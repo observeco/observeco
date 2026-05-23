@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500">
+  <defs>
+    <linearGradient id="term-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1b26;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#16161e;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Terminal window frame -->
+  <rect x="0" y="0" width="800" height="500" rx="8" fill="url(#term-bg)" stroke="#2f3340" stroke-width="1.5"/>
+
+  <!-- Window title bar dots -->
+  <circle cx="24" cy="20" r="6" fill="#ff5f56"/>
+  <circle cx="44" cy="20" r="6" fill="#ffbd2e"/>
+  <circle cx="64" cy="20" r="6" fill="#27c93f"/>
+
+  <!-- Title -->
+  <text x="400" y="27" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#565f89" text-anchor="middle" font-weight="600">observeco — terminal</text>
+
+  <!-- Command line 1 -->
+  <text x="16" y="68" font-family="'SF Mono','Fira Code','Cascadia Code',monospace" font-size="16" fill="#7aa2f7">$ pip install observeco[dashboard]</text>
+  <text x="16" y="94" font-family="monospace" font-size="15" fill="#9ece6a">✅ Successfully installed observeco-0.1.0</text>
+
+  <!-- Command line 2 -->
+  <text x="16" y="130" font-family="monospace" font-size="16" fill="#7aa2f7">$ observeco pulse check</text>
+  <text x="16" y="156" font-family="monospace" font-size="15" fill="#73daca">🟢  hermes-triage   12s ago  ·  4.2K tokens  ·  drift +3%</text>
+  <text x="16" y="176" font-family="monospace" font-size="15" fill="#73daca">🟢  pragma           8s ago  ·  2.1K tokens  ·  drift -1%</text>
+  <text x="16" y="196" font-family="monospace" font-size="15" fill="#e0af68">🟡  kepler           3m ago  ·  8.1K tokens  ·  drift +18%</text>
+  <text x="16" y="216" font-family="monospace" font-size="15" fill="#f7768e">🔴  hermes-dev      45s ago  ·  circuit: tripped</text>
+
+  <!-- Command line 3 -->
+  <text x="16" y="252" font-family="monospace" font-size="16" fill="#7aa2f7">$ echo "You are a helpful assistant with access to code execution." | observeco chisel trim</text>
+
+  <!-- Chisel output table -->
+  <text x="16" y="278" font-family="monospace" font-size="14" fill="#565f89">┌────────────┬───────┬────────┐</text>
+  <text x="16" y="298" font-family="monospace" font-size="14" fill="#7dcfff">│ Component  │ Tokens│ % of   │</text>
+  <text x="16" y="318" font-family="monospace" font-size="14" fill="#565f89">├────────────┼───────┼────────┤</text>
+  <text x="16" y="338" font-family="monospace" font-size="14" fill="#c0caf5">│ identity   │   256 │   35%  │</text>
+  <text x="16" y="358" font-family="monospace" font-size="14" fill="#c0caf5">│ skills     │   180 │   25%  │</text>
+  <text x="16" y="378" font-family="monospace" font-size="14" fill="#c0caf5">│ memory     │    90 │   12%  │</text>
+  <text x="16" y="398" font-family="monospace" font-size="14" fill="#c0caf5">│ tools      │   120 │   16%  │</text>
+  <text x="16" y="418" font-family="monospace" font-size="14" fill="#c0caf5">│ guidance   │    90 │   12%  │</text>
+  <text x="16" y="438" font-family="monospace" font-size="14" fill="#565f89">└────────────┴───────┴────────┘</text>
+
+  <!-- Savings line -->
+  <text x="16" y="468" font-family="monospace" font-size="15" fill="#9ece6a">✨ Chisel saved 412 tokens (22%)</text>
+
+  <!-- Blinking cursor -->
+  <text x="16" y="496" font-family="monospace" font-size="16" fill="#7aa2f7">$</text>
+  <rect x="28" y="480" width="10" height="18" fill="#7aa2f7" opacity="0.7"/>
+</svg>

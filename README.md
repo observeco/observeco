@@ -7,6 +7,8 @@
 pip install observeco[dashboard] && observeco dashboard
 ```
 
+<img src="assets/terminal-demo.svg" alt="observeco terminal demo showing pulse check and chisel trim" width="800">
+
 <div align="center">
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
