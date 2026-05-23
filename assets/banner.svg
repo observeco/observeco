@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F172A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E293B;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0EA5E9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- Decorative grid dots -->
+  <g fill="#334155" opacity="0.3">
+    <circle cx="100" cy="100" r="1"/><circle cx="200" cy="100" r="1"/>
+    <circle cx="300" cy="100" r="1"/><circle cx="400" cy="100" r="1"/>
+    <circle cx="500" cy="100" r="1"/><circle cx="600" cy="100" r="1"/>
+    <circle cx="700" cy="100" r="1"/><circle cx="800" cy="100" r="1"/>
+    <circle cx="900" cy="100" r="1"/><circle cx="1000" cy="100" r="1"/>
+    <circle cx="1100" cy="100" r="1"/><circle cx="1200" cy="100" r="1"/>
+  </g>
+
+  <!-- Logo icon -->
+  <g transform="translate(60, 50)">
+    <circle cx="32" cy="32" r="28" fill="none" stroke="url(#accent)" stroke-width="1.5" opacity="0.4"/>
+    <polyline points="4,32 14,32 18,20 22,40 26,18 30,44 34,22 38,32 42,22 46,44 50,18 54,40 58,20 60,32"
+              fill="none" stroke="url(#accent)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="18" cy="20" r="2" fill="#0EA5E9" opacity="0.7"/>
+    <circle cx="26" cy="18" r="2" fill="#14B8A6" opacity="0.7"/>
+    <circle cx="34" cy="22" r="2" fill="#06B6D4" opacity="0.7"/>
+    <circle cx="42" cy="22" r="2" fill="#0EA5E9" opacity="0.7"/>
+    <circle cx="50" cy="18" r="2" fill="#14B8A6" opacity="0.7"/>
+  </g>
+
+  <!-- Title -->
+  <text x="120" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="700" fill="#FFFFFF">
+    ObserveCo
+    <tspan fill="url(#accent" font-size="56">.</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="120" y="160" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="#94A3B8">
+    Runtime observability for your AI agents
+  </text>
+
+  <!-- Terminal mockup area -->
+  <rect x="80" y="200" width="1120" height="340" rx="12" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Terminal window dots -->
+  <circle cx="110" cy="228" r="6" fill="#EF4444"/>
+  <circle cx="135" cy="228" r="6" fill="#EAB308"/>
+  <circle cx="160" cy="228" r="6" fill="#22C55E"/>
+
+  <!-- Terminal title -->
+  <text x="640" y="235" font-family="monospace" font-size="14" fill="#64748B" text-anchor="middle">observeco pulse check</text>
+
+  <!-- Terminal lines -->
+  <!-- Line 1: command -->
+  <text x="110" y="280" font-family="monospace" font-size="16" fill="#38BDF8">$ observeco pulse check</text>
+
+  <!-- Line 2: output - hermes-triage -->
+  <text x="130" y="310" font-family="monospace" font-size="15" fill="#4ADE80">🟢 hermes-triage</text>
+  <text x="500" y="310" font-family="monospace" font-size="15" fill="#64748B">12s ago  ·  Tokens: 4.2K  ·  Drift: +3%</text>
+
+  <!-- Line 3: output - pragma -->
+  <text x="130" y="340" font-family="monospace" font-size="15" fill="#4ADE80">🟢 pragma</text>
+  <text x="500" y="340" font-family="monospace" font-size="15" fill="#64748B">8s ago  ·  Tokens: 2.1K  ·  Drift: -1%</text>
+
+  <!-- Line 4: output - kepler -->
+  <text x="130" y="370" font-family="monospace" font-size="15" fill="#FBBF24">🟡 kepler</text>
+  <text x="500" y="370" font-family="monospace" font-size="15" fill="#64748B">3m ago  ·  Tokens: 8.1K  ·  Drift: +18%</text>
+
+  <!-- Line 5: output - hermes-dev -->
+  <text x="130" y="400" font-family="monospace" font-size="15" fill="#F87171">🔴 hermes-dev</text>
+  <text x="500" y="400" font-family="monospace" font-size="15" fill="#64748B">45s ago  ·  Circuit: tripped</text>
+
+  <!-- Cursor blink -->
+  <text x="110" y="440" font-family="monospace" font-size="16" fill="#38BDF8">$</text>
+  <rect x="125" y="424" width="10" height="18" fill="#38BDF8" opacity="0.8"/>
+
+  <!-- Bottom: pip install -->
+  <rect x="80" y="560" width="1120" height="50" rx="8" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="110" y="593" font-family="monospace" font-size="18" fill="#A78BFA">$ pip install observeco[dashboard]</text>
+  <text x="600" y="593" font-family="monospace" font-size="18" fill="#22C55E">✨ Done in 12s</text>
+</svg>
