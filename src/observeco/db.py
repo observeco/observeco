@@ -158,12 +158,12 @@ class Database:
     # -- Pulse Log --
 
     def log_pulse(self, agent_name: str, status: str, latency_ms: float = 0,
-                  error_message: str = "", framework: str = "hermes") -> None:
+                  error_message: str = "", agent_framework: str = "hermes") -> None:
         conn = self._get_conn()
         conn.execute(
             "INSERT INTO pulse_log (agent_name, agent_framework, status, latency_ms, error_message, timestamp) "
             "VALUES (?, ?, ?, ?, ?, ?)",
-            (agent_name, framework, status, latency_ms, error_message, int(time.time())),
+            (agent_name, agent_framework, status, latency_ms, error_message, int(time.time())),
         )
         conn.commit()
 

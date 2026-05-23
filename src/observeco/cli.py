@@ -82,6 +82,22 @@ def clawforge_garden(
     from observeco.clawforge.garden import run_garden
     run_garden(apply=apply, agent_name=agent_name)
 
+# -- Watch subcommand --
+
+@app.command(name="watch")
+def watch_daemon(
+    interval: int = typer.Option(30, "--interval", "-i", help="Poll interval in seconds"),
+    once: bool = typer.Option(False, "--once", help="Single pass and exit"),
+):
+    """Auto-collect agent health data — runs in background.
+
+    Polls registered agents every N seconds, auto-discovers new agents,
+    writes to SQLite. Dashboard auto-populates within 60s.
+    """
+    from observeco.watch import run_watch
+    run_watch(interval=interval, once=once)
+
+
 # -- Dashboard subcommand --
 
 @app.command(name="dashboard")

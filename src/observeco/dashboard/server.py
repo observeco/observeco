@@ -13,12 +13,14 @@ from fastapi.staticfiles import StaticFiles
 
 from observeco.db import Database
 from observeco.billing import add_billing_endpoints
+from observeco.dashboard.otel import router as otel_router
 
 app = FastAPI(title="ObserveCo Dashboard")
 db = Database()
 
-# Register billing endpoints
+# Register endpoints
 add_billing_endpoints(app)
+app.include_router(otel_router)
 
 # Templates directory
 TEMPLATES_DIR = Path(__file__).parent / "templates"
