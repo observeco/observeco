@@ -188,7 +188,43 @@ def _execute_action(action: str, args: dict) -> tuple[bool, str]:
         return True, f"Circuit breaker for {agent_name} - manual acknowledgment required"
     return False, f"Unknown action: {action}"
 
+def _check_config_integrity() -> list[dict]:
+    """Check infrastructure config files for corruption that would crash the gateway."""
+    findings = []
+    config_path = Path.home() / ".hermes" / "config.yaml"
+    if config_path.exists():
+        try:
+            import yaml
+            yaml.safe_load(config_path.read_text())
+        except Exception as e:
+            findings.append({"component": "config.yaml", "status": "broken",
+                             "message": f"YAML parse error: {e}"})
+    env_path = Path.home() / ".hermes" / ".env"
+    if env_path.exists():
+        for i, line in enumerate(env_path.read_text().split("\n"), 1):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" not in line:
+                findings.append({"component": ".env", "status": "warning",
+                                 "message": f"Line {i}: malformed (no '=' sign)"})
+                break
+    return findings
+
+
 def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run: bool = False) -> None:
+    # Pre-flight: check infrastructure integrity first
+    infra_issues = _check_config_integrity()
+    if infra_issues:
+        console.print("[bold red]Infrastructure integrity issues found![/bold red]")
+        for issue in infra_issues:
+            severity = "[red]" if issue["status"] == "broken" else "[yellow]"
+            console.print(f"  {severity}{issue['component']}[/]: {issue['message']}")
+        console.print()
+        # Broken config = gateway would crash — flag critical, don't proceed
+        if any(i["status"] == "broken" for i in infra_issues):
+            console.print("[bold red]Config broken — gateway would crash on restart. Fix before proceeding.[/bold red]")
+            _get_flags_dir().parent.mkdir(parents=True, exist_ok=True)
+            (_get_flags_dir() / "config-broken.flag").write_text("config.yaml YAML parse error")
+            return
     db = Database()
     config = load_config()
     agents = [a for a in config.agents if a.name == agent_name] if agent_name else config.agents
