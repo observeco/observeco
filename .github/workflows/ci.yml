@@ -38,7 +38,7 @@ jobs:
         run: mypy src/observeco/
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short
+        run: pytest tests/ -v --tb=short --cov=observeco --cov-report=term-missing
 
       - name: Build package
         run: |
