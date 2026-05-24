@@ -11,11 +11,12 @@ Reads agents from:
 from __future__ import annotations
 
 import json
-import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
+from platformdirs import user_data_dir
 
 
 @dataclass
@@ -33,7 +34,7 @@ class ObserveConfig:
 
 _HERMES_CONFIG_PATH = Path.home() / ".hermes" / "config.yaml"
 _HERMES_AGENTS_DIR = Path.home() / ".hermes" / "agents"
-_AGENTS_JSON = Path.home() / ".observeco" / "agents.json"
+_AGENTS_JSON = Path(user_data_dir("observeco", "observeco")) / "agents.json"
 
 
 def _load_hermes_agents() -> list[AgentConfig]:

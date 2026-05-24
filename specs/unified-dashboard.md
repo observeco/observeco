@@ -560,21 +560,193 @@ The user always knows what phase they're in and what to expect next. No silent w
 
 ---
 
-## 9. The Moat (Why This Isn't Built in a Weekend)
+## 9. The Moat: Bidirectional Observability
 
-An engineer CAN build "show agents from SQLite, red/green dots" in a weekend. The moat is not the code. It's what the code collects over time.
+### 9.1 The Broken Premise
 
-| What's Easy to Clone | What's Not |
-|---------------------|------------|
-| Agent list from config | **Circuit breaker as a primitive** — self-healing failure gate with configurable cooldown, exponential backoff, and auto-reset. Not just "is it alive." |
-| Red/green status dots | **Token composition data (Hermes)** — per-component breakdown (identity vs skills vs memory vs tools vs guidance) collected from real agent sessions. No other tool understands this. |
-| SQLite time-series store | **Intent-aware loading (OpenClaw)** — classifier that decides what to load per message. Requires understanding agent architecture, not just reading a config file. |
-| HTTP health checks | **Memory hygiene (OpenClaw)** — ClawForge Garden that finds duplicates, contradictions, and stale entries in MEMORY.md. Automated, not manual. |
-| "Token profile" bar chart | **Skill usage intelligence** — tracking which skills fire per turn and auto-summarizing based on usage frequency. 50-turn baseline is real agent operation. |
-| Simple uptime monitoring | **Drift detection baseline** — what "normal" drift looks like requires running across hundreds of sessions. Fleet-aggregated calibration data. |
-| Status page widget | **Alert signal routing** — not just "send an email." Telegram push, webhook relay, CLI ping. Designed for how agent operators actually work. |
+Every observability tool shares the same broken assumption: **observability is read-only.** They collect data, display it, and leave the human to act.
 
-**The library is the data collector. The dashboard is the product. The calibration data is the moat.**
+This is wrong for AI agents. Agents self-modify. Their behavior degrades non-monotonically (context bloat, skill drift, prompt rot). A human checking a dashboard every morning is too slow — by the time you see the degradation, the agent has been producing bad output for hours.
+
+**Traditional observability:**
+```
+Agent → Metrics → Dashboard → Human sees → Human fixes  (minutes to hours)
+```
+
+**ObserveCo v2 (Bidirectional):**
+```
+Agent → Metrics → Detector → Healer → Agent fixed  (seconds)
+```
+
+### 9.2 The Three Moat Pillars
+
+ObserveCo is not a monitoring dashboard. It is a **runtime integrity layer for AI agents** — it detects degradation, heals it, documents what happened, and lets other agents query the history. No competitor can copy this because they're all cloud-based and can't touch your filesystem.
+
+| Competitor | Why they can't heal | Why they can't snapshot | Why they can't MCP |
+|------------|---------------------|------------------------|---------------------|
+| **Arize Phoenix** | Cloud SDK — can't SSH into your machine | No auto-discovery to render | No local data to expose |
+| **LangFuse** | Python SDK wrapping — can't restart daemons | No fleet data to compose | No agent-aware protocol |
+| **Helicone** | Proxy-based — can't modify agent configs | No context or drift data | Proxy intercepts don't know agent state |
+| **OpenLIT** | Cloud dashboard — can't execute recovery | No memory hygiene data | No local-first architecture |
+| **ObserveCo** | Local-first with CLI access to the host | Has auto_detect + pulse + chisel + garden data | Already runs locally and discovers all agents |
+
+### 9.3 Pillar 1: Self-Healing (`observeco heal`)
+
+**Tension strategy:** This is the headline feature — the thing that changes the product category. It does NOT ship in v0. What ships instead is the *preview*: observation mode that detects the same patterns, diagnoses the same root causes, but stops at a yellow banner saying "Run `observeco heal` to auto-fix." Users see exactly what would happen. The only missing piece is the user's permission to execute. By v1.1, they've already seen the tool correctly diagnose 10+ failures and trust it enough to flip the switch.
+
+| v0 ships | v1.1 adds | Why this builds tension |
+|----------|-----------|------------------------|
+| **Observation mode** — detects crash patterns, drift, memory debt; writes yellow banner with suggested command | Auto-execution of same diagnosis+fix pipeline | User sees "the tool knew what was wrong and I had to click vs it just fixed itself" — makes them impatient for automation |
+| Dashboard banners: "Agent Kepler: 3 memory errors detected. Suggested: restart with memory cap" | One-click apply from banner, then fully autonomous | Each banner is a reminder that the tool is smarter than most users expect |
+
+**What's fully specced for v1.1 (complete design below):**
+
+```python
+# v1.1 — includes circuit breaker on heal and snapshot-before-restart
+
+HEAL_CIRCUIT = {}  # agent_name -> {failures: int, last_failure: timestamp, cooldown_until: timestamp}
+MAX_HEAL_RETRIES = 3
+COOLDOWN_HOURS = 4
+
+def heal_cycle(agent_name, status, db):
+    # --- Circuit breaker check ---
+    record = HEAL_CIRCUIT.get(agent_name, {"failures": 0, "cooldown_until": 0})
+    if time.time() < record["cooldown_until"]:
+        db.write_healing_event(agent_name, "circuit_open", "escalation_mode — manual acknowledgment required")
+        return  # Do nothing. Human must acknowledge.
+    
+    if status == "dead":
+        # --- Snapshot before restart ---
+        try:
+            snapshot_before = observeco.snapshot(agent_name, prefix=f"pre-heal-{agent_name}")
+        except Exception:
+            pass  # Best-effort — don't let snapshot failure block heal
+        
+        last_five = db.get_recent_errors(agent_name, 5)
+        try:
+            if all("out of memory" in e for e in last_five):
+                restart_agent(agent_name, env={"PYTHONMEM": "512m"})
+                action = "restarted_with_cap"
+            elif all("module not found" in e for e in last_five):
+                subprocess.run(["pip", "install", "-e", "."], cwd=agent_repo, check=True)
+                restart_agent(agent_name)
+                action = "module_installed"
+            elif all("timeout" in e for e in last_five):
+                db.set_cooldown(agent_name, 300)
+                action = "cooldown_set"
+        except Exception as e:
+            # --- Heal failed — increment circuit breaker ---
+            record["failures"] += 1
+            if record["failures"] >= MAX_HEAL_RETRIES:
+                record["cooldown_until"] = time.time() + (COOLDOWN_HOURS * 3600)
+                # Write critical flag for human acknowledgment
+                with open(f"intelligence/flags/{agent_name}-heal-failure.flag", "w") as f:
+                    f.write(f"CRITICAL: {agent_name} heal failed {record['failures']}x. "
+                           f"Last error: {e}. Circuit open until {record['cooldown_until']}.")
+            HEAL_CIRCUIT[agent_name] = record
+            db.write_healing_event(agent_name, "heal_failed", str(e))
+            return
+        
+        db.write_healing_report(agent_name, action_taken, success)
+    elif drift > threshold:
+        trim_result = run_trim(agent_name)
+        db.write_healing_event(agent_name, "context_drift", f"trimmed {trim_result.savings} tokens")
+```
+
+**v1 state:** Observation-only — daemon detects degradation, writes recommendations to dashboard (yellow banners with suggested action). Does NOT execute.
+
+**v1.1 state:** Opt-in execution (`observeco heal` ships as a new CLI command). Daemon monitors, suggests, and when `--auto-heal` is set, executes. Includes circuit breaker on heal itself (3 failures in 1h → escalation mode: write critical flag, no retry for 4h, human must acknowledge).
+
+**Critical safety requirement — snapshot before restart:** Before any heal action that restarts a process (memory cap restart, module install restart), the heal pipeline MUST save an investigation dump:
+
+```python
+# Required: snapshot state BEFORE destructive action
+investigation_path = f"~/.observeco/heal/{agent_name}-{timestamp}.investigation.md"
+investigation = f"""
+# Heal Investigation: {agent_name}
+## Triggered at: {timestamp}
+## Diagnosis: {diagnosis}
+## Action: {action_taken}
+## Pre-heal state:
+- Last 3 errors:
+  1. {last_three[0]}
+  2. {last_three[1]}
+  3. {last_three[2]}
+- Last 5 health ticks: {recent_ticks}
+- Last known config: {agent_config}
+"""
+write_investigation(investigation_path, investigation)
+```
+
+**Why this is safety, not overhead:** A heal that restarts an agent mid-signal-write destroys evidence of what went wrong. A heal that restarts an OpenClaw agent mid-MEMORY.md write risks file corruption. By saving the last 3 signals, errors, and state before restarting, every heal action produces an auditable trace. This is the #1 reason enterprise monitoring tools are read-only — they don't want liability for destruction. ObserveCo's pre-heal snapshot removes that objection and becomes a marketing asset: "Every healing action preserves the evidence. You can audit exactly what happened."
+
+### 9.4 Pillar 2: Living Snapshot (`observeco snapshot`)
+
+**Target:** v1.1 (D+14)
+
+**Tension strategy:** The snapshot feature is a distribution play — it auto-generates the launch post. It cannot ship without 7+ days of real drift data, which means it physically cannot exist on D-0. But the preview ships: the dashboard already visualizes the same data (drift bars, error timeline, architecture diagram). Users see the individual pieces and can imagine what the full snapshot would look like. The dashboard IS the v0 preview of the living document.
+
+**What's fully specced for v1.1 (complete design below):**
+
+```bash
+observeco snapshot --name "7-agents-one-mac-mini" --out launch-paper/
+```
+
+**Generated artifacts:**
+
+| Artifact | Source | What It Proves |
+|----------|--------|----------------|
+| `architecture.svg` | Auto-discovered from Hermes config + ecosystem.json (0-30s after install) | "No agents discovered yet — run `observeco pulse check`" | Shows real agents, real connections, real health endpoints — not a mockup |
+| `dependency-graph.svg` | Computed from pulse check history (needs 1+ hours of data) | "Not enough data — check back after agents have been running for at least 1 hour" | Shows which agents communicate with which — real data flow |
+| `token-evolution-chart.svg` | From chisel trim history over 7+ days | "Token data accumulates over ~7 days — run `observeco chisel trim` periodically" | Proof that context bloat is real — not a simulated chart |
+| `error-timeline.svg` | From pulse log error events | "No error events recorded yet — this is good news" | Real incident frequency — not hand-picked examples |
+| `self-healing-log.md` | From observeco heal recovery attempts | "No self-healing events recorded" | The tool fixing itself — alerts that auto-resolved |
+| `README.snapshot.md` | Auto-generated narrative from all data | "Snapshot data incomplete — run command again when agents have been monitored longer" | Drafts the actual blog post: "7 agents, 1 Mac Mini, 0 human intervention" |
+
+**The HN pitch:** "We didn't write a launch post. We ran `observeco snapshot` on our live ecosystem and it wrote one for us. Here's 7 real AI agents, their actual health data, real error timelines, and proof that our tool fixes its own problems. The diagram? It's not a mockup — it's generated from running pulse check on actual agents."
+
+**Code complexity:** ~400 lines in `src/observeco/cli/snapshot.py`. Uses existing data, just formats it differently.
+
+### 9.5 Pillar 3: MCP Discovery Protocol (`observeco mcp serve`)
+
+**Target:** v1.1 (D+14)
+
+**Tension strategy:** MCP is the least urgent for v1 adoption — most users don't have MCP clients yet. But the v0 dashboard serves as the preview: health data is available via the FastAPI REST endpoints that the dashboard itself consumes. When users ask "can I query this programmatically?" the answer is "yes — via the dashboard API. The full MCP protocol ships in v1.1." The API endpoint IS the v0 preview.
+
+**What's fully specced for v1.1 (complete design below):**
+
+```bash
+observeco mcp serve
+# Starts an MCP server on port 9120
+# Auto-discovers all Hermes + OpenClaw agents
+# Exposes resources:
+#   observeco://<agent>/health     -> latest health status
+#   observeco://<agent>/config     -> agent config file
+#   observeco://<agent>/errors     -> recent error timeline
+#   observeco://<agent>/context    -> system prompt token breakdown
+#   observeco://fleet              -> all agent summaries
+#   observeco://alert/<rule>       -> triggered alert rules
+```
+
+**Why this is defensible:**
+1. **Dogfooding.** Hermes agents can MCP-query "what's my health?" — the ecosystem gains self-awareness. Dreamer's walks mention "Hound's pulse dropped 20% today."
+2. **Interop.** Any MCP client (Claude Desktop, continue.dev, Cursor) can query the agent fleet. This is the "API-first" approach to observability without building a separate REST API.
+3. **Launch hook.** "ObserveCo comes with an MCP server. Any AI tool can ask it about agent health." Positions ObserveCo as the data plane for agent systems, not just a dashboard.
+4. **Switching cost.** Once users have CI/CD, dashboards, and MCP servers all pointed at ObserveCo, switching costs are significant.
+
+**Code complexity:** ~300 lines implementing the MCP stdio protocol from scratch. **Do NOT add MCP as a pip dependency** — verify `pip install mcp>=1.0` succeeds first. The `mcp` Python package on PyPI is the OpenModelContextProtocol, which is a very young protocol — if it doesn't exist or the version is below 1.0, implement the stdio protocol directly (~500 lines). The protocol itself is simple JSON-RPC over stdin/stdout: `{"jsonrpc": "2.0", "method": "resources/read", "params": {"uri": "observeco://fleet"}, "id": 1}`.
+
+**Protocol version pin:** Document which MCP version ObserveCo implements. The protocol evolves fast — unpinned docs produce broken installs. Pin in pyproject.toml as an optional dependency: `mcp = ["observeco>=1.0"]` only if it actually exists on PyPI.
+
+### 9.6 The One-Sentence Thesis
+
+**v1 thesis (ships now):**
+> **Runtime observability for your AI agents — health checks, token profiling, drift tracking, OTel ingestion, auto-collection — all in one `pip install`.**
+
+**v1.1 thesis (D+14):**
+> **We don't just show you your agents are broken — we fix them, tell you what happened, and let your other agents ask about them.**
+
+No competitor can say either. They're all cloud-based and read-only. Launching with the v1 thesis and upgrading to the v1.1 thesis at D+14 creates a second distribution wave and lands self-healing on users who've experienced the pain firsthand.
 
 ---
 
@@ -619,17 +791,31 @@ An engineer CAN build "show agents from SQLite, red/green dots" in a weekend. Th
 
 ---
 
-## 12. What's NOT in v1
+## 12. What's NOT in v1 (and What IS)
 
-| Scope | Rationale |
-|-------|-----------|
-| Multi-cloud agent relay | Requires hosted infrastructure. Post-revenue. |
-| SSO / SAML / OIDC | Enterprise-only. Not needed for OSS adoption. |
-| Stripe billing integration | ✅ **UNBLOCKED** — Sean can get Stripe within 2 weeks. Ships D-0. Checkout + webhook + trial logic built into dashboard. Pro tiles wired to real Stripe checkout. |
-| Plugin hub / admission gate | Network-effects play. Premature without users. |
-| Tracing / deep profiling | Beyond "is it alive + what's in its context." v2 feature. |
-| Mobile app | Native apps are expensive. Dashboard is a responsive web app. |
+### Ships v1 (Launch)
 
+| Feature | Section | Priority |
+|---------|---------|----------|
+| Dashboard (fleet view, health dots, token bars, drift, error timeline, memory garden) | §1-8 | **P0 — launch** |
+| CLI (pulse, chisel, clawforge, watch, agents) | §4 | **P0 — launch** |
+| OTel /v1/traces endpoint | §4 | **P0 — launch** |
+| Stripe billing (Solo $9/mo, Team $49/mo, 30-day trial) | §6 | **P0 — launch** |
+| Heal observation mode (detects, suggests fixes, does NOT execute) | §9.3 | **P0 — launch** |
+
+### NOT in v1 (held back for tension — fully specced for v1.1)
+
+| Scope | Rationale (Tension Strategy) | Target |
+|-------|-----------|--------|
+| `observeco heal` (auto-heal execution) | Headline feature — deliberately held back. v0 ships detection+banners that show users *exactly* what auto-heal would do. Every banner builds trust and creates impatience. By v1.1, users have seen 10+ correct diagnoses and are asking "why can't it just DO it?" | **v1.1 (D+14)** |
+| `observeco snapshot` (living documentation) | Distribution play — cannot ship without 7+ days of drift data. v0 preview: dashboard already visualizes drift bars, error timelines, architecture. Users see the pieces and imagine the whole. | **v1.1 (D+14)** |
+| `observeco mcp serve` (MCP protocol) | Network effects play — most users don't have MCP clients at launch. v0 preview: FastAPI REST endpoints that power the dashboard. When users ask for programmatic access, MCP serves their demand. | **v1.1 (D+14)** |
+| Multi-cloud agent relay | Requires hosted infrastructure | Post-revenue |
+| SSO / SAML / OIDC | Enterprise-only | v2 |
+| Plugin hub / admission gate | Network-effects play | v2 |
+| Tracing / deep profiling | Beyond health + context scope | v1.1 |
+| Mobile app | Dashboard is responsive web | v1.1 |
+| Autonomous heal mode (no approval) | Safety — opt-in only for v1 | v1.1 |
 ---
 
 ## 13. User Stories (Prioritized)

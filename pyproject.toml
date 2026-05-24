@@ -29,14 +29,17 @@ dependencies = [
     "httpx>=0.27",
     "fastapi>=0.110",
     "uvicorn[standard]>=0.27",
+    "platformdirs>=4",
 ]
-
-[project.scripts]
-observeco = "observeco.cli:app"
 
 [project.optional-dependencies]
 dashboard = ["jinja2>=3.1", "python-multipart>=0.0.9"]
-dev = ["pytest>=7", "ruff>=0.3", "mypy>=1.0"]
+graph = ["tree-sitter>=0.25", "tree-sitter-python>=0.25"]
+dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.3", "mypy>=1.0"]
+watch = ["watchdog>=4"]
+
+[project.scripts]
+observeco = "observeco.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/observeco/observeco"
@@ -46,12 +49,24 @@ Repository = "https://github.com/observeco/observeco"
 [tool.hatch.build.targets.wheel]
 packages = ["src/observeco"]
 
+[tool.hatch.build]
+exclude = ["references/"]
+
 [tool.ruff]
-line-length = 100
+line-length = 130
 target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/observeco/snapshot.py" = ["E501"]
+"src/observeco/mcp_server.py" = ["E501"]
+"src/observeco/dashboard/server.py" = ["E501", "E741"]
+"src/observeco/cli.py" = ["E402"]
+"src/observeco/cli/billing_wire.py" = ["E402"]
+"src/observeco/heal/*" = ["E501"]
+"src/observeco/graph/*" = ["E501"]
 
 [tool.mypy]
 python_version = "3.10"

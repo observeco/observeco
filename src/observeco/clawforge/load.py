@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Optional
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 from observeco.db import Database
 
@@ -94,7 +94,7 @@ def run_load(probe: bool = False, message: Optional[str] = None) -> None:
 
         db.log_load("test", intent, len(sources_to_load), len(sources_to_skip), tokens_saved)
 
-        table = Table(title=f"Intent Classification Result", box=box.ROUNDED, header_style="bold cyan")
+        table = Table(title="Intent Classification Result", box=box.ROUNDED, header_style="bold cyan")
         table.add_column("Field", style="bold")
         table.add_column("Value")
 

@@ -7,14 +7,11 @@ Writes results to SQLite so the dashboard auto-populates.
 
 from __future__ import annotations
 
-import time
 import signal
-import sys
-from pathlib import Path
-from typing import Optional
+import time
 
+from observeco.config import load_config
 from observeco.db import Database
-from observeco.config import load_config, AgentConfig
 from observeco.pulse.check import _probe_agent
 
 

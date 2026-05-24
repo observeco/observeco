@@ -1,0 +1,3 @@
+[submodule "references/RagaAI-Catalyst"]
+	path = references/RagaAI-Catalyst
+	url = https://github.com/RagaAI/RagaAI-Catalyst.git

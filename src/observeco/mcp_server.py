@@ -3,11 +3,13 @@
 v1.1 feature. Implements Model Context Protocol (JSON-RPC 2.0 over stdio).
 """
 from __future__ import annotations
+
 import json
 import sys
 from typing import Any, Optional
-from observeco.config import load_config
+
 from observeco.db import Database
+
 
 class MCPServer:
     def __init__(self):
@@ -95,6 +97,24 @@ class MCPServer:
         parts = uri.replace("observeco://", "").split("/")
         if parts[0] == "fleet":
             return self._build_fleet_summary()
+        elif parts[0] == "graph" and len(parts) >= 2 and parts[1] == "stats":
+            try:
+                from observeco.graph.db import GraphDB
+                gdb = GraphDB()
+                stats = gdb.get_stats()
+                lines = [
+                    "Code Graph Stats:",
+                    f"  Files: {stats.get('files', 0)}",
+                    f"  Symbols: {stats.get('nodes', 0)}",
+                    f"  Relations: {stats.get('edges', 0)}",
+                ]
+                for kind, count in stats.get("node_kinds", {}).items():
+                    lines.append(f"  - {kind}: {count}")
+                return "\n".join(lines)
+            except Exception as e:
+                return f"Graph stats error: {e}"
+        elif parts[0] == "alert" and len(parts) >= 2:
+            return self._build_alert(parts[1])
         elif len(parts) >= 2:
             agent_name, resource_type = parts[0], parts[1]
             if resource_type == "health":
@@ -105,8 +125,6 @@ class MCPServer:
                 return self._build_agent_errors(agent_name)
             elif resource_type == "context":
                 return self._build_agent_context(agent_name)
-        elif parts[0] == "alert" and len(parts) >= 2:
-            return self._build_alert(parts[1])
         return f"Unknown resource: {uri}"
 
     def _handle_request(self, request: dict) -> Optional[dict]:
@@ -138,6 +156,9 @@ class MCPServer:
                                        "description": f"Token breakdown for {name}", "mimeType": "text/plain"})
             resources.append({"uri": "observeco://alert/_default", "name": "Default Alert",
                                "description": "Default alert rule status", "mimeType": "text/plain"})
+            # Graph resources
+            resources.append({"uri": "observeco://graph/stats", "name": "Graph Stats",
+                               "description": "Code graph statistics", "mimeType": "text/plain"})
             return self._make_response(rid, {"resources": resources})
         elif method == "resources/read":
             uri = params.get("uri", "")
@@ -155,6 +176,20 @@ class MCPServer:
                     {"name": "pulse", "description": "Run a pulse check",
                      "inputSchema": {"type": "object", "properties": {"agent_name": {"type": "string"}},
                                       "required": ["agent_name"]}},
+                    {"name": "graph_search", "description": "Search code graph symbols",
+                     "inputSchema": {"type": "object", "properties": {"query": {"type": "string"},
+                                                                       "limit": {"type": "number"}},
+                                      "required": ["query"]}},
+                    {"name": "graph_callers", "description": "Find all functions that call a symbol",
+                     "inputSchema": {"type": "object", "properties": {"symbol": {"type": "string"}},
+                                      "required": ["symbol"]}},
+                    {"name": "graph_callees", "description": "Find all functions called by a symbol",
+                     "inputSchema": {"type": "object", "properties": {"symbol": {"type": "string"}},
+                                      "required": ["symbol"]}},
+                    {"name": "graph_impact", "description": "Find transitive callers (impact radius)",
+                     "inputSchema": {"type": "object", "properties": {"symbol": {"type": "string"},
+                                                                       "depth": {"type": "number"}},
+                                      "required": ["symbol"]}},
                 ]
             })
         elif method == "tools/call":
@@ -170,7 +205,7 @@ class MCPServer:
                 try:
                     from observeco.snapshot import run_snapshot
                     run_snapshot(snapshot_name=snapshot_name)
-                except Exception as e:
+                except Exception:
                     pass
                 return self._make_response(rid, {"content": [{"type": "text", "text": f"Snapshot '{snapshot_name}' generated."}]})
             elif name == "pulse":
@@ -179,6 +214,73 @@ class MCPServer:
                 if pulses:
                     return self._make_response(rid, {"content": [{"type": "text", "text": str(pulses[0])}]})
                 return self._make_response(rid, {"content": [{"type": "text", "text": f"No pulse data for {agent_name}"}]})
+            elif name == "graph_search":
+                try:
+                    from observeco.graph.db import GraphDB
+                    gdb = GraphDB()
+                    query = arguments.get("query", "")
+                    limit = arguments.get("limit", 10)
+                    results = gdb.search_nodes(query, limit=limit)
+                    if not results:
+                        return self._make_response(rid, {"content": [{"type": "text", "text": f"No results for '{query}'"}]})
+                    lines = [f"Graph search: '{query}' ({len(results)} results)"]
+                    for r in results:
+                        lines.append(f"  {r['kind']}: {r['qualified_name']} [{r['file_path']}:{r['start_line']}]")
+                    return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
+                except Exception as e:
+                    return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph search error: {e}"}]})
+            elif name == "graph_callers":
+                try:
+                    from observeco.graph.db import GraphDB
+                    gdb = GraphDB()
+                    symbol = arguments.get("symbol", "")
+                    node = gdb.get_node_by_qualified_name(symbol)
+                    if not node:
+                        return self._make_response(rid, {"content": [{"type": "text", "text": f"Symbol not found: {symbol}"}]})
+                    callers = gdb.get_callers(node["id"])
+                    if not callers:
+                        return self._make_response(rid, {"content": [{"type": "text", "text": f"No callers for {symbol}"}]})
+                    lines = [f"Callers of {symbol}:"]
+                    for c in callers:
+                        lines.append(f"  ← {c['qualified_name']} [{c['file_path']}:{c['start_line']}]")
+                    return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
+                except Exception as e:
+                    return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph callers error: {e}"}]})
+            elif name == "graph_callees":
+                try:
+                    from observeco.graph.db import GraphDB
+                    gdb = GraphDB()
+                    symbol = arguments.get("symbol", "")
+                    node = gdb.get_node_by_qualified_name(symbol)
+                    if not node:
+                        return self._make_response(rid, {"content": [{"type": "text", "text": f"Symbol not found: {symbol}"}]})
+                    callees = gdb.get_callees(node["id"])
+                    if not callees:
+                        return self._make_response(rid, {"content": [{"type": "text", "text": f"No callees for {symbol}"}]})
+                    lines = [f"Callees of {symbol}:"]
+                    for c in callees:
+                        lines.append(f"  → {c['qualified_name']} [{c['file_path']}:{c['start_line']}]")
+                    return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
+                except Exception as e:
+                    return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph callees error: {e}"}]})
+            elif name == "graph_impact":
+                try:
+                    from observeco.graph.db import GraphDB
+                    gdb = GraphDB()
+                    symbol = arguments.get("symbol", "")
+                    depth = arguments.get("depth", 2)
+                    node = gdb.get_node_by_qualified_name(symbol)
+                    if not node:
+                        return self._make_response(rid, {"content": [{"type": "text", "text": f"Symbol not found: {symbol}"}]})
+                    impact = gdb.get_impact_radius(node["id"], depth=depth)
+                    if not impact:
+                        return self._make_response(rid, {"content": [{"type": "text", "text": f"No impact radius for {symbol} (depth={depth})"}]})
+                    lines = [f"Impact radius of {symbol} (depth={depth}):"]
+                    for i in impact:
+                        lines.append(f"  Depth {i['impact_depth']}: {i['qualified_name']} [{i['file_path']}:{i['start_line']}]")
+                    return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
+                except Exception as e:
+                    return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph impact error: {e}"}]})
             return self._make_error(rid, -32601, f"Tool not found: {name}")
         else:
             return self._make_error(rid, -32601, f"Method not found: {method}")
@@ -199,7 +301,7 @@ class MCPServer:
                 self._write(self._make_error(None, -32603, f"Internal error: {e}"))
 
     def run_http(self, port: int) -> None:
-        from http.server import HTTPServer, BaseHTTPRequestHandler
+        from http.server import BaseHTTPRequestHandler, HTTPServer
         class MCPHTTPHandler(BaseHTTPRequestHandler):
             server_instance = self
             def do_POST(self):

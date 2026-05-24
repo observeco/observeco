@@ -1,7 +1,5 @@
 """Tests for observeco CLI."""
 import subprocess
-import sys
-
 
 OBSERVECO = "observeco"
 
@@ -71,9 +69,10 @@ def test_dashboard_help():
 
 def test_db_module():
     """Test that db module initializes cleanly."""
-    from observeco.db import Database
-    import tempfile
     import os
+    import tempfile
+
+    from observeco.db import Database
     db = Database(db_path=os.path.join(tempfile.gettempdir(), "test_observeco.db"))
     assert db is not None
     db.close()

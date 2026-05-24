@@ -8,11 +8,10 @@ from __future__ import annotations
 
 import re
 import sys
-from typing import Optional
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 from observeco.db import Database
 
@@ -120,4 +119,4 @@ def run_trim() -> None:
 
     console.print(table)
     console.print(f"[dim]Estimated savings: {savings_ratio*100:.0f}% via guideline trimming[/dim]")
-    console.print(f"[dim]Run with --agent <name> to store per-agent history[/dim]")
+    console.print("[dim]Run with --agent <name> to store per-agent history[/dim]")

@@ -1,7 +1,5 @@
 """Tests for auto_detect and dashboard modules."""
-import os
-import tempfile
-from observeco.auto_detect import run_discover, run_add
+from observeco.auto_detect import run_add, run_discover
 from observeco.dashboard.server import serve
 
 

@@ -1,14 +1,17 @@
-"""`observeco heal` — auto-heal agents: detect, diagnose, fix common failure modes.
-"""
+"""`observeco heal` — auto-heal agents: detect, diagnose, fix common failure modes."""
 from __future__ import annotations
+
 import os
 import subprocess
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
 from rich import box
 from rich.console import Console
 from rich.table import Table
+
 from observeco.config import load_config
 from observeco.db import Database
 
@@ -18,19 +21,20 @@ MAX_HEAL_RETRIES = 3
 COOLDOWN_HOURS = 4
 
 def _get_flags_dir() -> Path:
-    p = Path.home() / ".observeco" / "flags"
+    from observeco.dirs import get_data_dir
+    p = get_data_dir() / "flags"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 def _get_heal_log_dir() -> Path:
-    p = Path.home() / ".observeco" / "heal"
+    from observeco.dirs import get_data_dir
+    p = get_data_dir() / "heal"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 def _write_critical_flag(agent_name: str, failures: int, error: str, cooldown_until: float) -> None:
     flags_dir = _get_flags_dir()
     flag_path = flags_dir / f"{agent_name}-heal-failure.flag"
-    from datetime import datetime
     cooldown_str = datetime.fromtimestamp(cooldown_until).isoformat()
     flag_path.write_text(
         f"CRITICAL: {agent_name} heal failed {failures}x.\n"
@@ -40,28 +44,64 @@ def _write_critical_flag(agent_name: str, failures: int, error: str, cooldown_un
     )
     console.print(f"[bold red]! Critical flag written: {flag_path}[/bold red]")
 
-def _write_investigation(agent_name: str, diagnosis: str, action: str,
-                          recent_errors: list, recent_pulses: list) -> None:
+def _format_ts_md(ts: int) -> str:
+    """Format timestamp as YYYYMMDD-HHMM for filenames."""
+    return datetime.fromtimestamp(ts).strftime("%Y%m%d-%H%M")
+
+def _snapshot_before_heal(agent_name: str, diagnosis: str, action: str,
+                           recent_errors: list, recent_pulses: list,
+                           action_timestamp: int) -> Path:
+    """Snapshot pre-heal state to an investigation log BEFORE any destructive action.
+
+    Required by spec: "Every healing action preserves the evidence.
+    You can audit exactly what happened."
+
+    Creates: ~/.observeco/heal/{agent}-{YYYYMMDD-HHMM}.investigation.md
+    """
     heal_dir = _get_heal_log_dir()
-    now = int(time.time())
-    path = heal_dir / f"{agent_name}-{now}.investigation.md"
-    lines = [
-        f"# Heal Investigation: {agent_name}",
-        f"## Triggered at: {now}",
-        f"## Diagnosis: {diagnosis}",
-        f"## Action: {action}",
-        "## Pre-heal state:",
-        "- Last errors:",
-    ]
-    for e in recent_errors[:3]:
-        msg = e.get("error_message", "") or e.get("message", "")
-        lines.append(f"  1. {msg[:200]}")
-    lines.append("- Last health ticks:")
+    ts_str = _format_ts_md(action_timestamp)
+    path = heal_dir / f"{agent_name}-{ts_str}.investigation.md"
+
+    # Collect last 3 errors
+    error_lines = []
+    for i, e in enumerate(recent_errors[:3], 1):
+        msg = e.get("error_message", "") or e.get("message", "?")
+        etype = e.get("error_type", "unknown")
+        sev = e.get("severity", "unknown")
+        e_ts = e.get("timestamp", "?")
+        error_lines.append(f"  [{i}] {e_ts} | {etype} ({sev}): {msg[:200]}")
+
+    # Collect last pulse status for 5 ticks
+    pulse_lines = []
     for p in recent_pulses[:5]:
-        lines.append(f"  - status={p.get('status')}, latency={p.get('latency_ms', 0):.0f}ms, ts={p.get('timestamp')}")
-    text = "\n".join(lines)
+        pulse_lines.append(
+            f"  - status={p.get('status', '?')}, "
+            f"latency={p.get('latency_ms', 0):.0f}ms, "
+            f"ts={p.get('timestamp', '?')}"
+        )
+
+    text = (
+        f"# Heal Investigation: {agent_name}\n"
+        f"\n"
+        f"Agent '{agent_name}' heal triggered at {datetime.fromtimestamp(action_timestamp).isoformat()}.\n"
+        f"\n"
+        f"## Diagnosis: {diagnosis}\n"
+        f"## Action taken: {action}\n"
+        f"\n"
+        f"## Pre-heal evidence (saved before action executed)\n"
+        f"\n"
+        f"Last {min(len(recent_errors), 3)} errors:\n"
+        f"{chr(10).join(error_lines) if error_lines else '  (none recorded)'}\n"
+        f"\n"
+        f"Last health ticks:\n"
+        f"{chr(10).join(pulse_lines) if pulse_lines else '  (none recorded)'}\n"
+        f"\n"
+        f"---\n"
+        f"Investigation log: {path}\n"
+    )
     path.write_text(text)
-    console.print(f"[dim]Investigation snapshot: {path}[/dim]")
+    return path
+
 
 def _diagnose_agent(agent_name: str, db: Database) -> Optional[dict]:
     pulses = db.get_recent_pulses(agent_name, limit=5)
@@ -118,6 +158,7 @@ def _diagnose_agent(agent_name: str, db: Database) -> Optional[dict]:
         pass
     return None
 
+
 def _execute_action(action: str, args: dict) -> tuple[bool, str]:
     agent_name = args["agent_name"]
     if action == "restart_with_cap":
@@ -165,9 +206,10 @@ def _execute_action(action: str, args: dict) -> tuple[bool, str]:
             return False, str(e)
     elif action == "trim":
         try:
-            from observeco.chisel.trim import run_trim as _run_trim
             import sys
             from io import StringIO
+
+            from observeco.chisel.trim import run_trim as _run_trim
             old_stdin = sys.stdin
             sys.stdin = StringIO(f"Trim {agent_name} context")
             try:
@@ -187,6 +229,7 @@ def _execute_action(action: str, args: dict) -> tuple[bool, str]:
     elif action == "acknowledge":
         return True, f"Circuit breaker for {agent_name} - manual acknowledgment required"
     return False, f"Unknown action: {action}"
+
 
 def _check_config_integrity() -> list[dict]:
     """Check infrastructure config files for corruption that would crash the gateway."""
@@ -219,7 +262,6 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
             severity = "[red]" if issue["status"] == "broken" else "[yellow]"
             console.print(f"  {severity}{issue['component']}[/]: {issue['message']}")
         console.print()
-        # Broken config = gateway would crash — flag critical, don't proceed
         if any(i["status"] == "broken" for i in infra_issues):
             console.print("[bold red]Config broken — gateway would crash on restart. Fix before proceeding.[/bold red]")
             _get_flags_dir().parent.mkdir(parents=True, exist_ok=True)
@@ -260,10 +302,24 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
                          f"[yellow]Would: {diagnosis['message']}[/yellow]")
             results.append({"agent": name, "status": "would_fix", "action": diagnosis['action']})
             continue
+
+        # --- SNAPSHOT BEFORE HEAL ---
+        # Always snapshot before destructive actions, in ALL modes
+        errors = db.get_errors(name, limit=5)
+        pulses = db.get_recent_pulses(name, limit=5)
+        action_ts = int(time.time())
+        snapshot_path = _snapshot_before_heal(
+            agent_name=name,
+            diagnosis=diagnosis['diagnosis'],
+            action=diagnosis['action'],
+            recent_errors=errors,
+            recent_pulses=pulses,
+            action_timestamp=action_ts,
+        )
+        console.print(f"[dim]Pre-heal snapshot: {snapshot_path}[/dim]")
+        # --- END SNAPSHOT ---
+
         if auto_heal:
-            errors = db.get_errors(name, limit=5)
-            pulses = db.get_recent_pulses(name, limit=5)
-            _write_investigation(name, diagnosis['diagnosis'], diagnosis['action'], errors, pulses)
             success, msg = _execute_action(diagnosis['action'], diagnosis['action_args'])
             if success:
                 table.add_row(name, f"[yellow]{diagnosis['diagnosis']}[/yellow]", diagnosis['action'],

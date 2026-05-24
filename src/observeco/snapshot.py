@@ -1,10 +1,13 @@
 """`observeco snapshot` — generate living documentation from agent ecosystem data."""
 from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+
 from observeco.config import load_config
 from observeco.db import Database
+
 
 def _ensure_dir(path: str) -> Path:
     p = Path(path)
@@ -121,7 +124,7 @@ def _build_readme_snapshot(name: str, agents: list, status_summary: dict,
     lines = [
         f"# ObserveCo Snapshot: {name}",
         f"**Generated:** {datetime.now().isoformat()}",
-        f"**Tool:** ObserveCo `snapshot` command",
+        "**Tool:** ObserveCo `snapshot` command",
         "",
         "## Fleet Summary",
         f"- **{total}** agents total",
@@ -176,12 +179,12 @@ def _build_readme_snapshot(name: str, agents: list, status_summary: dict,
     if has_placeholders:
         lines.extend(["", "---", "",
                        "> **Note:** Snapshot data incomplete. Run the snapshot command again when agents have been monitored longer for richer visualizations."])
-    return "\n".join(l for l in lines if l)
+    return "\n".join(line for line in lines if line)
 
 def run_snapshot(snapshot_name: str, output_dir: Optional[str] = None) -> None:
     out_dir = _ensure_dir(output_dir or f"./{snapshot_name}/")
     db = Database()
-    config = load_config()
+    load_config()
     agents_raw = db.get_agents()
     status_summary = db.get_agent_status_summary()
     all_errors = db.get_errors(limit=100)

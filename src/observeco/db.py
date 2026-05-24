@@ -7,8 +7,10 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from platformdirs import user_data_dir
+
 SCHEMA_VERSION = 1
-DB_DIR = Path.home() / ".observeco"
+DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
 _SCHEMA_SQL = """

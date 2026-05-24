@@ -3,285 +3,389 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ObserveCo — Agent Dashboard</title>
-    <script src="https://unpkg.com/htmx.org@1.9.11"
-            integrity="sha384-0gxUXCCwxNpqC1mQW0+6VQ3qB+LQZEo/WzH6cZxN6N+zOoG4M6G6G8pCQ+Z+O0/"
-            crossorigin="anonymous"></script>
+    <title>ObserveCo — Agent Fleet Dashboard</title>
+    <script src="/static/htmx.min.js"></script>
+    <script>if (!window.htmx) { document.write('<script src="https://unpkg.com/htmx.org@1.9.11/dist/htmx.min.js"><\/script>'); }</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1a2332;
+            --border: #1e293b;
+            --border-light: #334155;
+            --text: #ffffff;
+            --sec: #94a3b8;
+            --muted: #64748b;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --blue: #3b82f6;
+            --orange: #f97316;
+            --tok-identity: #6366f1;
+            --tok-skills: #8b5cf6;
+            --tok-memory: #ec4899;
+            --tok-tools: #14b8a6;
+            --tok-guidance: #f97316;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 24px 40px; }
 
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #1e293b;
+        /* ─── Header ─── */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; border-bottom: 1px solid var(--border);
+            margin-bottom: 16px; position: sticky; top: 0; z-index: 100;
+            background: var(--bg);
         }
-        .header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #f8fafc;
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-name { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; }
+        .brand-name span { color: var(--green); }
+        .brand-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .live-indicator {
+            font-size: 11px; color: var(--muted);
+            display: flex; align-items: center; gap: 6px;
         }
-        .header h1 span { color: #38bdf8; }
-        .header-subtitle {
-            font-size: 13px;
-            color: #64748b;
+        .live-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--green); animation: pulse 2s ease-in-out infinite;
         }
+        @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-        /* Fleet Stats */
-        .fleet-stats {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
+        /* ─── Tabs ─── */
+        .tabs {
+            display: flex; gap: 4px; margin-bottom: 16px;
+            background: var(--card); border-radius: 10px; padding: 4px;
+            border: 1px solid var(--border);
         }
-        .stat-box {
-            padding: 12px 20px;
-            border-radius: 8px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            font-size: 14px;
+        .tab-btn {
+            flex: 1; padding: 10px 16px; border-radius: 8px;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+            background: transparent; border: none; color: var(--muted);
+            font-family: 'Inter', sans-serif;
+            transition: all 0.15s; text-align: center;
         }
-        .stat-num { font-size: 28px; font-weight: 700; display: block; }
-        .stat-box.total .stat-num { color: #38bdf8; }
-        .stat-box.alive .stat-num { color: #22c55e; }
-        .stat-box.dead .stat-num { color: #ef4444; }
-        .stat-box.error .stat-num { color: #f59e0b; }
+        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+        .tab-btn.active { background: var(--green); color: #000; font-weight: 600; }
+        .tab-btn .badge {
+            display: inline-block; margin-left: 6px;
+            background: rgba(239,68,68,0.2); color: var(--red);
+            font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px;
+            vertical-align: middle;
+        }
+        .tab-btn.active .badge { background: rgba(0,0,0,0.15); color: #000; }
 
-        /* Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        .full-width { grid-column: 1 / -1; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
 
-        /* Panels */
-        .panel {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 16px;
-        }
-        .panel-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 12px;
+        /* ─── Phase banner ─── */
+        .phase-banner {
+            padding: 10px 16px; border-radius: 8px; font-size: 13px;
+            margin-bottom: 16px; border-left: 3px solid var(--blue);
+            background: rgba(59,130,246,0.08); color: var(--sec);
         }
 
-        /* Agent Cards */
-        .agent-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
+        /* ─── Fleet stats bar ─── */
+        .fleet-bar {
+            display: flex; gap: 8px; margin-bottom: 16px;
+            flex-wrap: wrap;
         }
+        .fleet-stat {
+            padding: 10px 18px; border-radius: 8px;
+            background: var(--card); border: 1px solid var(--border);
+            flex: 1; min-width: 70px; text-align: center;
+        }
+        .fleet-num { font-size: 22px; font-weight: 700; display: block; }
+        .fleet-label { color: var(--muted); font-size: 11px; margin-top: 1px; }
+
+        /* ─── Agent grid ─── */
+        .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
         .agent-card {
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 12px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px; cursor: pointer;
+            transition: border-color 0.2s;
             position: relative;
         }
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
+        .agent-card:hover { border-color: var(--green); }
+        .agent-card-header {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
         }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            flex-shrink: 0;
+        .dot {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
         }
-        .agent-name {
-            font-weight: 600;
-            font-size: 14px;
-        }
-        .agent-framework {
-            font-size: 11px;
-            color: #64748b;
-            background: #1e293b;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        .card-body .metric-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            padding: 2px 0;
-        }
-        .metric-label { color: #64748b; }
-        .status-alive { color: #22c55e; }
-        .status-dead { color: #ef4444; }
-        .status-error { color: #f59e0b; }
+        .dot.green { background: var(--green); }
+        .dot.red { background: var(--red); }
+        .dot.yellow { background: var(--yellow); }
+        .dot.gray { background: var(--muted); }
+        .agent-name { font-weight: 600; font-size: 14px; flex: 1; }
+        .agent-role { font-size: 10px; color: var(--muted); background: var(--bg); padding: 2px 7px; border-radius: 6px; font-weight: 500; }
+        .agent-meta { display: flex; gap: 10px; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+        .agent-meta span { white-space: nowrap; }
 
-        /* Token Bars */
-        .token-bar-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
-            font-size: 12px;
-        }
-        .bar-label { width: 100px; color: #94a3b8; flex-shrink: 0; }
+        /* Token mini bar */
+        .token-row { margin-top: 8px; }
         .token-bar {
-            flex: 1;
-            height: 16px;
-            background: #0f172a;
-            border-radius: 8px;
-            overflow: hidden;
-            display: flex;
+            display: flex; height: 3px; border-radius: 2px; overflow: hidden;
+            background: var(--border);
         }
-        .token-segment { height: 100%; }
-        .seg-identity { background: #3b82f6; }
-        .seg-skills { background: #8b5cf6; }
-        .seg-memory { background: #22c55e; }
-        .seg-tools { background: #f59e0b; }
-        .seg-guidance { background: #ef4444; }
-        .bar-total { width: 60px; text-align: right; color: #64748b; flex-shrink: 0; }
+        .token-bar .seg { height: 100%; }
+        .seg-identity { background: var(--tok-identity); }
+        .seg-skills { background: var(--tok-skills); }
+        .seg-memory { background: var(--tok-memory); }
+        .seg-tools { background: var(--tok-tools); }
+        .seg-guidance { background: var(--tok-guidance); }
+        .token-total { font-size: 10px; color: var(--muted); margin-top: 3px; }
 
-        /* Error Timeline */
+        /* ─── Agent detail panel ─── */
+        .agent-detail {
+            border-top: 1px solid var(--border);
+            margin-top: 10px; padding-top: 10px;
+            display: none;
+        }
+        .agent-detail.open { display: block; }
+        .detail-tabs {
+            display: flex; gap: 4px; margin-bottom: 10px;
+            background: var(--bg); border-radius: 8px; padding: 3px;
+        }
+        .detail-tab {
+            flex: 1; padding: 6px 10px; border-radius: 6px;
+            font-size: 12px; font-weight: 500; cursor: pointer;
+            background: transparent; border: none; color: var(--muted);
+            font-family: 'Inter', sans-serif; text-align: center;
+            transition: all 0.15s;
+        }
+        .detail-tab:hover { color: var(--text); }
+        .detail-tab.active { background: var(--green); color: #000; font-weight: 600; }
+
+        .detail-pane { display: none; font-size: 13px; color: var(--sec); line-height: 1.6; }
+        .detail-pane.active { display: block; }
+
+        .detail-label { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 10px; margin-bottom: 4px; }
+        .detail-value { color: var(--text); }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .detail-grid-item { padding: 8px; background: var(--bg); border-radius: 6px; }
+
+        /* Full token bar in detail */
+        .token-full-bar { display: flex; height: 20px; border-radius: 4px; overflow: hidden; margin: 8px 0; }
+        .token-full-bar .seg { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.85); min-width: 20px; }
+        .token-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+        .token-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+        .token-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+        /* Heal log */
+        .heal-entry {
+            padding: 8px 12px; margin-bottom: 6px; border-radius: 6px;
+            font-size: 12px; border-left: 3px solid;
+        }
+        .heal-entry.success { border-color: var(--green); background: rgba(34,197,94,0.06); }
+        .heal-entry.fail { border-color: var(--red); background: rgba(239,68,68,0.06); }
+        .heal-entry.info { border-color: var(--blue); background: rgba(59,130,246,0.06); }
+        .heal-entry .heal-action { font-weight: 600; }
+        .heal-entry .heal-time { color: var(--muted); font-size: 10px; }
+        .heal-entry .heal-detail { color: var(--sec); margin-top: 2px; }
+
+        /* Error timeline */
         .error-item {
-            display: flex;
-            gap: 12px;
-            font-size: 12px;
-            padding: 6px 0;
-            border-bottom: 1px solid #1e293b;
+            display: flex; gap: 10px; font-size: 12px;
+            padding: 7px 10px; border-radius: 6px; margin-bottom: 3px;
         }
-        .error-ts { color: #64748b; width: 80px; }
-        .error-agent { color: #38bdf8; width: 100px; }
-        .error-msg { flex: 1; }
+        .error-item.critical { border-left: 2px solid var(--red); background: rgba(239,68,68,0.06); }
+        .error-item.warning { border-left: 2px solid var(--yellow); background: rgba(234,179,8,0.04); }
+        .error-item.info { border-left: 2px solid var(--blue); background: rgba(59,130,246,0.04); }
+        .error-ts { color: var(--muted); width: 70px; font-family: monospace; font-size: 11px; flex-shrink: 0; }
+        .error-agent { color: var(--green); width: 90px; flex-shrink: 0; font-weight: 500; }
+        .error-msg { flex: 1; color: var(--sec); }
 
-        /* Empty State */
-        .empty-state {
-            color: #64748b;
-            font-size: 13px;
-            padding: 20px;
-            text-align: center;
-        }
-        .empty-state code {
-            background: #0f172a;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        /* Drift & Garden */
-        .drift-item, .garden-item {
-            display: flex;
-            gap: 12px;
-            font-size: 12px;
-            padding: 6px 0;
-            border-bottom: 1px solid #1e293b;
-        }
-        .drift-agent, .garden-agent { color: #38bdf8; width: 100px; }
-        .drift-comp { color: #94a3b8; }
-        .drift-delta { color: #ef4444; }
-        .garden-debt { color: #f59e0b; }
-        .garden-grade { color: #94a3b8; }
-        .garden-details { color: #64748b; }
-
-        /* Loading */
-        .htmx-indicator { opacity: 0; transition: opacity 0.3s; }
-        .htmx-request .htmx-indicator { opacity: 1; }
+        /* Welcome / empty */
+        .empty-state { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
+        .empty-state code { background: var(--card); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .dashboard-grid { grid-template-columns: 1fr; }
-            .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .agent-grid { grid-template-columns: 1fr; }
+            .fleet-bar { flex-wrap: wrap; }
+            .fleet-stat { min-width: 45%; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .tabs { flex-wrap: wrap; }
+            .tab-btn { flex: 1 1 45%; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div>
-                <h1><span>Observe</span>Co</h1>
-                <div class="header-subtitle">Agent Runtime Observability</div>
+        <!-- ═══ Header ═══ -->
+        <header>
+            <div class="brand">
+                <div>
+                    <div style="display:flex;align-items:baseline;gap:2px;">
+                        <span class="brand-name"><span>Observe</span>Co</span>
+                        <span style="font-size:10px;color:var(--green);font-weight:600;margin-left:4px;background:rgba(34,197,94,0.12);padding:1px 6px;border-radius:4px;">Ai</span>
+                    </div>
+                    <div class="brand-sub">Agent Fleet Dashboard</div>
+                </div>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <span class="header-subtitle">Auto-refresh every 30s</span>
+            <div class="header-right">
+                <div class="live-indicator">
+                    <span class="live-dot"></span>
+                    <span>Auto-refresh 30s</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══ Tab Navigation ═══ -->
+        <div class="tabs" role="tablist">
+            <button class="tab-btn active" data-tab="agents" onclick="switchTab('agents')">
+                🧑‍💻 Agents
+            </button>
+            <button class="tab-btn" data-tab="alerts" onclick="switchTab('alerts')">
+                ⚠️ Alerts <span class="badge" id="alert-count">0</span>
+            </button>
+            <button class="tab-btn" data-tab="self-heal" onclick="switchTab('self-heal')">
+                🔧 Self-Heal
+            </button>
+            <button class="tab-btn" data-tab="errors" onclick="switchTab('errors')">
+                📋 History
+            </button>
+        </div>
+
+        <!-- ═══ Phase Banner ═══ -->
+        <div id="phase-banner"></div>
+
+        <!-- ═══ Tab: Agents ═══ -->
+        <div class="tab-panel active" id="tab-agents">
+            <div id="fleet-bar"
+                 hx-get="/api/fleet-summary"
+                 hx-trigger="load, every 30s"
+                 hx-swap="innerHTML">
+            </div>
+            <div id="agent-cards"
+                 hx-get="/api/agents"
+                 hx-trigger="load, every 30s"
+                 hx-swap="innerHTML">
+                <div class="empty-state">Discovering agents...</div>
             </div>
         </div>
 
-        <!-- Fleet Summary -->
-        <div id="fleet-summary"
-             hx-get="/api/fleet-summary"
-             hx-trigger="load, every 30s"
-             hx-swap="innerHTML">
-            <div class="empty-state">Loading fleet...</div>
-        </div>
-
-        <div class="dashboard-grid">
-            <!-- Agent Cards -->
-            <div class="panel">
-                <div class="panel-title">Agent Fleet</div>
-                <div id="agent-cards"
-                     class="agent-cards"
-                     hx-get="/api/agents"
-                     hx-trigger="load, every 30s"
-                     hx-swap="innerHTML">
-                    <div class="empty-state">Loading agents...</div>
-                </div>
-            </div>
-
-            <!-- Token Summary -->
-            <div class="panel">
-                <div class="panel-title">Token Profile</div>
-                <div id="token-summary"
-                     hx-get="/api/token-summary"
-                     hx-trigger="load, every 30s"
-                     hx-swap="innerHTML">
-                    <div class="empty-state">Loading token data...</div>
-                </div>
-            </div>
-
-            <!-- Drift Summary -->
-            <div class="panel">
-                <div class="panel-title">Drift Breaches</div>
-                <div id="drift-summary"
-                     hx-get="/api/drift-summary"
-                     hx-trigger="load, every 30s"
-                     hx-swap="innerHTML">
-                    <div class="empty-state">Loading drift data...</div>
-                </div>
-            </div>
-
-            <!-- Memory Garden -->
-            <div class="panel">
-                <div class="panel-title">Memory Health</div>
-                <div id="garden-summary"
-                     hx-get="/api/garden-summary"
-                     hx-trigger="load, every 30s"
-                     hx-swap="innerHTML">
-                    <div class="empty-state">Loading memory data...</div>
-                </div>
+        <!-- ═══ Tab: Alerts ═══ -->
+        <div class="tab-panel" id="tab-alerts">
+            <div id="alerts-content"
+                 hx-get="/api/alerts"
+                 hx-trigger="load, every 30s"
+                 hx-swap="innerHTML">
+                <div class="empty-state">Loading alerts...</div>
             </div>
         </div>
 
-        <!-- Error Timeline -->
-        <div class="panel full-width">
-            <div class="panel-title">Error Timeline</div>
+        <!-- ═══ Tab: Self-Heal ═══ -->
+        <div class="tab-panel" id="tab-self-heal">
+            <div style="margin-bottom:12px;font-size:13px;color:var(--sec);line-height:1.6;">
+                <strong style="color:var(--text);">What is Self-Heal?</strong>
+                ObserveCo can automatically detect and fix common problems in your agent fleet:
+                <strong>restart dead agents</strong>, 
+                <strong>clear tripped circuits</strong>, 
+                <strong>trim bloated contexts</strong>, 
+                <strong>clean up memory clutter</strong>.
+                Below is the log of what's been diagnosed and what actions were taken.
+            </div>
+            <div id="heal-log"
+                 hx-get="/api/heal-log"
+                 hx-trigger="load, every 30s"
+                 hx-swap="innerHTML">
+                <div class="empty-state">Loading self-heal log...</div>
+            </div>
+        </div>
+
+        <!-- ═══ Tab: History ═══ -->
+        <div class="tab-panel" id="tab-errors">
+            <div style="margin-bottom:8px;font-size:13px;color:var(--sec);">
+                Recent errors, circuit trips, and recovery events across your entire fleet.
+            </div>
             <div id="error-timeline"
                  hx-get="/api/errors"
                  hx-trigger="load, every 30s"
                  hx-swap="innerHTML">
-                <div class="empty-state">Loading errors...</div>
+                <div class="empty-state">No errors recorded — good sign!</div>
             </div>
         </div>
     </div>
+
+    <script>
+    // ─── Tab switching ──────────────────────────────
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelector('.tab-btn[data-tab="' + tab + '"]').classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    // ─── Agent detail toggle ────────────────────────
+    function toggleDetail(id) {
+        var el = document.getElementById('detail-' + id);
+        if (!el) return;
+        var open = el.classList.contains('open');
+        el.classList.toggle('open');
+        if (!open) loadSubTab(id, 'health');
+    }
+
+    function switchSubTab(agentId, tab) {
+        // Update button states
+        document.querySelectorAll('#detail-' + agentId + ' .detail-tab').forEach(b => b.classList.remove('active'));
+        document.querySelector('#detail-' + agentId + ' .detail-tab[data-subtab="' + tab + '"]').classList.add('active');
+        // Show pane
+        document.querySelectorAll('#detail-' + agentId + ' .detail-pane').forEach(p => p.classList.remove('active'));
+        var pane = document.getElementById('sub-' + agentId + '-' + tab);
+        if (pane) pane.classList.add('active');
+        // Load data if not loaded
+        loadSubTab(agentId, tab);
+    }
+
+    var loadedTabs = {};
+    function loadSubTab(agentId, tab) {
+        var key = agentId + '-' + tab;
+        if (loadedTabs[key]) return;
+        loadedTabs[key] = true;
+        var container = document.getElementById('sub-content-' + agentId + '-' + tab);
+        if (!container) return;
+        container.innerHTML = '<div style="color:var(--muted);font-size:12px;">Loading...</div>';
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/agent-detail/' + encodeURIComponent(agentId) + '?tab=' + tab, true);
+        xhr.onload = function() {
+            container.innerHTML = xhr.responseText || '<div style="color:var(--muted);font-size:12px;">No data available</div>';
+        };
+        xhr.onerror = function() {
+            container.innerHTML = '<div style="color:var(--red);font-size:12px;">Failed to load</div>';
+        };
+        xhr.send();
+    }
+
+    // ─── Phase detection ────────────────────────────
+    function checkPhase() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/phase', true);
+        xhr.onload = function() {
+            var phase = xhr.responseText.trim();
+            var banner = document.getElementById('phase-banner');
+            var msgs = {
+                'phase-0': '⏳ Observing your fleet — discovering agents...',
+                'phase-1': '🟡 Learning baseline — first health data arriving within 90s',
+                'phase-2': '🟢 Health data active — waiting for first agent session for token data',
+                'phase-3': ''
+            };
+            banner.innerHTML = msgs[phase] ? '<div class="phase-banner">' + msgs[phase] + '</div>' : '';
+        };
+        xhr.send();
+    }
+    checkPhase();
+    setInterval(checkPhase, 30000);
+    </script>
 </body>
 </html>

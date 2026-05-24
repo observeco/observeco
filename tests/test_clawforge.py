@@ -1,11 +1,7 @@
 """Tests for clawforge modules — profile, load, garden."""
-import os
-import tempfile
-import json
-from observeco.clawforge.profile import _find_openclaw_agent, _estimate_tokens as profile_estimate_tokens
+from observeco.clawforge.garden import _find_contradictions, _find_duplicates
 from observeco.clawforge.load import _classify_intent, run_load
-from observeco.clawforge.garden import _find_memory_files, _find_duplicates, _find_contradictions, _find_stale
-
+from observeco.clawforge.profile import _estimate_tokens as profile_estimate_tokens
 
 SAMPLE_MEMORY_LINES = [
     "# Memory",

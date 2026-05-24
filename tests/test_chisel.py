@@ -1,9 +1,6 @@
 """Tests for chisel trim and drift modules."""
-import os
-import tempfile
-from observeco.chisel.trim import _classify_line, _estimate_tokens, run_trim
 from observeco.chisel.drift import run_drift
-
+from observeco.chisel.trim import _classify_line, _estimate_tokens, run_trim
 
 SAMPLE_LINES = [
     "You are a helpful assistant.",

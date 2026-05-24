@@ -9,13 +9,11 @@ Never shows an error without a next action.
 
 from __future__ import annotations
 
-from typing import Optional
-
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
-from observeco.config import load_config, write_agent, AgentConfig
+from observeco.config import AgentConfig, load_config, write_agent
 from observeco.db import Database
 
 console = Console()
@@ -66,14 +64,15 @@ def run_add(name: str, framework: str = "custom", health_check: str = "") -> Non
     write_agent(agent)
     db.register_agent(name, framework, health_check)
     console.print(f"[green]Added agent [bold]{name}[/bold] ({framework})[/green]")
-    console.print(f"[dim]Config saved to ~/.observeco/agents.json[/dim]")
+    console.print("[dim]Config saved to ~/.observeco/agents.json[/dim]")
 
 
 def run_list() -> None:
     """List all registered agents from the database."""
     agents = db.get_agents()
     if not agents:
-        console.print("[yellow]No agents registered. Run [bold]observeco agents discover[/bold] or [bold]observeco agents add <name>[/bold][/yellow]")
+        console.print("[yellow]No agents registered. Run [bold]observeco agents discover[/bold] "  # noqa: E501
+                       "or [bold]observeco agents add <name>[/bold][/yellow]")
         return
 
     table = Table(title="Registered Agents", box=box.ROUNDED, header_style="bold blue")

@@ -1,6 +1,7 @@
 """Tests for billing module — simulated checkout flow."""
 import json
-from observeco.billing import BillingConfig, configure, create_checkout_session, handle_webhook
+
+from observeco.billing import BillingConfig, create_checkout_session, handle_webhook
 
 
 def test_billing_config_default():

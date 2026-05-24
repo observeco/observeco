@@ -8,8 +8,6 @@ Compatible with any OTel-instrumented agent framework.
 from __future__ import annotations
 
 import json
-import time
-from typing import Optional
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -31,7 +29,6 @@ async def ingest_traces(request: Request):
     if not body or "resourceSpans" not in body:
         return JSONResponse({"error": "missing resourceSpans"}, status_code=400)
 
-    now = int(time.time())
     spans_ingested = 0
 
     for resource_span in body.get("resourceSpans", []):
@@ -52,11 +49,8 @@ async def ingest_traces(request: Request):
 
         for scope_span in resource_span.get("scopeSpans", []):
             for span in scope_span.get("spans", []):
-                span_id = span.get("spanId", "unknown")
                 span_name = span.get("name", "")
                 status_code = span.get("status", {}).get("code", "UNSET")
-                span_kind = span.get("kind", 0)
-
                 # Map OTel status to pulse status
                 pulse_status = "alive"
                 error_msg = ""

@@ -1,10 +1,7 @@
 """Tests for pulse check and circuit breaker modules."""
-import json
-import os
-import tempfile
-from observeco.pulse.check import _probe_agent, run_check
-from observeco.pulse.circuit import run_circuit
 from observeco.config import AgentConfig
+from observeco.pulse.check import _probe_agent
+from observeco.pulse.circuit import run_circuit
 
 
 def test_probe_agent_returns_tuple():

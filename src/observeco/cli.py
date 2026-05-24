@@ -1,7 +1,8 @@
 """ObserveCo CLI — runtime observability for AI agent systems."""
 
-import typer
 from typing import Optional
+
+import typer
 
 app = typer.Typer(
     name="observeco",
@@ -18,7 +19,7 @@ app.add_typer(pulse_app, name="pulse")
 @pulse_app.command(name="check")
 def pulse_check(
     watch: bool = typer.Option(False, "--watch", "-w", help="Poll every 5s for 3 cycles"),
-):
+) -> None:
     """Check agent liveness — alive/dead/error status per agent."""
     from observeco.pulse.check import run_check
     run_check(watch=watch)
@@ -27,7 +28,7 @@ def pulse_check(
 def pulse_circuit(
     reset: Optional[str] = typer.Option(None, "--reset", "-r", help="Reset circuit breaker for agent"),
     threshold: Optional[str] = typer.Option(None, "--threshold", "-t", help="Set max retries for agent (format: <agent>:<n>)"),
-):
+) -> None:
     """Show circuit breaker state or reset/trip thresholds."""
     from observeco.pulse.circuit import run_circuit
     run_circuit(reset=reset, threshold=threshold)
@@ -38,7 +39,7 @@ chisel_app = typer.Typer(help="System prompt compression & token monitoring", no
 app.add_typer(chisel_app, name="chisel")
 
 @chisel_app.command(name="trim")
-def chisel_trim():
+def chisel_trim() -> None:
     """Compress system prompt from stdin — token breakdown & savings ratio."""
     from observeco.chisel.trim import run_trim
     run_trim()
@@ -46,7 +47,7 @@ def chisel_trim():
 @chisel_app.command(name="drift")
 def chisel_drift(
     agent_name: Optional[str] = typer.Option(None, "--agent", "-a", help="Filter by agent name"),
-):
+) -> None:
     """Show 7-day token allocation drift per component."""
     from observeco.chisel.drift import run_drift
     run_drift(agent=agent_name)
@@ -59,7 +60,7 @@ app.add_typer(clawforge_app, name="clawforge")
 @clawforge_app.command(name="profile")
 def clawforge_profile(
     agent_name: Optional[str] = typer.Option(None, "--agent", "-a", help="Specific agent to profile"),
-):
+) -> None:
     """Show context composition for OpenClaw agents (MEMORY.md, skills, workspace)."""
     from observeco.clawforge.profile import run_profile
     run_profile(agent_name=agent_name)
@@ -68,7 +69,7 @@ def clawforge_profile(
 def clawforge_load(
     probe: bool = typer.Option(False, "--probe", help="Dry-run intent-aware classifier"),
     message: Optional[str] = typer.Option(None, "--message", "-m", help="Message to classify"),
-):
+) -> None:
     """Test intent-aware context classification."""
     from observeco.clawforge.load import run_load
     run_load(probe=probe, message=message)
@@ -77,10 +78,16 @@ def clawforge_load(
 def clawforge_garden(
     apply: bool = typer.Option(False, "--apply", help="Execute suggested memory hygiene actions"),
     agent_name: Optional[str] = typer.Option(None, "--agent", "-a", help="Specific agent to audit"),
-):
+) -> None:
     """Scan MEMORY.md for duplicates, contradictions, stale entries."""
     from observeco.clawforge.garden import run_garden
     run_garden(apply=apply, agent_name=agent_name)
+
+# -- Graph subcommands --
+
+from observeco.graph.cli import graph_app
+
+app.add_typer(graph_app, name="graph")
 
 # -- Watch subcommand --
 
@@ -88,7 +95,7 @@ def clawforge_garden(
 def watch_daemon(
     interval: int = typer.Option(30, "--interval", "-i", help="Poll interval in seconds"),
     once: bool = typer.Option(False, "--once", help="Single pass and exit"),
-):
+) -> None:
     """Auto-collect agent health data — runs in background.
 
     Polls registered agents every N seconds, auto-discovers new agents,
@@ -105,10 +112,50 @@ def serve_dashboard(
     port: int = typer.Option(9119, "--port", "-p", help="Dashboard port"),
     host: str = typer.Option("127.0.0.1", "--host", help="Dashboard bind address"),
     static: bool = typer.Option(False, "--static", help="Generate static HTML and exit"),
-):
+    no_browser: bool = typer.Option(False, "--no-browser", help="Don't open browser (headless/server mode)"),
+) -> None:
     """Launch the ObserveCo dashboard (FastAPI + htmx)."""
     from observeco.dashboard.server import serve
-    serve(host=host, port=port, static=static)
+    serve(host=host, port=port, static=static, no_browser=no_browser)
+
+
+# -- Heal command (v1.1) --
+
+@app.command(name="heal")
+def heal_command(
+    auto_heal: bool = typer.Option(False, "--auto-heal", help="Auto-execute fixes without prompting"),
+    agent: Optional[str] = typer.Option(None, "--agent", "-a", help="Target specific agent"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done without executing"),
+) -> None:
+    """Auto-heal agents — detect, diagnose, and fix common failure modes."""
+    from observeco.heal import run_heal
+    run_heal(auto_heal=auto_heal, agent_name=agent, dry_run=dry_run)
+
+
+# -- Snapshot command (v1.1) --
+
+@app.command(name="snapshot")
+def snapshot_command(
+    name: str = typer.Argument(..., help="Snapshot name/slug"),
+    out: Optional[str] = typer.Option(None, "--out", "-o", help="Output directory"),
+) -> None:
+    """Generate living documentation from your agent ecosystem data."""
+    from observeco.snapshot import run_snapshot
+    run_snapshot(snapshot_name=name, output_dir=out)
+
+
+# -- MCP subcommands (v1.1) --
+
+mcp_app = typer.Typer(help="MCP protocol server for agent queries")
+app.add_typer(mcp_app, name="mcp")
+
+@mcp_app.command(name="serve")
+def mcp_serve(
+    port: Optional[int] = typer.Option(None, "--port", "-p", help="Port for HTTP bridge (default: stdio mode)"),
+) -> None:
+    """Start MCP server — expose agent data via Model Context Protocol."""
+    from observeco.mcp_server import run_mcp_server
+    run_mcp_server(port=port)
 
 
 # -- Agents subcommands --
@@ -117,13 +164,13 @@ agents_app = typer.Typer(help="Manage agent registration & discovery", no_args_i
 app.add_typer(agents_app, name="agents")
 
 @agents_app.command(name="discover")
-def agents_discover():
+def agents_discover() -> None:
     """Auto-discover agents from Hermes, OpenClaw, and other configs."""
     from observeco.auto_detect import run_discover
     run_discover(show_all=True)
 
 @agents_app.command(name="list")
-def agents_list():
+def agents_list() -> None:
     """List all registered agents."""
     from observeco.auto_detect import run_list
     run_list()
@@ -133,7 +180,7 @@ def agents_add(
     name: str = typer.Argument(..., help="Agent name"),
     framework: str = typer.Option("custom", "--framework", "-f", help="Agent framework (hermes, openclaw, custom)"),
     health_check: str = typer.Option("", "--health-check", "-c", help="Health check URL or command"),
-):
+) -> None:
     """Manually add an agent."""
     from observeco.auto_detect import run_add
     run_add(name=name, framework=framework, health_check=health_check)

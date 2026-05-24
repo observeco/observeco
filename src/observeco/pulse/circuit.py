@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Optional
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 from observeco.db import Database
 

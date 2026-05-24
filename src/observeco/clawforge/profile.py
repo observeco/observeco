@@ -6,13 +6,12 @@ workspace files, and estimates tokens per source.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Optional
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 from observeco.db import Database
 
@@ -25,7 +24,6 @@ CHARS_PER_TOKEN = 4.0
 def _find_openclaw_agent(agent_name: Optional[str] = None) -> list[dict]:
     """Find OpenClaw agents by scanning common locations."""
     agents = []
-    search_locations = []
 
     # ~/.hermes/profiles/<name>/SOUL.md
     profiles_dir = Path.home() / ".hermes" / "profiles"

@@ -8,14 +8,13 @@ from __future__ import annotations
 
 import subprocess
 import time
-from typing import Optional
 
 import httpx
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
-from observeco.config import load_config, AgentConfig
+from observeco.config import AgentConfig, load_config
 from observeco.db import Database
 
 console = Console()

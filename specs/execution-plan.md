@@ -273,8 +273,9 @@ Minimum for launch:
 | **D-10** | Mid-beta check: triage all bugs, fix the top 3 blockers | Main | 0 P0 bugs, <5 P1 bugs |
 | **D-7** | Polish week: terminal GIF recorded, screenshots taken. Dashboard tested on clean install. All bugfixes from beta addressed. | Main | `pip install observeco[dashboard]` from PyPI → `observeco dashboard` opens browser with real monitoring data. GitHub social preview assets uploaded. |
 | **D-3** | Beta ends. Entry criteria met: "No bugs reported in 48h across all platforms" | Main | Count = 0 |
-| **D-1** | Pre-write HN post, Reddit posts, X threads | Main | Drafts approved by Sean |
-| **D-0** | **Launch** — push v0.1.0 to GitHub, publish to PyPI (public), post HN ("Show HN"), Reddit (r/LocalLLM, r/AI_Agents), X | Sean | 50+ stars day 1 |
+|| **D-3** | Pre-write X Article with all embedded visuals (screenshots, GIF, architecture diagram). Review + finalize. | Main | X Article draft complete, all 6-8 visuals produced and embedded |
+|| **D-1** | Pre-write HN post, Reddit posts, X thread. Publish X Article to X Premium (long-form goes live D-1 to pre-warm the audience). | Main | All drafts approved by Sean. X Article published. |
+|| **D-0** | **Launch** — push v0.1.0 to GitHub, publish to PyPI (public), post HN ("Show HN"), Reddit (r/LocalLLM, r/AI_Agents), X thread linking to the Article | Sean | 50+ stars day 1 |
 | **D+1** | Monitor comments, respond to every single one | Main | 100% response rate <1h |
 | **D+3** | Submit to awesome lists (awesome-ai-agents, awesome-cli-tools, awesome-python) | Main | 3+ lists |
 | **D+5** | First bugfix release based on user feedback | Main | v0.1.1 on PyPI |
@@ -289,7 +290,33 @@ Minimum for launch:
 | **Hacker News** | Show HN | Dogfood story + real screenshots + "7 agents on an M4 Mac Mini." Lead with the problem, not the tool. |
 | **Reddit r/LocalLLM** | "I built X" | Local-first AI agent observability. Zero cloud. Perfect for the local LLM community. |
 | **Reddit r/AI_Agents** | "I built X" | Directly relevant — this is the exact audience. Circuit breakers + token profiling for agent fleets. |
-| **X/Twitter** | Thread with GIF | Tag AI agent builders + indie dev community. Short video of `pip install` → working. |
+| **X/Twitter** | Thread + X Article | Tag AI agent builders + indie dev community. Short thread for virality, long-form X Article with embedded diagrams for depth. X Premium unlocks Articles — use it. |
+
+### 3.4 X Article Strategy (X Premium Channel)
+
+X Premium subscription unlocks **X Articles** (formerly Notes) — long-form posts up to ~25,000 characters with embedded images, GIFs, videos, and rich formatting. This is a first-class distribution channel, not an afterthought.
+
+**Article topic: "How we monitor 7 AI agents on a single Mac Mini"**
+- Hook: "Your agents are getting dumber every day and you don't know it"
+- Problem: Context drift, silent crashes, memory bloat in multi-agent fleets
+- Solution walkthrough with embedded screenshots:
+  - `pip install observeco` → fleet discovery (screenshot 1)
+  - Dashboard showing 7 agents alive/dead/error (screenshot 2)
+  - Token breakdown per component showing which agent is bloated (screenshot 3)
+  - Circuit breaker tripped after cascade failure (screenshot 4)
+  - Memory garden: duplicates found, contradictions, debt score (screenshot 5)
+  - Before/after: chisel trim savings stats (screenshot 6)
+- Embedded terminal GIF: 15-second demo of install → first results
+- Architecture diagram showing: 7 agents → observeco CLI → SQLite → Dashboard
+- Open source hook: MIT, local-first, no cloud
+- CTA: Star on GitHub, pip install, share your fleet size
+
+**Production requirements:**
+- Dashboard screenshots with real Hermes fleet data (not mockups)
+- Asciinema terminal demo GIF
+- Architecture workflow diagram (Mermaid or Excalidraw)
+- 2,000–4,000 words, 6-8 embedded visuals
+- Written in non-technical tone — "vibe coders who run agents" are the audience
 
 **Secondary (lower effort, still worth doing):**
 
@@ -316,7 +343,7 @@ HN is the highest-leverage single channel. One frontpage post can drive 500–2,
 3. Quick demo (code block): `pip install observeco[dashboard] && observeco dashboard`
 4. Screenshot (link to dashboard image)
 5. The ask: "pip install observeco — MIT free tier works immediately. Pro adds alert relay at $9/mo with 30-day free trial."
-6. What's next: alert relay, Pro features
+6. What's next: self-healing auto-execution, living snapshot documentation, MCP agent queries (v1.1 ~2 weeks post-launch)
 
 **Timing:** Post Tuesday–Thursday 9–11 AM ET (US tech workers mid-morning). Avoid weekends and Monday mornings (US)/Friday afternoons (global).
 
@@ -445,6 +472,96 @@ Most OSS tools invent fake use cases. ObserveCo has 7 real Hermes agents + 1 rea
 **Kepler is the first ClawForge test case.** Ship ClawForge's context profiler first, run it against Kepler, publish the results. This validates: (a) the classifier works on real OpenClaw messages, (b) the memory debt metric is useful, (c) the dashboard integration renders correctly. Dogfood ClawForge before beta to catch the bugs users would find.
 
 This is the #1 selling point. **Every piece of marketing should include real data from both the Hermes and OpenClaw fleets.**
+
+### 6.3 Bidirectional Architecture — The Three New Pillars
+
+The product thesis of ObserveCo has been reframed. ObserveCo is not a monitoring dashboard. It is a **runtime integrity layer for AI agents** built on three pillars no competitor can replicate. 
+
+**All three pillars are fully specced in this document. They are deliberately held back for v1.1 (D+14).**
+
+**Readiness: Heal ✅ (2/3) — Snapshot ⚠️ — MCP ❌ (v1.2)**
+- **Heal (✅ — code on disk):** `_snapshot_before_heal()` exists and fires before every destructive action. Tested and verified. Ready for D+14.
+- **Snapshot (⚠️ — code on disk, data-dependent):** 226 lines, 6 functions, SVG builders with fallback messages for empty data (token_chart, error_timeline, self_healing_log, dep_graph all have placeholders). Requires 7+ days of live data for meaningful charts. Users who install at D-0 won't have useful output until D+7 at earliest. Fallback model verified in code — see §Pillar 2 below.
+- **MCP (❌ — no code, protocol stable):** `mcp>=1.0.0` IS available on PyPI (v1.26.0 at time of writing). No ObserveCo MCP code exists. Low urgency for launch — defer to v1.2.
+
+v1 ships observation-only: dashboard, CLI, OTel, and heal heuristics that detect degradation and *suggest* fixes without executing. This creates deliberate tension — users see exactly what the tool *could* do, understand it knows what's wrong, and start asking "why can't it just fix it?" That impatience IS the v1.1 distribution engine. Every yellow banner is a pre-order for the full product.
+
+| v0 ships (preview) | v1.1 adds (delivered) | Tension mechanism |
+|--------------------|----------------------|-------------------|
+| Heal observation banners: "Agent Kepler: 3 memory errors detected" | Auto-execution of same diagnosis | User sees correct diagnosis → demands automation |
+| Dashboard: drift bars, error timeline, architecture diagram | `observeco snapshot` generates all as markdown+SVG | User sees the pieces → wants the whole picture |
+| FastAPI REST endpoints powering the dashboard | `observeco mcp serve` — MCP stdio protocol | User hacks their own client → wants the protocol |
+
+The thesis for v1 is:
+
+> **Runtime observability for your AI agents — health checks, token profiling, drift tracking, OTel ingestion, auto-collection — all in one `pip install`.**
+
+The full "we fix them, tell you what happened, and let your other agents ask about them" thesis is the **v1.1 hook** (D+14) — shipped when the user base already has real data and feels the pain that makes self-healing desirable, not abstract. The one-sentence comparison:
+
+> **v1:** "Know if your agents are alive, what's in their context, and when something breaks — all from a single `pip install`."
+> **v1.1:** "We don't just show you your agents are broken — we fix them, tell you what happened, and let your other agents ask about them."
+
+**Why v1.1 is the right timing:** Heal requires the user to trust the tool with destructive operations (process restarts, file writes). That trust takes ~2 weeks of correct observation data to earn. Snapshot requires 7+ days of drift data to generate meaningful charts. MCP is the least urgent — users without CI/CD pipelines don't need it. Launching observation-first and expanding to self-healing after the community has validated the product is the correct phasing.
+
+---
+
+#### Pillar 1: Self-Healing (`observeco heal` — **v1.1**)
+
+**v1 ships observation-only heuristics:** The watch daemon detects degradation patterns and writes recommendations to the dashboard as yellow banners with suggested commands. User clicks to execute. No automation.
+
+**v1.1 extends** the watch daemon with an execution pipeline that includes failure-mode handling:
+
+| Symptom | Diagnosis | Action |
+|---------|-----------|--------|
+| Agent "dead" | Memory error pattern | Restart with memory cap |
+| Agent "dead" | Module-not-found pattern | pip install in agent venv |
+| Agent "dead" | Timeout pattern | Set circuit cooldown (backpressure) |
+| Drift > threshold | Context growing >10%/week | Auto-trigger chisel trim |
+| Memory debt > 50 | MEMORY.md degradation | Auto-run clawforge garden --apply |
+
+**Launch state:** Opt-in (disabled by default, `--auto-heal` flag). The daemon monitors and suggests fixes but doesn't execute until user approves.
+
+#### Pillar 2: Living Snapshot (`observeco snapshot` — **v1.1 — ⚠️ data-dependent**)
+
+Generate a directory of artifacts from the live ecosystem — not a written blog post but a self-updating artifact:
+
+```
+observeco snapshot --name "7-agents-one-mac-mini" --out launch-paper/
+# Produces: architecture.svg, dependency-graph.svg, token-evolution-chart.svg,
+#            error-timeline.svg, self-healing-log.md, README.snapshot.md
+```
+
+**Launch hook:** "We didn't write a launch post. We ran `observeco snapshot` on our live ecosystem and it wrote one for us."
+
+**Data Availability Model (every artifact must handle missing data gracefully):**
+
+| Artifact | Data Required | Fallback If Missing |
+|----------|-------------|-------------------|
+| `architecture.svg` | Agent configs (0-30s after install) | "No agents discovered yet — run `observeco pulse check`" |
+| `dependency-graph.svg` | Pulse history (needs 1+ hours) | "Not enough data — check back after agents have been running" |
+| `token-evolution-chart.svg` | Chisel drift data (needs 7+ days) | "Token data accumulates over 7 days — run `chisel trim` periodically" |
+| `self-healing-log.md` | Heal recovery events | Shows "No self-healing events recorded" gracefully |
+
+Without these fallbacks, snapshot produces broken output for the first week. **Ship snapshot at D+14 only if at least one user has 7+ days of data.** Otherwise D+21 is safer.
+
+#### Pillar 3: MCP Discovery Protocol (`observeco mcp serve` — **v1.1**)
+
+Auto-discovers all agents and exposes them as MCP resources:
+
+```
+observeco mcp serve
+# observeco://<agent>/health  -> latest health status
+# observeco://<agent>/config  -> agent config file
+# observeco://fleet           -> all agent summaries
+```
+
+**Why defensible:** Once users point CI/CD, dashboards, and MCP clients at ObserveCo, switching costs compound.
+
+#### The One-Sentence Thesis — v1
+
+> **Runtime observability for your AI agents — health checks, token profiling, drift tracking, OTel ingestion, auto-collection — all in one `pip install`.**
+
+**Corrected from earlier draft.** The v1.1 thesis "we fix them, tell you, let them ask" is the post-launch evolution. See the IMPORTANT note above for the v1 vs v1.1 phasing rationale. The v1.1 thesis lands 14 days later on an already-engaged user base who've been monitoring their fleet and know exactly why they need self-healing. That's stronger than launching delayed with features nobody has asked for yet.
 
 ### 6.2 The Onboarding Funnel
 

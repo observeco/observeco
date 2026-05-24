@@ -10,6 +10,7 @@ observeco dashboard
 ```
 
 Opens at `http://127.0.0.1:9119`. Auto-refreshes every 30 seconds.
+If port 9119 is busy, falls back to the next available port (e.g., 9120).
 
 ## Dashboard Sections
 

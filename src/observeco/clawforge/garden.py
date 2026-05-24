@@ -6,15 +6,14 @@ computes a memory debt score (0-100), and optionally applies fixes.
 
 from __future__ import annotations
 
-import os
 import re
 import time
 from pathlib import Path
 from typing import Optional
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 from observeco.db import Database
 
@@ -159,7 +158,7 @@ def run_garden(apply: bool = False, agent_name: Optional[str] = None) -> None:
         stale_score = min(30, len(stale) * 3)
         debt_score = min(100, dupe_score + contra_score + stale_score)
 
-        grade = "A" if debt_score < 20 else "B" if debt_score < 40 else "C" if debt_score < 60 else "D" if debt_score < 80 else "F"
+        grade = "A" if debt_score < 20 else "B" if debt_score < 40 else "C" if debt_score < 60 else "D" if debt_score < 80 else "F"  # noqa: E501
 
         # Build suggestions text
         suggestions_parts = []
@@ -185,7 +184,7 @@ def run_garden(apply: bool = False, agent_name: Optional[str] = None) -> None:
         table.add_row("Contradictions found", str(len(contradictions)), f"+{contra_score}")
         table.add_row("Stale entries", str(len(stale)), f"+{stale_score}")
         table.add_section()
-        table.add_row(f"[bold]Memory Debt Score[/bold]", f"[bold]{debt_score:.0f}/100[/bold]", f"Grade: {grade}",
+        table.add_row("[bold]Memory Debt Score[/bold]", f"[bold]{debt_score:.0f}/100[/bold]", f"Grade: {grade}",
                       style="bold")
 
         console.print(table)

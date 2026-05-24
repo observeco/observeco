@@ -11,14 +11,12 @@ Implements:
 from __future__ import annotations
 
 import json
-import os
 import time
 from dataclasses import dataclass
-from typing import Optional
 
-from pathlib import Path
+from observeco.dirs import get_data_dir
 
-CONFIG_DIR = Path.home() / ".observeco"
+CONFIG_DIR = get_data_dir()
 CONFIG_FILE = CONFIG_DIR / "billing.json"
 
 
@@ -26,6 +24,7 @@ CONFIG_FILE = CONFIG_DIR / "billing.json"
 class BillingConfig:
     stripe_publishable_key: str = ""
     stripe_secret_key: str = ""
+    webhook_secret: str = ""
     solo_price_id: str = "price_solo_monthly"
     team_price_id: str = "price_team_monthly"
     trial_days: int = 30
@@ -54,6 +53,7 @@ def _save_config(config: BillingConfig) -> None:
     CONFIG_FILE.write_text(json.dumps({
         "stripe_publishable_key": config.stripe_publishable_key,
         "stripe_secret_key": config.stripe_secret_key,
+        "webhook_secret": config.webhook_secret,
         "solo_price_id": config.solo_price_id,
         "team_price_id": config.team_price_id,
         "trial_days": config.trial_days,
@@ -69,7 +69,8 @@ def get_price_id(plan: str = "solo") -> str:
 
 
 def configure(stripe_secret: str, stripe_publishable: str,
-              solo_price: str = "", team_price: str = "") -> None:
+              solo_price: str = "", team_price: str = "",
+              webhook_secret: str = "") -> None:
     """Configure Stripe integration."""
     config = _load_config()
     config.stripe_secret_key = stripe_secret
@@ -78,6 +79,8 @@ def configure(stripe_secret: str, stripe_publishable: str,
         config.solo_price_id = solo_price
     if team_price:
         config.team_price_id = team_price
+    if webhook_secret:
+        config.webhook_secret = webhook_secret
     config.is_active = True
     _save_config(config)
 
@@ -192,7 +195,7 @@ def get_billing_status() -> dict:
 
 def add_billing_endpoints(app) -> None:
     """Add Stripe billing endpoints to a FastAPI app (for dashboard integration)."""
-    from fastapi import Request, HTTPException
+    from fastapi import HTTPException, Request
 
     @app.get("/api/billing/status")
     async def billing_status():
