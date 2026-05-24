@@ -838,6 +838,8 @@ async def api_agents():
         if t["agent_name"] not in trimmed_agents:
             trimmed_agents[t["agent_name"]] = t
 
+    now = int(time.time())
+
     cards = []
     for name in sorted(all_agent_names):
         s = summary.get(name, {})
@@ -855,6 +857,18 @@ async def api_agents():
         fw = agent_cfg.get(name, {}).get("framework", "hermes") if agent_cfg else "hermes"
         fw_label = "Hermes" if fw == "hermes" else "OpenClaw"
         fw_color = "#38bdf8" if fw == "hermes" else "#a78bfa"
+
+        # Error count badge
+        errors = db.get_errors(agent_name=name, limit=50)
+        error_count = len(errors)
+        recent_errors = [e for e in errors if now - e.get("timestamp", 0) < 86400]
+        recent_error_count = len(recent_errors)
+        if recent_error_count > 0:
+            badge_text = f"{recent_error_count} {'error' if recent_error_count==1 else 'errors'}"
+            badge_class = "red" if status in ("dead", "error") else "yellow"
+            error_badge = f"<span class=\"agent-error-badge {badge_class}\">! {badge_text}</span>"
+        else:
+            error_badge = ""
 
         # Token bar
         trim_data = trimmed_agents.get(name)
@@ -911,6 +925,7 @@ async def api_agents():
     <div class="card-header" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
         <span class="status-dot" style="width:10px;height:10px;border-radius:50%;background:{dot_color};flex-shrink:0;" title="{status_text}"></span>
         <span class="agent-name" style="font-weight:600;font-size:14px;color:#e2e8f0;">{_html_escape(name)}</span>
+        {error_badge}
         <span style="font-size:11px;color:{fw_color};background:#1e293b;padding:2px 6px;border-radius:4px;margin-left:auto;">{fw_label}</span>
     </div>
     <div style="display:flex;gap:12px;font-size:12px;color:#64748b;">
@@ -919,7 +934,7 @@ async def api_agents():
     </div>
     {token_bar_html}
     {drift_sparkline}
-    <div style="display:none;" class="agent-detail" id="detail-{name}">
+    <div class="agent-detail" id="detail-{name}">
         <div style="margin-top:10px;border-top:1px solid #1e293b;padding-top:10px;">
             <div style="display:flex;gap:8px;margin-bottom:8px;">
                 <button onclick="event.stopPropagation();loadAgentTab('{name}','health')" class="tab-btn active" id="tab-{name}-health">Health</button>
