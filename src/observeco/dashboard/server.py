@@ -256,8 +256,40 @@ async def api_alerts():
             "severity_bg": "#422006",
         })
 
-    # 🔵 Info: heartbeat anomalies
+    # 🔴 Critical / 🟡 Warning: pulse-based agent status
     pulses = db.get_recent_pulses(limit=100)
+    seen_agents = set()
+    for p in pulses:
+        aname = p["agent_name"]
+        if aname in seen_agents:
+            continue
+        seen_agents.add(aname)
+        status = p.get("status", "")
+        if status == "dead":
+            alerts.append({
+                "severity": "critical",
+                "severity_label": "CRITICAL",
+                "icon": "🔴",
+                "agent": aname,
+                "message": "Agent is dead — no recent heartbeat",
+                "timestamp": p.get("timestamp", now - 300),
+                "severity_color": "#ef4444",
+                "severity_bg": "#450a0a",
+            })
+        elif status == "error":
+            err_msg = p.get("error_message", "") or "Error state detected"
+            alerts.append({
+                "severity": "warning",
+                "severity_label": "WARNING",
+                "icon": "🟡",
+                "agent": aname,
+                "message": f"Error: {err_msg[:80]}",
+                "timestamp": p.get("timestamp", now - 300),
+                "severity_color": "#eab308",
+                "severity_bg": "#422006",
+            })
+
+    # 🔵 Info: heartbeat anomalies
     from collections import Counter
     pulse_counts = Counter(p["agent_name"] for p in pulses)
     for agent in sorted(pulse_counts):
@@ -748,7 +780,7 @@ async def api_fleet_summary():
     circuit = db.get_circuit_breakers()
     drift = db.get_drift()
 
-    total = len(summary) if summary else 0
+    total = len(summary) if summary else len(db.get_agents())
     alive = sum(1 for s in summary.values() if s.get("status") == "alive")
     dead = sum(1 for s in summary.values() if s.get("status") == "dead")
     error_count = sum(1 for s in summary.values() if s.get("status") == "error")
@@ -1034,7 +1066,7 @@ async def api_phase():
 
     # Check if we have enough data for stable status
     now = int(time.time())
-    recent = [p for p in pulses if now - p.get("timestamp", 0) < 120]
+    recent = [p for p in pulses if now - p.get("timestamp", 0) < 600]  # 10min window for seeded/batch data
     trims = db.get_trims(limit=5)
 
     if not recent:
@@ -1271,12 +1303,50 @@ async def api_trigger_heal():
     </div>
 </div>""")
 
-    # Check for agents with low pulses
+    # Check for agents with pulse issues (dead/error) and low pulses
     from collections import Counter
-    agent_counts = Counter(p.get("agent_name", "?") for p in pulses if now - p.get("timestamp", 0) < 120)
+    agent_latest = {}
+    for p in pulses:
+        aname = p["agent_name"]
+        if aname not in agent_latest:
+            agent_latest[aname] = p
+
+    # Flag dead/error agents first
+    seen_heal = set()
+    for aname, p in agent_latest.items():
+        status = p.get("status", "")
+        if status == "dead":
+            seen_heal.add(aname)
+            items.append(f"""
+<div class="heal-entry fail">
+    <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-action">🔴 {aname}</span>
+        <span class="heal-time">now</span>
+    </div>
+    <div class="heal-detail">
+        <strong>Diagnosis:</strong> agent_dead — no recent heartbeat<br>
+        <strong>Recommendation:</strong> Restart agent or check agent process
+    </div>
+</div>""")
+        elif status == "error":
+            seen_heal.add(aname)
+            err_msg = p.get("error_message", "") or "Error state"
+            items.append(f"""
+<div class="heal-entry warning">
+    <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-action">🟡 {aname}</span>
+        <span class="heal-time">now</span>
+    </div>
+    <div class="heal-detail">
+        <strong>Diagnosis:</strong> agent_error — {err_msg[:100]}<br>
+        <strong>Recommendation:</strong> Check error log for details
+    </div>
+</div>""")
+
+    agent_counts = Counter(p.get("agent_name", "?") for p in pulses if now - p.get("timestamp", 0) < 600)
 
     for agent, count in agent_counts.most_common(10):
-        if count < 2:  # less than 2 recent pulses
+        if count < 2 and agent not in seen_heal:  # less than 2 recent pulses, not already flagged
             items.append(f"""
 <div class="heal-entry warning">
     <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
