@@ -38,45 +38,46 @@ _AGENTS_JSON = Path(user_data_dir("observeco", "observeco")) / "agents.json"
 
 
 def _load_hermes_agents() -> list[AgentConfig]:
-    """Detect Hermes agents from config.yaml and agents/ directory."""
+    """Detect Hermes agents from profiles/ directory (SOUL.md) and agents/ directory.
+
+    The canonical Hermes agent structure is profiles/<name>/SOUL.md.
+    ~/.hermes/config.yaml contains many YAML keys (model names, tool configs,
+    threshold settings) that are NOT agents — parsing it as agent names is wrong
+    and produces garbage. Only scan directories that contain SOUL.md files.
+    """
     agents: list[AgentConfig] = []
+    seen: set[str] = set()
 
-    # Method 1: Parse config.yaml for profile definitions
-    if _HERMES_CONFIG_PATH.exists():
-        try:
-            text = _HERMES_CONFIG_PATH.read_text()
-            # Simple YAML-free extraction of profile names
-            for line in text.splitlines():
-                m = re.match(r"^\s+(\w+):\s*$", line)
-                if m:
-                    name = m.group(1)
-                    if name not in ("default", "profiles", "tools", "gateways"):
+    # Method 1 (preferred): Scan ~/.hermes/profiles/ for SOUL.md — the canonical source
+    hermes_profiles_dir = Path.home() / ".hermes" / "profiles"
+    if hermes_profiles_dir.exists():
+        for entry in sorted(hermes_profiles_dir.iterdir()):
+            if entry.is_dir():
+                soul = entry / "SOUL.md"
+                if soul.exists():
+                    name = entry.name
+                    if name not in seen:
+                        seen.add(name)
                         agents.append(AgentConfig(name=name, framework="hermes",
-                                                   config_path=str(_HERMES_CONFIG_PATH)))
-        except Exception:
-            pass
+                                                   config_path=str(soul)))
 
-    # Method 2: Scan agents directory for SOUL.md files
+    # Method 2 (fallback): Scan ~/.hermes/agents/ for SOUL.md
     if _HERMES_AGENTS_DIR.exists():
         for entry in sorted(_HERMES_AGENTS_DIR.iterdir()):
             if entry.is_dir():
                 soul = entry / "SOUL.md"
-                if soul.exists():
+                if soul.exists() and entry.name not in seen:
+                    seen.add(entry.name)
                     agents.append(AgentConfig(name=entry.name, framework="hermes",
                                                config_path=str(soul)))
             elif entry.name.endswith(".md") and not entry.name.startswith("."):
                 name = entry.stem
-                agents.append(AgentConfig(name=name, framework="hermes",
-                                           config_path=str(entry)))
+                if name not in seen:
+                    seen.add(name)
+                    agents.append(AgentConfig(name=name, framework="hermes",
+                                               config_path=str(entry)))
 
-    # Deduplicate by name
-    seen: set[str] = set()
-    deduped: list[AgentConfig] = []
-    for a in agents:
-        if a.name not in seen:
-            seen.add(a.name)
-            deduped.append(a)
-    return deduped
+    return agents
 
 
 def _load_openclaw_agents() -> list[AgentConfig]:

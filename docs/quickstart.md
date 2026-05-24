@@ -10,7 +10,7 @@ echo "your prompt" | observeco chisel trim   # Decompose your system prompt
 observeco dashboard             # Open the fleet dashboard
 ```
 
-ObserveCo auto-discovers agents from `~/.hermes/config.yaml` and `~/.hermes/agents/`.
+ObserveCo auto-discovers agents from your **Hermes profiles** (`~/.hermes/profiles/`). Each profile directory with a `SOUL.md` file is detected as an agent. Run `observeco agents list` to see what was found.
 
 ## Scenario 2: You run OpenClaw agents
 

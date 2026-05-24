@@ -168,6 +168,10 @@ class Database:
             (agent_name, agent_framework, status, latency_ms, error_message, int(time.time())),
         )
         conn.commit()
+        # Auto-log to errors table on error/dead status with message
+        if status in ("error", "dead") and error_message:
+            self.log_error(agent_name, f"pulse_{status}", error_message,
+                           severity="critical" if status == "dead" else "error")
 
     def get_recent_pulses(self, agent_name: Optional[str] = None, limit: int = 20) -> list[dict]:
         conn = self._get_conn()

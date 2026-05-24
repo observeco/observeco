@@ -81,10 +81,10 @@ This plan was rewritten from a full filesystem + test audit. Every claim below w
 | **obs-L-008** | CI matrix: push to trigger 8-job workflow, verify green | 15m | P1 | Workflow defined but never run |
 | **obs-L-009** | Terminal demo GIF: asciinema recording of install → pulse → chisel → dashboard (15s) | 2h | P1 | SVG exists, no GIF |
 | **obs-L-010** | Dashboard screenshot: run with real Hermes data, crop, save to repo | 1h | P1 | Captured but not saved to assets/ |
-| **obs-L-013b** | GitHub: set repo description + topics | 15m | P1 | Missing |
-| **obs-L-013c** | GitHub: create bug report issue template | 15m | P1 | Only feature_request exists |
+|| ~~obs-L-013b~~ | GitHub: set repo description + topics | 15m | P1 | ✅ DONE | Description updated to value-focused: "Self-healing observability for AI agents. Discover, monitor, and auto-recover multi-agent systems — without a cloud dependency." 12 topics including agent-health, self-healing, agent-monitoring, devops, devtools, llm. |
+| ~~obs-L-013c~~ | GitHub: create bug report issue template | — | ✅ DONE | `.github/ISSUE_TEMPLATE/bug_report.md` exists with all required sections. Spec note was wrong — no feature_request.md exists. |
 | **obs-L-014** | Vendor `htmx.min.js` in `static/` for offline dashboard support | 10m | P1 | CSS inline works, htmx loads from CDN — breaks without internet |
-| **obs-L-030** | Add coverage reporting to CI (`pytest --cov`) | 30m | P2 | No coverage data |
+|| ~~obs-L-030~~ | Add coverage reporting to CI (`pytest --cov`) | 30m | P2 | ✅ ALREADY DONE | CI line 38 has `--cov=observeco --cov-report=term-missing`, pyproject.toml has `pytest-cov>=4` in dev deps, last CI run produced per-file coverage output across all 8 jobs, local run produces coverage at 18% overall. Was pre-wired with the original CI matrix — spec note was stale. |
 | **obs-L-032** | Port conflict test: verify _find_free_port works by starting two dashboard instances | 15m | P2 | Code exists, untested at runtime |
 | **obs-L-033** | Dashboard screenshot: save to assets/dashboard-preview.png and add to README | 15m | P1 | Need the screenshot file saved |
 | **obs-L-034** | Fix gaps map: update gaps map table to reflect actual state | 10m | P2 | Self-referential — this doc |
@@ -140,11 +140,11 @@ These are marked Done and removed from the kanban. They exist, tested, working.
 | ~~obs-L-005b~~ | Cross-platform paths: `Path.home() / ".observeco"` → `platformdirs` | — | — | ✅ DONE |
 | ~~obs-L-014~~ | Vendor `htmx.min.js` in `static/` for offline dashboard | — | — | ✅ DONE |
 | ~~obs-L-037~~ | Golden launch test doc (go/no-go gate added below) | — | — | ✅ DONE |
-| **obs-L-008** | Force push to trigger CI matrix (8 jobs: 4 python × 2 OS) | 15m | — | P1 |
-| **obs-L-013c** | Create bug report issue template (.github/ISSUE_TEMPLATE/bug_report.md) | 15m | — | P1 |
-| **obs-L-013b** | Set GitHub repo description + topics via gh CLI | 15m | — | P1 |
+| ~~obs-L-008~~ | CI matrix (8 jobs: 4 python × 2 OS, ruff + pytest + build) | — | — | ✅ ALL GREEN | First successful CI run in project history — 8/8 jobs passed (Python 3.10-3.13 × macOS + Ubuntu). Lint: ruff clean. Tests: pytest with coverage. Build: wheels + sdist. |
+| ~~obs-L-013c~~ | Create bug report issue template | — | — | ✅ DONE | Enhanced with Actual behavior, Terminal output code block, Agent framework field. |
+|| ~~obs-L-013b~~ | Set GitHub repo description + topics via gh CLI | 15m | — | ✅ DONE |
 | **obs-L-010** | Save dashboard screenshot to assets/ and add to README | 15m | — | P1 |
-| **obs-L-030** | Add pytest-cov to CI (--cov=observeco --cov-report=term-missing) | 15m | — | P2 |
+| ~~obs-L-030~~ | Add pytest-cov to CI (--cov=observeco --cov-report=term-missing) | 15m | — | ✅ DONE | Already wired — CI line 38 has --cov flags, pyproject.toml has pytest-cov>=4 in dev deps. Spec was stale. |
 | **obs-L-032** | Test port conflict: verify two dashboard instances don't crash | 10m | obs-L-005 | P2 |
 | **obs-L-035** | Post distribution drafts to private Telegram channel, verify formatting | 30m | — | P2 |
 

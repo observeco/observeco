@@ -15,16 +15,26 @@ Steps to reproduce the behavior:
 2. See error
 
 **Expected behavior**
-What you expected to happen instead.
+A clear description of what you expected to happen instead.
 
-**Screenshots / Terminal Output**
-If applicable, paste terminal output or screenshots.
+**Actual behavior**
+What actually happened.
 
-**Environment (please complete):**
+**Terminal output**
+Paste the full error output (use the copy button, not a screenshot).
+
+```
+```
+
+**Environment (complete all):**
 - OS: [e.g. macOS 15, Ubuntu 22.04, Windows 11]
 - Python version: [e.g. 3.11, 3.12]
-- Install method: [e.g. `pip install`, cloned repo, etc.]
+- Install method: [e.g. `pip install observeco`, cloned repo, `pip install -e .`]
 - `observeco --version` output:
+- Agent framework: [e.g. Hermes, OpenClaw, custom]
+
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
 
 **Additional context**
 Add any other context about the problem here.

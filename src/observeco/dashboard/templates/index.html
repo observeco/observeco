@@ -60,37 +60,27 @@
         }
         @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
 
-        /* ─── Tabs ─── */
-        .tabs {
-            display: flex; gap: 4px; margin-bottom: 16px;
-            background: var(--card); border-radius: 10px; padding: 4px;
-            border: 1px solid var(--border);
-        }
-        .tab-btn {
-            flex: 1; padding: 10px 16px; border-radius: 8px;
-            font-size: 13px; font-weight: 500; cursor: pointer;
-            background: transparent; border: none; color: var(--muted);
-            font-family: 'Inter', sans-serif;
-            transition: all 0.15s; text-align: center;
-        }
-        .tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
-        .tab-btn.active { background: var(--green); color: #000; font-weight: 600; }
-        .tab-btn .badge {
-            display: inline-block; margin-left: 6px;
-            background: rgba(239,68,68,0.2); color: var(--red);
-            font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px;
-            vertical-align: middle;
-        }
-        .tab-btn.active .badge { background: rgba(0,0,0,0.15); color: #000; }
-
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
-
         /* ─── Phase banner ─── */
         .phase-banner {
             padding: 10px 16px; border-radius: 8px; font-size: 13px;
             margin-bottom: 16px; border-left: 3px solid var(--blue);
             background: rgba(59,130,246,0.08); color: var(--sec);
+        }
+
+        /* ─── Single-pane layout: left rail + right rail ─── */
+        .pane-layout {
+            display: flex; gap: 16px; align-items: flex-start;
+        }
+        .left-rail {
+            flex: 1; min-width: 0; /* agent grid area */
+        }
+        .right-rail {
+            width: 320px; flex-shrink: 0;
+            position: sticky; top: 80px;
+        }
+        @media (max-width: 900px) {
+            .pane-layout { flex-direction: column; }
+            .right-rail { width: 100%; position: static; }
         }
 
         /* ─── Fleet stats bar ─── */
@@ -144,6 +134,23 @@
         .seg-guidance { background: var(--tok-guidance); }
         .token-total { font-size: 10px; color: var(--muted); margin-top: 3px; }
 
+        /* ─── Right rail: alerts panel ─── */
+        .alerts-panel {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px;
+        }
+        .alerts-panel-title {
+            font-size: 13px; font-weight: 600; color: var(--text);
+            margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+        }
+        .alert-row {
+            padding: 8px 10px; margin-bottom: 6px; border-radius: 6px;
+            font-size: 12px; border-left: 3px solid;
+        }
+        .alert-empty {
+            color: var(--muted); font-size: 12px; text-align: center; padding: 16px;
+        }
+
         /* ─── Agent detail panel ─── */
         .agent-detail {
             border-top: 1px solid var(--border);
@@ -151,36 +158,51 @@
             display: none;
         }
         .agent-detail.open { display: block; }
-        .detail-tabs {
-            display: flex; gap: 4px; margin-bottom: 10px;
-            background: var(--bg); border-radius: 8px; padding: 3px;
-        }
-        .detail-tab {
-            flex: 1; padding: 6px 10px; border-radius: 6px;
-            font-size: 12px; font-weight: 500; cursor: pointer;
-            background: transparent; border: none; color: var(--muted);
-            font-family: 'Inter', sans-serif; text-align: center;
-            transition: all 0.15s;
-        }
-        .detail-tab:hover { color: var(--text); }
-        .detail-tab.active { background: var(--green); color: #000; font-weight: 600; }
 
-        .detail-pane { display: none; font-size: 13px; color: var(--sec); line-height: 1.6; }
-        .detail-pane.active { display: block; }
-
-        .detail-label { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 10px; margin-bottom: 4px; }
-        .detail-value { color: var(--text); }
         .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .detail-grid-item { padding: 8px; background: var(--bg); border-radius: 6px; }
 
-        /* Full token bar in detail */
+        /* Token full bar */
         .token-full-bar { display: flex; height: 20px; border-radius: 4px; overflow: hidden; margin: 8px 0; }
         .token-full-bar .seg { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.85); min-width: 20px; }
         .token-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
         .token-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
         .token-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
 
-        /* Heal log */
+        /* ─── Bottom: error timeline ─── */
+        .error-timeline {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px; margin-top: 16px;
+        }
+        .error-timeline-title {
+            font-size: 13px; font-weight: 600; color: var(--text);
+            margin-bottom: 8px;
+        }
+        .error-item {
+            display: flex; gap: 10px; font-size: 12px;
+            padding: 7px 10px; border-radius: 6px; margin-bottom: 3px;
+        }
+        .error-item.critical { border-left: 2px solid var(--red); background: rgba(239,68,68,0.06); }
+        .error-item.warning { border-left: 2px solid var(--yellow); background: rgba(234,179,8,0.04); }
+        .error-item.info { border-left: 2px solid var(--blue); background: rgba(59,130,246,0.04); }
+        .error-ts { color: var(--muted); width: 70px; font-family: monospace; font-size: 11px; flex-shrink: 0; }
+        .error-agent { color: var(--green); width: 90px; flex-shrink: 0; font-weight: 500; }
+        .error-msg { flex: 1; color: var(--sec); }
+        .error-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 16px; }
+
+        /* Welcome / empty */
+        .empty-state { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
+        .empty-state code { background: var(--card); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+
+        /* Self-heal panel (section below agent grid on left rail) */
+        .heal-section {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px; margin-top: 16px;
+        }
+        .heal-section-title {
+            font-size: 13px; font-weight: 600; color: var(--text);
+            margin-bottom: 8px;
+        }
         .heal-entry {
             padding: 8px 12px; margin-bottom: 6px; border-radius: 6px;
             font-size: 12px; border-left: 3px solid;
@@ -192,22 +214,6 @@
         .heal-entry .heal-time { color: var(--muted); font-size: 10px; }
         .heal-entry .heal-detail { color: var(--sec); margin-top: 2px; }
 
-        /* Error timeline */
-        .error-item {
-            display: flex; gap: 10px; font-size: 12px;
-            padding: 7px 10px; border-radius: 6px; margin-bottom: 3px;
-        }
-        .error-item.critical { border-left: 2px solid var(--red); background: rgba(239,68,68,0.06); }
-        .error-item.warning { border-left: 2px solid var(--yellow); background: rgba(234,179,8,0.04); }
-        .error-item.info { border-left: 2px solid var(--blue); background: rgba(59,130,246,0.04); }
-        .error-ts { color: var(--muted); width: 70px; font-family: monospace; font-size: 11px; flex-shrink: 0; }
-        .error-agent { color: var(--green); width: 90px; flex-shrink: 0; font-weight: 500; }
-        .error-msg { flex: 1; color: var(--sec); }
-
-        /* Welcome / empty */
-        .empty-state { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
-        .empty-state code { background: var(--card); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-
         /* Responsive */
         @media (max-width: 768px) {
             .header { flex-direction: column; align-items: flex-start; gap: 10px; }
@@ -215,13 +221,26 @@
             .fleet-bar { flex-wrap: wrap; }
             .fleet-stat { min-width: 45%; }
             .detail-grid { grid-template-columns: 1fr; }
-            .tabs { flex-wrap: wrap; }
-            .tab-btn { flex: 1 1 45%; }
         }
+
+        /* Section heading */
+        .section-heading {
+            font-size: 15px; font-weight: 600; color: var(--sec);
+            margin-bottom: 10px; letter-spacing: -0.01em;
+        }
+
+        .heal-trigger-btn {
+            display: inline-block; background: var(--green); color: #000;
+            padding: 8px 20px; border-radius: 8px;
+            text-decoration: none; font-weight: 600; font-size: 13px;
+            margin-top: 8px; cursor: pointer;
+        }
+        .heal-trigger-btn:hover { background: #16a34a; }
     </style>
 </head>
 <body>
     <div class="container">
+
         <!-- ═══ Header ═══ -->
         <header>
             <div class="brand">
@@ -241,125 +260,94 @@
             </div>
         </header>
 
-        <!-- ═══ Tab Navigation ═══ -->
-        <div class="tabs" role="tablist">
-            <button class="tab-btn active" data-tab="agents" onclick="switchTab('agents')">
-                🧑‍💻 Agents
-            </button>
-            <button class="tab-btn" data-tab="alerts" onclick="switchTab('alerts')">
-                ⚠️ Alerts <span class="badge" id="alert-count">0</span>
-            </button>
-            <button class="tab-btn" data-tab="self-heal" onclick="switchTab('self-heal')">
-                🔧 Self-Heal
-            </button>
-            <button class="tab-btn" data-tab="errors" onclick="switchTab('errors')">
-                📋 History
-            </button>
-        </div>
-
         <!-- ═══ Phase Banner ═══ -->
         <div id="phase-banner"></div>
 
-        <!-- ═══ Tab: Agents ═══ -->
-        <div class="tab-panel active" id="tab-agents">
-            <div id="fleet-bar"
-                 hx-get="/api/fleet-summary"
-                 hx-trigger="load, every 30s"
-                 hx-swap="innerHTML">
-            </div>
-            <div id="agent-cards"
-                 hx-get="/api/agents"
-                 hx-trigger="load, every 30s"
-                 hx-swap="innerHTML">
-                <div class="empty-state">Discovering agents...</div>
-            </div>
-        </div>
+        <!-- ═══ Single Pane Layout ═══ -->
+        <div class="pane-layout">
 
-        <!-- ═══ Tab: Alerts ═══ -->
-        <div class="tab-panel" id="tab-alerts">
-            <div id="alerts-content"
-                 hx-get="/api/alerts"
-                 hx-trigger="load, every 30s"
-                 hx-swap="innerHTML">
-                <div class="empty-state">Loading alerts...</div>
-            </div>
-        </div>
+            <!-- ─── LEFT RAIL: Fleet + Agents + Heal ─── -->
+            <div class="left-rail">
 
-        <!-- ═══ Tab: Self-Heal ═══ -->
-        <div class="tab-panel" id="tab-self-heal">
-            <div style="margin-bottom:12px;font-size:13px;color:var(--sec);line-height:1.6;">
-                <strong style="color:var(--text);">What is Self-Heal?</strong>
-                ObserveCo can automatically detect and fix common problems in your agent fleet:
-                <strong>restart dead agents</strong>, 
-                <strong>clear tripped circuits</strong>, 
-                <strong>trim bloated contexts</strong>, 
-                <strong>clean up memory clutter</strong>.
-                Below is the log of what's been diagnosed and what actions were taken.
-            </div>
-            <div id="heal-log"
-                 hx-get="/api/heal-log"
-                 hx-trigger="load, every 30s"
-                 hx-swap="innerHTML">
-                <div class="empty-state">Loading self-heal log...</div>
-            </div>
-        </div>
+                <div id="fleet-bar"
+                     hx-get="/api/fleet-summary"
+                     hx-trigger="load, every 30s"
+                     hx-swap="innerHTML">
+                </div>
 
-        <!-- ═══ Tab: History ═══ -->
-        <div class="tab-panel" id="tab-errors">
-            <div style="margin-bottom:8px;font-size:13px;color:var(--sec);">
-                Recent errors, circuit trips, and recovery events across your entire fleet.
+                <div id="agent-cards"
+                     hx-get="/api/agents"
+                     hx-trigger="load, every 30s"
+                     hx-swap="innerHTML">
+                    <div class="empty-state">Discovering agents...</div>
+                </div>
+
+                <!-- Self-Heal section (below agent grid) -->
+                <div class="heal-section">
+                    <div class="heal-section-title">🔧 Self-Heal</div>
+                    <div style="font-size:12px;color:var(--sec);margin-bottom:8px;line-height:1.5;">
+                        Automatically detect and fix common problems — restart dead agents,
+                        clear tripped circuits, trim bloated contexts, clean memory.
+                    </div>
+                    <div id="heal-log"
+                         hx-get="/api/heal-log"
+                         hx-trigger="load, every 30s"
+                         hx-swap="innerHTML">
+                        <div class="empty-state">Loading self-heal log...</div>
+                    </div>
+                </div>
+
+                <!-- ═══ BOTTOM: Error Timeline ═══ -->
+                <div class="error-timeline">
+                    <div class="error-timeline-title">📋 Error Timeline</div>
+                    <div id="error-timeline"
+                         hx-get="/api/errors"
+                         hx-trigger="load, every 30s"
+                         hx-swap="innerHTML">
+                        <div class="error-empty">No errors recorded — good sign!</div>
+                    </div>
+                </div>
+
             </div>
-            <div id="error-timeline"
-                 hx-get="/api/errors"
-                 hx-trigger="load, every 30s"
-                 hx-swap="innerHTML">
-                <div class="empty-state">No errors recorded — good sign!</div>
+
+            <!-- ─── RIGHT RAIL: Alerts ─── -->
+            <div class="right-rail">
+                <div class="alerts-panel">
+                    <div class="alerts-panel-title">⚠️ Alerts</div>
+                    <div id="alerts-content"
+                         hx-get="/api/alerts"
+                         hx-trigger="load, every 30s"
+                         hx-swap="innerHTML">
+                        <div class="alert-empty">Loading alerts...</div>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 
     <script>
-    // ─── Tab switching ──────────────────────────────
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.querySelector('.tab-btn[data-tab="' + tab + '"]').classList.add('active');
-        document.getElementById('tab-' + tab).classList.add('active');
-    }
-
     // ─── Agent detail toggle ────────────────────────
-    function toggleDetail(id) {
+    function toggleAgentDetail(id) {
         var el = document.getElementById('detail-' + id);
         if (!el) return;
         var open = el.classList.contains('open');
         el.classList.toggle('open');
-        if (!open) loadSubTab(id, 'health');
-    }
-
-    function switchSubTab(agentId, tab) {
-        // Update button states
-        document.querySelectorAll('#detail-' + agentId + ' .detail-tab').forEach(b => b.classList.remove('active'));
-        document.querySelector('#detail-' + agentId + ' .detail-tab[data-subtab="' + tab + '"]').classList.add('active');
-        // Show pane
-        document.querySelectorAll('#detail-' + agentId + ' .detail-pane').forEach(p => p.classList.remove('active'));
-        var pane = document.getElementById('sub-' + agentId + '-' + tab);
-        if (pane) pane.classList.add('active');
-        // Load data if not loaded
-        loadSubTab(agentId, tab);
+        if (!open) loadAgentTab(id, 'health');
     }
 
     var loadedTabs = {};
-    function loadSubTab(agentId, tab) {
+    function loadAgentTab(agentId, tab) {
         var key = agentId + '-' + tab;
         if (loadedTabs[key]) return;
         loadedTabs[key] = true;
-        var container = document.getElementById('sub-content-' + agentId + '-' + tab);
+        var container = document.getElementById('detail-content-' + agentId);
         if (!container) return;
         container.innerHTML = '<div style="color:var(--muted);font-size:12px;">Loading...</div>';
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/api/agent-detail/' + encodeURIComponent(agentId) + '?tab=' + tab, true);
         xhr.onload = function() {
-            container.innerHTML = xhr.responseText || '<div style="color:var(--muted);font-size:12px;">No data available</div>';
+            container.innerHTML = xhr.responseText || '<div style="color:var(--muted);font-size:12px;">No data</div>';
         };
         xhr.onerror = function() {
             container.innerHTML = '<div style="color:var(--red);font-size:12px;">Failed to load</div>';
@@ -367,7 +355,7 @@
         xhr.send();
     }
 
-    // ─── Phase detection ────────────────────────────
+    // ─── Phase detection (single-pane: no tab reference needed) ───
     function checkPhase() {
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/api/phase', true);
