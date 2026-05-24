@@ -1140,7 +1140,7 @@ async def api_heal_log():
     from observeco.dirs import get_data_dir
     heal_dir = get_data_dir() / "heal"
     entries = []
-    
+
     if heal_dir.exists():
         files = sorted(heal_dir.glob("*.investigation.md"), reverse=True)[:20]
         for f in files:
@@ -1156,10 +1156,10 @@ async def api_heal_log():
                     elif line.startswith("## Action taken:"):
                         action = line.replace("## Action taken:", "").strip()
                         status = "success"
-                
+
                 agent_name = f.name.split("-")[0]
                 ts_str = f.name.replace(f"{agent_name}-", "").replace(".investigation.md", "")
-                
+
                 entries.append({
                     "agent": agent_name,
                     "diagnosis": diagnosis or "investigation",
@@ -1170,13 +1170,13 @@ async def api_heal_log():
                 })
             except Exception:
                 pass
-    
+
     # Also check circuit breaker state for current issues
     from observeco.db import Database
     d = Database()
     breakers = d.get_circuit_breakers()
     now = int(time.time())
-    
+
     if not entries:
         # Show circuit breaker state as fallback
         active_issues = []
@@ -1191,7 +1191,7 @@ async def api_heal_log():
     </div>
     <div class="heal-detail">{cb.get('failure_count',0)} failures — cooldown {remaining // 60}m remaining</div>
 </div>""")
-        
+
         if active_issues:
             html = """
 <div style="margin-bottom:12px;font-size:13px;color:var(--sec);">
@@ -1199,18 +1199,18 @@ async def api_heal_log():
 </div>""" + "\n".join(active_issues)
         else:
             html = '<div class="empty-state">✅ No self-heal events recorded yet. Run <code>observeco heal --diagnose</code> to start.</div>'
-        
+
         # Add running heal button
         html += """
 <div style="margin-top:16px;text-align:center;">
-    <a href="/api/trigger-heal" 
+    <a href="/api/trigger-heal"
        style="display:inline-block;background:#22c55e;color:#000;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;"
        onclick="event.preventDefault();fetch(this.href).then(r=>r.text()).then(t=>document.getElementById('heal-log').innerHTML=t+'<div style=\\\"text-align:center;margin-top:12px;\\\">Refreshing...</div>');setTimeout(()=>{document.getElementById('heal-log').innerHTML='<div class=\\\"empty-state\\\">Refreshing heal data...</div>';},100);">
         ⚡ Run Heal Check Now
     </a>
 </div>"""
         return HTMLResponse(html)
-    
+
     items = []
     for e in entries[:20]:
         icon = "✅" if e["status"] == "success" else "❌" if e["status"] == "fail" else "🔍"
@@ -1225,41 +1225,40 @@ async def api_heal_log():
         <strong>Action:</strong> {e['action']}
     </div>
 </div>""")
-    
+
     html = "\n".join(items)
-    
+
     # Add trigger button
     html += """
 <div style="margin-top:16px;text-align:center;">
-    <a href="/api/trigger-heal" 
+    <a href="/api/trigger-heal"
        style="display:inline-block;background:#22c55e;color:#000;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;"
        onclick="event.preventDefault();fetch(this.href).then(function(r){return r.text()}).then(function(t){var el=document.getElementById('heal-log');if(el){el.innerHTML=t+'<div style=\\\"text-align:center;margin-top:12px;font-size:13px;color:#64748b;\\\">Heal check complete — refreshing data...</div>';}});">
         ⚡ Run Heal Check Now
     </a>
 </div>"""
-    
+
     return HTMLResponse(html)
 
 
 @app.get("/api/trigger-heal", response_class=HTMLResponse)
 async def api_trigger_heal():
     """Diagnose agents and return results as HTML."""
-    from observeco.db import Database as D
     d = Database()
     breakers = d.get_circuit_breakers()
     pulses = d.get_recent_pulses(limit=10)
-    
+
     if not pulses and not breakers:
         return HTMLResponse('<div style="color:#64748b;font-size:13px;text-align:center;padding:20px;">No agent data to diagnose. Run <code>observeco pulse check</code> first.</div>')
-    
+
     items = []
     now = int(time.time())
-    
+
     # Check each breaker
     for cb in breakers:
         if cb.get("tripped"):
             cooldown = cb.get("cooldown_until", now)
-            remaining = max(0, cooldown - now)
+            _ = max(0, cooldown - now)  # unused — will use in cooldown display
             items.append(f"""
 <div class="heal-entry fail">
     <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
@@ -1271,11 +1270,11 @@ async def api_trigger_heal():
         <strong>Recommendation:</strong> Acknowledge circuit manually or set auto-recovery (Pro)
     </div>
 </div>""")
-    
+
     # Check for agents with low pulses
     from collections import Counter
     agent_counts = Counter(p.get("agent_name", "?") for p in pulses if now - p.get("timestamp", 0) < 120)
-    
+
     for agent, count in agent_counts.most_common(10):
         if count < 2:  # less than 2 recent pulses
             items.append(f"""
@@ -1289,12 +1288,12 @@ async def api_trigger_heal():
         <strong>Recommendation:</strong> Check if agent process is running
     </div>
 </div>""")
-    
+
     if not items:
         items.append('<div style="color:#22c55e;font-size:13px;text-align:center;padding:20px;">✅ All agents appear healthy</div>')
-    
+
     html = """
 <div style="margin-bottom:8px;font-size:12px;color:#64748b;">Heal check completed at """ + __import__('datetime').datetime.now().strftime("%H:%M:%S") + """</div>
 """ + "\n".join(items)
-    
+
     return HTMLResponse(html)
