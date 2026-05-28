@@ -11,17 +11,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0f172a;
-            --card: #1a2332;
+            --bg: #0c111d;
+            --card: #131a2b;
+            --card-hover: #1a2332;
             --border: #1e293b;
             --border-light: #334155;
-            --text: #ffffff;
+            --text: #f8fafc;
+            --fg: #f8fafc;
             --sec: #94a3b8;
             --muted: #64748b;
+            --mono: #0f172a;
+            --accent: #22c55e;
             --green: #22c55e;
             --red: #ef4444;
+            --amber: #f59e0b;
             --yellow: #eab308;
-            --blue: #3b82f6;
+            --blue: #38bdf8;
             --orange: #f97316;
             --tok-identity: #6366f1;
             --tok-skills: #8b5cf6;
@@ -32,8 +37,8 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            background: #0c111d;
+            color: var(--fg);
             min-height: 100vh;
         }
         .container { max-width: 1400px; margin: 0 auto; padding: 0 24px 40px; }
@@ -59,6 +64,7 @@
             background: var(--green); animation: pulse 2s ease-in-out infinite;
         }
         @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+        @keyframes pulse-skeleton { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
 
         /* ─── Phase banner ─── */
         .phase-banner {
@@ -157,6 +163,9 @@
             color: var(--muted); font-size: 12px; text-align: center; padding: 16px;
         }
 
+        /* ─── Metric row hover — reveal "See details" ─── */
+        .metric-row:hover .see-details { opacity: 1 !important; }
+
         /* ─── Agent detail panel ─── */
         .agent-detail {
             border-top: 1px solid var(--border);
@@ -212,7 +221,9 @@
         .heal-entry {
             padding: 8px 12px; margin-bottom: 6px; border-radius: 6px;
             font-size: 12px; border-left: 3px solid;
+            cursor: pointer; transition: background 0.15s;
         }
+        .heal-entry:hover { background: rgba(255,255,255,0.03); }
         .heal-entry.success { border-color: var(--green); background: rgba(34,197,94,0.06); }
         .heal-entry.fail { border-color: var(--red); background: rgba(239,68,68,0.06); }
         .heal-entry.info { border-color: var(--blue); background: rgba(59,130,246,0.06); }
@@ -242,6 +253,12 @@
             margin-top: 8px; cursor: pointer;
         }
         .heal-trigger-btn:hover { background: #16a34a; }
+
+        /* ─── Agent sections (framework grouping) ─── */
+        .agent-section { margin-bottom: 20px; }
+        .agent-section.collapsed .section-cards { display: none; }
+        .agent-section.collapsed .section-toggle { transform: rotate(-90deg); }
+        .section-header:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -250,24 +267,52 @@
         <!-- ═══ Header ═══ -->
         <header>
             <div class="brand">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28" style="flex-shrink:0;">
+                    <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+                    <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
                 <div>
                     <div style="display:flex;align-items:baseline;gap:2px;">
                         <span class="brand-name"><span>Observe</span>Co</span>
-                        <span style="font-size:10px;color:var(--green);font-weight:600;margin-left:4px;background:rgba(34,197,94,0.12);padding:1px 6px;border-radius:4px;">Ai</span>
+                        <span style="font-size:11px;color:var(--green);font-weight:600;margin-left:4px;background:rgba(34,197,94,0.12);padding:1px 6px;border-radius:4px;">Ai</span>
                     </div>
                     <div class="brand-sub">Agent Fleet Dashboard</div>
                 </div>
             </div>
             <div class="header-right">
-                <div class="live-indicator">
-                    <span class="live-dot"></span>
-                    <span>Auto-refresh 30s</span>
-                </div>
+            <div class="live-indicator">
+                <span class="live-dot"></span>
+                <span>Auto-refresh 30s</span>
             </div>
+            <button onclick="showFeedbackModal()"
+                    style="background:transparent;color:var(--sec);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s;"
+                    onmouseenter="this.style.background='#1e293b';this.style.color='var(--fg)'"
+                    onmouseleave="this.style.background='transparent';this.style.color='var(--sec)'"
+                    title="Report missing agent">
+                <span>➕</span> Add agent
+            </button>
+            <a href="/pathway" target="_blank"
+               style="background:transparent;color:var(--sec);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s;text-decoration:none;"
+               onmouseenter="this.style.background='#1e293b';this.style.color='var(--fg)'"
+               onmouseleave="this.style.background='transparent';this.style.color='var(--sec)'">
+                <span>🗺️</span> Pathways
+            </a>
+        </div>
         </header>
 
         <!-- ═══ Phase Banner ═══ -->
-        <div id="phase-banner"></div>
+        <div id="phase-banner"
+         hx-get="/api/phase"
+         hx-trigger="load, every 30s"
+         hx-swap="innerHTML">
+    </div>
+
+        <!-- ═══ Cumulative Delay Banner (obs-dp-006) ═══ -->
+        <div id="delay-banner"
+             hx-get="/api/delay-banner"
+             hx-trigger="load, every 30s"
+             hx-swap="innerHTML">
+        </div>
 
         <!-- ═══ Single Pane Layout ═══ -->
         <div class="pane-layout">
@@ -285,7 +330,57 @@
                      hx-get="/api/agents"
                      hx-trigger="load, every 30s"
                      hx-swap="innerHTML">
-                    <div class="empty-state">Discovering agents...</div>
+                    <div class="agent-grid">
+                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;">
+                            <div style="height:14px;width:100px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
+                            <div style="height:10px;width:60px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
+                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
+                        </div>
+                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:0.2s;">
+                            <div style="height:14px;width:80px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
+                            <div style="height:10px;width:50px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
+                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
+                        </div>
+                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:0.4s;">
+                            <div style="height:14px;width:90px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
+                            <div style="height:10px;width:55px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
+                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
+                        </div>
+                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:0.6s;">
+                            <div style="height:14px;width:70px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
+                            <div style="height:10px;width:45px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
+                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
+                        </div>
+                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:0.8s;">
+                            <div style="height:14px;width:85px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
+                            <div style="height:10px;width:65px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
+                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
+                        </div>
+                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:1.0s;">
+                            <div style="height:14px;width:95px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
+                            <div style="height:10px;width:40px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
+                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ Restart Quality (obs-spec-018) ═══ -->
+                <div class="restart-quality-section" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:16px;">
+                    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                        <span>🔄 Restart Quality</span>
+                        <span style="font-size:10px;color:var(--green);background:rgba(34,197,94,0.1);padding:1px 6px;border-radius:4px;font-weight:500;">NEW</span>
+                    </div>
+                    <div style="font-size:12px;color:var(--sec);margin-bottom:8px;line-height:1.5;">
+                        Classifies daemon restarts into <strong style="color:var(--green);">Healthy</strong> (KeepAlive),
+                        <strong style="color:#eab308;">TOCTOU Race</strong> (file consumed between fsnotify and .stat()),
+                        and <strong style="color:var(--red);">Crash</strong> (SIGSEGV, OOM, config error).
+                    </div>
+                    <div id="restart-quality-content"
+                         hx-get="/api/restart-quality"
+                         hx-trigger="load"
+                         hx-swap="innerHTML">
+                        <div class="empty-state">Loading restart quality data...</div>
+                    </div>
                 </div>
 
                 <!-- Self-Heal section (below agent grid) -->
@@ -314,6 +409,13 @@
                     </div>
                 </div>
 
+                <!-- ═══ Glossary & FAQ Panel (obs-glossary) ═══ -->
+                <div id="glossary-panel"
+                     hx-get="/api/glossary"
+                     hx-trigger="load"
+                     hx-swap="innerHTML">
+                </div>
+
             </div>
 
             <!-- ─── RIGHT RAIL: Alerts ─── -->
@@ -332,9 +434,57 @@
         </div>
     </div>
 
+    <!-- 🔒 Pro Preview overlay — dedicated div, not htmx-swappable -->
+    <div id="pro-preview-overlay" style="display:none;"></div>
+
     <script>
+    // ─── Metric row click → open detail panel ─────────
+    function loadAgentDetail(id) {
+        // Close all other open details first
+        document.querySelectorAll('.agent-detail.open').forEach(function(el) {
+            if (el.id !== 'detail-' + id) el.classList.remove('open');
+        });
+        var el = document.getElementById('detail-' + id);
+        if (!el) return;
+        if (!el.classList.contains('open')) {
+            el.classList.add('open');
+            loadAgentTab(id, 'health');
+        }
+        // Scroll to the card if it's below the fold
+        var card = document.getElementById('card-' + id);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ─── Section collapse toggle ─────────────────────
+    function toggleSection(key) {
+        var section = document.getElementById('section-' + key);
+        if (!section) return;
+        section.classList.toggle('collapsed');
+        var toggle = document.getElementById('toggle-' + key);
+        if (toggle) toggle.textContent = section.classList.contains('collapsed') ? '▶' : '▼';
+        try { sessionStorage.setItem('section-' + key + '-collapsed', section.classList.contains('collapsed')); } catch(e) {}
+    }
+
+    // Restore section collapse state from sessionStorage
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.agent-section').forEach(function(section) {
+            var key = section.id.replace('section-', '');
+            try {
+                if (sessionStorage.getItem('section-' + key + '-collapsed') === 'true') {
+                    section.classList.add('collapsed');
+                    var toggle = document.getElementById('toggle-' + key);
+                    if (toggle) toggle.textContent = '▶';
+                }
+            } catch(e) {}
+        });
+    });
+
     // ─── Agent detail toggle ────────────────────────
     function toggleAgentDetail(id) {
+        // Close all other open details first
+        document.querySelectorAll('.agent-detail.open').forEach(function(el) {
+            if (el.id !== 'detail-' + id) el.classList.remove('open');
+        });
         var el = document.getElementById('detail-' + id);
         if (!el) return;
         var open = el.classList.contains('open');
@@ -345,41 +495,158 @@
     var loadedTabs = {};
     function loadAgentTab(agentId, tab) {
         var key = agentId + '-' + tab;
-        if (loadedTabs[key]) return;
-        loadedTabs[key] = true;
         var container = document.getElementById('detail-content-' + agentId);
         if (!container) return;
+        // Detect if we're switching tabs within this agent — always re-fetch
+        // Don't cache per-tab; cache only as a debounce for the current load
+        if (loadedTabs['__in_flight__' + key]) return;
+        loadedTabs['__in_flight__' + key] = true;
         container.innerHTML = '<div style="color:var(--muted);font-size:12px;">Loading...</div>';
         var xhr = new XMLHttpRequest();
         xhr.open('GET', '/api/agent-detail/' + encodeURIComponent(agentId) + '?tab=' + tab, true);
         xhr.onload = function() {
             container.innerHTML = xhr.responseText || '<div style="color:var(--muted);font-size:12px;">No data</div>';
+            delete loadedTabs['__in_flight__' + key];
         };
         xhr.onerror = function() {
-            container.innerHTML = '<div style="color:var(--red);font-size:12px;">Failed to load</div>';
+            container.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:16px;">📡 Server unreachable. Run <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco dashboard --restart</code> to fix.</div>';
+            delete loadedTabs['__in_flight__' + key];
         };
         xhr.send();
     }
 
-    // ─── Phase detection (single-pane: no tab reference needed) ───
-    function checkPhase() {
+    // ─── Pro Preview modal ──────────────────────────
+    function showProPreview(featureId) {
+        var overlay = document.getElementById('pro-preview-overlay');
+        if (!overlay) return;
+        overlay.style.display = 'block';
+        overlay.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:40px;">Loading...</div>';
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/phase', true);
+        xhr.open('GET', '/api/pro-preview/' + encodeURIComponent(featureId), true);
         xhr.onload = function() {
-            var phase = xhr.responseText.trim();
-            var banner = document.getElementById('phase-banner');
-            var msgs = {
-                'phase-0': '⏳ Observing your fleet — discovering agents...',
-                'phase-1': '🟡 Learning baseline — first health data arriving within 90s',
-                'phase-2': '🟢 Health data active — waiting for first agent session for token data',
-                'phase-3': ''
-            };
-            banner.innerHTML = msgs[phase] ? '<div class="phase-banner">' + msgs[phase] + '</div>' : '';
+            overlay.innerHTML = xhr.responseText || '<div style="color:var(--red);font-size:12px;text-align:center;padding:40px;">Failed to load preview</div>';
+            // Add ✕ close button and Escape key listener
+            var modal = overlay.querySelector('.pro-preview-modal');
+            if (modal) {
+                var header = modal.querySelector('div[style*="justify-content:space-between"]');
+                if (header && !header.querySelector('.pro-close-btn')) {
+                    var closeBtn = document.createElement('button');
+                    closeBtn.className = 'pro-close-btn';
+                    closeBtn.innerHTML = '✕';
+                    closeBtn.style.cssText = 'background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:0 4px;line-height:1;';
+                    closeBtn.onclick = function(e) { e.stopPropagation(); closeProPreview(); };
+                    closeBtn.title = 'Close (Esc)';
+                    header.appendChild(closeBtn);
+                }
+            }
+            // Escape key listener
+            document.removeEventListener('keydown', closeProPreviewEsc);
+            document.addEventListener('keydown', closeProPreviewEsc);
+        };
+        xhr.onerror = function() {
+            overlay.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:40px;">📡 Server unreachable. Run <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco dashboard --restart</code> to fix.</div>';
         };
         xhr.send();
     }
-    checkPhase();
-    setInterval(checkPhase, 30000);
+    function closeProPreview() {
+        var overlay = document.getElementById('pro-preview-overlay');
+        if (overlay) overlay.style.display = 'none';
+        document.removeEventListener('keydown', closeProPreviewEsc);
+    }
+    function closeProPreviewEsc(e) {
+        if (e.key === 'Escape') closeProPreview();
+    }
+
+    // ─── obs-dp-005: Missing-agent feedback button ──
+    function showFeedbackModal() {
+        var overlay = document.getElementById('pro-preview-overlay');
+        if (!overlay) return;
+        overlay.style.display = 'block';
+        overlay.innerHTML = `
+<div class="pro-preview-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;"
+     onclick="if(event.target===this) closeProPreview()">
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;max-width:480px;width:90%;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h3 style="color:#f8fafc;font-size:16px;margin:0;">➕ Add missing agent</h3>
+            <span style="color:#64748b;cursor:pointer;font-size:18px;" onclick="closeProPreview()">✕</span>
+        </div>
+        <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">Don't see your agent? Run the CLI command:</p>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;">
+            <code style="color:#e2e8f0;font-size:13px;">observeco agents add &lt;name&gt; --check &lt;url&gt;</code>
+        </div>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;">
+            <code style="color:#e2e8f0;font-size:13px;">observeco pulse check</code>
+            <span style="color:#94a3b8;font-size:12px;display:block;margin-top:4px;">Auto-discover all configured agents</span>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+            <button onclick="closeProPreview()"
+                    style="background:#3b82f6;color:white;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
+                Got it
+            </button>
+        </div>
+    </div>
+</div>`;
+        document.removeEventListener('keydown', closeProPreviewEsc);
+        document.addEventListener('keydown', closeProPreviewEsc);
+    }
+
+    // ─── obs-dp-004: Show/hide × dismiss ─────────────
+    function dismissAgent(name) {
+        var card = document.getElementById('card-' + name);
+        if (!card) return;
+        card.style.display = 'none';
+        try {
+            var hidden = JSON.parse(sessionStorage.getItem('dismissed-agents') || '[]');
+            if (hidden.indexOf(name) === -1) hidden.push(name);
+            sessionStorage.setItem('dismissed-agents', JSON.stringify(hidden));
+        } catch(e) {}
+        // Show "restore all" button if not already present
+        var restoreBtn = document.getElementById('restore-dismissed');
+        if (!restoreBtn) {
+            var container = document.querySelector('.left-rail .fleet-bar') || document.getElementById('fleet-bar');
+            if (container) {
+                var btn = document.createElement('div');
+                btn.id = 'restore-dismissed';
+                btn.innerHTML = '<a href="#" onclick="restoreAllAgents();return false;" style="font-size:12px;color:#38bdf8;margin-left:8px;">Restore hidden agents</a>';
+                container.parentNode.insertBefore(btn, container.nextSibling);
+            }
+        }
+    }
+    function restoreAllAgents() {
+        document.querySelectorAll('.agent-card[style*="display: none"]').forEach(function(el) {
+            el.style.display = '';
+        });
+        try { sessionStorage.setItem('dismissed-agents', '[]'); } catch(e) {}
+        var btn = document.getElementById('restore-dismissed');
+        if (btn) btn.remove();
+    }
+    // Restore dismissed state on load
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            var hidden = JSON.parse(sessionStorage.getItem('dismissed-agents') || '[]');
+            if (hidden.length > 0) {
+                hidden.forEach(function(name) {
+                    var card = document.getElementById('card-' + name);
+                    if (card) card.style.display = 'none';
+                });
+                // Htmx re-render clears the hidden state — re-mark after swap
+                var observer = new MutationObserver(function() {
+                    try {
+                        var h = JSON.parse(sessionStorage.getItem('dismissed-agents') || '[]');
+                        if (h.length > 0) {
+                            h.forEach(function(name) {
+                                var card = document.getElementById('card-' + name);
+                                if (card) card.style.display = 'none';
+                            });
+                        }
+                    } catch(e) {}
+                });
+                // Watch for htmx swaps
+                var target = document.getElementById('agent-cards');
+                if (target) observer.observe(target, { childList: true, subtree: true });
+            }
+        } catch(e) {}
+    });
     </script>
 </body>
 </html>

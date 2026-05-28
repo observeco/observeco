@@ -5,8 +5,8 @@
       <stop offset="100%" style="stop-color:#1E293B;stop-opacity:1" />
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0EA5E9;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#14B8A6;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
     </linearGradient>
   </defs>
 
@@ -28,11 +28,11 @@
     <circle cx="32" cy="32" r="28" fill="none" stroke="url(#accent)" stroke-width="1.5" opacity="0.4"/>
     <polyline points="4,32 14,32 18,20 22,40 26,18 30,44 34,22 38,32 42,22 46,44 50,18 54,40 58,20 60,32"
               fill="none" stroke="url(#accent)" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="18" cy="20" r="2" fill="#0EA5E9" opacity="0.7"/>
-    <circle cx="26" cy="18" r="2" fill="#14B8A6" opacity="0.7"/>
-    <circle cx="34" cy="22" r="2" fill="#06B6D4" opacity="0.7"/>
-    <circle cx="42" cy="22" r="2" fill="#0EA5E9" opacity="0.7"/>
-    <circle cx="50" cy="18" r="2" fill="#14B8A6" opacity="0.7"/>
+    <circle cx="18" cy="20" r="2" fill="#22c55e" opacity="0.7"/>
+    <circle cx="26" cy="18" r="2" fill="#16a34a" opacity="0.7"/>
+    <circle cx="34" cy="22" r="2" fill="#15803d" opacity="0.7"/>
+    <circle cx="42" cy="22" r="2" fill="#22c55e" opacity="0.7"/>
+    <circle cx="50" cy="18" r="2" fill="#16a34a" opacity="0.7"/>
   </g>
 
   <!-- Title -->

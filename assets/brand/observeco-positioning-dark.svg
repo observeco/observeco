@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="200" fill="#0f172a" rx="8"/>
+
+  <!-- Pulse/Heartbeat line -->
+  <polyline points="30,100 50,100 56,80 62,120 68,76 74,124 80,82 86,100 92,82 98,124 104,76 110,120 116,80 122,100 142,100"
+            fill="none" stroke="url(#grad2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Circuit nodes on the pulse line -->
+  <circle cx="56" cy="80" r="3" fill="#22c55e" opacity="0.8"/>
+  <circle cx="68" cy="76" r="3" fill="#16a34a" opacity="0.8"/>
+  <circle cx="80" cy="82" r="3" fill="#15803d" opacity="0.8"/>
+  <circle cx="92" cy="82" r="3" fill="#22c55e" opacity="0.8"/>
+  <circle cx="104" cy="76" r="3" fill="#16a34a" opacity="0.8"/>
+  <circle cx="116" cy="80" r="3" fill="#15803d" opacity="0.8"/>
+
+  <!-- Logo text: ObserveCo -->
+  <text x="160" y="95" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="42" font-weight="700" fill="#f8fafc" letter-spacing="-0.02em">ObserveCo</text>
+
+  <!-- Positioning statement -->
+  <text x="160" y="130" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="16" font-weight="400" fill="#94a3b8" letter-spacing="0">Tells you if your AI agents are working, what they're doing, and where your money goes.</text>
+
+  <!-- Small decorative dots at edges -->
+  <circle cx="50" cy="100" r="1.5" fill="#22c55e" opacity="0.5"/>
+  <circle cx="142" cy="100" r="1.5" fill="#22c55e" opacity="0.5"/>
+</svg>

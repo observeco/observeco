@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Communication Pathway Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
+<style>
+:root {
+  --bg: #0c111d; --surface: #131a2b; --border: #1e293b; --border-light: #334155;
+  --fg: #f8fafc; --sec: #94a3b8; --muted: #64748b;
+  --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --blue: #38bdf8;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--fg);
+  min-height: 100vh;
+}
+.app { max-width: 1440px; margin: 0 auto; padding: 16px 20px; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-title { font-size: 18px; font-weight: 700; }
+.header-title span { color: var(--green); }
+.header-sub { font-size: 11px; color: var(--muted); }
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+/* Buttons */
+.btn {
+  background: var(--surface); border: 1px solid var(--border); color: var(--sec);
+  padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;
+  transition: all 0.15s; font-weight: 500;
+}
+.btn:hover { border-color: var(--green); color: var(--fg); background: #1a2332; }
+.btn-primary { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
+.btn-primary:hover { background: #16a34a; }
+
+/* Summary bar */
+.summary-bar {
+  display: flex; gap: 20px; padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  margin-bottom: 12px; align-items: center; flex-wrap: wrap;
+}
+.summary-stat { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--sec); }
+.summary-num { font-weight: 700; font-size: 16px; }
+.summary-num.green { color: var(--green); }
+.summary-num.red { color: var(--red); }
+.summary-num.amber { color: var(--amber); }
+
+/* Layout */
+.pane-layout { display: flex; gap: 14px; align-items: flex-start; }
+.left-rail { flex: 1; min-width: 0; }
+.right-rail { width: 360px; flex-shrink: 0; position: sticky; top: 80px; }
+@media (max-width: 1000px) { .pane-layout { flex-direction: column; } .right-rail { width: 100%; position: static; } }
+
+/* Graph container */
+.graph-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+}
+.graph-toolbar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  border-bottom: 1px solid var(--border); background: rgba(12,17,29,0.5);
+  flex-wrap: wrap;
+}
+.graph-toolbar-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+#cy {
+  width: 100%; height: 500px; background: var(--bg);
+  cursor: grab;
+}
+#cy:active { cursor: grabbing; }
+
+/* Filter chips */
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: transparent; color: var(--sec);
+  transition: all 0.15s;
+}
+.filter-chip:hover { border-color: var(--green); color: var(--fg); }
+.filter-chip.active { background: rgba(34,197,94,0.15); border-color: var(--green); color: var(--green); }
+.filter-chip.active-red { background: rgba(239,68,68,0.15); border-color: var(--red); color: var(--red); }
+.filter-chip.active-amber { background: rgba(245,158,11,0.15); border-color: var(--amber); color: var(--amber); }
+
+/* Legend */
+.legend {
+  display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid var(--border);
+  flex-wrap: wrap; align-items: center;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--sec); }
+.legend-line { width: 22px; height: 3px; border-radius: 2px; }
+.legend-line.green { background: var(--green); }
+.legend-line.amber { background: var(--amber); }
+.legend-line.red { background: var(--red); }
+.legend-line.teal { background: #14b8a6; }
+.legend-line.dashed { border-top: 2px dashed var(--red); height: 0; width: 22px; }
+
+/* Detail panel */
+.detail-panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+}
+.detail-header {
+  padding: 12px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.detail-title { font-size: 14px; font-weight: 600; flex: 1; }
+.detail-body { padding: 12px 14px; min-height: 120px; max-height: 450px; overflow-y: auto; }
+.detail-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 30px 10px; }
+.detail-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid rgba(30,41,59,0.5); }
+.detail-label { color: var(--muted); }
+.detail-value { color: var(--fg); font-weight: 500; }
+.detail-tag {
+  display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600;
+}
+.detail-section { margin-top: 10px; }
+.detail-section-title { font-size: 12px; font-weight: 600; color: var(--sec); margin-bottom: 6px; }
+.dead-end-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
+  background: rgba(239,68,68,0.15); color: var(--red);
+}
+
+/* Loading */
+.loading { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div class="header-left">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="24" height="24" style="flex-shrink:0;">
+      <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+      <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <div class="header-title"><span>Observe</span>Co</div>
+      <div class="header-sub">Communication Pathway Map</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="btn" onclick="resetLayout()">🔁 Reset Layout</button>
+    <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-bar" id="summary-bar">
+  <div class="summary-stat"><span class="summary-num green" id="total-nodes">-</span> Nodes</div>
+  <div class="summary-stat"><span class="summary-num green" id="total-green">-</span> 🟢 Complete</div>
+  <div class="summary-stat"><span class="summary-num amber" id="total-yellow">-</span> 🟡 Concerns</div>
+  <div class="summary-stat"><span class="summary-num red" id="total-red">-</span> 🔴 Dead Ends</div>
+</div>
+
+<div class="pane-layout">
+
+<div class="left-rail">
+  <div class="graph-card">
+    <div class="graph-toolbar">
+      <span class="graph-toolbar-label">Filter:</span>
+      <button class="filter-chip active" data-filter="all" onclick="setFilter('all', this)">All</button>
+      <button class="filter-chip" data-filter="green" onclick="setFilter('green', this)" style="color:var(--green);">🟢 Complete</button>
+      <button class="filter-chip active-amber" data-filter="yellow" onclick="setFilter('yellow', this)" style="color:var(--amber);">🟡 Concerns</button>
+      <button class="filter-chip active-red" data-filter="red" onclick="setFilter('red', this)" style="color:var(--red);">🔴 Dead Ends</button>
+      <span style="flex:1;"></span>
+      <span class="graph-toolbar-label" style="color:var(--muted);font-size:10px;">Scroll to zoom · Drag to pan</span>
+    </div>
+    <div id="cy"><div class="loading">Loading pathway map...</div></div>
+    <!-- Legend -->
+    <div class="legend">
+      <span class="legend-item"><span class="legend-line green"></span> Complete</span>
+      <span class="legend-item"><span class="legend-line amber"></span> Concern</span>
+      <span class="legend-item"><span class="legend-line red"></span> Dead End</span>
+      <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#6366f1;"></span> Agent</span>
+      <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;"></span> Cron</span>
+      <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#06b6d4;"></span> Platform</span>
+      <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#14b8a6;"></span> Consumer</span>
+      <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#3b82f6;"></span> Router</span>
+    </div>
+  </div>
+</div>
+
+<div class="right-rail">
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+      <span style="font-size:16px;">🔍</span>
+      <span class="detail-title">Details</span>
+    </div>
+    <div class="detail-body" id="detail-body">
+      <div class="detail-empty">Click a node or edge to see details</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.pane-layout -->
+</div><!-- /.app -->
+
+<script>
+let cy = null;
+let currentFilter = 'all';
+let graphData = { nodes: [], edges: [] };
+
+const NODE_STYLES = {
+  agent:      { icon: '🧠', color: '#6366f1', shape: 'round-rectangle' },
+  cron:       { icon: '⏰', color: '#f59e0b', shape: 'round-rectangle' },
+  platform:   { icon: '📱', color: '#06b6d4', shape: 'round-rectangle' },
+  consumer:   { icon: '📖', color: '#14b8a6', shape: 'ellipse' },
+  router:     { icon: '🔀', color: '#3b82f6', shape: 'round-rectangle' },
+};
+
+const EDGE_COLORS = { green: '#22c55e', yellow: '#eab308', red: '#ef4444', teal: '#14b8a6', unknown: '#64748b' };
+
+function nodeStyle(nodeType) {
+  return NODE_STYLES[nodeType] || { icon: '❓', color: '#6b7280', shape: 'round-rectangle' };
+}
+
+async function fetchGraph() {
+  try {
+    const resp = await fetch('/api/pathway-graph');
+    graphData = await resp.json();
+    return true;
+  } catch (e) {
+    console.error('Failed to fetch pathway graph:', e);
+    return false;
+  }
+}
+
+function buildCytoscapeElements() {
+  const elements = [];
+  const ns = graphData.nodes || [];
+  const es = graphData.edges || [];
+
+  // Node lookup
+  const nodeMap = {};
+  ns.forEach(function(n) { nodeMap[n.id] = n; });
+
+  // Create cytoscape nodes
+  ns.forEach(function(n) {
+    const style = nodeStyle(n.type);
+    elements.push({
+      group: 'nodes',
+      data: {
+        id: n.id,
+        label: n.name,
+        type: n.type,
+        icon: style.icon,
+        confidence: n.confidence || 50,
+        source: n.source || 'manual',
+        framework: n.framework || '',
+        nodeColor: style.color,
+        shape: style.shape,
+        raw: n
+      }
+    });
+  });
+
+  // Create cytoscape edges
+  es.forEach(function(e) {
+    const targetId = e.target_id;
+    const isDeadEnd = !targetId;
+    const status = e.status || 'unknown';
+
+    if (isDeadEnd) {
+      // For dead ends, add an invisible stub node (dead-end marker)
+      const stubId = '__dead__' + e.source_id;
+      if (!nodeMap[stubId]) {
+        elements.push({
+          group: 'nodes',
+          data: {
+            id: stubId,
+            label: '∅',
+            type: 'dead-end',
+            icon: '✕',
+            nodeColor: '#ef4444',
+            shape: 'ellipse',
+            parent: true,
+            raw: { id: stubId, name: '∅ Dead End', type: 'dead-end' }
+          },
+          classes: 'dead-end-node'
+        });
+        nodeMap[stubId] = { id: stubId };
+      }
+      elements.push({
+        group: 'edges',
+        data: {
+          id: e.id || ('edge-' + e.source_id + '-dead'),
+          source: e.source_id,
+          target: stubId,
+          status: 'red',
+          label: 'Dead End',
+          mechanism: e.mechanism || '',
+          confidence: e.confidence || 50,
+          scenario: e.scenario || '',
+          raw: e
+        },
+        classes: 'edge-red'
+      });
+    } else {
+      elements.push({
+        group: 'edges',
+        data: {
+          id: e.id || ('edge-' + e.source_id + '-' + targetId),
+          source: e.source_id,
+          target: targetId,
+          status: status,
+          label: '',
+          mechanism: e.mechanism || '',
+          confidence: e.confidence || 50,
+          scenario: e.scenario || '',
+          raw: e
+        },
+        classes: 'edge-' + status
+      });
+    }
+  });
+
+  return elements;
+}
+
+function initializeCy() {
+  if (cy) { cy.destroy(); }
+
+  const elements = buildCytoscapeElements();
+
+  try {
+    cytoscape.use(require('cytoscape-dagre'));
+  } catch(e) {
+    // CDN fallback
+  }
+
+  cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: elements,
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'label': 'data(label)',
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'color': '#e2e8f0',
+          'font-size': '11px',
+          'font-weight': '600',
+          'font-family': 'Inter, system-ui, sans-serif',
+          'width': 'label',
+          'height': 'label',
+          'padding': '8px 12px',
+          'shape': function(ele) { return ele.data('shape'); },
+          'background-color': function(ele) { return ele.data('nodeColor'); },
+          'border-width': 2,
+          'border-color': function(ele) { return ele.data('nodeColor'); },
+          'border-opacity': 0.5,
+          'text-wrap': 'wrap',
+          'text-max-width': '200px',
+          'min-width': '60px',
+          'min-height': '30px',
+        }
+      },
+      {
+        selector: 'node.dead-end-node',
+        style: {
+          'background-color': '#ef4444',
+          'border-color': '#ef4444',
+          'color': '#ef4444',
+          'font-size': '18px',
+          'font-weight': '800',
+          'padding': '4px 6px',
+          'min-width': '24px',
+          'min-height': '24px',
+          'shape': 'ellipse',
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'width': '28px',
+          'height': '28px',
+        }
+      },
+      {
+        selector: 'edge',
+        style: {
+          'width': 2,
+          'line-color': '#64748b',
+          'target-arrow-color': '#64748b',
+          'target-arrow-shape': 'triangle',
+          'arrow-scale': 1.2,
+          'curve-style': 'bezier',
+          'font-size': '9px',
+          'color': '#64748b',
+          'font-family': 'Inter, system-ui, sans-serif',
+        }
+      },
+      {
+        selector: 'edge.edge-green',
+        style: {
+          'line-color': '#22c55e',
+          'target-arrow-color': '#22c55e',
+          'width': 2.5,
+        }
+      },
+      {
+        selector: 'edge.edge-yellow',
+        style: {
+          'line-color': '#eab308',
+          'target-arrow-color': '#eab308',
+          'width': 2.5,
+          'line-style': 'dashed',
+        }
+      },
+      {
+        selector: 'edge.edge-red',
+        style: {
+          'line-color': '#ef4444',
+          'target-arrow-color': '#ef4444',
+          'width': 2,
+          'line-style': 'dashed',
+        }
+      },
+      {
+        selector: 'edge.edge-teal',
+        style: {
+          'line-color': '#14b8a6',
+          'target-arrow-color': '#14b8a6',
+          'width': 1.5,
+          'line-style': 'dashed',
+        }
+      },
+      // Hover
+      {
+        selector: 'node:selected',
+        style: { 'border-width': 3, 'border-opacity': 1 }
+      },
+      {
+        selector: 'edge:selected',
+        style: { 'width': 3.5 }
+      }
+    ],
+    layout: {
+      name: 'dagre',
+      rankDir: 'LR',
+      spacingFactor: 1.5,
+      nodeSep: 40,
+      rankSep: 80,
+      animate: true,
+      animationDuration: 300,
+    },
+    minZoom: 0.3,
+    maxZoom: 3,
+    wheelSensitivity: 0.3,
+  });
+
+  // Event handlers
+  cy.on('tap', 'node', function(evt) {
+    const node = evt.target;
+    showNodeDetail(node);
+  });
+
+  cy.on('tap', 'edge', function(evt) {
+    const edge = evt.target;
+    showEdgeDetail(edge);
+  });
+
+  cy.on('tap', function(evt) {
+    if (evt.target === cy) {
+      showEmptyDetail();
+    }
+  });
+
+  // Apply current filter
+  applyFilter(currentFilter);
+
+  // Update summary
+  updateSummary();
+}
+
+function showNodeDetail(node) {
+  const d = node.data();
+  const raw = d.raw || {};
+  const panel = document.getElementById('detail-body');
+
+  const style = nodeStyle(d.type);
+  const color = d.nodeColor || style.color;
+
+  let connectionsHtml = '';
+  const connected = node.connectedEdges();
+  if (connected.length > 0) {
+    connectionsHtml = '<div class="detail-section"><div class="detail-section-title">Connections</div>';
+    connected.forEach(function(edge) {
+      const isSource = edge.source().id() === node.id();
+      const other = isSource ? edge.target() : edge.source();
+      const arrow = isSource ? '→' : '←';
+      const status = edge.data('status') || 'unknown';
+      const icon = {green:'🟢',yellow:'🟡',red:'🔴',teal:'🔵'}[status] || '⚪';
+      connectionsHtml += `<div class="detail-row" style="border-bottom:1px solid rgba(30,41,59,0.3);cursor:pointer;" onclick="showEdgeDetail(cy.getElementById('${edge.id()}'))">
+        <span class="detail-label">${icon} ${other.data('label') || '∅'}</span>
+        <span class="detail-value">${arrow} ${status}</span>
+      </div>`;
+    });
+    connectionsHtml += '</div>';
+  }
+
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="font-size:24px;">${d.icon}</span>
+      <div>
+        <div style="font-size:15px;font-weight:600;">${d.label}</div>
+        <span class="detail-tag" style="background:${color}22;color:${color};">${d.type}</span>
+      </div>
+    </div>
+    <div class="detail-row"><span class="detail-label">Node ID</span><span class="detail-value">${d.id}</span></div>
+    <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value">${d.type}</span></div>
+    <div class="detail-row"><span class="detail-label">Source</span><span class="detail-value">${d.source}</span></div>
+    <div class="detail-row"><span class="detail-label">Confidence</span><span class="detail-value">${d.confidence}%</span></div>
+    ${d.framework ? `<div class="detail-row"><span class="detail-label">Framework</span><span class="detail-value">${d.framework}</span></div>` : ''}
+    ${connectionsHtml}
+  `;
+}
+
+function showEdgeDetail(edge) {
+  const d = edge.data();
+  const raw = d.raw || {};
+  const panel = document.getElementById('detail-body');
+  const status = d.status || 'unknown';
+  const statusIcon = {green:'🟢',yellow:'🟡',red:'🔴',teal:'🔵'}[status] || '⚪';
+  const sourceLabel = edge.source().data('label') || '?';
+  const targetLabel = d.status === 'red' && !edge.target().data('label') ? '∅ (Dead End)' : (edge.target().data('label') || '?');
+
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <span style="font-size:20px;">🔗</span>
+      <div>
+        <div style="font-size:15px;font-weight:600;">${sourceLabel} → ${targetLabel}</div>
+        <span class="detail-tag" style="background:${EDGE_COLORS[status] || '#64748b'}22;color:${EDGE_COLORS[status] || '#64748b'};">${statusIcon} ${status}</span>
+      </div>
+    </div>
+    <div class="detail-row"><span class="detail-label">Source</span><span class="detail-value">${sourceLabel}</span></div>
+    <div class="detail-row"><span class="detail-label">Target</span><span class="detail-value">${targetLabel}</span></div>
+    <div class="detail-row"><span class="detail-label">Mechanism</span><span class="detail-value">${d.mechanism || '-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Confidence</span><span class="detail-value">${d.confidence}%</span></div>
+    ${d.scenario ? `<div class="detail-row"><span class="detail-label">Scenario</span><span class="detail-value">#${d.scenario}</span></div>` : ''}
+    ${d.status === 'red' ? '<div style="margin-top:10px;padding:8px;background:rgba(239,68,68,0.08);border-radius:6px;border-left:3px solid var(--red);font-size:12px;color:var(--sec);"><strong style="color:var(--red);">Dead End</strong> — This path has no consumer. Messages delivered here will be lost.</div>' : ''}
+  `;
+}
+
+function showEmptyDetail() {
+  document.getElementById('detail-body').innerHTML =
+    '<div class="detail-empty">Click a node or edge to see details</div>';
+}
+
+function updateSummary() {
+  const es = graphData.edges || [];
+  let green = 0, yellow = 0, red = 0;
+  es.forEach(function(e) {
+    if (e.status === 'green') green++;
+    else if (e.status === 'yellow') yellow++;
+    else if (e.status === 'red') red++;
+  });
+  document.getElementById('total-nodes').textContent = (graphData.nodes || []).length;
+  document.getElementById('total-green').textContent = green;
+  document.getElementById('total-yellow').textContent = yellow;
+  document.getElementById('total-red').textContent = red;
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  // Update button states
+  document.querySelectorAll('.filter-chip').forEach(function(b) {
+    b.classList.remove('active', 'active-red', 'active-amber');
+  });
+  btn.classList.add('active');
+  applyFilter(filter);
+}
+
+function applyFilter(filter) {
+  if (!cy) return;
+
+  // Reset everything visible first
+  cy.nodes().forEach(function(n) {
+    const isDead = n.data('type') === 'dead-end';
+    if (filter === 'all') {
+      n.style('display', 'element');
+    } else if (filter === 'red') {
+      // Only show dead-end nodes + edges
+      n.style('display', isDead ? 'element' : 'none');
+    } else {
+      n.style('display', 'element');
+    }
+  });
+  cy.edges().forEach(function(e) {
+    if (filter === 'all') {
+      e.style('display', 'element');
+    } else if (filter === 'green') {
+      e.style('display', e.hasClass('edge-green') ? 'element' : 'none');
+    } else if (filter === 'yellow') {
+      e.style('display', e.hasClass('edge-yellow') ? 'element' : 'none');
+    } else if (filter === 'red') {
+      e.style('display', e.hasClass('edge-red') ? 'element' : 'none');
+    } else {
+      e.style('display', 'element');
+    }
+  });
+
+  // For green/yellow: hide orphaned nodes not connected to any visible edge
+  if (filter === 'green' || filter === 'yellow') {
+    cy.nodes().forEach(function(n) {
+      const isDead = n.data('type') === 'dead-end';
+      const visibleEdges = n.connectedEdges(':visible');
+      if (!isDead && visibleEdges.length === 0) {
+        n.style('display', 'none');
+      }
+      if (isDead) {
+        n.style('display', 'none');
+      }
+    });
+  }
+
+  // Rerun layout with animation
+  cy.layout({ name: 'dagre', rankDir: 'LR', animate: true, animationDuration: 200 }).run();
+}
+
+function resetLayout() {
+  if (!cy) return;
+  cy.layout({ name: 'dagre', rankDir: 'LR', animate: true, animationDuration: 400 }).run();
+}
+
+async function refreshData() {
+  document.getElementById('cy').innerHTML = '<div class="loading">Refreshing...</div>';
+  const ok = await fetchGraph();
+  if (!ok) {
+    document.getElementById('cy').innerHTML = '<div class="loading">Failed to load data. Retrying...</div>';
+    return;
+  }
+  initializeCy();
+}
+
+// Initialize on load
+(async function() {
+  const ok = await fetchGraph();
+  if (ok) initializeCy();
+})();
+</script>
+</body>
+</html>

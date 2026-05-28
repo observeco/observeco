@@ -71,24 +71,43 @@ This plan was rewritten from a full filesystem + test audit. Every claim below w
 
 ## ⚠️ Gaps That Actually Exist (Verified Missing)
 
+### Pulse Gaps (New — Found During Real Use)
+| ID | Gap | Est. | Priority | Notes |
+|----|-----|------|----------|-------|
+| **obs-L-038** | Pulse Tier 3 (`pgrep -f`) cannot detect agent subprocesses — Felo API calls, node scripts, curl runs are invisible | 4h | P1 | P2-2 in `specs/pulse-depth-spec.md`. Replace bare pgrep with process tree + activity probes |
+| **obs-L-039** | No external API call detection — agents burn tokens on external services (Felo, OpenAI, GitHub) with zero visibility | 6h | P1 | P2-3 in pulse-depth-spec. lsof-based outbound connection scanner |
+| **obs-L-040** | No agent session tracking — can't tell if agent is sleeping, working, or degraded beyond alive/dead | 6h | P2 | P2-4 in pulse-depth-spec. Track activity states via subprocess/API call patterns |
+| **obs-L-041** | No activity timeline in dashboard — chronological view of what each agent did (spawned, called, produced) | 8h | P2 | P2-5 in pulse-depth-spec. Timeline UI below fleet cards |
+| **obs-L-042** | No pulse history / uptime statistics — `observeco pulse stats` doesn't exist | 4h | P1 | P2-6. Uses existing pulse_log table, no new infra needed |
+| **obs-L-043** | No SOUL.md metadata extraction — dashboard shows "hound" but not what hound is/does | 2h | P1 | P2-1 in pulse-depth-spec. Read agent identity from SOUL.md |
+| **obs-L-044** | Full spec document: `specs/pulse-depth-spec.md` | ✅ DONE | — | Covers all 8 gaps with implementation plan, DB schema, priority phasing |
+
 ### Code Gaps (can fix without you)
 | ID | Gap | Est. | Priority | Notes |
 |----|-----|------|----------|-------|
-| ~~obs-L-005b~~ | Cross-platform paths: `Path.home() / ".observeco"` → `platformdirs` | — | ✅ DONE | `dirs.py` created. All 5 files migrated: billing.py, billing_wire.py, dashboard/server.py, heal.py (×2). 40/40 tests pass. |
-| ~~obs-L-014~~ | Vendor `htmx.min.js` in `static/` for offline dashboard support | — | ✅ Already done | `static/htmx.min.js` exists (48KB), StaticFiles mount active, template loads local-first with CDN fallback. |
-| ~~obs-L-037~~ | Golden launch test doc | — | ✅ DONE | Added to Single-Command Launch Verification section with go/no-go criteria table. |
-| **obs-L-007** | Integration test: `pip install` from clean env (Docker or VM) | 2h | P1 | Manual test before launch |
-| **obs-L-008** | CI matrix: push to trigger 8-job workflow, verify green | 15m | P1 | Workflow defined but never run |
-| **obs-L-009** | Terminal demo GIF: asciinema recording of install → pulse → chisel → dashboard (15s) | 2h | P1 | SVG exists, no GIF |
-| **obs-L-010** | Dashboard screenshot: run with real Hermes data, crop, save to repo | 1h | P1 | Captured but not saved to assets/ |
-|| ~~obs-L-013b~~ | GitHub: set repo description + topics | 15m | P1 | ✅ DONE | Description updated to value-focused: "Self-healing observability for AI agents. Discover, monitor, and auto-recover multi-agent systems — without a cloud dependency." 12 topics including agent-health, self-healing, agent-monitoring, devops, devtools, llm. |
-| ~~obs-L-013c~~ | GitHub: create bug report issue template | — | ✅ DONE | `.github/ISSUE_TEMPLATE/bug_report.md` exists with all required sections. Spec note was wrong — no feature_request.md exists. |
-| **obs-L-014** | Vendor `htmx.min.js` in `static/` for offline dashboard support | 10m | P1 | CSS inline works, htmx loads from CDN — breaks without internet |
-|| ~~obs-L-030~~ | Add coverage reporting to CI (`pytest --cov`) | 30m | P2 | ✅ ALREADY DONE | CI line 38 has `--cov=observeco --cov-report=term-missing`, pyproject.toml has `pytest-cov>=4` in dev deps, last CI run produced per-file coverage output across all 8 jobs, local run produces coverage at 18% overall. Was pre-wired with the original CI matrix — spec note was stale. |
-| **obs-L-032** | Port conflict test: verify _find_free_port works by starting two dashboard instances | 15m | P2 | Code exists, untested at runtime |
-| **obs-L-033** | Dashboard screenshot: save to assets/dashboard-preview.png and add to README | 15m | P1 | Need the screenshot file saved |
-| **obs-L-034** | Fix gaps map: update gaps map table to reflect actual state | 10m | P2 | Self-referential — this doc |
-| **obs-L-035** | Test distribution drafts in private Telegram channel for rendering | 30m | P2 | HN/Reddit/X have different markdown |
+| ~~obs-L-005b~~ | Cross-platform paths: `Path.home() / ".observeco"` → `platformdirs` | — | — | ✅ DONE | `dirs.py` created. All 5 files migrated: billing.py, billing_wire.py, dashboard/server.py, heal.py (×2). 40/40 tests pass. |
+| ~~obs-L-014~~ | Vendor `htmx.min.js` in `static/` for offline dashboard support | — | — | ✅ Already done | `static/htmx.min.js` exists (48KB), StaticFiles mount active, template loads local-first with CDN fallback. |
+| ~~obs-L-037~~ | Golden launch test doc | — | — | ✅ DONE | Added to Single-Command Launch Verification section with go/no-go criteria table. |
+| ~~obs-L-007~~ | Integration test: `pip install` from clean env (Docker or VM) | 2h | P1 | Manual test before launch |
+| ~~obs-L-008~~ | CI matrix: push to trigger 8-job workflow, verify green | 15m | P1 | Workflow defined but never run |
+| ~~obs-L-009~~ | Terminal demo GIF: asciinema recording of install → pulse → chisel → dashboard (15s) | 2h | P1 | SVG exists, no GIF |
+| ~~obs-L-010~~ | Dashboard screenshot: run with real Hermes data, crop, save to repo | 1h | P1 | Captured but not saved to assets/ |
+| ~~obs-L-013b~~ | GitHub: set repo description + topics | 15m | P1 | ✅ DONE |
+| ~~obs-L-013c~~ | GitHub: create bug report issue template | — | ✅ DONE | |
+| ~~obs-L-014~~ | Vendor `htmx.min.js` in `static/` for offline dashboard support | 10m | P1 | CSS inline works, htmx loads from CDN — breaks without internet |
+| ~~obs-L-030~~ | Add coverage reporting to CI (`pytest --cov`) | 30m | P2 | ✅ ALREADY DONE |
+| ~~obs-L-032~~ | Port conflict test: verify _find_free_port works by starting two dashboard instances | 15m | P2 | Code exists, untested at runtime |
+| ~~obs-L-033~~ | Dashboard screenshot: save to assets/dashboard-preview.png and add to README | 15m | P1 | Need the screenshot file saved |
+| ~~obs-L-034~~ | Fix gaps map: update gaps map table to reflect actual state | 10m | P2 | Self-referential — this doc |
+| ~~obs-L-035~~ | Test distribution drafts in private Telegram channel for rendering | 30m | P2 | HN/Reddit/X have different markdown |
+| | | | | |
+| **NEW FEATURES (2026-05-26):** | | | | |
+| **obs-L-045** | System prompt compression: port Hermes Chisel to `observeco chisel compress` (file-in/file-out) | 2d | P2 | Spec: `specs/pulse-depth-spec.md` §1 |
+| **obs-L-046** | Per-turn token tracking: `POST /api/chisel/trim` endpoint + Hermes post-turn hook | 3d | P2 | Spec: `specs/pulse-depth-spec.md` §2 |
+| **obs-L-047** | Auto-heal: integrate heal trigger into watch daemon (3-line change) | 1d | P2 | Spec: `specs/pulse-depth-spec.md` §3. Heal logic already exists. |
+| **obs-L-048** | OpenClaw ClawForge plugin: `@observeco/clawforge-plugin` Node.js ContextEngine hooks | 5-7d | P3 | Spec: `specs/pulse-depth-spec.md` §4. Separate package. |
+| **obs-L-049** | Push alerts: Telegram, webhook, email delivery module | 3d | P2 | Spec: `specs/pulse-depth-spec.md` §5. Alert detection pipeline exists. |
+| **obs-L-050** | Extended token history: expand dashboard queries from 24h to 7d (Free) / full history (Pro) | 2h | P1 | Spec: `specs/pulse-depth-spec.md` §6. All data already stored. Pro uses `?range=full` param. |
 
 ### Ops Gaps (blocked on you)
 | ID | Gap | Est. | Priority | Depends on |

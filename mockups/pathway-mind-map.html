@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Communication Pathway Mind Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #253349;
+  --border: #334155;
+  --border-soft: #273548;
+  --border-light: #334155;
+  --fg: #f8fafc;
+  --fg-2: #94a3b8;
+  --muted: #64748b;
+  --accent: #22c55e;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 24px;
+  --text-3xl: 40px;
+  --text-4xl: 56px;
+  --leading-body: 1.5;
+  --leading-tight: 1.06;
+  --tracking-display: -0.025em;
+  --container-max: 1440px;
+  --container-gutter-desktop: 36px;
+  --container-gutter-tablet: 24px;
+  --container-gutter-phone: 16px;
+  --section-y-desktop: 40px;
+  --section-y-tablet: 32px;
+  --section-y-phone: 24px;
+  --accent-on: #0c1628;
+  --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+  --accent-active: color-mix(in oklab, var(--accent), black 14%);
+  --success: #22c55e;
+  --warn: #eab308;
+  --danger: #ef4444;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 24px 72px rgba(0, 0, 0, 0.42);
+  --focus-ring: 0 0 0 4px color-mix(in oklab, var(--accent), transparent 70%);
+  --motion-fast: 100ms;
+  --motion-base: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --meta: #3b82f6;
+  --surface-warm: #253349;
+  --status-healthy: #22c55e;
+  --status-warning: #eab308;
+  --status-critical: #ef4444;
+  --status-info: #3b82f6;
+  --token-identity: #6366f1;
+  --token-skills: #8b5cf6;
+  --token-memory: #ec4899;
+  --token-tools: #14b8a6;
+  --token-guidance: #f97316;
+  --data-primary: #22c55e;
+  --data-secondary: #3b82f6;
+  --data-accent: #3b82f6;
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --yellow: #eab308;
+  --blue: #38bdf8;
+  --orange: #f97316;
+  --purple: #a78bfa;
+  --pink: #ec4899;
+  --cyan: #22d3ee;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.header-logo svg { width: 28px; height: 28px; }
+.header-title { font-size: 18px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--green); }
+.header-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.tier-badge {
+  background: rgba(34,197,94,0.12); color: #86efac; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px; letter-spacing: 0.03em;
+}
+.scenario-badge {
+  background: rgba(239,68,68,0.12); color: #fca5a5; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px; letter-spacing: 0.03em;
+  margin-left: auto;
+}
+
+/* Layout */
+.pane-layout { display: flex; gap: 16px; align-items: flex-start; }
+.left-rail { flex: 1; min-width: 0; }
+.right-rail { width: 380px; flex-shrink: 0; position: sticky; top: 80px; }
+@media (max-width: 1100px) {
+  .pane-layout { flex-direction: column; }
+  .right-rail { width: 100%; position: static; }
+}
+
+/* Graph container */
+.graph-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.graph-card-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15,23,42,0.4);
+}
+.graph-card-title { font-size: 14px; font-weight: 600; color: var(--fg); }
+.graph-card-sub { font-size: 11px; color: var(--muted); }
+.graph-card-actions { margin-left: auto; display: flex; gap: 6px; }
+
+/* Filter chips */
+.filter-chips {
+  display: flex; gap: 6px; padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.filter-chip {
+  padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 500;
+  border: 1px solid var(--border); background: transparent; color: var(--fg-2);
+  cursor: pointer; transition: all 0.15s;
+}
+.filter-chip:hover { border-color: var(--border-light); color: var(--fg); }
+.filter-chip.active { background: rgba(34,197,94,0.1); border-color: var(--green); color: var(--green); }
+.filter-chip.active-red { background: rgba(239,68,68,0.1); border-color: var(--red); color: var(--red); }
+.filter-chip.active-yellow { background: rgba(245,158,11,0.1); border-color: var(--amber); color: var(--amber); }
+
+/* SVG Graph area */
+.graph-svg-wrap {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.graph-svg-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--bg);
+}
+
+/* Node styles */
+.node-group { cursor: pointer; }
+.node-bg {
+  transition: fill 0.2s, stroke 0.2s;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.node-group:hover .node-bg { filter: drop-shadow(0 0 12px rgba(34,197,94,0.2)); }
+.node-label { font-size: 13px; font-weight: 600; fill: var(--fg); pointer-events: none; }
+.node-sublabel { font-size: 10px; fill: var(--muted); pointer-events: none; }
+.node-icon { pointer-events: none; }
+
+/* Edge styles */
+.edge-path {
+  fill: none;
+  stroke-width: 2.5;
+  cursor: pointer;
+  transition: stroke 0.2s, stroke-width 0.2s, opacity 0.2s;
+}
+.edge-path:hover { stroke-width: 3.5; }
+.edge-path.green { stroke: var(--green); }
+.edge-path.yellow { stroke: var(--amber); }
+.edge-path.red { stroke: var(--red); }
+.edge-path.gray { stroke: var(--border); }
+.edge-path.dimmed { opacity: 0.15; }
+
+.edge-label-bg {
+  fill: var(--surface); stroke: var(--border); stroke-width: 1;
+  rx: 4;
+}
+.edge-label { font-size: 9px; fill: var(--fg-2); text-anchor: middle; pointer-events: none; font-weight: 500; }
+
+/* Failure scenario markers */
+.failure-marker {
+  fill: var(--red); opacity: 0.6;
+  animation: pulse-danger 2s ease-in-out infinite;
+}
+@keyframes pulse-danger {
+  0%,100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
+/* Legend */
+.legend {
+  display: flex; gap: 16px; padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg-2); }
+.legend-line { width: 24px; height: 3px; border-radius: 2px; }
+.legend-line.green { background: var(--green); }
+.legend-line.yellow { background: var(--amber); }
+.legend-line.red { background: var(--red); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.legend-dot.green { background: var(--green); }
+.legend-dot.agent { background: #6366f1; }
+.legend-dot.platform { background: var(--cyan); }
+.legend-dot.cron { background: var(--amber); }
+.legend-dot.human { background: var(--pink); }
+.legend-dot.daemon { background: var(--purple); }
+
+/* Right rail - Detail panel */
+.detail-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.detail-panel-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.detail-panel-title { font-size: 13px; font-weight: 600; color: var(--fg); flex: 1; }
+.detail-panel-close { cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1; display: none; }
+.detail-panel-body { padding: 14px 16px; min-height: 200px; }
+
+/* Node detail card */
+.node-detail-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.node-detail-name { font-size: 15px; font-weight: 700; }
+.node-detail-type { font-size: 10px; color: var(--muted); background: var(--bg); padding: 2px 8px; border-radius: 6px; font-weight: 500; }
+.node-detail-status { font-size: 11px; }
+
+/* Edge list */
+.edge-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.edge-card {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(15,23,42,0.3);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.edge-card:hover { border-color: var(--border-light); }
+.edge-card .edge-dir { font-size: 12px; font-weight: 500; color: var(--fg); flex: 1; }
+.edge-card .edge-mech { font-size: 10px; color: var(--muted); width: 80px; }
+.edge-card .edge-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.edge-card .edge-status-dot.green { background: var(--green); }
+.edge-card .edge-status-dot.yellow { background: var(--amber); }
+.edge-card .edge-status-dot.red { background: var(--red); }
+.edge-card .edge-detail { font-size: 10px; color: var(--muted); max-width: 200px; }
+
+/* Scenario list */
+.scenario-section { margin-top: 12px; }
+.scenario-section-title { font-size: 11px; font-weight: 600; color: var(--fg-2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.scenario-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 8px; border-radius: 6px;
+  font-size: 12px; color: var(--fg-2);
+  border-left: 3px solid var(--border);
+  margin-bottom: 4px;
+}
+.scenario-item.detected { border-left-color: var(--red); background: rgba(239,68,68,0.04); }
+.scenario-item.detected .scenario-status { color: var(--red); font-weight: 600; }
+.scenario-item.ok { border-left-color: var(--green); background: rgba(34,197,94,0.04); }
+.scenario-item.ok .scenario-status { color: var(--green); }
+.scenario-item.warn { border-left-color: var(--amber); background: rgba(245,158,11,0.04); }
+.scenario-item.warn .scenario-status { color: var(--amber); }
+.scenario-status { width: 60px; flex-shrink: 0; font-size: 11px; }
+.scenario-desc { flex: 1; line-height: 1.4; }
+.scenario-tag {
+  font-size: 9px; padding: 1px 5px; border-radius: 4px;
+  background: rgba(239,68,68,0.1); color: #fca5a5;
+  margin-left: 4px; white-space: nowrap;
+}
+
+/* Summary bar at bottom */
+.summary-bar {
+  display: flex; gap: 16px; padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.summary-stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fg-2); }
+.summary-num { font-weight: 700; font-size: 14px; }
+.summary-num.green { color: var(--green); }
+.summary-num.red { color: var(--red); }
+.summary-num.amber { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ Header ═══ -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+          <defs>
+            <linearGradient id="oc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="oc-grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <circle cx="64" cy="64" r="60" fill="none" stroke="url(#oc-grad)" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#oc-grad2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/>
+          <circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+          <circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/>
+          <circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/>
+          <circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+          <circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/>
+          <circle cx="28" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+          <circle cx="100" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+        </svg>
+        <div>
+          <div class="header-title"><span>Observe</span>Co</div>
+          <div class="brand-tagline" style="font-size: 13px; color: #94a3b8; font-weight: 400; margin-top: 2px;">Tells you if your AI agents are working, what they're doing, and where your money goes.</div>
+          <div class="header-sub">Communication Pathway Mind Map</div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="tier-badge">🟡 Planned</span>
+      <span class="scenario-badge" id="detected-count-badge">7 failure scenarios detectable</span>
+    </div>
+  </header>
+
+  <!-- ═══ Main Layout ═══ -->
+  <div class="pane-layout">
+
+    <!-- ─── LEFT: Graph ─── -->
+    <div class="left-rail">
+      <div class="graph-card">
+
+        <!-- Graph header -->
+        <div class="graph-card-header">
+          <div class="graph-card-title">Agent Ecosystem Routing Graph</div>
+          <div class="graph-card-sub">Every communication path · Color-coded by health</div>
+          <div class="graph-card-actions">
+            <span style="font-size:10px;color:var(--muted);background:rgba(0,0,0,0.3);padding:4px 10px;border-radius:6px;">Click a node or edge to diagnose</span>
+          </div>
+        </div>
+
+        <!-- Filter chips -->
+        <div class="filter-chips" id="filter-chips">
+          <span class="filter-chip active" data-filter="all" onclick="setFilter('all')">All</span>
+          <span class="filter-chip active" data-filter="green" onclick="setFilter('green')">🟢 Healthy</span>
+          <span class="filter-chip active-red" data-filter="red" onclick="setFilter('red')">🔴 Broken</span>
+          <span class="filter-chip active-yellow" data-filter="yellow" onclick="setFilter('yellow')">🟡 Unverified</span>
+          <span style="flex:1;"></span>
+          <span style="font-size:10px;color:var(--muted);">pro · interactive</span>
+          <span style="font-size:10px;color:var(--green);font-weight:500;background:rgba(34,197,94,0.08);padding:2px 8px;border-radius:6px;">free · static view</span>
+        </div>
+
+        <!-- SVG Graph -->
+        <div class="graph-svg-wrap">
+          <svg viewBox="0 0 1000 620" id="pathway-graph" style="min-height:620px;">
+            <defs>
+              <marker id="arrow-green" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="var(--green)"/>
+              </marker>
+              <marker id="arrow-red" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="var(--red)"/>
+              </marker>
+              <marker id="arrow-amber" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="var(--amber)"/>
+              </marker>
+              <marker id="arrow-border" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 Z" fill="var(--border)"/>
+              </marker>
+              <filter id="glow-green"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glow-red"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+
+            <!-- ─── EDGES ─── -->
+
+            <!-- SCENARIO 1: Cron to dead mailbox (RED) -->
+            <!-- dreamer-intelligence-walk → main/inbox (no daemon reading it) -->
+            <path class="edge-path red" d="M200,430 Q280,380 380,470" id="edge-cron-dead" data-from="cron-dreamer" data-to="node-main" data-mechanism="cron-delivery" data-status="red" data-scenario="1" onclick="selectEdge('edge-cron-dead')"/>
+            <rect class="edge-label-bg" x="245" y="400" width="110" height="18"/>
+            <text class="edge-label" x="300" y="413">dreamer-intel → main/inbox</text>
+            <circle class="failure-marker" cx="290" cy="430" r="4"/>
+            <circle class="failure-marker" cx="310" cy="415" r="4"/>
+
+            <!-- SCENARIO 2: Kepler writes to wrong outbox (RED) -->
+            <!-- Kepler → signals/kepler/outbox/ (wrong - router scans signals/outbox/) -->
+            <path class="edge-path red" d="M620,280 Q650,310 700,340" id="edge-kepler-outbox" data-from="node-kepler" data-to="node-outbox-wrong" data-mechanism="signal-write" data-status="red" data-scenario="2" onclick="selectEdge('edge-kepler-outbox')"/>
+            <rect class="edge-label-bg" x="625" y="295" width="120" height="18"/>
+            <text class="edge-label" x="685" y="308">signal → wrong outbox</text>
+            <circle class="failure-marker" cx="660" cy="310" r="4"/>
+
+            <!-- Canonical Kepler → shared outbox (DIM - should be this but isn't) -->
+            <path class="edge-path gray" d="M620,280 Q680,300 740,280" id="edge-kepler-canon" data-from="node-kepler" data-to="node-outbox" data-mechanism="signal-write" data-status="dim" data-scenario="2" stroke-dasharray="4,4" onclick="selectEdge('edge-kepler-canon')"/>
+            <rect class="edge-label-bg" x="645" y="270" width="110" height="18" fill="var(--bg)" opacity="0.8"/>
+            <text class="edge-label" x="700" y="283" fill="var(--muted)">should be → shared outbox</text>
+
+            <!-- SCENARIO 3: Main direct-write to hound/inbox (YELLOW) -->
+            <!-- Main writes directly to hound/inbox instead of via router -->
+            <path class="edge-path yellow" d="M380,470 Q420,530 520,520" id="edge-main-direct" data-from="node-main" data-to="node-hound" data-mechanism="direct-write" data-status="yellow" data-scenario="3" onclick="selectEdge('edge-main-direct')"/>
+            <rect class="edge-label-bg" x="400" y="505" width="130" height="18" fill="var(--surface)" stroke="var(--amber)"/>
+            <text class="edge-label" x="465" y="518">→ hound/inbox (direct)</text>
+
+            <!-- Canonical path via router (GREEN) -->
+            <path class="edge-path green" d="M380,470 L380,520 Q380,555 420,555 L520,555 Q560,555 560,520 L560,480" id="edge-main-router" data-from="node-main" data-to="node-router" data-mechanism="signal-signal" data-status="green" data-scenario="3" onclick="selectEdge('edge-main-router')"/>
+            <rect class="edge-label-bg" x="430" y="540" width="100" height="18"/>
+            <text class="edge-label" x="480" y="553">→ router (canonical)</text>
+
+            <!-- Router → Hound (GREEN) -->
+            <path class="edge-path green" d="M620,480 Q640,490 660,490 Q680,490 680,470" id="edge-router-hound" data-from="node-router" data-to="node-hound" data-mechanism="signal-deliver" data-status="green" data-scenario="" onclick="selectEdge('edge-router-hound')"/>
+            <rect class="edge-label-bg" x="640" y="485" width="70" height="16"/>
+            <text class="edge-label" x="675" y="497">router → hound</text>
+
+            <!-- Router → Kepler (GREEN) -->
+            <path class="edge-path green" d="M660,280 Q680,300 700,320 Q720,340 740,360 Q760,380 780,380 Q790,380 790,370" id="edge-router-kepler" data-from="node-router" data-to="node-kepler" data-mechanism="signal-deliver" data-status="green" data-scenario="" onclick="selectEdge('edge-router-kepler')"/>
+            <rect class="edge-label-bg" x="700" y="325" width="80" height="16"/>
+            <text class="edge-label" x="740" y="337">router → kepler</text>
+
+            <!-- Router → Pragma (GREEN) via alias -->
+            <path class="edge-path yellow" d="M660,400 Q680,410 700,410 Q720,410 720,390" id="edge-router-pragma" data-from="node-router" data-to="node-pragma" data-mechanism="signal-alias" data-status="yellow" data-scenario="4" onclick="selectEdge('edge-router-pragma')"/>
+            <rect class="edge-label-bg" x="670" y="405" width="90" height="16" fill="var(--surface)" stroke="var(--amber)"/>
+            <text class="edge-label" x="715" y="417">→ pragma (alias: accelerator)</text>
+
+            <!-- SCENARIO 5: Intelligence tier misrouting (RED) -->
+            <!-- Hound writes briefs to intelligence/briefs/ (T3) but should be T1 -->
+            <path class="edge-path red" d="M680,470 Q710,490 740,510" id="edge-hound-intel" data-from="node-hound" data-to="node-intel-briefs" data-mechanism="intel-write" data-status="red" data-scenario="5" onclick="selectEdge('edge-hound-intel')"/>
+            <rect class="edge-label-bg" x="690" y="485" width="110" height="18" fill="var(--surface)" stroke="var(--red)"/>
+            <text class="edge-label" x="745" y="498">→ intel/briefs (T3)</text>
+            <circle class="failure-marker" cx="720" cy="495" r="4"/>
+            <text class="edge-label" x="745" y="380" fill="var(--muted)" font-size="8">intended: T1 → Telegram</text>
+
+            <!-- SCENARIO 6: WhatsApp bridge down (RED) -->
+            <!-- PA → WhatsApp bridge (down) -->
+            <path class="edge-path green" d="M220,200 Q280,180 340,190" id="edge-pa-msg" data-from="node-pa" data-to="node-telegram" data-mechanism="msg-send" data-status="green" data-scenario="" onclick="selectEdge('edge-pa-msg')"/>
+            <rect class="edge-label-bg" x="250" y="175" width="80" height="16"/>
+            <text class="edge-label" x="290" y="187">→ Telegram (ok)</text>
+
+            <path class="edge-path red" d="M300,200 Q340,220 370,240" id="edge-pa-whatsapp" data-from="node-pa" data-to="node-whatsapp" data-mechanism="msg-send" data-status="red" data-scenario="6" onclick="selectEdge('edge-pa-whatsapp')"/>
+            <rect class="edge-label-bg" x="310" y="215" width="90" height="16" fill="var(--surface)" stroke="var(--red)"/>
+            <text class="edge-label" x="355" y="227">→ WhatsApp (bridge down)</text>
+            <circle class="failure-marker" cx="340" cy="225" r="4"/>
+
+            <!-- SCENARIO 7: Stale agent inbox (RED) -->
+            <!-- Main inbox has unconsumed signals but Main is session-only -->
+            <path class="edge-path green" d="M200,380 Q280,360 380,390" id="edge-cron-watch" data-from="node-cron-watch" data-to="node-main" data-mechanism="cron-delivery" data-status="green" data-scenario="" onclick="selectEdge('edge-cron-watch')"/>
+            <rect class="edge-label-bg" x="260" y="365" width="100" height="16"/>
+            <text class="edge-label" x="310" y="377">watch → 458083937 (ok)</text>
+
+            <!-- Main inbox → unconsumed signals marker -->
+            <path class="edge-path red" d="M300,390 Q320,420 340,440 Q350,450 360,440" id="edge-inbox-stale" data-from="node-main" data-to="node-main" data-mechanism="inbox-poll" data-status="red" data-scenario="7" onclick="selectEdge('edge-inbox-stale')" fill="none" stroke-dasharray="4,4"/>
+            <rect class="edge-label-bg" x="300" y="415" width="130" height="16" fill="var(--surface)" stroke="var(--red)"/>
+            <text class="edge-label" x="365" y="427">inbox: 12 unconsumed</text>
+            <circle class="failure-marker" cx="340" cy="430" r="4"/>
+
+            <!-- GREEN edges - healthy -->
+            <!-- Sean → Telegram (healthy) -->
+            <path class="edge-path green" d="M90,60 Q100,100 130,120" id="edge-human-telegram" data-from="node-human" data-to="node-telegram" data-mechanism="human-msg" data-status="green" data-scenario="" onclick="selectEdge('edge-human-telegram')"/>
+            <rect class="edge-label-bg" x="90" y="90" width="60" height="16"/>
+            <text class="edge-label" x="120" y="102">chat</text>
+
+            <!-- Telegram → Main (healthy) -->
+            <path class="edge-path green" d="M200,180 Q280,200 380,220" id="edge-telegram-main" data-from="node-telegram" data-to="node-main" data-mechanism="bot-route" data-status="green" data-scenario="" onclick="selectEdge('edge-telegram-main')"/>
+            <rect class="edge-label-bg" x="260" y="195" width="100" height="16"/>
+            <text class="edge-label" x="310" y="207">bot → main/session</text>
+
+            <!-- Telegram → PA (healthy) -->
+            <path class="edge-path green" d="M160,200 Q180,230 200,260" id="edge-telegram-pa" data-from="node-telegram" data-to="node-pa" data-mechanism="bot-route" data-status="green" data-scenario="" onclick="selectEdge('edge-telegram-pa')"/>
+            <rect class="edge-label-bg" x="170" y="225" width="60" height="16"/>
+            <text class="edge-label" x="200" y="237">bot → pa</text>
+
+            <!-- Telegram → Dreamer (healthy) -->
+            <path class="edge-path green" d="M240,160 Q280,150 320,140" id="edge-telegram-dreamer" data-from="node-telegram" data-to="node-dreamer" data-mechanism="bot-route" data-status="green" data-scenario="" onclick="selectEdge('edge-telegram-dreamer')"/>
+            <rect class="edge-label-bg" x="260" y="142" width="70" height="16"/>
+            <text class="edge-label" x="295" y="154">bot → dreamer</text>
+
+            <!-- Main → Telegram (healthy) -->
+            <path class="edge-path green" d="M380,260 Q350,270 320,270 Q280,270 260,250" id="edge-main-send" data-from="node-main" data-to="node-telegram" data-mechanism="msg-send" data-status="green" data-scenario="" onclick="selectEdge('edge-main-send')"/>
+            <rect class="edge-label-bg" x="290" y="265" width="60" height="16"/>
+            <text class="edge-label" x="320" y="277">main→send</text>
+
+            <!-- Main → Dreamer (ACPS - healthy) -->
+            <path class="edge-path green" d="M380,300 Q360,290 340,280" id="edge-main-dreamer" data-from="node-main" data-to="node-dreamer" data-mechanism="acps" data-status="green" data-scenario="" onclick="selectEdge('edge-main-dreamer')"/>
+            <rect class="edge-label-bg" x="340" y="282" width="60" height="16"/>
+            <text class="edge-label" x="370" y="294">acps</text>
+
+            <!-- Main → PA (ACPS - healthy) -->
+            <path class="edge-path green" d="M380,340 Q360,350 340,350 Q320,350 300,340" id="edge-main-pa" data-from="node-main" data-to="node-pa" data-mechanism="acps" data-status="green" data-scenario="" onclick="selectEdge('edge-main-pa')"/>
+            <rect class="edge-label-bg" x="320" y="342" width="50" height="16"/>
+            <text class="edge-label" x="345" y="354">acps</text>
+
+            <!-- Dreamer → cron (trigger) (healthy) -->
+            <path class="edge-path green" d="M320,120 Q260,100 200,100 Q180,100 180,120" id="edge-dreamer-cron" data-from="node-dreamer" data-to="node-cron-trigger" data-mechanism="trigger" data-status="green" data-scenario="" onclick="selectEdge('edge-dreamer-cron')"/>
+            <rect class="edge-label-bg" x="200" y="95" width="60" height="16"/>
+            <text class="edge-label" x="230" y="107">trigger</text>
+
+            <!-- Cron → Telegram (healthy) -->
+            <path class="edge-path green" d="M120,180 Q140,170 160,165" id="edge-cron-telegram" data-from="node-cron-watch" data-to="node-telegram" data-mechanism="cron-delivery" data-status="green" data-scenario="" onclick="selectEdge('edge-cron-telegram')"/>
+            <rect class="edge-label-bg" x="120" y="168" width="60" height="16"/>
+            <text class="edge-label" x="150" y="180">deliver</text>
+
+            <!-- deal-scout → Telegram (healthy) -->
+            <path class="edge-path green" d="M100,280 Q130,260 160,250" id="edge-dealscout-telegram" data-from="node-deal-scout" data-to="node-telegram" data-mechanism="cron-delivery" data-status="green" data-scenario="" onclick="selectEdge('edge-dealscout-telegram')"/>
+            <rect class="edge-label-bg" x="110" y="258" width="60" height="16"/>
+            <text class="edge-label" x="140" y="270">deliver</text>
+
+            <!-- ─── NODES ─── -->
+
+            <!-- Human (Sean) -->
+            <g class="node-group" id="node-human" onclick="selectNode('node-human')">
+              <ellipse class="node-bg" cx="80" cy="50" rx="38" ry="24" fill="rgba(236,72,153,0.12)" stroke="var(--pink)" stroke-width="1.5"/>
+              <text class="node-label" x="80" y="46" text-anchor="middle">🧑 Sean</text>
+              <text class="node-sublabel" x="80" y="59" text-anchor="middle">Human operator</text>
+            </g>
+
+            <!-- Telegram -->
+            <g class="node-group" id="node-telegram" onclick="selectNode('node-telegram')">
+              <rect class="node-bg" x="155" y="145" width="90" height="44" rx="8" fill="rgba(34,211,238,0.08)" stroke="var(--cyan)" stroke-width="1.5"/>
+              <text class="node-label" x="200" y="163" text-anchor="middle">📱 Telegram</text>
+              <text class="node-sublabel" x="200" y="178" text-anchor="middle">bot: observeco_bot</text>
+            </g>
+
+            <!-- WhatsApp bridge -->
+            <g class="node-group" id="node-whatsapp" onclick="selectNode('node-whatsapp')">
+              <circle class="node-bg" cx="390" cy="245" r="30" fill="rgba(34,211,238,0.08)" stroke="var(--red)" stroke-width="2"/>
+              <text class="node-label" x="390" y="242" text-anchor="middle" font-size="11">💬 WhatsApp</text>
+              <text class="node-sublabel" x="390" y="256" text-anchor="middle" fill="var(--red)">bridge down</text>
+            </g>
+
+            <!-- Dreamer -->
+            <g class="node-group" id="node-dreamer" onclick="selectNode('node-dreamer')">
+              <rect class="node-bg" x="275" y="95" width="90" height="44" rx="8" fill="rgba(99,102,241,0.1)" stroke="#6366f1" stroke-width="1.5"/>
+              <text class="node-label" x="320" y="113" text-anchor="middle">🧠 Dreamer</text>
+              <text class="node-sublabel" x="320" y="128" text-anchor="middle">Hermes · $0.01/turn</text>
+            </g>
+
+            <!-- Main -->
+            <g class="node-group" id="node-main" onclick="selectNode('node-main')">
+              <rect class="node-bg" x="335" y="245" width="90" height="44" rx="8" fill="rgba(99,102,241,0.1)" stroke="#6366f1" stroke-width="1.5"/>
+              <text class="node-label" x="380" y="263" text-anchor="middle">⚡ Main</text>
+              <text class="node-sublabel" x="380" y="278" text-anchor="middle">Hermes · session-only</text>
+            </g>
+
+            <!-- PA -->
+            <g class="node-group" id="node-pa" onclick="selectNode('node-pa')">
+              <rect class="node-bg" x="195" y="255" width="90" height="44" rx="8" fill="rgba(99,102,241,0.1)" stroke="#6366f1" stroke-width="1.5"/>
+              <text class="node-label" x="240" y="273" text-anchor="middle">📋 PA</text>
+              <text class="node-sublabel" x="240" y="288" text-anchor="middle">Hermes · $0.02/turn</text>
+            </g>
+
+            <!-- Kepler -->
+            <g class="node-group" id="node-kepler" onclick="selectNode('node-kepler')">
+              <rect class="node-bg" x="575" y="260" width="90" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="var(--purple)" stroke-width="1.5"/>
+              <text class="node-label" x="620" y="278" text-anchor="middle">🛰️ Kepler</text>
+              <text class="node-sublabel" x="620" y="293" text-anchor="middle">OpenClaw · daemon</text>
+            </g>
+
+            <!-- Hound -->
+            <g class="node-group" id="node-hound" onclick="selectNode('node-hound')">
+              <rect class="node-bg" x="635" y="450" width="90" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="var(--purple)" stroke-width="1.5"/>
+              <text class="node-label" x="680" y="468" text-anchor="middle">🐕 Hound</text>
+              <text class="node-sublabel" x="680" y="483" text-anchor="middle">OpenClaw · daemon</text>
+            </g>
+
+            <!-- Pragma (alias for accelerator) -->
+            <g class="node-group" id="node-pragma" onclick="selectNode('node-pragma')">
+              <rect class="node-bg" x="675" y="365" width="90" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="var(--amber)" stroke-width="2" stroke-dasharray="4,2"/>
+              <text class="node-label" x="720" y="383" text-anchor="middle">⚙️ Pragma</text>
+              <text class="node-sublabel" x="720" y="398" text-anchor="middle">alias: accelerator</text>
+            </g>
+
+            <!-- Router -->
+            <g class="node-group" id="node-router" onclick="selectNode('node-router')">
+              <rect class="node-bg" x="605" y="370" width="90" height="44" rx="8" fill="rgba(59,130,246,0.08)" stroke="var(--blue)" stroke-width="1.5"/>
+              <text class="node-label" x="650" y="388" text-anchor="middle">🔀 Router</text>
+              <text class="node-sublabel" x="650" y="403" text-anchor="middle">signal routing daemon</text>
+            </g>
+
+            <!-- Cron: observeco watch -->
+            <g class="node-group" id="node-cron-watch" onclick="selectNode('node-cron-watch')">
+              <rect class="node-bg" x="75" y="155" width="90" height="44" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+              <text class="node-label" x="120" y="173" text-anchor="middle">⏰ watch</text>
+              <text class="node-sublabel" x="120" y="188" text-anchor="middle">every 30s</text>
+            </g>
+
+            <!-- Cron: dreamer-intelligence-walk -->
+            <g class="node-group" id="node-cron-dreamer" onclick="selectNode('node-cron-dreamer')">
+              <rect class="node-bg" x="135" y="405" width="130" height="44" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--red)" stroke-width="2"/>
+              <text class="node-label" x="200" y="423" text-anchor="middle">🧠 dreamer-intel-walk</text>
+              <text class="node-sublabel" x="200" y="438" text-anchor="middle">every 30m → main/inbox</text>
+            </g>
+
+            <!-- Cron: deal-scout -->
+            <g class="node-group" id="node-deal-scout" onclick="selectNode('node-deal-scout')">
+              <rect class="node-bg" x="55" y="265" width="90" height="44" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+              <text class="node-label" x="100" y="283" text-anchor="middle">✈️ deal-scout</text>
+              <text class="node-sublabel" x="100" y="298" text-anchor="middle">daily 8am</text>
+            </g>
+
+            <!-- Cron: trigger (generic cron launcher) -->
+            <g class="node-group" id="node-cron-trigger" onclick="selectNode('node-cron-trigger')">
+              <rect class="node-bg" x="135" y="100" width="90" height="44" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+              <text class="node-label" x="180" y="118" text-anchor="middle">⏰ crond</text>
+              <text class="node-sublabel" x="180" y="133" text-anchor="middle">Hermes scheduler</text>
+            </g>
+
+            <!-- Shared outbox -->
+            <g class="node-group" id="node-outbox" onclick="selectNode('node-outbox')">
+              <rect class="node-bg" x="740" y="260" width="100" height="36" rx="6" fill="rgba(59,130,246,0.06)" stroke="var(--blue)" stroke-width="1" stroke-dasharray="3,2"/>
+              <text class="node-label" x="790" y="278" text-anchor="middle" font-size="11">📤 signals/outbox/</text>
+              <text class="node-sublabel" x="790" y="291" text-anchor="middle" font-size="9" fill="var(--muted)">(router watches here)</text>
+            </g>
+
+            <!-- Wrong outbox (Kepler's old path) -->
+            <g class="node-group" id="node-outbox-wrong" onclick="selectNode('node-outbox-wrong')">
+              <rect class="node-bg" x="750" y="340" width="120" height="36" rx="6" fill="rgba(239,68,68,0.06)" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="3,2"/>
+              <text class="node-label" x="810" y="358" text-anchor="middle" font-size="11" fill="var(--red)">📤 kepler/outbox/</text>
+              <text class="node-sublabel" x="810" y="371" text-anchor="middle" font-size="9" fill="var(--red)">(router doesn't scan)</text>
+            </g>
+
+            <!-- Intel briefs (T3 - wrong tier) -->
+            <g class="node-group" id="node-intel-briefs" onclick="selectNode('node-intel-briefs')">
+              <rect class="node-bg" x="780" y="500" width="130" height="36" rx="6" fill="rgba(239,68,68,0.06)" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="3,2"/>
+              <text class="node-label" x="845" y="518" text-anchor="middle" font-size="11" fill="var(--red)">📁 intel/briefs (T3)</text>
+              <text class="node-sublabel" x="845" y="531" text-anchor="middle" font-size="9" fill="var(--red)">(should be T1 → Telegram)</text>
+            </g>
+
+            <!-- Inbox unconsumed marker -->
+            <circle cx="450" cy="420" r="8" fill="none" stroke="var(--red)" stroke-width="2" stroke-dasharray="3,3" opacity="0.6"/>
+            <text x="450" y="410" text-anchor="middle" font-size="8" fill="var(--red)" opacity="0.8">12 unread</text>
+
+          </svg>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+          <div class="legend-item"><div class="legend-line green"></div> Healthy</div>
+          <div class="legend-item"><div class="legend-line yellow"></div> Unverified</div>
+          <div class="legend-item"><div class="legend-line red"></div> Broken</div>
+          <div class="legend-item"><div class="legend-line" style="background:var(--border);"></div> Should-be</div>
+          <span style="color:var(--border);width:1px;"></span>
+          <div class="legend-item"><div class="legend-dot agent"></div> Agent</div>
+          <div class="legend-item"><div class="legend-dot platform"></div> Platform</div>
+          <div class="legend-item"><div class="legend-dot cron"></div> Cron</div>
+          <div class="legend-item"><div class="legend-dot human"></div> Human</div>
+          <div class="legend-item"><div class="legend-dot daemon"></div> Daemon</div>
+          <div style="flex:1;"></div>
+          <div class="legend-item" style="color:var(--muted);">🟡 Free = static snapshot</div>
+          <div class="legend-item" style="color:var(--green);">🟢 Pro = interactive + live</div>
+        </div>
+
+        <!-- Summary bar -->
+        <div class="summary-bar">
+          <div class="summary-stat">Total edges: <span class="summary-num" style="color:var(--fg);">14</span></div>
+          <div class="summary-stat">🟢 <span class="summary-num green">8</span> healthy</div>
+          <div class="summary-stat">🟡 <span class="summary-num amber">2</span> unverified</div>
+          <div class="summary-stat">🔴 <span class="summary-num red">4</span> broken</div>
+          <span style="flex:1;"></span>
+          <div class="summary-stat" style="color:var(--red);">4 failure scenarios active</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── RIGHT: Detail Panel ─── -->
+    <div class="right-rail" id="detail-rail">
+      <div class="detail-panel">
+        <div class="detail-panel-header">
+          <div class="detail-panel-title" id="detail-title">🔍 Select a node or edge</div>
+          <div class="detail-panel-close" id="detail-close" onclick="clearSelection()">✕</div>
+        </div>
+        <div class="detail-panel-body" id="detail-body">
+          <div style="color:var(--muted);font-size:13px;line-height:1.6;text-align:center;padding:40px 0;">
+            Click any node (agent, cron, platform)<br>or edge (pathway) to inspect it.
+            <div style="margin-top:20px;font-size:11px;color:var(--fg-2);">
+              <div style="padding:8px 12px;background:rgba(15,23,42,0.5);border-radius:8px;display:inline-block;text-align:left;">
+                <div>🔴 <strong>4 broken</strong> — stale inboxes, dead bridges, wrong outboxes</div>
+                <div style="margin-top:4px;">🟡 <strong>2 unverified</strong> — direct writes, alias routes</div>
+                <div style="margin-top:4px;">🟢 <strong>8 healthy</strong> — main paths confirmed working</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── Data ───
+const NODE_DATA = {
+  'node-human': {
+    name: '🧑 Sean Foo',
+    type: 'Human operator',
+    status: 'active',
+    desc: 'Reads Telegram, sends commands. The human-in-the-loop for escalation.',
+    scenarios: []
+  },
+  'node-telegram': {
+    name: '📱 Telegram',
+    type: 'Messaging platform',
+    status: 'active',
+    desc: 'Bot observeco_bot. Primary message channel. Routes commands to agents via session router.',
+    scenarios: []
+  },
+  'node-whatsapp': {
+    name: '💬 WhatsApp',
+    type: 'Messaging platform',
+    status: 'down',
+    desc: 'WhatsApp bridge daemon. Currently NOT running — bridge process exited yesterday.',
+    scenarios: [{num: 6, label: 'Bridge down', detail: 'WhatsApp bridge daemon exited 14h ago. Messages queued but undelivered.'}]
+  },
+  'node-dreamer': {
+    name: '🧠 Dreamer',
+    type: 'Hermes agent',
+    status: 'active',
+    desc: 'Notices patterns, runs intelligence walks. Session-only, triggered by cron + human.',
+    scenarios: []
+  },
+  'node-main': {
+    name: '⚡ Main',
+    type: 'Hermes agent',
+    status: 'session',
+    desc: 'The Applied Thinker. Session-only — runs when Sean types. Has inbox but no daemon polling it.',
+    scenarios: [{num: 1, label: 'Stale inbox', detail: '12 unconsumed signals in main/inbox. Cron delivers every 30m but no daemon reads them.'}, {num: 3, label: 'Direct write', detail: 'Main writes directly to hound/inbox and kepler/inbox, bypassing the router. No audit trail.'}]
+  },
+  'node-pa': {
+    name: '📋 PA',
+    type: 'Hermes agent',
+    status: 'active',
+    desc: 'Sweeps channels, formats signals, handles scheduling. Daemon-mode agent.',
+    scenarios: []
+  },
+  'node-kepler': {
+    name: '🛰️ Kepler',
+    type: 'OpenClaw agent',
+    status: 'active',
+    desc: 'Debate orchestration agent. Daemon-mode. Currently writes signals to wrong outbox.',
+    scenarios: [{num: 2, label: 'Wrong outbox', detail: 'Kepler writes to signals/kepler/outbox/ but router scans signals/outbox/. 5 debate responses dead-lettered.'}]
+  },
+  'node-hound': {
+    name: '🐕 Hound',
+    type: 'OpenClaw agent',
+    status: 'active',
+    desc: 'Intelligence watcher. Monitors feeds and writes briefs to intelligence/ tier directories.',
+    scenarios: [{num: 5, label: 'Tier misrouting', detail: 'Hound writes briefs to intel/briefs (T3) instead of T1 (Telegram). Sean never sees urgent flags.'}]
+  },
+  'node-pragma': {
+    name: '⚙️ Pragma',
+    type: 'OpenClaw agent (alias)',
+    status: 'active',
+    desc: 'Alias for accelerator. Receives signals intended for Accelerator. Verify this is intentional.',
+    scenarios: [{num: 4, label: 'Alias routing', detail: 'Pragma = alias for accelerator. Signals to accelerator land in pragma/inbox. Verify semantic correctness.'}]
+  },
+  'node-router': {
+    name: '🔀 Signal Router',
+    type: 'Routing daemon',
+    status: 'active',
+    desc: 'Scans signals/outbox/ every 60s. Routes to correct agent inboxes by topic.',
+    scenarios: []
+  },
+  'node-cron-watch': {
+    name: '⏰ observeco watch',
+    type: 'Cron job',
+    status: 'active',
+    desc: 'Agent health check every 30s. Delivers results to Telegram 458083937. Healthy.',
+    scenarios: []
+  },
+  'node-cron-dreamer': {
+    name: '🧠 dreamer-intelligence-walk',
+    type: 'Cron job',
+    status: 'active',
+    desc: 'Runs Dreamer intelligence walk every 30m. Deliver target: main/inbox. BUT nobody reads main/inbox.',
+    scenarios: [{num: 1, label: 'Dead delivery target', detail: 'Cron fires every 30m → main/inbox. Main is session-only with no daemon. 12+ outputs unconsumed.'}]
+  },
+  'node-deal-scout': {
+    name: '✈️ deal-scout',
+    type: 'Cron job',
+    status: 'active',
+    desc: 'Daily 8am flight deal scout. Delivers to Telegram. Healthy.',
+    scenarios: []
+  },
+  'node-cron-trigger': {
+    name: '⏰ Hermes crond',
+    type: 'Cron scheduler',
+    status: 'active',
+    desc: 'Hermes Agent cron scheduler. Triggers all cron jobs on schedule.',
+    scenarios: []
+  },
+  'node-outbox': {
+    name: '📤 signals/outbox/',
+    type: 'Shared directory',
+    status: 'active',
+    desc: 'Canonical shared outbox. Router scans here every 60s for outgoing signals.',
+    scenarios: []
+  },
+  'node-outbox-wrong': {
+    name: '📤 kepler/outbox/',
+    type: 'Stale directory',
+    status: 'abandoned',
+    desc: 'Kepler\'s old outbox path. Router does NOT scan this directory. Anything written here is dead-lettered.',
+    scenarios: [{num: 2, label: 'Dead outbox', detail: 'Kepler writes to kepler/outbox/. Router scans signals/outbox/. Files sit here forever.'}]
+  },
+  'node-intel-briefs': {
+    name: '📁 intel/briefs (T3)',
+    type: 'Intelligence tier',
+    status: 'broken',
+    desc: 'T3 tier — silently logged, never delivered to human. Hound writes briefs here but they should go to T1 (Telegram).',
+    scenarios: [{num: 5, label: 'Wrong tier', detail: 'Briefs written to T3 (silent log) instead of T1 (Telegram to Sean). Not a routing error — a content classification error.'}]
+  }
+};
+
+const EDGE_DATA = {
+  'edge-cron-dead': {
+    from: 'node-cron-dreamer', to: 'node-main',
+    mech: 'cron delivery', status: 'red',
+    detail: 'Cron fires every 30m to main/inbox. Main is session-only — no daemon reads its inbox. 12+ outputs unconsumed.',
+    scenario: '#1: Cron to dead target'
+  },
+  'edge-kepler-outbox': {
+    from: 'node-kepler', to: 'node-outbox-wrong',
+    mech: 'signal write', status: 'red',
+    detail: 'Kepler writes to kepler/outbox/ instead of signals/outbox/. Router only scans the shared outbox. 5 signals dead-lettered.',
+    scenario: '#2: Wrong outbox'
+  },
+  'edge-main-direct': {
+    from: 'node-main', to: 'node-hound',
+    mech: 'direct write', status: 'yellow',
+    detail: 'Main writes signals directly to hound/inbox instead of via shared outbox → router. No audit trail, bypasses retry logic.',
+    scenario: '#3: Direct inbox write'
+  },
+  'edge-router-hound': {
+    from: 'node-router', to: 'node-hound',
+    mech: 'signal delivery', status: 'green',
+    detail: 'Canonical route: router → hound/inbox. Verified working. Last delivery: 2m ago.',
+    scenario: null
+  },
+  'edge-router-kepler': {
+    from: 'node-router', to: 'node-kepler',
+    mech: 'signal delivery', status: 'green',
+    detail: 'Canonical route: router → kepler/inbox. Verified working.',
+    scenario: null
+  },
+  'edge-router-pragma': {
+    from: 'node-router', to: 'node-pragma',
+    mech: 'alias route', status: 'yellow',
+    detail: 'Pragma is alias for accelerator. Signals to accelerator land in pragma/inbox. Verify this mapping is intentional.',
+    scenario: '#4: Alias routing mismatch'
+  },
+  'edge-hound-intel': {
+    from: 'node-hound', to: 'node-intel-briefs',
+    mech: 'intel write', status: 'red',
+    detail: 'Hound writes briefs to intel/briefs (T3 — silent log). These should be T1 (Telegram to Sean). He never sees them.',
+    scenario: '#5: Intelligence tier misrouting'
+  },
+  'edge-pa-whatsapp': {
+    from: 'node-pa', to: 'node-whatsapp',
+    mech: 'message send', status: 'red',
+    detail: 'PA tries to send evening brief via WhatsApp bridge. Bridge daemon exited 14h ago. Messages queued but undelivered.',
+    scenario: '#6: Bridge failure'
+  },
+  'edge-inbox-stale': {
+    from: 'node-main', to: 'node-main',
+    mech: 'inbox polling', status: 'red',
+    detail: 'main/inbox has 12 unconsumed signals. Oldest: 6h ago. Main is session-only with no daemon polling its inbox.',
+    scenario: '#7: Stale agent inbox'
+  },
+  'edge-human-telegram': {
+    from: 'node-human', to: 'node-telegram',
+    mech: 'message send', status: 'green',
+    detail: 'Sean sends messages to Telegram bot. Active session. Verified working.',
+    scenario: null
+  },
+  'edge-telegram-main': {
+    from: 'node-telegram', to: 'node-main',
+    mech: 'bot routing', status: 'green',
+    detail: 'Telegram bot routes commands to Main session. Last route: 5m ago.',
+    scenario: null
+  },
+  'edge-telegram-pa': {
+    from: 'node-telegram', to: 'node-pa',
+    mech: 'bot routing', status: 'green',
+    detail: 'Telegram bot routes commands to PA. Active.',
+    scenario: null
+  },
+  'edge-telegram-dreamer': {
+    from: 'node-telegram', to: 'node-dreamer',
+    mech: 'bot routing', status: 'green',
+    detail: 'Telegram bot routes commands to Dreamer. Active.',
+    scenario: null
+  },
+  'edge-main-send': {
+    from: 'node-main', to: 'node-telegram',
+    mech: 'message send', status: 'green',
+    detail: 'Main sends messages to Telegram. Last send: 2m ago.',
+    scenario: null
+  },
+  'edge-main-dreamer': {
+    from: 'node-main', to: 'node-dreamer',
+    mech: 'ACPS signal', status: 'green',
+    detail: 'Main ↔ Dreamer via ACPS. Inter-agent communication channel. Verified working.',
+    scenario: null
+  },
+  'edge-main-pa': {
+    from: 'node-main', to: 'node-pa',
+    mech: 'ACPS signal', status: 'green',
+    detail: 'Main ↔ PA via ACPS. Inter-agent communication channel. Verified working.',
+    scenario: null
+  },
+  'edge-dreamer-cron': {
+    from: 'node-dreamer', to: 'node-cron-trigger',
+    mech: 'trigger', status: 'green',
+    detail: 'Dreamer triggers cron jobs via Hermes scheduler. Verified working.',
+    scenario: null
+  },
+  'edge-cron-telegram': {
+    from: 'node-cron-watch', to: 'node-telegram',
+    mech: 'cron delivery', status: 'green',
+    detail: 'observeco watch delivers to Telegram 458083937. Last delivery: 30s ago. Healthy.',
+    scenario: null
+  },
+  'edge-dealscout-telegram': {
+    from: 'node-deal-scout', to: 'node-telegram',
+    mech: 'cron delivery', status: 'green',
+    detail: 'deal-scout delivers to Telegram daily at 8am. Last delivery: today 8:00 AM. Healthy.',
+    scenario: null
+  }
+};
+
+let selected = null;
+
+// ─── Select node ───
+function selectNode(id) {
+  selected = { type: 'node', id };
+  const data = NODE_DATA[id];
+  document.getElementById('detail-close').style.display = 'block';
+  document.getElementById('detail-title').textContent = data.name;
+
+  let scenariosHtml = '';
+  if (data.scenarios && data.scenarios.length > 0) {
+    scenariosHtml = '<div class="scenario-section"><div class="scenario-section-title">Detected Issues</div>';
+    data.scenarios.forEach(s => {
+      scenariosHtml += `<div class="scenario-item detected">
+        <div class="scenario-status">🔴 #${s.num}</div>
+        <div class="scenario-desc"><strong>${s.label}</strong><br>${s.detail}</div>
+      </div>`;
+    });
+    scenariosHtml += '</div>';
+  }
+
+  const connections = getNodeConnections(id);
+  let edgesHtml = '';
+  if (connections.length > 0) {
+    edgesHtml = '<div class="scenario-section" style="margin-top:10px;"><div class="scenario-section-title">Pathways</div>';
+    connections.forEach(e => {
+      const dir = e.from === id ? `→ ${getShortName(e.to)}` : `${getShortName(e.from)} →`;
+      const statusDot = `edge-status-dot ${e.data.status}`;
+      edgesHtml += `<div class="edge-card" onclick="selectEdge('${e.edgeId}')">
+        <div class="${statusDot}"></div>
+        <div class="edge-dir">${dir}</div>
+        <div class="edge-mech">${e.data.mech}</div>
+        <div style="font-size:10px;color:var(--muted);">${e.data.status === 'green' ? '✅' : e.data.status === 'yellow' ? '🟡' : '🔴'} ${e.data.status}</div>
+      </div>`;
+    });
+    edgesHtml += '</div>';
+  }
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="node-detail-header">
+      <div class="node-detail-name">${data.name}</div>
+      <div class="node-detail-type">${data.type}</div>
+    </div>
+    <div style="font-size:12px;color:var(--fg-2);line-height:1.6;margin-bottom:8px;">${data.desc}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+      Status: ${data.status === 'active' ? '<span style="color:var(--green);">🟢 active</span>' :
+                 data.status === 'session' ? '<span style="color:var(--amber);">🟡 session-only</span>' :
+                 data.status === 'down' ? '<span style="color:var(--red);">🔴 down</span>' :
+                 data.status === 'broken' ? '<span style="color:var(--red);">🔴 broken</span>' :
+                 '<span style="color:var(--muted);">⚪ ' + data.status + '</span>'}
+    </div>
+    ${scenariosHtml}
+    ${edgesHtml}
+  `;
+}
+
+// ─── Select edge ───
+function selectEdge(id) {
+  selected = { type: 'edge', id };
+  const data = EDGE_DATA[id];
+  if (!data) return;
+  document.getElementById('detail-close').style.display = 'block';
+  document.getElementById('detail-title').textContent =
+    data.status === 'green' ? '🟢 ' + data.mech :
+    data.status === 'yellow' ? '🟡 ' + data.mech :
+    '🔴 ' + data.mech;
+
+  const fromName = getShortName(data.from);
+  const toName = getShortName(data.to);
+
+  let statusBadge = '';
+  if (data.status === 'green') statusBadge = '<span style="color:var(--green);font-weight:600;">🟢 Healthy</span>';
+  else if (data.status === 'yellow') statusBadge = '<span style="color:var(--amber);font-weight:600;">🟡 Unverified</span>';
+  else statusBadge = '<span style="color:var(--red);font-weight:600;">🔴 Broken</span>';
+
+  let scenarioSection = '';
+  if (data.scenario) {
+    scenarioSection = `<div class="scenario-item detected" style="margin-top:8px;">
+      <div class="scenario-status">🔴 ${data.scenario}</div>
+      <div class="scenario-desc">${data.detail}</div>
+    </div>`;
+  } else {
+    scenarioSection = `<div class="scenario-item ok" style="margin-top:8px;">
+      <div class="scenario-status">✅ OK</div>
+      <div class="scenario-desc">${data.detail}</div>
+    </div>`;
+  }
+
+  document.getElementById('detail-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span class="node-detail-name">${fromName}</span>
+      <span style="color:var(--muted);font-size:13px;">→</span>
+      <span class="node-detail-name">${toName}</span>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">
+      ${data.mech} · ${statusBadge}
+    </div>
+    ${scenarioSection}
+  `;
+}
+
+// ─── Helpers ───
+function getShortName(id) {
+  const data = NODE_DATA[id];
+  return data ? data.name.split(' ').slice(0,2).join(' ') : id;
+}
+
+function getNodeConnections(nodeId) {
+  const result = [];
+  for (const [edgeId, data] of Object.entries(EDGE_DATA)) {
+    if (data.from === nodeId || data.to === nodeId) {
+      result.push({ edgeId, data, from: data.from, to: data.to });
+    }
+  }
+  return result;
+}
+
+// ─── Clear selection ───
+function clearSelection() {
+  selected = null;
+  document.getElementById('detail-close').style.display = 'none';
+  document.getElementById('detail-title').textContent = '🔍 Select a node or edge';
+  document.getElementById('detail-body').innerHTML = `
+    <div style="color:var(--muted);font-size:13px;line-height:1.6;text-align:center;padding:40px 0;">
+      Click any node (agent, cron, platform)<br>or edge (pathway) to inspect it.
+      <div style="margin-top:20px;font-size:11px;color:var(--fg-2);">
+        <div style="padding:8px 12px;background:rgba(15,23,42,0.5);border-radius:8px;display:inline-block;text-align:left;">
+          <div>🔴 <strong>4 broken</strong> — stale inboxes, dead bridges, wrong outboxes</div>
+          <div style="margin-top:4px;">🟡 <strong>2 unverified</strong> — direct writes, alias routes</div>
+          <div style="margin-top:4px;">🟢 <strong>8 healthy</strong> — main paths confirmed working</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Filter ───
+function setFilter(filter) {
+  document.querySelectorAll('.filter-chip').forEach(c => {
+    c.classList.remove('active', 'active-red', 'active-yellow');
+  });
+  document.querySelectorAll(`.filter-chip[data-filter="${filter}"]`).forEach(c => {
+    if (filter === 'red') c.classList.add('active-red');
+    else if (filter === 'yellow') c.classList.add('active-yellow');
+    else c.classList.add('active');
+  });
+
+  // Toggle edge visibility
+  document.querySelectorAll('.edge-path').forEach(el => {
+    if (filter === 'all') {
+      el.classList.remove('dimmed');
+    } else {
+      const status = el.getAttribute('data-status');
+      if (filter === 'green') {
+        if (status === 'green') el.classList.remove('dimmed');
+        else el.classList.add('dimmed');
+      } else if (filter === 'red') {
+        if (status === 'red') el.classList.remove('dimmed');
+        else el.classList.add('dimmed');
+      } else if (filter === 'yellow') {
+        if (status === 'yellow') el.classList.remove('dimmed');
+        else el.classList.add('dimmed');
+      }
+    }
+  });
+}
+
+// ─── Init: pre-select a problematic node ───
+document.addEventListener('DOMContentLoaded', function() {
+  // Pre-select a node to show the detail panel has content
+  // setTimeout(() => selectNode('node-main'), 500);
+});
+</script>
+
+<!-- ObserveCo branding -->
+<div style="text-align:center;padding:24px 0 16px;font-size:12px;color:#475569;border-top:1px solid #1e293b;margin-top:32px;">ObserveCo · Runtime observability for AI agents</div>
+</body>
+</html>

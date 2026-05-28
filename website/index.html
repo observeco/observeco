@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ObserveCo — Runtime observability for AI agents</title>
+  <meta name="description" content="ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes. Open source. Local. No cloud.">
+  <meta property="og:title" content="ObserveCo — Runtime observability for AI agents">
+  <meta property="og:description" content="Tells you if your AI agents are working, what they're doing, and where your money goes.">
+  <meta property="og:image" content="assets/dashboard-preview.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #253349;
+      --border: #334155;
+      --green: #22c55e;
+      --green-dim: rgba(34, 197, 94, 0.15);
+      --blue: #3b82f6;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --fg: #f8fafc;
+      --fg-2: #94a3b8;
+      --fg-3: #64748b;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--fg);
+    }
+    .nav-logo svg { width: 32px; height: 32px; }
+    .nav-logo span { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a {
+      color: var(--fg-2);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--fg); }
+    .nav-cta {
+      background: var(--green) !important;
+      color: #000 !important;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      font-family: var(--font-mono);
+      font-size: 13px !important;
+    }
+    .nav-cta:hover { opacity: 0.9; }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 140px 0 80px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--green-dim);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--green);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero h1 .green { color: var(--green); }
+    .hero p {
+      font-size: 18px;
+      color: var(--fg-2);
+      max-width: 560px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+    .hero-install {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 24px;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      color: var(--green);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .hero-install:hover { border-color: var(--green); }
+    .hero-install .copy { color: var(--fg-3); font-size: 13px; margin-left: 8px; }
+    .hero-note {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--fg-3);
+    }
+    .hero-note span { color: var(--fg-2); }
+
+    /* ─── DASHBOARD PREVIEW ─── */
+    .preview {
+      padding: 0 0 100px;
+    }
+    .preview-frame {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 48px 96px rgba(0, 0, 0, 0.4);
+    }
+    .preview-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid var(--border);
+    }
+    .preview-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .preview-dot.r { background: #ef4444; }
+    .preview-dot.y { background: #eab308; }
+    .preview-dot.g { background: #22c55e; }
+    .preview-url {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      color: var(--fg-3);
+      font-family: var(--font-mono);
+    }
+    .preview-img {
+      width: 100%;
+      display: block;
+    }
+
+    /* ─── SECTION ─── */
+    section { padding: 100px 0; }
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--green);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(28px, 3.5vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .section-desc {
+      font-size: 16px;
+      color: var(--fg-2);
+      max-width: 560px;
+      line-height: 1.6;
+    }
+
+    /* ─── FEATURES GRID ─── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 48px;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      transition: border-color 0.15s;
+    }
+    .feature-card:hover { border-color: var(--green); }
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--green-dim);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+    .feature-card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: 13px;
+      color: var(--fg-2);
+      line-height: 1.5;
+    }
+    .feature-card .tag {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--fg-3);
+    }
+    .feature-card .tag.free { border-color: var(--green); color: var(--green); }
+
+    /* ─── HOW IT WORKS ─── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-top: 48px;
+    }
+    .step {
+      text-align: center;
+    }
+    .step-num {
+      font-family: var(--font-mono);
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--green);
+      opacity: 0.3;
+      margin-bottom: 16px;
+    }
+    .step h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .step p {
+      font-size: 14px;
+      color: var(--fg-2);
+      line-height: 1.5;
+    }
+
+    /* ─── COMPARISON ─── */
+    .comparison {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 48px;
+    }
+    .comparison-row {
+      display: grid;
+      grid-template-columns: 200px 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .comparison-row:last-child { border-bottom: none; }
+    .comparison-row.header {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    .comparison-cell {
+      padding: 14px 20px;
+      font-size: 14px;
+      border-right: 1px solid var(--border);
+    }
+    .comparison-cell:last-child { border-right: none; }
+    .comparison-row.header .comparison-cell {
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--fg-3);
+    }
+    .comparison-cell .check { color: var(--green); }
+    .comparison-cell .cross { color: var(--fg-3); }
+
+    /* ─── ROADMAP ─── */
+    .roadmap-items {
+      margin-top: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .roadmap-item {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 24px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .roadmap-item:last-child { border-bottom: none; }
+    .roadmap-version {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--green);
+    }
+    .roadmap-item h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .roadmap-item p {
+      font-size: 14px;
+      color: var(--fg-2);
+    }
+
+    /* ─── CTA ─── */
+    .cta {
+      text-align: center;
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
+    }
+    .cta h2 {
+      font-size: clamp(28px, 3.5vw, 40px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .cta p {
+      font-size: 16px;
+      color: var(--fg-2);
+      margin-bottom: 32px;
+    }
+    .cta-install {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--green);
+      color: #000;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .cta-install:hover { opacity: 0.9; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      text-align: center;
+      font-size: 13px;
+      color: var(--fg-3);
+    }
+    footer a { color: var(--fg-2); text-decoration: none; }
+    footer a:hover { color: var(--fg); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; gap: 40px; }
+      .comparison-row { grid-template-columns: 1fr; }
+      .comparison-cell { border-right: none; border-bottom: 1px solid var(--border); }
+      .comparison-cell:last-child { border-bottom: none; }
+      .roadmap-item { grid-template-columns: 1fr; gap: 8px; }
+      .nav-links { display: none; }
+    }
+
+    /* ─── TERMINAL DEMO ─── */
+    .terminal {
+      background: #0b1120;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.8;
+      margin-top: 48px;
+      overflow-x: auto;
+    }
+    .terminal .prompt { color: var(--green); }
+    .terminal .cmd { color: var(--fg); }
+    .terminal .output { color: var(--fg-2); }
+    .terminal .ok { color: var(--green); }
+    .terminal .warn { color: var(--yellow); }
+    .terminal .err { color: var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <a href="#" class="nav-logo">
+      <svg viewBox="0 0 128 128" width="32" height="32">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#22c55e"/>
+            <stop offset="100%" style="stop-color:#16a34a"/>
+          </linearGradient>
+        </defs>
+        <circle cx="64" cy="64" r="60" fill="none" stroke="url(#g1)" stroke-width="2" opacity="0.3"/>
+        <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>ObserveCo</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#compare">Compare</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="https://github.com/observeco/observeco" target="_blank">GitHub</a>
+      <a href="#install" class="nav-cta">pip install</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Open source · MIT license · No cloud
+    </div>
+    <h1>Tells you if your AI agents are <span class="green">working</span>, what they're doing, and where your <span class="green">money</span> goes.</h1>
+    <p>12 features. One install. 60 seconds to first health data. Your data never leaves your machine.</p>
+    <div class="hero-install" onclick="navigator.clipboard.writeText('pip install observeco && observeco dashboard'); this.querySelector('.copy').textContent='copied!'">
+      <span>$</span> pip install observeco && observeco dashboard
+      <span class="copy">click to copy</span>
+    </div>
+    <p class="hero-note"><span>Works with Hermes, OpenClaw, Ollama, LangChain, CrewAI, or any framework.</span></p>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section class="preview">
+  <div class="container">
+    <div class="preview-frame">
+      <div class="preview-bar">
+        <div class="preview-dot r"></div>
+        <div class="preview-dot y"></div>
+        <div class="preview-dot g"></div>
+        <div class="preview-url">localhost:8080</div>
+      </div>
+      <img src="assets/dashboard-preview.png" alt="ObserveCo dashboard showing fleet health, token breakdown, and error timeline" class="preview-img">
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">What you get</div>
+    <h2 class="section-title">12 features. Zero config for Hermes users.</h2>
+    <p class="section-desc">Everything you need to know if your agents are alive, what's in their context, and when something breaks.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">💓</div>
+        <h3>Pulse Check</h3>
+        <p>Agent liveness — alive, dead, or errored. Every 30 seconds. Zero config.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Circuit Breaker</h3>
+        <p>N-failure trip → auto-block → cooldown. Stops cascade failures before they spread.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Safety Guard</h3>
+        <p>99.7% noise reduction. Only surfaces real issues, not flapping or transient errors.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <h3>Heal Button</h3>
+        <p>One-click restart for dead agents. Manual trigger, you're in control.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>Token Breakdown</h3>
+        <p>See exactly what's in your agent's context — identity, skills, memory, tools, guidance.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3>Drift Tracking</h3>
+        <p>7-day rolling token trend per component. Know before context bloat becomes a problem.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Skill Audit</h3>
+        <p>Find bloated, duplicate, or unused skills eating your context window.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌱</div>
+        <h3>Memory Garden</h3>
+        <p>Duplicates, contradictions, stale entries — find and fix memory bloat.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Context Profiler</h3>
+        <p>See what's loading into your agent's context — MEMORY.md, skills, workspace.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⏱️</div>
+        <h3>Error Timeline</h3>
+        <p>Full error history with context snapshots. Not just logs — annotated events.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>In-Dashboard Alerts</h3>
+        <p>See alerts when you open the dashboard. Shows the discovery gap — how late you found out.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <h3>Local SQLite</h3>
+        <p>All data on your machine. Zero cloud. Zero telemetry. Your agents' data stays yours.</p>
+        <span class="tag free">Free</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">60 seconds to first health data.</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Install</h3>
+        <p><code style="color: var(--green);">pip install observeco</code> — one command, no dependencies to manage.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Discover</h3>
+        <p>Auto-detects your agents from config. Hermes users: zero configuration needed.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Monitor</h3>
+        <p>Dashboard shows fleet health, token breakdown, drift trends, and errors in real time.</p>
+      </div>
+    </div>
+
+    <div class="terminal">
+      <div><span class="prompt">$</span> <span class="cmd">pip install observeco</span></div>
+      <div class="output">✓ Installed observeco-0.1.0</div>
+      <div>&nbsp;</div>
+      <div><span class="prompt">$</span> <span class="cmd">observeco pulse check</span></div>
+      <div class="output">Agent Fleet Health</div>
+      <div><span class="ok">● hound</span> <span class="output">alive · 30s ago · 12,400 tokens</span></div>
+      <div><span class="ok">● kepler</span> <span class="output">alive · 30s ago · 8,200 tokens</span></div>
+      <div><span class="ok">● aleph</span> <span class="output">alive · 30s ago · 15,600 tokens</span></div>
+      <div><span class="warn">● dreamer</span> <span class="output">degraded · 2 missed heartbeats</span></div>
+      <div><span class="err">● raven</span> <span class="output">dead · no response in 5m</span></div>
+      <div>&nbsp;</div>
+      <div><span class="prompt">$</span> <span class="cmd">observeco dashboard</span></div>
+      <div class="output">Dashboard running at <span style="color: var(--blue);">http://localhost:8080</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare">
+  <div class="container">
+    <div class="section-label">Why ObserveCo</div>
+    <h2 class="section-title">Built for agent operators, not infrastructure teams.</h2>
+
+    <div class="comparison">
+      <div class="comparison-row header">
+        <div class="comparison-cell"></div>
+        <div class="comparison-cell">ObserveCo</div>
+        <div class="comparison-cell">Alternatives</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Setup time</div>
+        <div class="comparison-cell"><span class="check">60 seconds</span> — pip install, done</div>
+        <div class="comparison-cell"><span class="cross">2+ hours</span> — Grafana + Prometheus</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Understands tokens</div>
+        <div class="comparison-cell"><span class="check">✓</span> Per-component breakdown, drift, cost</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Generic metrics, no context concept</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Memory hygiene</div>
+        <div class="comparison-cell"><span class="check">✓</span> Duplicates, contradictions, debt score</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Not available</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Circuit breakers</div>
+        <div class="comparison-cell"><span class="check">✓</span> Built-in, auto-cooldown</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Manual configuration</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Cost</div>
+        <div class="comparison-cell"><span class="check">Free forever</span> — MIT license</div>
+        <div class="comparison-cell"><span class="cross">$15-59/mo</span> — per host</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Data</div>
+        <div class="comparison-cell"><span class="check">Local</span> — SQLite, no cloud</div>
+        <div class="comparison-cell"><span class="cross">Cloud</span> — your data leaves your machine</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="section-label">What's coming</div>
+    <h2 class="section-title">v0.1 is just the beginning.</h2>
+    <p class="section-desc">We ship fast. Every week, new capabilities. The dashboard that sees problems also fixes them.</p>
+
+    <div class="roadmap-items">
+      <div class="roadmap-item">
+        <div class="roadmap-version">v0.1 · Now</div>
+        <div>
+          <h3>12 features — monitoring + diagnostics</h3>
+          <p>Pulse check, circuit breakers, token breakdown, drift tracking, memory garden, skill audit, heal button, error timeline, in-dashboard alerts, local SQLite.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-version">v0.2 · D+3</div>
+        <div>
+          <h3>Auto-heal + extended history</h3>
+          <p>Watch daemon auto-restarts dead agents. 93% of failures resolved without human intervention. L1 crash recovery in ~5 seconds.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-version">v0.3 · D+7</div>
+        <div>
+          <h3>Chisel compression + push alerts</h3>
+          <p>Compress system prompts automatically. Telegram, webhook, and email alerts when agents break. Close the discovery gap.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-version">v1.1 · D+14</div>
+        <div>
+          <h3>OpenClaw runtime plugin</h3>
+          <p>40-60% fewer tokens per turn. Intent-aware context loading that only loads what your agent needs, when it needs it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="install">
+  <div class="container">
+    <h2>See your agents in 60 seconds.</h2>
+    <p>No signup. No account. Just open source.</p>
+    <a href="https://github.com/observeco/observeco" class="cta-install" target="_blank">
+      <span>$</span> pip install observeco && observeco dashboard
+    </a>
+    <p style="margin-top: 24px; font-size: 13px; color: var(--fg-3);">
+      <a href="https://github.com/observeco/observeco" target="_blank" style="color: var(--fg-2); text-decoration: none;">GitHub</a> · MIT License · Built for the AI agent community
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <p>© 2026 ObserveCo · Built with ❤️ for AI agent operators · <a href="https://github.com/observeco/observeco" target="_blank">GitHub</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

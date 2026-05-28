@@ -11,6 +11,19 @@ app = typer.Typer(
     rich_markup_mode="rich",
 )
 
+def _version_callback(value: bool) -> None:
+    if value:
+        from observeco import __version__
+        print(f"observeco v{__version__}")
+        raise typer.Exit()
+
+@app.callback()
+def main_callback(
+    version: bool = typer.Option(False, "--version", "-V", help="Show version and exit", callback=_version_callback),
+) -> None:
+    """ObserveCo — Runtime observability for AI agent systems."""
+    pass
+
 # -- Pulse subcommands --
 
 pulse_app = typer.Typer(help="Agent health monitoring & circuit breakers", no_args_is_help=True)
@@ -52,6 +65,13 @@ def chisel_drift(
     from observeco.chisel.drift import run_drift
     run_drift(agent=agent_name)
 
+
+@chisel_app.command(name="skills")
+def chisel_skills() -> None:
+    """Audit all Hermes skill files — token cost ranked by total tokens."""
+    from observeco.chisel.trim import run_skills
+    run_skills()
+
 # -- ClawForge subcommands --
 
 clawforge_app = typer.Typer(help="OpenClaw context profiler & memory hygiene", no_args_is_help=True)
@@ -76,6 +96,70 @@ def clawforge_load(
 
 @clawforge_app.command(name="garden")
 def clawforge_garden(
+    apply: bool = typer.Option(False, "--apply", help="Execute suggested memory hygiene actions"),
+    agent_name: Optional[str] = typer.Option(None, "--agent", "-a", help="Specific agent to audit"),
+) -> None:
+    """Scan MEMORY.md for duplicates, contradictions, stale entries."""
+    from observeco.clawforge.garden import run_garden
+    run_garden(apply=apply, agent_name=agent_name)
+
+# -- Generic aliases (framework-agnostic naming) --
+#
+# These alias internal-branded commands to generic names so users
+# don't need to know what "chisel" or "clawforge" means.
+#
+#   observeco context trim    -> chisel trim
+#   observeco context drift   -> chisel drift
+#   observeco context skills  -> chisel skills
+#   observeco context profile -> clawforge profile
+#   observeco context load    -> clawforge load
+#   observeco memory garden   -> clawforge garden
+
+context_app = typer.Typer(help="System prompt management — trim, drift, profile, load", no_args_is_help=True)
+app.add_typer(context_app, name="context")
+
+@context_app.command(name="trim")
+def context_trim() -> None:
+    """Compress system prompt — token breakdown & savings ratio."""
+    from observeco.chisel.trim import run_trim
+    run_trim()
+
+@context_app.command(name="drift")
+def context_drift(
+    agent_name: Optional[str] = typer.Option(None, "--agent", "-a", help="Filter by agent name"),
+) -> None:
+    """Show 7-day token allocation drift per component."""
+    from observeco.chisel.drift import run_drift
+    run_drift(agent=agent_name)
+
+@context_app.command(name="skills")
+def context_skills() -> None:
+    """Audit all skill files — token cost ranked by total tokens."""
+    from observeco.chisel.trim import run_skills
+    run_skills()
+
+@context_app.command(name="profile")
+def context_profile(
+    agent_name: Optional[str] = typer.Option(None, "--agent", "-a", help="Specific agent to profile"),
+) -> None:
+    """Show context composition per agent (MEMORY.md, skills, workspace)."""
+    from observeco.clawforge.profile import run_profile
+    run_profile(agent_name=agent_name)
+
+@context_app.command(name="load")
+def context_load(
+    probe: bool = typer.Option(False, "--probe", help="Dry-run intent-aware classifier"),
+    message: Optional[str] = typer.Option(None, "--message", "-m", help="Message to classify"),
+) -> None:
+    """Test intent-aware context classification."""
+    from observeco.clawforge.load import run_load
+    run_load(probe=probe, message=message)
+
+memory_app = typer.Typer(help="Memory hygiene — audit and clean agent memory", no_args_is_help=True)
+app.add_typer(memory_app, name="memory")
+
+@memory_app.command(name="garden")
+def memory_garden(
     apply: bool = typer.Option(False, "--apply", help="Execute suggested memory hygiene actions"),
     agent_name: Optional[str] = typer.Option(None, "--agent", "-a", help="Specific agent to audit"),
 ) -> None:
@@ -144,6 +228,29 @@ def snapshot_command(
     run_snapshot(snapshot_name=name, output_dir=out)
 
 
+# -- Feedback command (v1.1) --
+
+@app.command(name="feedback")
+def feedback_command(
+    type: Optional[str] = typer.Option(None, "--type", "-t", help="Feedback type (bug|feature|ux|docs|performance|other)"),
+    summary: Optional[str] = typer.Option(None, "--summary", "-s", help="One-line summary"),
+    detail: Optional[str] = typer.Option(None, "--detail", "-d", help="Detailed description or logs"),
+    severity: Optional[str] = typer.Option(None, "--severity", help="blocked|annoying|minor|suggestion"),
+    non_interactive: bool = typer.Option(False, "--yes", "-y", help="Skip interactive prompts"),
+    send: bool = typer.Option(False, "--send", help="Force send even if previously saved"),
+) -> None:
+    """Send feedback — bug report, feature suggestion, or UX issue."""
+    from observeco.feedback import run_feedback
+    run_feedback(
+        fb_type=type,
+        summary=summary,
+        detail=detail,
+        severity=severity,
+        interactive=not non_interactive,
+        send=send,
+    )
+
+
 # -- MCP subcommands (v1.1) --
 
 mcp_app = typer.Typer(help="MCP protocol server for agent queries")
@@ -184,6 +291,110 @@ def agents_add(
     """Manually add an agent."""
     from observeco.auto_detect import run_add
     run_add(name=name, framework=framework, health_check=health_check)
+
+
+# -- Pathway subcommands --
+
+pathway_app = typer.Typer(help="Communication Pathway Map — trace message delivery paths", no_args_is_help=True)
+app.add_typer(pathway_app, name="pathway")
+
+@pathway_app.command(name="scan")
+def pathway_scan() -> None:
+    """Auto-discover communication pathways from agents, crons, and infrastructure."""
+    from observeco.db import Database
+    db = Database()
+    count = db.pathway_scan()
+    graph = db.pathway_get_graph()
+    print(f"🔍 Pathway scan complete: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges scanned")
+
+    # Count by status
+    by_status = {}
+    for e in graph["edges"]:
+        s = e["status"]
+        by_status[s] = by_status.get(s, 0) + 1
+    for status, cnt in sorted(by_status.items()):
+        icon = {"green": "🟢", "yellow": "🟡", "red": "🔴", "teal": "🔵"}.get(status, "⚪")
+        print(f"  {icon} {status}: {cnt}")
+
+    # Show red/dead ends
+    red_edges = [e for e in graph["edges"] if e["status"] == "red"]
+    for e in red_edges:
+        print(f'  🔴 Dead end: {e["source_name"]} → ∅')
+
+@pathway_app.command(name="list")
+def pathway_list() -> None:
+    """List all pathways with status."""
+    from observeco.db import Database
+    from rich import box
+    from rich.console import Console
+    from rich.table import Table
+
+    db = Database()
+    graph = db.pathway_get_graph()
+    console = Console()
+
+    table = Table(title="Communication Pathways", box=box.ROUNDED, header_style="bold cyan")
+    table.add_column("Source", style="bold")
+    table.add_column("→")
+    table.add_column("Target")
+    table.add_column("Status")
+    table.add_column("Mechanism")
+    table.add_column("Confidence")
+
+    for e in graph["edges"]:
+        target = e.get("target_name", "∅")
+        icon = {"green": "🟢", "yellow": "🟡", "red": "🔴", "teal": "🔵"}.get(e["status"], "⚪")
+        table.add_row(
+            e["source_name"], "→",
+            target, f"{icon} {e['status']}",
+            e.get("mechanism", "-"),
+            str(e.get("confidence", "-")),
+        )
+    console.print(table)
+
+@pathway_app.command(name="add")
+def pathway_add(
+    name: str = typer.Argument(..., help="Node name"),
+    node_type: str = typer.Option("agent", "--type", "-t", help="Node type (cron, agent, platform, consumer, router)"),
+    source: str = typer.Option("manual", "--source", "-s", help="Data source (auto, manual)"),
+    target: str = typer.Option("", "--target", help="Target node ID (omit for dead end)"),
+    status: str = typer.Option("green", "--status", help="Edge status (green, yellow, red, teal)"),
+) -> None:
+    """Manually add a pathway node + optional edge."""
+    from observeco.db import Database
+    from rich.console import Console
+
+    db = Database()
+    console = Console()
+    node_id = f"{node_type}-{name.lower().replace(' ', '-')}"
+
+    db.pathway_add_node(node_id, name, node_type, source=source)
+    console.print(f"[green]Added node [bold]{node_id}[/bold] ({node_type})[/green]")
+
+    if target:
+        edge_id = db.pathway_add_edge(node_id, target, status=status, mechanism="manual")
+        console.print(f"[green]Added edge [bold]{node_id}[/bold] → [bold]{target}[/bold] ({status})[/green]")
+    else:
+        edge_id = db.pathway_add_edge(node_id, None, status="red", scenario="manual_dead_end")
+        console.print(f"[yellow]Added dead-end edge: [bold]{node_id}[/bold] → ∅[/yellow]")
+
+@pathway_app.command(name="clear")
+def pathway_clear() -> None:
+    """Reset all auto-detected pathway data for fresh scan."""
+    from observeco.db import Database
+    db = Database()
+    count = db.pathway_clear()
+    from rich.console import Console
+    Console().print(f"[yellow]Cleared {count} auto-detected pathway items[/yellow]")
+
+@pathway_app.command(name="graph")
+def pathway_graph_export() -> None:
+    """Export pathway graph as JSON (for rendering)."""
+    from observeco.db import Database
+    import json
+    db = Database()
+    graph = db.pathway_get_graph()
+    print(json.dumps(graph, indent=2, default=str))
 
 
 def main():

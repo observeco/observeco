@@ -1,0 +1,58 @@
+name: Forward Feedback
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  issues: read
+
+jobs:
+  forward:
+    if: |
+      (github.event.action == 'opened' && contains(github.event.issue.labels.*.name, 'beta-feedback')) ||
+      (github.event.action == 'labeled' && github.event.label.name == 'beta-feedback')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build feedback payload
+        id: payload
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+            const title = issue.title || '';
+            const summary = title.replace('[Feedback] ', '').trim() || issue.title;
+            
+            // Extract fields from issue body (GitHub form textareas)
+            const extract = (label) => {
+              const re = new RegExp(`### ${label}\\s*\\n([\\s\\S]*?)(?=\\n### |$)`, 'i');
+              const match = body.match(re);
+              return match ? match[1].trim() : '';
+            };
+            
+            const typeMatch = body.match(/### Feedback type\\s*\\n\\s*([^\\n]+)/);
+            
+            const payload = {
+              type: 'github_issue',
+              type_label: typeMatch ? typeMatch[1].trim() : 'GitHub Issue',
+              summary: extract('What happened?') || summary,
+              detail: [
+                extract('What did you expect?') ? `Expected: ${extract('What did you expect?')}` : '',
+                extract('Steps to reproduce') ? `Steps:\n${extract('Steps to reproduce')}` : '',
+                extract('Terminal output') ? `Logs:\n\`\`\`\n${extract('Terminal output')}\n\`\`\`` : '',
+                extract('Additional context') ? `Context: ${extract('Additional context')}` : '',
+              ].filter(Boolean).join('\n\n'),
+              severity: extract('How much does this block you?') || '💡 Suggestion — not a bug',
+              environment: {
+                observeco_version: extract('ObserveCo version'),
+                github_issue: issue.html_url,
+              },
+            };
+            
+            core.setOutput('payload', JSON.stringify(payload));
+
+      - name: Send to ObserveCo
+        run: |
+          curl -s -X POST "${{ secrets.OBSERVECO_FEEDBACK_URL || 'http://127.0.0.1:9119/v1/feedback' }}" \
+            -H "Content-Type: application/json" \
+            -d '${{ steps.payload.outputs.payload }}'

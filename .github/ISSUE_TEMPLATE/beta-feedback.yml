@@ -1,0 +1,98 @@
+name: 🧪 Beta Feedback
+description: Report bugs, suggest improvements, or share feedback about ObserveCo
+title: "[Feedback] "
+labels: [beta-feedback]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping shape ObserveCo! 🙏
+
+        Fill in what you know — even partial feedback is valuable. If you're reporting a bug, include error output.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Feedback type
+      description: What kind of feedback is this?
+      options:
+        - Bug report
+        - Feature suggestion
+        - UX / usability issue
+        - Documentation issue
+        - Performance problem
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe what broke, confused you, or what you'd like improved.
+      placeholder: When I run `observeco pulse check`, all agents show as dead even though they're running...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: What should have happened instead?
+      placeholder: Agents that are running should show green status.
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce (for bugs)
+      description: Numbered steps so we can reproduce the issue.
+      placeholder: |
+        1. Run `pip install observeco[dashboard]`
+        2. Run `observeco pulse check`
+        3. See error...
+      render: bash
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal output / logs
+      description: Paste the full error output (copy button, not screenshot).
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: ObserveCo version
+      description: Run `observeco --version` and paste the output.
+      placeholder: e.g. 0.2.1
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How much does this block you?
+      options:
+        - "🚫 Completely blocked — can't use the feature"
+        - "⚠️ Annoying — workaround exists but painful"
+        - "🙂 Minor — nice to fix eventually"
+        - "💡 Suggestion — not a bug"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: environment
+    attributes:
+      label: Environment
+      description: Check what applies
+      options:
+        - label: macOS
+        - label: Linux
+        - label: Windows
+        - label: "`pip install observeco`"
+        - label: "`pip install observeco[dashboard]`"
+        - label: "`pip install -e .` (from source)"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else? Screenshots, workarounds, related issues.

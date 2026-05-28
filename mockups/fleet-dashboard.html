@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Fleet Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --fg: #f8fafc;
+  --accent: #22c55e;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 24px;
+  --text-3xl: 40px;
+  --text-4xl: 56px;
+  --leading-body: 1.5;
+  --leading-tight: 1.06;
+  --tracking-display: -0.025em;
+  --container-max: 1440px;
+  --container-gutter-desktop: 36px;
+  --container-gutter-tablet: 24px;
+  --container-gutter-phone: 16px;
+  --section-y-desktop: 40px;
+  --section-y-tablet: 32px;
+  --section-y-phone: 24px;
+  --accent-on: #0c1628;
+  --success: #22c55e;
+  --warn: #eab308;
+  --danger: #ef4444;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-raised: 0 24px 72px rgba(0, 0, 0, 0.42);
+  --motion-fast: 100ms;
+  --motion-base: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --fg-2: #94a3b8;
+  --meta: #3b82f6;
+  --muted: #64748b;
+  --surface-warm: #253349;
+  --border: #334155;
+  --border-soft: #273548;
+  --status-healthy: #22c55e;
+  --status-warning: #eab308;
+  --status-critical: #ef4444;
+  --status-info: #3b82f6;
+  --token-identity: #6366f1;
+  --token-skills: #8b5cf6;
+  --token-memory: #ec4899;
+  --token-tools: #14b8a6;
+  --token-guidance: #f97316;
+  --data-primary: #22c55e;
+  --data-secondary: #3b82f6;
+  --data-accent: #3b82f6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg, #0f172a);
+  color: #e2e8f0;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.app { max-width: 1200px; margin: 0 auto; padding: 20px 24px; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.header-logo svg { width: 28px; height: 28px; }
+.header-title { font-size: 18px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--muted); font-weight: 400; }
+.tier-badge {
+  background: var(--accent-on); color: #86efac; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px; letter-spacing: 0.03em;
+}
+
+/* Status header */
+.status-row {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px; padding: 12px 16px;
+  background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
+}
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.status-dot.alive { background: var(--accent); box-shadow: 0 0 6px var(--accent)44; }
+.status-dot.error { background: var(--warn); box-shadow: 0 0 6px var(--warn)44; }
+.status-dot.dead { background: var(--danger); box-shadow: 0 0 6px var(--danger)44; }
+.status-stat { font-size: 13px; color: var(--fg-2); }
+.status-stat strong { color: var(--fg); }
+
+/* Feedback button */
+.feedback-btn {
+  margin-left: auto; background: var(--surface); border: 1px solid var(--border);
+  color: var(--fg-2); padding: 6px 14px; border-radius: 8px;
+  font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.feedback-btn:hover { border-color: #475569; color: #e2e8f0; }
+
+/* Section styling */
+.section {
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.section-header:hover { background: var(--surface); }
+.section-header .chevron { font-size: 11px; color: var(--muted); transition: transform 0.2s; }
+.section-header.collapsed .chevron { transform: rotate(-90deg); }
+.section-name { font-size: 13px; font-weight: 600; color: var(--fg); }
+.section-count {
+  font-size: 11px; color: var(--fg-2);
+  background: var(--surface); padding: 2px 7px; border-radius: 5px;
+  border: 1px solid var(--border);
+}
+.section-total-tokens { margin-left: auto; font-size: 11px; color: var(--muted); font: var(--font-mono); }
+.section-body {
+  background: var(--bg);
+  padding: 10px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 8px;
+}
+.section-header.collapsed + .section-body { display: none; }
+
+/* Agent card */
+.agent-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px; position: relative;
+}
+.agent-card.hidden { display: none; }
+
+/* Card top row */
+.card-top {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px;
+}
+.agent-status { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.agent-status.alive { background: var(--accent); box-shadow: 0 0 8px var(--accent)44; }
+.agent-status.dead { background: var(--danger); box-shadow: 0 0 8px var(--danger)44; }
+.agent-status.error { background: var(--warn); box-shadow: 0 0 8px var(--warn)44; }
+
+.agent-info { flex: 1; min-width: 0; }
+.agent-name { font-size: 13px; font-weight: 600; color: var(--fg); }
+.agent-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.agent-last-seen { font-size: 11px; color: var(--muted); text-align: right; white-space: nowrap; }
+
+/* Show/hide toggle */
+.agent-toggle {
+  position: absolute; top: 6px; right: 6px;
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--muted); transition: all 0.15s;
+  z-index: 2;
+}
+.agent-toggle:hover { border-color: var(--danger); color: var(--danger); background: #450a0a33; }
+.agent-toggle.active { border-color: var(--danger); color: var(--danger); background: #450a0a33; }
+
+/* Metric clickable rows */
+.metric-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px;
+  margin: 1px -8px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.1s, border-color 0.1s;
+  border: 1px solid transparent;
+  position: relative;
+}
+.metric-row:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.metric-row:active {
+  background: var(--surface);
+  border-color: var(--meta);
+}
+.metric-row .label { font-size: 11px; color: var(--muted); width: 70px; flex-shrink: 0; }
+.metric-row .value { font-size: 12px; flex: 1; }
+.metric-row .click-hint {
+  font-size: 10px; color: var(--meta);
+  opacity: 0;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+.metric-row:hover .click-hint { opacity: 1; }
+.metric-row .arrow {
+  font-size: 11px; color: var(--border);
+  margin-left: 2px;
+  transition: transform 0.15s, color 0.15s;
+}
+.metric-row:hover .arrow {
+  color: var(--meta);
+  transform: translateX(2px);
+}
+
+/* Token bar */
+.token-bar {
+  margin: 4px 0;
+  height: 4px; border-radius: 2px; overflow: hidden;
+  display: flex; gap: 1px;
+}
+.token-bar .seg { height: 100%; border-radius: 1px; }
+.token-count { font-size: 10px; color: #475569; font: var(--font-mono); }
+
+/* Drill-down modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  align-items: flex-start; justify-content: center;
+  z-index: 100; padding-top: 60px;
+  overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  max-width: 600px; width: 90%; margin-bottom: 40px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h3 { font-size: 14px; font-weight: 600; color: var(--fg); }
+.modal-header .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.modal-close {
+  width: 24px; height: 24px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: var(--border); color: #e2e8f0; }
+
+.modal-body { padding: 14px 18px; max-height: 400px; overflow-y: auto; }
+
+/* Data table in modal */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left; font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 6px 8px; border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+.data-table td {
+  padding: 6px 8px; font-size: 12px; color: #e2e8f0;
+  border-bottom: 1px solid var(--surface);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table .muted { color: var(--muted); }
+.data-table .good { color: var(--accent); }
+.data-table .bad { color: var(--danger); }
+.data-table .warn { color: var(--warn); }
+
+/* Pulse history dots */
+.pulse-timeline {
+  display: flex; gap: 2px; flex-wrap: wrap; margin-top: 8px;
+}
+.pulse-dot { width: 12px; height: 12px; border-radius: 2px; }
+.pulse-dot.ok { background: var(--accent); }
+.pulse-dot.warn { background: var(--warn); }
+.pulse-dot.err { background: var(--danger); }
+
+/* Section within modal */
+.modal-section { margin-top: 14px; }
+.modal-section:first-child { margin-top: 0; }
+.modal-section h4 {
+  font-size: 11px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.05em; margin-bottom: 8px; font-weight: 500;
+}
+
+/* Feedback bar */
+.feedback-bar {
+  display: none; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface); border: 1px dashed var(--border); border-radius: 8px;
+  margin-top: 8px;
+}
+.feedback-bar input {
+  flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+  padding: 7px 10px; font-size: 12px; color: #e2e8f0; font-family: 'Inter', sans-serif;
+  outline: none; transition: border-color 0.15s;
+}
+.feedback-bar input:focus { border-color: var(--meta); }
+.feedback-bar input::placeholder { color: #475569; }
+.feedback-bar select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+  padding: 7px 10px; font-size: 12px; color: #e2e8f0; outline: none;
+}
+.add-btn {
+  background: var(--meta); border: none; color: white;
+  padding: 7px 14px; border-radius: 5px; font-size: 11px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+.add-btn:hover { background: #2563eb; }
+.feedback-hint { font-size: 10px; color: #475569; white-space: nowrap; }
+
+@media (max-width: 720px) {
+  .section-body { grid-template-columns: 1fr; }
+  .status-row { flex-wrap: wrap; }
+  .feedback-bar { flex-wrap: wrap; }
+  .feedback-hint { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+          <defs>
+            <linearGradient id="oc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="oc-grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <circle cx="64" cy="64" r="60" fill="none" stroke="url(#oc-grad)" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#oc-grad2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/>
+          <circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+          <circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/>
+          <circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/>
+          <circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+          <circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/>
+          <circle cx="28" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+          <circle cx="100" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+        </svg>
+      </div>
+      <span class="header-title">ObserveCo <span>fleet</span></span>
+      <div class="brand-tagline" style="font-size: 13px; color: #94a3b8; font-weight: 400; margin-top: 2px;">Tells you if your AI agents are working, what they're doing, and where your money goes.</div>
+      <span class="tier-badge">🔓 FREE</span>
+    </div>
+  </div>
+
+  <!-- Status badges -->
+  <div class="status-row">
+    <span class="status-stat"><span class="status-dot alive"></span><strong>7</strong> alive</span>
+    <span class="status-stat"><span class="status-dot error"></span><strong>1</strong> warning</span>
+    <span class="status-stat"><span class="status-dot dead"></span><strong>1</strong> down</span>
+    <span class="status-stat"><strong>12</strong> agents</span>
+    <span class="status-stat"><strong>97%</strong> uptime</span>
+    <button class="feedback-btn" onclick="toggleFeedback()">+ Missing an agent?</button>
+  </div>
+
+  <!-- Feedback Bar -->
+  <div id="feedbackBar" class="feedback-bar">
+    <input type="text" id="feedbackInput" placeholder="Agent name (e.g. my-temp-scraper)" />
+    <select id="feedbackFramework">
+      <option value="hermes">Hermes</option>
+      <option value="openclaw">OpenClaw</option>
+      <option value="custom" selected>Custom</option>
+    </select>
+    <button class="add-btn" onclick="addMissingAgent()">Add Agent</button>
+    <span class="feedback-hint">I'll register them immediately</span>
+  </div>
+
+  <!-- Fleet sections -->
+  <div id="fleetContainer"></div>
+</div>
+
+<!-- Drill-down modal -->
+<div class="modal-overlay" id="drillModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modalTitle">Agent</h3>
+        <div class="sub" id="modalSub">Hermes · Role</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <!-- populated dynamically -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// Agent data
+// ──────────────────────────────────────────────
+const AGENTS = {
+  hermes: [
+    { name: 'hound', role: 'Operations', status: 'alive', fw: 'Hermes', latency: '1.2s', lastCheck: '12s ago', lastCheckTs: 1779761564, tokens: 4200, drift: 3, circuit: 'OK', error: null,
+      components: { identity: 504, skills: 1428, memory: 756, tools: 882, guidance: 630 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [-1, 0, +1, +2, +2, +3, +3] },
+    { name: 'main', role: 'Evaluator', status: 'alive', fw: 'Hermes', latency: '0.8s', lastCheck: '8s ago', lastCheckTs: 1779761568, tokens: 3800, drift: 1, circuit: 'OK', error: null,
+      components: { identity: 456, skills: 1292, memory: 684, tools: 798, guidance: 570 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [0, 0, 0, +1, +1, +1, +1] },
+    { name: 'dreamer', role: 'Patterns', status: 'alive', fw: 'Hermes', latency: '0.9s', lastCheck: '10s ago', lastCheckTs: 1779761566, tokens: 5400, drift: -1, circuit: 'OK', error: null,
+      components: { identity: 648, skills: 1836, memory: 972, tools: 1134, guidance: 810 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [0, -1, -2, -1, -1, -1, -1] },
+    { name: 'pragma', role: 'Build Executor', status: 'error', fw: 'Hermes', latency: '4.2s', lastCheck: '2m ago', lastCheckTs: 1779761440, tokens: 2900, drift: 7, circuit: 'OK', error: 'Last build failed — spec mismatch',
+      components: { identity: 348, skills: 986, memory: 522, tools: 609, guidance: 435 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','warn','warn','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [{ t: '09:32', msg: 'Build failed — spec mismatch on output format' }, { t: '09:14', msg: 'Build timed out after 30s' }, { t: '08:45', msg: 'Dependency "requests" not found' }],
+      dailyDrift: [+2, +3, +5, +6, +7, +7, +7] },
+    { name: 'accelerator', role: 'Alias (main)', status: 'alive', fw: 'Hermes', latency: '0.5s', lastCheck: '10s ago', lastCheckTs: 1779761566, tokens: 1800, drift: 0, circuit: 'OK', error: null,
+      components: { identity: 216, skills: 612, memory: 324, tools: 378, guidance: 270 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [0, 0, 0, 0, 0, 0, 0] },
+    { name: 'raven', role: 'Procurement', status: 'alive', fw: 'Hermes', latency: '1.5s', lastCheck: '30s ago', lastCheckTs: 1779761546, tokens: 3100, drift: 2, circuit: 'OK', error: null,
+      components: { identity: 372, skills: 1054, memory: 558, tools: 651, guidance: 465 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [0, 0, +1, +2, +2, +2, +2] },
+    { name: 'skeptical', role: 'Auditor', status: 'alive', fw: 'Hermes', latency: '0.6s', lastCheck: '15s ago', lastCheckTs: 1779761561, tokens: 2200, drift: -2, circuit: 'OK', error: null,
+      components: { identity: 264, skills: 748, memory: 396, tools: 462, guidance: 330 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [0, -1, -1, -2, -2, -2, -2] },
+  ],
+  openclaw: [
+    { name: 'kepler', role: 'Revenue / CRO', status: 'dead', fw: 'OpenClaw', latency: '—', lastCheck: '23m ago', lastCheckTs: 1779760120, tokens: 8100, drift: 18, circuit: 'TRIPPED', error: 'Pulse timeout after 10s',
+      components: { identity: 972, skills: 2592, memory: 1458, tools: 1701, guidance: 1377 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','warn','warn','err','err','err','err','err','err','err','err','err','err','err'],
+      errors: [{ t: '09:37', msg: 'Pulse timeout after 10s — connection refused' }, { t: '09:34', msg: 'Pulse timeout after 10s — connection refused' }, { t: '09:31', msg: 'Health endpoint returned 500' }, { t: '09:28', msg: 'Agent process not found (pgrep)' }],
+      dailyDrift: [+5, +8, +12, +14, +16, +17, +18] },
+  ],
+  others: [
+    { name: 'hermes-triage', role: 'QA Agent', status: 'error', fw: 'Custom', latency: '—', lastCheck: '45s ago', lastCheckTs: 1779761531, tokens: 3800, drift: 5, circuit: 'TRIPPED', error: 'Circuit tripped after 3 failures',
+      components: { identity: 456, skills: 1292, memory: 684, tools: 798, guidance: 570 },
+      pulses: ['ok','ok','err','err','ok','ok','err','err','err','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [{ t: '09:40', msg: 'Circuit trip — 3 consecutive failures, cooldown 4:12 remaining' }, { t: '09:38', msg: 'Health endpoint timeout (10s)' }, { t: '09:35', msg: '503 Service Unavailable' }],
+      dailyDrift: [0, +1, +2, +3, +3, +4, +5] },
+    { name: 'ollama-phi', role: 'Local LLM', status: 'alive', fw: 'Ollama', latency: '0.4s', lastCheck: '5s ago', lastCheckTs: 1779761571, tokens: 1200, drift: 0, circuit: 'OK', error: null,
+      components: { identity: 144, skills: 408, memory: 216, tools: 252, guidance: 180 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [0, 0, 0, 0, 0, 0, 0] },
+    { name: 'pgvector-cluster', role: 'Vector Search', status: 'alive', fw: 'Custom', latency: '0.2s', lastCheck: '3s ago', lastCheckTs: 1779761573, tokens: 0, drift: null, circuit: 'OK', error: null,
+      components: {},
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [0, 0, 0, 0, 0, 0, 0] },
+    { name: 'scraper-batch', role: 'Web Scraper', status: 'alive', fw: 'Legacy', latency: '1.8s', lastCheck: '22s ago', lastCheckTs: 1779761554, tokens: 2500, drift: 4, circuit: 'OK', error: null,
+      components: { identity: 300, skills: 850, memory: 450, tools: 525, guidance: 375 },
+      pulses: ['ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok','ok'],
+      errors: [],
+      dailyDrift: [0, +1, +2, +3, +3, +4, +4] },
+  ],
+};
+
+const sectionLabels = { hermes: 'Hermes Agents', openclaw: 'OpenClaw', others: '+ Others' };
+const COMP_COLORS = { identity: '#6366f1', skills: '#8b5cf6', memory: '#ec4899', tools: '#14b8a6', guidance: '#f97316' };
+const COMP_NAMES = { identity: 'Identity', skills: 'Skills', memory: 'Memory', tools: 'Tools', guidance: 'Guidance' };
+const COMP_ORDER = ['skills', 'tools', 'memory', 'guidance', 'identity'];
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+let hiddenAgents = new Set();
+let lastDayIdx = 6; // today = Fri in the data
+
+// ──────────────────────────────────────────────
+// Render
+// ──────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('fleetContainer');
+  let html = '';
+
+  for (const [key, agents] of Object.entries(AGENTS)) {
+    const sorted = [...agents].sort((a, b) => {
+      const order = { dead: 0, error: 1, alive: 2 };
+      return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+    });
+
+    const vis = sorted.filter(a => !hiddenAgents.has(a.name));
+    const tot = vis.reduce((s, a) => s + a.tokens, 0);
+
+    html += `
+      <div class="section" data-section="${key}">
+        <div class="section-header" onclick="toggleSection(this)">
+          <span class="chevron">▼</span>
+          <span class="section-name">${sectionLabels[key]}</span>
+          <span class="section-count">${vis.length} / ${sorted.length}</span>
+          <span class="section-total-tokens">${tot.toLocaleString()}</span>
+        </div>
+        <div class="section-body">
+          ${sorted.map(a => renderCard(a)).join('')}
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderCard(a) {
+  const total = Object.values(a.components).reduce((x, y) => x + y, 0);
+  const sorted = COMP_ORDER.filter(c => (a.components[c] || 0) > 0);
+
+  const segs = sorted.map(c => {
+    const pct = ((a.components[c] || 0) / (total || 1) * 100).toFixed(1);
+    return `<span class="seg" style="width:${pct}%;background:${COMP_COLORS[c]};" title="${COMP_NAMES[c]}: ${(a.components[c] || 0).toLocaleString()}"></span>`;
+  }).join('');
+
+  const tokenBar = total > 0
+    ? `<div class="token-bar">${segs}</div><div class="token-count">${total.toLocaleString()} total</div>`
+    : '<div class="token-count" style="color:#475569;">No brain data</div>';
+
+  const driftStr = a.drift !== null ? `${a.drift > 0 ? '📈' : a.drift < 0 ? '📉' : '➡️'} ${a.drift > 0 ? '+' : ''}${a.drift}% this week` : '—';
+  const driftColor = a.drift > 5 ? '#f97316' : a.drift < 0 ? '#22c55e' : '#94a3b8';
+
+  const circuitLabel = a.circuit === 'TRIPPED' ? '🔴 Stopped (failed 3x)' : '✅ Guard OK';
+  const circuitColor = a.circuit === 'TRIPPED' ? '#ef4444' : '#22c55e';
+
+  const errBadge = a.error ? `<span style="font-size:10px;color:#eab308;background:#451a03;padding:1px 5px;border-radius:3px;font-weight:600;margin-left:6px;">!</span>` : '';
+
+  const hidden = hiddenAgents.has(a.name);
+
+  return `
+    <div class="agent-card ${hidden ? 'hidden' : ''}" data-agent="${a.name}">
+      <button class="agent-toggle ${hiddenAgents.has(a.name) ? 'active' : ''}" onclick="event.stopPropagation();toggleHide('${a.name}')" title="${hidden ? 'Show' : 'Hide'}"></button>
+      <div class="card-top">
+        <span class="agent-status ${a.status}" title="${a.status === 'alive' ? 'Running' : a.status === 'dead' ? 'Not running' : 'Running but broken'}"></span>
+        <div class="agent-info">
+          <div class="agent-name">${a.name} ${errBadge}</div>
+          <div class="agent-meta">${a.fw} · ${a.role}</div>
+        </div>
+        <div class="agent-last-seen" style="font-size:12px;color:#e2e8f0;">${a.lastCheck}</div>
+      </div>
+
+      <!-- Clickable metrics -->
+      <div class="metric-row" onclick="showPulseDrill('${a.name}')">
+        <span class="label">Health</span>
+        <span class="value" style="color:${a.status === 'alive' ? '#22c55e' : a.status === 'dead' ? '#ef4444' : '#eab308'};font-weight:600;">${a.status === 'alive' ? '● Running' : a.status === 'dead' ? '● Down' : '● Warning'}</span>
+        <span class="click-hint">See details</span>
+        <span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="showGuardDrill('${a.name}')">
+        <span class="label">Guard</span>
+        <span class="value" style="color:${circuitColor};font-weight:600;">${circuitLabel}</span>
+        <span class="click-hint">See details</span>
+        <span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="showErrorsDrill('${a.name}')">
+        <span class="label">Errors</span>
+        <span class="value" style="color:${a.errors.length > 0 ? '#eab308' : '#64748b'};">${a.errors.length > 0 ? `${a.errors.length} in last 24h` : 'None'}</span>
+        <span class="click-hint">See details</span>
+        <span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="showDriftDrill('${a.name}')">
+        <span class="label">Brain size</span>
+        <span class="value" style="color:${driftColor};">${driftStr}</span>
+        <span class="click-hint">See details</span>
+        <span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="showBrainDrill('${a.name}')">
+        <span class="label">Composition</span>
+        <span class="value" style="flex:1;">${tokenBar}</span>
+        <span class="click-hint">See details</span>
+        <span class="arrow" style="align-self:flex-start;margin-top:6px;">›</span>
+      </div>
+    </div>`;
+}
+
+// ──────────────────────────────────────────────
+// Drill-down panels
+// ──────────────────────────────────────────────
+function getAgent(name) {
+  for (const g of Object.values(AGENTS)) {
+    const a = g.find(x => x.name === name);
+    if (a) return a;
+  }
+  return null;
+}
+
+function openModal(title, sub, bodyHtml) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalSub').textContent = sub;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('drillModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('drillModal').classList.remove('active');
+}
+
+function showPulseDrill(name) {
+  const a = getAgent(name);
+  if (!a) return;
+
+  const dots = a.pulses.map(s => `<span class="pulse-dot ${s === 'ok' ? 'ok' : s === 'warn' ? 'warn' : 'err'}" title="${s === 'ok' ? 'OK' : s === 'warn' ? 'Warning' : 'Error'}"></span>`).join('');
+
+  // Build annotated timeline from error events
+  let errorEvents, summary;
+  if (a.errors.length > 0) {
+    errorEvents = a.errors.map(e => {
+      const statusClass = e.msg.toLowerCase().includes('timeout') || e.msg.toLowerCase().includes('refused') || e.msg.toLowerCase().includes('not found') ? 'bad' : 'warn';
+      return `<tr><td>${e.t}</td><td class="${statusClass}">${statusClass === 'bad' ? '🔴' : '🟡'} ${statusClass === 'bad' ? 'Down' : 'Warning'}</td><td style="font-size:12px;color:#94a3b8;">${e.msg}</td></tr>`;
+    }).join('');
+    summary = `This agent had <strong>${a.errors.length} issue${a.errors.length > 1 ? 's' : ''}</strong> in the last 24 hours.<br><br>`;
+
+    // Categorise errors
+    const timeouts = a.errors.filter(e => e.msg.toLowerCase().includes('timeout') || e.msg.toLowerCase().includes('timed out')).length;
+    const connRefused = a.errors.filter(e => e.msg.toLowerCase().includes('refused') || e.msg.toLowerCase().includes('unreachable')).length;
+    const notFound = a.errors.filter(e => e.msg.toLowerCase().includes('not found')).length;
+    const httpErrors = a.errors.filter(e => e.msg.match(/HTTP \d{3}|5\d{2}|503|500/)).length;
+    const other = a.errors.length - timeouts - connRefused - notFound - httpErrors;
+
+    if (timeouts > 0) summary += `🕐 <strong>${timeouts}</strong> timeout${timeouts > 1 ? 's' : ''} — the agent was running but didn't respond in time. Usually means it's overloaded or stuck.<br>`;
+    if (connRefused > 0) summary += `🔌 <strong>${connRefused}</strong> connection refused — the agent process may have crashed or the port changed.<br>`;
+    if (notFound > 0) summary += `🔍 <strong>${notFound}</strong> resource not found — a dependency, file, or endpoint the agent needs is missing.<br>`;
+    if (httpErrors > 0) summary += `🌐 <strong>${httpErrors}</strong> HTTP error${httpErrors > 1 ? 's' : ''} — the agent is running but returning server errors (code 5xx). Its code may be broken.<br>`;
+    if (other > 0) summary += `❓ <strong>${other}</strong> other error${other > 1 ? 's' : ''} — check the full error list for details.<br>`;
+
+    summary += `<br><strong>Verdict:</strong> ${a.status === 'dead' ? 'This agent needs attention — try restarting it.' : a.status === 'error' ? 'This agent is running but unstable — check the error details above.' : 'Issues appear resolved for now — monitor the next few checks.'}`;
+  } else {
+    errorEvents = '<tr><td colspan="3" style="color:#64748b;text-align:center;padding:12px;">No errors — all checks passed</td></tr>';
+    summary = 'All checks passed in the last 24 hours. No issues detected.';
+  }
+
+  openModal(`${a.name} — Health timeline`, `${a.fw} · ${a.role}`, `
+    <div class="modal-section">
+      <h4>Last 24 hours (every 30s)</h4>
+      <div class="pulse-timeline">${dots}</div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:#64748b;">
+        <span><span class="pulse-dot ok" style="display:inline-block;width:10px;height:10px;vertical-align:middle;margin-right:3px;"></span> OK</span>
+        <span><span class="pulse-dot warn" style="display:inline-block;width:10px;height:10px;vertical-align:middle;margin-right:3px;"></span> Warning</span>
+        <span><span class="pulse-dot err" style="display:inline-block;width:10px;height:10px;vertical-align:middle;margin-right:3px;"></span> Error</span>
+      </div>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>What happened — annotated timeline</h4>
+      <table class="data-table">
+        <tr><th style="width:70px;">Time</th><th style="width:80px;">Status</th><th>What happened</th></tr>
+        ${errorEvents}
+      </table>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>Summary</h4>
+      <div style="font-size:12px;color:#64748b;line-height:1.6;">
+        ${summary}
+      </div>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>Latest check</h4>
+      <table class="data-table">
+        <tr><th style="width:70px;">Time</th><th style="width:80px;">Result</th><th>Latency</th></tr>
+        <tr><td>now</td><td class="${a.status === 'alive' ? 'good' : 'bad'}">${a.status === 'alive' ? '✅ OK' : a.status === 'error' ? '🟡 Warning' : '🔴 Down'}</td><td>${a.latency}</td></tr>
+      </table>
+    </div>
+  `);
+}
+
+function showGuardDrill(name) {
+  const a = getAgent(name);
+  if (!a) return;
+
+  const isTripped = a.circuit === 'TRIPPED';
+
+  // Build failure history from pulse data for tripped agents, or errors for current
+  let failureTimeline, failureSummary;
+  if (a.errors.length > 0) {
+    // Show the errors that led to the guard tripping (last 3-4 errors)
+    const recentErrors = a.errors.slice(0, 4);
+    failureTimeline = recentErrors.map(e => {
+      const cls = e.msg.toLowerCase().includes('timeout') || e.msg.toLowerCase().includes('refused') || e.msg.toLowerCase().includes('not found') ? 'bad' : 'warn';
+      return `<tr><td>${e.t}</td><td class="${cls}">${cls === 'bad' ? '🔴' : '🟡'}</td><td style="font-size:12px;color:#94a3b8;">${e.msg}</td></tr>`;
+    }).join('');
+  } else {
+    failureTimeline = '<tr><td colspan="3" style="color:#64748b;text-align:center;padding:8px;">No failures recorded</td></tr>';
+  }
+
+  if (isTripped) {
+    const failureCount = a.errors.length;
+    failureSummary = `The guard triggered after <strong>3 consecutive failures</strong>. In total, <strong>${failureCount} error${failureCount > 1 ? 's' : ''}</strong> were logged before it stopped checking.`;
+  } else if (a.errors.length > 0) {
+    failureSummary = `${a.errors.length} error${a.errors.length > 1 ? 's' : ''} detected but fewer than 3 in a row — the guard has not tripped.`;
+  } else {
+    failureSummary = 'No failures. The guard has never tripped for this agent.';
+  }
+
+  openModal(`${a.name} — Safety guard`, `${a.fw} · ${a.role}`, `
+    <div class="modal-section">
+      <h4>Status</h4>
+      <div style="font-size:13px;color:${isTripped ? '#ef4444' : '#22c55e'};font-weight:600;margin-bottom:8px;">
+        ${isTripped ? '🔴 Guard is STOPPED — not checking this agent' : '✅ Guard is OK — monitoring normally'}
+      </div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+        ${isTripped
+          ? `The safety guard detected <strong>3 consecutive failures</strong> from this agent and stopped checking to prevent noise. It will automatically resume in <strong>~4 hours</strong> (cooldown period).`
+          : `The safety guard has detected <strong>0 consecutive failures</strong>. It continues monitoring every 30 seconds.`}
+      </div>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>Failures that triggered the guard</h4>
+      <table class="data-table">
+        <tr><th style="width:70px;">Time</th><th style="width:50px;"></th><th>What happened</th></tr>
+        ${failureTimeline}
+      </table>
+      <div style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.6;">
+        ${failureSummary}
+      </div>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>What the guard does</h4>
+      <div style="font-size:12px;color:#64748b;line-height:1.6;">
+        Without this guard, a dead agent gets checked every 30 seconds — generating error messages, filling your logs, and wasting resources. After <strong>3 failures in a row</strong>, the guard <strong>stops checking</strong> and enters cooldown. After cooldown expires, it tries again automatically. This prevents alert fatigue from a single downed agent.
+      </div>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>What the guard saved</h4>
+      <div style="font-size:12px;color:#64748b;line-height:1.6;">
+        ${(function() {
+          const WITHOUT_CHECKS = 2880; // HTTP checks/day without guard
+          const WITHOUT_WRITES = WITHOUT_CHECKS * 2; // pulse_log + errors per check
+          const WITHOUT_KB = (WITHOUT_WRITES * 75 / 1024).toFixed(1); // ~75 bytes/write
+          const WITH = a.errors.length > 0 ? a.errors.length : 0;
+          const WITH_WRITES = WITH * 2;
+          const WITH_KB = (WITH_WRITES * 75 / 1024).toFixed(1);
+          const savedWrites = WITHOUT_WRITES - WITH_WRITES;
+          const savedKB = (savedWrites * 75 / 1024).toFixed(0);
+          const pct = ((savedWrites / WITHOUT_WRITES) * 100).toFixed(1);
+          return `
+            <table class="data-table" style="margin-bottom:8px;">
+              <tr><th></th><th style="text-align:right;">Without guard</th><th style="text-align:right;">With guard</th></tr>
+              <tr><td>HTTP checks / day</td><td style="text-align:right;color:#ef4444;">${WITHOUT_CHECKS.toLocaleString()}</td><td style="text-align:right;color:#22c55e;">${WITH}</td></tr>
+              <tr><td>DB writes / day</td><td style="text-align:right;color:#ef4444;">${WITHOUT_WRITES.toLocaleString()} (~${WITHOUT_KB} KB)</td><td style="text-align:right;color:#22c55e;">${WITH_WRITES} (~${WITH_KB} KB)</td></tr>
+              <tr><td>Saved</td><td></td><td style="text-align:right;color:#22c55e;font-weight:600;">${savedWrites.toLocaleString()} writes (~${savedKB} KB/day) — ${pct}%</td></tr>
+            </table>
+            ${WITH > 0
+              ? `Without the guard, this agent's single crash would have written <strong>${WITHOUT_WRITES.toLocaleString()} rows</strong> to your SQLite DB today — roughly <strong>${WITHOUT_KB} KB</strong> of noise. Instead, you see <strong>${WITH_WRITES} writes (${WITH_KB} KB)</strong>. The guard prevented <strong>${savedWrites.toLocaleString()} unnecessary DB writes (~${savedKB} KB/day)</strong>.`
+              : 'No failures means the guard has no savings to show — but it\'s ready if something goes down.'}
+          `;
+        })()}
+      </div>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>Settings</h4>
+      <table class="data-table">
+        <tr><td>Failures before stop</td><td>3</td></tr>
+        <tr><td>Cooldown period</td><td>${isTripped ? '~4 hours (active)' : '~4 hours (ready)'}</td></tr>
+        <tr><td>Auto-retry after cooldown</td><td class="good">Yes</td></tr>
+      </table>
+    </div>
+  `);
+}
+
+function showErrorsDrill(name) {
+  const a = getAgent(name);
+  if (!a) return;
+
+  const rows = a.errors.length > 0
+    ? a.errors.map(e => `<tr><td>${e.t}</td><td>${e.msg}</td></tr>`).join('')
+    : '<tr><td colspan="2" style="color:#64748b;text-align:center;padding:12px;">No errors in the last 24 hours</td></tr>';
+
+  openModal(`${a.name} — Error history`, `${a.fw} · ${a.role}`, `
+    <div class="modal-section">
+      <h4>Last 24 hours</h4>
+      <table class="data-table">
+        <tr><th>Time</th><th>What happened</th></tr>
+        ${rows}
+      </table>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>What this means</h4>
+      <div style="font-size:12px;color:#64748b;line-height:1.6;">
+        ${a.errors.length === 0
+          ? 'No errors means this agent has been running cleanly for the last 24 hours.'
+          : a.errors.length === 1
+          ? 'One error in 24 hours is usually transient — network hiccup or temporary overload.'
+          : 'Multiple errors suggest an ongoing problem. Check the guard status to see if monitoring has been stopped automatically.'}
+      </div>
+    </div>
+    <!-- Pro preview: what longer history reveals -->
+    <div class="modal-section" style="margin-top:16px;border:1px dashed #3730a3;border-radius:10px;padding:14px;cursor:pointer;" onclick="openProErrorModal('${a.name}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h4 style="margin-bottom:4px;">🔒 More history unlocks patterns</h4>
+          <div style="font-size:11px;color:#64748b;line-height:1.6;">
+            Free: last 24h only. Pro keeps every day from install — so next week you can see if errors are getting <strong style="color:#f97316;">better or worse</strong>.<br>
+            <span style="color:#a5b4fc;">Weekly trend charts · regression alerts · never pruned</span>
+          </div>
+        </div>
+        <button class="secondary-btn" style="white-space:nowrap;font-size:11px;padding:6px 12px;" onclick="event.stopPropagation();openProErrorModal('${a.name}')">See what you're missing ›</button>
+      </div>
+    </div>
+  `);
+}
+
+function showDriftDrill(name) {
+  const a = getAgent(name);
+  if (!a) return;
+
+  const driftData = a.dailyDrift || [];
+  const maxVal = Math.max(...driftData.map(Math.abs), 1);
+  const bars = driftData.map((v, i) => {
+    const pct = Math.abs(v) / maxVal * 100;
+    const color = v > 0 ? '#f97316' : v < 0 ? '#22c55e' : '#64748b';
+    const barW = Math.max(pct, 3);
+    return `<tr><td style="font-size:11px;color:#64748b;">${DAYS[i]}</td><td><div style="height:14px;width:${barW}%;background:${color};border-radius:2px;min-width:3px;"></div></td><td style="font-size:11px;color:#94a3b8;text-align:right;">${v > 0 ? '+' : ''}${v}%</td></tr>`;
+  }).join('');
+
+  const trend = a.drift > 0 ? 'growing (more tokens each day)' : a.drift < 0 ? 'shrinking (getting leaner)' : 'stable';
+
+  openModal(`${a.name} — Brain size trend`, `${a.fw} · ${a.role}`, `
+    <div class="modal-section">
+      <h4>7-day change (${trend})</h4>
+      <table class="data-table">
+        <tr><th style="width:50px;">Day</th><th style="width:200px;">Change</th><th style="width:50px;text-align:right;">%</th></tr>
+        ${bars}
+      </table>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>What this means</h4>
+      <div style="font-size:12px;color:#64748b;line-height:1.6;">
+        ${a.drift === null
+          ? 'This agent has no measurable brain — it likely doesn\'t use a system prompt or SOUL.md.'
+          : a.drift > 5
+          ? `This agent grew <strong>${a.drift}%</strong> this week. That's significant — its context is getting larger, which means slower responses and higher costs per turn. Check if new skills were added or if memory is accumulating without cleanup.`
+          : a.drift > 0
+          ? `This agent grew <strong>${a.drift}%</strong> this week — a small increase, possibly normal fluctuation.`
+          : a.drift < 0
+          ? `This agent shrunk <strong>${Math.abs(a.drift)}%</strong> this week — it's getting leaner, which is generally good for speed and cost.`
+          : 'Brain size is stable — no notable changes this week.'}
+      </div>
+    </div>
+  `);
+}
+
+function showBrainDrill(name) {
+  const a = getAgent(name);
+  if (!a) return;
+
+  const total = Object.values(a.components).reduce((x, y) => x + y, 0);
+  const sorted = COMP_ORDER.filter(c => (a.components[c] || 0) > 0);
+
+  const rows = sorted.map(c => {
+    const pct = ((a.components[c] || 0) / (total || 1) * 100).toFixed(1);
+    const barW = Math.max(parseFloat(pct), 2);
+    return `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${COMP_COLORS[c]};margin-right:6px;"></span>${COMP_NAMES[c]}</td><td style="text-align:right;">${(a.components[c] || 0).toLocaleString()}</td><td><div style="height:14px;width:${barW}%;background:${COMP_COLORS[c]};border-radius:2px;min-width:3px;"></div></td><td style="text-align:right;color:#64748b;">${pct}%</td></tr>`;
+  }).join('');
+
+  openModal(`${a.name} — Brain composition`, `${a.fw} · ${a.role}`, `
+    <div class="modal-section">
+      <h4>What's in this agent's brain</h4>
+      <table class="data-table">
+        <tr><th>Component</th><th style="text-align:right;">Tokens</th><th style="width:120px;">Share</th><th style="text-align:right;">%</th></tr>
+        ${rows}
+        <tr style="border-top:1px solid #334155;"><td style="font-weight:600;">Total</td><td style="text-align:right;font-weight:600;">${total.toLocaleString()}</td><td></td><td style="text-align:right;color:#64748b;">100%</td></tr>
+      </table>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>What each part does</h4>
+      <div style="font-size:12px;color:#64748b;line-height:1.7;">
+        <strong style="color:#e2e8f0;">Skills</strong> — Instructions for specific tasks (scraping, analysis, communication). Usually the largest section.<br>
+        <strong style="color:#e2e8f0;">Tools</strong> — Definitions of APIs and functions the agent can call.<br>
+        <strong style="color:#e2e8f0;">Memory</strong> — Long-term context about users, past sessions, learned facts.<br>
+        <strong style="color:#e2e8f0;">Guidance</strong> — Behavioral rules, guardrails, output format requirements.<br>
+        <strong style="color:#e2e8f0;">Identity</strong> — The agent's name, role, personality (SOUL.md identity section).
+      </div>
+    </div>
+    <div class="modal-section" style="margin-top:16px;">
+      <h4>How to read this</h4>
+      <div style="font-size:12px;color:#64748b;line-height:1.6;">
+        Every token in this table gets <strong>loaded into every conversation turn</strong>. If Skills is 50% of the brain, half of every response's cost goes to reading skills instructions. If the total is over 5,000 tokens, this agent is considered "heavy" and may benefit from trimming unused skills or compressing the system prompt.
+      </div>
+    </div>
+  `);
+}
+
+// ──────────────────────────────────────────────
+// Interactions
+// ──────────────────────────────────────────────
+function toggleSection(el) { el.classList.toggle('collapsed'); }
+
+function toggleHide(name) {
+  if (hiddenAgents.has(name)) hiddenAgents.delete(name);
+  else hiddenAgents.add(name);
+  render();
+}
+
+function toggleFeedback() {
+  const bar = document.getElementById('feedbackBar');
+  bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+}
+
+function addMissingAgent() {
+  const name = document.getElementById('feedbackInput').value.trim();
+  if (!name) { alert('Enter an agent name first'); return; }
+  const framework = document.getElementById('feedbackFramework').value;
+  const group = framework === 'openclaw' ? 'openclaw' : framework === 'custom' || framework === 'ollama' || framework === 'legacy' ? 'others' : 'hermes';
+  if (!AGENTS[group]) AGENTS[group] = [];
+  AGENTS[group].push({
+    name, role: 'Custom', status: 'alive', fw: framework.charAt(0).toUpperCase() + framework.slice(1),
+    latency: '—', lastCheck: 'just now', lastCheckTs: Math.floor(Date.now()/1000),
+    tokens: 0, drift: 0, circuit: 'OK', error: null, components: {},
+    pulses: ['ok'], errors: [], dailyDrift: [0]
+  });
+  document.getElementById('feedbackInput').value = '';
+  document.getElementById('feedbackBar').style.display = 'none';
+  render();
+}
+
+/* ─── Pro upsell modals ─── */
+let activeProModal = null;
+
+function openProErrorModal(agentName) {
+  const agent = getAgent(agentName);
+  const errCount = agent ? agent.errors.length : 3;
+  const proModal = document.createElement('div');
+  proModal.id = 'proErrorModal';
+  proModal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:200;';
+  proModal.innerHTML = `
+    <div style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:28px;max-width:520px;width:90%;">
+      <div style="font-size:36px;margin-bottom:8px;text-align:center;">🔒</div>
+      <h3 style="font-size:17px;font-weight:600;text-align:center;margin-bottom:4px;">Why history matters</h3>
+      <p style="font-size:13px;color:#94a3b8;text-align:center;margin-bottom:16px;">You see <strong style="color:#e2e8f0;">${errCount} errors</strong> in 24h. Without a trend you can't tell if that's a blip or the start of something worse.</p>
+
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:4px;">
+          <span>What 2 weeks of data reveals (example)</span>
+          <span style="color:#f97316;">+650%</span>
+        </div>
+        <div style="display:flex;gap:2px;height:40px;align-items:flex-end;">
+          <div style="flex:1;height:8px;background:#22c55e;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:10px;background:#22c55e;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:8px;background:#22c55e;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:12px;background:#eab308;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:14px;background:#eab308;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:12px;background:#eab308;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:16px;background:#f97316;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:18px;background:#f97316;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:16px;background:#f97316;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:24px;background:#ef4444;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:28px;background:#ef4444;border-radius:2px 2px 0 0;"></div>
+          <div style="flex:1;height:32px;background:#ef4444;border-radius:2px 2px 0 0;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;margin-top:2px;">
+          <span>Week 1</span>
+          <span>Week 2</span>
+          <span style="color:#ef4444;">Now</span>
+        </div>
+      </div>
+
+      <div style="text-align:left;">
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">📈 Weekly trend chart</div>
+          <div style="font-size:11px;color:#64748b;">See error rate per week — are things getting better or worse?</div>
+        </div>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🚩 Regression detection</div>
+          <div style="font-size:11px;color:#64748b;">Alert when error rate doubles week-over-week, linked to config changes.</div>
+        </div>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🕵️ Pattern discovery</div>
+          <div style="font-size:11px;color:#64748b;">Auto-tags recurring errors — same "timeout" 40 times vs varied errors.</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:12px;">
+        <div style="font-size:12px;color:#a5b4fc;margin-bottom:8px;">🔒 Pro — never-pruned history · weekly trends · regression alerts</div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="secondary-btn" onclick="closeProErrorModal()" style="background:#334155;border:none;color:#94a3b8;padding:8px 20px;border-radius:8px;font-size:13px;cursor:pointer;">Not now</button>
+          <button onclick="alert('Stripe checkout would open here')" style="background:#3b82f6;border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Start Free Trial</button>
+        </div>
+      </div>
+    </div>
+  `;
+  proModal.addEventListener('click', function(e) { if (e.target === this) closeProErrorModal(); });
+  document.body.appendChild(proModal);
+  activeProModal = proModal;
+}
+
+function closeProErrorModal() {
+  if (activeProModal) { activeProModal.remove(); activeProModal = null; }
+}
+
+// ──────────────────────────────────────────────
+// Init
+// ──────────────────────────────────────────────
+render();
+
+// Keyboard shortcut: Escape closes modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+
+
+<!-- ObserveCo branding -->
+<div style="text-align:center;padding:24px 0 16px;font-size:12px;color:#475569;border-top:1px solid #1e293b;margin-top:32px;">ObserveCo · Runtime observability for AI agents</div>
+</body>
+</html>

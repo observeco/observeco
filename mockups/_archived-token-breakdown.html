@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Token Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0f172a; color: #e2e8f0; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.app { max-width: 800px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+
+/* Agent selector */
+.agent-select { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+.agent-select select {
+  background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+  padding: 8px 12px; border-radius: 8px; font-size: 14px; font-family: inherit;
+  cursor: pointer; outline: none;
+}
+.agent-select select:hover { border-color: #475569; }
+.agent-select .framework-badge {
+  background: #1e293b; color: #38bdf8; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px; border: 1px solid #334155;
+}
+
+/* Tier indicator */
+.tier-bar { display: flex; margin-bottom: 24px; border-radius: 8px; overflow: hidden; }
+.tier-bar .free { flex: 1; background: #166534; color: #86efac; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; }
+.tier-bar .pro { flex: 1; background: #1e293b; color: #64748b; padding: 8px; text-align: center; font-size: 12px; font-weight: 400; border: 1px solid #334155; }
+
+/* Token breakdown card */
+.card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+  padding: 20px; margin-bottom: 16px;
+}
+.card h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.card h3 span { font-size: 11px; color: #64748b; font-weight: 400; }
+
+.token-total {
+  font-size: 28px; font-weight: 700; font-family: monospace; margin-bottom: 4px;
+}
+.token-total span { font-size: 14px; color: #64748b; font-weight: 400; }
+
+.token-bar-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.token-bar-item .label { width: 80px; font-size: 12px; color: #94a3b8; flex-shrink: 0; }
+.token-bar-item .bar-track { flex: 1; height: 20px; background: #0f172a; border-radius: 6px; overflow: hidden; position: relative; }
+.token-bar-item .bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; position: relative; cursor: pointer; }
+.token-bar-item .bar-fill:hover { opacity: 0.85; }
+.token-bar-item .value { width: 100px; text-align: right; font-family: monospace; font-size: 12px; color: #e2e8f0; flex-shrink: 0; }
+
+.tooltip {
+  display: none; position: absolute; top: -32px; left: 50%; transform: translateX(-50%);
+  background: #0f172a; border: 1px solid #334155; padding: 4px 10px; border-radius: 6px;
+  font-size: 11px; white-space: nowrap; color: #e2e8f0; z-index: 10;
+}
+.token-bar-item .bar-fill:hover .tooltip { display: block; }
+
+/* Savings banner */
+.savings-banner {
+  background: #0f172a; border: 1px solid #166534; border-radius: 8px;
+  padding: 12px; font-size: 13px; color: #22c55e; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* Drift sparkline */
+.drift-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding: 6px 0; }
+.drift-row .comp { width: 80px; font-size: 12px; color: #94a3b8; flex-shrink: 0; }
+.drift-row svg { flex: 1; height: 24px; }
+.drift-row .pct { width: 60px; text-align: right; font-family: monospace; font-size: 12px; }
+
+/* Per-turn timeline */
+.timeline { margin-top: 16px; }
+.timeline-bar { display: flex; gap: 2px; height: 40px; align-items: flex-end; margin-bottom: 6px; }
+.timeline-col {
+  flex: 1; min-width: 4px; border-radius: 2px 2px 0 0;
+  background: linear-gradient(to top, #6366f1, #8b5cf6);
+  transition: height 0.2s;
+  cursor: pointer; position: relative;
+}
+.timeline-col:hover { opacity: 0.8; }
+.timeline-col .tip {
+  display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  background: #0f172a; border: 1px solid #334155; padding: 4px 8px; border-radius: 6px;
+  font-size: 10px; white-space: nowrap; z-index: 10;
+}
+.timeline-col:hover .tip { display: block; }
+
+/* Pro locked */
+.pro-locked {
+  background: #1e293b; border: 1px dashed #475569; border-radius: 12px;
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;
+}
+.pro-locked:hover { border-color: #3b82f6; }
+.pro-locked .lock-icon { font-size: 28px; margin-bottom: 8px; }
+.pro-locked .title { font-size: 15px; font-weight: 600; color: #94a3b8; }
+.pro-locked .desc { font-size: 12px; color: #64748b; margin-top: 4px; }
+.pro-locked .stats { font-size: 12px; color: #3b82f6; margin-top: 8px; }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  align-items: center; justify-content: center; z-index: 100;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #1e293b; border: 1px solid #334155; border-radius: 16px;
+  padding: 28px; max-width: 420px; width: 90%; text-align: center;
+}
+.modal .big-icon { font-size: 40px; margin-bottom: 12px; }
+.modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: #94a3b8; line-height: 1.6; margin-bottom: 12px; }
+.modal .pro-list { text-align: left; list-style: none; margin: 12px 0 16px; }
+.modal .pro-list li { padding: 5px 0; font-size: 13px; color: #e2e8f0; }
+.modal .pro-list li:before { content: '✅ '; }
+.modal .close-btn {
+  background: #334155; border: none; color: #94a3b8;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-right: 8px;
+}
+.modal .close-btn:hover { background: #475569; color: #e2e8f0; }
+.modal .cta-btn {
+  background: #3b82f6; border: none; color: white; padding: 8px 20px;
+  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.modal .cta-btn:hover { background: #2563eb; }
+
+.tier-free-tag {
+  display: inline-block; background: #166534; color: #86efac; font-size: 10px;
+  font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px;
+}
+.tier-pro-tag {
+  display: inline-block; background: #3730a3; color: #a5b4fc; font-size: 10px;
+  font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px;
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Token Analysis</h1>
+  <div class="subtitle">Per-agent system prompt breakdown & trend</div>
+
+  <div class="agent-select">
+    <select id="agentSelect" onchange="switchAgent(this.value)">
+      <option value="hound">hound</option>
+      <option value="kepler">kepler</option>
+    </select>
+    <span class="framework-badge" id="fwBadge">Hermes</span>
+    <span class="tier-free-tag">FREE</span>
+  </div>
+
+  <div class="tier-bar">
+    <div class="free">🔓 FREE — 7-day history included</div>
+    <div class="pro">🔒 Pro — unlocks 90-day history & fleet comparison</div>
+  </div>
+
+  <!-- Token breakdown -->
+  <div class="card" id="breakdownCard">
+    <h3>Token Breakdown <span>per component</span></h3>
+    <div class="token-total" id="totalTokens">10,000 <span>total</span></div>
+    <div id="tokenBars"></div>
+  </div>
+
+  <div class="savings-banner">
+    🗜️ CHISEL saved 22% this session — lite compression active
+  </div>
+
+  <!-- Drift trend -->
+  <div class="card">
+    <h3>7-Day Drift Trend <span class="tier-free-tag">FREE</span></h3>
+    <div id="driftComponents"></div>
+  </div>
+
+  <!-- Per-turn timeline -->
+  <div class="card">
+    <h3>Per-Turn Token Usage <span>last 24h</span> <span class="tier-free-tag">FREE</span></h3>
+    <p style="font-size:12px;color:#64748b;margin-bottom:12px;">Each column = one agent turn. Height = total tokens consumed.</p>
+    <div class="timeline-bar" id="timelineBar"></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;">
+      <span>24h ago</span>
+      <span>Now</span>
+    </div>
+  </div>
+
+  <!-- Pro locked: 90-day history -->
+  <div class="pro-locked" onclick="openProModal()">
+    <div class="lock-icon">🔒</div>
+    <div class="title">90-Day Token History</div>
+    <div class="desc">See how each agent's token allocation evolved over months, not hours.</div>
+    <div class="stats">In the last 7 days, hound consumed <strong style="color:#e2e8f0;">247K tokens</strong> across <strong style="color:#e2e8f0;">83 turns</strong></div>
+    <div style="margin-top:8px;font-size:12px;color:#3b82f6;">Pro unlocks 90-day history & fleet comparison →</div>
+  </div>
+</div>
+
+<!-- Pro modal -->
+<div class="modal-overlay" id="proModal">
+  <div class="modal">
+    <div class="big-icon">🔒</div>
+    <h3>Go Deeper with Pro</h3>
+    <p>Your agent hound consumed 247K tokens in the last 7 days. See the full picture with extended history.</p>
+    <ul class="pro-list">
+      <li>90-day token & error history</li>
+      <li>Fleet-wide comparison side-by-side</li>
+      <li>Push alerts when drift exceeds thresholds</li>
+      <li>Auto-heal with configurable retries</li>
+    </ul>
+    <p style="font-size:12px;color:#64748b;">30-day free trial · <strong style="color:#e2e8f0;">$9/mo Solo</strong> · <strong style="color:#e2e8f0;">$49/mo Team</strong></p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:16px;">
+      <button class="close-btn" onclick="closeProModal()">Not now</button>
+      <button class="cta-btn" onclick="alert('Stripe checkout would open here')">Start Free Trial</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  hound: {
+    fw: 'Hermes',
+    total: 10000,
+    comps: [
+      { name: 'skills', tokens: 3400, color: '#8b5cf6' },
+      { name: 'tools', tokens: 2100, color: '#14b8a6' },
+      { name: 'memory', tokens: 1800, color: '#ec4899' },
+      { name: 'guidance', tokens: 1500, color: '#f97316' },
+      { name: 'identity', tokens: 1200, color: '#6366f1' },
+    ],
+    drift: [
+      { comp: 'skills', pts: [12,14,13,15,16,14,17], pct: '+5%', dir: 'up' },
+      { comp: 'tools', pts: [8,9,8,7,9,10,11], pct: '+3%', dir: 'up' },
+      { comp: 'memory', pts: [15,16,15,14,15,16,18], pct: '+3%', dir: 'up' },
+      { comp: 'guidance', pts: [20,18,17,16,15,14,15], pct: '-5%', dir: 'down' },
+      { comp: 'identity', pts: [12,12,12,12,12,12,12], pct: '0%', dir: 'flat' },
+    ],
+    turns: [3200, 4800, 2100, 5600, 3900, 4500, 2800, 6100, 3400, 4200, 3800, 5100, 2900, 4700, 3500, 5200, 4100, 3300, 4900, 2700, 5300, 3600, 4400, 3000],
+  },
+  kepler: {
+    fw: 'OpenClaw',
+    total: 15400,
+    comps: [
+      { name: 'skills', tokens: 5200, color: '#8b5cf6' },
+      { name: 'tools', tokens: 3400, color: '#14b8a6' },
+      { name: 'guidance', tokens: 2900, color: '#f97316' },
+      { name: 'memory', tokens: 2400, color: '#ec4899' },
+      { name: 'identity', tokens: 1500, color: '#6366f1' },
+    ],
+    drift: [
+      { comp: 'skills', pts: [15,16,18,20,22,25,27], pct: '+12%', dir: 'up' },
+      { comp: 'tools', pts: [12,11,12,13,14,15,17], pct: '+5%', dir: 'up' },
+      { comp: 'guidance', pts: [18,17,16,16,15,15,14], pct: '-4%', dir: 'down' },
+      { comp: 'memory', pts: [10,11,12,12,13,14,15], pct: '+5%', dir: 'up' },
+      { comp: 'identity', pts: [8,8,8,8,8,8,8], pct: '0%', dir: 'flat' },
+    ],
+    turns: [6200, 7800, 5100, 9400, 7200, 8500, 5800, 10100, 6400, 8200, 7100, 8800, 5900, 7700, 6500, 8900, 7800, 6300, 9200, 5700, 9600, 6600, 8100, 6000],
+  }
+};
+
+function renderAgent(name) {
+  const d = DATA[name];
+  document.getElementById('fwBadge').textContent = d.fw;
+  document.getElementById('totalTokens').innerHTML = d.total.toLocaleString() + ' <span>total</span>';
+
+  // Token bars
+  const maxT = d.comps[0].tokens;
+  const bars = d.comps.map(c => {
+    const pct = (c.tokens / d.total * 100).toFixed(1);
+    const barW = (c.tokens / maxT * 100).toFixed(1);
+    return `
+      <div class="token-bar-item">
+        <span class="label">${c.name}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${barW}%;background:${c.color};">
+            <span class="tooltip">${c.name}: ${c.tokens.toLocaleString()} tok (${pct}%)</span>
+          </div>
+        </div>
+        <span class="value">${c.tokens.toLocaleString()} <span style="color:#64748b;">(${pct}%)</span></span>
+      </div>`;
+  }).join('');
+  document.getElementById('tokenBars').innerHTML = bars;
+
+  // Drift
+  const driftHtml = d.drift.map(item => {
+    const maxP = Math.max(...item.pts, 1);
+    const poly = item.pts.map((v,i) => `${i * 20},${20 - (v/maxP*18)}`).join(' ');
+    // Draw area fill too
+    const area = item.pts.map((v,i) => `${i * 20},${20 - (v/maxP*18)}`).join(' ') + ` ${(item.pts.length-1)*20},20 0,20`;
+    const col = item.dir === 'up' ? '#f97316' : item.dir === 'down' ? '#22c55e' : '#94a3b8';
+    return `
+      <div class="drift-row">
+        <span class="comp">${item.comp}</span>
+        <svg viewBox="0 0 ${(item.pts.length-1)*20} 20">
+          <polygon points="${area}" fill="${col}22" />
+          <polyline points="${poly}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="pct" style="color:${col};">${item.pct}</span>
+      </div>`;
+  }).join('');
+  document.getElementById('driftComponents').innerHTML = driftHtml;
+
+  // Per-turn timeline
+  const turns = d.turns;
+  const maxTurn = Math.max(...turns, 1);
+  const cols = turns.map(v => {
+    const h = Math.max(4, (v / maxTurn) * 38);
+    return `<div class="timeline-col" style="height:${h}px;"><span class="tip">${v.toLocaleString()} tok</span></div>`;
+  }).join('');
+  document.getElementById('timelineBar').innerHTML = cols;
+}
+
+function switchAgent(name) { renderAgent(name); }
+
+function openProModal() { document.getElementById('proModal').classList.add('active'); }
+function closeProModal() { document.getElementById('proModal').classList.remove('active'); }
+document.getElementById('proModal').addEventListener('click', function(e) { if (e.target === this) closeProModal(); });
+
+renderAgent('hound');
+</script>
+</body>
+</html>

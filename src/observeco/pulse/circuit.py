@@ -1,4 +1,8 @@
-"""Circuit breaker — N-failure state machine."""
+"""Circuit breaker — N-failure state machine.
+
+obs-spec-018: TOCTOU restarts are excluded from failure counting.
+Circuit only trips on real crashes.
+"""
 
 from __future__ import annotations
 

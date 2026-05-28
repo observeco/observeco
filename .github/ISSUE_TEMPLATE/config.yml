@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Telegram
+    url: https://t.me/observeco
+    about: Chat with the team directly
+  - name: 🐛 Bug Report (non-beta)
+    url: https://github.com/observeco/observeco/issues/new?template=bug_report.md
+    about: Use the Markdown form for formal bug reports

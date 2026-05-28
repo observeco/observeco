@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Communication Pathway Mind Map · Real Ecosystem</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #253349;
+  --border: #334155;
+  --border-soft: #273548;
+  --fg: #f8fafc;
+  --fg-2: #94a3b8;
+  --muted: #64748b;
+  --accent: #22c55e;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 24px;
+  --text-3xl: 40px;
+  --text-4xl: 56px;
+  --leading-body: 1.5;
+  --leading-tight: 1.06;
+  --tracking-display: -0.025em;
+  --container-max: 1440px;
+  --container-gutter-desktop: 36px;
+  --container-gutter-tablet: 24px;
+  --container-gutter-phone: 16px;
+  --section-y-desktop: 40px;
+  --section-y-tablet: 32px;
+  --section-y-phone: 24px;
+  --accent-on: #0c1628;
+  --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+  --accent-active: color-mix(in oklab, var(--accent), black 14%);
+  --success: #22c55e;
+  --warn: #eab308;
+  --danger: #ef4444;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 24px 72px rgba(0, 0, 0, 0.42);
+  --focus-ring: 0 0 0 4px color-mix(in oklab, var(--accent), transparent 70%);
+  --motion-fast: 100ms;
+  --motion-base: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --meta: #3b82f6;
+  --surface-warm: #253349;
+  --status-healthy: #22c55e;
+  --status-warning: #eab308;
+  --status-critical: #ef4444;
+  --status-info: #3b82f6;
+  --token-identity: #6366f1;
+  --token-skills: #8b5cf6;
+  --token-memory: #ec4899;
+  --token-tools: #14b8a6;
+  --token-guidance: #f97316;
+  --data-primary: #22c55e;
+  --data-secondary: #3b82f6;
+  --data-accent: #3b82f6;
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --yellow: #eab308;
+  --blue: #38bdf8;
+  --orange: #f97316;
+  --purple: #a78bfa;
+  --pink: #ec4899;
+  --cyan: #22d3ee;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 1440px; margin: 0 auto; padding: 20px 24px; }
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.header-logo svg { width: 28px; height: 28px; }
+.header-title { font-size: 18px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--green); }
+.header-sub { font-size: 11px; color: var(--muted); }
+.pane-layout { display: flex; gap: 16px; align-items: flex-start; }
+.left-rail { flex: 1; min-width: 0; }
+.right-rail { width: 400px; flex-shrink: 0; position: sticky; top: 80px; }
+@media (max-width: 1100px) { .pane-layout { flex-direction: column; } .right-rail { width: 100%; position: static; } }
+
+.graph-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.graph-card-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: rgba(15,23,42,0.4); }
+.graph-card-title { font-size: 14px; font-weight: 600; color: var(--fg); }
+.graph-card-sub { font-size: 11px; color: var(--muted); }
+.graph-card-actions { margin-left: auto; display: flex; gap: 6px; }
+.graph-svg-wrap { width: 100%; position: relative; overflow: auto; }
+.graph-svg-wrap svg { display: block; min-width: 1000px; height: auto; background: var(--bg); }
+
+.node-group { cursor: pointer; }
+.node-bg { transition: fill 0.2s, stroke 0.2s; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+.node-group:hover .node-bg { filter: drop-shadow(0 0 12px rgba(34,197,94,0.2)); }
+.node-label { font-size: 12px; font-weight: 600; fill: var(--fg); pointer-events: none; }
+.node-sublabel { font-size: 9px; fill: var(--muted); pointer-events: none; }
+.node-tag { font-size: 8px; fill: var(--muted); pointer-events: none; }
+
+.edge-path { fill: none; stroke-width: 2; cursor: pointer; transition: stroke 0.2s, stroke-width 0.2s, opacity 0.2s; }
+.edge-path:hover { stroke-width: 3; }
+.edge-path.green { stroke: var(--green); }
+.edge-path.yellow { stroke: var(--amber); }
+.edge-path.red { stroke: var(--red); }
+.edge-path.gray { stroke: var(--border); }
+
+.edge-label-bg { fill: var(--surface); stroke: var(--border); stroke-width: 1; rx: 3; }
+.edge-label { font-size: 8px; fill: var(--fg-2); text-anchor: middle; pointer-events: none; font-weight: 500; font-family: 'Inter', sans-serif; }
+
+@keyframes pulse-danger { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.3); } }
+.failure-marker { fill: var(--red); opacity: 0.6; animation: pulse-danger 2s ease-in-out infinite; }
+
+.legend { display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--fg-2); }
+.legend-line { width: 24px; height: 3px; border-radius: 2px; }
+.legend-line.green { background: var(--green); }
+.legend-line.yellow { background: var(--amber); }
+.legend-line.red { background: var(--red); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.legend-dot.green { background: var(--green); }
+.legend-dot.hermes { background: #6366f1; }
+.legend-dot.openclaw { background: var(--purple); }
+.legend-dot.platform { background: var(--cyan); }
+.legend-dot.cron { background: var(--amber); }
+.legend-dot.human { background: var(--pink); }
+
+.detail-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.detail-panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.detail-panel-title { font-size: 13px; font-weight: 600; color: var(--fg); flex: 1; }
+.detail-panel-body { padding: 14px 16px; min-height: 200px; max-height: 600px; overflow-y: auto; }
+.issue-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px; border-radius: 6px; font-size: 12px; color: var(--fg-2); border-left: 3px solid var(--border); margin-bottom: 4px; line-height: 1.4; }
+.issue-item.issue-red { border-left-color: var(--red); background: rgba(239,68,68,0.04); }
+.issue-item.issue-yellow { border-left-color: var(--amber); background: rgba(245,158,11,0.04); }
+.issue-item.issue-green { border-left-color: var(--green); background: rgba(34,197,94,0.04); }
+.issue-status { width: 50px; flex-shrink: 0; font-size: 11px; font-weight: 600; }
+
+.summary-bar { display: flex; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.summary-stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fg-2); }
+.summary-num { font-weight: 700; font-size: 14px; }
+.summary-num.green { color: var(--green); }
+.summary-num.red { color: var(--red); }
+.summary-num.amber { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+        <defs>
+          <linearGradient id="oc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+          </linearGradient>
+          <linearGradient id="oc-grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <circle cx="64" cy="64" r="60" fill="none" stroke="url(#oc-grad)" stroke-width="2" opacity="0.3"/>
+        <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#oc-grad2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/>
+        <circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+        <circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/>
+        <circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/>
+        <circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+        <circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/>
+        <circle cx="28" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+        <circle cx="100" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+      </svg>
+      <div>
+        <div class="header-title"><span>Observe</span>Co</div>
+        <div class="brand-tagline" style="font-size: 13px; color: #94a3b8; font-weight: 400; margin-top: 2px;">Tells you if your AI agents are working, what they're doing, and where your money goes.</div>
+        <div class="header-sub">Communication Pathway Mind Map · Your Real Ecosystem</div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;font-size:11px;">
+    <span style="color:var(--muted);">Generated from live scan</span>
+    <span style="color:var(--green);background:rgba(34,197,94,0.1);padding:2px 8px;border-radius:4px;">Real data</span>
+  </div>
+</header>
+
+<div class="pane-layout">
+  <div class="left-rail">
+    <div class="graph-card">
+      <div class="graph-card-header">
+        <div class="graph-card-title">Sean's Agent Ecosystem</div>
+        <div class="graph-card-sub">Every communication path · Color-coded by health</div>
+        <div class="graph-card-actions">
+          <span style="font-size:10px;color:var(--muted);background:rgba(0,0,0,0.3);padding:4px 10px;border-radius:6px;">Click node → inspect</span>
+        </div>
+      </div>
+
+      <div class="graph-svg-wrap">
+        <svg viewBox="0 0 1100 820" id="pathway-graph" style="min-height:820px;">
+          <defs>
+            <marker id="arrow-green" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--green)"/></marker>
+            <marker id="arrow-red" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--red)"/></marker>
+            <marker id="arrow-amber" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="var(--amber)"/></marker>
+          </defs>
+
+          <!-- ==================== EDGES ==================== -->
+
+          <!-- Sean → Telegram (chat) -->
+          <path class="edge-path green" d="M80,60 Q100,100 120,130" id="e-sean-tg"/>
+          <rect class="edge-label-bg" x="80" y="95" width="50" height="16"/>
+          <text class="edge-label" x="105" y="106">chat</text>
+
+          <!-- Telegram → Main (bot routes) -->
+          <path class="edge-path green" d="M180,190 Q220,200 260,210" id="e-tg-main"/>
+          <rect class="edge-label-bg" x="190" y="195" width="50" height="16"/>
+          <text class="edge-label" x="215" y="206">bot ↦ session</text>
+
+          <!-- Telegram → Dreamer (bot routes) -->
+          <path class="edge-path green" d="M220,150 Q240,130 260,110" id="e-tg-dreamer"/>
+          <rect class="edge-label-bg" x="220" y="125" width="50" height="16"/>
+          <text class="edge-label" x="245" y="136">bot ↦ dreamer</text>
+
+          <!-- Telegram → PA (bot routes) -->
+          <path class="edge-path green" d="M220,210 Q240,230 260,250" id="e-tg-pa"/>
+          <rect class="edge-label-bg" x="220" y="225" width="50" height="16"/>
+          <text class="edge-label" x="245" y="236">bot ↦ pa</text>
+
+          <!-- Telegram → Hound (bot routes) -->
+          <path class="edge-path green" d="M180,170 Q200,180 220,190" id="e-tg-hound"/>
+          <rect class="edge-label-bg" x="185" y="178" width="50" height="16"/>
+          <text class="edge-label" x="210" y="189">bot ↦ hound (topic 1)</text>
+
+          <!-- MAIN → HOUND: Main sends signals to Hound via shared outbox → router (direct write detected) -->
+          <path class="edge-path yellow" d="M380,340 Q400,370 420,390" id="e-main-hound-direct"/>
+          <rect class="edge-label-bg" x="380" y="360" width="100" height="16" fill="var(--surface)" stroke="var(--amber)"/>
+          <text class="edge-label" x="430" y="371">→ hound/inbox (direct write, no router)</text>
+          <circle class="failure-marker" cx="420" cy="365" r="3"/>
+
+          <!-- MAIN → KEPLER: direct write detected -->
+          <path class="edge-path yellow" d="M380,320 Q420,310 460,300" id="e-main-kepler-direct"/>
+          <rect class="edge-label-bg" x="390" y="308" width="100" height="16" fill="var(--surface)" stroke="var(--amber)"/>
+          <text class="edge-label" x="440" y="319">→ kepler/inbox (direct write, no router)</text>
+
+          <!-- Router → HOUND (canonical route) -->
+          <path class="edge-path green" d="M560,470 Q580,480 600,480 Q620,480 630,470" id="e-router-hound"/>
+          <rect class="edge-label-bg" x="580" y="478" width="60" height="16"/>
+          <text class="edge-label" x="610" y="489">router → hound</text>
+
+          <!-- Router → DREAMER -->
+          <path class="edge-path green" d="M560,400 Q560,370 540,340" id="e-router-dreamer"/>
+          <rect class="edge-label-bg" x="540" y="365" width="70" height="16"/>
+          <text class="edge-label" x="575" y="376">router → dreamer</text>
+
+          <!-- Router → PRAGMA -->
+          <path class="edge-path green" d="M560,500 Q580,510 600,520" id="e-router-pragma"/>
+          <rect class="edge-label-bg" x="570" y="510" width="70" height="16"/>
+          <text class="edge-label" x="605" y="521">router → pragma</text>
+
+          <!-- Router → ALEPH (via secondbrain alias) -->
+          <path class="edge-path green" d="M560,440 Q580,450 600,450" id="e-router-aleph"/>
+          <rect class="edge-label-bg" x="570" y="444" width="40" height="16"/>
+          <text class="edge-label" x="590" y="455">router → aleph (alias: secondbrain)</text>
+
+          <!-- Router → RAVEN -->
+          <path class="edge-path green" d="M560,420 Q580,430 600,430" id="e-router-raven"/>
+          <rect class="edge-label-bg" x="570" y="424" width="40" height="16"/>
+          <text class="edge-label" x="590" y="435">router → raven</text>
+
+          <!-- HOUND OUTBOX → ROUTER (8 files pending) -->
+          <path class="edge-path yellow" d="M700,470 Q740,450 760,430" id="e-hound-outbox-router"/>
+          <rect class="edge-label-bg" x="710" y="450" width="100" height="16" fill="var(--surface)" stroke="var(--amber)"/>
+          <text class="edge-label" x="760" y="461">hound/outbox · 8 pending →</text>
+          <circle class="failure-marker" cx="755" cy="448" r="3"/>
+
+          <!-- MAIN OUTBOX → ROUTER (6 files pending) -->
+          <path class="edge-path yellow" d="M380,260 Q440,250 500,260" id="e-main-outbox-router"/>
+          <rect class="edge-label-bg" x="410" y="255" width="80" height="16" fill="var(--surface)" stroke="var(--amber)"/>
+          <text class="edge-label" x="450" y="266">main/outbox · 6 pending →</text>
+
+          <!-- DREAMER → Telegram topic 1165 (Morning Drift, Signal Synthesis, etc) -->
+          <path class="edge-path green" d="M380,120 Q340,130 300,150" id="e-dreamer-tg"/>
+          <rect class="edge-label-bg" x="320" y="135" width="50" height="16"/>
+          <text class="edge-label" x="345" y="146">↦ topic 1165</text>
+
+          <!-- DREAMER → Telegram topic 1165 (Tend the Room — stale since May 18) -->
+          <path class="edge-path yellow" d="M380,140 Q360,150 340,170" id="e-dreamer-tend"/>
+          <rect class="edge-label-bg" x="340" y="157" width="90" height="16" fill="var(--surface)" stroke="var(--amber)"/>
+          <text class="edge-label" x="385" y="168">Tend the Room — stale 10d</text>
+
+          <!-- DREAMER → local (Daily Digest — deliver: local, nobody reads) -->
+          <path class="edge-path red" d="M340,70 Q340,50 340,40" id="e-dreamer-local"/>
+          <rect class="edge-label-bg" x="310" y="40" width="80" height="16" fill="var(--surface)" stroke="var(--red)"/>
+          <text class="edge-label" x="350" y="51">Daily Digest → local (stale)</text>
+          <circle class="failure-marker" cx="340" cy="48" r="3"/>
+
+          <!-- PA → Telegram topic 2 (Morning Brief ok, Evening Brief error) -->
+          <path class="edge-path green" d="M340,340 Q300,340 280,340" id="e-pa-morning"/>
+          <rect class="edge-label-bg" x="280" y="336" width="60" height="16"/>
+          <text class="edge-label" x="310" y="347">↦ topic 2 (morning ok)</text>
+
+          <path class="edge-path red" d="M340,360 Q310,370 280,370" id="e-pa-evening"/>
+          <rect class="edge-label-bg" x="280" y="365" width="80" height="16" fill="var(--surface)" stroke="var(--red)"/>
+          <text class="edge-label" x="320" y="376">Evening Brief — error 10d</text>
+          <circle class="failure-marker" cx="310" cy="375" r="3"/>
+
+          <!-- HOUND INBOX → HOUND (17 files unconsumed) -->
+          <path class="edge-path red" d="M700,500 Q720,520 720,540" id="e-hound-inbox-unread"/>
+          <rect class="edge-label-bg" x="680" y="520" width="110" height="16" fill="var(--surface)" stroke="var(--red)"/>
+          <text class="edge-label" x="735" y="531">hound/inbox · 17 unconsumed</text>
+          <circle class="failure-marker" cx="715" cy="530" r="3"/>
+
+          <!-- SEAN INBOX → (5 files unconsumed) -->
+          <path class="edge-path yellow" d="M260,280 Q260,300 260,310" id="e-sean-inbox"/>
+          <rect class="edge-label-bg" x="200" y="295" width="100" height="16" fill="var(--surface)" stroke="var(--amber)"/>
+          <text class="edge-label" x="250" y="306">sean/inbox · 5 unconsumed</text>
+
+          <!-- MAIN → TELEGRAM (sends messages via gateway) -->
+          <path class="edge-path green" d="M380,280 Q340,290 300,290" id="e-main-tg"/>
+          <rect class="edge-label-bg" x="300" y="284" width="50" height="16"/>
+          <text class="edge-label" x="325" y="295">↦ outbound</text>
+
+          <!-- HOUND → SEAN INBOX (escalations) -->
+          <path class="edge-path green" d="M700,420 Q680,400 660,390" id="e-hound-sean"/>
+          <rect class="edge-label-bg" x="660" y="385" width="70" height="16"/>
+          <text class="edge-label" x="695" y="396">→ sean/inbox</text>
+
+          <!-- KEPLER INBOX POLLER → Telegram topic 4 (every 10m) -->
+          <path class="edge-path green" d="M540,280 Q500,280 460,280" id="e-kepler-tg"/>
+          <rect class="edge-label-bg" x="470" y="277" width="60" height="16"/>
+          <text class="edge-label" x="500" y="288">↦ topic 4</text>
+
+          <!-- NEWS DIGEST CRON → Telegram topic 29 -->
+          <path class="edge-path green" d="M120,500 Q100,480 120,460" id="e-news-tg"/>
+          <rect class="edge-label-bg" x="100" y="475" width="60" height="16"/>
+          <text class="edge-label" x="130" y="486">↦ topic 29</text>
+
+          <!-- DEAL SCOUT → Telegram topic 3 -->
+          <path class="edge-path green" d="M120,560 Q140,550 160,540" id="e-deal-tg"/>
+          <rect class="edge-label-bg" x="130" y="545" width="60" height="16"/>
+          <text class="edge-label" x="160" y="556">↦ topic 3</text>
+
+          <!-- ALEPH → Telegram topic 29 -->
+          <path class="edge-path green" d="M700,360 Q720,380 740,400" id="e-aleph-tg"/>
+          <rect class="edge-label-bg" x="700" y="380" width="50" height="16"/>
+          <text class="edge-label" x="725" y="391">↦ topic 29</text>
+
+          <!-- ==================== NODES ==================== -->
+
+          <!-- Sean -->
+          <g class="node-group" id="n-sean" onclick="selectNode('Sean (you)')">
+            <ellipse class="node-bg" cx="70" cy="50" rx="36" ry="22" fill="rgba(236,72,153,0.12)" stroke="var(--pink)" stroke-width="1.5"/>
+            <text class="node-label" x="70" y="46" text-anchor="middle">🧑 Sean</text>
+            <text class="node-sublabel" x="70" y="59" text-anchor="middle">Human operator</text>
+          </g>
+
+          <!-- Telegram -->
+          <g class="node-group" id="n-telegram" onclick="selectNode('Telegram')">
+            <rect class="node-bg" x="155" y="140" width="100" height="42" rx="8" fill="rgba(34,211,238,0.08)" stroke="var(--cyan)" stroke-width="1.5"/>
+            <text class="node-label" x="205" y="156" text-anchor="middle">📱 Telegram</text>
+            <text class="node-sublabel" x="205" y="171" text-anchor="middle">seanfzc_bot · home: 458083937</text>
+          </g>
+
+          <!-- Main -->
+          <g class="node-group" id="n-main" onclick="selectNode('Main (accelerator)')">
+            <rect class="node-bg" x="325" y="250" width="110" height="44" rx="8" fill="rgba(99,102,241,0.1)" stroke="#6366f1" stroke-width="1.5"/>
+            <text class="node-label" x="380" y="267" text-anchor="middle">⚡ Main</text>
+            <text class="node-sublabel" x="380" y="281" text-anchor="middle">(alias: accelerator) · Hermes</text>
+            <text class="node-tag" x="380" y="292" text-anchor="middle" fill="var(--muted)">inbox: 1·outbox: 6</text>
+          </g>
+
+          <!-- Dreamer -->
+          <g class="node-group" id="n-dreamer" onclick="selectNode('Dreamer (subconscious)')">
+            <rect class="node-bg" x="325" y="90" width="110" height="44" rx="8" fill="rgba(99,102,241,0.1)" stroke="#6366f1" stroke-width="1.5"/>
+            <text class="node-label" x="380" y="107" text-anchor="middle">🧠 Dreamer</text>
+            <text class="node-sublabel" x="380" y="121" text-anchor="middle">(alias: subconscious) · daemon</text>
+            <text class="node-tag" x="380" y="132" text-anchor="middle" fill="var(--muted)">inbox: 1·outbox: 1</text>
+          </g>
+
+          <!-- PA -->
+          <g class="node-group" id="n-pa" onclick="selectNode('PA (Pickles)')">
+            <rect class="node-bg" x="275" y="325" width="110" height="44" rx="8" fill="rgba(99,102,241,0.1)" stroke="#6366f1" stroke-width="1.5"/>
+            <text class="node-label" x="330" y="342" text-anchor="middle">📋 PA (Pickles)</text>
+            <text class="node-sublabel" x="330" y="356" text-anchor="middle">daemon: ai.hermes.pa ✅</text>
+            <text class="node-tag" x="330" y="367" text-anchor="middle" fill="var(--muted)">inbox: 0</text>
+          </g>
+
+          <!-- Hound -->
+          <g class="node-group" id="n-hound" onclick="selectNode('Hound')">
+            <rect class="node-bg" x="645" y="420" width="110" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="var(--purple)" stroke-width="1.5"/>
+            <text class="node-label" x="700" y="437" text-anchor="middle">🐕 Hound</text>
+            <text class="node-sublabel" x="700" y="451" text-anchor="middle">Co-CEO · Hermes</text>
+            <text class="node-tag" x="700" y="462" text-anchor="middle" fill="var(--red)">daemon NOT running · inbox: 17! · outbox: 8</text>
+          </g>
+
+          <!-- Kepler -->
+          <g class="node-group" id="n-kepler" onclick="selectNode('Kepler')">
+            <rect class="node-bg" x="480" y="265" width="110" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="var(--purple)" stroke-width="1.5"/>
+            <text class="node-label" x="535" y="282" text-anchor="middle">🛰️ Kepler</text>
+            <text class="node-sublabel" x="535" y="296" text-anchor="middle">CRO · OpenClaw + Hermes</text>
+            <text class="node-tag" x="535" y="307" text-anchor="middle" fill="var(--muted)">inbox: 0</text>
+          </g>
+
+          <!-- Pragma -->
+          <g class="node-group" id="n-pragma" onclick="selectNode('Pragma')">
+            <rect class="node-bg" x="645" y="510" width="110" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="var(--purple)" stroke-width="1.5"/>
+            <text class="node-label" x="700" y="527" text-anchor="middle">⚙️ Pragma</text>
+            <text class="node-sublabel" x="700" y="541" text-anchor="middle">Build Executor · Hermes</text>
+            <text class="node-tag" x="700" y="552" text-anchor="middle" fill="var(--muted)">inbox: 1</text>
+          </g>
+
+          <!-- aleph (secondbrain) -->
+          <g class="node-group" id="n-aleph" onclick="selectNode('Aleph (secondbrain)')">
+            <rect class="node-bg" x="645" y="345" width="110" height="44" rx="8" fill="rgba(167,139,250,0.1)" stroke="var(--purple)" stroke-width="1.5"/>
+            <text class="node-label" x="700" y="362" text-anchor="middle">📚 Aleph</text>
+            <text class="node-sublabel" x="700" y="376" text-anchor="middle">(alias: secondbrain) · daemon</text>
+            <text class="node-tag" x="700" y="387" text-anchor="middle" fill="var(--muted)">inbox: 1</text>
+          </g>
+
+          <!-- Raven -->
+          <g class="node-group" id="n-raven" onclick="selectNode('Raven')">
+            <rect class="node-bg" x="645" y="420" width="0" height="0" visibility="hidden"/>
+          </g>
+
+          <!-- Signal Router -->
+          <g class="node-group" id="n-router" onclick="selectNode('Signal Router')">
+            <rect class="node-bg" x="500" y="455" width="110" height="36" rx="8" fill="rgba(59,130,246,0.08)" stroke="var(--blue)" stroke-width="1.5"/>
+            <text class="node-label" x="555" y="471" text-anchor="middle">🔀 Signal Router</text>
+            <text class="node-sublabel" x="555" y="484" text-anchor="middle">scans signals/outbox/ every 60s</text>
+          </g>
+
+          <!-- Cron: PA Sweep -->
+          <g class="node-group" id="n-cron-pa" onclick="selectNode('PA Sweep (hourly)')">
+            <rect class="node-bg" x="80" y="380" width="120" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+            <text class="node-label" x="140" y="397" text-anchor="middle">⏰ PA Sweep (hourly)</text>
+            <text class="node-sublabel" x="140" y="410" text-anchor="middle">↦ telegram:topic 2</text>
+          </g>
+
+          <!-- Cron: Morning Drift -->
+          <g class="node-group" id="n-cron-drift" onclick="selectNode('Dreamer Morning Drift')">
+            <rect class="node-bg" x="80" y="440" width="120" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+            <text class="node-label" x="140" y="457" text-anchor="middle">⏰ Morning Drift (7am)</text>
+            <text class="node-sublabel" x="140" y="470" text-anchor="middle">↦ telegram:topic 1165</text>
+          </g>
+
+          <!-- Cron: Signal Synthesis -->
+          <g class="node-group" id="n-cron-synth" onclick="selectNode('Dreamer Signal Synthesis')">
+            <rect class="node-bg" x="80" y="490" width="120" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+            <text class="node-label" x="140" y="507" text-anchor="middle">⏰ Signal Synthesis (7:30am)</text>
+            <text class="node-sublabel" x="140" y="520" text-anchor="middle">↦ telegram:topic 1165</text>
+          </g>
+
+          <!-- Cron: Daily News Digest -->
+          <g class="node-group" id="n-cron-news" onclick="selectNode('Daily News Digest')">
+            <rect class="node-bg" x="60" y="530" width="130" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+            <text class="node-label" x="125" y="547" text-anchor="middle">⏰ Daily News Digest (8am)</text>
+            <text class="node-sublabel" x="125" y="560" text-anchor="middle">script · ↦ topic 29 · last ok today</text>
+          </g>
+
+          <!-- Cron: Deal Scout -->
+          <g class="node-group" id="n-cron-deal" onclick="selectNode('Travel Deal Scout')">
+            <rect class="node-bg" x="75" y="580" width="120" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+            <text class="node-label" x="135" y="597" text-anchor="middle">⏰ Travel Deal Scout (5:30pm)</text>
+            <text class="node-sublabel" x="135" y="610" text-anchor="middle">↦ telegram:topic 3 · last ok May 18</text>
+          </g>
+
+          <!-- Cron: Dreamer Tend the Room (stale) -->
+          <g class="node-group" id="n-cron-tend" onclick="selectNode('Dreamer Tend the Room')">
+            <rect class="node-bg" x="75" y="630" width="150" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--red)" stroke-width="2"/>
+            <text class="node-label" x="150" y="647" text-anchor="middle">⏰ Tend the Room (10pm) — stale</text>
+            <text class="node-sublabel" x="150" y="660" text-anchor="middle">last ran May 18 · 10d ago</text>
+          </g>
+
+          <!-- Cron: Dreamer Daily Digest (local delivery) -->
+          <g class="node-group" id="n-cron-digest" onclick="selectNode('Dreamer Daily Digest')">
+            <rect class="node-bg" x="250" y="40" width="135" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--red)" stroke-width="2"/>
+            <text class="node-label" x="317" y="57" text-anchor="middle">⏰ Daily Digest (8am)</text>
+            <text class="node-sublabel" x="317" y="70" text-anchor="middle">deliver: local · nobody reads</text>
+          </g>
+
+          <!-- Cron: Kepler Inbox Poller -->
+          <g class="node-group" id="n-cron-kepler" onclick="selectNode('Kepler Inbox Poller')">
+            <rect class="node-bg" x="480" y="220" width="120" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+            <text class="node-label" x="540" y="237" text-anchor="middle">⏰ Kepler Poller (10m)</text>
+            <text class="node-sublabel" x="540" y="250" text-anchor="middle">↦ telegram:topic 4</text>
+          </g>
+
+          <!-- Cron: PA Evening Brief (error) -->
+          <g class="node-group" id="n-cron-evening" onclick="selectNode('PA Evening Brief')">
+            <rect class="node-bg" x="200" y="380" width="120" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--red)" stroke-width="2"/>
+            <text class="node-label" x="260" y="397" text-anchor="middle">⏰ Evening Brief (6pm)</text>
+            <text class="node-sublabel" x="260" y="410" text-anchor="middle">last: ERROR · May 18</text>
+          </g>
+
+          <!-- Cron: PA Morning Brief (ok) -->
+          <g class="node-group" id="n-cron-am" onclick="selectNode('PA Morning Brief')">
+            <rect class="node-bg" x="200" y="330" width="120" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+            <text class="node-label" x="260" y="347" text-anchor="middle">⏰ Morning Brief (7am)</text>
+            <text class="node-sublabel" x="260" y="360" text-anchor="middle">↦ telegram:topic 2 · ok today</text>
+          </g>
+
+          <!-- cron: Signal Router (every 60s) -->
+          <g class="node-group" id="n-cron-router" onclick="selectNode('Signal Router Cron')">
+            <rect class="node-bg" x="480" y="500" width="120" height="36" rx="8" fill="rgba(245,158,11,0.08)" stroke="var(--amber)" stroke-width="1.5"/>
+            <text class="node-label" x="540" y="517" text-anchor="middle">⏰ Router Cron (60s)</text>
+            <text class="node-sublabel" x="540" y="530" text-anchor="middle">↦ local · scans outbox</text>
+          </g>
+
+          <!-- Sean inbox signal -->
+          <g class="node-group" id="n-sean-inbox" onclick="selectNode('Sean Signal Inbox')">
+            <rect class="node-bg" x="200" y="280" width="100" height="36" rx="6" fill="rgba(239,68,68,0.06)" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <text class="node-label" x="250" y="297" text-anchor="middle" font-size="11">📥 sean/inbox</text>
+            <text class="node-sublabel" x="250" y="310" text-anchor="middle" fill="var(--amber)">5 unconsumed signals</text>
+          </g>
+
+        </svg>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-line green"></div> Healthy</div>
+        <div class="legend-item"><div class="legend-line yellow"></div> Warning</div>
+        <div class="legend-item"><div class="legend-line red"></div> Broken/Stale</div>
+        <span style="color:var(--border);width:1px;"></span>
+        <div class="legend-item"><div class="legend-dot hermes"></div> Hermes agent</div>
+        <div class="legend-item"><div class="legend-dot openclaw"></div> OpenClaw agent</div>
+        <div class="legend-item"><div class="legend-dot platform"></div> Platform</div>
+        <div class="legend-item"><div class="legend-dot cron"></div> Cron job</div>
+        <div class="legend-item"><div class="legend-dot human"></div> Human</div>
+      </div>
+
+      <div class="summary-bar">
+        <div class="summary-stat">🟢 <span class="summary-num green">12</span> healthy paths</div>
+        <div class="summary-stat">🟡 <span class="summary-num amber">5</span> warnings</div>
+        <div class="summary-stat">🔴 <span class="summary-num red">5</span> broken/stale</div>
+        <span style="flex:1;"></span>
+        <div class="summary-stat" style="color:var(--fg);font-weight:500;">22 total pathways · 33 cron jobs running</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="right-rail">
+    <div class="detail-panel">
+      <div class="detail-panel-header">
+        <div class="detail-panel-title" id="detail-title">🔍 Click a node to inspect</div>
+      </div>
+      <div class="detail-panel-body" id="detail-body">
+        <div style="color:var(--muted);font-size:13px;line-height:1.6;">
+          Your ecosystem at a glance:
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
+
+            <div class="issue-item issue-red">
+              <div class="issue-status">🔴</div>
+              <div><strong>Hound daemon not running + 17 inbox signals</strong><br>
+              Launchd status: stopped. 17 unconsumed signals in inbox. Hound isn't processing anything.</div>
+            </div>
+
+            <div class="issue-item issue-red">
+              <div class="issue-status">🔴</div>
+              <div><strong>PA Evening Brief broken (10 days)</strong><br>
+              Last ran May 18 with ERROR. Sean hasn't received an evening brief since.</div>
+            </div>
+
+            <div class="issue-item issue-red">
+              <div class="issue-status">🔴</div>
+              <div><strong>Dreamer crons stale (10 days)</strong><br>
+              Tend the Room, Deep Walk haven't run since May 17-18. Several cron jobs silently dormant.</div>
+            </div>
+
+            <div class="issue-item issue-red">
+              <div class="issue-status">🔴</div>
+              <div><strong>Daily Digest delivers to 'local'</strong><br>
+              Daily Digest cron fires at 8am daily but deliver: local. Output saved to disk, nobody reads it.</div>
+            </div>
+
+            <div class="issue-item issue-yellow">
+              <div class="issue-status">🟡</div>
+              <div><strong>Main direct-writes to hound/inbox & kepler/inbox</strong><br>
+              Bypassing signal router. No audit trail, no retry logic.</div>
+            </div>
+
+            <div class="issue-item issue-yellow">
+              <div class="issue-status">🟡</div>
+              <div><strong>Hound outbox: 8 pending signals</strong><br>
+              Hound wrote 8 outbound signals that haven't been routed or consumed.</div>
+            </div>
+
+            <div class="issue-item issue-yellow">
+              <div class="issue-status">🟡</div>
+              <div><strong>Main outbox: 6 pending signals</strong><br>
+              Main wrote 6 outbound signals not yet routed.</div>
+            </div>
+
+            <div class="issue-item issue-yellow">
+              <div class="issue-status">🟡</div>
+              <div><strong>5 unconsumed signals in sean/inbox</strong><br>
+              Signals addressed to Sean's inbox haven't been processed.</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+const NODE_INFO = {
+  'Sean (you)': {
+    icon: '🧑', name: 'Sean Foo', type: 'Human operator',
+    detail: 'Primary human-in-the-loop. Reads Telegram. Sends commands via Telegram bot. Has a signal inbox (sean/inbox) with 5 unconsumed files.',
+    issues: []
+  },
+  'Telegram': {
+    icon: '📱', name: 'Telegram', type: 'Messaging platform',
+    detail: 'Primary communication platform. Bot: seanfzc_bot. Home channel: 458083937. Routes commands to agents based on topic IDs.',
+    issues: []
+  },
+  'Main (accelerator)': {
+    icon: '⚡', name: 'Main', type: 'Hermes agent · Evaluator',
+    detail: 'The Applied Thinker. Alias: accelerator. Signal inbox: signals/main/inbox/ (1 file). Outbox: 6 pending. Writes directly to hound/inbox and kepler/inbox bypassing router.',
+    issues: [
+      { severity: 'yellow', text: 'Direct writes to hound/inbox & kepler/inbox — bypassing signal router' },
+      { severity: 'yellow', text: '6 pending outbox signals not yet routed' }
+    ]
+  },
+  'Dreamer (subconscious)': {
+    icon: '🧠', name: 'Dreamer', type: 'Hermes agent · Signal Weaver',
+    detail: 'Pattern detection, intelligence walks, drift monitoring. Alias: subconscious. Daemon running (ai.hermes.dreamer). Delivers to Telegram topic 1165. Has multiple cron jobs — some stale.',
+    issues: [
+      { severity: 'red', text: 'Tend the Room cron stale — 10d since last run' },
+      { severity: 'red', text: 'Deep Walk cron stale — 11d since last run' },
+      { severity: 'red', text: 'Daily Digest → deliver: local — nobody reads it' }
+    ]
+  },
+  'PA (Pickles)': {
+    icon: '📋', name: 'PA (Pickles)', type: 'Hermes agent · Chief of Staff',
+    detail: 'Filtering, briefs, calendar management. Daemon: ai.hermes.pa (running ✅). Delivers morning + evening briefs to Telegram topic 2. Inbox: 0 files.',
+    issues: [
+      { severity: 'red', text: 'Evening Brief errored since May 18 — 10 days without evening delivery' },
+      { severity: 'green', text: 'Morning Brief running OK — last delivery today' },
+      { severity: 'green', text: 'Hourly PA Sweep running OK' }
+    ]
+  },
+  'Hound': {
+    icon: '🐕', name: 'Hound', type: 'Hermes agent · Co-CEO',
+    detail: 'Strategy, approvals, agent management. Launchd daemon: ai.hermes.hound — NOT running. Inbox: 17 unconsumed files. Outbox: 8 pending signals. This is the most critical issue in the ecosystem.',
+    issues: [
+      { severity: 'red', text: 'Daemon NOT running — launchd shows stopped status' },
+      { severity: 'red', text: '17 unconsumed signals in inbox' },
+      { severity: 'yellow', text: '8 pending outbound signals not routed' }
+    ]
+  },
+  'Kepler': {
+    icon: '🛰️', name: 'Kepler', type: 'OpenClaw + Hermes agent · CRO',
+    detail: 'Revenue strategy, G1 gate, debates. OpenClaw gateway running (port 18789). Inbox: 0 files. Kepler Inbox Poller cron active every 10m → Telegram topic 4.',
+    issues: []
+  },
+  'Pragma': {
+    icon: '⚙️', name: 'Pragma', type: 'Hermes agent · Build Executor',
+    detail: 'Implements approved builds. No dedicated daemon. Receives from hound, dreamer, skeptical. Inbox: 1 file (hound_ack).',
+    issues: []
+  },
+  'Aleph (secondbrain)': {
+    icon: '📚', name: 'Aleph', type: 'Hermes agent · Librarian',
+    detail: 'Second Brain wiki curation. Alias: secondbrain. Daemon: ai.hermes.aleph (running). Inbox: 1 file (gbrain survey). Daily Learning Loop cron runs at 7am.',
+    issues: []
+  },
+  'Raven': {
+    icon: '🦅', name: 'Raven', type: 'Hermes agent · Procurement',
+    detail: 'Deal hunting and sourcing. Daemon: ai.hermes.raven (running via ACPS watcher). Inbox: 0 files.',
+    issues: []
+  },
+  'Signal Router': {
+    icon: '🔀', name: 'Signal Router', type: 'Routing daemon',
+    detail: 'Scans signals/outbox/ every 60s. Routes to correct agent inboxes by topic. Alias mappings: secondbrain→aleph, skeptical→pragma, accelerator→main, subconscious→dreamer, hermes→hound.',
+    issues: []
+  },
+  'PA Sweep (hourly)': {
+    type: 'Cron job', detail: 'Runs every hour. Script: pa_hourly_sweep.py. Deliver: telegram:topic 2. Last run: today, ok.',
+    issues: [{ severity: 'green', text: 'Running normally' }]
+  },
+  'PA Morning Brief': {
+    type: 'Cron job', detail: 'Runs daily at 7:00. Script: pa_morning_brief.py. Deliver: telegram:topic 2. Last run: today, ok.',
+    issues: [{ severity: 'green', text: 'Running normally' }]
+  },
+  'PA Evening Brief': {
+    type: 'Cron job', detail: 'Runs daily at 18:00. Script: pa_evening_brief.py. Deliver: telegram:topic 2. Last run: May 18 — ERROR.',
+    issues: [{ severity: 'red', text: 'ERROR on last run — 10 days without brief' }]
+  },
+  'Dreamer Morning Drift': {
+    type: 'Cron job', detail: 'Runs daily at 7:00. Script: dreamer_walk.py. Deliver: telegram:topic 1165. Last run: today, ok.',
+    issues: [{ severity: 'green', text: 'Running normally' }]
+  },
+  'Dreamer Signal Synthesis': {
+    type: 'Cron job', detail: 'Runs daily at 7:30. Model: deepseek-v4-flash. Deliver: telegram:topic 1165. Last run: today, ok.',
+    issues: [{ severity: 'green', text: 'Running normally' }]
+  },
+  'Dreamer Tend the Room': {
+    type: 'Cron job', detail: 'Runs daily at 22:00. Script: dreamer_tend.py. Deliver: telegram:topic 1165. Last run: May 18 — 10 days stale.',
+    issues: [{ severity: 'red', text: 'Stale — 10 days since last run' }]
+  },
+  'Dreamer Daily Digest': {
+    type: 'Cron job', detail: 'Runs daily at 8:00. Script: dreamer_digest.py. Deliver: local — output saved to disk only, no Telegram delivery.',
+    issues: [{ severity: 'red', text: 'Deliver: local — output goes nowhere visible' }]
+  },
+  'Daily News Digest': {
+    type: 'Cron job', detail: 'Runs daily at 8:00. Script: daily_news_digest.py. Deliver: telegram:topic 29. Last run: today, ok.',
+    issues: [{ severity: 'green', text: 'Running normally' }]
+  },
+  'Travel Deal Scout': {
+    type: 'Cron job', detail: 'Runs daily at 17:30. Script: travel_deal_scraper_sep.py. Model: qwen3.5:latest. Deliver: telegram:topic 3. Last run: May 18.',
+    issues: [{ severity: 'yellow', text: 'Last ran May 18 — 10d ago, but runs on demand too' }]
+  },
+  'Kepler Inbox Poller': {
+    type: 'Cron job', detail: 'Runs every 10m. Reads kepler/inbox/ for unconsumed signals. Deliver: telegram:topic 4. Last run: today, ok.',
+    issues: [{ severity: 'green', text: 'Running normally' }]
+  },
+  'Signal Router Cron': {
+    type: 'Cron job', detail: 'Runs every 60s. Script: signal_router.py. Deliver: local. Scans signals/outbox/ and routes to agent inboxes.',
+    issues: [{ severity: 'green', text: 'Running normally' }]
+  },
+  'Sean Signal Inbox': {
+    type: 'Signal inbox', detail: '5 unconsumed signal files. Contains: hound_escalation_bump, main_kepler_assessment_eval, plus 3 more.',
+    issues: [{ severity: 'yellow', text: '5 signals waiting — oldest from May' }]
+  }
+};
+
+function selectNode(name) {
+  const info = NODE_INFO[name];
+  if (!info) return;
+  document.getElementById('detail-title').textContent = `${info.icon || '🔍'} ${info.name || name}`;
+  let html = `<div style="font-size:12px;color:var(--fg-2);line-height:1.6;margin-bottom:12px;">${info.detail}</div>`;
+  if (info.type) {
+    html += `<div style="font-size:10px;color:var(--muted);margin-bottom:10px;background:rgba(15,23,42,0.5);padding:4px 8px;border-radius:6px;display:inline-block;">${info.type}</div>`;
+  }
+  if (info.issues && info.issues.length > 0) {
+    html += '<div style="margin-top:8px;">';
+    info.issues.forEach(iss => {
+      const cls = iss.severity === 'red' ? 'issue-red' : iss.severity === 'yellow' ? 'issue-yellow' : 'issue-green';
+      const dot = iss.severity === 'red' ? '🔴' : iss.severity === 'yellow' ? '🟡' : '🟢';
+      html += `<div class="issue-item ${cls}"><div class="issue-status">${dot}</div><div>${iss.text}</div></div>`;
+    });
+    html += '</div>';
+  }
+  if (!info.issues || info.issues.length === 0) {
+    html += '<div style="color:var(--muted);font-size:12px;margin-top:8px;">No issues detected.</div>';
+  }
+  document.getElementById('detail-body').innerHTML = html;
+}
+
+// Default: show ecosystem overview
+document.addEventListener('DOMContentLoaded', function() {
+  // Already rendered the default
+});
+</script>
+
+<!-- ObserveCo branding -->
+<div style="text-align:center;padding:24px 0 16px;font-size:12px;color:#475569;border-top:1px solid #1e293b;margin-top:32px;">ObserveCo · Runtime observability for AI agents</div>
+</body>
+</html>

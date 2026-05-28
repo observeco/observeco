@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Skill Audit</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --fg: #f8fafc;
+  --accent: #22c55e;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 24px;
+  --text-3xl: 40px;
+  --text-4xl: 56px;
+  --leading-body: 1.5;
+  --leading-tight: 1.06;
+  --tracking-display: -0.025em;
+  --container-max: 1440px;
+  --container-gutter-desktop: 36px;
+  --container-gutter-tablet: 24px;
+  --container-gutter-phone: 16px;
+  --section-y-desktop: 40px;
+  --section-y-tablet: 32px;
+  --section-y-phone: 24px;
+  --accent-on: #0c1628;
+  --success: #22c55e;
+  --warn: #eab308;
+  --danger: #ef4444;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-raised: 0 24px 72px rgba(0, 0, 0, 0.42);
+  --motion-fast: 100ms;
+  --motion-base: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --fg-2: #94a3b8;
+  --meta: #3b82f6;
+  --muted: #64748b;
+  --surface-warm: #253349;
+  --border: #334155;
+  --border-soft: #273548;
+  --status-healthy: #22c55e;
+  --status-warning: #eab308;
+  --status-critical: #ef4444;
+  --status-info: #3b82f6;
+  --token-identity: #6366f1;
+  --token-skills: #8b5cf6;
+  --token-memory: #ec4899;
+  --token-tools: #14b8a6;
+  --token-guidance: #f97316;
+  --data-primary: #22c55e;
+  --data-secondary: #3b82f6;
+  --data-accent: #3b82f6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg, #0f172a); color: #e2e8f0; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 960px; margin: 0 auto; padding: 24px; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.header-logo svg { width: 28px; height: 28px; }
+.header-title { font-size: 18px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--muted); font-weight: 400; }
+.tier-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.03em; }
+.tier-badge.free { background: var(--accent-on); color: #86efac; }
+.tier-badge.pro { background: #3730a3; color: #a5b4fc; }
+
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+/* Summary cards */
+.summary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (max-width:700px) { .summary-row { grid-template-columns: 1fr 1fr; } }
+
+.summary-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; text-align: center;
+}
+.summary-card .number { font-size: 24px; font-weight: 700; }
+.summary-card .label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.summary-card.highlight { border-color: #3730a3; background: #1e1b4b; }
+.summary-card.highlight .number { color: #a5b4fc; }
+.summary-card.warning { border-color: #854d0e; background: #422006; }
+.summary-card.warning .number { color: #fde68a; }
+.summary-card .savings { font-size: 11px; color: #86efac; margin-top: 4px; }
+
+/* Toggle banner */
+.toggle-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #1e1b4b; border: 1px solid #3730a3; border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.toggle-banner .label { font-size: 13px; font-weight: 600; color: #a5b4fc; }
+.toggle-banner .desc { font-size: 12px; color: var(--muted); }
+.toggle-banner .switch {
+  position: relative; width: 44px; height: 24px; cursor: pointer;
+}
+.toggle-banner .switch input { opacity: 0; width: 0; height: 0; }
+.toggle-banner .slider {
+  position: absolute; inset: 0; background: var(--border); border-radius: 24px;
+  transition: 0.3s;
+}
+.toggle-banner .slider::before {
+  content: ''; position: absolute; width: 18px; height: 18px;
+  left: 3px; top: 3px; background: var(--fg-2); border-radius: 50%;
+  transition: 0.3s;
+}
+.toggle-banner .switch input:checked + .slider { background: #3730a3; }
+.toggle-banner .switch input:checked + .slider::before { transform: translateX(20px); background: #a5b4fc; }
+.toggle-banner .lock-icon { font-size: 16px; margin-right: 6px; }
+
+/* Ranked table */
+.skills-table {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.skills-table table { width: 100%; border-collapse: collapse; }
+.skills-table th {
+  text-align: left; font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+.skills-table td {
+  padding: 10px 12px; font-size: 12px;
+  border-bottom: 1px solid var(--surface);
+  vertical-align: top;
+}
+.skills-table tr:last-child td { border-bottom: none; }
+.skills-table .rank { color: var(--muted); font-size: 11px; width: 28px; }
+.skills-table .skill-name { color: #e2e8f0; font-weight: 500; }
+.skills-table .skill-category { color: var(--muted); font-size: 10px; }
+.skills-table .tokens { font-weight: 600; }
+.skills-table .tokens.over-limit { color: #fca5a5; }
+.skills-table .tokens.normal { color: var(--fg-2); }
+.skills-table .drift { font-size: 11px; }
+.skills-table .drift.up { color: #fca5a5; }
+.skills-table .drift.down { color: #86efac; }
+.skills-table .drift.flat { color: var(--muted); }
+.skills-table .last-used { color: var(--muted); font-size: 11px; }
+.skills-table .last-used.stale { color: #fca5a5; }
+.skills-table .cost { color: var(--muted); font-size: 11px; }
+.skills-table .cost.high { color: #fca5a5; font-weight: 600; }
+.skills-table .sparkline { font-size: 10px; letter-spacing: -1px; }
+.skills-table .threshold-badge {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  padding: 1px 6px; border-radius: 4px;
+}
+.skills-table .threshold-badge.breach { background: #450a0a; color: #fca5a5; }
+.skills-table .threshold-badge.ok { background: var(--bg); color: #86efac; }
+
+.skills-table tr.over-threshold { background: #450a0a30; }
+.skills-table .bloat-row td { border-bottom: 2px solid #7f1d1d; }
+.skills-table tr:hover { background: var(--bg)80; }
+
+/* Section bar */
+.section-bar { display: flex; height: 4px; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.section-bar .seg { height: 100%; }
+.section-bar .seg.identity { background: var(--token-identity); }
+.section-bar .seg.skills { background: var(--accent); }
+.section-bar .seg.memory { background: var(--warn); }
+.section-bar .seg.tools { background: var(--meta); }
+.section-bar .seg.guidance { background: var(--danger); }
+.section-bar.over-threshold { height: 5px; }
+
+/* Legend */
+.legend {
+  display: flex; gap: 14px; margin-bottom: 16px;
+  font-size: 11px; color: var(--muted);
+}
+.legend-item { display: flex; align-items: center; gap: 4px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+/* Pro CTA */
+.cta-block {
+  text-align: center; margin-top: 20px;
+}
+.cta-block .headline { font-size: 13px; color: #a5b4fc; margin-bottom: 8px; }
+.cta-btn {
+  background: var(--meta); border: none; color: white;
+  padding: 10px 28px; border-radius: 8px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.cta-btn:hover { background: #2563eb; }
+
+.tag {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px; letter-spacing: 0.03em;
+  margin-left: 6px;
+}
+.tag.pro { background: #3730a3; color: #a5b4fc; }
+.tag.free { background: var(--surface); color: var(--fg-2); }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  align-items: center; justify-content: center; z-index: 100;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid #3730a3; border-radius: 16px;
+  padding: 28px; max-width: 420px; width: 90%; text-align: center;
+}
+.modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(--fg-2); line-height: 1.6; margin-bottom: 12px; }
+.modal .feature-list { text-align: left; padding: 12px 16px; background: var(--bg); border-radius: 8px; margin-bottom: 12px; }
+.modal .feature-list div { padding: 4px 0; font-size: 13px; }
+.modal .close-btn { background: var(--border); border: none; color: var(--fg-2); padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.modal .cta-btn { background: var(--meta); border: none; color: white; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+.toast {
+  position: fixed; bottom: 20px; right: 20px; z-index: 50;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 20px; font-size: 13px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: translateY(100px); opacity: 0; transition: all 0.3s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+        <defs>
+          <linearGradient id="oc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+          </linearGradient>
+          <linearGradient id="oc-grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <circle cx="64" cy="64" r="60" fill="none" stroke="url(#oc-grad)" stroke-width="2" opacity="0.3"/>
+        <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#oc-grad2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/>
+        <circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+        <circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/>
+        <circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/>
+        <circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+        <circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/>
+        <circle cx="28" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+        <circle cx="100" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+      </svg>
+    </div>
+    <span class="header-title">ObserveCo <span>skill audit</span></span>
+    <div class="brand-tagline" style="font-size: 13px; color: #94a3b8; font-weight: 400; margin-top: 2px;">Tells you if your AI agents are working, what they're doing, and where your money goes.</div>
+  </div>
+  <span class="tier-badge pro">Pro</span>
+</div>
+<div class="app">
+  <h1>Skill Audit</h1>
+  <div class="subtitle">
+    Every skill loads into every session. Bloated skills cost you tokens you never use.
+    <strong style="color:#a5b4fc;">Free: manual scan. Pro: auto-watch catches bloat the week it happens.</strong>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="summary-row">
+    <div class="summary-card">
+      <div class="number" style="color:#e2e8f0;">132</div>
+      <div class="label">Skills installed</div>
+    </div>
+    <div class="summary-card">
+      <div class="number" style="color:#94a3b8;">44,700</div>
+      <div class="label">Tokens loaded per session</div>
+    </div>
+    <div class="summary-card highlight">
+      <div class="number" style="color:#a5b4fc;">$124</div>
+      <div class="label">Yearly cost (DeepSeek) <span class="tag free">Free</span></div>
+      <div class="savings">Manual trim saves $51/yr → $73</div>
+    </div>
+    <div class="summary-card warning">
+      <div class="number" style="color:#fde68a;">$47</div>
+      <div class="label">Yearly cost after Pro auto-watch</div>
+      <div class="savings" style="color:#86efac;">⬇ $77 saved — 8.5x Pro price</div>
+    </div>
+  </div>
+
+  <!-- Toggle banner -->
+  <div class="toggle-banner">
+    <div>
+      <div class="label">🔒 Auto-Watch <span class="tag pro">Pro</span></div>
+      <div class="desc">Weekly scan + drift tracking + threshold alerts to Telegram. Catches bloat the week it happens.</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:11px;color:#64748b;">Off</span>
+      <label class="switch">
+        <input type="checkbox" onclick="togglePro(this)">
+        <span class="slider"></span>
+      </label>
+      <span style="font-size:11px;color:#64748b;">On</span>
+      <span style="font-size:18px;margin-left:4px;cursor:pointer;" onclick="openProModal()">🔒</span>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:#6366f1;"></span> Identity</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#22c55e;"></span> Skills</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#eab308;"></span> Memory</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span> Tools</div>
+    <div class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span> Guidance</div>
+  </div>
+
+  <!-- Ranked table -->
+  <div class="skills-table">
+    <table>
+      <tr>
+        <th>#</th>
+        <th>Skill</th>
+        <th>Tokens</th>
+        <th>Composition</th>
+        <th>Drift</th>
+        <th>Last used</th>
+        <th>$/yr</th>
+      </tr>
+      <tr class="over-threshold">
+        <td class="rank">1</td>
+        <td>
+          <div class="skill-name">weather <span class="threshold-badge breach">⛔ 4,200</span></div>
+          <div class="skill-category">devops</div>
+        </td>
+        <td class="tokens over-limit">4,200</td>
+        <td>
+          <div class="section-bar over-threshold">
+            <span class="seg identity" style="width:8%"></span>
+            <span class="seg skills" style="width:12%"></span>
+            <span class="seg memory" style="width:5%"></span>
+            <span class="seg tools" style="width:55%"></span>
+            <span class="seg guidance" style="width:20%"></span>
+          </div>
+        </td>
+        <td class="drift up">⬆ +12% this scan</td>
+        <td class="last-used stale">3 months ago</td>
+        <td class="cost high">$22.80</td>
+      </tr>
+      <tr>
+        <td class="rank">2</td>
+        <td>
+          <div class="skill-name">database <span class="threshold-badge ok">3,100</span></div>
+          <div class="skill-category">devops</div>
+        </td>
+        <td class="tokens over-limit">3,100</td>
+        <td>
+          <div class="section-bar">
+            <span class="seg identity" style="width:6%"></span>
+            <span class="seg skills" style="width:30%"></span>
+            <span class="seg memory" style="width:8%"></span>
+            <span class="seg tools" style="width:40%"></span>
+            <span class="seg guidance" style="width:16%"></span>
+          </div>
+        </td>
+        <td class="drift up">⬆ +58% in 4 weeks</td>
+        <td class="last-used">2 weeks ago</td>
+        <td class="cost high">$16.80</td>
+      </tr>
+      <tr>
+        <td class="rank">3</td>
+        <td>
+          <div class="skill-name">github-code-review <span class="threshold-badge ok">2,850</span></div>
+          <div class="skill-category">github</div>
+        </td>
+        <td class="tokens normal">2,850</td>
+        <td>
+          <div class="section-bar">
+            <span class="seg identity" style="width:5%"></span>
+            <span class="seg skills" style="width:15%"></span>
+            <span class="seg memory" style="width:10%"></span>
+            <span class="seg tools" style="width:50%"></span>
+            <span class="seg guidance" style="width:20%"></span>
+          </div>
+        </td>
+        <td class="drift flat">— +3% (stable)</td>
+        <td class="last-used">Yesterday</td>
+        <td class="cost">$15.40</td>
+      </tr>
+      <tr>
+        <td class="rank">4</td>
+        <td>
+          <div class="skill-name">second-brain-wiki <span class="threshold-badge ok">2,100</span></div>
+          <div class="skill-category">knowledge</div>
+        </td>
+        <td class="tokens normal">2,100</td>
+        <td>
+          <div class="section-bar">
+            <span class="seg identity" style="width:10%"></span>
+            <span class="seg skills" style="width:25%"></span>
+            <span class="seg memory" style="width:15%"></span>
+            <span class="seg tools" style="width:35%"></span>
+            <span class="seg guidance" style="width:15%"></span>
+          </div>
+        </td>
+        <td class="drift down">⬇ -8% (trimmed)</td>
+        <td class="last-used">Daily</td>
+        <td class="cost">$11.40</td>
+      </tr>
+      <tr>
+        <td class="rank">5</td>
+        <td>
+          <div class="skill-name">imessage <span class="threshold-badge ok">1,800</span></div>
+          <div class="skill-category">apple</div>
+        </td>
+        <td class="tokens normal">1,800</td>
+        <td>
+          <div class="section-bar">
+            <span class="seg identity" style="width:12%"></span>
+            <span class="seg skills" style="width:20%"></span>
+            <span class="seg memory" style="width:8%"></span>
+            <span class="seg tools" style="width:45%"></span>
+            <span class="seg guidance" style="width:15%"></span>
+          </div>
+        </td>
+        <td class="drift flat">— 0%</td>
+        <td class="last-used">3 days ago</td>
+        <td class="cost">$9.70</td>
+      </tr>
+      <tr>
+        <td class="rank">6</td>
+        <td>
+          <div class="skill-name">dspy <span class="threshold-badge ok">1,650</span></div>
+          <div class="skill-category">research</div>
+        </td>
+        <td class="tokens normal">1,650</td>
+        <td>
+          <div class="section-bar">
+            <span class="seg identity" style="width:8%"></span>
+            <span class="seg skills" style="width:35%"></span>
+            <span class="seg memory" style="width:5%"></span>
+            <span class="seg tools" style="width:40%"></span>
+            <span class="seg guidance" style="width:12%"></span>
+          </div>
+        </td>
+        <td class="drift flat">— +2%</td>
+        <td class="last-used">Last week</td>
+        <td class="cost">$8.90</td>
+      </tr>
+      <tr>
+        <td class="rank">7</td>
+        <td>
+          <div class="skill-name">stealth-web-scraper <span class="threshold-badge ok">1,420</span></div>
+          <div class="skill-category">devops</div>
+        </td>
+        <td class="tokens normal">1,420</td>
+        <td>
+          <div class="section-bar">
+            <span class="seg identity" style="width:10%"></span>
+            <span class="seg skills" style="width:18%"></span>
+            <span class="seg memory" style="width:12%"></span>
+            <span class="seg tools" style="width:38%"></span>
+            <span class="seg guidance" style="width:22%"></span>
+          </div>
+        </td>
+        <td class="drift up">⬆ +22% this scan</td>
+        <td class="last-used">2 days ago</td>
+        <td class="cost">$7.70</td>
+      </tr>
+  </table>
+</div>
+
+<!-- Category breakdown -->
+<div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:16px;">
+  <h3 style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:10px;">🏷️ By Category</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+    <div style="background:#0f172a;border-radius:8px;padding:10px;">
+      <span style="font-weight:600;color:#e2e8f0;">devops</span>
+      <span style="font-size:11px;color:#64748b;margin-left:6px;">12 skills · 8,720 tokens</span>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:10px;">
+      <span style="font-weight:600;color:#e2e8f0;">github</span>
+      <span style="font-size:11px;color:#64748b;margin-left:6px;">8 skills · 6,540 tokens</span>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:10px;">
+      <span style="font-weight:600;color:#e2e8f0;">knowledge</span>
+      <span style="font-size:11px;color:#64748b;margin-left:6px;">6 skills · 4,210 tokens</span>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:10px;">
+      <span style="font-weight:600;color:#e2e8f0;">apple</span>
+      <span style="font-size:11px;color:#64748b;margin-left:6px;">5 skills · 3,880 tokens</span>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:10px;">
+      <span style="font-weight:600;color:#e2e8f0;">research</span>
+      <span style="font-size:11px;color:#64748b;margin-left:6px;">10 skills · 5,100 tokens</span>
+    </div>
+    <div style="background:#0f172a;border-radius:8px;padding:10px;">
+      <span style="font-weight:600;color:#e2e8f0;">Others (18 categories)</span>
+      <span style="font-size:11px;color:#64748b;margin-left:6px;">91 skills · 16,250 tokens</span>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-block">
+  <div class="headline">🔒 Pro Auto-Watch: weekly scan catches bloat the week it starts. $77/year savings on DeepSeek.</div>
+  <button onclick="openProModal()" class="cta-btn">Start Free Trial — $9/mo</button>
+</div>
+
+<!-- Pro modal -->
+<div class="modal-overlay" id="proModal">
+  <div class="modal">
+    <div style="font-size:40px;margin-bottom:12px;">🔒</div>
+    <h3>Skill Audit — Auto-Watch</h3>
+    <p>Weekly scans catch bloated skills the week they grow. Drift tracking shows you trends. Threshold alerts buzz before bloat compounds.</p>
+    <div class="feature-list">
+      <div>✅ Auto-scan every 7 days</div>
+      <div>✅ Drift tracking: "this skill grew 58% in 4 weeks"</div>
+      <div>✅ Threshold alerts (>3,000 tokens → Telegram)</div>
+      <div>✅ 12-week trend chart per skill</div>
+      <div>✅ Integrates with Auto-Heal push alerts</div>
+    </div>
+    <p style="font-size:12px;color:#64748b;">Saves $77/year on DeepSeek (8.5x Pro price) · $1,536/year on Claude Sonnet (15.4x)</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <button class="close-btn" onclick="closeProModal()">Not now</button>
+      <button class="cta-btn" onclick="alert('Stripe checkout would open here')">Start Free Trial</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function openProModal() { document.getElementById('proModal').classList.add('active'); }
+function closeProModal() { document.getElementById('proModal').classList.remove('active'); }
+document.getElementById('proModal').addEventListener('click', function(e) { if (e.target === this) closeProModal(); });
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+function togglePro(el) {
+  if (el.checked) {
+    el.checked = false; // gated
+    openProModal();
+  }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProModal(); });
+</script>
+
+<!-- ObserveCo branding -->
+<div style="text-align:center;padding:24px 0 16px;font-size:12px;color:#475569;border-top:1px solid #1e293b;margin-top:32px;">ObserveCo · Runtime observability for AI agents</div>
+</body>
+</html>

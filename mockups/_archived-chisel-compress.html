@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Chisel Compression</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0f172a; color: #e2e8f0; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.app { max-width: 800px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+
+/* Tabs */
+.tab-bar { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid #1e293b; }
+.tab-btn {
+  padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer;
+  border-bottom: 2px solid transparent; color: #64748b; transition: all 0.15s;
+  background: none; border-top: none; border-left: none; border-right: none; font-family: inherit;
+}
+.tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+.tab-btn:hover { color: #94a3b8; }
+
+/* Agent selector */
+.agent-select { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.agent-select select {
+  background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+  padding: 8px 12px; border-radius: 8px; font-size: 14px; font-family: inherit; cursor: pointer;
+}
+.agent-select select:hover { border-color: #475569; }
+
+.card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+  padding: 20px; margin-bottom: 16px;
+}
+.card h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+
+/* Comparison view */
+.comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.comp-panel {
+  background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 16px;
+}
+.comp-panel .title { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.comp-panel .token-count { font-size: 22px; font-weight: 700; font-family: monospace; margin-bottom: 4px; }
+.comp-panel .savings { font-size: 13px; font-weight: 600; }
+.comp-panel h4 { font-size: 13px; font-weight: 600; margin: 12px 0 6px; color: #94a3b8; }
+
+.diff-line { font-family: monospace; font-size: 11px; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; white-space: pre-wrap; word-break: break-all; }
+.diff-line.old { background: #450a0a; color: #fca5a5; }
+.diff-line.new { background: #0a2a1a; color: #86efac; }
+.diff-line.unchanged { color: #64748b; }
+
+/* Stats row */
+.stats-row { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-box {
+  flex: 1; min-width: 140px;
+  background: #0f172a; border: 1px solid #334155; border-radius: 10px;
+  padding: 16px; text-align: center;
+}
+.stat-box .big { font-size: 24px; font-weight: 700; font-family: monospace; }
+.stat-box .stat-label { font-size: 11px; color: #64748b; margin-top: 4px; text-transform: uppercase; }
+.stat-box.green .big { color: #22c55e; }
+.stat-box.orange .big { color: #f97316; }
+.stat-box.blue .big { color: #38bdf8; }
+
+/* Mode selector */
+.mode-select { display: flex; gap: 8px; margin-bottom: 20px; }
+.mode-btn {
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: 1px solid #334155; background: #1e293b; color: #94a3b8; transition: all 0.15s;
+}
+.mode-btn.active { background: #166534; border-color: #22c55e; color: #86efac; }
+.mode-btn:hover { border-color: #475569; }
+
+/* Action buttons */
+.actions { display: flex; gap: 12px; margin-bottom: 24px; }
+.primary-btn {
+  background: #3b82f6; border: none; color: white;
+  padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.primary-btn:hover { background: #2563eb; }
+.primary-btn.green { background: #16a34a; }
+.primary-btn.green:hover { background: #15803d; }
+.secondary-btn {
+  background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+  padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+}
+.secondary-btn:hover { border-color: #475569; color: #e2e8f0; }
+
+/* Pro teaser */
+.pro-teaser {
+  background: #1e293b; border: 1px dashed #475569; border-radius: 12px;
+  padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px;
+}
+.pro-teaser:hover { border-color: #3b82f6; }
+.pro-teaser .lock { font-size: 28px; margin-bottom: 8px; }
+.pro-teaser .title { font-size: 14px; font-weight: 600; color: #94a3b8; }
+.pro-teaser .desc { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  align-items: center; justify-content: center; z-index: 100;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #1e293b; border: 1px solid #334155; border-radius: 16px;
+  padding: 28px; max-width: 420px; width: 90%; text-align: center;
+}
+.modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: #94a3b8; }
+.modal .close-btn { background: #334155; border: none; color: #94a3b8; padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-top: 16px; }
+.modal .close-btn:hover { background: #475569; color: #e2e8f0; }
+.modal .cta-btn { background: #3b82f6; border: none; color: white; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 50;
+  background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+  padding: 12px 20px; font-size: 13px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: translateY(100px); opacity: 0; transition: all 0.3s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* Tier tag */
+.tier-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px;
+}
+.tier-tag.free { background: #166534; color: #86efac; }
+.tier-tag.pro { background: #3730a3; color: #a5b4fc; }
+
+@media (max-width:640px){.comparison{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>System Prompt Compression</h1>
+  <div class="subtitle">Measure, analyse, and shrink your agent's system prompt — powered by Chisel</div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchCompressTab('dry-run', this)">🔍 Dry Run</button>
+    <button class="tab-btn" onclick="switchCompressTab('apply', this)">💾 Apply</button>
+    <button class="tab-btn" onclick="switchCompressTab('auto', this)">⏰ Auto-Watch</button>
+  </div>
+
+  <div class="agent-select">
+    <select id="compressAgent" onchange="renderCompress()">
+      <option value="hound">hound</option>
+      <option value="kepler">kepler</option>
+      <option value="dreamer">dreamer</option>
+    </select>
+    <span style="font-size:12px;color:#64748b;">SOUL.md (~4.2K tokens)</span>
+  </div>
+
+  <div class="mode-select">
+    <button class="mode-btn active" onclick="switchMode('lite', this)">Lite</button>
+    <button class="mode-btn" onclick="switchMode('full', this)">Full</button>
+    <span style="font-size:11px;color:#64748b;margin-left:auto;">Lite: 6 guidance blocks · Full: +memory +profile +context</span>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box" style="border-color:#334155;">
+      <div class="big" id="beforeTokens">4,200</div>
+      <div class="stat-label">Before</div>
+    </div>
+    <div class="stat-box green">
+      <div class="big" id="afterTokens">3,276</div>
+      <div class="stat-label">After</div>
+    </div>
+    <div class="stat-box green">
+      <div class="big" id="savedPct">22%</div>
+      <div class="stat-label">Saved</div>
+    </div>
+    <div class="stat-box blue">
+      <div class="big" id="savedTokens">924</div>
+      <div class="stat-label">Tk saved / session</div>
+    </div>
+  </div>
+
+  <!-- Before/After comparison -->
+  <div class="card">
+    <h3>Compression Preview <span id="modeLabel" class="tier-tag free">FREE</span></h3>
+    <div class="comparison">
+      <div class="comp-panel">
+        <div class="title">Before</div>
+        <div class="token-count" style="color:#94a3b8;" id="beforeCount">4,200 tok</div>
+        <h4>TOOL_USE_ENFORCEMENT_GUIDANCE</h4>
+        <div class="diff-line old">When using tools, you MUST:</div>
+        <div class="diff-line old">1. Call exactly one tool per turn</div>
+        <div class="diff-line old">2. Pass all required parameters as shown</div>
+        <div class="diff-line old">3. Use the exact parameter names</div>
+        <div class="diff-line old">4. Do not add extra text before/after</div>
+        <div class="diff-line old">5. Wait for the tool response before proceeding</div>
+        <div class="diff-line old">6. If a tool returns an error, report it</div>
+        <div class="diff-line old" style="margin-top:6px;">Failure to follow these rules</div>
+        <div class="diff-line old">will result in incorrect execution.</div>
+        <div class="diff-line old" style="color:#475569;margin-top:6px;">(14 more lines...)</div>
+      </div>
+      <div class="comp-panel">
+        <div class="title">After (Lite compression)</div>
+        <div class="token-count" style="color:#22c55e;" id="afterCount">3,276 tok <span style="font-size:12px;color:#64748b;font-weight:400;">-22%</span></div>
+        <h4>TOOL_USE_ENFORCEMENT_GUIDANCE (compressed)</h4>
+        <div class="diff-line new">Call one tool per turn with exact params.</div>
+        <div class="diff-line new">No extra text. Wait for response. Report errors.</div>
+        <div class="diff-line new" style="margin-top:6px;">COMPUTER_USE_GUIDANCE (compressed):</div>
+        <div class="diff-line new">Use coordinates, type text, take screenshots</div>
+        <div class="diff-line new">to verify. Return to chat when done.</div>
+        <div class="diff-line new" style="margin-top:6px;">PLATFORM_HINTS (shared constant):</div>
+        <div class="diff-line new">Use MEDIA_DELIVERY_HINT string for files.</div>
+        <div class="diff-line new" style="color:#475569;margin-top:6px;">(9 blocks compressed, ~924 tokens saved)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mode content -->
+  <div id="dryRunContent">
+    <div class="actions">
+      <button class="primary-btn green" onclick="showToast('✅ Dry-run complete — would save 924 tokens (22%)')">▶️ Run Compression Dry-Run</button>
+      <button class="secondary-btn" onclick="showToast('📋 Report copied to clipboard')">📋 Copy Report</button>
+    </div>
+  </div>
+
+  <div id="applyContent" style="display:none;">
+    <div class="card">
+      <h3>Apply Compression <span class="tier-tag free">FREE</span></h3>
+      <p style="font-size:13px;color:#64748b;margin-bottom:12px;">Write the compressed version back to the SOUL.md file. A backup is created automatically.</p>
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;margin-bottom:12px;">
+        <span style="color:#64748b;">$</span> observeco chisel compress --agent <span style="color:#22c55e;">hound</span> --mode <span style="color:#38bdf8;">lite</span> --apply
+        <br>
+        <span style="color:#22c55e;">✅ Backup: hound.SOUL.md.bak.20260526</span>
+        <br>
+        <span style="color:#22c55e;">✅ SOUL.md compressed (4,200 → 3,276 tok, -22%)</span>
+      </div>
+      <div class="actions" style="margin-bottom:0;">
+        <button class="primary-btn green" onclick="showToast('✅ SOUL.md compressed. Backup saved.')">💾 Apply Compression</button>
+        <button class="secondary-btn" onclick="showToast('📋 Diff preview generated')">📋 Preview Diff</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="autoContent" style="display:none;">
+    <div class="pro-teaser" onclick="openProModal()">
+      <div class="lock">🔒</div>
+      <div class="title">Auto-Compression (Pro)</div>
+      <div class="desc">Watch daemon compresses SOUL.md automatically after each edit. Always at optimal compression, zero user action.</div>
+      <div style="margin-top:8px;font-size:12px;color:#3b82f6;">Pro feature — click to learn more</div>
+    </div>
+
+    <div class="card">
+      <h3>How it would look <span class="tier-tag pro">PRO</span></h3>
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:16px;font-family:monospace;font-size:12px;line-height:1.8;">
+        <span style="color:#64748b;">[watch]</span> hound SOUL.md modified — running lite compression...
+        <br>
+        <span style="color:#22c55e;">  → 4,200 → 3,276 tok (-22%)</span>
+        <br>
+        <span style="color:#64748b;">[watch]</span> kepler SOUL.md modified — running lite compression...
+        <br>
+        <span style="color:#22c55e;">  → 5,700 → 4,446 tok (-22%)</span>
+        <br>
+        <span style="color:#64748b;">[watch]</span> Auto-compression enabled for <span style="color:#38bdf8;">12 agents</span>
+        <br>
+        <span style="color:#22c55e;">📊 Cumulative savings this week: 47,812 tokens</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pro modal -->
+<div class="modal-overlay" id="proModal">
+  <div class="modal">
+    <div style="font-size:40px;margin-bottom:12px;">🔒</div>
+    <h3>Auto-Compression in Pro</h3>
+    <p style="margin-top:8px;">Watch daemon detects every SOUL.md edit and auto-compresses. Always optimal, zero effort.</p>
+    <div style="margin:12px 0;text-align:left;font-size:13px;">
+      <div style="padding:5px 0;">✅ Auto-compress on file change</div>
+      <div style="padding:5px 0;">✅ Cumulative token savings per agent</div>
+      <div style="padding:5px 0;">✅ Backup before every compression</div>
+      <div style="padding:5px 0;">✅ Email report on compression events</div>
+    </div>
+    <p style="font-size:12px;color:#64748b;">30-day free trial · <strong style="color:#e2e8f0;">$9/mo Solo</strong></p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <button class="close-btn" onclick="closeProModal()">Not now</button>
+      <button class="cta-btn" onclick="alert('Stripe checkout would open here')">Start Free Trial</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = {
+  hound: { before: 4200, after: 3276 },
+  kepler: { before: 5700, after: 4446 },
+  dreamer: { before: 3800, after: 2964 },
+};
+
+let currentMode = 'lite';
+let currentTab = 'dry-run';
+
+function renderCompress() {
+  const name = document.getElementById('compressAgent').value;
+  const d = DATA[name];
+  document.getElementById('beforeTokens').textContent = d.before.toLocaleString();
+  document.getElementById('afterTokens').textContent = d.after.toLocaleString();
+  document.getElementById('beforeCount').textContent = d.before.toLocaleString() + ' tok';
+  document.getElementById('afterCount').innerHTML = d.after.toLocaleString() + ' tok <span style="font-size:12px;color:#64748b;font-weight:400;">-' + Math.round((1 - d.after/d.before)*100) + '%</span>';
+  document.getElementById('savedPct').textContent = Math.round((1 - d.after/d.before)*100) + '%';
+  document.getElementById('savedTokens').textContent = (d.before - d.after).toLocaleString();
+}
+
+function switchMode(mode, btn) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const label = document.getElementById('modeLabel');
+  label.textContent = mode === 'lite' ? 'FREE' : 'FREE';
+  // Full mode saves more
+  const name = document.getElementById('compressAgent').value;
+  const d = DATA[name];
+  const pct = mode === 'lite' ? 0.22 : 0.35;
+  const saved = Math.round(d.before * pct);
+  document.getElementById('afterTokens').textContent = (d.before - saved).toLocaleString();
+  document.getElementById('afterCount').innerHTML = (d.before - saved).toLocaleString() + ' tok <span style="font-size:12px;color:#64748b;font-weight:400;">-' + Math.round(pct*100) + '%</span>';
+  document.getElementById('savedPct').textContent = Math.round(pct*100) + '%';
+  document.getElementById('savedTokens').textContent = saved.toLocaleString();
+}
+
+function switchCompressTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('dryRunContent').style.display = tab === 'dry-run' ? 'block' : 'none';
+  document.getElementById('applyContent').style.display = tab === 'apply' ? 'block' : 'none';
+  document.getElementById('autoContent').style.display = tab === 'auto' ? 'block' : 'none';
+}
+
+function openProModal() { document.getElementById('proModal').classList.add('active'); }
+function closeProModal() { document.getElementById('proModal').classList.remove('active'); }
+document.getElementById('proModal').addEventListener('click', function(e) { if (e.target === this) closeProModal(); });
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+renderCompress();
+</script>
+</body>
+</html>

@@ -408,7 +408,7 @@ The `[🔒 Pro]` tag on each real alert is NOT a mockup. It's a real alert that 
 | Feature | Why Paid |
 |---------|----------|
 | 📡 **Alert relay** | Push notifications via Telegram, webhook, or CLI when circuits trip or drift exceeds thresholds. Free shows alerts in-dashboard; Pro delivers them to you. |
-| 🕰️ **90-day history** | Error timeline, drift trends, pulse history extended from 7d to 90d |
+| 🕰️ **Never-pruned history** | Error timeline, drift trends, pulse history — Pro keeps everything from install onward. Free prunes after 7 days. |
 | 📋 **Fleet comparison** | Side-by-side token profiles across all agents. "Hound is 42K, Kepler is 28K. Content Agent grew 200%." |
 | 🎯 **Optimal budget planner** | "Recommended allocation for this agent: 82K total. Your current system prompt is 98K — save 16K by redistributing." Based on aggregated calibration data. |
 | 🚨 **Drift alerts** | Proactive when any agent's system prompt grows beyond configurable threshold. |
@@ -454,7 +454,7 @@ Every Pro feature tile has four states:
 | Pro Feature | Preview Content |
 |-------------|----------------|
 | 📡 **Alert relay** | "In the last 24h, 3 alerts would have pushed to you: (1) circuit trip at 14:02, (2) drift breach at 09:15, (3) heartbeat miss at 03:44." |
-| 🕰️ **90-day history** | Shows the 7-day error timeline with a subtle "🔒 90-day history — 72 more days available with Pro" watermark across the right portion. |
+| 🕰️ **Never-pruned history** | Shows the 7-day error timeline with a subtle "🔒 Pro keeps everything from day 1 — so next week you can see if errors are getting better or worse" watermark across the right portion. |
 | 📋 **Fleet comparison** | Shows 3 agents side-by-side with a `blur(8px)` overlay on agents 4+. "12 agents in your fleet — compare all with Pro." |
 | 🎯 **Optimal budget planner** | "Your agent kepler is 8.1K tokens. Fleet calibration data suggests optimal allocation is 6.2K. Pro unlocks the recommendation." |
 | 🚨 **Drift alerts** | "kepler drift at +18% was detected 14 minutes before any manual check. Pro would have alerted you immediately." |

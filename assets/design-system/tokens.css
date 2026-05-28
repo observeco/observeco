@@ -1,0 +1,98 @@
+/* design-systems/observeco/tokens.css
+ * Structured token bindings for ObserveCo Design System.
+ * Agent observability dashboard — dark navy canvas, green brand telemetry,
+ * independent status palette, token composition bar palette.
+ *
+ * Adapted from Mission Control structural layout:
+ *   --bg: #0b1120 → #0f172a (ObserveCo dark navy)
+ *   --data-primary: #FFB800 → #22c55e (ObserveCo brand green)
+ *   --data-secondary: #00D4FF → #3b82f6 (ObserveCo info blue)
+ *   Token composition layer: indigo/violet/pink/teal/orange added (no equivalent in MC)
+ */
+
+:root {
+  /* ──────────────────────────────────────────────────── A1-identity (required) ── */
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --fg: #f8fafc;
+  --accent: #22c55e;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* ─────────────────────────────────────────────────── A1-structure (required) ── */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 24px;
+  --text-3xl: 40px;
+  --text-4xl: 56px;
+  --leading-body: 1.5;
+  --leading-tight: 1.06;
+  --tracking-display: -0.025em;
+  --container-max: 1440px;
+  --container-gutter-desktop: 36px;
+  --container-gutter-tablet: 24px;
+  --container-gutter-phone: 16px;
+  --section-y-desktop: 40px;
+  --section-y-tablet: 32px;
+  --section-y-phone: 24px;
+
+  /* ───────────────────────────────────────────────────────────── A2 (required) ── */
+  --accent-on: #0c1628;
+  --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+  --accent-active: color-mix(in oklab, var(--accent), black 14%);
+  --success: #22c55e;
+  --warn: #eab308;
+  --danger: #ef4444;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 24px 72px rgba(0, 0, 0, 0.42);
+  --focus-ring: 0 0 0 4px color-mix(in oklab, var(--accent), transparent 70%);
+  --motion-fast: 100ms;
+  --motion-base: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ────────────────────────────────────────────────────────────── B-slot (req) ── */
+  --fg-2: #94a3b8;
+  --meta: #3b82f6;
+  --muted: #64748b;
+  --surface-warm: #253349;
+  --border: #334155;
+  --border-soft: #273548;
+
+  /* ─────────────────────────────────────────────────────────── C-extension ────── */
+  /* ObserveCo-specific token palette for health status (distinct from composition) */
+  --status-healthy: #22c55e;
+  --status-warning: #eab308;
+  --status-critical: #ef4444;
+  --status-info: #3b82f6;
+
+  /* ObserveCo-specific token palette for breakdown bars (distinct from status) */
+  --token-identity: #6366f1;
+  --token-skills: #8b5cf6;
+  --token-memory: #ec4899;
+  --token-tools: #14b8a6;
+  --token-guidance: #f97316;
+
+  /* ObserveCo-specific telemetry accents */
+  --data-primary: #22c55e;
+  --data-secondary: #3b82f6;
+  --data-accent: #3b82f6;
+}

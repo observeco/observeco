@@ -13,6 +13,7 @@ import time
 from observeco.config import load_config
 from observeco.db import Database
 from observeco.pulse.check import _probe_agent
+from observeco.chisel.trim import run_trim_file
 
 
 def run_watch(
@@ -75,6 +76,9 @@ def run_watch(
                         status=status,
                         latency_ms=latency * 1000,
                     )
+                    # Auto-trim SOUL.md for all agents on every pulse cycle
+                    if status == "alive" and getattr(agent, "config_path", None):
+                        run_trim_file(agent.name, agent.config_path)
                     results.append((agent.name, status, latency))
                 except Exception as e:
                     db.log_pulse(
