@@ -2362,3 +2362,102 @@ async def api_trigger_heal():
 """ + "\n".join(items)
 
     return HTMLResponse(html)
+
+
+# ---------------------------------------------------------------------------
+# § Risk Dashboard — risk classifications + log integrity
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/risk", response_class=HTMLResponse)
+async def api_risk():
+    """Risk classification dashboard — shows risk policy + recent classifications."""
+    try:
+        from observeco.risk_engine import RiskLevel, RISK_EMOJI
+        from observeco.session_log import SessionLogger
+
+        # Get recent session logs
+        from observeco.platform import get_data_dir
+        sessions_dir = get_data_dir() / "sessions"
+        sessions = []
+        if sessions_dir.exists():
+            for sf in sorted(sessions_dir.glob("*.jsonl"), reverse=True)[:10]:
+                logger = SessionLogger(sf.stem)
+                valid, error = logger.verify_chain()
+                summary = logger.get_summary()
+                sessions.append({
+                    "id": sf.stem,
+                    "events": summary["total_events"],
+                    "tool_calls": summary["tool_calls"],
+                    "valid": valid,
+                    "decisions": summary["decisions"],
+                })
+
+        # Build risk policy display
+        risk_rows = ""
+        for level in RiskLevel:
+            emoji = RISK_EMOJI.get(level, "?")
+            if level == RiskLevel.LOW:
+                desc = "Auto-approve (reads, searches, status)"
+            elif level == RiskLevel.MEDIUM:
+                desc = "Auto-approve configurable (edits, writes, tests)"
+            elif level == RiskLevel.HIGH:
+                desc = "Flag for review (push, deploy, env vars)"
+            else:
+                desc = "Deny (database, auth, destructive)"
+            risk_rows += f"""
+            <tr>
+                <td>{emoji} <span class="risk-badge risk-{level.value}">{level.value.upper()}</span></td>
+                <td>{desc}</td>
+            </tr>"""
+
+        # Build sessions table
+        session_rows = """
+        <tr><td colspan="5" style="color: var(--text-muted); padding: 16px;">No sessions recorded yet. Run <code>observeco run "task"</code> to generate data.</td></tr>"""
+        if sessions:
+            session_rows = ""
+            for s in sessions:
+                status_icon = "✓" if s["valid"] else "✗"
+                status_color = "var(--green)" if s["valid"] else "var(--red)"
+                decisions = ", ".join(f"{k}: {v}" for k, v in s["decisions"].items()) or "none"
+                session_rows += f"""
+                <tr>
+                    <td>{s["id"]}</td>
+                    <td>{s["events"]}</td>
+                    <td>{s["tool_calls"]}</td>
+                    <td style="color: {status_color}">{status_icon} {'Valid' if s['valid'] else 'INVALID'}</td>
+                    <td style="font-size: 0.85rem;">{decisions}</td>
+                </tr>"""
+
+        html = f"""
+        <div class="risk-dashboard">
+            <h3 style="margin-bottom: 16px;">Risk Classification Policy</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <th style="text-align: left; padding: 8px;">Level</th>
+                        <th style="text-align: left; padding: 8px;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>{risk_rows}</tbody>
+            </table>
+
+            <h3 style="margin-bottom: 16px;">Session Log Integrity</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <th style="text-align: left; padding: 8px;">Session</th>
+                        <th style="text-align: left; padding: 8px;">Events</th>
+                        <th style="text-align: left; padding: 8px;">Tool Calls</th>
+                        <th style="text-align: left; padding: 8px;">Chain</th>
+                        <th style="text-align: left; padding: 8px;">Decisions</th>
+                    </tr>
+                </thead>
+                <tbody>{session_rows}</tbody>
+            </table>
+        </div>
+        """
+
+        return HTMLResponse(html)
+    except Exception as e:
+        return HTMLResponse(f"<div class='error'>Risk dashboard error: {e}</div>")

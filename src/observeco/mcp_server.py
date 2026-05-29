@@ -190,6 +190,26 @@ class MCPServer:
                      "inputSchema": {"type": "object", "properties": {"symbol": {"type": "string"},
                                                                        "depth": {"type": "number"}},
                                       "required": ["symbol"]}},
+                    {"name": "classify_risk", "description": "Classify a tool call or action by risk level",
+                     "inputSchema": {"type": "object", "properties": {
+                         "tool_name": {"type": "string"},
+                         "tool_args": {"type": "object"},
+                         "action_text": {"type": "string"}
+                     }}},
+                    {"name": "get_risk_policy", "description": "Get the current risk classification policy",
+                     "inputSchema": {"type": "object", "properties": {}}},
+                    {"name": "log_tool_call", "description": "Log a tool call with risk classification to tamper-evident log",
+                     "inputSchema": {"type": "object", "properties": {
+                         "tool_name": {"type": "string"},
+                         "tool_args": {"type": "object"},
+                         "risk_level": {"type": "string"},
+                         "decision": {"type": "string"},
+                         "agent_id": {"type": "string"}
+                     }, "required": ["tool_name", "risk_level", "decision"]}},
+                    {"name": "verify_log_integrity", "description": "Verify tamper-evident session log hash chain",
+                     "inputSchema": {"type": "object", "properties": {
+                         "session_id": {"type": "string"}
+                     }}},
                 ]
             })
         elif method == "tools/call":
@@ -281,6 +301,75 @@ class MCPServer:
                     return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
                 except Exception as e:
                     return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph impact error: {e}"}]})
+            elif name == "classify_risk":
+                try:
+                    from observeco.risk_engine import ToolCall, classify_tool_call, classify_text_action
+                    tool_name = arguments.get("tool_name", "")
+                    tool_args = arguments.get("tool_args", {})
+                    action_text = arguments.get("action_text", "")
+                    if tool_name:
+                        tc = ToolCall(name=tool_name, arguments=tool_args)
+                        result = classify_tool_call(tc)
+                    elif action_text:
+                        result = classify_text_action(action_text)
+                    else:
+                        return self._make_response(rid, {"content": [{"type": "text", "text": "Provide tool_name+tool_args or action_text"}]})
+                    lines = [
+                        f"Risk Level: {result.level.value.upper()}",
+                        f"Category: {result.category}",
+                        f"Reason: {result.reason}",
+                        f"Decision: {result.action}",
+                    ]
+                    return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
+                except Exception as e:
+                    return self._make_response(rid, {"content": [{"type": "text", "text": f"Risk classification error: {e}"}]})
+            elif name == "get_risk_policy":
+                from observeco.risk_engine import RiskLevel, RISK_EMOJI
+                lines = ["ObserveCo Risk Policy:", "", "Risk Levels:"]
+                for level in RiskLevel:
+                    emoji = RISK_EMOJI.get(level, "?")
+                    if level == RiskLevel.LOW:
+                        desc = "Auto-approve (reads, searches, status)"
+                    elif level == RiskLevel.MEDIUM:
+                        desc = "Auto-approve configurable (edits, writes, tests)"
+                    elif level == RiskLevel.HIGH:
+                        desc = "Flag for review (push, deploy, env vars)"
+                    else:
+                        desc = "Deny (database, auth, destructive)"
+                    lines.append(f"  {emoji} {level.value.upper()}: {desc}")
+                lines.extend(["", "Platform-aware patterns:", "  - Database ops (DELETE, DROP, TRUNCATE) → CRITICAL", "  - Git push / deploy → HIGH", "  - File edits → MEDIUM", "  - Reads → LOW"])
+                return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
+            elif name == "log_tool_call":
+                try:
+                    from observeco.session_log import SessionLogger
+                    logger = SessionLogger()
+                    tool_name = arguments.get("tool_name", "unknown")
+                    tool_args = arguments.get("tool_args", {})
+                    risk_level = arguments.get("risk_level", "unknown")
+                    decision = arguments.get("decision", "unknown")
+                    agent_id = arguments.get("agent_id", "")
+                    entry = logger.log_tool_call(tool_name, tool_args, risk_level, decision, agent_id)
+                    return self._make_response(rid, {"content": [{"type": "text", "text": f"Logged: {tool_name} | {risk_level} | {decision} | hash={entry.get('_hash', '?')[:16]}..."}]})
+                except Exception as e:
+                    return self._make_response(rid, {"content": [{"type": "text", "text": f"Log error: {e}"}]})
+            elif name == "verify_log_integrity":
+                try:
+                    from observeco.session_log import SessionLogger
+                    session_id = arguments.get("session_id", None)
+                    logger = SessionLogger(session_id)
+                    valid, error = logger.verify_chain()
+                    summary = logger.get_summary()
+                    lines = [
+                        f"Session: {summary['session_id']}",
+                        f"Chain valid: {'✓ YES' if valid else '✗ NO'}",
+                        f"Total events: {summary['total_events']}",
+                        f"Tool calls: {summary['tool_calls']}",
+                    ]
+                    if error:
+                        lines.append(f"Error: {error}")
+                    return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
+                except Exception as e:
+                    return self._make_response(rid, {"content": [{"type": "text", "text": f"Verification error: {e}"}]})
             return self._make_error(rid, -32601, f"Tool not found: {name}")
         else:
             return self._make_error(rid, -32601, f"Method not found: {method}")
