@@ -318,7 +318,7 @@ def _error_banner(icon: str, message: str, action: str, severity: str) -> str:
         border = ERROR_WARNING_BORDER
     return f"""<div class="delay-banner" style="background:{bg};border-left-color:{border};">
     <span>{icon}</span>
-    <span style="margin-left:6px;">{_html_escape(message)}</span>
+    <span class="u-ml-6">{_html_escape(message)}</span>
     <code class="inline-code">{_html_escape(action)}</code>
 </div>"""
 
@@ -567,13 +567,13 @@ async def api_alerts():
         <span><strong style="color:{a['severity_color']}">{a['severity_label']}</strong></span>
         <span class="heal-time">{ts_str}</span>
     </div>
-    <div class="text-secondary" style="margin-top:2px;">
+    <div class="text-secondary" class="u-mt-2">
         <span style="color:#38bdf8;font-weight:600;">{_html_escape(a['agent'])}</span>
         <span> — {_html_escape(a['message'])}</span>
     </div>
     <div class="alerts-action-bar">
         <span class="heal-time">[ Push]</span>
-        <span style="cursor:pointer;" onclick="showProPreview('alert-relay')">[ Pro]</span>
+        <span class="u-cursor-pointer" onclick="showProPreview('alert-relay')">[ Pro]</span>
     </div>
 </div>""")
 
@@ -624,9 +624,9 @@ def _pro_locked_tiles() -> str:
     <div class="pro-tile-desc">
         {feat['description'][:80]}…
     </div>
-    <div style="display:none;" id="preview-data-{feat['id']}">{_html_escape(preview)}</div>
+    <div class="u-hidden" id="preview-data-{feat['id']}">{_html_escape(preview)}</div>
 </div>""")
-    return '<div class="pro-tiles-section" style="margin-top:16px;"><div class="pro-tile-section-label">🔒 Pro Features</div>' + "\n".join(tiles) + "</div>"
+    return '<div class="pro-tiles-section" class="u-mt-16"><div class="pro-tile-section-label">🔒 Pro Features</div>' + "\n".join(tiles) + "</div>"
 
 
 @app.get("/api/pro-preview/{feature_id}", response_class=HTMLResponse)
@@ -1135,8 +1135,8 @@ async def api_fleet_summary():
     {f'<span class="status-stat"><strong>{drift_text}</strong></span>' if drift_text else ''}
     {trip_badge}
       <button class="feedback-btn" onclick="toggleFeedback()">+ Missing an agent?</button>
-      <button class="feedback-btn" onclick="openSkillsAuditModal('all')" style="margin-left:8px;">📊 Skill Audit</button>
-      <button class="feedback-btn" onclick="openPathwayModal()" style="margin-left:8px;">🕸️ Pathway map</button>
+      <button class="feedback-btn" onclick="openSkillsAuditModal('all')" class="u-ml-8">📊 Skill Audit</button>
+      <button class="feedback-btn" onclick="openPathwayModal()" class="u-ml-8">🕸️ Pathway map</button>
 </div>""")
 
 
@@ -1550,9 +1550,9 @@ async def api_agents():
       </div>
       <div class="metric-row" onclick="openModal('{name} — Brain composition','{role_label}','Composition data...')">
         <span class="label">Composition</span>
-        <span class="value" style="flex:1;">{token_bar}</span>
+        <span class="value" class="u-flex-1">{token_bar}</span>
         <span class="click-hint">See details</span>
-        <span class="arrow" style="align-self:flex-start;margin-top:6px;">›</span>
+        <span class="arrow" class="u-align-start u-mt-6">›</span>
       </div>
     </div>""")
 
@@ -2175,7 +2175,7 @@ async def api_glossary():
         <div class="glossary-panel-title">📖 Glossary &amp; FAQ</div>
         <span onclick="toggleGlossarySection()" class="glossary-panel-toggle" id="glossary-toggle-label">▼ Show</span>
     </div>
-    <div id="glossary-body" style="display:none;">
+    <div id="glossary-body" class="u-hidden">
 """ + "\n".join(items_html) + """
     </div>
 </div>
