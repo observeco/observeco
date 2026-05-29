@@ -814,7 +814,7 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
 </div>"""
 
     if not errors_html:
-        errors_html = '<div class="empty-state" style="">No errors recorded — your agents are running clean. Errors appear here automatically when pulse checks detect failures or when agents log error events.</div>'
+        errors_html = '<div class="empty-state">No errors recorded — your agents are running clean. Errors appear here automatically when pulse checks detect failures or when agents log error events.</div>'
 
     framework_label = "Hermes" if framework == "hermes" else "OpenClaw"
 
@@ -858,11 +858,11 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
                        "tools": "#14b8a6", "guidance": "#f97316"}.get(comp, "#6b7280")
                 comp_label = comp.capitalize()
                 bars.append(f"""<div class="token-row-detail">
-    <span class="token-row-label" style="">{comp_label}</span>
+    <span class="token-row-label">{comp_label}</span>
     <div class="token-bar-bg">
         <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};"></div>
     </div>
-    <span class="token-row-value token-value" style="">{val:,} tok ({pct:.0f}%)</span>
+    <span class="token-row-value token-value">{val:,} tok ({pct:.0f}%)</span>
 </div>""")
 
             savings = latest_trim.get("savings_ratio", 0)
@@ -905,11 +905,11 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
                 col = {"MEMORY.md": "#ec4899", "Skills": "#8b5cf6", "Workspace": "#14b8a6",
                        "History": "#6366f1", "Bootstrap": "#f97316"}.get(comp, "#6b7280")
                 bars.append(f"""<div class="token-row-detail">
-    <span class="token-row-label" style="">{comp}</span>
+    <span class="token-row-label">{comp}</span>
     <div class="token-bar-bg">
         <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};"></div>
     </div>
-    <span class="token-row-value token-value" style="">{val:,} tok</span>
+    <span class="token-row-value token-value">{val:,} tok</span>
 </div>""")
 
             loads = db.get_loads(agent_name=name)
@@ -926,7 +926,7 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
     {"".join(bars)}
     {savings_html}
 </div>""")
-        return HTMLResponse('<div class="empty-state" style="">No profile data — run `observeco clawforge profile`</div>')
+        return HTMLResponse('<div class="empty-state">No profile data — run `observeco clawforge profile`</div>')
 
 
 def _detail_drift_html(drift: list, name: str) -> str:
@@ -2045,7 +2045,7 @@ async def api_restart_quality():
         <span class="restart-card-badge" style="color:{far_color};">{far_icon} {far_text}</span>
         </div>
     </div>
-    <div class="restart-card-detail" style="">
+    <div class="restart-card-detail">
         <div class="restart-card-stat"><span class="restart-card-stat-key">Restarts:</span> <span class="restart-card-stat-val">{total}</span></div>
         <div class="restart-card-stat"><span class="restart-card-stat-key green">KeepAlive:</span> <span class="restart-card-stat-val">{healthy}</span></div>
         <div class="restart-card-stat"><span class="restart-card-stat-key amber">TOCTOU:</span> <span class="restart-card-stat-val">{toctou}</span></div>
@@ -2170,7 +2170,7 @@ async def api_glossary():
 </div>""")
 
     html = """
-<div class="glossary-panel" style="">
+<div class="glossary-panel">
     <div class="glossary-panel-header">
         <div class="glossary-panel-title">📖 Glossary &amp; FAQ</div>
         <span onclick="toggleGlossarySection()" class="glossary-panel-toggle" id="glossary-toggle-label">▼ Show</span>
@@ -2320,7 +2320,7 @@ async def api_trigger_heal():
     pulses = d.get_recent_pulses(limit=10)
 
     if not pulses and not breakers:
-        return HTMLResponse('<div class="heal-result-ok" style="">No agent data to diagnose. Run <code>observeco pulse check</code> first.</div>')
+        return HTMLResponse('<div class="heal-result-ok">No agent data to diagnose. Run <code>observeco pulse check</code> first.</div>')
 
     items = []
     now = int(time.time())
@@ -2420,7 +2420,7 @@ async def api_trigger_heal():
 </div>""")
 
     if not items:
-        items.append('<div class="heal-result-ok" style="">All agents appear healthy</div>')
+        items.append('<div class="heal-result-ok">All agents appear healthy</div>')
 
     html = """
 <div class="heal-timestamp">Heal check completed at """ + __import__('datetime').datetime.now().strftime("%H:%M:%S") + """</div>

@@ -201,23 +201,53 @@ class RiskPredictor:
         )
 
     def _get_tool_history(self, tool_name: str) -> list:
-        """Get historical calls for a tool."""
+        """Get historical calls for a tool across ALL session files."""
         try:
-            logger = SessionLogger()
-            entries = logger.get_entries(limit=1000)
-            return [e.get("data", {}) for e in entries
-                    if e.get("event_type") == "tool_call"
-                    and e.get("data", {}).get("tool_name") == tool_name]
+            from .dirs import get_data_dir
+            sessions_dir = get_data_dir() / "sessions"
+            if not sessions_dir.exists():
+                return []
+
+            results = []
+            for session_file in sorted(sessions_dir.glob("*.jsonl"), reverse=True)[:20]:
+                try:
+                    with open(session_file) as f:
+                        for line in f:
+                            line = line.strip()
+                            if not line:
+                                continue
+                            entry = json.loads(line)
+                            if (entry.get("event_type") == "tool_call"
+                                    and entry.get("data", {}).get("tool_name") == tool_name):
+                                results.append(entry.get("data", {}))
+                except Exception:
+                    continue
+            return results[:500]  # Cap at 500 entries
         except Exception:
             return []
 
     def _get_agent_history(self, agent_id: str) -> list:
-        """Get historical calls for an agent."""
+        """Get historical calls for an agent across ALL session files."""
         try:
-            logger = SessionLogger()
-            entries = logger.get_entries(limit=1000)
-            return [e.get("data", {}) for e in entries
-                    if e.get("agent_id") == agent_id]
+            from .dirs import get_data_dir
+            sessions_dir = get_data_dir() / "sessions"
+            if not sessions_dir.exists():
+                return []
+
+            results = []
+            for session_file in sorted(sessions_dir.glob("*.jsonl"), reverse=True)[:20]:
+                try:
+                    with open(session_file) as f:
+                        for line in f:
+                            line = line.strip()
+                            if not line:
+                                continue
+                            entry = json.loads(line)
+                            if entry.get("agent_id") == agent_id:
+                                results.append(entry.get("data", {}))
+                except Exception:
+                    continue
+            return results[:500]  # Cap at 500 entries
         except Exception:
             return []
 
