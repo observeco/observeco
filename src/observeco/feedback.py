@@ -70,9 +70,15 @@ def _preview_feedback(fb_type: str, summary: str, detail: str, severity: str) ->
 
 
 def _send_feedback(payload: dict) -> bool:
-    """Send feedback — try local dashboard server first, then direct delivery, fallback to file."""
-    # 1) Try local dashboard server
-    server_url = os.environ.get("OBSERVECO_FEEDBACK_URL", "http://127.0.0.1:9119/v1/feedback")
+    """Send feedback to the ObserveCo telemetry server.
+    
+    Default: https://telemetry.observeco.ai/v1/feedback
+    Users can override with OBSERVECO_FEEDBACK_URL env var.
+    """
+    server_url = os.environ.get(
+        "OBSERVECO_FEEDBACK_URL",
+        "https://telemetry.observeco.ai/v1/feedback",
+    )
     try:
         import urllib.request
         data = json.dumps(payload).encode("utf-8")
@@ -82,25 +88,13 @@ def _send_feedback(payload: dict) -> bool:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        resp = urllib.request.urlopen(req, timeout=5)
+        resp = urllib.request.urlopen(req, timeout=10)
         result = json.loads(resp.read())
-        # Server handles Telegram + Email + DB on our behalf
         return result.get("status") == "ok"
-    except Exception:
-        pass  # Fall through to direct delivery
-
-    # 2) Direct delivery (no server running — CLI standalone mode)
-    from observeco.feedback_delivery import deliver_feedback
-    from observeco.db import Database
-
-    delivered = deliver_feedback(payload)
-    db = Database()
-    db.save_feedback(payload,
-                     delivered_tg=delivered.get("telegram", False),
-                     delivered_email=delivered.get("email", False))
-
-    # Return True if at least one channel worked
-    return delivered.get("telegram", False) or delivered.get("email", False)
+    except Exception as exc:
+        logger = __import__("logging").getLogger("observeco.feedback")
+        logger.warning("Feedback delivery to %s failed: %s", server_url, exc)
+        return False
 
 
 def run_feedback(

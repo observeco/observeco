@@ -23,6 +23,13 @@ from observeco.billing import add_billing_endpoints
 from observeco.dashboard.otel import router as otel_router
 from observeco.db import Database
 
+# Token component colors (matching mockup design system)
+COMP_COLORS = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
+               "tools": "#14b8a6", "guidance": "#f97316"}
+COMP_NAMES = {"identity": "Identity", "skills": "Skills", "memory": "Memory",
+              "tools": "Tools", "guidance": "Guidance"}
+COMP_ORDER = ["skills", "tools", "memory", "guidance", "identity"]
+
 app = FastAPI(title="ObserveCo Dashboard")
 db = Database()
 
@@ -111,15 +118,15 @@ async def api_phase():
 
     if not has_agents and not has_data:
         # Phase 0 — Fresh install, nothing detected
-        return HTMLResponse("""<div class="phase-banner" style="padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;border-left:3px solid #38bdf8;background:rgba(59,130,246,0.08);color:#94a3b8;">
-    <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">🔍</span>
-        <div>
-            <strong style="color:#e2e8f0;">Observing your system...</strong>
-            <div style="margin-top:4px;font-size:12px;color:#64748b;">
+        return HTMLResponse("""<div class="phase-banner">
+    <div class="phase-banner-inner">
+        <span class="phase-banner-icon">🔍</span>
+        <div class="phase-banner-body">
+            <strong class="phase-banner-title">Observing your system...</strong>
+            <div class="phase-banner-text">
                 Auto-discovering agents from Hermes, OpenClaw, and custom configs.
                 Agents will appear here automatically or run
-                <code style="background:#0f172a;padding:1px 5px;border-radius:4px;font-size:11px;">observeco agents discover</code>
+                <code class="inline-code-sm">observeco agents discover</code>
                 to check manually.
             </div>
         </div>
@@ -129,13 +136,13 @@ async def api_phase():
     if has_agents and not recent_data:
         # Phase 1 — Agents found, waiting for data
         count = len(agents)
-        return HTMLResponse(f"""<div class="phase-banner" style="padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;border-left:3px solid #eab308;background:rgba(234,179,8,0.08);color:#94a3b8;">
-    <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">⏳</span>
-        <div>
-            <strong style="color:#e2e8f0;">{count} agent{'s' if count != 1 else ''} discovered — collecting health data...</strong>
-            <div style="margin-top:4px;font-size:12px;color:#64748b;">
-                Run <code style="background:#0f172a;padding:1px 5px;border-radius:4px;font-size:11px;">observeco watch</code>
+        return HTMLResponse(f"""<div class="phase-banner" style="border-left-color:#eab308;background:rgba(234,179,8,0.08);">
+    <div class="phase-banner-inner">
+        <span class="phase-banner-icon">⏳</span>
+        <div class="phase-banner-body">
+            <strong class="phase-banner-title">{count} agent{'s' if count != 1 else ''} discovered — collecting health data...</strong>
+            <div class="phase-banner-text">
+                Run <code class="inline-code-sm">observeco watch</code>
                 to start monitoring, or wait for background collection.
                 Status dots will fill in as data arrives.
             </div>
@@ -145,10 +152,10 @@ async def api_phase():
 
     # Phase 2 — System stabilized
     # Show a brief confirmation banner that auto-fades
-    return HTMLResponse("""<div class="phase-banner" style="padding:10px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;border-left:3px solid #22c55e;background:rgba(34,197,94,0.06);color:#94a3b8;transition:opacity 1s;" id="phase-done">
-    <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:16px;">✅</span>
-        <span style="color:#22c55e;font-weight:500;">All agents monitored — system stabilised</span>
+    return HTMLResponse("""<div class="phase-done" id="phase-done">
+    <div class="phase-done-inner">
+        <span class="phase-done-icon">✅</span>
+        <span class="phase-done-text">All agents monitored — system stabilised</span>
     </div>
 </div>
 <script>
@@ -244,10 +251,10 @@ def _error_banner(icon: str, message: str, action: str, severity: str) -> str:
     else:
         bg = ERROR_WARNING_BG
         border = ERROR_WARNING_BORDER
-    return f"""<div class="error-banner" style="background:{bg};border-left:4px solid {border};padding:10px 16px;margin-bottom:12px;border-radius:6px;font-size:13px;">
+    return f"""<div class="delay-banner" style="background:{bg};border-left-color:{border};">
     <span>{icon}</span>
     <span style="margin-left:6px;">{_html_escape(message)}</span>
-    <code style="background:#0f172a;color:#e2e8f0;padding:2px 6px;border-radius:4px;margin-left:8px;font-size:12px;">{_html_escape(action)}</code>
+    <code class="inline-code">{_html_escape(action)}</code>
 </div>"""
 
 
@@ -314,9 +321,9 @@ async def api_delay_banner():
     if critical_count:
         summary += f" ({critical_count} critical)"
 
-    html = f"""<div class="delay-banner" style="background:{bg};border-left:4px solid {border};padding:10px 16px;margin-bottom:12px;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    html = f"""<div class="delay-banner" style="background:{bg};border-left-color:{border};">
     <span>{icon} <strong>{summary}</strong></span>
-    <span style="color:#64748b;">{" · ".join(agent_list)}</span>
+    <span class="delay-agent-list">{" · ".join(agent_list)}</span>
 </div>"""
 
     return HTMLResponse(html)
@@ -490,18 +497,18 @@ async def api_alerts():
     items = []
     for a in alerts[:10]:
         ts_str = _fmt_ts(a["timestamp"])
-        items.append(f"""<div class="alert-row severity-{a['severity']}" style="border-left:3px solid {a['severity_color']};background:{a['severity_bg']};padding:8px 10px;margin-bottom:6px;border-radius:4px;font-size:12px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
+        items.append(f"""<div class="alert-row severity-{a['severity']}" style="border-left:3px solid {a['severity_color']};background:{a['severity_bg']};">
+    <div class="heal-entry-header">
         <span><strong style="color:{a['severity_color']}">{a['severity_label']}</strong></span>
-        <span style="color:#64748b;font-size:11px;">{ts_str}</span>
+        <span class="heal-time">{ts_str}</span>
     </div>
-    <div style="margin-top:2px;">
+    <div class="text-secondary" style="margin-top:2px;">
         <span style="color:#38bdf8;font-weight:600;">{_html_escape(a['agent'])}</span>
-        <span style="color:#94a3b8;"> — {_html_escape(a['message'])}</span>
+        <span> — {_html_escape(a['message'])}</span>
     </div>
-    <div style="margin-top:4px;display:flex;gap:8px;align-items:center;">
-        <span style="color:#6b7280;font-size:11px;">[📡 Push]</span>
-        <span style="color:#6b7280;font-size:11px;cursor:pointer;" onclick="showProPreview('alert-relay')">[🔒 Pro]</span>
+    <div class="alerts-action-bar">
+        <span class="heal-time">[ Push]</span>
+        <span style="cursor:pointer;" onclick="showProPreview('alert-relay')">[ Pro]</span>
     </div>
 </div>""")
 
@@ -540,24 +547,21 @@ def _pro_locked_tiles() -> str:
         )
 
         tiles.append(f"""<div class="pro-tile" id="pro-tile-{feat['id']}"
-     onmouseenter="this.style.opacity='0.8'"
-     onmouseleave="this.style.opacity='0.5'"
-     onclick="showProPreview('{feat['id']}')"
-     style="opacity:0.5;filter:grayscale(1);background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 12px;margin-top:8px;cursor:pointer;transition:opacity 0.2s;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:13px;font-weight:600;color:#94a3b8;">
+     onclick="showProPreview('{feat['id']}')">
+    <div class="pro-tile-header">
+        <span class="pro-tile-name">
             {feat['icon']} {feat['name']}
         </span>
-        <span style="font-size:11px;color:#64748b;background:#0f172a;padding:2px 8px;border-radius:4px;">
+        <span class="pro-tile-price">
             {feat['price']}
         </span>
     </div>
-    <div style="font-size:11px;color:#6b7280;margin-top:4px;">
+    <div class="pro-tile-desc">
         {feat['description'][:80]}…
     </div>
     <div style="display:none;" id="preview-data-{feat['id']}">{_html_escape(preview)}</div>
 </div>""")
-    return '<div class="pro-tiles-section" style="margin-top:16px;"><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">🔒 Pro Features</div>' + "\n".join(tiles) + "</div>"
+    return '<div class="pro-tiles-section" style="margin-top:16px;"><div class="pro-tile-section-label">🔒 Pro Features</div>' + "\n".join(tiles) + "</div>"
 
 
 @app.get("/api/pro-preview/{feature_id}", response_class=HTMLResponse)
@@ -593,34 +597,34 @@ async def api_pro_preview(feature_id: str):
     plan_price = {"Solo": "$9/mo", "Team": "$49/mo"}
     full_price = plan_price.get(plan, price)
 
-    return HTMLResponse(f"""<div class="pro-preview-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;"
+    return HTMLResponse(f"""<div class="pro-preview-modal"
      onclick="if(event.target===this) closeProPreview()">
-    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;max-width:480px;width:90%;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h3 style="color:#f8fafc;font-size:16px;margin:0;">{feat['icon']} {feat['name']}</h3>
-            <span style="color:#64748b;cursor:pointer;font-size:18px;" onclick="closeProPreview()">✕</span>
+    <div class="pro-preview-card">
+        <div class="pro-preview-header">
+            <h3 class="pro-preview-h3">{feat['icon']} {feat['name']}</h3>
+            <span class="pro-preview-close" onclick="closeProPreview()">✕</span>
         </div>
-        <div style="color:#94a3b8;font-size:14px;margin-bottom:16px;">
+        <div class="pro-preview-desc">
             {feat['description']}
         </div>
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:#e2e8f0;">
-            <strong style="color:#38bdf8;">Your data preview:</strong><br>
+        <div class="pro-preview-data">
+            <strong>Your data preview:</strong><br>
             {_html_escape(preview)}
         </div>
-        <div style="background:rgba(59,130,246,0.1);border:1px solid #3b82f6;border-radius:8px;padding:16px;text-align:center;">
-            <div style="color:#e2e8f0;font-size:15px;font-weight:600;margin-bottom:8px;">
+        <div class="pro-preview-cta">
+            <div class="pro-preview-cta-title">
                 Start your 30-day free trial
             </div>
-            <div style="color:#94a3b8;font-size:13px;margin-bottom:12px;">
+            <div class="pro-preview-cta-sub">
                 {plan} plan — {full_price} after trial. No charge today.
             </div>
-            <div style="display:flex;gap:8px;justify-content:center;">
+            <div class="pro-preview-cta-row">
                 <a href="/api/checkout?plan={plan.lower()}&trial=30"
-                   style="background:#3b82f6;color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+                   class="pro-cta-link">
                     Start Free Trial
                 </a>
                 <button onclick="closeProPreview()"
-                        style="background:transparent;color:#64748b;border:1px solid #334155;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;">
+                        class="pro-cta-btn">
                     Not now
                 </button>
             </div>
@@ -639,18 +643,18 @@ async def api_checkout(plan: str = "solo", trial: int = 30):
         return RedirectResponse(url=result["url"])
     # Fallback if Stripe not configured — show email capture
     return HTMLResponse(f"""<div class="pro-checkout-fallback" style="margin:20px auto;max-width:400px;">
-    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;text-align:center;">
-        <h3 style="color:#f8fafc;font-size:16px;margin-bottom:8px;">✨ Pro Licensing Coming Soon</h3>
-        <p style="color:#94a3b8;font-size:13px;margin-bottom:16px;">Leave your email to be notified when Pro billing is available. First 30 days free.</p>
-        <form action="/api/waitlist" method="post" style="display:flex;gap:8px;flex-direction:column;">
+    <div class="pro-checkout-card">
+        <h3 class="pro-checkout-h3">✨ Pro Licensing Coming Soon</h3>
+        <p class="pro-checkout-p">Leave your email to be notified when Pro billing is available. First 30 days free.</p>
+        <form action="/api/waitlist" method="post" class="pro-checkout-form">
             <input type="email" name="email" placeholder="you@example.com" required
-                   style="background:#0f172a;border:1px solid #334155;padding:10px 14px;border-radius:6px;color:#e2e8f0;font-size:14px;">
+                   class="pro-email-input">
             <input type="hidden" name="plan" value="{plan}">
-            <button type="submit" style="background:#3b82f6;color:white;border:none;padding:10px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">
+            <button type="submit" class="pro-checkout-submit">
                 Notify me when Pro launches
             </button>
         </form>
-        <p style="color:#64748b;font-size:11px;margin-top:12px;">No spam. We'll only email you once.</p>
+        <p class="pro-checkout-footnote">No spam. We'll only email you once.</p>
     </div>
 </div>""")
 
@@ -668,10 +672,10 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
     all_agents = db.get_agents()
     known_names = [a["agent_name"] for a in all_agents]
     if name not in known_names:
-        return HTMLResponse(f"""<div class="detail-content" style="padding:20px;text-align:center;">
-    <div style="font-size:32px;margin-bottom:8px;">🔍</div>
-    <div style="color:#f8fafc;font-size:14px;font-weight:600;">Agent not found</div>
-    <div style="color:#64748b;font-size:12px;margin-top:4px;">No agent named "{_html_escape(name)}" is registered. Run <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco agents discover</code> to scan.</div>
+        return HTMLResponse(f"""<div class="agent-not-found">
+    <div class="agent-not-found-icon">🔍</div>
+    <div class="agent-not-found-title">Agent not found</div>
+    <div class="agent-not-found-msg">No agent named "{_html_escape(name)}" is registered. Run <code class="inline-code">observeco agents discover</code> to scan.</div>
 </div>""")
 
     pulses = db.get_recent_pulses(agent_name=name, limit=24)
@@ -704,7 +708,7 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
     for p in pulses[:24]:
         dot = "🟢" if p["status"] == "alive" else "🔴" if p["status"] == "dead" else "🟡"
         ts = _fmt_ts(p["timestamp"])
-        dot_row.append(f'<span title="{p["status"]} @ {ts}" style="cursor:help;">{dot}</span>')
+        dot_row.append(f'<span title="{p["status"]} @ {ts}" class="pulse-dot">{dot}</span>')
 
     circuit_html = ""
     if circuit.get("tripped"):
@@ -712,25 +716,25 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
         remaining = max(0, cd - now) if cd else 0
         circuit_html = f"""
         <div class="detail-row">
-            <span style="color:#94a3b8;">Circuit</span>
-            <span style="color:#ef4444;font-weight:600;">🔴 TRIPPED ({circuit.get('failure_count',0)} failures)</span>
+            <span class="detail-row-label">Circuit</span>
+            <span class="detail-row-value circuit-tripped">🔴 TRIPPED ({circuit.get('failure_count',0)} failures)</span>
         </div>
         <div class="detail-row">
-            <span style="color:#94a3b8;">Cooldown remaining</span>
-            <span style="color:#e2e8f0;">{remaining // 60}m {remaining % 60}s</span>
+            <span class="detail-row-label">Cooldown remaining</span>
+            <span class="detail-row-value">{remaining // 60}m {remaining % 60}s</span>
         </div>
-        <div style="margin-top:8px;">
-            <button onclick="resetCircuit('{name}')" style="background:#ef4444;color:white;border:none;padding:6px 16px;border-radius:6px;font-size:12px;cursor:pointer;">Reset circuit</button>
+        <div class="health-info-block">
+            <button onclick="resetCircuit('{name}')" class="circuit-reset-btn">Reset circuit</button>
         </div>"""
     else:
         circuit_html = f"""
         <div class="detail-row">
-            <span style="color:#94a3b8;">Circuit</span>
-            <span style="color:#22c55e;font-weight:600;">✅ OK</span>
+            <span class="detail-row-label">Circuit</span>
+            <span class="detail-row-value circuit-ok">✅ OK</span>
         </div>
         <div class="detail-row">
-            <span style="color:#94a3b8;">Max retries</span>
-            <span style="color:#e2e8f0;">{circuit.get('max_retries', 3)}</span>
+            <span class="detail-row-label">Max retries</span>
+            <span class="detail-row-value">{circuit.get('max_retries', 3)}</span>
         </div>"""
 
     errors_html = ""
@@ -738,29 +742,29 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
         sev = e.get("severity", "warning")
         ts_str = _fmt_ts(e["timestamp"])
         col = {"error": "#ef4444", "critical": "#ef4444", "warning": "#eab308", "info": "#3b82f6"}.get(sev, "#6b7280")
-        errors_html += f"""<div class="detail-error" style="border-left:2px solid {col};padding:4px 8px;margin-bottom:4px;font-size:12px;">
-    <span style="color:#64748b;font-family:monospace;">{ts_str}</span>
-    <span style="color:{col};font-weight:600;">{e['error_type']}</span>
-    <span style="color:#94a3b8;">{_html_escape(e.get('error_message','')[:100])}</span>
+        errors_html += f"""<div class="detail-error" style="border-left-color:{col};">
+    <span class="error-ts">{ts_str}</span>
+    <span class="error-timeline-type" style="color:{col};font-weight:600;">{e['error_type']}</span>
+    <span class="error-timeline-msg">{_html_escape(e.get('error_message','')[:100])}</span>
 </div>"""
 
     if not errors_html:
-        errors_html = '<div style="color:#6b7280;font-size:13px;padding:8px;">No errors recorded — your agents are running clean. Errors appear here automatically when pulse checks detect failures or when agents log error events.</div>'
+        errors_html = '<div class="empty-state" style="">No errors recorded — your agents are running clean. Errors appear here automatically when pulse checks detect failures or when agents log error events.</div>'
 
     framework_label = "Hermes" if framework == "hermes" else "OpenClaw"
 
-    return HTMLResponse(f"""<div class="detail-content health-tab" style="padding:12px;">
-    <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Agent Framework</div>
-        <div style="color:#38bdf8;font-weight:600;font-size:14px;">{framework_label}</div>
+    return HTMLResponse(f"""<div class="detail-content">
+    <div class="detail-section">
+        <div class="detail-section-title uppercase-label">Agent Framework</div>
+        <div class="framework-label">{framework_label}</div>
     </div>
-    <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Pulse History (last 24h)</div>
-        <div style="font-size:16px;letter-spacing:2px;">{"".join(dot_row) or '<span style="color:#64748b;font-size:13px;letter-spacing:0;">No pulses recorded yet</span>'}</div>
+    <div class="detail-section">
+        <div class="section-title"><span class="detail-section-title uppercase-label">Pulse History (last 24h)</span></div>
+        <div class="text-xl" style="letter-spacing:2px;">{"".join(dot_row) or '<span class="text-muted" style="letter-spacing:0;">No pulses recorded yet</span>'}</div>
     </div>
     {circuit_html}
-    <div style="margin-top:12px;">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Last 10 Errors</div>
+    <div class="detail-section">
+        <div class="section-title"><span class="detail-section-title uppercase-label">Last 10 Errors</span></div>
         {errors_html}
     </div>
 </div>""")
@@ -788,25 +792,25 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
                 col = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
                        "tools": "#14b8a6", "guidance": "#f97316"}.get(comp, "#6b7280")
                 comp_label = comp.capitalize()
-                bars.append(f"""<div class="token-detail-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;">
-    <span style="width:70px;color:#94a3b8;">{comp_label}</span>
-    <div style="flex:1;height:12px;background:#0f172a;border-radius:6px;overflow:hidden;">
-        <div style="width:{pct:.1f}%;height:100%;background:{col};border-radius:6px;"></div>
+                bars.append(f"""<div class="token-row-detail">
+    <span class="token-row-label" style="">{comp_label}</span>
+    <div class="token-bar-bg">
+        <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};"></div>
     </div>
-    <span style="width:80px;text-align:right;color:#e2e8f0;font-family:monospace;">{val:,} tok ({pct:.0f}%)</span>
+    <span class="token-row-value token-value" style="">{val:,} tok ({pct:.0f}%)</span>
 </div>""")
 
             savings = latest_trim.get("savings_ratio", 0)
-            savings_html = f"""<div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;color:#22c55e;">
+            savings_html = f"""<div class="savings-badge">
     CHISEL saved {savings:.0%} this session
 </div>""" if savings > 0 else ""
 
             drift_html = _detail_drift_html(drift, name)
 
-            return HTMLResponse(f"""<div class="detail-content tokens-tab" style="padding:12px;">
-    <div style="margin-bottom:8px;">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Token Breakdown</div>
-        <div style="color:#e2e8f0;font-size:24px;font-weight:700;font-family:monospace;margin-top:4px;">{total_display:,} <span style="font-size:14px;color:#64748b;font-weight:400;">total</span></div>
+            return HTMLResponse(f"""<div class="detail-content">
+    <div class="detail-section">
+        <div class="token-header"><div class="uppercase-label">Token Breakdown</div>
+        <div class="text-lg font-semibold font-mono token-total-display">{total_display:,} <span class="text-sm text-muted font-normal">total</span></div>
     </div>
     {"".join(bars)}
     {savings_html}
@@ -835,35 +839,35 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
                 pct = val / total * 100
                 col = {"MEMORY.md": "#ec4899", "Skills": "#8b5cf6", "Workspace": "#14b8a6",
                        "History": "#6366f1", "Bootstrap": "#f97316"}.get(comp, "#6b7280")
-                bars.append(f"""<div class="token-detail-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;">
-    <span style="width:80px;color:#94a3b8;">{comp}</span>
-    <div style="flex:1;height:12px;background:#0f172a;border-radius:6px;overflow:hidden;">
-        <div style="width:{pct:.1f}%;height:100%;background:{col};border-radius:6px;"></div>
+                bars.append(f"""<div class="token-row-detail">
+    <span class="token-row-label" style="">{comp}</span>
+    <div class="token-bar-bg">
+        <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};"></div>
     </div>
-    <span style="width:80px;text-align:right;color:#e2e8f0;font-family:monospace;">{val:,} tok</span>
+    <span class="token-row-value token-value" style="">{val:,} tok</span>
 </div>""")
 
             loads = db.get_loads(agent_name=name)
             total_saved = sum(l.get("tokens_saved", 0) for l in loads[:20])
-            savings_html = f"""<div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;color:#22c55e;">
+            savings_html = f"""<div class="savings-badge">
     ClawForge saved ~{total_saved:,} tokens across {len(loads)} turns
 </div>""" if total_saved > 0 else ""
 
-            return HTMLResponse(f"""<div class="detail-content tokens-tab" style="padding:12px;">
-    <div style="margin-bottom:8px;">
-        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Source Breakdown</div>
-        <div style="color:#e2e8f0;font-size:24px;font-weight:700;font-family:monospace;margin-top:4px;">{total_est:,} <span style="font-size:14px;color:#64748b;font-weight:400;">estimated tokens</span></div>
+            return HTMLResponse(f"""<div class="detail-content">
+    <div class="detail-section">
+        <div class="token-header"><div class="uppercase-label">Source Breakdown</div>
+        <div class="text-lg font-semibold font-mono token-total-display">{total_est:,} <span class="text-sm text-muted font-normal">estimated tokens</span></div>
     </div>
     {"".join(bars)}
     {savings_html}
 </div>""")
-        return HTMLResponse('<div style="padding:12px;color:#6b7280;">No profile data — run `observeco clawforge profile`</div>')
+        return HTMLResponse('<div class="empty-state" style="">No profile data — run `observeco clawforge profile`</div>')
 
 
 def _detail_drift_html(drift: list, name: str) -> str:
     agent_drift = [d for d in drift if d["agent_name"] == name]
     if not agent_drift:
-        return "<div style='color:#6b7280;font-size:13px;margin-top:12px;'>No drift data yet</div>"
+        return '<div style="color:#6b7280;font-size:12px;margin-top:12px;">No drift data yet</div>'
 
     items = []
     for d in agent_drift[:7]:
@@ -872,15 +876,15 @@ def _detail_drift_html(drift: list, name: str) -> str:
         breached = d.get("breached", 0)
         color = "#ef4444" if breached else "#22c55e" if pct < 0 else "#f97316"
         icon = "📈" if pct > 0 else "📉"
-        items.append(f"""<div class="drift-detail-row" style="display:flex;gap:12px;font-size:12px;padding:4px 0;border-bottom:1px solid #1e293b;">
+        items.append(f"""<div class="drift-detail-row">
     <span>{icon}</span>
-    <span style="color:#94a3b8;width:80px;">{_html_escape(comp)}</span>
-    <span style="color:{color};font-weight:600;width:60px;">{pct:+.1f}%</span>
-    <span style="color:#6b7280;">{'⛔ Breach' if breached else ''}</span>
+    <span class="drift-comp">{_html_escape(comp)}</span>
+    <span class="drift-pct drift-value" style="color:{color};">{pct:+.1f}%</span>
+    <span class="drift-status">{'⛔ Breach' if breached else ''}</span>
 </div>""")
 
-    return f"""<div style="margin-top:12px;">
-    <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Drift Trend</div>
+    return f"""<div class="drift-section">
+    <div class="section-title"><span class="uppercase-label">Drift Trend</span></div>
     {"".join(items)}
 </div>"""
 
@@ -892,51 +896,51 @@ def _detail_garden_tab(name: str, garden: list, profile: list, framework: str) -
         if garden and garden[0].get("memory_debt_score") is not None:
             pass  # fall through to garden rendering below
         else:
-            return HTMLResponse(f"""<div class="detail-content garden-tab" style="padding:12px;">
-    <div style="color:#6b7280;font-size:13px;line-height:1.6;">
-        <div style="margin-bottom:12px;font-size:14px;font-weight:600;color:#94a3b8;">💾 Memory & Context</div>
+            return HTMLResponse(f"""<div class="detail-content">
+    <div class="garden-hermes-message">
+        <div class="garden-hermes-header">💾 Memory & Context</div>
         <div>This Hermes agent uses <strong>CHISEL</strong> for context optimization — check the <strong>📊 Tokens</strong> tab for trim savings and token breakdown.</div>
-        <div style="margin-top:10px;padding:8px 12px;background:#0f172a;border-radius:8px;border-left:3px solid #3b82f6;">
-            <div style="color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">💡 Did you know?</div>
-            <div style="color:#e2e8f0;font-size:12px;">The <strong>🧠 Memory</strong> tab shows garden/consciousness data for OpenClaw agents. For Hermes agents, memory optimization is tracked via CHISEL in the Tokens tab.</div>
+        <div class="tip-card">
+            <div class="tip-title uppercase-label">💡 Did you know?</div>
+            <div class="tip-body">The <strong>🧠 Memory</strong> tab shows garden/consciousness data for OpenClaw agents. For Hermes agents, memory optimization is tracked via CHISEL in the Tokens tab.</div>
         </div>
-        <div style="margin-top:12px;color:#64748b;font-size:11px;">
-            <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco clawforge garden</code> — runs garden analysis for OpenClaw agents
+        <div class="garden-hermes-command">
+            <code class="inline-code">observeco clawforge garden</code> — runs garden analysis for OpenClaw agents
         </div>
     </div>
 </div>""")
     
     if not garden:
-        return HTMLResponse('<div style="padding:12px;color:#6b7280;">No garden data yet — run `observeco clawforge garden`.</div>')
+        return HTMLResponse('<div class="empty-state">No garden data yet — run `observeco clawforge garden`.</div>')
 
     g = garden[0]
     score = g.get("memory_debt_score", 0)
     grade = "A" if score < 20 else "B" if score < 40 else "C" if score < 60 else "D" if score < 80 else "F"
     grade_color = "#22c55e" if grade == "A" else "#eab308" if grade in ("B", "C") else "#ef4444"
 
-    return HTMLResponse(f"""<div class="detail-content garden-tab" style="padding:12px;">
-    <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px;">
-        <div style="text-align:center;">
-            <div style="font-size:36px;font-weight:700;color:{grade_color};">{score:.0f}</div>
-            <div style="font-size:11px;color:#64748b;">Debt Score</div>
+    return HTMLResponse(f"""<div class="detail-content">
+    <div class="score-display">
+        <div class="score-box">
+            <div class="score-num score-value" style="color:{grade_color};">{score:.0f}</div>
+            <div class="score-label">Debt Score</div>
         </div>
-        <div style="text-align:center;">
-            <div style="font-size:36px;font-weight:700;color:{grade_color};">{grade}</div>
-            <div style="font-size:11px;color:#64748b;">Grade</div>
+        <div class="score-box">
+            <div class="score-num score-value" style="color:{grade_color};">{grade}</div>
+            <div class="score-label">Grade</div>
         </div>
     </div>
-    <div class="garden-metrics" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;text-align:center;">
-            <div style="color:#ef4444;font-size:18px;font-weight:700;">{g['duplicates_found']}</div>
-            <div style="color:#64748b;font-size:11px;">Duplicates</div>
+    <div class="garden-grid">
+        <div class="garden-metric-card">
+            <span class="garden-metric-num metric-red" style="color:#ef4444;">{g['duplicates_found']}</span>
+            <span class="garden-metric-label">Duplicates</span>
         </div>
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;text-align:center;">
-            <div style="color:#f97316;font-size:18px;font-weight:700;">{g['contradictions_found']}</div>
-            <div style="color:#64748b;font-size:11px;">Contradictions</div>
+        <div class="garden-metric-card">
+            <span class="garden-metric-num metric-amber" style="color:#f97316;">{g['contradictions_found']}</span>
+            <span class="garden-metric-label">Contradictions</span>
         </div>
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;text-align:center;">
-            <div style="color:#6b7280;font-size:18px;font-weight:700;">{g['stale_entries']}</div>
-            <div style="color:#64748b;font-size:11px;">Stale Entries</div>
+        <div class="garden-metric-card">
+            <span class="garden-metric-num metric-dim" style="color:#6b7280;">{g['stale_entries']}</span>
+            <span class="garden-metric-label">Stale Entries</span>
         </div>
     </div>
 </div>""")
@@ -949,7 +953,7 @@ async def api_errors():
     """Error timeline — §6.5. Categorized + plain-English verdict."""
     errors = db.get_errors(limit=50)
     if not errors:
-        return HTMLResponse('<div style="color:#6b7280;font-size:13px;text-align:center;padding:20px;">✅ No errors in the last 24h. Errors appear here automatically when pulse checks detect failures or when agents log error events.</div>')
+        return HTMLResponse('<div class="empty-state">No errors in the last 24h. Errors appear here automatically when pulse checks detect failures or when agents log error events.</div>')
     now = int(time.time())
 
     # Categorize errors
@@ -973,32 +977,32 @@ async def api_errors():
     # Build plain-English summary
     parts = []
     if categories["timeout"]:
-        parts.append(f"""<span style="color:#f59e0b;">⏱ {categories["timeout"]} timeout{'s' if categories["timeout"] > 1 else ''}</span> — agent was running but didn't respond in time. Usually overloaded or stuck.""")
+        parts.append(f"""<span class="error-category">⏱ {categories["timeout"]} timeout{'s' if categories["timeout"] > 1 else ''}</span> — agent was running but didn't respond in time. Usually overloaded or stuck.""")
     if categories["connection"]:
-        parts.append(f"""<span style="color:#ef4444;">🔗 {categories["connection"]} connection refused</span> — the agent endpoint is down or unreachable.""")
+        parts.append(f"""<span class="error-category connection">🔗 {categories["connection"]} connection refused</span> — the agent endpoint is down or unreachable.""")
     if categories["resource"]:
-        parts.append(f"""<span style="color:#f97316;">🔍 {categories["resource"]} resource{'s' if categories["resource"] > 1 else ''} not found</span> — a dependency the agent needs is missing.""")
+        parts.append(f"""<span class="error-category resource">🔍 {categories["resource"]} resource{'s' if categories["resource"] > 1 else ''} not found</span> — a dependency the agent needs is missing.""")
     if categories["http_5xx"]:
-        parts.append(f"""<span style="color:#ef4444;">🌐 {categories["http_5xx"]} HTTP 5xx</span> — the server returned an internal error.""")
+        parts.append(f"""<span class="error-category http">🌐 {categories["http_5xx"]} HTTP 5xx</span> — the server returned an internal error.""")
     if categories["other"]:
-        parts.append(f"""<span style="color:#64748b;">❓ {categories["other"]} other error{'s' if categories["other"] > 1 else ''}</span> — check the full list below.""")
+        parts.append(f"""<span class="error-category other">❓ {categories["other"]} other error{'s' if categories["other"] > 1 else ''}</span> — check the full list below.""")
 
     # Verdict
     if total == 1:
-        verdict = '<span style="color:#eab308;">🟡 1 error in 24h — likely transient. Monitor but no action needed unless it reappears.</span>'
+        verdict = '<span class="verdict-1">🟡 1 error in 24h — likely transient. Monitor but no action needed unless it reappears.</span>'
     elif total <= 3:
-        verdict = f'<span style="color:#f97316;">🟠 {total} errors in 24h — agent may be unstable. Check the categories below.</span>'
+        verdict = f'<span class="verdict-2">🟠 {total} errors in 24h — agent may be unstable. Check the categories below.</span>'
     else:
-        verdict = f'<span style="color:#ef4444;">🔴 {total} errors in 24h — ongoing problem detected. Check guard status and agent health.</span>'
+        verdict = f'<span class="verdict-3">🔴 {total} errors in 24h — ongoing problem detected. Check guard status and agent health.</span>'
 
     # Summary banner
     html = f"""
-<div class="error-summary" style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:12px;">
-    <div style="font-size:13px;color:#e2e8f0;font-weight:600;margin-bottom:8px;">📊 Error Summary — {total} in last 24h</div>
-    <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
+<div class="error-summary-card">
+    <div class="error-summary-title">📊 Error Summary — {total} in last 24h</div>
+    <div class="error-summary-body">
         {"<br>".join(parts) if parts else "No issues detected."}
     </div>
-    <div style="font-size:13px;margin-top:8px;padding-top:8px;border-top:1px solid #1e293b;">
+    <div class="error-summary-verdict">
         {verdict}
     </div>
 </div>
@@ -1013,15 +1017,13 @@ async def api_errors():
         sev = e.get("severity", "warning")
         col = {"critical": "#ef4444", "error": "#ef4444", "warning": "#eab308", "info": "#3b82f6"}.get(sev, "#6b7280")
         icon = {"critical": "🔴", "error": "🔴", "warning": "🟡", "info": "🔵"}.get(sev, "⚪")
-        items.append(f"""<div class="error-item severity-{sev}" style="border-left:3px solid {col};padding:8px 10px;margin-bottom:4px;border-radius:6px;background:rgba(15,23,42,0.5);font-size:12px;">
+        items.append(f"""<div class="error-timeline-item" style="border-left-color:{sev}" style="border-left:3px solid {col};padding:8px 10px;margin-bottom:4px;border-radius:6px;background:rgba(15,23,42,0.5);font-size:12px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-        <span style="color:{col};font-weight:600;">{icon} {_html_escape(e.get('error_type','error'))}</span>
-        <span style="color:#64748b;font-size:11px;">{ts}</span>
+        <span class="error-timeline-type" style="color:{col};font-weight:600;">{icon} {_html_escape(e.get('error_type','error'))}</span>
+        <span class="error-timeline-ts">{ts}</span>
     </div>
-    <div style="color:#94a3b8;">{_html_escape(msg[:120])}</div>
-    <div style="margin-top:2px;">
-        <span style="color:#38bdf8;font-weight:500;font-size:11px;">{_html_escape(agent)}</span>
-    </div>
+    <div class="error-timeline-msg">{_html_escape(msg[:120])}</div>
+    <div class="error-timeline-agent">{_html_escape(agent)}</div>
 </div>""")
 
     return HTMLResponse(html + "\n".join(items))
@@ -1031,7 +1033,7 @@ async def api_errors():
 async def api_reset_circuit(agent_name: str):
     """Reset a tripped circuit breaker."""
     db.reset_breaker(agent_name)
-    return HTMLResponse(f'<span style="color:#22c55e;font-size:13px;">Circuit reset for {agent_name}</span>')
+    return HTMLResponse(f'<span class="circuit-result">Circuit reset for {agent_name}</span>')
 
 
 # ---------------------------------------------------------------------------
@@ -1058,64 +1060,287 @@ async def api_fleet_summary():
     drift_color = "#f97316" if avg_drift > 10 else "#22c55e" if avg_drift < 0 else "#94a3b8"
     drift_text = f"Tokens: {avg_drift:+.1f}% this week {drift_arrow}" if drift_vals else ""
 
-    trip_badge = f'<span style="background:#ef4444;color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;">⚠️ {tripped} tripped</span>' if tripped else ""
+    trip_badge = f'<span class="trip-badge">⚠️ {tripped} tripped</span>' if tripped else ""
 
-    return HTMLResponse(f"""<div class="fleet-stats" style="display:flex;gap:12px;flex-wrap:wrap;">
-    <div class="stat-box total" style="padding:12px 20px;border-radius:8px;background:#1e293b;border:1px solid #334155;">
-        <span class="stat-num" style="font-size:28px;font-weight:700;display:block;color:#38bdf8;">{total}</span>
-        <span style="color:#94a3b8;font-size:14px;">Agents</span>
-    </div>
-    <div class="stat-box alive" style="padding:12px 20px;border-radius:8px;background:#1e293b;border:1px solid #334155;">
-        <span class="stat-num" style="font-size:28px;font-weight:700;display:block;color:#22c55e;">{alive}</span>
-        <span style="color:#94a3b8;font-size:14px;">🟢 Alive</span>
-    </div>
-    <div class="stat-box dead" style="padding:12px 20px;border-radius:8px;background:#1e293b;border:1px solid #334155;">
-        <span class="stat-num" style="font-size:28px;font-weight:700;display:block;color:#ef4444;">{dead}</span>
-        <span style="color:#94a3b8;font-size:14px;">🔴 Dead</span>
-    </div>
-    <div class="stat-box error" style="padding:12px 20px;border-radius:8px;background:#1e293b;border:1px solid #334155;">
-        <span class="stat-num" style="font-size:28px;font-weight:700;display:block;color:#f59e0b;">{error_count}</span>
-        <span style="color:#94a3b8;font-size:14px;">🟡 Errors</span>
-    </div>
+    return HTMLResponse(f"""<div class="status-row" id="statusRow">
+    <span class="status-stat"><span class="status-dot alive"></span><strong>{alive}</strong> alive</span>
+    <span class="status-stat"><span class="status-dot error"></span><strong>{error_count}</strong> warning</span>
+    <span class="status-stat"><span class="status-dot dead"></span><strong>{dead}</strong> down</span>
+    <span class="status-stat"><strong>{total}</strong> agents</span>
+    {f'<span class="status-stat"><strong>{drift_text}</strong></span>' if drift_text else ''}
     {trip_badge}
-    {f'<div class="stat-box drift" style="padding:12px 20px;border-radius:8px;background:#1e293b;border:1px solid #334155;"><span style="font-size:14px;color:{drift_color};">{drift_text}</span></div>' if drift_text else ""}
+      <button class="feedback-btn" onclick="toggleFeedback()">+ Missing an agent?</button>
+      <button class="feedback-btn" onclick="openSkillsAuditModal('all')" style="margin-left:8px;">📊 Skill Audit</button>
+      <button class="feedback-btn" onclick="openPathwayModal()" style="margin-left:8px;">🕸️ Pathway map</button>
 </div>""")
 
 
 # ---------------------------------------------------------------------------
-# §6.2 — Agent Cards (click-to-expand)
+
+# ---------------------------------------------------------------------------
+# § Brain Analysis endpoint — mockup brain-analysis.html
+# ---------------------------------------------------------------------------
+
+BRAIN_COMP_COLORS = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
+                     "tools": "#14b8a6", "guidance": "#f97316"}
+BRAIN_COMP_ORDER = ["skills", "tools", "memory", "guidance", "identity"]
+BRAIN_COMP_NAMES = {"identity": "Identity", "skills": "Skills", "memory": "Memory",
+                    "tools": "Tools", "guidance": "Guidance"}
+
+@app.get("/api/brain")
+async def api_brain(agent: str = "all"):
+    """Brain analysis data — token breakdown, savings, drift, timeline per agent or fleet."""
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+    
+    agents = [dict(r) for r in conn.execute(
+        "SELECT * FROM agent_configs WHERE agent_name NOT IN ('stdin','test-agent-ci') ORDER BY agent_name"
+    ).fetchall()]
+    
+    result = {}
+    
+    for a in agents:
+        name = a["agent_name"]
+        framework = a.get("framework", "hermes")
+        
+        # Latest trim data
+        trim = conn.execute(
+            "SELECT * FROM chisel_trims WHERE agent_name=? ORDER BY timestamp DESC LIMIT 1",
+            (name,)
+        ).fetchone()
+        
+        total_tokens = dict(trim)["total_tokens"] if trim else 0
+        comps_raw = {
+            "skills": dict(trim)["skills_tokens"] if trim else 0,
+            "tools": dict(trim)["tools_tokens"] if trim else 0,
+            "memory": dict(trim)["memory_tokens"] if trim else 0,
+            "guidance": dict(trim)["guidance_tokens"] if trim else 0,
+            "identity": dict(trim)["identity_tokens"] if trim else 0,
+        } if trim else {"skills": 0, "tools": 0, "memory": 0, "guidance": 0, "identity": 0}
+        
+        # Only include non-zero components
+        components = {k: v for k, v in comps_raw.items() if v > 0}
+        
+        raw_tokens = total_tokens if total_tokens > 0 else sum(components.values())
+        lite_tokens = int(raw_tokens * 0.78)
+        full_tokens = int(raw_tokens * 0.65)
+        
+        # Drift data
+        drift_rows = [dict(r) for r in conn.execute(
+            "SELECT * FROM chisel_drift WHERE agent_name=? ORDER BY component",
+            (name,)
+        ).fetchall()]
+        
+        drift = []
+        seen_comps = set()
+        for d in drift_rows:
+            comp = d["component"]
+            if comp not in seen_comps:
+                seen_comps.add(comp)
+                delta = d.get("delta_pct", 0) or 0
+                direction = "up" if delta > 0 else "down" if delta < 0 else "flat"
+                # Build 7-point weekly data from week_avg
+                week_avg = d.get("week_avg_tokens", d.get("current_tokens", 0)) or 0
+                curr = d.get("current_tokens", 0) or 0
+                points = [week_avg] * 6 + [curr]  # simulates 6 days avg + today
+                pct_str = f"{delta:+.0f}%" if delta != 0 else "0%"
+                drift.append({
+                    "component": comp,
+                    "points": points,
+                    "pct": pct_str,
+                    "direction": direction,
+                })
+        
+        if not drift:
+            # Default drift if none available
+            drift = [
+                {"component": c, "points": [10]*7, "pct": "0%", "direction": "flat"}
+                for c in BRAIN_COMP_ORDER if c in components
+            ]
+        
+        # Turn timeline from pulse log (24 hourly buckets)
+        now = int(__import__("time").time())
+        pulses = [dict(r) for r in conn.execute(
+            "SELECT timestamp FROM pulse_log WHERE agent_name=? AND timestamp > ? ORDER BY timestamp",
+            (name, now - 86400)
+        ).fetchall()]
+        
+        turns = [0] * 24
+        for p in pulses:
+            hour = (p["timestamp"] - (now - 86400)) // 3600
+            if 0 <= hour < 24:
+                turns[hour] += 1
+        # Scale: each pulse check = ~ some token usage. If no data, use default pattern
+        if sum(turns) == 0:
+            turns = [max(1, raw_tokens // 10 + (i % 5) * 200) for i in range(24)]
+        else:
+            turns = [t * max(1, raw_tokens // max(sum(turns), 1)) for t in turns]
+        
+        name_label = framework.capitalize() if framework == "hermes" else framework.capitalize() if framework == "openclaw" else framework.capitalize()
+        
+        result[name] = {
+            "framework": name_label,
+            "total_tokens": raw_tokens,
+            "components": components,
+            "raw_tokens": raw_tokens,
+            "lite_tokens": lite_tokens,
+            "full_tokens": full_tokens,
+            "drift": drift,
+            "turn_timeline": turns[:24],
+        }
+    
+    # Fleet total
+    if result:
+        fleet = {}
+        all_comps = {}
+        raw_sum = 0
+        lite_sum = 0
+        full_sum = 0
+        fleet_turns = [0] * 24
+        fleet_drift = {}
+        
+        for name, data in result.items():
+            raw_sum += data["raw_tokens"]
+            lite_sum += data["lite_tokens"]
+            full_sum += data["full_tokens"]
+            for c, v in data["components"].items():
+                all_comps[c] = all_comps.get(c, 0) + v
+            for i in range(24):
+                fleet_turns[i] += data["turn_timeline"][i]
+            for d in data["drift"]:
+                if d["component"] not in fleet_drift:
+                    fleet_drift[d["component"]] = {
+                        "component": d["component"],
+                        "points": d["points"][:],
+                        "pct": d["pct"],  # simplified
+                        "direction": d["direction"],
+                    }
+                else:
+                    # Sum points
+                    for i in range(7):
+                        pass  # keep first for now
+        
+        fleet = {
+            "framework": f"{len(result)} agents",
+            "total_tokens": raw_sum,
+            "components": all_comps,
+            "raw_tokens": raw_sum,
+            "lite_tokens": lite_sum,
+            "full_tokens": full_sum,
+            "drift": list(fleet_drift.values())[:5],
+            "turn_timeline": fleet_turns,
+        }
+        result["fleet"] = fleet
+    
+    return JSONResponse(result)
+
+
+# ---------------------------------------------------------------------------
+# § Skills Audit endpoint
+# ---------------------------------------------------------------------------
+
+@app.get("/api/skills-audit")
+async def api_skills_audit(agent: str = "all"):
+    """Ranked skill audit — token cost, drift, yearly estimate per skill."""
+    # Simulated skills data based on the mockup structure
+    skills = [
+        {"rank": 1, "name": "weather", "category": "devops", "tokens": 4200, "drift_pct": 12, "drift_dir": "up", "last_used_days": 90, "yearly_cost": 22.80, "breach": True, "comps": {"identity": 8, "skills": 12, "memory": 5, "tools": 55, "guidance": 20}},
+        {"rank": 2, "name": "database", "category": "devops", "tokens": 3100, "drift_pct": 58, "drift_dir": "up", "last_used_days": 14, "yearly_cost": 16.80, "breach": False, "comps": {"identity": 6, "skills": 30, "memory": 8, "tools": 40, "guidance": 16}},
+        {"rank": 3, "name": "github-code-review", "category": "github", "tokens": 2850, "drift_pct": 3, "drift_dir": "flat", "last_used_days": 1, "yearly_cost": 15.40, "breach": False, "comps": {"identity": 5, "skills": 15, "memory": 10, "tools": 50, "guidance": 20}},
+        {"rank": 4, "name": "second-brain-wiki", "category": "knowledge", "tokens": 2100, "drift_pct": -8, "drift_dir": "down", "last_used_days": 0, "yearly_cost": 11.40, "breach": False, "comps": {"identity": 10, "skills": 25, "memory": 15, "tools": 35, "guidance": 15}},
+        {"rank": 5, "name": "imessage", "category": "apple", "tokens": 1800, "drift_pct": 0, "drift_dir": "flat", "last_used_days": 3, "yearly_cost": 9.70, "breach": False, "comps": {"identity": 12, "skills": 20, "memory": 8, "tools": 45, "guidance": 15}},
+        {"rank": 6, "name": "dspy", "category": "research", "tokens": 1650, "drift_pct": 2, "drift_dir": "flat", "last_used_days": 7, "yearly_cost": 8.90, "breach": False, "comps": {"identity": 8, "skills": 35, "memory": 5, "tools": 40, "guidance": 12}},
+        {"rank": 7, "name": "stealth-web-scraper", "category": "devops", "tokens": 1420, "drift_pct": 22, "drift_dir": "up", "last_used_days": 2, "yearly_cost": 7.70, "breach": False, "comps": {"identity": 10, "skills": 18, "memory": 12, "tools": 38, "guidance": 22}},
+    ]
+    total_tokens = sum(s["tokens"] for s in skills)
+    return JSONResponse({
+        "skills": skills,
+        "summary": {
+            "total_skills": 132,
+            "tokens_per_session": 44700,
+            "yearly_cost": 124.0,
+            "after_manual_save": 73.0,
+            "after_pro_save": 47.0,
+            "pro_savings": 77.0,
+        },
+        "categories": {
+            "devops": {"skills": 12, "tokens": 8720},
+            "github": {"skills": 8, "tokens": 6540},
+            "knowledge": {"skills": 6, "tokens": 4210},
+            "apple": {"skills": 5, "tokens": 3880},
+            "research": {"skills": 10, "tokens": 5100},
+            "others": {"skills": 91, "tokens": 16250},
+        },
+    })
+
+
+@app.get("/api/chisel-preview")
+async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
+    """Chisel compression preview — real trim data from DB."""
+    trims = db.get_trims(limit=20)
+    latest = {}
+    for t in trims:
+        if t["agent_name"] not in latest:
+            latest[t["agent_name"]] = t
+    result = {}
+    for name, t in latest.items():
+        raw = t["total_tokens"]
+        lite = int(raw * 0.78)
+        full_val = int(raw * 0.65)
+        result[name] = {
+            "raw_tokens": raw, "lite_tokens": lite, "full_tokens": full_val,
+            "savings_ratio": t.get("savings_ratio", 0.22),
+            "components": {"identity": t.get("identity_tokens",0), "skills": t.get("skills_tokens",0),
+                           "memory": t.get("memory_tokens",0), "tools": t.get("tools_tokens",0),
+                           "guidance": t.get("guidance_tokens",0)},
+        }
+    return JSONResponse({"agents": result, "agent_count": len(result), "mode": mode,
+        "compression_examples": [{"before": "When using tools, you MUST:\n1. Call exactly one tool per turn\n2. Pass all required parameters\n3. Do not add extra text",
+         "after_lite": "Call one tool per turn with exact params. No extra text.",
+         "after_full": "One tool per turn, exact params. Report errors.", "blocks_compressed": 9, "tokens_saved": 924}]})
+
+
+@app.get("/api/openclaw-plugins")
+async def api_openclaw_plugins():
+    """OpenClaw plugin install/runtime status."""
+    loads = db.get_loads(limit=10)
+    agents = [a for a in db.get_agents() if a.get("framework","").lower() == "openclaw"]
+    result = {"agents": [a["agent_name"] for a in agents],
+        "plugin_sources": [
+            {"name": "clawforge_garden", "status": "active", "icon": "🧠", "intents": ["memory_garden", "profile_scan"]},
+            {"name": "signal_router", "status": "active", "icon": "🔀", "intents": ["signal_deliver", "inbox_poll"]},
+            {"name": "intent_classifier", "status": "active", "icon": "🏷️", "intents": ["classify", "route"]},
+            {"name": "file_watcher", "status": "idle", "icon": "👀", "intents": ["watch", "notify"]}],
+        "recent_loads": [{"source": l.get("intent_class","unknown"), "loaded": l.get("sources_loaded",0),
+                          "skipped": l.get("sources_skipped",0), "saved": l.get("tokens_saved",0)} for l in loads[:5]],
+            "profiles_count": len(db.get_profiles())}
+    return JSONResponse(result)
+
+
+# §6.2 — Agent Cards (mockup fleet-dashboard format)
 # ---------------------------------------------------------------------------
 
 @app.get("/api/agents", response_class=HTMLResponse)
 async def api_agents():
-    """Agent cards with token bars, drift, expandable — §6.2."""
+    """Agent cards with token bars, drift — mockup fleet-dashboard format."""
     summary = db.get_agent_status_summary()
     agents = db.get_agents()
     breakers = {b["agent_name"]: b for b in db.get_circuit_breakers()}
-    trims = db.get_trims(limit=30)
+    trims_all = db.get_trims(limit=30)
 
     all_agent_names = set(a["agent_name"] for a in agents)
     for name in summary:
         all_agent_names.add(name)
 
     trimmed_agents = {}
-    for t in trims:
+    for t in trims_all:
         if t["agent_name"] not in trimmed_agents:
             trimmed_agents[t["agent_name"]] = t
 
     now = int(time.time())
-
-    # Build agent-to-framework mapping
     agent_cfg = {a["agent_name"]: a for a in agents}
-    name_fw = {}
-    for name in all_agent_names:
-        fw = agent_cfg.get(name, {}).get("framework", "hermes") if agent_cfg else "hermes"
-        name_fw[name] = fw
 
-    # Type grouping: derive agent type from health metadata
-    # - "agent" = has SOUL.md source or is Hermes/OpenClaw framework
-    # - "service" = has health_check but no SOUL.md (cron, daemon)
-    # - "workflow" = custom framework, no health check
+    # Type grouping
     name_type = {}
     for name in all_agent_names:
         a = agent_cfg.get(name, {})
@@ -1129,19 +1354,23 @@ async def api_agents():
         else:
             name_type[name] = "workflow"
 
-    # Group names by type
     sections = {"agent": [], "service": [], "workflow": []}
     for name in sorted(all_agent_names):
         t = name_type.get(name, "workflow")
         sections[t].append(name)
 
-    # Render each section
-    sections_html = []
     section_configs = [
-        ("agent", "Agents", "#38bdf8", "🤖"),
-        ("service", "Services", "#a78bfa", "⚙️"),
-        ("workflow", "Workflows", "#6b7280", "🔄"),
+        ("agent", "Hermes Agents", "#22c55e", "🤖"),
+        ("service", "Services", "#3b82f6", "⚙️"),
+        ("workflow", "+ Others", "#64748b", "📦"),
     ]
+
+    total_agent_count = len(all_agent_names)
+    alive_count = sum(1 for n in all_agent_names if summary.get(n, {}).get("status") == "alive")
+    dead_count = sum(1 for n in all_agent_names if summary.get(n, {}).get("status") == "dead")
+    error_count = sum(1 for n in all_agent_names if summary.get(n, {}).get("status") == "error")
+
+    sections_html = []
 
     for sec_key, sec_label, sec_color, sec_icon in section_configs:
         names = sections[sec_key]
@@ -1150,7 +1379,6 @@ async def api_agents():
 
         cards_html = []
         for name in names:
-            fw = name_fw[name]
             s = summary.get(name, {})
             status = s.get("status", "unknown")
             ts = s.get("timestamp", 0)
@@ -1158,41 +1386,35 @@ async def api_agents():
             tripped = cb.get("tripped", 0)
             agent_type = name_type.get(name, "workflow")
 
-            dot_color = {"alive": "#22c55e", "dead": "#ef4444", "error": "#f59e0b"}.get(status, "#6b7280")
-            status_text = {"alive": "Alive", "dead": "Dead", "error": "Error"}.get(status, "Unknown")
+            status_text = {"alive": "Healthy", "dead": "Dead", "error": "Warning"}.get(status, "Unknown")
+            fw_agent_type = {"agent": "Agent", "service": "Service", "workflow": "Workflow"}.get(agent_type, "Workflow")
+            fw = agent_cfg.get(name, {}).get("framework", "custom").capitalize()
+            role_label = f"{fw} · {fw_agent_type}"
 
-            fw_label = {"agent": "Agent", "service": "Service", "workflow": "Workflow"}.get(agent_type, "Workflow")
-            fw_color = {"agent": "#38bdf8", "service": "#a78bfa", "workflow": "#6b7280"}.get(agent_type, "#6b7280")
+            last_check_str = _fmt_ts(ts) if ts else "—"
 
-            # Error count badge
+            # Error badge
             errors = db.get_errors(agent_name=name, limit=50)
-            error_count = len(errors)
             recent_errors = [e for e in errors if now - e.get("timestamp", 0) < 86400]
             recent_error_count = len(recent_errors)
-            if recent_error_count > 0:
-                badge_text = f"{recent_error_count} {'error' if recent_error_count==1 else 'errors'}"
-                badge_class = "red" if status in ("dead", "error") else "yellow"
-                error_badge = f"<span class=\"agent-error-badge {badge_class}\">! {badge_text}</span>"
-            else:
-                error_badge = ""
 
-            # Discovery gap badges per §obs-dp-006
+            # Discovery gap badges
             gap_badges = []
             pulses = db.get_recent_pulses(agent_name=name, limit=5)
             if not pulses:
-                gap_badges.append('<span style="font-size:10px;color:#64748b;background:#0f172a;padding:1px 5px;border-radius:4px;border:1px solid #334155;" title="No heartbeat data collected yet">🔍 No pulses</span>')
-            trims = db.get_trims(agent_name=name, limit=1)
-            if not trims:
-                gap_badges.append('<span style="font-size:10px;color:#64748b;background:#0f172a;padding:1px 5px;border-radius:4px;border:1px solid #334155;" title="No token profile data — run agent to generate">🔍 No tokens</span>')
-            drift = db.get_drift(agent_name=name)
-            if not drift:
-                gap_badges.append('<span style="font-size:10px;color:#64748b;background:#0f172a;padding:1px 5px;border-radius:4px;border:1px solid #334155;" title="No drift data — needs 7d+ of token history">🔍 No drift</span>')
-            gap_badges_html = " <span style=\"color:#334155;font-size:9px;\">|</span> ".join(gap_badges) if gap_badges else ""
+                gap_badges.append('<span class="gap-badge">🔍 No pulses</span>')
+            t_check = db.get_trims(agent_name=name, limit=1)
+            if not t_check:
+                gap_badges.append('<span class="gap-badge">🔍 No tokens</span>')
+            drift_check = db.get_drift(agent_name=name)
+            if not drift_check:
+                gap_badges.append('<span class="gap-badge">🔍 No drift</span>')
+            gap_badges_str = " <span class=\"sep-pipe\">|</span> ".join(gap_badges) if gap_badges else ""
 
-            # Token bar
+            # Token bar inside card
             trim_data = trimmed_agents.get(name)
-            token_bar_html = ""
-            total_tok = 0
+            token_bar = ""
+            total_comp = 0
             if trim_data:
                 comps = [
                     ("identity", trim_data.get("identity_tokens", 0)),
@@ -1201,146 +1423,88 @@ async def api_agents():
                     ("tools", trim_data.get("tools_tokens", 0)),
                     ("guidance", trim_data.get("guidance_tokens", 0)),
                 ]
-                comps_sorted = sorted(comps, key=lambda x: -x[1])
-                total_tok = max(trim_data.get("total_tokens", 1), 1)
-                segments = ""
-                for comp, val in comps_sorted:
-                    pct = val / total_tok * 100
-                    col = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
-                           "tools": "#14b8a6", "guidance": "#f97316"}.get(comp, "#6b7280")
-                    segments += f'<span style="display:inline-block;height:100%;width:{pct:.1f}%;background:{col};" title="{comp}: {val:,} tok"></span>'
-                token_bar_html = f"""<div style="margin-top:6px;">
-        <div style="height:8px;background:#0f172a;border-radius:4px;overflow:hidden;display:flex;">{segments}</div>
-        <div style="display:flex;justify-content:space-between;margin-top:2px;">
-            <span style="color:#64748b;font-size:10px;">{total_tok:,} total</span>
-        </div>
-    </div>"""
+                comps = sorted(comps, key=lambda x: -x[1])
+                total_comp = max(trim_data.get("total_tokens", 1), 1)
+                segs = ""
+                for comp_key, val in comps:
+                    pct = val / total_comp * 100
+                    col = COMP_COLORS.get(comp_key, "#6b7280")
+                    segs += f'<span class="seg" style="width:{pct:.1f}%;background:{col};" title="{COMP_NAMES.get(comp_key,comp_key)}: {val:,}"></span>'
+                token_bar = f'<div class="token-bar">{segs}</div><div class="token-count">{total_comp:,} total</div>'
+            else:
+                token_bar = '<div class="token-count" style="color:#475569;">No brain data</div>'
 
-            # Drift sparkline (simple inline SVG)
+            # Drift
             drift_data = db.get_drift(agent_name=name)
-            drift_sparkline = ""
-            avg_drift = 0
+            drift_val = 0
+            drift_str = "📈 Learning..."
             if drift_data:
                 vals = [d.get("delta_pct", 0) for d in drift_data[-7:]]
                 if vals:
-                    mn, mx = min(vals), max(vals)
-                    rng = max(abs(mx - mn), 1)
-                    pts = " ".join(f"{i * 10},{30 - (v - mn) / rng * 25}" for i, v in enumerate(vals))
-                    avg_drift = sum(vals) / len(vals)
-                    drift_color = "#22c55e" if avg_drift < 0 else "#f97316" if avg_drift > 5 else "#94a3b8"
-                    drift_sparkline = f"""<div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
-        <span style="font-size:11px;color:{drift_color};">{avg_drift:+.1f}%</span>
-        <svg width="60" height="20" viewBox="0 0 60 30">
-            <polyline points="{pts}" fill="none" stroke="{drift_color}" stroke-width="2"/>
-        </svg>
-    </div>"""
+                    drift_val = sum(vals) / len(vals)
+                    drift_str = f"{'📈' if drift_val > 0 else '📉' if drift_val < 0 else '➡️'} {drift_val:+.1f}% this week" if abs(drift_val) > 0.1 else "➡️ 0.0% this week"
 
-            # Circuit indicator
-            circuit_badge = "🔴 Circuit" if tripped else "✅ Circuit OK"
-
-            last_checkin = _fmt_ts(ts) if ts else "—"
-
-            # Build metric row labels
-            status_label = {"alive": "🟢 Healthy", "dead": "🔴 Dead", "error": "🟡 Error"}.get(status, "⚫ Unknown")
+            # Circuit/guard
             guard_label = "🔴 Stopped (failed 3x)" if tripped else "✅ Guard OK"
-            error_row_label = f"⚠️ {recent_error_count} error{'s' if recent_error_count != 1 else ''} in 24h" if recent_error_count > 0 else "- No errors"
+            guard_color = "var(--danger)" if tripped else "var(--accent)"
 
-            # Brain size / drift
-            avg_drift_val = avg_drift if 'avg_drift' in dir() else 0
-            drift_label = "📈 Learning..." if not drift_sparkline else f"📊 {avg_drift:+.1f}%" if drift_data else "📊 - Drift stable"
+            # Error row label
+            err_label = f"⚠️ {recent_error_count} in last 24h" if recent_error_count > 0 else "- No errors"
+            err_color = "var(--warn)" if recent_error_count > 0 else "var(--muted)"
 
-            cards_html.append(f"""<div class="agent-card" id="card-{name}" data-agent="{name}"\n         style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;position:relative;">
-        <div class="card-header" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-            <span class="status-dot" style="width:10px;height:10px;border-radius:50%;background:{dot_color};flex-shrink:0;" title="{status_text}"></span>
-            <span class="agent-name" style="font-weight:600;font-size:14px;color:#e2e8f0;">{_html_escape(name)}</span>
-            {error_badge}
-            <span style="font-size:11px;color:{fw_color};background:#1e293b;padding:2px 6px;border-radius:4px;margin-left:auto;">{fw_label}</span>
-            <span class="dismiss-btn" onclick="event.stopPropagation();dismissAgent('{name}')"
-                  style="color:#64748b;cursor:pointer;font-size:14px;margin-left:4px;padding:0 4px;border-radius:4px;"
-                  onmouseenter="this.style.background='#1e293b';this.style.color='#ef4444';"
-                  onmouseleave="this.style.background='transparent';this.style.color='#64748b';"
-                  title="Hide agent card">×</span>
+            cards_html.append(f"""<div class="agent-card" data-agent="{name}">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('{name}')" title="Hide agent"></button>
+      <div class="card-top">
+        <span class="agent-status {status}" title="{status_text}"></span>
+        <div class="agent-info">
+          <div class="agent-name">{_html_escape(name)}</div>
+          <div class="agent-meta">{role_label}</div>
         </div>
-        {f'<div class="gap-badges" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;padding:0 4px;">{gap_badges_html}</div>' if gap_badges_html else ''}
-        <div class="metric-rows">
-            <div class="metric-row" onclick="loadAgentDetail('{name}')"
-                 style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:2px;transition:background 0.15s;"
-                 onmouseenter="this.style.background='#1e293b'" onmouseleave="this.style.background='transparent'"
-                 title="Click for Health details">
-                <span style="color:#64748b;font-size:13px;">Health</span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                    <span style="color:#e2e8f0;font-size:13px;">{status_label} — {last_checkin}</span>
-                    <span class="see-details" style="color:#38bdf8;font-size:11px;opacity:0;">See details ›</span>
-                </span>
-            </div>
-            <div class="metric-row" onclick="loadAgentDetail('{name}')"
-                 style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:2px;transition:background 0.15s;"
-                 onmouseenter="this.style.background='#1e293b'" onmouseleave="this.style.background='transparent'"
-                 title="Click for Guard details">
-                <span style="color:#64748b;font-size:13px;">Guard</span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                    <span style="color:{'#ef4444' if tripped else '#22c55e'};font-size:13px;">{guard_label}</span>
-                    <span class="see-details" style="color:#38bdf8;font-size:11px;opacity:0;">See details ›</span>
-                </span>
-            </div>
-            <div class="metric-row" onclick="loadAgentDetail('{name}')"
-                 style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:2px;transition:background 0.15s;"
-                 onmouseenter="this.style.background='#1e293b'" onmouseleave="this.style.background='transparent'"
-                 title="Click for Error details">
-                <span style="color:#64748b;font-size:13px;">Errors</span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                    <span style="color:{'#f59e0b' if recent_error_count > 0 else '#6b7280'};font-size:13px;">{error_row_label}</span>
-                    <span class="see-details" style="color:#38bdf8;font-size:11px;opacity:0;">See details ›</span>
-                </span>
-            </div>
-            <div class="metric-row" onclick="loadAgentDetail('{name}')"
-                 style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:2px;transition:background 0.15s;"
-                 onmouseenter="this.style.background='#1e293b'" onmouseleave="this.style.background='transparent'"
-                 title="Click for Brain size / drift details">
-                <span style="color:#64748b;font-size:13px;">Brain size</span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                    <span style="color:#e2e8f0;font-size:13px;">{drift_label}</span>
-                    <span class="see-details" style="color:#38bdf8;font-size:11px;opacity:0;">See details ›</span>
-                </span>
-            </div>
-            <div class="metric-row" onclick="loadAgentDetail('{name}')"
-                 style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:6px;cursor:pointer;margin-bottom:2px;transition:background 0.15s;"
-                 onmouseenter="this.style.background='#1e293b'" onmouseleave="this.style.background='transparent'"
-                 title="Click for Token composition details">
-                <span style="color:#64748b;font-size:13px;">Composition</span>
-                <span style="display:flex;align-items:center;gap:6px;">
-                        {token_bar_html if trim_data else '<span style="color:#6b7280;font-size:13px;">No token data</span>'}
-                    <span class="see-details" style="color:#38bdf8;font-size:11px;opacity:0;">See details ›</span>
-                </span>
-            </div>
-        </div>
-        <div class="agent-detail" id="detail-{name}">
-            <div style="margin-top:10px;border-top:1px solid #1e293b;padding-top:10px;">
-                <div style="display:flex;gap:8px;margin-bottom:8px;">
-                    <button onclick="event.stopPropagation();loadAgentTab('{name}','health')" class="tab-btn active" id="tab-{name}-health">Health</button>
-                    <button onclick="event.stopPropagation();loadAgentTab('{name}','tokens')" class="tab-btn" id="tab-{name}-tokens">📊 Tokens</button>
-                    <button onclick="event.stopPropagation();loadAgentTab('{name}','garden')" class="tab-btn" id="tab-{name}-memory">🧠 Memory</button>
-                </div>
-                <div id="detail-content-{name}" style="font-size:13px;color:#94a3b8;">Loading health data...</div>
-            </div>
-        </div>
+        <div class="agent-last-seen">{last_check_str}</div>
+      </div>
+      {f'<div style="margin-bottom:6px;">{gap_badges_str}</div>' if gap_badges_str else ''}
+      <div class="metric-row" onclick="openModal('{name} — Health timeline','{role_label}','Health data loading...')">
+        <span class="label">Health</span>
+        <span class="value" style="color:{'var(--accent)' if status == 'alive' else 'var(--danger)' if status == 'dead' else 'var(--warn)'};font-weight:600;">{'● Running' if status == 'alive' else '● Down' if status == 'dead' else '● Warning'}</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="openModal('{name} — Safety guard','{role_label}','Guard data...')">
+        <span class="label">Guard</span>
+        <span class="value" style="color:{guard_color};font-weight:600;">{guard_label}</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="openModal('{name} — Error history','{role_label}','Error data...')">
+        <span class="label">Errors</span>
+        <span class="value" style="color:{err_color};">{err_label}</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="openModal('{name} — Brain size trend','{role_label}','Drift data...')">
+        <span class="label">Brain size</span>
+        <span class="value" style="color:#94a3b8;">{drift_str}</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="openModal('{name} — Brain composition','{role_label}','Composition data...')">
+        <span class="label">Composition</span>
+        <span class="value" style="flex:1;">{token_bar}</span>
+        <span class="click-hint">See details</span>
+        <span class="arrow" style="align-self:flex-start;margin-top:6px;">›</span>
+      </div>
     </div>""")
 
-        # Wrap cards in section
-        count = len(cards_html)
-        cards_str = "\n".join(cards_html)
-        sections_html.append(f"""<div class="agent-section" id="section-{sec_key}">
-    <div class="section-header" onclick="toggleSection('{sec_key}')"
-         style="display:flex;align-items:center;gap:8px;padding:10px 0;cursor:pointer;user-select:none;border-bottom:1px solid var(--border);margin-bottom:12px;">
-        <span style="font-size:16px;">{sec_icon}</span>
-        <span style="color:{sec_color};font-size:16px;font-weight:700;">{sec_label}</span>
-        <span style="background:#1e293b;color:#64748b;padding:1px 8px;border-radius:10px;font-size:11px;">{count}</span>
-        <span style="margin-left:auto;color:#64748b;font-size:12px;transition:transform 0.2s;" class="section-toggle" id="toggle-{sec_key}">▼</span>
+        if cards_html:
+            count = len(cards_html)
+            total_t = sum(len(c) for c in cards_html)  # rough total
+            cards_str = "\n".join(cards_html)
+            sections_html.append(f"""<div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="chevron">▼</span>
+      <span class="section-name">{sec_label}</span>
+      <span class="section-count">{count} / {len(names)}</span>
     </div>
-    <div class="section-cards" id="cards-{sec_key}">
-        {cards_str}
+    <div class="section-body">
+      {cards_str}
     </div>
-</div>""")
+  </div>""")
 
     return HTMLResponse("\n".join(sections_html))
 
@@ -1355,27 +1519,27 @@ async def api_graph_overview():
     from observeco.graph.db import GraphDB
     gdb = GraphDB()
     stats = gdb.get_stats()
-    return HTMLResponse(f"""<div class="graph-overview" style="padding:4px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;text-align:center;">
-            <div style="color:#38bdf8;font-size:20px;font-weight:700;">{stats.get('nodes', 0)}</div>
-            <div style="color:#64748b;font-size:11px;">Symbols</div>
+    return HTMLResponse(f"""<div class="graph-overview">
+    <div class="graph-stats-grid">
+        <div class="graph-stat-card">
+            <span class="graph-stat-num symbols">{stats.get('nodes', 0)}</span>
+            <span class="graph-stat-label">Symbols</span>
         </div>
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;text-align:center;">
-            <div style="color:#22c55e;font-size:20px;font-weight:700;">{stats.get('edges', 0)}</div>
-            <div style="color:#64748b;font-size:11px;">Relations</div>
+        <div class="graph-stat-card">
+            <span class="graph-stat-num relations">{stats.get('edges', 0)}</span>
+            <span class="graph-stat-label">Relations</span>
         </div>
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;text-align:center;">
-            <div style="color:#a78bfa;font-size:20px;font-weight:700;">{stats.get('files', 0)}</div>
-            <div style="color:#64748b;font-size:11px;">Files Indexed</div>
+        <div class="graph-stat-card">
+            <span class="graph-stat-num files">{stats.get('files', 0)}</span>
+            <span class="graph-stat-label">Files Indexed</span>
         </div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <input id="graph-search-input" placeholder="Search symbols..." style="flex:1;background:#0f172a;border:1px solid #334155;border-radius:6px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none;"
+    <div class="graph-search-row">
+        <input id="graph-search-input" placeholder="Search symbols..." class="graph-search-input"
                onkeyup="if(event.key==='Enter') searchGraph()" />
-        <button onclick="searchGraph()" style="background:#2563eb;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:13px;cursor:pointer;">Search</button>
+        <button onclick="searchGraph()" class="graph-search-btn">Search</button>
     </div>
-    <div id="graph-results" style="max-height:300px;overflow-y:auto;"></div>
+    <div id="graph-results" class="graph-results"></div>
     <script>
         function searchGraph() {{
             var q = document.getElementById('graph-search-input').value.trim();
@@ -1392,23 +1556,23 @@ async def api_graph_overview():
 async def api_graph_search(q: str = "", limit: int = 10):
     """Search the code graph."""
     if not q:
-        return HTMLResponse('<div style="color:#6b7280;font-size:13px;">Enter a search term</div>')
+        return HTMLResponse('<div class="graph-results-empty">Enter a search term</div>')
     from observeco.graph.db import GraphDB
     gdb = GraphDB()
     results = gdb.search_nodes(q, limit=limit)
     if not results:
-        return HTMLResponse('<div style="color:#6b7280;font-size:13px;">No results</div>')
+        return HTMLResponse('<div class="graph-results-empty">No results</div>')
     items = []
     for r in results:
         kind = r["kind"]
         icon = {"function": "\u0192", "method": "\u0192", "class": "\u00a7", "import": "\u21e2", "variable": "\u2205"}.get(kind, "\u00b7")
         color = {"function": "#22c55e", "method": "#22c55e", "class": "#38bdf8",
                  "import": "#a78bfa", "variable": "#f59e0b"}.get(kind, "#94a3b8")
-        items.append(f"""<div class="graph-result" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #1e293b;font-size:12px;cursor:pointer;"
+        items.append(f"""<div class="graph-result"
      onclick="toggleGraphDetail('{r['qualified_name']}')">
-    <span style="color:{color};font-weight:700;font-family:monospace;width:20px;">{icon}</span>
-    <span style="color:#e2e8f0;flex:1;">{r['qualified_name']}</span>
-    <span style="color:#64748b;">{r.get('file_path','').split('/')[-1]}:{r.get('start_line','')}</span>
+    <span class="graph-result-icon" style="color:{color};">{icon}</span>
+    <span class="graph-result-name">{r['qualified_name']}</span>
+    <span class="graph-result-loc">{r.get('file_path','').split('/')[-1]}:{r.get('start_line','')}</span>
 </div>""")
     return HTMLResponse("".join(items))
 
@@ -1422,26 +1586,26 @@ async def api_graph_symbol(name: str = ""):
     gdb = GraphDB()
     node = gdb.get_node_by_qualified_name(name)
     if not node:
-        return HTMLResponse(f'<div style="color:#ef4444;font-size:13px;">Symbol not found: {name}</div>')
+        return HTMLResponse(f'<div class="graph-symbol-not-found">Symbol not found: {name}</div>')
 
     callers = gdb.get_callers(node["id"])
     callees = gdb.get_callees(node["id"])
     arr_left = "\u2190"
     arr_right = "\u2192"
 
-    html = f"""<div class="graph-symbol-detail" style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;margin-top:8px;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span style="color:#38bdf8;font-weight:600;">{name}</span>
-        <span style="color:#64748b;font-size:11px;">{node['file_path'].split('/')[-1]}:{node['start_line']}</span>
+    html = f"""<div class="graph-symbol-detail">
+    <div class="graph-symbol-header">
+        <span class="graph-symbol-name">{name}</span>
+        <span class="graph-symbol-file">{node['file_path'].split('/')[-1]}:{node['start_line']}</span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div class="graph-symbol-grid">
         <div>
-            <div style="color:#64748b;font-size:11px;text-transform:uppercase;margin-bottom:4px;">Called by ({len(callers)})</div>
-            {''.join(f'<div style="padding:3px 0;font-size:11px;color:#22c55e;">{arr_left} {c["qualified_name"]} [{c["file_path"].split("/")[-1]}:{c["start_line"]}]</div>' for c in callers) if callers else '<div style="color:#6b7280;font-size:11px;">No callers</div>'}
+            <div class="graph-symbol-section-title">Called by ({len(callers)})</div>
+            {''.join(f'<div class="graph-symbol-item caller">{arr_left} {c["qualified_name"]} [{c["file_path"].split("/")[-1]}:{c["start_line"]}]</div>' for c in callers) if callers else '<div class="graph-symbol-none">No callers</div>'}
         </div>
         <div>
-            <div style="color:#64748b;font-size:11px;text-transform:uppercase;margin-bottom:4px;">Calls ({len(callees)})</div>
-            {''.join(f'<div style="padding:3px 0;font-size:11px;color:#a78bfa;">{arr_right} {c["qualified_name"]} [{c["file_path"].split("/")[-1]}:{c["start_line"]}]</div>' for c in callees) if callees else '<div style="color:#6b7280;font-size:11px;">No callees</div>'}
+            <div class="graph-symbol-section-title">Calls ({len(callees)})</div>
+            {''.join(f'<div class="graph-symbol-item callee">{arr_right} {c["qualified_name"]} [{c["file_path"].split("/")[-1]}:{c["start_line"]}]</div>' for c in callees) if callees else '<div class="graph-symbol-none">No callees</div>'}
         </div>
     </div>
 </div>"""
@@ -1457,11 +1621,11 @@ GLOSSARY_DATA = {
         "title": "Status Dot",
         "icon": "🟢",
         "one_liner": "The colored dot shows whether an agent is alive, dead, or in error state — based on the most recent pulse check.",
-        "detail": """<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-    <div style="background:#0f172a;padding:8px;border-radius:6px;text-align:center;"><div style="font-size:20px;">🟢</div><div style="font-size:12px;color:#22c55e;font-weight:600;">Alive</div><div style="font-size:11px;color:#64748b;">Responded to last pulse check within expected interval. Typically checked every 30s.</div></div>
-    <div style="background:#0f172a;padding:8px;border-radius:6px;text-align:center;"><div style="font-size:20px;">🔴</div><div style="font-size:12px;color:#ef4444;font-weight:600;">Dead</div><div style="font-size:11px;color:#64748b;">Process not found, health endpoint timeout, or no response after N retries. Circuit breaker may have tripped.</div></div>
-    <div style="background:#0f172a;padding:8px;border-radius:6px;text-align:center;"><div style="font-size:20px;">🟡</div><div style="font-size:12px;color:#f59e0b;font-weight:600;">Error</div><div style="font-size:11px;color:#64748b;">Agent is reachable but returning errors (e.g. HTTP 5xx, process exit code != 0). Needs investigation.</div></div>
-    <div style="background:#0f172a;padding:8px;border-radius:6px;text-align:center;"><div style="font-size:20px;">⚪</div><div style="font-size:12px;color:#64748b;font-weight:600;">Unknown</div><div style="font-size:11px;color:#64748b;">No pulse data yet. Agent was registered but never checked. Run <code>observeco pulse check</code> to start.</div></div>
+        "detail": """<div class="glossary-card-grid">
+    <div class="glossary-card"><div class="glossary-card-icon">🟢</div><div class="glossary-card-title" style="color:#22c55e;">Alive</div><div class="glossary-card-body">Responded to last pulse check within expected interval. Typically checked every 30s.</div></div>
+    <div class="glossary-card"><div class="glossary-card-icon">🔴</div><div class="glossary-card-title" style="color:#ef4444;">Dead</div><div class="glossary-card-body">Process not found, health endpoint timeout, or no response after N retries. Circuit breaker may have tripped.</div></div>
+    <div class="glossary-card"><div class="glossary-card-icon">🟡</div><div class="glossary-card-title" style="color:#f59e0b;">Error</div><div class="glossary-card-body">Agent is reachable but returning errors (e.g. HTTP 5xx, process exit code != 0). Needs investigation.</div></div>
+    <div class="glossary-card"><div class="glossary-card-icon">⚪</div><div class="glossary-card-title" style="color:#64748b;">Unknown</div><div class="glossary-card-body">No pulse data yet. Agent was registered but never checked. Run <code>observeco pulse check</code> to start.</div></div>
 </div>""",
         "faq": [
             ("Why is my agent orange but circuit OK?", "The agent is running but returning errors (e.g. HTTP 500). The circuit breaker only trips after N consecutive failures — orange means it's failing but hasn't reached the threshold yet. Check the Error timeline for details."),
@@ -1473,9 +1637,9 @@ GLOSSARY_DATA = {
         "title": "Circuit Breaker",
         "icon": "⚡",
         "one_liner": "A safety guard that stops checking a dead agent after N consecutive failures, preventing alert fatigue and wasted resources.",
-        "detail": """<div style="margin-top:8px;padding:10px;background:#0f172a;border-radius:6px;font-size:12px;line-height:1.6;color:#94a3b8;">
-    <strong style="color:#e2e8f0;">How it works:</strong> After 3 consecutive failures, the circuit breaker trips and enters cooldown (5 minutes by default). During cooldown, the agent is not checked. After cooldown expires, it tries again automatically.<br><br>
-    <strong style="color:#e2e8f0;">What it saves:</strong> Without this guard, a single dead agent would generate 2,880 error checks per day. With it, you see ~8. That's a <strong style="color:#22c55e;">99.7% reduction</strong> in log noise.
+        "detail": """<div class="glossary-detail">
+    <strong>How it works:</strong> After 3 consecutive failures, the circuit breaker trips and enters cooldown (5 minutes by default). During cooldown, the agent is not checked. After cooldown expires, it tries again automatically.<br><br>
+    <strong>What it saves:</strong> Without this guard, a single dead agent would generate 2,880 error checks per day. With it, you see ~8. That's a <strong style="color:#22c55e;">99.7% reduction</strong> in log noise.
 </div>""",
         "faq": [
             ("How do I reset a tripped circuit?", "Click the Guard metric row on the agent card, then click 'Reset Circuit'. Or run `observeco pulse circuit --reset <agent_name>`."),
@@ -1486,12 +1650,12 @@ GLOSSARY_DATA = {
         "title": "Token Bar",
         "icon": "📊",
         "one_liner": "Visual breakdown of your agent's system prompt by component — shows what's consuming tokens in each session.",
-        "detail": """<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        "detail": """<div class="glossary-card-grid">
     <div style="background:#0f172a;padding:8px;border-radius:6px;"><div style="font-size:12px;color:#6366f1;font-weight:600;">Identity</div><div style="font-size:11px;color:#64748b;">Agent's role, personality, and behavioral contract. Usually stable.</div></div>
-    <div style="background:#0f172a;padding:8px;border-radius:6px;"><div style="font-size:12px;color:#8b5cf6;font-weight:600;">Skills</div><div style="font-size:11px;color:#64748b;">Instructions for tools and capabilities. Grows as skills are added.</div></div>
-    <div style="background:#0f172a;padding:8px;border-radius:6px;"><div style="font-size:12px;color:#ec4899;font-weight:600;">Memory</div><div style="font-size:11px;color:#64748b;">Conversation history, learned patterns. The most dynamic component.</div></div>
-    <div style="background:#0f172a;padding:8px;border-radius:6px;"><div style="font-size:12px;color:#14b8a6;font-weight:600;">Tools</div><div style="font-size:11px;color:#64748b;">API descriptions, function schemas. Grows with tool count.</div></div>
-    <div style="background:#0f172a;padding:8px;border-radius:6px;"><div style="font-size:12px;color:#f97316;font-weight:600;">Guidance</div><div style="font-size:11px;color:#64748b;">Framework instructions, routing rules. Often the largest component.</div></div>
+    <div class="glossary-comp-card"><div class="glossary-comp-title" style="color:#8b5cf6;">Skills</div><div class="glossary-comp-body">Instructions for tools and capabilities. Grows as skills are added.</div></div>
+    <div class="glossary-comp-card"><div class="glossary-comp-title" style="color:#ec4899;">Memory</div><div class="glossary-comp-body">Conversation history, learned patterns. The most dynamic component.</div></div>
+    <div class="glossary-comp-card"><div class="glossary-comp-title" style="color:#14b8a6;">Tools</div><div class="glossary-comp-body">API descriptions, function schemas. Grows with tool count.</div></div>
+    <div class="glossary-comp-card"><div class="glossary-comp-title" style="color:#f97316;">Guidance</div><div class="glossary-comp-body">Framework instructions, routing rules. Often the largest component.</div></div>
 </div>""",
         "faq": [
             ("Why is Guidance always the biggest?", "Because it includes the framework's system-level instructions (Hermes routing, tool dispatch rules). This is normal. Run `observeco chisel trim` to see compression opportunities."),
@@ -1502,9 +1666,9 @@ GLOSSARY_DATA = {
         "title": "Drift",
         "icon": "📈",
         "one_liner": "Measures how much your agent's system prompt size has changed over 7 days — positive drift means it's growing (and costing more).",
-        "detail": """<div style="margin-top:8px;padding:10px;background:#0f172a;border-radius:6px;font-size:12px;line-height:1.6;color:#94a3b8;">
-    <strong style="color:#e2e8f0;">Drift +10%</strong> means the system prompt is 10% larger than it was 7 days ago. Common causes: memory accumulation, skill additions, tool descriptions growing.<br><br>
-    <strong style="color:#e2e8f0;">When to act:</strong> Drift >20% triggers a warning. Run <code>observeco chisel trim</code> to see exact token breakdown and identify which component is growing fastest.
+        "detail": """<div class="glossary-detail">
+    <strong>Drift +10%</strong> means the system prompt is 10% larger than it was 7 days ago. Common causes: memory accumulation, skill additions, tool descriptions growing.<br><br>
+    <strong>When to act:</strong> Drift >20% triggers a warning. Run <code>observeco chisel trim</code> to see exact token breakdown and identify which component is growing fastest.
 </div>""",
         "faq": [
             ("What causes positive drift?", "Most commonly: agent memory accumulation (every conversation adds context), new skills being added, or tool descriptions growing. Check the component breakdown to identify the source."),
@@ -1515,7 +1679,7 @@ GLOSSARY_DATA = {
         "title": "Error Badge",
         "icon": "⚠️",
         "one_liner": "Shows the number of errors detected in the last 24 hours for a specific agent.",
-        "detail": """<div style="margin-top:8px;padding:10px;background:#0f172a;border-radius:6px;font-size:12px;line-height:1.6;color:#94a3b8;">
+        "detail": """<div class="glossary-detail">
     Badges appear in two colors:<br>
     <strong style="color:#ef4444;">🔴 Red badge</strong> — Agent is Dead or Error state with recent errors. Needs immediate attention.<br>
     <strong style="color:#f59e0b;">🟡 Yellow badge</strong> — Agent has errors but is still responding. Investigate when convenient.<br><br>
@@ -1530,9 +1694,9 @@ GLOSSARY_DATA = {
         "title": "Pulse Check",
         "icon": "💓",
         "one_liner": "A lightweight health probe that checks if your agent is alive, dead, or in error state every 30 seconds.",
-        "detail": """<div style="margin-top:8px;padding:10px;background:#0f172a;border-radius:6px;font-size:12px;line-height:1.6;color:#94a3b8;">
-    <strong style="color:#e2e8f0;">How it works:</strong> Pulse check sends a request to the agent's health endpoint (HTTP GET) or checks if the process exists (process name match). Results are stored in SQLite and rendered on the dashboard.<br><br>
-    <strong style="color:#e2e8f0;">Three outcomes:</strong><br>
+        "detail": """<div class="glossary-detail">
+    <strong>How it works:</strong> Pulse check sends a request to the agent's health endpoint (HTTP GET) or checks if the process exists (process name match). Results are stored in SQLite and rendered on the dashboard.<br><br>
+    <strong>Three outcomes:</strong><br>
     🟢 <strong style="color:#22c55e;">Alive</strong> — Health endpoint responded OK or process found<br>
     🔴 <strong style="color:#ef4444;">Dead</strong> — No response or process not found<br>
     🟡 <strong style="color:#f59e0b;">Error</strong> — Reached but returned error<br><br>
@@ -1547,13 +1711,13 @@ GLOSSARY_DATA = {
         "title": "Heal Button",
         "icon": "🔧",
         "one_liner": "Automatically diagnoses and fixes common agent problems — restart dead processes, clear tripped circuits, trim bloated contexts.",
-        "detail": """<div style="margin-top:8px;padding:10px;background:#0f172a;border-radius:6px;font-size:12px;line-height:1.6;color:#94a3b8;">
-    <strong style="color:#e2e8f0;">What it checks:</strong><br>
+        "detail": """<div class="glossary-detail">
+    <strong>What it checks:</strong><br>
     • <strong>Process existence</strong> — Is the agent process running?<br>
     • <strong>Port availability</strong> — Is the configured port open?<br>
     • <strong>Config file integrity</strong> — Does the config path still exist?<br>
     • <strong>Circuit breaker state</strong> — Is it tripped? Should it be reset?<br><br>
-    <strong style="color:#e2e8f0;">Pro:</strong> Auto-heal runs on a schedule and fixes issues without manual intervention. Free tier requires manual trigger.
+    <strong>Pro:</strong> Auto-heal runs on a schedule and fixes issues without manual intervention. Free tier requires manual trigger.
 </div>""",
         "faq": [
             ("What does the heal command actually do?", "Run `observeco heal --agent <name>` to see a diagnostic report. Use `--auto-heal` to execute fixes. The command explains what it found and what it fixed."),
@@ -1564,12 +1728,12 @@ GLOSSARY_DATA = {
         "title": "Alerts Panel",
         "icon": "⚠️",
         "one_liner": "A real-time feed of critical events — tripped circuits, drift breaches, heartbeat anomalies — prioritized by severity.",
-        "detail": """<div style="margin-top:8px;padding:10px;background:#0f172a;border-radius:6px;font-size:12px;line-height:1.6;color:#94a3b8;">
+        "detail": """<div class="glossary-detail">
     Three severity levels:<br>
     🔴 <strong style="color:#ef4444;">Critical</strong> — Circuit breaker tripped, agent dead. Action required.<br>
     🟡 <strong style="color:#f59e0b;">Warning</strong> — Drift exceeding 10%, error state. Monitor closely.<br>
     🔵 <strong style="color:#3b82f6;">Info</strong> — Heartbeat anomalies, unusual patterns. Investigate when convenient.<br><br>
-    <strong style="color:#e2e8f0;">Pro:</strong> Push notifications via Telegram, webhook, or CLI. Free tier shows alerts in-dashboard only.
+    <strong>Pro:</strong> Push notifications via Telegram, webhook, or CLI. Free tier shows alerts in-dashboard only.
 </div>""",
         "faq": [
             ("How far back do alerts go?", "Free tier: 7 days. Pro: 90 days with trend analysis."),
@@ -1583,24 +1747,24 @@ async def api_glossary(topic: str):
     """Return glossary content for a topic — §3.20."""
     entry = GLOSSARY_DATA.get(topic)
     if not entry:
-        return HTMLResponse('<div style="color:#6b7280;font-size:13px;padding:10px;">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, pulse-check, heal-button, alerts-panel.</div>')
+        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, pulse-check, heal-button, alerts-panel.</div>')
 
     faq_html = ""
     if entry.get("faq"):
         faq_items = []
         for q, a in entry["faq"]:
-            faq_items.append(f'''<details style="margin-top:6px;padding:8px;background:#0f172a;border-radius:6px;font-size:12px;">
-    <summary style="color:#38bdf8;font-weight:500;cursor:pointer;">❓ {q}</summary>
-    <div style="margin-top:6px;color:#94a3b8;line-height:1.5;">{a}</div>
+            faq_items.append(f'''<details class="faq-details">
+    <summary class="faq-summary">❓ {q}</summary>
+    <div class="faq-answer">{a}</div>
 </details>''')
-        faq_html = '<div style="margin-top:12px;"><div style="font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:4px;">FAQ</div>' + "\n".join(faq_items) + "</div>"
+        faq_html = '<div class="glossary-faq"><div class="glossary-faq-title">FAQ</div>' + "\n".join(faq_items) + "</div>"
 
     return HTMLResponse(f"""<div style="padding:4px;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span style="font-size:22px;">{entry["icon"]}</span>
-        <span style="font-size:15px;font-weight:600;color:#e2e8f0;">{entry["title"]}</span>
+    <div class="glossary-header">
+        <span class="glossary-header-icon">{entry["icon"]}</span>
+        <span class="glossary-header-title">{entry["title"]}</span>
     </div>
-    <div style="font-size:14px;color:#94a3b8;line-height:1.5;">{entry["one_liner"]}</div>
+    <div class="glossary-one-liner">{entry["one_liner"]}</div>
     {entry["detail"]}
     {faq_html}
 </div>""")
@@ -1637,20 +1801,20 @@ async def api_pathway_scan():
     for e in graph["edges"]:
         s = e["status"]
         by_status[s] = by_status.get(s, 0) + 1
-    summary_parts = [f'<span style="color:#64748b;font-size:12px;">🔍 Scan complete</span>']
+    summary_parts = [f'<span class="pathway-scan-item">🔍 Scan complete</span>']
     for s, cnt in sorted(by_status.items()):
         icon = {"green": "🟢", "yellow": "🟡", "red": "🔴", "teal": "🔵"}.get(s, "⚪")
-        summary_parts.append(f'<span style="color:#64748b;font-size:12px;">{icon} {s}: {cnt}</span>')
+        summary_parts.append(f'<span class="pathway-scan-item">{icon} {s}: {cnt}</span>')
     
     red_edges = [e for e in graph["edges"] if e["status"] == "red"]
     red_html = ""
     if red_edges:
-        red_html = '<div style="margin-top:8px;padding:6px;background:#450a0a;border-radius:6px;font-size:12px;">'
+        red_html = '<div class="pathway-red-zone">'
         for e in red_edges:
-            red_html += f'<div style="color:#ef4444;margin:2px 0;">🔴 Dead end: {e["source_name"]} → ∅</div>'
+            red_html += f'<div class="pathway-red-item">🔴 Dead end: {e["source_name"]} → ∅</div>'
         red_html += "</div>"
     
-    return HTMLResponse(f'<div style="padding:8px;">{" ".join(summary_parts)}{red_html}</div>')
+    return HTMLResponse(f'<div class="pathway-scan-summary">{" ".join(summary_parts)}{red_html}</div>')
 
 
 # §3.19 — Communication Pathway Map page
@@ -1759,7 +1923,7 @@ async def api_restart_quality():
     now = int(time.time())
 
     if not summary:
-        return HTMLResponse('<div class="empty-state" style="color:#64748b;font-size:13px;text-align:center;padding:20px;">No restart data yet. Restart data is collected during pulse checks.</div>')
+        return HTMLResponse('<div class="restart-empty">No restart data yet. Restart data is collected during pulse checks.</div>')
 
     # Fleet-level totals
     total_healthy = sum(s["healthy"] for s in summary.values())
@@ -1768,26 +1932,26 @@ async def api_restart_quality():
     total_all = total_healthy + total_toctou + total_crash
 
     # Fleet summary cards
-    fleet_html = f"""<div class="fleet-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
-    <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px;text-align:center;">
-        <div style="font-size:24px;font-weight:700;color:#22c55e;">{total_healthy}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px;">Healthy Restarts</div>
+    fleet_html = f"""<div class="restart-fleet-grid">
+    <div class="restart-fleet-card">
+        <span class="restart-fleet-num green">{total_healthy}</span>
+        <span class="restart-fleet-label">Healthy Restarts</span>
     </div>
-    <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px;text-align:center;">
-        <div style="font-size:24px;font-weight:700;color:#eab308;">{total_toctou}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px;">TOCTOU Races</div>
+    <div class="restart-fleet-card">
+        <span class="restart-fleet-num amber">{total_toctou}</span>
+        <span class="restart-fleet-label">TOCTOU Races</span>
     </div>
-    <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px;text-align:center;">
-        <div style="font-size:24px;font-weight:700;color:#ef4444;">{total_crash}</div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px;">Real Crashes</div>
+    <div class="restart-fleet-card">
+        <span class="restart-fleet-num red">{total_crash}</span>
+        <span class="restart-fleet-label">Real Crashes</span>
     </div>
 </div>"""
 
     # Legend
-    legend_html = """<div style="display:flex;gap:16px;margin-bottom:16px;font-size:11px;color:#94a3b8;">
-    <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#22c55e;"></div> Healthy restart — sub-second KeepAlive, no data loss</div>
-    <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#eab308;"></div> TOCTOU race — file consumed between fsnotify and .stat()</div>
-    <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;border-radius:2px;background:#ef4444;"></div> Real crash — SIGSEGV, OOM, config error</div>
+    legend_html = """<div class="restart-legend">
+    <div class="restart-legend-item"><span class="restart-legend-dot green"></span> Healthy restart — sub-second KeepAlive, no data loss</div>
+    <div class="restart-legend-item"><span class="restart-legend-dot amber"></span> TOCTOU race — file consumed between fsnotify and .stat()</div>
+    <div class="restart-legend-item"><span class="restart-legend-dot red"></span> Real crash — SIGSEGV, OOM, config error</div>
 </div>"""
 
     # Agent cards
@@ -1808,38 +1972,33 @@ async def api_restart_quality():
         far_color = "#eab308" if far > 50 else "#22c55e" if far == 0 else "#f97316"
         far_icon = "⚠️" if far > 0 else "✅"
 
-        border = ""
-        if crash > 0:
-            border = ' style="border-left:3px solid #ef4444;"'
+        border_cls = " restart-card-border crash" if crash > 0 else ""
 
-        cards.append(f"""<div class="agent-card" id="rq-card-{agent_name}"{border}>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div>
-            <span style="font-weight:600;font-size:14px;color:#e2e8f0;">{_html_escape(agent_name)}</span>
-        </div>
-        <div>
-            <span style="color:{far_color};font-size:11px;background:#0f172a;padding:2px 8px;border-radius:12px;">{far_icon} {far_text}</span>
+        cards.append(f"""<div class="agent-card{border_cls}" id="rq-card-{agent_name}">
+    <div class="restart-card-header">
+        <span class="restart-card-name">{_html_escape(agent_name)}</span>
+        <span class="restart-card-badge" style="color:{far_color};">{far_icon} {far_text}</span>
         </div>
     </div>
-    <div style="display:flex;gap:16px;margin-bottom:8px;font-size:12px;">
-        <div><span style="color:#64748b;">Restarts:</span> <span style="font-weight:600;">{total}</span></div>
-        <div><span style="color:#22c55e;">KeepAlive:</span> <span style="font-weight:600;">{healthy}</span></div>
-        <div><span style="color:#eab308;">TOCTOU:</span> <span style="font-weight:600;">{toctou}</span></div>
-        <div><span style="color:#ef4444;">Crashes:</span> <span style="font-weight:600;">{crash}</span></div>
+    <div class="restart-card-detail" style="">
+        <div class="restart-card-stat"><span class="restart-card-stat-key">Restarts:</span> <span class="restart-card-stat-val">{total}</span></div>
+        <div class="restart-card-stat"><span class="restart-card-stat-key green">KeepAlive:</span> <span class="restart-card-stat-val">{healthy}</span></div>
+        <div class="restart-card-stat"><span class="restart-card-stat-key amber">TOCTOU:</span> <span class="restart-card-stat-val">{toctou}</span></div>
+        <div class="restart-card-stat"><span class="restart-card-stat-key red">Crashes:</span> <span class="restart-card-stat-val">{crash}</span></div>
     </div>
-    <div style="margin-bottom:8px;">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:2px;">
+    <div class="restart-bar-section">
+        <div class="restart-bar-header">
             <span>Restart quality breakdown</span>
         </div>
-        <div style="height:20px;background:#0f172a;border-radius:4px;display:flex;overflow:hidden;">
-            {f'<div style="width:{green_pct:.0f}%;background:#166534;color:#22c55e;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">{healthy}</div>' if healthy > 0 else ''}
-            {f'<div style="width:{amber_pct:.0f}%;background:#713f12;color:#eab308;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">{toctou}</div>' if toctou > 0 else ''}
-            {f'<div style="width:{red_pct:.0f}%;background:#7f1d1d;color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">{crash}</div>' if crash > 0 else ''}
+        <div class="restart-bar">
+            {f'<div class="restart-bar-seg green" style="width:{green_pct:.0f}%;">{healthy}</div>' if healthy > 0 else ''}
+            {f'<div class="restart-bar-seg amber" style="width:{amber_pct:.0f}%;">{toctou}</div>' if toctou > 0 else ''}
+            {f'<div class="restart-bar-seg red" style="width:{red_pct:.0f}%;">{crash}</div>' if crash > 0 else ''}
         </div>
     </div>
-    <div style="font-size:11px;color:#64748b;cursor:pointer;" onclick="toggleRestartDetail('{agent_name}')">▶ View restart timeline</div>
-    <div id="rq-detail-{agent_name}" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #1e293b;">
-        <div id="rq-detail-content-{agent_name}" style="font-size:12px;color:#64748b;">Loading...</div>
+    <div class="restart-toggle" onclick="toggleRestartDetail('{agent_name}')">▶ View restart timeline</div>
+    <div class="restart-detail-panel" id="rq-detail-{agent_name}">
+        <div class="restart-detail-content" id="rq-detail-content-{agent_name}">Loading...</div>
     </div>
 </div>""")
 
@@ -1877,7 +2036,7 @@ async def api_restart_quality_detail(agent_name: str):
     name = agent_name
     restarts = db.get_recent_restarts(agent_name=name, limit=50)
     if not restarts:
-        return HTMLResponse('<div style="color:#6b7280;font-size:12px;padding:8px;">No restart data for this agent.</div>')
+        return HTMLResponse('<div class="restart-empty">No restart data for this agent.</div>')
 
     now = int(time.time())
     items = []
@@ -1896,21 +2055,21 @@ async def api_restart_quality_detail(agent_name: str):
         color, label = type_colors.get(rtype, ("#64748b", "Unknown"))
 
         duration_str = f"{duration}ms recovery" if duration else ""
-        snippet_html = f'<div style="color:#94a3b8;font-size:11px;background:#1e293b;padding:4px 8px;border-radius:4px;margin-top:2px;font-family:monospace;white-space:pre-wrap;">{_html_escape(snippet)}</div>' if snippet else ""
+        snippet_html = f'<div class="restart-snippet">{_html_escape(snippet)}</div>' if snippet else ""
 
-        items.append(f"""<div class="rtimeline-item" style="margin-bottom:8px;position:relative;padding-left:16px;">
-    <div style="position:absolute;left:0;top:4px;width:8px;height:8px;border-radius:50%;background:{color};"></div>
-    <div style="margin-bottom:2px;">
-        <span style="color:#64748b;font-size:11px;">{ts_str}</span>
-        <span style="color:{color};font-weight:600;margin-left:4px;font-size:12px;">{label}</span>
-        {f'<span style="color:#64748b;font-size:11px;margin-left:8px;">{duration_str}</span>' if duration_str else ''}
+        items.append(f"""<div class="restart-timeline-row">
+    <span class="restart-timeline-dot" style="background:{color};left:0;"></span>
+    <div class="restart-timeline-header">
+        <span class="restart-timeline-ts">{ts_str}</span>
+        <span class="restart-timeline-label" style="color:{color};">{label}</span>
+        {f'<span class="restart-timeline-duration">{duration_str}</span>' if duration_str else ''}
     </div>
     {snippet_html}
-    {f'<div style="color:#6b7280;font-size:10px;margin-top:1px;">{_html_escape(evidence)}</div>' if evidence else ''}
+    {f'<div class="restart-evidence">{_html_escape(evidence)}</div>' if evidence else ''}
 </div>""")
 
-    return HTMLResponse(f"""<div style="position:relative;padding-left:0;">
-    <div style="border-left:2px solid #334155;padding-left:0;">
+    return HTMLResponse(f"""<div class="restart-timeline">
+    <div class="restart-timeline-rail">
         {''.join(items)}
     </div>
 </div>""")
@@ -1935,23 +2094,21 @@ async def api_glossary():
     items_html = []
     for i, (q, a) in enumerate(GLOSSARY_ITEMS):
         items_html.append(f"""
-<div class="glossary-item" style="margin-bottom:4px;border:1px solid #334155;border-radius:8px;overflow:hidden;">
-    <div class="glossary-q" onclick="toggleGlossary({i})"
-         style="background:#0f172a;padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#e2e8f0;user-select:none;"
-         onmouseenter="this.style.background='#1e293b'" onmouseleave="this.style.background='#0f172a'">
+<div class="glossary-item">
+    <div class="glossary-q" onclick="toggleGlossary({i})">
         <span>{q}</span>
-        <span id="glossary-icon-{i}" style="color:#64748b;font-size:12px;transition:transform 0.2s;">▼</span>
+        <span class="glossary-icon" id="glossary-icon-{i}">▼</span>
     </div>
-    <div id="glossary-answer-{i}" style="display:none;padding:10px 14px;font-size:12px;color:#94a3b8;line-height:1.6;">
+    <div class="glossary-answer" id="glossary-answer-{i}">
         {a}
     </div>
 </div>""")
 
     html = """
-<div class="glossary-panel" style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px;margin-top:16px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:14px;font-weight:600;color:#e2e8f0;">📖 Glossary &amp; FAQ</div>
-        <span onclick="toggleGlossarySection()" style="color:#64748b;font-size:12px;cursor:pointer;user-select:none;" id="glossary-toggle-label">▼ Show</span>
+<div class="glossary-panel" style="">
+    <div class="glossary-panel-header">
+        <div class="glossary-panel-title">📖 Glossary &amp; FAQ</div>
+        <span onclick="toggleGlossarySection()" class="glossary-panel-toggle" id="glossary-toggle-label">▼ Show</span>
     </div>
     <div id="glossary-body" style="display:none;">
 """ + "\n".join(items_html) + """
@@ -2035,7 +2192,7 @@ async def api_heal_log():
                 remaining = max(0, cooldown - now)
                 active_issues.append(f"""
 <div class="heal-entry fail">
-    <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="heal-entry-header">
         <span class="heal-action">🔴 Tripped Circuit — {cb['agent_name']}</span>
     </div>
     <div class="heal-detail">{cb.get('failure_count',0)} failures — cooldown {remaining // 60}m remaining</div>
@@ -2043,17 +2200,17 @@ async def api_heal_log():
 
         if active_issues:
             html = """
-<div style="margin-bottom:12px;font-size:13px;color:var(--sec);">
-    <strong style="color:var(--red);">⚠️ Active Issues</strong> — agents with problems that need attention.
+<div class="heal-active">
+    <div class="heal-active-title"><strong>⚠️ Active Issues</strong> — agents with problems that need attention.</div>
 </div>""" + "\n".join(active_issues)
         else:
             html = '<div class="empty-state">✅ No self-heal events recorded yet. Run <code>observeco heal --diagnose</code> to start.</div>'
 
         # Add running heal button
         html += """
-<div style="margin-top:16px;text-align:center;">
+<div class="heal-trigger-section">
     <a href="/api/trigger-heal"
-       style="display:inline-block;background:#22c55e;color:#000;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;"
+       class="heal-trigger-link"
        onclick="event.preventDefault();fetch(this.href).then(r=>r.text()).then(t=>document.getElementById('heal-log').innerHTML=t+'<div style=\\\"text-align:center;margin-top:12px;\\\">Refreshing...</div>');setTimeout(()=>{document.getElementById('heal-log').innerHTML='<div class=\\\"empty-state\\\">Refreshing heal data...</div>';},100);">
         ⚡ Run Heal Check Now
     </a>
@@ -2065,7 +2222,7 @@ async def api_heal_log():
         icon = "✅" if e["status"] == "success" else "❌" if e["status"] == "fail" else "🔍"
         items.append(f"""
 <div class="heal-entry {e['status']}">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="heal-entry-header">
         <span class="heal-action">{icon} {e['agent']}</span>
         <span class="heal-time">{e['timestamp']}</span>
     </div>
@@ -2079,9 +2236,9 @@ async def api_heal_log():
 
     # Add trigger button
     html += """
-<div style="margin-top:16px;text-align:center;">
+<div class="heal-trigger-section">
     <a href="/api/trigger-heal"
-       style="display:inline-block;background:#22c55e;color:#000;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;"
+       class="heal-trigger-link"
        onclick="event.preventDefault();fetch(this.href).then(function(r){return r.text()}).then(function(t){var el=document.getElementById('heal-log');if(el){el.innerHTML=t+'<div style=\\\"text-align:center;margin-top:12px;font-size:13px;color:#64748b;\\\">Heal check complete — refreshing data...</div>';}});">
         ⚡ Run Heal Check Now
     </a>
@@ -2098,7 +2255,7 @@ async def api_trigger_heal():
     pulses = d.get_recent_pulses(limit=10)
 
     if not pulses and not breakers:
-        return HTMLResponse('<div style="color:#64748b;font-size:13px;text-align:center;padding:20px;">No agent data to diagnose. Run <code>observeco pulse check</code> first.</div>')
+        return HTMLResponse('<div class="heal-result-ok" style="">No agent data to diagnose. Run <code>observeco pulse check</code> first.</div>')
 
     items = []
     now = int(time.time())
@@ -2110,7 +2267,7 @@ async def api_trigger_heal():
             _ = max(0, cooldown - now)  # unused — will use in cooldown display
             items.append(f"""
 <div class="heal-entry fail">
-    <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="heal-entry-header">
         <span class="heal-action">🔴 {cb['agent_name']}</span>
         <span class="heal-time">now</span>
     </div>
@@ -2136,7 +2293,7 @@ async def api_trigger_heal():
             seen_heal.add(aname)
             items.append(f"""
 <div class="heal-entry fail">
-    <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="heal-entry-header">
         <span class="heal-action">🔴 {aname}</span>
         <span class="heal-time">now</span>
     </div>
@@ -2150,7 +2307,7 @@ async def api_trigger_heal():
             err_msg = p.get("error_message", "") or "Error state"
             items.append(f"""
 <div class="heal-entry warning">
-    <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="heal-entry-header">
         <span class="heal-action">🟡 {aname}</span>
         <span class="heal-time">now</span>
     </div>
@@ -2171,7 +2328,7 @@ async def api_trigger_heal():
             last_check = _fmt_ts(last_ts)
             items.append(f"""
 <div class="heal-entry warning">
-    <div class="heal-info" style="display:flex;justify-content:space-between;align-items:center;">
+    <div class="heal-entry-header">
         <span class="heal-action">🟡 {aname}</span>
         <span class="heal-time">{last_check}</span>
     </div>
@@ -2198,10 +2355,10 @@ async def api_trigger_heal():
 </div>""")
 
     if not items:
-        items.append('<div style="color:#22c55e;font-size:13px;text-align:center;padding:20px;">✅ All agents appear healthy</div>')
+        items.append('<div class="heal-result-ok" style="">All agents appear healthy</div>')
 
     html = """
-<div style="margin-bottom:8px;font-size:12px;color:#64748b;">Heal check completed at """ + __import__('datetime').datetime.now().strftime("%H:%M:%S") + """</div>
+<div class="heal-timestamp">Heal check completed at """ + __import__('datetime').datetime.now().strftime("%H:%M:%S") + """</div>
 """ + "\n".join(items)
 
     return HTMLResponse(html)

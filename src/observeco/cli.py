@@ -251,6 +251,21 @@ def feedback_command(
     )
 
 
+# -- Telemetry subcommand --
+telemetry_app = typer.Typer(help="Central feedback telemetry server")
+app.add_typer(telemetry_app, name="telemetry")
+
+
+@telemetry_app.command(name="serve")
+def telemetry_serve(
+    port: int = typer.Option(9120, "--port", "-p", help="Telemetry server port"),
+    host: str = typer.Option("127.0.0.1", "--host", help="Telemetry server bind address"),
+) -> None:
+    """Start the central feedback collector (runs alongside dashboard)."""
+    from observeco.telemetry_server import serve
+    serve()
+
+
 # -- MCP subcommands (v1.1) --
 
 mcp_app = typer.Typer(help="MCP protocol server for agent queries")
@@ -398,7 +413,47 @@ def pathway_graph_export() -> None:
 
 
 def main():
-    app()
+    """CLI entry point with automatic telemetry and error capture."""
+    import sys
+    import traceback as tb_module
+
+    # Fire usage telemetry in background (fire-and-forget, never blocks)
+    _fire_usage_ping(sys.argv)
+
+    try:
+        app()
+    except typer.Exit:
+        pass  # Normal typer exit (--help, --version)
+    except SystemExit:
+        raise  # Let system exits propagate normally
+    except Exception:
+        # Automatic crash capture
+        error_type = type(sys.exc_info()[1]).__name__
+        error_msg = str(sys.exc_info()[1])
+        stack = tb_module.format_exc()
+
+        # Fire-and-forget crash report
+        _fire_crash_report(error_type, error_msg, stack)
+
+
+def _fire_usage_ping(argv: list[str]) -> None:
+    """Send anonymous usage ping in background thread. Never raises."""
+    try:
+        from observeco.telemetry_client import send_usage
+        cmd = " ".join(argv[1:3]) if len(argv) > 1 else "help"
+        send_usage(cmd)
+    except Exception:
+        pass
+
+
+def _fire_crash_report(error_type: str, error_msg: str, stack: str) -> None:
+    """Send crash report in background thread. Never raises."""
+    try:
+        from observeco.telemetry_client import send_error
+        cmd = " ".join(__import__("sys").argv[1:3]) if len(__import__("sys").argv) > 1 else "unknown"
+        send_error(error_type, error_msg, stack, command=cmd)
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

@@ -2188,3 +2188,71 @@ Add "Skill Audit" card to dashboard (Pro-only):
 | `mockups/chisel-compress.html` | ⚠️ Obsolete — replaced by `brain-analysis.html` |
 | `mockups/openclaw-plugin.html` | Interactive mockup: OpenClaw runtime plugin (planned) |
 | `mockups/skills-audit.html` | Interactive mockup: skill audit ranked list (planned) |
+
+---
+
+## Appendix: Cross-Platform Gap Analysis (v2.1 — 2026-05-29)
+
+**Source:** Independent gap analysis + code review + master plan v2.1
+**Status:** Active — Phase 1 execution
+
+### A.1 Current Cross-Platform State
+
+| Feature | macOS | Linux | Windows |
+|---|---|---|---|
+| CLI | ✅ | ✅ | ✅ (with fixes) |
+| Config location | ~/.config/observeco/ | ~/.config/observeco/ | %APPDATA%/observeco/ |
+| Colors | ✅ | ✅ | ✅ (colorama) |
+| Headless mode | N/A | ✅ (no ANSI) | N/A |
+| Keychain | Keychain | Secret Service | Credential Manager |
+| Installer | Homebrew | apt/snap | MSI/Chocolatey |
+
+### A.2 New Modules Added (Phase 1)
+
+| Module | Purpose | Status |
+|---|---|---|
+| `risk_engine.py` | Tool-call JSON parser, 4 risk levels | ✅ Added |
+| `session_log.py` | Tamper-evident SHA-256 hash chain logging | ✅ Added |
+| `hooks/outcome-tracking.js` | Auto-capture user feedback | ✅ Added |
+| `hooks/model-routing.js` | Classify tasks, route to models | ✅ Added |
+| `hooks/self-healing.js` | Per-tool-call retry + fallback | ✅ Added |
+| `hooks/knowledge-graph.js` | Query intelligence layer before research | ✅ Added |
+
+### A.3 Phase 1 Tasks (Updated)
+
+| # | Task | Owner | Status |
+|---|---|---|---|
+| 1.1 | Naming resolved (ObserveCo = company) | Kepler | ✅ |
+| 1.2 | README fixed (removed false npm claim) | Kepler | ✅ |
+| 1.3 | pyproject.toml ready for PyPI | Hound | ✅ |
+| 1.4 | Cross-platform paths (platformdirs) | Hound | ✅ |
+| 1.5 | Cross-platform colors (colorama + headless) | Hound | ✅ |
+| 1.6 | Risk engine v2 (tool-call JSON parser) | Hound | ✅ |
+| 1.7 | Platform-aware dangerous patterns | Hound | ✅ |
+| 1.8 | OpenClaw hook integration | Hound | ✅ |
+| 1.9 | Tamper-evident session logs (hash chain) | Hound | ✅ |
+| 1.10 | OS keychain (keyring + fallback) | Hound | ✅ |
+| 1.11 | Security audit | TBD | ⬜ |
+
+### A.4 Code Review Findings (Resolved)
+
+| ID | Severity | Issue | Fix |
+|---|---|---|---|
+| SEC-001 | Critical | Secrets plaintext in fallback | File permissions (0o600) added |
+| SEC-002 | High | Secrets file world-readable | chmod on write |
+| CROSS-001 | High | ANSI detection fails in Git Bash | Multiple env var checks added |
+| CROSS-002 | High | macOS data dir uses Linux path | macOS path added |
+| PKG-001 | Medium | keyring overly restrictive | Made optional dependency |
+
+### A.5 Phase 2 Roadmap (Cross-Platform)
+
+| # | Task | Effort |
+|---|---|---|
+| 2.1 | MCP server (universal agent adapter) | 1 week |
+| 2.2 | Slack adapter | 3 days |
+| 2.3 | Discord adapter | 3 days |
+| 2.4 | Telegram adapter | 2 days |
+| 2.5 | Dashboard (htmx + FastAPI) | 1 week |
+| 2.6 | WebSocket real-time monitoring | 3 days |
+| 2.7 | Team features (shared policies) | 3 days |
+| 2.8 | Docker image | 1 day |

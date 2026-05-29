@@ -1,652 +1,1273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ObserveCo — Agent Fleet Dashboard</title>
-    <script src="/static/htmx.min.js"></script>
-    <script>if (!window.htmx) { document.write('<script src="https://unpkg.com/htmx.org@1.9.11/dist/htmx.min.js"><\/script>'); }</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0c111d;
-            --card: #131a2b;
-            --card-hover: #1a2332;
-            --border: #1e293b;
-            --border-light: #334155;
-            --text: #f8fafc;
-            --fg: #f8fafc;
-            --sec: #94a3b8;
-            --muted: #64748b;
-            --mono: #0f172a;
-            --accent: #22c55e;
-            --green: #22c55e;
-            --red: #ef4444;
-            --amber: #f59e0b;
-            --yellow: #eab308;
-            --blue: #38bdf8;
-            --orange: #f97316;
-            --tok-identity: #6366f1;
-            --tok-skills: #8b5cf6;
-            --tok-memory: #ec4899;
-            --tok-tools: #14b8a6;
-            --tok-guidance: #f97316;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0c111d;
-            color: var(--fg);
-            min-height: 100vh;
-        }
-        .container { max-width: 1400px; margin: 0 auto; padding: 0 24px 40px; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Fleet Dashboard</title>
+<script src="/static/htmx.min.js" onerror="
+  if (!window.htmx) {
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/htmx.org@1.9.11/dist/htmx.min.js';
+    document.head.appendChild(s);
+  }
+"></script>
+<script>if (!window.htmx) {
+  var s = document.createElement('script');
+  s.src = 'https://unpkg.com/htmx.org@1.9.11/dist/htmx.min.js';
+  document.head.appendChild(s);
+}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --fg: #f8fafc;
+  --fg-2: #94a3b8;
+  --accent: #22c55e;
+  --warn: #eab308;
+  --danger: #ef4444;
+  --meta: #3b82f6;
+  --muted: #64748b;
+  --border: #334155;
+  --border-soft: #273548;
+  --accent-on: #0c1628;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --tok-identity: #6366f1;
+  --tok-skills: #8b5cf6;
+  --tok-memory: #ec4899;
+  --tok-tools: #14b8a6;
+  --tok-guidance: #f97316;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: #e2e8f0;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.app { max-width: 1200px; margin: 0 auto; padding: 20px 24px; }
 
-        /* ─── Header ─── */
-        header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px 0; border-bottom: 1px solid var(--border);
-            margin-bottom: 16px; position: sticky; top: 0; z-index: 100;
-            background: var(--bg);
-        }
-        .brand { display: flex; align-items: center; gap: 12px; }
-        .brand-name { font-weight: 700; font-size: 20px; letter-spacing: -0.02em; }
-        .brand-name span { color: var(--green); }
-        .brand-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
-        .header-right { display: flex; align-items: center; gap: 10px; }
-        .live-indicator {
-            font-size: 11px; color: var(--muted);
-            display: flex; align-items: center; gap: 6px;
-        }
-        .live-dot {
-            width: 7px; height: 7px; border-radius: 50%;
-            background: var(--green); animation: pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
-        @keyframes pulse-skeleton { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.header-logo svg { width: 28px; height: 28px; }
+.header-title { font-size: 18px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--muted); font-weight: 400; }
+.tier-badge {
+  background: var(--accent-on); color: #86efac; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px; letter-spacing: 0.03em;
+}
 
-        /* ─── Phase banner ─── */
-        .phase-banner {
-            padding: 10px 16px; border-radius: 8px; font-size: 13px;
-            margin-bottom: 16px; border-left: 3px solid var(--blue);
-            background: rgba(59,130,246,0.08); color: var(--sec);
-        }
+/* Status header */
+.status-row {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px; padding: 12px 16px;
+  background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
+}
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.status-dot.alive { background: var(--accent); box-shadow: 0 0 6px var(--accent)44; }
+.status-dot.error { background: var(--warn); box-shadow: 0 0 6px var(--warn)44; }
+.status-dot.dead { background: var(--danger); box-shadow: 0 0 6px var(--danger)44; }
+.status-stat { font-size: 13px; color: var(--fg-2); }
+.status-stat strong { color: var(--fg); }
 
-        /* ─── Single-pane layout: left rail + right rail ─── */
-        .pane-layout {
-            display: flex; gap: 16px; align-items: flex-start;
-        }
-        .left-rail {
-            flex: 1; min-width: 0; /* agent grid area */
-        }
-        .right-rail {
-            width: 320px; flex-shrink: 0;
-            position: sticky; top: 80px;
-        }
-        @media (max-width: 900px) {
-            .pane-layout { flex-direction: column; }
-            .right-rail { width: 100%; position: static; }
-        }
+/* Feedback button & bar */
+.feedback-btn {
+  margin-left: auto; background: var(--surface); border: 1px solid var(--border);
+  color: var(--fg-2); padding: 6px 14px; border-radius: 8px;
+  font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.feedback-btn:hover { border-color: #475569; color: #e2e8f0; }
+.feedback-bar {
+  display: none; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface); border: 1px dashed var(--border); border-radius: 8px;
+  margin-top: 8px;
+}
+.feedback-bar input {
+  flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+  padding: 7px 10px; font-size: 12px; color: #e2e8f0; font-family: 'Inter', sans-serif;
+  outline: none; transition: border-color 0.15s;
+}
+.feedback-bar input:focus { border-color: var(--meta); }
+.feedback-bar input::placeholder { color: #475569; }
+.feedback-bar select {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 5px;
+  padding: 7px 10px; font-size: 12px; color: #e2e8f0; outline: none;
+}
+.add-btn {
+  background: var(--meta); border: none; color: white;
+  padding: 7px 14px; border-radius: 5px; font-size: 11px; font-weight: 600;
+  cursor: pointer; white-space: nowrap;
+}
+.add-btn:hover { background: #2563eb; }
+.feedback-hint { font-size: 10px; color: #475569; white-space: nowrap; }
 
-        /* ─── Fleet stats bar ─── */
-        .fleet-bar {
-            display: flex; gap: 8px; margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-        .fleet-stat {
-            padding: 10px 18px; border-radius: 8px;
-            background: var(--card); border: 1px solid var(--border);
-            flex: 1; min-width: 70px; text-align: center;
-        }
-        .fleet-num { font-size: 22px; font-weight: 700; display: block; }
-        .fleet-label { color: var(--muted); font-size: 11px; margin-top: 1px; }
+/* Agent card */
+.agent-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  transition: all .3s cubic-bezier(0,0,0.2,1);
+  position: relative;
+}
+.agent-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, transparent 60%, rgba(34, 197, 94, 0.03));
+  pointer-events: none;
+}
+.agent-card:hover {
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transform: translateY(-1px);
+}
+.agent-card.hidden { display: none; }
 
-        /* ─── Agent grid ─── */
-        .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
-        .agent-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 10px; padding: 14px; cursor: pointer;
-            transition: border-color 0.2s;
-            position: relative;
-        }
-        .agent-card:hover { border-color: var(--green); }
-        .agent-card-header {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-        }
-        .dot {
-            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-        }
-        .dot.green { background: var(--green); }
-        .dot.red { background: var(--red); }
-        .dot.yellow { background: var(--yellow); }
-        .dot.gray { background: var(--muted); }
-        .agent-name { font-weight: 600; font-size: 14px; flex: 1; }
-        .agent-role { font-size: 10px; color: var(--muted); background: var(--bg); padding: 2px 7px; border-radius: 6px; font-weight: 500; }
-        .agent-meta { display: flex; gap: 10px; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
-        .agent-meta span { white-space: nowrap; }
-        .agent-error-badge {
-            display: inline-block; font-size: 10px; font-weight: 700;
-            padding: 1px 6px; border-radius: 6px; margin-left: auto;
-        }
-        .agent-error-badge.red { background: rgba(239,68,68,0.15); color: var(--red); }
-        .agent-error-badge.yellow { background: rgba(234,179,8,0.15); color: var(--yellow); }
+/* Card top row */
+.card-top {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px;
+}
+.agent-status { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.agent-status.alive { background: var(--accent); box-shadow: 0 0 8px var(--accent)44; }
+.agent-status.dead { background: var(--danger); box-shadow: 0 0 8px var(--danger)44; }
+.agent-status.error { background: var(--warn); box-shadow: 0 0 8px var(--warn)44; }
+.agent-info { flex: 1; min-width: 0; }
+.agent-name { font-size: 13px; font-weight: 600; color: var(--fg); }
+.agent-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.agent-last-seen { font-size: 11px; color: var(--fg-2); text-align: right; white-space: nowrap; }
 
-        /* Token mini bar */
-        .token-row { margin-top: 8px; }
-        .token-bar {
-            display: flex; height: 3px; border-radius: 2px; overflow: hidden;
-            background: var(--border);
-        }
-        .token-bar .seg { height: 100%; }
-        .seg-identity { background: var(--tok-identity); }
-        .seg-skills { background: var(--tok-skills); }
-        .seg-memory { background: var(--tok-memory); }
-        .seg-tools { background: var(--tok-tools); }
-        .seg-guidance { background: var(--tok-guidance); }
-        .token-total { font-size: 10px; color: var(--muted); margin-top: 3px; }
+/* Show/hide toggle */
+.agent-toggle {
+  position: absolute; top: 6px; right: 6px;
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--muted); transition: all 0.15s;
+  z-index: 2;
+}
+.agent-toggle:hover { border-color: var(--danger); color: var(--danger); background: #450a0a33; }
+.agent-toggle.active { border-color: var(--danger); color: var(--danger); background: #450a0a33; }
 
-        /* ─── Right rail: alerts panel ─── */
-        .alerts-panel {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px;
-        }
-        .alerts-panel-title {
-            font-size: 13px; font-weight: 600; color: var(--text);
-            margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
-        }
-        .alert-row {
-            padding: 8px 10px; margin-bottom: 6px; border-radius: 6px;
-            font-size: 12px; border-left: 3px solid;
-        }
-        .alert-empty {
-            color: var(--muted); font-size: 12px; text-align: center; padding: 16px;
-        }
+/* Metric rows */
+.metric-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px;
+  margin: 1px -8px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.1s, border-color 0.1s;
+  border: 1px solid transparent;
+  position: relative;
+}
+.metric-row:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.metric-row:active {
+  background: var(--surface);
+  border-color: var(--meta);
+}
+.metric-row .label { font-size: 11px; color: var(--muted); width: 70px; flex-shrink: 0; }
+.metric-row .value { font-size: 12px; flex: 1; }
+.metric-row .click-hint {
+  font-size: 10px; color: var(--meta);
+  opacity: 0;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+.metric-row:hover .click-hint { opacity: 1; }
+.metric-row .arrow {
+  font-size: 11px; color: var(--border);
+  margin-left: 2px;
+  transition: transform 0.15s, color 0.15s;
+}
+.metric-row:hover .arrow {
+  color: var(--meta);
+  transform: translateX(2px);
+}
 
-        /* ─── Metric row hover — reveal "See details" ─── */
-        .metric-row:hover .see-details { opacity: 1 !important; }
+/* Token bar */
+.token-bar {
+  margin: 4px 0;
+  height: 4px; border-radius: 2px; overflow: hidden;
+  display: flex; gap: 1px;
+}
+.token-bar .seg { height: 100%; border-radius: 1px; }
+.token-count { font-size: 10px; color: #475569; font: var(--font-mono); }
 
-        /* ─── Agent detail panel ─── */
-        .agent-detail {
-            border-top: 1px solid var(--border);
-            margin-top: 10px; padding-top: 10px;
-            display: none;
-        }
-        .agent-detail.open { display: block; }
+/* Section styling */
+.section {
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.section-header:hover { background: var(--surface); }
+.section-header .chevron { font-size: 11px; color: var(--muted); transition: transform 0.2s; }
+.section-header.collapsed .chevron { transform: rotate(-90deg); }
+.section-name { font-size: 13px; font-weight: 600; color: var(--fg); }
+.section-count {
+  font-size: 11px; color: var(--fg-2);
+  background: var(--bg); padding: 2px 7px; border-radius: 5px;
+  border: 1px solid var(--border);
+}
+.section-total-tokens { margin-left: auto; font-size: 11px; color: var(--muted); font: var(--font-mono); }
+.section-body {
+  background: var(--bg);
+  padding: 10px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 8px;
+}
+.section-header.collapsed + .section-body { display: none; }
 
-        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .detail-grid-item { padding: 8px; background: var(--bg); border-radius: 6px; }
+/* Error badge on card */
+.agent-error-badge { 
+  display: inline-flex; align-items: center; gap: 2px; 
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 6px; margin-left: 6px;
+}
+.agent-error-badge.red { background: rgba(239,68,68,0.15); color: var(--danger); }
+.agent-error-badge.yellow { background: rgba(234,179,8,0.15); color: var(--warn); }
 
-        /* Token full bar */
-        .token-full-bar { display: flex; height: 20px; border-radius: 4px; overflow: hidden; margin: 8px 0; }
-        .token-full-bar .seg { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.85); min-width: 20px; }
-        .token-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-        .token-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
-        .token-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+/* Gap badges */
+.gap-badge { 
+  display: inline-flex; align-items: center; font-size: 11px; 
+  color: var(--fg-2); background: rgba(10,15,26,0.5); 
+  padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border);
+}
+.sep-pipe { color: var(--border); font-size: 11px; padding: 0 2px; }
 
-        /* ─── Bottom: error timeline ─── */
-        .error-timeline {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px; margin-top: 16px;
-        }
-        .error-timeline-title {
-            font-size: 13px; font-weight: 600; color: var(--text);
-            margin-bottom: 8px;
-        }
-        .error-item {
-            display: flex; gap: 10px; font-size: 12px;
-            padding: 7px 10px; border-radius: 6px; margin-bottom: 3px;
-        }
-        .error-item.critical { border-left: 2px solid var(--red); background: rgba(239,68,68,0.06); }
-        .error-item.warning { border-left: 2px solid var(--yellow); background: rgba(234,179,8,0.04); }
-        .error-item.info { border-left: 2px solid var(--blue); background: rgba(59,130,246,0.04); }
-        .error-ts { color: var(--muted); width: 70px; font-family: monospace; font-size: 11px; flex-shrink: 0; }
-        .error-agent { color: var(--green); width: 90px; flex-shrink: 0; font-weight: 500; }
-        .error-msg { flex: 1; color: var(--sec); }
-        .error-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 16px; }
+/* Drill-down modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  align-items: flex-start; justify-content: center;
+  z-index: 100; padding-top: 60px;
+  overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  max-width: 600px; width: 90%; margin-bottom: 40px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-header h3 { font-size: 14px; font-weight: 600; color: var(--fg); }
+.modal-header .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.modal-close {
+  width: 24px; height: 24px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: var(--border); color: #e2e8f0; }
+.modal-body { padding: 14px 18px; max-height: 400px; overflow-y: auto; }
 
-        /* Welcome / empty */
-        .empty-state { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
-        .empty-state code { background: var(--card); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+/* Data table in modal */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left; font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 6px 8px; border-bottom: 1px solid var(--border);
+  font-weight: 500;
+}
+.data-table td {
+  padding: 6px 8px; font-size: 12px; color: #e2e8f0;
+  border-bottom: 1px solid var(--bg);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table .muted { color: var(--muted); }
+.data-table .good { color: var(--accent); }
+.data-table .bad { color: var(--danger); }
+.data-table .warn { color: var(--warn); }
 
-        /* Self-heal panel (section below agent grid on left rail) */
-        .heal-section {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px; margin-top: 16px;
-        }
-        .heal-section-title {
-            font-size: 13px; font-weight: 600; color: var(--text);
-            margin-bottom: 8px;
-        }
-        .heal-entry {
-            padding: 8px 12px; margin-bottom: 6px; border-radius: 6px;
-            font-size: 12px; border-left: 3px solid;
-            cursor: pointer; transition: background 0.15s;
-        }
-        .heal-entry:hover { background: rgba(255,255,255,0.03); }
-        .heal-entry.success { border-color: var(--green); background: rgba(34,197,94,0.06); }
-        .heal-entry.fail { border-color: var(--red); background: rgba(239,68,68,0.06); }
-        .heal-entry.info { border-color: var(--blue); background: rgba(59,130,246,0.06); }
-        .heal-entry .heal-action { font-weight: 600; }
-        .heal-entry .heal-time { color: var(--muted); font-size: 10px; }
-        .heal-entry .heal-detail { color: var(--sec); margin-top: 2px; }
+/* Pulse history dots */
+.pulse-timeline {
+  display: flex; gap: 2px; flex-wrap: wrap; margin-top: 8px;
+}
+.pulse-dot { width: 12px; height: 12px; border-radius: 2px; }
+.pulse-dot.ok { background: var(--accent); }
+.pulse-dot.warn { background: var(--warn); }
+.pulse-dot.err { background: var(--danger); }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .agent-grid { grid-template-columns: 1fr; }
-            .fleet-bar { flex-wrap: wrap; }
-            .fleet-stat { min-width: 45%; }
-            .detail-grid { grid-template-columns: 1fr; }
-        }
+/* Section inside modal */
+.modal-section { margin-top: 14px; }
+.modal-section:first-child { margin-top: 0; }
+.modal-section h4 {
+  font-size: 11px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.05em; margin-bottom: 8px; font-weight: 500;
+}
 
-        /* Section heading */
-        .section-heading {
-            font-size: 15px; font-weight: 600; color: var(--sec);
-            margin-bottom: 10px; letter-spacing: -0.01em;
-        }
+/* Heal button and log */
+.heal-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--border);
+  background: rgba(34,197,94,0.08);
+  color: var(--accent);
+  transition: all 0.15s;
+}
+.heal-btn:hover { background: rgba(34,197,94,0.15); border-color: var(--accent); }
+.heal-log { font-size: 12px; color: var(--fg-2); line-height: 1.6; margin-top: 8px; }
 
-        .heal-trigger-btn {
-            display: inline-block; background: var(--green); color: #000;
-            padding: 8px 20px; border-radius: 8px;
-            text-decoration: none; font-weight: 600; font-size: 13px;
-            margin-top: 8px; cursor: pointer;
-        }
-        .heal-trigger-btn:hover { background: #16a34a; }
+/* Brain analysis section */
+.brain-section {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.brain-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+}
+.brain-body {
+  background: var(--bg);
+  padding: 14px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.brain-header.collapsed + .brain-body { display: none; }
+@media (max-width: 720px) { .section-body { grid-template-columns: 1fr; } .status-row { flex-wrap: wrap; } .feedback-bar { flex-wrap: wrap; } .feedback-hint { display: none; } .brain-body { grid-template-columns: 1fr; } }
 
-        /* ─── Agent sections (framework grouping) ─── */
-        .agent-section { margin-bottom: 20px; }
-        .agent-section.collapsed .section-cards { display: none; }
-        .agent-section.collapsed .section-toggle { transform: rotate(-90deg); }
-        .section-header:hover { opacity: 0.8; }
-    </style>
+/* Tabs */
+.tab-bar {
+  display: flex; gap: 4px; margin-bottom: 16px;
+  background: var(--surface); border-radius: 10px; padding: 4px;
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; background: transparent; color: var(--muted);
+  transition: all 0.15s; font-family: inherit; text-align: center;
+}
+.tab-btn:hover { color: var(--fg-2); }
+.tab-btn.active { background: var(--bg); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Brain analysis (mockup brain-analysis.html styles) */
+.brain-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; margin-bottom: 16px;
+}
+.brain-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.brain-agent-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.brain-agent-header select {
+  background: var(--surface); border: 1px solid var(--border); color: #e2e8f0;
+  padding: 8px 12px; border-radius: 8px; font-size: 14px; font-family: inherit; cursor: pointer;
+  min-width: 180px;
+}
+.brain-agent-header select:hover { border-color: #475569; }
+.brain-fw-badge {
+  background: var(--surface); color: #38bdf8; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border);
+}
+.comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width:640px){.comp-grid{grid-template-columns:1fr;}}
+.token-total-display { font-size: 28px; font-weight: 700; font-family: var(--font-mono); margin-bottom: 8px; }
+.token-total-display span { font-size: 14px; color: var(--muted); font-weight: 400; }
+.comp-bar-item { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.comp-bar-item .cl { width: 76px; font-size: 12px; color: var(--fg-2); flex-shrink: 0; }
+.comp-bar-item .bt { flex: 1; height: 20px; background: var(--bg); border-radius: 6px; overflow: hidden; }
+.comp-bar-item .bf { height: 100%; border-radius: 6px; transition: width 0.4s; }
+.comp-bar-item .cv { width: 100px; text-align: right; font-family: var(--font-mono); font-size: 12px; color: #e2e8f0; flex-shrink: 0; }
+.comp-legend { font-size: 12px; color: #64748b; line-height: 1.7; }
+
+/* Savings bars */
+.savings-vis { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.sav-row { display: flex; align-items: center; gap: 10px; }
+.sav-row .sl { width: 100px; font-size: 12px; flex-shrink: 0; }
+.sav-row .st { flex: 1; height: 24px; background: var(--bg); border-radius: 6px; overflow: hidden; }
+.sav-row .sf { height: 100%; border-radius: 6px; transition: width 0.4s; }
+.sav-row .sv { width: 190px; text-align: right; font-family: var(--font-mono); font-size: 12px; flex-shrink: 0; }
+.sav-calc { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-top: 12px; }
+.cb { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+.cb .big { font-size: 20px; font-weight: 700; font-family: var(--font-mono); }
+.cb .cbl { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.cb.green .big { color: var(--accent); }
+.cb.orange .big { color: #f97316; }
+.cb.blue .big { color: #38bdf8; }
+.cb.purple .big { color: #a5b4fc; }
+
+/* Provider config */
+.prov-cfg {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.prov-cfg label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.prov-cfg select, .prov-cfg input {
+  background: var(--surface); border: 1px solid var(--border); color: #e2e8f0;
+  padding: 5px 10px; border-radius: 6px; font-size: 12px; font-family: var(--font-mono);
+}
+.prov-cfg input { width: 80px; }
+.prov-cfg .pn { font-size: 11px; color: #475569; }
+
+/* Drift */
+.drift-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width:640px){.drift-grid{grid-template-columns:1fr;}}
+.drift-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.drift-row .dc { width: 76px; font-size: 12px; color: var(--fg-2); flex-shrink: 0; }
+.drift-row svg { flex: 1; height: 22px; }
+.drift-row .dp { width: 50px; text-align: right; font-family: var(--font-mono); font-size: 12px; }
+.per-turn-bar { display: flex; gap: 2px; height: 36px; align-items: flex-end; margin: 8px 0 4px; }
+.per-turn-col {
+  flex: 1; min-width: 3px; border-radius: 2px 2px 0 0;
+  background: linear-gradient(to top, #6366f1, #8b5cf6);
+  transition: height 0.2s; cursor: pointer; position: relative;
+}
+.per-turn-col:hover { opacity: 0.8; }
+.per-turn-col .tip {
+  display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  background: var(--bg); border: 1px solid var(--border); padding: 3px 7px; border-radius: 5px;
+  font-size: 9px; white-space: nowrap; z-index: 10; pointer-events: none;
+}
+.per-turn-col:hover .tip { display: block; }
+.timeline-axis { display: flex; justify-content: space-between; font-size: 10px; color: #475569; }
+
+/* Pro upsell */
+.pro-upsell {
+  margin-top: 12px; padding: 14px; border: 1px dashed #3730a3; border-radius: 10px;
+  text-align: center; cursor: pointer; transition: all 0.2s;
+}
+.pro-upsell:hover { border-color: #6366f1; background: #1e1b4b; }
+.pro-upsell .pt { font-size: 14px; font-weight: 600; color: #a5b4fc; }
+.pro-upsell .pd { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.pro-upsell .sh { color: var(--accent); font-weight: 700; }
+
+/* Tier boxes */
+.tier-box-row { display: flex; gap: 16px; margin-top: 8px; }
+.tier-box { flex: 1; border-radius: 10px; padding: 16px; }
+.tier-box.free { background: #0a2a1a; border: 1px solid var(--accent-on); }
+.tier-box.pro { background: #1e1b4b; border: 1px solid #3730a3; cursor: pointer; transition: all 0.2s; }
+.tier-box.pro:hover { border-color: #6366f1; }
+.tier-box .tier { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.tier-box .tier.free { color: #86efac; }
+.tier-box .tier.pro { color: #a5b4fc; }
+.tier-box .name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.tier-box .items { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.tier-box .cta { font-size: 11px; margin-top: 8px; }
+.tier-box .cta.free { color: #86efac; }
+.tier-box .cta.pro { color: #6366f1; }
+
+/* Toast */
+.toast-b {
+  position: fixed; bottom: 24px; right: 24px; z-index: 50;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 20px; font-size: 13px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: translateY(100px); opacity: 0; transition: all 0.3s;
+}
+.toast-b.show { transform: translateY(0); opacity: 1; }
+
+/* Skills Audit modal */
+.sa-summary { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.sa-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+.sa-card .n { font-size: 24px; font-weight: 700; }
+.sa-card .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.sa-card.hl { border-color: #3730a3; background: #1e1b4b; }
+.sa-card.hl .n { color: #a5b4fc; }
+.sa-card.wn { border-color: #854d0e; background: #422006; }
+.sa-card.wn .n { color: #fde68a; }
+.sa-card .sv { font-size: 11px; color: #86efac; margin-top: 4px; }
+.sa-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.sa-table th { text-align: left; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
+.sa-table td { padding: 10px 12px; border-bottom: 1px solid var(--surface); }
+.sa-table tr:last-child td { border-bottom: none; }
+.sa-table .rnk { color: var(--muted); font-size: 11px; width: 28px; }
+.sa-table .sn { color: #e2e8f0; font-weight: 500; }
+.sa-table .sc { color: var(--muted); font-size: 10px; }
+.sa-table .tk { font-weight: 600; }
+.sa-table .tk.ov { color: #fca5a5; }
+.sa-table .tk.ok { color: var(--fg-2); }
+.sa-table .dr { font-size: 11px; }
+.sa-table .dr.up { color: #fca5a5; }
+.sa-table .dr.dn { color: #86efac; }
+.sa-table .dr.fl { color: var(--muted); }
+.sa-table .lu { color: var(--muted); font-size: 11px; }
+.sa-table .lu.st { color: #fca5a5; }
+.sa-table .co { color: var(--muted); font-size: 11px; }
+.sa-table .co.hi { color: #fca5a5; font-weight: 600; }
+.sa-table .badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.sa-table .badge.br { background: #450a0a; color: #fca5a5; }
+.sa-table .badge.ok { background: var(--bg); color: #86efac; }
+.sa-table tr.ov-th { background: #450a0a30; }
+.sa-bar { display: flex; height: 4px; border-radius: 2px; overflow: hidden; }
+.sa-bar .sg { height: 100%; }
+.sa-bar .sg.sk { background: #8b5cf6; }
+.sa-bar .sg.me { background: #ec4899; }
+.sa-bar .sg.mm { background: #eab308; }
+.sa-bar .sg.to { background: #14b8a6; }
+.sa-bar .sg.gu { background: #ef4444; }
+.sa-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin-top: 12px; }
+.sa-cat-item { background: var(--bg); border-radius: 8px; padding: 10px; }
+.sa-cat-item .cn { font-weight: 600; color: #e2e8f0; }
+.sa-cat-item .cc { font-size: 11px; color: var(--muted); margin-left: 6px; }
+</style>
 </head>
 <body>
-    <div class="container">
+<div class="app">
 
-        <!-- ═══ Header ═══ -->
-        <header>
-            <div class="brand">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28" style="flex-shrink:0;">
-                    <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
-                    <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <div>
-                    <div style="display:flex;align-items:baseline;gap:2px;">
-                        <span class="brand-name"><span>Observe</span>Co</span>
-                        <span style="font-size:11px;color:var(--green);font-weight:600;margin-left:4px;background:rgba(34,197,94,0.12);padding:1px 6px;border-radius:4px;">Ai</span>
-                    </div>
-                    <div class="brand-sub">Agent Fleet Dashboard</div>
-                </div>
-            </div>
-            <div class="header-right">
-            <div class="live-indicator">
-                <span class="live-dot"></span>
-                <span>Auto-refresh 30s</span>
-            </div>
-            <button onclick="showFeedbackModal()"
-                    style="background:transparent;color:var(--sec);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s;"
-                    onmouseenter="this.style.background='#1e293b';this.style.color='var(--fg)'"
-                    onmouseleave="this.style.background='transparent';this.style.color='var(--sec)'"
-                    title="Report missing agent">
-                <span>➕</span> Add agent
-            </button>
-            <a href="/pathway" target="_blank"
-               style="background:transparent;color:var(--sec);border:1px solid var(--border);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.15s;text-decoration:none;"
-               onmouseenter="this.style.background='#1e293b';this.style.color='var(--fg)'"
-               onmouseleave="this.style.background='transparent';this.style.color='var(--sec)'">
-                <span>🗺️</span> Pathways
-            </a>
-        </div>
-        </header>
-
-        <!-- ═══ Phase Banner ═══ -->
-        <div id="phase-banner"
-         hx-get="/api/phase"
-         hx-trigger="load, every 30s"
-         hx-swap="innerHTML">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+          <defs>
+            <linearGradient id="oc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+            </linearGradient>
+            <linearGradient id="oc-grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <circle cx="64" cy="64" r="60" fill="none" stroke="url(#oc-grad)" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#oc-grad2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/>
+          <circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+          <circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/>
+          <circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/>
+          <circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+          <circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/>
+          <circle cx="28" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+          <circle cx="100" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+        </svg>
+      </div>
+      <span class="header-title">ObserveCo <span>fleet</span></span>
+      <span class="tier-badge">🔓 FREE</span>
     </div>
+  </div>
 
-        <!-- ═══ Cumulative Delay Banner (obs-dp-006) ═══ -->
-        <div id="delay-banner"
-             hx-get="/api/delay-banner"
-             hx-trigger="load, every 30s"
-             hx-swap="innerHTML">
-        </div>
+  <!-- Status badges -->
+  <div class="status-row" id="statusRow" hx-get="/api/fleet-summary" hx-trigger="load, every 30s" hx-swap="outerHTML"></div>
 
-        <!-- ═══ Single Pane Layout ═══ -->
-        <div class="pane-layout">
+  <!-- Missing Agent Feedback Bar -->
+  <div id="feedbackBar" class="feedback-bar">
+    <input type="text" id="feedbackInput" placeholder="Agent name (e.g. my-temp-scraper)" />
+    <select id="feedbackFramework">
+      <option value="hermes">Hermes</option>
+      <option value="openclaw">OpenClaw</option>
+      <option value="custom" selected>Custom</option>
+    </select>
+    <button class="add-btn" onclick="addMissingAgent()">Add Agent</button>
+    <span class="feedback-hint">I'll register them immediately</span>
+  </div>
 
-            <!-- ─── LEFT RAIL: Fleet + Agents + Heal ─── -->
-            <div class="left-rail">
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('fleet', this)">🚀 Fleet</button>
+    <button class="tab-btn" onclick="switchTab('brain', this)">🧠 Brain Analysis</button>
+    <button class="tab-btn" onclick="switchTab('heal', this)">🛠️ Auto-Heal</button>
+    <button class="tab-btn" onclick="switchTab('alerts', this)">🔔 Push Alerts</button>
+  </div>
 
-                <div id="fleet-bar"
-                     hx-get="/api/fleet-summary"
-                     hx-trigger="load, every 30s"
-                     hx-swap="innerHTML">
-                </div>
+  <!-- Fleet tab -->
+  <div class="tab-content active" id="tabFleet">
+    <div id="fleetContainer"></div>
+  </div>
 
-                <div id="agent-cards"
-                     hx-get="/api/agents"
-                     hx-trigger="load, every 30s"
-                     hx-swap="innerHTML">
-                    <div class="agent-grid">
-                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;">
-                            <div style="height:14px;width:100px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
-                            <div style="height:10px;width:60px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
-                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
-                        </div>
-                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:0.2s;">
-                            <div style="height:14px;width:80px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
-                            <div style="height:10px;width:50px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
-                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
-                        </div>
-                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:0.4s;">
-                            <div style="height:14px;width:90px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
-                            <div style="height:10px;width:55px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
-                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
-                        </div>
-                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:0.6s;">
-                            <div style="height:14px;width:70px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
-                            <div style="height:10px;width:45px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
-                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
-                        </div>
-                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:0.8s;">
-                            <div style="height:14px;width:85px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
-                            <div style="height:10px;width:65px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
-                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
-                        </div>
-                        <div class="agent-card" style="pointer-events:none;animation:pulse-skeleton 1.5s ease-in-out infinite;animation-delay:1.0s;">
-                            <div style="height:14px;width:95px;background:#1e293b;border-radius:4px;margin-bottom:10px;"></div>
-                            <div style="height:10px;width:40px;background:#1e293b;border-radius:4px;margin-bottom:8px;"></div>
-                            <div style="height:3px;width:100%;background:#1e293b;border-radius:2px;"></div>
-                        </div>
-                    </div>
-                </div>
+  <!-- Brain Analysis tab -->
+  <div class="tab-content" id="tabBrain">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🧠 Brain Analysis</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">See what feeds your agents. See what you can save.</div>
 
-                <!-- ═══ Restart Quality (obs-spec-018) ═══ -->
-                <div class="restart-quality-section" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:16px;">
-                    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-                        <span>🔄 Restart Quality</span>
-                        <span style="font-size:10px;color:var(--green);background:rgba(34,197,94,0.1);padding:1px 6px;border-radius:4px;font-weight:500;">NEW</span>
-                    </div>
-                    <div style="font-size:12px;color:var(--sec);margin-bottom:8px;line-height:1.5;">
-                        Classifies daemon restarts into <strong style="color:var(--green);">Healthy</strong> (KeepAlive),
-                        <strong style="color:#eab308;">TOCTOU Race</strong> (file consumed between fsnotify and .stat()),
-                        and <strong style="color:var(--red);">Crash</strong> (SIGSEGV, OOM, config error).
-                    </div>
-                    <div id="restart-quality-content"
-                         hx-get="/api/restart-quality"
-                         hx-trigger="load"
-                         hx-swap="innerHTML">
-                        <div class="empty-state">Loading restart quality data...</div>
-                    </div>
-                </div>
+      <!-- Agent selector -->
+      <div class="brain-agent-header">
+        <select id="brainAgentSelect" onchange="renderBrain(document.getElementById('brainAgentSelect').value)">
+          <option value="all">All Agents (fleet total)</option>
+        </select>
+        <span class="brain-fw-badge" id="brainFwBadge">13 agents</span>
+        <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">FREE</span>
+      </div>
 
-                <!-- Self-Heal section (below agent grid) -->
-                <div class="heal-section">
-                    <div class="heal-section-title">🔧 Self-Heal</div>
-                    <div style="font-size:12px;color:var(--sec);margin-bottom:8px;line-height:1.5;">
-                        Automatically detect and fix common problems — restart dead agents,
-                        clear tripped circuits, trim bloated contexts, clean memory.
-                    </div>
-                    <div id="heal-log"
-                         hx-get="/api/heal-log"
-                         hx-trigger="load, every 30s"
-                         hx-swap="innerHTML">
-                        <div class="empty-state">Loading self-heal log...</div>
-                    </div>
-                </div>
-
-                <!-- ═══ BOTTOM: Error Timeline ═══ -->
-                <div class="error-timeline">
-                    <div class="error-timeline-title">📋 Error Timeline</div>
-                    <div id="error-timeline"
-                         hx-get="/api/errors"
-                         hx-trigger="load, every 30s"
-                         hx-swap="innerHTML">
-                        <div class="error-empty">No errors recorded — good sign!</div>
-                    </div>
-                </div>
-
-                <!-- ═══ Glossary & FAQ Panel (obs-glossary) ═══ -->
-                <div id="glossary-panel"
-                     hx-get="/api/glossary"
-                     hx-trigger="load"
-                     hx-swap="innerHTML">
-                </div>
-
+      <!-- Composition -->
+      <div class="brain-card">
+        <h3>Token Breakdown <span style="font-size:11px;color:#64748b;font-weight:400;">per component</span></h3>
+        <div class="comp-grid">
+          <div>
+            <div class="token-total-display" id="brainTotal">0 <span>total</span></div>
+            <div id="brainTokenBars"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">What each part means</div>
+            <div class="comp-legend">
+              <strong style="color:#8b5cf6;">skills</strong> = task instructions<br>
+              <strong style="color:#14b8a6;">tools</strong> = functions and APIs<br>
+              <strong style="color:#ec4899;">memory</strong> = user context and history<br>
+              <strong style="color:#f97316;">guidance</strong> = behavioural rules<br>
+              <strong style="color:#6366f1;">identity</strong> = role and personality
             </div>
-
-            <!-- ─── RIGHT RAIL: Alerts ─── -->
-            <div class="right-rail">
-                <div class="alerts-panel">
-                    <div class="alerts-panel-title">⚠️ Alerts</div>
-                    <div id="alerts-content"
-                         hx-get="/api/alerts"
-                         hx-trigger="load, every 30s"
-                         hx-swap="innerHTML">
-                        <div class="alert-empty">Loading alerts...</div>
-                    </div>
-                </div>
-            </div>
-
+          </div>
         </div>
+      </div>
+
+      <!-- Savings -->
+      <div class="brain-card">
+        <h3>What CHISEL Can Save You
+          <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">LITE</span>
+          <span style="background:#3730a3;color:#a5b4fc;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">FULL</span>
+          <span style="font-size:11px;color:#64748b;font-weight:400;margin-left:4px;">per day</span>
+        </h3>
+        <div class="prov-cfg">
+          <label>Provider cost:</label>
+          <select id="brainProvider" onchange="renderBrain(document.getElementById('brainAgentSelect').value)">
+            <option value="0.15">DeepSeek v4 Flash — $0.15/M input</option>
+            <option value="0.15">Ollama Pro — $0.15/M input</option>
+            <option value="0.10">Zhipu — $0.10/M input</option>
+            <option value="0">Ollama Local — FREE</option>
+            <option value="custom">Custom</option>
+          </select>
+          <span style="display:none;align-items:center;gap:4px;" id="brainCustomCost">
+            <span style="font-size:11px;color:#64748b;">$</span>
+            <input type="text" id="brainCustomRate" value="0.15" style="width:60px;" oninput="renderBrain(document.getElementById('brainAgentSelect').value)">
+            <span class="pn">/M input tokens</span>
+          </span>
+          <span class="pn">50 turns/day avg</span>
+        </div>
+        <div class="savings-vis" id="brainSavingsChart"></div>
+        <div class="sav-calc" id="brainSavingsCalc"></div>
+        <div class="pro-upsell" onclick="showBrainPro()" id="brainProUpsell">
+          <div class="pt">🔒 Full compression saves more — that's extra per year</div>
+          <div class="pd">Pro gives you Full compression + Auto-Watch + Token Optimiser + never-pruned history</div>
+        </div>
+      </div>
+
+      <!-- Drift & Usage -->
+      <div class="brain-card">
+        <h3>Drift & Usage <span style="font-size:11px;color:#64748b;font-weight:400;">7-day trend</span></h3>
+        <div class="drift-grid">
+          <div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">Component drift</div>
+            <div id="brainDrift"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
+              Per-turn token usage <span style="color:#64748b;">last 24h</span>
+              <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;">FREE</span>
+            </div>
+            <div class="per-turn-bar" id="brainTimeline"></div>
+            <div class="timeline-axis"><span>24h ago</span><span>Now</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier summary -->
+      <div class="tier-box-row">
+        <div class="tier-box free">
+          <div class="tier free">🔓 FREE</div>
+          <div class="name">CHISEL Lite</div>
+          <div class="items">
+            • Compress guidance blocks<br>
+            • Per-agent breakdown & drift<br>
+            • 24h per-turn timeline<br>
+            • 7-day component trends
+          </div>
+          <div class="cta free">22% savings per turn</div>
+        </div>
+        <div class="tier-box pro" onclick="showBrainPro()">
+          <div class="tier pro">🔒 PRO</div>
+          <div class="name">CHISEL Full + Optimiser</div>
+          <div class="items">
+            • Full compression (memory + skills + context)<br>
+            • Auto-Watch daemon<br>
+            • Token Optimiser (learns from 200 turns)<br>
+            • Never-pruned history & fleet comparison
+          </div>
+          <div class="cta pro">Upgrade → Up to 47% savings</div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- 🔒 Pro Preview overlay — dedicated div, not htmx-swappable -->
-    <div id="pro-preview-overlay" style="display:none;"></div>
 
-    <script>
-    // ─── Metric row click → open detail panel ─────────
-    function loadAgentDetail(id) {
-        // Close all other open details first
-        document.querySelectorAll('.agent-detail.open').forEach(function(el) {
-            if (el.id !== 'detail-' + id) el.classList.remove('open');
-        });
-        var el = document.getElementById('detail-' + id);
-        if (!el) return;
-        if (!el.classList.contains('open')) {
-            el.classList.add('open');
-            loadAgentTab(id, 'health');
-        }
-        // Scroll to the card if it's below the fold
-        var card = document.getElementById('card-' + id);
-        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+  <!-- Heal tab -->
+  <div class="tab-content" id="tabHeal">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🛠️ Auto-Heal</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">See how self-healing can recover agents automatically.</div>
 
-    // ─── Section collapse toggle ─────────────────────
-    function toggleSection(key) {
-        var section = document.getElementById('section-' + key);
-        if (!section) return;
-        section.classList.toggle('collapsed');
-        var toggle = document.getElementById('toggle-' + key);
-        if (toggle) toggle.textContent = section.classList.contains('collapsed') ? '▶' : '▼';
-        try { sessionStorage.setItem('section-' + key + '-collapsed', section.classList.contains('collapsed')); } catch(e) {}
-    }
+      <!-- Scenario comparison -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;" id="healGrid">
+        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);">
+          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg-2);">🔓 Free (Manual)</div>
+          <div style="padding:14px;background:var(--surface);">
+            <div style="position:relative;padding-left:22px;">
+              <div style="position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--border);"></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32</span> <span class="event">Agent down</span></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--warn);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:44</span> <span class="event" style="color:#fde68a;">⚠️ You notice via dashboard</span></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--meta);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:58</span> <span class="event" style="color:#93c5fd;">💻 You investigate manually</span></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--danger);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">11:19</span> <span class="event" style="color:#fca5a5;">❌ Agent still down — 47 min</span></div>
+              <div style="font-style:italic;font-size:10px;padding:2px 0 2px 10px;color:var(--border);">...</div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">12:30</span> <span class="event" style="color:#86efac;">✅ You restart — back in 1h 58m</span></div>
+            </div>
+            <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#450a0a;border:1px solid #7f1d1d;color:#fca5a5;">
+              <strong>Outcome: 1h 58m downtime</strong><br>
+              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0 saved</span>
+              You did all the work. Downtime costs stack while you investigate.
+            </div>
+          </div>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--accent-on);">
+          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--bg);color:#86efac;">🛡️ Pro — L1 Auto-Heal</div>
+          <div style="padding:14px;background:var(--surface);">
+            <div style="position:relative;padding-left:22px;">
+              <div style="position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--accent);"></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32</span> <span class="event">Agent down</span></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32</span> <span class="event" style="color:#86efac;">⚡ Detected instantly</span></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--meta);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32</span> <span class="event" style="color:#93c5fd;">🔄 Auto-restart triggered</span></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:33</span> <span class="event" style="color:#86efac;">✅ Agent back online — ~1 min</span></div>
+            </div>
+            <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:var(--bg);border:1px solid var(--accent-on);color:#86efac;">
+              <strong>Outcome: ~1 min downtime</strong><br>
+              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0.02 saved / event</span>
+              Instant detection, auto-restart. You don't lift a finger.
+            </div>
+          </div>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid #854d0e;">
+          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:#422006;color:#fde68a;">🧠 Pro — L2 Proactive</div>
+          <div style="padding:14px;background:var(--surface);">
+            <div style="position:relative;padding-left:22px;">
+              <div style="position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:#ca8a04;"></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--warn);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:31:45</span> <span class="event" style="color:#fde68a;">📊 Memory pressure rising</span></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:31:50</span> <span class="event" style="color:#86efac;">🔧 Preemptive rotation</span></div>
+              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32:00</span> <span class="event" style="color:#86efac;">✅ Crisis averted — no downtime</span></div>
+            </div>
+            <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#422006;border:1px solid #854d0e;color:#fde68a;">
+              <strong>Outcome: 0 downtime</strong><br>
+              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0.03 saved / event</span>
+              Predicted failure before it happened. Zero impact.
+            </div>
+          </div>
+        </div>
+      </div>
 
-    // Restore section collapse state from sessionStorage
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.agent-section').forEach(function(section) {
-            var key = section.id.replace('section-', '');
-            try {
-                if (sessionStorage.getItem('section-' + key + '-collapsed') === 'true') {
-                    section.classList.add('collapsed');
-                    var toggle = document.getElementById('toggle-' + key);
-                    if (toggle) toggle.textContent = '▶';
-                }
-            } catch(e) {}
-        });
+      <!-- Value comparison table -->
+      <div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr><th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);"></th>
+            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);">Free</th>
+            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg);">Pro L1 Auto-Heal</th>
+            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);">Pro L2 Proactive</th></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Detection speed</td>
+            <td style="font-size:12px;color:#94a3b8;padding:10px 14px;border-bottom:1px solid var(--bg);">Manual — you notice</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">Instant — pulse detects</td>
+            <td style="font-size:12px;color:#fde68a;padding:10px 14px;border-bottom:1px solid var(--bg);">Predictive — before failure</td></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Recovery action</td>
+            <td style="font-size:12px;color:#94a3b8;padding:10px 14px;border-bottom:1px solid var(--bg);">You SSH & restart</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">Auto-restart process</td>
+            <td style="font-size:12px;color:#fde68a;padding:10px 14px;border-bottom:1px solid var(--bg);">Auto-rotate + notify you</td></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Avg downtime</td>
+            <td style="font-size:12px;color:#fca5a5;padding:10px 14px;border-bottom:1px solid var(--bg);">~2 hours</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">~1 minute</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);">0 — prevented</td></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Cost / agent / month</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);">$0 (included)</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">$0 (included in Pro)</td>
+            <td style="font-size:12px;color:#fde68a;padding:10px 14px;border-bottom:1px solid var(--bg);">$0 (included in Pro)</td></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:none;">Circuit breaker</td>
+            <td style="font-size:12px;color:#fca5a5;padding:10px 14px;border-bottom:none;">❌ Not available</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;background:var(--bg);">✅ Stops cascade failures</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;">✅ + predictive alerts</td></tr>
+        </table>
+      </div>
+
+      <!-- Heal log section -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+          <div><strong style="font-size:13px;color:var(--fg);">Heal Log</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">recent events</span></div>
+          <button onclick="runHealCheck()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:rgba(34,197,94,0.08);color:var(--accent);font-family:inherit;transition:all 0.15s;" onmouseover="this.style.background='rgba(34,197,94,0.15)';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='rgba(34,197,94,0.08)';this.style.borderColor='var(--border)'">⚡ Run Heal Check</button>
+        </div>
+        <div id="healLog" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
+      </div>
+
+      <!-- Pro upsell -->
+      <div onclick="showBrainPro()" style="margin-top:12px;padding:14px;border:1px dashed #3730a3;border-radius:10px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#6366f1';this.style.background='#1e1b4b'" onmouseout="this.style.borderColor='#3730a3';this.style.background='transparent'">
+        <div style="font-size:14px;font-weight:600;color:#a5b4fc;">🔒 Auto-Heal is Pro</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Free: manual diagnose only. Pro auto-detects, auto-restarts, and predicts failures before they happen.</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Alerts tab -->
+  <div class="tab-content" id="tabAlerts">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔔 Push Alerts</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Know when something breaks — before your users tell you.</div>
+
+      <!-- 3-column scenario -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);">
+          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg-2);">🔓 Free (Dashboard Only)</div>
+          <div style="padding:14px;background:var(--surface);">
+            <div class="alert-entry" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--danger);background:var(--bg);">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🔴</span><span style="font-size:12px;font-weight:600;">Agent Down</span><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:#450a0a;color:#fca5a5;">Critical</span></div>
+              <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">hound has not checked in for 14 minutes</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">Found when you open dashboard</div>
+            </div>
+            <div class="outcome" style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#450a0a;border:1px solid #7f1d1d;color:#fca5a5;">
+              <strong>You discover it later</strong><br>
+              <span style="font-size:18px;font-weight:700;display:block;margin:3px 0;">~2h delayed</span>
+              No notification — you only see it when you check the dashboard.
+            </div>
+          </div>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--accent-on);">
+          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--bg);color:#86efac;">🛡️ Pro — Silent Auto-Heal</div>
+          <div style="padding:14px;background:var(--surface);">
+            <div class="alert-entry silent" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--accent-on);background:var(--bg);opacity:0.7;">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🟢</span><span style="font-size:12px;font-weight:600;">Agent Down → Healed</span><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:var(--bg);color:#86efac;">Auto</span></div>
+              <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">hound auto-restarted in 47s</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">No notification needed — you're never woken up</div>
+            </div>
+            <div class="outcome" style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:var(--bg);border:1px solid var(--accent-on);color:#86efac;">
+              <strong>You never know (that's good)</strong><br>
+              <span style="font-size:18px;font-weight:700;display:block;margin:3px 0;">Auto-healed</span>
+              Agent recovered before you'd even notice. Zero alerts to your phone.
+            </div>
+          </div>
+        </div>
+        <div style="border-radius:12px;overflow:hidden;border:1px solid #854d0e;">
+          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:#422006;color:#fde68a;">📲 Pro — Alert on Exhaustion</div>
+          <div style="padding:14px;background:var(--surface);">
+            <div class="alert-entry warning" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--warn);background:var(--bg);">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🟡</span><span style="font-size:12px;font-weight:600;">Circuit Breaker Tripped</span><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:#451a03;color:#fcd34d;">Warning</span></div>
+              <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">dreamer: circuit tripped after 5 failures — auto-retry in 4h</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">📱 Pushed to Telegram · 2s latency</div>
+            </div>
+            <div class="discovery-gap" style="display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 8px;border-radius:4px;margin-top:4px;background:var(--bg);color:#86efac;">
+              🔍 Discovery gap: ~10 min → you know in real time
+            </div>
+            <div class="outcome" style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#422006;border:1px solid #854d0e;color:#fde68a;">
+              <strong>Know instantly</strong><br>
+              <span style="font-size:18px;font-weight:700;display:block;margin:3px 0;">2s latency</span>
+              Push notification to Telegram/Slack/email. You decide if it needs attention.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Value comparison -->
+      <div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr><th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);"></th>
+            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);">Free</th>
+            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg);">Pro Silent</th>
+            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);">Pro Alert</th></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Detection</td>
+            <td style="font-size:12px;color:#94a3b8;padding:10px 14px;border-bottom:1px solid var(--bg);">Dashboard only</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">Auto-heal silently</td>
+            <td style="font-size:12px;color:#fde68a;padding:10px 14px;border-bottom:1px solid var(--bg);">Push + Auto-heal</td></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Delivery</td>
+            <td style="font-size:12px;color:#fca5a5;padding:10px 14px;border-bottom:1px solid var(--bg);">❌ None</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">✅ None needed</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);">✅ Telegram / Slack / Email</td></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Discovery gap</td>
+            <td style="font-size:12px;color:#fca5a5;padding:10px 14px;border-bottom:1px solid var(--bg);">~2h</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">0 (auto-healed)</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);">~2s</td></tr>
+          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:none;">Cost</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;">$0</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;background:var(--bg);">$0 (Pro)</td>
+            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;">$0 (Pro)</td></tr>
+        </table>
+      </div>
+
+      <!-- Channel config -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;">
+        <h3 style="font-size:13px;font-weight:600;color:var(--fg-2);margin-bottom:12px;">Channel Configuration <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:8px;">FREE</span></h3>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface);">
+          <span style="font-size:18px;">🔔</span>
+          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">In-Dashboard</div><div style="font-size:11px;color:var(--muted);">Alerts appear in the dashboard alert panel</div></div>
+          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:var(--accent-on);color:#86efac;">Active</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface);">
+          <span style="font-size:18px;">📱</span>
+          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Telegram</div><div style="font-size:11px;color:var(--muted);">Push notifications to your Telegram channel</div></div>
+          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface);">
+          <span style="font-size:18px;">💬</span>
+          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Slack</div><div style="font-size:11px;color:var(--muted);">Post alerts to a Slack channel</div></div>
+          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:none;">
+          <span style="font-size:18px;">📧</span>
+          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Email</div><div style="font-size:11px;color:var(--muted);;">Email notifications for critical alerts</div></div>
+          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
+        </div>
+      </div>
+
+      <!-- Insight callout -->
+      <div style="background:#1e1b4b;border:1px solid #3730a3;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;">
+        <span style="font-size:22px;line-height:1;">💡</span>
+        <div style="font-size:13px;line-height:1.6;">
+          <strong style="color:#a5b4fc;">Discovery gap matters.</strong> Every minute between an agent going down and you finding out costs time, money, and user trust. Pro reduces that gap from hours to seconds — and Silent mode eliminates it entirely.
+        </div>
+      </div>
+
+      <!-- Pro upsell -->
+      <div onclick="showBrainPro()" style="margin-top:12px;padding:14px;border:1px dashed #3730a3;border-radius:10px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#6366f1';this.style.background='#1e1b4b'" onmouseout="this.style.borderColor='#3730a3';this.style.background='transparent'">
+        <div style="font-size:14px;font-weight:600;color:#a5b4fc;">🔒 Push Alerts are Pro</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Free: dashboard alerts only. Pro adds Telegram/Slack/email push — and Silent mode that heals before you need to know.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Brain Pro modal -->
+<div class="modal-overlay" id="brainProModal" onclick="if(event.target===this)document.getElementById('brainProModal').classList.remove('active')">
+  <div class="modal">
+    <div style="font-size:40px;margin-bottom:12px;">🔒</div>
+    <h3>CHISEL Pro</h3>
+    <p style="margin-top:8px;font-size:13px;color:#94a3b8;">Turn passive observation into active optimisation.</p>
+    <ul class="data-table" style="list-style:none;margin:12px 0;width:100%;">
+      <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Full compression (guidance + memory + skills + context)<br><span style="font-size:11px;color:#64748b;">35% savings vs Lite's 22%</span></li>
+      <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Auto-Watch Daemon<br><span style="font-size:11px;color:#64748b;">Every SOUL.md edit triggers auto-compression</span></li>
+      <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Token Optimiser<br><span style="font-size:11px;color:#64748b;">Analyses 200+ turns to prune unused skills</span></li>
+      <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ 90-Day History & Fleet Comparison</li>
+    </ul>
+    <p style="font-size:12px;color:#64748b;">30-day free trial · <strong style="color:#e2e8f0;">$9/mo Solo</strong></p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="font-size:13px;padding:8px 20px;width:auto;">Not now</button>
+      <button class="add-btn" onclick="alert('Stripe checkout would open here')" style="font-size:13px;padding:8px 20px;">Start Free Trial</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-b" id="brainToast"></div>
+
+<!-- Skills Audit modal -->
+<div class="modal-overlay" id="skillsAuditModal" onclick="if(event.target===this)closeSkillsAudit()">
+  <div class="modal" style="max-width: 800px; width: 95%; padding: 0; overflow: hidden;">
+    <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+      <div>
+        <h3 id="saModalTitle" style="font-size:14px;font-weight:600;color:var(--fg);">Skill Audit</h3>
+        <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Skills ranked by token cost — see what's bloated</div>
+      </div>
+      <button class="modal-close" onclick="closeSkillsAudit()">✕</button>
+    </div>
+    <div class="modal-body" id="saModalBody" style="max-height: 80vh; padding: 18px; overflow-y: auto;">
+      <div style="text-align:center;padding:20px;color:var(--muted);">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Drill-down modal -->
+<div class="modal-overlay" id="drillModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modalTitle">Agent</h3>
+        <div class="sub" id="modalSub">Hermes</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ─── Data ───
+const COMP_COLORS = { identity: '#6366f1', skills: '#8b5cf6', memory: '#ec4899', tools: '#14b8a6', guidance: '#f97316' };
+const COMP_NAMES  = { identity: 'Identity', skills: 'Skills', memory: 'Memory', tools: 'Tools', guidance: 'Guidance' };
+const COMP_ORDER  = ['skills', 'tools', 'memory', 'guidance', 'identity'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let hiddenAgents = new Set();
+let lastDayIdx = 6;
+
+// ─── Render from /api/agents response ───
+function renderAgentHTML(html) {
+  document.getElementById('fleetContainer').innerHTML = html;
+}
+
+// ─── Modal ───
+function openModal(title, sub, bodyHtml) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalSub').textContent = sub;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('drillModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('drillModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ─── Section toggle ───
+function toggleSection(el) { el.classList.toggle('collapsed'); }
+
+// ─── Agent hide ───
+function toggleHide(name) {
+  hiddenAgents.add(name);
+  // Re-fetch agents to reflect hidden state
+  htmx.trigger('#fleetContainer', 'agents-updated');
+}
+
+// ─── Feedback ───
+function toggleFeedback() {
+  const bar = document.getElementById('feedbackBar');
+  bar.style.display = bar.style.display === 'none' || bar.style.display === '' ? 'flex' : 'none';
+}
+function addMissingAgent() {
+  const name = document.getElementById('feedbackInput').value.trim();
+  if (!name) { alert('Enter an agent name first'); return; }
+  // POST to /api/agents/add (future)
+  document.getElementById('feedbackInput').value = '';
+  document.getElementById('feedbackBar').style.display = 'none';
+  htmx.trigger('#fleetContainer', 'agents-updated');
+}
+
+// ─── HTMX agent loading ───
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+  if (evt.detail && evt.detail.target && evt.detail.target.id === 'fleetContainer') {
+    // Re-attach click handlers for metric rows that point to show*Drill functions
+  }
+});
+
+// ─── Tab switching ───
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  if (tab === 'brain' && !window.brainLoaded) {
+    loadBrainData();
+  }
+  if (tab === 'heal') {
+    runHealCheck();
+  }
+}
+
+// ─── Brain Analysis ───
+let brainData = null;
+function loadBrainData() {
+  fetch('/api/brain')
+    .then(r => r.json())
+    .then(data => {
+      brainData = data;
+      // Populate agent selector
+      const sel = document.getElementById('brainAgentSelect');
+      const keys = Object.keys(data).filter(k => k !== 'fleet').sort();
+      keys.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+      window.brainLoaded = true;
+      renderBrain('all');
+    })
+    .catch(e => console.error('Brain load failed:', e));
+}
+function renderBrain(agentName) {
+  if (!brainData) return;
+  const a = brainData[agentName] || brainData['fleet'];
+  if (!a) return;
+  const fw = a.framework;
+  document.getElementById('brainFwBadge').textContent = fw;
+  const totalVal = a.total_tokens || Object.values(a.components).reduce((x,y)=>x+y,0);
+  document.getElementById('brainTotal').innerHTML = totalVal.toLocaleString() + ' <span>total' + (agentName === 'all' ? ' across fleet' : '') + '</span>';
+  // Token bars
+  const comps = Object.entries(a.components).filter(([_,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  const maxT = Math.max(...comps.map(c => c[1]), 1);
+  const bars = comps.map(([name, tokens]) => {
+    const pct = (tokens / totalVal * 100).toFixed(1);
+    const barW = (tokens / maxT * 100).toFixed(1);
+    return `<div class="comp-bar-item">
+      <span class="cl" style="color:${COMP_COLORS[name]};">${name}</span>
+      <div class="bt"><div class="bf" style="width:${barW}%;background:${COMP_COLORS[name]};"></div></div>
+      <span class="cv">${tokens.toLocaleString()} <span style="color:#64748b;">(${pct}%)</span></span>
+    </div>`;
+  }).join('');
+  document.getElementById('brainTokenBars').innerHTML = bars || '<div style="color:#64748b;font-size:12px;">No token data for this agent</div>';
+  // Savings
+  const rawTk = a.raw_tokens || totalVal;
+  const liteTk = a.lite_tokens || Math.round(rawTk * 0.78);
+  const fullTk = a.full_tokens || Math.round(rawTk * 0.65);
+  const selProv = document.getElementById('brainProvider');
+  let rate = parseFloat(selProv.value);
+  if (selProv.value === 'custom') rate = parseFloat(document.getElementById('brainCustomRate').value) || 0;
+  document.getElementById('brainCustomCost').style.display = selProv.value === 'custom' ? 'flex' : 'none';
+  const litePct = ((rawTk - liteTk) / rawTk * 100).toFixed(1);
+  const fullPct = ((rawTk - fullTk) / rawTk * 100).toFixed(1);
+  const turnsPerDay = 50;
+  const cpt = rate / 1000000;
+  const liteDaily = liteTk * turnsPerDay;
+  const fullDaily = fullTk * turnsPerDay;
+  const rawDaily = rawTk * turnsPerDay;
+  const liteSavingsD = (rawDaily - liteDaily) * cpt;
+  const fullSavingsD = (rawDaily - fullDaily) * cpt;
+  document.getElementById('brainSavingsChart').innerHTML =
+    `<div class="sav-row"><span class="sl" style="color:#94a3b8;">Original</span><div class="st"><div class="sf" style="width:100%;background:#475569;"></div></div><span class="sv" style="color:#94a3b8;">${rawTk.toLocaleString()} tok/turn</span></div>
+    <div class="sav-row"><span class="sl" style="color:#86efac;">Lite (Free)</span><div class="st"><div class="sf" style="width:${(liteTk/rawTk*100).toFixed(1)}%;background:#22c55e;"></div></div><span class="sv" style="color:#22c55e;">${liteTk.toLocaleString()} tok <span style="color:#64748b;">(-${litePct}%)</span>${rate > 0 ? ' <span style="color:#64748b;font-size:11px;">→ $' + liteSavingsD.toFixed(3) + '/day</span>' : ''}</span></div>
+    <div class="sav-row"><span class="sl" style="color:#a5b4fc;">Full (Pro)</span><div class="st"><div class="sf" style="width:${(fullTk/rawTk*100).toFixed(1)}%;background:#6366f1;"></div></div><span class="sv" style="color:#a5b4fc;">${fullTk.toLocaleString()} tok <span style="color:#64748b;">(-${fullPct}%)</span>${rate > 0 ? ' <span style="color:#64748b;font-size:11px;">→ $' + fullSavingsD.toFixed(3) + '/day</span>' : ''}</span></div>`;
+  document.getElementById('brainSavingsCalc').innerHTML =
+    `<div class="cb green"><div class="big">-${litePct}%</div><div class="cbl">Lite saves / turn</div></div>
+    <div class="cb orange"><div class="big">-${fullPct}%</div><div class="cbl">Full saves / turn</div></div>
+    <div class="cb blue"><div class="big">${(fullSavingsD > 0 ? (rawDaily - fullDaily).toLocaleString() : '0')}</div><div class="cbl">Tokens saved / day</div></div>
+    <div class="cb purple"><div class="big">${rate > 0 ? '$' + fullSavingsD.toFixed(2) : 'FREE'}</div><div class="cbl">Dollars saved / day</div></div>`;
+  document.getElementById('brainProUpsell').querySelector('.pt').innerHTML =
+    `🔒 Full compression saves <span class="sh">$${fullSavingsD.toFixed(2)}/day</span> vs Lite's <span style="color:#22c55e;">$${liteSavingsD.toFixed(2)}</span> — that's <span class="sh">$${(fullSavingsD * 365).toFixed(0)}/year</span> extra`;
+  // Drift
+  const drift = a.drift || [];
+  const driftHtml = drift.map(item => {
+    const pts = item.points || [10]*7;
+    const maxP = Math.max(...pts, 1);
+    const stepX = pts.length > 1 ? 20 : 20;
+    const poly = pts.map((v,i) => `${i*20},${20-(v/maxP*18)}`).join(' ');
+    const area = pts.map((v,i) => `${i*20},${20-(v/maxP*18)}`).join(' ') + ` ${(pts.length-1)*20},20 0,20`;
+    const col = item.direction === 'up' ? '#f97316' : item.direction === 'down' ? '#22c55e' : '#94a3b8';
+    return `<div class="drift-row"><span class="dc">${item.component}</span>
+      <svg viewBox="0 0 ${(pts.length-1)*20} 20"><polygon points="${area}" fill="${col}22" />
+      <polyline points="${poly}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="dp" style="color:${col};">${item.pct}</span></div>`;
+  }).join('');
+  document.getElementById('brainDrift').innerHTML = driftHtml || '<div style="color:#64748b;font-size:12px;">No drift data</div>';
+  // Timeline
+  const turns = a.turn_timeline || [];
+  const maxTurn = Math.max(...turns, 1);
+  const cols = turns.map(v => {
+    const h = Math.max(3, (v / maxTurn) * 34);
+    return `<div class="per-turn-col" style="height:${h}px;"><span class="tip">${v.toLocaleString()} tok</span></div>`;
+  }).join('');
+  document.getElementById('brainTimeline').innerHTML = cols || '<div style="color:#64748b;font-size:12px;">No timeline data</div>';
+}
+function showBrainPro() {
+  document.getElementById('brainProModal').classList.add('active');
+}
+// Custom provider toggle
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('brainProvider').addEventListener('change', function() {
+    document.getElementById('brainCustomCost').style.display = this.value === 'custom' ? 'flex' : 'none';
+    renderBrain(document.getElementById('brainAgentSelect').value);
+  });
+});
+
+// ─── Auto-Heal ───
+function runHealCheck() {
+  document.getElementById('healLog').innerHTML = 'Running heal check...';
+  fetch('/api/heal-log')
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('healLog').innerHTML = html;
+    })
+    .catch(e => {
+      document.getElementById('healLog').innerHTML = '<div style="color:#ef4444;padding:12px;">Heal check failed: ' + e.message + '</div>';
     });
+}
 
-    // ─── Agent detail toggle ────────────────────────
-    function toggleAgentDetail(id) {
-        // Close all other open details first
-        document.querySelectorAll('.agent-detail.open').forEach(function(el) {
-            if (el.id !== 'detail-' + id) el.classList.remove('open');
-        });
-        var el = document.getElementById('detail-' + id);
-        if (!el) return;
-        var open = el.classList.contains('open');
-        el.classList.toggle('open');
-        if (!open) loadAgentTab(id, 'health');
-    }
-
-    var loadedTabs = {};
-    function loadAgentTab(agentId, tab) {
-        var key = agentId + '-' + tab;
-        var container = document.getElementById('detail-content-' + agentId);
-        if (!container) return;
-        // Detect if we're switching tabs within this agent — always re-fetch
-        // Don't cache per-tab; cache only as a debounce for the current load
-        if (loadedTabs['__in_flight__' + key]) return;
-        loadedTabs['__in_flight__' + key] = true;
-        container.innerHTML = '<div style="color:var(--muted);font-size:12px;">Loading...</div>';
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/agent-detail/' + encodeURIComponent(agentId) + '?tab=' + tab, true);
-        xhr.onload = function() {
-            container.innerHTML = xhr.responseText || '<div style="color:var(--muted);font-size:12px;">No data</div>';
-            delete loadedTabs['__in_flight__' + key];
-        };
-        xhr.onerror = function() {
-            container.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:16px;">📡 Server unreachable. Run <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco dashboard --restart</code> to fix.</div>';
-            delete loadedTabs['__in_flight__' + key];
-        };
-        xhr.send();
-    }
-
-    // ─── Pro Preview modal ──────────────────────────
-    function showProPreview(featureId) {
-        var overlay = document.getElementById('pro-preview-overlay');
-        if (!overlay) return;
-        overlay.style.display = 'block';
-        overlay.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:40px;">Loading...</div>';
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/pro-preview/' + encodeURIComponent(featureId), true);
-        xhr.onload = function() {
-            overlay.innerHTML = xhr.responseText || '<div style="color:var(--red);font-size:12px;text-align:center;padding:40px;">Failed to load preview</div>';
-            // Add ✕ close button and Escape key listener
-            var modal = overlay.querySelector('.pro-preview-modal');
-            if (modal) {
-                var header = modal.querySelector('div[style*="justify-content:space-between"]');
-                if (header && !header.querySelector('.pro-close-btn')) {
-                    var closeBtn = document.createElement('button');
-                    closeBtn.className = 'pro-close-btn';
-                    closeBtn.innerHTML = '✕';
-                    closeBtn.style.cssText = 'background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;padding:0 4px;line-height:1;';
-                    closeBtn.onclick = function(e) { e.stopPropagation(); closeProPreview(); };
-                    closeBtn.title = 'Close (Esc)';
-                    header.appendChild(closeBtn);
-                }
-            }
-            // Escape key listener
-            document.removeEventListener('keydown', closeProPreviewEsc);
-            document.addEventListener('keydown', closeProPreviewEsc);
-        };
-        xhr.onerror = function() {
-            overlay.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;padding:40px;">📡 Server unreachable. Run <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco dashboard --restart</code> to fix.</div>';
-        };
-        xhr.send();
-    }
-    function closeProPreview() {
-        var overlay = document.getElementById('pro-preview-overlay');
-        if (overlay) overlay.style.display = 'none';
-        document.removeEventListener('keydown', closeProPreviewEsc);
-    }
-    function closeProPreviewEsc(e) {
-        if (e.key === 'Escape') closeProPreview();
-    }
-
-    // ─── obs-dp-005: Missing-agent feedback button ──
-    function showFeedbackModal() {
-        var overlay = document.getElementById('pro-preview-overlay');
-        if (!overlay) return;
-        overlay.style.display = 'block';
-        overlay.innerHTML = `
-<div class="pro-preview-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;"
-     onclick="if(event.target===this) closeProPreview()">
-    <div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;max-width:480px;width:90%;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <h3 style="color:#f8fafc;font-size:16px;margin:0;">➕ Add missing agent</h3>
-            <span style="color:#64748b;cursor:pointer;font-size:18px;" onclick="closeProPreview()">✕</span>
-        </div>
-        <p style="color:#94a3b8;font-size:13px;margin-bottom:12px;">Don't see your agent? Run the CLI command:</p>
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;">
-            <code style="color:#e2e8f0;font-size:13px;">observeco agents add &lt;name&gt; --check &lt;url&gt;</code>
-        </div>
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:16px;">
-            <code style="color:#e2e8f0;font-size:13px;">observeco pulse check</code>
-            <span style="color:#94a3b8;font-size:12px;display:block;margin-top:4px;">Auto-discover all configured agents</span>
-        </div>
-        <div style="display:flex;gap:8px;justify-content:center;">
-            <button onclick="closeProPreview()"
-                    style="background:#3b82f6;color:white;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">
-                Got it
-            </button>
-        </div>
-    </div>
-</div>`;
-        document.removeEventListener('keydown', closeProPreviewEsc);
-        document.addEventListener('keydown', closeProPreviewEsc);
-    }
-
-    // ─── obs-dp-004: Show/hide × dismiss ─────────────
-    function dismissAgent(name) {
-        var card = document.getElementById('card-' + name);
-        if (!card) return;
-        card.style.display = 'none';
-        try {
-            var hidden = JSON.parse(sessionStorage.getItem('dismissed-agents') || '[]');
-            if (hidden.indexOf(name) === -1) hidden.push(name);
-            sessionStorage.setItem('dismissed-agents', JSON.stringify(hidden));
-        } catch(e) {}
-        // Show "restore all" button if not already present
-        var restoreBtn = document.getElementById('restore-dismissed');
-        if (!restoreBtn) {
-            var container = document.querySelector('.left-rail .fleet-bar') || document.getElementById('fleet-bar');
-            if (container) {
-                var btn = document.createElement('div');
-                btn.id = 'restore-dismissed';
-                btn.innerHTML = '<a href="#" onclick="restoreAllAgents();return false;" style="font-size:12px;color:#38bdf8;margin-left:8px;">Restore hidden agents</a>';
-                container.parentNode.insertBefore(btn, container.nextSibling);
-            }
-        }
-    }
-    function restoreAllAgents() {
-        document.querySelectorAll('.agent-card[style*="display: none"]').forEach(function(el) {
-            el.style.display = '';
-        });
-        try { sessionStorage.setItem('dismissed-agents', '[]'); } catch(e) {}
-        var btn = document.getElementById('restore-dismissed');
-        if (btn) btn.remove();
-    }
-    // Restore dismissed state on load
-    document.addEventListener('DOMContentLoaded', function() {
-        try {
-            var hidden = JSON.parse(sessionStorage.getItem('dismissed-agents') || '[]');
-            if (hidden.length > 0) {
-                hidden.forEach(function(name) {
-                    var card = document.getElementById('card-' + name);
-                    if (card) card.style.display = 'none';
-                });
-                // Htmx re-render clears the hidden state — re-mark after swap
-                var observer = new MutationObserver(function() {
-                    try {
-                        var h = JSON.parse(sessionStorage.getItem('dismissed-agents') || '[]');
-                        if (h.length > 0) {
-                            h.forEach(function(name) {
-                                var card = document.getElementById('card-' + name);
-                                if (card) card.style.display = 'none';
-                            });
-                        }
-                    } catch(e) {}
-                });
-                // Watch for htmx swaps
-                var target = document.getElementById('agent-cards');
-                if (target) observer.observe(target, { childList: true, subtree: true });
-            }
-        } catch(e) {}
+// ─── Skills Audit ───
+function openSkillsAuditModal(agentName) {
+  const modal = document.getElementById('skillsAuditModal');
+  const body = document.getElementById('saModalBody');
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Loading skills audit...</div>';
+  fetch('/api/skills-audit?agent=' + encodeURIComponent(agentName || 'all'))
+    .then(r => r.json())
+    .then(data => {
+      const s = data.summary;
+      const skills = data.skills;
+      const cats = data.categories;
+      let html = '<div class="sa-summary">' +
+        '<div class="sa-card"><div class="n" style="color:#e2e8f0;">' + s.total_skills + '</div><div class="l">Skills installed</div></div>' +
+        '<div class="sa-card"><div class="n" style="color:#94a3b8;">' + s.tokens_per_session.toLocaleString() + '</div><div class="l">Tokens / session</div></div>' +
+        '<div class="sa-card hl"><div class="n">$' + s.yearly_cost + '</div><div class="l">Yearly cost (DeepSeek)</div><div class="sv">Manual trim saves $' + (s.yearly_cost - s.after_manual_save).toFixed(0) + '/yr</div></div>' +
+        '<div class="sa-card wn"><div class="n">$' + s.after_pro_save + '</div><div class="l">Yearly cost after Pro</div><div class="sv" style="color:#86efac;">⬇ $' + s.pro_savings + ' saved</div></div>' +
+        '</div>';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;background:#1e1b4b;border:1px solid #3730a3;border-radius:10px;padding:14px 18px;margin-bottom:16px;">' +
+        '<div><div style="font-size:13px;font-weight:600;color:#a5b4fc;">🔒 Auto-Watch <span style="background:#3730a3;color:#a5b4fc;font-size:9px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;">Pro</span></div>' +
+        '<div style="font-size:12px;color:var(--muted);">Weekly scan + drift tracking + threshold alerts</div></div>' +
+        '<span style="font-size:18px;cursor:pointer;color:#6366f1;" onclick="showBrainPro()">🔒</span></div>';
+      html += '<div class="sa-card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;padding:0;">';
+      html += '<table class="sa-table"><tr><th>#</th><th>Skill</th><th>Tokens</th><th>Composition</th><th>Drift</th><th>Last used</th><th>$/yr</th></tr>';
+      const COMP_KEYS = ['identity', 'skills', 'memory', 'tools', 'guidance'];
+      const COMP_CLS = { identity: 'sg', skills: 'sg sk', memory: 'sg me', tools: 'sg to', guidance: 'sg gu' };
+      const COMP_LABELS = { identity: 'sg me', skills: 'sg sk', memory: 'sg mm', tools: 'sg to', guidance: 'sg gu' };
+      skills.forEach(sk => {
+        const tot = sk.tokens;
+        const comps = sk.comps || {};
+        const totalPct = Object.values(comps).reduce((a,b)=>a+b,0) || 1;
+        const bar = Object.entries(comps).map(([k,v]) => {
+          const w = (v / totalPct * 100).toFixed(0);
+          const cls = {identity:'sg',skills:'sg sk',memory:'sg mm',tools:'sg to',guidance:'sg gu'}[k] || 'sg';
+          return `<span class="${cls}" style="width:${w}%"></span>`;
+        }).join('');
+        const dirIcon = sk.drift_dir === 'up' ? '⬆' : sk.drift_dir === 'down' ? '⬇' : '—';
+        const driftCls = sk.drift_dir === 'up' ? 'up' : sk.drift_dir === 'down' ? 'dn' : 'fl';
+        const lastUsed = sk.last_used_days === 0 ? 'Today' : sk.last_used_days === 1 ? 'Yesterday' : sk.last_used_days + ' days ago';
+        const lastCls = sk.last_used_days > 60 ? 'lu st' : 'lu';
+        const tokenCls = sk.breach ? 'tk ov' : 'tk ok';
+        const badge = sk.breach ? '<span class="badge br">⛔ ' + sk.tokens + '</span>' : '<span class="badge ok">' + sk.tokens + '</span>';
+        const rowCls = sk.breach ? 'ov-th' : '';
+        html += '<tr class="' + rowCls + '"><td class="rnk">' + sk.rank + '</td><td><div class="sn">' + sk.name + ' ' + badge + '</div><div class="sc">' + sk.category + '</div></td>' +
+          '<td class="' + tokenCls + '">' + sk.tokens.toLocaleString() + '</td><td><div class="sa-bar">' + bar + '</div></td>' +
+          '<td class="dr ' + driftCls + '">' + dirIcon + (sk.drift_pct > 0 ? ' +' : ' ') + sk.drift_pct + '%</td>' +
+          '<td class="' + lastCls + '">' + lastUsed + '</td>' +
+          '<td class="co' + (sk.yearly_cost > 15 ? ' hi' : '') + '">$' + sk.yearly_cost.toFixed(2) + '</td></tr>';
+      });
+      html += '</table></div>';
+      html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">' +
+        '<div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:10px;">🏷️ By Category</div>' +
+        '<div class="sa-cat-grid">';
+      Object.entries(cats).forEach(([cat, info]) => {
+        html += '<div class="sa-cat-item"><span class="cn">' + cat.charAt(0).toUpperCase() + cat.slice(1) + '</span><span class="cc">' + info.skills + ' skills · ' + info.tokens.toLocaleString() + ' tokens</span></div>';
+      });
+      html += '</div></div>';
+      html += '<div style="text-align:center;margin-top:12px;">' +
+        '<div style="font-size:13px;color:#a5b4fc;margin-bottom:8px;">🔒 Pro Auto-Watch: weekly scan catches bloat the week it starts. $' + s.pro_savings + '/year savings.</div>' +
+        '<button onclick="showBrainPro()" style="background:var(--meta);border:none;color:white;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Start Free Trial — $9/mo</button></div>';
+      body.innerHTML = html;
+    })
+    .catch(e => {
+      body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed to load: ' + e.message + '</div>';
     });
-    </script>
+}
+function closeSkillsAudit() {
+  document.getElementById('skillsAuditModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+</script>
+
+<!-- htmx: load agents on page load and every 30s -->
+<div hx-get="/api/agents" hx-trigger="load, every 30s, agents-updated from:body" hx-target="#fleetContainer" hx-swap="innerHTML"></div>
+
 </body>
 </html>

@@ -153,6 +153,26 @@ CREATE TABLE IF NOT EXISTS feedback (
 
 CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);
 
+-- Telemetry events (v1.1 — automatic crash/usage/install pings)
+CREATE TABLE IF NOT EXISTS telemetry_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    machine_id TEXT DEFAULT '',
+    version TEXT DEFAULT '',
+    python TEXT DEFAULT '',
+    os_info TEXT DEFAULT '',
+    error_type TEXT DEFAULT '',
+    error_message TEXT DEFAULT '',
+    stack_trace TEXT DEFAULT '',
+    command TEXT DEFAULT '',
+    feature_name TEXT DEFAULT '',
+    extra TEXT DEFAULT '{}',
+    created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_telemetry_event ON telemetry_events(event_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_telemetry_machine ON telemetry_events(machine_id);
+
 -- Communication Pathway Map (§3.19)
 CREATE TABLE IF NOT EXISTS pathway_nodes (
     id TEXT PRIMARY KEY,
@@ -314,6 +334,60 @@ class Database:
         conn = self._get_conn()
         cur = conn.execute(
             "SELECT * FROM feedback WHERE created_at >= ? ORDER BY created_at DESC",
+            (since_ts,),
+        )
+        return [dict(r) for r in cur.fetchall()]
+
+    # -- Telemetry Events --
+
+    def save_telemetry(self, event: dict) -> int:
+        """Persist an automatic telemetry event. Returns row id."""
+        conn = self._get_conn()
+        payload = event.get("payload", {})
+        cur = conn.execute(
+            "INSERT INTO telemetry_events (event_type, machine_id, version, python, os_info, "
+            "error_type, error_message, stack_trace, command, feature_name, extra, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                event.get("event", "unknown"),
+                event.get("machine_id", ""),
+                event.get("version", ""),
+                event.get("python", ""),
+                event.get("os", ""),
+                payload.get("type", ""),
+                payload.get("message", ""),
+                payload.get("stack", ""),
+                payload.get("command", ""),
+                payload.get("feature", ""),
+                json.dumps(payload.get("detail", "")),
+                int(time.time()),
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid or 0
+
+    def get_telemetry(self, event_type: Optional[str] = None,
+                      limit: int = 100, offset: int = 0) -> list[dict]:
+        """List telemetry events, newest first."""
+        conn = self._get_conn()
+        if event_type:
+            cur = conn.execute(
+                "SELECT * FROM telemetry_events WHERE event_type=? "
+                "ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (event_type, limit, offset),
+            )
+        else:
+            cur = conn.execute(
+                "SELECT * FROM telemetry_events ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (limit, offset),
+            )
+        return [dict(r) for r in cur.fetchall()]
+
+    def get_recent_telemetry(self, since_ts: int) -> list[dict]:
+        """Get telemetry events since a timestamp."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "SELECT * FROM telemetry_events WHERE created_at >= ? ORDER BY created_at DESC",
             (since_ts,),
         )
         return [dict(r) for r in cur.fetchall()]
