@@ -1,0 +1,57 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist
+build
+.eggs
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.coverage
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+*.secret
+*.key
+secrets.json
+.secrets.json
+
+# Data
+*.db
+*.sqlite
+data/
+.clawbench/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Docs
+references/
+specs/
+docs/
+*.md
+!README.md
+LICENSE
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Wrangler
+.wrangler/

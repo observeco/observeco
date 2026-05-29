@@ -1,0 +1,246 @@
+"""ObserveCo public API — REST endpoints for third-party integrations.
+
+API v1 endpoints:
+- GET /api/v1/fleet — fleet status overview
+- GET /api/v1/agents — list all agents
+- GET /api/v1/agents/{id} — agent details
+- GET /api/v1/agents/{id}/health — agent health history
+- GET /api/v1/agents/{id}/errors — agent error history
+- GET /api/v1/agents/{id}/tokens — token usage breakdown
+- POST /api/v1/events — ingest events from external sources
+- GET /api/v1/events — list recent events
+- GET /api/v1/risks — risk classification summary
+- POST /api/v1/risks/classify — classify a tool call
+- GET /api/v1/doctor/diagnostics — run diagnostics
+- GET /api/v1/health — API health check
+
+Authentication: Bearer token via Authorization header.
+"""
+from __future__ import annotations
+
+import json
+import time
+from typing import Optional
+
+from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi.responses import JSONResponse
+
+from observeco.db import Database
+
+router = APIRouter(prefix="/api/v1", tags=["v1"])
+db = Database()
+
+# Simple token store (production would use a proper secret manager)
+API_TOKENS: dict[str, dict] = {}
+
+
+def _verify_auth(authorization: str = Header(None)) -> dict:
+    """Verify Bearer token authentication."""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization format")
+    token = authorization[7:]
+    if token not in API_TOKENS:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return API_TOKENS[token]
+
+
+# --- Fleet endpoints ---
+
+@router.get("/fleet")
+async def fleet_status(authorization: str = Header(None)):
+    """Get fleet status overview — all agents, health, token usage."""
+    _verify_auth(authorization)
+    agents = db.get_agents()
+    summary = db.get_agent_status_summary()
+
+    fleet = []
+    alive = dead = 0
+    for agent in agents:
+        name = agent.get("agent_name", agent.get("name", ""))
+        s = summary.get(name, {})
+        status = s.get("status", "unknown")
+        if status == "alive":
+            alive += 1
+        elif status == "dead":
+            dead += 1
+        fleet.append({
+            "name": name,
+            "framework": agent.get("framework", "unknown"),
+            "status": status,
+            "latency_ms": s.get("latency_ms", 0),
+            "last_check": s.get("timestamp", ""),
+            "circuit_tripped": s.get("circuit_tripped", 0),
+        })
+
+    return {
+        "total": len(agents),
+        "alive": alive,
+        "dead": dead,
+        "errors": len(agents) - alive - dead,
+        "agents": fleet,
+    }
+
+
+# --- Agent endpoints ---
+
+@router.get("/agents")
+async def list_agents(authorization: str = Header(None)):
+    """List all registered agents."""
+    _verify_auth(authorization)
+    agents = db.get_agents()
+    return {"agents": agents}
+
+
+@router.get("/agents/{agent_name}")
+async def get_agent(agent_name: str, authorization: str = Header(None)):
+    """Get agent details."""
+    _verify_auth(authorization)
+    summary = db.get_agent_status_summary()
+    s = summary.get(agent_name, {})
+    if not s:
+        raise HTTPException(status_code=404, detail=f"Agent '{agent_name}' not found")
+    return {"name": agent_name, **s}
+
+
+@router.get("/agents/{agent_name}/health")
+async def agent_health(agent_name: str, limit: int = 50, authorization: str = Header(None)):
+    """Get agent health history."""
+    _verify_auth(authorization)
+    pulses = db.get_recent_pulses(agent_name, limit=limit)
+    return {"agent": agent_name, "pulses": pulses}
+
+
+@router.get("/agents/{agent_name}/errors")
+async def agent_errors(agent_name: str, limit: int = 50, authorization: str = Header(None)):
+    """Get agent error history."""
+    _verify_auth(authorization)
+    errors = db.get_errors(agent_name, limit=limit)
+    return {"agent": agent_name, "errors": errors}
+
+
+@router.get("/agents/{agent_name}/tokens")
+async def agent_tokens(agent_name: str, authorization: str = Header(None)):
+    """Get token usage breakdown."""
+    _verify_auth(authorization)
+    try:
+        conn = db._get_conn()
+        row = conn.execute(
+            "SELECT * FROM chisel_trims WHERE agent_name=? ORDER BY timestamp DESC LIMIT 1",
+            (agent_name,),
+        ).fetchone()
+        if row:
+            return {"agent": agent_name, "tokens": dict(row)}
+    except Exception:
+        pass
+    return {"agent": agent_name, "tokens": None}
+
+
+# --- Events endpoints ---
+
+@router.post("/events")
+async def ingest_event(request: Request, authorization: str = Header(None)):
+    """Ingest an event from an external source (OEF format)."""
+    _verify_auth(authorization)
+    try:
+        body = await request.json()
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    # Validate OEF format
+    required = ["event_type", "agent_id"]
+    for field in required:
+        if not body.get(field):
+            raise HTTPException(status_code=400, detail=f"Missing field: {field}")
+
+    # Log to session log
+    try:
+        from observeco.session_log import SessionLogger
+        logger = SessionLogger()
+        logger.log(
+            event_type=body["event_type"],
+            data=body.get("payload", {}),
+            agent_id=body["agent_id"],
+            risk_level=body.get("payload", {}).get("risk_level", ""),
+        )
+    except Exception:
+        pass
+
+    return {"status": "accepted", "event_type": body["event_type"]}
+
+
+@router.get("/events")
+async def list_events(limit: int = 50, authorization: str = Header(None)):
+    """List recent events."""
+    _verify_auth(authorization)
+    try:
+        from observeco.session_log import SessionLogger
+        logger = SessionLogger()
+        entries = logger.get_entries(limit=limit)
+        return {"events": entries}
+    except Exception:
+        return {"events": []}
+
+
+# --- Risk endpoints ---
+
+@router.get("/risks")
+async def risk_summary(authorization: str = Header(None)):
+    """Get risk classification summary."""
+    _verify_auth(authorization)
+    from observeco.risk_engine import RiskLevel, RISK_EMOJI
+    levels = {}
+    for level in RiskLevel:
+        levels[level.value] = {"emoji": RISK_EMOJI[level], "count": 0}
+    return {"risk_levels": levels, "policy": "low=auto, medium=configurable, high=flag, critical=deny"}
+
+
+@router.post("/risks/classify")
+async def classify_risk(request: Request, authorization: str = Header(None)):
+    """Classify a tool call by risk level."""
+    _verify_auth(authorization)
+    try:
+        body = await request.json()
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    from observeco.risk_engine import ToolCall, classify_tool_call, classify_text_action
+
+    tool_name = body.get("tool_name", "")
+    tool_args = body.get("tool_args", {})
+    action_text = body.get("action_text", "")
+
+    if tool_name:
+        tc = ToolCall(name=tool_name, arguments=tool_args)
+        result = classify_tool_call(tc)
+    elif action_text:
+        result = classify_text_action(action_text)
+    else:
+        raise HTTPException(status_code=400, detail="Provide tool_name+tool_args or action_text")
+
+    return {
+        "risk_level": result.level.value,
+        "category": result.category,
+        "reason": result.reason,
+        "action": result.action,
+    }
+
+
+# --- Doctor endpoint ---
+
+@router.get("/doctor/diagnostics")
+async def run_diagnostics(authorization: str = Header(None)):
+    """Run environment diagnostics."""
+    _verify_auth(authorization)
+    from observeco.doctor.diagnostics import run_diagnostics as _run
+    report = _run()
+    return report.to_dict()
+
+
+# --- Health check ---
+
+@router.get("/health")
+async def health():
+    """API health check (no auth required)."""
+    return {"status": "ok", "version": "0.1.0", "timestamp": int(time.time())}

@@ -436,6 +436,55 @@ def agents_add(
     run_add(name=name, framework=framework, health_check=health_check)
 
 
+# -- Fleet subcommands --
+
+fleet_app = typer.Typer(help="Fleet dashboard — multi-agent, multi-channel overview", no_args_is_help=True)
+app.add_typer(fleet_app, name="fleet")
+
+@fleet_app.command(name="status")
+def fleet_status() -> None:
+    """Show fleet status — all agents, health, token usage."""
+    from rich.console import Console
+    from rich.table import Table
+    from observeco.db import Database
+
+    db = Database()
+    agents = db.get_agents()
+    summary = db.get_agent_status_summary()
+
+    console = Console()
+    table = Table(title="Fleet Status")
+    table.add_column("Agent", style="cyan")
+    table.add_column("Framework")
+    table.add_column("Status")
+    table.add_column("Latency")
+    table.add_column("Circuit")
+
+    alive = dead = 0
+    for agent in agents:
+        name = agent.get("agent_name", agent.get("name", ""))
+        s = summary.get(name, {})
+        status = s.get("status", "unknown")
+        if status == "alive":
+            alive += 1
+            status_style = "[green]alive[/green]"
+        elif status == "dead":
+            dead += 1
+            status_style = "[red]dead[/red]"
+        else:
+            status_style = f"[yellow]{status}[/yellow]"
+        table.add_row(
+            name,
+            agent.get("framework", "?"),
+            status_style,
+            f"{s.get('latency_ms', 0):.0f}ms",
+            "tripped" if s.get("circuit_tripped") else "ok",
+        )
+
+    console.print(table)
+    console.print(f"\n  Total: {len(agents)} | Alive: {alive} | Dead: {dead}")
+
+
 # -- Pathway subcommands --
 
 pathway_app = typer.Typer(help="Communication Pathway Map — trace message delivery paths", no_args_is_help=True)

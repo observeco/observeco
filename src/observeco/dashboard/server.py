@@ -22,6 +22,7 @@ from fastapi.staticfiles import StaticFiles
 from observeco.billing import add_billing_endpoints
 from observeco.dashboard.otel import router as otel_router
 from observeco.db import Database
+from observeco.api import router as api_router
 
 # Token component colors (matching mockup design system)
 COMP_COLORS = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
@@ -34,12 +35,14 @@ app = FastAPI(title="ObserveCo Dashboard")
 db = Database()
 
 # --- Auth setup ---
+import secrets as _secrets
 from observeco.auth.oauth2 import OAuth2Provider
 auth_provider = OAuth2Provider()
 
 # Register billing + OTel + feedback endpoints
 add_billing_endpoints(app)
 app.include_router(otel_router)
+app.include_router(api_router)
 
 
 # ---------------------------------------------------------------------------
@@ -120,7 +123,7 @@ async def auth_login(provider: str = ""):
         session = auth_provider._create_local_session("local@local.local", "Local User")
         from fastapi.responses import RedirectResponse
         resp = RedirectResponse(url="/")
-        resp.set_cookie("observeco_token", session.token, httponly=True, max_age=604800)
+        resp.set_cookie("observeco_token", session.token, httponly=True, secure=True, samesite="lax", max_age=604800)
         return resp
     url = auth_provider.get_authorization_url(state=secrets.token_urlsafe(16))
     from fastapi.responses import RedirectResponse
@@ -137,7 +140,7 @@ async def auth_callback(code: str = "", state: str = ""):
         return HTMLResponse("<h1>Authentication failed</h1>", status_code=401)
     from fastapi.responses import RedirectResponse
     resp = RedirectResponse(url="/")
-    resp.set_cookie("observeco_token", session.token, httponly=True, max_age=604800)
+    resp.set_cookie("observeco_token", session.token, httponly=True, secure=True, samesite="lax", max_age=604800)
     return resp
 
 

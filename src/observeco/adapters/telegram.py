@@ -208,13 +208,18 @@ class TelegramAdapter:
         """Verify Telegram webhook request.
 
         Telegram uses a secret token in X-Telegram-Bot-Api-Secret-Token header.
+        Returns False if no secret is configured (never trust unverified requests).
         """
         if not self.webhook_secret:
-            logger.warning("Telegram webhook verification skipped — no secret")
-            return True
+            logger.warning("Telegram webhook verification skipped — no secret configured")
+            return False
 
         token = headers.get("X-Telegram-Bot-Api-Secret-Token", "")
-        return token == self.webhook_secret
+        if not token:
+            return False
+
+        # Constant-time comparison to prevent timing attacks
+        return hmac.compare_digest(token, self.webhook_secret)
 
     def set_webhook(self, url: str, secret: str = "") -> bool:
         """Set the webhook URL for the bot."""

@@ -91,6 +91,7 @@ class OAuth2Provider:
         self.redirect_uri = redirect_uri or os.environ.get("OBSERVECO_OAUTH_REDIRECT_URI", "")
         self.jwt_secret = jwt_secret or os.environ.get("OBSERVECO_JWT_SECRET", secrets.token_hex(32))
         self._sessions: dict[str, Session] = {}
+        self._pending_state: str = ""
 
     def is_configured(self) -> bool:
         return self.provider != "local" and bool(self.client_id and self.client_secret)
@@ -104,24 +105,35 @@ class OAuth2Provider:
             raise ValueError(f"Unknown provider: {self.provider}")
 
         config = self.PROVIDERS[self.provider]
+
+        # Generate and store state for CSRF protection
+        if not state:
+            state = secrets.token_urlsafe(16)
+        self._pending_state = state
+
+        import urllib.parse
         params = {
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
             "response_type": "code",
             "scope": " ".join(config["scopes"]),
+            "state": state,
         }
-        if state:
-            params["state"] = state
 
-        query = "&".join(f"{k}={v}" for k, v in params.items())
+        query = urllib.parse.urlencode(params)
         return f"{config['authorization_url']}?{query}"
 
-    def exchange_code(self, code: str) -> Optional[Session]:
+    def exchange_code(self, code: str, state: str = "") -> Optional[Session]:
         """Exchange authorization code for access token and create session."""
         if self.provider == "local":
             return self._create_local_session("local@local.local", "Local User")
 
         if self.provider not in self.PROVIDERS:
+            return None
+
+        # Verify state parameter (CSRF protection)
+        if state and state != self._pending_state:
+            logger.warning(f"OAuth state mismatch: expected {self._pending_state}, got {state}")
             return None
 
         config = self.PROVIDERS[self.provider]
