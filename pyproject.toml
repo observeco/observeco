@@ -35,7 +35,7 @@ dependencies = [
 [project.optional-dependencies]
 dashboard = ["jinja2>=3.1", "python-multipart>=0.0.9"]
 graph = ["tree-sitter>=0.25", "tree-sitter-python>=0.25"]
-adapters = ["pynacl>=1.5.0"]  # Ed25519 for Discord webhook verification
+adapters = ["pynacl>=1.5.0", "defusedxml>=0.7.0"]  # Ed25519 for Discord, XML security for SAML
 dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.3", "mypy>=1.0"]
 watch = ["watchdog>=4"]
 

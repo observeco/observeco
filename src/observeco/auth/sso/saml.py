@@ -20,7 +20,12 @@ import hashlib
 import os
 import time
 import urllib.parse
-import xml.etree.ElementTree as ET
+try:
+    import defusedxml.ElementTree as ET
+    HAS_DEFUSEDXML = True
+except ImportError:
+    import xml.etree.ElementTree as ET
+    HAS_DEFUSEDXML = False
 from dataclasses import dataclass, field
 from typing import Optional
 

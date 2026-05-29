@@ -8,14 +8,17 @@ echo   ObserveCo - Windows Installer
 echo ========================================
 echo.
 
-REM Check Python
-python --version >nul 2>&1
+REM Check Python version
+python -c "import sys; exit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: Python not found. Please install Python 3.10+ from python.org
+    echo ERROR: Python 3.10+ required. Current version:
+    python --version
     echo Download: https://www.python.org/downloads/
     pause
     exit /b 1
 )
+
+echo Python version OK:
 
 echo [1/4] Installing ObserveCo...
 pip install observeco
