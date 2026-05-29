@@ -193,11 +193,10 @@ class DiscordAdapter:
         )
 
     def verify_webhook(self, headers: dict, body: str) -> bool:
-        """Verify Discord request signature.
+        """Verify Discord request signature (Ed25519).
 
-        Discord uses Ed25519 signatures. This is a simplified check —
-        for production, use the `nacl` or `pynacl` library for proper
-        Ed25519 verification.
+        Uses pynacl for proper Ed25519 verification.
+        Falls back to header-only check if pynacl is not installed.
         """
         if not self.public_key:
             logger.warning("Discord signature verification skipped — no public key")
@@ -209,13 +208,24 @@ class DiscordAdapter:
         if not signature or not timestamp:
             return False
 
-        # For full implementation, use:
-        # from nacl.signing import VerifyKey
-        # verify_key = VerifyKey(bytes.fromhex(self.public_key))
-        # verify_key.verify(f"{timestamp}{body}".encode(), bytes.fromhex(signature))
-        # For now, return True if headers are present (placeholder)
-        logger.info("Discord signature verification: placeholder (implement nacl for production)")
-        return True
+        try:
+            from nacl.signing import VerifyKey
+            from nacl.exceptions import BadSignatureError
+
+            verify_key = VerifyKey(bytes.fromhex(self.public_key))
+            message = f"{timestamp}{body}".encode()
+            verify_key.verify(message, bytes.fromhex(signature))
+            return True
+        except ImportError:
+            logger.warning("pynacl not installed — Discord signature verification is placeholder")
+            # Fallback: accept if headers are present (NOT secure for production)
+            return True
+        except BadSignatureError:
+            logger.warning("Discord signature verification failed: bad signature")
+            return False
+        except Exception as e:
+            logger.error(f"Discord signature verification error: {e}")
+            return False
 
     # --- API ---
 

@@ -79,11 +79,20 @@ class OEFEvent:
 
     @classmethod
     def verify_signature(cls, event_data: str, signature: str, secret: str) -> bool:
-        """Verify HMAC-SHA256 signature."""
+        """Verify HMAC-SHA256 signature.
+
+        Args:
+            event_data: The canonical signature_payload() string (not raw JSON)
+            signature: The signature to verify (with or without 'sha256=' prefix)
+            secret: The shared secret
+        """
+        # Strip prefix if present
+        if signature.startswith("sha256="):
+            signature = signature[7:]
         expected = hashlib.sha256(
             f"{secret}{event_data}".encode()
         ).hexdigest()
-        return expected == signature
+        return hmac.compare_digest(expected, signature)
 
 
 # --- Convenience constructors ---
