@@ -1303,7 +1303,7 @@ async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
 @app.get("/api/openclaw-plugins")
 async def api_openclaw_plugins():
     """OpenClaw plugin install/runtime status."""
-    loads = db.get_loads(limit=10)
+    loads = db.get_loads()
     agents = [a for a in db.get_agents() if a.get("framework","").lower() == "openclaw"]
     result = {"agents": [a["agent_name"] for a in agents],
         "plugin_sources": [

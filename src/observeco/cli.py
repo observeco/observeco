@@ -359,6 +359,34 @@ def adapters_send(
         console.print(f"[red]Unknown channel: {channel}[/red]")
 
 
+# -- Doctor subcommands --
+
+doctor_app = typer.Typer(help="Intelligent environment troubleshooter with LLM-powered diagnostics")
+app.add_typer(doctor_app, name="doctor")
+
+@doctor_app.command(name="run")
+def doctor_run(
+    auto_fix: bool = typer.Option(False, "--auto-fix", "-y", help="Apply fixes automatically"),
+    provider: str = typer.Option("auto", "--provider", "-p", help="LLM provider: auto, openai, anthropic, google, ollama, none"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Diagnose environment issues and get AI-powered fixes."""
+    from observeco.doctor.cli import doctor_run as _run
+    _run(auto_fix=auto_fix, provider=provider, json_output=json_output)
+
+@doctor_app.command(name="diagnose")
+def doctor_diagnose() -> None:
+    """Quick health check — diagnostics only."""
+    from observeco.doctor.cli import doctor_diagnose as _diagnose
+    _diagnose()
+
+@doctor_app.command(name="providers")
+def doctor_providers() -> None:
+    """List available LLM providers."""
+    from observeco.doctor.cli import doctor_providers as _providers
+    _providers()
+
+
 # -- Agents subcommands --
 
 agents_app = typer.Typer(help="Manage agent registration & discovery", no_args_is_help=True)

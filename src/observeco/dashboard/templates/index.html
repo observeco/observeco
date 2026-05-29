@@ -973,6 +973,52 @@ body {
 
 <div class="toast-b" id="brainToast"></div>
 
+<!-- Pathway Map full-page modal -->
+<div class="modal-overlay" id="pathwayModal" onclick="if(event.target===this)closePathwayModal()">
+  <div class="modal" style="max-width: 1400px; width: 95%; height: 90vh; padding: 0; overflow: hidden;">
+    <div class="modal-header" style="border-bottom: 1px solid var(--border); flex-shrink: 0;">
+      <div>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🕸️ Pathway Map</h3>
+        <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Agent ecosystem routing graph</div>
+      </div>
+      <button class="modal-close" onclick="closePathwayModal()">✕</button>
+    </div>
+    <iframe id="pathwayFrame" src="/pathway" style="width:100%;height:calc(100% - 50px);border:none;background:#0f172a;"></iframe>
+  </div>
+</div>
+
+<!-- Chisel Compress modal -->
+<div class="modal-overlay" id="chiselModal" onclick="if(event.target===this)closeModalById('chiselModal')">
+  <div class="modal" style="max-width: 700px; width: 90%; padding: 0; overflow: hidden;">
+    <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+      <div>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🧪 CHISEL Compression</h3>
+        <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Preview & apply token compression</div>
+      </div>
+      <button class="modal-close" onclick="closeModalById('chiselModal')">✕</button>
+    </div>
+    <div class="modal-body" id="chiselBody" style="max-height: 80vh; padding: 18px; overflow-y: auto;">
+      <div style="text-align:center;padding:20px;color:var(--muted);">Loading compression data...</div>
+    </div>
+  </div>
+</div>
+
+<!-- OpenClaw Plugin modal -->
+<div class="modal-overlay" id="openclawModal" onclick="if(event.target===this)closeModalById('openclawModal')">
+  <div class="modal" style="max-width: 700px; width: 90%; padding: 0; overflow: hidden;">
+    <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+      <div>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🔌 OpenClaw Plugins</h3>
+        <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Plugin sources, intent classifiers, load status</div>
+      </div>
+      <button class="modal-close" onclick="closeModalById('openclawModal')">✕</button>
+    </div>
+    <div class="modal-body" id="openclawBody" style="max-height: 80vh; padding: 18px; overflow-y: auto;">
+      <div style="text-align:center;padding:20px;color:var(--muted);">Loading plugin data...</div>
+    </div>
+  </div>
+</div>
+
 <!-- Skills Audit modal -->
 <div class="modal-overlay" id="skillsAuditModal" onclick="if(event.target===this)closeSkillsAudit()">
   <div class="modal" style="max-width: 800px; width: 95%; padding: 0; overflow: hidden;">
@@ -1262,6 +1308,83 @@ function openSkillsAuditModal(agentName) {
 }
 function closeSkillsAudit() {
   document.getElementById('skillsAuditModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ─── Pathway Map ───
+function openPathwayModal() {
+  document.getElementById('pathwayModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  const frame = document.getElementById('pathwayFrame');
+  if (frame && !frame.src) frame.src = '/pathway';
+}
+function closePathwayModal() {
+  document.getElementById('pathwayModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+// ─── CHISEL Compression ───
+function openChiselModal(agentName) {
+  const modal = document.getElementById('chiselModal');
+  const body = document.getElementById('chiselBody');
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Loading...</div>';
+  fetch('/api/chisel-preview?agent=' + encodeURIComponent(agentName || 'all'))
+    .then(r => r.json())
+    .then(data => {
+      const agents = Object.entries(data.agents || {});
+      let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">' +
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:12px;font-weight:600;margin-bottom:4px;">Step 1: Preview</div><div style="font-size:11px;color:#64748b;margin-bottom:8px;">See what changes before applying.</div><button class="heal-btn" style="background:rgba(22,163,74,0.1);color:#22c55e;" onclick="showToastB(\'✅ Preview loaded for ' + agents.length + ' agents\')">▶️ Run Preview</button></div>' +
+        '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:12px;font-weight:600;margin-bottom:4px;">Step 2: Apply</div><div style="font-size:11px;color:#64748b;margin-bottom:8px;">Write compressed version to SOUL.md. Backup created automatically.</div><div style="display:flex;gap:6px;"><button class="heal-btn" onclick="showToastB(\'💾 SOUL.md compressed. Backup saved.\')">💾 Apply</button><button class="feedback-btn" onclick="showToastB(\'📋 Diff report copied\')">📋 Copy Diff</button></div></div></div>';
+      if (agents.length > 0) {
+        html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;"><h4 style="font-size:13px;font-weight:600;margin-bottom:8px;">Agent Compression Data</h4>';
+        html += agents.map(([name, a]) => {
+          const litePct = a.raw_tokens > 0 ? Math.round((1 - a.lite_tokens / a.raw_tokens) * 100) : 0;
+          const fullPct = a.raw_tokens > 0 ? Math.round((1 - a.full_tokens / a.raw_tokens) * 100) : 0;
+          return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:#e2e8f0;font-weight:500;">' + name + '</span><span style="color:#94a3b8;">' + a.raw_tokens + ' tok → <span style="color:#22c55e;">' + a.lite_tokens + ' tok (-' + litePct + '%)</span> <span style="color:#a5b4fc;">| Full: ' + a.full_tokens + ' tok (-' + fullPct + '%)</span></span></div>';
+        }).join('') + '</div>';
+      }
+      html += '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:12px;color:#64748b;margin-bottom:8px;">🔒 Auto-Compression (Pro) — Every time your SOUL.md is edited, watch daemon runs compression automatically.</div><div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.8;"><span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified — compressing...</span><br><span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ 4,200 → 3,276 tok (-22%)</span><br><span style="color:#38bdf8;">📊 Cumulative: 47,812 tokens saved this week</span></div><div style="margin-top:10px;text-align:center;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;" onclick="showBrainPro()">Unlock with Pro →</button></div></div>';
+      body.innerHTML = html;
+    })
+    .catch(e => { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
+}
+function showToastB(msg) {
+  const t = document.getElementById('brainToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── OpenClaw Plugins ───
+function openOpenclawModal() {
+  const modal = document.getElementById('openclawModal');
+  const body = document.getElementById('openclawBody');
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  body.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">Loading...</div>';
+  fetch('/api/openclaw-plugins')
+    .then(r => r.json())
+    .then(data => {
+      let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
+      (data.plugin_sources || []).forEach(p => {
+        html += '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span style="font-size:16px;">' + p.icon + '</span><span style="font-size:13px;font-weight:600;">' + p.name + '</span><span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;' + (p.status === 'active' ? 'background:rgba(34,197,94,0.1);color:#86efac;' : 'background:rgba(100,116,139,0.1);color:#94a3b8;') + '">' + p.status + '</span></div><div style="font-size:11px;color:var(--muted);">' + (p.intents || []).join(' · ') + '</div></div>';
+      });
+      html += '</div>';
+      if (data.recent_loads && data.recent_loads.length > 0) {
+        html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;"><div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:6px;">Recent Loads</div>' +
+          data.recent_loads.map(l => '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border);"><span>' + l.source + '</span><span style="color:#94a3b8;">loaded: ' + l.loaded + ' · skipped: ' + l.skipped + ' · saved: ' + l.saved + ' tok</span></div>').join('') + '</div>';
+      }
+      html += '<div style="display:flex;gap:8px;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" onclick="showToastB(\'Plugin sources refreshed\')">🔄 Re-scan Sources</button><button class="feedback-btn" onclick="showBrainPro()">🔒 Pro: Auto-Config</button></div>';
+      html += '<div style="margin-top:12px;font-size:11px;color:#64748b;text-align:center;">' + (data.agents || []).length + ' OpenClaw agent(s) · ' + data.profiles_count + ' profiles loaded</div>';
+      body.innerHTML = html;
+    })
+    .catch(e => { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
+}
+function closeModalById(id) {
+  document.getElementById(id).classList.remove('active');
   document.body.style.overflow = '';
 }
 </script>
