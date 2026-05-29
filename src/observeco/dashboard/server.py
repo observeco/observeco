@@ -2419,12 +2419,12 @@ async def api_risk():
             for s in sessions:
                 status_icon = "✓" if s["valid"] else "✗"
                 status_color = "var(--green)" if s["valid"] else "var(--red)"
-                decisions = ", ".join(f"{k}: {v}" for k, v in s["decisions"].items()) or "none"
+                decisions = _html_escape(", ".join(f"{k}: {v}" for k, v in s["decisions"].items()) or "none")
                 session_rows += f"""
                 <tr>
-                    <td>{s["id"]}</td>
-                    <td>{s["events"]}</td>
-                    <td>{s["tool_calls"]}</td>
+                    <td>{_html_escape(s["id"])}</td>
+                    <td>{_html_escape(str(s["events"]))}</td>
+                    <td>{_html_escape(str(s["tool_calls"]))}</td>
                     <td style="color: {status_color}">{status_icon} {'Valid' if s['valid'] else 'INVALID'}</td>
                     <td style="font-size: 0.85rem;">{decisions}</td>
                 </tr>"""

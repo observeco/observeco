@@ -342,12 +342,24 @@ class MCPServer:
             elif name == "log_tool_call":
                 try:
                     from observeco.session_log import SessionLogger
-                    logger = SessionLogger()
                     tool_name = arguments.get("tool_name", "unknown")
                     tool_args = arguments.get("tool_args", {})
                     risk_level = arguments.get("risk_level", "unknown")
                     decision = arguments.get("decision", "unknown")
                     agent_id = arguments.get("agent_id", "")
+                    session_id = arguments.get("session_id", None)
+                    # Validate session_id: must be provided and match expected format
+                    if not session_id or not isinstance(session_id, str) or len(session_id) > 100:
+                        return self._make_error(rid, -32602, "Invalid session_id: must be a non-empty string (max 100 chars)")
+                    # Validate risk_level
+                    valid_levels = {"low", "medium", "high", "critical"}
+                    if risk_level not in valid_levels:
+                        return self._make_error(rid, -32602, f"Invalid risk_level: must be one of {valid_levels}")
+                    # Validate decision
+                    valid_decisions = {"auto_approve", "flag", "deny"}
+                    if decision not in valid_decisions:
+                        return self._make_error(rid, -32602, f"Invalid decision: must be one of {valid_decisions}")
+                    logger = SessionLogger(session_id)
                     entry = logger.log_tool_call(tool_name, tool_args, risk_level, decision, agent_id)
                     return self._make_response(rid, {"content": [{"type": "text", "text": f"Logged: {tool_name} | {risk_level} | {decision} | hash={entry.get('_hash', '?')[:16]}..."}]})
                 except Exception as e:
