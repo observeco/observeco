@@ -341,12 +341,6 @@ def _check_llm_providers() -> list[DiagnosticCheck]:
         "GROQ_API_KEY": "Groq",
         "TOGETHER_API_KEY": "Together AI",
         "OPENROUTER_API_KEY": "OpenRouter",
-        "COHERE_API_KEY": "Cohere",
-        "FIREWORKS_API_KEY": "Fireworks",
-        "NVIDIA_API_KEY": "NVIDIA",
-        "XAI_API_KEY": "xAI",
-        "ZHIPU_API_KEY": "Zhipu",
-        "XIAOMI_API_KEY": "Xiaomi",
     }
 
     for env_var, name in env_keys.items():

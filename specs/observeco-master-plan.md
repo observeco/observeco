@@ -2295,3 +2295,19 @@ Central server aggregates patterns: "30% of Slack users miss bot token scope"
     ↓
 System prompt updated automatically → next user gets better advice
 ```
+
+### A.7 LLM Provider Expansion (2026-05-29)
+
+**Coverage:** 20+ LLM providers auto-detected from environment variables.
+
+| Category | Providers |
+|---|---|
+| Cloud (major) | Anthropic, OpenAI, DeepSeek, Google/Gemini, Mistral, Groq |
+| Cloud (extended) | Together AI, OpenRouter, Cohere, Fireworks, NVIDIA, xAI, Zhipu, Xiaomi |
+| Local servers | Ollama, LM Studio, vLLM, TextGen, LocalAI |
+
+**Auto-select preference:** Cloud providers (more capable) > local servers.
+
+**OpenAI-compatible API:** `_call_openai_compatible()` handles DeepSeek, Mistral, Groq, Together, OpenRouter, and all local servers — they all use the same chat completions format.
+
+**Fallback:** If no provider detected, falls back to static help docs (still useful, just not AI-powered).

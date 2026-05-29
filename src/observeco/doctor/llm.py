@@ -91,21 +91,11 @@ def detect_llm_providers() -> list[LLMProvider]:
         ("anthropic", "ANTHROPIC_API_KEY"),
         ("openai", "OPENAI_API_KEY"),
         ("google", "GOOGLE_API_KEY"),
-        ("google", "GEMINI_API_KEY"),
-        ("deepseek", "DEEPSEEK_API_KEY"),
         ("deepseek", "DEEPSEEK_API_KEY"),
         ("mistral", "MISTRAL_API_KEY"),
-        ("cohere", "COHERE_API_KEY"),
         ("groq", "GROQ_API_KEY"),
         ("together", "TOGETHER_API_KEY"),
-        ("fireworks", "FIREWORKS_API_KEY"),
         ("openrouter", "OPENROUTER_API_KEY"),
-        ("nvidia", "NVIDIA_API_KEY"),
-        ("xai", "XAI_API_KEY"),
-        ("zhipu", "ZHIPU_API_KEY"),
-        ("xiaomi", "XIAOMI_API_KEY"),
-        ("ollama-cloud", "OLLAMA_API_KEY"),
-        ("9router", "NINEROUTER_API_KEY"),
     ]
 
     seen_providers = set()
