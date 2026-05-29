@@ -280,6 +280,85 @@ def mcp_serve(
     run_mcp_server(port=port)
 
 
+# -- Adapters subcommands --
+
+adapters_app = typer.Typer(help="Communication channel adapters (Slack, Discord, etc.)", no_args_is_help=True)
+app.add_typer(adapters_app, name="adapters")
+
+@adapters_app.command(name="test")
+def adapters_test(
+    channel: str = typer.Argument(..., help="Channel to test: slack, discord, all"),
+) -> None:
+    """Test channel adapter connection."""
+    from rich.console import Console
+    console = Console()
+
+    if channel in ("slack", "all"):
+        from observeco.adapters.slack import SlackAdapter
+        adapter = SlackAdapter()
+        if not adapter.is_configured():
+            console.print("[yellow]Slack not configured — set OBSERVECO_SLACK_BOT_TOKEN and OBSERVECO_SLACK_SIGNING_SECRET[/yellow]")
+        else:
+            result = adapter.test_connection()
+            if result.get("ok"):
+                console.print(f"[green]✓ Slack connected as {result.get('username', '?')}[/green]")
+            else:
+                console.print(f"[red]✗ Slack error: {result.get('error', 'unknown')}[/red]")
+
+    if channel in ("discord", "all"):
+        from observeco.adapters.discord import DiscordAdapter
+        adapter = DiscordAdapter()
+        if not adapter.is_configured():
+            console.print("[yellow]Discord not configured — set OBSERVECO_DISCORD_BOT_TOKEN and OBSERVECO_DISCORD_PUBLIC_KEY[/yellow]")
+        else:
+            result = adapter.test_connection()
+            if result.get("ok"):
+                console.print(f"[green]✓ Discord connected as {result.get('username', '?')} (ID: {result.get('id', '?')})[/green]")
+            else:
+                console.print(f"[red]✗ Discord error: {result.get('error', 'unknown')}[/red]")
+
+@adapters_app.command(name="send")
+def adapters_send(
+    channel: str = typer.Argument(..., help="Channel to send to: slack, discord"),
+    event_type: str = typer.Option("heartbeat", help="Event type: tool_call, risk_alert, error, heartbeat"),
+    agent_id: str = typer.Option("test-agent", help="Agent ID"),
+    message: str = typer.Option("Test message from ObserveCo", help="Message text"),
+) -> None:
+    """Send a test event to a channel."""
+    from rich.console import Console
+    from observeco.adapters.oef import OEFEvent, make_heartbeat_event
+    console = Console()
+
+    event = OEFEvent(
+        event_type=event_type,
+        agent_id=agent_id,
+        runtime="observeco",
+        channel=channel,
+        payload={"status": "alive", "latency_ms": 42, "message": message},
+    )
+
+    if channel == "slack":
+        from observeco.adapters.slack import SlackAdapter
+        adapter = SlackAdapter()
+        if not adapter.is_configured():
+            console.print("[red]Slack not configured[/red]")
+            return
+        ok = adapter.send_event(event)
+        console.print(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} Slack send{' succeeded' if ok else ' failed'}[/{'green' if ok else 'red'}]")
+
+    elif channel == "discord":
+        from observeco.adapters.discord import DiscordAdapter
+        adapter = DiscordAdapter()
+        if not adapter.is_configured():
+            console.print("[red]Discord not configured[/red]")
+            return
+        ok = adapter.send_event(event)
+        console.print(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} Discord send{' succeeded' if ok else ' failed'}[/{'green' if ok else 'red'}]")
+
+    else:
+        console.print(f"[red]Unknown channel: {channel}[/red]")
+
+
 # -- Agents subcommands --
 
 agents_app = typer.Typer(help="Manage agent registration & discovery", no_args_is_help=True)
