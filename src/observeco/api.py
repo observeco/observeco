@@ -30,8 +30,34 @@ from observeco.db import Database
 router = APIRouter(prefix="/api/v1", tags=["v1"])
 db = Database()
 
-# Simple token store (production would use a proper secret manager)
+# Token store — persists to file for multi-process access
+import os
+from pathlib import Path
+
+_API_TOKENS_FILE = Path(os.environ.get("OBSERVECO_DATA_DIR", "~/.observeco")) / ".api_tokens.json"
 API_TOKENS: dict[str, dict] = {}
+
+
+def _load_tokens():
+    """Load tokens from file."""
+    global API_TOKENS
+    try:
+        if _API_TOKENS_FILE.exists():
+            API_TOKENS = json.loads(_API_TOKENS_FILE.read_text())
+    except Exception:
+        pass
+
+
+def _save_tokens():
+    """Save tokens to file."""
+    try:
+        _API_TOKENS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _API_TOKENS_FILE.write_text(json.dumps(API_TOKENS, indent=2))
+    except Exception:
+        pass
+
+
+_load_tokens()
 
 
 def _verify_auth(authorization: str = Header(None)) -> dict:

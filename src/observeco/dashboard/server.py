@@ -135,7 +135,7 @@ async def auth_callback(code: str = "", state: str = ""):
     """OAuth2 callback — exchange code for session."""
     if not code:
         return HTMLResponse("<h1>Missing authorization code</h1>", status_code=400)
-    session = auth_provider.exchange_code(code)
+    session = auth_provider.exchange_code(code, state=state)
     if not session:
         return HTMLResponse("<h1>Authentication failed</h1>", status_code=401)
     from fastapi.responses import RedirectResponse
