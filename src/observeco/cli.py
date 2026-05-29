@@ -485,6 +485,97 @@ def fleet_status() -> None:
     console.print(f"\n  Total: {len(agents)} | Alive: {alive} | Dead: {dead}")
 
 
+# -- Risk subcommands --
+
+risk_app = typer.Typer(help="ML-based risk prediction and profiling", no_args_is_help=True)
+app.add_typer(risk_app, name="risk")
+
+@risk_app.command(name="predict")
+def risk_predict(
+    tool: str = typer.Argument(..., help="Tool name to predict risk for"),
+    agent: str = typer.Option("", "--agent", "-a", help="Agent ID for agent-specific prediction"),
+) -> None:
+    """Predict risk for a tool call based on historical patterns."""
+    from rich.console import Console
+    from observeco.risk_predictor import RiskPredictor
+
+    predictor = RiskPredictor()
+    prediction = predictor.predict(tool, agent_id=agent)
+
+    console = Console()
+    risk_emoji = {"low": "🟢", "medium": "🟡", "high": "🟠", "critical": "🔴"}
+    emoji = risk_emoji.get(prediction.predicted_risk, "⚪")
+
+    console.print(f"\n{emoji} Risk Prediction for `{tool}`")
+    console.print(f"  Predicted: {prediction.predicted_risk.upper()}")
+    console.print(f"  Confidence: {prediction.confidence:.0%}")
+    console.print(f"  Reason: {prediction.reason}")
+    console.print(f"  Pattern: {prediction.pattern}")
+    if prediction.historical_total > 0:
+        console.print(f"  History: {prediction.historical_failures}/{prediction.historical_total} failures")
+
+@risk_app.command(name="profile")
+def risk_profile(
+    entity: str = typer.Argument(..., help="Agent ID or tool name"),
+    entity_type: str = typer.Option("auto", "--type", "-t", help="Entity type: agent, tool, auto"),
+) -> None:
+    """Show risk profile for an agent or tool."""
+    from rich.console import Console
+    from observeco.risk_predictor import RiskPredictor
+
+    predictor = RiskPredictor()
+
+    if entity_type == "agent" or (entity_type == "auto" and not "/" in entity):
+        profile = predictor.get_agent_profile(entity)
+    else:
+        profile = predictor.get_tool_profile(entity)
+
+    console = Console()
+    trend_emoji = {"improving": "📈", "stable": "➡️", "degrading": "📉"}
+
+    console.print(f"\n📊 Risk Profile: {profile.entity}")
+    console.print(f"  Type: {profile.entity_type}")
+    console.print(f"  Total calls: {profile.total_calls}")
+    console.print(f"  Failures: {profile.failures}")
+    console.print(f"  Failure rate: {profile.failure_rate:.1%}")
+    console.print(f"  Trend: {trend_emoji.get(profile.recent_trend, '?')} {profile.recent_trend}")
+    if profile.last_failure:
+        console.print(f"  Last failure: {profile.last_failure}")
+    if profile.risk_distribution:
+        console.print(f"  Risk distribution: {profile.risk_distribution}")
+
+@risk_app.command(name="fleet")
+def risk_fleet() -> None:
+    """Show risk profiles for all agents."""
+    from rich.console import Console
+    from rich.table import Table
+    from observeco.risk_predictor import RiskPredictor
+
+    predictor = RiskPredictor()
+    profiles = predictor.get_fleet_profiles()
+
+    console = Console()
+    table = Table(title="Fleet Risk Profiles")
+    table.add_column("Agent", style="cyan")
+    table.add_column("Calls")
+    table.add_column("Failures")
+    table.add_column("Rate")
+    table.add_column("Trend")
+
+    for p in profiles:
+        trend_emoji = {"improving": "📈", "stable": "➡️", "degrading": "📉"}
+        rate_style = "[red]" if p.failure_rate > 0.2 else "[yellow]" if p.failure_rate > 0.1 else "[green]"
+        table.add_row(
+            p.entity,
+            str(p.total_calls),
+            str(p.failures),
+            f"{rate_style}{p.failure_rate:.1%}[/]",
+            f"{trend_emoji.get(p.recent_trend, '?')} {p.recent_trend}",
+        )
+
+    console.print(table)
+
+
 # -- Pathway subcommands --
 
 pathway_app = typer.Typer(help="Communication Pathway Map — trace message delivery paths", no_args_is_help=True)

@@ -6,7 +6,17 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional
 
-from .platform import get_platform_name
+import sys
+
+
+def get_platform_name() -> str:
+    if sys.platform == "win32":
+        return "windows"
+    elif sys.platform == "darwin":
+        return "macos"
+    elif sys.platform.startswith("linux"):
+        return "linux"
+    return "unknown"
 
 
 class RiskLevel(Enum):

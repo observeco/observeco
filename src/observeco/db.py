@@ -836,6 +836,8 @@ class Database:
 
         # 2. Register known platform nodes
         known_platforms = [("telegram", "Telegram", "platform", "📱"),
+                           ("slack", "Slack", "platform", "💬"),
+                           ("discord", "Discord", "platform", "🎮"),
                            ("whatsapp", "WhatsApp", "platform", "📱"),
                            ("bluebubbles", "BlueBubbles", "platform", "📱")]
 

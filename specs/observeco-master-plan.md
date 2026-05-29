@@ -2298,16 +2298,68 @@ System prompt updated automatically → next user gets better advice
 
 ### A.7 LLM Provider Expansion (2026-05-29)
 
-**Coverage:** 20+ LLM providers auto-detected from environment variables.
+**Coverage:** 13 LLM providers auto-detected from environment variables.
 
 | Category | Providers |
 |---|---|
 | Cloud (major) | Anthropic, OpenAI, DeepSeek, Google/Gemini, Mistral, Groq |
-| Cloud (extended) | Together AI, OpenRouter, Cohere, Fireworks, NVIDIA, xAI, Zhipu, Xiaomi |
+| Cloud (extended) | Together AI, OpenRouter |
 | Local servers | Ollama, LM Studio, vLLM, TextGen, LocalAI |
 
 **Auto-select preference:** Cloud providers (more capable) > local servers.
 
-**OpenAI-compatible API:** `_call_openai_compatible()` handles DeepSeek, Mistral, Groq, Together, OpenRouter, and all local servers — they all use the same chat completions format.
+**OpenAI-compatible API:** `_call_openai_compatible()` handles DeepSeek, Mistral, Groq, Together, OpenRouter, and all local servers.
 
-**Fallback:** If no provider detected, falls back to static help docs (still useful, just not AI-powered).
+**Fallback:** If no provider detected, falls back to static help docs.
+
+---
+
+### A.8 Public API v1 (2026-05-29)
+
+**Base URL:** `/api/v1`
+**Authentication:** Bearer token via Authorization header
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/health` | GET | Health check (no auth) |
+| `/fleet` | GET | Fleet status overview |
+| `/agents` | GET | List all agents |
+| `/agents/{id}` | GET | Agent details |
+| `/agents/{id}/health` | GET | Agent health history |
+| `/agents/{id}/errors` | GET | Agent error history |
+| `/agents/{id}/tokens` | GET | Token usage breakdown |
+| `/events` | POST | Ingest OEF events |
+| `/events` | GET | List recent events |
+| `/risks` | GET | Risk classification summary |
+| `/risks/classify` | POST | Classify a tool call |
+| `/doctor/diagnostics` | GET | Run diagnostics |
+
+---
+
+### A.9 Telegram Adapter (2026-05-29)
+
+**Features:**
+- HTML messages with inline keyboards
+- Webhook verification (X-Telegram-Bot-Api-Secret-Token)
+- Approval workflow via inline buttons
+- Set webhook URL programmatically
+
+**Env vars:** OBSERVECO_TG_BOT_TOKEN, OBSERVECO_TG_CHAT_ID, OBSERVECO_WEBHOOK_SECRET
+
+---
+
+### A.10 Docker Image (2026-05-29)
+
+**Build:** Multi-stage, Python 3.12-slim, non-root user
+**Port:** 8080 (dashboard)
+**Health check:** GET /api/health
+**.dockerignore:** Prevents .git, secrets, data, docs from leaking into image
+
+---
+
+### A.11 OAuth2 Authentication (2026-05-29)
+
+**Providers:** Google, GitHub, generic OIDC, local mode
+**Session:** Cookie-based, 7-day expiry, Secure + SameSite=lax
+**CSRF:** State parameter verified on callback
+**Dashboard endpoints:** /auth/login, /auth/callback, /auth/logout, /auth/me

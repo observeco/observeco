@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from .platform import get_data_dir
+from .dirs import get_data_dir
 
 
 def _hash_entry(entry: dict, prev_hash: str) -> str:
