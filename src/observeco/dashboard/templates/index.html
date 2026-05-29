@@ -338,6 +338,8 @@ body {
   transition: all 0.15s;
 }
 .heal-btn:hover { background: rgba(34,197,94,0.15); border-color: var(--accent); }
+.heal-trigger-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid var(--accent); background: rgba(34,197,94,0.12); color: var(--accent); font-family: inherit; transition: all 0.15s; }
+.heal-trigger-btn:hover { background: rgba(34,197,94,0.22); border-color: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,0.2); }
 .heal-log { font-size: 12px; color: var(--fg-2); line-height: 1.6; margin-top: 8px; }
 
 /* Brain analysis section */
@@ -592,6 +594,11 @@ body {
 .u-mt-16 { margin-top: 16px; }
 .u-hidden { display: none; }
 .u-align-start { align-self: flex-start; }
+/* ─── Detail modal tab bar ─── */
+.detail-tab-bar { display: flex; gap: 6px; padding: 10px 14px 0; border-bottom: 1px solid var(--border); background: var(--surface); }
+.detail-tab-btn { background: none; border: none; color: var(--muted); font-size: 12px; font-weight: 600; padding: 8px 14px; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.detail-tab-btn.active { color: var(--fg); border-bottom-color: var(--accent); }
+.detail-tab-btn:hover { color: var(--fg); }
 </style>
 </head>
 <body>
@@ -625,6 +632,7 @@ body {
         </svg>
       </div>
       <span class="header-title">ObserveCo <span>fleet</span></span>
+      <div class="brand-tagline">Tells you if your AI agents are working, what they're doing, and where your money goes.</div>
       <span class="tier-badge">🔓 FREE</span>
     </div>
   </div>
@@ -638,6 +646,7 @@ body {
     <select id="feedbackFramework">
       <option value="hermes">Hermes</option>
       <option value="openclaw">OpenClaw</option>
+      <option value="service">Service</option>
       <option value="custom" selected>Custom</option>
     </select>
     <button class="add-btn" onclick="addMissingAgent()">Add Agent</button>
@@ -868,7 +877,7 @@ body {
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
         <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
           <div><strong style="font-size:13px;color:var(--fg);">Heal Log</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">recent events</span></div>
-          <button onclick="runHealCheck()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:rgba(34,197,94,0.08);color:var(--accent);font-family:inherit;transition:all 0.15s;" onmouseover="this.style.background='rgba(34,197,94,0.15)';this.style.borderColor='var(--accent)'" onmouseout="this.style.background='rgba(34,197,94,0.08)';this.style.borderColor='var(--border)'">⚡ Run Heal Check</button>
+          <button onclick="runHealCheck()" class="heal-trigger-btn">⚡ Run Heal Check</button>
         </div>
         <div id="healLog" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
       </div>
@@ -1121,13 +1130,36 @@ function renderAgentHTML(html) {
   document.getElementById('fleetContainer').innerHTML = html;
 }
 
-// ─── Modal ───
+// ─── Detail Modal (wired to /api/agent-detail) ───
 function openModal(title, sub, bodyHtml) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalSub').textContent = sub;
-  document.getElementById('modalBody').innerHTML = bodyHtml;
+  // Render tab bar + loading placeholder
+  const agentName = title.split(' — ')[0];
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-tab-bar">
+      <button class="detail-tab-btn active" onclick="switchDetailTab('${agentName}', 'health', this)">🩺 Health</button>
+      <button class="detail-tab-btn" onclick="switchDetailTab('${agentName}', 'tokens', this)">📊 Tokens</button>
+      <button class="detail-tab-btn" onclick="switchDetailTab('${agentName}', 'garden', this)">🧠 Memory</button>
+    </div>
+    <div id="detailContent" style="padding:14px;font-size:12px;color:var(--fg-2);max-height:60vh;overflow-y:auto;">Loading health data...</div>`;
   document.getElementById('drillModal').classList.add('active');
   document.body.style.overflow = 'hidden';
+  // Fetch health data by default
+  switchDetailTab(agentName, 'health', document.querySelector('.detail-tab-btn.active'));
+}
+function switchDetailTab(agentName, tab, btn) {
+  document.querySelectorAll('.detail-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('detailContent').innerHTML = 'Loading ' + tab + ' data...';
+  fetch('/api/agent-detail/' + encodeURIComponent(agentName) + '?tab=' + tab)
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('detailContent').innerHTML = html;
+    })
+    .catch(e => {
+      document.getElementById('detailContent').innerHTML = '<div style="color:#ef4444;padding:12px;">Failed: ' + e.message + '</div>';
+    });
 }
 function closeModal() {
   document.getElementById('drillModal').classList.remove('active');
@@ -1140,8 +1172,12 @@ function toggleSection(el) { el.classList.toggle('collapsed'); }
 // ─── Agent hide ───
 function toggleHide(name) {
   hiddenAgents.add(name);
-  // Re-fetch agents to reflect hidden state
-  htmx.trigger('#fleetContainer', 'agents-updated');
+  // Re-fetch agents with hidden list to filter server-side
+  const hidden = Array.from(hiddenAgents).join(',');
+  htmx.ajax('GET', '/api/agents?hidden=' + encodeURIComponent(hidden), {
+    target: '#fleetContainer',
+    swap: 'innerHTML'
+  });
 }
 
 // ─── Feedback ───
@@ -1151,11 +1187,24 @@ function toggleFeedback() {
 }
 function addMissingAgent() {
   const name = document.getElementById('feedbackInput').value.trim();
+  const framework = document.getElementById('feedbackFramework').value;
   if (!name) { alert('Enter an agent name first'); return; }
-  // POST to /api/agents/add (future)
-  document.getElementById('feedbackInput').value = '';
-  document.getElementById('feedbackBar').style.display = 'none';
-  htmx.trigger('#fleetContainer', 'agents-updated');
+  fetch('/api/agents/add', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name, framework})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        document.getElementById('feedbackInput').value = '';
+        document.getElementById('feedbackBar').style.display = 'none';
+        htmx.trigger('#fleetContainer', 'agents-updated');
+      } else {
+        alert('Failed: ' + (data.error || 'unknown'));
+      }
+    })
+    .catch(e => alert('Error: ' + e.message));
 }
 
 // ─── HTMX agent loading ───

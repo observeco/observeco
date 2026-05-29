@@ -516,7 +516,14 @@ Append here every time a human catches something an AI missed. This is how the p
 | "11 Pro mentions vs 0 Free/OSS" | MIT-licensed product reads as paid-only | Confidence | Added MIT License badge in header, Free & Open Source footer with GitHub star link |
 | "f-string compiles fine" | `{brain_composition_html}` undefined at runtime raises NameError 500 — py_compile doesn't catch this | Friction | Added Pitfall #8: runtime f-string verification |
 | "Font-size batch replace worked" | Batch replace script corrupted ❓ emoji inside an f-string — cause SyntaxError on next compile | Friction | Added Pitfall #9: multi-byte Unicode corruption from regex batch edits |
-| "git checkout reverted the broken line" | Also reverted font-size bumps, MIT badge, htmx fix — all uncommitted | Friction | Added Pitfall #10: atomic fix scripts survive git revert |
+| "10 trap catalogue covers all known patterns" | Brand positioning statement missing — logo alone doesn't explain purpose | Trap 5 — Empty State | Added tagline: "Tells you if your AI agents are working, what they're doing, and where your money goes." |
+| "Clickable elements have visual feedback" | Agent card toggle checkbox at top-right corner: clicking does nothing — no event handler | Trap 2 — Mechanism ≠ Feedback | Verified: `toggleHide()` appends to JS Set but never passes to backend. Needs query param filter. |
+| "Status text is accurate" | "5d ago" timestamp + "● Running" status dot side-by-side: user cannot tell if agent is running NOW or ran 5 days ago | Trap 3 — Data ≠ Readable / Layer 2 Confidence | Timestamp shows last pulse. Status shows circuit state. These can diverge when pulses are stale. Needs staleness indicator or explicit label. |
+| "Metric rows show real data" | All 5 rows pass static placeholder strings ("Health data loading...", "Guard data...", "Error data...", "Drift data...", "Composition data...") | Trap 1 — Structural Correctness ≠ Visual Completeness / Friction | Wire `openModal()` to `/api/agent-detail/{name}?tab=` with tabbed Health/Tokens/Memory panels. Backend already returns real data — frontend never called it. |
+| "Services section accurate" | Only 1 card in Services. User expects more. No way to add a Service-type agent from the UI. | Trap 5 — Empty State | Add "Service" option to Add Agent dropdown alongside Hermes/OpenClaw/Custom. |
+| "Detail modal has Tokens and Garden tabs" | No tab bar exists — clicking any metric row opens a plain modal with no tabs at all | Trap 6 — Navigation ≠ Context | Replaced plain `openModal()` with tabbed interface calling live `/api/agent-detail/` endpoint with Health/Tokens/Memory tabs. |
+
+| 2026-05-29 | ObserveCo Dashboard v0.2 | Various (see full table above) | Multiple | All | Added 10 pitfall patterns, empty-data consolidation, f-string leak detection |
 
 ### Template for future entries
 

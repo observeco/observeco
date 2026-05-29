@@ -47,8 +47,7 @@ specs/
 docs/
 *.md
 !README.md
-LICENSE
-
+# LICENSE intentionally not excluded (Dockerfile COPY needs it)
 # OS
 .DS_Store
 Thumbs.db

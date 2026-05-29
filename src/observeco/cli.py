@@ -436,6 +436,51 @@ def agents_add(
     run_add(name=name, framework=framework, health_check=health_check)
 
 
+# -- OTel subcommands --
+
+otel_app = typer.Typer(help="OpenTelemetry bridge — export events as OTel spans")
+app.add_typer(otel_app, name="otel")
+
+@otel_app.command(name="export")
+def otel_export(
+    session_id: str = typer.Option("", "--session", "-s", help="Session ID to export"),
+    format: str = typer.Option("otlp", "--format", "-f", help="Export format: otlp, jaeger"),
+) -> None:
+    """Export session events as OTel-compatible trace."""
+    from rich.console import Console
+    from observeco.session_log import SessionLogger
+    from observeco.otel_bridge import OTelBridge
+
+    console = Console()
+    bridge = OTelBridge()
+    logger = SessionLogger(session_id) if session_id else SessionLogger()
+    entries = logger.get_entries(limit=100)
+
+    if not entries:
+        console.print("[yellow]No events to export[/yellow]")
+        return
+
+    # Convert entries to OEF events
+    from observeco.adapters.oef import OEFEvent
+    events = []
+    for entry in entries:
+        event = OEFEvent(
+            event_type=entry.get("event_type", "unknown"),
+            agent_id=entry.get("agent_id", "unknown"),
+            runtime="observeco",
+            channel="cli",
+            payload=entry.get("data", {}),
+        )
+        events.append(event)
+
+    if format == "jaeger":
+        result = bridge.export_to_jaeger(events)
+    else:
+        result = bridge.export_events(events)
+
+    print(json.dumps(result, indent=2))
+
+
 # -- Fleet subcommands --
 
 fleet_app = typer.Typer(help="Fleet dashboard — multi-agent, multi-channel overview", no_args_is_help=True)

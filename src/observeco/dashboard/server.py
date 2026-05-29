@@ -23,6 +23,7 @@ from observeco.billing import add_billing_endpoints
 from observeco.dashboard.otel import router as otel_router
 from observeco.db import Database
 from observeco.api import router as api_router
+from observeco.realtime import router as realtime_router
 
 # Token component colors (matching mockup design system)
 COMP_COLORS = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
@@ -43,6 +44,7 @@ auth_provider = OAuth2Provider()
 add_billing_endpoints(app)
 app.include_router(otel_router)
 app.include_router(api_router)
+app.include_router(realtime_router)
 
 
 # ---------------------------------------------------------------------------
@@ -1386,7 +1388,7 @@ async def api_openclaw_plugins():
 # ---------------------------------------------------------------------------
 
 @app.get("/api/agents", response_class=HTMLResponse)
-async def api_agents():
+async def api_agents(hidden: str = ""):
     """Agent cards with token bars, drift — mockup fleet-dashboard format."""
     summary = db.get_agent_status_summary()
     agents = db.get_agents()
@@ -1396,6 +1398,11 @@ async def api_agents():
     all_agent_names = set(a["agent_name"] for a in agents)
     for name in summary:
         all_agent_names.add(name)
+
+    # Filter hidden agents
+    hidden_set = set(n.strip() for n in hidden.split(",") if n.strip())
+    if hidden_set:
+        all_agent_names = {n for n in all_agent_names if n not in hidden_set}
 
     trimmed_agents = {}
     for t in trims_all:
@@ -1425,7 +1432,7 @@ async def api_agents():
         sections[t].append(name)
 
     section_configs = [
-        ("agent", "Hermes Agents", "#22c55e", "🤖"),
+        ("agent", "Agents", "#22c55e", "🤖"),
         ("service", "Services", "#3b82f6", "⚙️"),
         ("workflow", "+ Others", "#64748b", "📦"),
     ]
@@ -1456,7 +1463,10 @@ async def api_agents():
             fw = agent_cfg.get(name, {}).get("framework", "custom").capitalize()
             role_label = f"{fw} · {fw_agent_type}"
 
+            # Last seen: prefix with "last pulse" when data is stale
             last_check_str = _fmt_ts(ts) if ts else "—"
+            if ts and (now - ts) > 3600:
+                last_check_str = f"last pulse {_fmt_ts(ts)}"
 
             # Error badge
             errors = db.get_errors(agent_name=name, limit=50)
@@ -1517,6 +1527,14 @@ async def api_agents():
             err_label = f"⚠️ {recent_error_count} in last 24h" if recent_error_count > 0 else "- No errors"
             err_color = "var(--warn)" if recent_error_count > 0 else "var(--muted)"
 
+            # Status label with staleness indicator
+            stale = ts and (now - ts) > 3600  # stale if last pulse > 1h ago
+            status_label = {'alive': '● Running', 'dead': '● Down', 'error': '● Warning'}.get(status, '○ Unknown')
+            if stale and status == 'alive':
+                status_label = '● Running (stale)'
+            if stale and status == 'error':
+                status_label = '● Warning (stale)'
+
             cards_html.append(f"""<div class="agent-card" data-agent="{name}">
       <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('{name}')" title="Hide agent"></button>
       <div class="card-top">
@@ -1530,7 +1548,7 @@ async def api_agents():
       {f'<div style="margin-bottom:6px;">{gap_badges_str}</div>' if gap_badges_str else ''}
       <div class="metric-row" onclick="openModal('{name} — Health timeline','{role_label}','Health data loading...')">
         <span class="label">Health</span>
-        <span class="value" style="color:{'var(--accent)' if status == 'alive' else 'var(--danger)' if status == 'dead' else 'var(--warn)'};font-weight:600;">{'● Running' if status == 'alive' else '● Down' if status == 'dead' else '● Warning'}</span>
+        <span class="value" style="color:{'var(--accent)' if status == 'alive' else 'var(--danger)' if status == 'dead' else 'var(--warn)'};font-weight:600;">{status_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
       <div class="metric-row" onclick="openModal('{name} — Safety guard','{role_label}','Guard data...')">
@@ -1572,6 +1590,21 @@ async def api_agents():
   </div>""")
 
     return HTMLResponse("\n".join(sections_html))
+
+
+@app.post("/api/agents/add")
+async def api_add_agent(request: Request):
+    """Register a new agent via the feedback bar. §6.2."""
+    try:
+        body = await request.json()
+        name = body.get("name", "").strip()
+        framework = body.get("framework", "custom")
+        if not name:
+            return JSONResponse({"ok": False, "error": "Name required"}, status_code=400)
+        db.register_agent(name, framework=framework)
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
 
 
 # ---------------------------------------------------------------------------
