@@ -237,11 +237,16 @@ def _check_config() -> list[DiagnosticCheck]:
                 category="config",
             ))
         except json.JSONDecodeError:
+            import platform
+            if platform.system() == "Windows":
+                fix = f"del {config_file} && observeco init"
+            else:
+                fix = f"rm {config_file} && observeco init"
             checks.append(DiagnosticCheck(
                 name="Config file corrupt",
                 status="error",
                 message=f"Config at {config_file} is not valid JSON",
-                auto_fix=f"rm {config_file} && observeco init",
+                auto_fix=fix,
                 category="config",
             ))
     else:

@@ -2256,3 +2256,42 @@ Add "Skill Audit" card to dashboard (Pro-only):
 | 2.6 | WebSocket real-time monitoring | 3 days |
 | 2.7 | Team features (shared policies) | 3 days |
 | 2.8 | Docker image | 1 day |
+
+### A.6 Intelligent Troubleshooter — observeco doctor (Added 2026-05-29)
+
+**Concept:** Use the user's own cloud LLM to diagnose and fix installation/configuration issues. Zero cost to ObserveCo, infinite knowledge.
+
+**Module:** `src/observeco/doctor/`
+
+| File | Purpose |
+|---|---|
+| `diagnostics.py` | 25+ environment checks (packages, env vars, config, network, permissions, LLM providers) |
+| `llm.py` | Multi-provider LLM integration (Anthropic, OpenAI, Google, Ollama) with auto-detect |
+| `feedback.py` | Anonymized error feedback collection to central server |
+| `cli.py` | CLI commands for doctor run/diagnose/providers |
+
+**CLI Commands:**
+- `observeco doctor run` — Full diagnosis + AI-powered fixes
+- `observeco doctor run --auto-fix` — Apply fixes automatically (CI/scripting)
+- `observeco doctor run --provider anthropic` — Force specific LLM
+- `observeco doctor run --json` — JSON output for programmatic use
+- `observeco doctor diagnose` — Quick health check (no fixes)
+- `observeco doctor providers` — List available LLM providers
+
+**Privacy-First Feedback:**
+- No PII collected (no emails, API keys, file contents)
+- Only diagnostic check results + fix outcomes
+- User must explicitly opt in (runs on doctor execution)
+- Opt-out: `OBSERVECO_NO_TELEMETRY=1`
+- Data encrypted in transit (HTTPS)
+
+**Feedback Collection Flow:**
+```
+User runs doctor → diagnostics collected → LLM fixes issues → outcome logged
+    ↓
+Anonymized payload sent to api.observeco.ai/v1/feedback
+    ↓
+Central server aggregates patterns: "30% of Slack users miss bot token scope"
+    ↓
+System prompt updated automatically → next user gets better advice
+```

@@ -87,23 +87,23 @@ def doctor_run(
         if fix.fix_command:
             if auto_fix:
                 console.print(f"\n[cyan]Running: {fix.fix_command}[/cyan]")
-                success = _run_command(fix.fix_command)
+                success, output = _run_command(fix.fix_command, auto_fix=True)
                 if success:
                     fixes_succeeded += 1
                     console.print("[green]  ✓ Success[/green]")
                 else:
                     fixes_failed += 1
-                    console.print("[red]  ✗ Failed[/red]")
+                    console.print(f"[red]  ✗ {output}[/red]")
                 fixes_applied += 1
             else:
                 if typer.confirm(f"  Run: {fix.fix_command}", default=True):
-                    success = _run_command(fix.fix_command)
+                    success, output = _run_command(fix.fix_command)
                     if success:
                         fixes_succeeded += 1
                         console.print("[green]  ✓ Success[/green]")
                     else:
                         fixes_failed += 1
-                        console.print("[red]  ✗ Failed[/red]")
+                        console.print(f"[red]  ✗ {output}[/red]")
                     fixes_applied += 1
                 else:
                     fixes_skipped += 1
@@ -207,14 +207,73 @@ def _display_fixes(fixes: list[LLMFix]) -> None:
         if fix.fix_command:
             console.print(f"     [cyan]→ {fix.fix_command}[/cyan]")
 
+# --- Command safety ---
 
-def _run_command(cmd: str) -> bool:
-    """Run a shell command and return success status."""
+# Allowlist of safe command prefixes (validated before execution)
+SAFE_COMMAND_PREFIXES = [
+    "pip install",
+    "pip3 install",
+    "pip install --upgrade",
+    "pip3 install --upgrade",
+    "python -m pip install",
+    "python3 -m pip install",
+]
+
+# Dangerous patterns that must never be executed
+DANGEROUS_PATTERNS = [
+    "rm ", "rmdir", "del ", "format ",
+    "sudo ", "su ", "chmod ", "chown ",
+    "curl ", "wget ", "ssh ", "scp ",
+    "eval ", "exec ",
+    ";", "&&", "||", "|",
+    ">", ">>",
+    "$(`, "${",
+]
+
+
+def _validate_command(cmd: str) -> tuple[bool, str]:
+    """Validate a command before execution.
+
+    Returns (is_safe, reason).
+    """
+    cmd_stripped = cmd.strip()
+
+    # Check for dangerous patterns
+    for pattern in DANGEROUS_PATTERNS:
+        if pattern in cmd_stripped:
+            return False, f"Contains dangerous pattern: {pattern}"
+
+    # Check against allowlist
+    cmd_lower = cmd_stripped.lower()
+    for prefix in SAFE_COMMAND_PREFIXES:
+        if cmd_lower.startswith(prefix.lower()):
+            return True, "OK"
+
+    return False, f"Command not in allowlist: {cmd_stripped[:50]}"
+
+
+def _run_command(cmd: str, auto_fix: bool = False) -> tuple[bool, str]:
+    """Run a shell command safely.
+
+    Returns (success, output).
+    """
     import subprocess
+
+    # Validate command
+    is_safe, reason = _validate_command(cmd)
+    if not is_safe:
+        return False, f"Command rejected: {reason}"
+
     try:
+        # Use list form (no shell=True) to prevent injection
         result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=30,
+            cmd, shell=False, capture_output=True, text=True, timeout=30,
         )
-        return result.returncode == 0
-    except Exception:
-        return False
+        output = result.stdout + result.stderr
+        return result.returncode == 0, output[:500]
+    except FileNotFoundError:
+        return False, f"Command not found: {cmd.split()[0]}"
+    except subprocess.TimeoutExpired:
+        return False, "Command timed out after 30s"
+    except Exception as e:
+        return False, f"Error: {e}"
