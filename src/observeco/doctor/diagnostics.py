@@ -330,25 +330,45 @@ def _check_llm_providers() -> list[DiagnosticCheck]:
 
     providers = []
 
-    # OpenAI
-    if os.environ.get("OPENAI_API_KEY"):
-        providers.append("openai")
+    # Check major cloud providers
+    env_keys = {
+        "OPENAI_API_KEY": "OpenAI",
+        "ANTHROPIC_API_KEY": "Anthropic",
+        "GOOGLE_API_KEY": "Google",
+        "GEMINI_API_KEY": "Google Gemini",
+        "DEEPSEEK_API_KEY": "DeepSeek",
+        "MISTRAL_API_KEY": "Mistral",
+        "GROQ_API_KEY": "Groq",
+        "TOGETHER_API_KEY": "Together AI",
+        "OPENROUTER_API_KEY": "OpenRouter",
+        "COHERE_API_KEY": "Cohere",
+        "FIREWORKS_API_KEY": "Fireworks",
+        "NVIDIA_API_KEY": "NVIDIA",
+        "XAI_API_KEY": "xAI",
+        "ZHIPU_API_KEY": "Zhipu",
+        "XIAOMI_API_KEY": "Xiaomi",
+    }
 
-    # Anthropic
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        providers.append("anthropic")
+    for env_var, name in env_keys.items():
+        if os.environ.get(env_var):
+            providers.append(name)
 
-    # Google
-    if os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY"):
-        providers.append("google")
+    # Check local servers
+    local_servers = {
+        "http://localhost:11434/api/tags": "Ollama",
+        "http://localhost:1234/v1/models": "LM Studio",
+        "http://localhost:8000/v1/models": "vLLM",
+        "http://localhost:5000/v1/models": "TextGen",
+        "http://localhost:8080/v1/models": "LocalAI",
+    }
 
-    # Ollama (local)
-    try:
-        import urllib.request
-        urllib.request.urlopen("http://localhost:11434/api/tags", timeout=2)
-        providers.append("ollama")
-    except Exception:
-        pass
+    for url, name in local_servers.items():
+        try:
+            import urllib.request
+            urllib.request.urlopen(url, timeout=2)
+            providers.append(name)
+        except Exception:
+            pass
 
     if providers:
         checks.append(DiagnosticCheck(
@@ -361,7 +381,7 @@ def _check_llm_providers() -> list[DiagnosticCheck]:
         checks.append(DiagnosticCheck(
             name="No LLM providers detected",
             status="warning",
-            message="Doctor will use static help docs (set OPENAI_API_KEY or ANTHROPIC_API_KEY for AI-powered troubleshooting)",
+            message="Doctor will use static help docs (set any LLM API key for AI-powered troubleshooting)",
             category="llm",
         ))
 

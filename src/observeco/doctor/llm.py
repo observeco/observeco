@@ -80,39 +80,92 @@ class LLMProvider:
 
 
 def detect_llm_providers() -> list[LLMProvider]:
-    """Detect available LLM providers from environment."""
+    """Detect available LLM providers from environment.
+
+    Checks 20+ provider env vars plus local LLM servers.
+    """
     providers = []
 
-    # OpenAI
-    key = os.environ.get("OPENAI_API_KEY", "")
-    providers.append(LLMProvider(name="openai", available=bool(key), api_key=key))
+    # --- Major providers (env vars) ---
+    env_providers = [
+        ("anthropic", "ANTHROPIC_API_KEY"),
+        ("openai", "OPENAI_API_KEY"),
+        ("google", "GOOGLE_API_KEY"),
+        ("google", "GEMINI_API_KEY"),
+        ("deepseek", "DEEPSEEK_API_KEY"),
+        ("deepseek", "DEEPSEEK_API_KEY"),
+        ("mistral", "MISTRAL_API_KEY"),
+        ("cohere", "COHERE_API_KEY"),
+        ("groq", "GROQ_API_KEY"),
+        ("together", "TOGETHER_API_KEY"),
+        ("fireworks", "FIREWORKS_API_KEY"),
+        ("openrouter", "OPENROUTER_API_KEY"),
+        ("nvidia", "NVIDIA_API_KEY"),
+        ("xai", "XAI_API_KEY"),
+        ("zhipu", "ZHIPU_API_KEY"),
+        ("xiaomi", "XIAOMI_API_KEY"),
+        ("ollama-cloud", "OLLAMA_API_KEY"),
+        ("9router", "NINEROUTER_API_KEY"),
+    ]
 
-    # Anthropic
-    key = os.environ.get("ANTHROPIC_API_KEY", "")
-    providers.append(LLMProvider(name="anthropic", available=bool(key), api_key=key))
+    seen_providers = set()
+    for provider_name, env_var in env_providers:
+        key = os.environ.get(env_var, "")
+        if key and provider_name not in seen_providers:
+            providers.append(LLMProvider(name=provider_name, available=True, api_key=key))
+            seen_providers.add(provider_name)
 
-    # Google
-    key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
-    providers.append(LLMProvider(name="google", available=bool(key), api_key=key))
+    # --- Check OpenRouter (uses OPENAI_API_KEY sometimes) ---
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
+    if openai_key and "openai" not in seen_providers:
+        # Check if it's an OpenRouter key (starts with sk-or-)
+        if openai_key.startswith("sk-or-"):
+            providers.append(LLMProvider(name="openrouter", available=True, api_key=openai_key))
+            seen_providers.add("openrouter")
 
-    # Ollama (local)
-    try:
-        import urllib.request
-        urllib.request.urlopen("http://localhost:11434/api/tags", timeout=2)
-        providers.append(LLMProvider(name="ollama", available=True))
-    except Exception:
-        providers.append(LLMProvider(name="ollama", available=False))
+    # --- Local LLM servers ---
+    local_servers = [
+        ("ollama", "http://localhost:11434/api/tags"),
+        ("lmstudio", "http://localhost:1234/v1/models"),
+        ("vllm", "http://localhost:8000/v1/models"),
+        ("textgen", "http://localhost:5000/v1/models"),
+        ("localai", "http://localhost:8080/v1/models"),
+    ]
+
+    for name, url in local_servers:
+        if name in seen_providers:
+            continue
+        try:
+            import urllib.request
+            urllib.request.urlopen(url, timeout=2)
+            providers.append(LLMProvider(name=name, available=True))
+            seen_providers.add(name)
+        except Exception:
+            pass
 
     return providers
 
 
 def get_auto_provider(providers: list[LLMProvider]) -> Optional[LLMProvider]:
-    """Auto-detect the best available provider."""
-    # Prefer: anthropic > openai > google > ollama
-    for preferred in ["anthropic", "openai", "google", "ollama"]:
+    """Auto-detect the best available provider.
+
+    Preference order: cloud providers > local servers.
+    """
+    # Prefer cloud providers (more capable for diagnosis)
+    cloud_preferred = ["anthropic", "openai", "deepseek", "google", "mistral",
+                       "groq", "together", "openrouter", "cohere"]
+    for preferred in cloud_preferred:
         for p in providers:
             if p.name == preferred and p.available:
                 return p
+
+    # Fall back to local servers
+    local_preferred = ["ollama", "lmstudio", "vllm", "textgen", "localai"]
+    for preferred in local_preferred:
+        for p in providers:
+            if p.name == preferred and p.available:
+                return p
+
     return None
 
 
@@ -137,6 +190,48 @@ def diagnose_with_llm(report: DiagnosticReport, provider: Optional[LLMProvider] 
             response = _call_google(provider.api_key, SYSTEM_PROMPT, user_prompt)
         elif provider.name == "ollama":
             response = _call_ollama(SYSTEM_PROMPT, user_prompt)
+        elif provider.name == "deepseek":
+            response = _call_openai_compatible(
+                provider.api_key, SYSTEM_PROMPT, user_prompt,
+                base_url="https://api.deepseek.com",
+                model="deepseek-chat",
+            )
+        elif provider.name == "mistral":
+            response = _call_openai_compatible(
+                provider.api_key, SYSTEM_PROMPT, user_prompt,
+                base_url="https://api.mistral.ai",
+                model="mistral-large-latest",
+            )
+        elif provider.name == "groq":
+            response = _call_openai_compatible(
+                provider.api_key, SYSTEM_PROMPT, user_prompt,
+                base_url="https://api.groq.com/openai",
+                model="llama-3.1-70b-versatile",
+            )
+        elif provider.name == "together":
+            response = _call_openai_compatible(
+                provider.api_key, SYSTEM_PROMPT, user_prompt,
+                base_url="https://api.together.xyz",
+                model="meta-llama/Llama-3-70b-chat-hf",
+            )
+        elif provider.name == "openrouter":
+            response = _call_openai_compatible(
+                provider.api_key, SYSTEM_PROMPT, user_prompt,
+                base_url="https://openrouter.ai/api",
+                model="anthropic/claude-sonnet-4",
+            )
+        elif provider.name in ("lmstudio", "vllm", "textgen", "localai"):
+            base_urls = {
+                "lmstudio": "http://localhost:1234/v1",
+                "vllm": "http://localhost:8000/v1",
+                "textgen": "http://localhost:5000/v1",
+                "localai": "http://localhost:8080/v1",
+            }
+            response = _call_openai_compatible(
+                "", SYSTEM_PROMPT, user_prompt,
+                base_url=base_urls[provider.name],
+                model="default",
+            )
         else:
             return _static_diagnosis(report)
 
@@ -228,6 +323,31 @@ def _call_ollama(system: str, prompt: str) -> str:
     with urllib.request.urlopen(req, timeout=60) as resp:
         result = json.loads(resp.read())
         return result["message"]["content"]
+
+
+def _call_openai_compatible(api_key: str, system: str, prompt: str,
+                             base_url: str, model: str) -> str:
+    """Call any OpenAI-compatible API (DeepSeek, Mistral, Groq, Together, etc.)."""
+    import urllib.request
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    data = json.dumps({
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt},
+        ],
+        "max_tokens": 2048,
+    }).encode()
+    req = urllib.request.Request(
+        f"{base_url}/v1/chat/completions",
+        data=data,
+        headers=headers,
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        result = json.loads(resp.read())
+        return result["choices"][0]["message"]["content"]
 
 
 def _parse_fixes(response: str) -> list[LLMFix]:
