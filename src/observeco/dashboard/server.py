@@ -33,6 +33,10 @@ COMP_ORDER = ["skills", "tools", "memory", "guidance", "identity"]
 app = FastAPI(title="ObserveCo Dashboard")
 db = Database()
 
+# --- Auth setup ---
+from observeco.auth.oauth2 import OAuth2Provider
+auth_provider = OAuth2Provider()
+
 # Register billing + OTel + feedback endpoints
 add_billing_endpoints(app)
 app.include_router(otel_router)
@@ -99,6 +103,64 @@ def _fmt_ts(ts: int) -> str:
 
 def _html_escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+# ---------------------------------------------------------------------------
+# § Auth endpoints — OAuth2 login/logout/callback
+# ---------------------------------------------------------------------------
+
+
+@app.get("/auth/login")
+async def auth_login(provider: str = ""):
+    """Initiate OAuth2 login."""
+    if provider:
+        auth_provider.provider = provider
+    if not auth_provider.is_configured():
+        # Local mode — create session directly
+        session = auth_provider._create_local_session("local@local.local", "Local User")
+        from fastapi.responses import RedirectResponse
+        resp = RedirectResponse(url="/")
+        resp.set_cookie("observeco_token", session.token, httponly=True, max_age=604800)
+        return resp
+    url = auth_provider.get_authorization_url(state=secrets.token_urlsafe(16))
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=url)
+
+
+@app.get("/auth/callback")
+async def auth_callback(code: str = "", state: str = ""):
+    """OAuth2 callback — exchange code for session."""
+    if not code:
+        return HTMLResponse("<h1>Missing authorization code</h1>", status_code=400)
+    session = auth_provider.exchange_code(code)
+    if not session:
+        return HTMLResponse("<h1>Authentication failed</h1>", status_code=401)
+    from fastapi.responses import RedirectResponse
+    resp = RedirectResponse(url="/")
+    resp.set_cookie("observeco_token", session.token, httponly=True, max_age=604800)
+    return resp
+
+
+@app.get("/auth/logout")
+async def auth_logout(request: Request):
+    """Destroy session."""
+    token = request.cookies.get("observeco_token", "")
+    if token:
+        auth_provider.destroy_session(token)
+    from fastapi.responses import RedirectResponse
+    resp = RedirectResponse(url="/")
+    resp.delete_cookie("observeco_token")
+    return resp
+
+
+@app.get("/auth/me")
+async def auth_me(request: Request):
+    """Get current user info."""
+    token = request.cookies.get("observeco_token", "")
+    user = auth_provider.get_current_user({"authorization": f"Bearer {token}"})
+    if user:
+        return JSONResponse({"authenticated": True, "user": user.__dict__})
+    return JSONResponse({"authenticated": False})
 
 
 # ---------------------------------------------------------------------------

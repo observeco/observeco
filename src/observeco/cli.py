@@ -317,6 +317,18 @@ def adapters_test(
             else:
                 console.print(f"[red]✗ Discord error: {result.get('error', 'unknown')}[/red]")
 
+    if channel in ("telegram", "all"):
+        from observeco.adapters.telegram import TelegramAdapter
+        adapter = TelegramAdapter()
+        if not adapter.is_configured():
+            console.print("[yellow]Telegram not configured — set OBSERVECO_TG_BOT_TOKEN and OBSERVECO_TG_CHAT_ID[/yellow]")
+        else:
+            result = adapter.test_connection()
+            if result.get("ok"):
+                console.print(f"[green]✓ Telegram connected as @{result.get('username', '?')}[/green]")
+            else:
+                console.print(f"[red]✗ Telegram error: {result.get('error', 'unknown')}[/red]")
+
 @adapters_app.command(name="send")
 def adapters_send(
     channel: str = typer.Argument(..., help="Channel to send to: slack, discord"),
@@ -354,6 +366,15 @@ def adapters_send(
             return
         ok = adapter.send_event(event)
         console.print(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} Discord send{' succeeded' if ok else ' failed'}[/{'green' if ok else 'red'}]")
+
+    elif channel == "telegram":
+        from observeco.adapters.telegram import TelegramAdapter
+        adapter = TelegramAdapter()
+        if not adapter.is_configured():
+            console.print("[red]Telegram not configured[/red]")
+            return
+        ok = adapter.send_event(event)
+        console.print(f"[{'green' if ok else 'red'}]{'✓' if ok else '✗'} Telegram send{' succeeded' if ok else ' failed'}[/{'green' if ok else 'red'}]")
 
     else:
         console.print(f"[red]Unknown channel: {channel}[/red]")
