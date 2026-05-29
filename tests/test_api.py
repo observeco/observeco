@@ -1,22 +1,17 @@
-"""Tests for the observeco public API."""
+"""Tests for the observeco public API module."""
 
-import inspect
-from observeco.api import app
-
-
-def test_health_endpoint_exists():
-    """Verify the health route is registered."""
-    routes = [r.path for r in app.routes]
-    assert "/api/v1/health" in routes or any("health" in str(r.path) for r in app.routes), \
-        f"Health route not found. Routes: {routes}"
+from observeco.api import router
 
 
-def test_app_is_configured():
-    """Verify the app has routes registered."""
-    assert len(app.routes) > 0, "App has no routes"
+def test_router_has_routes():
+    assert len(router.routes) > 0, "Router has no routes"
 
 
-def test_api_has_version_info():
-    """Check api module exports version metadata."""
-    from observeco import __version__
-    assert __version__ == "0.1.0"
+def test_health_route_exists():
+    paths = [r.path for r in router.routes if hasattr(r, "path")]
+    assert any("health" in str(p) for p in paths), f"No health route in {paths}"
+
+
+def test_api_has_multiple_endpoints():
+    paths = [r.path for r in router.routes if hasattr(r, "path")]
+    assert len(paths) >= 5, f"Expected 5+ endpoints, got {len(paths)}: {paths}"

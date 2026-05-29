@@ -13,7 +13,7 @@ import logging
 import time
 from typing import Optional
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Cookie
 from fastapi.responses import StreamingResponse
 
 logger = logging.getLogger(__name__)
@@ -72,6 +72,39 @@ class EventBroadcaster:
 # Global broadcaster instance
 broadcaster = EventBroadcaster()
 
+# Max WebSocket clients (DoS prevention)
+MAX_WS_CLIENTS = 100
+
+
+async def _authenticate_ws(websocket: WebSocket) -> bool:
+    """Authenticate WebSocket connection via cookie or query param."""
+    token = websocket.cookies.get("observeco_token", "")
+    if not token:
+        # Check query param
+        token = websocket.query_params.get("token", "")
+    if not token:
+        return False
+
+    # Validate token (import here to avoid circular imports)
+    from observeco.auth.oauth2 import OAuth2Provider
+    provider = OAuth2Provider()
+    session = provider.validate_session(token)
+    return session is not None
+
+
+async def _authenticate_sse(request) -> bool:
+    """Authenticate SSE request via cookie or query param."""
+    token = request.cookies.get("observeco_token", "")
+    if not token:
+        token = request.query_params.get("token", "")
+    if not token:
+        return False
+
+    from observeco.auth.oauth2 import OAuth2Provider
+    provider = OAuth2Provider()
+    session = provider.validate_session(token)
+    return session is not None
+
 
 @router.websocket("/ws/events")
 async def websocket_events(
@@ -87,6 +120,16 @@ async def websocket_events(
     - risk_level: Filter by risk level (low, medium, high, critical)
     - event_type: Filter by event type (tool_call, risk_alert, error, heartbeat)
     """
+    # Authenticate
+    if not await _authenticate_ws(websocket):
+        await websocket.close(code=4001, reason="Unauthorized")
+        return
+
+    # Rate limit
+    if broadcaster.client_count >= MAX_WS_CLIENTS:
+        await websocket.close(code=4002, reason="Too many connections")
+        return
+
     await broadcaster.connect(websocket)
 
     try:
