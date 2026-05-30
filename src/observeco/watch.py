@@ -14,6 +14,7 @@ import logging
 import os
 import signal
 import time
+from pathlib import Path
 
 from observeco.config import load_config
 from observeco.db import Database

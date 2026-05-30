@@ -243,8 +243,8 @@ async def ingest_event(request: Request, authorization: str = Header(None)):
     # Log to session log — with DLQ fallback on failure
     try:
         from observeco.session_log import SessionLogger
-        logger = SessionLogger()
-        logger.log(
+        session_logger = SessionLogger()
+        session_logger.log(
             event_type=body["event_type"],
             data=body.get("payload", {}),
             agent_id=body["agent_id"],
@@ -261,7 +261,8 @@ async def ingest_event(request: Request, authorization: str = Header(None)):
             )
         except Exception:
             pass  # If DLQ itself fails, log and continue
-        logger.error(f"Event ingestion failed (saved to DLQ): {e}")
+        import logging as _log
+        _log.getLogger(__name__).error(f"Event ingestion failed (saved to DLQ): {e}")
 
     return {"status": "accepted", "event_type": body["event_type"]}
 
