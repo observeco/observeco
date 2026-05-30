@@ -203,6 +203,16 @@ def serve_dashboard(
     serve(host=host, port=port, static=static, no_browser=no_browser)
 
 
+@app.command(name="webhook")
+def serve_webhook(
+    port: int = typer.Option(9120, "--port", "-p", help="Webhook server port"),
+    host: str = typer.Option("0.0.0.0", "--host", help="Webhook server bind address"),
+) -> None:
+    """Launch the webhook ingestion server (receives Slack/Discord/Telegram webhooks)."""
+    from observeco.webhook_server import run_webhook_server
+    run_webhook_server(host=host, port=port)
+
+
 # -- Heal command (v1.1) --
 
 @app.command(name="heal")
