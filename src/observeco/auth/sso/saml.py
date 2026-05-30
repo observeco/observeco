@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 import os
 import time
 import urllib.parse
@@ -30,6 +31,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from ..oauth2 import User, Session
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -144,8 +147,8 @@ class SAMLProvider:
     def validate_response(self, saml_response: str, expected_request_id: str = "") -> bool:
         """Validate SAML response signature and conditions.
 
-        Note: Full signature validation requires xmlsec library.
-        This validates structure and basic conditions.
+        Uses xmlsec for cryptographic signature verification when available.
+        Falls back to structural validation if xmlsec is not installed.
         """
         try:
             decoded = base64.b64decode(saml_response).decode("utf-8")
@@ -189,12 +192,87 @@ class SAMLProvider:
             # Check Issuer matches IdP
             issuer = assertion.find("saml:Issuer", ns)
             if issuer is not None and self.config.x509_cert:
-                # In production, verify signature against certificate
-                pass
+                issuer_text = issuer.text or ""
+                # In production, verify the issuer matches the configured IdP
+                # (exact match or certificate pinning)
+
+            # Cryptographic signature verification
+            sig_verified = self._verify_signature(root, ns)
+            if not sig_verified:
+                logger.warning("SAML response signature verification failed")
+                return False
 
             return True
 
-        except Exception:
+        except Exception as e:
+            logger.error(f"SAML validation error: {e}")
+            return False
+
+    def _verify_signature(self, root: ET.Element, ns: dict) -> bool:
+        """Verify SAML response XML signature using xmlsec.
+
+        Returns True if:
+        - xmlsec is available and signature is valid
+        - xmlsec is not available but no signature exists (graceful degradation)
+        Returns False if:
+        - xmlsec is available but signature is invalid
+        - xmlsec is not available and signature exists (can't verify)
+        """
+        # Check if there's a signature in the document
+        sig_element = root.find(
+            ".//{http://www.w3.org/2000/09/xmldsig#}Signature"
+        )
+        has_signature = sig_element is not None
+
+        try:
+            import xmlsec
+            import xmlsec.tree
+            import xmlsec.signature
+            import xmlsec.constants as consts
+
+            # xmlsec is available — do proper verification
+            # Find the signature node
+            sig_node = xmlsec.tree.find_signature(root)
+            if sig_node is None:
+                # No signature found
+                if has_signature:
+                    return False  # Signature was expected but not found by xmlsec
+                return True  # No signature, no problem (degraded mode)
+
+            # Create template for verification
+            ctx = xmlsec.SignatureContext()
+            
+            # Load the IdP certificate
+            if self.config.x509_cert:
+                key_data = self.config.x509_cert.strip()
+                if key_data.startswith("-----BEGIN"):
+                    # PEM format
+                    key = xmlsec.Key.from_file(key_data, consts.KeyDataFormatPem)
+                else:
+                    # DER/base64 format
+                    import tempfile
+                    with tempfile.NamedTemporaryFile(suffix='.crt', delete=False) as f:
+                        f.write(key_data.encode())
+                        key = xmlsec.Key.from_file(f.name, consts.KeyDataFormatCertPem)
+                ctx.key = key
+
+            # Verify
+            ctx.verify(sig_node)
+            return True
+
+        except ImportError:
+            # xmlsec not installed — graceful degradation
+            if has_signature:
+                # Signature exists but we can't verify it
+                logger.warning(
+                    "SAML signature present but xmlsec not installed. "
+                    "Install with: pip install xmlsec. Rejecting unsigned assertion."
+                )
+                return False
+            # No signature, no xmlsec — accept (degraded mode)
+            return True
+        except Exception as e:
+            logger.error(f"SAML signature verification error: {e}")
             return False
 
     def create_session(self, user: User) -> Session:

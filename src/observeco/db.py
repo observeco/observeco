@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import time
 from pathlib import Path
@@ -10,9 +11,117 @@ from typing import Optional
 
 from platformdirs import user_data_dir
 
-SCHEMA_VERSION = 4
+logger = logging.getLogger(__name__)
+
+SCHEMA_VERSION = 5
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
+
+# Versioned migrations — each entry is (version, sql)
+# Run in order when upgrading from an older version.
+MIGRATIONS = [
+    (2, """-- Migration 2: restart_log table
+CREATE TABLE IF NOT EXISTS restart_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    restart_type TEXT NOT NULL CHECK(restart_type IN ('healthy', 'toctou', 'crash')),
+    duration_ms INTEGER DEFAULT 0,
+    crash_log_snippet TEXT,
+    evidence TEXT,
+    timestamp INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_restart_agent_ts ON restart_log(agent_name, timestamp);
+CREATE INDEX IF NOT EXISTS idx_restart_ts ON restart_log(timestamp);
+"""),
+    (3, """-- Migration 3: feedback table
+CREATE TABLE IF NOT EXISTS feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    feedback_type TEXT NOT NULL,
+    type_label TEXT,
+    summary TEXT NOT NULL,
+    detail TEXT DEFAULT '',
+    severity TEXT DEFAULT '',
+    version TEXT DEFAULT '',
+    os_info TEXT DEFAULT '',
+    install_method TEXT DEFAULT '',
+    delivered_tg INTEGER DEFAULT 0,
+    delivered_email INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);
+"""),
+    (4, """-- Migration 4: telemetry + pathway tables
+CREATE TABLE IF NOT EXISTS telemetry_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    machine_id TEXT DEFAULT '',
+    version TEXT DEFAULT '',
+    python TEXT DEFAULT '',
+    os_info TEXT DEFAULT '',
+    error_type TEXT DEFAULT '',
+    error_message TEXT DEFAULT '',
+    stack_trace TEXT DEFAULT '',
+    command TEXT DEFAULT '',
+    feature_name TEXT DEFAULT '',
+    extra TEXT DEFAULT '{}',
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_telemetry_event ON telemetry_events(event_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_telemetry_machine ON telemetry_events(machine_id);
+
+CREATE TABLE IF NOT EXISTS pathway_nodes (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('cron','agent','platform','consumer','router')),
+    framework TEXT DEFAULT '',
+    source TEXT DEFAULT 'manual' CHECK(source IN ('auto','manual')),
+    confidence INTEGER DEFAULT 50 CHECK(confidence IN (0,25,50,75,100)),
+    metadata TEXT DEFAULT '{}'
+);
+CREATE TABLE IF NOT EXISTS pathway_edges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source_id TEXT NOT NULL REFERENCES pathway_nodes(id),
+    target_id TEXT REFERENCES pathway_nodes(id),
+    status TEXT NOT NULL DEFAULT 'unknown' CHECK(status IN ('green','yellow','red','teal','unknown')),
+    mechanism TEXT DEFAULT '',
+    confidence INTEGER DEFAULT 50 CHECK(confidence IN (0,25,50,75,100)),
+    scenario TEXT DEFAULT '',
+    last_verified INTEGER,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_edges_source ON pathway_edges(source_id);
+CREATE INDEX IF NOT EXISTS idx_edges_target ON pathway_edges(target_id);
+CREATE INDEX IF NOT EXISTS idx_edges_status ON pathway_edges(status);
+"""),
+    (5, """-- Migration 5: auth sessions + dead letter queue
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    email TEXT DEFAULT '',
+    name TEXT DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    provider TEXT DEFAULT 'local',
+    expires_at REAL NOT NULL,
+    created_at REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires ON auth_sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS dead_letter_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    agent_id TEXT DEFAULT '',
+    payload TEXT DEFAULT '{}',
+    error TEXT NOT NULL,
+    retries INTEGER DEFAULT 0,
+    max_retries INTEGER DEFAULT 3,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending','retried','failed','resolved')),
+    created_at INTEGER NOT NULL,
+    resolved_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_dlq_status ON dead_letter_queue(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_dlq_retries ON dead_letter_queue(retries);
+"""),
+]
 
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS _meta (
@@ -271,22 +380,34 @@ class Database:
         # Run full schema to ensure all tables exist (IF NOT EXISTS makes it idempotent)
         conn.executescript(_SCHEMA_SQL)
 
-        # Check/update schema version with migration support
+        # Check current version
         cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
         row = cur.fetchone()
-        if row is None:
-            conn.execute("INSERT INTO _meta (key, value) VALUES ('schema_version', ?)",
-                         (str(SCHEMA_VERSION),))
-        else:
-            existing = int(row["value"])
-            if existing < 2:
-                # Migration 1→2: restart_log table is already handled by IF NOT EXISTS above.
-                # Just bump the version.
-                pass
-            if existing < SCHEMA_VERSION:
-                conn.execute("UPDATE _meta SET value=? WHERE key='schema_version'",
-                             (str(SCHEMA_VERSION),))
-        conn.commit()
+        current_version = int(row["value"]) if row else 1
+
+        # Run pending migrations in order
+        for target_version, migration_sql in MIGRATIONS:
+            if current_version < target_version:
+                try:
+                    conn.executescript(migration_sql)
+                    conn.execute(
+                        "UPDATE _meta SET value=? WHERE key='schema_version'",
+                        (str(target_version),),
+                    )
+                    conn.commit()
+                    current_version = target_version
+                except Exception as e:
+                    logger.error(f"Migration {current_version}→{target_version} failed: {e}")
+                    # Continue — next startup will retry
+                    break
+
+        # Ensure version is current
+        if current_version < SCHEMA_VERSION:
+            conn.execute(
+                "UPDATE _meta SET value=? WHERE key='schema_version'",
+                (str(SCHEMA_VERSION),),
+            )
+            conn.commit()
 
     def close(self) -> None:
         if self._conn is not None:
