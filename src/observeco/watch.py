@@ -10,6 +10,8 @@ Self-check: writes heartbeat file every cycle so external monitors
 
 from __future__ import annotations
 
+import logging
+import os
 import signal
 import time
 
@@ -99,7 +101,7 @@ def run_watch(
                     db.log_error(
                         agent_name=agent.name,
                         error_type="watch_probe_failed",
-                        error_message=str(e),
+                        message=str(e),
                         severity="error",
                     )
                     results.append((agent.name, "error", 0))
