@@ -482,7 +482,7 @@
       Open source · MIT license · No cloud
     </div>
     <h1>Tells you if your AI agents are <span class="green">working</span>, what they're doing, and where your <span class="green">money</span> goes.</h1>
-    <p>12 features. One install. 60 seconds to first health data. Your data never leaves your machine.</p>
+    <p>20+ features. One install. 60 seconds to first health data. Your data never leaves your machine.</p>
     <div class="hero-install" onclick="navigator.clipboard.writeText('pip install observeco && observeco dashboard'); this.querySelector('.copy').textContent='copied!'">
       <span>$</span> pip install observeco && observeco dashboard
       <span class="copy">click to copy</span>
@@ -510,8 +510,8 @@
 <section id="features">
   <div class="container">
     <div class="section-label">What you get</div>
-    <h2 class="section-title">12 features. Zero config for Hermes users.</h2>
-    <p class="section-desc">Everything you need to know if your agents are alive, what's in their context, and when something breaks.</p>
+    <h2 class="section-title">20+ features. Auto-detects your agent stack.</h2>
+    <p class="section-desc">Everything you need to know if your agents are alive, what's in their context, and when something breaks. Plus webhook ingestion from Slack, Discord, and Telegram.</p>
 
     <div class="features-grid">
       <div class="feature-card">
@@ -586,6 +586,60 @@
         <p>All data on your machine. Zero cloud. Zero telemetry. Your agents' data stays yours.</p>
         <span class="tag free">Free</span>
       </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌐</div>
+        <h3>Webhook Ingestion</h3>
+        <p>Receive events from Slack, Discord, and Telegram. Translates to OEF → risk engine → alerts.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔀</div>
+        <h3>Event Pipeline</h3>
+        <p>Tool calls flow through risk classification → session log → alert dispatch → circuit breaker.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⏳</div>
+        <h3>Rate Limiting</h3>
+        <p>Built-in 429 handling with exponential backoff. Slack, Discord, Telegram calls never silently fail.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📮</div>
+        <h3>Dead Letter Queue</h3>
+        <p>Failed events are stored, not dropped. Retry, resolve, or purge from the API.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔐</div>
+        <h3>SAML SSO</h3>
+        <p>Enterprise single sign-on with XML signature validation. Just-in-time user provisioning.</p>
+        <span class="tag">Enterprise</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🪪</div>
+        <h3>OAuth2 + Sessions</h3>
+        <p>Google, GitHub login. Sessions persist across restarts via SQLite.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Encrypted Tokens</h3>
+        <p>API tokens encrypted at rest via OS keychain. No plaintext secrets on disk.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>DB Migrations</h3>
+        <p>Versioned schema migrations. Upgrade safely — no data loss, no breakage.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💓</div>
+        <h3>Watch Self-Check</h3>
+        <p>Heartbeat file every cycle. External monitors can detect if the daemon is stuck.</p>
+        <span class="tag free">Free</span>
+      </div>
     </div>
   </div>
 </section>
@@ -605,7 +659,7 @@
       <div class="step">
         <div class="step-num">02</div>
         <h3>Discover</h3>
-        <p>Auto-detects your agents from config. Hermes users: zero configuration needed.</p>
+        <p>Auto-detects your agents from config files. Zero configuration if you use Hermes or OpenClaw.</p>
       </div>
       <div class="step">
         <div class="step-num">03</div>
@@ -665,6 +719,26 @@
         <div class="comparison-cell"><span class="cross">✗</span> Manual configuration</div>
       </div>
       <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Webhook ingestion</div>
+        <div class="comparison-cell"><span class="check">✓</span> Slack, Discord, Telegram → OEF → risk engine</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Manual integration required</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Rate limiting</div>
+        <div class="comparison-cell"><span class="check">✓</span> Built-in 429 retry + backoff</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Silent failures on rate limits</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Dead letter queue</div>
+        <div class="comparison-cell"><span class="check">✓</span> Failed events stored, retryable</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Events silently dropped</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">SSO / SAML</div>
+        <div class="comparison-cell"><span class="check">✓</span> Built-in with signature validation</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Not available</div>
+      </div>
+      <div class="comparison-row">
         <div class="comparison-cell" style="font-weight: 500;">Cost</div>
         <div class="comparison-cell"><span class="check">Free forever</span> — MIT license</div>
         <div class="comparison-cell"><span class="cross">$15-59/mo</span> — per host</div>
@@ -687,28 +761,21 @@
 
     <div class="roadmap-items">
       <div class="roadmap-item">
-        <div class="roadmap-version">v0.1 · Now</div>
+        <div class="roadmap-version">v0.2 · Now</div>
         <div>
-          <h3>12 features — monitoring + diagnostics</h3>
-          <p>Pulse check, circuit breakers, token breakdown, drift tracking, memory garden, skill audit, heal button, error timeline, in-dashboard alerts, local SQLite.</p>
+          <h3>20+ features — monitoring + integration</h3>
+          <p>Pulse check, circuit breakers, token breakdown, drift tracking, memory garden, skill audit, heal button, error timeline, webhook ingestion, event pipeline, rate limiting, dead letter queue, SAML SSO, OAuth2, encrypted tokens, DB migrations.</p>
         </div>
       </div>
       <div class="roadmap-item">
-        <div class="roadmap-version">v0.2 · D+3</div>
+        <div class="roadmap-version">v0.3 · Next</div>
         <div>
-          <h3>Auto-heal + extended history</h3>
-          <p>Watch daemon auto-restarts dead agents. 93% of failures resolved without human intervention. L1 crash recovery in ~5 seconds.</p>
+          <h3>Auto-heal + push alerts</h3>
+          <p>Watch daemon auto-restarts dead agents. Telegram, webhook, and email alerts when agents break. Close the discovery gap.</p>
         </div>
       </div>
       <div class="roadmap-item">
-        <div class="roadmap-version">v0.3 · D+7</div>
-        <div>
-          <h3>Chisel compression + push alerts</h3>
-          <p>Compress system prompts automatically. Telegram, webhook, and email alerts when agents break. Close the discovery gap.</p>
-        </div>
-      </div>
-      <div class="roadmap-item">
-        <div class="roadmap-version">v1.1 · D+14</div>
+        <div class="roadmap-version">v1.0 · Soon</div>
         <div>
           <h3>OpenClaw runtime plugin</h3>
           <p>40-60% fewer tokens per turn. Intent-aware context loading that only loads what your agent needs, when it needs it.</p>
