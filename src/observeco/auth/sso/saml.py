@@ -198,19 +198,51 @@ class SAMLProvider:
             return False
 
     def create_session(self, user: User) -> Session:
-        """Create a session for an authenticated SAML user."""
+        """Create a session for an authenticated SAML user — persisted to SQLite."""
         import secrets
         token = secrets.token_urlsafe(32)
+        now = time.time()
         session = Session(
             token=token,
             user=user,
-            expires_at=time.time() + 86400 * 8,  # 8 hours (SAML sessions are shorter)
+            expires_at=now + 86400 * 8,  # 8 hours (SAML sessions are shorter)
         )
+        # Persist to database
+        try:
+            from observeco.db import Database
+            db = Database()
+            db.save_session(
+                token=token, user_id=user.id, email=user.email,
+                name=user.name, avatar_url=user.avatar_url,
+                provider=user.provider, expires_at=session.expires_at,
+                created_at=now,
+            )
+        except Exception:
+            pass
         self._sessions[token] = session
         return session
 
     def validate_session(self, token: str) -> Optional[Session]:
-        """Validate a session token."""
+        """Validate a session token — checks database first, then in-memory."""
+        try:
+            from observeco.db import Database
+            db = Database()
+            row = db.get_session(token)
+            if row:
+                user = User(
+                    id=row["user_id"], email=row["email"], name=row["name"],
+                    avatar_url=row.get("avatar_url", ""),
+                    provider=row.get("provider", "saml"),
+                )
+                session = Session(
+                    token=token, user=user,
+                    expires_at=row["expires_at"],
+                    created_at=row.get("created_at", time.time()),
+                )
+                self._sessions[token] = session
+                return session
+        except Exception:
+            pass
         session = self._sessions.get(token)
         if session and not session.is_expired:
             return session

@@ -173,6 +173,37 @@ CREATE TABLE IF NOT EXISTS telemetry_events (
 CREATE INDEX IF NOT EXISTS idx_telemetry_event ON telemetry_events(event_type, created_at);
 CREATE INDEX IF NOT EXISTS idx_telemetry_machine ON telemetry_events(machine_id);
 
+-- Auth sessions (persisted — survive restart)
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    email TEXT DEFAULT '',
+    name TEXT DEFAULT '',
+    avatar_url TEXT DEFAULT '',
+    provider TEXT DEFAULT 'local',
+    expires_at REAL NOT NULL,
+    created_at REAL NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires ON auth_sessions(expires_at);
+
+-- Dead letter queue for failed event ingestion
+CREATE TABLE IF NOT EXISTS dead_letter_queue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    agent_id TEXT DEFAULT '',
+    payload TEXT DEFAULT '{}',
+    error TEXT NOT NULL,
+    retries INTEGER DEFAULT 0,
+    max_retries INTEGER DEFAULT 3,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending','retried','failed','resolved')),
+    created_at INTEGER NOT NULL,
+    resolved_at INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_dlq_status ON dead_letter_queue(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_dlq_retries ON dead_letter_queue(retries);
+
 -- Communication Pathway Map (§3.19)
 CREATE TABLE IF NOT EXISTS pathway_nodes (
     id TEXT PRIMARY KEY,
@@ -261,6 +292,56 @@ class Database:
         if self._conn is not None:
             self._conn.close()
             self._conn = None
+
+    def backup(self, dest_path: Optional[str | Path] = None) -> bool:
+        """Create a backup of the database using SQLite's online backup API.
+
+        Safe to call while the database is in use (WAL mode).
+        Returns True on success.
+        """
+        import shutil
+        if dest_path is None:
+            backup_dir = self.db_path.parent / "backups"
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            ts = time.strftime("%Y%m%d_%H%M%S")
+            dest_path = backup_dir / f"pulse_{ts}.db"
+        dest_path = Path(dest_path)
+        try:
+            src_conn = self._get_conn()
+            dest_conn = sqlite3.connect(str(dest_path))
+            src_conn.backup(dest_conn)
+            dest_conn.close()
+            logger.info(f"Database backed up to {dest_path}")
+            return True
+        except Exception as e:
+            logger.error(f"Database backup failed: {e}")
+            return False
+
+    def vacuum(self) -> bool:
+        """Reclaim space and clean WAL. Run periodically."""
+        try:
+            conn = self._get_conn()
+            conn.execute("VACUUM")
+            conn.commit()
+            return True
+        except Exception as e:
+            logger.error(f"VACUUM failed: {e}")
+            return False
+
+    def purge_old_data(self, days: int = 90) -> dict:
+        """Remove data older than N days. Returns counts of deleted rows."""
+        conn = self._get_conn()
+        cutoff = int(time.time()) - (days * 86400)
+        counts = {}
+        for table in ["pulse_log", "chisel_trims", "chisel_drift", "errors",
+                      "restart_log", "telemetry_events"]:
+            try:
+                cur = conn.execute(f"DELETE FROM {table} WHERE timestamp < ?", (cutoff,))
+                counts[table] = cur.rowcount
+            except Exception:
+                counts[table] = 0
+        conn.commit()
+        return counts
 
     # -- Pulse Log --
 
@@ -391,6 +472,133 @@ class Database:
             (since_ts,),
         )
         return [dict(r) for r in cur.fetchall()]
+
+    # -- Auth Sessions (persisted — survive restart) --
+
+    def save_session(self, token: str, user_id: str, email: str, name: str,
+                     avatar_url: str = "", provider: str = "local",
+                     expires_at: float = 0, created_at: float = 0) -> None:
+        """Persist an auth session to SQLite."""
+        conn = self._get_conn()
+        now = created_at or time.time()
+        exp = expires_at or (now + 86400 * 7)
+        conn.execute(
+            "INSERT OR REPLACE INTO auth_sessions "
+            "(token, user_id, email, name, avatar_url, provider, expires_at, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (token, user_id, email, name, avatar_url, provider, exp, now),
+        )
+        conn.commit()
+
+    def get_session(self, token: str) -> Optional[dict]:
+        """Load a session by token. Returns None if expired or missing."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "SELECT * FROM auth_sessions WHERE token=?", (token,)
+        )
+        row = cur.fetchone()
+        if not row:
+            return None
+        session = dict(row)
+        if session["expires_at"] < time.time():
+            # Expired — clean up
+            self.delete_session(token)
+            return None
+        return session
+
+    def delete_session(self, token: str) -> bool:
+        """Delete a session. Returns True if a row was deleted."""
+        conn = self._get_conn()
+        cur = conn.execute("DELETE FROM auth_sessions WHERE token=?", (token,))
+        conn.commit()
+        return cur.rowcount > 0
+
+    def purge_expired_sessions(self) -> int:
+        """Delete expired sessions. Returns count removed."""
+        conn = self._get_conn()
+        now = time.time()
+        cur = conn.execute(
+            "DELETE FROM auth_sessions WHERE expires_at < ?", (now,)
+        )
+        conn.commit()
+        return cur.rowcount
+
+    # -- Dead Letter Queue (failed events) --
+
+    def dlq_add(self, event_type: str, agent_id: str, payload: dict, error: str) -> int:
+        """Add a failed event to the dead letter queue. Returns row id."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "INSERT INTO dead_letter_queue "
+            "(event_type, agent_id, payload, error, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (event_type, agent_id, json.dumps(payload), error, int(time.time())),
+        )
+        conn.commit()
+        return cur.lastrowid or 0
+
+    def dlq_get_pending(self, limit: int = 50) -> list[dict]:
+        """Get pending DLQ entries for retry."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "SELECT * FROM dead_letter_queue "
+            "WHERE status='pending' AND retries < max_retries "
+            "ORDER BY created_at ASC LIMIT ?",
+            (limit,),
+        )
+        return [dict(r) for r in cur.fetchall()]
+
+    def dlq_mark_retried(self, row_id: int) -> None:
+        """Mark a DLQ entry as retried (increment retry count)."""
+        conn = self._get_conn()
+        conn.execute(
+            "UPDATE dead_letter_queue SET retries = retries + 1 WHERE id=?",
+            (row_id,),
+        )
+        conn.commit()
+
+    def dlq_mark_failed(self, row_id: int) -> None:
+        """Mark a DLQ entry as permanently failed."""
+        conn = self._get_conn()
+        conn.execute(
+            "UPDATE dead_letter_queue SET status='failed', resolved_at=? WHERE id=?",
+            (int(time.time()), row_id),
+        )
+        conn.commit()
+
+    def dlq_mark_resolved(self, row_id: int) -> None:
+        """Mark a DLQ entry as resolved."""
+        conn = self._get_conn()
+        conn.execute(
+            "UPDATE dead_letter_queue SET status='resolved', resolved_at=? WHERE id=?",
+            (int(time.time()), row_id),
+        )
+        conn.commit()
+
+    def dlq_stats(self) -> dict:
+        """Get DLQ statistics."""
+        conn = self._get_conn()
+        pending = conn.execute(
+            "SELECT COUNT(*) FROM dead_letter_queue WHERE status='pending'"
+        ).fetchone()[0]
+        failed = conn.execute(
+            "SELECT COUNT(*) FROM dead_letter_queue WHERE status='failed'"
+        ).fetchone()[0]
+        resolved = conn.execute(
+            "SELECT COUNT(*) FROM dead_letter_queue WHERE status='resolved'"
+        ).fetchone()[0]
+        return {"pending": pending, "failed": failed, "resolved": resolved}
+
+    def dlq_purge(self, older_than_days: int = 7) -> int:
+        """Purge old DLQ entries. Returns count removed."""
+        conn = self._get_conn()
+        cutoff = int(time.time()) - (older_than_days * 86400)
+        cur = conn.execute(
+            "DELETE FROM dead_letter_queue WHERE created_at < ? AND status IN ('resolved','failed')",
+            (cutoff,),
+        )
+        conn.commit()
+        return cur.rowcount
 
     # -- Circuit Breakers --
 

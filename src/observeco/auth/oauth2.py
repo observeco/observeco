@@ -91,7 +91,7 @@ class OAuth2Provider:
         self.redirect_uri = redirect_uri or os.environ.get("OBSERVECO_OAUTH_REDIRECT_URI", "")
         self.jwt_secret = jwt_secret or os.environ.get("OBSERVECO_JWT_SECRET", secrets.token_hex(32))
         self._sessions: dict[str, Session] = {}
-        self._pending_state: str = ""
+        self._pending_states: dict[str, float] = {}  # state -> creation timestamp
 
     def is_configured(self) -> bool:
         return self.provider != "local" and bool(self.client_id and self.client_secret)
@@ -109,7 +109,7 @@ class OAuth2Provider:
         # Generate and store state for CSRF protection
         if not state:
             state = secrets.token_urlsafe(16)
-        self._pending_state = state
+        self._pending_states[state] = time.time()
 
         import urllib.parse
         params = {
@@ -131,10 +131,15 @@ class OAuth2Provider:
         if self.provider not in self.PROVIDERS:
             return None
 
-        # Verify state parameter (CSRF protection)
-        if state and state != self._pending_state:
-            logger.warning(f"OAuth state mismatch: expected {self._pending_state}, got {state}")
-            return None
+        # Verify state parameter (CSRF protection) — check dict and clean stale entries
+        if state:
+            # Purge states older than 10 minutes
+            cutoff = time.time() - 600
+            self._pending_states = {s: t for s, t in self._pending_states.items() if t > cutoff}
+            if state not in self._pending_states:
+                logger.warning(f"OAuth state not found or expired: {state}")
+                return None
+            del self._pending_states[state]
 
         config = self.PROVIDERS[self.provider]
 
@@ -194,13 +199,27 @@ class OAuth2Provider:
             return None
 
     def _create_session(self, user: User) -> Session:
-        """Create a new session for a user."""
-        token = secrets.token_urlsafe(32)
+        """Create a new session for a user — persisted to SQLite."""
+        import secrets as _sec
+        token = _sec.token_urlsafe(32)
+        now = time.time()
         session = Session(
             token=token,
             user=user,
-            expires_at=time.time() + 86400 * 7,  # 7 days
+            expires_at=now + 86400 * 7,  # 7 days
         )
+        # Persist to database
+        try:
+            from observeco.db import Database
+            db = Database()
+            db.save_session(
+                token=token, user_id=user.id, email=user.email,
+                name=user.name, avatar_url=user.avatar_url,
+                provider=user.provider, expires_at=session.expires_at,
+                created_at=now,
+            )
+        except Exception:
+            pass  # Graceful degradation — in-memory fallback still works
         self._sessions[token] = session
         return session
 
@@ -210,7 +229,28 @@ class OAuth2Provider:
         return self._create_session(user)
 
     def validate_session(self, token: str) -> Optional[Session]:
-        """Validate a session token."""
+        """Validate a session token — checks database first, then in-memory."""
+        # Try database first (survives restart)
+        try:
+            from observeco.db import Database
+            db = Database()
+            row = db.get_session(token)
+            if row:
+                user = User(
+                    id=row["user_id"], email=row["email"], name=row["name"],
+                    avatar_url=row.get("avatar_url", ""),
+                    provider=row.get("provider", "local"),
+                )
+                session = Session(
+                    token=token, user=user,
+                    expires_at=row["expires_at"],
+                    created_at=row.get("created_at", time.time()),
+                )
+                self._sessions[token] = session  # Cache in-memory
+                return session
+        except Exception:
+            pass
+        # Fallback to in-memory
         session = self._sessions.get(token)
         if session and not session.is_expired:
             return session
@@ -219,7 +259,13 @@ class OAuth2Provider:
         return None
 
     def destroy_session(self, token: str) -> bool:
-        """Destroy a session."""
+        """Destroy a session — removes from both database and memory."""
+        try:
+            from observeco.db import Database
+            db = Database()
+            db.delete_session(token)
+        except Exception:
+            pass
         if token in self._sessions:
             del self._sessions[token]
             return True

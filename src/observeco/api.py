@@ -37,22 +37,82 @@ from pathlib import Path
 _API_TOKENS_FILE = Path(os.environ.get("OBSERVECO_DATA_DIR", "~/.observeco")) / ".api_tokens.json"
 API_TOKENS: dict[str, dict] = {}
 
+# Encryption key from OS keychain (or generated once)
+_SERVICE_NAME = "observeco-api-tokens"
+_ENCRYPTION_KEY: bytes = b""
+
+
+def _get_encryption_key() -> bytes:
+    """Get or generate encryption key from OS keychain."""
+    global _ENCRYPTION_KEY
+    if _ENCRYPTION_KEY:
+        return _ENCRYPTION_KEY
+
+    try:
+        import keyring
+        stored = keyring.get_password(_SERVICE_NAME, "_encryption_key")
+        if stored:
+            _ENCRYPTION_KEY = bytes.fromhex(stored)
+            return _ENCRYPTION_KEY
+        # Generate new key
+        import secrets
+        _ENCRYPTION_KEY = secrets.token_bytes(32)
+        keyring.set_password(_SERVICE_NAME, "_encryption_key", _ENCRYPTION_KEY.hex())
+        return _ENCRYPTION_KEY
+    except Exception:
+        # Fallback: derive from machine-id (not truly secure, but better than plaintext)
+        import hashlib
+        machine_id = os.environ.get("OBSERVECO_MACHINE_ID", "observeco-default")
+        _ENCRYPTION_KEY = hashlib.sha256(machine_id.encode()).digest()
+        return _ENCRYPTION_KEY
+
+
+def _encrypt(data: str) -> str:
+    """XOR encrypt with key (simple but better than plaintext)."""
+    key = _get_encryption_key()
+    encrypted = bytes(b ^ key[i % len(key)] for i, b in enumerate(data.encode()))
+    return encrypted.hex()
+
+
+def _decrypt(data: str) -> str:
+    """XOR decrypt."""
+    key = _get_encryption_key()
+    raw = bytes.fromhex(data)
+    decrypted = bytes(b ^ key[i % len(key)] for i, b in enumerate(raw))
+    return decrypted.decode()
+
 
 def _load_tokens():
-    """Load tokens from file."""
+    """Load tokens from encrypted file."""
     global API_TOKENS
     try:
         if _API_TOKENS_FILE.exists():
-            API_TOKENS = json.loads(_API_TOKENS_FILE.read_text())
+            encrypted = json.loads(_API_TOKENS_FILE.read_text())
+            API_TOKENS = {}
+            for token_key, value in encrypted.items():
+                try:
+                    decrypted_key = _decrypt(token_key)
+                    decrypted_value = {k: _decrypt(v) if isinstance(v, str) else v
+                                       for k, v in value.items()}
+                    API_TOKENS[decrypted_key] = decrypted_value
+                except Exception:
+                    # Unencrypted fallback for migration
+                    API_TOKENS[token_key] = value
     except Exception:
         pass
 
 
 def _save_tokens():
-    """Save tokens to file."""
+    """Save tokens to encrypted file."""
     try:
         _API_TOKENS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        _API_TOKENS_FILE.write_text(json.dumps(API_TOKENS, indent=2))
+        encrypted = {}
+        for token_key, value in API_TOKENS.items():
+            enc_key = _encrypt(token_key)
+            enc_value = {k: _encrypt(v) if isinstance(v, str) else v
+                         for k, v in value.items()}
+            encrypted[enc_key] = enc_value
+        _API_TOKENS_FILE.write_text(json.dumps(encrypted, indent=2))
     except Exception:
         pass
 
@@ -180,7 +240,7 @@ async def ingest_event(request: Request, authorization: str = Header(None)):
         if not body.get(field):
             raise HTTPException(status_code=400, detail=f"Missing field: {field}")
 
-    # Log to session log
+    # Log to session log — with DLQ fallback on failure
     try:
         from observeco.session_log import SessionLogger
         logger = SessionLogger()
@@ -190,8 +250,18 @@ async def ingest_event(request: Request, authorization: str = Header(None)):
             agent_id=body["agent_id"],
             risk_level=body.get("payload", {}).get("risk_level", ""),
         )
-    except Exception:
-        pass
+    except Exception as e:
+        # Event failed to process — save to dead letter queue for retry
+        try:
+            db.dlq_add(
+                event_type=body["event_type"],
+                agent_id=body["agent_id"],
+                payload=body.get("payload", {}),
+                error=str(e),
+            )
+        except Exception:
+            pass  # If DLQ itself fails, log and continue
+        logger.error(f"Event ingestion failed (saved to DLQ): {e}")
 
     return {"status": "accepted", "event_type": body["event_type"]}
 
@@ -270,3 +340,38 @@ async def run_diagnostics(authorization: str = Header(None)):
 async def health():
     """API health check (no auth required)."""
     return {"status": "ok", "version": "0.1.0", "timestamp": int(time.time())}
+
+
+# --- Dead Letter Queue ---
+
+@router.get("/dlq")
+async def dlq_list(limit: int = 50, authorization: str = Header(None)):
+    """List pending dead letter queue entries."""
+    _verify_auth(authorization)
+    pending = db.dlq_get_pending(limit=limit)
+    stats = db.dlq_stats()
+    return {"stats": stats, "entries": pending}
+
+
+@router.post("/dlq/{entry_id}/retry")
+async def dlq_retry(entry_id: int, authorization: str = Header(None)):
+    """Mark a DLQ entry as retried."""
+    _verify_auth(authorization)
+    db.dlq_mark_retried(entry_id)
+    return {"status": "retried", "id": entry_id}
+
+
+@router.post("/dlq/{entry_id}/resolve")
+async def dlq_resolve(entry_id: int, authorization: str = Header(None)):
+    """Mark a DLQ entry as resolved."""
+    _verify_auth(authorization)
+    db.dlq_mark_resolved(entry_id)
+    return {"status": "resolved", "id": entry_id}
+
+
+@router.post("/dlq/purge")
+async def dlq_purge(older_than_days: int = 7, authorization: str = Header(None)):
+    """Purge old DLQ entries."""
+    _verify_auth(authorization)
+    count = db.dlq_purge(older_than_days=older_than_days)
+    return {"status": "purged", "count": count}

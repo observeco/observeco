@@ -7,11 +7,11 @@
 
 > **Name convention (post-review):** ObserveCo = company name. agentscope = product name and package name. All marketing uses "agentscope" as the product. ObserveCo is only used for legal entity, domain, and company branding.
 
-**Version:** 2.1 (post-review)
-**Last Updated:** 2026-05-29
+**Version:** 2.2 (post-plumbing-audit)
+**Last Updated:** 2026-05-30
 **Owner:** Hound (CEO) → Kepler (Revenue) → Pragma (COO)
-**Status:** Active — Phase 1 Build
-**Review:** Passed with issues (all resolved below)
+**Status:** Active — Phase 2 Plumbing Gap Remediation
+**Review:** Plumbing audit complete — 17 gaps identified, 4 critical
 
 ---
 
@@ -116,19 +116,30 @@ ObserveCo makes AI agent failures visible, diagnosable, and fixable. We sit betw
 
 | # | Task | Owner | Status | Priority |
 |---|---|---|---|---|
-| 2.1 | MCP server (universal agent adapter) | Pragma | ⬜ TODO | P0 |
-| 2.2 | Slack adapter (bot events, audit logs) | Pragma | ⬜ TODO | P0 |
-| 2.3 | Discord adapter (bot messages, slash commands) | Pragma | ⬜ TODO | P0 |
-| 2.4 | Telegram adapter (bot API updates) | Pragma | ⬜ TODO | P1 |
-| 2.5 | Dashboard framework + session history (htmx + FastAPI) | Pragma | ⬜ TODO | P0 |
-| 2.6 | Dashboard real-time monitoring (add WebSocket to existing dashboard) | Pragma | ⬜ TODO | P1 |
+| 2.1 | MCP server (universal agent adapter) | Pragma | ✅ DONE | P0 |
+| 2.2 | Slack adapter (bot events, audit logs) | Pragma | ✅ DONE | P0 |
+| 2.3 | Discord adapter (bot messages, slash commands) | Pragma | ✅ DONE | P0 |
+| 2.4 | Telegram adapter (bot API updates) | Pragma | ✅ DONE | P1 |
+| 2.5 | Dashboard framework + session history (htmx + FastAPI) | Pragma | ✅ DONE | P0 |
+| 2.6 | Dashboard real-time monitoring (add WebSocket to existing dashboard) | Pragma | ✅ DONE | P1 |
 | 2.7 | Team features — shared permission policies | Pragma | ⬜ TODO | P0 |
 | 2.8 | Team features — audit log | Pragma | ⬜ TODO | P0 |
 | 2.9 | Claude Code adapter (hooks integration) | Kepler | ⬜ TODO | P0 |
 | 2.10 | Cursor adapter (extension) | Kepler | ⬜ TODO | P1 |
-| 2.11 | Docker image for self-hosted deployment | Pragma | ⬜ TODO | P1 |
-| 2.12 | Standardized Event Format (OEF) — formalize §4.2 into standalone spec | Hound | ⬜ TODO | P1 |
-| 2.13 | User authentication (OAuth2) | Pragma | ⬜ TODO | P0 |
+| 2.11 | Docker image for self-hosted deployment | Pragma | ✅ DONE | P1 |
+| 2.12 | Standardized Event Format (OEF) — formalize §4.2 into standalone spec | Hound | ✅ DONE | P1 |
+| 2.13 | User authentication (OAuth2) | Pragma | ✅ DONE | P0 |
+| **2.14** | **Webhook ingestion server — translate platform webhooks → OEF → risk engine** | **Hound** | **⬜ TODO** | **P0** |
+| **2.15** | **Event processing pipeline — adapter → OEF → risk engine → session log → alerts** | **Hound** | **⬜ TODO** | **P0** |
+| **2.16** | **Persist auth sessions to SQLite (OAuth2 + SAML)** | **Hound** | **⬜ TODO** | **P0** |
+| **2.17** | **Discord signature verification — fail-closed when pynacl missing** | **Hound** | **⬜ TODO** | **P0** |
+| **2.18** | **Outbound rate limiting + retry (Slack/Discord/Telegram 429 handling)** | **Hound** | **⬜ TODO** | **P1** |
+| **2.19** | **API tokens — encrypt at rest, rotation, expiry** | **Hound** | **⬜ TODO** | **P1** |
+| **2.20** | **Stripe webhook secret — read from config, not hardcoded** | **Hound** | **⬜ TODO** | **P1** |
+| **2.21** | **Dead letter queue for failed event ingestion** | **Hound** | **⬜ TODO** | **P1** |
+| **2.22** | **Watch daemon self-check (health heartbeat file)** | **Hound** | **⬜ TODO** | **P2** |
+| **2.23** | **SQLite WAL backup schedule + thread-safety audit** | **Hound** | **⬜ TODO** | **P2** |
+| **2.24** | **Database migration strategy (versioned SQL migrations)** | **Hound** | **⬜ TODO** | **P2** |
 
 > **Note:** Codex adapter deferred to Phase 3 pending API feasibility verification.
 > **Note:** Task 2.5 and 2.6 are sequenced: 2.5 builds dashboard framework, 2.6 adds WebSocket to it.
@@ -148,19 +159,24 @@ ObserveCo makes AI agent failures visible, diagnosable, and fixable. We sit betw
 
 | # | Task | Owner | Status | Priority |
 |---|---|---|---|---|
-| 3.1 | Fleet dashboard — multi-agent, multi-channel view | Pragma | ⬜ TODO | P0 |
-| 3.2 | Universal pathway map (any communication protocol) | Hound | ⬜ TODO | P0 |
-| 3.3 | ML-based predictive risk scoring | Pragma | ⬜ TODO | P1 |
-| 3.4 | Cross-agent failure correlation | Hound | ⬜ TODO | P1 |
-| 3.5 | Windows MSI installer | Kepler | ⬜ TODO | P1 |
+| 3.1 | Fleet dashboard — multi-agent, multi-channel view | Pragma | ✅ DONE | P0 |
+| 3.2 | Universal pathway map (any communication protocol) | Hound | ✅ DONE | P0 |
+| 3.3 | ML-based predictive risk scoring | Pragma | ✅ DONE | P1 |
+| 3.4 | Cross-agent failure correlation | Hound | ✅ DONE | P1 |
+| 3.5 | Windows MSI installer | Kepler | ✅ DONE | P1 |
 | 3.6 | Homebrew formula | Kepler | ⬜ TODO | P2 |
 | 3.7 | Mobile monitoring app | Kepler | ⬜ TODO | P2 |
-| 3.8 | Enterprise SSO/SAML | Pragma | ⬜ TODO | P1 |
-| 3.9 | API for third-party integrations | Pragma | ⬜ TODO | P0 |
+| 3.8 | Enterprise SSO/SAML | Pragma | ✅ DONE | P1 |
+| 3.9 | API for third-party integrations | Pragma | ✅ DONE | P0 |
 | 3.10 | On-prem deployment option | Pragma | ⬜ TODO | P2 |
 | 3.11 | macOS LaunchAgent for auto-start | Pragma | ⬜ TODO | P2 |
 | 3.12 | macOS notarization for Gatekeeper | Kepler | ⬜ TODO | P2 |
 | 3.13 | Codex adapter (pending API verification) | Kepler | ⬜ TODO | P2 |
+| **3.14** | **SAML response signature validation (replace placeholder)** | **Hound** | **⬜ TODO** | **P1** |
+| **3.15** | **OAuth state as dict (concurrent login support)** | **Hound** | **⬜ TODO** | **P2** |
+| **3.16** | **Pathway scan — detect Discord/Slack/webhook delivery (not just Telegram)** | **Hound** | **⬜ TODO** | **P2** |
+| **3.17** | **Session log rotation + compaction** | **Hound** | **⬜ TODO** | **P2** |
+| **3.18** | **Graceful shutdown for dashboard (SIGTERM handling)** | **Hound** | **⬜ TODO** | **P2** |
 
 **Phase 3 Success Criteria:**
 - [ ] Dashboard shows all agents across all channels
@@ -392,6 +408,14 @@ All agents, regardless of runtime, send events in this format:
 | Slack API rate limits | Medium | Medium | Batch events, exponential backoff |
 | Dashboard performance at scale | Low | High | Implement pagination, virtual scrolling |
 | Security audit failure | Medium | Critical | Run security audit in Phase 1 |
+| Discord webhook signature bypass (pynacl missing) | High | Critical | Fail-closed: reject if pynacl not installed |
+| Auth session loss on restart | High | High | Persist sessions to SQLite |
+| API tokens in plaintext JSON | Medium | High | Encrypt at rest via keyring or AES |
+| No event processing pipeline | High | Critical | Build adapter → OEF → risk engine → log pipeline |
+| Hardcoded Stripe webhook secret | Medium | High | Read from billing config |
+| Outbound rate limit silent drops | Medium | Medium | Retry + exponential backoff on 429 |
+| OAuth concurrent login race | Low | Low | State dict instead of single string |
+| SAML no signature validation | Medium | High | Integrate xmlsec for production SAML |
 
 ---
 
@@ -423,6 +447,56 @@ All agents, regardless of runtime, send events in this format:
 | 2026-05-29 | MCP server prioritized for Phase 2 | Universal adapter — solves agent compatibility in one shot |
 | 2026-05-29 | OEF spec created | Standardized event format enables any channel integration |
 | 2026-05-29 | Phase 1 focused on CLI fixes | Must work before anything else can be built on top |
+| 2026-05-30 | Plumbing audit: 17 gaps identified (4 critical, 5 high, 5 medium, 3 low) | Adapters are output-only; ingestion, auth persistence, signature verification, and event pipeline missing |
+| 2026-05-30 | Phase 2 tasks 2.1-2.6, 2.11-2.13 marked DONE (built 2026-05-29) | Master plan was stale — corrected |
+| 2026-05-30 | Phase 3 tasks 3.1-3.4, 3.5, 3.8-3.9 marked DONE (built 2026-05-29) | Master plan was stale — corrected |
+| 2026-05-30 | New Phase 2 tasks 2.14-2.24 added for plumbing remediation | P0: webhook ingestion, event pipeline, session persistence, Discord sig fix |
+
+---
+
+## 11. Plumbing Gap Audit (2026-05-30)
+
+**Trigger:** "What's missing" exercise after Phase 2/3 build. Adapters (Slack, Discord, Telegram) appeared complete from the outside but lacked integration plumbing.
+
+### 11.1 Gap Categories
+
+| Category | Gaps | Pattern |
+|----------|------|--------|
+| **Integration Pipeline** | #1, #4 | Adapters have send/receive but no ingestion server or processing pipeline |
+| **Auth & Security** | #2, #3, #5, #7, #16 | Sessions in-memory, sig bypass, plaintext tokens, hardcoded secrets, no SAML validation |
+| **Resilience** | #6, #9, #10, #11, #12 | No rate limiting, no DLQ, no self-check, no backup, no migrations |
+| **Multi-Tenancy** | #8 | Single-user data model blocks Team tier |
+| **Polish** | #13, #14, #15, #17 | OAuth race, pathway=Telegram only, no log rotation, no graceful shutdown |
+
+### 11.2 Critical Path (Must Fix Before Launch)
+
+1. **Webhook ingestion server** — platform webhooks (Slack Events API, Discord interactions, Telegram updates) → OEF translation → risk engine → session log. Without this, adapters are notification-only.
+2. **Event processing pipeline** — the connective tissue: adapter output → OEF normalization → risk classification → session log write → alert dispatch → circuit breaker update.
+3. **Persist auth sessions** — `_sessions` dict dies on restart. Migrate to SQLite `sessions` table.
+4. **Discord signature fail-closed** — if pynacl not installed, reject (not accept) webhook requests.
+
+### 11.3 Task Mapping
+
+| Gap # | Task | Phase | Priority |
+|-------|------|-------|----------|
+| 1 | 2.14 Webhook ingestion server | 2 | P0 |
+| 4 | 2.15 Event processing pipeline | 2 | P0 |
+| 2 | 2.16 Persist auth sessions | 2 | P0 |
+| 3 | 2.17 Discord sig fail-closed | 2 | P0 |
+| 6 | 2.18 Outbound rate limiting | 2 | P1 |
+| 5 | 2.19 API token encryption | 2 | P1 |
+| 7 | 2.20 Stripe webhook secret from config | 2 | P1 |
+| 9 | 2.21 Dead letter queue | 2 | P1 |
+| 10 | 2.22 Watch daemon self-check | 2 | P2 |
+| 11 | 2.23 SQLite backup + thread safety | 2 | P2 |
+| 12 | 2.24 DB migration strategy | 2 | P2 |
+| 16 | 3.14 SAML signature validation | 3 | P1 |
+| 13 | 3.15 OAuth state dict | 3 | P2 |
+| 14 | 3.16 Pathway multi-channel | 3 | P2 |
+| 15 | 3.17 Session log rotation | 3 | P2 |
+| 17 | 3.18 Graceful shutdown | 3 | P2 |
+
+> **Note:** Gap #8 (Multi-Tenancy — single-user data model blocks Team tier) is acknowledged in §11.1 but **deferred** — requires full data model redesign (workspace/team/role tables). tracked as a Phase 3 design task, not part of this plumbing remediation cycle.
 
 ---
 

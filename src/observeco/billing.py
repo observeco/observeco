@@ -159,7 +159,7 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
     try:
         import stripe
         stripe.api_key = config.stripe_secret_key
-        event = stripe.Webhook.construct_event(payload, sig_header, "whsec_observeco")
+        event = stripe.Webhook.construct_event(payload, sig_header, config.webhook_secret)
 
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]

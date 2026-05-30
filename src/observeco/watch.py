@@ -3,6 +3,9 @@
 Polls registered agents' health endpoints on a configurable interval.
 Auto-discovers new agents from Hermes/OpenClaw/other configs.
 Writes results to SQLite so the dashboard auto-populates.
+
+Self-check: writes heartbeat file every cycle so external monitors
+ can detect if this daemon is stuck or dead.
 """
 
 from __future__ import annotations
@@ -14,6 +17,9 @@ from observeco.config import load_config
 from observeco.db import Database
 from observeco.pulse.check import _probe_agent
 from observeco.chisel.trim import run_trim_file
+
+# Self-check heartbeat file
+_HEARTBEAT_FILE = Path.home() / ".observeco" / ".watch_heartbeat.json"
 
 
 def run_watch(
@@ -40,6 +46,9 @@ def run_watch(
     signal.signal(signal.SIGTERM, handle_signal)
 
     cycle = 0
+
+    # Write initial heartbeat
+    _write_heartbeat(status="starting", cycle=0)
 
     print(f"ObserveCo watch: starting (interval={interval}s, daemon={daemon})")
 
@@ -101,6 +110,12 @@ def run_watch(
             error = sum(1 for _, s, _ in results if s == "error")
             print(f"  [{timestamp}] Cycle {cycle}: {len(results)} agents — {alive} alive, {dead} dead, {error} errors")
 
+            # Write heartbeat
+            _write_heartbeat(
+                status="running", cycle=cycle, agents=len(results),
+                alive=alive, dead=dead, errors=error,
+            )
+
         if once:
             break
 
@@ -111,3 +126,24 @@ def run_watch(
             time.sleep(1)
 
     print("ObserveCo watch: stopped.")
+    _write_heartbeat(status="stopped", cycle=cycle)
+
+
+def _write_heartbeat(status: str, cycle: int, agents: int = 0,
+                     alive: int = 0, dead: int = 0, errors: int = 0) -> None:
+    """Write heartbeat file for external monitoring."""
+    import json as _json
+    try:
+        _HEARTBEAT_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _HEARTBEAT_FILE.write_text(_json.dumps({
+            "status": status,
+            "cycle": cycle,
+            "timestamp": int(time.time()),
+            "agents": agents,
+            "alive": alive,
+            "dead": dead,
+            "errors": errors,
+            "pid": os.getpid(),
+        }, indent=2))
+    except Exception:
+        pass

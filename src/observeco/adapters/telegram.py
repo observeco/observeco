@@ -22,6 +22,7 @@ import urllib.request
 from typing import Optional
 
 from .oef import OEFEvent
+from observeco.rate_limiter import get_rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -231,26 +232,46 @@ class TelegramAdapter:
     # --- API ---
 
     def _api_call(self, method: str, payload: dict) -> bool:
-        """Make a Telegram Bot API call."""
+        """Make a Telegram Bot API call with rate limiting and retry."""
         if not self.bot_token:
             return False
 
-        try:
-            data = json.dumps(payload).encode()
-            req = urllib.request.Request(
-                f"{self._base_url}/{method}",
-                data=data,
-                headers={"Content-Type": "application/json"},
-            )
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                result = json.loads(resp.read())
-                if not result.get("ok"):
-                    logger.error(f"Telegram API error: {result.get('description', 'unknown')}")
-                    return False
-                return True
-        except Exception as e:
-            logger.error(f"Telegram API call failed: {e}")
-            return False
+        limiter = get_rate_limiter()
+        host = "api.telegram.org"
+
+        for attempt in range(3):
+            limiter.wait_if_needed(host)
+            try:
+                data = json.dumps(payload).encode()
+                req = urllib.request.Request(
+                    f"{self._base_url}/{method}",
+                    data=data,
+                    headers={"Content-Type": "application/json"},
+                )
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    result = json.loads(resp.read())
+                    if not result.get("ok"):
+                        desc = result.get("description", "unknown")
+                        if "Too Many Requests" in desc or "retry after" in desc.lower():
+                            limiter.record_response(host, 429)
+                            continue
+                        logger.error(f"Telegram API error: {desc}")
+                        return False
+                    limiter.record_response(host, 200)
+                    return True
+            except urllib.error.HTTPError as e:
+                if e.code == 429:
+                    retry_after = e.headers.get("Retry-After", "")
+                    limiter.record_response(host, 429, {"Retry-After": retry_after})
+                    continue
+                logger.error(f"Telegram API call failed: {e}")
+                return False
+            except Exception as e:
+                logger.error(f"Telegram API call failed: {e}")
+                return False
+
+        logger.error(f"Telegram API call failed after 3 attempts (rate limited)")
+        return False
 
     def test_connection(self) -> dict:
         """Test Telegram connection and return bot info."""

@@ -21,6 +21,7 @@ import urllib.request
 from typing import Optional
 
 from .oef import OEFEvent
+from observeco.rate_limiter import get_rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +197,7 @@ class DiscordAdapter:
         """Verify Discord request signature (Ed25519).
 
         Uses pynacl for proper Ed25519 verification.
-        Falls back to header-only check if pynacl is not installed.
+        FAILS CLOSED: if pynacl is not installed, requests are rejected.
         """
         if not self.public_key:
             logger.warning("Discord signature verification skipped — no public key")
@@ -217,9 +218,9 @@ class DiscordAdapter:
             verify_key.verify(message, bytes.fromhex(signature))
             return True
         except ImportError:
-            logger.warning("pynacl not installed — Discord signature verification is placeholder")
-            # Fallback: accept if headers are present (NOT secure for production)
-            return True
+            # FAIL CLOSED — do not accept unverified requests
+            logger.error("pynacl not installed — Discord webhook verification IMPOSSIBLE. Rejecting request. Install with: pip install pynacl")
+            return False
         except BadSignatureError:
             logger.warning("Discord signature verification failed: bad signature")
             return False
@@ -230,23 +231,39 @@ class DiscordAdapter:
     # --- API ---
 
     def _api_call(self, path: str, payload: dict, method: str = "POST") -> bool:
-        """Make a Discord API call."""
-        try:
-            data = json.dumps(payload).encode()
-            req = urllib.request.Request(
-                f"https://discord.com/api/v10{path}",
-                data=data,
-                headers={
-                    "Authorization": f"Bot {self.bot_token}",
-                    "Content-Type": "application/json",
-                },
-                method=method,
-            )
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                return resp.status in (200, 201)
-        except Exception as e:
-            logger.error(f"Discord API call failed: {e}")
-            return False
+        """Make a Discord API call with rate limiting and retry."""
+        limiter = get_rate_limiter()
+        host = "discord.com"
+
+        for attempt in range(3):
+            limiter.wait_if_needed(host)
+            try:
+                data = json.dumps(payload).encode()
+                req = urllib.request.Request(
+                    f"https://{host}/api/v10{path}",
+                    data=data,
+                    headers={
+                        "Authorization": f"Bot {self.bot_token}",
+                        "Content-Type": "application/json",
+                    },
+                    method=method,
+                )
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    limiter.record_response(host, resp.status)
+                    return resp.status in (200, 201)
+            except urllib.error.HTTPError as e:
+                if e.code == 429:
+                    retry_after = e.headers.get("Retry-After", "")
+                    limiter.record_response(host, 429, {"Retry-After": retry_after})
+                    continue
+                logger.error(f"Discord API call failed: {e}")
+                return False
+            except Exception as e:
+                logger.error(f"Discord API call failed: {e}")
+                return False
+
+        logger.error(f"Discord API call failed after 3 attempts (rate limited)")
+        return False
 
     def test_connection(self) -> dict:
         """Test Discord connection and return bot info."""
