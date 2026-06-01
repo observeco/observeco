@@ -13,7 +13,7 @@ from platformdirs import user_data_dir
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 8
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -121,6 +121,106 @@ CREATE TABLE IF NOT EXISTS dead_letter_queue (
 CREATE INDEX IF NOT EXISTS idx_dlq_status ON dead_letter_queue(status, created_at);
 CREATE INDEX IF NOT EXISTS idx_dlq_retries ON dead_letter_queue(retries);
 """),
+    (6, """-- Migration 6: L2 trending, push alerts, plugin tracking
+CREATE TABLE IF NOT EXISTS l2_trending (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    trend_type TEXT NOT NULL CHECK(trend_type IN ('memory_bloat','stuck','drift','upstream_fail')),
+    signal_label TEXT NOT NULL DEFAULT '',
+    severity TEXT NOT NULL DEFAULT 'warning' CHECK(severity IN ('info','warning','critical')),
+    metric_value REAL DEFAULT 0,
+    threshold REAL DEFAULT 0,
+    auto_action TEXT NOT NULL DEFAULT 'none' CHECK(auto_action IN ('none','graceful_restart','sigabort','circuit_backoff','restart_fallback')),
+    resolved INTEGER NOT NULL DEFAULT 0,
+    resolved_action TEXT DEFAULT '',
+    timestamp INTEGER NOT NULL,
+    resolved_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_l2_trending_agent ON l2_trending(agent_name, timestamp);
+CREATE INDEX IF NOT EXISTS idx_l2_trending_type ON l2_trending(trend_type, resolved);
+
+CREATE TABLE IF NOT EXISTS alert_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel TEXT NOT NULL CHECK(channel IN ('telegram','webhook','email')),
+    target TEXT NOT NULL,
+    event_types TEXT NOT NULL DEFAULT 'all' CHECK(event_types IN ('all','critical_only','heal_failure','drift','circuit_trip','agent_death')),
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS alert_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel TEXT NOT NULL,
+    target TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    delivered INTEGER NOT NULL DEFAULT 0,
+    delivery_error TEXT DEFAULT '',
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_alert_log_ts ON alert_log(created_at);
+
+CREATE TABLE IF NOT EXISTS plugin_tracking (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    plugin_name TEXT NOT NULL DEFAULT 'clawforge',
+    hook_point TEXT NOT NULL CHECK(hook_point IN ('bootstrap','ingest','pre_response')),
+    intent_class TEXT DEFAULT '',
+    sources_loaded INTEGER NOT NULL DEFAULT 0,
+    sources_skipped INTEGER NOT NULL DEFAULT 0,
+    tokens_saved INTEGER NOT NULL DEFAULT 0,
+    context_window_pct REAL DEFAULT 0,
+    timestamp INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_plugin_agent ON plugin_tracking(agent_name, timestamp);
+"""),
+    (7, """-- Migration 7: per-turn token tracking + extended history
+CREATE TABLE IF NOT EXISTS token_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    turn_id TEXT NOT NULL,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    identity_tokens INTEGER DEFAULT 0,
+    skills_tokens INTEGER DEFAULT 0,
+    memory_tokens INTEGER DEFAULT 0,
+    tools_tokens INTEGER DEFAULT 0,
+    guidance_tokens INTEGER DEFAULT 0,
+    provider TEXT DEFAULT '',
+    cost REAL DEFAULT 0,
+    anomaly_score REAL,
+    recorded_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_token_agent_ts ON token_logs(agent_name, recorded_at DESC);
+CREATE INDEX IF NOT EXISTS idx_token_ts ON token_logs(recorded_at);
+
+CREATE TABLE IF NOT EXISTS token_budgets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL UNIQUE,
+    max_daily_tokens INTEGER DEFAULT 0,
+    max_turn_cost REAL DEFAULT 0,
+    max_component_growth_pct REAL DEFAULT 0,
+    anomaly_threshold_sigma REAL DEFAULT 3.0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS retention_config (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+INSERT OR IGNORE INTO retention_config (key, value) VALUES ('pulse_days', '7');
+INSERT OR IGNORE INTO retention_config (key, value) VALUES ('error_days', '7');
+INSERT OR IGNORE INTO retention_config (key, value) VALUES ('drift_days', '7');
+INSERT OR IGNORE INTO retention_config (key, value) VALUES ('token_days', '7');
+INSERT OR IGNORE INTO retention_config (key, value) VALUES ('l2_days', '7');
+"""),
+    (8, """-- Migration 8: instance_id for shared-view mode
+-- SAFE & IDEMPOTENT (ref requirements-fidelity Trap 3: lifecycle safety,
+-- ref system-design Lens 9: multi-instance safety):
+-- ALTER TABLE ADD COLUMN is a no-op if the column already exists
+-- (SQLite ignores duplicate ADD COLUMN gracefully).
+ALTER TABLE pulse_log ADD COLUMN instance_id TEXT DEFAULT '';
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -136,7 +236,8 @@ CREATE TABLE IF NOT EXISTS pulse_log (
     status TEXT NOT NULL CHECK(status IN ('alive','dead','error')),
     latency_ms REAL DEFAULT 0,
     error_message TEXT,
-    timestamp INTEGER NOT NULL
+    timestamp INTEGER NOT NULL,
+    instance_id TEXT DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS circuit_breakers (
@@ -467,12 +568,14 @@ class Database:
     # -- Pulse Log --
 
     def log_pulse(self, agent_name: str, status: str, latency_ms: float = 0,
-                  error_message: str = "", agent_framework: str = "hermes") -> None:
+                  error_message: str = "", agent_framework: str = "hermes",
+                  instance_id: str = "") -> None:
         conn = self._get_conn()
         conn.execute(
-            "INSERT INTO pulse_log (agent_name, agent_framework, status, latency_ms, error_message, timestamp) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (agent_name, agent_framework, status, latency_ms, error_message, int(time.time())),
+            "INSERT INTO pulse_log (agent_name, agent_framework, status, latency_ms, error_message, timestamp, instance_id) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (agent_name, agent_framework, status, latency_ms, error_message,
+             int(time.time()), instance_id or ""),
         )
         conn.commit()
         # Auto-log to errors table on error/dead status with message
@@ -492,6 +595,27 @@ class Database:
                 "SELECT * FROM pulse_log ORDER BY timestamp DESC LIMIT ?", (limit,)
             )
         return [dict(r) for r in cur.fetchall()]
+
+    def get_instances(self) -> list[dict]:
+        """Get all unique dashboard instances that have written pulse data.
+
+        Returns list of {instance_id, last_seen, agent_count} sorted by last_seen DESC.
+        Only includes instances seen within the last 24 hours.
+        """
+        conn = self._get_conn()
+        try:
+            cur = conn.execute(
+                "SELECT instance_id, MAX(timestamp) as last_seen, "
+                "COUNT(DISTINCT agent_name) as agent_count "
+                "FROM pulse_log "
+                "WHERE instance_id != '' AND timestamp > ? "
+                "GROUP BY instance_id "
+                "ORDER BY last_seen DESC",
+                (int(time.time()) - 86400,),
+            )
+            return [dict(r) for r in cur.fetchall()]
+        except Exception:
+            return []
 
     # -- Feedback Inbox --
 
@@ -802,14 +926,15 @@ class Database:
     # -- Chisel --
 
     def log_trim(self, agent_name: str, identity: int, skills: int, memory: int,
-                 tools: int, guidance: int, total: int, savings: float) -> None:
+                 tools: int, guidance: int, total: int, savings: float,
+                 mode: str = "stdin") -> None:
         conn = self._get_conn()
         conn.execute(
             "INSERT INTO chisel_trims (agent_name, identity_tokens, skills_tokens, memory_tokens, "
-            "tools_tokens, guidance_tokens, total_tokens, savings_ratio, timestamp) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "tools_tokens, guidance_tokens, total_tokens, savings_ratio, mode, timestamp) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (agent_name, identity, skills, memory, tools, guidance, total, savings,
-             int(time.time())),
+             mode, int(time.time())),
         )
         conn.commit()
 
@@ -929,10 +1054,45 @@ class Database:
     def register_agent(self, name: str, framework: str = "custom",
                        health_check: str = "") -> None:
         conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT framework FROM agent_configs WHERE agent_name=?",
+            (name,)
+        ).fetchone()
+
+        if existing:
+            existing_fw = existing["framework"]
+            existing_parts = set(p.strip().lower() for p in existing_fw.split("+"))
+            new_fw = framework.lower().strip()
+
+            # If the incoming framework is itself a composite (e.g. "openclaw + hermes"),
+            # check that ALL its parts are tracked — not just the full string
+            new_parts = set(p.strip().lower() for p in new_fw.split("+"))
+            if new_parts.issubset(existing_parts):
+                return  # All parts already registered — no-op
+
+            # Check if the full new_fw is a single part already tracked
+            if new_fw in existing_parts:
+                return  # Already registered — no-op
+
+            # Merge: append only the missing parts to existing composite
+            if new_fw not in ("custom", "agent", "service", "workflow"):
+                missing_parts = " + ".join(p for p in new_parts if p not in existing_parts)
+                if missing_parts:
+                    composite = existing_fw + " + " + missing_parts
+                    conn.execute(
+                        "UPDATE agent_configs SET framework=? WHERE agent_name=?",
+                        (composite, name),
+                    )
+                    conn.commit()
+                return
+            # New framework is a type classifier — skip, don't overwrite
+            return
+
         conn.execute(
             "INSERT INTO agent_configs (agent_name, framework, health_check, is_active, last_seen) "
             "VALUES (?, ?, ?, 1, ?) "
-            "ON CONFLICT(agent_name) DO UPDATE SET last_seen=excluded.last_seen",
+            "ON CONFLICT(agent_name) DO UPDATE SET framework=excluded.framework, "
+            "health_check=excluded.health_check, last_seen=excluded.last_seen",
             (name, framework, health_check, int(time.time())),
         )
         conn.commit()
@@ -941,6 +1101,17 @@ class Database:
         conn = self._get_conn()
         cur = conn.execute("SELECT * FROM agent_configs ORDER BY agent_name")
         return [dict(r) for r in cur.fetchall()]
+
+    def remove_agents(self, names: list[str]) -> None:
+        """Remove named agents and all their data from the database."""
+        if not names:
+            return
+        conn = self._get_conn()
+        placeholders = ",".join("?" for _ in names)
+        conn.execute(f"DELETE FROM agent_configs WHERE agent_name IN ({placeholders})", names)
+        conn.execute(f"DELETE FROM pulse_log WHERE agent_name IN ({placeholders})", names)
+        conn.execute(f"DELETE FROM errors WHERE agent_name IN ({placeholders})", names)
+        conn.commit()
 
     def purge_stale_agents(self, valid_names: set[str]) -> int:
         """Remove agents from DB that aren't in the current valid set.
@@ -1157,24 +1328,47 @@ class Database:
         """Auto-detect pathways from registered agents and known infrastructure.
         Returns number of edges scanned/updated."""
         conn = self._get_conn()
-        count = 0
         now = int(time.time())
+
+        # Clear all auto-detected pathway data first to avoid duplication on re-scan
+        conn.execute("DELETE FROM pathway_edges")
+        conn.execute("DELETE FROM pathway_nodes WHERE source='auto'")
+        count = 0
 
         # 1. Register known consumer nodes
         known_consumers = [("sean", "Sean", "consumer", "📖")]
 
-        # 2. Register known platform nodes
+        for nid, nname, ntype, _ in known_consumers:
+            conn.execute(
+                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                "VALUES (?, ?, ?, 'auto', 50)",
+                (nid, nname, ntype),
+            )
+
+        # 2. Register known platform nodes — and connect each to the consumer
         known_platforms = [("telegram", "Telegram", "platform", "📱"),
                            ("slack", "Slack", "platform", "💬"),
                            ("discord", "Discord", "platform", "🎮"),
                            ("whatsapp", "WhatsApp", "platform", "📱"),
                            ("bluebubbles", "BlueBubbles", "platform", "📱")]
 
+        for nid, nname, ntype, _ in known_platforms:
+            conn.execute(
+                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                "VALUES (?, ?, ?, 'auto', 50)",
+                (nid, nname, ntype),
+            )
+            # Link platform → consumer so no node dangles
+            conn.execute(
+                "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, mechanism, confidence, created_at) "
+                "VALUES (?, 'sean', 'green', 'message delivery', 75, ?)",
+                (nid, now),
+            )
+            count += 1
+
         # 3. Register signal router
         known_routers = [("signal-router", "Signal Router", "router", "🔀")]
-
-        # Ensure infrastructure nodes exist
-        for nid, nname, ntype, _ in known_consumers + known_platforms + known_routers:
+        for nid, nname, ntype, _ in known_routers:
             conn.execute(
                 "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
                 "VALUES (?, ?, ?, 'auto', 50)",
@@ -1227,7 +1421,7 @@ class Database:
                         elif "whatsapp" in str(deliver):
                             target_nid = "whatsapp"
                         elif deliver == "local":
-                            target_nid = None  # dead end
+                            target_nid = "signal-router"  # local cron output feeds signal pipeline
                         elif deliver in ("all", "origin"):
                             target_nid = "telegram"
                         elif deliver:
@@ -1252,6 +1446,61 @@ class Database:
                 except (json.JSONDecodeError, Exception) as exc:
                     pass
 
+        # 6. Detect agent-to-agent routing from signal inboxes
+        signal_base = Path.home() / ".hermes" / "signals"
+        if signal_base.exists():
+            for _agent_node_dir in signal_base.iterdir():
+                if not _agent_node_dir.is_dir():
+                    continue
+                agent_name = _agent_node_dir.name
+                inbox_dir = _agent_node_dir / "inbox"
+                if not inbox_dir.exists():
+                    continue
+                # Read all signals in this inbox to find who sent them
+                try:
+                    for sig_file in sorted(inbox_dir.iterdir()):
+                        if not sig_file.name.endswith(".json"):
+                            continue
+                        try:
+                            sig = json.loads(sig_file.read_text())
+                            sig_from = sig.get("from", "")
+                            sig_to = sig.get("to", agent_name)
+                            if not sig_from or sig_from == agent_name:
+                                continue
+                            # Source: sender (map to agent- prefix or use as-is)
+                            src_nid = f"agent-{sig_from}"
+                            tgt_nid = f"agent-{sig_to}"
+                            # Ensure both nodes exist
+                            conn.execute(
+                                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                                "VALUES (?, ?, 'agent', 'auto', 75)",
+                                (src_nid, sig_from),
+                            )
+                            conn.execute(
+                                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                                "VALUES (?, ?, 'agent', 'auto', 75)",
+                                (tgt_nid, sig_to),
+                            )
+                            # Create edge
+                            sig_type = sig.get("type", "signal")
+                            mechanism = f"signal_{sig_type}"
+                            conn.execute(
+                                "INSERT OR REPLACE INTO pathway_edges (source_id, target_id, status, "
+                                "mechanism, confidence, scenario, last_verified, created_at) "
+                                "VALUES (?, ?, 'green', ?, 75, '', ?, ?)",
+                                (src_nid, tgt_nid, mechanism, now, now),
+                            )
+                            count += 1
+                            # Only process first few signals per agent to avoid duplicates
+                            if count > 200:
+                                break
+                        except (json.JSONDecodeError, Exception):
+                            continue
+                        if count > 200:
+                            break
+                except Exception:
+                    continue
+
         conn.commit()
         return count
 
@@ -1264,3 +1513,340 @@ class Database:
         conn.execute("DELETE FROM pathway_nodes WHERE source='auto'")
         conn.commit()
         return edges + nodes
+
+    # --- L2 Trending ---
+    def log_l2_trend(self, agent_name: str, trend_type: str, signal_label: str,
+                     severity: str = "warning", metric_value: float = 0,
+                     threshold: float = 0, auto_action: str = "none") -> None:
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO l2_trending (agent_name, trend_type, signal_label, severity, "
+            "metric_value, threshold, auto_action, timestamp) VALUES (?,?,?,?,?,?,?,?)",
+            (agent_name, trend_type, signal_label, severity, metric_value, threshold,
+             auto_action, int(time.time()))
+        )
+        conn.commit()
+
+    def get_l2_trends(self, agent_name: str = "", limit: int = 50) -> list[dict]:
+        conn = self._get_conn()
+        if agent_name:
+            rows = conn.execute(
+                "SELECT * FROM l2_trending WHERE agent_name=? ORDER BY timestamp DESC LIMIT ?",
+                (agent_name, limit)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM l2_trending ORDER BY timestamp DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def resolve_l2_trend(self, trend_id: int, action: str = "") -> None:
+        conn = self._get_conn()
+        conn.execute(
+            "UPDATE l2_trending SET resolved=1, resolved_action=?, resolved_at=? WHERE id=?",
+            (action, int(time.time()), trend_id)
+        )
+        conn.commit()
+
+    # --- Push Alerts ---
+    def add_alert_subscription(self, channel: str, target: str,
+                                event_types: str = "all") -> dict:
+        conn = self._get_conn()
+        cur = conn.execute(
+            "INSERT INTO alert_subscriptions (channel, target, event_types, created_at) VALUES (?,?,?,?)",
+            (channel, target, event_types, int(time.time()))
+        )
+        conn.commit()
+        return {"id": cur.lastrowid, "channel": channel, "target": target}
+
+    def get_alert_subscriptions(self) -> list[dict]:
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT * FROM alert_subscriptions ORDER BY created_at DESC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def delete_alert_subscription(self, sub_id: int) -> None:
+        conn = self._get_conn()
+        conn.execute("DELETE FROM alert_subscriptions WHERE id=?", (sub_id,))
+        conn.commit()
+
+    def log_alert_delivery(self, channel: str, target: str, event_type: str,
+                           message: str, delivered: bool = True, error: str = "") -> None:
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO alert_log (channel, target, event_type, message, delivered, "
+            "delivery_error, created_at) VALUES (?,?,?,?,?,?,?)",
+            (channel, target, event_type, message, int(delivered), error, int(time.time()))
+        )
+        conn.commit()
+
+    def get_alert_log(self, limit: int = 20) -> list[dict]:
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT * FROM alert_log ORDER BY created_at DESC LIMIT ?", (limit,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    # --- Plugin Tracking ---
+    def log_plugin_tracking(self, agent_name: str, plugin_name: str = "clawforge",
+                            hook_point: str = "ingest", intent_class: str = "",
+                            sources_loaded: int = 0, sources_skipped: int = 0,
+                            tokens_saved: int = 0, context_window_pct: float = 0) -> None:
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO plugin_tracking (agent_name, plugin_name, hook_point, intent_class, "
+            "sources_loaded, sources_skipped, tokens_saved, context_window_pct, timestamp) "
+            "VALUES (?,?,?,?,?,?,?,?,?)",
+            (agent_name, plugin_name, hook_point, intent_class, sources_loaded,
+             sources_skipped, tokens_saved, context_window_pct, int(time.time()))
+        )
+        conn.commit()
+
+    def get_plugin_tracking(self, agent_name: str = "", limit: int = 50) -> list[dict]:
+        conn = self._get_conn()
+        if agent_name:
+            rows = conn.execute(
+                "SELECT * FROM plugin_tracking WHERE agent_name=? ORDER BY timestamp DESC LIMIT ?",
+                (agent_name, limit)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM plugin_tracking ORDER BY timestamp DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_plugin_stats(self, agent_name: str = "") -> dict:
+        conn = self._get_conn()
+        if agent_name:
+            row = conn.execute(
+                "SELECT COUNT(*) as turns, COALESCE(SUM(sources_loaded),0) as loaded, "
+                "COALESCE(SUM(sources_skipped),0) as skipped, COALESCE(SUM(tokens_saved),0) as saved "
+                "FROM plugin_tracking WHERE agent_name=?", (agent_name,)
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT COUNT(*) as turns, COALESCE(SUM(sources_loaded),0) as loaded, "
+                "COALESCE(SUM(sources_skipped),0) as skipped, COALESCE(SUM(tokens_saved),0) as saved "
+                "FROM plugin_tracking", ()
+            ).fetchone()
+        if not row:
+            return {"turns": 0, "loaded": 0, "skipped": 0, "saved": 0}
+        d = dict(row)
+        total = d["loaded"] + d["skipped"]
+        d["avg_reduction_pct"] = round((d["skipped"] / max(total, 1)) * 100, 1)
+        return d
+
+    # --- Token Tracking (#14) ---
+    def log_token_turn(self, agent_name: str, turn_id: str, total_tokens: int,
+                       identity_tokens: int = 0, skills_tokens: int = 0,
+                       memory_tokens: int = 0, tools_tokens: int = 0,
+                       guidance_tokens: int = 0, provider: str = "",
+                       cost: float = 0, anomaly_score: float | None = None) -> dict:
+        conn = self._get_conn()
+        cur = conn.execute(
+            "INSERT INTO token_logs (agent_name, turn_id, total_tokens, identity_tokens, "
+            "skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
+            "provider, cost, anomaly_score, recorded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            (agent_name, turn_id, total_tokens, identity_tokens, skills_tokens,
+             memory_tokens, tools_tokens, guidance_tokens, provider, cost,
+             anomaly_score, int(time.time()))
+        )
+        conn.commit()
+        return {"id": cur.lastrowid}
+
+    def get_token_turns(self, agent_name: str = "", limit: int = 100,
+                        since: int = 0) -> list[dict]:
+        conn = self._get_conn()
+        if agent_name and since:
+            rows = conn.execute(
+                "SELECT * FROM token_logs WHERE agent_name=? AND recorded_at>=? ORDER BY recorded_at DESC LIMIT ?",
+                (agent_name, since, limit)
+            ).fetchall()
+        elif agent_name:
+            rows = conn.execute(
+                "SELECT * FROM token_logs WHERE agent_name=? ORDER BY recorded_at DESC LIMIT ?",
+                (agent_name, limit)
+            ).fetchall()
+        elif since:
+            rows = conn.execute(
+                "SELECT * FROM token_logs WHERE recorded_at>=? ORDER BY recorded_at DESC LIMIT ?",
+                (since, limit)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM token_logs ORDER BY recorded_at DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_token_summary(self, agent_name: str = "", since: int = 0) -> dict:
+        conn = self._get_conn()
+        since_clause = "AND recorded_at>=?" if since else ""
+        params = (agent_name,) if agent_name and not since else (agent_name, since) if agent_name and since else (since,) if since else ()
+        where = "WHERE agent_name=?" if agent_name else ""
+
+        row = conn.execute(
+            f"SELECT COUNT(*) as turns, COALESCE(SUM(total_tokens),0) as total_tokens, "
+            f"COALESCE(SUM(cost),0) as total_cost, "
+            f"COALESCE(AVG(total_tokens),0) as avg_tokens, "
+            f"COALESCE(MAX(total_tokens),0) as max_tokens "
+            f"FROM token_logs {where} {since_clause}", params
+        ).fetchone()
+        if not row:
+            return {"turns": 0, "total_tokens": 0, "total_cost": 0, "avg_tokens": 0, "max_tokens": 0}
+        return dict(row)
+
+    def get_token_trends(self, agent_name: str = "", days: int = 7) -> dict:
+        conn = self._get_conn()
+        now = int(time.time())
+        since = now - days * 86400
+        if agent_name:
+            rows = conn.execute(
+                "SELECT skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
+                "identity_tokens, total_tokens, recorded_at "
+                "FROM token_logs WHERE agent_name=? AND recorded_at>=? ORDER BY recorded_at",
+                (agent_name, since)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT agent_name, skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
+                "identity_tokens, total_tokens, recorded_at "
+                "FROM token_logs WHERE recorded_at>=? ORDER BY recorded_at",
+                (since,)
+            ).fetchall()
+        if not rows:
+            return {"components": {}, "total_tokens": 0, "avg_per_turn": 0, "days": days}
+        comps = {"skills": 0, "memory": 0, "tools": 0, "guidance": 0, "identity": 0}
+        total = 0
+        for r in rows:
+            rd = dict(r)
+            for c in comps:
+                comps[c] += rd.get(f"{c}_tokens", 0) or 0
+            total += rd.get("total_tokens", 0) or 0
+        avg = total / max(len(rows), 1)
+        return {"components": comps, "total_tokens": total,
+                "avg_per_turn": round(avg, 1), "turns": len(rows), "days": days}
+
+    def set_token_budget(self, agent_name: str, max_daily_tokens: int = 0,
+                          max_turn_cost: float = 0,
+                          max_component_growth_pct: float = 0,
+                          anomaly_threshold_sigma: float = 3.0) -> None:
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO token_budgets (agent_name, max_daily_tokens, max_turn_cost, "
+            "max_component_growth_pct, anomaly_threshold_sigma, created_at) "
+            "VALUES (?,?,?,?,?,?) ON CONFLICT(agent_name) DO UPDATE SET "
+            "max_daily_tokens=excluded.max_daily_tokens, max_turn_cost=excluded.max_turn_cost, "
+            "max_component_growth_pct=excluded.max_component_growth_pct, "
+            "anomaly_threshold_sigma=excluded.anomaly_threshold_sigma",
+            (agent_name, max_daily_tokens, max_turn_cost, max_component_growth_pct,
+             anomaly_threshold_sigma, int(time.time()))
+        )
+        conn.commit()
+
+    def get_token_budgets(self, agent_name: str = "") -> list[dict]:
+        conn = self._get_conn()
+        if agent_name:
+            rows = conn.execute("SELECT * FROM token_budgets WHERE agent_name=?", (agent_name,)).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM token_budgets ORDER BY agent_name").fetchall()
+        return [dict(r) for r in rows]
+
+    # --- Retention / Extended History (#18) ---
+    def get_retention_config(self) -> dict:
+        conn = self._get_conn()
+        rows = conn.execute("SELECT key, value FROM retention_config").fetchall()
+        return {r["key"]: r["value"] for r in rows}
+
+    def set_retention_days(self, data_type: str, days: str) -> None:
+        conn = self._get_conn()
+        conn.execute("INSERT OR REPLACE INTO retention_config (key, value) VALUES (?, ?)",
+                     (f"{data_type}_days", days))
+        conn.commit()
+
+    def prune_old_data(self, data_type: str, days: int) -> int:
+        """Delete rows older than `days` for a data type. Returns rows deleted."""
+        conn = self._get_conn()
+        cutoff = int(time.time()) - days * 86400
+        table_map = {
+            "pulse": "pulse_log",
+            "error": "errors",
+            "drift": "chisel_drift",
+            "token": "token_logs",
+            "l2": "l2_trending",
+        }
+        table = table_map.get(data_type)
+        if not table:
+            return 0
+        col = {"pulse_log": "timestamp", "errors": "timestamp",
+               "chisel_drift": "timestamp", "token_logs": "recorded_at",
+               "l2_trending": "timestamp"}.get(table, "timestamp")
+        cur = conn.execute(f"DELETE FROM {table} WHERE {col} < ?", (cutoff,))
+        conn.commit()
+        return cur.rowcount
+
+    def set_pruning_schedule(self, enabled: bool, hour: int = 3) -> None:
+        conn = self._get_conn()
+        conn.execute("INSERT OR REPLACE INTO retention_config (key, value) VALUES (?, ?)",
+                     ("pruning_enabled", str(int(enabled))))
+        conn.execute("INSERT OR REPLACE INTO retention_config (key, value) VALUES (?, ?)",
+                     ("pruning_hour", str(hour)))
+        conn.commit()
+
+    # --- L2 Baseline Engine (#18 Phase 2) ---
+    def compute_l2_baselines(self, agent_name: str = "", days: int = 7) -> dict:
+        """Compute rolling L2 baselines from historical data."""
+        conn = self._get_conn()
+        now = int(time.time())
+        since = now - days * 86400
+
+        if agent_name:
+            pulses = conn.execute(
+                "SELECT latency_ms, timestamp FROM pulse_log WHERE agent_name=? AND timestamp>=? AND latency_ms>0 ORDER BY timestamp",
+                (agent_name, since)
+            ).fetchall()
+            tokens = conn.execute(
+                "SELECT total_tokens, recorded_at FROM token_logs WHERE agent_name=? AND recorded_at>=? ORDER BY recorded_at",
+                (agent_name, since)
+            ).fetchall()
+            errors = conn.execute(
+                "SELECT error_message, timestamp FROM errors WHERE agent_name=? AND timestamp>=? ORDER BY timestamp",
+                (agent_name, since)
+            ).fetchall()
+        else:
+            pulses = conn.execute(
+                "SELECT agent_name, latency_ms, timestamp FROM pulse_log WHERE timestamp>=? AND latency_ms>0 ORDER BY timestamp",
+                (since,)
+            ).fetchall()
+            tokens = conn.execute(
+                "SELECT agent_name, total_tokens, recorded_at FROM token_logs WHERE recorded_at>=? ORDER BY recorded_at",
+                (since,)
+            ).fetchall()
+            errors = conn.execute(
+                "SELECT agent_name, error_message, timestamp FROM errors WHERE timestamp>=? ORDER BY timestamp",
+                (since,)
+            ).fetchall()
+
+        # Compute baselines
+        p95_latency = 0
+        if pulses:
+            latencies = sorted(p["latency_ms"] for p in pulses)
+            p95_latency = latencies[int(len(latencies) * 0.95)] if len(latencies) > 10 else (latencies[-1] if latencies else 0)
+
+        rss_baseline = p95_latency  # RSS approximated by latency trend
+        avg_tokens = round(sum(t["total_tokens"] for t in tokens) / max(len(tokens), 1), 1) if tokens else 0
+        error_rate = round(len(errors) / max(days, 1), 2)
+
+        upstream_errors = sum(1 for e in errors if
+                              "refused" in (e.get("error_message", "") or "").lower()
+                              or "timeout" in (e.get("error_message", "") or "").lower())
+
+        return {
+            "rss_baseline_ms": rss_baseline,
+            "p95_latency_ms": p95_latency,
+            "avg_token_per_turn": avg_tokens,
+            "total_turns": len(tokens),
+            "error_rate_per_day": error_rate,
+            "upstream_error_count": upstream_errors,
+            "sample_days": days,
+        }
