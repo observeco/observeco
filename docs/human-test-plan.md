@@ -59,6 +59,10 @@ The dashboard is a **single FastAPI app** (`src/observeco/dashboard/server.py`) 
 
 Auto-refresh: every 30s via htmx. Phase banners auto-detect onboarding state (Phase 0/1/2).
 
+Dashboard auth: all `/api/` routes (except `/api/phase`, `/api/agent-count`, `/api/licenses/validate`) require `X-ObserveCo-Token` header or `?token=` query param. Token auto-injected into htmx requests via `window.__OBSERVECO_TOKEN`. View with `observeco dashboard --show-token`.
+
+Desktop app: `observeco desktop` launches a native pywebview window (1200×800). Falls back to browser if pywebview is not installed.
+
 ---
 
 ## Test Batches — Do In Order
@@ -176,6 +180,93 @@ This requires deliberately breaking the running dashboard.
 
 ---
 
+### Batch H (NEW): Security & Auth Flow (8 min)
+
+**Pre-test setup:** Delete `~/.observeco/.dashboard_secret` if it exists (fresh state).
+
+| # | Action | What To Notice / Questions to Answer | Layer |
+|---|---|---|---|
+| H1 | Run `observeco dashboard` in terminal | **Q: What does the terminal output say? Does it mention the access token?** Exact quote please. | Emotional Load |
+| H2 | Open `http://localhost:9119/` in browser | **Q: Does the page load normally? Does the fluorescent "Local only — do not expose to the internet" banner appear at the top?** | Perception |
+| H3 | Open your browser DevTools (F12), go to Console tab | **Q: Do you see any errors about missing token or 401 responses? Check for red errors.** | Friction |
+| H4 | Open DevTools Network tab. Load the page. Look for a request to `/api/agents`. Click it and check Request Headers. | **Q: Does the request include `X-ObserveCo-Token` header with a ~43-character value?** | Confidence |
+| H5 | Open DevTools Console and type: `window.__OBSERVECO_TOKEN` | **Q: Does it return a non-empty string? Yes/No + first 8 chars visible?** | Confidence |
+| H6 | Run in a separate terminal: `curl -s http://localhost:9119/api/agents` | **Q: What status code and error body do you get? Expected: HTTP 401 with a message about `--show-token`** | Confidence |
+| H7 | Run: `observeco dashboard --show-token` | **Q: Does it print a 43-character token?** Copy the token, then run: `curl -s -H 'X-ObserveCo-Token: <token>' http://localhost:9119/api/agents` | Friction |
+| H8 | **Q: Does the authenticated curl return your agent cards HTML (no longer 401)?** | Confidence |
+| H9 | **Q: Overall feeling — does this token flow feel secure but not annoying? Rate 1–10 (1 = "why do I need a token?", 10 = "this feels properly locked down")** | Emotional Load |
+| H10 | Close the browser tab. Open a **new incognito/private window**. Navigate to `http://localhost:9119/`. | **Q: Does the page load normally (no auth prompt, no login screen)? The token is injected into the HTML, not a cookie — so it should work in incognito.** | Perception |
+
+**Submit all H1–H10 before moving on.**
+
+---
+
+### Batch I (NEW): Desktop App Experience (5 min)
+
+**Pre-test: If you have pywebview installed. Otherwise skip to I7.**
+
+| # | Action | What To Notice / Questions to Answer | Layer |
+|---|---|---|---|
+| I1 | Run: `observeco desktop` | **Q: Does a native window open (1200×800, dark theme)? Or does it fall back to browser?** | Friction |
+| I2 | Hover over the top of the window | **Q: Does the title bar show "ObserveCo · Fleet Dashboard"?** | Perception |
+| I3 | Resize the window smaller than 800×600 | **Q: Does it stop at the minimum size or go smaller?** | Friction |
+| I4 | Click the close (red X) button | **Q: Does a confirmation dialog appear before quitting?** | Friction |
+| I5 | Look for a system tray icon (top-right menu bar on macOS) | **Q: Is there an ObserveCo icon? Click it — what menu options appear?** | Perception |
+| I6 | **Q: Overall — does the desktop app feel native or does it feel like a website in a frame? Rate 1–10** | Emotional Load |
+| I7 | (No pywebview) Run: `observeco desktop` | **Q: Does it print the "Desktop mode requires pywebview" message and open the browser instead? No crash?** | Perception |
+
+**Submit I1–I7 (or as many as apply).**
+
+---
+
+### Batch J (NEW): Scale Experience (5 min)
+
+Test the search/filter/pagination that handles 100+ agents.
+
+| # | Action | What To Notice | Layer |
+|---|---|---|---|
+| J1 | Look at the top of the agent list | **Q: Is there a search bar with placeholder "Search agents by name or framework..."? If you only have 1–5 agents, is it still visible?** | Perception |
+| J2 | Click the search bar and type the name of one of your agents | **Q: Does the list filter as you type (with ~300ms delay)? Does the non-matching agent disappear?** | Friction |
+| J3 | Clear the search. Look for filter chips to the right of the search bar: **All / ● Alive / ● Warning / ● Down** | **Q: Click each filter chip. Does the active one highlight green? Does the list update? Click "All" — does everything come back?** | Perception |
+| J4 | If you have >25 agents: | **Q: Do pagination controls appear at the bottom of the page showing "Showing 1–25 of X"? Click next page — does it load smoothly?** | Friction |
+| J5 | If you have <25 agents: | **Q: Is there NO pagination bar? (Expected — pagination only shows when >25 agents)** | Perception |
+| J6 | Click a filter (e.g. "● Down") then type a search query | **Q: Do both filters stack? (e.g. only 'down' agents matching your search text show up)** | Confidence |
+| J7 | Click "Clear filters" link if no results match | **Q: Does it reset everything to "All" with empty search?** | Friction |
+| J8 | **Q: Overall — does search/filter feel instant or laggy? Rate 1–10** | Emotional Load |
+
+**Submit all J1–J8.**
+
+---
+
+### Batch K (NEW): Shared Mode Experience (5 min)
+
+**Only do this batch if you have a network share available or want to test the shared DB path.**
+
+| # | Action | What To Notice | Layer |
+|---|---|---|---|
+| K1 | Run in a terminal: `observeco dashboard --shared /tmp/team-observeco.db` | **Q: Does the terminal print "Shared fleet DB: /tmp/team-observeco.db"? Does the dashboard load normally?** | Perception |
+| K2 | On the page, look just below the telemetry banner | **Q: Does a yellow "Shared Fleet Mode Active" banner appear? Does it show the DB path and a security warning about network shares?** | Confidence |
+| K3 | Dismiss the warning by clicking the ✕ button, then reload the page | **Q: Does the warning come back? (Expected: no — it's a one-time banner, persisted in `~/.observeco/.shared_warning_shown`)** | Friction |
+| K4 | **Q: Does the shared mode feel like it changes anything else on the page? Does it break any cards?** | Perception |
+
+**Submit K1–K4 only if you tested shared mode.**
+
+---
+
+### Batch L (NEW): Overall Emotional Load & First-Use (3 min)
+
+| # | Question | Emotional Load |
+|---|---|---|
+| L1 | **First 10 seconds:** Did you know what ObserveCo does without reading any text? Yes/No + one sentence | Layer 5 |
+| L2 | **First action:** What was the first thing you wanted to click? Did it work? | Layer 5 |
+| L3 | **Safety feeling:** Did you feel like the dashboard was "mine and no one else's"? The token system aims for that — did it achieve it? | Layer 5 |
+| L4 | **Desktop feeling:** Did the desktop app feel like a real app or a website trick? Rate 1–10 | Layer 5 |
+| L5 | **One thing you'd change:** If you could fix ONE thing about the whole experience right now, what is it? | Layer 5 |
+
+**Submit L1–L5. This is the most important batch — it shapes the next sprint.**
+
+---
+
 ## What Not to Test (Covered by AI)
 
 | Skip | Reason |
@@ -188,6 +279,11 @@ This requires deliberately breaking the running dashboard.
 | Agent card count accuracy | Data-dependent, SQL is correct |
 | Modal close/hide mechanics | Script-verified |
 | htmx auto-refresh timing | Script-verified |
+| Auth middleware blocks unauthenticated requests | TestClient verifies this (layer F/15) |
+| `observeco desktop --help` works | Subprocess test in audit layer |
+| CSP / nosniff / Referrer-Policy headers | TestClient verifies these (auth middleware) |
+| Token is crypto-secure (`secrets.token_urlsafe(32)`) | Code-level verification done |
+| Token file persists across restarts | Tested via file read/write |
 
 ---
 
@@ -198,9 +294,9 @@ This requires deliberately breaking the running dashboard.
 1. **Telegram DM** — send each issue as a separate message using the format above. I'll process in order.
 2. **Batch list** — collect all issues from one batch into a single message. I'll still process each.
 
-**Recommended flow:** Test Batch A → send all A issues → wait for my fix → test Batch A again → proceed to Batch B. This catches regressions fast.
+**Recommended flow:** Test Batch H → send all H issues → wait for my fix → test Batch H again → proceed to Batch I. This catches regressions fast.
 
-**Do not skip the sequence.** Batch A fixes may affect Batch B rendering. If you test B before A is fixed, you'll report issues A already addressed.
+**Do not skip the sequence.** Batch H fixes may affect Batch I rendering. If you test I before H is fixed, you'll report issues H already addressed.
 
 ---
 
