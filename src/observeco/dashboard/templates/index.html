@@ -9,13 +9,48 @@
     var s = document.createElement('script');
     s.src = 'https://unpkg.com/htmx.org@1.9.11/dist/htmx.min.js';
     document.head.appendChild(s);
-  }
-"></script>
+  }"></script>
 <script>if (!window.htmx) {
   var s = document.createElement('script');
   s.src = 'https://unpkg.com/htmx.org@1.9.11/dist/htmx.min.js';
   document.head.appendChild(s);
-}</script>
+}
+// Global fetch interceptor — auto-attach dashboard token to all /api/ requests
+(function() {
+  var _origFetch = window.fetch;
+  window.fetch = function(url, opts) {
+    opts = opts || {};
+    if (typeof url === 'string' && url.startsWith('/api/')) {
+      var token = window.__OBSERVECO_TOKEN || '';
+      if (token) {
+        opts.headers = opts.headers || {};
+        if (Array.isArray(opts.headers)) {
+          opts.headers.push(['X-ObserveCo-Token', token]);
+        } else {
+          opts.headers['X-ObserveCo-Token'] = token;
+        }
+      }
+    }
+    return _origFetch.call(window, url, opts);
+  };
+})();
+
+// This script runs BEFORE the server-injected token script (which is after <style>).
+// So __OBSERVECO_TOKEN may not be set yet. That's fine — the server-injected script
+// registers the htmx handler synchronously. Both this and that are needed because
+// the htmx load trigger fires during parsing.
+// We install a handler that checks for the token at REQUEST time, not registration time.
+(function() {
+  var _origHtmxOn = window.htmx ? window.htmx.on : null;
+  if (window.htmx) {
+    window.htmx.on('htmx:configRequest', function(evt) {
+      if (window.__OBSERVECO_TOKEN && !evt.detail.headers['X-ObserveCo-Token']) {
+        evt.detail.headers['X-ObserveCo-Token'] = window.__OBSERVECO_TOKEN;
+      }
+    });
+  }
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -61,11 +96,13 @@ body {
   padding: 16px 0; margin-bottom: 20px;
   border-bottom: 1px solid var(--border);
 }
-.header-left { display: flex; align-items: center; gap: 12px; }
-.header-logo { display: flex; align-items: center; gap: 10px; }
-.header-logo svg { width: 28px; height: 28px; }
-.header-title { font-size: 18px; font-weight: 700; color: var(--fg); }
-.header-title span { color: var(--muted); font-weight: 400; }
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo { display: flex; align-items: center; }
+.header-logo svg { width: 32px; height: 32px; }
+.header-brand-col { display: flex; flex-direction: column; gap: 1px; }
+.header-title { font-size: 22px; font-weight: 700; color: var(--fg); line-height: 1.2; }
+.header-position { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.brand-tagline { font-size: 11px; color: var(--fg-2); line-height: 1.3; }
 .tier-badge {
   background: var(--accent-on); color: #86efac; font-size: 11px; font-weight: 600;
   padding: 3px 10px; border-radius: 999px; letter-spacing: 0.03em;
@@ -114,7 +151,7 @@ body {
   cursor: pointer; white-space: nowrap;
 }
 .add-btn:hover { background: #2563eb; }
-.feedback-hint { font-size: 10px; color: #475569; white-space: nowrap; }
+.feedback-hint { font-size: 11px; color: #475569; white-space: nowrap; }
 
 /* Agent card */
 .agent-card {
@@ -150,7 +187,7 @@ body {
 .agent-status.error { background: var(--warn); box-shadow: 0 0 8px var(--warn)44; }
 .agent-info { flex: 1; min-width: 0; }
 .agent-name { font-size: 13px; font-weight: 600; color: var(--fg); }
-.agent-meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.agent-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
 .agent-last-seen { font-size: 11px; color: var(--fg-2); text-align: right; white-space: nowrap; }
 
 /* Show/hide toggle */
@@ -159,11 +196,20 @@ body {
   width: 18px; height: 18px; border-radius: 4px;
   border: 1px solid var(--border); background: transparent;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: var(--muted); transition: all 0.15s;
+  font-size: 11px; color: var(--muted); transition: all 0.15s;
   z-index: 2;
 }
 .agent-toggle:hover { border-color: var(--danger); color: var(--danger); background: #450a0a33; }
 .agent-toggle.active { border-color: var(--danger); color: var(--danger); background: #450a0a33; }
+.agent-delete {
+  position: absolute; top: 6px; right: 28px;
+  width: 18px; height: 18px; border-radius: 4px;
+  border: 1px solid var(--border); background: transparent;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--muted); transition: all 0.15s;
+  z-index: 2; line-height: 1;
+}
+.agent-delete:hover { border-color: var(--danger); color: var(--danger); background: #450a0a33; }
 
 /* Metric rows */
 .metric-row {
@@ -187,7 +233,7 @@ body {
 .metric-row .label { font-size: 11px; color: var(--muted); width: 70px; flex-shrink: 0; }
 .metric-row .value { font-size: 12px; flex: 1; }
 .metric-row .click-hint {
-  font-size: 10px; color: var(--meta);
+  font-size: 11px; color: var(--meta);
   opacity: 0;
   transition: opacity 0.15s;
   white-space: nowrap;
@@ -211,7 +257,7 @@ body {
   display: flex; gap: 1px;
 }
 .token-bar .seg { height: 100%; border-radius: 1px; }
-.token-count { font-size: 10px; color: #475569; font: var(--font-mono); }
+.token-count { font-size: 11px; color: #475569; font: var(--font-mono); }
 
 /* Section styling */
 .section {
@@ -248,7 +294,7 @@ body {
 /* Error badge on card */
 .agent-error-badge { 
   display: inline-flex; align-items: center; gap: 2px; 
-  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 6px; margin-left: 6px;
+  font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; margin-left: 6px;
 }
 .agent-error-badge.red { background: rgba(239,68,68,0.15); color: var(--danger); }
 .agent-error-badge.yellow { background: rgba(234,179,8,0.15); color: var(--warn); }
@@ -295,7 +341,7 @@ body {
 /* Data table in modal */
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
-  text-align: left; font-size: 10px; color: var(--muted);
+  text-align: left; font-size: 11px; color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.05em;
   padding: 6px 8px; border-bottom: 1px solid var(--border);
   font-weight: 500;
@@ -418,7 +464,7 @@ body {
 .sav-calc { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-top: 12px; }
 .cb { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
 .cb .big { font-size: 20px; font-weight: 700; font-family: var(--font-mono); }
-.cb .cbl { font-size: 10px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.cb .cbl { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
 .cb.green .big { color: var(--accent); }
 .cb.orange .big { color: #f97316; }
 .cb.blue .big { color: #38bdf8; }
@@ -454,10 +500,10 @@ body {
 .per-turn-col .tip {
   display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
   background: var(--bg); border: 1px solid var(--border); padding: 3px 7px; border-radius: 5px;
-  font-size: 9px; white-space: nowrap; z-index: 10; pointer-events: none;
+  font-size: 11px; white-space: nowrap; z-index: 10; pointer-events: none;
 }
 .per-turn-col:hover .tip { display: block; }
-.timeline-axis { display: flex; justify-content: space-between; font-size: 10px; color: #475569; }
+.timeline-axis { display: flex; justify-content: space-between; font-size: 11px; color: #475569; }
 
 /* Pro upsell */
 .pro-upsell {
@@ -474,7 +520,60 @@ body {
 .tier-box { flex: 1; border-radius: 10px; padding: 16px; }
 .tier-box.free { background: #0a2a1a; border: 1px solid var(--accent-on); }
 .tier-box.pro { background: #1e1b4b; border: 1px solid #3730a3; cursor: pointer; transition: all 0.2s; }
-.tier-box.pro:hover { border-color: #6366f1; }
+.tier-box.pro:hover { border-color: var(--tok-identity); }
+
+/* Compression section */
+.toggle-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.toggle-btn { background: var(--bg); border: 1px solid var(--border); color: var(--fg-2); padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.toggle-btn.active { background: var(--surface); border-color: var(--meta); color: #e2e8f0; }
+.mode-select { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.mode-btn { background: var(--bg); border: 1px solid var(--border); color: var(--fg-2); padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
+.mode-btn.active { background: var(--meta); border-color: var(--meta); color: white; }
+.comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.com-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.comp-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+.comp-tokens { font-size: 11px; font-family: var(--font-mono); margin-bottom: 8px; }
+.diff-preview { font-size: 12px; line-height: 1.7; }
+.diff-line { font-size: 12px; line-height: 1.6; }
+.diff-line.old { color: #475569; }
+.diff-line.new { color: #86efac; }
+.compress-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.action-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.primary-btn { border: none; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; background: var(--meta); color: white; }
+.primary-btn.green { background: #16a34a; color: white; }
+.secondary-btn { border: 1px solid var(--border); background: transparent; color: var(--fg-2); padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer; font-family: inherit; }
+.auto-watch-card { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.auto-watch-card:hover { border-color: var(--meta); }
+.auto-watch-card .icon { font-size: 28px; margin-bottom: 8px; }
+.auto-watch-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.auto-watch-card p { font-size: 12px; color: var(--muted); }
+.auto-log-preview { margin-top: 12px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; text-align: left; font-family: var(--font-mono); font-size: 11px; line-height: 1.8; }
+.pro-cta-btn { background: var(--meta); border: none; color: white; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.tier-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+.tier-tag.free { background: var(--accent-on); color: #86efac; }
+.tier-tag.pro { background: #3730a3; color: #a5b4fc; }
+
+/* Optimiser section */
+.optimiser-card-full { cursor: pointer; border-color: #3730a3; transition: all 0.2s; }
+.optimiser-card-full:hover { border-color: #6366f1; }
+.optimiser-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.optimiser-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.optimiser-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+.optimiser-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.optimiser-progress { margin-bottom: 10px; }
+.bar-track { height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+.bar-fill { height: 100%; border-radius: 4px; }
+.label-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.optimiser-metric { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #1e293b; }
+.optimiser-metric .label { color: #94a3b8; }
+.savings-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.mini-card { background: #1e293b; border-radius: 6px; padding: 10px; text-align: center; }
+.mini-val { font-size: 18px; font-weight: 700; font-family: var(--font-mono); }
+.mini-label { font-size: 10px; color: var(--muted); }
+.optimiser-highlight { background: linear-gradient(135deg,#1e1b4b,#0f172a); border: 1px solid #3730a3; border-radius: 8px; padding: 12px; text-align: center; }
+.hl-val { font-size: 22px; font-weight: 700; font-family: var(--font-mono); color: #c4b5fd; }
+.hl-label { font-size: 11px; color: #a5b4fc; }
+.hl-meta { font-size: 10px; color: var(--muted); margin-top: 4px; }
 .tier-box .tier { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
 .tier-box .tier.free { color: #86efac; }
 .tier-box .tier.pro { color: #a5b4fc; }
@@ -504,12 +603,12 @@ body {
 .sa-card.wn .n { color: #fde68a; }
 .sa-card .sv { font-size: 11px; color: #86efac; margin-top: 4px; }
 .sa-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.sa-table th { text-align: left; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
+.sa-table th { text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
 .sa-table td { padding: 10px 12px; border-bottom: 1px solid var(--surface); }
 .sa-table tr:last-child td { border-bottom: none; }
 .sa-table .rnk { color: var(--muted); font-size: 11px; width: 28px; }
 .sa-table .sn { color: #e2e8f0; font-weight: 500; }
-.sa-table .sc { color: var(--muted); font-size: 10px; }
+.sa-table .sc { color: var(--muted); font-size: 11px; }
 .sa-table .tk { font-weight: 600; }
 .sa-table .tk.ov { color: #fca5a5; }
 .sa-table .tk.ok { color: var(--fg-2); }
@@ -521,7 +620,7 @@ body {
 .sa-table .lu.st { color: #fca5a5; }
 .sa-table .co { color: var(--muted); font-size: 11px; }
 .sa-table .co.hi { color: #fca5a5; font-weight: 600; }
-.sa-table .badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+.sa-table .badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
 .sa-table .badge.br { background: #450a0a; color: #fca5a5; }
 .sa-table .badge.ok { background: var(--bg); color: #86efac; }
 .sa-table tr.ov-th { background: #450a0a30; }
@@ -594,6 +693,10 @@ body {
 .u-mt-16 { margin-top: 16px; }
 .u-hidden { display: none; }
 .u-align-start { align-self: flex-start; }
+
+/* Pagination buttons */
+.page-btn { background: var(--surface); border: 1px solid var(--border); color: #94a3b8; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.page-btn:hover:not([style*="pointer-events:none"]) { border-color: #475569; color: #e2e8f0; }
 /* ─── Detail modal tab bar ─── */
 .detail-tab-bar { display: flex; gap: 6px; padding: 10px 14px 0; border-bottom: 1px solid var(--border); background: var(--surface); }
 .detail-tab-btn { background: none; border: none; color: var(--muted); font-size: 12px; font-weight: 600; padding: 8px 14px; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; }
@@ -602,6 +705,28 @@ body {
 </style>
 </head>
 <body>
+<div hx-get="/api/phase" hx-trigger="load" hx-swap="none" hx-target="this"></div>
+<div hx-get="/api/onboarding" hx-trigger="load" hx-target="body" hx-swap="beforeend"></div>
+<script>
+// Extract phase from the API response and set it as data attribute on body
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+  if (evt.detail.pathInfo.requestPath === '/api/phase') {
+    var phase = 'phase-0';
+    var text = evt.detail.serverResponse || '';
+    if (text.includes('phase-banner-icon')) {
+      // Phase 0 banner has 🔍 icon
+      if (text.includes('🔍') || text.includes('Observing your system')) phase = 'phase-0';
+      // Phase 1 banner has ⏳ icon
+      if (text.includes('⏳') || text.includes('discovered')) phase = 'phase-1';
+    }
+    // Phase 2 banner has ✅ icon
+    if (text.includes('phase-done') || text.includes('All agents monitored')) phase = 'phase-2';
+    // Phase 3 (fully stabilised, no banner returned — treat as phase-3)
+    if (!text.trim()) phase = 'phase-3';
+    document.body.setAttribute('data-phase', phase);
+  }
+});
+</script>
 <div class="app">
 
   <!-- Header -->
@@ -640,14 +765,39 @@ body {
   <!-- Status badges -->
   <div class="status-row" id="statusRow" hx-get="/api/fleet-summary" hx-trigger="load, every 30s" hx-swap="outerHTML"></div>
 
+  <!-- License badge row -->
+  <div style="display:flex;align-items:center;gap:8px;padding:0 20px 6px 20px;font-size:11px;color:#475569;">
+    <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">MIT License</span>
+    <span>Free forever · No cloud · Apache 2.0 compatible</span>
+  </div>
+
+  <!-- Telemetry opt-in prompt (F9) — loaded via htmx if not yet decided -->
+  <div hx-get="/api/telemetry-prompt" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></div>
+
+  <!-- Shared-fleet warning (one-time on first shared-mode load) -->
+  <div hx-get="/api/shared-warning" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></div>
+
+  <!-- Shared-fleet instance badge (appears only in shared mode with >1 instance) -->
+  <div style="display:inline-flex;align-items:center;">
+    <span hx-get="/api/instances" hx-trigger="load, every 60s" hx-target="this" hx-swap="outerHTML"></span>
+  </div>
+
+  <!-- F9: Security warning banner -->
+  <div class="security-warning" style="background:rgba(255,183,77,0.08);border:1px solid rgba(255,183,77,0.2);border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#94a3b8;"><span style="color:#f59e0b;">🔒</span> Local only — this dashboard is accessible to any process on this machine. Do not expose to the internet.</div>
+
+  <!-- F2: First-run guidance -->
+  <div class="first-run-guidance" style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.12);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#94a3b8;">
+    <span>👋 First time here? <strong style="color:#e2e8f0;">Detect agents</strong> or <strong style="color:#e2e8f0;">add an agent</strong> to start monitoring your fleet.</span>
+  </div>
+
   <!-- Missing Agent Feedback Bar -->
   <div id="feedbackBar" class="feedback-bar">
     <input type="text" id="feedbackInput" placeholder="Agent name (e.g. my-temp-scraper)" />
     <select id="feedbackFramework">
-      <option value="hermes">Hermes</option>
-      <option value="openclaw">OpenClaw</option>
+      <option value="agent">Agent</option>
       <option value="service">Service</option>
-      <option value="custom" selected>Custom</option>
+      <option value="workflow">Workflow</option>
+      <option value="custom" selected>Other</option>
     </select>
     <button class="add-btn" onclick="addMissingAgent()">Add Agent</button>
     <span class="feedback-hint">I'll register them immediately</span>
@@ -659,10 +809,25 @@ body {
     <button class="tab-btn" onclick="switchTab('brain', this)">🧠 Brain Analysis</button>
     <button class="tab-btn" onclick="switchTab('heal', this)">🛠️ Auto-Heal</button>
     <button class="tab-btn" onclick="switchTab('alerts', this)">🔔 Push Alerts</button>
+    <button class="tab-btn" onclick="switchTab('plugin', this)">🔌 Plugin</button>
   </div>
 
   <!-- Fleet tab -->
   <div class="tab-content active" id="tabFleet">
+    <!-- Search bar (hidden initially — shown by JS when agents exist) -->
+    <div id="searchBar" class="search-bar" style="display:none;margin-bottom:8px;align-items:center;gap:8px;">
+      <input type="text" id="agentSearch" placeholder="Search agents by name or framework..."
+             hx-get="/api/agents?per_page=25" hx-trigger="keyup changed delay:300ms" hx-target="#fleetContainer" hx-swap="innerHTML" hx-include="this"
+             name="q"
+             style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:#e2e8f0;font-family:inherit;outline:none;">
+      <!-- Filter chips -->
+      <div class="filter-chips" style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="filter-chip active" data-filter="" onclick="applyFilter(this,'')" style="background:var(--accent-on);color:#86efac;border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">All</button>
+        <button class="filter-chip" data-filter="alive" onclick="applyFilter(this,'alive')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Alive</button>
+        <button class="filter-chip" data-filter="error" onclick="applyFilter(this,'error')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Warning</button>
+        <button class="filter-chip" data-filter="dead" onclick="applyFilter(this,'dead')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Down</button>
+      </div>
+    </div>
     <div id="fleetContainer"></div>
   </div>
 
@@ -704,11 +869,7 @@ body {
 
       <!-- Savings -->
       <div class="brain-card">
-        <h3>What CHISEL Can Save You
-          <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">LITE</span>
-          <span style="background:#3730a3;color:#a5b4fc;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">FULL</span>
-          <span style="font-size:11px;color:#64748b;font-weight:400;margin-left:4px;">per day</span>
-        </h3>
+        <h3>What Token Optimiser Can Save You</h3>
         <div class="prov-cfg">
           <label>Provider cost:</label>
           <select id="brainProvider" onchange="renderBrain(document.getElementById('brainAgentSelect').value)">
@@ -752,11 +913,153 @@ body {
         </div>
       </div>
 
+      <!-- ====== COMPRESSION (Section 3) ====== -->
+      <div class="brain-card">
+        <h3>Compression
+          <span style="font-size:11px;color:#64748b;font-weight:400;">see the diff, then apply</span>
+        </h3>
+
+        <div class="toggle-row">
+          <button class="toggle-btn active" onclick="switchCompressTab('manual', this)" id="manualToggle">🛠️ Manual: Preview &amp; Apply</button>
+          <button class="toggle-btn" onclick="switchCompressTab('auto', this)" id="autoToggle">🤖 Automatic: Watch Daemon</button>
+        </div>
+
+        <!-- Manual tab -->
+        <div id="manualTab">
+          <div class="mode-select">
+            <button class="mode-btn active" onclick="switchMode('lite', this)" id="liteBtn">Lite (Free) &mdash; 22%</button>
+            <button class="mode-btn" onclick="switchMode('full', this)" id="fullBtn">Full (Pro) &mdash; 35%</button>
+            <span style="font-size:11px;color:#64748b;margin-left:auto;">
+              Lite: compress guidance blocks &middot; Full: +memory culling +skill dedup +context refactor
+            </span>
+          </div>
+
+          <div class="comparison" id="compressComparison">
+            <div class="comp-panel">
+              <div class="comp-title" id="beforeTitle">Before compression</div>
+              <div class="comp-tokens" style="color:#94a3b8;" id="beforeTokens">0 tok</div>
+              <div class="diff-preview" id="diffPreviewOld" style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.7;">
+                Select an agent and run Preview to see the diff.
+              </div>
+            </div>
+            <div class="comp-panel">
+              <div class="comp-title" id="afterTitle">After (<span id="afterModeName">Lite</span> compression)</div>
+              <div class="comp-tokens" style="color:#22c55e;" id="afterTokens">0 tok <span style="font-size:12px;color:#64748b;font-weight:400;">&mdash;</span></div>
+              <div class="diff-preview" id="diffPreviewNew" style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.7;">
+                &nbsp;
+              </div>
+            </div>
+          </div>
+
+          <div class="compress-actions">
+            <div class="action-card">
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px;">Step 1: Preview</div>
+              <div style="font-size:11px;color:#64748b;margin-bottom:8px;">See what changes before applying. No file is modified.</div>
+              <button class="primary-btn green" onclick="runCompressPreview()">▶️ Run Preview</button>
+            </div>
+            <div class="action-card">
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px;">Step 2: Apply</div>
+              <div style="font-size:11px;color:#64748b;margin-bottom:8px;">Write compressed version to agent's SOUL.md. Backup created automatically.</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="primary-btn" onclick="applyCompression()">💾 Apply to File</button>
+                <button class="secondary-btn" onclick="copyCompressDiff()">📋 Copy Diff</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="compressStatus" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.6;"></div>
+        </div>
+
+        <!-- Auto tab (Pro locked) -->
+        <div id="autoTab" style="display:none;">
+          <div class="auto-watch-card" onclick="showBrainPro()">
+            <div class="icon" id="autoIcon">🔒</div>
+            <h4 id="autoTitle">Auto-Compression (Pro)</h4>
+            <p id="autoDesc">Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
+            <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#64748b;">
+              <span>⚡ Detects file changes</span>
+              <span>💾 Auto-backup before compress</span>
+              <span>📊 Logs savings to dashboard</span>
+            </div>
+            <div class="auto-log-preview">
+              <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified &mdash; auto-compressing...</span><br>
+              <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ 4,200 &rarr; 3,276 tok (-22%)</span><br>
+              <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
+              <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 &rarr; 2,470 tok (-35%)</span><br>
+              <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
+              <span style="color:#38bdf8;">📊 Cumulative fleet savings this week: 47,812 tokens saved</span>
+            </div>
+            <div style="margin-top:10px;">
+              <button class="pro-cta-btn" onclick="showBrainPro()">Unlock with Pro &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== TOKEN OPTIMISER (Section 4 — Pro teaser) ====== -->
+      <div class="brain-card optimiser-card-full" onclick="showBrainPro()">
+        <div class="optimiser-header">
+          <div>
+            <h3>🧠 Token Optimiser
+              <span class="tier-tag pro">PRO</span>
+              <span style="font-size:11px;color:#64748b;font-weight:400;">learns from 200+ turns</span>
+            </h3>
+            <p style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.6;">
+              Beyond simple compression. The Optimiser analyses every turn your agents take &mdash; which skills are used, which rules trigger, which memory gets referenced &mdash; then surgically removes what's unused and restructures what remains.
+            </p>
+          </div>
+          <span style="font-size:24px;color:#6366f1;">🔒</span>
+        </div>
+
+        <div class="optimiser-grid">
+          <div class="optimiser-card">
+            <h4>📊 Learning progress</h4>
+        <div class="optimiser-progress">
+              <div class="bar-track">
+                <div class="bar-fill" id="optimiserProgressBar" style="width:58%;background:linear-gradient(90deg,#6366f1,#8b5cf6);"></div>
+              </div>
+              <div class="label-row">
+                <span id="optimiserProgressLabel">58% — learned from 116 turns</span>
+                <span id="optimiserGoalLabel" style="color:#6366f1;">Goal: 200 turns</span>
+              </div>
+            </div>
+            <div class="optimiser-metric"><span class="label">Skills never triggered</span><span id="optimiserSkillsNever" class="value" style="color:#f97316;">3 of 8</span></div>
+            <div class="optimiser-metric"><span class="label">Guidance rules stale</span><span id="optimiserGuidanceStale" class="value" style="color:#eab308;">2 of 5</span></div>
+            <div class="optimiser-metric"><span class="label">Recent compressions</span><span id="optimiserRecentCompressions" class="value" style="color:#64748b;">—</span></div>
+            <div style="font-size:11px;color:#64748b;margin-top:8px;">At 200 turns, Optimiser will recommend what to prune &mdash; projected <strong style="color:#22c55e;">8-12%</strong> additional savings on top of compression.</div>
+          </div>
+          <div class="optimiser-card">
+            <h4>📈 Projected savings</h4>
+            <div class="savings-mini-grid">
+              <div class="mini-card">
+                <div class="mini-val" style="color:#22c55e;">-22%</div>
+                <div class="mini-label">Lite (current)</div>
+              </div>
+              <div class="mini-card">
+                <div class="mini-val" style="color:#a5b4fc;">-35%</div>
+                <div class="mini-label">Full (available)</div>
+              </div>
+            </div>
+            <div class="optimiser-highlight">
+              <div class="hl-val">-43% to -47%</div>
+              <div class="hl-label">Projected with Optimiser after 200 turns</div>
+              <div class="hl-meta">Lite compression + Optimiser pruning = deeper savings</div>
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-top:8px;">
+              &rarr; At 50 turns/day, you'll have enough data in <strong style="color:#e2e8f0;">~2 days</strong>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:12px;font-size:13px;color:#6366f1;font-weight:600;">
+          🔒 Unlock Token Optimiser + Auto-Watch + Full compression with Pro &rarr;
+        </div>
+      </div>
+
       <!-- Tier summary -->
       <div class="tier-box-row">
         <div class="tier-box free">
           <div class="tier free">🔓 FREE</div>
-          <div class="name">CHISEL Lite</div>
+          <div class="name">Optimiser Lite</div>
           <div class="items">
             • Compress guidance blocks<br>
             • Per-agent breakdown & drift<br>
@@ -767,7 +1070,7 @@ body {
         </div>
         <div class="tier-box pro" onclick="showBrainPro()">
           <div class="tier pro">🔒 PRO</div>
-          <div class="name">CHISEL Full + Optimiser</div>
+          <div class="name">Optimiser Full</div>
           <div class="items">
             • Full compression (memory + skills + context)<br>
             • Auto-Watch daemon<br>
@@ -798,7 +1101,7 @@ body {
               <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--warn);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:44</span> <span class="event" style="color:#fde68a;">⚠️ You notice via dashboard</span></div>
               <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--meta);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:58</span> <span class="event" style="color:#93c5fd;">💻 You investigate manually</span></div>
               <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--danger);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">11:19</span> <span class="event" style="color:#fca5a5;">❌ Agent still down — 47 min</span></div>
-              <div style="font-style:italic;font-size:10px;padding:2px 0 2px 10px;color:var(--border);">...</div>
+              <div style="font-style:italic;font-size:11px;padding:2px 0 2px 10px;color:var(--border);">...</div>
               <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">12:30</span> <span class="event" style="color:#86efac;">✅ You restart — back in 1h 58m</span></div>
             </div>
             <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#450a0a;border:1px solid #7f1d1d;color:#fca5a5;">
@@ -887,6 +1190,18 @@ body {
         <div style="font-size:14px;font-weight:600;color:#a5b4fc;">🔒 Auto-Heal is Pro</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px;">Free: manual diagnose only. Pro auto-detects, auto-restarts, and predicts failures before they happen.</div>
       </div>
+
+      <!-- L2 Proactive Monitoring section -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+          <div><strong style="font-size:13px;color:var(--fg);">🧠 L2 Proactive Monitoring</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">trend-based pre-emptive detection</span></div>
+          <button onclick="runL2Scan()" class="heal-trigger-btn">🔬 Run L2 Scan</button>
+        </div>
+        <div id="l2Trends" style="padding:14px;font-size:12px;color:var(--fg-2);"><div class="empty-state">📊 No trends recorded yet. Click "Run L2 Scan" to start.</div></div>
+      </div>
+
+      <!-- L2 metrics summary -->
+      <div id="l2Metrics" style="display:none;"></div>
     </div>
   </div>
 
@@ -903,7 +1218,7 @@ body {
           <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg-2);">🔓 Free (Dashboard Only)</div>
           <div style="padding:14px;background:var(--surface);">
             <div class="alert-entry" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--danger);background:var(--bg);">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🔴</span><span style="font-size:12px;font-weight:600;">Agent Down</span><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:#450a0a;color:#fca5a5;">Critical</span></div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🔴</span><span style="font-size:12px;font-weight:600;">Agent Down</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:#450a0a;color:#fca5a5;">Critical</span></div>
               <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">hound has not checked in for 14 minutes</div>
               <div style="font-size:11px;color:var(--muted);margin-top:4px;">Found when you open dashboard</div>
             </div>
@@ -918,7 +1233,7 @@ body {
           <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--bg);color:#86efac;">🛡️ Pro — Silent Auto-Heal</div>
           <div style="padding:14px;background:var(--surface);">
             <div class="alert-entry silent" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--accent-on);background:var(--bg);opacity:0.7;">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🟢</span><span style="font-size:12px;font-weight:600;">Agent Down → Healed</span><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:var(--bg);color:#86efac;">Auto</span></div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🟢</span><span style="font-size:12px;font-weight:600;">Agent Down → Healed</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:var(--bg);color:#86efac;">Auto</span></div>
               <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">hound auto-restarted in 47s</div>
               <div style="font-size:11px;color:var(--muted);margin-top:4px;">No notification needed — you're never woken up</div>
             </div>
@@ -933,7 +1248,7 @@ body {
           <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:#422006;color:#fde68a;">📲 Pro — Alert on Exhaustion</div>
           <div style="padding:14px;background:var(--surface);">
             <div class="alert-entry warning" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--warn);background:var(--bg);">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🟡</span><span style="font-size:12px;font-weight:600;">Circuit Breaker Tripped</span><span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:#451a03;color:#fcd34d;">Warning</span></div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🟡</span><span style="font-size:12px;font-weight:600;">Circuit Breaker Tripped</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:#451a03;color:#fcd34d;">Warning</span></div>
               <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">dreamer: circuit tripped after 5 failures — auto-retry in 4h</div>
               <div style="font-size:11px;color:var(--muted);margin-top:4px;">📱 Pushed to Telegram · 2s latency</div>
             </div>
@@ -1013,6 +1328,76 @@ body {
         <div style="font-size:14px;font-weight:600;color:#a5b4fc;">🔒 Push Alerts are Pro</div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px;">Free: dashboard alerts only. Pro adds Telegram/Slack/email push — and Silent mode that heals before you need to know.</div>
       </div>
+
+      <!-- Live subscriptions -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+          <div><strong style="font-size:13px;color:var(--fg);">📡 Subscriptions</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">active alert channels</span></div>
+          <button onclick="loadAlertSubs()" class="heal-trigger-btn">🔄 Refresh</button>
+        </div>
+        <div id="alertSubs" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
+      </div>
+
+      <!-- Delivery log -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+          <div><strong style="font-size:13px;color:var(--fg);">📋 Delivery Log</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">recent alert deliveries</span></div>
+          <button onclick="loadAlertLog()" class="heal-trigger-btn">🔄 Refresh</button>
+        </div>
+        <div id="alertLog" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plugin tab -->
+  <div class="tab-content" id="tabPlugin">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔌 ClawForge Plugin</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Intent-aware context loading — save 40-60% per turn inside OpenClaw agents.</div>
+
+      <!-- Stats summary -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px;" id="pluginStatsGrid">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--accent);" id="pluginTurns">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Turns Tracked</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--accent);" id="pluginSaved">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Tokens Saved</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:#38bdf8;" id="pluginReduction">0%</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Avg Reduction</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--token-guidance);" id="pluginLoaded">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Sources Loaded</div>
+        </div>
+      </div>
+
+      <!-- Recent hooks -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+          <div><strong style="font-size:13px;color:var(--fg);">Recent Hook Events</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">from OpenClaw agents</span></div>
+          <button onclick="loadPluginHooks()" class="heal-trigger-btn">🔄 Refresh</button>
+        </div>
+        <div id="pluginHooks" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
+      </div>
+
+      <!-- Install card -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <h3 style="font-size:13px;font-weight:600;color:var(--fg-2);margin-bottom:12px;">Install @observeco/clawforge-plugin</h3>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:var(--font-mono);font-size:12px;line-height:1.8;">
+          <span style="color:var(--muted);"># Install the plugin</span><br>
+          <span style="color:var(--accent);">npm install</span> <span style="color:#38bdf8;">@observeco/clawforge-plugin</span><br><br>
+          <span style="color:var(--muted);"># Add to OpenClaw config</span><br>
+          <span style="color:#64748b;">{</span><br>
+          &nbsp;&nbsp;<span style="color:#38bdf8;">"plugins"</span>: [<span style="color:#38bdf8;">"@observeco/clawforge-plugin"</span>]<br>
+          <span style="color:#64748b;">}</span><br><br>
+          <span style="color:var(--muted);"># Activate (no restart needed)</span><br>
+          <span style="color:var(--accent);">observeco plugin log</span> ... <span style="color:#94a3b8;">(or POST /api/plugin-log)</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1022,7 +1407,7 @@ body {
 <div class="modal-overlay" id="brainProModal" onclick="if(event.target===this)document.getElementById('brainProModal').classList.remove('active')">
   <div class="modal">
     <div style="font-size:40px;margin-bottom:12px;">🔒</div>
-    <h3>CHISEL Pro</h3>
+    <h3>Token Optimiser Pro</h3>
     <p style="margin-top:8px;font-size:13px;color:#94a3b8;">Turn passive observation into active optimisation.</p>
     <ul class="data-table" style="list-style:none;margin:12px 0;width:100%;">
       <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Full compression (guidance + memory + skills + context)<br><span style="font-size:11px;color:#64748b;">35% savings vs Lite's 22%</span></li>
@@ -1031,9 +1416,20 @@ body {
       <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ 90-Day History & Fleet Comparison</li>
     </ul>
     <p style="font-size:12px;color:#64748b;">30-day free trial · <strong style="color:#e2e8f0;">$9/mo Solo</strong></p>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
-      <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="font-size:13px;padding:8px 20px;width:auto;">Not now</button>
-      <button class="add-btn" onclick="alert('Stripe checkout would open here')" style="font-size:13px;padding:8px 20px;">Start Free Trial</button>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
+      <div id="proTrialStatus" style="font-size:12px;color:var(--fg-2);min-height:18px;"></div>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="font-size:13px;padding:8px 20px;width:auto;">Not now</button>
+        <button class="add-btn" onclick="startProTrial()" id="proTrialBtn" style="font-size:13px;padding:8px 20px;">Start Free Trial</button>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:6px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Already have a license key?</div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="proLicenseKey" placeholder="OBS-XXXXXXXX-XXXX" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:12px;color:#e2e8f0;font-family:var(--font-mono);outline:none;">
+          <button class="add-btn" onclick="activateProLicense()" style="font-size:11px;padding:7px 14px;white-space:nowrap;">Activate</button>
+        </div>
+        <div id="proLicenseStatus" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:16px;"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1059,7 +1455,7 @@ body {
   <div class="modal" style="max-width: 700px; width: 90%; padding: 0; overflow: hidden;">
     <div class="modal-header" style="border-bottom: 1px solid var(--border);">
       <div>
-        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🧪 CHISEL Compression</h3>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🧪 Token Optimiser</h3>
         <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Preview & apply token compression</div>
       </div>
       <button class="modal-close" onclick="closeModalById('chiselModal')">✕</button>
@@ -1108,7 +1504,7 @@ body {
     <div class="modal-header">
       <div>
         <h3 id="modalTitle">Agent</h3>
-        <div class="sub" id="modalSub">Hermes</div>
+        <div class="sub" id="modalSub">Agent</div>
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
@@ -1134,23 +1530,24 @@ function renderAgentHTML(html) {
 function openModal(title, sub, bodyHtml) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalSub').textContent = sub;
-  // Render tab bar + loading placeholder
   const agentName = title.split(' — ')[0];
+  // Render 5-tab bar + loading placeholder
   document.getElementById('modalBody').innerHTML = `
     <div class="detail-tab-bar">
-      <button class="detail-tab-btn active" onclick="switchDetailTab('${agentName}', 'health', this)">🩺 Health</button>
-      <button class="detail-tab-btn" onclick="switchDetailTab('${agentName}', 'tokens', this)">📊 Tokens</button>
-      <button class="detail-tab-btn" onclick="switchDetailTab('${agentName}', 'garden', this)">🧠 Memory</button>
+      <button class="detail-tab-btn active" data-tab="health" onclick="switchDetailTab('${agentName}', 'health', this)">🩺 Health</button>
+      <button class="detail-tab-btn" data-tab="guard" onclick="switchDetailTab('${agentName}', 'guard', this)">🛡️ Guard</button>
+      <button class="detail-tab-btn" data-tab="errors" onclick="switchDetailTab('${agentName}', 'errors', this)">⚠️ Errors</button>
+      <button class="detail-tab-btn" data-tab="tokens" onclick="switchDetailTab('${agentName}', 'tokens', this)">📊 Tokens</button>
+      <button class="detail-tab-btn" data-tab="memory" onclick="switchDetailTab('${agentName}', 'memory', this)">🧠 Memory</button>
     </div>
     <div id="detailContent" style="padding:14px;font-size:12px;color:var(--fg-2);max-height:60vh;overflow-y:auto;">Loading health data...</div>`;
   document.getElementById('drillModal').classList.add('active');
   document.body.style.overflow = 'hidden';
-  // Fetch health data by default
-  switchDetailTab(agentName, 'health', document.querySelector('.detail-tab-btn.active'));
+  switchDetailTab(agentName, 'health', document.querySelector('[data-tab="health"]'));
 }
 function switchDetailTab(agentName, tab, btn) {
   document.querySelectorAll('.detail-tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (btn) btn.classList.add('active');
   document.getElementById('detailContent').innerHTML = 'Loading ' + tab + ' data...';
   fetch('/api/agent-detail/' + encodeURIComponent(agentName) + '?tab=' + tab)
     .then(r => r.text())
@@ -1164,6 +1561,46 @@ function switchDetailTab(agentName, tab, btn) {
 function closeModal() {
   document.getElementById('drillModal').classList.remove('active');
   document.body.style.overflow = '';
+}
+
+function loadTab(name, tab) {
+  const modal = document.getElementById('drillModal');
+  const title = document.getElementById('modalTitle');
+  const sub = document.getElementById('modalSub');
+  const body = document.getElementById('modalBody');
+  const tabLabels = {
+    health: { title: 'Health timeline', sub: 'Health' },
+    guard: { title: 'Safety guard', sub: 'Guard' },
+    errors: { title: 'Error history', sub: 'Errors' },
+    tokens: { title: 'Token breakdown', sub: 'Tokens' },
+    memory: { title: 'Memory & Context', sub: 'Memory' }
+  };
+  const tabIcons = {
+    health: '🩺', guard: '🛡️', errors: '⚠️',
+    tokens: '📊', memory: '🧠'
+  };
+  const info = tabLabels[tab] || { title: 'Detail', sub: 'Detail' };
+  title.textContent = name + ' — ' + info.title;
+  sub.textContent = info.sub;
+  // Render full 5-tab bar
+  const allTabs = ['health', 'guard', 'errors', 'tokens', 'memory'];
+  var tabBar = '<div class="detail-tab-bar">';
+  allTabs.forEach(function(t) {
+    var active = t === tab ? ' active' : '';
+    tabBar += '<button class="detail-tab-btn' + active + '" data-tab="' + t + '" onclick="switchDetailTab(\'' + name + '\', \'' + t + '\', this)">' + tabIcons[t] + ' ' + t.charAt(0).toUpperCase() + t.slice(1) + '</button>';
+  });
+  tabBar += '</div>';
+  body.innerHTML = tabBar + '<div id="detailContent" style="padding:14px;font-size:12px;color:var(--fg-2);max-height:60vh;overflow-y:auto;">Loading ' + tab + ' data...</div>';
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  fetch('/api/agent-detail/' + encodeURIComponent(name) + '?tab=' + tab)
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('detailContent').innerHTML = html;
+    })
+    .catch(e => {
+      document.getElementById('detailContent').innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>';
+    });
 }
 
 // ─── Section toggle ───
@@ -1189,19 +1626,31 @@ function addMissingAgent() {
   const name = document.getElementById('feedbackInput').value.trim();
   const framework = document.getElementById('feedbackFramework').value;
   if (!name) { alert('Enter an agent name first'); return; }
+  var token = window.__OBSERVECO_TOKEN || '';
   fetch('/api/agents/add', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
+    headers: {'Content-Type': 'application/json', 'X-ObserveCo-Token': token},
     body: JSON.stringify({name, framework})
   })
     .then(r => r.json())
     .then(data => {
       if (data.ok) {
+        if (data.merged) {
+          showToast('🔄 ' + data.message);
+        } else {
+          showToast('✅ Added ' + name);
+        }
         document.getElementById('feedbackInput').value = '';
         document.getElementById('feedbackBar').style.display = 'none';
         htmx.trigger('#fleetContainer', 'agents-updated');
       } else {
-        alert('Failed: ' + (data.error || 'unknown'));
+        if (data.reason === 'already_visible') {
+          showToast('ℹ️ ' + data.error);
+          document.getElementById('feedbackInput').value = '';
+          document.getElementById('feedbackBar').style.display = 'none';
+        } else {
+          alert('Failed: ' + (data.error || 'unknown'));
+        }
       }
     })
     .catch(e => alert('Error: ' + e.message));
@@ -1226,6 +1675,12 @@ function switchTab(tab, btn) {
   if (tab === 'heal') {
     runHealCheck();
   }
+  if (tab === 'alerts') {
+    initAlerts();
+  }
+  if (tab === 'plugin') {
+    initPlugin();
+  }
 }
 
 // ─── Brain Analysis ───
@@ -1246,8 +1701,42 @@ function loadBrainData() {
       });
       window.brainLoaded = true;
       renderBrain('all');
+      loadOptimiserData();
     })
     .catch(e => console.error('Brain load failed:', e));
+}
+
+// ─── Optimiser Data ───
+function loadOptimiserData() {
+  fetch('/api/optimiser/stats')
+    .then(r => r.json())
+    .then(data => {
+      renderOptimiser(data);
+    })
+    .catch(e => console.error('Optimiser load failed:', e));
+}
+function renderOptimiser(data) {
+  const pct = data.learning_pct;
+  const pctStr = pct + '%';
+  // Learning progress bar
+  const bar = document.getElementById('optimiserProgressBar');
+  if (bar) bar.style.width = pctStr;
+  const labelPct = document.getElementById('optimiserProgressLabel');
+  if (labelPct) labelPct.textContent = pctStr + ' — learned from ' + data.total_turns + ' turns';
+  const labelGoal = document.getElementById('optimiserGoalLabel');
+  if (labelGoal) labelGoal.textContent = 'Goal: ' + data.goal_turns + ' turns';
+  // Skills metrics
+  const skillsNever = document.getElementById('optimiserSkillsNever');
+  if (skillsNever) skillsNever.textContent = data.skills_never_triggered + ' of ' + data.skills_total;
+  const guidanceStale = document.getElementById('optimiserGuidanceStale');
+  if (guidanceStale) guidanceStale.textContent = data.guidance_rules_stale + ' of ' + data.guidance_rules_total;
+  // Recent compressions
+  const recentEl = document.getElementById('optimiserRecentCompressions');
+  if (recentEl && data.recent_compressions && data.recent_compressions.length > 0) {
+    recentEl.innerHTML = data.recent_compressions.slice(0, 3).map(c =>
+      '<div style="font-size:11px;color:#64748b;">' + c.agent_name + ': ' + c.mode + ' (' + c.savings_pct + '%)</div>'
+    ).join('');
+  }
 }
 function renderBrain(agentName) {
   if (!brainData) return;
@@ -1324,6 +1813,90 @@ function renderBrain(agentName) {
 }
 function showBrainPro() {
   document.getElementById('brainProModal').classList.add('active');
+  loadLicenseStatus();
+}
+function loadLicenseStatus() {
+  fetch('/api/licenses/status')
+    .then(r => r.json())
+    .then(status => {
+      const el = document.getElementById('proTrialStatus');
+      const isPro = status.license_type === 'pro' || status.license_type === 'trial' || status.is_pro;
+      if (isPro) {
+        if (status.license_type === 'trial') {
+          el.innerHTML = `<span style="color:#a5b4fc;">✅ Trial active — ${status.trial_days_remaining}d remaining</span>`;
+        } else {
+          el.innerHTML = `<span style="color:#86efac;">✅ Pro active${status.plan ? ' (' + status.plan + ' plan)' : ''}</span>`;
+        }
+        document.getElementById('proTrialBtn').style.display = 'none';
+        // Hide all locked UI elements
+        document.querySelectorAll('.pro-upsell, .pro-upsell-block, [onclick*="showBrainPro"]').forEach(e => {
+          if (e.id !== 'brainProModal' && !e.closest('#brainProModal')) e.style.display = 'none';
+        });
+      } else {
+        el.innerHTML = '<span style="color:var(--muted);">Free tier — no license found</span>';
+        document.getElementById('proTrialBtn').style.display = '';
+      }
+    })
+    .catch(() => {});
+}
+function startProTrial() {
+  const btn = document.getElementById('proTrialBtn');
+  const status = document.getElementById('proTrialStatus');
+  btn.disabled = true;
+  btn.textContent = 'Starting...';
+  fetch('/api/licenses/trial', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({confirm: true}),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'trial_started') {
+        status.innerHTML = `<span style="color:#86efac;">✅ Trial started — 30 days remaining</span>`;
+        btn.style.display = 'none';
+        showToast('🎉 30-day Pro trial started!');
+      } else {
+        status.innerHTML = `<span style="color:#ef4444;">Error: ${data.detail || 'unknown'}</span>`;
+        btn.disabled = false;
+        btn.textContent = 'Start Free Trial';
+      }
+    })
+    .catch(e => {
+      status.innerHTML = `<span style="color:#ef4444;">Failed: ${e.message}</span>`;
+      btn.disabled = false;
+      btn.textContent = 'Start Free Trial';
+    });
+}
+function activateProLicense() {
+  const input = document.getElementById('proLicenseKey');
+  const status = document.getElementById('proLicenseStatus');
+  const key = input.value.trim();
+  if (!key) { status.innerHTML = '<span style="color:#eab308;">Enter a license key</span>'; return; }
+  status.innerHTML = '<span style="color:var(--muted);">Validating...</span>';
+  fetch('/api/licenses/activate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({key: key, plan: 'solo'}),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'activated') {
+        status.innerHTML = `<span style="color:#86efac;">✅ Activated — ${data.plan} plan</span>`;
+        input.value = '';
+        document.getElementById('proTrialBtn').style.display = 'none';
+        showToast('🎉 Pro license activated!');
+      } else if (data.status === 'activated_offline') {
+        status.innerHTML = `<span style="color:#eab308;">✅ Saved offline — will validate when online</span>`;
+        input.value = '';
+        document.getElementById('proTrialBtn').style.display = 'none';
+        showToast('📝 License saved (offline mode)');
+      } else {
+        status.innerHTML = `<span style="color:#ef4444;">${data.detail || data.message || 'Invalid key'}</span>`;
+      }
+    })
+    .catch(e => {
+      status.innerHTML = `<span style="color:#ef4444;">Failed: ${e.message}</span>`;
+    });
 }
 // Custom provider toggle
 document.addEventListener('DOMContentLoaded', function() {
@@ -1332,6 +1905,109 @@ document.addEventListener('DOMContentLoaded', function() {
     renderBrain(document.getElementById('brainAgentSelect').value);
   });
 });
+
+// ─── Compression (Section 3) ───
+let compressMode = 'lite';
+function switchCompressTab(tab, btn) {
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('manualTab').style.display = tab === 'manual' ? '' : 'none';
+  document.getElementById('autoTab').style.display = tab === 'auto' ? '' : 'none';
+}
+function switchMode(mode, btn) {
+  compressMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('afterModeName').textContent = mode === 'lite' ? 'Lite' : 'Full';
+  document.getElementById('compressStatus').style.display = 'none';
+}
+function runCompressPreview() {
+  const sel = document.getElementById('brainAgentSelect');
+  const agentName = sel.value;
+  if (agentName === 'all') {
+    showStatus('compressStatus', 'Select a single agent for compression preview.', 'warn');
+    return;
+  }
+  const a = brainData && brainData[agentName];
+  if (!a) {
+    showStatus('compressStatus', 'No brain data for this agent.', 'warn');
+    return;
+  }
+  const rawTk = a.raw_tokens || a.total_tokens;
+  const pct = compressMode === 'lite' ? 0.22 : 0.35;
+  const saved = Math.round(rawTk * pct);
+  const afterTk = rawTk - saved;
+  // Render "before" diff placeholder (first ~500 chars of the prompt)
+  const oldLines = [
+    'When using tools, you MUST:',
+    '1. Call exactly one tool per turn',
+    '2. Pass all required parameters as shown',
+    '3. Do not add extra text before/after',
+    '4. Wait for the tool response before proceeding',
+    '(simulated — run observeco chisel trim for real output)'
+  ];
+  const newLines = compressMode === 'lite'
+    ? ['Call one tool per turn with exact params.', 'No extra text. Wait for response. Report errors.', '(Lite: guidance blocks compressed)']
+    : ['Consolidated guidance + deduped skills.', 'Memory culled to active sections.', '(Full: memory + skills + context refactored)'];
+  document.getElementById('beforeTokens').innerHTML = rawTk.toLocaleString() + ' tok';
+  document.getElementById('afterTokens').innerHTML = afterTk.toLocaleString() + ' tok <span style="font-size:12px;color:#64748b;font-weight:400;">-' + (pct*100).toFixed(0) + '%</span>';
+  document.getElementById('diffPreviewOld').innerHTML = oldLines.map(l => '<div class="diff-line old">' + l + '</div>').join('');
+  document.getElementById('diffPreviewNew').innerHTML = newLines.map(l => '<div class="diff-line new">' + l + '</div>').join('') +
+    '<div style="color:#475569;margin-top:4px;font-size:11px;">(' + saved.toLocaleString() + ' tokens saved)</div>';
+  showStatus('compressStatus', '✅ Preview complete — ' + saved.toLocaleString() + ' tokens could be saved with ' + compressMode.charAt(0).toUpperCase() + compressMode.slice(1) + ' compression.', 'success');
+}
+function applyCompression() {
+  const sel = document.getElementById('brainAgentSelect');
+  const agentName = sel.value;
+  if (agentName === 'all') {
+    showStatus('compressStatus', 'Select a single agent to apply compression.', 'warn');
+    return;
+  }
+  const a = brainData && brainData[agentName];
+  if (!a) {
+    showStatus('compressStatus', 'No data for this agent.', 'warn');
+    return;
+  }
+  fetch('/api/chisel/compress', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({agent: agentName, mode: compressMode}),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        showStatus('compressStatus', '💾 ' + data.message + (data.backup ? '<br><span style="color:#64748b;">Backup: ' + data.backup + '</span>' : ''), 'success');
+      } else {
+        showStatus('compressStatus', '⚠️ ' + (data.message || 'Compression failed'), 'warn');
+      }
+    })
+    .catch(e => {
+      showStatus('compressStatus', '💡 Compression endpoint not available yet. The preview showed ' + (a.raw_tokens || a.total_tokens).toLocaleString() + ' → tokens. This will be wired when the CLI backend is ready.', 'warn');
+    });
+}
+function copyCompressDiff() {
+  const oldText = document.getElementById('diffPreviewOld').textContent.trim();
+  const newText = document.getElementById('diffPreviewNew').textContent.trim();
+  if (!oldText || oldText === 'Select an agent and run Preview to see the diff.') {
+    showStatus('compressStatus', 'Run Preview first to generate a diff to copy.', 'warn');
+    return;
+  }
+  const diff = '--- Before\n+++ After\n' + oldText + '\n' + newText;
+  navigator.clipboard.writeText(diff).then(() => {
+    showStatus('compressStatus', '📋 Diff report copied to clipboard.', 'success');
+  }).catch(() => {
+    showStatus('compressStatus', '📋 ' + diff, 'success');
+  });
+}
+function showStatus(elId, msg, type) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.style.display = 'block';
+  if (type === 'success') { el.style.background = '#0a2a1a'; el.style.border = '1px solid #166534'; el.style.color = '#86efac'; }
+  else if (type === 'warn') { el.style.background = '#451a03'; el.style.border = '1px solid #78350f'; el.style.color = '#fcd34d'; }
+  else { el.style.background = '#1e293b'; el.style.border = '1px solid #334155'; el.style.color = '#94a3b8'; }
+  el.innerHTML = msg;
+}
 
 // ─── Auto-Heal ───
 function runHealCheck() {
@@ -1345,6 +2021,64 @@ function runHealCheck() {
       document.getElementById('healLog').innerHTML = '<div style="color:#ef4444;padding:12px;">Heal check failed: ' + e.message + '</div>';
     });
 }
+
+// ─── L2 Proactive Monitoring ───
+function runL2Scan() {
+  const el = document.getElementById('l2Trends');
+  el.innerHTML = 'Running L2 scan...';
+  fetch('/api/l2-scan')
+    .then(r => r.text())
+    .then(html => { el.innerHTML = html; loadL2Trends(); })
+    .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">L2 scan failed: ' + e.message + '</div>'; });
+}
+function loadL2Trends() {
+  fetch('/api/l2-trends')
+    .then(r => r.text())
+    .then(html => { document.getElementById('l2Trends').innerHTML = html; })
+    .catch(() => {});
+}
+function initL2() { loadL2Trends(); }
+
+// ─── Push Alerts ───
+function loadAlertSubs() {
+  const el = document.getElementById('alertSubs');
+  el.innerHTML = 'Loading...';
+  fetch('/api/alerts-subs')
+    .then(r => r.text())
+    .then(html => { el.innerHTML = html; })
+    .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
+}
+function loadAlertLog() {
+  const el = document.getElementById('alertLog');
+  el.innerHTML = 'Loading...';
+  fetch('/api/alert-log')
+    .then(r => r.text())
+    .then(html => { el.innerHTML = html; })
+    .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
+}
+function initAlerts() { loadAlertSubs(); loadAlertLog(); }
+
+// ─── Plugin Tracking ───
+function loadPluginStats() {
+  fetch('/api/plugin-stats')
+    .then(r => r.json())
+    .then(stats => {
+      document.getElementById('pluginTurns').textContent = stats.turns || 0;
+      document.getElementById('pluginSaved').textContent = (stats.saved || 0).toLocaleString();
+      document.getElementById('pluginReduction').textContent = (stats.avg_reduction_pct || 0) + '%';
+      document.getElementById('pluginLoaded').textContent = (stats.loaded || 0).toLocaleString();
+    })
+    .catch(() => {});
+}
+function loadPluginHooks() {
+  const el = document.getElementById('pluginHooks');
+  el.innerHTML = 'Loading...';
+  fetch('/api/plugin-hooks')
+    .then(r => r.text())
+    .then(html => { el.innerHTML = html; })
+    .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
+}
+function initPlugin() { loadPluginStats(); loadPluginHooks(); }
 
 // ─── Skills Audit ───
 function openSkillsAuditModal(agentName) {
@@ -1366,7 +2100,7 @@ function openSkillsAuditModal(agentName) {
         '<div class="sa-card wn"><div class="n">$' + s.after_pro_save + '</div><div class="l">Yearly cost after Pro</div><div class="sv" style="color:#86efac;">⬇ $' + s.pro_savings + ' saved</div></div>' +
         '</div>';
       html += '<div style="display:flex;align-items:center;justify-content:space-between;background:#1e1b4b;border:1px solid #3730a3;border-radius:10px;padding:14px 18px;margin-bottom:16px;">' +
-        '<div><div style="font-size:13px;font-weight:600;color:#a5b4fc;">🔒 Auto-Watch <span style="background:#3730a3;color:#a5b4fc;font-size:9px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;">Pro</span></div>' +
+        '<div><div style="font-size:13px;font-weight:600;color:#a5b4fc;">🔒 Auto-Watch <span style="background:#3730a3;color:#a5b4fc;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;">Pro</span></div>' +
         '<div style="font-size:12px;color:var(--muted);">Weekly scan + drift tracking + threshold alerts</div></div>' +
         '<span style="font-size:18px;cursor:pointer;color:#6366f1;" onclick="showBrainPro()">🔒</span></div>';
       html += '<div class="sa-card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;padding:0;">';
@@ -1430,7 +2164,7 @@ function closePathwayModal() {
   document.body.style.overflow = '';
 }
 
-// ─── CHISEL Compression ───
+// ─── Token Optimiser ───
 function openChiselModal(agentName) {
   const modal = document.getElementById('chiselModal');
   const body = document.getElementById('chiselBody');
@@ -1456,6 +2190,9 @@ function openChiselModal(agentName) {
       body.innerHTML = html;
     })
     .catch(e => { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
+}
+function showToast(msg) {
+  showToastB(msg);
 }
 function showToastB(msg) {
   const t = document.getElementById('brainToast');
@@ -1494,10 +2231,294 @@ function closeModalById(id) {
   document.getElementById(id).classList.remove('active');
   document.body.style.overflow = '';
 }
+
+// ─── Search/Filter — show/hide search bar based on agent count ───
+function showSearchBar() {
+  fetch('/api/agent-count')
+    .then(r => r.json())
+    .then(data => {
+      var bar = document.getElementById('searchBar');
+      if (bar && data.total > 0) {
+        bar.style.display = 'flex';
+      }
+    })
+    .catch(function() {});
+}
+
+function applyFilter(btn, filterValue) {
+  // Update active state on filter chips
+  document.querySelectorAll('.filter-chip').forEach(function(b) {
+    b.style.background = 'var(--surface)';
+    b.style.color = '#94a3b8';
+    b.style.fontWeight = '400';
+  });
+  btn.style.background = 'var(--accent-on)';
+  btn.style.color = '#86efac';
+  btn.style.fontWeight = '600';
+
+  // Reload agents with filter
+  var searchValue = document.getElementById('agentSearch') ? document.getElementById('agentSearch').value : '';
+  var url = '/api/agents?per_page=25&status=' + filterValue;
+  if (searchValue) url += '&q=' + encodeURIComponent(searchValue);
+  htmx.ajax('GET', url, {target: '#fleetContainer', swap: 'innerHTML'});
+}
+
+function clearFilters() {
+  // Reset filter chip visual state
+  document.querySelectorAll('.filter-chip').forEach(function(b) {
+    b.style.background = 'var(--surface)';
+    b.style.color = '#94a3b8';
+    b.style.fontWeight = '400';
+  });
+  var allBtn = document.querySelector('.filter-chip[data-filter=""]');
+  if (allBtn) {
+    allBtn.style.background = 'var(--accent-on)';
+    allBtn.style.color = '#86efac';
+    allBtn.style.fontWeight = '600';
+  }
+  // Clear search input
+  var searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.value = '';
+  htmx.ajax('GET', '/api/agents?per_page=25', {target: '#fleetContainer', swap: 'innerHTML'});
+}
+
+function deleteAgent(name) {
+  if (!confirm('Remove "' + name + '" from the dashboard? All its data will be deleted.')) return;
+  var token = window.__OBSERVECO_TOKEN || '';
+  fetch('/api/agents/' + encodeURIComponent(name), {
+    method: 'DELETE',
+    headers: token ? {'X-ObserveCo-Token': token} : {}
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) {
+      showToast('Removed ' + name);
+      htmx.ajax('GET', '/api/agents?per_page=25', {target: '#fleetContainer', swap: 'innerHTML'});
+    } else {
+      showToast('Failed: ' + (d.error || 'Unknown'));
+    }
+  }).catch(function(e) {
+    showToast('Error: ' + e.message);
+  });
+}
+
+// Show search bar after page load
+document.addEventListener('DOMContentLoaded', showSearchBar);
 </script>
 
 <!-- htmx: load agents on page load and every 30s -->
 <div hx-get="/api/agents" hx-trigger="load, every 30s, agents-updated from:body" hx-target="#fleetContainer" hx-swap="innerHTML"></div>
+
+<!-- Onboarding overlay (also loaded via /api/onboarding) -->
+<!-- Onboarding Overlay — self-contained, loaded via htmx on page load.
+     Shows context-appropriate guidance based on the dashboard's current phase.
+     Dismissed by clicking "Got it" which sets localStorage flag. -->
+<div id="onboardingOverlay" class="onboarding-overlay" style="display:none;">
+  <div class="onboarding-card">
+    <button class="onboarding-close" onclick="dismissOnboarding()" title="Dismiss">✕</button>
+
+    <!-- Phase 0: No agents -->
+    <div class="onboarding-panel" data-phase="phase-0" style="display:none;">
+      <div class="onboarding-icon">🔍</div>
+      <h2 class="onboarding-title">Welcome to ObserveCo</h2>
+      <p class="onboarding-sub">Your system looks clean — let's find your agents.</p>
+      <div class="onboarding-steps">
+        <div class="onboarding-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Discover agents</strong>
+            <code class="step-code">observeco agents discover</code>
+            <span class="step-desc">Scans config files and common agent paths</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Add manually</strong>
+            <code class="step-code">observeco agents add my-agent</code>
+            <span class="step-desc">Or add any agent by name</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Reload dashboard</strong>
+            <span class="step-desc">Agents will appear here as cards</span>
+          </div>
+        </div>
+      </div>
+      <button class="onboarding-cta" onclick="dismissOnboarding()">Got it</button>
+    </div>
+
+    <!-- Phase 1: Agents found, no data yet -->
+    <div class="onboarding-panel" data-phase="phase-1" style="display:none;">
+      <div class="onboarding-icon">⏳</div>
+      <h2 class="onboarding-title">Agents Detected</h2>
+      <p class="onboarding-sub">ObserveCo found your agents and is collecting health data.</p>
+      <div class="onboarding-steps">
+        <div class="onboarding-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Start monitoring</strong>
+            <code class="step-code">observeco watch</code>
+            <span class="step-desc">Daemon that polls agents every 30s</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>What the cards show</strong>
+            <ul class="step-list">
+              <li>🟢 <strong>Status dot</strong> — alive / dead / error</li>
+              <li>📊 <strong>Token bar</strong> — system prompt composition</li>
+              <li>📈 <strong>Drift</strong> — how your prompts change over time</li>
+              <li>⚠️ <strong>Error badge</strong> — recent failures</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <button class="onboarding-cta" onclick="dismissOnboarding()">Got it</button>
+    </div>
+
+    <!-- Phase 2: System stabilised -->
+    <div class="onboarding-panel" data-phase="phase-2" style="display:none;">
+      <div class="onboarding-icon">✅</div>
+      <h2 class="onboarding-title">System Stabilised</h2>
+      <p class="onboarding-sub">All agents monitored — here's what you can do next:</p>
+      <div class="onboarding-steps">
+        <div class="onboarding-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Explore the fleet</strong>
+            <span class="step-desc">Click any card to see pulse history, token breakdowns, and drift trends</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Check the pathway map</strong>
+            <a class="step-link" href="/pathway" onclick="dismissOnboarding()">View Communication Pathways →</a>
+            <span class="step-desc">See how your agents talk to each other</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Run a heal check</strong>
+            <span class="step-desc">Use the Heal button or <code class="inline-code-sm">observeco heal</code> to diagnose issues</span>
+          </div>
+        </div>
+      </div>
+      <button class="onboarding-cta" onclick="dismissOnboarding()">Start exploring</button>
+    </div>
+
+    <!-- Phase 3: Fully operational — no overlay needed, but show if re-dismissed -->
+    <div class="onboarding-panel" data-phase="phase-3" style="display:none;">
+      <div class="onboarding-icon">🚀</div>
+      <h2 class="onboarding-title">All Systems Go</h2>
+      <p class="onboarding-sub">Everything is running. Need a refresher?</p>
+      <div style="margin:12px 0 16px;text-align:center;font-size:12px;color:var(--muted);line-height:1.6;">
+        <code class="inline-code-sm">observeco--help</code> for all CLI commands
+      </div>
+      <button class="onboarding-cta secondary" onclick="dismissOnboarding()">Close</button>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.onboarding-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(2px);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  animation: onboarding-fade-in 0.3s ease;
+}
+.onboarding-card {
+  background: var(--surface, #1e293b); border: 1px solid var(--border, #334155);
+  border-radius: 16px; max-width: 480px; width: 90%;
+  padding: 32px 28px 24px; position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: onboarding-slide-up 0.35s ease;
+}
+.onboarding-close {
+  position: absolute; top: 12px; right: 12px;
+  background: none; border: none; color: var(--muted, #64748b);
+  font-size: 18px; cursor: pointer; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; transition: all 0.15s;
+}
+.onboarding-close:hover { background: var(--border, #334155); color: var(--fg, #f8fafc); }
+.onboarding-icon { font-size: 36px; text-align: center; margin-bottom: 8px; }
+.onboarding-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+.onboarding-sub { font-size: 13px; color: var(--muted, #64748b); text-align: center; margin-bottom: 16px; line-height: 1.5; }
+.onboarding-steps { margin: 16px 0; }
+.onboarding-step { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+.step-num {
+  width: 24px; height: 24px; min-width: 24px;
+  background: var(--accent, #22c55e); color: var(--accent-on, #0c1628);
+  border-radius: 50%; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.step-content { font-size: 13px; line-height: 1.5; color: var(--fg-2, #94a3b8); }
+.step-content strong { color: var(--fg, #f8fafc); display: block; margin-bottom: 2px; }
+.step-code {
+  display: inline-block; background: var(--bg, #0f172a); border: 1px solid var(--border, #334155);
+  padding: 3px 10px; border-radius: 4px; font-size: 12px; font-family: 'SF Mono','Fira Code',monospace;
+  color: var(--accent, #22c55e); margin: 4px 0;
+}
+.step-desc { display: block; font-size: 11px; color: var(--muted, #64748b); margin-top: 2px; }
+.step-link { color: var(--meta, #3b82f6); font-weight: 500; text-decoration: none; display: inline-block; margin: 4px 0; }
+.step-link:hover { text-decoration: underline; }
+.step-list { margin: 4px 0 0; padding: 0 0 0 16px; font-size: 12px; color: var(--fg-2, #94a3b8); line-height: 1.7; }
+.step-list li { list-style: none; }
+.onboarding-cta {
+  display: block; width: 100%;
+  background: var(--accent, #22c55e); color: var(--accent-on, #0c1628);
+  border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; margin-top: 8px;
+}
+.onboarding-cta:hover { opacity: 0.9; transform: translateY(-1px); }
+.onboarding-cta.secondary {
+  background: var(--border, #334155); color: var(--fg-2, #94a3b8);
+}
+@keyframes onboarding-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes onboarding-slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.inline-code-sm {
+  background: var(--bg, #0f172a); border: 1px solid var(--border, #334155);
+  padding: 1px 6px; border-radius: 3px; font-size: 11px; font-family: 'SF Mono','Fira Code',monospace;
+  color: var(--accent, #22c55e);
+}
+</style>
+
+<script>
+(function() {
+  // Only show if not dismissed
+  if (localStorage.getItem('observeco-onboarding-dismissed')) return;
+
+  // Detect phase from the body data attribute or API
+  var phase = document.body.getAttribute('data-phase') || 'phase-0';
+
+  // If fully stabilised (phase-3), don't show automatically (show only if user explicitly re-opens)
+  if (phase === 'phase-3') return;
+
+  var overlay = document.getElementById('onboardingOverlay');
+  if (!overlay) return;
+
+  // Show matching panel
+  var panels = overlay.querySelectorAll('.onboarding-panel');
+  panels.forEach(function(p) {
+    if (p.getAttribute('data-phase') === phase) {
+      p.style.display = 'block';
+    }
+  });
+
+  overlay.style.display = 'flex';
+})();
+
+function dismissOnboarding() {
+  var overlay = document.getElementById('onboardingOverlay');
+  if (overlay) overlay.style.display = 'none';
+  localStorage.setItem('observeco-onboarding-dismissed', 'true');
+}
+</script>
 
 </body>
 </html>
