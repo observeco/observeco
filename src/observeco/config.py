@@ -47,6 +47,7 @@ def _load_hermes_agents() -> list[AgentConfig]:
     """
     agents: list[AgentConfig] = []
     seen: set[str] = set()
+    excluded = _get_excluded_set()
 
     # Method 1 (preferred): Scan ~/.hermes/profiles/ for SOUL.md — the canonical source
     hermes_profiles_dir = Path.home() / ".hermes" / "profiles"
@@ -56,7 +57,7 @@ def _load_hermes_agents() -> list[AgentConfig]:
                 soul = entry / "SOUL.md"
                 if soul.exists():
                     name = entry.name
-                    if name not in seen:
+                    if name not in seen and name not in excluded:
                         seen.add(name)
                         agents.append(AgentConfig(name=name, framework="hermes",
                                                    config_path=str(soul)))
@@ -66,13 +67,13 @@ def _load_hermes_agents() -> list[AgentConfig]:
         for entry in sorted(_HERMES_AGENTS_DIR.iterdir()):
             if entry.is_dir():
                 soul = entry / "SOUL.md"
-                if soul.exists() and entry.name not in seen:
+                if soul.exists() and entry.name not in seen and entry.name not in excluded:
                     seen.add(entry.name)
                     agents.append(AgentConfig(name=entry.name, framework="hermes",
                                                config_path=str(soul)))
             elif entry.name.endswith(".md") and not entry.name.startswith("."):
                 name = entry.stem
-                if name not in seen:
+                if name not in seen and name not in excluded:
                     seen.add(name)
                     agents.append(AgentConfig(name=name, framework="hermes",
                                                config_path=str(entry)))
@@ -81,8 +82,44 @@ def _load_hermes_agents() -> list[AgentConfig]:
 
 
 def _load_openclaw_agents() -> list[AgentConfig]:
-    """Detect OpenClaw agents from AGENTS.md / SOUL.md in common locations."""
+    """Detect OpenClaw agents from their workspace and SOUL identity markers."""
     agents: list[AgentConfig] = []
+    seen: set[str] = set()
+    excluded = _get_excluded_set()
+
+    # Method 1 (most authoritative): Scan ~/.openclaw/workspace/ for SOUL.md
+    oc_workspace = Path.home() / ".openclaw" / "workspace"
+    if oc_workspace.exists():
+        soul = oc_workspace / "SOUL.md"
+        if soul.exists():
+            text = soul.read_text().lower()
+            if "openclaw" in text:
+                name = soul.parent.name  # "workspace" — but we need the actual agent name
+                # Try to extract name from SOUL content
+                name = "kepler" if "kepler" in soul.read_text().lower() else name
+                if name not in seen and name not in excluded:
+                    seen.add(name)
+                    agents.append(AgentConfig(name=name, framework="openclaw",
+                                               config_path=str(soul)))
+
+    # Method 2: Check ~/.hermes/profiles/ for SOUL.md with OpenClaw ownership markers
+    profiles_dir = Path.home() / ".hermes" / "profiles"
+    if profiles_dir.exists():
+        for entry in profiles_dir.iterdir():
+            soul = entry / "SOUL.md"
+            if soul.exists():
+                text = soul.read_text()
+                lower = text.lower()
+                # Only match if the SOUL explicitly owns the OpenClaw identity
+                if ("openclaw" in lower and ("i am" in lower or "i run" in lower or "i'm" in lower)) or \
+                   ("openclaw" in lower and "workspace" in lower):
+                    name = entry.name
+                    if name not in seen and name not in excluded:
+                        seen.add(name)
+                        agents.append(AgentConfig(name=name, framework="openclaw",
+                                                   config_path=str(soul)))
+
+    # Method 3: Legacy — AGENTS.md / SOUL.md in home or cwd
     search_paths = [
         Path.home() / "AGENTS.md",
         Path.home() / "SOUL.md",
@@ -90,32 +127,29 @@ def _load_openclaw_agents() -> list[AgentConfig]:
         Path.cwd() / "SOUL.md",
     ]
     for sp in search_paths:
-        if sp.exists():
-            name = "kepler" if "kepler" in sp.read_text().lower() else sp.stem.lower()
-            agents.append(AgentConfig(name=name, framework="openclaw",
-                                       config_path=str(sp)))
-    # Check ~/.hermes/profiles/ for OpenClaw profiles
-    profiles_dir = Path.home() / ".hermes" / "profiles"
-    if profiles_dir.exists():
-        for entry in profiles_dir.iterdir():
-            soul = entry / "SOUL.md"
-            if soul.exists():
-                text = soul.read_text()
-                if "openclaw" in text.lower():
-                    agents.append(AgentConfig(name=entry.name, framework="openclaw",
-                                               config_path=str(soul)))
+        if sp.exists() and "openclaw" in sp.read_text().lower():
+            text = sp.read_text().lower()
+            name = "kepler" if "kepler" in text else sp.stem.lower()
+            if name not in seen and name not in excluded:
+                seen.add(name)
+                agents.append(AgentConfig(name=name, framework="openclaw",
+                                           config_path=str(sp)))
     return agents
 
 
 def _load_agents_json() -> list[AgentConfig]:
     """Read agents from ~/.observeco/agents.json."""
     agents: list[AgentConfig] = []
+    excluded = _get_excluded_set()
     if _AGENTS_JSON.exists():
         try:
             data = json.loads(_AGENTS_JSON.read_text())
             for item in data.get("agents", []):
+                name = item.get("name", "unknown")
+                if name in excluded:
+                    continue
                 agents.append(AgentConfig(
-                    name=item.get("name", "unknown"),
+                    name=name,
                     framework=item.get("framework", "custom"),
                     health_check=item.get("health_check"),
                     config_path=str(_AGENTS_JSON),
@@ -128,6 +162,7 @@ def _load_agents_json() -> list[AgentConfig]:
 def _load_cwd_yml() -> list[AgentConfig]:
     """Read observeco.yml from current working directory."""
     agents: list[AgentConfig] = []
+    excluded = _get_excluded_set()
     yml_path = Path.cwd() / "observeco.yml"
     if yml_path.exists():
         try:
@@ -136,6 +171,8 @@ def _load_cwd_yml() -> list[AgentConfig]:
                 m = re.match(r"^\s*-\s*name:\s*(\S+)", line)
                 if m:
                     name = m.group(1)
+                    if name in excluded:
+                        continue
                     fw_m = re.search(r"framework:\s*(\S+)", text)
                     framework = fw_m.group(1) if fw_m else "custom"
                     agents.append(AgentConfig(name=name, framework=framework,
@@ -150,12 +187,21 @@ def load_config() -> ObserveConfig:
     config = ObserveConfig()
     seen: set[str] = set()
 
-    for loader in [_load_hermes_agents, _load_openclaw_agents,
+    for loader in [_load_openclaw_agents, _load_hermes_agents,
                    _load_agents_json, _load_cwd_yml]:
         for agent in loader():
-            if agent.name not in seen:
-                seen.add(agent.name)
-                config.agents.append(agent)
+            if agent.name in seen:
+                # Merge frameworks instead of deduping by name
+                for existing in config.agents:
+                    if existing.name == agent.name:
+                        existing_fw = set(existing.framework.lower().replace("+", "").split())
+                        new_fw = agent.framework.lower()
+                        if new_fw not in existing_fw:
+                            existing.framework = existing.framework + " + " + agent.framework
+                        break
+                continue
+            seen.add(agent.name)
+            config.agents.append(agent)
 
     return config
 
@@ -172,3 +218,31 @@ def write_agent(agent: AgentConfig) -> None:
         "health_check": agent.health_check,
     })
     _AGENTS_JSON.write_text(json.dumps(existing, indent=2))
+
+
+def _get_excluded_set() -> set[str]:
+    """Read the excluded_agents set from agents.json."""
+    if not _AGENTS_JSON.exists():
+        return set()
+    try:
+        data = json.loads(_AGENTS_JSON.read_text())
+        return set(data.get("excluded_agents", []))
+    except Exception:
+        return set()
+
+
+def exclude_agent(name: str) -> None:
+    """Add an agent name to the excluded set so auto-discovery skips it."""
+    _AGENTS_JSON.parent.mkdir(parents=True, exist_ok=True)
+    existing = json.loads(_AGENTS_JSON.read_text()) if _AGENTS_JSON.exists() else {"agents": []}
+    excluded = set(existing.get("excluded_agents", []))
+    excluded.add(name)
+    existing["excluded_agents"] = sorted(excluded)
+    # Also remove from the agents list if present
+    existing["agents"] = [a for a in existing["agents"] if a.get("name") != name]
+    _AGENTS_JSON.write_text(json.dumps(existing, indent=2))
+
+
+def list_excluded() -> list[str]:
+    """Return the list of excluded agent names."""
+    return sorted(_get_excluded_set())

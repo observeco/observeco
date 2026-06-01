@@ -9,6 +9,7 @@ Spec: specs/unified-dashboard.md
 from __future__ import annotations
 
 import json
+import os
 import time
 import webbrowser
 from datetime import datetime, timezone
@@ -21,9 +22,15 @@ from fastapi.staticfiles import StaticFiles
 
 from observeco.billing import add_billing_endpoints
 from observeco.dashboard.otel import router as otel_router
+from observeco.dashboard.licenses_api import router as licenses_router
 from observeco.db import Database
 from observeco.api import router as api_router
 from observeco.realtime import router as realtime_router
+from observeco.dirs import get_data_dir
+
+# Shared heartbeat path — watch daemon writes this every 30s.
+# Dashboard reads it to detect if the daemon is alive.
+_HEARTBEAT_PATH = get_data_dir() / ".watch_heartbeat.json"
 
 # Token component colors (matching mockup design system)
 COMP_COLORS = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
@@ -35,16 +42,39 @@ COMP_ORDER = ["skills", "tools", "memory", "guidance", "identity"]
 app = FastAPI(title="ObserveCo Dashboard")
 db = Database()
 
+# Initialize dashboard auth at module level (for TestClient compatibility).
+# serve() re-initializes with the persisted secret on actual launch.
+from observeco.dashboard.auth import init_auth as _init_auth, get_cached_secret as _get_secret
+_dash_secret = _init_auth(app)
+app.state.dashboard_secret = _dash_secret
+
 # --- Auth setup ---
 import secrets as _secrets
 from observeco.auth.oauth2 import OAuth2Provider
 auth_provider = OAuth2Provider()
 
-# Register billing + OTel + feedback endpoints
+# Register billing + OTel + feedback + license endpoints
 add_billing_endpoints(app)
 app.include_router(otel_router)
 app.include_router(api_router)
 app.include_router(realtime_router)
+app.include_router(licenses_router)
+
+# --- Startup: ensure trial token if first run ---
+@app.on_event("startup")
+async def startup_license_check():
+    from observeco import license as lic
+    state = lic.load()
+    if state.license_type == "free" and not state.key and not state.trial_token:
+        lic.ensure_trial(state)
+        _log_license = f"auto-trial started ({state.remains_days}d remaining)"
+    elif state.license_type == "trial":
+        _log_license = f"trial mode ({state.remains_days}d remaining)"
+    elif state.license_type == "pro":
+        _log_license = "pro mode"
+    else:
+        _log_license = f"free mode ({state.license_type})"
+    print(f"[license] {_log_license}")
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +221,7 @@ async def api_phase():
         <div class="phase-banner-body">
             <strong class="phase-banner-title">Observing your system...</strong>
             <div class="phase-banner-text">
-                Auto-discovering agents from Hermes, OpenClaw, and custom configs.
+                Auto-discovering your agents from config files and common agent paths.
                 Agents will appear here automatically or run
                 <code class="inline-code-sm">observeco agents discover</code>
                 to check manually.
@@ -335,9 +365,39 @@ DELAY_CRITICAL_SEC = 3600  # 1h  → banner turns red
 
 @app.get("/api/delay-banner", response_class=HTMLResponse)
 async def api_delay_banner():
-    """Compute cumulative agent delay and return a banner if any agents are overdue."""
+    """Compute cumulative agent delay and return a banner if any agents are overdue.
+    Also checks watch daemon health (Layer F7).
+    """
     agents = db.get_agents()
     now = int(time.time())
+
+    # ── Daemon health check (F7) ────────────────────────────────────
+    daemon_warning = ""
+    try:
+        hb_data = None
+        if _HEARTBEAT_PATH.exists():
+            hb_data = json.loads(_HEARTBEAT_PATH.read_text())
+        daemon_alive = False
+        if hb_data:
+            hb_age = now - hb_data.get("timestamp", 0)
+            pid = hb_data.get("pid")
+            if hb_age < 90 and pid:
+                try:
+                    os.kill(pid, 0)
+                    daemon_alive = True
+                except (OSError, ProcessLookupError):
+                    pass
+        if not daemon_alive:
+            daemon_warning = (
+                '<div class="daemon-warning delay-banner" style="background:#fefce8;border-left-color:#eab308;'
+                'padding:8px 14px;margin-bottom:8px;border-radius:8px;border-left:3px solid;font-size:12px;">'
+                '<span>⚠️ Watch daemon not running — agent data may be stale</span>'
+                '<code class="inline-code" style="margin-left:8px;background:#0f172a;padding:2px 8px;'
+                'border-radius:4px;font-size:11px;">observeco watch start</code>'
+                '</div>'
+            )
+    except Exception:
+        pass
 
     delays = []
     for a in agents:
@@ -351,7 +411,7 @@ async def api_delay_banner():
         delays.append((name, delay))
 
     if not delays:
-        return HTMLResponse("")
+        return HTMLResponse(daemon_warning)
 
     # Summarize
     max_delay = max(d[1] for d in delays)
@@ -359,7 +419,7 @@ async def api_delay_banner():
     critical_agents = [d for d in delays if d[1] > DELAY_CRITICAL_SEC]
 
     if not overdue_agents:
-        return HTMLResponse("")
+        return HTMLResponse(daemon_warning)
 
     # Build banner
     total = len(delays)
@@ -394,6 +454,33 @@ async def api_delay_banner():
 </div>"""
 
     return HTMLResponse(html)
+
+
+# ---------------------------------------------------------------------------
+# § Pro Feature Gating — helpers used by backend endpoints
+# ---------------------------------------------------------------------------
+
+
+def _pro_response(html: str) -> HTMLResponse:
+    """Return an HTML response wrapped with license-aware headers."""
+    from observeco import license as lic
+    is_pro = lic.require_pro()
+    if isinstance(html, str) and 'data-pro-state' not in html:
+        html = html.replace('<div', '<div data-pro-state="' + ('unlocked' if is_pro else 'locked') + '"', 1) if '<div' in html else html
+    return HTMLResponse(html)
+
+
+def _pro_or_upsell(pro_html: str, feature_name: str = "Pro feature") -> str:
+    """Return Pro content if licensed, otherwise return an upsell block."""
+    from observeco import license as lic
+    if lic.require_pro():
+        return pro_html
+    return f"""<div class="pro-upsell-block" style="border:1px dashed #3730a3;border-radius:10px;padding:20px;text-align:center;margin:8px 0;">
+    <div style="font-size:28px;margin-bottom:8px;">🔒</div>
+    <div style="font-size:14px;font-weight:600;color:#a5b4fc;margin-bottom:4px;">{feature_name}</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:12px;">Unlock with Pro — start your free trial</div>
+    <button onclick="showBrainPro()" style="background:#6366f1;border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Start Free Trial →</button>
+</div>"""
 
 
 # ---------------------------------------------------------------------------
@@ -458,13 +545,32 @@ PRO_FEATURES = [
 ]
 
 
+_ALERTS_VIEW_PATH = get_data_dir() / ".alerts_last_viewed"
+
+def _get_alerts_last_viewed() -> int:
+    try:
+        return int(_ALERTS_VIEW_PATH.read_text().strip())
+    except (FileNotFoundError, ValueError, OSError):
+        return int(time.time())
+
+def _set_alerts_last_viewed() -> None:
+    try:
+        _ALERTS_VIEW_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _ALERTS_VIEW_PATH.write_text(str(int(time.time())))
+    except Exception:
+        pass
+
+
 @app.get("/api/alerts", response_class=HTMLResponse)
 async def api_alerts():
-    """Generate alerts panel content per §6.4 — right rail, severity-coded."""
+    """Generate alerts panel content per §6.4 — right rail, severity-coded,
+    with discovery gap badges and cumulative delay summary.
+    """
     db.get_errors(limit=50)
     circuit = db.get_circuit_breakers()
     drift = db.get_drift()
     now = int(time.time())
+    last_viewed = _get_alerts_last_viewed()
 
     alerts: list[dict] = []
 
@@ -473,13 +579,17 @@ async def api_alerts():
         if cb.get("tripped"):
             name = cb["agent_name"]
             failures = cb.get("failure_count", 0)
+            ts = cb.get("cooldown_until") or (now - 300)
+            gap_s = now - ts
             alerts.append({
                 "severity": "critical",
                 "severity_label": "CRITICAL",
                 "icon": "🔴",
                 "agent": name,
                 "message": f"Circuit breaker tripped ({failures} failures)",
-                "timestamp": cb.get("cooldown_until") or (now - 300),
+                "timestamp": ts,
+                "gap_seconds": gap_s,
+                "is_new": ts > last_viewed,
                 "severity_color": "#ef4444",
                 "severity_bg": "#450a0a",
             })
@@ -490,13 +600,17 @@ async def api_alerts():
         agent = d["agent_name"]
         comp = d.get("component", "system prompt")
         pct = d.get("delta_pct", 0)
+        ts = d.get("timestamp", now - 600)
+        gap_s = now - ts
         alerts.append({
             "severity": "warning",
             "severity_label": "WARNING",
             "icon": "🟡",
             "agent": agent,
             "message": f"Drift {pct:+.1f}% in {comp}",
-            "timestamp": d.get("timestamp", now - 600),
+            "timestamp": ts,
+            "gap_seconds": gap_s,
+            "is_new": ts > last_viewed,
             "severity_color": "#eab308",
             "severity_bg": "#422006",
         })
@@ -510,6 +624,8 @@ async def api_alerts():
             continue
         seen_agents.add(aname)
         status = p.get("status", "")
+        ts = p.get("timestamp", now - 300)
+        gap_s = now - ts
         if status == "dead":
             alerts.append({
                 "severity": "critical",
@@ -517,7 +633,9 @@ async def api_alerts():
                 "icon": "🔴",
                 "agent": aname,
                 "message": "Agent is dead — no recent heartbeat",
-                "timestamp": p.get("timestamp", now - 300),
+                "timestamp": ts,
+                "gap_seconds": gap_s,
+                "is_new": ts > last_viewed,
                 "severity_color": "#ef4444",
                 "severity_bg": "#450a0a",
             })
@@ -529,7 +647,9 @@ async def api_alerts():
                 "icon": "🟡",
                 "agent": aname,
                 "message": f"Error: {err_msg[:80]}",
-                "timestamp": p.get("timestamp", now - 300),
+                "timestamp": ts,
+                "gap_seconds": gap_s,
+                "is_new": ts > last_viewed,
                 "severity_color": "#eab308",
                 "severity_bg": "#422006",
             })
@@ -550,6 +670,8 @@ async def api_alerts():
                         "agent": agent,
                         "message": f"Heartbeat anomaly — only {pulse_counts[agent]} pulses recorded",
                         "timestamp": last_ts,
+                        "gap_seconds": now - last_ts,
+                        "is_new": last_ts > last_viewed,
                         "severity_color": "#3b82f6",
                         "severity_bg": "#172554",
                     })
@@ -559,23 +681,54 @@ async def api_alerts():
     alerts.sort(key=lambda a: (severity_order.get(a["severity"], 99), -a["timestamp"]))
 
     if not alerts:
-        return HTMLResponse('<div class="empty-state" style="color:#6b7280;font-size:13px;text-align:center;padding:20px;">✅ All clear — no alerts</div>')
+        empty_status = "" if _ALERTS_VIEW_PATH.exists() else 'first-load'
+        _set_alerts_last_viewed()
+        return HTMLResponse(f'<div class="empty-state" style="color:#6b7280;font-size:13px;text-align:center;padding:24px 20px;">✅ All clear — no alerts</div><div data-alerts-viewed="{empty_status}" style="display:none;"></div>')
 
-    items = []
+    # Compute cumulative undiscovered downtime
+    total_gap_minutes = sum(a["gap_seconds"] for a in alerts) // 60
+    new_count = sum(1 for a in alerts if a.get("is_new"))
+    discovery_alert_count = len(alerts)
+
+    # Build cumulative gap banner
+    gap_banner = f"""<div class="gap-banner" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:20px;font-weight:700;color:#f97316;">{total_gap_minutes}m</div>
+    <div style="font-size:11px;color:var(--fg-2);line-height:1.5;">
+        Total <strong style="color:#e2e8f0;">undiscovered downtime</strong> across {discovery_alert_count} alert(s) in the last 24h
+        {f' — <span style="color:#ef4444;font-weight:600;">{new_count} new since your last view</span>' if new_count else ''}
+    </div>
+</div>"""
+
+    items = [gap_banner]
     for a in alerts[:10]:
         ts_str = _fmt_ts(a["timestamp"])
+        # Discovery gap badge
+        gap_s = a.get("gap_seconds", 0)
+        is_new = a.get("is_new", False)
+        gap_label = ""
+        if gap_s > 300:  # Only show gap if >5 min
+            gap_m = gap_s // 60
+            gap_h = gap_m // 60
+            if gap_h > 0:
+                gap_label = f"🕐 Happened {_fmt_ts(a['timestamp'])} · <strong style='color:#fca5a5;'>{gap_h}h {gap_m % 60}m gap</strong>"
+            else:
+                gap_label = f"🕐 Happened {_fmt_ts(a['timestamp'])} · <strong style='color:#fca5a5;'>{gap_m}m gap</strong>"
+        new_badge = '<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span>' if is_new else ""
+
         items.append(f"""<div class="alert-row severity-{a['severity']}" style="border-left:3px solid {a['severity_color']};background:{a['severity_bg']};">
     <div class="heal-entry-header">
-        <span><strong style="color:{a['severity_color']}">{a['severity_label']}</strong></span>
+        <span><strong style="color:{a['severity_color']}">{a['severity_label']}{new_badge}</strong></span>
         <span class="heal-time">{ts_str}</span>
     </div>
     <div class="text-secondary" class="u-mt-2">
         <span style="color:#38bdf8;font-weight:600;">{_html_escape(a['agent'])}</span>
         <span> — {_html_escape(a['message'])}</span>
     </div>
-    <div class="alerts-action-bar">
-        <span class="heal-time">[ Push]</span>
-        <span class="u-cursor-pointer" onclick="showProPreview('alert-relay')">[ Pro]</span>
+    {f'<div class="discovery-gap" style="font-size:10px;color:#94a3b8;margin-top:2px;">{gap_label}</div>' if gap_label else ''}
+    <div class="alerts-action-bar" style="margin-top:4px;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
     </div>
 </div>""")
 
@@ -583,11 +736,19 @@ async def api_alerts():
     pro_tiles_html = _pro_locked_tiles()
     items.append(pro_tiles_html)
 
-    return HTMLResponse("\n".join(items))
+    # Record that user has now seen these alerts
+    _set_alerts_last_viewed()
+
+    html = "\n".join(items)
+    return HTMLResponse(html)
 
 
 def _pro_locked_tiles() -> str:
-    """Generate Pro locked tile grid per §7.1."""
+    """Generate Pro locked tile grid per §7.1 — returns empty string if Pro active."""
+    from observeco import license as lic
+    if lic.require_pro():
+        return ""
+
     tiles = []
     for feat in PRO_FEATURES:
         # Compute preview data from real state
@@ -754,12 +915,19 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
     circuit = {b["agent_name"]: b for b in db.get_circuit_breakers()}.get(name, {})
     profile = db.get_profiles(agent_name=name)
 
-    # Determine framework
+    # Determine framework — pass through actual DB value, never hardcode default
     agents_cfg = {a["agent_name"]: a for a in db.get_agents()}
-    framework = agents_cfg.get(name, {}).get("framework", "hermes") if agents_cfg else "hermes"
+    raw_fw = (agents_cfg.get(name, {}).get("framework", "") or "") if agents_cfg else ""
+    # Handle composite frameworks like "hermes + openclaw"
+    fw_parts = [p.strip().capitalize() for p in raw_fw.split("+")] if raw_fw else []
+    framework = " + ".join(fw_parts) if fw_parts else ""
 
     if tab == "health":
         return _detail_health_tab(name, pulses, errors, circuit, framework)
+    elif tab == "guard":
+        return _detail_guard_tab(name, errors, circuit, framework)
+    elif tab == "errors":
+        return _detail_errors_tab(name, errors, framework)
     elif tab == "tokens":
         return _detail_tokens_tab(name, trims, drift, framework)
     elif tab == "garden" or tab == "memory":
@@ -770,96 +938,176 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
 def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, framework: str) -> str:
     now = int(time.time())
 
-    # Pulse history — last 24h as dots
+    # ── Section 1: Pulse timeline (all dots with legend) ──
     dot_row = []
-    for p in pulses[:24]:
+    for p in pulses[:48]:
         dot = "🟢" if p["status"] == "alive" else "🔴" if p["status"] == "dead" else "🟡"
         ts = _fmt_ts(p["timestamp"])
         dot_row.append(f'<span title="{p["status"]} @ {ts}" class="pulse-dot">{dot}</span>')
+    dots_html = "\n".join(dot_row) if dot_row else '<span class="text-muted">No pulses recorded yet</span>'
 
+    # ── Section 2: Annotated timeline (errors as table) ──
+    error_rows = ""
+    if errors:
+        for e in errors[:20]:
+            sev = e.get("severity", "warning")
+            ts_str = _fmt_ts(e["timestamp"])
+            col = {"critical": "#ef4444", "error": "#ef4444", "warning": "#eab308", "info": "#3b82f6"}.get(sev, "#6b7280")
+            status_icon = "🔴" if sev in ("critical", "error") else "🟡"
+            status_label = "Down" if sev in ("critical", "error") else "Warning"
+            msg = _html_escape(e.get("error_message", "") or e.get("message", "") or e.get("error_type", "?")[:100])
+            error_rows += f"""<tr>
+    <td class="error-tl-time">{ts_str}</td>
+    <td class="error-tl-status" style="color:{col};">{status_icon} {status_label}</td>
+    <td class="error-tl-msg">{msg}</td>
+</tr>"""
+    else:
+        error_rows = '<tr><td colspan="3" class="empty-table-msg">No errors — all checks passed</td></tr>'
+
+    # ── Section 3: Categorized summary + plain-English verdict ──
+    categories = {"timeout": 0, "connection": 0, "resource": 0, "http_5xx": 0, "other": 0}
+    for e in errors:
+        msg = (e.get("error_type", "") + " " + e.get("error_message", "")).lower()
+        etype = e.get("error_type", "").lower()
+        if "timeout" in msg or "timed out" in msg or etype == "timeout":
+            categories["timeout"] += 1
+        elif "connection" in msg or "refused" in msg or etype == "connection_refused":
+            categories["connection"] += 1
+        elif "not found" in msg or "missing" in msg or "dependency" in msg:
+            categories["resource"] += 1
+        elif ("5" in etype and ("00" in etype or "03" in etype)) or "500" in msg or "503" in msg:
+            categories["http_5xx"] += 1
+        else:
+            categories["other"] += 1
+
+    summary_parts = []
+    if categories["timeout"]:
+        summary_parts.append(f'🕐 <strong>{categories["timeout"]}</strong> timeout{"s" if categories["timeout"] > 1 else ""} — the agent was running but didn\'t respond. Usually overloaded or stuck.')
+    if categories["connection"]:
+        summary_parts.append(f'🔌 <strong>{categories["connection"]}</strong> connection refused — the agent process may have crashed or the port changed.')
+    if categories["resource"]:
+        summary_parts.append(f'🔍 <strong>{categories["resource"]}</strong> resource{"s" if categories["resource"] > 1 else ""} not found — a dependency, file, or endpoint is missing.')
+    if categories["http_5xx"]:
+        summary_parts.append(f'🌐 <strong>{categories["http_5xx"]}</strong> HTTP 5xx error{"s" if categories["http_5xx"] > 1 else ""} — agent is running but returning server errors.')
+    if categories["other"]:
+        summary_parts.append(f'❓ <strong>{categories["other"]}</strong> other error{"s" if categories["other"] > 1 else ""} — check the full list.')
+
+    total_errs = len(errors)
+    if total_errs == 0:
+        verdict_text = "All checks passed in the last 24 hours. No issues detected."
+    elif total_errs == 1:
+        verdict_text = "This agent had 1 issue in the last 24 hours. Likely transient — monitor."
+    elif total_errs <= 3:
+        verdict_text = f"This agent had <strong>{total_errs} issues</strong> in the last 24 hours. Possibly unstable — check the error details above."
+    else:
+        # Determine status-based verdict
+        if any(p["status"] in ("dead", "error") for p in pulses[:24]):
+            verdict_text = f"This agent had <strong>{total_errs} issues</strong> in the last 24 hours. It needs attention — try restarting it."
+        else:
+            verdict_text = f"This agent had <strong>{total_errs} issues</strong> in the last 24 hours. Issues appear resolved for now — monitor the next few checks."
+
+    summary_html = "<br>".join(summary_parts) if summary_parts else "All checks passed — no issues detected this period."
+
+    # ── Section 4: Latest check ──
+    last_pulse = pulses[0] if pulses else {}
+    last_status = last_pulse.get("status", "unknown")
+    last_ts = _fmt_ts(last_pulse.get("timestamp", 0)) if last_pulse else "—"
+    last_latency = last_pulse.get("latency", "—") if last_pulse else "—"
+    if last_status == "alive":
+        latest_result = "✅ OK"
+        latest_cls = "good"
+    elif last_status == "error":
+        latest_result = "🟡 Warning"
+        latest_cls = "warn"
+    else:
+        latest_result = "🔴 Down"
+        latest_cls = "bad"
+
+    # ── Circuit section (compact) ──
     circuit_html = ""
     if circuit.get("tripped"):
         cd = circuit.get("cooldown_until", 0)
         remaining = max(0, cd - now) if cd else 0
         circuit_html = f"""
-        <div class="detail-row">
-            <span class="detail-row-label">Circuit</span>
-            <span class="detail-row-value circuit-tripped">🔴 TRIPPED ({circuit.get('failure_count',0)} failures)</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-row-label">Cooldown remaining</span>
-            <span class="detail-row-value">{remaining // 60}m {remaining % 60}s</span>
-        </div>
-        <div class="health-info-block">
-            <button onclick="resetCircuit('{name}')" class="circuit-reset-btn">Reset circuit</button>
-        </div>"""
-    else:
-        circuit_html = f"""
-        <div class="detail-row">
-            <span class="detail-row-label">Circuit</span>
-            <span class="detail-row-value circuit-ok">✅ OK</span>
-        </div>
-        <div class="detail-row">
-            <span class="detail-row-label">Max retries</span>
-            <span class="detail-row-value">{circuit.get('max_retries', 3)}</span>
-        </div>"""
-
-    errors_html = ""
-    for e in errors[:10]:
-        sev = e.get("severity", "warning")
-        ts_str = _fmt_ts(e["timestamp"])
-        col = {"error": "#ef4444", "critical": "#ef4444", "warning": "#eab308", "info": "#3b82f6"}.get(sev, "#6b7280")
-        errors_html += f"""<div class="detail-error" style="border-left-color:{col};">
-    <span class="error-ts">{ts_str}</span>
-    <span class="error-timeline-type" style="color:{col};font-weight:600;">{e['error_type']}</span>
-    <span class="error-timeline-msg">{_html_escape(e.get('error_message','')[:100])}</span>
-</div>"""
-
-    if not errors_html:
-        errors_html = '<div class="empty-state">No errors recorded — your agents are running clean. Errors appear here automatically when pulse checks detect failures or when agents log error events.</div>'
-
-    framework_label = "Hermes" if framework == "hermes" else "OpenClaw"
+    <div class="modal-section">
+        <h4>Safety Guard</h4>
+        <div style="font-size:13px;color:#ef4444;font-weight:600;margin-bottom:6px;">🔴 Guard is STOPPED — not checking this agent</div>
+        <div style="font-size:12px;color:#64748b;">{circuit.get("failure_count", 0)} consecutive failures. Cooldown: {remaining // 60}m {remaining % 60}s remaining.</div>
+    </div>"""
 
     return HTMLResponse(f"""<div class="detail-content">
-    <div class="detail-section">
-        <div class="detail-section-title uppercase-label">Agent Framework</div>
-        <div class="framework-label">{framework_label}</div>
+    <div class="modal-section">
+        <h4>Last 24 hours (every 30s)</h4>
+        <div class="pulse-timeline">{dots_html}</div>
+        <div class="pulse-legend">
+            <span class="pulse-legend-dot ok">🟢 OK</span>
+            <span class="pulse-legend-dot warn">🟡 Warning</span>
+            <span class="pulse-legend-dot err">🔴 Error</span>
+        </div>
     </div>
-    <div class="detail-section">
-        <div class="section-title"><span class="detail-section-title uppercase-label">Pulse History (last 24h)</span></div>
-        <div class="text-xl" style="letter-spacing:2px;">{"".join(dot_row) or '<span class="text-muted" style="letter-spacing:0;">No pulses recorded yet</span>'}</div>
+    <div class="modal-section">
+        <h4>What happened — annotated timeline</h4>
+        <table class="data-table">
+            <tr><th style="width:70px;">Time</th><th style="width:80px;">Status</th><th>What happened</th></tr>
+            {error_rows}
+        </table>
+    </div>
+    <div class="modal-section">
+        <h4>Summary</h4>
+        <div class="health-summary-body">
+            {summary_html}
+        </div>
+        <div class="health-verdict">
+            <strong>Verdict:</strong> {verdict_text}
+        </div>
+    </div>
+    <div class="modal-section">
+        <h4>Latest check</h4>
+        <table class="data-table">
+            <tr><th style="width:70px;">Time</th><th style="width:80px;">Result</th><th>Latency</th></tr>
+            <tr><td>{last_ts}</td><td class="{latest_cls}">{latest_result}</td><td>{last_latency}</td></tr>
+        </table>
     </div>
     {circuit_html}
-    <div class="detail-section">
-        <div class="section-title"><span class="detail-section-title uppercase-label">Last 10 Errors</span></div>
-        {errors_html}
-    </div>
 </div>""")
 
 
 def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> str:
+    # Determine if we have data
+    latest_trim = trims[0] if trims else None
+    if not latest_trim:
+        # No trim data — show helpful empty state
+        fw_hint = f" ({framework.capitalize()} agent)" if framework else ""
+        return HTMLResponse(f"""<div class="detail-content">
+    <div class="empty-state">
+        <div class="empty-state-title">📊 No token data yet</div>
+        <div class="empty-state-body">Token breakdown appears after the agent participates in conversations or runs tasks{fw_hint}.</div>
+        <div class="empty-state-actions">
+            Run <code class="inline-code">observeco context trim</code> to see per-component breakdown.
+        </div>
+    </div>
+</div>""")
+
     if framework == "hermes":
         # Hermes token breakdown
-        latest_trim = trims[0] if trims else None
-        if latest_trim:
-            comps = [
-                ("identity", latest_trim.get("identity_tokens", 0)),
-                ("skills", latest_trim.get("skills_tokens", 0)),
-                ("memory", latest_trim.get("memory_tokens", 0)),
-                ("tools", latest_trim.get("tools_tokens", 0)),
-                ("guidance", latest_trim.get("guidance_tokens", 0)),
-            ]
-            comps_sorted = sorted(comps, key=lambda x: -x[1])
-            total = max(sum(c[1] for c in comps_sorted), 1)
-            total_display = latest_trim.get("total_tokens", total)
+        comps = [
+            ("identity", latest_trim.get("identity_tokens", 0)),
+            ("skills", latest_trim.get("skills_tokens", 0)),
+            ("memory", latest_trim.get("memory_tokens", 0)),
+            ("tools", latest_trim.get("tools_tokens", 0)),
+            ("guidance", latest_trim.get("guidance_tokens", 0)),
+        ]
+        comps_sorted = sorted(comps, key=lambda x: -x[1])
+        total = max(sum(c[1] for c in comps_sorted), 1)
+        total_display = latest_trim.get("total_tokens", total)
 
-            bars = []
-            for comp, val in comps_sorted:
-                pct = val / total * 100
-                col = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
-                       "tools": "#14b8a6", "guidance": "#f97316"}.get(comp, "#6b7280")
-                comp_label = comp.capitalize()
-                bars.append(f"""<div class="token-row-detail">
+        bars = []
+        for comp, val in comps_sorted:
+            pct = val / total * 100
+            col = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
+                   "tools": "#14b8a6", "guidance": "#f97316"}.get(comp, "#6b7280")
+            comp_label = comp.capitalize()
+            bars.append(f"""<div class="token-row-detail">
     <span class="token-row-label">{comp_label}</span>
     <div class="token-bar-bg">
         <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};"></div>
@@ -867,14 +1115,14 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
     <span class="token-row-value token-value">{val:,} tok ({pct:.0f}%)</span>
 </div>""")
 
-            savings = latest_trim.get("savings_ratio", 0)
-            savings_html = f"""<div class="savings-badge">
-    CHISEL saved {savings:.0%} this session
+        savings = latest_trim.get("savings_ratio", 0)
+        savings_html = f"""<div class="savings-badge">
+    Context optimized by {savings:.0%} this session
 </div>""" if savings > 0 else ""
 
-            drift_html = _detail_drift_html(drift, name)
+        drift_html = _detail_drift_html(drift, name)
 
-            return HTMLResponse(f"""<div class="detail-content">
+        return HTMLResponse(f"""<div class="detail-content">
     <div class="detail-section">
         <div class="token-header"><div class="uppercase-label">Token Breakdown</div>
         <div class="text-lg font-semibold font-mono token-total-display">{total_display:,} <span class="text-sm text-muted font-normal">total</span></div>
@@ -956,36 +1204,148 @@ def _detail_drift_html(drift: list, name: str) -> str:
 </div>"""
 
 
-def _detail_garden_tab(name: str, garden: list, profile: list, framework: str) -> str:
-    if framework != "openclaw" and framework != "clawforge":
-        # Hermes agents use chisel trim for memory optimization, not clawforge garden
-        # But if garden data exists, show it anyway
-        if garden and garden[0].get("memory_debt_score") is not None:
-            pass  # fall through to garden rendering below
-        else:
-            return HTMLResponse(f"""<div class="detail-content">
-    <div class="garden-hermes-message">
-        <div class="garden-hermes-header">💾 Memory & Context</div>
-        <div>This Hermes agent uses <strong>CHISEL</strong> for context optimization — check the <strong>📊 Tokens</strong> tab for trim savings and token breakdown.</div>
-        <div class="tip-card">
-            <div class="tip-title uppercase-label">💡 Did you know?</div>
-            <div class="tip-body">The <strong>🧠 Memory</strong> tab shows garden/consciousness data for OpenClaw agents. For Hermes agents, memory optimization is tracked via CHISEL in the Tokens tab.</div>
+def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str) -> str:
+    """Guard detail — 5 sections: status, failure timeline, explanation, savings, settings."""
+    now = int(time.time())
+    is_tripped = circuit.get("tripped", False)
+
+    # Section 1: Status
+    if is_tripped:
+        status_html = """
+        <div style="font-size:13px;color:#ef4444;font-weight:600;margin-bottom:8px;">
+            🔴 Guard is STOPPED — not checking this agent
         </div>
-        <div class="garden-hermes-command">
-            <code class="inline-code">observeco clawforge garden</code> — runs garden analysis for OpenClaw agents
+        <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+            The safety guard detected <strong>3 consecutive failures</strong> from this agent and stopped checking
+            to prevent noise. It will automatically resume in <strong>~4 hours</strong> (cooldown period).
+        </div>"""
+    else:
+        status_html = """
+        <div style="font-size:13px;color:#22c55e;font-weight:600;margin-bottom:8px;">
+            ✅ Guard is OK — monitoring normally
+        </div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+            The safety guard has detected <strong>0 consecutive failures</strong>. It continues monitoring every 30 seconds.
+        </div>"""
+
+    # Section 2: Failure timeline
+    failure_rows = ""
+    failure_summary = ""
+    if errors:
+        for e in errors[:10]:
+            sev = e.get("severity", "warning")
+            ts_str = _fmt_ts(e["timestamp"])
+            msg = _html_escape(e.get("error_message", "") or e.get("message", "") or "?")[:100]
+            is_bad = sev in ("critical", "error") or any(kw in msg.lower() for kw in ["timeout", "refused", "not found", "500", "503"])
+            icon = "🔴" if is_bad else "🟡"
+            failure_rows += f"""<tr><td class="error-tl-time">{ts_str}</td><td class="error-tl-status" style="color:{'#ef4444' if is_bad else '#eab308'};">{icon}</td><td class="error-tl-msg">{msg}</td></tr>"""
+
+        if is_tripped:
+            failure_summary = f"The guard triggered after <strong>3 consecutive failures</strong>. In total, <strong>{len(errors)} error{'s' if len(errors) > 1 else ''}</strong> were logged before it stopped checking."
+        else:
+            failure_summary = f"{len(errors)} error{'s' if len(errors) > 1 else ''} detected but fewer than 3 in a row — the guard has not tripped."
+    else:
+        failure_rows = '<tr><td colspan="3" class="empty-table-msg">No failures recorded</td></tr>'
+        failure_summary = "No failures. The guard has never tripped for this agent."
+
+    # Section 3: Settings
+    cooldown_remaining = ""
+    if is_tripped:
+        cd = circuit.get("cooldown_until", 0)
+        rem = max(0, cd - now) if cd else 0
+        cooldown_remaining = f" ({rem // 60}m {rem % 60}s remaining)"
+
+    settings_html = f"""<table class="data-table">
+        <tr><td>Failures before stop</td><td>3</td></tr>
+        <tr><td>Cooldown period</td><td>~4 hours{cooldown_remaining}</td></tr>
+        <tr><td>Auto-retry after cooldown</td><td class="good">Yes</td></tr>
+    </table>"""
+
+    return HTMLResponse(f"""<div class="detail-content">
+    <div class="modal-section">
+        <h4>Status</h4>
+        {status_html}
+    </div>
+    <div class="modal-section">
+        <h4>Failures that triggered the guard</h4>
+        <table class="data-table">
+            <tr><th style="width:70px;">Time</th><th style="width:50px;"></th><th>What happened</th></tr>
+            {failure_rows}
+        </table>
+        <div class="health-summary-body">{failure_summary}</div>
+    </div>
+    <div class="modal-section">
+        <h4>What the guard does</h4>
+        <div class="health-summary-body">
+            Without this guard, a dead agent gets checked every 30 seconds — generating error messages,
+            filling your logs, and wasting resources. After <strong>3 failures in a row</strong>, the guard
+            <strong>stops checking</strong> and enters cooldown. After cooldown expires, it tries again automatically.
+            This prevents alert fatigue from a single downed agent.
+        </div>
+    </div>
+    <div class="modal-section">
+        <h4>Settings</h4>
+        {settings_html}
+    </div>
+</div>""")
+
+
+def _detail_errors_tab(name: str, errors: list, framework: str) -> str:
+    """Error history — timeline table + categorized verdict + Pro upsell."""
+    error_rows = ""
+    if errors:
+        for e in errors[:20]:
+            ts_str = _fmt_ts(e["timestamp"])
+            sev = e.get("severity", "warning")
+            msg = _html_escape(e.get("error_message", "") or e.get("message", "") or e.get("error_type", "?")[:120])
+            col = {"critical": "#ef4444", "error": "#ef4444", "warning": "#eab308", "info": "#3b82f6"}.get(sev, "#6b7280")
+            error_rows += f"""<tr><td>{ts_str}</td><td style="color:{col};">{msg}</td></tr>"""
+    else:
+        error_rows = '<tr><td colspan="2" class="empty-table-msg">No errors in the last 24 hours</td></tr>'
+
+    total = len(errors)
+    if total == 0:
+        verdict_msg = 'No errors means this agent has been running cleanly for the last 24 hours.'
+    elif total == 1:
+        verdict_msg = 'One error in 24 hours is usually transient — network hiccup or temporary overload.'
+    else:
+        verdict_msg = 'Multiple errors suggest an ongoing problem. Check the guard status to see if monitoring has been stopped automatically.'
+
+    return HTMLResponse(f"""<div class="detail-content">
+    <div class="modal-section">
+        <h4>Last 24 hours</h4>
+        <table class="data-table">
+            <tr><th style="width:70px;">Time</th><th>What happened</th></tr>
+            {error_rows}
+        </table>
+    </div>
+    <div class="modal-section">
+        <h4>What this means</h4>
+        <div class="health-summary-body">{verdict_msg}</div>
+    </div>
+    <div class="modal-section pro-preview" style="border:1px dashed #3730a3;border-radius:10px;padding:14px;cursor:pointer;" onclick="openProModal('{_html_escape(name)} - Error History')">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <h4 style="margin-bottom:4px;font-size:13px;">🔒 More history unlocks patterns</h4>
+                <div style="font-size:11px;color:#64748b;line-height:1.6;">
+                    Free: last 24h only. Pro keeps every day from install — so next week you can see if errors are getting
+                    <strong style="color:#f97316;">better or worse</strong>.<br>
+                    <span style="color:#a5b4fc;">Weekly trend charts · regression alerts · never pruned</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>""")
-    
-    if not garden:
-        return HTMLResponse('<div class="empty-state">No garden data yet — run `observeco clawforge garden`.</div>')
 
-    g = garden[0]
-    score = g.get("memory_debt_score", 0)
-    grade = "A" if score < 20 else "B" if score < 40 else "C" if score < 60 else "D" if score < 80 else "F"
-    grade_color = "#22c55e" if grade == "A" else "#eab308" if grade in ("B", "C") else "#ef4444"
 
-    return HTMLResponse(f"""<div class="detail-content">
+def _detail_garden_tab(name: str, garden: list, profile: list, framework: str) -> str:
+    if garden and garden[0].get("memory_debt_score") is not None and garden[0]["memory_debt_score"] > 0:
+        g = garden[0]
+        score = g.get("memory_debt_score", 0)
+        grade = "A" if score < 20 else "B" if score < 40 else "C" if score < 60 else "D" if score < 80 else "F"
+        grade_color = "#22c55e" if grade == "A" else "#eab308" if grade in ("B", "C") else "#ef4444"
+
+        return HTMLResponse(f"""<div class="detail-content">
     <div class="score-display">
         <div class="score-box">
             <div class="score-num score-value" style="color:{grade_color};">{score:.0f}</div>
@@ -1008,6 +1368,38 @@ def _detail_garden_tab(name: str, garden: list, profile: list, framework: str) -
         <div class="garden-metric-card">
             <span class="garden-metric-num metric-dim" style="color:#6b7280;">{g['stale_entries']}</span>
             <span class="garden-metric-label">Stale Entries</span>
+        </div>
+    </div>
+</div>""")
+
+    # No garden data — explain that data accumulates as the daemon watches
+    return HTMLResponse(f"""<div class="detail-content">
+    <div class="modal-section">
+        <h4>💾 Memory & Context</h4>
+        <div style="font-size:13px;color:#94a3b8;margin-bottom:12px;line-height:1.6;">
+            Memory quality data appears automatically after the <code>observeco watch</code> daemon
+            has been running for some time — it tracks duplicate detection, contradiction scanning,
+            and stale entry reporting for this agent's knowledge base.
+        </div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:8px;">
+            <div style="font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Prerequisites:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+                <div style="background:var(--surface);border-radius:8px;padding:12px;">
+                    <div style="color:#94a3b8;font-size:11px;margin-bottom:4px;">① Daemon running</div>
+                    <div style="color:#22c55e;font-weight:600;">observeco watch --daemon</div>
+                    <div style="color:#64748b;font-size:11px;margin-top:4px;">Collects agent data automatically</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px;">
+                    <div style="color:#94a3b8;font-size:11px;margin-bottom:4px;">② Agent activity</div>
+                    <div style="color:#eab308;font-weight:600;">⏳ Agent runs tasks</div>
+                    <div style="color:#64748b;font-size:11px;margin-top:4px;">Data builds up as agents produce output</div>
+                </div>
+                <div style="background:var(--surface);border-radius:8px;padding:12px;">
+                    <div style="color:#94a3b8;font-size:11px;margin-bottom:4px;">③ Inspect here</div>
+                    <div style="color:#6366f1;font-weight:600;">↩ Return to this tab</div>
+                    <div style="color:#64748b;font-size:11px;margin-top:4px;">Debt score, duplicates, contradictions appear here</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>""")
@@ -1137,9 +1529,20 @@ async def api_fleet_summary():
     {f'<span class="status-stat"><strong>{drift_text}</strong></span>' if drift_text else ''}
     {trip_badge}
       <button class="feedback-btn" onclick="toggleFeedback()">+ Missing an agent?</button>
-      <button class="feedback-btn" onclick="openSkillsAuditModal('all')" class="u-ml-8">📊 Skill Audit</button>
-      <button class="feedback-btn" onclick="openPathwayModal()" class="u-ml-8">🕸️ Pathway map</button>
+      <button class="feedback-btn u-ml-8" onclick="openSkillsAuditModal('all')">🧩 Skill Audit</button>
+      <button class="feedback-btn u-ml-8" onclick="openPathwayModal()">🕸️ Pathway map</button>
 </div>""")
+
+
+# ---------------------------------------------------------------------------
+# § Agent count for pagination/search state
+# ---------------------------------------------------------------------------
+
+@app.get("/api/agent-count")
+async def api_agent_count():
+    """Return agent count for pagination state (used by frontend)."""
+    agents = db.get_agents()
+    return JSONResponse({"total": len(agents)})
 
 
 # ---------------------------------------------------------------------------
@@ -1243,7 +1646,8 @@ async def api_brain(agent: str = "all"):
         else:
             turns = [t * max(1, raw_tokens // max(sum(turns), 1)) for t in turns]
         
-        name_label = framework.capitalize() if framework == "hermes" else framework.capitalize() if framework == "openclaw" else framework.capitalize()
+        fw = framework.capitalize() if framework else "Custom"
+        name_label = fw
         
         result[name] = {
             "framework": name_label,
@@ -1388,8 +1792,22 @@ async def api_openclaw_plugins():
 # ---------------------------------------------------------------------------
 
 @app.get("/api/agents", response_class=HTMLResponse)
-async def api_agents(hidden: str = ""):
-    """Agent cards with token bars, drift — mockup fleet-dashboard format."""
+async def api_agents(
+    hidden: str = "",
+    q: str = "",
+    status: str = "",
+    page: int = 1,
+    per_page: int = 25,
+):
+    """Agent cards with search, filter, pagination — 100+ agents supported.
+
+    Query params:
+        hidden: Comma-separated agent names to hide.
+        q: Text search — matches agent name and framework (case-insensitive).
+        status: Filter by status — 'alive', 'dead', 'error', '' (all).
+        page: 1-indexed page number (default 1).
+        per_page: Agents per page (default 25, max 100).
+    """
     summary = db.get_agent_status_summary()
     agents = db.get_agents()
     breakers = {b["agent_name"]: b for b in db.get_circuit_breakers()}
@@ -1419,22 +1837,62 @@ async def api_agents(hidden: str = ""):
         fw = a.get("framework", "custom")
         hc = a.get("health_check", "") or ""
         cfg_path = a.get("config_path", "") or ""
-        if fw in ("hermes", "openclaw") or "SOUL.md" in cfg_path:
+        if fw in ("hermes", "openclaw", "agent") or "SOUL.md" in cfg_path:
             name_type[name] = "agent"
-        elif hc or fw == "service":
+        elif any(w in fw.lower() for w in ("hermes", "openclaw")):
+            name_type[name] = "agent"
+        elif fw == "service" or hc:
             name_type[name] = "service"
+        elif fw == "custom":
+            name_type[name] = "other"
         else:
             name_type[name] = "workflow"
 
-    sections = {"agent": [], "service": [], "workflow": []}
-    for name in sorted(all_agent_names):
+    # ── Search (q=) filter ───────────────────────────────────────
+    q_lower = q.strip().lower()
+    q_is_active = bool(q_lower)
+    if q_lower:
+        filtered_names = set()
+        for name in all_agent_names:
+            a = agent_cfg.get(name, {})
+            fw = (a.get("framework", "") or "").lower()
+            if q_lower in name.lower() or q_lower in fw:
+                filtered_names.add(name)
+        all_agent_names = filtered_names
+
+    # Track whether any filter is active (for no-match state)
+    filter_is_active = bool(q_is_active) or bool(status)
+
+    # ── Status filter ────────────────────────────────────────────
+    if status:
+        status_names = set()
+        for name in all_agent_names:
+            s = summary.get(name, {})
+            if s.get("status") == status:
+                status_names.add(name)
+        all_agent_names = status_names
+
+    # ── Pagination ───────────────────────────────────────────────
+    clamped_page = max(1, page)
+    clamped_pp = max(1, min(per_page, 100))
+    sorted_names = sorted(all_agent_names)
+    total_filtered = len(sorted_names)
+    total_pages = max(1, (total_filtered + clamped_pp - 1) // clamped_pp)
+    clamped_page = min(clamped_page, total_pages)
+    start_idx = (clamped_page - 1) * clamped_pp
+    end_idx = start_idx + clamped_pp
+    page_names = sorted_names[start_idx:end_idx]
+
+    sections = {"agent": [], "service": [], "workflow": [], "other": []}
+    for name in page_names:
         t = name_type.get(name, "workflow")
         sections[t].append(name)
 
     section_configs = [
         ("agent", "Agents", "#22c55e", "🤖"),
         ("service", "Services", "#3b82f6", "⚙️"),
-        ("workflow", "+ Others", "#64748b", "📦"),
+        ("workflow", "Workflows", "#64748b", "📦"),
+        ("other", "Others", "#6b7280", "📂"),
     ]
 
     total_agent_count = len(all_agent_names)
@@ -1460,8 +1918,11 @@ async def api_agents(hidden: str = ""):
 
             status_text = {"alive": "Healthy", "dead": "Dead", "error": "Warning"}.get(status, "Unknown")
             fw_agent_type = {"agent": "Agent", "service": "Service", "workflow": "Workflow"}.get(agent_type, "Workflow")
-            fw = agent_cfg.get(name, {}).get("framework", "custom").capitalize()
-            role_label = f"{fw} · {fw_agent_type}"
+            fw = agent_cfg.get(name, {}).get("framework", "") or ""
+            # Handle composite frameworks like "hermes + openclaw"
+            fw_parts = [p.strip().capitalize() for p in fw.split("+")] if fw else []
+            fw_display = " + ".join(fw_parts) if fw_parts else ""
+            role_label = f"{fw_agent_type} · {fw_display}" if fw_display else fw_agent_type
 
             # Last seen: prefix with "last pulse" when data is stale
             last_check_str = _fmt_ts(ts) if ts else "—"
@@ -1537,6 +1998,7 @@ async def api_agents(hidden: str = ""):
 
             cards_html.append(f"""<div class="agent-card" data-agent="{name}">
       <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('{name}')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('{name}')" title="Remove agent">✕</button>
       <div class="card-top">
         <span class="agent-status {status}" title="{status_text}"></span>
         <div class="agent-info">
@@ -1546,27 +2008,27 @@ async def api_agents(hidden: str = ""):
         <div class="agent-last-seen">{last_check_str}</div>
       </div>
       {f'<div style="margin-bottom:6px;">{gap_badges_str}</div>' if gap_badges_str else ''}
-      <div class="metric-row" onclick="openModal('{name} — Health timeline','{role_label}','Health data loading...')">
+      <div class="metric-row" onclick="loadTab('{name}','health')">
         <span class="label">Health</span>
         <span class="value" style="color:{'var(--accent)' if status == 'alive' else 'var(--danger)' if status == 'dead' else 'var(--warn)'};font-weight:600;">{status_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
-      <div class="metric-row" onclick="openModal('{name} — Safety guard','{role_label}','Guard data...')">
+      <div class="metric-row" onclick="loadTab('{name}','guard')">
         <span class="label">Guard</span>
         <span class="value" style="color:{guard_color};font-weight:600;">{guard_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
-      <div class="metric-row" onclick="openModal('{name} — Error history','{role_label}','Error data...')">
+      <div class="metric-row" onclick="loadTab('{name}','errors')">
         <span class="label">Errors</span>
         <span class="value" style="color:{err_color};">{err_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
-      <div class="metric-row" onclick="openModal('{name} — Brain size trend','{role_label}','Drift data...')">
+      <div class="metric-row" onclick="loadTab('{name}','tokens')">
         <span class="label">Brain size</span>
         <span class="value" style="color:#94a3b8;">{drift_str}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
-      <div class="metric-row" onclick="openModal('{name} — Brain composition','{role_label}','Composition data...')">
+      <div class="metric-row" onclick="loadTab('{name}','tokens')">
         <span class="label">Composition</span>
         <span class="value" class="u-flex-1">{token_bar}</span>
         <span class="click-hint">See details</span>
@@ -1589,6 +2051,41 @@ async def api_agents(hidden: str = ""):
     </div>
   </div>""")
 
+    if not sections_html and filter_is_active:
+        # Search/filter returned no matching agents
+        clear_link = f" onclick=\"clearFilters()\" style=\"color:#818cf8;cursor:pointer;\""
+        return HTMLResponse(
+            f'<div class="empty-state" style="color:#6b7280;font-size:13px;text-align:center;padding:24px;">'
+            f'No agents match filter'
+            f'<br><span{clear_link}>Clear filters</span></div>'
+        )
+
+    if not sections_html:
+        # No agents at all (first run) — return empty so first-run banners show
+        return HTMLResponse("")
+
+    count = sum(len(sections[sk]) for sk, _, _, _ in section_configs if sections.get(sk))
+
+    # Build pagination controls
+    pagination_html = ""
+    if total_pages > 1:
+        prev_disabled = "style=\"opacity:0.4;pointer-events:none;\"" if clamped_page <= 1 else ""
+        next_disabled = "style=\"opacity:0.4;pointer-events:none;\"" if clamped_page >= total_pages else ""
+        q_param = f"&q={q}" if q else ""
+        s_param = f"&status={status}" if status else ""
+        h_param = f"&hidden={hidden}" if hidden else ""
+        pagination_html = f"""
+<div class="pagination-bar" id="paginationBar" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 0;font-size:12px;color:#94a3b8;">
+    <button hx-get="/api/agents?page=1&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {prev_disabled} class="page-btn">⏮</button>
+    <button hx-get="/api/agents?page={clamped_page - 1}&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {prev_disabled} class="page-btn">◀</button>
+    <span style="color:#e2e8f0;">{clamped_page} / {total_pages}</span>
+    <button hx-get="/api/agents?page={clamped_page + 1}&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {next_disabled} class="page-btn">▶</button>
+    <button hx-get="/api/agents?page={total_pages}&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {next_disabled} class="page-btn">⏭</button>
+    <span style="margin-left:8px;">Showing {start_idx + 1}–{min(end_idx, total_filtered)} of {total_filtered}</span>
+</div>"""
+
+    sections_html.append(pagination_html)
+
     return HTMLResponse("\n".join(sections_html))
 
 
@@ -1598,18 +2095,178 @@ async def api_add_agent(request: Request):
     try:
         body = await request.json()
         name = body.get("name", "").strip()
-        framework = body.get("framework", "custom")
+        fw_type = body.get("framework", "custom")
         if not name:
             return JSONResponse({"ok": False, "error": "Name required"}, status_code=400)
-        db.register_agent(name, framework=framework)
+
+        existing_dict = {a["agent_name"]: a for a in db.get_agents()}
+
+        if name in existing_dict:
+            existing_fw = existing_dict[name].get("framework", "")
+
+            # Case 1: user selected a type classifier ("Agent", "Service", "Workflow")
+            # → they're trying to re-add something already visible. Reject.
+            if fw_type in ("agent", "service", "workflow", "custom"):
+                return JSONResponse({
+                    "ok": False,
+                    "error": f"'{name}' already displayed as card",
+                    "reason": "already_visible",
+                })
+
+            # Case 2: user typed a real framework name — check if it's already tracked
+            existing_parts = set(p.strip().lower() for p in existing_fw.split("+"))
+            if fw_type.lower().strip() in existing_parts:
+                return JSONResponse({
+                    "ok": False,
+                    "error": f"'{name}' already has '{fw_type}' in its card label",
+                    "reason": "already_visible",
+                })
+
+            # Case 3: legitimate new framework to merge (e.g. Kepler + Hermes)
+            composite = existing_fw + " + " + fw_type
+            db.register_agent(name, framework=composite)
+            return JSONResponse({
+                "ok": True,
+                "merged": True,
+                "framework": composite,
+                "message": f"Merged {fw_type} into {name}'s identity",
+            })
+
+        # New agent — register with type as framework
+        db.register_agent(name, framework=fw_type)
         return JSONResponse({"ok": True})
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
 
 
-# ---------------------------------------------------------------------------
-# §4.6 — Code Graph Panel
-# ---------------------------------------------------------------------------
+@app.delete("/api/agents/{agent_name}")
+async def api_delete_agent(agent_name: str):
+    """Remove an agent and all its data from the dashboard."""
+    try:
+        # Check if agent exists first
+        existing = {a["agent_name"] for a in db.get_agents()}
+        if agent_name not in existing:
+            return JSONResponse({"ok": False, "error": f"Agent '{agent_name}' not found"}, status_code=404)
+        db.remove_agents([agent_name])
+        # Also exclude from auto-discovery so it doesn't reappear
+        from observeco.config import exclude_agent
+        exclude_agent(agent_name)
+        return JSONResponse({"ok": True, "message": f"Removed {agent_name}"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@app.post("/api/chisel/compress")
+async def api_chisel_compress(request: Request):
+    """Compress an agent's SOUL.md via the dashboard.
+
+    Accepts JSON: {"agent": "name", "mode": "lite"|"full"}
+    Returns: {"status": "ok", "message": "...", "backup": "...", "before_tokens": N, "after_tokens": N, "savings": N, "savings_pct": N}
+    """
+    try:
+        body = await request.json()
+        agent_name = body.get("agent", "").strip()
+        mode = body.get("mode", "lite").strip().lower()
+        if not agent_name:
+            return JSONResponse({"status": "error", "message": "Agent name required"}, status_code=400)
+        if mode not in ("lite", "full"):
+            return JSONResponse({"status": "error", "message": "Mode must be 'lite' or 'full'"}, status_code=400)
+        
+        # Gate: full compression requires Pro
+        if mode == "full":
+            from observeco import license as lic
+            if not lic.require_pro():
+                return JSONResponse({"status": "error", "message": "Full compression requires Pro — start a free trial"}, status_code=402)
+        
+        from observeco.chisel.trim import run_compress
+        result = run_compress(agent_name=agent_name, mode=mode)
+        # Also log to database
+        from observeco.db import Database
+        local_db = Database()
+        conn = local_db._get_conn()
+        conn.execute(
+            "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, savings, "
+            "savings_pct, backup_path, triggered_by, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (result["agent"], result["mode"], result["before_tokens"], result["after_tokens"],
+             result["savings"], result["savings_pct"], result.get("backup", ""),
+             "dashboard", int(__import__("time").time())),
+        )
+        conn.commit()
+        return JSONResponse(result)
+    except FileNotFoundError as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=404)
+    except ValueError as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+# ── Optimiser Endpoints ───────────────────────────────────────────────────────
+
+
+@app.get("/api/optimiser/stats")
+async def api_optimiser_stats(agent: str = "all"):
+    """Return optimiser stats: learning progress, skill usage, guidance fires."""
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+
+    if agent == "all" or not agent:
+        # Fleet-wide stats
+        turn_count = conn.execute("SELECT COUNT(*) as c FROM turn_log").fetchone()["c"]
+        skill_rows = conn.execute(
+            "SELECT agent_name, skill_name, triggered, turn_count FROM skill_usage ORDER BY turn_count DESC LIMIT 20"
+        ).fetchall()
+        guidance_rows = conn.execute(
+            "SELECT agent_name, rule_text, fire_count FROM guidance_fire ORDER BY fire_count DESC LIMIT 20"
+        ).fetchall()
+        compress_rows = conn.execute(
+            "SELECT agent_name, mode, savings_pct FROM compress_log ORDER BY timestamp DESC LIMIT 10"
+        ).fetchall()
+    else:
+        turn_count = conn.execute(
+            "SELECT COUNT(*) as c FROM turn_log WHERE agent_name=?", (agent,)
+        ).fetchone()["c"]
+        skill_rows = conn.execute(
+            "SELECT skill_name, triggered, turn_count FROM skill_usage WHERE agent_name=? ORDER BY turn_count DESC LIMIT 20",
+            (agent,),
+        ).fetchall()
+        guidance_rows = conn.execute(
+            "SELECT rule_text, fire_count FROM guidance_fire WHERE agent_name=? ORDER BY fire_count DESC LIMIT 20",
+            (agent,),
+        ).fetchall()
+        compress_rows = conn.execute(
+            "SELECT mode, savings_pct FROM compress_log WHERE agent_name=? ORDER BY timestamp DESC LIMIT 10",
+            (agent,),
+        ).fetchall()
+
+    skills_never = [dict(s) for s in skill_rows if s["triggered"] == 0]
+    skills_active = [dict(s) for s in skill_rows if s["triggered"] > 0]
+    guidance_zero = [dict(g) for g in guidance_rows if g["fire_count"] == 0]
+    guidance_active = [dict(g) for g in guidance_rows if g["fire_count"] > 0]
+
+    return JSONResponse({
+        "agent": agent,
+        "total_turns": turn_count,
+        "goal_turns": 200,
+        "learning_pct": round(min(100, turn_count / 200 * 100), 1) if turn_count < 200 else 100,
+        "skills_never_triggered": len(skills_never),
+        "skills_total": len(skill_rows),
+        "skills_never": skills_never[:5],
+        "guidance_rules_stale": len(guidance_zero),
+        "guidance_rules_total": len(guidance_rows),
+        "guidance_stale": guidance_zero[:5],
+        "guidance_active": guidance_active[:5],
+        "recent_compressions": [dict(c) for c in compress_rows],
+        "projected_savings": {
+            "lite": -22,
+            "full": -35,
+            "optimiser_min": -43,
+            "optimiser_max": -47,
+        },
+    })
+
+
+# ── Code Graph Panel ─────────────────────────────────────────────────────────
 
 @app.get("/api/graph/overview", response_class=HTMLResponse)
 async def api_graph_overview():
@@ -1756,7 +2413,7 @@ GLOSSARY_DATA = {
     <div class="glossary-comp-card"><div class="glossary-comp-title" style="color:#f97316;">Guidance</div><div class="glossary-comp-body">Framework instructions, routing rules. Often the largest component.</div></div>
 </div>""",
         "faq": [
-            ("Why is Guidance always the biggest?", "Because it includes the framework's system-level instructions (Hermes routing, tool dispatch rules). This is normal. Run `observeco chisel trim` to see compression opportunities."),
+            ("Why is Guidance always the biggest?", "Because it includes framework-level instructions (routing rules, tool dispatch logic). This is normal. Run `observeco context trim` to see compression opportunities."),
             ("What should I do if tokens keep growing?", "Run `observeco chisel skills` to find bloated skills. Skills are the most common source of token bloat. Each skill description is loaded into every session."),
         ],
     },
@@ -1801,7 +2458,7 @@ GLOSSARY_DATA = {
     Run <code>observeco pulse check</code> from the CLI to see current status for all agents.
 </div>""",
         "faq": [
-            ("Do I need to set up health endpoints for every agent?", "No. ObserveCo auto-detects Hermes and OpenClaw agents. For custom agents, use `observeco agents add <name> --health-check <url_or_command>` or let the auto-discovery find them."),
+            ("Do I need to set up health endpoints for every agent?", "No. ObserveCo auto-detects agents from config files (Hermes, OpenClaw, and others). For custom agents, use `observeco agents add <name> --health-check <url_or_command>` to register manually."),
             ("What happens if pulse.db doesn't exist?", "First run creates it automatically. The dashboard shows a phase banner guiding you through the first discovery."),
         ],
     },
@@ -1877,7 +2534,33 @@ async def index():
     index_path = TEMPLATES_DIR / "index.html"
     if not index_path.exists():
         return HTMLResponse("<h1>Dashboard</h1><p>Template not found.</p>")
-    return HTMLResponse(index_path.read_text(encoding="utf-8"))
+    html = index_path.read_text(encoding="utf-8")
+    # Inject dashboard token into htmx via hx-headers attribute on <body> tag.
+    # hx-headers is parsed by htmx at DOM processing time — zero JS timing dependency,
+    # no event handler race, no setTimeout poll needed.
+    # Also inject cache-busting meta and __OBSERVECO_TOKEN for fetch interceptor.
+    token = getattr(app.state, "dashboard_secret", "")
+    if token:
+        # 1. Inject hx-headers on the <body> tag (htmx-native, zero timing dependency)
+        body_idx = html.find("<body")
+        if body_idx >= 0:
+            body_close = html.index(">", body_idx)
+            hx_attr = f' hx-headers=\'{{"X-ObserveCo-Token":"{token}"}}\''
+            html = html[:body_close] + hx_attr + html[body_close:]
+
+        # 2. Inject cache meta + __OBSERVECO_TOKEN before </head>
+        if "</head>" in html:
+            head_end = html.rindex("</head>")
+            injection = (
+                f'<meta name="observeco-token" content="{token}">\n'
+                f'<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n'
+                f'<meta http-equiv="Pragma" content="no-cache">\n'
+                f'<meta http-equiv="Expires" content="0">\n'
+                f'<script>window.__OBSERVECO_TOKEN = "{token}";</script>\n'
+                f'</head>'
+            )
+            html = html[:head_end] + injection + html[head_end + len("</head>"):]
+    return HTMLResponse(html)
 
 
 # ---------------------------------------------------------------------------
@@ -1926,6 +2609,164 @@ async def pathway_page():
     return HTMLResponse(PATHWAY_TEMPLATE.read_text(encoding="utf-8"))
 
 
+# ── Telemetry opt-in endpoint (Layer F / F9) ────────────────────
+
+
+# ---------------------------------------------------------------------------
+# § Shared-Fleet — Multi-Instance Detection
+# ---------------------------------------------------------------------------
+
+@app.get("/api/instances", response_class=HTMLResponse)
+async def api_instances():
+    """Return a badge showing how many instances share this DB (shared mode only)."""
+    shared_path = os.environ.get("OBSERVECO_SHARED_DB", "")
+    if not shared_path:
+        return HTMLResponse("")
+    agents = db.get_agents()
+    instance_ids = set()
+    for a in agents:
+        pulses = db.get_recent_pulses(agent_name=a["agent_name"], limit=5)
+        for p in pulses:
+            iid = p.get("instance_id", "")
+            if iid:
+                instance_ids.add(iid)
+    count = len(instance_ids)
+    if count <= 1:
+        return HTMLResponse("")
+    return HTMLResponse(
+        f'<div class="shared-badge" style="display:inline-flex;align-items:center;gap:4px;'
+        f'background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);'
+        f'border-radius:6px;padding:2px 8px;font-size:11px;color:#a5b4fc;">'
+        f'🌐 {count} instance{"s" if count != 1 else ""}</div>'
+    )
+
+
+@app.get("/api/shared-warning", response_class=HTMLResponse)
+async def api_shared_warning():
+    """Return a one-time warning banner on first shared-mode load (similar to F9 telemetry warning)."""
+    shared_path = os.environ.get("OBSERVECO_SHARED_DB", "")
+    if not shared_path:
+        return HTMLResponse("")
+    warned_path = get_data_dir() / ".shared_warning_shown"
+    if warned_path.exists():
+        return HTMLResponse("")
+    warned_path.touch()
+    return HTMLResponse(
+        '<div id="sharedWarning" class="shared-warning" style="background:rgba(234,179,8,0.08);'
+        'border:1px solid rgba(234,179,8,0.2);border-radius:8px;padding:10px 14px;'
+        'margin-bottom:12px;font-size:12px;line-height:1.5;">'
+        '<div style="display:flex;align-items:flex-start;gap:10px;">'
+        '<span style="font-size:16px;">🛡️</span>'
+        '<div style="flex:1;">'
+        '<strong style="color:#fde68a;">Shared Fleet Mode Active</strong>'
+        '<div style="color:#94a3b8;margin-top:2px;">'
+        'Multiple instances share this database via <code style="font-size:11px;background:#0f172a;padding:1px 5px;border-radius:3px;">'
+        f'{_html_escape(shared_path)}</code>. '
+        'Data writes from all instances merge into one view. Ensure only trusted '
+        'team members have write access to this path. Network share latency may '
+        'affect dashboard responsiveness.'
+        '</div></div>'
+        '<button onclick="document.getElementById(\'sharedWarning\').style.display=\'none\'" '
+        'style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;">✕</button>'
+        '</div></div>'
+    )
+
+
+@app.get("/api/telemetry-status")
+async def api_telemetry_status():
+    """Return whether the user has opted in to telemetry.
+
+    Returns JSON with: opted_in (bool), opted_out_file_exists (bool),
+    prompt_required (bool). The dashboard uses this to decide
+    whether to show the opt-in prompt.
+    """
+    from observeco.telemetry_client import is_telemetry_enabled, _OPT_IN_FILE
+    opted_in = is_telemetry_enabled()
+    opt_file_exists = _OPT_IN_FILE.exists()
+    return JSONResponse({
+        "opted_in": opted_in,
+        "opted_out_file_exists": opt_file_exists,
+        "prompt_required": not opt_file_exists,
+    })
+
+
+@app.get("/api/telemetry-opt-in")
+async def api_telemetry_opt_in(choice: str = ""):
+    """Persist the user's telemetry consent choice.
+
+    Query param ``choice``: "yes" or "no".
+    Returns an htmx-compatible HTML snippet.
+    """
+    from observeco.telemetry_client import set_opt_in
+    if choice == "yes":
+        set_opt_in(True)
+        return HTMLResponse(
+            '<div class="telemetry-confirmed" style="background:rgba(34,197,94,0.08);'
+            'border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:8px 14px;'
+            'font-size:11px;color:#86efac;">'
+            '✅ Telemetry enabled — thank you. Anonymous crash/usage data helps improve ObserveCo.'
+            '</div>'
+        )
+    elif choice == "no":
+        set_opt_in(False)
+        return HTMLResponse(
+            '<div class="telemetry-declined" style="background:rgba(148,163,184,0.08);'
+            'border:1px solid rgba(148,163,184,0.2);border-radius:8px;padding:8px 14px;'
+            'font-size:11px;color:#94a3b8;">'
+            '🔕 Telemetry disabled. You can change this later via Settings.'
+            '</div>'
+        )
+    return HTMLResponse("")
+
+
+@app.get("/api/telemetry-prompt", response_class=HTMLResponse)
+async def api_telemetry_prompt():
+    """Return the opt-in prompt banner if the user hasn't decided yet.
+
+    This is loaded by htmx on page load.
+    """
+    from observeco.telemetry_client import _OPT_IN_FILE
+    if _OPT_IN_FILE.exists():
+        return HTMLResponse("")  # Already decided — no prompt
+    return HTMLResponse(
+        '<div id="telemetryPrompt" class="telemetry-prompt" style="background:rgba(99,102,241,0.08);'
+        'border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:10px 14px;'
+        'margin-bottom:12px;font-size:12px;line-height:1.5;">'
+        '<div style="display:flex;align-items:flex-start;gap:10px;">'
+        '<span style="font-size:16px;flex-shrink:0;">📊</span>'
+        '<div style="flex:1;">'
+        '<div style="font-weight:600;color:#e2e8f0;margin-bottom:2px;">Help improve ObserveCo</div>'
+        '<div style="color:#94a3b8;margin-bottom:6px;">'
+        'Send anonymous crash and usage data? No personal data collected. '
+        '<a href="#" onclick="alert(\'We collect: crash reports, feature usage counts, Python version, '
+        'and OS type. No code, no prompts, no personal identifiers. See privacy policy at '
+        'https://observeco.ai/privacy\')" style="color:#818cf8;">Learn more</a>'
+        '</div>'
+        '<div style="display:flex;gap:6px;">'
+        '<button hx-get="/api/telemetry-opt-in?choice=yes" hx-target="#telemetryPrompt" hx-swap="outerHTML" '
+        'style="background:#6366f1;border:none;color:white;padding:5px 14px;border-radius:6px;'
+        'font-size:11px;font-weight:600;cursor:pointer;">Yes, help me improve</button>'
+        '<button hx-get="/api/telemetry-opt-in?choice=no" hx-target="#telemetryPrompt" hx-swap="outerHTML" '
+        'style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:5px 14px;'
+        'border-radius:6px;font-size:11px;cursor:pointer;">No, thanks</button>'
+        '</div>'
+        '</div>'
+        '</div>'
+    )
+
+
+# ── Onboarding overlay endpoint (Layer F / F2) ─────────────────
+ONBOARDING_TEMPLATE = TEMPLATES_DIR / "onboarding.html"
+
+
+@app.get("/api/onboarding", response_class=HTMLResponse)
+async def api_onboarding():
+    """Serve the onboarding overlay template."""
+    if not ONBOARDING_TEMPLATE.exists():
+        return HTMLResponse("")
+    return HTMLResponse(ONBOARDING_TEMPLATE.read_text(encoding="utf-8"))
+
+
 # ---------------------------------------------------------------------------
 # Launch
 # ---------------------------------------------------------------------------
@@ -1942,20 +2783,106 @@ def _find_free_port(host: str, preferred: int) -> int:
     return preferred
 
 
-def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False, no_browser: bool = False) -> None:
-    """Start the dashboard server."""
+def _ensure_watch_running() -> None:
+    """Auto-launch the watch daemon if it's not already running.
+
+    Checks heartbeat freshness AND PID liveness. If either is stale
+    or the daemon process has died, spawns a new independent process
+    via ``observeco watch start``.
+    """
+    hb = _HEARTBEAT_PATH
+    now = time.time()
+    stale_threshold = 90  # 3 missed cycles at 30s
+
+    alive = False
+    if hb.exists():
+        try:
+            data = json.loads(hb.read_text())
+            age = now - data.get("timestamp", 0)
+            # Only consider alive if heartbeat is fresh AND PID is actually running
+            if age < stale_threshold:
+                pid = data.get("pid")
+                if pid:
+                    try:
+                        os.kill(pid, 0)
+                        alive = True
+                    except (OSError, ProcessLookupError):
+                        pass
+        except Exception:
+            pass
+
+    if alive:
+        return
+
+    import subprocess, sys
+
+    kwargs = {
+        "stdout": subprocess.DEVNULL,
+        "stderr": subprocess.DEVNULL,
+        "stdin": subprocess.DEVNULL,
+    }
+    if sys.platform == "win32":
+        kwargs["creationflags"] = (
+            subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+        )
+    else:
+        kwargs["start_new_session"] = True
+
+    try:
+        subprocess.Popen(
+            [sys.executable, "-m", "observeco", "watch", "start"],
+            **kwargs,
+        )
+    except Exception:
+        pass
+
+
+def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False,
+          no_browser: bool = False, shared: str | None = None,
+          show_token: bool = False) -> None:
+    """Start the dashboard server.
+
+    Args:
+        host: Bind address.
+        port: Preferred port.
+        static: Generate static HTML and exit.
+        no_browser: Don't open browser.
+        shared: Path to shared SQLite DB for team fleet view.
+        show_token: Print the dashboard access token and exit.
+    """
+    # Set shared DB path and instance ID as env vars for subprocesses
+    if shared:
+        os.environ["OBSERVECO_SHARED_DB"] = str(Path(shared).expanduser().resolve())
+    from observeco.dirs import get_instance_id
+    os.environ["OBSERVECO_INSTANCE_ID"] = get_instance_id()
+
+    # Initialize dashboard auth (token-based middleware for /api/ routes)
+    from observeco.dashboard.auth import load_or_generate_secret
+    dashboard_secret = load_or_generate_secret()
+    app.state.dashboard_secret = dashboard_secret
+
+    if show_token:
+        print(f"Dashboard access token: {dashboard_secret}")
+        print("Use this with: curl -H 'X-ObserveCo-Token: <token>' http://localhost:{port}/api/agents")
+        return
+
     if static:
         _generate_static(host, port)
         return
+
+    # Auto-launch the independent watch daemon if not running.
+    _ensure_watch_running()
 
     actual_port = _find_free_port(host, port)
     url = f"http://{host}:{actual_port}"
     if not no_browser:
         webbrowser.open(url)
     if actual_port != port:
-        print(f"ObserveCo Dashboard: {url} (port {port} was in use)")
+        print(f"Port {port} in use — serving on {actual_port}")
     else:
         print(f"ObserveCo Dashboard: {url}")
+    if shared:
+        print(f"Shared fleet DB: {os.environ['OBSERVECO_SHARED_DB']}")
     uvicorn.run(app, host=host, port=actual_port, log_level="info")
 
 
@@ -2181,8 +3108,8 @@ GLOSSARY_ITEMS = [
     ("What is a pulse?", "A heartbeat check — `observeco pulse check` sends a health request to each agent and records alive/dead/error status. Green = healthy, yellow = degraded, red = unreachable."),
     ("What is a circuit breaker?", "When an agent fails N times in a row (default 3), the circuit trips — further checks are blocked until a cooldown expires or you manually reset. Prevents cascading failures."),
     ("What is drift?", "Token composition change over time. If an agent's system prompt grows +15% in a week, that's drift. Tracked per component (identity, skills, memory, tools, guidance)."),
-    ("What is CHISEL?", "ObserveCo's system prompt compression for Hermes agents. Decomposes the prompt by component, measures tokens per section, and saves 15-30% per session via intelligent trimming."),
-    ("What is ClawForge?", "Context optimizer for OpenClaw agents. Includes intent-aware loading (load only relevant sources), memory gardening (dedup, archive, flag contradictions), and skill usage intelligence."),
+    ("What is context compression?", "ObserveCo's system prompt compression. Decomposes the prompt by component, measures tokens per section, and saves 15-30% per session via intelligent trimming. Run `observeco context trim` to see breakdown."),
+    ("What is memory gardening?", "Memory hygiene automation: scans agent memory for duplicates, contradictions, and stale entries. Assigns a health score (A-F). Run `observeco memory garden` to audit any agent."),
     ("What is Pro?", "Paid tier ($9/mo Solo, $49/mo Team) with push alerts via Telegram/webhook, never-pruned error history, fleet comparison, drift alerts, circuit auto-recovery, and multi-machine relay. 30-day free trial."),
     ("What do the gauge colors mean?", "🟢 Green = healthy. 🟡 Yellow = warning (1-2 missed heartbeats, drift >10%). 🔴 Red = critical (dead agent, tripped circuit). 🟠 Orange = token growth. 🔵 Blue = info/baseline."),
 ]
@@ -2302,16 +3229,19 @@ async def api_heal_log():
     <div class="heal-active-title"><strong>⚠️ Active Issues</strong> — agents with problems that need attention.</div>
 </div>""" + "\n".join(active_issues)
         else:
-            html = '<div class="empty-state">✅ No self-heal events recorded yet. Run <code>observeco heal --diagnose</code> to start.</div>'
+            html = '<div class="empty-state">✅ No self-heal events recorded yet. Click <strong>Run Heal Check Now</strong> below to diagnose current issues.</div>'
 
         # Add running heal button
         html += """
 <div class="heal-trigger-section">
-    <a href="/api/trigger-heal"
-       class="heal-trigger-link"
-       onclick="event.preventDefault();fetch(this.href).then(r=>r.text()).then(t=>document.getElementById('heal-log').innerHTML=t+'<div style=\\\"text-align:center;margin-top:12px;\\\">Refreshing...</div>');setTimeout(()=>{document.getElementById('heal-log').innerHTML='<div class=\\\"empty-state\\\">Refreshing heal data...</div>';},100);">
-        ⚡ Run Heal Check Now
-    </a>
+    <button class="heal-trigger-btn" onclick="
+        var el=document.getElementById('heal-log');
+        if(el){el.innerHTML='<div style=\\'text-align:center;padding:20px;color:#64748b;\\'>Running heal check...</div>';}
+        fetch('/api/trigger-heal').then(function(r){return r.text();}).then(function(t){
+            var el2=document.getElementById('heal-log');
+            if(el2){el2.innerHTML=t;}
+        });
+    ">⚡ Run Heal Check Now</button>
 </div>"""
         return HTMLResponse(html)
 
@@ -2335,11 +3265,12 @@ async def api_heal_log():
     # Add trigger button
     html += """
 <div class="heal-trigger-section">
-    <a href="/api/trigger-heal"
-       class="heal-trigger-link"
-       onclick="event.preventDefault();fetch(this.href).then(function(r){return r.text()}).then(function(t){var el=document.getElementById('heal-log');if(el){el.innerHTML=t+'<div style=\\\"text-align:center;margin-top:12px;font-size:13px;color:#64748b;\\\">Heal check complete — refreshing data...</div>';}});">
-        ⚡ Run Heal Check Now
-    </a>
+    <button class="heal-trigger-btn" onclick="
+        fetch('/api/trigger-heal').then(function(r){return r.text();}).then(function(t){
+            var el=document.getElementById('heal-log');
+            if(el){el.innerHTML=t;}
+        });
+    ">⚡ Run Heal Check Now</button>
 </div>"""
 
     return HTMLResponse(html)
@@ -2559,3 +3490,406 @@ async def api_risk():
         return HTMLResponse(html)
     except Exception as e:
         return HTMLResponse(f"<div class='error'>Risk dashboard error: {e}</div>")
+
+
+# ---------------------------------------------------------------------------
+# § Auto-Heal L2 — proactive trend detection
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/l2-scan", response_class=HTMLResponse)
+async def api_l2_scan():
+    """Run L2 scan and return results as HTML snippet."""
+    from observeco.heal.l2 import run_l2_scan, get_l2_metrics
+    results = run_l2_scan()
+    metrics = get_l2_metrics()
+    items = []
+    for r in results:
+        icon = {"memory_bloat": "📈", "stuck": "⏱️", "drift": "📋", "upstream_fail": "🌐"}
+        sev_icon = {"warning": "🟡", "critical": "🔴", "info": "🔵"}
+        items.append(f"""<div class="heal-entry warning">
+    <div class="heal-entry-header"><span class="heal-action">{sev_icon.get('warning','⚠️')} {icon.get(r['trend_type'],'?')} {r['agent']}</span></div>
+    <div class="heal-detail"><strong>{r['trend_type']}</strong> — metric: {r['metric']:.1f}</div>
+</div>""")
+    if not items:
+        html = '<div class="heal-result-ok">✅ No L2 trends detected — all agents within normal parameters</div>'
+    else:
+        html = f'<div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">Detected {len(results)} trend(s)</div>' + "".join(items)
+    html += f"""<div class="heal-trigger-section" style="margin-top:8px;">
+    <span style="font-size:11px;color:#64748b;">{metrics['total_trends']} tracked · {metrics['resolution_rate']}% resolved</span>
+</div>"""
+    return HTMLResponse(html)
+
+
+@app.get("/api/l2-trends", response_class=HTMLResponse)
+async def api_l2_trends():
+    """Show L2 trends as HTML snippet."""
+    from observeco.heal.l2 import get_l2_summary, get_l2_metrics
+    metrics = get_l2_metrics()
+    trends = get_l2_summary(limit=20)
+    items = []
+    for t in trends:
+        icon = "✅" if t["resolved"] else "⚠️"
+        sev_c = {"warning": "#eab308", "critical": "#ef4444", "info": "#3b82f6"}
+        color = sev_c.get(t["severity"], "#94a3b8")
+        items.append(f"""<div class="heal-entry {'success' if t['resolved'] else 'warning'}">
+    <div class="heal-entry-header">
+        <span class="heal-action">{icon} {t['agent_name']} · {t['trend_type']}</span>
+        <span class="heal-time" style="color:{color};">{t['severity']}</span>
+    </div>
+    <div class="heal-detail">{t['signal_label'][:80]}</div>
+</div>""")
+    if not items:
+        html = '<div class="empty-state">📊 No trends recorded yet. Run L2 scan to start monitoring.</div>'
+    else:
+        html = "".join(items)
+    html += f"""<div class="heal-trigger-section"><span style="font-size:11px;color:#64748b;">
+    {metrics['total_trends']} total · {metrics['resolved_trends']} resolved · {metrics['unresolved_trends']} active</span></div>"""
+    return HTMLResponse(html)
+
+
+# ---------------------------------------------------------------------------
+# § Push Alerts — subscriptions + delivery log
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/alerts-subs", response_class=HTMLResponse)
+async def api_alerts_subs():
+    """Show alert subscriptions as HTML snippet."""
+    from observeco.db import Database
+    db = Database()
+    subs = db.get_alert_subscriptions()
+    items = []
+    for s in subs:
+        icon = {"telegram": "📱", "webhook": "🔗", "email": "📧"}
+        items.append(f"""<div class="heal-entry info">
+    <div class="heal-entry-header">
+        <span class="heal-action">{icon.get(s['channel'],'?')} {s['channel']} → {_html_escape(s['target'][:50])}</span>
+        <span class="heal-time">{'✅ Enabled' if s['enabled'] else '❌ Disabled'}</span>
+    </div>
+    <div class="heal-detail">Events: {s['event_types']}</div>
+</div>""")
+    if not items:
+        html = '<div class="empty-state">📭 No alert subscriptions. Add one via CLI: <code>observeco alerts subscribe telegram &lt;chat_id&gt;</code></div>'
+    else:
+        html = "".join(items)
+    return HTMLResponse(html)
+
+
+@app.get("/api/alert-log", response_class=HTMLResponse)
+async def api_alert_log():
+    """Show alert delivery log as HTML snippet."""
+    from observeco.db import Database
+    db = Database()
+    log = db.get_alert_log(limit=15)
+    items = []
+    for l in log:
+        icon = "✅" if l["delivered"] else "❌"
+        items.append(f"""<div class="heal-entry {'success' if l['delivered'] else 'fail'}">
+    <div class="heal-entry-header">
+        <span class="heal-action">{icon} {l['channel']} → {_html_escape(l['target'][:40])}</span>
+        <span class="heal-time">{l['event_type']}</span>
+    </div>
+    <div class="heal-detail">{_html_escape(l['message'][:80])}</div>
+</div>""")
+    if not items:
+        html = '<div class="empty-state">📭 No alerts delivered yet.</div>'
+    else:
+        html = "".join(items)
+    return HTMLResponse(html)
+
+
+@app.post("/api/alert-subscribe")
+async def api_alert_subscribe(request: Request):
+    """Subscribe to push alerts via API — Pro feature."""
+    from observeco import license as lic
+    if not lic.require_pro():
+        return JSONResponse({"error": "Push alerts require Pro — start a free trial"}, status_code=402)
+    from observeco.db import Database
+    db = Database()
+    try:
+        body = await request.json()
+        channel = body.get("channel", "telegram")
+        target = body.get("target", "")
+        event_types = body.get("event_types", "all")
+        if not target:
+            return JSONResponse({"error": "target required"}, status_code=400)
+        result = db.add_alert_subscription(channel, target, event_types)
+        return JSONResponse({"status": "ok", "subscription": result})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+@app.delete("/api/alert-subscribe/{sub_id}")
+async def api_alert_unsubscribe(sub_id: int):
+    """Remove an alert subscription."""
+    from observeco.db import Database
+    db = Database()
+    db.delete_alert_subscription(sub_id)
+    return JSONResponse({"status": "ok"})
+
+
+# ---------------------------------------------------------------------------
+# § OpenClaw Plugin tracking
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/plugin-stats")
+async def api_plugin_stats(agent: str = ""):
+    """Get plugin tracking stats as JSON."""
+    from observeco.clawforge.plugin import get_plugin_stats, seed_demo_data
+    seed_demo_data()  # Seed demo data if empty
+    stats = get_plugin_stats(agent)
+    return JSONResponse(stats)
+
+
+@app.get("/api/plugin-hooks", response_class=HTMLResponse)
+async def api_plugin_hooks(agent: str = ""):
+    """Show recent plugin hooks as HTML snippet."""
+    from observeco.clawforge.plugin import get_recent_hooks, seed_demo_data
+    seed_demo_data()
+    hooks = get_recent_hooks(agent, limit=10)
+    items = []
+    for h in hooks:
+        red_pct = round((h["sources_skipped"] / max(h["sources_loaded"] + h["sources_skipped"], 1)) * 100, 1)
+        icon = {"bootstrap": "📥", "ingest": "🔍", "pre_response": "📊"}
+        items.append(f"""<div class="heal-entry info">
+    <div class="heal-entry-header">
+        <span class="heal-action">{icon.get(h['hook_point'],'?')} {h['agent_name']} · {_html_escape(h.get('intent_class','') or h['hook_point'])}</span>
+        <span class="heal-time">{h['hook_point']}</span>
+    </div>
+    <div class="heal-detail">Loaded {h['sources_loaded']} · Skipped {h['sources_skipped']} · Saved {h['tokens_saved']} tok ({red_pct}%)</div>
+</div>""")
+    if not items:
+        html = '<div class="empty-state">🔌 No plugin hooks recorded yet.</div>'
+    else:
+        html = "".join(items)
+    return HTMLResponse(html)
+
+
+@app.post("/api/plugin-log")
+async def api_plugin_log(request: Request):
+    """Log a plugin hook event."""
+    from observeco.clawforge.plugin import log_plugin_hook
+    try:
+        body = await request.json()
+        result = log_plugin_hook(
+            agent_name=body.get("agent_name", ""),
+            hook_point=body.get("hook_point", "ingest"),
+            intent_class=body.get("intent_class", ""),
+            sources_loaded=body.get("sources_loaded", 0),
+            sources_skipped=body.get("sources_skipped", 0),
+            tokens_saved=body.get("tokens_saved", 0),
+            context_window_pct=body.get("context_window_pct", 0),
+        )
+        return JSONResponse({"status": "ok", "result": result})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+# ---------------------------------------------------------------------------
+# § Per-Turn Token Tracking (#14)
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/tokens/log")
+async def api_token_log(request: Request):
+    """Ingest per-turn token usage from agents."""
+    from observeco.tracking.tokens import log_token_turn
+    try:
+        body = await request.json()
+        result = log_token_turn(
+            agent_name=body.get("agent_name", ""),
+            turn_id=body.get("turn_id", ""),
+            total_tokens=body.get("total_tokens", 0),
+            identity_tokens=body.get("identity_tokens", 0),
+            skills_tokens=body.get("skills_tokens", 0),
+            memory_tokens=body.get("memory_tokens", 0),
+            tools_tokens=body.get("tools_tokens", 0),
+            guidance_tokens=body.get("guidance_tokens", 0),
+            provider=body.get("provider", ""),
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+@app.get("/api/tokens/summary")
+async def api_token_summary(agent: str = "", days: int = 7):
+    """Get aggregate token summary per agent."""
+    from observeco.tracking.tokens import get_token_summary
+    stats = get_token_summary(agent, days)
+    return JSONResponse(stats)
+
+
+@app.get("/api/tokens/trends")
+async def api_token_trends(agent: str = "", days: int = 7):
+    """Get component growth trends."""
+    from observeco.tracking.tokens import get_trend_analysis
+    analysis = get_trend_analysis(agent)
+    return JSONResponse(analysis)
+
+
+@app.get("/api/tokens/recent", response_class=HTMLResponse)
+async def api_token_recent(agent: str = "", days: int = 7):
+    """Show recent token turns as HTML snippet."""
+    from observeco.db import Database
+    db = Database()
+    since = int(time.time()) - days * 86400
+    turns = db.get_token_turns(agent, limit=20, since=since)
+    if not turns:
+        return HTMLResponse('<div class="empty-state">📊 No token data recorded yet. Agents can POST /api/tokens/log to start tracking.</div>')
+    items = []
+    for t in turns[:15]:
+        icon = "📈"
+        if t.get("anomaly_score") and abs(t["anomaly_score"]) > 2:
+            icon = "🔴" if abs(t["anomaly_score"]) > 3 else "🟡"
+        ts = _fmt_ts(t["recorded_at"])
+        cost_str = f" · ${t['cost']:.4f}" if t["cost"] else ""
+        anomaly_str = f" · {t['anomaly_score']:.1f}σ" if t.get("anomaly_score") else ""
+        items.append(f"""<div class="heal-entry info">
+    <div class="heal-entry-header">
+        <span class="heal-action">{icon} {t['agent_name']} · {t['total_tokens']:,} tok{cost_str}{anomaly_str}</span>
+        <span class="heal-time">{ts}</span>
+    </div>
+    <div class="heal-detail">{t.get('turn_id', '?')} · Provider: {t.get('provider', '?')}</div>
+</div>""")
+    return HTMLResponse("".join(items))
+
+
+@app.post("/api/tokens/budget")
+async def api_token_budget(request: Request):
+    """Set per-agent token budget."""
+    from observeco.db import Database
+    db = Database()
+    try:
+        body = await request.json()
+        db.set_token_budget(
+            agent_name=body.get("agent_name", ""),
+            max_daily_tokens=body.get("max_daily_tokens", 0),
+            max_turn_cost=body.get("max_turn_cost", 0),
+            anomaly_threshold_sigma=body.get("anomaly_threshold_sigma", 3.0),
+        )
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+@app.get("/api/tokens/budgets")
+async def api_token_budgets(agent: str = ""):
+    """List token budgets."""
+    from observeco.db import Database
+    db = Database()
+    budgets = db.get_token_budgets(agent)
+    return JSONResponse({"budgets": budgets})
+
+
+# ---------------------------------------------------------------------------
+# § Extended History (#18) — retention + L2 baselines
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/prune")
+async def api_prune():
+    """Run pruning operation and return result."""
+    from observeco.tracking.prune import run_prune
+    result = run_prune()
+    return JSONResponse(result)
+
+
+@app.get("/api/retention-config")
+async def api_retention_config():
+    """Get current retention configuration."""
+    from observeco.db import Database
+    db = Database()
+    config = db.get_retention_config()
+    return JSONResponse(config)
+
+
+@app.post("/api/retention-config")
+async def api_set_retention(request: Request):
+    """Update retention config."""
+    from observeco.db import Database
+    db = Database()
+    try:
+        body = await request.json()
+        data_type = body.get("data_type", "")
+        days = body.get("days", "7")
+        if data_type:
+            db.set_retention_days(data_type, str(days))
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+@app.get("/api/l2/baseline")
+async def api_l2_baseline(agent: str = "", days: int = 7):
+    """Compute L2 baselines for an agent or all agents."""
+    from observeco.tracking.baselines import compute_baselines, compute_all_baselines
+    if agent:
+        result = compute_baselines(agent, days)
+    else:
+        result = compute_all_baselines(days)
+    return JSONResponse(result)
+
+
+@app.get("/api/l2/baselines", response_class=HTMLResponse)
+async def api_l2_baselines_html(agent: str = "", days: int = 7):
+    """Show L2 baselines as HTML snippet."""
+    from observeco.tracking.baselines import compute_baselines, compute_all_baselines
+    if agent:
+        baselines = {agent: compute_baselines(agent, days)}
+    else:
+        baselines = compute_all_baselines(days)
+    items = []
+    for name, bl in baselines.items():
+        if "error" in bl:
+            items.append(f"""<div class="heal-entry fail">
+    <div class="heal-entry-header"><span class="heal-action">❌ {name}</span></div>
+    <div class="heal-detail">Error: {bl['error']}</div>
+</div>""")
+        else:
+            err_color = "#ef4444" if bl.get("error_rate_per_day", 0) > 1 else "#22c55e"
+            items.append(f"""<div class="heal-entry info">
+    <div class="heal-entry-header">
+        <span class="heal-action">📊 {name}</span>
+        <span class="heal-time">{bl.get('sample_days', '?')}d</span>
+    </div>
+    <div class="heal-detail">
+        P95: {bl.get('p95_latency_ms', 0):.0f}ms · Tokens: {bl.get('avg_token_per_turn', 0):.0f}/turn · Turns: {bl.get('total_turns', 0)} · 
+        <span style="color:{err_color};">Errors: {bl.get('error_rate_per_day', 0)}/day</span>
+    </div>
+</div>""")
+    if not items:
+        html = '<div class="empty-state">📊 No baseline data yet. Run pulse checks and log some tokens first.</div>'
+    else:
+        html = "".join(items)
+    return HTMLResponse(html)
+
+
+@app.get("/api/history", response_class=HTMLResponse)
+async def api_history():
+    """Show extended history data availability."""
+    from observeco.db import Database
+    db = Database()
+    config = db.get_retention_config()
+    counts = {}
+    for dt in ["pulse_log", "errors", "chisel_drift", "token_logs", "l2_trending"]:
+        try:
+            row = db._get_conn().execute(f"SELECT COUNT(*) as c FROM {dt}").fetchone()
+            counts[dt] = row["c"] if row else 0
+        except Exception:
+            counts[dt] = 0
+    total = sum(counts.values())
+    items = []
+    for table, count in counts.items():
+        days = config.get(f"{table.replace('_log','').replace('chisel_','').replace('l2_','')}_days", "7")
+        items.append(f"""<div class="heal-entry info">
+    <div class="heal-entry-header">
+        <span class="heal-action">📁 {table}</span>
+        <span class="heal-time">{count:,} rows</span>
+    </div>
+    <div class="heal-detail">Retention: {days}d · Pruning: {"✅ On" if config.get("pruning_enabled", "1") != "0" else "❌ Off"}</div>
+</div>""")
+    html = f"<div style='font-size:12px;color:#94a3b8;margin-bottom:8px;'>Total: {total:,} rows across 5 data stores</div>" + "".join(items)
+    return HTMLResponse(html)
