@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-**Last updated:** 2026-05-28
+| **Last updated:** 2026-06-01 (P3: Pro Tier — Real Lock & Unlock ✅) |
 **Author:** Main
 
 ---
@@ -13,7 +13,7 @@
 | **One-liner** | ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes |
 | **Positioning** | "ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes." — Locked 2026-05-28 |
 | **What it does** | CLI + dashboard that discovers your agents, monitors their health, analyses token usage, detects drift, and auto-heals failures — all local, no cloud |
-| **License** | MIT (free tier forever), Stripe Pro ($9 solo / $49 team) — **generous free tier, all core features unlocked** |
+| **License** | MIT (free tier forever), Stripe Pro ($9 Solo/month) — **generous free tier, all core features unlocked**. Team tier ($49) delayed post-v1. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`. |
 | **Free badge** | `Free forever · MIT license · No cloud` — always visible in dashboard header and README |
 | **Supersedes** | ERIS (runtime integrity) + CHISEL (context observability) — merged into single product |
 | **Framework support** | Any framework via `observeco agent add` + health check. Full token/drift for Hermes + OpenClaw |
@@ -24,53 +24,56 @@
 
 ## 2. Feature Matrix (Complete)
 
-| # | Feature | Category | Status | Free | Pro ($9/$49) | Effort | Spec |
+| # | Feature | Category | Status | Free | Pro ($9 Solo) | Effort | Spec |
 |---|---------|----------|--------|------|-------------|--------|------|
-| 1 | Fleet view — per-agent cards with status, token bar, drift, error badge | Dashboard | ✅ Live (partial) | ✅ | ✅ | — | — |
-| 1a | Fleet view: type-based grouping (Agents / Services / Workflows) | Dashboard | 🔴 Not built | ✅ | ✅ | ~4h | observeco-master-plan.md §3.1 |
-| 1b | Fleet view: show/hide per agent (× button) | Dashboard | 🔴 Not built (mocked) | ✅ | ✅ | ~1h | observeco-master-plan.md §3.1 |
-| 1c | Fleet view: missing-agent feedback button in header | Dashboard | 🔴 Not built (mocked) | ✅ | ✅ | ~1h | observeco-master-plan.md §3.1 |
-| 1d | Fleet view: 5 clickable metric rows per card (Health/Guard/Errors/Brain size/Composition) | Dashboard | 🔴 Not built (mocked) | ✅ | ✅ | ~3h | observeco-master-plan.md §3.1 |
-| 1e | Fleet view: drill-down modals (Health pulse timeline, Guard failure history, Error annotated timeline) | Dashboard | 🔴 Not built (mocked) | ✅ | ✅ | ~4h | observeco-master-plan.md §3.2-3.6 |
+| 1 | Fleet view — per-agent cards with status, token bar, drift, error badge | Dashboard | ✅ Live | ✅ | ✅ | — | — |
+|| 1a | Fleet view: type-based grouping (Agents / Services / Workflows) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
+|| 1b | Fleet view: show/hide per agent (× button) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
+| 1c | Fleet view: missing-agent feedback button in header | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
+| 1d | Fleet view: 5 clickable metric rows per card (Health/Guard/Errors/Brain size/Composition) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
+| 1e | Fleet view: drill-down modals (Health pulse timeline + annotated timeline + categorized verdict, Guard failure history + settings + explanation, Error timeline + verdict + Pro upsell) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.2-3.6 |
 | 2 | Pulse check (alive/dead/error) | Monitoring | ✅ Live | ✅ | ✅ | — | — |
 | 3 | Circuit breakers (N-failure + auto-cooldown) | Monitoring | ✅ Live | ✅ | ✅ | — | — |
 | 4 | Token breakdown bar chart (SOUL.md by watch daemon) | Analysis | ✅ Live | ✅ | ✅ | — | — |
+| | 4a | Brain Analysis: Savings Comparison + Compression UI (Manual preview/apply, Lite/Full, Auto-Watch Pro teaser) | Analysis | ✅ Live | ✅ Preview + Lite Apply | ✅ Full + Auto-Watch | — | brain-analysis.html mockup |
+| | 4b | Compression Backend: /api/chisel/compress, `chisel compress` CLI, Lite/Full algorithms, backup/restore | Analysis | ✅ Live | ✅ Lite | ✅ Full | — | — |
+| | 4c | Token Optimiser Data Layer: DB tables (turn_log, skill_usage, guidance_fire, compress_log), /api/optimiser/stats endpoint | Analysis | ✅ Live | ✅ Demo data | ✅ Real data at 200+ turns | — | — |
+| | 4d | Auto-Compression Daemon: `chisel watch start/stop/status`, fswatch-based SOUL.md monitoring | Analysis | ✅ Live | ✅ Daemon runs Lite | ✅ Daemon runs Full | — | — |
 | 5 | 7-day drift trend per component | Analysis | ✅ Live | ✅ | ✅ | — | — |
 | 6 | Error history (last 24h) | Dashboard | ✅ Live | ✅ | ✅ | — | — |
 | 7 | Heal button (manual trigger, diagnosis + restart) | Self-Heal | ✅ Live | ✅ | ✅ | — | — |
-| 8 | In-dashboard alerts — severity-coded feed + Pro locked tiles | Alerts | 🟡 Live (partial — no discovery gaps yet) | ✅ | ✅ | — | — |
+| 8 | In-dashboard alerts — severity-coded feed + discovery gaps + cumulative downtime banner + NEW badge + Pro push upsell | Alerts | ✅ Live | ✅ Discovery gap badges, cumulative downtime banner, NEW/unviewed indicators | ✅ Same (Pro unlocks push delivery — §17) | — | — |
 | 9 | Memory Garden (dupes, contradictions, debt score) | Analysis | ✅ Live | ✅ | ✅ | — | — |
 | 10 | ClawForge CLI (profile/load/garden/history) | CLI | ✅ Live | ✅ | ✅ | — | — |
 | 11 | All CLI commands (pulse, circuit, chisel, clawforge) | CLI | ✅ Live | ✅ | ✅ | — | — |
 | 12 | Local SQLite, zero cloud, zero telemetry | Infrastructure | ✅ Live | ✅ | ✅ | — | — |
 | | | | | | | | |
 | **PLANNED** | | | | | | | |
-| 13 | System prompt compression (`observeco chisel compress`) | Analysis | 🔴 Planned | ✅ `--dry-run` / `--apply` (Lite 22%) | ✅ auto-watch + Full (35%) + Skill Audit integration | ~2.5d | observeco-master-plan.md §13 |
-| 14 | Per-turn token tracking (webhook + agent hooks) | Monitoring | 🔴 Planned | ✅ 24h timeline + component breakdown | ✅ never-pruned history + anomaly detection + budget alerts + fleet comparison | ~4d (~2d if §18 built first) | observeco-master-plan.md §14 |
-| 15 | Auto-heal (watch daemon trigger, auto-restart) | Self-Heal | 🔴 Planned | ✅ manual Heal button + dashboard alerts | ✅ L1 crash recovery (~5s) + L2 proactive detection (93%) + structured diagnosis (7%) | ~1d | observeco-master-plan.md §15 |
-| 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) | Analysis | 🔴 Planned | ✅ (MIT, free forever) | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d | observeco-master-plan.md §3.16 |
-| 17 | Push alerts (Telegram, webhook, email) | Alerts | 🔴 Planned | ❌ in-dashboard only (discovery gap) | ✅ Telegram + webhook + email + auto-heal integration (fires on exhaustion) | ~3d | observeco-master-plan.md §17 |
-| 18 | Extended history (7d free / never-pruned pro) | Dashboard | 🔴 Planned | ✅ 7d | ✅ never-pruned + L2 trend baselines (14d/21d/30d/90d) | ~4d | observeco-master-plan.md §18 |
+| 13 | System prompt compression (`observeco chisel compress`) | Analysis | ✅ Live | ✅ `--mode lite` (guidance compression) | ✅ `--mode full` (memory culling + skill dedup + context refactor) | ~2.5d | observeco-master-plan.md §13 |
+| 14 | Per-turn token tracking (webhook + agent hooks) | Monitoring | ✅ Live | ✅ 24h timeline + component breakdown + cost tracking | ✅ never-pruned history + anomaly detection (+3σ flag) + budget thresholds (daily/cost/anomaly sigma) + fleet comparison + component trend analysis | ~4d (~2d if §18 built first) | observeco-master-plan.md §14 |
+| 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Live | ✅ manual Heal button + dashboard alerts + L2 trends | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) | ~1d + L2 built | observeco-master-plan.md §15 |
+| 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) | Analysis | ✅ Live | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
+| 17 | Push alerts (Telegram, webhook, email) | Alerts | ✅ Live | ❌ in-dashboard only (discovery gap) | ✅ Telegram + webhook + email + auto-heal integration + subscription management + delivery log | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
+| 18 | Extended history (7d free / never-pruned pro) | Dashboard | ✅ Live | ✅ 7d (pruning cron at 3am) + L2 baselines (RSS, P95, errors, upstream) | ✅ never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
 || 19 | In-dashboard Glossary & FAQ | Dashboard | ✅ Live | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
 || 20 | Skill Audit (`observeco chisel skills`) | Analysis | ✅ Live | ✅ manual CLI scan + ranked table | ✅ auto-scan (weekly) + drift tracking + threshold alerts + 12-week trend chart | ~3d (built) | observeco-master-plan.md §3.21 |
-|| 21 | Communication Pathway Map | Diagnostics | ✅ Live | ✅ Static snapshot + dead-end detection + interactive graph + filters | ✅ Detail panel + drag + auto-alert | ~3d (built) | observeco-master-plan.md §3.19 |
+|| 21 | Communication Pathway Map | Diagnostics | ✅ Live | ✅ Interactive graph with 87 nodes + 106 edges + agent-to-agent routing + 0 dead ends | ✅ Detail panel + drag + auto-alert | ~3d (built) | observeco-master-plan.md §3.19 |
+|| 22 | Multi-platform messaging gateway (Telegram, Discord, Slack, Signal, WhatsApp, email + 11 more) | Infrastructure | 🔴 Planned | ✅ All 16+ platforms (core infra for Pathway Map, Push Alerts) | ✅ Same (no gating) | ~Phase 3+ | observeco-master-plan.md §3.22 |
 
 ---
 
 ## 3. Feature Deep Dives
 
-### 3.1 Fleet View (🟡 Partial — flat grid only, no sections/drill-downs yet)
+### 3.1 Fleet View (✅ Type grouping live — flat grid remains until drill-downs built)
 
 **Tagline:** *See every agent in one place — alive, broken, or hiding.*
 
-**What it is:** A dashboard screen with agent cards in a single flat grid grouped by **type** (Agents · Services · Workflows), not by framework. Each card shows the entity's status, last check, and type-appropriate metrics. Live: flat grid only.
+**What it is:** A dashboard screen with agent cards in a single flat grid grouped by **type** (Agents · Services · Workflows), not by framework. Each card shows the entity's status, last check, and type-appropriate metrics.
 
 > ⚠️ **Features marked NOT BUILT are spec'd only** — see kanban tasks for build priority.
-> - Type-based grouping (Agents / Services / Workflows) — not built
-> - 5 clickable metric rows per card (Health/Guard/Errors/Brain size/Composition)
 > - Drill-down modals (pulse timeline, guard failure history, annotated error timeline)
-> - Show/hide × button per agent
-> - Missing-agent feedback button in header
+
+**Now live:** Type-based grouping in collapsible sections, show/hide × buttons, missing-agent feedback bar, 5-clickable metric rows per card, and full 5-tab drill-down modal (Health/Guard/Errors/Tokens/Memory). All fleet view components shipped.
 
 **How auto-discovery works (live):** The system discovers entities automatically, classifying them by type:
 
@@ -83,7 +86,14 @@
 
 **Config key filter:** Auto-discovery must filter to entries with valid agent metadata (health_check, config_path, or SOUL.md path). Config key sections from Hermes `config.yaml` are never promoted as agents.
 
-**No framework labels in fleet view:** All agents appear in one unified grid. Framework context (Hermes vs OpenClaw) belongs in the agent detail panel, not as a sorting category. This ensures a LangChain/CrewAI user sees their agents as first-class citizens, not "others."
+**Framework labels in fleet view:** Each agent card shows framework as secondary metadata after type: `Kepler · Agent · OpenClaw`. Framework is auto-detected from config source (Hermes profile dir, OpenClaw workspace, Ollama config, explicit `--framework` flag, or inferred from config path). It must render correctly for ANY framework value, not just known ones.
+
+**Implementation rules:**
+- Cards display: `{name} · {type} · {framework}` or just `{name} · {type}` when framework is `custom`/unknown
+- Detail modal framework section: always shows the actual framework value (never hardcodes to "Hermes" or "OpenClaw")
+- Default framework when unknown: pass through the raw DB value or show a generic label — never default to "Hermes"
+- Framework dropdown for `agent add`: options are "Agent" (default), "Service", "Workflow" — framework is set separately as optional metadata
+- CLI commands: generic names are primary (`observeco context trim`), internal names still work as aliases (`observeco chisel trim`)
 
 **Show/hide per agent (NOT BUILT — mocked only):** Click the × button on any card to hide it. (Note: not implemented — all agents shown always.)
 
@@ -128,34 +138,21 @@ Every 30s → for each agent:
 
 - **On the Fleet View card:** Status dot (🟢 alive / 🔴 dead / 🟡 error) shown inline. Card click opens inline agent detail tab with Health/Tokens/Memory sections, not a drill-down modal.
 
-- **Mockup features (see kanban tasks):**
-  - 5 clickable metric rows (Health/Guard/Errors/Brain size/Composition) with "See details ›" labels
+|- **5 clickable metric rows (Health/Guard/Errors/Brain size/Composition)** with "See details ›" labels. All rows are wired to live backend endpoints via `loadTab()`.
   - **Click Health →** drill-down modal opens with 4 sections:
-
-  1. **Pulse timeline** — 48 colour-coded dots (24 hours × 2 dots per minute). Green = OK, yellow = warning, red = error. One glance tells you if this agent had a rough night or is trending bad.
-
-  2. **What happened — annotated timeline** — A table that turns every red/yellow dot into a real error message:
-
-  | Time | Status | What happened |
-  |------|--------|---------------|
-  | 09:32 | 🟡 Warning | Build failed — spec mismatch on output format |
-  | 09:14 | 🟡 Warning | Build timed out after 30s |
-  | 08:45 | 🔴 Down | Dependency "requests" not found |
-
-  Each row comes directly from the error log. You see *what* went wrong, not just *that* it went wrong.
-
-  3. **Summary** — The system reads every error, categorises it, and tells you in plain English:
-
-  > *This agent had 3 issues in the last 24 hours.*
-  > 🕐 **1** timeout — the agent was running but didn't respond. Usually overloaded or stuck.
-  > 🔍 **1** resource not found — a dependency the agent needs is missing.
-  > ❓ **1** other error — check the full list.
-  >
-  > **Verdict:** This agent is running but unstable — check the error details above.
-
-  Categories covered: timeouts, connection refused, resource not found, HTTP errors (5xx), and other. Each comes with a plain-English explanation of what that type of error usually means.
-
-  4. **Latest check** — The real-time status: "✅ OK", "🟡 Warning", or "🔴 Down" with latency.
+    1. **Pulse timeline** — Up to 48 colour-coded dots (24 hours). Green = OK, yellow = warning, red = error. Legend included.
+    2. **Annotated timeline** — Table: Time | Status | What happened. Each error row shows severity icon + label + message.
+    3. **Categorized Summary** — The system categorises errors into 5 types (timeout, connection refused, resource not found, HTTP 5xx, other) and provides plain-English explanations + verdict.
+    4. **Latest check** — Table: Time | Result | Latency.
+  - **Click Guard →** drill-down modal opens with 4 sections:
+    1. **Status** — "🔴 Guard is STOPPED" or "✅ Guard is OK" with explanation.
+    2. **Failure timeline** — Table of errors that triggered the guard + plain-English summary.
+    3. **What the guard does** — Explanation of 3-failure trip, cooldown, auto-retry.
+    4. **Settings** — Failures before stop, cooldown period, auto-retry status.
+  - **Click Errors →** drill-down modal opens with 3 sections:
+    1. **Error timeline** — Table: Time | What happened, severity-colored.
+    2. **What this means** — Plain-English verdict (0 errors = clean, 1 = transient, 2+ = ongoing problem).
+    3. **Pro upsell** — Preview card showing what longer history unlocks.
 
 **Why this is better than coloured dots:** Coloured dots tell you *when*. The annotated timeline and summary tell you *why* — "timed out" vs "dependency not found" vs "HTTP 500" each point to different root causes and different fixes. Without this, you see red and guess.
 
@@ -281,13 +278,23 @@ The guard doesn't just reduce noise — it preserves the **signal** by making su
 **Free:** Automatic detection, auto-cooldown, full drill-down in Fleet View.
 **Pro:** Configurable thresholds (change 3 failures to N) + auto-recovery timer (change cooldown period).
 
-### 3.4 Brain Analysis (🚧 Mockup — replaces old token-breakdown + chisel-compress)
+### 3.4 Brain Analysis (✅ Live — Sections 1-3 built, Section 4 Pro-teaser mockup)
 
 **Tagline:** *See what feeds your agents. See what you can save.*
 
 **What it is:** A unified page that merges observation (token composition, drift, usage timeline) with action (compression preview/apply, auto-watch, token optimiser). The default view shows the fleet total across all agents so dollar savings are meaningful. Switching to a single agent shows per-agent granularity.
 
+**Status:** Seven sections rendered in the Brain tab:
+- **Section 1 — Token Breakdown (✅ Live):** Per-component bars (identity/skills/memory/tools/guidance) sorted by size, component explanations
+- **Section 2 — Savings Comparison (✅ Live):** 3-bar chart (Original/Lite/Full), provider cost dropdown, 4 summary boxes, Pro upsell
+- **Section 3 — Compression (✅ Live):** Manual tab with Lite/Full toggle, before/after diff preview, Apply/Copy Diff actions. Backend: `/api/chisel/compress` POST endpoint, `observeco chisel compress --agent <name> --mode lite|full` CLI. Lite compresses guidance (replacements: MUST→must, should→should, dedup identical rules). Full additionally culls memory sections to active content + deduplicates skills. Backup auto-created at `.md.bak`.
+- **Section 4 — Token Optimiser (✅ Live with demo data):** Learning progress bar, projected savings, Pro-locked. Backend: `/api/optimiser/stats` endpoint queries `turn_log`, `skill_usage`, `guidance_fire`, `compress_log` tables. Real data populates as agents accumulate turns (goal: 200).
+- **Section 5 — Drift & Usage (✅ Live):** 7-day component drift SVGs + 24-column per-turn timeline
+- **Section 6 — Auto-Compression Daemon (✅ Live):** `chisel watch start/stop/status` CLI commands. Monitors SOUL.md files for modifications, auto-compresses, logs to `compress_log`. Heartbeat file at `~/.observeco/.chisel_watch_heartbeat.json`.
+- **Bottom tier summary (✅ Live):** Free vs Pro comparison table
+
 **Mockup:** `mockups/brain-analysis.html`
+**Obsoletes:** `mockups/token-breakdown.html`, `mockups/chisel-compress.html` (to be removed when brain-analysis is implemented)
 
 ---
 
@@ -1028,11 +1035,11 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 | **Effort** | ~4 days (1 data layer, 2 baseline engine, 1 dashboard) |
 | **Depends on** | L2 detection signals being collected (RSS, P95, output structure — already available from existing metrics) |
 
-### 3.19 Communication Pathway Map (🟡 Planned)
+### 3.19 Communication Pathway Map (✅ Live)
 
 **Tagline:** *Where did my message go? Every delivery path in your ecosystem, traced from source to consumer.*
 
-**What it is:** An interactive graph that shows every message delivery path — cron → agent → Telegram → human. Every path starts at a **source** and terminates at a **consumer**. Paths that don't reach a consumer are **dead ends** — the core diagnostic. Detects 7 failure scenarios.
+**What it is:** An interactive graph that shows every message delivery path — cron → agent → platform → human. Every path starts at a **source** and terminates at a **consumer**. Paths that don't reach a consumer are **dead ends** — the core diagnostic. Detects 7 failure scenarios.
 
 **Why this exists:** Information gets routed wrong all over the ecosystem — cron → dead inbox, agent → wrong outbox, direct writes bypassing the router, alias misrouting, intelligence tier misplacement, bridge failures, stale inboxes. The map makes every invisible failure visible.
 
@@ -1073,9 +1080,21 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 | 6 | Cross-platform bridge failure | 🔴 Red | agent → dead bridge → dead end |
 | 7 | Stale agent inbox (unconsumed) | 🔴 Red | inbox → agent that doesn't process it |
 
-**What data it reads:** Cron job specs (delivery targets), signal routing config (AGENT_TOPICS, aliases, outbox paths), SOUL.md files (inbox locations, polling mechanisms, daemon states), intelligence tier mappings, platform bridge states (Telegram bot, WhatsApp bridge), agent daemon states from pulse check.
+**What data it reads:** Agent configs from pulse.db (framework-agnostic), cron job specs (Hermes `~/.hermes/cron/jobs.json`), signal inbox routing (`~/.hermes/signals/*/inbox/`), platform bridge states, agent daemon states from pulse check.
 
-**Data collection:** Hybrid passive + active. Layer 1: auto-detect from existing pulse check data, ACPS signal router pass-through logs, and filesystem events in `signals/*/inbox/` and `signals/*/outbox/`. Layer 2: manual declaration via CLI (`observeco pathway add`) for users without ACPS routing.
+**Data collection:** Hybrid passive + active, 6-step scan pipeline:
+| Step | Source | What It Detects |
+|------|--------|-----------------|
+| 1 | Known consumer nodes | Hardcoded (e.g. "Sean") — configurable |
+| 2 | Platform nodes | 5 hardcoded platforms connected to consumer |
+| 3 | Signal Router | Static router node (future: detect from gateways) |
+| 4 | `agent_configs` from pulse.db | All registered agents → Telegram (pulse check) |
+| 5 | Hermes `~/.hermes/cron/jobs.json` | Cron delivery targets → platform, signal-router, or agent |
+| 6 | `~/.hermes/signals/*/inbox/` JSON files | Agent-to-agent routing from signal `from`/`to` fields |
+
+Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6 are Hermes-specific. Layer 2: manual declaration via CLI (`observeco pathway add`) for users without ACPS routing.
+
+**Known limitation:** OpenClaw/ClawForge hub contract routing is not yet detected. Only the agent name appears — agent-to-agent routing is inferred from signal inboxes (Hermes protocol) only. Planned: ClawForge hub scanning for OpenClaw agents.
 
 **Confidence indicators on each edge:**
 
@@ -1091,7 +1110,7 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 
 **Filters (Pro):** By status: All / Complete / Concerns / Dead ends. By agent: pick one, show only its edges + connected nodes. Implementation: `display:none` — non-matching elements disappear entirely.
 
-**v1 scope:** Data collection + manual declaration CLI/UI + pathways.db (SQLite) + dagre ranked layout + green/yellow/red + dead-end × markers + confidence indicators + status/agent filters + click/hover/drag (100ms debounce flicker guard) + right detail panel (collapsible on mobile) + edge label toggle (off by default) + data banner. Out of scope: multi-machine paths, historical trends, multiple consumers, auto-fix buttons (show guidance only), force-directed layout, non-Telegram bridges.
+**v1 scope:** Data collection + Cytoscape.js rendering + dagre layout + click/hover/drag + detail panel + filters + confidence indicators. Out of scope: multi-machine paths, historical trends, multiple consumers, auto-fix buttons, non-Telegram bridges, OpenClaw hub contract detection.
 
 **Tech stack:** Cytoscape.js (CDN) + dagre layout + HTML detail panel. Single-file HTML, no build step.
 
@@ -1105,9 +1124,8 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 | Live auto-refresh | ❌ | ✅ |
 | Auto-alert on red path | ❌ | ✅ |
 
-**Effort:** ~3-4 days (data collection layer: 1d, rendering: 1d, interactions: 1d, accessibility: 0.5d)  
-**Current status:** Data collection layer complete — SQLite schema, passive detection from 38 cron jobs + 14 agents + infrastructure nodes, CLI (`observeco pathway scan|list|add|clear|graph`), dashboard API (`/api/pathway-graph`, `/api/pathway-scan`). 58 nodes, 53 edges detected — 35 green, 18 red (dead ends). Next: Cytoscape.js rendering + detail panel.  
-**Mockup:** `mockups/pathway-map-v5.html` — 434 lines, column pipeline layout, Cytoscape.js-ready. Also v1-v4 in `mockups/` for iteration history.
+**Current status:** ✅ Live. 87 nodes, 106 edges detected — all green (0 dead ends). Agent-to-agent routing detected from 26 signal inbox connections across 9 inter-agent pathways. Cytoscape.js rendering with dagre layout, status filters, detail panel. Framework-agnostic core (steps 1-4) works for any observeco user.
+**Mockup:** `mockups/pathway-map-v5.html` — 434 lines, column pipeline layout, Cytoscape.js-ready.
 
 ---
 
@@ -1140,7 +1158,90 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 ||| **Depends on** | `observeco chisel skills` CLI (✅ exists), push alert infrastructure (✅ from §17) |
 ||| **Implementation** | Phase 1: existing CLI (no change). Phase 2: new SQLite DB `~/.observeco/skill_audit.db` with `skill_scans` table (agent_name, skill_name, total_tokens, section_tokens breakdown, last_used, usage_7d, cost_per_turn, tier). Phase 3: `observeco chisel skills --auto-watch` subcommand + cron scheduling + threshold check + push alert on breach. Phase 4: dashboard card with ranked table, drift column, trend sparkline, auto-watch toggle banner. |
 ||| **Mockup** | `mockups/skills-audit.html` |
-|| **Related** | Already have skill description truncation (120-char cap `build_skills_system_prompt()`). This complements it by making the size transparent. Together they form: measure → expose → truncate (in Hermes). |
+||| **Related** | Already have skill description truncation (120-char cap `build_skills_system_prompt()`). This complements it by making the size transparent. Together they form: measure → expose → truncate (in Hermes). |
+
+### 3.22 Multi-Platform Messaging Gateway (🔴 Planned)
+
+**Source analysis:** Hermes Agent `gateway/platforms/` — 16+ messaging adapters on a shared `BasePlatformAdapter` ABC. Full architecture report at `~/.hermes/intelligence/analysis/hermes-gateway-architecture-report.md`
+
+**What it is:** A messaging gateway that lets ObserveCo send alerts, reports, and human-in-the-loop prompts to any messaging platform. The same infrastructure powers push alerts (§17) but extends to full bidirectional messaging (receive + respond) on every platform.
+
+**Platforms covered (16+):**
+
+| Platform | Comms Pattern | Auth | Bidirectional? | Effort |
+|----------|--------------|------|---------------|--------|
+| Telegram | Long-polling (getUpdates) | Bot token | ✅ | ~2d |
+| Discord | WebSocket gateway + slash commands | Bot token | ✅ | ~3d |
+| Slack | Socket Mode (WebSocket) | Bot + App token | ✅ | ~2d |
+| Signal | HTTP to signal-cli daemon + SSE | signal-cli daemon | ✅ | ~1d |
+| WhatsApp | Node.js bridge subprocess (port 3000) | QR pairing | ✅ | ~2d |
+| Email (IMAP/SMTP) | IMAP polling + SMTP send | Credentials | ✅ | ~1d |
+| BlueBubbles | HTTP REST to BlueBubbles server | Password | ✅ | ~1d |
+| Matrix | Matrix C-S API (sync) | Access token | ✅ | ~1.5d |
+| Mattermost | WebSocket + REST API | Bot token | ✅ | ~1d |
+| Webhook | HTTP POST listener (built-in server) | Secret header | ✅ (POST) | ~0.5d |
+| API Server | OpenAI-compatible HTTP server | Bearer token | ✅ (POST) | ~0.5d |
+| SMS | SMS gateway API | API key | ⚠️ Send only | ~1d |
+| DingTalk | Webhook + REST | App credentials | ✅ | ~1.5d |
+| Feishu/Lark | Webhook + REST | App credentials | ✅ | ~1.5d |
+| WeCom | Webhook + REST + callback | Bot key | ✅ | ~1.5d |
+| Weixin | Webhook + REST | App credentials | ✅ | ~1.5d |
+
+**Architecture (replicable from Hermes):**
+
+```
+PlatformAdapter (ABC) — connect(), disconnect(), send(), send_image(), send_voice()
+        │
+  ┌─────┴─────┬──────────┬──────────┬──────────┐
+Telegram   Discord    Slack     Signal    WhatsApp  ... 16+
+Adapter    Adapter   Adapter   Adapter    Adapter
+   │          │         │         │          │
+  PTB      discord.py slack_bolt signal-cli  Node.js
+ (poll)    (WebSocket)(Socket)   (SSE)       bridge:3000
+```
+
+**Shared infrastructure (replicable):**
+
+| Component | Purpose |
+|-----------|---------|
+| Message dedup (TTL cache) | Prevent duplicate processing on reconnect |
+| Text batch aggregator | Merge rapid-fire text into single messages |
+| Thread participation tracker | Correct reply threading |
+| Proxy resolution | Multi-source proxy (env var, macOS system) |
+| UTF-16 truncation | Platform-compatible message length |
+| Fatal error system | Structured error states with retryability |
+
+**How incoming messages flow:**
+```
+Platform event → adapter handler → MessageEvent (unified format)
+                                    → session manager
+                                    → AIAgent.chat() / handler
+                                    → adapter.send() (back to user)
+```
+
+**Auth model:** Each adapter reads credentials from env vars with standardized naming:
+- `OBSERVECO_TELEGRAM_BOT_TOKEN`
+- `OBSERVECO_DISCORD_BOT_TOKEN`
+- `OBSERVECO_SLACK_BOT_TOKEN`
+- `OBSERVECO_SLACK_APP_TOKEN`
+- `OBSERVECO_SIGNAL_CLI_HTTP_URL`
+- `OBSERVECO_WHATSAPP_BRIDGE_SCRIPT` + `_PORT`
+- etc.
+
+**Implementation phases:**
+
+| Phase | Scope | Platforms | Effort |
+|-------|-------|-----------|--------|
+| P1 — Core interface | `PlatformAdapter` ABC + MessageEvent + SendResult + config loader | — | ~2d |
+| P2 — First 4 adapters | Telegram + Webhook + Email + API Server | Telegram, webhook, email, REST | ~4d |
+| P3 — Extended adapters | Discord + Slack + Signal | Discord, Slack, Signal | ~5d |
+| P4 — Full set | WhatsApp + Matrix + Mattermost + BlueBubbles + SMS + Chinese platforms | All 16+ | ~8d |
+
+**Free tier:** All 16+ platforms — this is core infrastructure. The pathway map (§3.19) needs gateway knowledge to draw real communication edges (agent → Telegram → user). Push alerts (§17) needs at least one send channel. Gating this behind Pro would break both features.
+
+**Pro tier:** Same (no gating). Pro value is in analysis depth and alert sophistication, not in platform access.
+
+**Note:** This is a large infrastructure feature. Recommend building only what push alerts (§17) needs first (Telegram + webhook + email sends), then expanding to full bidirectional support in P2+.
 
 ## 4. Free Tier — What You Get Immediately
 
@@ -1162,23 +1263,20 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 
 ---
 
-## 5. Pro Tier ($9 solo / $49 team) — What Upgrades Unlock
+## 5. Pro Tier ($9 Solo/month) — What Upgrades Unlock
 
-| Feature | Solo ($9/mo) | Team ($49/mo) | Built? |
-|---------|-------------|---------------|--------|
-| Push alerts (Telegram, webhook, email) | ✅ 1 channel | ✅ unlimited | 🔴 Planned ~3d |
-| Extended history (never-pruned) | ✅ | ✅ | 🔴 Planned ~2h |
-| Auto-heal (configurable) | ✅ | ✅ | 🔴 Planned ~1d |
-| Chisel compress auto-watch | ✅ | ✅ | 🔴 Planned ~2d |
-| Per-turn token tracking (never-pruned) | ✅ | ✅ | 🔴 Planned ~3d |
-| Fleet comparison | ❌ | ✅ | 🔴 Planned (included in extended history) |
-| Multi-machine relay | ❌ | ✅ | 🔴 Planned ~3d |
-| Custom alert thresholds | ❌ | ✅ | 🔴 Planned |
-| Team collaboration | ❌ | ✅ | 🔴 Planned |
+| Feature | Solo ($9/mo) | Built? |
+|---------|-------------|--------|
+| Push alerts (Telegram, webhook, email) | ✅ 1 channel | 🔴 Planned ~3d |
+| Extended history (never-pruned) | ✅ | 🔴 Planned ~2h |
+| Auto-heal (configurable) | ✅ | 🔴 Planned ~1d |
+| Chisel compress auto-watch | ✅ | 🔴 Planned ~2d |
+| Per-turn token tracking (never-pruned) | ✅ | 🔴 Planned ~3d |
 
-**Pricing:** Solo $9/mo, Team $49/mo. 30-day free trial. Stripe checkout wired.
+**Pricing:** Solo $9/mo only. Team tier ($49/mo) delayed — product not mature enough.
+30-day free trial via Stripe. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`.
 
-**⚠️ Reality check:** Strip is wired but NO Pro features are built yet. A user who starts a trial today sees nothing unlocked. Pro features are spec'd in `specs/pulse-depth-spec.md`.
+**⚠️ Reality check:** Pro features are spec'd but NOT fully built yet — a user who starts a trial today sees nothing unlocked. Stripe checkout + license key validation is the first step (v0 of Pro).
 
 ---
 
@@ -1194,6 +1292,55 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 ---
 
 ## 7. Architecture Overview
+
+### 7.1 Process Architecture — Two Independent Processes
+
+ObserveCo runs as **two independent processes** that share a common SQLite database. They are NOT a client-server pair — they are peer processes with different responsibilities.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                  YOUR SYSTEM                              │
+│                                                          │
+│  ┌─────────────────────┐   ┌──────────────────────────┐  │
+│  │  observeco watch    │   │  observeco dashboard     │  │
+│  │  (data collector)   │   │  (web UI reader)         │  │
+│  │                     │   │                          │  │
+│  │  PID: 23941         │   │  PID: 62697              │  │
+│  │  Started: 11:33am   │   │  Started: when you need  │  │
+│  │  Runs: continuous   │   │          the UI          │  │
+│  │                     │   │                          │  │
+│  │  What it does:      │   │  What it does:           │  │
+│  │  • Probes agents    │   │  • Serves /api/* from    │  │
+│  │    every 30s        │──┼──▶  pulse.db (read-only)  │  │
+│  │  • Writes pulse,    │   │  • Renders HTML pages    │  │
+│  │    trims, drift,    │   │  • Auto-launches watch   │  │
+│  │    garden to        │   │    if it's not running   │  │
+│  │    ~/.observeco/    │   │  • Read-only consumer    │  │
+│  │    pulse.db         │   │                          │  │
+│  └─────────────────────┘   └──────────────────────────┘  │
+│         │                              │                 │
+│         └──────────┬───────────────────┘                 │
+│                    ▼                                     │
+│        ┌────────────────────────┐                        │
+│        │  ~/.observeco/pulse.db │                        │
+│        │  (shared SQLite)       │                        │
+│        │  - watch daemon WRITES │                        │
+│        │  - dashboard READS     │                        │
+│        └────────────────────────┘                        │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Critical rules for anyone working on the system:**
+
+| Rule | Why |
+|------|-----|
+| **Watch daemon is the data collector. Dashboard is a read-only consumer.** | The watch daemon writes pulse, trims, drift, garden, pathway. The dashboard only reads. Killing the dashboard does NOT stop data collection. |
+| **Killing/restarting the dashboard is safe.** | The watch daemon continues collecting data. When the dashboard restarts, it resumes reading from the same DB — no data is lost, no probes are missed. |
+| **Killing the watch daemon IS visible.** | Data stops updating. Dashboard shows stale data with "last seen Xm ago". Phase banner detects the gap. |
+| **Dashboard auto-launches the watch daemon** on startup if it's not running (`_ensure_watch_running()`). | If you `observeco watch stop` and then `observeco dashboard`, the dashboard will re-launch the watch daemon automatically. |
+| **Multiple dashboard instances can accumulate** if server.py is invoked directly (not through `observeco dashboard`). | Each `uvicorn.run()` without going through the CLI creates a separate process on a different port. Always use `observeco dashboard` to start. |
+
+### 7.2 Data Flow Diagram
 
 ```
 Your AI Agents (any framework)
