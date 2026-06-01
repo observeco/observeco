@@ -57,8 +57,8 @@
 | 18 | Extended history (7d free / never-pruned pro) | Dashboard | ✅ Live | ✅ 7d (pruning cron at 3am) + L2 baselines (RSS, P95, errors, upstream) | ✅ never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
 || 19 | In-dashboard Glossary & FAQ | Dashboard | ✅ Live | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
 || 20 | Skill Audit (`observeco chisel skills`) | Analysis | ✅ Live | ✅ manual CLI scan + ranked table | ✅ auto-scan (weekly) + drift tracking + threshold alerts + 12-week trend chart | ~3d (built) | observeco-master-plan.md §3.21 |
-|| 21 | Communication Pathway Map | Diagnostics | ✅ Live | ✅ Interactive graph with 87 nodes + 106 edges + agent-to-agent routing + 0 dead ends | ✅ Detail panel + drag + auto-alert | ~3d (built) | observeco-master-plan.md §3.19 |
-|| 22 | Unified detection engine (OTel, 35+ messaging platforms, 10+ agent frameworks, macOS/Linux/Windows) | Infrastructure | 🔴 Planned | ✅ All (detection + all platforms — core infra for Pathway Map) | ✅ Same (no gating) | ~P1-P6 | observeco-master-plan.md §3.22 |
+||| 21 | Communication Pathway Map (subgraph folding, daemon heartbeat metadata, sticky header) | Diagnostics | ✅ Live | ✅ Interactive graph with 98 nodes + 129 edges + agent-to-agent routing + 0 dead ends + subgraph folding | ✅ Detail panel + drag + auto-alert | ~3d (built) | observeco-master-plan.md §3.19 |
+|| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity) | Infrastructure | 🔴 Planned | ✅ All (detection + health — core infra for everything) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
 
 ---
 
@@ -1092,7 +1092,7 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 | 4 | `agent_configs` from pulse.db | All registered agents → Telegram (pulse check) | ✅ Yes |
 | 5 | Cron job scheduler files | Cron delivery targets via `OBSERVECO_PATHWAY_CRON_DIR` | ✅ Configurable |
 | 6 | Agent signal inboxes | Agent-to-agent routing from signal `from`/`to` fields via `OBSERVECO_PATHWAY_SIGNALS_DIR` | ✅ Configurable |
-| 7 | Daemon/watcher scan | Launchd plists, restart logs, running watch daemon | ✅ Yes (macOS) |
+| 7 | Daemon/watcher scan (Phase 1: agent metadata from pulse_log, Phase 2: launchd plists + restart logs + process inspect) | ✅ Yes (Phase 1: any framework. Phase 2: macOS/Hermes) |
 | 8 | ClawForge hub routes | OpenClaw agent routing from AGENTS.md + cron dirs | ✅ OpenClaw |
 
 Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6 default to Hermes paths but are overridable via env vars `OBSERVECO_PATHWAY_CRON_DIR` and `OBSERVECO_PATHWAY_SIGNALS_DIR`. Step 7 detects background daemons via macOS launchd, pulse.db restart_log, and process inspection. Step 8 reads OpenClaw agent profile directories for inter-agent references (AGENTS.md) and internal schedulers (cron dir).
@@ -1127,7 +1127,7 @@ Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6
 
 **Current status:** ✅ Live. 98 nodes, 129 edges detected — all green (0 dead ends). Agent-to-agent routing from 28 signal connections across 9 pathways. 16 launchd daemons + 3 restart-log agents detected. 4 OpenClaw ClawForge hub edges. Framework-agnostic core (steps 1-4) + configurable cron/signal paths (env vars) + daemon/watcher scan + OpenClaw hub support.
 
-**Daemon detection caveat:** Steps 7a-7c are Hermes-specific (restart_log table, observeco process grepping, ai.hermes.* plist scanning). A non-Hermes user with systemd/Docker won't get daemon detection. Planned fix: self-registration via `daemon: true` flag in agents.json (Option A). Marked as tech debt.
+**Daemon detection:** Step 7 now has two phases. **Phase 1 (generic)** reads agent-provided heartbeat metadata from `pulse_log.metadata` — any agent that returns a health check HTTP response with `{"metadata": {"daemon": true, "watchdog": "systemd"}}` gets detected as a daemon with the appropriate watchdog mechanism label. This works for any framework. **Phase 2 (Hermes-compatible)** falls back to restart_log, launchd plists, and process grepping when agents don't self-report.
 
 **Recent fixes (2026-06-04):**
 - **Subgraph folding:** New "Collapse Leaves/Expand All" toggle in toolbar. Groups leaf agents under hub nodes (platforms/routers/agents with 5+ connections), hides children + edges, and appends a count badge to the hub label. Non-destructive — hidden nodes retain their data for detail panel clicks.
@@ -1169,127 +1169,144 @@ Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6
 ||| **Mockup** | `mockups/skills-audit.html` |
 ||| **Related** | Already have skill description truncation (120-char cap `build_skills_system_prompt()`). This complements it by making the size transparent. Together they form: measure → expose → truncate (in Hermes). |
 
-### 3.22 Multi-Platform Messaging + Detection Gateway (🔴 Planned)
+### 3.22 Agent Health Detection Engine (🔴 Planned — market-informed)
 
-**Source analysis:** Deep crawl of 80+ ObserveCo source files + Hermes `gateway/platforms/` (16 adapters) + OpenClaw (35 channels) + OpenInference (28 framework instrumentors) + 12 GitHub references.
+**Market research source:** `~/.hermes/intelligence/analysis/market-needs-research.md`
+**Key findings: existing tools (Langfuse, Arize Phoenix, LangSmith) monitor LLM traces. Nobody monitors agent PROCESSES.**
 
-**This feature combines TWO things:**
+#### Product Positioning
 
-1. **Unified Detection Engine** — discover agents across ALL frameworks and OSes
-2. **Multi-Platform Messaging Gateway** — send/receive on 35+ messaging platforms
+> **"Langfuse shows you what your agents said. ObserveCo shows you whether they're still breathing."**
 
-They're combined because the pathway map needs BOTH: it needs to know what frameworks exist AND what platforms they communicate through.
+**ObserveCo's differentiator:** Health-first, traces-second. Cross-framework by default. Platform-aware. Process-level. Affordable for solo devs ($9/mo).
 
----
+#### Market Data That Drove This Design
 
-#### Part A: Unified Detection Engine
+| Rank | Pain Point | Source | Existing Tools |
+|------|-----------|--------|----------------|
+| 1 | **"Is my agent alive?"** — no process health visibility | HN "How are you monitoring AI agents?" | **Nobody does this** |
+| 2 | **"Fragmented stack"** — Team A uses LangGraph, Team B uses CrewAI, no unified view | HN (chirdeeps) | **Nobody does this** |
+| 3 | **"No audit trail for post-mortems"** | HN | Partial (Langfuse traces) |
+| 4 | **"Surprise LLM bills"** — untracked token usage | HN | Proxy tools only |
+| 5 | **"Messaging bot is connected?"** — no platform health check | Implied | **Nobody does this** |
 
-**Key insight:** 70% of agent framework instrumentation is already solved by OpenInference (Arize, 1k★) and OpenLLMetry (traceloop, 7k★). ObserveCo should NOT build per-framework detectors.
+**Framework adoption reality (PyPI downloads, last 30 days):**
+LangChain 282M · LangGraph 53M · Pydantic AI 41M · CrewAI 14M · LlamaIndex 12M · Agno 3.6M. Users run 2-3 frameworks. No single-framework solution works.
 
-**OpenInference already instruments 28 Python packages:**
+**Key quote that defines the market:**
+> *"Observability and governance cannot live inside the agent framework. They have to live in an independent execution layer."* — HN comment
 
-| Category | Frameworks |
-|----------|-----------|
-| Agent frameworks | LangChain, LangGraph, CrewAI, AutoGen, OpenAI Agents, Pydantic AI, SmolAgents, Agno, Claude Agent SDK, DSPy, Haystack, LlamaIndex |
-| LLM SDKs | OpenAI, Anthropic, MistralAI, Google GenAI, AWS Bedrock, VertexAI, Groq, liteLLM |
-| Tools | MCP, Guardrails, Instructor, Portkey |
-| Span processors | OpenLIT, OpenLLMetry (bridges to OpenTelemetry) |
-
-**How ObserveCo uses this:**
-
-```
-User installs: pip install openinference-instrumentation-langchain
-
-Their LangChain agent → OpenInference tracer → OTel spans (OTLP port 4318)
-                                                      ↓
-                      ObserveCo OTel listener (port 4318/4317)
-                      → extracts: agent_name, tool calls, LLM calls, duration, errors
-                      → feeds: pulse database, pathway map, token tracking, alerts
-```
-
-**Detection pipeline:**
-
-```
-1. OTel Listener (primary):    Listen on OTLP port 4318/4317 for spans from any
-                                OpenInference or OpenLLMetry-instrumented agent
-
-2. Framework import scan:      pip list / npm list → detect installed frameworks
-                                → suggest the right OpenInference package
-
-3. Process scan (cross-OS):    pgrep (macOS/Linux) / tasklist (Windows) / systemctl
-                                → find agent processes regardless of framework
-
-4. Config scan (deep):         Known config paths per framework + OS:
-                                Hermes:     ~/.hermes/profiles/*/config.yaml
-                                OpenClaw:   openclaw config / package.json
-                                CrewAI:     crew.py, config/*.yaml
-                                Semantic Kernel:  config/*.json
-                                Claude Code: ~/.claude/*
-                                Codex CLI:   ~/.codex/*
-
-5. Health probe (fallback):    HTTP GET / shell command (30s interval)
-                                → pulse check when OTel spans not available
-```
-
-**OS-level detection (cross-platform):**
-
-| OS | Service Detection | Process Detection | Crash Detection |
-|----|------------------|------------------|-----------------|
-| macOS | launchctl list, brew services | pgrep -f | log stream --predicate |
-| Linux | systemctl list-units, supervisor | pgrep -f, /proc/*/ | journalctl |
-| Windows | Get-Service, schtasks | tasklist, Get-Process | Event Log |
+**ObserveCo is that independent layer.**
 
 ---
 
-#### Part B: Multi-Platform Messaging Gateway
+#### What We Build (Launch — P0)
 
-**Architecture:** `BasePlatformAdapter(ABC)` — same interface for all platforms:
+| Priority | Feature | Why Market Needs It | Competition |
+|----------|---------|--------------------|-------------|
+| **P0** | Agent process health (pgrep + launchd + Docker + systemd) | #1 pain point: "Is my agent alive?" | **Nobody** ⚡ |
+| **P0** | OTel listener on port 4318 | 28 frameworks auto-emit. Zero-instrument entry point. | Phoenix does this, but ObserveCo adds process health on top |
+| **P0** | Cross-framework unified dashboard | Fragmented stack = one pane for all frameworks | **Nobody** ⚡ |
+| **P0** | Platform connectivity health (Telegram, Discord, Slack, webhooks) | Devs need to know if their bot is connected | **Nobody** ⚡ |
+| **P1** | Docker container process health | ~60% of production agents run in Docker | **Nobody** ⚡ |
+| **P1** | Crash log analysis (OOM, segfault, kill signals) | Post-mortem need cited on HN | **Nobody** ⚡ |
+| **P2** | Cost per agent/model | #4 pain point — surprise bills | Proxy tools only |
 
-```python
-async def connect(self) -> bool
-async def disconnect(self) -> None
-async def send(self, chat_id, content, reply_to, metadata) -> SendResult
-async def send_image/voice/video(self, ...)  # optional overrides
-async def edit_message(self, ...)
-async def delete_message(self, ...)
+#### What We Defer (Post-Launch)
+
+| Feature | Why Defer | Future Trigger |
+|---------|-----------|---------------|
+| Bidirectional messaging gateway (send/receive on all platforms) | Pathway Map needed this, but market wants HEALTH first not messaging first | Phase 2 |
+| Multi-agent comm tracing (inter-agent conversation visibility) | InsAIts exists but tiny; market not screaming for this yet | Phase 3 |
+| CI/CD integration (GitHub Actions hooks) | 70% use it but no observability tool does this well | Phase 4 |
+| Windows-specific probes | OTel listener covers Windows agents anyway via OTLP | Phase 4 |
+
+---
+
+#### Architecture
+
+**The ObserveCo detection stack (4 layers):**
+
+```
+Layer 1 — Process Health (P0)
+┌──────────────────────────────────────────────┐
+│  pgrep -f agent_name          (macOS/Linux)  │
+│  launchctl list               (macOS)        │
+│  systemctl list-units         (Linux)        │
+│  docker ps                    (Docker)       │
+│  tasklist / Get-Process       (Windows)      │
+│  → Status: alive / dead / error             │
+│  → Every 30s, stored in pulse.db            │
+└──────────────────────────────────────────────┘
+
+Layer 2 — OTel Span Ingestion (P0)
+┌──────────────────────────────────────────────┐
+│  OTLP listener on port 4318/4317             │
+│  Accepts spans from OpenInference (28 pkgs)  │
+│  Extracts: agent_name, tool_calls, LLM calls │
+│  → Feeds: pulse.db, pathway map, token track │
+└──────────────────────────────────────────────┘
+
+Layer 3 — Platform Connectivity (P0)
+┌──────────────────────────────────────────────┐
+│  Telegram bot: getMe() → connected status    │
+│  Discord: gateway heartbeat alive            │
+│  Slack: API test → connected                 │
+│  WhatsApp webhook: last received timestamp   │
+│  Email IMAP: login test → connected          │
+│  → Status per platform in dashboard          │
+└──────────────────────────────────────────────┘
+
+Layer 4 — Cross-Framework Dashboard (P0)
+┌──────────────────────────────────────────────┐
+│  Single view: agents from any framework      │
+│  Shows: alive/dead, framework label, tokens  │
+│  Click → per-agent detail (health timeline)  │
+│  All frameworks in one tab — not one per     │
+└──────────────────────────────────────────────┘
 ```
 
-**Coverage by priority:**
+---
 
-| Priority | Platforms | Implementation |
-|----------|-----------|---------------|
-| HIGH (P1) | Telegram, Discord, Slack, Signal, WhatsApp, Email | python-telegram-bot (29k★), discord.py (16k★), slack_bolt (4k★), signal-cli + SSE, whatsmeow Go bridge (6.2k★), IMAP + SMTP |
-| MEDIUM (P2) | Microsoft Teams, Google Chat, Matrix, Mattermost | Microsoft Graph API, Google Chat API, matrix-nio, mattermostdriver |
-| LOW (P3) | LINE, QQ Bot, Feishu, WeCom, Weixin, DingTalk, SMS, BlueBubbles, Zalo, Nostr, Twitch, IRC, Nextcloud Talk, Synology Chat, Tlon, Yuanbao | OpenClaw channel patterns + platform-specific SDKs |
+#### Implementation Phases
 
-**All credentials from env vars:** `OBSERVECO_TELEGRAM_BOT_TOKEN`, `OBSERVECO_DISCORD_BOT_TOKEN`, etc.
-
-**Free tier:** All 16+ platforms + all frameworks. This is core infrastructure — the pathway map needs it.
+| Phase | Scope | Systems Covered | Effort | Launch? |
+|-------|-------|----------------|--------|---------|
+| **P0** | Agent process health (pgrep + launchd + Docker + systemd) + OTel listener + platform connectivity + cross-framework dashboard | All frameworks (health), Hermes, OpenClaw, Docker, Telegram, Discord, Slack, webhooks | 6-8d | ✅ **Launch** |
+| **P1** | Crash log analysis + Docker container expand + cost per agent estimates | OOM/segfault detection, full Docker integration | 3d | ⏳ Phase 1.1 |
+| **P2** | Cost per model + budget thresholds + anomaly detection | Per-agent cost tracking | 4d | ⏳ Phase 2 |
+| **P3** | Messaging gateway (bidirectional adapters: Telegram, Discord, Slack, Signal) | 4 send+receive platforms | 6d | ⏳ Phase 3 |
+| **P4** | OS expansion (Windows services) + CI/CD hooks + extended adapters | Windows + GitHub Actions + 4 more platforms | 6d | ⏳ Phase 4 |
+| **P5** | Plugin system + community adapter contributions | Community framework | 5d | ⏳ Phase 5 |
 
 ---
 
-#### Part C: Implementation Phases
-
-| Phase | Scope | Systems Covered | Effort |
-|-------|-------|----------------|--------|
-| **P1** | OTel listener (4318) + import scan + process scan + Hermes/OpenClaw config scan | All frameworks with OpenInference + Hermes + OpenClaw | 3d |
-| **P2** | Webhook server → adapter pattern + Email adapter | Webhook + email send/receive | 2d |
-| **P3** | Gateway adapters: Telegram, Discord, Slack, Signal, WhatsApp | 5 bidirectional messaging platforms | 8d |
-| **P4** | OS expansion: Windows services + Linux systemd + crash detection | Windows + Linux agent discovery | 3d |
-| **P5** | Extended adapters: Teams, Google Chat, Matrix, Mattermost | 4 more platforms | 5d |
-| **P6** | Framework expansion + plugin system | Community adapter contributions | 5d |
-
----
-
-**Reference implementations:**
+#### Reference implementations
 
 | Reference | Stars | What to Learn |
 |-----------|-------|---------------|
 | Arize-ai/openinference | 1k★ | 28 Python instrumentations, OTel-native, standard ports (4318/4317) |
 | traceloop/openllmetry | 7k★ | OTel semantic conventions for gen_ai |
-| nonebot/nonebot2 | 7.5k★ | Python multi-platform adapter registration |
-| Hermes gateway (local) | — | 16 adapter BasePlatformAdapter ABC |
-| OpenClaw (local) | — | 35 channels + channel catalog JSON + Zod schema |
+| Hermes gateway (local) | — | 16 adapter BasePlatformAdapter ABC (for platform connectivity) |
+| OpenClaw (local) | — | 35 channels + channel catalog JSON (for connectivity) |
+| vectordotdev/vector | 22k★ | Multi-OS log/metric collection agent pattern (for crash logs) |
+
+---
+
+#### Market-Ready Score: ~65%
+
+| Capability | Market Expectation | Launch | Score |
+|------------|------------------|--------|-------|
+| Agent process health (any framework) | Must have | ✅ pgrep + launchd + Docker + systemd | **100%** |
+| OTel span ingestion (28 frameworks) | Must have | ✅ OTel listener on 4318 | **100%** |
+| Cross-framework unified dashboard | High value | ✅ Single pane for all frameworks | **80%** |
+| Platform connectivity (Telegram/Discord/Slack) | Medium | ✅ Gateway health check | **70%** |
+| Crash log analysis | Medium | ⚠️ Basic (stderr, kill detection) | **30%** |
+| Cost per agent/model | High value | ❌ Phase 2 | **0%** |
+| Multi-agent comm tracing | Low for MV1 | ❌ Phase 3 | **0%** |
+| CI/CD integration | Medium | ❌ Phase 4 | **0%** |
+
+**The 65% covers the gap nobody fills: agent process health + cross-framework + platform connectivity.** The remaining 35% is Phase 2-5 differentiation.
 
 ## 4. Free Tier — What You Get Immediately
 
