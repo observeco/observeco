@@ -27,6 +27,8 @@ body {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 0; margin-bottom: 12px;
   border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg);
 }
 .header-left { display: flex; align-items: center; gap: 10px; }
 .header-title { font-size: 18px; font-weight: 700; }
@@ -49,6 +51,7 @@ body {
   display: flex; gap: 20px; padding: 10px 14px;
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   margin-bottom: 12px; align-items: center; flex-wrap: wrap;
+  position: sticky; top: 52px; z-index: 9;
 }
 .summary-stat { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--sec); }
 .summary-num { font-weight: 700; font-size: 16px; }
@@ -170,7 +173,7 @@ body {
       <button class="filter-chip active-amber" data-filter="yellow" onclick="setFilter('yellow', this)" style="color:var(--amber);">🟡 Concerns</button>
       <button class="filter-chip active-red" data-filter="red" onclick="setFilter('red', this)" style="color:var(--red);">🔴 Dead Ends</button>
       <span style="flex:1;"></span>
-      <span class="graph-toolbar-label" style="color:var(--muted);font-size:10px;">Scroll to zoom · Drag to pan</span>
+      <span class="graph-toolbar-label" style="color:var(--muted);font-size:11px;">Scroll to zoom · Drag to pan</span>
     </div>
     <div id="cy"><div class="loading">Loading pathway map...</div></div>
     <!-- Legend -->
@@ -280,7 +283,6 @@ function buildCytoscapeElements() {
             icon: '✕',
             nodeColor: '#ef4444',
             shape: 'ellipse',
-            parent: true,
             raw: { id: stubId, name: '∅ Dead End', type: 'dead-end' }
           },
           classes: 'dead-end-node'
@@ -329,11 +331,7 @@ function initializeCy() {
 
   const elements = buildCytoscapeElements();
 
-  try {
-    cytoscape.use(require('cytoscape-dagre'));
-  } catch(e) {
-    // CDN fallback
-  }
+  // cytoscape-dagre is registered globally via CDN script tag — no require() needed
 
   cy = cytoscape({
     container: document.getElementById('cy'),
@@ -346,7 +344,7 @@ function initializeCy() {
           'text-valign': 'center',
           'text-halign': 'center',
           'color': '#e2e8f0',
-          'font-size': '11px',
+          'font-size': '13px',
           'font-weight': '600',
           'font-family': 'Inter, system-ui, sans-serif',
           'width': 'label',
@@ -419,6 +417,7 @@ function initializeCy() {
           'target-arrow-color': '#ef4444',
           'width': 2,
           'line-style': 'dashed',
+          'target-arrow-shape': 'tee',
         }
       },
       {
@@ -443,14 +442,16 @@ function initializeCy() {
     layout: {
       name: 'dagre',
       rankDir: 'LR',
-      spacingFactor: 1.5,
-      nodeSep: 40,
-      rankSep: 80,
+      spacingFactor: 1.05,
+      nodeSep: 24,
+      rankSep: 50,
+      fit: true,
+      padding: 20,
       animate: true,
       animationDuration: 300,
     },
-    minZoom: 0.3,
-    maxZoom: 3,
+    minZoom: 0.4,
+    maxZoom: 2.5,
     wheelSensitivity: 0.3,
   });
 
@@ -471,8 +472,38 @@ function initializeCy() {
     }
   });
 
+  // Hover dimming (Datadog pattern: dim non-connected neighbors)
+  cy.on('mouseover', 'node', function(evt) {
+    const node = evt.target;
+    const connected = new Set();
+    node.connectedEdges().forEach(function(e) {
+      connected.add(e.source().id());
+      connected.add(e.target().id());
+    });
+    cy.nodes().forEach(function(n) {
+      if (n.id() !== node.id() && !connected.has(n.id()) && n.data('type') !== 'dead-end') {
+        n.style('opacity', 0.25);
+      }
+    });
+    cy.edges().forEach(function(e) {
+      if (e.source().id() !== node.id() && e.target().id() !== node.id()) {
+        e.style('opacity', 0.15);
+      }
+    });
+  });
+
+  cy.on('mouseout', 'node', function(evt) {
+    cy.nodes().forEach(function(n) { n.style('opacity', 1); });
+    cy.edges().forEach(function(e) { e.style('opacity', 1); });
+  });
+
   // Apply current filter
   applyFilter(currentFilter);
+
+  // Add failure-scenario markers on dead-end edges
+  cy.edges('.edge-red').forEach(function(e) {
+    e.style('line-style', 'dashed');
+  });
 
   // Update summary
   updateSummary();
@@ -572,7 +603,13 @@ function setFilter(filter, btn) {
   document.querySelectorAll('.filter-chip').forEach(function(b) {
     b.classList.remove('active', 'active-red', 'active-amber');
   });
-  btn.classList.add('active');
+  if (filter === 'red') {
+    btn.classList.add('active-red');
+  } else if (filter === 'yellow') {
+    btn.classList.add('active-amber');
+  } else {
+    btn.classList.add('active');
+  }
   applyFilter(filter);
 }
 
@@ -585,8 +622,12 @@ function applyFilter(filter) {
     if (filter === 'all') {
       n.style('display', 'element');
     } else if (filter === 'red') {
-      // Only show dead-end nodes + edges
-      n.style('display', isDead ? 'element' : 'none');
+      // Show dead-end nodes + source nodes of red edges
+      const redEdgeSources = new Set();
+      cy.edges('.edge-red').forEach(function(e) {
+        redEdgeSources.add(e.source().id());
+      });
+      n.style('display', (isDead || redEdgeSources.has(n.id())) ? 'element' : 'none');
     } else {
       n.style('display', 'element');
     }
@@ -605,27 +646,28 @@ function applyFilter(filter) {
     }
   });
 
-  // For green/yellow: hide orphaned nodes not connected to any visible edge
-  if (filter === 'green' || filter === 'yellow') {
+  // For green/yellow/red: hide orphaned nodes not connected to any visible edge
+  if (filter === 'green' || filter === 'yellow' || filter === 'red') {
     cy.nodes().forEach(function(n) {
       const isDead = n.data('type') === 'dead-end';
       const visibleEdges = n.connectedEdges(':visible');
       if (!isDead && visibleEdges.length === 0) {
         n.style('display', 'none');
       }
-      if (isDead) {
+      // Hide dead-end nodes in green/yellow filters (they have no real purpose there)
+      if (isDead && filter !== 'red') {
         n.style('display', 'none');
       }
     });
   }
 
   // Rerun layout with animation
-  cy.layout({ name: 'dagre', rankDir: 'LR', animate: true, animationDuration: 200 }).run();
+  cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.05, nodeSep: 24, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 200 }).run();
 }
 
 function resetLayout() {
   if (!cy) return;
-  cy.layout({ name: 'dagre', rankDir: 'LR', animate: true, animationDuration: 400 }).run();
+  cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.05, nodeSep: 24, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 400 }).run();
 }
 
 async function refreshData() {
@@ -641,7 +683,16 @@ async function refreshData() {
 // Initialize on load
 (async function() {
   const ok = await fetchGraph();
-  if (ok) initializeCy();
+  if (ok) {
+    try {
+      initializeCy();
+    } catch(e) {
+      console.error('Cytoscape initialization failed:', e);
+      document.getElementById('cy').innerHTML = '<div class="loading" style="color:#ef4444;">⚠️ Pathway map failed to render. <a href="/pathway" style="color:#38bdf8;">Reload page</a> or check console for details.</div>';
+    }
+  } else {
+    document.getElementById('cy').innerHTML = '<div class="loading" style="color:#ef4444;">⚠️ No pathway data. Run <code>observeco pathway scan</code> first.</div>';
+  }
 })();
 </script>
 </body>

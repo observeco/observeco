@@ -2011,8 +2011,8 @@ function showStatus(elId, msg, type) {
 
 // ─── Auto-Heal ───
 function runHealCheck() {
-  document.getElementById('healLog').innerHTML = 'Running heal check...';
-  fetch('/api/heal-log')
+  document.getElementById('healLog').innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;">Running heal check...</div>';
+  fetch('/api/trigger-heal')
     .then(r => r.text())
     .then(html => {
       document.getElementById('healLog').innerHTML = html;

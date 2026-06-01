@@ -2028,11 +2028,9 @@ async def api_agents(
         <span class="value" style="color:#94a3b8;">{drift_str}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
-      <div class="metric-row" onclick="loadTab('{name}','tokens')">
+      <div class="metric-row">
         <span class="label">Composition</span>
         <span class="value" class="u-flex-1">{token_bar}</span>
-        <span class="click-hint">See details</span>
-        <span class="arrow" class="u-align-start u-mt-6">›</span>
       </div>
     </div>""")
 
@@ -3229,20 +3227,8 @@ async def api_heal_log():
     <div class="heal-active-title"><strong>⚠️ Active Issues</strong> — agents with problems that need attention.</div>
 </div>""" + "\n".join(active_issues)
         else:
-            html = '<div class="empty-state">✅ No self-heal events recorded yet. Click <strong>Run Heal Check Now</strong> below to diagnose current issues.</div>'
+            html = '<div class="empty-state">✅ No self-heal events recorded yet.</div>'
 
-        # Add running heal button
-        html += """
-<div class="heal-trigger-section">
-    <button class="heal-trigger-btn" onclick="
-        var el=document.getElementById('heal-log');
-        if(el){el.innerHTML='<div style=\\'text-align:center;padding:20px;color:#64748b;\\'>Running heal check...</div>';}
-        fetch('/api/trigger-heal').then(function(r){return r.text();}).then(function(t){
-            var el2=document.getElementById('heal-log');
-            if(el2){el2.innerHTML=t;}
-        });
-    ">⚡ Run Heal Check Now</button>
-</div>"""
         return HTMLResponse(html)
 
     items = []
@@ -3261,17 +3247,6 @@ async def api_heal_log():
 </div>""")
 
     html = "\n".join(items)
-
-    # Add trigger button
-    html += """
-<div class="heal-trigger-section">
-    <button class="heal-trigger-btn" onclick="
-        fetch('/api/trigger-heal').then(function(r){return r.text();}).then(function(t){
-            var el=document.getElementById('heal-log');
-            if(el){el.innerHTML=t;}
-        });
-    ">⚡ Run Heal Check Now</button>
-</div>"""
 
     return HTMLResponse(html)
 
