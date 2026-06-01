@@ -1395,8 +1395,10 @@ class Database:
             )
             count += 1
 
-        # 5. Scan Hermes cron jobs from filesystem
-        hermes_cron_dir = Path.home() / ".hermes" / "cron"
+        # 5. Scan cron jobs from filesystem (configurable path for framework-agnostic support)
+        import os
+        cron_dir_env = os.environ.get("OBSERVECO_PATHWAY_CRON_DIR", "")
+        hermes_cron_dir = Path(cron_dir_env) if cron_dir_env else (Path.home() / ".hermes" / "cron")
         if hermes_cron_dir.exists():
             jobs_file = hermes_cron_dir / "jobs.json"
             if jobs_file.exists():
@@ -1446,8 +1448,10 @@ class Database:
                 except (json.JSONDecodeError, Exception) as exc:
                     pass
 
-        # 6. Detect agent-to-agent routing from signal inboxes
-        signal_base = Path.home() / ".hermes" / "signals"
+        # 6. Detect agent-to-agent routing from signal inboxes (configurable path)
+        import os
+        signals_env = os.environ.get("OBSERVECO_PATHWAY_SIGNALS_DIR", "")
+        signal_base = Path(signals_env) if signals_env else (Path.home() / ".hermes" / "signals")
         if signal_base.exists():
             for _agent_node_dir in signal_base.iterdir():
                 if not _agent_node_dir.is_dir():
@@ -1500,6 +1504,114 @@ class Database:
                             break
                 except Exception:
                     continue
+
+        # 7. Detect daemons and watchers — long-running background processes
+        # Sources: restart_log in pulse.db, launchd plists, running processes
+        try:
+            # 7a. Restart log shows which agents had daemon processes
+            restart_rows = conn.execute(
+                "SELECT DISTINCT agent_name FROM restart_log ORDER BY agent_name"
+            ).fetchall()
+            for row in restart_rows:
+                aname = row["agent_name"]
+                nid = f"agent-{aname}"
+                conn.execute(
+                    "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                    "VALUES (?, ?, 'agent', 'auto', 75)",
+                    (nid, aname),
+                )
+                conn.execute(
+                    "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
+                    "mechanism, confidence, created_at) "
+                    "VALUES (?, ?, 'green', 'daemon_restart_log', 50, ?)",
+                    (nid, "signal-router", now),
+                )
+                count += 1
+        except Exception:
+            pass
+
+        # 7b. Detect running watch daemon process
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["pgrep", "-f", "observeco.*watch"], capture_output=True, text=True, timeout=5
+            )
+            if result.returncode == 0:
+                nid = "daemon-watch"
+                conn.execute(
+                    "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                    "VALUES (?, 'ObserveCo Watch Daemon', 'daemon', 'auto', 75)",
+                    (nid,),
+                )
+                conn.execute(
+                    "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
+                    "mechanism, confidence, created_at) "
+                    "VALUES (?, ?, 'green', 'daemon_active', 75, ?)",
+                    (nid, "signal-router", now),
+                )
+                count += 1
+        except Exception:
+            pass
+
+        # 7c. Detect launchd-managed agents (macOS)
+        try:
+            launchd_dir = Path.home() / "Library" / "LaunchAgents"
+            if launchd_dir.exists():
+                for plist in launchd_dir.glob("ai.hermes.*.plist"):
+                    aname = plist.stem.replace("ai.hermes.", "")
+                    nid = f"agent-{aname}"
+                    conn.execute(
+                        "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                        "VALUES (?, ?, 'agent', 'auto', 75)",
+                        (nid, aname),
+                    )
+                    conn.execute(
+                        "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
+                        "mechanism, confidence, created_at) "
+                        "VALUES (?, ?, 'green', 'launchd_daemon', 50, ?)",
+                        (nid, "signal-router", now),
+                    )
+                    count += 1
+        except Exception:
+            pass
+
+        # 8. Detect ClawForge hub routing for OpenClaw agents
+        try:
+            oc_agents = [a for a in agents if "openclaw" in a.get("framework", "").lower()]
+            for a in oc_agents:
+                aname = a["agent_name"]
+                nid = f"agent-{aname}"
+                # Look for AGENTS.md in the OpenClaw agent's profile directory
+                profiles_dir = Path.home() / ".hermes" / "profiles"
+                agent_dir = profiles_dir / aname
+                if agent_dir.exists():
+                    # AGENTS.md lists peer agents in an OpenClaw cluster
+                    agents_file = agent_dir / "AGENTS.md"
+                    if agents_file.exists():
+                        content = agents_file.read_text(encoding="utf-8", errors="replace")
+                        for other in agents:
+                            o_name = other["agent_name"]
+                            if o_name != aname and o_name.lower() in content.lower():
+                                tgt_nid = f"agent-{o_name}"
+                                conn.execute(
+                                    "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
+                                    "mechanism, confidence, created_at) "
+                                    "VALUES (?, ?, 'green', 'clawforge_hub', 50, ?)",
+                                    (nid, tgt_nid, now),
+                                )
+                                count += 1
+                    # HEARTBEAT.md or cron dir shows internal scheduling
+                    cron_dir = agent_dir / "cron"
+                    if cron_dir.exists():
+                        conn.execute(
+                            "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
+                            "mechanism, confidence, created_at) "
+                            "VALUES (?, ?, 'green', 'clawforge_scheduler', 50, ?)",
+                            (nid, "signal-router", now),
+                        )
+                        count += 1
+        except Exception:
+            pass
 
         conn.commit()
         return count

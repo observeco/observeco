@@ -1055,6 +1055,7 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 |------|------|-------|-------|---------|
 | Source (cron) | ⏰ | Rounded rect | Amber | `cron-morning-brief` |
 | Agent | 🧠⚡📋 | Rounded rect | Indigo or Purple | `Dreamer`, `Hound`, `Kepler` |
+| Daemon/Watcher | 👻 | Rounded rect | Pink | `Watch Daemon`, `Hound Watcher` |
 | Platform | 📱 | Rounded rect | Cyan | `Telegram`, `WhatsApp` |
 | Consumer | 📖 | Ellipse | Teal | `Sean` |
 | Router | 🔀 | Rounded rect | Blue | `Signal Router` |
@@ -1082,19 +1083,19 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 
 **What data it reads:** Agent configs from pulse.db (framework-agnostic), cron job specs (Hermes `~/.hermes/cron/jobs.json`), signal inbox routing (`~/.hermes/signals/*/inbox/`), platform bridge states, agent daemon states from pulse check.
 
-**Data collection:** Hybrid passive + active, 6-step scan pipeline:
-| Step | Source | What It Detects |
-|------|--------|-----------------|
-| 1 | Known consumer nodes | Hardcoded (e.g. "Sean") — configurable |
-| 2 | Platform nodes | 5 hardcoded platforms connected to consumer |
-| 3 | Signal Router | Static router node (future: detect from gateways) |
-| 4 | `agent_configs` from pulse.db | All registered agents → Telegram (pulse check) |
-| 5 | Hermes `~/.hermes/cron/jobs.json` | Cron delivery targets → platform, signal-router, or agent |
-| 6 | `~/.hermes/signals/*/inbox/` JSON files | Agent-to-agent routing from signal `from`/`to` fields |
+**Data collection:** Hybrid passive + active, 8-step scan pipeline:
+| Step | Source | What It Detects | Generic? |
+|------|--------|-----------------|----------|
+| 1 | Known consumer nodes | Hardcoded (e.g. "Sean") | ✅ Yes |
+| 2 | Platform nodes | 5 hardcoded platforms connected to consumer | ✅ Yes |
+| 3 | Signal Router | Static router node | ✅ Yes |
+| 4 | `agent_configs` from pulse.db | All registered agents → Telegram (pulse check) | ✅ Yes |
+| 5 | Cron job scheduler files | Cron delivery targets via `OBSERVECO_PATHWAY_CRON_DIR` | ✅ Configurable |
+| 6 | Agent signal inboxes | Agent-to-agent routing from signal `from`/`to` fields via `OBSERVECO_PATHWAY_SIGNALS_DIR` | ✅ Configurable |
+| 7 | Daemon/watcher scan | Launchd plists, restart logs, running watch daemon | ✅ Yes (macOS) |
+| 8 | ClawForge hub routes | OpenClaw agent routing from AGENTS.md + cron dirs | ✅ OpenClaw |
 
-Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6 are Hermes-specific. Layer 2: manual declaration via CLI (`observeco pathway add`) for users without ACPS routing.
-
-**Known limitation:** OpenClaw/ClawForge hub contract routing is not yet detected. Only the agent name appears — agent-to-agent routing is inferred from signal inboxes (Hermes protocol) only. Planned: ClawForge hub scanning for OpenClaw agents.
+Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6 default to Hermes paths but are overridable via env vars `OBSERVECO_PATHWAY_CRON_DIR` and `OBSERVECO_PATHWAY_SIGNALS_DIR`. Step 7 detects background daemons via macOS launchd, pulse.db restart_log, and process inspection. Step 8 reads OpenClaw agent profile directories for inter-agent references (AGENTS.md) and internal schedulers (cron dir).
 
 **Confidence indicators on each edge:**
 
@@ -1124,7 +1125,7 @@ Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6
 | Live auto-refresh | ❌ | ✅ |
 | Auto-alert on red path | ❌ | ✅ |
 
-**Current status:** ✅ Live. 87 nodes, 106 edges detected — all green (0 dead ends). Agent-to-agent routing detected from 26 signal inbox connections across 9 inter-agent pathways. Cytoscape.js rendering with dagre layout, status filters, detail panel. Framework-agnostic core (steps 1-4) works for any observeco user.
+**Current status:** ✅ Live. 98 nodes, 129 edges detected — all green (0 dead ends). Agent-to-agent routing from 28 signal connections across 9 pathways. 16 launchd daemons + 3 restart-log agents detected. 4 OpenClaw ClawForge hub edges. Framework-agnostic core (steps 1-4) + configurable cron/signal paths (env vars) + daemon/watcher scan + OpenClaw hub support.
 **Mockup:** `mockups/pathway-map-v5.html` — 434 lines, column pipeline layout, Cytoscape.js-ready.
 
 ---
