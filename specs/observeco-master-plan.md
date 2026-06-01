@@ -1,8 +1,8 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-| **Last updated:** 2026-06-01 (P3: Pro Tier — Real Lock & Unlock ✅) |
-**Author:** Main
+| **Last updated:** 2026-06-04 (Pathway subgraph folding ✅, heal tab fix ✅, exclusion persistence ✅, plugin 401 fix ✅) |
+|**Author:** Main
 
 ---
 
@@ -28,7 +28,7 @@
 |---|---------|----------|--------|------|-------------|--------|------|
 | 1 | Fleet view — per-agent cards with status, token bar, drift, error badge | Dashboard | ✅ Live | ✅ | ✅ | — | — |
 || 1a | Fleet view: type-based grouping (Agents / Services / Workflows) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
-|| 1b | Fleet view: show/hide per agent (× button) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
+|| 1b | Fleet view: delete per agent (× button → removes from DB + persists exclusion in agents.json to prevent re-discovery) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
 | 1c | Fleet view: missing-agent feedback button in header | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
 | 1d | Fleet view: 5 clickable metric rows per card (Health/Guard/Errors/Brain size/Composition) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.1 |
 | 1e | Fleet view: drill-down modals (Health pulse timeline + annotated timeline + categorized verdict, Guard failure history + settings + explanation, Error timeline + verdict + Pro upsell) | Dashboard | ✅ Live | ✅ | ✅ | — | observeco-master-plan.md §3.2-3.6 |
@@ -41,7 +41,7 @@
 | | 4d | Auto-Compression Daemon: `chisel watch start/stop/status`, fswatch-based SOUL.md monitoring | Analysis | ✅ Live | ✅ Daemon runs Lite | ✅ Daemon runs Full | — | — |
 | 5 | 7-day drift trend per component | Analysis | ✅ Live | ✅ | ✅ | — | — |
 | 6 | Error history (last 24h) | Dashboard | ✅ Live | ✅ | ✅ | — | — |
-| 7 | Heal button (manual trigger, diagnosis + restart) | Self-Heal | ✅ Live | ✅ | ✅ | — | — |
+| 7 | Heal tab (manual trigger + /api/trigger-heal diagnosis — broken onclick quoting fixed, duplicate button removed from API response) | Self-Heal | ✅ Live | ✅ | ✅ | — | — |
 | 8 | In-dashboard alerts — severity-coded feed + discovery gaps + cumulative downtime banner + NEW badge + Pro push upsell | Alerts | ✅ Live | ✅ Discovery gap badges, cumulative downtime banner, NEW/unviewed indicators | ✅ Same (Pro unlocks push delivery — §17) | — | — |
 | 9 | Memory Garden (dupes, contradictions, debt score) | Analysis | ✅ Live | ✅ | ✅ | — | — |
 | 10 | ClawForge CLI (profile/load/garden/history) | CLI | ✅ Live | ✅ | ✅ | — | — |
@@ -52,13 +52,13 @@
 | 13 | System prompt compression (`observeco chisel compress`) | Analysis | ✅ Live | ✅ `--mode lite` (guidance compression) | ✅ `--mode full` (memory culling + skill dedup + context refactor) | ~2.5d | observeco-master-plan.md §13 |
 | 14 | Per-turn token tracking (webhook + agent hooks) | Monitoring | ✅ Live | ✅ 24h timeline + component breakdown + cost tracking | ✅ never-pruned history + anomaly detection (+3σ flag) + budget thresholds (daily/cost/anomaly sigma) + fleet comparison + component trend analysis | ~4d (~2d if §18 built first) | observeco-master-plan.md §14 |
 | 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Live | ✅ manual Heal button + dashboard alerts + L2 trends | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) | ~1d + L2 built | observeco-master-plan.md §15 |
-| 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) | Analysis | ✅ Live | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
+| 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) — dashboard stats + hooks now auth-exempt (401 fix) | Analysis | ✅ Live | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
 | 17 | Push alerts (Telegram, webhook, email) | Alerts | ✅ Live | ❌ in-dashboard only (discovery gap) | ✅ Telegram + webhook + email + auto-heal integration + subscription management + delivery log | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
 | 18 | Extended history (7d free / never-pruned pro) | Dashboard | ✅ Live | ✅ 7d (pruning cron at 3am) + L2 baselines (RSS, P95, errors, upstream) | ✅ never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
 || 19 | In-dashboard Glossary & FAQ | Dashboard | ✅ Live | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
 || 20 | Skill Audit (`observeco chisel skills`) | Analysis | ✅ Live | ✅ manual CLI scan + ranked table | ✅ auto-scan (weekly) + drift tracking + threshold alerts + 12-week trend chart | ~3d (built) | observeco-master-plan.md §3.21 |
 || 21 | Communication Pathway Map | Diagnostics | ✅ Live | ✅ Interactive graph with 87 nodes + 106 edges + agent-to-agent routing + 0 dead ends | ✅ Detail panel + drag + auto-alert | ~3d (built) | observeco-master-plan.md §3.19 |
-|| 22 | Multi-platform messaging gateway (Telegram, Discord, Slack, Signal, WhatsApp, email + 11 more) | Infrastructure | 🔴 Planned | ✅ All 16+ platforms (core infra for Pathway Map, Push Alerts) | ✅ Same (no gating) | ~Phase 3+ | observeco-master-plan.md §3.22 |
+|| 22 | Unified detection engine (OTel, 35+ messaging platforms, 10+ agent frameworks, macOS/Linux/Windows) | Infrastructure | 🔴 Planned | ✅ All (detection + all platforms — core infra for Pathway Map) | ✅ Same (no gating) | ~P1-P6 | observeco-master-plan.md §3.22 |
 
 ---
 
@@ -73,7 +73,7 @@
 > ⚠️ **Features marked NOT BUILT are spec'd only** — see kanban tasks for build priority.
 > - Drill-down modals (pulse timeline, guard failure history, annotated error timeline)
 
-**Now live:** Type-based grouping in collapsible sections, show/hide × buttons, missing-agent feedback bar, 5-clickable metric rows per card, and full 5-tab drill-down modal (Health/Guard/Errors/Tokens/Memory). All fleet view components shipped.
+**Now live:** Type-based grouping in collapsible sections, show/hide × buttons, missing-agent feedback bar, 5-clickable metric rows per card (Health/Guard/Errors/Brain size/Composition), and full 5-tab drill-down modal (Health/Guard/Errors/Tokens/Memory). Composition row shows inline token bar without redundant "See details" link (brain size row has the link). All fleet view components shipped.
 
 **How auto-discovery works (live):** The system discovers entities automatically, classifying them by type:
 
@@ -1126,6 +1126,14 @@ Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6
 | Auto-alert on red path | ❌ | ✅ |
 
 **Current status:** ✅ Live. 98 nodes, 129 edges detected — all green (0 dead ends). Agent-to-agent routing from 28 signal connections across 9 pathways. 16 launchd daemons + 3 restart-log agents detected. 4 OpenClaw ClawForge hub edges. Framework-agnostic core (steps 1-4) + configurable cron/signal paths (env vars) + daemon/watcher scan + OpenClaw hub support.
+
+**Daemon detection caveat:** Steps 7a-7c are Hermes-specific (restart_log table, observeco process grepping, ai.hermes.* plist scanning). A non-Hermes user with systemd/Docker won't get daemon detection. Planned fix: self-registration via `daemon: true` flag in agents.json (Option A). Marked as tech debt.
+
+**Recent fixes (2026-06-04):**
+- **Subgraph folding:** New "Collapse Leaves/Expand All" toggle in toolbar. Groups leaf agents under hub nodes (platforms/routers/agents with 5+ connections), hides children + edges, and appends a count badge to the hub label. Non-destructive — hidden nodes retain their data for detail panel clicks.
+- **Sticky header + summary bar:** Both pinned via `position: sticky` so buttons (Reset Layout, Refresh, filters) don't scroll away inside the dashboard iframe.
+- **Hover dimming guard:** Protected against firing during dagre layout animation (prevents the intermittent "wrong node lights up" bug). Uses `layoutRunning` flag.
+
 **Mockup:** `mockups/pathway-map-v5.html` — 434 lines, column pipeline layout, Cytoscape.js-ready.
 
 ---
@@ -1161,88 +1169,127 @@ Framework-agnostic detection (steps 1-4) works for any observeco user. Steps 5-6
 ||| **Mockup** | `mockups/skills-audit.html` |
 ||| **Related** | Already have skill description truncation (120-char cap `build_skills_system_prompt()`). This complements it by making the size transparent. Together they form: measure → expose → truncate (in Hermes). |
 
-### 3.22 Multi-Platform Messaging Gateway (🔴 Planned)
+### 3.22 Multi-Platform Messaging + Detection Gateway (🔴 Planned)
 
-**Source analysis:** Hermes Agent `gateway/platforms/` — 16+ messaging adapters on a shared `BasePlatformAdapter` ABC. Full architecture report at `~/.hermes/intelligence/analysis/hermes-gateway-architecture-report.md`
+**Source analysis:** Deep crawl of 80+ ObserveCo source files + Hermes `gateway/platforms/` (16 adapters) + OpenClaw (35 channels) + OpenInference (28 framework instrumentors) + 12 GitHub references.
 
-**What it is:** A messaging gateway that lets ObserveCo send alerts, reports, and human-in-the-loop prompts to any messaging platform. The same infrastructure powers push alerts (§17) but extends to full bidirectional messaging (receive + respond) on every platform.
+**This feature combines TWO things:**
 
-**Platforms covered (16+):**
+1. **Unified Detection Engine** — discover agents across ALL frameworks and OSes
+2. **Multi-Platform Messaging Gateway** — send/receive on 35+ messaging platforms
 
-| Platform | Comms Pattern | Auth | Bidirectional? | Effort |
-|----------|--------------|------|---------------|--------|
-| Telegram | Long-polling (getUpdates) | Bot token | ✅ | ~2d |
-| Discord | WebSocket gateway + slash commands | Bot token | ✅ | ~3d |
-| Slack | Socket Mode (WebSocket) | Bot + App token | ✅ | ~2d |
-| Signal | HTTP to signal-cli daemon + SSE | signal-cli daemon | ✅ | ~1d |
-| WhatsApp | Node.js bridge subprocess (port 3000) | QR pairing | ✅ | ~2d |
-| Email (IMAP/SMTP) | IMAP polling + SMTP send | Credentials | ✅ | ~1d |
-| BlueBubbles | HTTP REST to BlueBubbles server | Password | ✅ | ~1d |
-| Matrix | Matrix C-S API (sync) | Access token | ✅ | ~1.5d |
-| Mattermost | WebSocket + REST API | Bot token | ✅ | ~1d |
-| Webhook | HTTP POST listener (built-in server) | Secret header | ✅ (POST) | ~0.5d |
-| API Server | OpenAI-compatible HTTP server | Bearer token | ✅ (POST) | ~0.5d |
-| SMS | SMS gateway API | API key | ⚠️ Send only | ~1d |
-| DingTalk | Webhook + REST | App credentials | ✅ | ~1.5d |
-| Feishu/Lark | Webhook + REST | App credentials | ✅ | ~1.5d |
-| WeCom | Webhook + REST + callback | Bot key | ✅ | ~1.5d |
-| Weixin | Webhook + REST | App credentials | ✅ | ~1.5d |
+They're combined because the pathway map needs BOTH: it needs to know what frameworks exist AND what platforms they communicate through.
 
-**Architecture (replicable from Hermes):**
+---
+
+#### Part A: Unified Detection Engine
+
+**Key insight:** 70% of agent framework instrumentation is already solved by OpenInference (Arize, 1k★) and OpenLLMetry (traceloop, 7k★). ObserveCo should NOT build per-framework detectors.
+
+**OpenInference already instruments 28 Python packages:**
+
+| Category | Frameworks |
+|----------|-----------|
+| Agent frameworks | LangChain, LangGraph, CrewAI, AutoGen, OpenAI Agents, Pydantic AI, SmolAgents, Agno, Claude Agent SDK, DSPy, Haystack, LlamaIndex |
+| LLM SDKs | OpenAI, Anthropic, MistralAI, Google GenAI, AWS Bedrock, VertexAI, Groq, liteLLM |
+| Tools | MCP, Guardrails, Instructor, Portkey |
+| Span processors | OpenLIT, OpenLLMetry (bridges to OpenTelemetry) |
+
+**How ObserveCo uses this:**
 
 ```
-PlatformAdapter (ABC) — connect(), disconnect(), send(), send_image(), send_voice()
-        │
-  ┌─────┴─────┬──────────┬──────────┬──────────┐
-Telegram   Discord    Slack     Signal    WhatsApp  ... 16+
-Adapter    Adapter   Adapter   Adapter    Adapter
-   │          │         │         │          │
-  PTB      discord.py slack_bolt signal-cli  Node.js
- (poll)    (WebSocket)(Socket)   (SSE)       bridge:3000
+User installs: pip install openinference-instrumentation-langchain
+
+Their LangChain agent → OpenInference tracer → OTel spans (OTLP port 4318)
+                                                      ↓
+                      ObserveCo OTel listener (port 4318/4317)
+                      → extracts: agent_name, tool calls, LLM calls, duration, errors
+                      → feeds: pulse database, pathway map, token tracking, alerts
 ```
 
-**Shared infrastructure (replicable):**
+**Detection pipeline:**
 
-| Component | Purpose |
-|-----------|---------|
-| Message dedup (TTL cache) | Prevent duplicate processing on reconnect |
-| Text batch aggregator | Merge rapid-fire text into single messages |
-| Thread participation tracker | Correct reply threading |
-| Proxy resolution | Multi-source proxy (env var, macOS system) |
-| UTF-16 truncation | Platform-compatible message length |
-| Fatal error system | Structured error states with retryability |
-
-**How incoming messages flow:**
 ```
-Platform event → adapter handler → MessageEvent (unified format)
-                                    → session manager
-                                    → AIAgent.chat() / handler
-                                    → adapter.send() (back to user)
+1. OTel Listener (primary):    Listen on OTLP port 4318/4317 for spans from any
+                                OpenInference or OpenLLMetry-instrumented agent
+
+2. Framework import scan:      pip list / npm list → detect installed frameworks
+                                → suggest the right OpenInference package
+
+3. Process scan (cross-OS):    pgrep (macOS/Linux) / tasklist (Windows) / systemctl
+                                → find agent processes regardless of framework
+
+4. Config scan (deep):         Known config paths per framework + OS:
+                                Hermes:     ~/.hermes/profiles/*/config.yaml
+                                OpenClaw:   openclaw config / package.json
+                                CrewAI:     crew.py, config/*.yaml
+                                Semantic Kernel:  config/*.json
+                                Claude Code: ~/.claude/*
+                                Codex CLI:   ~/.codex/*
+
+5. Health probe (fallback):    HTTP GET / shell command (30s interval)
+                                → pulse check when OTel spans not available
 ```
 
-**Auth model:** Each adapter reads credentials from env vars with standardized naming:
-- `OBSERVECO_TELEGRAM_BOT_TOKEN`
-- `OBSERVECO_DISCORD_BOT_TOKEN`
-- `OBSERVECO_SLACK_BOT_TOKEN`
-- `OBSERVECO_SLACK_APP_TOKEN`
-- `OBSERVECO_SIGNAL_CLI_HTTP_URL`
-- `OBSERVECO_WHATSAPP_BRIDGE_SCRIPT` + `_PORT`
-- etc.
+**OS-level detection (cross-platform):**
 
-**Implementation phases:**
+| OS | Service Detection | Process Detection | Crash Detection |
+|----|------------------|------------------|-----------------|
+| macOS | launchctl list, brew services | pgrep -f | log stream --predicate |
+| Linux | systemctl list-units, supervisor | pgrep -f, /proc/*/ | journalctl |
+| Windows | Get-Service, schtasks | tasklist, Get-Process | Event Log |
 
-| Phase | Scope | Platforms | Effort |
-|-------|-------|-----------|--------|
-| P1 — Core interface | `PlatformAdapter` ABC + MessageEvent + SendResult + config loader | — | ~2d |
-| P2 — First 4 adapters | Telegram + Webhook + Email + API Server | Telegram, webhook, email, REST | ~4d |
-| P3 — Extended adapters | Discord + Slack + Signal | Discord, Slack, Signal | ~5d |
-| P4 — Full set | WhatsApp + Matrix + Mattermost + BlueBubbles + SMS + Chinese platforms | All 16+ | ~8d |
+---
 
-**Free tier:** All 16+ platforms — this is core infrastructure. The pathway map (§3.19) needs gateway knowledge to draw real communication edges (agent → Telegram → user). Push alerts (§17) needs at least one send channel. Gating this behind Pro would break both features.
+#### Part B: Multi-Platform Messaging Gateway
 
-**Pro tier:** Same (no gating). Pro value is in analysis depth and alert sophistication, not in platform access.
+**Architecture:** `BasePlatformAdapter(ABC)` — same interface for all platforms:
 
-**Note:** This is a large infrastructure feature. Recommend building only what push alerts (§17) needs first (Telegram + webhook + email sends), then expanding to full bidirectional support in P2+.
+```python
+async def connect(self) -> bool
+async def disconnect(self) -> None
+async def send(self, chat_id, content, reply_to, metadata) -> SendResult
+async def send_image/voice/video(self, ...)  # optional overrides
+async def edit_message(self, ...)
+async def delete_message(self, ...)
+```
+
+**Coverage by priority:**
+
+| Priority | Platforms | Implementation |
+|----------|-----------|---------------|
+| HIGH (P1) | Telegram, Discord, Slack, Signal, WhatsApp, Email | python-telegram-bot (29k★), discord.py (16k★), slack_bolt (4k★), signal-cli + SSE, whatsmeow Go bridge (6.2k★), IMAP + SMTP |
+| MEDIUM (P2) | Microsoft Teams, Google Chat, Matrix, Mattermost | Microsoft Graph API, Google Chat API, matrix-nio, mattermostdriver |
+| LOW (P3) | LINE, QQ Bot, Feishu, WeCom, Weixin, DingTalk, SMS, BlueBubbles, Zalo, Nostr, Twitch, IRC, Nextcloud Talk, Synology Chat, Tlon, Yuanbao | OpenClaw channel patterns + platform-specific SDKs |
+
+**All credentials from env vars:** `OBSERVECO_TELEGRAM_BOT_TOKEN`, `OBSERVECO_DISCORD_BOT_TOKEN`, etc.
+
+**Free tier:** All 16+ platforms + all frameworks. This is core infrastructure — the pathway map needs it.
+
+---
+
+#### Part C: Implementation Phases
+
+| Phase | Scope | Systems Covered | Effort |
+|-------|-------|----------------|--------|
+| **P1** | OTel listener (4318) + import scan + process scan + Hermes/OpenClaw config scan | All frameworks with OpenInference + Hermes + OpenClaw | 3d |
+| **P2** | Webhook server → adapter pattern + Email adapter | Webhook + email send/receive | 2d |
+| **P3** | Gateway adapters: Telegram, Discord, Slack, Signal, WhatsApp | 5 bidirectional messaging platforms | 8d |
+| **P4** | OS expansion: Windows services + Linux systemd + crash detection | Windows + Linux agent discovery | 3d |
+| **P5** | Extended adapters: Teams, Google Chat, Matrix, Mattermost | 4 more platforms | 5d |
+| **P6** | Framework expansion + plugin system | Community adapter contributions | 5d |
+
+---
+
+**Reference implementations:**
+
+| Reference | Stars | What to Learn |
+|-----------|-------|---------------|
+| Arize-ai/openinference | 1k★ | 28 Python instrumentations, OTel-native, standard ports (4318/4317) |
+| traceloop/openllmetry | 7k★ | OTel semantic conventions for gen_ai |
+| nonebot/nonebot2 | 7.5k★ | Python multi-platform adapter registration |
+| Hermes gateway (local) | — | 16 adapter BasePlatformAdapter ABC |
+| OpenClaw (local) | — | 35 channels + channel catalog JSON + Zod schema |
 
 ## 4. Free Tier — What You Get Immediately
 

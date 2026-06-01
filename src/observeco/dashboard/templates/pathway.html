@@ -172,6 +172,9 @@ body {
       <button class="filter-chip" data-filter="green" onclick="setFilter('green', this)" style="color:var(--green);">🟢 Complete</button>
       <button class="filter-chip active-amber" data-filter="yellow" onclick="setFilter('yellow', this)" style="color:var(--amber);">🟡 Concerns</button>
       <button class="filter-chip active-red" data-filter="red" onclick="setFilter('red', this)" style="color:var(--red);">🔴 Dead Ends</button>
+      <span style="width:1px;height:20px;background:var(--border);display:inline-block;margin:0 4px;"></span>
+      <span class="graph-toolbar-label">Fold:</span>
+      <button class="filter-chip" id="foldBtn" onclick="toggleFold()">📂 Collapse Leaves</button>
       <span style="flex:1;"></span>
       <span class="graph-toolbar-label" style="color:var(--muted);font-size:11px;">Scroll to zoom · Drag to pan</span>
     </div>
@@ -677,7 +680,108 @@ async function refreshData() {
     document.getElementById('cy').innerHTML = '<div class="loading">Failed to load data. Retrying...</div>';
     return;
   }
+  isFolded = false;
+  document.getElementById('foldBtn').textContent = '📂 Collapse Leaves';
   initializeCy();
+}
+
+// ─── Subgraph Folding ───
+let isFolded = false;
+
+function toggleFold() {
+  if (!cy) return;
+  isFolded = !isFolded;
+  const btn = document.getElementById('foldBtn');
+  btn.textContent = isFolded ? '📂 Expand All' : '📂 Collapse Leaves';
+  btn.classList.toggle('active', isFolded);
+
+  if (isFolded) {
+    foldLeaves();
+  } else {
+    unfoldAll();
+  }
+}
+
+function foldLeaves() {
+  // Identify leaf agents: agent nodes with exactly 1 edge to another agent (not platform/consumer/router)
+  // Group them by their parent and collapse into a badge
+  const parentGroups = {};
+  const hubNodeIds = new Set();
+
+  // First pass: identify hub nodes (platforms, routers, consumer, agents with 5+ connections)
+  cy.nodes().forEach(function(n) {
+    const t = n.data('type');
+    const degree = n.connectedEdges().length;
+    if (t === 'platform' || t === 'router' || t === 'consumer' || degree >= 5) {
+      hubNodeIds.add(n.id());
+      parentGroups[n.id()] = { node: n, children: [] };
+    }
+  });
+
+  // Second pass: group leaf agents under their hub parent
+  cy.nodes().forEach(function(n) {
+    if (hubNodeIds.has(n.id())) return;
+    if (n.data('type') !== 'agent') return;
+    if (n.data('type') === 'dead-end') return;
+
+    const edges = n.connectedEdges();
+    if (edges.length === 0) return;
+
+    // Find the hub parent among connected nodes
+    let parentId = null;
+    edges.forEach(function(e) {
+      const src = e.source().id();
+      const tgt = e.target().id();
+      if (hubNodeIds.has(src) && tgt === n.id()) parentId = src;
+      else if (hubNodeIds.has(tgt) && src === n.id()) parentId = tgt;
+    });
+
+    if (parentId && parentGroups[parentId]) {
+      parentGroups[parentId].children.push(n);
+    }
+  });
+
+  // Third pass: hide children, update parent badges
+  Object.keys(parentGroups).forEach(function(pid) {
+    const group = parentGroups[pid];
+    if (group.children.length === 0) return;
+
+    const childCount = group.children.length;
+    group.children.forEach(function(child) {
+      child.style('display', 'none');
+      child.connectedEdges().forEach(function(e) {
+        e.style('display', 'none');
+        e.style('width', 0);
+      });
+    });
+
+    // Update parent label to show count
+    const currentLabel = group.node.data('label');
+    group.node.data('foldedLabel', currentLabel);
+    group.node.data('label', currentLabel + ' (+' + childCount + ')');
+    group.node.style({ 'label': group.node.data('label') });
+  });
+
+  // Rerun layout
+  cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.1, nodeSep: 28, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 300 }).run();
+}
+
+function unfoldAll() {
+  // Restore all hidden nodes and edges
+  cy.nodes().forEach(function(n) {
+    const foldedLabel = n.data('foldedLabel');
+    if (foldedLabel) {
+      n.data('label', foldedLabel);
+    }
+    n.style('display', 'element');
+    n.style({ 'label': n.data('label') });
+  });
+  cy.edges().forEach(function(e) {
+    e.style('display', 'element');
+    e.style('width', 2);
+  });
+
+  cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.05, nodeSep: 24, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 300 }).run();
 }
 
 // Initialize on load
