@@ -221,6 +221,9 @@ INSERT OR IGNORE INTO retention_config (key, value) VALUES ('l2_days', '7');
 -- (SQLite ignores duplicate ADD COLUMN gracefully).
 ALTER TABLE pulse_log ADD COLUMN instance_id TEXT DEFAULT '';
 """),
+    (9, """-- Migration 9: agent heartbeat metadata (daemon info, watchdog, PID)
+ALTER TABLE pulse_log ADD COLUMN metadata TEXT DEFAULT '';
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -569,13 +572,13 @@ class Database:
 
     def log_pulse(self, agent_name: str, status: str, latency_ms: float = 0,
                   error_message: str = "", agent_framework: str = "hermes",
-                  instance_id: str = "") -> None:
+                  instance_id: str = "", metadata_json: str = "") -> None:
         conn = self._get_conn()
         conn.execute(
-            "INSERT INTO pulse_log (agent_name, agent_framework, status, latency_ms, error_message, timestamp, instance_id) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO pulse_log (agent_name, agent_framework, status, latency_ms, error_message, timestamp, instance_id, metadata) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (agent_name, agent_framework, status, latency_ms, error_message,
-             int(time.time()), instance_id or ""),
+             int(time.time()), instance_id or "", metadata_json or ""),
         )
         conn.commit()
         # Auto-log to errors table on error/dead status with message
@@ -1506,7 +1509,44 @@ class Database:
                     continue
 
         # 7. Detect daemons and watchers — long-running background processes
-        # Sources: restart_log in pulse.db, launchd plists, running processes
+        # Sources: agent-provided metadata from pulse_log (generic), restart_log, launchd plists, running processes
+        # Phase 1: Check agent-provided heartbeat metadata (fully generic, any framework)
+        try:
+            md_rows = conn.execute(
+                "SELECT DISTINCT agent_name, metadata FROM pulse_log WHERE metadata IS NOT NULL AND metadata != '' ORDER BY agent_name"
+            ).fetchall()
+            for row in md_rows:
+                aname = row["agent_name"]
+                md_raw = row["metadata"]
+                try:
+                    import json as _json
+                    md = _json.loads(md_raw)
+                except (_json.JSONDecodeError, Exception):
+                    continue
+                if not isinstance(md, dict):
+                    continue
+                is_daemon = md.get("daemon", False) or md.get("watchdog", "") != ""
+                if is_daemon:
+                    nid = f"agent-{aname}"
+                    conn.execute(
+                        "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                        "VALUES (?, ?, 'agent', 'auto', 75)",
+                        (nid, aname),
+                    )
+                    mechanism = "daemon_metadata"
+                    if md.get("watchdog"):
+                        mechanism = f"watchdog_{md['watchdog']}"
+                    conn.execute(
+                        "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
+                        "mechanism, confidence, created_at) "
+                        "VALUES (?, ?, 'green', ?, 75, ?)",
+                        (nid, "signal-router", mechanism, now),
+                    )
+                    count += 1
+        except Exception:
+            pass
+
+        # Phase 2: Restart log shows which agents had daemon processes (Hermes-compatible)
         try:
             # 7a. Restart log shows which agents had daemon processes
             restart_rows = conn.execute(
