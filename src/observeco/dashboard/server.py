@@ -2472,27 +2472,27 @@ async def api_agents(
       </div>
       {f'<div style="margin-bottom:6px;">{gap_badges_str}</div>' if gap_badges_str else ''}
       <div class="metric-row" onclick="loadTab('{name}','health')">
-        <span class="label">Health</span>
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
         <span class="value" style="color:{'var(--accent)' if status == 'alive' else 'var(--danger)' if status == 'dead' else 'var(--warn)'};font-weight:600;">{status_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
       <div class="metric-row" onclick="loadTab('{name}','guard')">
-        <span class="label">Guard</span>
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
         <span class="value" style="color:{guard_color};font-weight:600;">{guard_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
       <div class="metric-row" onclick="loadTab('{name}','errors')">
-        <span class="label">Errors</span>
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
         <span class="value" style="color:{err_color};">{err_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
       <div class="metric-row" onclick="loadTab('{name}','tokens')">
-        <span class="label">Brain size</span>
+        <span class="label">Brain size<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
         <span class="value" style="color:#94a3b8;">{drift_str}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
       <div class="metric-row">
-        <span class="label">Composition</span>
+        <span class="label">Composition<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('token-bar', event)">?</span></span>
         <span class="value" class="u-flex-1">{token_bar}</span>
       </div>
     </div>""")

@@ -250,6 +250,28 @@ body {
   transform: translateX(2px);
 }
 
+/* Glossary hint */
+.glossary-hint {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: rgba(100,116,139,0.15); color: #64748b;
+  font-size: 10px; font-weight: 700; cursor: pointer;
+  margin-left: 3px; transition: all 0.15s;
+  line-height: 1; vertical-align: middle; flex-shrink: 0;
+}
+.glossary-hint:hover { background: var(--accent); color: white; }
+.glossary-tooltip {
+  position: fixed; z-index: 100;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  max-width: 360px; width: max-content; font-size: 12px; line-height: 1.6;
+  display: none;
+}
+.glossary-tooltip h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #e2e8f0; }
+.glossary-tooltip .gt-close { float: right; cursor: pointer; font-size: 14px; color: #64748b; }
+.glossary-tooltip .gt-close:hover { color: #e2e8f0; }
+.glossary-tooltip .gt-body { color: #94a3b8; max-height: 400px; overflow-y: auto; }
+
 /* Token bar */
 .token-bar {
   margin: 4px 0;
@@ -2706,7 +2728,58 @@ function dismissOnboarding() {
   if (overlay) overlay.style.display = 'none';
   localStorage.setItem('observeco-onboarding-dismissed', 'true');
 }
+
+// ─── Glossary ───
+function closeGlossary() { document.getElementById('glossaryTooltip').style.display = 'none'; }
+function closeGlossaryModal() { document.getElementById('glossaryModal').classList.remove('active'); }
+function showGlossary(topic, event) {
+  const tooltip = document.getElementById('glossaryTooltip');
+  const body = document.getElementById('glossaryBody');
+  body.innerHTML = 'Loading...';
+  if (event) {
+    const x = Math.min(event.clientX, window.innerWidth - 380);
+    const y = Math.min(event.clientY + 20, window.innerHeight - 300);
+    tooltip.style.left = Math.max(8, x) + 'px';
+    tooltip.style.top = Math.max(8, y) + 'px';
+  } else {
+    tooltip.style.left = '50%'; tooltip.style.top = '40%';
+  }
+  tooltip.style.display = 'block';
+  fetch('/api/glossary/' + encodeURIComponent(topic))
+    .then(r => r.text()).then(html => { body.innerHTML = html; })
+    .catch(() => { body.innerHTML = '<div style="color:#ef4444;">Failed to load.</div>'; });
+}
+function showGlossaryModal(topic) {
+  document.getElementById('glossaryModal').classList.add('active');
+  const body = document.getElementById('glossaryModalBody');
+  body.innerHTML = 'Loading...';
+  fetch('/api/glossary/' + encodeURIComponent(topic))
+    .then(r => r.text()).then(html => { body.innerHTML = '<div style="font-size:13px;line-height:1.7;">'+html+'</div>'; })
+    .catch(() => { body.innerHTML = '<div style="color:#ef4444;">Failed to load.</div>'; });
+}
+document.addEventListener('click', function(e) {
+  const t = document.getElementById('glossaryTooltip');
+  if (t.style.display === 'block' && !t.contains(e.target) && !e.target.closest('.glossary-hint')) t.style.display = 'none';
+});
 </script>
+
+<!-- Glossary tooltip -->
+<div id="glossaryTooltip" class="glossary-tooltip">
+  <span class="gt-close" onclick="closeGlossary()">✕</span>
+  <div id="glossaryBody" class="gt-body">Loading...</div>
+</div>
+<!-- Glossary modal -->
+<div class="modal-overlay" id="glossaryModal" onclick="if(event.target===this)closeGlossaryModal()">
+  <div class="modal" style="max-width:600px;width:90%;">
+    <div class="modal-header" style="border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;font-weight:600;">ObserveCo Glossary</span>
+      <button class="modal-close" onclick="closeGlossaryModal()">✕</button>
+    </div>
+    <div class="modal-body" id="glossaryModalBody" style="max-height:70vh;overflow-y:auto;padding:16px;">
+      <div style="text-align:center;color:#64748b;padding:24px;">Select a topic from any "?" icon on an agent card.</div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

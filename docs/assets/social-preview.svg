@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <!-- Grid lines -->
+  <line x1="0" y1="320" x2="1280" y2="320" stroke="#1e293b" stroke-width="0.5"/>
+  <line x1="640" y1="0" x2="640" y2="640" stroke="#1e293b" stroke-width="0.5"/>
+  <!-- Pulse graph -->
+  <polyline points="80,400 160,420 240,360 320,460 400,340 480,400 560,370 640,440 720,350 800,410 880,370 960,420 1040,330 1120,380 1200,350"
+            fill="none" stroke="url(#green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+  <polyline points="120,480 180,440 260,410 340,430 420,390 500,370 580,400 660,360 740,420 820,380 900,410 980,360 1060,390 1140,340 1200,370"
+            fill="none" stroke="url(#accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+  <!-- Title -->
+  <text x="80" y="140" font-family="Inter, system-ui, sans-serif" font-size="48" font-weight="800" fill="#e2e8f0">ObserveCo</text>
+  <text x="80" y="200" font-family="Inter, system-ui, sans-serif" font-size="22" fill="#94a3b8">Runtime observability for AI agents</text>
+  <!-- Tagline features -->
+  <circle cx="80" cy="260" r="6" fill="#22c55e"/>
+  <text x="100" y="266" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#64748b">Health checks</text>
+  <circle cx="220" cy="260" r="6" fill="#22c55e"/>
+  <text x="240" y="266" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#64748b">Token intelligence</text>
+  <circle cx="400" cy="260" r="6" fill="#22c55e"/>
+  <text x="420" y="266" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#64748b">Memory diagnostics</text>
+  <circle cx="580" cy="260" r="6" fill="#22c55e"/>
+  <text x="600" y="266" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#64748b">Local-first dashboard</text>
+  <!-- Install -->
+  <rect x="80" y="310" rx="8" ry="8" width="520" height="50" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="100" y="342" font-family="SF Mono, monospace" font-size="16" fill="#22c55e">pip install observeco[dashboard]</text>
+  <!-- Right side: agent cards mockup -->
+  <rect x="720" y="100" rx="10" ry="10" width="480" height="260" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <!-- Card 1 -->
+  <circle cx="750" cy="140" r="6" fill="#22c55e"/>
+  <text x="770" y="146" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#e2e8f0">Hermes</text>
+  <text x="850" y="146" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#22c55e">● Healthy</text>
+  <rect x="740" y="160" rx="4" ry="4" width="440" height="4" fill="#334155"/>
+  <rect x="740" y="160" rx="4" ry="4" width="280" height="4" fill="url(#accent)"/>
+  <text x="740" y="180" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">1,240 tokens · +0.3% this week</text>
+  <!-- Card 2 -->
+  <circle cx="750" cy="210" r="6" fill="#22c55e"/>
+  <text x="770" y="216" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#e2e8f0">Kepler</text>
+  <text x="850" y="216" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#22c55e">● Healthy</text>
+  <rect x="740" y="230" rx="4" ry="4" width="440" height="4" fill="#334155"/>
+  <rect x="740" y="230" rx="4" ry="4" width="380" height="4" fill="#f59e0b"/>
+  <text x="740" y="250" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">12,400 tokens · +14.2% this week ⚠️</text>
+  <!-- Card 3 -->
+  <circle cx="750" cy="280" r="6" fill="#ef4444"/>
+  <text x="770" y="286" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600" fill="#e2e8f0">Beta</text>
+  <text x="850" y="286" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#ef4444">● Dead (circuit tripped)</text>
+  <rect x="740" y="300" rx="4" ry="4" width="440" height="4" fill="#334155"/>
+  <text x="740" y="320" font-family="Inter, system-ui, sans-serif" font-size="11" fill="#64748b">Last seen 2h ago · 3 consecutive failures</text>
+  <!-- Bottom tag -->
+  <rect x="80" y="420" rx="6" ry="6" width="200" height="30" fill="none" stroke="#6366f1" stroke-width="1"/>
+  <text x="180" y="440" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#a5b4fc">pip install · Local-first · MIT</text>
+</svg>

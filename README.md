@@ -6,6 +6,13 @@
 pip install 'observeco[dashboard]' && observeco dashboard
 ```
 
+> **v0.1 — 12 features live. Pro tier available ($9/mo).** Built and dogfooded on a 7-agent fleet running on a single M4 Mac Mini.
+
+<p align="center">
+  <img src="docs/assets/dashboard-screenshot.png" alt="ObserveCo Dashboard" width="720">
+  <br><em>Fleet view with health dots, token bars, drift sparklines, and error timeline. One pip install.</em>
+</p>
+
 <div align="center">
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -23,6 +30,33 @@ pip install 'observeco[dashboard]' && observeco dashboard
 Every AI agent operator has this story: an agent was silently failing for weeks. Context bloating 15% per week. Memory full of duplicates and contradictions. Nobody noticed until a user complained.
 
 This is normal. The tools to fix it don't exist — yet.
+
+---
+
+## From the Trenches (Dogfood)
+
+> We run 7 autonomous agents on an M4 Mac Mini — Hermes, Kepler, Hound, Dreamer, Aleph, PA, and an orchestrator. They talk via ACPS signals, trigger on file changes, get scheduled via cron. For months we ran `ps aux | grep python` and hoped for the best.
+
+> **Then we built ObserveCo.** It caught Hermes' SOUL.md growing 15% week-over-week. It showed Kepler's context carrying 40k tokens of memory it never used. It exposed 3 silent circuit trips in 2 days that nobody saw. These are not edge cases — they're the normal state of any agent fleet older than a week.
+
+---
+
+## Pro Tier ($9/mo — 30-day free trial)
+
+Get the full Observability Engine:
+
+| Feature | Free | Pro |
+|---------|:----:|:---:|
+| Fleet health monitoring | ✅ | ✅ |
+| Circuit breakers | ✅ | ✅ |
+| Token breakdown | ✅ (read-only) | ✅ |
+| Memory garden | ✅ | ✅ |
+| **Drift tracking (7-day history)** | ❌ | ✅ |
+| **Push alerts (Telegram / email)** | ❌ | ✅ |
+| **CRM & license management** | ❌ | ✅ |
+| **Dashboard auto-refresh** | every 60s | every 10s |
+
+Run `observeco dashboard` and click "Unlock with Pro" to start your free trial.
 
 ---
 
@@ -158,3 +192,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). First-time contributors welcome — look
 ---
 
 Built with ❤️ for the AI agent community. MIT licensed.
+
+### Glossary
+
+Hover the "?" icons on any agent card in the dashboard to get instant definitions of:
+- **Health** (status dot) — green/yellow/red lifecycle
+- **Guard** (circuit breaker) — N-failure auto-stop
+- **Errors** — per-agent error badge (24h window)
+- **Brain size** (drift) — 7-day token growth trend
+- **Composition** (token bar) — identity/skills/memory/tools/guidance breakdown
+
+Each popup includes FAQ. Click the topic header to open the full modal.
