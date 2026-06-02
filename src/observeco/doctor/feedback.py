@@ -26,7 +26,7 @@ from typing import Optional
 from .diagnostics import DiagnosticReport
 
 
-FEEDBACK_SERVER = "https://api.observeco.ai/v1/feedback"
+FEEDBACK_SERVER = "https://observeco.com/api/telemetry"
 FEEDBACK_OPTOUT_VAR = "OBSERVECO_NO_TELEMETRY"
 
 
