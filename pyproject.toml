@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "observeco"
-version = "0.1.0"
+version = "0.2.0"
 description = "Runtime observability for AI agent systems — pulse, circuit breaker, token compression, dashboard"
 readme = "README.md"
 license = {text = "MIT"}
@@ -30,10 +30,12 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.27",
     "platformdirs>=4",
+    "colorama>=0.4.6",
 ]
 
 [project.optional-dependencies]
 dashboard = ["jinja2>=3.1", "python-multipart>=0.0.9"]
+desktop = ["pywebview>=5"]
 graph = ["tree-sitter>=0.25", "tree-sitter-python>=0.25"]
 adapters = ["pynacl>=1.5.0", "defusedxml>=0.7.0"]  # Ed25519 for Discord, XML security for SAML
 dev = ["pytest>=7", "pytest-cov>=4", "ruff>=0.3", "mypy>=1.0"]
@@ -43,7 +45,7 @@ watch = ["watchdog>=4"]
 observeco = "observeco.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/observeco/observeco"
+Homepage = "https://observeco.ai"
 Documentation = "https://github.com/observeco/observeco#readme"
 Repository = "https://github.com/observeco/observeco"
 
