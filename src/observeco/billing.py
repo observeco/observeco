@@ -147,6 +147,7 @@ def create_checkout_session(email: str, plan: str = "solo",
             success_url=success_url,
             cancel_url=cancel_url,
             customer_email=email,
+            metadata={"plan": plan},
             subscription_data={
                 "trial_period_days": config.trial_days,
                 "metadata": {"plan": plan},
