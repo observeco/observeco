@@ -14,6 +14,9 @@ import json
 import time
 from dataclasses import dataclass
 
+from fastapi import HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+
 from observeco.dirs import get_data_dir
 
 CONFIG_DIR = get_data_dir()
@@ -211,7 +214,6 @@ def get_billing_status() -> dict:
 
 def add_billing_endpoints(app) -> None:
     """Add Stripe billing endpoints to a FastAPI app (for dashboard integration)."""
-    from fastapi import HTTPException, Request
 
     @app.get("/api/billing/status")
     async def billing_status():
@@ -230,7 +232,6 @@ def add_billing_endpoints(app) -> None:
     @app.get("/api/billing/success")
     async def billing_success(request: Request):
         """Stripe checkout success page — redirects back to dashboard with toast."""
-        from fastapi.responses import HTMLResponse
         session_id = request.query_params.get("session_id", "")
         return HTMLResponse(f"""<!DOCTYPE html><html><head><meta http-equiv="refresh" content="2;url=/"></head><body style="background:#0f172a;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;">
         <div style="font-size:48px;">✅</div>
@@ -244,7 +245,6 @@ def add_billing_endpoints(app) -> None:
     @app.get("/api/billing/cancel")
     async def billing_cancel():
         """Stripe checkout cancelled — redirect back to dashboard."""
-        from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/")
 
     @app.post("/api/billing/webhook")

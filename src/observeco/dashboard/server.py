@@ -3420,6 +3420,20 @@ def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False,
                 _k, _v = _line.split("=", 1)
                 os.environ.setdefault(_k.strip(), _v.strip())
 
+    # Auto-wire Stripe billing if env vars are set
+    _stripe_sk = os.environ.get("STRIPE_SECRET_KEY") or os.environ.get("stripe_secret_key", "")
+    _stripe_pk = os.environ.get("STRIPE_PUBLISHABLE_KEY") or os.environ.get("stripe_publishable_key", "")
+    if _stripe_sk and _stripe_pk:
+        from observeco.billing import configure as _configure_billing
+        _configure_billing(
+            stripe_secret=_stripe_sk,
+            stripe_publishable=_stripe_pk,
+            solo_price=os.environ.get("SOLO_PRICE_ID", ""),
+            team_price=os.environ.get("TEAM_PRICE_ID", ""),
+            webhook_secret=os.environ.get("STRIPE_WEBHOOK_SECRET", ""),
+        )
+        print(f"[billing] Stripe configured via env vars (pk: {_stripe_pk[:8]}...)")
+
     if show_token:
         print(f"Dashboard access token: {dashboard_secret}")
         print("Use this with: curl -H 'X-ObserveCo-Token: <token>' http://localhost:{port}/api/agents")
