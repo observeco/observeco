@@ -1,0 +1,9 @@
+{
+  "name": "observeco-api",
+  "version": "1.0.0",
+  "description": "Vercel serverless functions for ObserveCo licensing, billing, and telemetry",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "stripe": "^17.0.0"
+  }
+}
