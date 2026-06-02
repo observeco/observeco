@@ -23,6 +23,7 @@ build/
 
 # Environment
 .env
+.env.*
 *.env.local
 
 # Docs build
