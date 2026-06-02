@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from observeco.billing import add_billing_endpoints
 from observeco.dashboard.otel import router as otel_router
 from observeco.dashboard.licenses_api import router as licenses_router
+from observeco.dashboard.commercial_api import router as commercial_router
 from observeco.db import Database
 from observeco.api import router as api_router
 from observeco.realtime import router as realtime_router
@@ -59,6 +60,7 @@ app.include_router(otel_router)
 app.include_router(api_router)
 app.include_router(realtime_router)
 app.include_router(licenses_router)
+app.include_router(commercial_router)
 
 # --- Startup: ensure trial token if first run ---
 @app.on_event("startup")
@@ -204,51 +206,94 @@ async def auth_me(request: Request):
 
 @app.get("/api/phase", response_class=HTMLResponse)
 async def api_phase():
-    """Detect onboarding phase per §8 — 3-phase progressive loading."""
+    """Detect onboarding phase per §8 — 3-phase progressive loading (backed by DB persistence)."""
+    phase = db.get_phase()
     agents = db.get_agents()
     pulses = db.get_recent_pulses(limit=5)
     now = int(time.time())
-
     has_agents = len(agents) > 0
     has_data = len(pulses) > 0
-    recent_data = any(now - p.get("timestamp", 0) < 300 for p in pulses)  # within 5m
+    recent_data = any(now - p.get("timestamp", 0) < 300 for p in pulses)
 
-    if not has_agents and not has_data:
+    # Persist detected phase if none set yet
+    if not db.get_phase() or db.get_phase() == "zero":
+        if has_data:
+            db.set_phase("live")
+            phase = "live"
+        elif has_agents:
+            db.set_phase("setup")
+            phase = "setup"
+
+    if phase == "zero" or (not has_agents and not has_data):
         # Phase 0 — Fresh install, nothing detected
-        return HTMLResponse("""<div class="phase-banner">
+        return HTMLResponse("""<div class="phase-banner" id="phaseBanner">
     <div class="phase-banner-inner">
         <span class="phase-banner-icon">🔍</span>
         <div class="phase-banner-body">
-            <strong class="phase-banner-title">Observing your system...</strong>
+            <strong class="phase-banner-title">Welcome to ObserveCo</strong>
             <div class="phase-banner-text">
-                Auto-discovering your agents from config files and common agent paths.
-                Agents will appear here automatically or run
-                <code class="inline-code-sm">observeco agents discover</code>
-                to check manually.
+                Let's find your agents. Click below to auto-discover agents from
+                your system, or add them manually.
             </div>
+            <div class="phase-banner-actions" style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+                <button class="phase-banner-btn"
+                    hx-post="/api/discover/run-html"
+                    hx-target="#discoverResults"
+                    hx-swap="innerHTML"
+                    hx-indicator="#discoverSpinner">
+                    🔍 Let's find your agents
+                </button>
+                <span id="discoverSpinner" class="htmx-indicator" style="font-size:12px;color:#64748b;">Discovering...</span>
+            </div>
+            <div id="discoverResults" style="margin-top:10px;"></div>
         </div>
     </div>
 </div>""")
 
-    if has_agents and not recent_data:
+    if phase == "setup" or (has_agents and not recent_data):
         # Phase 1 — Agents found, waiting for data
         count = len(agents)
-        return HTMLResponse(f"""<div class="phase-banner" style="border-left-color:#eab308;background:rgba(234,179,8,0.08);">
+        pulse_count = len(pulses)
+        has_any_pulse = pulse_count > 0
+        db.set_phase("setup")
+        # Determine which step we're on in the 4-stage progress
+        steps = [
+            ("Discovered", True),
+            ("Watched", db.is_first_run() is False),
+            ("Pulse arriving", has_any_pulse),
+            ("Dashboard live", False),
+        ]
+        progress_html = '<div class="setup-progress" style="margin:10px 0 6px;">'
+        for i, (label, done) in enumerate(steps):
+            icon = "✅" if done else "⏳" if i == next((j for j, (_, d) in enumerate(steps) if not d), 3) else "◻️"
+            progress_html += f'<span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:11px;color:{"#22c55e" if done else "#94a3b8"};">{icon} {label}</span>'
+            if i < len(steps) - 1:
+                progress_html += '<span style="color:#334155;font-size:10px;">──</span>'
+        progress_html += "</div>"
+        guide_section = f"""<div id="setupGuide" class="setup-guide" style="margin-top:8px;padding:8px 12px;background:rgba(59,130,246,0.06);border-radius:6px;border-left:2px solid #3b82f6;">
+    <div style="font-size:11px;font-weight:600;color:#93c5fd;margin-bottom:4px;">💡 Your personalized guide</div>
+    <div id="onboardingGuideContainer" hx-get="/api/onboarding-guide" hx-trigger="load" hx-swap="innerHTML" style="font-size:11px;color:#94a3b8;line-height:1.5;"></div>
+</div>"""
+        uses = "s" if count != 1 else ""
+        return HTMLResponse(f"""<div class="phase-banner" id="phaseBanner" style="border-left-color:#eab308;background:rgba(234,179,8,0.08);">
     <div class="phase-banner-inner">
         <span class="phase-banner-icon">⏳</span>
         <div class="phase-banner-body">
-            <strong class="phase-banner-title">{count} agent{'s' if count != 1 else ''} discovered — collecting health data...</strong>
+            <strong class="phase-banner-title">{count} agent{uses} discovered — collecting health data...</strong>
             <div class="phase-banner-text">
-                Run <code class="inline-code-sm">observeco watch</code>
-                to start monitoring, or wait for background collection.
-                Status dots will fill in as data arrives.
+                Your agent{uses} are registered. Health data will appear within 60 seconds.
+                Run <code class="inline-code-sm">observeco watch</code> to start monitoring immediately.
             </div>
+            {progress_html}
+            {guide_section}
         </div>
     </div>
 </div>""")
 
-    # Phase 2 — System stabilized
-    # Show a brief confirmation banner that auto-fades
+    # Phase 2 / Live — System stabilized
+    db.set_phase("live")
+    if db.is_first_run():
+        db.set_first_run_complete()
     return HTMLResponse("""<div class="phase-done" id="phase-done">
     <div class="phase-done-inner">
         <span class="phase-done-icon">✅</span>
@@ -941,9 +986,9 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
     # ── Section 1: Pulse timeline (all dots with legend) ──
     dot_row = []
     for p in pulses[:48]:
-        dot = "🟢" if p["status"] == "alive" else "🔴" if p["status"] == "dead" else "🟡"
+        cls = "ok" if p["status"] == "alive" else "err" if p["status"] == "dead" else "warn"
         ts = _fmt_ts(p["timestamp"])
-        dot_row.append(f'<span title="{p["status"]} @ {ts}" class="pulse-dot">{dot}</span>')
+        dot_row.append(f'<span title="{p["status"]} @ {ts}" class="pulse-dot {cls}"></span>')
     dots_html = "\n".join(dot_row) if dot_row else '<span class="text-muted">No pulses recorded yet</span>'
 
     # ── Section 2: Annotated timeline (errors as table) ──
@@ -1040,9 +1085,9 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
         <h4>Last 24 hours (every 30s)</h4>
         <div class="pulse-timeline">{dots_html}</div>
         <div class="pulse-legend">
-            <span class="pulse-legend-dot ok">🟢 OK</span>
-            <span class="pulse-legend-dot warn">🟡 Warning</span>
-            <span class="pulse-legend-dot err">🔴 Error</span>
+            <span class="pulse-legend-dot"><span class="pulse-dot ok"></span> OK</span>
+            <span class="pulse-legend-dot"><span class="pulse-dot warn"></span> Warning</span>
+            <span class="pulse-legend-dot"><span class="pulse-dot err"></span> Error</span>
         </div>
     </div>
     <div class="modal-section">
@@ -1088,7 +1133,7 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
     </div>
 </div>""")
 
-    if framework == "hermes":
+    if "hermes" in framework.lower():
         # Hermes token breakdown
         comps = [
             ("identity", latest_trim.get("identity_tokens", 0)),
@@ -1107,18 +1152,32 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
             col = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
                    "tools": "#14b8a6", "guidance": "#f97316"}.get(comp, "#6b7280")
             comp_label = comp.capitalize()
+            # Estimate yearly cost at $0.15/M tokens
+            yearly_est = val * 365 * 0.15 / 1_000_000
             bars.append(f"""<div class="token-row-detail">
-    <span class="token-row-label">{comp_label}</span>
-    <div class="token-bar-bg">
-        <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span class="token-row-label" style="font-weight:600;color:#e2e8f0;font-size:12px;">{comp_label}</span>
+        <span style="font-size:11px;color:#94a3b8;font-family:var(--font-mono);">{val:,} <span style="color:#64748b;">tok</span></span>
     </div>
-    <span class="token-row-value token-value">{val:,} tok ({pct:.0f}%)</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <div class="token-bar-bg" style="flex:1;height:6px;">
+            <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};height:6px;border-radius:3px;"></div>
+        </div>
+        <span class="token-row-value" style="font-size:11px;color:#94a3b8;min-width:40px;text-align:right;font-family:var(--font-mono);">{pct:.0f}%</span>
+    </div>
 </div>""")
 
         savings = latest_trim.get("savings_ratio", 0)
-        savings_html = f"""<div class="savings-badge">
-    Context optimized by {savings:.0%} this session
+        savings_html = f"""<div class="savings-badge" style="display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:6px 10px;font-size:11px;color:#22c55e;margin-top:8px;">
+    📉 Compressed {savings:.0%} this session
 </div>""" if savings > 0 else ""
+
+        yearly_est_total = total * 365 * 0.15 / 1_000_000
+        cost_line = f"""<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;background:var(--surface);border-radius:6px;font-size:11px;">
+    <span style="color:#64748b;">Estimated yearly cost</span>
+    <span style="color:#e2e8f0;font-family:var(--font-mono);font-weight:600;">${yearly_est_total:.2f}</span>
+    <span style="color:#475569;font-size:10px;">(at $0.15/M tok, DeepSeek rates)</span>
+</div>"""
 
         drift_html = _detail_drift_html(drift, name)
 
@@ -1129,6 +1188,7 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
     </div>
     {"".join(bars)}
     {savings_html}
+    {cost_line}
     {drift_html}
 </div>""")
     else:
@@ -1154,19 +1214,32 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
                 pct = val / total * 100
                 col = {"MEMORY.md": "#ec4899", "Skills": "#8b5cf6", "Workspace": "#14b8a6",
                        "History": "#6366f1", "Bootstrap": "#f97316"}.get(comp, "#6b7280")
+                yearly_est = val * 365 * 0.15 / 1_000_000
                 bars.append(f"""<div class="token-row-detail">
-    <span class="token-row-label">{comp}</span>
-    <div class="token-bar-bg">
-        <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span class="token-row-label" style="font-weight:600;color:#e2e8f0;font-size:12px;">{comp}</span>
+        <span style="font-size:11px;color:#94a3b8;font-family:var(--font-mono);">{val:,} <span style="color:#64748b;">tok</span></span>
     </div>
-    <span class="token-row-value token-value">{val:,} tok</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <div class="token-bar-bg" style="flex:1;height:6px;">
+            <div class="token-bar-fill-dynamic" style="width:{pct:.1f}%;background:{col};height:6px;border-radius:3px;"></div>
+        </div>
+        <span class="token-row-value" style="font-size:11px;color:#94a3b8;min-width:40px;text-align:right;font-family:var(--font-mono);">{pct:.0f}%</span>
+    </div>
 </div>""")
 
             loads = db.get_loads(agent_name=name)
             total_saved = sum(l.get("tokens_saved", 0) for l in loads[:20])
-            savings_html = f"""<div class="savings-badge">
-    ClawForge saved ~{total_saved:,} tokens across {len(loads)} turns
+            savings_html = f"""<div class="savings-badge" style="display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:6px 10px;font-size:11px;color:#22c55e;margin-top:8px;">
+    📉 ClawForge saved ~{total_saved:,} tokens across {len(loads)} turns
 </div>""" if total_saved > 0 else ""
+
+            yearly_est_total = (total_est or total) * 365 * 0.15 / 1_000_000
+            cost_line = f"""<div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;background:var(--surface);border-radius:6px;font-size:11px;">
+    <span style="color:#64748b;">Estimated yearly cost</span>
+    <span style="color:#e2e8f0;font-family:var(--font-mono);font-weight:600;">${yearly_est_total:.2f}</span>
+    <span style="color:#475569;font-size:10px;">(at $0.15/M tok, DeepSeek rates)</span>
+</div>"""
 
             return HTMLResponse(f"""<div class="detail-content">
     <div class="detail-section">
@@ -1175,6 +1248,7 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
     </div>
     {"".join(bars)}
     {savings_html}
+    {cost_line}
 </div>""")
         return HTMLResponse('<div class="empty-state">No profile data — run `observeco clawforge profile`</div>')
 
@@ -1372,33 +1446,83 @@ def _detail_garden_tab(name: str, garden: list, profile: list, framework: str) -
     </div>
 </div>""")
 
-    # No garden data — explain that data accumulates as the daemon watches
+    # No garden data — explain that data accumulates as the daemon watches, quantify uptime
+    # Check if watch daemon is actually running and for how long
+    import os
+    watch_pid_path = os.path.expanduser("~/.observeco/.watch.pid")
+    daemon_status = ""
+    try:
+        if os.path.exists(watch_pid_path):
+            pid = int(Path(watch_pid_path).read_text().strip())
+            alive = False
+            try:
+                os.kill(pid, 0)
+                alive = True
+            except (OSError, ProcessLookupError):
+                pass
+            if alive:
+                mtime = os.path.getmtime(watch_pid_path)
+                uptime_seconds = int(time.time()) - mtime
+                if uptime_seconds < 3600:
+                    uptime_str = f"{uptime_seconds // 60}m"
+                elif uptime_seconds < 86400:
+                    uptime_str = f"{uptime_seconds // 3600}h {uptime_seconds % 3600 // 60}m"
+                else:
+                    uptime_str = f"{uptime_seconds // 86400}d {uptime_seconds % 86400 // 3600}h"
+                daemon_status = """<div class="garden-metric-card" style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);">
+                    <span class="garden-metric-num" style="color:#22c55e;">""" + uptime_str + """</span>
+                    <span class="garden-metric-label">Watch daemon uptime</span>
+                </div>"""
+            else:
+                daemon_status = """<div class="garden-metric-card" style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);">
+                    <span class="garden-metric-num" style="color:#eab308;">Not running</span>
+                    <span class="garden-metric-label">Watch daemon</span>
+                </div>"""
+        else:
+            daemon_status = """<div class="garden-metric-card" style="background:var(--surface);border:1px solid var(--border);">
+                <span class="garden-metric-num" style="color:#64748b;">—</span>
+                <span class="garden-metric-label">Watch daemon (never started)</span>
+            </div>"""
+    except Exception:
+        daemon_status = ""
+
     return HTMLResponse(f"""<div class="detail-content">
     <div class="modal-section">
         <h4>💾 Memory & Context</h4>
         <div style="font-size:13px;color:#94a3b8;margin-bottom:12px;line-height:1.6;">
-            Memory quality data appears automatically after the <code>observeco watch</code> daemon
-            has been running for some time — it tracks duplicate detection, contradiction scanning,
-            and stale entry reporting for this agent's knowledge base.
+            Memory quality data builds up over time. Results appear here after the watch daemon
+            has collected enough data through active monitoring.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div class="garden-metric-card" style="background:var(--surface);border:1px solid var(--border);">
+                <span class="garden-metric-num" style="color:#6366f1;">24h+</span>
+                <span class="garden-metric-label">Minimum monitoring</span>
+            </div>
+            <div class="garden-metric-card" style="background:var(--surface);border:1px solid var(--border);">
+                <span class="garden-metric-num" style="color:#6366f1;">50+</span>
+                <span class="garden-metric-label">Interactions needed</span>
+            </div>
+            <div class="garden-metric-card" style="background:var(--surface);border:1px solid var(--border);">
+                <span class="garden-metric-num" style="color:#6366f1;">~7d</span>
+                <span class="garden-metric-label">For stable scores</span>
+            </div>
+            {daemon_status}
         </div>
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:8px;">
-            <div style="font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">Prerequisites:</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
-                <div style="background:var(--surface);border-radius:8px;padding:12px;">
-                    <div style="color:#94a3b8;font-size:11px;margin-bottom:4px;">① Daemon running</div>
-                    <div style="color:#22c55e;font-weight:600;">observeco watch --daemon</div>
-                    <div style="color:#64748b;font-size:11px;margin-top:4px;">Collects agent data automatically</div>
-                </div>
-                <div style="background:var(--surface);border-radius:8px;padding:12px;">
-                    <div style="color:#94a3b8;font-size:11px;margin-bottom:4px;">② Agent activity</div>
-                    <div style="color:#eab308;font-weight:600;">⏳ Agent runs tasks</div>
-                    <div style="color:#64748b;font-size:11px;margin-top:4px;">Data builds up as agents produce output</div>
-                </div>
-                <div style="background:var(--surface);border-radius:8px;padding:12px;">
-                    <div style="color:#94a3b8;font-size:11px;margin-bottom:4px;">③ Inspect here</div>
-                    <div style="color:#6366f1;font-weight:600;">↩ Return to this tab</div>
-                    <div style="color:#64748b;font-size:11px;margin-top:4px;">Debt score, duplicates, contradictions appear here</div>
-                </div>
+            <div style="font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:8px;">
+                🚀 Start monitoring your agents now:
+            </div>
+            <div style="background:var(--surface);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:12px;line-height:1.8;">
+                <span style="color:#64748b;"># One command in terminal</span><br>
+                <span style="color:var(--accent);font-weight:600;">observeco watch start</span><br>
+                <span style="color:#64748b;font-size:11px;">Starts the watch daemon in the background. It'll begin collecting pulse data immediately.</span><br><br>
+                <span style="color:#64748b;"># Check status</span><br>
+                <span style="color:#94a3b8;">observeco watch status</span>
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-top:10px;line-height:1.6;">
+                No config needed. The daemon auto-discovers agents from <code style="color:#94a3b8;">~/.hermes/agents/</code> (Hermes) or the active OpenClaw config, pings them every 30s, and logs pulses to the database. As data accumulates, this tab fills with memory quality scores, drift analysis, and token recommendations.
+            </div>
+        </div>
             </div>
         </div>
     </div>
@@ -1531,6 +1655,104 @@ async def api_fleet_summary():
       <button class="feedback-btn" onclick="toggleFeedback()">+ Missing an agent?</button>
       <button class="feedback-btn u-ml-8" onclick="openSkillsAuditModal('all')">🧩 Skill Audit</button>
       <button class="feedback-btn u-ml-8" onclick="openPathwayModal()">🕸️ Pathway map</button>
+      <button class="feedback-btn u-ml-8" onclick="loadPlatforms()">🔌 Platforms</button>
+      <span id="platformStatus"></span>
+</div>""")
+
+
+# ---------------------------------------------------------------------------
+# § Platform Connectivity — live probe of messaging platforms
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/platforms", response_class=HTMLResponse)
+async def api_platforms():
+    """Probe local platforms and return their connectivity status."""
+    import subprocess as _sp
+    import httpx as _httpx
+    platforms = {}
+    now = int(time.time())
+
+    # 1. Hermes gateway
+    try:
+        r = _httpx.get("http://127.0.0.1:8642/health", timeout=3)
+        platforms["gateway"] = {"status": "up", "latency_ms": int(r.elapsed.total_seconds() * 1000)} if r.status_code == 200 else {"status": "error", "http": r.status_code}
+    except Exception as e:
+        platforms["gateway"] = {"status": "down", "error": str(e)[:60]}
+
+    # 2. ObserveCo webhook
+    try:
+        r = _httpx.get("http://127.0.0.1:9120/health", timeout=3)
+        platforms["webhook"] = {"status": "up", "latency_ms": int(r.elapsed.total_seconds() * 1000)} if r.status_code == 200 else {"status": "error", "http": r.status_code}
+    except Exception as e:
+        platforms["webhook"] = {"status": "down", "error": str(e)[:60]}
+
+    # 3. iMessage (BlueBubbles)
+    try:
+        r = _httpx.get("http://127.0.0.1:1234/", timeout=3)
+        platforms["imessage"] = {"status": "up"} if r.status_code == 200 else {"status": "error", "http": r.status_code}
+    except Exception:
+        platforms["imessage"] = {"status": "down"}
+
+    # 4. Telegram API (public reachability)
+    try:
+        r = _httpx.get("https://api.telegram.org/botINVALID/getMe", timeout=5)
+        platforms["telegram"] = {"status": "reachable", "latency_ms": int(r.elapsed.total_seconds() * 1000)}
+    except Exception:
+        platforms["telegram"] = {"status": "down"}
+
+    # 5. WhatsApp bridge
+    try:
+        r = _httpx.get("http://127.0.0.1:3000/", timeout=3)
+        platforms["whatsapp"] = {"status": "up"} if r.status_code == 200 else {"status": "error", "http": r.status_code}
+    except Exception:
+        platforms["whatsapp"] = {"status": "down"}
+
+    # Render connectivity badges as a compact modal card
+    platform_icons = {"gateway": "🌐", "webhook": "🔗", "imessage": "💬", "telegram": "✈️", "whatsapp": "📱"}
+    platform_desc = {"gateway": "Hermes API Gateway", "webhook": "ObserveCo Webhook Server", "imessage": "BlueBubbles (iMessage)", "telegram": "Telegram Bot API", "whatsapp": "WhatsApp Bridge"}
+    rows = ""
+    for name, info in sorted(platforms.items()):
+        icon = {"up": "🟢", "reachable": "🟢", "error": "🟡", "down": "🔴"}.get(info["status"], "⚪")
+        label = f"{info['status'].capitalize()}"
+        if "latency_ms" in info and info["status"] == "up":
+            label += f" — {info['latency_ms']}ms"
+        elif "latency_ms" in info and info["status"] == "reachable":
+            label += f" ({info['latency_ms']}ms)"
+        if info["status"] == "error" and "http" in info:
+            label += f" (HTTP {info['http']})"
+        status_color = {"up": "#22c55e", "reachable": "#22c55e", "error": "#eab308", "down": "#ef4444"}.get(info["status"], "#6b7280")
+        plt_icon = platform_icons.get(name, "🔌")
+        desc = platform_desc.get(name, name)
+
+        rows += f"""<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+    <div style="width:32px;height:32px;border-radius:8px;background:{status_color}18;display:flex;align-items:center;justify-content:center;font-size:16px;">{plt_icon}</div>
+    <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:13px;font-weight:600;color:#e2e8f0;">{name}</span>
+            <span style="font-size:10px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{desc}</span>
+        </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:{status_color};"></span>
+        <span style="font-size:12px;color:{status_color};font-weight:500;">{label}</span>
+    </div>
+</div>"""
+
+    return HTMLResponse(f"""<div id="platformModal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;width:480px;max-width:90vw;max-height:80vh;overflow-y:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.4);" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+                <div style="font-size:15px;font-weight:700;color:#e2e8f0;">🔌 Platform Connectivity</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px;">Live health check of messaging gateways and APIs</div>
+            </div>
+            <button onclick="document.getElementById('platformModal').style.display='none'" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;width:30px;height:30px;cursor:pointer;color:#94a3b8;font-size:16px;">✕</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+            {rows}
+        </div>
+        <div style="font-size:10px;color:#475569;margin-top:10px;text-align:center;">Last checked: {datetime.fromtimestamp(now).strftime('%H:%M:%S')}</div>
+    </div>
 </div>""")
 
 
@@ -1707,6 +1929,247 @@ async def api_brain(agent: str = "all"):
 
 
 # ---------------------------------------------------------------------------
+# § Garden Summary — fleet-level Memory Garden aggregates
+# ---------------------------------------------------------------------------
+
+@app.get("/api/garden-summary")
+async def api_garden_summary():
+    """Fleet-level Memory Garden aggregates for Brain Analysis.
+    
+    Returns JSON with agents_scanned, total_duplicates, total_contradictions,
+    total_stale, avg_debt_score, fleet_grade, total_snapshots.
+    """
+    return JSONResponse(db.get_garden_summary())
+
+
+@app.get("/api/token-summary")
+async def api_token_summary_alias(agent: str = "", days: int = 7):
+    """Alias for /api/tokens/summary — static HTML export compatibility."""
+    from observeco.tracking.tokens import get_token_summary
+    return JSONResponse(get_token_summary(agent, days))
+
+
+@app.get("/api/drift-summary")
+async def api_drift_summary():
+    """Fleet-wide drift summary across all agents."""
+    drift = db.get_drift()
+    if not drift:
+        return JSONResponse({"agents": [], "total_breached": 0, "avg_delta_pct": 0})
+    agents = {}
+    for d in drift:
+        name = d["agent_name"]
+        if name not in agents:
+            agents[name] = {"agent_name": name, "components": {}, "breached": 0}
+        agents[name]["components"][d["component"]] = {
+            "current": d["current_tokens"],
+            "week_avg": d["week_avg_tokens"],
+            "delta_pct": round(d["delta_pct"], 1),
+            "breached": bool(d["breached"]),
+        }
+        if d["breached"]:
+            agents[name]["breached"] += 1
+    total_breached = sum(a["breached"] for a in agents.values())
+    deltas = [d["delta_pct"] for d in drift]
+    avg_delta = round(sum(deltas) / len(deltas), 1) if deltas else 0
+    return JSONResponse({
+        "agents": sorted(agents.values(), key=lambda x: x["agent_name"]),
+        "total_agents": len(agents),
+        "total_breached": total_breached,
+        "avg_delta_pct": avg_delta,
+    })
+
+
+@app.get("/api/communication-map")
+async def api_communication_map():
+    """Alias for /api/pathway-graph — static HTML export compatibility."""
+    graph = db.pathway_get_graph()
+    return JSONResponse({"nodes": graph.get("nodes", []), "edges": graph.get("edges", [])})
+
+
+@app.get("/api/phase/state")
+async def api_phase_state():
+    """Return the current dashboard phase as JSON (complements HTML /api/phase banner)."""
+    return JSONResponse({
+        "phase": db.get_phase(),
+        "is_first_run": db.is_first_run(),
+        "agents_exist": len(db.get_agents()) > 0,
+    })
+
+
+@app.post("/api/phase/transition")
+async def api_phase_transition(request: Request):
+    """Transition to a new phase. Only forward progression allowed."""
+    try:
+        body = await request.json()
+        phase = body.get("phase", "")
+        if phase not in ("zero", "setup", "live"):
+            return JSONResponse({"error": f"Invalid phase: {phase}"}, status_code=400)
+        current = db.get_phase()
+        db.set_phase(phase)
+        if phase == "setup" and current == "zero":
+            db.set_first_run_complete()
+        return JSONResponse({"phase": db.get_phase(), "transitioned": phase != current})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+# ── Agent Discovery Wizard ─────────────────────────────────────────
+
+@app.post("/api/discover/run")
+async def api_discover_run():
+    """Run agent discovery and cache results. Returns list of found candidates."""
+    try:
+        from observeco.auto_detect import run_discover as _run_disc, run_llm_discovery
+
+        # Run static discovery first
+        _run_disc(show_all=False)
+
+        # Get current agents from config
+        from observeco.config import load_config
+        config = load_config()
+        candidates = []
+
+        # Static agents from config
+        for agent in (config.agents or []):
+            candidates.append({
+                "name": agent.name,
+                "type": agent.framework or "custom",
+                "source": "config",
+                "confidence": "high",
+            })
+
+        # If few found, try LLM discovery
+        if len(candidates) < 2:
+            try:
+                llm_candidates = run_llm_discovery()
+                for c in llm_candidates:
+                    # Deduplicate by name
+                    if not any(ex["name"].lower() == c.get("name", "").lower() for ex in candidates):
+                        candidates.append({
+                            "name": c.get("name", "unknown"),
+                            "type": c.get("type", "unknown"),
+                            "source": "llm",
+                            "confidence": c.get("confidence", "low"),
+                        })
+            except Exception:
+                pass
+
+        db.set_discovery_candidates(candidates)
+        return JSONResponse({"candidates": candidates, "count": len(candidates)})
+    except Exception as e:
+        return JSONResponse({"error": str(e), "candidates": [], "count": 0}, status_code=500)
+
+
+@app.get("/api/discover/candidates")
+async def api_discover_candidates():
+    """Return cached discovery candidates."""
+    return JSONResponse({"candidates": db.get_discovery_candidates(), "count": len(db.get_discovery_candidates())})
+
+
+@app.post("/api/discover/run-html", response_class=HTMLResponse)
+async def api_discover_run_html():
+    """Run agent discovery and return HTML results for htmx."""
+    try:
+        from observeco.auto_detect import run_discover as _run_disc, run_llm_discovery
+
+        # Run static discovery
+        _run_disc(show_all=False)
+
+        from observeco.config import load_config
+        config = load_config()
+        candidates = []
+
+        for agent in (config.agents or []):
+            candidates.append({
+                "name": agent.name,
+                "type": agent.framework or "custom",
+                "source": "config",
+                "confidence": "high",
+            })
+
+        if len(candidates) < 2:
+            try:
+                llm_candidates = run_llm_discovery()
+                for c in llm_candidates:
+                    if not any(ex["name"].lower() == c.get("name", "").lower() for ex in candidates):
+                        candidates.append({
+                            "name": c.get("name", "unknown"),
+                            "type": c.get("type", "unknown"),
+                            "source": "llm",
+                            "confidence": c.get("confidence", "low"),
+                        })
+            except Exception:
+                pass
+
+        db.set_discovery_candidates(candidates)
+    except Exception:
+        pass
+
+    candidates = db.get_discovery_candidates()
+
+    if not candidates:
+        return HTMLResponse("""<div class="discover-results-empty" style="padding:8px 0;font-size:12px;color:#94a3b8;">
+    <span>No agents found automatically.</span>
+    <div style="margin-top:6px;">Add one manually with the field below, or check that your agents are running.</div>
+</div>""")
+
+    rows = "".join(
+        f'''<div class="discover-result-row" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:rgba(255,255,255,0.04);margin-bottom:4px;">
+    <span style="font-size:12px;font-weight:600;color:#e2e8f0;flex:1;">{c["name"]}</span>
+    <span style="font-size:10px;color:#64748b;padding:1px 6px;border-radius:4px;background:rgba(100,116,139,0.15);">{c.get("type", "custom")}</span>
+    <span style="font-size:10px;color:{"#22c55e" if c.get("confidence") == "high" else "#eab308"};">
+        {"●" if c.get("confidence") == "high" else "◐"}
+    </span>
+</div>'''
+        for c in candidates
+    )
+
+    return HTMLResponse(f"""<div class="discover-results" style="margin-top:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:13px;font-weight:600;color:#e2e8f0;">Found {len(candidates)} agent{"s" if len(candidates) != 1 else ""}</span>
+        <button class="discover-confirm-btn"
+            hx-post="/api/discover/confirm"
+            hx-target="#discoverResults"
+            hx-swap="innerHTML"
+            hx-trigger="click"
+            hx-on::after-request="setTimeout(function(){{ window.location.reload(); }}, 500);"
+            style="background:#22c55e;color:#0c1628;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;">
+            ✓ Confirm & Continue
+        </button>
+    </div>
+    {rows}
+</div>""")
+
+
+@app.post("/api/discover/confirm")
+async def api_discover_confirm():
+    """Confirm discovery results — register all candidates as agents."""
+    candidates = db.get_discovery_candidates()
+    if not candidates:
+        return JSONResponse({"error": "No candidates to confirm. Run discovery first."}, status_code=400)
+
+    # Before registering, check if we already have agents
+    existing_agents = db.get_agents()
+    had_agents = len(existing_agents) > 0
+
+    registered = 0
+    for c in candidates:
+        try:
+            db.register_agent(c["name"], c.get("type", "custom"), "")
+            registered += 1
+        except Exception:
+            pass
+
+    # Clear candidates after confirmation
+    db.clear_discovery_candidates()
+
+    # Transition phase if this is the first batch of agents
+    if not had_agents and registered > 0:
+        db.set_phase("setup")
+
+    return JSONResponse({"registered": registered, "total": len(candidates)})
+
+
 # § Skills Audit endpoint
 # ---------------------------------------------------------------------------
 
@@ -2549,12 +3012,15 @@ async def index():
         # 2. Inject cache meta + __OBSERVECO_TOKEN before </head>
         if "</head>" in html:
             head_end = html.rindex("</head>")
+            phase = db.get_phase()
             injection = (
                 f'<meta name="observeco-token" content="{token}">\n'
+                f'<meta name="observeco-phase" content="{phase}">\n'
                 f'<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n'
                 f'<meta http-equiv="Pragma" content="no-cache">\n'
                 f'<meta http-equiv="Expires" content="0">\n'
                 f'<script>window.__OBSERVECO_TOKEN = "{token}";</script>\n'
+                f'<script>window.__OBSERVECO_PHASE = "{phase}";</script>\n'
                 f'</head>'
             )
             html = html[:head_end] + injection + html[head_end + len("</head>"):]
@@ -2753,7 +3219,93 @@ async def api_telemetry_prompt():
     )
 
 
-# ── Onboarding overlay endpoint (Layer F / F2) ─────────────────
+# ── LLM-powered onboarding guide (Day 3 — §3.25) ─────────────────
+ONBOARDING_GUIDE_PROMPT = """You are ObserveCo's onboarding guide. Generate a brief, personalized 3-step onboarding guide.
+
+System context:
+{system_context}
+
+OS: {os}
+Detected LLM provider: {provider}
+
+Generate a 3-step guide. Keep it under 200 words total. Format:
+
+TITLE: <personalized welcome title>
+STEP1: <first thing user should see/do>
+STEP2: <what happens next>
+STEP3: <what to explore>
+
+Focus on what's actually running on this machine, not generic instructions."""
+
+
+@app.get("/api/onboarding-guide", response_class=HTMLResponse)
+async def api_onboarding_guide():
+    """Generate personalized onboarding guide via LLM."""
+    from observeco.llm_service import ask, detect_providers, get_auto_provider
+
+    # Collect system context
+    agents = db.get_agents()
+    agent_names = ", ".join(a["agent_name"] for a in agents[:5]) if agents else "none detected"
+    agent_count = len(agents)
+
+    pulses = db.get_recent_pulses(limit=3)
+    has_data = len(pulses) > 0
+
+    import platform
+    os_name = platform.system()
+
+    providers = detect_providers()
+    auto = get_auto_provider()
+    provider_name = auto.name if auto else "none"
+
+    system_context = f"Agents: {agent_count} ({agent_names}). Data arriving: {has_data}."
+
+    response = ask(
+        ONBOARDING_GUIDE_PROMPT.format(
+            system_context=system_context,
+            os=os_name,
+            provider=provider_name,
+        ),
+        "",
+        consumer="onboarding_guide",
+        max_cost_cents=0.005,
+        cache_ttl_secs=3600,  # cache 1h — system state changes slowly
+        tier=2,
+    )
+
+    if response is None:
+        # Static fallback
+        return HTMLResponse("<div>Welcome to ObserveCo. Start by adding agents and running the watch daemon.</div>")
+
+    # Parse and render
+    guide = {"title": "Welcome to ObserveCo", "steps": []}
+    step = ""
+    for line in response.strip().split("\n"):
+        line = line.strip()
+        if line.startswith("TITLE:"):
+            guide["title"] = line[6:].strip()
+        elif line.startswith("STEP"):
+            if line[5:].startswith(":"):
+                if step:
+                    guide["steps"].append(step)
+                step = line[6:].strip()
+
+    if step:
+        guide["steps"].append(step)
+
+    html = f"""<div class="llm-guide" style="background:linear-gradient(135deg,rgba(34,197,94,0.06),rgba(59,130,246,0.04));border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:14px 16px;margin:12px 0;">
+        <div style="font-size:14px;font-weight:600;color:#e2e8f0;margin-bottom:10px;">{guide['title']}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">"""
+    for i, s in enumerate(guide["steps"], 1):
+        html += f"""
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+                <div style="width:22px;height:22px;min-width:22px;border-radius:50%;background:rgba(34,197,94,0.15);color:#22c55e;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">{i}</div>
+                <div style="font-size:12px;color:#94a3b8;line-height:1.5;">{s}</div>
+            </div>"""
+    html += """</div></div>"""
+    return HTMLResponse(html)
+
+
 ONBOARDING_TEMPLATE = TEMPLATES_DIR / "onboarding.html"
 
 
@@ -2858,6 +3410,15 @@ def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False,
     from observeco.dashboard.auth import load_or_generate_secret
     dashboard_secret = load_or_generate_secret()
     app.state.dashboard_secret = dashboard_secret
+
+    # Load Supabase credentials for CRM backend
+    _supa_env = Path(__file__).resolve().parent.parent.parent.parent / ".env.supabase"
+    if _supa_env.exists():
+        for _line in _supa_env.read_text().splitlines():
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
 
     if show_token:
         print(f"Dashboard access token: {dashboard_secret}")
@@ -3557,21 +4118,37 @@ async def api_alert_log():
     from observeco.db import Database
     db = Database()
     log = db.get_alert_log(limit=15)
+    now = int(time.time())
+
+    if not log:
+        return HTMLResponse('<div class="empty-state" style="padding:20px;text-align:center;"><div style="font-size:24px;margin-bottom:8px;">📭</div><div style="color:#94a3b8;font-size:13px;">No alerts delivered yet.</div><div style="color:#64748b;font-size:11px;margin-top:4px;">Set up a subscription via <code style="background:var(--surface);padding:2px 6px;border-radius:4px;">observeco alerts subscribe telegram &lt;chat_id&gt;</code></div></div>')
+
+    headers = True
     items = []
     for l in log:
         icon = "✅" if l["delivered"] else "❌"
-        items.append(f"""<div class="heal-entry {'success' if l['delivered'] else 'fail'}">
+        ts = l.get("created_at", 0)
+        age_m = (now - ts) // 60
+        if age_m < 60:
+            age_str = f"{age_m}m ago"
+        elif age_m < 1440:
+            age_str = f"{age_m // 60}h ago"
+        else:
+            age_str = f"{age_m // 1440}d ago"
+
+        items.append(f"""<div class="heal-entry {'success' if l['delivered'] else 'fail'}" style="margin-bottom:4px;">
     <div class="heal-entry-header">
         <span class="heal-action">{icon} {l['channel']} → {_html_escape(l['target'][:40])}</span>
-        <span class="heal-time">{l['event_type']}</span>
+        <span style="font-size:10px;color:#475569;">{age_str}</span>
     </div>
-    <div class="heal-detail">{_html_escape(l['message'][:80])}</div>
+    <div class="heal-detail" style="display:flex;justify-content:space-between;">
+        <span>{_html_escape(l['message'][:80])}</span>
+        <span style="font-size:9px;color:#475569;">{l['event_type']}</span>
+    </div>
 </div>""")
-    if not items:
-        html = '<div class="empty-state">📭 No alerts delivered yet.</div>'
-    else:
-        html = "".join(items)
-    return HTMLResponse(html)
+
+    html = "".join(items)
+    return HTMLResponse(f"""<div style="font-size:10px;color:#64748b;margin-bottom:8px;">Last {len(log)} deliveries:</div>{html}""")
 
 
 @app.post("/api/alert-subscribe")
@@ -3868,3 +4445,74 @@ async def api_history():
 </div>""")
     html = f"<div style='font-size:12px;color:#94a3b8;margin-bottom:8px;'>Total: {total:,} rows across 5 data stores</div>" + "".join(items)
     return HTMLResponse(html)
+
+
+@app.get("/api/config-health", response_class=HTMLResponse)
+async def api_config_health():
+    """Config hygiene widget — Pro gated. Returns HTML card or upsell."""
+    from observeco.chisel.config_widget import generate_widget_html
+    return _pro_response(generate_widget_html())
+
+
+# ── Per-agent LLM summary (Tier 2 shallow — §3.25) ─────────────────
+PER_AGENT_SUMMARY_PROMPT = """You are an agent observability dashboard. Given raw metrics, generate a one-paragraph plain-language summary.
+
+Agent: {name}
+Status: {status}
+Latency: {latency_ms}ms
+Errors (24h): {error_count}
+Restarts (24h): {restart_count}
+Drift: {drift}
+Memory debt: {memory_debt}
+
+Keep it under 40 words. Focus on what matters: is it healthy, what changed."""
+
+
+@app.get("/api/agent-summary/{name}", response_class=HTMLResponse)
+async def api_agent_summary(name: str):
+    """Per-agent LLM-generated summary — Tier 2 shallow. Falls back to raw metrics."""
+    from observeco.llm_service import ask
+
+    agents = db.get_agents()
+    agent = next((a for a in agents if a["agent_name"] == name), None)
+    if not agent:
+        return HTMLResponse("<span style='color:#64748b;font-size:12px;'>Unknown agent</span>")
+
+    pulses = db.get_recent_pulses(name, limit=3)
+    errors = db.get_errors(name, limit=10)
+    restarts = db.get_recent_restarts(agent_name=name, limit=10)
+
+    status = pulses[0].get("status", "?") if pulses else "?"
+    latency = pulses[0].get("latency_ms", 0) if pulses else 0
+    error_count = len(errors)
+    restart_count = len(restarts)
+
+    drift = "unknown"
+    memory_debt = "unknown"
+    try:
+        conn = db._get_conn()
+        dr = conn.execute("SELECT delta_pct, breached FROM chisel_drift WHERE agent_name=? ORDER BY timestamp DESC LIMIT 1", (name,)).fetchone()
+        if dr:
+            drift = f"{dr['delta_pct']:.1f}%{' ⚠️' if dr['breached'] else ''}"
+        gr = conn.execute("SELECT memory_debt_score FROM clawforge_garden WHERE agent_name=? ORDER BY timestamp DESC LIMIT 1", (name,)).fetchone()
+        if gr:
+            memory_debt = str(round(gr['memory_debt_score']))
+    except Exception:
+        pass
+
+    response = ask(
+        PER_AGENT_SUMMARY_PROMPT.format(name=name, status=status, latency_ms=latency,
+                                        error_count=error_count, restart_count=restart_count,
+                                        drift=drift, memory_debt=memory_debt),
+        "",
+        consumer="per_agent_summary",
+        max_cost_cents=0.005,
+        cache_ttl_secs=3600,
+        tier=2,
+    )
+
+    if response is None:
+        # Static fallback
+        response = f"{status} · {latency:.0f}ms · {error_count} errors · ⚡{drift}"
+
+    return HTMLResponse(f"<span style='font-size:12px;color:#94a3b8;'>{response}</span>")

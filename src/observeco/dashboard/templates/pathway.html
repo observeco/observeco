@@ -167,14 +167,22 @@ body {
 <div class="left-rail">
   <div class="graph-card">
     <div class="graph-toolbar">
-      <span class="graph-toolbar-label">Filter:</span>
-      <button class="filter-chip active" data-filter="all" onclick="setFilter('all', this)">All</button>
-      <button class="filter-chip" data-filter="green" onclick="setFilter('green', this)" style="color:var(--green);">🟢 Complete</button>
-      <button class="filter-chip active-amber" data-filter="yellow" onclick="setFilter('yellow', this)" style="color:var(--amber);">🟡 Concerns</button>
-      <button class="filter-chip active-red" data-filter="red" onclick="setFilter('red', this)" style="color:var(--red);">🔴 Dead Ends</button>
+      <span class="graph-toolbar-label">View:</span>
+      <button class="filter-chip active" data-filter="all" onclick="setFilter('all', this)">🌐 Full Graph</button>
+      <button class="filter-chip" data-filter="green" onclick="setFilter('green', this)" style="color:var(--green);">✅ Complete</button>
+      <button class="filter-chip active-amber" data-filter="yellow" onclick="setFilter('yellow', this)" style="color:var(--amber);">⚠️ Concerns</button>
+      <button class="filter-chip active-red" data-filter="red" onclick="setFilter('red', this)" style="color:var(--red);">❌ Dead Ends</button>
       <span style="width:1px;height:20px;background:var(--border);display:inline-block;margin:0 4px;"></span>
-      <span class="graph-toolbar-label">Fold:</span>
-      <button class="filter-chip" id="foldBtn" onclick="toggleFold()">📂 Collapse Leaves</button>
+      <span class="graph-toolbar-label">Simplify:</span>
+      <button class="filter-chip" id="foldBtn" onclick="toggleFold()">📂 Hide leaf nodes</button>
+      <span style="width:1px;height:20px;background:var(--border);display:inline-block;margin:0 4px;"></span>
+      <span class="graph-toolbar-label">Type:</span>
+      <button class="filter-chip active" data-type="all" onclick="setTypeFilter('all', this)">🧠 All</button>
+      <button class="filter-chip" data-type="agent" onclick="setTypeFilter('agent', this)">Agent</button>
+      <button class="filter-chip" data-type="cron" onclick="setTypeFilter('cron', this)">Cron</button>
+      <button class="filter-chip" data-type="platform" onclick="setTypeFilter('platform', this)">Platform</button>
+      <button class="filter-chip" data-type="consumer" onclick="setTypeFilter('consumer', this)">Consumer</button>
+      <button class="filter-chip" data-type="router" onclick="setTypeFilter('router', this)">Router</button>
       <span style="flex:1;"></span>
       <span class="graph-toolbar-label" style="color:var(--muted);font-size:11px;">Scroll to zoom · Drag to pan</span>
     </div>
@@ -211,6 +219,7 @@ body {
 <script>
 let cy = null;
 let currentFilter = 'all';
+let currentTypeFilter = 'all';
 let graphData = { nodes: [], edges: [] };
 
 const NODE_STYLES = {
@@ -501,7 +510,7 @@ function initializeCy() {
   });
 
   // Apply current filter
-  applyFilter(currentFilter);
+  applyFilters();
 
   // Add failure-scenario markers on dead-end edges
   cy.edges('.edge-red').forEach(function(e) {
@@ -603,7 +612,7 @@ function updateSummary() {
 function setFilter(filter, btn) {
   currentFilter = filter;
   // Update button states
-  document.querySelectorAll('.filter-chip').forEach(function(b) {
+  document.querySelectorAll('[onclick^="setFilter("]').forEach(function(b) {
     b.classList.remove('active', 'active-red', 'active-amber');
   });
   if (filter === 'red') {
@@ -613,12 +622,22 @@ function setFilter(filter, btn) {
   } else {
     btn.classList.add('active');
   }
-  applyFilter(filter);
+  applyFilters();
 }
 
-function applyFilter(filter) {
-  if (!cy) return;
+function setTypeFilter(type, btn) {
+  currentTypeFilter = type;
+  document.querySelectorAll('[onclick^="setTypeFilter("]').forEach(function(b) {
+    b.classList.remove('active', 'active-red', 'active-amber');
+  });
+  btn.classList.add('active');
+  applyFilters();
+}
 
+function applyFilters() {
+  if (!cy) return;
+  // Apply status filter
+  const filter = currentFilter;
   // Reset everything visible first
   cy.nodes().forEach(function(n) {
     const isDead = n.data('type') === 'dead-end';
@@ -664,6 +683,17 @@ function applyFilter(filter) {
     });
   }
 
+  // Apply type filter (after status filter)
+  if (currentTypeFilter !== 'all') {
+    cy.nodes().forEach(function(n) {
+      const ntype = n.data('type');
+      if (ntype === 'dead-end') return;
+      if (ntype !== currentTypeFilter) {
+        n.style('display', 'none');
+      }
+    });
+  }
+
   // Rerun layout with animation
   cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.05, nodeSep: 24, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 200 }).run();
 }
@@ -681,7 +711,7 @@ async function refreshData() {
     return;
   }
   isFolded = false;
-  document.getElementById('foldBtn').textContent = '📂 Collapse Leaves';
+  document.getElementById('foldBtn').textContent = '📂 Hide leaf nodes';
   initializeCy();
 }
 
@@ -692,7 +722,7 @@ function toggleFold() {
   if (!cy) return;
   isFolded = !isFolded;
   const btn = document.getElementById('foldBtn');
-  btn.textContent = isFolded ? '📂 Expand All' : '📂 Collapse Leaves';
+  btn.textContent = isFolded ? '📂 Show all nodes' : '📂 Hide leaf nodes';
   btn.classList.toggle('active', isFolded);
 
   if (isFolded) {

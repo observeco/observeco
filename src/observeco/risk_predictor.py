@@ -13,6 +13,7 @@ import math
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 from .session_log import SessionLogger
@@ -204,24 +205,48 @@ class RiskPredictor:
         """Get historical calls for a tool across ALL session files."""
         try:
             from .dirs import get_data_dir
-            sessions_dir = get_data_dir() / "sessions"
-            if not sessions_dir.exists():
-                return []
-
             results = []
-            for session_file in sorted(sessions_dir.glob("*.jsonl"), reverse=True)[:20]:
-                try:
-                    with open(session_file) as f:
-                        for line in f:
-                            line = line.strip()
-                            if not line:
-                                continue
-                            entry = json.loads(line)
-                            if (entry.get("event_type") == "tool_call"
-                                    and entry.get("data", {}).get("tool_name") == tool_name):
-                                results.append(entry.get("data", {}))
-                except Exception:
+
+            # Primary: Hermes session directory (ObserveCo data dir is secondary)
+            session_paths = [
+                get_data_dir() / "sessions",
+                Path.home() / ".hermes" / "sessions",
+            ]
+
+            for sessions_dir in session_paths:
+                if not sessions_dir.exists():
                     continue
+
+                for session_file in sorted(sessions_dir.glob("*.jsonl"), reverse=True)[:20]:
+                    try:
+                        with open(session_file) as f:
+                            for line in f:
+                                line = line.strip()
+                                if not line:
+                                    continue
+                                entry = json.loads(line)
+                                # Support both ObserveCo JSONL format and Hermes session format
+                                if (
+                                    entry.get("event_type") == "tool_call"
+                                    and entry.get("data", {}).get("tool_name") == tool_name
+                                ):
+                                    results.append(entry.get("data", {}))
+                                elif (
+                                    entry.get("role") == "tool"
+                                    and entry.get("name") == tool_name
+                                ):
+                                    results.append({
+                                        "tool_name": tool_name,
+                                        "decision": "deny" if entry.get("is_error") else "allow",
+                                        "risk_level": "high" if entry.get("is_error") else "low",
+                                        "arguments": entry.get("arguments", ""),
+                                        "timestamp": entry.get("timestamp", ""),
+                                    })
+                    except Exception:
+                        continue
+                if len(results) >= 500:
+                    break
+
             return results[:500]  # Cap at 500 entries
         except Exception:
             return []
@@ -230,23 +255,41 @@ class RiskPredictor:
         """Get historical calls for an agent across ALL session files."""
         try:
             from .dirs import get_data_dir
-            sessions_dir = get_data_dir() / "sessions"
-            if not sessions_dir.exists():
-                return []
-
             results = []
-            for session_file in sorted(sessions_dir.glob("*.jsonl"), reverse=True)[:20]:
-                try:
-                    with open(session_file) as f:
-                        for line in f:
-                            line = line.strip()
-                            if not line:
-                                continue
-                            entry = json.loads(line)
-                            if entry.get("agent_id") == agent_id:
-                                results.append(entry.get("data", {}))
-                except Exception:
+
+            # Primary: Hermes session directory
+            session_paths = [
+                get_data_dir() / "sessions",
+                Path.home() / ".hermes" / "sessions",
+            ]
+
+            for sessions_dir in session_paths:
+                if not sessions_dir.exists():
                     continue
+
+                for session_file in sorted(sessions_dir.glob("*.jsonl"), reverse=True)[:20]:
+                    try:
+                        with open(session_file) as f:
+                            for line in f:
+                                line = line.strip()
+                                if not line:
+                                    continue
+                                entry = json.loads(line)
+                                # Support both formats
+                                if entry.get("agent_id") == agent_id:
+                                    results.append(entry.get("data", {}))
+                                elif entry.get("role") == "user" and agent_id in str(entry.get("content", "")):
+                                    # Fuzzy match: look for agent name in message content
+                                    results.append({
+                                        "decision": "allow",
+                                        "risk_level": "low",
+                                        "timestamp": entry.get("timestamp", ""),
+                                    })
+                    except Exception:
+                        continue
+                if len(results) >= 500:
+                    break
+
             return results[:500]  # Cap at 500 entries
         except Exception:
             return []

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional
 
+from observeco.colors import Color
 import sys
 
 
@@ -34,10 +35,10 @@ RISK_EMOJI = {
 }
 
 RISK_COLORS = {
-    RiskLevel.LOW: "\033[92m",
-    RiskLevel.MEDIUM: "\033[92m",
-    RiskLevel.HIGH: "\033[93m",
-    RiskLevel.CRITICAL: "\033[91m",
+    RiskLevel.LOW: Color.GREEN,
+    RiskLevel.MEDIUM: Color.GREEN,
+    RiskLevel.HIGH: Color.YELLOW,
+    RiskLevel.CRITICAL: Color.RED,
 }
 
 # Headless-safe versions (no ANSI)
@@ -94,6 +95,111 @@ class RiskResult:
     action: str  # "auto_approve", "flag", "deny"
 
 
+# --- Structured Risk Classification ---
+
+# Dangerous command names — structured check based on the command/keyword
+_DANGEROUS_COMMANDS = {
+    "delete_file", "remove", "unlink", "rmdir",
+    "drop_table", "truncate_table", "drop_database",
+    "format_disk", "shutdown", "reboot",
+    "sudo", "su",
+}
+
+_FLAGGED_COMMANDS = {
+    "git_push", "git_force_push", "deploy", "release", "publish",
+    "ssh", "scp", "rsync",
+    "chmod", "chown",
+    "set_env", "write_env",
+}
+
+_SENSITIVE_ARG_KEYS = {
+    "sql", "query", "command", "script", "code",
+    "password", "token", "secret", "api_key", "credential",
+}
+
+_PRODUCTION_PATHS = [
+    "/prod", "/production", "/etc/", "/var/www",
+    "production", "prod.db", "main.db",
+]
+
+
+def _classify_structured(tool_call: ToolCall) -> Optional[RiskResult]:
+    """Try structured classification by inspecting tool call arguments.
+
+    Looks at the tool name and argument keys/values directly
+    rather than concatenating to a text blob for regex search.
+    Returns None if no structured rule matched (fall back to regex).
+    """
+    name = tool_call.name.lower()
+    args = tool_call.arguments
+
+    # 1. Check by command name
+    if name in _DANGEROUS_COMMANDS:
+        return RiskResult(
+            level=RiskLevel.CRITICAL,
+            category="destructive",
+            reason=f"Dangerous command: {tool_call.name}",
+            action="deny",
+        )
+
+    if name in _FLAGGED_COMMANDS:
+        return RiskResult(
+            level=RiskLevel.HIGH,
+            category="deploy" if name.startswith("git_") or name in ("deploy", "release", "publish") else "privilege",
+            reason=f"Flagged command: {tool_call.name}",
+            action="flag",
+        )
+
+    # 2. Check for SQL injection / dangerous SQL
+    for key in ("sql", "query", "command"):
+        val = args.get(key, "")
+        if isinstance(val, str) and re.search(
+            r"\b(drop\s+table|truncate|delete\s+from|drop\s+database)\b",
+            val, re.IGNORECASE
+        ):
+            return RiskResult(
+                level=RiskLevel.CRITICAL,
+                category="database",
+                reason=f"Dangerous SQL in argument '{key}'",
+                action="deny",
+            )
+
+    # 3. Check for credentials in args
+    for key in args:
+        if key in ("password", "token", "secret", "api_key", "credential", "auth"):
+            return RiskResult(
+                level=RiskLevel.HIGH,
+                category="credentials",
+                reason=f"Sensitive argument key: {key}",
+                action="flag",
+            )
+
+    # 4. Check paths for production paths
+    for key in ("path", "filepath", "dest", "destination", "target"):
+        val = str(args.get(key, ""))
+        for prod_path in _PRODUCTION_PATHS:
+            if prod_path in val:
+                return RiskResult(
+                    level=RiskLevel.HIGH,
+                    category="destructive",
+                    reason=f"Path '{val}' contains production location",
+                    action="flag",
+                )
+
+    # 5. Check URL args for dangerous hosts
+    for key in ("url", "endpoint", "host"):
+        val = str(args.get(key, ""))
+        if "prod" in val.lower() or "production" in val.lower():
+            return RiskResult(
+                level=RiskLevel.HIGH,
+                category="network",
+                reason=f"URL '{val}' targets production endpoint",
+                action="flag",
+            )
+
+    return None
+
+
 # --- Risk Rules ---
 
 # Critical patterns: always deny
@@ -132,10 +238,21 @@ READ_PATTERNS = [
 
 
 def classify_tool_call(tool_call: ToolCall, platform: str = None) -> RiskResult:
-    """Classify a tool call by risk level."""
+    """Classify a tool call by risk level.
+
+    Tries structured classification first (inspects tool name and
+    argument keys/values directly). Falls back to regex-based text
+    classification for unstructured/text-based tool calls.
+    """
     if platform is None:
         platform = get_platform_name()
 
+    # Try structured classification first
+    structured_result = _classify_structured(tool_call)
+    if structured_result is not None:
+        return structured_result
+
+    # Fall back to regex-based text classification
     text = f"{tool_call.name} {json.dumps(tool_call.arguments)}".lower()
 
     # Check critical
@@ -204,7 +321,7 @@ def format_risk(level: RiskLevel, action: str, auto_approved: bool, use_ansi: bo
     """Format a risk assessment line for display."""
     emoji = RISK_EMOJI.get(level, "?")
     color = get_risk_color(level, use_ansi)
-    reset = "\033[0m" if use_ansi else ""
+    reset = Color.RESET if use_ansi else ""
 
     if level == RiskLevel.CRITICAL:
         status = "DENIED"
@@ -215,7 +332,7 @@ def format_risk(level: RiskLevel, action: str, auto_approved: bool, use_ansi: bo
     else:
         status = "manual review"
 
-    dim = "\033[2m" if use_ansi else ""
-    bold = "\033[1m" if use_ansi else ""
+    dim = Color.DIM if use_ansi else ""
+    bright = Color.BRIGHT if use_ansi else ""
 
     return f"  {color}{emoji}{reset} {dim}{action}{reset} {color}({status}){reset}"

@@ -2,6 +2,15 @@
 
 **Product:** ObserveCo (and all future frontend projects)
 **Status:** Living — update as lessons accumulate
+**Version:** 3.2 — 2026-06-01
+**Version History:**
+| Version | Date | What changed |
+|---------|------|-------------|
+| 2.0 | 2026-05-30 | Added Version field, Golden Gate, fixes section numbering |
+| 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
+| 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, rename "Pre-Ship Gate" → "Golden Gate" |
+| 3.2 | 2026-06-01 | Added Trap 14 (Representation Overflows Container), Trap 15 (Inline Reference Not Verified), Trap 16 (JS Rename Leaves Dead Call). Updated Trap 5 detection (actionable empty state commands), Trap 9 detection (flush-content check). Added Lessons Learned entry for 6 post-launch issues. |
+
 **Author:** Main (per Sean direction 2026-05-25)
 **Source:** Real testing session — dashboard v0 passed all AI checks, failed every human check
 
@@ -177,6 +186,7 @@ Each trap is a **recurring failure pattern** — not a specific bug in the curre
 - Explain *why* it's empty?
 - Tell the user *when* it will populate?
 - Give a *next action* the user can take?
+- If the empty state is tied to a **user-actionable prerequisite** (daemon not running, API key missing, config not set): does it show the EXACT terminal command to resolve it? Every actionable empty state must include a runnable command — not just a description of what's missing.
 
 **Triage:**
 | State | Good | Bad |
@@ -185,6 +195,7 @@ Each trap is a **recurring failure pattern** — not a specific bug in the curre
 | No token data | "📊 Token data appears after the agent's next session" | Blank area below the agent card |
 | No drift data | "📈 Establishing baseline — 3+ pulses needed" | Missing sparkline |
 | No alerts | No alert panel needed at all (collapse it) | Empty right rail with "Pro Features" greyed out |
+| No daemon | "⏳ Watch daemon not running. Start: `observeco watch start`" — actionable, one terminal command | "Watch daemon (never started)" — describes the state, gives no path forward |
 
 ### Trap 6: Navigation Works ≠ User Stays in Context
 
@@ -267,6 +278,7 @@ Load Time (ms) and Perceived Performance do not map 1:1. A page that loads in 80
 2. Manual scan: does any element stand out as "wrong" (wrong font size, wrong spacing, wrong colour)?
 3. Check every button, card, badge, and chip against the design-system tokens file
 4. Check icon consistency: are all icons from the same set? Same stroke weight?
+5. Check every container with `overflow: hidden`: does its content fit, or does text/buttons touch the container edges? No content should be flush against a container border — minimum 12-16px internal padding.
 
 **Remedy:**
 - Every visual token must come from a single source of truth (DESIGN.md, tokens.css, or a design-system component library)
@@ -301,7 +313,7 @@ This is by far the most expensive trap to miss — it determines whether the use
 
 This is the **minimum viable human-lens evaluation**. Apply it before any frontend deliverable is marked complete.
 
-### 4.1 Pre-Ship Gate (run by Hound or any agent)
+### 4.1 The Golden Gate (run by Hound or any agent)
 
 ```
 Before marking any frontend work done, run this 9-point gate:
@@ -474,7 +486,243 @@ After any screenshot command in Prompts 7 or 8, you must output the exact image 
 
 ---
 
-## 6. Lessons Learned Log
+## 6. Pathway Map UX Testing — The Graph Visualization Gate
+
+**This section is dedicated to the unique UX testing challenges of directed graph visualizations (Cytoscape.js pathway maps).** The 5-layer framework and 10 traps above apply generically — this section covers the additional failure modes that only exist in graph-based UIs.
+
+Graph UIs violate the fundamental assumption of every other UI type: that the visual layout is predictable. In a graph, the layout is computed at runtime and changes every time data or filters change. This introduces failure modes that don't exist in card-based dashboards or modal-based interfaces.
+
+### 6.1 The Pathway Map UX Audit
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ PATHWAY MAP UX GATE — The Human Lens on Graphs                   │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│ GRAPH READABILITY                                                 │
+│  [ ] Can you trace any path from source → consumer in <3 seconds? │
+│  [ ] Do any two nodes overlap or obscure each other?              │
+│  [ ] Are edge labels readable (not covering nodes/other edges)?   │
+│  [ ] Does the graph look "full" at default zoom (not too sparse)? │
+│  [ ] Does the left-to-right flow match the mental model of comms? │
+│                                                                    │
+│ LEGEND & COLOR                                                     │
+│  [ ] Every node type in the graph has a match in the legend       │
+│  [ ] Every edge color (green/yellow/red/teal) has a legend entry  │
+│  [ ] Dead-end × markers are explained in the legend               │
+│  [ ] Colors are distinguishable without reading labels            │
+│  [ ] Color-blind test: red-green edge status still comprehensible │
+│                                                                    │
+│ INTERACTION                                                       │
+│  [ ] Click node → detail panel updates in <100ms                 │
+│  [ ] Click edge → detail shows source/status/mechanism            │
+│  [ ] Click background → detail panel resets to idle               │
+│  [ ] Pan & zoom: smooth (no jank at 50+ nodes)                    │
+│  [ ] Reset Layout button works after zooming/panning              │
+│  [ ] Refresh button works (destroy + reload + relayout)           │
+│                                                                    │
+│ FILTERING                                                         │
+│  [ ] All filter shows everything (baseline)                       │
+│  [ ] Green filter: only green edges + connected nodes visible     │
+│  [ ] Red filter: only dead-end edges visible, no orphans          │
+│  [ ] Yellow filter: only concern edges + connected nodes          │
+│  [ ] Filtering animates (doesn't jump)                            │
+│  [ ] After filter change: layout re-settles, no overlap           │
+│  [ ] Dead-end nodes hidden when filtering green                   │
+│                                                                    │
+│ DETAIL PANEL                                                      │
+│  [ ] Node detail shows correct name, type, ID, framework          │
+│  [ ] Connections listed match actual edge count in graph          │
+│  [ ] Edge detail shows source → target with status                │
+│  [ ] Dead-end edge detail explains "no consumer — data lost"      │
+│  [ ] Connected edge ref click → highlights that edge in graph     │
+│  [ ] Empty state (no selection): helpful prompt, not blank        │
+│                                                                    │
+│ FIRST USE & EMOTIONAL LOAD                                        │
+│  [ ] User understands "what am I looking at?" in <10 seconds      │
+│  [ ] User can identify the most broken path without training      │
+│  [ ] User can identify the healthiest path without training       │
+│  [ ] The graph feels explorable, not overwhelming                 │
+│  [ ] A first-time user can answer "what should I fix first?"      │
+│                                                                    │
+│ PASS/FAIL: ___/28 (≥25 = pass, <25 = do not ship)                 │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 6.2 Graph-Specific Traps (Trap 11—17)
+
+In addition to the 10 generic traps, pathway maps have 7 unique traps:
+
+#### Trap 11: The Layout Is Correct but the Graph Is Unreadable
+
+**Pattern:** Dagre renders every node in the correct rank order with no overlap. But edges cross 8 times, labels overlap edges, and dead-end stubs cluster in a corner. All rendering is technically correct. Human can't read the graph.
+
+The difference between "correct layout" and "readable layout" in graph visualization:
+- Correct: every node is positioned, no overlap, proper rank assignment
+- Readable: the most important paths are visually distinct, edges don't cross frequently, labels don't overlap, dead ends are clearly visible
+
+**Detection:**
+1. Can you trace any single path from source → dead end without losing it in crossing edges?
+2. Are there edge crossings within the same rank? (these are avoidable with rankSep tuning)
+3. Do any labels overlap edges or other nodes?
+4. Are dead-end stubs spread out or clustered into a hard-to-click group?
+
+**Remedy:**
+```javascript
+// Tune dagre parameters for readability, not just validity
+cy.layout({
+    name: 'dagre',
+    rankDir: 'LR',
+    spacingFactor: 1.5,     // Increase from default 1.0 to reduce overlap
+    nodeSep: 40,             // Minimum vertical space between nodes
+    rankSep: 80,             // Minimum horizontal distance between ranks
+    edgeSep: 20,             // Minimum distance between edges
+    animate: true,
+    animationDuration: 300,
+}).run();
+```
+
+#### Trap 12: Data Integrity Passes but Visual Integrity Fails
+
+**Pattern:** The `verify_pathway_data()` SQL query reports 0 orphans, 0 bad edges, 0 duplicates — the data layer is clean. But the visual render shows edges pointing at wrong targets, nodes in wrong ranks, or dead-end stubs that don't correspond to the right source edge.
+
+This happens when the frontend JS processing of the DB data introduces its own bugs:
+- Dead-end stub IDs reused → multiple edges collapse into one target node
+- `nodeMap` lookup by string ID doesn't match the actual node IDs from the DB
+- Edge `source_id`/`target_id` processing applies a normalization that doesn't match DB values
+- Filter logic hides nodes that should be visible (or vice versa)
+
+**Detection:**
+1. Click a dead-end edge. Does the detail panel show the correct source node name?
+2. Count visible nodes vs DB node count. Are any missing?
+3. Click "All" filter, then click "Red". Do exactly the right nodes disappear?
+4. For a known-complete path (green edge with both ends populated): click both ends and verify the edge connects them
+
+**Remedy:**
+```javascript
+// Add data-integrity logging to the frontend
+function logIntegrityCheck() {
+    const nodes = cy.nodes().map(n => n.id());
+    const edges = cy.edges().map(e => ({
+        id: e.id(), source: e.source().id(), target: e.target().id()
+    }));
+    console.log('Rendered nodes:', nodes.length);
+    console.log('Rendered edges:', edges.length);
+    console.log('Edge-source match:', edges.every(e => nodes.includes(e.source)));
+    console.log('Edge-target match:', edges.every(e => nodes.includes(e.target)));
+    // Check for duplicate edge targets (dead-end collapse)
+    const deadTargets = edges.filter(e => e.target.startsWith('__dead__'));
+    const uniqueDead = new Set(deadTargets.map(e => e.target));
+    if (deadTargets.length !== uniqueDead.size) {
+        console.warn('DUPLICATE DEAD-END STUB: edges collapsed');
+    }
+}
+```
+
+#### Trap 13: Filtering Changes Meaning (the "Green Filter" Fallacy)
+
+**Pattern:** User clicks "🟢 Complete" filter. Graph shows only green edges and their connected nodes. User concludes: "All these paths are healthy." But the filter has hidden ALL yellow and red paths — the user now has a misleadingly clean picture of the system.
+
+This is unique to graph UIs. In a table, filtering by status shows a subset of rows — the user implicitly knows they're looking at a subset. In a graph, filtering removes entire nodes and edges, and the remaining graph still looks like a complete system. The user forgets they're looking at a filtered view.
+
+**Detection:**
+1. Activate each filter. For each one: does the filter toolbar clearly indicate that a filter is active?
+2. Does the summary count update to show "N of M edges visible"?
+3. Would a user who just clicked around for 30 seconds know they're in a filtered view?
+4. Does the "All" filter restore everything?
+
+**Remedy:**
+```javascript
+// After any filter change, update the filter toolbar
+function updateFilterDisplay(filter, count, total) {
+    const label = document.getElementById('filter-label');
+    label.textContent = total > 0
+        ? `Showing ${count} of ${total} elements`
+        : `${total} elements`;
+    // Highlight active filter button more prominently than inactive
+}
+```
+
+**The one-question test:** Show someone the filtered graph without telling them a filter is active. Do they think this is the complete system? If yes, the filter needs a more prominent indicator.
+
+#### Trap 14: Visual Representation Is Correct but Overflows the Container
+
+**Pattern:** Data layer is correct (correct number of status dots, correct colours). But the visual representation chosen (emoji, unicode symbols, oversized icons) doesn't fit the allocated container at the rendered size.
+
+Emoji have no fixed intrinsic dimensions — they vary by OS, font, and rendering engine. A 10×10px box that works with CSS dots will overflow with emoji at the same dimensions. The legend row overlaps the dot row because emoji characters exceed their nominal font-size bounding box.
+
+**Detection:**
+1. For every data-to-visual indicator: is it a CSS element (`div` with `background-color`) or a text character (emoji, unicode symbol)?
+2. If text: pin the `font-size` explicitly, or switch to CSS-only elements
+3. Check every pair of adjacent rows: does content from row N visually overlap row N+1?
+4. Test on Safari, Chrome, and Mac vs Linux — emoji rendering varies significantly
+5. For pulse dots specifically: CSS `width + height + border-radius` is deterministic. Emoji `🟢🔴🟡` at `font-size: 10px` is not — it renders at the host platform's emoji cell size.
+6. At the code level: does the element use `display: inline` (behaves like text, can push past container) or `display: inline-block` with explicit dimensions?
+
+**Fix pattern:**
+- Use CSS-only elements for fixed-dimension indicators: `<div class="pulse-dot ok"></div>` not `<span>🟢</span>`
+- For colored dots: `display: inline-block; width: 10px; height: 10px; border-radius: 2px;`
+- Legends must use the same CSS class, not repeat the emoji
+- Apply `flex-shrink: 0` and `line-height: 1` on indicator containers
+- When there's a legend below a timeline of dots, add `margin-top` to the legend and verify no overlap in a screenshot — don't trust the computed style alone
+
+#### Trap 15: Inline Reference Text Was Never Verified
+
+**Pattern:** Dashboard help text, error messages, or CLI output tells the user to run a command. Nobody verified the exact command works on the installed binary.
+
+**Root cause:** The developer assumes CLI flags match the internal function name. `watch.py` has a `start()` function → developer writes `observeco watch --daemon`. But the CLI uses subcommands, not flags — the real command is `observeco watch start`. The user hits the error and loses confidence in the product.
+
+**Detection (before shipping ANY inline command text):**
+1. Run the EXACT command string in a fresh terminal
+2. Does it work? (exit 0, correct output)
+3. If it fails: is this the wrong flag, wrong subcommand, or wrong product?
+4. For CLI help text listed in the UI: run `observeco <command> --help` and verify the documented flags/subcommands actually exist in the output
+5. If the command can't be tested (e.g., requires a remote server): mark it with a `<!-- @verify-command -->` comment and test before release
+
+**Fix pattern:**
+- Every inline command in the dashboard HTML, error messages, and documentation must be tested against the live CLI — not assumed from function signatures
+- Run `observeco <command> --help` and grep for each flag or subcommand listed
+- Use a simple CI step: `grep -rn 'observeco [a-z]' templates/ | cut -d' ' -f2-4 | while read cmd; do $cmd --help >/dev/null 2>&1 || echo "BROKEN: $cmd"; done`
+- When the CLI interface changes, grep all templates for affected command strings
+
+#### Trap 16: Renamed JS Function Leaves Dead Call in HTML Template
+
+**Pattern:** Developer renames a JavaScript function (e.g. `applyFilter` → `applyFilters`). Python linters pass. The project uses vanilla JS in HTML templates (`.html` files). The old function name persists in a cytoscape callback, event listener, or inline `<script>` block. The page breaks silently — or worse, only breaks on a specific user interaction.
+
+**Why AI misses this:** AI sees the rename in the JS file and the old name in the template's HTML and resolves the contradiction by assuming the template is correct. Without a type system or linter that understands the JS-in-HTML relationship, neither the builder nor the reviewer catches it.
+
+**Detection:**
+1. After ANY JS function rename, run: `grep -rn 'oldFunctionName' templates/`
+2. Check every occurrence: is it a definition to update or a call site to rename?
+3. Specifically check: `onclick=` attributes, event listeners (`cy.on()`, `addEventListener`), `onchange=` handlers, `setTimeout`/`setInterval` callbacks, template literals that construct JS code
+4. Hard-reload the page (Cmd+Shift+R) and check the browser console for: `ReferenceError: oldFunctionName is not defined`
+5. If the function is called inside a library callback (cytoscape init, plotly config, chart render), it won't fire on page load — you must trigger the specific interaction to catch it
+
+**Fix pattern:**
+- Add a project convention: when renaming a JS function that's called from HTML, grep ALL templates BEFORE merging
+- Better: define all interactive JS functions in a single `.js` file and import them — ESLint or TypeScript would then catch dead references
+- At minimum: after any JS refactor that touches interactive functions, hard-reload the page, simulate each user interaction, and check the console
+- Add a post-refactor checklist item to the Golden Gate (Section 4.1): "After JS renames, grep templates for old name"
+
+#### Trap 17: Dead-End Detail Is Confusing (Trap 5 variant)
+
+**Pattern:** User clicks a dead-end red edge. Detail panel shows: "Dead End — This path has no consumer. Messages delivered here will be lost." The data is accurate. The language is accurate. The user still doesn't understand what to *do* about it.
+
+The gap: telling someone WHAT is wrong is not the same as telling them WHY it matters or WHAT to fix.
+
+**Dead-end detail must answer three questions:**
+1. **What exactly is missing?** — "No consumer found for the output of [source agent/cron]"
+2. **Why does this matter?** — "Any signal sent from [source] to this destination will be lost"
+3. **What should the user do?** — "Declare the consumer (observeco pathway add --consumer X) or confirm this is intentional (observeco pathway exempt --reason 'deliberately dangling')"
+
+**Detection:** Click every dead-end edge. For each one:
+- Does the detail panel answer all three questions?
+- Can a first-time user understand the dead end's impact without asking for help?
+- Is there an actionable next step displayed?
+
+---
+
+## 7. Lessons Learned Log
 
 Append here every time a human catches something an AI missed. This is how the playbook stays alive.
 
@@ -525,6 +773,24 @@ Append here every time a human catches something an AI missed. This is how the p
 
 | 2026-05-29 | ObserveCo Dashboard v0.2 | Various (see full table above) | Multiple | All | Added 10 pitfall patterns, empty-data consolidation, f-string leak detection |
 
+### 2026-05-30 — Framework Overfitting Audit (External Perspective Trap)
+
+**Trigger:** Sean flagged that Kepler detection "fights between Hermes and OpenClaw" — the product was overfitting to our ecosystem by treating framework as primary identity.
+
+**Root cause:** Agent detection separated into `_load_hermes_agents()` and `_load_openclaw_agents()`, but the dashboard then hardcoded framework labels to only "Hermes" or "OpenClaw". Default framework was "hermes". A CrewAI user would see their agent falsely labeled "OpenClaw" with no way to tell the label is wrong.
+
+**Detection technique:** Ran TestClient-based automated audit across ALL API endpoints, searching for hardcoded framework strings in responses. Combined with grep over source files for pattern matches.
+
+**Fix checklist codified in master plan:**
+1. Framework label must render ANY value, not just known ones — never `"Hermes" or "OpenClaw"` ternary
+2. Default framework must be empty string, not "hermes"
+3. Agent card shows type first, framework second: `Agent · Hermes` not `Hermes · Agent`
+4. User-facing text must not use internal brand names (CHISEL, ClawForge, Claw)
+5. Add Agent dropdown: type options first (Agent/Service/Workflow), framework as optional metadata
+6. CLI commands show generic names as primary, internal names as aliases
+
+**Files patched (15 files):** server.py (7 locations), templates/index.html (2 locations), website/index.html (2 locations), auto_detect.py, README.md, observeco-master-plan.md (spec), ux-testing-playbook.md (this entry).
+
 ### Template for future entries
 
 ```
@@ -533,9 +799,34 @@ Append here every time a human catches something an AI missed. This is how the p
 | YYYY-MM-DD | {product} | {AI claim} | {human finding} | {Trap N or Layer X} | {what was done} |
 ```
 
+### 2026-05-31 — Standardization Pass
+
+| What was wrong | Category | Fix applied |
+|----------------|----------|-------------|
+| "Pre-Ship Gate" naming inconsistent with other playbooks' "Golden Gate" | Naming inconsistency | Renamed §4.1 heading from "Pre-Ship Gate" to "The Golden Gate" — matches coding-fidelity, system-design, and master-gate conventions. |
+| No Version History table — inline version string only | Missing metadata | Added Version History table with 2.0 → 2.1 entries. |
+| No cross-reference to Playbook Inventory | Cross-reference gap | Added reference to requirements-fidelity-playbook.md §Playbook Inventory (canonical system document count and roles). |
+
+### 2026-06-01 — Spatial Density Blindspot (The "AI Blindspot")
+
+| What was wrong | Category | Fix applied |
+|----------------|----------|-------------|
+| Playbook had no section for graph visualization spatial optimization | Missing UX dimension — AI verifies "nodes render" but doesn't think about whether a human can see all objects without zooming | Added §9.7 Spatial Density & Layout Optimization — the 3-Question Spatial Audit, fix patterns table, and the one-question smell test. |
+
+### 2026-06-01 — ObserveCo Dashboard Post-Launch Review (6 Issues)
+
+| Date | Product | What AI said | What human found | Trap/Layer | Fix |
+|------|---------|-------------|------------------|-----------|-----|
+| 2026-06-01 | ObserveCo | "Pulse dots render at 10px with 5px gap" | Emoji (🟢🔴🟡) overflow 10×10px boxes → dots overlap legend row below | Trap 14 — Representation Overflows Container | Replaced emoji with CSS `div` dots; added `flex-shrink: 0; line-height: 1`; legend uses same CSS class |
+| 2026-06-01 | ObserveCo | "Yearly cost estimate calculated" | `if framework == "hermes":` never matches because upstream capitalizes to "Hermes" → falls to OpenClaw branch → `total_est = 0` → `$0.00` | Data-transformation pipeline bug | Changed to `"hermes" in framework.lower()` |
+| 2026-06-01 | ObserveCo | "Memory tab shows daemon status" | Shows "never started" but no way to start it — user is stuck | Trap 5 — Empty State unactionable | Added start command + explanation to empty garden tab; updated Trap 5 detection to check for runnable command in actionable empty states |
+| 2026-06-01 | ObserveCo | "Pathway map renders" | `initializeCy()` calls `applyFilter(currentFilter)` — renamed to `applyFilters()` → `ReferenceError: applyFilter is not defined` on every page load | Trap 16 — JS Rename Leaves Dead Call | Fixed call site; added Trap 16 to playbook |
+| 2026-06-01 | ObserveCo | "Watch daemon start command shown" | Help text says `observeco watch --daemon` but CLI uses subcommands: `observeco watch start` | Trap 15 — Inline Reference Not Verified | Fixed help text; added Trap 15 to playbook |
+| 2026-06-01 | ObserveCo | "Pro modal has padding" | `.modal { overflow: hidden }` with no internal padding → content flush to edges | Trap 9 — Visual Consistency | Added `.modal-body { padding: 18px; overflow-y: auto }`; added flush-content check to Trap 9 detection |
+
 ---
 
-## 7. Projecting Forward
+## 8. Projecting Forward
 
 This playbook applies to any frontend product we build — not just ObserveCo. Before shipping any UI:
 1. Load the playbook
@@ -547,11 +838,11 @@ The goal is not to eliminate AI-human gaps. The goal is to make every new gap a 
 
 ---
 
-## 8. Scaling the Playbook
+## 9. Scaling the Playbook
 
 The current protocol is designed for one engineer running manual checks on one dashboard. When ObserveCo has 12 dashboards and a team of 8, this does not scale.
 
-### 8.1 Quantitative Success Metrics
+### 9.1 Quantitative Success Metrics
 
 Add to every gate — pass/fail is not enough. Measure:
 
@@ -567,7 +858,7 @@ Add to every gate — pass/fail is not enough. Measure:
 
 These are minimums. Set per-scope targets (higher for landing pages, lower for internal dashboards).
 
-### 8.2 Cross-Device & Environment Matrix
+### 9.2 Cross-Device & Environment Matrix
 
 The playbook assumes desktop Chrome. Must test all environments before any public launch:
 
@@ -589,7 +880,7 @@ The playbook assumes desktop Chrome. Must test all environments before any publi
 
 **Test every OS-level accessibility setting:** Reduce Transparency, Increase Contrast, Bold Text, Button Shapes, On/Off Labels, Differentiate Without Colour.
 
-### 8.3 Visual Regression Testing in CI
+### 9.3 Visual Regression Testing in CI
 
 Functional Playwright tests catch logic bugs. They do not catch "this card padding changed by 2px."
 
@@ -600,7 +891,7 @@ Functional Playwright tests catch logic bugs. They do not catch "this card paddi
 - **Threshold:** 0.5% tolerance for anti-aliasing noise; anything larger requires human review
 - **Exclusions:** Animated regions, live data (replace with mock data for screenshots)
 
-### 8.4 Real-User Session Replay & Heatmaps
+### 9.4 Real-User Session Replay & Heatmaps
 
 The playbook relies on Sean's feedback. Real users behave differently.
 
@@ -622,7 +913,7 @@ The playbook relies on Sean's feedback. Real users behave differently.
 - [ ] First-click accuracy >80% for primary actions
 - [ ] Scroll depth >80% for the landing/dashboard page
 
-### 8.5 AI Hallucination Trap in Testing Prompts
+### 9.5 AI Hallucination Trap in Testing Prompts
 
 When agents run the prompts above, they may describe imaginary screenshots. The agent says "I took a screenshot showing..." without actually capturing one.
 
@@ -632,7 +923,7 @@ When agents run the prompts above, they may describe imaginary screenshots. The 
 
 This is now appended to Prompt 7 and Prompt 8 above.
 
-### 8.6 Upgrade Path
+## 9.6 Upgrade Path
 
 | Scale level | What to add | When |
 |---|---|---|
@@ -641,3 +932,67 @@ This is now appended to Prompt 7 and Prompt 8 above.
 | 5+ dashboards | Visual regression CI (Percy/Chromatic) | Before team hires |
 | 8+ dashboards, team of 4+ | Real-user session replay, cross-device lab | After first public release |
 | 12+ dashboards, team of 8+ | Dedicated QA script suite + automated accessibility regression | Before enterprise launch |
+
+### 9.7 Spatial Density & Layout Optimization (Graph Visualizations — The "AI Blindspot")
+
+**Problem:** AI verifies "86 nodes, 277 edges render" — but the human needs to see ALL of them without zooming, scrolling, or squinting. Graph layout engines (Cytoscape.js, D3 force, vis-network) compute positions algorithmically and are blind to human-viewing constraints. They produce layouts that are:
+- **Too sparse** — 80% empty canvas, nodes the size of pinpricks, human must zoom in to read anything
+- **Too dense** — nodes overlap, edges tangle, labels collide, human must zoom in to find anything
+- **Uneven** — one corner has 60 nodes, rest of canvas is empty
+
+This is the exact class of problem Sean flagged: *"AI doesn't necessarily think about this."*
+
+**Detection — The 3-Question Spatial Audit:**
+
+Before marking any graph/network visualization done, run these checks:
+
+```
+1. SPATIAL UTILIZATION: What % of the viewport contains visible nodes/edges?
+   - Screenshot the full graph at default zoom (no scroll)
+   - Crop to the bounding box of all visible nodes
+   - Measure: does the node bounding box fill <40% of the viewport?
+   - PASS: >60% of viewport has graph content. FAIL: >40% is empty canvas.
+
+2. OVERLAP CHECK: Do any nodes visually overlap or touch?
+   - In dense areas, pick any 3 adjacent nodes
+   - Can you see the boundary between each pair, or do they blend into a blob?
+   - PASS: Every node boundary is distinguishable from its neighbours.
+   - FAIL: Two or more nodes overlap, or edges pass under node labels.
+
+3. LABEL READABILITY: Can every visible label be read at default zoom without squinting?
+   - Pick the 3 smallest labels in the densest region
+   - Read them aloud. Can you?
+   - PASS: All labels readable at normal viewing distance.
+   - FAIL: Any label needs squinting, zooming, or tilting the screen.
+```
+
+**If ANY check fails, the layout must be re-optimized BEFORE the graph is shipped.**
+
+**Fix patterns (in order of preference):**
+
+| Problem | Fix | When to use |
+|---------|-----|-------------|
+| Too sparse — nodes tiny, lots of empty space | Increase `nodeSpacing` multiplier. Or switch layout algorithm. Force-directed layouts (Cytoscape `cose`, `cola`, D3 force) compact naturally; grid/circle layouts leave gaps. | Always try this first |
+| Too dense — nodes overlapping | Increase `padding` or `nodeDimensionsIncludeLabels`. Or use `cola` (constrained layout) which prevents overlap by design. | Dense cluster regions |
+| Uneven distribution | Apply `spacingFactor` > 1.0 and run layout with `animate: false` and `fit: true` to scale into viewport. | Post-layout adjustment |
+| Labels unreadable | Increase minimum label font size. Or show labels on hover only, with node colour alone identifying type at rest. | Last resort — labels hidden = worse UX |
+| Layout looks wrong at a glance | Try a different layout algorithm. `cose-bilkent` (Cytoscape) or `d3-force` often produce better spatial utilization than default `cose` or `breadthfirst`. | When the current algorithm was chosen by default, not by testing |
+
+**The one-question smell test for graph layouts:**
+
+*"Can I understand the shape of the network at a glance without moving my eyes more than 30 degrees from center?"*
+
+If the answer is no: zoom-to-fit is hiding a layout problem. If you need to zoom to see the graph, the graph is not optimized for human viewing — it's optimized for the algorithm.
+
+**Extended — Multi-Viewport Rule (for complex graphs):**
+
+If the graph genuinely cannot fit in one viewport without unacceptable density (true for >200 visible nodes with labels), the right answer is NOT "make the user zoom." The right answers (in order):
+
+1. **Collapse modules** — group related nodes into clusters at a reasonable zoom level, show internal structure on click. Cytoscape supports this natively via compound nodes or `cy.expandCollapse`.
+2. **Filter by subsystem** — default view shows only top-level clusters. User drills into a subsystem to see its internal edges.
+3. **Zoom-dependent label density** — at default zoom, show labels only on hub nodes (degree ≥ 5). On zoom-in, reveal all labels.
+4. **Last resort: zoom-to-fit with clear zoom affordance** — if the graph MUST be large, the initial view should show the user *that there's more to see* (cluster previews, not a scattered cloud of dots).
+
+**Never:** Ship a graph where the user's first reaction is "I need to zoom in to see what this is."
+
+**Reference:** `coding-fidelity-playbook.md` §2.2 (Implementation Fidelity — the 4-Question Audit applies to graph layouts too: Exists? renders. Correct? nodes at correct positions. Complete? all nodes visible at default zoom. Matches mockup? spatial density matches what the mockup suggested.)

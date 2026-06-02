@@ -105,7 +105,7 @@ class DashboardAuthMiddleware(BaseHTTPMiddleware):
         needs_auth = (
             path.startswith("/api/")
             and not path.startswith("/api/licenses/validate")
-            and path not in ("/api/agent-count", "/api/phase", "/api/onboarding", "/api/pathway-graph", "/api/heal-log", "/api/trigger-heal", "/api/plugin-stats", "/api/plugin-hooks", "/api/openclaw-plugins")
+            and path not in ("/api/agent-count", "/api/phase", "/api/onboarding", "/api/pathway-graph", "/api/heal-log", "/api/trigger-heal", "/api/plugin-stats", "/api/plugin-hooks", "/api/openclaw-plugins", "/api/phase/state", "/api/discover/run", "/api/discover/candidates", "/api/discover/confirm", "/api/discover/run-html")
         )
 
         # Check token for protected API routes

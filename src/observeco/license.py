@@ -195,7 +195,7 @@ def _validate_online(key: str) -> dict:
 
     url = os.environ.get(
         "OBSERVECO_LICENSE_API",
-        "https://observeco.com/api/licenses/validate"
+        "https://observeco-license-crm.vercel.app/api/licenses/validate"
     )
     payload = json.dumps({"license_key": key}).encode()
     req = urllib.request.Request(

@@ -568,6 +568,68 @@ class Database:
         conn.commit()
         return counts
 
+    def get_phase(self) -> str:
+        """Determine the current dashboard phase: zero, setup, or live.
+
+        - zero: No agents discovered, no pulse data. Fresh install.
+        - setup: Agents exist but no pulse data yet. Waiting for first health check.
+        - live: Active agents with pulse data. Full dashboard.
+        """
+        conn = self._get_conn()
+        cur = conn.execute("SELECT value FROM _meta WHERE key='dashboard_phase'")
+        row = cur.fetchone()
+        if row:
+            override = row["value"]
+            if override in ("zero", "setup", "live"):
+                return override
+
+        cur = conn.execute("SELECT COUNT(*) as c FROM pulse_log")
+        pulse_count = cur.fetchone()["c"]
+        if pulse_count > 0:
+            return "live"
+
+        cur = conn.execute("SELECT COUNT(*) as c FROM agent_configs WHERE is_active=1")
+        agent_count = cur.fetchone()["c"]
+        if agent_count > 0:
+            return "setup"
+
+        return "zero"
+
+    def set_phase(self, phase: str) -> None:
+        """Persist an irreversible phase override in _meta.
+        Only allows forward progression: zero -> setup -> live.
+        """
+        valid = ("zero", "setup", "live")
+        if phase not in valid:
+            return
+        current = self.get_phase()
+        current_idx = valid.index(current)
+        new_idx = valid.index(phase)
+        if new_idx <= current_idx:
+            return  # Irreversible
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)",
+            ("dashboard_phase", phase),
+        )
+        conn.commit()
+
+    def is_first_run(self) -> bool:
+        """Check if this is the user's very first dashboard launch."""
+        conn = self._get_conn()
+        cur = conn.execute("SELECT value FROM _meta WHERE key='first_run_complete'")
+        row = cur.fetchone()
+        return row is None or row["value"] != "true"
+
+    def set_first_run_complete(self) -> None:
+        """Mark first-run as completed (irreversible)."""
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)",
+            ("first_run_complete", "true"),
+        )
+        conn.commit()
+
     # -- Pulse Log --
 
     def log_pulse(self, agent_name: str, status: str, latency_ms: float = 0,
@@ -1051,6 +1113,79 @@ class Database:
                 "SELECT * FROM clawforge_garden ORDER BY timestamp DESC"
             )
         return [dict(r) for r in cur.fetchall()]
+
+    def get_garden_summary(self) -> dict:
+        """Get fleet-level Memory Garden aggregates.
+
+        Returns fleet-wide totals and averages to populate the Brain Analysis
+        Memory Garden section.
+        """
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT "
+            "COUNT(DISTINCT agent_name) AS agents_scanned, "
+            "COALESCE(SUM(duplicates_found), 0) AS total_duplicates, "
+            "COALESCE(SUM(contradictions_found), 0) AS total_contradictions, "
+            "COALESCE(SUM(stale_entries), 0) AS total_stale, "
+            "COALESCE(AVG(memory_debt_score), 0) AS avg_debt_score, "
+            "COUNT(*) AS total_snapshots "
+            "FROM clawforge_garden"
+        ).fetchone()
+
+        if not row or not row["agents_scanned"]:
+            return {
+                "agents_scanned": 0,
+                "total_duplicates": 0,
+                "total_contradictions": 0,
+                "total_stale": 0,
+                "avg_debt_score": 0,
+                "total_snapshots": 0,
+                "fleet_grade": "N/A",
+            }
+
+        result = dict(row)
+        avg = result["avg_debt_score"] or 0
+        if avg < 20:
+            result["fleet_grade"] = "A"
+        elif avg < 40:
+            result["fleet_grade"] = "B"
+        elif avg < 60:
+            result["fleet_grade"] = "C"
+        elif avg < 80:
+            result["fleet_grade"] = "D"
+        else:
+            result["fleet_grade"] = "F"
+
+        return result
+
+    # -- Discovery Candidates --
+
+    def get_discovery_candidates(self) -> list[dict]:
+        """Return cached discovery candidates from _meta table."""
+        conn = self._get_conn()
+        cur = conn.execute("SELECT value FROM _meta WHERE key='discovery_candidates'")
+        row = cur.fetchone()
+        if row is None:
+            return []
+        try:
+            return json.loads(row["value"])
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    def set_discovery_candidates(self, candidates: list[dict]) -> None:
+        """Cache discovery candidates in _meta table."""
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)",
+            ("discovery_candidates", json.dumps(candidates)),
+        )
+        conn.commit()
+
+    def clear_discovery_candidates(self) -> None:
+        """Clear cached discovery candidates."""
+        conn = self._get_conn()
+        conn.execute("DELETE FROM _meta WHERE key='discovery_candidates'")
+        conn.commit()
 
     # -- Agent Config --
 
@@ -1833,16 +1968,21 @@ class Database:
 
     def get_token_summary(self, agent_name: str = "", since: int = 0) -> dict:
         conn = self._get_conn()
-        since_clause = "AND recorded_at>=?" if since else ""
-        params = (agent_name,) if agent_name and not since else (agent_name, since) if agent_name and since else (since,) if since else ()
-        where = "WHERE agent_name=?" if agent_name else ""
-
+        conditions = []
+        params = []
+        if agent_name:
+            conditions.append("agent_name=?")
+            params.append(agent_name)
+        if since:
+            conditions.append("recorded_at>=?")
+            params.append(since)
+        where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
         row = conn.execute(
             f"SELECT COUNT(*) as turns, COALESCE(SUM(total_tokens),0) as total_tokens, "
             f"COALESCE(SUM(cost),0) as total_cost, "
             f"COALESCE(AVG(total_tokens),0) as avg_tokens, "
             f"COALESCE(MAX(total_tokens),0) as max_tokens "
-            f"FROM token_logs {where} {since_clause}", params
+            f"FROM token_logs {where_clause}", params
         ).fetchone()
         if not row:
             return {"turns": 0, "total_tokens": 0, "total_cost": 0, "avg_tokens": 0, "max_tokens": 0}

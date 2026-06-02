@@ -1,13 +1,19 @@
-"""3-tier agent auto-discovery system.
+"""3-tier agent auto-discovery system with LLM-powered fallback.
 
 Tier 1: Framework configs (Hermes ~/.hermes/, OpenClaw SOUL.md, Ollama ~/.ollama/)
 Tier 2: Explicit observeco.yml in cwd
-Tier 3: Manual add via `observeco agents add <name>`
+Tier 3: LLM discovery — scans ps aux / lsof -i / common ports when static returns < 2 agents
+Tier 4: Manual add via `observeco agents add <name>`
 
 Never shows an error without a next action.
 """
 
 from __future__ import annotations
+
+import os
+import subprocess
+import sys
+from typing import Optional
 
 from rich import box
 from rich.console import Console
@@ -15,14 +21,141 @@ from rich.table import Table
 
 from observeco.config import AgentConfig, load_config, write_agent
 from observeco.db import Database
+from observeco.llm_service import ask, detect_providers, get_auto_provider
 
 console = Console()
 db = Database()
 
 
+LLM_DISCOVERY_PROMPT = """You are an agent discovery assistant. Given the output of system commands (ps aux, lsof -i, common port scans), identify running processes that look like AI agents or agent frameworks.
+
+Look for:
+- Python processes running agent frameworks (hermes, openclaw, crewai, langchain, autogen, etc.)
+- Node.js processes running bot or agent services
+- Ollama models
+- Any process listening on common agent ports (3000-9999)
+- Processes named after known agents
+
+For each candidate, provide:
+NAME: <short descriptive name>
+TYPE: <python|node|ollama|other>
+PORT: <port if applicable, or 0>
+EVIDENCE: <what command output shows this>
+CONFIDENCE: <high|medium|low>
+
+If nothing looks like an agent, respond with: NONE_FOUND
+"""
+
+
+def run_llm_discovery() -> list[dict]:
+    """Use LLM to discover agents from running processes.
+
+    Called when static discovery returns < 2 agents.
+    Returns list of candidate agent dicts with name, type, port, evidence.
+    """
+    # Collect system context
+    context_parts = []
+
+    try:
+        ps = subprocess.run(
+            ["ps", "aux"], capture_output=True, text=True, timeout=5
+        )
+        # Filter to interesting processes only (Python, Node, agents, servers)
+        lines = ps.stdout.split("\n")
+        interesting = []
+        keywords = ["python", "node", "agent", "ollama", "hermes", "bot",
+                    "server", "worker", "daemon", "chat", "llm", "langchain"]
+        for line in lines:
+            if any(k in line.lower() for k in keywords):
+                interesting.append(line)
+        if interesting:
+            context_parts.append("=== Running processes (filtered) ===")
+            context_parts.extend(interesting[:60])  # cap at 60 lines
+    except Exception:
+        pass
+
+    try:
+        lsof = subprocess.run(
+            ["lsof", "-i", "-P"], capture_output=True, text=True, timeout=5
+        )
+        # Filter to LISTEN + common ports
+        lines = lsof.stdout.split("\n")
+        listening = [l for l in lines if "LISTEN" in l]
+        context_parts.append("=== Listening ports ===")
+        context_parts.extend(listening[:30])  # cap at 30 lines
+    except Exception:
+        pass
+
+    # Check common Hermes paths
+    hermes_paths = [
+        os.path.expanduser("~/.hermes/config.yaml"),
+        os.path.expanduser("~/.hermes/hermes-agent/venv/bin"),
+    ]
+    context_parts.append("=== Hermes paths ===")
+    for p in hermes_paths:
+        if os.path.exists(p):
+            context_parts.append(f"EXISTS: {p}")
+
+    user_context = "\n".join(context_parts)
+
+    response = ask(
+        LLM_DISCOVERY_PROMPT,
+        user_context,
+        consumer="agent_discovery",
+        max_cost_cents=0.02,
+        cache_ttl_secs=600,  # cache 10min — process state changes slowly
+        tier=1,
+    )
+
+    if response is None or "NONE_FOUND" in response:
+        return []
+
+    # Parse candidates
+    candidates = []
+    current = {}
+    for line in response.split("\n"):
+        line = line.strip()
+        if line.startswith("NAME:"):
+            if current:
+                candidates.append(current)
+            current = {"name": line[5:].strip(), "port": "0"}
+        elif line.startswith("TYPE:"):
+            current["type"] = line[5:].strip().lower()
+        elif line.startswith("PORT:"):
+            try:
+                current["port"] = int(line[5:].strip())
+            except ValueError:
+                current["port"] = 0
+        elif line.startswith("EVIDENCE:"):
+            current["evidence"] = line[9:].strip()
+        elif line.startswith("CONFIDENCE:"):
+            current["confidence"] = line[11:].strip().lower()
+
+    if current:
+        candidates.append(current)
+
+    return candidates
+
+
 def run_discover(show_all: bool = False) -> None:
     """Run auto-discovery and display found agents."""
     config = load_config()
+
+    if not config.agents or len(config.agents) < 2:
+        # Try LLM discovery if static returned few/no agents
+        llm_candidates = run_llm_discovery()
+        if llm_candidates:
+            console.print("[bold cyan]🔍 LLM discovered running processes:[/bold cyan]")
+            for c in llm_candidates:
+                confidence_color = {"high": "green", "medium": "yellow", "low": "dim"}
+                color = confidence_color.get(c.get("confidence", "low"), "dim")
+                port_str = f" port {c['port']}" if c.get("port") else ""
+                console.print(
+                    f"  [{color}]• {c.get('name', '?')} ({c.get('type', '?')}){port_str}[/{color}]"
+                )
+            console.print()
+            console.print("[dim]Run [bold]observeco agents add <name>[/bold] to add any of the above.[/dim]")
+            console.print()
 
     if not config.agents:
         console.print("[yellow]No agents detected automatically.[/yellow]")
@@ -30,7 +163,7 @@ def run_discover(show_all: bool = False) -> None:
         console.print("Next steps:")
         console.print("  1. Run [bold]observeco agents add <name>[/bold] to manually add an agent")
         console.print("  2. Create an [bold]observeco.yml[/bold] in your project directory")
-        console.print("  3. Ensure your Hermes config is at [bold]~/.hermes/config.yaml[/bold]")
+        console.print("  3. Ensure your agent config is at [bold]~/.hermes/config.yaml[/bold] or another supported path")
         return
 
     # Register all detected agents in DB

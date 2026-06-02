@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
@@ -182,13 +183,109 @@ def _load_cwd_yml() -> list[AgentConfig]:
     return agents
 
 
+def _scan_launchd_agents() -> list[AgentConfig]:
+    """Scan macOS launchd for known agent services. Returns [] if not macOS."""
+    agents: list[AgentConfig] = []
+    excluded = _get_excluded_set()
+    try:
+        result = subprocess.run(
+            ["launchctl", "list"], capture_output=True, text=True, timeout=5
+        )
+        if result.returncode != 0:
+            return []
+        for line in result.stdout.splitlines():
+            parts = line.split("\t")
+            if len(parts) < 3:
+                continue
+            label = parts[2].strip()
+            # Only include known agent patterns
+            if any(label.startswith(p) for p in
+                   ["ai.hermes.", "ai.openclaw.", "com.observeco.",
+                    "ai.observeco.", "com.hermes."]):
+                name = label.split(".")[-1] if "." in label else label
+                if name in excluded:
+                    continue
+                agents.append(AgentConfig(
+                    name=name, framework="launchd",
+                    health_check=f"launchd:{label}",
+                ))
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        pass
+    return agents
+
+
+def _scan_docker_agents() -> list[AgentConfig]:
+    """Scan Docker for running containers. Returns [] if Docker not available."""
+    agents: list[AgentConfig] = []
+    excluded = _get_excluded_set()
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}|{{.Image}}"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode != 0:
+            return []
+        for line in result.stdout.splitlines():
+            parts = line.split("|")
+            if not parts or not parts[0].strip():
+                continue
+            name = parts[0].strip()
+            image = parts[1].strip() if len(parts) > 1 else "unknown"
+            if name in excluded:
+                continue
+            agents.append(AgentConfig(
+                name=name, framework="docker",
+                health_check=f"docker:{name}",
+                config_path=f"docker://{image}",
+            ))
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        pass
+    return agents
+
+
+def _scan_systemd_agents() -> list[AgentConfig]:
+    """Scan systemd for agent-like services. Returns [] if not Linux."""
+    agents: list[AgentConfig] = []
+    excluded = _get_excluded_set()
+    try:
+        result = subprocess.run(
+            ["systemctl", "list-units", "--type=service", "--all", "--no-pager"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode != 0:
+            return []
+        # Filter for agent-like service names
+        agent_keywords = ["agent", "bot", "hermes", "observeco",
+                          "openclaw", "crew", "worker", "daemon"]
+        for line in result.stdout.splitlines():
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+            unit_name = parts[0].strip()
+            unit_lower = unit_name.lower()
+            # Only include if a keyword matches
+            if any(kw in unit_lower for kw in agent_keywords):
+                if unit_name in excluded:
+                    continue
+                agents.append(AgentConfig(
+                    name=unit_name.replace(".service", ""),
+                    framework="systemd",
+                    health_check=f"systemd:{unit_name}",
+                ))
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        pass
+    return agents
+
+
 def load_config() -> ObserveConfig:
     """Auto-detect all agents from all sources."""
     config = ObserveConfig()
     seen: set[str] = set()
 
     for loader in [_load_openclaw_agents, _load_hermes_agents,
-                   _load_agents_json, _load_cwd_yml]:
+                   _load_agents_json, _load_cwd_yml,
+                   _scan_launchd_agents, _scan_docker_agents,
+                   _scan_systemd_agents]:
         for agent in loader():
             if agent.name in seen:
                 # Merge frameworks instead of deduping by name

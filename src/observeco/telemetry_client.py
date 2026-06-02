@@ -28,10 +28,11 @@ from typing import Optional
 
 from observeco import __version__
 from observeco.dirs import get_data_dir
+from observeco.event_bus import publish as _event_publish
 
 TELEMETRY_URL = os.environ.get(
     "OBSERVECO_TELEMETRY_URL",
-    "https://observeco.com/api/telemetry",
+    "https://observeco-license-crm.vercel.app/api/telemetry",
 )
 
 # Env override: set OBSERVECO_TELEMETRY=off to disable regardless of opt-in
@@ -148,6 +149,11 @@ def send_sync(event_type: str, payload: dict) -> None:
     Will NOT send unless the user has explicitly opted in.
     """
     _send(TELEMETRY_URL, _build_envelope(event_type, payload))
+    # Also publish locally to event bus
+    try:
+        _event_publish(None, f"telemetry_{event_type}", **payload)
+    except Exception:
+        pass
 
 
 def send(event_type: str, payload: dict) -> None:

@@ -36,21 +36,13 @@ class BillingConfig:
             self.customers = []
 
 
-def _load_config() -> BillingConfig:
-    """Load billing config from disk."""
-    if CONFIG_FILE.exists():
-        try:
-            data = json.loads(CONFIG_FILE.read_text())
-            return BillingConfig(**data)
-        except Exception:
-            pass
-    return BillingConfig()
-
-
 def _save_config(config: BillingConfig) -> None:
-    """Save billing config to disk."""
+    """Save billing config to disk with encrypted secrets."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-    CONFIG_FILE.write_text(json.dumps({
+
+    from .crypto import encrypt_dict
+
+    data = {
         "stripe_publishable_key": config.stripe_publishable_key,
         "stripe_secret_key": config.stripe_secret_key,
         "webhook_secret": config.webhook_secret,
@@ -59,7 +51,31 @@ def _save_config(config: BillingConfig) -> None:
         "trial_days": config.trial_days,
         "is_active": config.is_active,
         "customers": config.customers,
-    }, indent=2))
+    }
+
+    # Encrypt sensitive fields
+    SENSITIVE = ["stripe_secret_key", "webhook_secret"]
+    encrypt_dict(data, SENSITIVE)
+
+    CONFIG_FILE.write_text(json.dumps(data, indent=2))
+    CONFIG_FILE.chmod(0o600)
+
+
+def _load_config() -> BillingConfig:
+    """Load billing config from disk with decryption."""
+    if CONFIG_FILE.exists():
+        try:
+            data = json.loads(CONFIG_FILE.read_text())
+
+            from .crypto import decrypt_dict
+
+            SENSITIVE = ["stripe_secret_key", "webhook_secret"]
+            decrypt_dict(data, SENSITIVE)
+
+            return BillingConfig(**data)
+        except Exception:
+            pass
+    return BillingConfig()
 
 
 def get_price_id(plan: str = "solo") -> str:
@@ -210,6 +226,26 @@ def add_billing_endpoints(app) -> None:
             raise HTTPException(400, "Email is required")
         result = create_checkout_session(email, plan)
         return result
+
+    @app.get("/api/billing/success")
+    async def billing_success(request: Request):
+        """Stripe checkout success page — redirects back to dashboard with toast."""
+        from fastapi.responses import HTMLResponse
+        session_id = request.query_params.get("session_id", "")
+        return HTMLResponse(f"""<!DOCTYPE html><html><head><meta http-equiv="refresh" content="2;url=/"></head><body style="background:#0f172a;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;">
+        <div style="font-size:48px;">✅</div>
+        <h2 style="margin:0;">Payment successful!</h2>
+        <p style="color:#94a3b8;font-size:14px;">Your Pro license is being activated...</p>
+        <p style="color:#64748b;font-size:12px;">Redirecting to dashboard...</p>
+        <script>
+        fetch('/api/licenses/validate', {{method: 'POST', headers: {{'Content-Type': 'application/json'}}, body: JSON.stringify({{force: true}})}}).then(() => {{ window.location.href = '/'; }}).catch(() => {{ window.location.href = '/'; }});
+        </script></body></html>""")
+
+    @app.get("/api/billing/cancel")
+    async def billing_cancel():
+        """Stripe checkout cancelled — redirect back to dashboard."""
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/")
 
     @app.post("/api/billing/webhook")
     async def billing_webhook(request: Request):

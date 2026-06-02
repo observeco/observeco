@@ -26,7 +26,7 @@ from typing import Optional
 from .diagnostics import DiagnosticReport
 
 
-FEEDBACK_SERVER = "https://observeco.com/api/telemetry"
+FEEDBACK_SERVER = "https://observeco-license-crm.vercel.app/api/telemetry"
 FEEDBACK_OPTOUT_VAR = "OBSERVECO_NO_TELEMETRY"
 
 

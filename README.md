@@ -33,24 +33,24 @@ This is normal. The tools to fix it don't exist — yet.
 ### Fleet Health
 | Feature | Command | What it does |
 |---------|---------|-------------|
-| **Pulse Check** | `observeco pulse check` | Agent liveness — alive / dead / error. Zero config for Hermes users. |
+| **Pulse Check** | `observeco pulse check` | Agent liveness — alive / dead / error. Auto-detects from config. |
 | **Circuit Breaker** | `observeco pulse circuit` | N-failure trip → auto-block → cooldown. Stops cascade failures. |
-| **Safety Guard** | built-in | 99.7% noise reduction — only surfaces real issues, not flapping |
+| **Safety Guard** | built-in | Noise reduction — only surfaces real issues, not flapping |
 | **Heal Button** | dashboard | One-click restart for dead agents. Manual trigger, you're in control. |
 
 ### Token Intelligence
 | Feature | Command | What it does |
 |---------|---------|-------------|
-| **Chisel Trim** | `observeco chisel trim` | System prompt compression with per-component token breakdown |
-| **Drift Tracking** | `observeco chisel drift` | 7-day rolling token drift trend per component per agent |
-| **Skill Audit** | `observeco chisel skills` | Find bloated, duplicate, or unused skills eating context |
+| **Context Trim** | `observeco context trim` (or `observeco chisel trim`) | System prompt compression with per-component token breakdown |
+| **Drift Tracking** | `observeco context drift` (or `observeco chisel drift`) | 7-day rolling token drift trend per component per agent |
+| **Skill Audit** | `observeco context skills` (or `observeco chisel skills`) | Find bloated, duplicate, or unused skills eating context |
 
 ### Memory & Context
 | Feature | Command | What it does |
 |---------|---------|-------------|
-| **Memory Garden** | `observeco clawforge garden` | Find duplicates, contradictions, stale entries in agent memory |
-| **Context Profiler** | `observeco clawforge profile` | See what's in your agent's context — MEMORY.md, skills, workspace |
-| **Intent Classifier** | `observeco clawforge load` | Dry-run which sources would load per message type |
+| **Memory Garden** | `observeco memory garden` (or `observeco clawforge garden`) | Find duplicates, contradictions, stale entries in agent memory |
+| **Context Profiler** | `observeco context profile` (or `observeco clawforge profile`) | See what's in your agent's context — MEMORY.md, skills, workspace |
+| **Intent Classifier** | `observeco context load` (or `observeco clawforge load`) | Dry-run which sources would load per message type |
 
 ### Dashboard & Alerts
 | Feature | Access | What it does |
@@ -119,7 +119,7 @@ pip install observeco
 - **Storage:** Local SQLite (`~/.observeco/pulse.db`) — zero setup
 - **Web server:** FastAPI + htmx — no build step, ships with CLI
 - **CLI:** Typer — shell completion, rich output
-- **Data:** Stays on your machine. No cloud. No telemetry.
+- **Telemetry:** Optional crash/usage reports to help improve ObserveCo. Opt-out via `OBSERVECO_TELEMETRY=off`. No data collected otherwise.
 
 ---
 

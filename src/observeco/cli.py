@@ -1,5 +1,6 @@
 """ObserveCo CLI — runtime observability for AI agent systems."""
 
+import os
 from typing import Optional
 
 import typer
@@ -20,8 +21,11 @@ def _version_callback(value: bool) -> None:
 @app.callback()
 def main_callback(
     version: bool = typer.Option(False, "--version", "-V", help="Show version and exit", callback=_version_callback),
+    no_llm: bool = typer.Option(False, "--no-llm", help="Disable LLM-powered features entirely"),
 ) -> None:
     """ObserveCo — Runtime observability for AI agent systems."""
+    if no_llm:
+        os.environ["OBSERVECO_NO_LLM"] = "true"
     pass
 
 # -- Pulse subcommands --
@@ -46,6 +50,37 @@ def pulse_circuit(
     from observeco.pulse.circuit import run_circuit
     run_circuit(reset=reset, threshold=threshold)
 
+# -- Gate subcommands --
+
+gate_app = typer.Typer(help="Playbook Golden Gates — verify code, UX, and architecture compliance", no_args_is_help=True)
+app.add_typer(gate_app, name="gate")
+
+@gate_app.command(name="full")
+def gate_full(
+    json_output: bool = typer.Option(False, "--json", help="JSON output for machine parsing"),
+) -> None:
+    """Run ALL Golden Gates — full compliance check before shipping."""
+    from observeco.gate.runner import run_gate
+    results = run_gate(full=True, json_output=json_output)
+    if json_output:
+        import json as _json
+        print(_json.dumps([r.to_dict() for r in results], indent=2))
+    failed = sum(1 for r in results if r.status == "FAIL")
+    raise typer.Exit(code=1 if failed > 0 else 0)
+
+@gate_app.command(name="coding")
+def gate_coding(
+    json_output: bool = typer.Option(False, "--json", help="JSON output for machine parsing"),
+) -> None:
+    """Run Coding Fidelity Golden Gate only."""
+    from observeco.gate.runner import run_gate
+    results = run_gate(full=False, json_output=json_output)
+    if json_output:
+        import json as _json
+        print(_json.dumps([r.to_dict() for r in results], indent=2))
+    failed = sum(1 for r in results if r.status == "FAIL")
+    raise typer.Exit(code=1 if failed > 0 else 0)
+
 # -- Chisel subcommands --
 
 chisel_app = typer.Typer(help="System prompt compression & token monitoring", no_args_is_help=True)
@@ -67,10 +102,170 @@ def chisel_drift(
 
 
 @chisel_app.command(name="skills")
-def chisel_skills() -> None:
+def chisel_skills(
+    compress: bool = typer.Option(False, "--compress", help="Apply compression to skill bodies"),
+    limit: int = typer.Option(0, "--limit", "-n", help="Number of top skills to compress (0 = all compressible)"),
+    dry_run: bool = typer.Option(True, "--dry-run", help="Preview savings without applying (default: true)"),
+    apply: bool = typer.Option(False, "--apply", help="Apply compression immediately (overrides --dry-run)"),
+) -> None:
     """Audit all Hermes skill files — token cost ranked by total tokens."""
     from observeco.chisel.trim import run_skills
-    run_skills()
+    run_skills(compress=compress or apply, compress_limit=limit if limit > 0 else 0, dry_run=not apply)
+
+
+@chisel_app.command(name="cards")
+def chisel_cards() -> None:
+    """Show skill cards (metadata catalog) — compact view of all skills."""
+    from pathlib import Path
+    import json
+    cards_path = Path.home() / ".hermes" / "skills" / "cards.json"
+    if not cards_path.exists():
+        print("No cards.json found. Run 'observeco chisel artifacts --refresh' first.")
+        return
+    import json
+    cards = json.loads(cards_path.read_text(encoding="utf-8"))
+    cards.sort(key=lambda c: c.get("total_tokens", 0), reverse=True)
+    print(f"Skill Cards — {len(cards)} skills, token cost ranked")
+    print(f"{'Name':<35} {'Cat':<18} {'Body tok':>10} {'Saved%':>7} {'Tags':<20}")
+    print("-" * 95)
+    for c in cards[:30]:
+        name = c.get("name", "?")[:34]
+        cat = c.get("category", "")[:17]
+        tok = c.get("total_tokens", 0)
+        pct = f"{c.get('savings_pct', 0):+.1f}%" if c.get("savings_pct") else "0%"
+        tags = ", ".join(c.get("tags", [])[:4])
+        print(f"{name:<35} {cat:<18} {tok:>10} {pct:>7} {tags:<20}")
+    print(f"\n... {len(cards)} total cards. Use 'observeco chisel artifacts' to refresh.")
+
+
+@chisel_app.command(name="artifacts")
+def chisel_artifacts(
+    refresh: bool = typer.Option(False, "--refresh", help="Regenerate compressed artifacts and cards"),
+    caveman: bool = typer.Option(False, "--caveman", help="Use LLM caveman compression (slower, higher savings)"),
+    workers: int = typer.Option(3, "--workers", help="Parallel workers for caveman mode"),
+) -> None:
+    """Manage compressed skill artifacts (.md.compressed, cards.json, manifests.json)."""
+    from pathlib import Path
+    import json
+    from observeco.chisel.skill_compress import batch_compress_skills, generate_cards_json, export_manifest_json
+
+    if refresh:
+        engine = "caveman" if caveman else "rule"
+        print(f"Regenerating skill artifacts (engine={engine})...")
+        results = batch_compress_skills(limit=0, engine=engine)
+        
+        # Write consolidated cards.json
+        cards_json = generate_cards_json()
+        cards = json.loads(cards_json)
+        (Path.home() / ".hermes" / "skills" / "cards.json").write_text(cards_json)
+        print(f"  Written cards.json ({len(cards)} cards)")
+        
+        # Write manifests
+        manifests_json = export_manifest_json()
+        manifests = json.loads(manifests_json)
+        (Path.home() / ".hermes" / "skills" / "manifests.json").write_text(manifests_json)
+        print(f"  Written manifests.json ({len(manifests)} manifests)")
+        
+        total_before = sum(r["original_tokens"] for r in results)
+        total_after = sum(r["compressed_tokens"] for r in results)
+        saved = total_before - total_after
+        print(f"\n  Total: {total_before} → {total_after} tok (saved {saved}, {round(saved/max(total_before,1)*100,1)}%)")
+    else:
+        skills_dir = Path.home() / ".hermes" / "skills"
+        compressed = list(skills_dir.rglob("SKILL.md.compressed"))
+        manifests = list(skills_dir.rglob("SKILL.md.manifest"))
+        cards = list(skills_dir.rglob("SKILL.md.card"))
+        cards_json_path = skills_dir / "cards.json"
+        print(f"Compressed artifacts:  {len(compressed)} files")
+        print(f"Manifests:             {len(manifests)} files")
+        print(f"Cards (individual):    {len(cards)} files")
+        print(f"Cards (consolidated):  {'✅' if cards_json_path.exists() else '❌'} {'exists' if cards_json_path.exists() else 'missing'}")
+        
+        if manifests:
+            import json
+            total_saved = 0
+            total_before = 0
+            for mf in manifests:
+                try:
+                    m = json.loads(mf.read_text(encoding="utf-8"))
+                    total_before += m.get("original_tokens", 0)
+                    total_saved += m.get("savings_tokens", 0)
+                except Exception:
+                    pass
+            pct = round(total_saved / max(total_before, 1) * 100, 1)
+            print(f"\nTotal savings: {total_saved:,} tokens ({pct}%)")
+            print(f"Run --refresh to regenerate.")
+
+
+@chisel_app.command(name="compress")
+def chisel_compress(
+    agent_name: str = typer.Option("", "--agent", "-a", help="Agent name to compress"),
+    mode: str = typer.Option("lite", "--mode", "-m", help="Compression mode: lite or full"),
+    filepath: Optional[str] = typer.Option(None, "--file", "-f", help="Explicit path to SOUL.md"),
+) -> None:
+    """Compress an agent's SOUL.md — Lite (22% guidance) or Full (35% + memory + skills)."""
+    if not agent_name and not filepath:
+        print("Usage: observeco chisel compress --agent <name> [--mode lite|full]")
+        return
+    from observeco.chisel.trim import run_compress
+    result = run_compress(agent_name=agent_name, mode=mode, filepath=filepath)
+    print(f"Status: {result['status']}")
+    print(f"Agent: {result['agent']}")
+    print(f"Mode: {result['mode']}")
+    print(f"Before: {result['before_tokens']} tok")
+    print(f"After:  {result['after_tokens']} tok")
+    print(f"Saved:  {result['savings']} tok ({result['savings_pct']:+.1f}%)")
+    print(f"Backup: {result['backup']}")
+
+
+@chisel_app.command(name="config")
+def chisel_config(
+    hermes_home: Optional[str] = typer.Option(None, "--hermes-home", help="Custom Hermes home path"),
+    json_output: bool = typer.Option(False, "--json", help="JSON output for machine parsing"),
+    fix: bool = typer.Option(False, "--fix", help="Apply auto-fixable findings"),
+) -> None:
+    """Scan Hermes config for token-waste patterns (duplicate prompts, low cache TTL, stale refs)."""
+    from observeco.chisel.config_scanner import run_scan
+    run_scan(hermes_home=hermes_home, json_output=json_output, fix=fix)
+
+
+# -- Chisel Watch subcommands --
+chisel_watch_app = typer.Typer(help="Auto-compression watchdog daemon", no_args_is_help=True)
+chisel_app.add_typer(chisel_watch_app, name="watch")
+
+
+@chisel_watch_app.command(name="start")
+def chisel_watch_start() -> None:
+    """Start the auto-compression daemon."""
+    from observeco.chisel.watch import start_daemon
+    start_daemon()
+
+
+@chisel_watch_app.command(name="stop")
+def chisel_watch_stop() -> None:
+    """Stop the auto-compression daemon."""
+    from observeco.chisel.watch import stop_daemon
+    stop_daemon()
+
+
+@chisel_watch_app.command(name="status")
+def chisel_watch_status() -> None:
+    """Check if the auto-compression daemon is running."""
+    from observeco.chisel.watch import status
+    s = status()
+    if s["running"]:
+        print(f"Chisel watch daemon running (PID {s['pid']})")
+        if s["heartbeat_age"] is not None:
+            print(f"Last heartbeat: {s['heartbeat_age']:.0f}s ago")
+    else:
+        print("Chisel watch daemon not running")
+
+
+@chisel_watch_app.command(name="foreground")
+def chisel_watch_foreground() -> None:
+    """Run the auto-compression daemon in the foreground (for testing)."""
+    from observeco.chisel.watch import _run_foreground
+    _run_foreground()
 
 # -- ClawForge subcommands --
 
@@ -173,20 +368,65 @@ from observeco.graph.cli import graph_app
 
 app.add_typer(graph_app, name="graph")
 
-# -- Watch subcommand --
+# -- Watch subcommands (daemon lifecycle) --
 
-@app.command(name="watch")
-def watch_daemon(
-    interval: int = typer.Option(30, "--interval", "-i", help="Poll interval in seconds"),
-    once: bool = typer.Option(False, "--once", help="Single pass and exit"),
-) -> None:
-    """Auto-collect agent health data — runs in background.
+watch_app = typer.Typer(
+    name="watch",
+    help="Agent health auto-collection daemon — start/stop/status",
+    no_args_is_help=True,
+)
+app.add_typer(watch_app)
 
-    Polls registered agents every N seconds, auto-discovers new agents,
-    writes to SQLite. Dashboard auto-populates within 60s.
+
+@watch_app.command(name="start")
+def watch_start() -> None:
+    """Start the watch daemon as an independent background process.
+
+    Runs pulse check (every 30s), token trim (every pulse),
+    drift scan (every 5min), garden sweep (every 15min),
+    and pathway discovery (every 15min). Survives dashboard restarts.
     """
+    from observeco.watch import start
+    start()
+
+
+@watch_app.command(name="stop")
+def watch_stop() -> None:
+    """Stop the watch daemon by signalling its PID."""
+    from observeco.watch import stop
+    stop()
+
+
+@watch_app.command(name="status")
+def watch_status() -> None:
+    """Show whether the watch daemon is running and how fresh its data is."""
+    from observeco.watch import status as daemon_status
+
+    s = daemon_status()
+    if s["running"]:
+        age_str = f"{s['heartbeat_age']:.0f}s ago" if s["heartbeat_age"] is not None else "unknown"
+        print(f"● ObserveCo watch is running (PID {s['pid']}). Heartbeat: {age_str}")
+    else:
+        age_str = f"{s['heartbeat_age']:.0f}s ago" if s["heartbeat_age"] is not None else "never"
+        print(f"○ ObserveCo watch is NOT running. Last heartbeat: {age_str}")
+
+
+@watch_app.command(name="foreground")
+def watch_foreground(
+    interval: int = typer.Option(30, "--interval", "-i", help="Poll interval in seconds"),
+) -> None:
+    """Run the watch loop attached to this terminal (debug/testing)."""
     from observeco.watch import run_watch
-    run_watch(interval=interval, once=once)
+    run_watch(interval=interval, once=False)
+
+
+@watch_app.command(name="once")
+def watch_once(
+    daemon: bool = typer.Option(False, "--daemon", help="Daemon flag for CI compatibility (one-shot mode)"),
+) -> None:
+    """Single pulse cycle and exit (one-shot)."""
+    from observeco.watch import run_watch
+    run_watch(once=True)
 
 
 # -- Dashboard subcommand --
@@ -197,10 +437,24 @@ def serve_dashboard(
     host: str = typer.Option("127.0.0.1", "--host", help="Dashboard bind address"),
     static: bool = typer.Option(False, "--static", help="Generate static HTML and exit"),
     no_browser: bool = typer.Option(False, "--no-browser", help="Don't open browser (headless/server mode)"),
+    shared: Optional[str] = typer.Option(None, "--shared", help="Path to shared SQLite DB for team fleet view"),
+    show_token: bool = typer.Option(False, "--show-token", help="Print the dashboard access token and exit"),
 ) -> None:
     """Launch the ObserveCo dashboard (FastAPI + htmx)."""
     from observeco.dashboard.server import serve
-    serve(host=host, port=port, static=static, no_browser=no_browser)
+    serve(host=host, port=port, static=static, no_browser=no_browser, shared=shared, show_token=show_token)
+
+
+@app.command(name="desktop")
+def desktop_launch(
+    port: int = typer.Option(9119, "--port", "-p", help="Dashboard port"),
+    host: str = typer.Option("127.0.0.1", "--host", help="Dashboard bind address"),
+    no_tray: bool = typer.Option(False, "--no-tray", help="Skip system tray icon"),
+    shared: Optional[str] = typer.Option(None, "--shared", help="Path to shared SQLite DB for team fleet view"),
+) -> None:
+    """Launch the ObserveCo desktop app (native window via pywebview)."""
+    from observeco.desktop import launch
+    launch(port=port, host=host, no_tray=no_tray, shared=shared)
 
 
 @app.command(name="webhook")
@@ -226,6 +480,289 @@ def heal_command(
     run_heal(auto_heal=auto_heal, agent_name=agent, dry_run=dry_run)
 
 
+# -- L2 monitoring subcommand --
+
+l2_app = typer.Typer(help="Layer 2 proactive trend detection (memory bloat, stuck, drift, upstream)", no_args_is_help=True)
+app.add_typer(l2_app, name="l2")
+
+@l2_app.command(name="scan")
+def l2_scan() -> None:
+    """Run one L2 trend scan across all agents."""
+    from observeco.heal.l2 import run_l2_scan
+    results = run_l2_scan()
+    from rich.console import Console
+    console = Console()
+    if not results:
+        console.print("[green]No L2 trends detected — all agents look healthy.[/green]")
+    else:
+        console.print(f"[yellow]{len(results)} L2 trend(s) detected:[/yellow]")
+        for r in results:
+            console.print(f"  [{r['trend_type']}] {r['agent']} — metric={r['metric']:.1f}")
+
+@l2_app.command(name="status")
+def l2_status() -> None:
+    """Show current L2 trends."""
+    from observeco.heal.l2 import get_l2_summary, get_l2_metrics
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+    console = Console()
+    metrics = get_l2_metrics()
+    table = Table(title=f"L2 Trending — {metrics['total_trends']} total, {metrics['resolution_rate']}% resolved",
+                  box=box.ROUNDED, header_style="bold cyan")
+    table.add_column("Agent")
+    table.add_column("Type")
+    table.add_column("Severity")
+    table.add_column("Signal")
+    table.add_column("Resolved")
+    for t in get_l2_summary(limit=15):
+        icon = "✅" if t["resolved"] else "⚠️"
+        table.add_row(t["agent_name"], t["trend_type"], t["severity"],
+                      t["signal_label"][:60], icon)
+    console.print(table)
+
+
+# -- Alerts subcommand --
+
+alerts_app = typer.Typer(help="Push alert subscriptions (Telegram, webhook, email)", no_args_is_help=True)
+app.add_typer(alerts_app, name="alerts")
+
+@alerts_app.command(name="subscribe")
+def alerts_subscribe(
+    channel: str = typer.Argument(..., help="Channel: telegram, webhook, email"),
+    target: str = typer.Argument(..., help="Target: chat_id, webhook URL, or email address"),
+    event_types: str = typer.Option("all", "--events", "-e",
+                                    help="Filter: all, critical_only, heal_failure, drift, circuit_trip, agent_death"),
+) -> None:
+    """Subscribe to push alerts on a delivery channel."""
+    from observeco.alerts.push import add_subscription
+    from rich.console import Console
+    console = Console()
+    result = add_subscription(channel, target, event_types)
+    console.print(f"[green]Subscribed: {channel} -> {target} (events: {event_types})[/green]")
+    console.print(f"[dim]Subscription ID: {result['id']}[/dim]")
+
+@alerts_app.command(name="unsubscribe")
+def alerts_unsubscribe(
+    sub_id: int = typer.Argument(..., help="Subscription ID to remove"),
+) -> None:
+    """Remove an alert subscription."""
+    from observeco.alerts.push import remove_subscription
+    from rich.console import Console
+    console = Console()
+    remove_subscription(sub_id)
+    console.print(f"[green]Subscription {sub_id} removed.[/green]")
+
+@alerts_app.command(name="list")
+def alerts_list() -> None:
+    """List all alert subscriptions."""
+    from observeco.alerts.push import list_subscriptions
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+    console = Console()
+    subs = list_subscriptions()
+    if not subs:
+        console.print("[dim]No alert subscriptions. Use `observeco alerts subscribe <channel> <target>` to add one.[/dim]")
+        return
+    table = Table(box=box.ROUNDED, header_style="bold cyan")
+    table.add_column("ID")
+    table.add_column("Channel")
+    table.add_column("Target")
+    table.add_column("Events")
+    table.add_column("Enabled")
+    for s in subs:
+        table.add_row(str(s["id"]), s["channel"], s["target"],
+                      s["event_types"], "✅" if s["enabled"] else "❌")
+    console.print(table)
+
+@alerts_app.command(name="log")
+def alerts_log() -> None:
+    """Show recent alert delivery log."""
+    from observeco.alerts.push import get_delivery_log
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+    console = Console()
+    log = get_delivery_log(limit=10)
+    if not log:
+        console.print("[dim]No alert deliveries yet.[/dim]")
+        return
+    table = Table(box=box.ROUNDED, header_style="bold cyan")
+    table.add_column("Channel")
+    table.add_column("Event")
+    table.add_column("Delivered")
+    table.add_column("Message")
+    for l in log:
+        icon = "✅" if l["delivered"] else "❌"
+        table.add_row(l["channel"], l["event_type"], icon, l["message"][:70])
+    console.print(table)
+
+
+# -- Plugin tracking subcommand --
+
+plugin_app = typer.Typer(help="OpenClaw plugin context-loading tracking", no_args_is_help=True)
+app.add_typer(plugin_app, name="plugin")
+
+@plugin_app.command(name="log")
+def plugin_log(
+    agent_name: str = typer.Argument(..., help="Agent name"),
+    hook_point: str = typer.Argument(..., help="Hook point: bootstrap, ingest, pre_response"),
+    intent_class: str = typer.Option("", "--intent", "-i", help="Classified intent"),
+    loaded: int = typer.Option(0, "--loaded", "-l", help="Sources loaded"),
+    skipped: int = typer.Option(0, "--skipped", "-s", help="Sources skipped"),
+    saved: int = typer.Option(0, "--saved", help="Tokens saved"),
+) -> None:
+    """Log a plugin hook event (for OpenClaw plugin integration)."""
+    from observeco.clawforge.plugin import log_plugin_hook
+    from rich.console import Console
+    console = Console()
+    result = log_plugin_hook(agent_name, hook_point, intent_class, loaded, skipped, saved)
+    console.print(f"[green]Logged {hook_point} for {agent_name}: {result['reduction_pct']}% reduction[/green]")
+
+@plugin_app.command(name="stats")
+def plugin_stats(
+    agent_name: str = typer.Option("", "--agent", "-a", help="Filter by agent"),
+) -> None:
+    """Show plugin tracking statistics."""
+    from observeco.clawforge.plugin import get_plugin_stats, get_recent_hooks
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+    console = Console()
+    stats = get_plugin_stats(agent_name)
+    if stats["turns"] == 0:
+        console.print("[dim]No plugin data recorded yet.[/dim]")
+        return
+    console.print(f"[bold]Plugin Stats[/bold] {'for ' + agent_name if agent_name else '(all agents)'}")
+    console.print(f"  Turns tracked: {stats['turns']}")
+    console.print(f"  Sources loaded: {stats['loaded']}")
+    console.print(f"  Sources skipped (saved): {stats['skipped']}")
+    console.print(f"  Avg reduction: {stats['avg_reduction_pct']}%")
+
+
+# -- Token tracking subcommand --
+
+tokens_app = typer.Typer(help="Per-turn token tracking, budget thresholds, trend analysis", no_args_is_help=True)
+app.add_typer(tokens_app, name="tokens")
+
+@tokens_app.command(name="log")
+def tokens_log(
+    agent_name: str = typer.Argument(..., help="Agent name"),
+    turn_id: str = typer.Argument(..., help="Turn ID (e.g. turn_001)"),
+    total_tokens: int = typer.Argument(..., help="Total tokens used"),
+    identity: int = typer.Option(0, "--identity", help="Identity tokens"),
+    skills: int = typer.Option(0, "--skills", help="Skills tokens"),
+    memory: int = typer.Option(0, "--memory", help="Memory tokens"),
+    tools: int = typer.Option(0, "--tools", help="Tools tokens"),
+    guidance: int = typer.Option(0, "--guidance", help="Guidance tokens"),
+    provider: str = typer.Option("custom", "--provider", help="Provider name (deepseek, claude, etc.)"),
+) -> None:
+    """Log a single turn's token usage (anomaly detection + budget check)."""
+    from observeco.tracking.tokens import log_token_turn
+    from rich.console import Console
+    console = Console()
+    result = log_token_turn(agent_name, turn_id, total_tokens, identity, skills,
+                            memory, tools, guidance, provider)
+    parts = [f"Cost: ${result['cost']:.6f}"]
+    if result['anomaly_score'] is not None:
+        parts.append(f"Anomaly: {result['anomaly_score']:.1f}σ")
+    if result['budget_alerts']:
+        parts.append(f"⚠️ {', '.join(result['budget_alerts'])}")
+    console.print(f"[green]Logged turn {turn_id} for {agent_name} — {' · '.join(parts)}[/green]")
+
+@tokens_app.command(name="status")
+def tokens_status(
+    agent_name: str = typer.Option("", "--agent", "-a", help="Filter by agent"),
+    days: int = typer.Option(7, "--days", "-d", help="Lookback window"),
+) -> None:
+    """Show token tracking summary per agent."""
+    from observeco.tracking.tokens import get_token_summary
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+    console = Console()
+    stats = get_token_summary(agent_name, days)
+    if stats["turns"] == 0:
+        console.print("[dim]No token data recorded yet.[/dim]")
+        return
+    table = Table(box=box.ROUNDED, header_style="bold cyan")
+    table.add_column("Metric")
+    table.add_column("Value")
+    table.add_row("Turns", str(stats["turns"]))
+    table.add_row("Total tokens", f"{stats['total_tokens']:,}")
+    table.add_row("Total cost", f"${stats['total_cost']:.4f}")
+    table.add_row("Avg per turn", f"{stats['avg_tokens']:.0f}")
+    table.add_row("Max turn", f"{stats['max_tokens']:,}")
+    console.print(table)
+
+@tokens_app.command(name="trends")
+def tokens_trends(
+    agent_name: str = typer.Option("", "--agent", "-a", help="Filter by agent"),
+    days: int = typer.Option(7, "--days", "-d", help="Lookback window"),
+) -> None:
+    """Show component growth trends over time."""
+    from observeco.tracking.tokens import get_trend_analysis
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+    console = Console()
+    analysis = get_trend_analysis(agent_name)
+    console.print(f"[bold]Trend Analysis[/bold] for {agent_name or 'all agents'}")
+    table = Table(box=box.ROUNDED, header_style="bold cyan")
+    table.add_column("Component")
+    table.add_column("Growth")
+    table.add_column("Recent avg")
+    table.add_column("Baseline avg")
+    for comp, growth in analysis.get("component_growth", {}).items():
+        color = "green" if growth < 0 else "yellow" if growth < 10 else "red"
+        table.add_row(comp, f"[{color}]{growth:+.1f}%[/{color}]",
+                      str(analysis.get("recent_avg", 0)),
+                      str(analysis.get("baseline_avg", 0)))
+    table.add_row("Total", f"{analysis.get('growth_pct', 0):+.1f}%",
+                  str(analysis.get("recent_avg", 0)),
+                  str(analysis.get("baseline_avg", 0)))
+    console.print(table)
+
+@tokens_app.command(name="budget")
+def tokens_budget(
+    agent_name: str = typer.Argument(..., help="Agent name"),
+    max_daily_tokens: int = typer.Option(0, "--max-daily", help="Max tokens per day"),
+    max_turn_cost: float = typer.Option(0, "--max-turn-cost", help="Max cost per turn in $"),
+    anomaly_sigma: float = typer.Option(3.0, "--anomaly-sigma", help="Anomaly detection sigma threshold"),
+) -> None:
+    """Set per-agent token budget thresholds."""
+    from observeco.db import Database
+    from rich.console import Console
+    console = Console()
+    db = Database()
+    db.set_token_budget(agent_name, max_daily_tokens, max_turn_cost,
+                        anomaly_threshold_sigma=anomaly_sigma)
+    console.print(f"[green]Budget set for {agent_name}: daily={max_daily_tokens}, turn_cost=${max_turn_cost:.4f}, anomaly={anomaly_sigma}σ[/green]")
+
+
+# -- Prune subcommand --
+
+@app.command(name="prune")
+def prune_command(
+    data_type: str = typer.Option("all", "--type", "-t", help="Data type: pulse, error, drift, token, l2, or all"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be pruned"),
+) -> None:
+    """Prune old data per retention policy."""
+    from observeco.tracking.prune import run_prune
+    from rich.console import Console
+    console = Console()
+    result = run_prune()
+    if result.get("status") == "disabled":
+        console.print("[yellow]Pruning is disabled. Run `observeco config set pruning_enabled 1`[/yellow]")
+    elif result.get("status") == "pro_never_prune":
+        console.print("[green]Pro tier — never prunes data. No action taken.[/green]")
+    elif result.get("status") == "ok":
+        total = sum(v for k, v in result.items() if k != "status")
+        console.print(f"[green]Pruned {total} rows across {len(result) - 1} data types.[/green]")
+        for dt, count in result.items():
+            if dt != "status":
+                console.print(f"  {dt}: {count} rows deleted")
 # -- Snapshot command (v1.1) --
 
 @app.command(name="snapshot")
@@ -390,6 +927,54 @@ def adapters_send(
         console.print(f"[red]Unknown channel: {channel}[/red]")
 
 
+@adapters_app.command(name="openclaw")
+def adapters_openclaw() -> None:
+    """List and validate OpenClaw hooks."""
+    from rich.console import Console
+    from rich.table import Table
+    from observeco.adapters.openclaw import list_hooks, validate_hooks, get_hook_config
+
+    console = Console()
+
+    hooks = list_hooks()
+    if not hooks:
+        console.print("[yellow]No OpenClaw hooks found in hooks/ directory[/yellow]")
+        return
+
+    # List hooks table
+    table = Table(title="OpenClaw Hooks")
+    table.add_column("Name", style="cyan")
+    table.add_column("File", style="white")
+    table.add_column("Version", style="green")
+    table.add_column("Exports", style="yellow")
+
+    for h in hooks:
+        exports = ", ".join(h.get("exports", []))
+        table.add_row(h.get("name", "?"), h.get("file", "?"), h.get("version", "?"), exports)
+
+    console.print(table)
+
+    # Validation results
+    validation = validate_hooks()
+    console.print("\n[bold]Validation:[/bold]")
+    for v in validation:
+        if v.get("status") == "critical":
+            console.print(f"  [red]✗ {v['name']} — {', '.join(v.get('issues', []))}[/red]")
+        elif v.get("status") == "missing":
+            console.print(f"  [yellow]○ {v['name']} — optional, not present[/yellow]")
+        elif v.get("status") == "partial":
+            console.print(f"  [yellow]⚠ {v['name']} — {', '.join(v.get('issues', []))}[/yellow]")
+        else:
+            console.print(f"  [green]✓ {v['name']}[/green]")
+
+    # Config summary
+    config = get_hook_config()
+    if config.get("validation", {}).get("status") == "failed":
+        console.print(f"\n[red]⚠ Missing required hooks: {', '.join(config['validation']['missing_required'])}[/red]")
+    else:
+        console.print(f"\n[green]✓ All required hooks present ({config['hooks_dir']})[/green]")
+
+
 # -- Doctor subcommands --
 
 doctor_app = typer.Typer(help="Intelligent environment troubleshooter with LLM-powered diagnostics")
@@ -445,6 +1030,35 @@ def agents_add(
     from observeco.auto_detect import run_add
     run_add(name=name, framework=framework, health_check=health_check)
 
+    # LLM-powered health check suggestion (Tier 2 shallow)
+    if not health_check:
+        try:
+            from observeco.llm_service import ask
+            import subprocess
+            lsof = subprocess.run(["lsof", "-i", "-P"], capture_output=True, text=True, timeout=5)
+            listening = [l for l in lsof.stdout.split("\n") if "LISTEN" in l][:10]
+            if listening:
+                port_context = "\n".join(listening)
+                suggestion = ask(
+                    """You are a health check advisor. Given listening ports and the agent name, suggest an appropriate health check URL or command.
+
+Format: SUGGESTION: <health check URL or command>
+If nothing obvious, respond: NO_SUGGESTION""",
+                    f"Agent: {name}\nFramework: {framework}\n\nListening ports:\n{port_context}",
+                    consumer="health_check_suggestion",
+                    max_cost_cents=0.005,
+                    cache_ttl_secs=3600,
+                    tier=2,
+                )
+                if suggestion and "NO_SUGGESTION" not in suggestion:
+                    for line in suggestion.split("\n"):
+                        if line.startswith("SUGGESTION:"):
+                            suggested_hc = line[11:].strip()
+                            console = __import__('rich').console.Console()
+                            console.print(f"[dim]💡 LLM suggests: [bold]--health-check '{suggested_hc}'[/bold][/dim]")
+        except Exception:
+            pass
+
 
 # -- OTel subcommands --
 
@@ -489,6 +1103,16 @@ def otel_export(
         result = bridge.export_events(events)
 
     print(json.dumps(result, indent=2))
+
+
+@otel_app.command(name="listen")
+def otel_listen(
+    action: str = typer.Argument("status", help="start, stop, status, or --once"),
+    port: int = typer.Option(4318, "--port", "-p", help="OTLP listen port"),
+) -> None:
+    """Standalone OTLP listener on port 4318 — accepts spans from OpenInference-instrumented agents."""
+    from observeco.otel_listener import cli_main
+    cli_main([action, str(port)])
 
 
 # -- Fleet subcommands --
@@ -777,6 +1401,21 @@ def _fire_crash_report(error_type: str, error_msg: str, stack: str) -> None:
         send_error(error_type, error_msg, stack, command=cmd)
     except Exception:
         pass
+
+
+# -- PA Brief subcommand --
+
+pa_app = typer.Typer(help="PA brief operations (evening snapshot / morning delta)")
+app.add_typer(pa_app, name="pa")
+
+@pa_app.command(name="brief")
+def pa_brief(
+    mode: str = typer.Option("morning", "--mode", "-m", help="Brief mode: 'morning' (diff against evening) or 'evening' (take snapshot)"),
+) -> None:
+    """PA brief — morning diffs against evening snapshot, evening takes a baseline snapshot."""
+    from observeco.pa_brief_diff import run_brief
+    result = run_brief(mode)
+    print(result)
 
 
 if __name__ == "__main__":

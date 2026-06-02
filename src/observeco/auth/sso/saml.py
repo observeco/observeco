@@ -27,6 +27,20 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET
     HAS_DEFUSEDXML = False
+
+# When defusedxml is not available, warn loudly and use regex-based entity pre-scan
+if not HAS_DEFUSEDXML:
+    import warnings
+    warnings.warn(
+        "defusedxml not installed! SAML XML parsing is vulnerable to XXE attacks. "
+        "Install with: pip install defusedxml"
+    )
+
+    # Entity pre-scan as defense-in-depth
+    import re
+    _XXE_ENTITY_PATTERN = re.compile(r'<!ENTITY|<\!DOCTYPE[^>]*\[|<!ELEMENT')
+else:
+    pass
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -106,6 +120,9 @@ class SAMLProvider:
             decoded = base64.b64decode(saml_response).decode("utf-8")
 
             # Parse XML
+            if not HAS_DEFUSEDXML and _XXE_ENTITY_PATTERN.search(decoded):
+                raise ValueError("XXE patterns detected in SAML response — rejecting")
+
             root = ET.fromstring(decoded)
 
             # Extract NameID (email)
@@ -152,6 +169,11 @@ class SAMLProvider:
         """
         try:
             decoded = base64.b64decode(saml_response).decode("utf-8")
+
+            # XXE defense
+            if not HAS_DEFUSEDXML and _XXE_ENTITY_PATTERN.search(decoded):
+                raise ValueError("XXE patterns detected in SAML response — rejecting")
+
             root = ET.fromstring(decoded)
 
             ns = {

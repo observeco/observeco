@@ -32,6 +32,7 @@ import signal
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
 
@@ -40,6 +41,8 @@ from observeco.db import Database
 from observeco.dirs import get_data_dir
 from observeco.pulse.check import _probe_agent
 from observeco.chisel.trim import run_trim_file
+from observeco.event_bus import publish
+from observeco.watch_consumers import ConsumerManager
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +55,6 @@ _PID_PATH = _DATA_DIR / ".watch.pid"
 # ── Timing ───────────────────────────────────────────────────────────────────
 
 PULSE_INTERVAL = 30         # seconds between agent probes
-DRIFT_INTERVAL = 300        # seconds between drift scans (5 min)
-GARDEN_INTERVAL = 900       # seconds between garden scans (15 min)
-PATHWAY_INTERVAL = 900      # seconds between pathway scans (15 min)
 HEARTBEAT_STALE_THRESHOLD = 90  # 3 missed cycles
 
 # ── Daemon management ────────────────────────────────────────────────────────
@@ -242,9 +242,6 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
     db = Database()
     running = True
     cycle = 0
-    last_drift_ts = 0
-    last_garden_ts = 0
-    last_pathway_ts = 0
     instance_id = os.environ.get("OBSERVECO_INSTANCE_ID", "")
 
     def _handle_signal(sig, frame):
@@ -271,6 +268,11 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
     # Write initial heartbeat so dashboard can detect us immediately
     _write_heartbeat(status="starting", cycle=0)
 
+    # Start event-driven consumers (drift, garden, pathway, heal, prune)
+    consumer_mgr = ConsumerManager(db=db)
+    consumer_mgr.register_all()
+    consumer_mgr.start_all()
+
     while running:
         cycle += 1
         timestamp = int(time.time())
@@ -288,64 +290,55 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
 
         if agents:
             results = []
-            for agent in agents:
-                try:
-                    status_val, latency, error, metadata_json = _probe_agent(agent)
-                    db.log_pulse(
-                        agent_name=agent.name,
-                        agent_framework=getattr(agent, "framework", "custom"),
-                        status=status_val,
-                        latency_ms=latency * 1000,
-                        instance_id=instance_id,
-                        metadata_json=metadata_json,
-                    )
-                    # Auto-trim SOUL.md for all alive agents
-                    if status_val == "alive" and getattr(agent, "config_path", None):
-                        run_trim_file(agent.name, agent.config_path)
-                    results.append((agent.name, status_val, latency))
-                except Exception as e:
-                    db.log_pulse(
-                        agent_name=agent.name,
-                        agent_framework=getattr(agent, "framework", "custom"),
-                        status="error",
-                        latency_ms=0,
-                        instance_id=instance_id,
-                    )
-                    db.log_error(
-                        agent_name=agent.name,
-                        error_type="watch_probe_failed",
-                        message=str(e),
-                        severity="error",
-                    )
-                    results.append((agent.name, "error", 0))
+            # Parallel probe via ThreadPoolExecutor — max(30s) per agent
+            with ThreadPoolExecutor(max_workers=10) as pool:
+                future_map = {pool.submit(_probe_agent, agent): agent for agent in agents}
+                for future in as_completed(future_map, timeout=45):
+                    agent = future_map[future]
+                    try:
+                        status_val, latency, error, metadata_json = future.result(timeout=30)
+                        db.log_pulse(
+                            agent_name=agent.name,
+                            agent_framework=getattr(agent, "framework", "custom"),
+                            status=status_val,
+                            latency_ms=latency * 1000,
+                            instance_id=instance_id,
+                            metadata_json=metadata_json,
+                        )
+                        # Auto-trim SOUL.md for all alive agents
+                        if status_val == "alive" and getattr(agent, "config_path", None):
+                            run_trim_file(agent.name, agent.config_path)
+                        results.append((agent.name, status_val, latency))
+                        # Publish probe event
+                        try:
+                            publish(None, "probe_result", agent_name=agent.name,
+                                    status=status_val, latency_ms=latency * 1000)
+                        except Exception:
+                            pass
+                    except Exception as e:
+                        db.log_pulse(
+                            agent_name=agent.name,
+                            agent_framework=getattr(agent, "framework", "custom"),
+                            status="error",
+                            latency_ms=0,
+                            instance_id=instance_id,
+                        )
+                        db.log_error(
+                            agent_name=agent.name,
+                            error_type="watch_probe_failed",
+                            message=str(e),
+                            severity="error",
+                        )
+                        results.append((agent.name, "error", 0))
+                        # Publish error event
+                        try:
+                            publish(None, "probe_error", agent_name=agent.name, error=str(e))
+                        except Exception:
+                            pass
 
             alive = sum(1 for _, s, _ in results if s == "alive")
             dead = sum(1 for _, s, _ in results if s == "dead")
             error = sum(1 for _, s, _ in results if s == "error")
-
-            # ── Cycle 2: Drift scan (every 5 min) ───────────────────────────
-            if timestamp - last_drift_ts >= DRIFT_INTERVAL:
-                try:
-                    _run_drift_scan(db, agents)
-                    last_drift_ts = timestamp
-                except Exception:
-                    pass
-
-            # ── Cycle 3: Garden scan (every 15 min) ──────────────────────────
-            if timestamp - last_garden_ts >= GARDEN_INTERVAL:
-                try:
-                    _run_garden_scan(db)
-                    last_garden_ts = timestamp
-                except Exception:
-                    pass
-
-            # ── Cycle 4: Pathway scan (every 15 min) ─────────────────────────
-            if timestamp - last_pathway_ts >= PATHWAY_INTERVAL:
-                try:
-                    _run_pathway_scan(db)
-                    last_pathway_ts = timestamp
-                except Exception:
-                    pass
 
             # Write heartbeat
             _write_heartbeat(
@@ -359,92 +352,12 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
                 break
             time.sleep(1)
 
+    consumer_mgr.stop_all()
     _write_heartbeat(status="stopped", cycle=cycle)
     _PID_PATH.unlink(missing_ok=True)
 
 
-# ── Sweep functions ──────────────────────────────────────────────────────────
-
-
-def _run_drift_scan(db: Database, agents: list) -> None:
-    """Compute and log 7-day drift for all agents."""
-    from observeco.chisel.drift import run_drift as _compute_drift
-    # run_drift is a CLI-only display function. The DB logging is done
-    # inline here to avoid circular imports.
-    components = ["identity", "skills", "memory", "tools", "guidance"]
-    now = time.time()
-    week_ago = now - 7 * 86400
-
-    for agent_cfg in agents:
-        name = agent_cfg.name
-        trims = db.get_trims(agent_name=name, limit=50)
-        if not trims or len(trims) < 2:
-            continue
-
-        # Split into recent (last 24h) and rolling (7d)
-        latest = trims[0]
-        week_entries = [t for t in trims if t.get("timestamp", 0) >= week_ago]
-
-        for comp in components:
-            current = latest.get(f"{comp}_tokens", 0) or 0
-            comp_vals = [t.get(f"{comp}_tokens", 0) or 0 for t in week_entries]
-            week_avg = int(sum(comp_vals) / max(len(comp_vals), 1))
-            delta_pct = ((current - week_avg) / max(week_avg, 1)) * 100
-            breached = int(abs(delta_pct) > 10.0)
-
-            db.log_drift(name, comp, current, week_avg, delta_pct, bool(breached))
-
-
-def _run_garden_scan(db: Database) -> None:
-    """Scan MEMORY.md files and log garden data."""
-    from observeco.clawforge.garden import (
-        _find_memory_files, _find_duplicates,
-        _find_contradictions, _find_stale,
-    )
-
-    memories = _find_memory_files()
-    if not memories:
-        return
-
-    for mem in memories:
-        path = Path(mem["path"])
-        if not path.exists():
-            continue
-
-        lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
-        dupes = _find_duplicates(lines)
-        contradictions = _find_contradictions(lines)
-        stale = _find_stale(lines, str(path))
-
-        dupe_score = min(40, len(dupes) * 5)
-        contra_score = min(30, len(contradictions) * 10)
-        stale_score = min(30, len(stale) * 3)
-        debt_score = min(100, dupe_score + contra_score + stale_score)
-
-        suggestions_parts = []
-        if dupes:
-            suggestions_parts.append(f"{len(dupes)} duplicates found")
-        if contradictions:
-            suggestions_parts.append(f"{len(contradictions)} contradictions found")
-        if stale:
-            suggestions_parts.append(f"{len(stale)} stale entries found")
-        suggestions = "; ".join(suggestions_parts) or "No issues found"
-
-        db.log_garden(mem["agent"], len(dupes), len(contradictions),
-                      len(stale), debt_score, suggestions)
-
-
-def _run_pathway_scan(db: Database) -> None:
-    """Re-discover communication pathways and sync to DB."""
-    try:
-        from observeco.pathway.discover import run_discover as discover_pathways
-        discover_pathways()
-    except ImportError:
-        # Pathway discovery not installed — skip silently
-        pass
-
-
-# ── Heartbeat ────────────────────────────────────────────────────────────────
+# ── Heartbeat helper ──────────────────────────────────────────────────────────
 
 
 def _write_heartbeat(status: str, cycle: int, agents: int = 0,

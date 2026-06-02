@@ -77,7 +77,7 @@ def _send_feedback(payload: dict) -> bool:
     """
     server_url = os.environ.get(
         "OBSERVECO_FEEDBACK_URL",
-        "https://observeco.com/api/telemetry",
+        "https://observeco-license-crm.vercel.app/api/telemetry",
     )
     try:
         import urllib.request

@@ -1,0 +1,95 @@
+# Requirements & Spec Fidelity Playbook — The Upstream Gate
+
+**Product:** ObserveCo (and all future software projects)
+**Status:** Living — update as lessons accumulate
+**Version:** 2.1 — 2026-05-31
+**Version History:**
+| Version | Date | What changed |
+|---------|------|-------------|
+| 1.0 | 2026-05-30 | Initial creation |
+| 2.0 | 2026-05-30 | Added Playbook Inventory, fixes "5 playbooks" refs |
+| 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory in all docs, Golden Gate naming normalization |
+**Source:** Real failure — the watch daemon architecture fix was *correctly implemented* against an *incomplete spec*. The thread-in-dashboard approach was never ruled out by the requirements because the requirements never specified lifecycle, cross-platform, or data-continuity constraints.
+
+This playbook sits **upstream** of coding-fidelity-playbook.md, ux-testing-playbook.md, and system-design-testing-playbook.md. It catches the class of problem where the code and architecture are perfect — but the spec was wrong.
+
+## Playbook Inventory
+
+The full playbook system has 7 documents, organized by flow:
+
+| Order | Playbook | Role |
+|-------|----------|------|
+| 1 | requirements-fidelity-playbook.md | Spec hardening (upstream gate) |
+| 2 | coding-fidelity-playbook.md | Code matches spec |
+| 3 | ux-testing-playbook.md | Human experience lens |
+| 4 | system-design-testing-playbook.md | Architecture & daemon lens |
+| 5 | agent-governance-playbook.md | Session mastery for agents |
+| 6 | master-fidelity-gate.md | Integration gate (combines all 5) |
+| 7 | playbook-evolution-meta.md | Self-improvement loop |
+
+Refer to this inventory when the playbook system is referenced in other documents. When a section says "all 5 playbooks" or "all playbooks", it refers to playbooks 1-5 as the core set. **This inventory is the authoritative cross-reference — every document that mentions "the playbooks" should link here.**
+
+---
+
+## 1. Thesis
+
+**A perfect implementation of an ambiguous spec is still wrong.**
+
+The three sibling playbooks assume the spec, mockup, and master-plan.md are correct and complete. In practice, 40–60% of downstream failures originate here: ambiguous language, missing edge states, contradictory mockups, or "I'll know it when I see it" requirements.
+
+This document is not a spec template. It is a **spec hardening process** — a repeatable way to catch the class of problem, not the instance.
+
+| The other playbooks catch | This playbook catches |
+|--------------------------|----------------------|
+| Does the code match the spec? | Is the spec complete enough to code from? |
+| Does the UI render correctly? | Are all states (empty, loading, error, partial) described? |
+| Does the daemon survive a crash? | Was "what happens on crash?" ever specified? |
+| Are the lenses scored ≥4? | Were the acceptance criteria defined before scoring? |
+
+---
+
+## 2. The 6 Spec Traps
+
+Every ambiguous, contradictory, or incomplete spec falls into one of these six traps.
+
+### Trap 1: Assumed Happy Path Only
+
+**Pattern:** The spec describes what happens when everything works. Nothing about what happens when it doesn't.
+
+| Example | What was specified | What was missing |
+|---------|-------------------|-----------------|
+| Watch daemon | "Polls registered agents every N seconds" | What happens when the daemon crashes? When the terminal closes? When the user runs it twice? When the DB is corrupted? |
+| Dashboard cards | "Shows agent status and last pulse" | What does a card show when there's no pulse data? When the daemon is dead? During the first 30 seconds after install? |
+| Feature lock | "Pro tiles show upgrade CTA" | What happens when the API endpoint for upgrades is unreachable? When the user is on a free plan and clicks? After upgrade—do tiles unlock in real-time or after refresh? |
+
+**Detection:** Run the spec through this litmus test:
+
+```
+☐ For every "happy path" described, is there a corresponding failure path?
+☐ Does the spec describe what happens on FIRST LOAD?
+☐ Does the spec describe what happens on EMPTY STATE?
+☐ Does the spec describe what happens on ERROR?
+☐ Does the spec describe what happens on PARTIAL DATA?
+☐ Does the spec describe what happens on TIMEOUT?
+```
+
+**Fix pattern:** Every feature specification must include a section titled **"States & Edge Cases"** that enumerates at minimum: success, empty, loading, error, partial, stale, and timeout.
+
+### Trap 2: Visuals Described But Not States
+
+**Pattern:** The mockup shows a perfect-looking screenshot. The spec lists visual elements. Neither describes how those elements change over time.
+
+| Example | Mockup shows | What's missing |
+|---------|-------------|----------------|
+| Agent card | Green status dot, token bar, "12s ago" | What colour is the dot when the agent hasn't been seen in 12 hours? What's the animation when status transitions from green to red? Does the token bar animate on update or snap? |
+| Drift chart | 7-point line chart with up/down trends | Is the chart interactive (tooltip on hover?) Does it auto-scroll to latest data? What does "no data" look like? |
+| Pathway map | 86 nodes, 277 edges, filters | What happens when filters produce zero visible edges? Does the graph re-layout or stay frozen? Are nodes draggable? |
+
+**Detection:**
+
+```
+☐ For every visual element in the mockup, does the spec describe its full state machine?
+☐ What does this element look like at t=0 (first load)?
+☐ What does it look like at t=30s (data arrives)?
+☐ What does it look like at t=5min (data goes stale)?
+☐ What does it look like at t=∞ (data never arrives)?

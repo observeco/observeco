@@ -5,21 +5,22 @@ from observeco.pulse.circuit import run_circuit
 
 
 def test_probe_agent_returns_tuple():
-    """_probe_agent should return (status, response_time, error) tuple."""
+    """_probe_agent should return (status, response_time, error, metadata) tuple."""
     agent = AgentConfig(name="test-agent", framework="custom", health_check="echo ok")
     result = _probe_agent(agent)
     assert isinstance(result, tuple)
-    assert len(result) == 3
-    status, response_time, error = result
+    assert len(result) == 4
+    status, response_time, error, metadata = result
     assert status in ("alive", "dead", "error")
     assert isinstance(response_time, float)
     assert isinstance(error, str)
+    assert isinstance(metadata, str)
 
 
 def test_probe_agent_custom_health():
     """A valid health check command should return alive."""
     agent = AgentConfig(name="ping-agent", framework="custom", health_check="echo pong")
-    status, rt, err = _probe_agent(agent)
+    status, rt, err, meta = _probe_agent(agent)
     assert status == "alive"
     assert rt >= 0.0
 

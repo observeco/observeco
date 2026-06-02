@@ -134,15 +134,18 @@ class OAuth2Provider:
         if self.provider not in self.PROVIDERS:
             return None
 
-        # Verify state parameter (CSRF protection) — check dict and clean stale entries
-        if state:
-            # Purge states older than 10 minutes
-            cutoff = time.time() - 600
-            self._pending_states = {s: t for s, t in self._pending_states.items() if t > cutoff}
-            if state not in self._pending_states:
-                logger.warning(f"OAuth state not found or expired: {state}")
-                return None
-            del self._pending_states[state]
+        # REQUIRE state parameter for CSRF protection
+        if not state:
+            logger.warning("OAuth exchange rejected — no state parameter provided (CSRF)")
+            return None
+
+        # Verify state parameter — purge states older than 10 minutes
+        cutoff = time.time() - 600
+        self._pending_states = {s: t for s, t in self._pending_states.items() if t > cutoff}
+        if state not in self._pending_states:
+            logger.warning(f"OAuth state not found or expired: {state}")
+            return None
+        del self._pending_states[state]
 
         config = self.PROVIDERS[self.provider]
 

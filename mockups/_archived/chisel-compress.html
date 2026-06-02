@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Chisel Compression</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --fg: #f8fafc;
+  --accent: #22c55e;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 15px;
+  --text-xl: 18px;
+  --text-2xl: 24px;
+  --text-3xl: 40px;
+  --text-4xl: 56px;
+  --leading-body: 1.5;
+  --leading-tight: 1.06;
+  --tracking-display: -0.025em;
+  --container-max: 1440px;
+  --container-gutter-desktop: 36px;
+  --container-gutter-tablet: 24px;
+  --container-gutter-phone: 16px;
+  --section-y-desktop: 40px;
+  --section-y-tablet: 32px;
+  --section-y-phone: 24px;
+  --accent-on: #0c1628;
+  --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+  --accent-active: color-mix(in oklab, var(--accent), black 14%);
+  --success: #22c55e;
+  --warn: #eab308;
+  --danger: #ef4444;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 24px 72px rgba(0, 0, 0, 0.42);
+  --focus-ring: 0 0 0 4px color-mix(in oklab, var(--accent), transparent 70%);
+  --motion-fast: 100ms;
+  --motion-base: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --fg-2: #94a3b8;
+  --meta: #3b82f6;
+  --muted: #64748b;
+  --surface-warm: #253349;
+  --border: #334155;
+  --border-soft: #273548;
+  --status-healthy: #22c55e;
+  --status-warning: #eab308;
+  --status-critical: #ef4444;
+  --status-info: #3b82f6;
+  --token-identity: #6366f1;
+  --token-skills: #8b5cf6;
+  --token-memory: #ec4899;
+  --token-tools: #14b8a6;
+  --token-guidance: #f97316;
+  --data-primary: #22c55e;
+  --data-secondary: #3b82f6;
+  --data-accent: #3b82f6;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-display);
+  background: var(--bg); color: #e2e8f0; line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 800px; margin: 0 auto; padding: 24px; }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+
+/* Tabs */
+.tab-bar { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 1px solid #1e293b; }
+.tab-btn {
+  padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer;
+  border-bottom: 2px solid transparent; color: #64748b; transition: all 0.15s;
+  background: none; border-top: none; border-left: none; border-right: none; font-family: inherit;
+}
+.tab-btn.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+.tab-btn:hover { color: #94a3b8; }
+
+/* Agent selector */
+.agent-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.agent-row select {
+  background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+  padding: 8px 12px; border-radius: 8px; font-size: 14px; font-family: inherit; cursor: pointer;
+}
+
+.card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+  padding: 16px; margin-bottom: 16px;
+}
+.card h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.card h3 .tag {
+  display: inline-block; font-size: 9px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px; letter-spacing: 0.03em; margin-left: 6px;
+}
+.tag.free { background: #166534; color: #86efac; }
+.tag.pro { background: #3730a3; color: #a5b4fc; }
+
+/* Stats row */
+.stats-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.stat-box {
+  flex: 1; min-width: 100px;
+  background: #0f172a; border: 1px solid #334155; border-radius: 10px;
+  padding: 14px; text-align: center;
+}
+.stat-box .big { font-size: 22px; font-weight: 700; }
+.stat-box .label { font-size: 10px; color: #64748b; margin-top: 3px; text-transform: uppercase; }
+.stat-box.green { border-color: #166534; }
+.stat-box.green .big { color: #22c55e; }
+.stat-box.blue { border-color: #1e3a5f; }
+.stat-box.blue .big { color: #60a5fa; }
+.stat-box.highlight { border-color: #3730a3; background: #1e1b4b; }
+.stat-box.highlight .big { color: #a5b4fc; }
+
+/* Mode selector */
+.mode-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.mode-btn {
+  padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1px solid #334155; background: #1e293b; color: #94a3b8; transition: all 0.15s; font-family: inherit;
+}
+.mode-btn.active.lite { background: #166534; border-color: #22c55e; color: #86efac; }
+.mode-btn.active.full { background: #3730a3; border-color: #6366f1; color: #a5b4fc; }
+.mode-btn:hover { border-color: #475569; }
+.mode-row .mode-note { font-size: 11px; color: #64748b; margin-left: auto; }
+
+/* Comparison */
+.comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+@media (max-width:640px) { .comparison { grid-template-columns: 1fr; } }
+.comp-panel {
+  background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 14px;
+}
+.comp-panel .panel-title { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.comp-panel .token-count { font-size: 20px; font-weight: 700; font-family: monospace; margin-bottom: 8px; }
+.comp-panel h4 { font-size: 12px; font-weight: 600; margin: 10px 0 6px; color: #94a3b8; }
+
+.diff-line { font-family: monospace; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-bottom: 1px; white-space: pre-wrap; word-break: break-all; }
+.diff-line.old { background: #450a0a; color: #fca5a5; }
+.diff-line.new { background: #0a2a1a; color: #86efac; }
+.diff-line.unchanged { color: #64748b; }
+
+/* Actions */
+.actions { display: flex; gap: 8px; margin-bottom: 12px; }
+.primary-btn {
+  background: #3b82f6; border: none; color: white;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.primary-btn:hover { background: #2563eb; }
+.primary-btn.green { background: #16a34a; }
+.primary-btn.green:hover { background: #15803d; }
+.secondary-btn {
+  background: #1e293b; border: 1px solid #334155; color: #94a3b8;
+  padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.secondary-btn:hover { border-color: #475569; color: #e2e8f0; }
+
+/* PRO locked */
+.pro-locked-area {
+  background: #0f172a; border: 2px dashed #3730a3; border-radius: 12px;
+  padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
+}
+.pro-locked-area:hover { border-color: #6366f1; }
+.pro-locked-area .header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.pro-locked-area .header .lock { font-size: 20px; }
+.pro-locked-area .header .title { font-size: 14px; font-weight: 600; color: #a5b4fc; }
+.pro-locked-area .preview { font-size: 12px; color: #64748b; line-height: 1.6; }
+.pro-locked-area .preview strong { color: #94a3b8; }
+.pro-locked-area .cta-text { font-size: 12px; color: #6366f1; margin-top: 8px; font-weight: 500; }
+
+/* Method table */
+.method-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 12px; }
+.method-table th { text-align: left; font-size: 10px; color: #64748b; text-transform: uppercase; padding: 6px 8px; border-bottom: 1px solid #334155; font-weight: 500; }
+.method-table td { padding: 6px 8px; border-bottom: 1px solid #1e293b; }
+.method-table tr:last-child td { border-bottom: none; }
+.method-table .check-yes { color: #22c55e; font-weight: 700; }
+.method-table .check-no { color: #475569; }
+
+/* CTA */
+.cta-block { text-align: center; margin-top: 16px; }
+.cta-block .headline { font-size: 13px; color: #a5b4fc; margin-bottom: 8px; }
+.cta-btn {
+  background: #3b82f6; border: none; color: white;
+  padding: 10px 28px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.cta-btn:hover { background: #2563eb; }
+
+/* Savings banner */
+.savings-banner {
+  background: #1e1b4b; border: 1px solid #3730a3; border-radius: 10px;
+  padding: 12px 16px; margin-bottom: 12px; font-size: 12px; line-height: 1.6;
+}
+.savings-banner strong { color: #a5b4fc; }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  align-items: center; justify-content: center; z-index: 100;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #1e293b; border: 1px solid #3730a3; border-radius: 16px;
+  padding: 28px; max-width: 420px; width: 90%; text-align: center;
+}
+.modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: #94a3b8; line-height: 1.6; margin-bottom: 12px; }
+.modal .feature-list { text-align: left; padding: 12px 16px; background: #0f172a; border-radius: 8px; margin-bottom: 12px; }
+.modal .feature-list div { padding: 4px 0; font-size: 13px; }
+.modal .close-btn { background: #334155; border: none; color: #94a3b8; padding: 8px 20px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.modal .cta-btn { background: #3b82f6; border: none; color: white; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+.toast {
+  position: fixed; bottom: 20px; right: 20px; z-index: 50;
+  background: #1e293b; border: 1px solid #334155; border-radius: 10px;
+  padding: 12px 20px; font-size: 13px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  transform: translateY(100px); opacity: 0; transition: all 0.3s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+<!-- Header -->
+<div class="header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 0;margin-bottom:20px;border-bottom:1px solid var(--border);">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+        <defs>
+          <linearGradient id="oc-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+          </linearGradient>
+          <linearGradient id="oc-grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4ade80;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#22c55e;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <circle cx="64" cy="64" r="60" fill="none" stroke="url(#oc-grad)" stroke-width="2" opacity="0.3"/>
+        <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#oc-grad2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/>
+        <circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+        <circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/>
+        <circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/>
+        <circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+        <circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/>
+        <circle cx="28" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+        <circle cx="100" cy="64" r="2" fill="#22c55e" opacity="0.5"/>
+      </svg>
+    </div>
+    <span style="font-size:18px;font-weight:700;color:var(--fg);">ObserveCo <span style="color:var(--muted);font-weight:400;">chisel</span></span>
+    <div class="brand-tagline" style="font-size: 13px; color: #94a3b8; font-weight: 400; margin-top: 2px;">Tells you if your AI agents are working, what they're doing, and where your money goes.</div>
+  </div>
+</div>
+<div class="app">
+  <h1>System Prompt Compression</h1>
+  <div class="subtitle">
+    Shrink your agent's SOUL.md — every session saves tokens.
+    <strong style="color:#a5b4fc;">Free: manual Lite (22%). Pro: auto Full (35%) + memory culling + skill dedup.</strong>
+  </div>
+
+  <!-- Agent selector -->
+  <div class="agent-row">
+    <select id="compressAgent">
+      <option value="hound">hound</option>
+      <option value="kepler">kepler</option>
+    </select>
+    <span style="font-size:12px;color:#64748b;">SOUL.md — <span id="beforeTokenDisplay">4,200</span> tokens uncompressed</span>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('dry-run', this)">🔍 Dry Run</button>
+    <button class="tab-btn" onclick="switchTab('apply', this)">💾 Apply</button>
+    <button class="tab-btn" onclick="switchTab('auto', this)">⏰ Auto-Watch</button>
+  </div>
+
+  <!-- DRY RUN TAB -->
+  <div id="dryRunContent">
+    <!-- Mode selector -->
+    <div class="mode-row">
+      <button class="mode-btn active lite" id="liteBtn" onclick="switchMode('lite')">Lite <span class="tag free">Free</span></button>
+      <button class="mode-btn" id="fullBtn" onclick="switchMode('full')">Full <span class="tag pro">Pro</span></button>
+      <span class="mode-note" id="modeNote">Lite: guidance dedup + rewording only</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="big" id="beforeTokens">4,200</div>
+        <div class="label">Before</div>
+      </div>
+      <div class="stat-box green">
+        <div class="big" id="afterTokens">3,276</div>
+        <div class="label">After <span id="modeLabel">(Lite)</span></div>
+      </div>
+      <div class="stat-box green">
+        <div class="big" id="savedPct">22%</div>
+        <div class="label">Token reduction</div>
+      </div>
+      <div class="stat-box blue">
+        <div class="big" id="savedYearly">$15</div>
+        <div class="label">$/yr saved (DeepSeek)</div>
+      </div>
+      <div class="stat-box highlight" id="proStatBox">
+        <div class="big" id="proSavedPct">35%</div>
+        <div class="label">Pro Full: memory + skills + context</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary-btn green" id="runBtn" onclick="showToast('✅ Dry-run complete — would save 924 tokens (22%)')">▶️ Run Dry-Run</button>
+      <button class="secondary-btn" onclick="showToast('📋 Report copied to clipboard')">📋 Copy Report</button>
+    </div>
+
+    <!-- Comparison -->
+    <div class="card">
+      <h3>Before / After <span class="tag free" id="compTag">Free</span></h3>
+      <div class="comparison">
+        <div class="comp-panel">
+          <div class="panel-title">Before</div>
+          <div class="token-count" style="color:#94a3b8;" id="beforeCount">4,200 tok</div>
+          <h4>TOOL_USE_ENFORCEMENT_GUIDANCE</h4>
+          <div class="diff-line old">When using tools, you MUST:</div>
+          <div class="diff-line old">1. Call exactly one tool per turn</div>
+          <div class="diff-line old">2. Pass all required parameters as shown</div>
+          <div class="diff-line old">3. Use the exact parameter names</div>
+          <div class="diff-line old">4. Do not add extra text before/after</div>
+          <div class="diff-line old">5. Wait for the tool response</div>
+          <div class="diff-line old" style="margin-top:6px;">Failure to follow these rules</div>
+          <div class="diff-line old">will result in incorrect execution.</div>
+        </div>
+        <div class="comp-panel">
+          <div class="panel-title" id="afterTitle">After (Lite compression)</div>
+          <div class="token-count" style="color:#22c55e;" id="afterCount">3,276 tok <span style="font-size:12px;color:#64748b;font-weight:400;">-22%</span></div>
+          <h4>TOOL_USE_ENFORCEMENT_GUIDANCE (compressed)</h4>
+          <div class="diff-line new">Call one tool per turn with exact params.</div>
+          <div class="diff-line new">No extra text. Wait for response.</div>
+          <div class="diff-line new" style="margin-top:6px;">COMPUTER_USE_GUIDANCE (compressed):</div>
+          <div class="diff-line new">Use coordinates, type text, screenshots.</div>
+          <div class="diff-line new" style="margin-top:6px;">PLATFORM_HINTS (shared constant):</div>
+          <div class="diff-line new">Use MEDIA_DELIVERY_HINT for files.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro savings callout -->
+    <div class="savings-banner">
+      💡 <strong>Pro Full compression adds memory culling + skill dedup + context refactoring — 35% vs Lite's 22%.</strong>
+      Saves $24/year per fleet on DeepSeek (2.2x Pro price). On Claude Sonnet: $485/year (5.5x Pro).
+    </div>
+  </div>
+
+  <!-- APPLY TAB -->
+  <div id="applyContent" style="display:none;">
+    <div class="card">
+      <h3>Apply Compression <span class="tag free">Free</span></h3>
+      <p style="font-size:13px;color:#64748b;margin-bottom:10px;">Writes compressed version back to SOUL.md. Backup created automatically.</p>
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;margin-bottom:10px;line-height:1.8;">
+        <span style="color:#64748b;">$</span> observeco chisel compress --agent <span style="color:#22c55e;">hound</span> --mode <span id="applyMode" style="color:#38bdf8;">lite</span> --apply
+        <br>
+        <span style="color:#22c55e;">✅ Backup: hound.SOUL.md.bak.20260527</span>
+        <br>
+        <span style="color:#22c55e;">✅ SOUL.md compressed (4,200 → <span id="applyAfter">3,276</span> tok, -<span id="applyPct">22</span>%)</span>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:10px;padding:8px 10px;background:#0f172a;border-radius:6px;">
+        ⚠️ Lite mode compresses guidance rules only. Full mode (Pro) also culls stale memory entries, deduplicates skills, and refactors context order — 35% vs 22%.
+      </div>
+      <div class="actions" style="margin-bottom:0;">
+        <button class="primary-btn green" onclick="showToast('✅ SOUL.md compressed. Backup saved.')">💾 Apply Compression</button>
+        <button class="secondary-btn" onclick="showToast('📋 Diff preview generated')">📋 Preview Diff</button>
+      </div>
+    </div>
+
+    <!-- Pro locked: Full compression -->
+    <div class="pro-locked-area" onclick="openProModal()">
+      <div class="header">
+        <div class="lock">🔒</div>
+        <div class="title">Full Compression — Memory Culling + Skill Dedup</div>
+      </div>
+      <div class="preview">
+        <strong>Adds 3 compression methods Lite doesn't have:</strong>
+        <div style="margin-top:6px;">
+          <strong>🧠 Memory culling:</strong> Removes entries >30d stale with zero invocations — saves ~400 tokens average<br>
+          <strong>🔧 Skill dedup:</strong> Merges overlapping skill references — saves ~280 tokens average<br>
+          <strong>📐 Context refactoring:</strong> Reorders sections for minimal overhead — saves ~190 tokens average
+        </div>
+      </div>
+      <div class="cta-text">🔓 Unlock 35% compression with Pro →</div>
+    </div>
+  </div>
+
+  <!-- AUTO-WATCH TAB -->
+  <div id="autoContent" style="display:none;">
+    <div class="pro-locked-area" onclick="openProModal()" style="margin-bottom:12px;">
+      <div class="header">
+        <div class="lock">🔒</div>
+        <div class="title">Auto-Compression — Set and Forget</div>
+      </div>
+      <div class="preview">
+        <strong>Every SOUL.md edit triggers Full compression within 60 seconds — you never think about it.</strong>
+        <div style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.8;">
+          • Watch daemon monitors all SOUL.md files<br>
+          • Detects edits with 5s debounce (avoids partial writes)<br>
+          • Runs Full compression: guidance + memory culling + skill dedup<br>
+          • Writes compressed version + backup automatically<br>
+          • Dashboard shows cumulative savings: "Saved 18,200 tokens this month"
+        </div>
+      </div>
+      <div class="cta-text">🔓 Enable auto-watch with Pro →</div>
+    </div>
+
+    <div class="card">
+      <h3>How Auto-Watch Works <span class="tag pro">Pro</span></h3>
+      <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;font-family:monospace;font-size:11px;line-height:1.8;">
+        <span style="color:#64748b;">[watch 23:14:05]</span> hound SOUL.md modified — debounce 5s...<br>
+        <span style="color:#22c55e;">  → 4,200 → 2,730 tok (-35%) ✅</span><br>
+        <span style="color:#64748b;">[watch 23:14:10]</span> Compression complete. Backup: SOUL.md.bak.20260527<br>
+        <br>
+        <span style="color:#64748b;">[watch this month]</span> Cumulative savings across 6 agents:<br>
+        <span style="color:#22c55e;">  → 18,200 tokens saved ($1.80 on DeepSeek)</span><br>
+        <span style="color:#22c55e;">  → 12 auto-compressions triggered (3 SOUL.md edits × 6 agents)</span><br>
+        <span style="color:#64748b;">[watch config]</span> Enabled for: hound, kepler, dreamer, pa, main, triage<br>
+        <span style="color:#64748b;">[watch status]</span> ✅ All watching. Last compression: 3 mins ago.
+      </div>
+    </div>
+
+    <!-- Integration with Skill Audit -->
+    <div class="pro-locked-area" onclick="openProModal()" style="border-style:solid;background:#1e1b4b;">
+      <div class="header">
+        <div class="lock">🔒</div>
+        <div class="title">Skill Audit Integration — Auto-Compress on Bloat</div>
+      </div>
+      <div class="preview">
+        <strong>When Skill Audit detects a skill crossed threshold (>3,000 tokens or >30% growth), auto-watch triggers Full compression on the parent SOUL.md.</strong>
+        <div style="margin-top:6px;font-size:11px;color:#64748b;">
+          Skill Audit → "database skill grew 58% in 4 weeks" → Auto-watch compresses parent SOUL.md → 35% saved → Alert: "Bloat detected and compressed. Last 3 compressions: 4,200→2,730→4,100→2,665→4,050→2,632"
+        </div>
+      </div>
+      <div class="cta-text">🔓 Chain Pro features for continuous optimization →</div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-block">
+    <div class="headline">🔒 Pro: Full compression (35% vs 22%) + auto-watch + Skill Audit integration. Saves $485/year on Claude Sonnet.</div>
+    <button onclick="openProModal()" class="cta-btn">Start Free Trial — $9/mo</button>
+  </div>
+</div>
+
+<!-- Pro modal -->
+<div class="modal-overlay" id="proModal">
+  <div class="modal">
+    <div style="font-size:40px;margin-bottom:12px;">🔒</div>
+    <h3>Chisel Compression — Pro</h3>
+    <p>Free compresses guidance rules (Lite, 22%). Pro compresses everything: guidance + memory culling + skill dedup + context refactoring (Full, 35%). Auto-watch triggers on every SOUL.md edit — set and forget.</p>
+    <div class="feature-list">
+      <div>✅ Full compression: 35% vs Lite's 22%</div>
+      <div>✅ Memory culling — removes stale entries</div>
+      <div>✅ Skill dedup — merges overlapping references</div>
+      <div>✅ Context refactoring — optimal section order</div>
+      <div>✅ Auto-watch: compress on every edit (60s)</div>
+      <div>✅ Skill Audit integration: auto-compress on threshold</div>
+    </div>
+    <p style="font-size:12px;color:#64748b;">30-day free trial · <strong style="color:#e2e8f0;">$9/mo Solo</strong> · <strong style="color:#e2e8f0;">$49/mo Team</strong></p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+      <button class="close-btn" onclick="closeProModal()">Not now</button>
+      <button class="cta-btn" onclick="alert('Stripe checkout would open here')">Start Free Trial</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = {
+  hound: { before: 4200, liteAfter: 3276, fullAfter: 2730, liteSaved: 924, fullSaved: 1470, litePct: 22, fullPct: 35 },
+  kepler: { before: 5700, liteAfter: 4446, fullAfter: 3705, liteSaved: 1254, fullSaved: 1995, litePct: 22, fullPct: 35 }
+};
+
+let currentMode = 'lite';
+let currentTab = 'dry-run';
+
+function renderAgent(name) {
+  const d = DATA[name];
+  document.getElementById('beforeTokenDisplay').textContent = d.before.toLocaleString();
+  updateMode(currentMode);
+}
+
+function updateMode(mode) {
+  const d = DATA[document.getElementById('compressAgent').value];
+  currentMode = mode;
+
+  const isFull = mode === 'full';
+  const after = isFull ? d.fullAfter : d.liteAfter;
+  const pct = isFull ? d.fullPct : d.litePct;
+  const saved = d.before - after;
+  const yearly = Math.round(saved * 0.00015 * 50 * 365 / 1000 * 6); // DeepSeek rate
+
+  // Stats
+  document.getElementById('beforeTokens').textContent = d.before.toLocaleString();
+  document.getElementById('afterTokens').textContent = after.toLocaleString();
+  document.getElementById('savedPct').textContent = pct + '%';
+  document.getElementById('savedYearly').textContent = '$' + yearly;
+  document.getElementById('proSavedPct').textContent = isFull ? '🎯 Active' : '35%';
+  document.getElementById('modeLabel').textContent = isFull ? '(Full)' : '(Lite)';
+
+  // Comparison
+  document.getElementById('beforeCount').textContent = d.before.toLocaleString() + ' tok';
+  document.getElementById('afterCount').innerHTML = after.toLocaleString() + ' tok <span style="font-size:12px;color:#64748b;font-weight:400;">-' + pct + '%</span>';
+
+  // Buttons
+  const liteBtn = document.getElementById('liteBtn');
+  const fullBtn = document.getElementById('fullBtn');
+  liteBtn.className = 'mode-btn' + (isFull ? '' : ' active lite');
+  fullBtn.className = 'mode-btn' + (isFull ? ' active full' : '');
+
+  const note = document.getElementById('modeNote');
+  note.textContent = isFull ? 'Full: guidance + memory culling + skill dedup + context refactor' : 'Lite: guidance dedup + rewording only';
+
+  // Tag
+  document.getElementById('compTag').textContent = isFull ? 'Pro' : 'Free';
+  document.getElementById('compTag').className = 'tag ' + (isFull ? 'pro' : 'free');
+  document.getElementById('afterTitle').textContent = isFull ? 'After (Full compression)' : 'After (Lite compression)';
+
+  // Apply tab
+  document.getElementById('applyMode').textContent = mode;
+  document.getElementById('applyAfter').textContent = after.toLocaleString();
+  document.getElementById('applyPct').textContent = pct;
+
+  // Run button
+  document.getElementById('runBtn').innerHTML = isFull ? '▶️ Run Full Dry-Run' : '▶️ Run Lite Dry-Run';
+  document.getElementById('runBtn').onclick = function() { showToast('✅ Dry-run: ' + d.before.toLocaleString() + ' → ' + after.toLocaleString() + ' tok (-' + pct + '%)'); };
+}
+
+function switchMode(mode) { updateMode(mode); }
+
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('dryRunContent').style.display = tab === 'dry-run' ? 'block' : 'none';
+  document.getElementById('applyContent').style.display = tab === 'apply' ? 'block' : 'none';
+  document.getElementById('autoContent').style.display = tab === 'auto' ? 'block' : 'none';
+}
+
+document.getElementById('compressAgent').addEventListener('change', e => renderAgent(e.target.value));
+
+function openProModal() { document.getElementById('proModal').classList.add('active'); }
+function closeProModal() { document.getElementById('proModal').classList.remove('active'); }
+document.getElementById('proModal').addEventListener('click', function(e) { if (e.target === this) closeProModal(); });
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProModal(); });
+
+renderAgent('hound');
+</script>
+
+<!-- ObserveCo branding -->
+<div style="text-align:center;padding:24px 0 16px;font-size:12px;color:#475569;border-top:1px solid #1e293b;margin-top:32px;">ObserveCo · Runtime observability for AI agents</div>
+</body>
+</html>

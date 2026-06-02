@@ -320,7 +320,12 @@ body {
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
   max-width: 600px; width: 90%; margin-bottom: 40px;
   box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-  overflow: hidden;
+  max-height: 85vh;
+}
+.modal-body {
+  padding: 18px;
+  overflow-y: auto;
+  max-height: calc(85vh - 2px);
 }
 .modal-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -358,12 +363,14 @@ body {
 
 /* Pulse history dots */
 .pulse-timeline {
-  display: flex; gap: 2px; flex-wrap: wrap; margin-top: 8px;
+  display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; align-items: center; line-height: 1;
 }
-.pulse-dot { width: 12px; height: 12px; border-radius: 2px; }
+.pulse-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 .pulse-dot.ok { background: var(--accent); }
 .pulse-dot.warn { background: var(--warn); }
 .pulse-dot.err { background: var(--danger); }
+.pulse-legend { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--muted); align-items: center; }
+.pulse-legend-dot { display: inline-flex; align-items: center; gap: 4px; }
 
 /* Section inside modal */
 .modal-section { margin-top: 14px; }
@@ -702,6 +709,59 @@ body {
 .detail-tab-btn { background: none; border: none; color: var(--muted); font-size: 12px; font-weight: 600; padding: 8px 14px; cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; }
 .detail-tab-btn.active { color: var(--fg); border-bottom-color: var(--accent); }
 .detail-tab-btn:hover { color: var(--fg); }
+
+/* ─── Restart Quality tab ─── */
+.restart-fleet-grid { display: flex; gap: 12px; margin-bottom: 16px; }
+.restart-fleet-card {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px; text-align: center;
+}
+.restart-fleet-num { font-size: 28px; font-weight: 700; display: block; }
+.restart-fleet-num.green { color: var(--accent); }
+.restart-fleet-num.amber { color: var(--warn); }
+.restart-fleet-num.red { color: var(--danger); }
+.restart-fleet-label { font-size: 11px; color: var(--muted); margin-top: 4px; display: block; text-transform: uppercase; letter-spacing: 0.04em; }
+.restart-legend { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.restart-legend-item { font-size: 11px; color: var(--fg-2); display: flex; align-items: center; gap: 6px; }
+.restart-legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.restart-legend-dot.green { background: var(--accent); }
+.restart-legend-dot.amber { background: var(--warn); }
+.restart-legend-dot.red { background: var(--danger); }
+.agent-restart-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+.agent-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.agent-card.restart-card-border.crash { border-left: 3px solid var(--danger); }
+.restart-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.restart-card-name { font-size: 13px; font-weight: 600; color: var(--fg); }
+.restart-card-badge { font-size: 11px; }
+.restart-card-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; }
+.restart-card-stat { font-size: 12px; display: flex; justify-content: space-between; padding: 2px 0; }
+.restart-card-stat-key { color: var(--muted); }
+.restart-card-stat-key.green { color: var(--accent); }
+.restart-card-stat-key.amber { color: var(--warn); }
+.restart-card-stat-key.red { color: var(--danger); }
+.restart-card-stat-val { color: var(--fg); font-weight: 600; font-family: var(--font-mono); }
+.restart-bar-section {}
+.restart-bar-header { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.restart-bar { display: flex; height: 16px; border-radius: 4px; overflow: hidden; background: var(--bg); }
+.restart-bar-seg { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: rgba(0,0,0,0.7); }
+.restart-bar-seg.green { background: var(--accent); }
+.restart-bar-seg.amber { background: var(--warn); }
+.restart-bar-seg.red { background: var(--danger); }
+.restart-toggle { font-size: 11px; color: var(--meta); cursor: pointer; margin-top: 8px; padding: 4px 0; }
+.restart-toggle:hover { color: #60a5fa; }
+.restart-detail-panel { display: none; margin-top: 8px; }
+.restart-detail-content { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12px; max-height: 300px; overflow-y: auto; }
+.restart-timeline { position: relative; }
+.restart-timeline-rail { position: relative; padding-left: 12px; }
+.restart-timeline-row { position: relative; padding: 6px 0 6px 8px; border-left: 1px solid var(--border); margin-left: 4px; }
+.restart-timeline-dot { position: absolute; left: -4px; top: 9px; width: 8px; height: 8px; border-radius: 50%; }
+.restart-timeline-header { display: flex; gap: 8px; align-items: center; }
+.restart-timeline-ts { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.restart-timeline-label { font-size: 11px; font-weight: 600; }
+.restart-timeline-duration { font-size: 10px; color: var(--muted); }
+.restart-snippet { font-size: 10px; color: var(--fg-2); font-family: var(--font-mono); margin-top: 2px; white-space: pre-wrap; word-break: break-all; }
+.restart-evidence { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.restart-empty { font-size: 12px; color: var(--muted); padding: 20px; text-align: center; }
 </style>
 </head>
 <body>
@@ -758,7 +818,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       </div>
       <span class="header-title">ObserveCo <span>fleet</span></span>
       <div class="brand-tagline">Tells you if your AI agents are working, what they're doing, and where your money goes.</div>
-      <span class="tier-badge">🔓 FREE</span>
+      <span class="tier-badge" id="tierBadge" hx-get="/api/licenses/badge" hx-trigger="load, every 30s" hx-swap="outerHTML">🔓 FREE</span>
     </div>
   </div>
 
@@ -785,9 +845,9 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <!-- F9: Security warning banner -->
   <div class="security-warning" style="background:rgba(255,183,77,0.08);border:1px solid rgba(255,183,77,0.2);border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#94a3b8;"><span style="color:#f59e0b;">🔒</span> Local only — this dashboard is accessible to any process on this machine. Do not expose to the internet.</div>
 
-  <!-- F2: First-run guidance -->
+  <!-- F2: First-run guidance with LLM onboarding guide -->
   <div class="first-run-guidance" style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.12);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#94a3b8;">
-    <span>👋 First time here? <strong style="color:#e2e8f0;">Detect agents</strong> or <strong style="color:#e2e8f0;">add an agent</strong> to start monitoring your fleet.</span>
+    <div id="onboardingGuideContainer" hx-get="/api/onboarding-guide" hx-trigger="load" hx-swap="innerHTML"></div>
   </div>
 
   <!-- Missing Agent Feedback Bar -->
@@ -810,6 +870,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
     <button class="tab-btn" onclick="switchTab('heal', this)">🛠️ Auto-Heal</button>
     <button class="tab-btn" onclick="switchTab('alerts', this)">🔔 Push Alerts</button>
     <button class="tab-btn" onclick="switchTab('plugin', this)">🔌 Plugin</button>
+    <button class="tab-btn" onclick="switchTab('restarts', this)">🔄 Restarts</button>
   </div>
 
   <!-- Fleet tab -->
@@ -913,6 +974,11 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         </div>
       </div>
 
+      <!-- ====== CONFIG HEALTH (Pro) ====== -->
+      <div class="brain-card" id="configHealthCard">
+        <div hx-get="/api/config-health" hx-trigger="load, every 60s" hx-swap="innerHTML"></div>
+      </div>
+
       <!-- ====== COMPRESSION (Section 3) ====== -->
       <div class="brain-card">
         <h3>Compression
@@ -972,7 +1038,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 
         <!-- Auto tab (Pro locked) -->
         <div id="autoTab" style="display:none;">
-          <div class="auto-watch-card" onclick="showBrainPro()">
+          <div class="auto-watch-card" onclick="showToastB('🔒 Pro feature — opening upgrade dialog');showBrainPro()">
             <div class="icon" id="autoIcon">🔒</div>
             <h4 id="autoTitle">Auto-Compression (Pro)</h4>
             <p id="autoDesc">Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
@@ -990,7 +1056,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
               <span style="color:#38bdf8;">📊 Cumulative fleet savings this week: 47,812 tokens saved</span>
             </div>
             <div style="margin-top:10px;">
-              <button class="pro-cta-btn" onclick="showBrainPro()">Unlock with Pro &rarr;</button>
+              <button class="pro-cta-btn" onclick="showToastB('🔓 Opening Pro settings...');showBrainPro()">Unlock with Pro &rarr;</button>
             </div>
           </div>
         </div>
@@ -1078,6 +1144,16 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             • Never-pruned history & fleet comparison
           </div>
           <div class="cta pro">Upgrade → Up to 47% savings</div>
+        </div>
+      </div>
+
+      <!-- ====== MEMORY GARDEN (Section 5 — fleet summary) ====== -->
+      <div class="brain-card">
+        <h3>💾 Memory Garden
+          <span style="font-size:11px;color:#64748b;font-weight:400;">fleet-wide memory health</span>
+        </h3>
+        <div id="gardenSummary">
+          <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Loading garden data...</div>
         </div>
       </div>
     </div>
@@ -1349,6 +1425,13 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
     </div>
   </div>
 
+  <!-- Restarts tab -->
+  <div class="tab-content" id="tabRestarts">
+    <div class="app" style="padding:0;" id="restartQualityContainer" hx-get="/api/restart-quality" hx-trigger="load" hx-swap="innerHTML">
+      <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Loading restart quality data...</div>
+    </div>
+  </div>
+
   <!-- Plugin tab -->
   <div class="tab-content" id="tabPlugin">
     <div class="app" style="padding:0;">
@@ -1406,29 +1489,32 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 <!-- Brain Pro modal -->
 <div class="modal-overlay" id="brainProModal" onclick="if(event.target===this)document.getElementById('brainProModal').classList.remove('active')">
   <div class="modal">
-    <div style="font-size:40px;margin-bottom:12px;">🔒</div>
-    <h3>Token Optimiser Pro</h3>
-    <p style="margin-top:8px;font-size:13px;color:#94a3b8;">Turn passive observation into active optimisation.</p>
-    <ul class="data-table" style="list-style:none;margin:12px 0;width:100%;">
-      <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Full compression (guidance + memory + skills + context)<br><span style="font-size:11px;color:#64748b;">35% savings vs Lite's 22%</span></li>
-      <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Auto-Watch Daemon<br><span style="font-size:11px;color:#64748b;">Every SOUL.md edit triggers auto-compression</span></li>
-      <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Token Optimiser<br><span style="font-size:11px;color:#64748b;">Analyses 200+ turns to prune unused skills</span></li>
-      <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ 90-Day History & Fleet Comparison</li>
-    </ul>
-    <p style="font-size:12px;color:#64748b;">30-day free trial · <strong style="color:#e2e8f0;">$9/mo Solo</strong></p>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
-      <div id="proTrialStatus" style="font-size:12px;color:var(--fg-2);min-height:18px;"></div>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="font-size:13px;padding:8px 20px;width:auto;">Not now</button>
-        <button class="add-btn" onclick="startProTrial()" id="proTrialBtn" style="font-size:13px;padding:8px 20px;">Start Free Trial</button>
-      </div>
-      <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:6px;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Already have a license key?</div>
-        <div style="display:flex;gap:6px;">
-          <input type="text" id="proLicenseKey" placeholder="OBS-XXXXXXXX-XXXX" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:12px;color:#e2e8f0;font-family:var(--font-mono);outline:none;">
-          <button class="add-btn" onclick="activateProLicense()" style="font-size:11px;padding:7px 14px;white-space:nowrap;">Activate</button>
+    <div class="modal-body">
+      <div style="font-size:40px;margin-bottom:12px;">🔒</div>
+      <h3>Token Optimiser Pro</h3>
+      <p style="margin-top:8px;font-size:13px;color:#94a3b8;">Turn passive observation into active optimisation.</p>
+      <ul class="data-table" style="list-style:none;margin:12px 0;width:100%;">
+        <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Full compression (guidance + memory + skills + context)<br><span style="font-size:11px;color:#64748b;">35% savings vs Lite's 22%</span></li>
+        <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Auto-Watch Daemon<br><span style="font-size:11px;color:#64748b;">Every SOUL.md edit triggers auto-compression</span></li>
+        <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Token Optimiser<br><span style="font-size:11px;color:#64748b;">Analyses 200+ turns to prune unused skills</span></li>
+        <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ 90-Day History & Fleet Comparison</li>
+      </ul>
+      <p style="font-size:12px;color:#64748b;">30-day free trial · <strong style="color:#e2e8f0;">$9/mo Solo</strong></p>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
+        <div id="proTrialStatus" style="font-size:12px;color:var(--fg-2);min-height:18px;"></div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="font-size:13px;padding:8px 20px;width:auto;">Not now</button>
+          <button class="add-btn" onclick="startProTrial()" id="proTrialBtn" style="font-size:13px;padding:8px 20px;">Start Free Trial</button>
+          <button class="add-btn" onclick="subscribeStripe()" id="stripeSubscribeBtn" style="font-size:13px;padding:8px 20px;background:#6366f1;border-color:#6366f1;">Subscribe via Stripe ($9/mo)</button>
         </div>
-        <div id="proLicenseStatus" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:16px;"></div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:6px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Already have a license key?</div>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="proLicenseKey" placeholder="OBS-XXXXXXXX-XXXX" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:12px;color:#e2e8f0;font-family:var(--font-mono);outline:none;">
+            <button class="add-btn" onclick="activateProLicense()" style="font-size:11px;padding:7px 14px;white-space:nowrap;">Activate</button>
+          </div>
+          <div id="proLicenseStatus" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:16px;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1577,7 +1663,7 @@ function loadTab(name, tab) {
   };
   const tabIcons = {
     health: '🩺', guard: '🛡️', errors: '⚠️',
-    tokens: '📊', memory: '🧠'
+    tokens: '💎', memory: '🧠'
   };
   const info = tabLabels[tab] || { title: 'Detail', sub: 'Detail' };
   title.textContent = name + ' — ' + info.title;
@@ -1603,6 +1689,19 @@ function loadTab(name, tab) {
     });
 }
 
+function loadPlatforms() {
+  fetch('/api/platforms')
+    .then(r => r.text())
+    .then(html => {
+      // Remove any existing platform modal
+      const old = document.getElementById('platformModal');
+      if (old) old.remove();
+      // Insert the modal HTML (includes overlay + card)
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      document.body.appendChild(div.firstElementChild);
+    });
+}
 // ─── Section toggle ───
 function toggleSection(el) { el.classList.toggle('collapsed'); }
 
@@ -1702,8 +1801,46 @@ function loadBrainData() {
       window.brainLoaded = true;
       renderBrain('all');
       loadOptimiserData();
+      loadGardenSummary();
     })
     .catch(e => console.error('Brain load failed:', e));
+}
+
+// ─── Memory Garden Summary ───
+function loadGardenSummary() {
+  fetch('/api/garden-summary')
+    .then(r => r.json())
+    .then(data => {
+      renderGardenSummary(data);
+    })
+    .catch(e => {
+      document.getElementById('gardenSummary').innerHTML =
+        '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">⚠️ Garden data unavailable</div>';
+    });
+}
+function renderGardenSummary(data) {
+  if (!data || data.agents_scanned === 0) {
+    document.getElementById('gardenSummary').innerHTML =
+      '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">📭 No garden data yet. Data accumulates as agents run and ClawForge scans their memory.</div>';
+    return;
+  }
+  const gradeColor = {'A':'#22c55e','B':'#eab308','C':'#eab308','D':'#ef4444','F':'#ef4444','N/A':'#6b7280'}[data.fleet_grade] || '#6b7280';
+  const baseScore = data.avg_debt_score.toFixed ? data.avg_debt_score.toFixed(0) : data.avg_debt_score;
+  document.getElementById('gardenSummary').innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;">' +
+      '<div class="garden-metric-card"><div class="garden-metric-num" style="color:#a5b4fc;">' + data.agents_scanned + '</div><div class="garden-metric-label" style="color:#94a3b8;">Agents scanned</div></div>' +
+      '<div class="garden-metric-card"><div class="garden-metric-num" style="color:#ef4444;">' + data.total_duplicates + '</div><div class="garden-metric-label" style="color:#94a3b8;">Duplicates</div></div>' +
+      '<div class="garden-metric-card"><div class="garden-metric-num" style="color:#f97316;">' + data.total_contradictions + '</div><div class="garden-metric-label" style="color:#94a3b8;">Contradictions</div></div>' +
+      '<div class="garden-metric-card"><div class="garden-metric-num" style="color:#6b7280;">' + data.total_stale + '</div><div class="garden-metric-label" style="color:#94a3b8;">Stale entries</div></div>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);">' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
+        '<div style="font-size:28px;font-weight:700;color:' + gradeColor + ';">' + data.fleet_grade + '</div>' +
+        '<div><div style="font-size:12px;color:var(--fg-2);">Fleet Memory Grade</div>' +
+        '<div style="font-size:11px;color:var(--muted);">Avg debt score: ' + baseScore + ' &middot; ' + data.total_snapshots + ' snapshots</div></div>' +
+      '</div>' +
+      '<div style="text-align:right;font-size:11px;color:#64748b;">Click any agent card\'s Brain size row to see per-agent details</div>' +
+    '</div>';
 }
 
 // ─── Optimiser Data ───
@@ -1815,6 +1952,15 @@ function showBrainPro() {
   document.getElementById('brainProModal').classList.add('active');
   loadLicenseStatus();
 }
+function fixConfigHygiene(checkName) {
+  fetch('/api/config-health?fix=' + encodeURIComponent(checkName))
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById('configHealthCard').querySelector('[hx-get*="config-health"]').innerHTML = html;
+      showToast('Fix applied — re-running scan...');
+      setTimeout(() => htmx.trigger('#configHealthCard', 'load'), 2000);
+    });
+}
 function loadLicenseStatus() {
   fetch('/api/licenses/status')
     .then(r => r.json())
@@ -1828,6 +1974,7 @@ function loadLicenseStatus() {
           el.innerHTML = `<span style="color:#86efac;">✅ Pro active${status.plan ? ' (' + status.plan + ' plan)' : ''}</span>`;
         }
         document.getElementById('proTrialBtn').style.display = 'none';
+        document.getElementById('stripeSubscribeBtn').style.display = 'none';
         // Hide all locked UI elements
         document.querySelectorAll('.pro-upsell, .pro-upsell-block, [onclick*="showBrainPro"]').forEach(e => {
           if (e.id !== 'brainProModal' && !e.closest('#brainProModal')) e.style.display = 'none';
@@ -1896,6 +2043,47 @@ function activateProLicense() {
     })
     .catch(e => {
       status.innerHTML = `<span style="color:#ef4444;">Failed: ${e.message}</span>`;
+    });
+}
+function subscribeStripe() {
+  const status = document.getElementById('proTrialStatus');
+  const btn = document.getElementById('stripeSubscribeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Opening Stripe...';
+  // Get email from any available source, or prompt
+  fetch('/api/licenses/status')
+    .then(r => r.json())
+    .then(s => {
+      const email = s.customer_email || '';
+      return fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email || 'prospect@observeco.local', plan: 'solo'}),
+      });
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.url) {
+        if (data.mode === 'simulated') {
+          // Simulated mode — redirect to success page
+          status.innerHTML = `<span style="color:#eab308;">Demo mode: ${data.url}</span>`;
+          window.open(data.url, '_blank');
+          btn.disabled = false;
+          btn.textContent = 'Subscribe via Stripe ($9/mo)';
+        } else {
+          // Real Stripe — redirect
+          window.location.href = data.url;
+        }
+      } else {
+        status.innerHTML = `<span style="color:#ef4444;">Error: ${data.detail || data.error || 'Checkout failed'}</span>`;
+        btn.disabled = false;
+        btn.textContent = 'Subscribe via Stripe ($9/mo)';
+      }
+    })
+    .catch(e => {
+      status.innerHTML = `<span style="color:#ef4444;">Failed: ${e.message}</span>`;
+      btn.disabled = false;
+      btn.textContent = 'Subscribe via Stripe ($9/mo)';
     });
 }
 // Custom provider toggle

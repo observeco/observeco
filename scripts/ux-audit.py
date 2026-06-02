@@ -56,14 +56,14 @@ check("Returns HTML", "ObserveCo" in r.text and ("!DOCTYPE" in r.text or "<!doct
 print("\n─── [1] Phase Detection ───")
 code, body = get("/api/phase")
 check("Phase returns 200", code == 200, f"HTTP {code}")
-check("Phase is valid string", body.strip() in ("phase-0", "phase-1", "phase-2", "phase-3"),
-      f"Got: {repr(body.strip())}")
+check("Phase is valid status", "phase-done" in body or body.strip() in ("phase-0", "phase-1", "phase-2", "phase-3"),
+      f"Got: {repr(body.strip()[:100])}")
 
 # ── 2. Fleet summary ────────────────────────────────────────────────
 print("\n─── [2] Fleet Summary ───")
 code, body = get("/api/fleet-summary")
 check("Fleet summary 200", code == 200, f"HTTP {code}")
-check("Contains agent count", "Agents" in body or "fleet-stats" in body, body[:100])
+check("Contains agent count", "alive" in body and ("status-stat" in body or "fleet-stats" in body), body[:100])
 check("No traceback", "Traceback" not in body, "")
 check("No Internal Server Error", "Internal Server Error" not in body, "")
 
@@ -72,17 +72,20 @@ print("\n─── [3] Agent Cards (3-Section) ───")
 code, body = get("/api/agents")
 check("Agents endpoint 200", code == 200, f"HTTP {code}")
 
-has_hermes = "section-hermes" in body
-has_openclaw = "section-openclaw" in body
-has_other = "section-other" in body
-check("3-section grouping present", has_hermes or has_openclaw or has_other,
-      f"Sections: hermes={has_hermes} openclaw={has_openclaw} other={has_other}")
+has_agents_section = "section-name" in body and "Agents" in body
+has_services_section = "Services" in body
+has_card_structure = "agent-card" in body
+check("Agent sections present", has_agents_section or has_card_structure,
+      f"Agents section={has_agents_section}, Services section={has_services_section}, cards={has_card_structure}")
 check("No traceback", "Traceback" not in body, "")
 
 if "agent-card" in body:
     card_count = body.count("agent-card")
     check("Agent cards render", card_count > 0, f"Count: {card_count}")
-    check("Status dots render", "status-dot" in body, "")
+    status_dot = "status-dot" in body
+    agent_status = "agent-status" in body
+    check("Status indicators render", agent_status or status_dot,
+          f"agent-status={agent_status}, status-dot={status_dot}")
     check("Section headers render", "section-header" in body, "")
     check("Discovery gap badges present", "gap-badges" in body or True, "gap-badges rendered only when data missing")
 else:
@@ -94,7 +97,7 @@ code, body = get("/api/errors")
 check("Errors endpoint 200", code == 200, f"HTTP {code}")
 check("No traceback", "Traceback" not in body, "")
 no_errors = "No errors" in body or "empty-state" in body
-has_errors = "error-item" in body
+has_errors = "error-item" in body or "error-summary-card" in body or "error-timeline-item" in body
 check("Graceful empty or data", no_errors or has_errors,
       f"No errors: {no_errors}, Has errors: {has_errors}")
 

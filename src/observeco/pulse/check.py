@@ -12,14 +12,13 @@ import subprocess
 import time
 from pathlib import Path
 
-import httpx
-import json
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
 from observeco.config import AgentConfig, load_config
 from observeco.db import Database
+from observeco.probe.registry import resolve_probe, ProbeResult
 
 console = Console()
 db = Database()
@@ -129,132 +128,15 @@ def _read_last_n_lines(path: str, n: int = 20) -> str:
 def _probe_agent(agent: AgentConfig) -> tuple[str, float, str, str]:
     """Probe a single agent and return (status, latency_ms, error_message, metadata_json).
 
-    Agents can return heartbeat metadata by including a JSON body in their health check
-    response with a "metadata" field:
-        {"status": "ok", "metadata": {"daemon": true, "watchdog": "launchd", "pid": 12345}}
+    Delegates to the Probe Driver Registry (probe/registry.py) —
+    resolves the agent's health_check scheme to the correct typed probe.
     """
     start = time.time()
-
-# 1. If health check is a URL
-    if agent.health_check and agent.health_check.startswith(("http://", "https://")):
-        try:
-            resp = httpx.get(agent.health_check, timeout=10.0)
-            latency = (time.time() - start) * 1000
-            metadata_json = ""
-            if resp.status_code < 500 and resp.text.strip():
-                try:
-                    body = resp.json()
-                    if isinstance(body, dict) and "metadata" in body:
-                        metadata_json = json.dumps(body["metadata"])
-                except (json.JSONDecodeError, ValueError):
-                    pass
-            if resp.status_code < 500:
-                return ("alive", latency, "", metadata_json)
-            else:
-                return ("error", latency, f"HTTP {resp.status_code}", "")
-        except httpx.TimeoutException:
-            latency = (time.time() - start) * 1000
-            return ("dead", latency, "timeout", "")
-        except Exception as e:
-            latency = (time.time() - start) * 1000
-            return ("error", latency, str(e)[:200], "")
-
-    # 1b. launchd probe — use 'launchctl list <label>' (simpler than 'launchctl print')
-    if agent.health_check and agent.health_check.startswith("launchd:"):
-        label = agent.health_check[len("launchd:"):]
-        try:
-            result = subprocess.run(
-                ["launchctl", "list", label],
-                capture_output=True, text=True, timeout=5,
-            )
-            latency = (time.time() - start) * 1000
-            if result.returncode == 0:
-                return ("alive", latency, "", "")
-            return ("dead", latency, result.stderr[:200] or result.stdout[:200], "")
-        except subprocess.TimeoutExpired:
-            latency = (time.time() - start) * 1000
-            return ("dead", latency, "timeout", "")
-        except FileNotFoundError:
-            latency = (time.time() - start) * 1000
-            return ("dead", latency, "launchctl not found", "")
-        except Exception as e:
-            latency = (time.time() - start) * 1000
-            return ("error", latency, str(e)[:200], "")
-
-    # 1c. docker probe
-    if agent.health_check and agent.health_check.startswith("docker:"):
-        container = agent.health_check[len("docker:"):]
-        try:
-            result = subprocess.run(
-                ["docker", "ps", "--filter", f"name={container}",
-                 "--format", "{{.Status}}"],
-                capture_output=True, text=True, timeout=10,
-            )
-            latency = (time.time() - start) * 1000
-            if result.returncode == 0 and result.stdout.strip():
-                status = result.stdout.strip()
-                if "Up" in status:
-                    return ("alive", latency, status, "")
-                elif "Exited" in status or "Paused" in status or "Created" in status:
-                    return ("dead", latency, status, "")
-                return ("error", latency, status[:200], "")
-            return ("dead", latency, result.stderr[:200] or "container not found", "")
-        except subprocess.TimeoutExpired:
-            return ("dead", (time.time() - start) * 1000, "timeout", "")
-        except FileNotFoundError:
-            return ("error", (time.time() - start) * 1000, "docker CLI not found", "")
-        except Exception as e:
-            return ("error", (time.time() - start) * 1000, str(e)[:200], "")
-
-    # 1d. systemd probe
-    if agent.health_check and agent.health_check.startswith("systemd:"):
-        unit = agent.health_check[len("systemd:"):]
-        try:
-            result = subprocess.run(
-                ["systemctl", "is-active", unit],
-                capture_output=True, text=True, timeout=5,
-            )
-            latency = (time.time() - start) * 1000
-            status = result.stdout.strip()
-            if result.returncode == 0 and status == "active":
-                return ("alive", latency, status, "")
-            return ("dead", latency, status or result.stderr[:200], "")
-        except subprocess.TimeoutExpired:
-            return ("dead", (time.time() - start) * 1000, "timeout", "")
-        except FileNotFoundError:
-            return ("error", (time.time() - start) * 1000, "systemctl not found", "")
-        except Exception as e:
-            return ("error", (time.time() - start) * 1000, str(e)[:200], "")
-
-    # 2. If health check is a command (generic shell command)
-    if agent.health_check and not agent.health_check.startswith(("http://", "https://")):
-        try:
-            result = subprocess.run(
-                agent.health_check, shell=True, capture_output=True, text=True, timeout=10
-            )
-            latency = (time.time() - start) * 1000
-            if result.returncode == 0:
-                return ("alive", latency, "", "")
-            else:
-                return ("dead", latency, result.stderr[:200] or result.stdout[:200], "")
-        except subprocess.TimeoutExpired:
-            latency = (time.time() - start) * 1000
-            return ("dead", latency, "timeout", "")
-        except Exception as e:
-            latency = (time.time() - start) * 1000
-            return ("error", latency, str(e)[:200], "")
-
-    # 3. No explicit check: probe by process name
     try:
-        result = subprocess.run(
-            ["pgrep", "-f", agent.name],
-            capture_output=True, text=True, timeout=5,
-        )
-        latency = (time.time() - start) * 1000
-        if result.returncode == 0:
-            return ("alive", latency, "", "")
-        else:
-            return ("dead", latency, "no matching process", "")
+        probe = resolve_probe(agent)
+        result: ProbeResult = probe.probe(agent, timeout=10.0)
+        # Convert ProbeResult back to legacy 4-tuple for backward compat
+        return (result.status, result.latency_ms, result.error, result.metadata)
     except Exception as e:
         latency = (time.time() - start) * 1000
         return ("error", latency, str(e)[:200], "")

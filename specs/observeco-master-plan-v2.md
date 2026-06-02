@@ -7,10 +7,10 @@
 
 > **Name convention (post-review):** ObserveCo = company name. agentscope = product name and package name. All marketing uses "agentscope" as the product. ObserveCo is only used for legal entity, domain, and company branding.
 
-**Version:** 2.2 (post-plumbing-audit)
-**Last Updated:** 2026-05-30
+**Version:** 2.21 (2026-06-01 — Layer F First-Run Experience complete)
+**Last Updated:** 2026-06-01
 **Owner:** Hound (CEO) → Kepler (Revenue) → Pragma (COO)
-**Status:** Active — Phase 2 Plumbing Gap Remediation
+**Status:** Active — Phase 3.11: First-Run Experience (Layer F)
 **Review:** Plumbing audit complete — 17 gaps identified, 4 critical
 
 ---

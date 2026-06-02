@@ -1,0 +1,211 @@
+<!-- Onboarding Overlay — self-contained, loaded via htmx on page load.
+     Shows context-appropriate guidance based on the dashboard's current phase.
+     Dismissed by clicking "Got it" which sets localStorage flag. -->
+<div id="onboardingOverlay" class="onboarding-overlay" style="display:none;">
+  <div class="onboarding-card">
+    <button class="onboarding-close" onclick="dismissOnboarding()" title="Dismiss">✕</button>
+
+    <!-- Phase 0: No agents -->
+    <div class="onboarding-panel" data-phase="phase-0" style="display:none;">
+      <div class="onboarding-icon">🔍</div>
+      <h2 class="onboarding-title">Welcome to ObserveCo</h2>
+      <p class="onboarding-sub">Your system looks clean — let's find your agents.</p>
+      <div class="onboarding-steps">
+        <div class="onboarding-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Discover agents</strong>
+            <code class="step-code">observeco agents discover</code>
+            <span class="step-desc">Scans config files and common agent paths</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Add manually</strong>
+            <code class="step-code">observeco agents add my-agent</code>
+            <span class="step-desc">Or add any agent by name</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Reload dashboard</strong>
+            <span class="step-desc">Agents will appear here as cards</span>
+          </div>
+        </div>
+      </div>
+      <button class="onboarding-cta" onclick="dismissOnboarding()">Got it</button>
+    </div>
+
+    <!-- Phase 1: Agents found, no data yet -->
+    <div class="onboarding-panel" data-phase="phase-1" style="display:none;">
+      <div class="onboarding-icon">⏳</div>
+      <h2 class="onboarding-title">Agents Detected</h2>
+      <p class="onboarding-sub">ObserveCo found your agents and is collecting health data.</p>
+      <div class="onboarding-steps">
+        <div class="onboarding-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Start monitoring</strong>
+            <code class="step-code">observeco watch</code>
+            <span class="step-desc">Daemon that polls agents every 30s</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>What the cards show</strong>
+            <ul class="step-list">
+              <li>🟢 <strong>Status dot</strong> — alive / dead / error</li>
+              <li>📊 <strong>Token bar</strong> — system prompt composition</li>
+              <li>📈 <strong>Drift</strong> — how your prompts change over time</li>
+              <li>⚠️ <strong>Error badge</strong> — recent failures</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <button class="onboarding-cta" onclick="dismissOnboarding()">Got it</button>
+    </div>
+
+    <!-- Phase 2: System stabilised -->
+    <div class="onboarding-panel" data-phase="phase-2" style="display:none;">
+      <div class="onboarding-icon">✅</div>
+      <h2 class="onboarding-title">System Stabilised</h2>
+      <p class="onboarding-sub">All agents monitored — here's what you can do next:</p>
+      <div class="onboarding-steps">
+        <div class="onboarding-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Explore the fleet</strong>
+            <span class="step-desc">Click any card to see pulse history, token breakdowns, and drift trends</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Check the pathway map</strong>
+            <a class="step-link" href="/pathway" onclick="dismissOnboarding()">View Communication Pathways →</a>
+            <span class="step-desc">See how your agents talk to each other</span>
+          </div>
+        </div>
+        <div class="onboarding-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Run a heal check</strong>
+            <span class="step-desc">Use the Heal button or <code class="inline-code-sm">observeco heal</code> to diagnose issues</span>
+          </div>
+        </div>
+      </div>
+      <button class="onboarding-cta" onclick="dismissOnboarding()">Start exploring</button>
+    </div>
+
+    <!-- Phase 3: Fully operational — no overlay needed, but show if re-dismissed -->
+    <div class="onboarding-panel" data-phase="phase-3" style="display:none;">
+      <div class="onboarding-icon">🚀</div>
+      <h2 class="onboarding-title">All Systems Go</h2>
+      <p class="onboarding-sub">Everything is running. Need a refresher?</p>
+      <div style="margin:12px 0 16px;text-align:center;font-size:12px;color:var(--muted);line-height:1.6;">
+        <code class="inline-code-sm">observeco--help</code> for all CLI commands
+      </div>
+      <button class="onboarding-cta secondary" onclick="dismissOnboarding()">Close</button>
+    </div>
+
+  </div>
+</div>
+
+<style>
+.onboarding-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(2px);
+  z-index: 9999; display: flex; align-items: center; justify-content: center;
+  animation: onboarding-fade-in 0.3s ease;
+}
+.onboarding-card {
+  background: var(--surface, #1e293b); border: 1px solid var(--border, #334155);
+  border-radius: 16px; max-width: 480px; width: 90%;
+  padding: 32px 28px 24px; position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: onboarding-slide-up 0.35s ease;
+}
+.onboarding-close {
+  position: absolute; top: 12px; right: 12px;
+  background: none; border: none; color: var(--muted, #64748b);
+  font-size: 18px; cursor: pointer; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; transition: all 0.15s;
+}
+.onboarding-close:hover { background: var(--border, #334155); color: var(--fg, #f8fafc); }
+.onboarding-icon { font-size: 36px; text-align: center; margin-bottom: 8px; }
+.onboarding-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+.onboarding-sub { font-size: 13px; color: var(--muted, #64748b); text-align: center; margin-bottom: 16px; line-height: 1.5; }
+.onboarding-steps { margin: 16px 0; }
+.onboarding-step { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+.step-num {
+  width: 24px; height: 24px; min-width: 24px;
+  background: var(--accent, #22c55e); color: var(--accent-on, #0c1628);
+  border-radius: 50%; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.step-content { font-size: 13px; line-height: 1.5; color: var(--fg-2, #94a3b8); }
+.step-content strong { color: var(--fg, #f8fafc); display: block; margin-bottom: 2px; }
+.step-code {
+  display: inline-block; background: var(--bg, #0f172a); border: 1px solid var(--border, #334155);
+  padding: 3px 10px; border-radius: 4px; font-size: 12px; font-family: 'SF Mono','Fira Code',monospace;
+  color: var(--accent, #22c55e); margin: 4px 0;
+}
+.step-desc { display: block; font-size: 11px; color: var(--muted, #64748b); margin-top: 2px; }
+.step-link { color: var(--meta, #3b82f6); font-weight: 500; text-decoration: none; display: inline-block; margin: 4px 0; }
+.step-link:hover { text-decoration: underline; }
+.step-list { margin: 4px 0 0; padding: 0 0 0 16px; font-size: 12px; color: var(--fg-2, #94a3b8); line-height: 1.7; }
+.step-list li { list-style: none; }
+.onboarding-cta {
+  display: block; width: 100%;
+  background: var(--accent, #22c55e); color: var(--accent-on, #0c1628);
+  border: none; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; margin-top: 8px;
+}
+.onboarding-cta:hover { opacity: 0.9; transform: translateY(-1px); }
+.onboarding-cta.secondary {
+  background: var(--border, #334155); color: var(--fg-2, #94a3b8);
+}
+@keyframes onboarding-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes onboarding-slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.inline-code-sm {
+  background: var(--bg, #0f172a); border: 1px solid var(--border, #334155);
+  padding: 1px 6px; border-radius: 3px; font-size: 11px; font-family: 'SF Mono','Fira Code',monospace;
+  color: var(--accent, #22c55e);
+}
+</style>
+
+<script>
+(function() {
+  // Only show if not dismissed
+  if (localStorage.getItem('observeco-onboarding-dismissed')) return;
+
+  // Detect phase from the body data attribute or API
+  var phase = document.body.getAttribute('data-phase') || 'phase-0';
+
+  // If fully stabilised (phase-3), don't show automatically (show only if user explicitly re-opens)
+  if (phase === 'phase-3') return;
+
+  var overlay = document.getElementById('onboardingOverlay');
+  if (!overlay) return;
+
+  // Show matching panel
+  var panels = overlay.querySelectorAll('.onboarding-panel');
+  panels.forEach(function(p) {
+    if (p.getAttribute('data-phase') === phase) {
+      p.style.display = 'block';
+    }
+  });
+
+  overlay.style.display = 'flex';
+})();
+
+function dismissOnboarding() {
+  var overlay = document.getElementById('onboardingOverlay');
+  if (overlay) overlay.style.display = 'none';
+  localStorage.setItem('observeco-onboarding-dismissed', 'true');
+}
+</script>

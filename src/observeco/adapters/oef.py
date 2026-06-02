@@ -73,9 +73,10 @@ class OEFEvent:
         }, sort_keys=True, separators=(",", ":"))
 
     def sign(self, secret: str) -> str:
-        """Compute HMAC-SHA256 signature."""
-        return hashlib.sha256(
-            f"{secret}{self.signature_payload()}".encode()
+        """Compute HMAC-SHA256 signature over the canonical payload."""
+        payload = self.signature_payload()
+        return hmac.new(
+            secret.encode(), payload.encode(), hashlib.sha256
         ).hexdigest()
 
     @classmethod
@@ -83,15 +84,17 @@ class OEFEvent:
         """Verify HMAC-SHA256 signature.
 
         Args:
-            event_data: The canonical signature_payload() string (not raw JSON)
+            event_data: The canonical OEFEvent.signature_payload() string
             signature: The signature to verify (with or without 'sha256=' prefix)
             secret: The shared secret
         """
         # Strip prefix if present
         if signature.startswith("sha256="):
             signature = signature[7:]
-        expected = hashlib.sha256(
-            f"{secret}{event_data}".encode()
+
+        # Use proper HMAC with constant-time comparison
+        expected = hmac.new(
+            secret.encode(), event_data.encode(), hashlib.sha256
         ).hexdigest()
         return hmac.compare_digest(expected, signature)
 

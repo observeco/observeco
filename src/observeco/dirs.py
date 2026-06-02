@@ -1,6 +1,11 @@
-"""ObserveCo data directory — single source of truth for storage paths."""
+"""ObserveCo data directory — single source of truth for storage paths.
+
+Supports shared-mode via env var OBSERVECO_SHARED_DB or --shared flag.
+"""
 from __future__ import annotations
 
+import os
+import socket
 from pathlib import Path
 
 from platformdirs import user_data_dir
@@ -8,11 +13,57 @@ from platformdirs import user_data_dir
 _OLD_DIR = Path.home() / ".observeco"
 _DIR = Path(user_data_dir("observeco", "observeco"))
 
+# Env var override for shared database path
+_SHARED_DB_ENV = os.environ.get("OBSERVECO_SHARED_DB", "")
+
 
 def get_data_dir() -> Path:
     """Return the canonical ObserveCo data directory (platformdirs-based)."""
     _DIR.mkdir(parents=True, exist_ok=True)
     return _DIR
+
+
+def get_shared_db_path(shared_arg: str | None = None) -> Path | None:
+    """Resolve the shared database path.
+
+    Priority: explicit --shared arg > OBSERVECO_SHARED_DB env var > None (local mode).
+    Returns None if no shared path is configured or the path is invalid/unwritable.
+    Graceful fallback for Layer F first-run safety — if the path's parent is not
+    writable, returns None so the system falls back to local mode.
+    """
+    raw = shared_arg or _SHARED_DB_ENV or ""
+    if raw.strip():
+        try:
+            p = Path(raw.strip()).expanduser().resolve()
+            # Check parent directory writability (don't create the file, just check)
+            parent = p.parent
+            if not parent.exists():
+                parent.mkdir(parents=True, exist_ok=True)
+            test_file = parent / ".observeco_write_test"
+            try:
+                test_file.touch()
+                test_file.unlink()
+            except (OSError, PermissionError):
+                return None
+            return p
+        except (OSError, PermissionError, RuntimeError):
+            return None
+    return None
+
+
+def is_shared_mode(shared_arg: str | None = None) -> bool:
+    """Return True if a shared DB path is configured."""
+    return get_shared_db_path(shared_arg) is not None
+
+
+def get_instance_id() -> str:
+    """Return a stable-but-unique instance identifier for shared-mode tracking.
+
+    Format: hostname:dashboard_port (or hostname:cli if no dashboard).
+    """
+    host = socket.gethostname()
+    port = os.environ.get("OBSERVECO_DASHBOARD_PORT", "cli")
+    return f"{host}:{port}"
 
 
 def migrate_old_data() -> None:
@@ -26,8 +77,8 @@ def migrate_old_data() -> None:
                 import shutil
                 shutil.copytree(item, dest)
             else:
+                import shutil
                 shutil.copy2(item, dest)
-    # Remove old dir after migration
     import shutil
     shutil.rmtree(_OLD_DIR)
 
@@ -39,7 +90,6 @@ def _find_pulse_db() -> Path:
         return p
     old = _OLD_DIR / "pulse.db"
     if old.exists():
-        # Migrate it
         import shutil
         shutil.copy2(old, p)
         return p

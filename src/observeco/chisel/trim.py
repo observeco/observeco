@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 import sys
+import time
 from pathlib import Path
 
 from rich import box
@@ -209,8 +210,100 @@ def _parse_skill_yaml(path: Path) -> dict | None:
         return meta if meta else None
 
 
-def run_skills() -> None:
+def _compress_skill_body(body_text: str) -> tuple[str, int]:
+    """Compress a skill's body text using the guidance compression engine.
+    
+    Returns (compressed_text, tokens_saved).
+    """
+    compressed = compress_guidance_block(body_text)
+    if compressed.strip():
+        before = _count_tokens(body_text)
+        after = _count_tokens(compressed)
+        if after < before:
+            return compressed, before - after
+    return body_text, 0
+
+
+def compress_skill(skill_path: Path, dry_run: bool = False) -> dict | None:
+    """Compress a single SKILL.md file's body text.
+    
+    Args:
+        skill_path: Path to SKILL.md
+        dry_run: If True, don't write changes — only report savings.
+    
+    Returns:
+        dict with keys: name, saved_tokens, savings_pct, backup_path
+        or None if skill has no compressible body.
+    """
+    body = skill_path.read_text(encoding="utf-8")
+    
+    # Split frontmatter from body
+    if body.startswith("---"):
+        parts = body.split("---", 2)
+        frontmatter = parts[1] if len(parts) >= 2 else ""
+        body_text = parts[2] if len(parts) >= 3 else ""
+    else:
+        frontmatter = ""
+        body_text = body
+    
+    if not body_text.strip():
+        return None
+    
+    before_tokens = _count_tokens(body_text)
+    compressed, saved = _compress_skill_body(body_text)
+    
+    if saved == 0:
+        return None
+    
+    savings_pct = round(saved / max(before_tokens, 1) * 100, 1)
+    name = skill_path.parent.name
+    
+    if not dry_run:
+        # Create backup
+        backup_path = skill_path.with_suffix(".md.bak")
+        backup_path.write_text(body, encoding="utf-8")
+        
+        # Write compressed version
+        if frontmatter:
+            new_content = f"---{frontmatter}---\n{compressed}"
+        else:
+            new_content = compressed
+        skill_path.write_text(new_content, encoding="utf-8")
+        
+        # Log to compress_log (raw SQL, consistent with watch.py)
+        from observeco.db import Database
+        db_local = Database()
+        conn = db_local._get_conn()
+        after_tokens = _count_tokens(new_content)
+        conn.execute(
+            "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, savings, "
+            "savings_pct, file_path, backup_path, triggered_by, timestamp) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (name, "skill_lite", _count_tokens(body), after_tokens, saved,
+             savings_pct, str(skill_path), str(backup_path), "skill_compress", int(time.time())),
+        )
+        conn.commit()
+    else:
+        backup_path = None
+    
+    return {
+        "name": name,
+        "path": str(skill_path),
+        "before_tokens": before_tokens,
+        "saved_tokens": saved,
+        "savings_pct": savings_pct,
+        "backup_path": str(backup_path) if backup_path else None,
+        "dry_run": dry_run,
+    }
+
+
+def run_skills(compress: bool = False, compress_limit: int = 0, dry_run: bool = True) -> None:
     """Audit all Hermes skill files: token cost, ranked by total tokens.
+    
+    Args:
+        compress: If True, compress skill body text after audit.
+        compress_limit: Max number of skills to compress (0 = all compressible).
+        dry_run: If True and compress=True, show savings without applying.
 
     Walks ~/.hermes/skills/, finds SKILL.md files, parses YAML frontmatter,
     measures token counts, and reports a ranked table with per-category totals.
@@ -259,6 +352,7 @@ def run_skills() -> None:
             "body_tokens": body_tokens,
             "total": total,
             "tags": tags,
+            "path": sf,
         })
 
     if not skills:
@@ -344,3 +438,308 @@ def run_skills() -> None:
 
     console.print(cat_table)
     console.print(f"[dim]Total skill tokens across {len(skills)} files: {grand:,}[/dim]")
+
+    # ── Compression pass ──
+    if compress:
+        limit = compress_limit if compress_limit > 0 else len(skills)
+        compressed_count = 0
+        total_saved = 0
+        tag = "[yellow]Dry run:[/yellow]" if dry_run else "[green]Compressed:[/green]"
+        for i, s in enumerate(skills[:limit]):
+            result = compress_skill(s["path"], dry_run=dry_run)
+            if result:
+                compressed_count += 1
+                total_saved += result["saved_tokens"]
+                action = "would save" if dry_run else "saved"
+                console.print(f"  {tag} {result['name']}: {action} {result['saved_tokens']} tok ({result['savings_pct']:+.1f}%)")
+        if compressed_count > 0:
+            console.print(f"[bold]{'[dry run] Would save' if dry_run else 'Saved'} {total_saved:,} tokens across {compressed_count} skills[/bold]")
+        else:
+            console.print("[dim]No compressible skills found.[/dim]")
+
+
+# ── Compression (Lite/Full) ──────────────────────────────────────────────────
+
+
+def compress_guidance_block(block: str) -> str:
+    """Compress a single guidance block using rule-based shortening.
+
+    Lite: compress guidance blocks only (rules → condensed).
+    Full: also cull memory sections to active content, deduplicate skills,
+          and refactor context references.
+    """
+    lines = block.splitlines()
+    # Remove empty lines at start/end
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    if not lines:
+        return ""
+
+    # Simple rule-based compression
+    compressed = []
+    seen_rules = set()
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            compressed.append("")
+            continue
+        # Deduplicate identical guidance rules
+        key = stripped.lower()
+        if key in seen_rules:
+            continue
+        seen_rules.add(key)
+        # Shorten common verbose patterns
+        shortened = stripped
+        shortened = shortened.replace("you MUST", "must")
+        shortened = shortened.replace("You MUST", "Must")
+        shortened = shortened.replace("you should", "should")
+        shortened = shortened.replace("You should", "Should")
+        shortened = shortened.replace("you may", "can")
+        shortened = shortened.replace("You may", "Can")
+        shortened = shortened.replace("do not", "don't")
+        shortened = shortened.replace("Do not", "Don't")
+        shortened = shortened.replace("please ", "")
+        shortened = shortened.replace("Please ", "")
+        if line.startswith(" ") or line.startswith("\t"):
+            compressed.append("  " + shortened if not shortened.startswith((" ", "\t")) else shortened)
+        else:
+            compressed.append(shortened)
+
+    return "\n".join(compressed)
+
+
+def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = None) -> dict:
+    """Compress an agent's SOUL.md file.
+
+    Args:
+        agent_name: Name of the agent.
+        mode: 'lite' (guidance only, 22%) or 'full' (guidance + memory + skills, 35%).
+        filepath: Optional explicit path to SOUL.md. If None, auto-discover.
+
+    Returns:
+        dict with keys: status, message, backup, before_tokens, after_tokens, savings_pct.
+
+    Raises:
+        FileNotFoundError: if SOUL.md can't be found.
+        ValueError: if mode is invalid.
+    """
+    if mode not in ("lite", "full"):
+        raise ValueError(f"Invalid mode '{mode}'. Use 'lite' or 'full'.")
+
+    # Find the SOUL.md file
+    if filepath:
+        soul_path = Path(filepath)
+    else:
+        # Auto-discover from profiles directory
+        profiles_dir = Path.home() / ".hermes" / "profiles"
+        if (profiles_dir / agent_name / "SOUL.md").exists():
+            soul_path = profiles_dir / agent_name / "SOUL.md"
+        elif (Path.home() / ".hermes" / "profiles" / agent_name / "SOUL.md").exists():
+            soul_path = Path.home() / ".hermes" / "profiles" / agent_name / "SOUL.md"
+        else:
+            # Check root .hermes
+            root_soul = Path.home() / ".hermes" / "SOUL.md"
+            if agent_name == "hermes" and root_soul.exists():
+                soul_path = root_soul
+            else:
+                # Search broadly
+                import glob as glob_mod
+                matches = list(glob_mod.glob(str(Path.home() / ".hermes" / "**" / "SOUL.md"), recursive=True))
+                # Filter matches by proximity to agent_name in path
+                agent_matches = [m for m in matches if agent_name in m]
+                if agent_matches:
+                    soul_path = Path(agent_matches[0])
+                else:
+                    raise FileNotFoundError(
+                        f"Could not find SOUL.md for agent '{agent_name}'. "
+                        f"Searched: ~/.hermes/profiles/{agent_name}/SOUL.md"
+                    )
+
+    if not soul_path.exists():
+        raise FileNotFoundError(f"SOUL.md not found at {soul_path}")
+
+    original_text = soul_path.read_text(encoding="utf-8")
+    before_tokens = _estimate_tokens(original_text)
+
+    # Parse sections
+    text = original_text
+    sections = _analyse_prompt(text)
+    guidance_tokens = sections.get("guidance_tokens", 0)
+    memory_tokens = sections.get("memory_tokens", 0)
+    skills_tokens = sections.get("skills_tokens", 0)
+
+    # Lite mode: compress all content globally (section-agnostic)
+    # Apply rule-based shortening to every line
+    lines = text.splitlines()
+    new_lines = []
+    blank_count = 0
+    in_code_block = False
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Don't compress code blocks, headings, or empty lines
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            new_lines.append(line)
+            continue
+        if in_code_block:
+            new_lines.append(line)
+            continue
+        if not stripped:
+            blank_count += 1
+            new_lines.append(line)
+            continue
+        if stripped.startswith("#") and not stripped.startswith("##"):
+            # Top-level heading — keep as-is
+            new_lines.append(line)
+            continue
+        
+        # Skip lines that are clearly structural
+        if re.match(r"^[-*_]{3,}$", stripped):
+            new_lines.append(line)
+            continue
+        
+        blank_count = 0
+        
+        # Apply guidance compression rules to every non-heading line
+        shortened = stripped
+        shortened = shortened.replace("you MUST", "must")
+        shortened = shortened.replace("You MUST", "Must")
+        shortened = shortened.replace("you should", "should")
+        shortened = shortened.replace("You should", "Should")
+        shortened = shortened.replace("you may", "can")
+        shortened = shortened.replace("You may", "Can")
+        shortened = shortened.replace("do not", "don't")
+        shortened = shortened.replace("Do not", "Don't")
+        shortened = shortened.replace("please ", "")
+        shortened = shortened.replace("Please ", "")
+        shortened = shortened.replace("Do NOT", "Don't")
+        shortened = shortened.replace("do NOT", "don't")
+        
+        # Preserve indentation
+        if line.startswith(" ") or line.startswith("\t"):
+            indent = line[:len(line) - len(line.lstrip())]
+            shortened = indent + shortened
+        new_lines.append(shortened)
+    
+    text = "\n".join(new_lines)
+
+    # Full mode: additional compression on memory and skills
+    if mode == "full":
+        text = _full_compress(text)
+
+    # Trim blank lines at boundaries
+    text = text.strip()
+    if not text.endswith("\n"):
+        text += "\n"
+
+    after_tokens = _estimate_tokens(text)
+    savings = before_tokens - after_tokens
+    savings_pct = round(savings / max(before_tokens, 1) * 100, 1)
+
+    # Create backup
+    backup_path = soul_path.with_suffix(".md.bak")
+    backup_path.write_text(original_text, encoding="utf-8")
+
+    # Write compressed version
+    soul_path.write_text(text, encoding="utf-8")
+
+    # Log to database
+    from observeco.db import Database
+    analysis = _analyse_prompt(text)
+    db_local = Database()
+    db_local.log_trim(
+        agent_name,
+        analysis["identity_tokens"], analysis["skills_tokens"],
+        analysis["memory_tokens"], analysis["tools_tokens"],
+        analysis["guidance_tokens"], analysis["total_tokens"],
+        analysis.get("savings_ratio", 0),
+        mode=mode,
+    )
+
+    return {
+        "status": "ok",
+        "agent": agent_name,
+        "mode": mode,
+        "before_tokens": before_tokens,
+        "after_tokens": after_tokens,
+        "savings": savings,
+        "savings_pct": savings_pct,
+        "message": f"{mode.capitalize()} compression applied: {before_tokens} → {after_tokens} tok ({savings_pct:+.1f}%)",
+        "backup": str(backup_path),
+    }
+
+
+def _full_compress(text: str) -> str:
+    """Full compression: memory section culling + skill dedup + context refactoring."""
+    lines = text.splitlines()
+    result = []
+    in_memory = False
+    in_skills = False
+    memory_lines = []
+    skills_lines = []
+    memory_start = None
+    skills_start = None
+
+    for i, line in enumerate(lines):
+        lower = line.strip().lower()
+        # Detect memory section
+        if any(lower.startswith(f"## {kw}") or lower.startswith(f"# {kw}") for kw in ["memory", "context", "history", "recall"]):
+            in_memory = True
+            in_skills = False
+            memory_start = i
+            memory_lines = [line]
+            continue
+        # Detect skills section
+        if any(lower.startswith(f"## {kw}") or lower.startswith(f"# {kw}") for kw in ["skill", "tool", "command", "function"]):
+            in_skills = True
+            in_memory = False
+            skills_start = i
+            skills_lines = [line]
+            continue
+        # End of a section
+        if re.match(r"^#{1,4}\s+", line):
+            if in_memory:
+                in_memory = False
+            if in_skills:
+                in_skills = False
+        if in_memory:
+            memory_lines.append(line)
+        elif in_skills:
+            skills_lines.append(line)
+        else:
+            result.append(line)
+
+    # Process memory: keep only lines with actual content (non-empty, non-header)
+    if memory_lines:
+        header = memory_lines[0]
+        body = memory_lines[1:]
+        # Keep lines that aren't purely formatting
+        kept = [l for l in body if l.strip() and not re.match(r"^[-*_]{3,}$", l.strip())]
+        # If more than 15 lines, keep first 10 + last 3
+        if len(kept) > 15:
+            kept = kept[:10] + ["", "... (trimmed by Full compression) ...", ""] + kept[-3:]
+        result.append(header)
+        result.extend(kept)
+
+    # Process skills: deduplicate by content
+    if skills_lines:
+        header = skills_lines[0]
+        body = skills_lines[1:]
+        seen = set()
+        deduped = []
+        for l in body:
+            key = l.strip().lower()
+            if key not in seen or not l.strip():
+                seen.add(key)
+                deduped.append(l)
+        if len(deduped) != len(body):
+            deduped.append("  (duplicates removed by Full compression)")
+        result.append("")
+        result.append(header)
+        result.extend(deduped)
+
+    return "\n".join(result)

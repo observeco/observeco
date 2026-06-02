@@ -217,6 +217,23 @@ SAFE_COMMAND_PREFIXES = [
     "pip3 install --upgrade",
     "python -m pip install",
     "python3 -m pip install",
+    "echo",
+    "ls",
+    "cat",
+    "head",
+    "tail",
+    "grep",
+    "find",
+    "wc",
+    "du",
+    "df",
+    "which",
+    "mkdir",
+    "touch",
+    "cp",
+    "mv",
+    "whoami",
+    "uname",
 ]
 
 # Dangerous patterns that must never be executed
@@ -227,8 +244,11 @@ DANGEROUS_PATTERNS = [
     "eval ", "exec ",
     ";", "&&", "||", "|",
     ">", ">>",
-    "$(`, "${",
+    "$(", "${",
 ]
+
+# Commands parsed as shlex list (safer than raw string for subprocess.run)
+import shlex
 
 
 def _validate_command(cmd: str) -> tuple[bool, str]:
@@ -237,6 +257,15 @@ def _validate_command(cmd: str) -> tuple[bool, str]:
     Returns (is_safe, reason).
     """
     cmd_stripped = cmd.strip()
+
+    # Reject empty commands
+    if not cmd_stripped:
+        return False, "Empty command"
+
+    # Reject commands with too many parts
+    parts = shlex.split(cmd_stripped)
+    if len(parts) > 10:
+        return False, f"Command too complex ({len(parts)} parts, max 10)"
 
     # Check for dangerous patterns
     for pattern in DANGEROUS_PATTERNS:
@@ -249,7 +278,7 @@ def _validate_command(cmd: str) -> tuple[bool, str]:
         if cmd_lower.startswith(prefix.lower()):
             return True, "OK"
 
-    return False, f"Command not in allowlist: {cmd_stripped[:50]}"
+    return False, f"Command not in allowlist: {parts[0] if parts else cmd_stripped[:50]}"
 
 
 def _run_command(cmd: str, auto_fix: bool = False) -> tuple[bool, str]:
@@ -265,14 +294,18 @@ def _run_command(cmd: str, auto_fix: bool = False) -> tuple[bool, str]:
         return False, f"Command rejected: {reason}"
 
     try:
-        # Use list form (no shell=True) to prevent injection
+        # Parse command string into list for shell=False safety
+        try:
+            cmd_args = shlex.split(cmd)
+        except ValueError as e:
+            return False, f"Command parse error: {e}"
         result = subprocess.run(
-            cmd, shell=False, capture_output=True, text=True, timeout=30,
+            cmd_args, shell=False, capture_output=True, text=True, timeout=30,
         )
         output = result.stdout + result.stderr
         return result.returncode == 0, output[:500]
     except FileNotFoundError:
-        return False, f"Command not found: {cmd.split()[0]}"
+        return False, f"Command not found: {cmd_args[0]}"
     except subprocess.TimeoutExpired:
         return False, "Command timed out after 30s"
     except Exception as e:
