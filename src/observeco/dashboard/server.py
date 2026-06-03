@@ -969,15 +969,14 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
 
     if tab == "health":
         return _detail_health_tab(name, pulses, errors, circuit, framework)
-    elif tab == "guard":
-        # Derive agent status from recent pulses
-        agent_status = "unknown"
-        if pulses:
-            # Status from most recent pulse
-            agent_status = pulses[0].get("status", "unknown")
+    # Derive agent status from recent pulses (shared by guard + errors tabs)
+    agent_status = "unknown"
+    if pulses:
+        agent_status = pulses[0].get("status", "unknown")
+    if tab == "guard":
         return _detail_guard_tab(name, errors, circuit, framework, agent_status)
     elif tab == "errors":
-        return _detail_errors_tab(name, errors, framework)
+        return _detail_errors_tab(name, errors, framework, agent_status)
     elif tab == "tokens":
         return _detail_tokens_tab(name, trims, drift, framework)
     elif tab == "garden" or tab == "memory":
@@ -1382,9 +1381,10 @@ def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, ag
 </div>""")
 
 
-def _detail_errors_tab(name: str, errors: list, framework: str) -> str:
+def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: str = "unknown") -> str:
     """Error history — timeline table + categorized verdict + Pro upsell."""
     error_rows = ""
+    is_dead = agent_status == "dead"
     if errors:
         for e in errors[:20]:
             ts_str = _fmt_ts(e["timestamp"])
@@ -1398,6 +1398,12 @@ def _detail_errors_tab(name: str, errors: list, framework: str) -> str:
     total = len(errors)
     if total == 0:
         verdict_msg = 'No errors means this agent has been running cleanly for the last 24 hours.'
+    elif is_dead:
+        verdict_msg = (
+            f'This agent has been <strong>dead</strong> throughout — all {total} error{"s" if total > 1 else ""} '
+            f'are from the system trying (and failing) to reach its process. '
+            f'The agent will not recover on its own. Start it manually or check its configuration.'
+        )
     elif total == 1:
         verdict_msg = 'One error in 24 hours is usually transient — network hiccup or temporary overload.'
     else:

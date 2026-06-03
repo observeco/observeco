@@ -1702,12 +1702,15 @@ function loadTab(name, tab) {
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
   fetch('/api/agent-detail/' + encodeURIComponent(name) + '?tab=' + tab)
-    .then(r => r.text())
+    .then(r => {
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' — ' + r.statusText);
+      return r.text();
+    })
     .then(html => {
       document.getElementById('detailContent').innerHTML = html;
     })
     .catch(e => {
-      document.getElementById('detailContent').innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>';
+      document.getElementById('detailContent').innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed to load: ' + e.message + '<br><span style="font-size:11px;color:#64748b;margin-top:8px;display:block;">Make sure the dashboard server is running. Restart with: <code style="background:#0f172a;padding:1px 6px;border-radius:3px;">observeco dashboard</code></span></div>';
     });
 }
 
