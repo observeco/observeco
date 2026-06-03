@@ -1,5 +1,6 @@
 """Tests for billing module — simulated checkout flow."""
 import json
+from unittest.mock import patch
 
 from observeco.billing import BillingConfig, create_checkout_session, handle_webhook
 
@@ -23,7 +24,9 @@ def test_billing_configure_sets_keys():
 
 def test_create_checkout_simulated():
     """Without real Stripe keys, checkout should return simulated session."""
-    result = create_checkout_session(email="test@example.com", plan="solo")
+    with patch("observeco.billing._load_config") as mock_load:
+        mock_load.return_value = BillingConfig()
+        result = create_checkout_session(email="test@example.com", plan="solo")
     assert result is not None
     assert "session_id" in result
     assert "url" in result
@@ -31,12 +34,16 @@ def test_create_checkout_simulated():
 
 
 def test_create_checkout_team_plan():
-    result = create_checkout_session(email="team@example.com", plan="team")
+    """Without real Stripe keys, team plan returns simulated."""
+    with patch("observeco.billing._load_config") as mock_load:
+        mock_load.return_value = BillingConfig()
+        result = create_checkout_session(email="team@example.com", plan="team")
     assert result is not None
     assert "session_id" in result
 
 
 def test_handle_webhook_simulated():
+    """Without real Stripe keys, webhook should return demo status."""
     payload = json.dumps({
         "type": "checkout.session.completed",
         "data": {
@@ -47,6 +54,9 @@ def test_handle_webhook_simulated():
             }
         }
     })
-    result = handle_webhook(payload.encode())
+    with patch("observeco.billing._load_config") as mock_load:
+        mock_load.return_value = BillingConfig()
+        result = handle_webhook(payload.encode())
     assert result is not None
     assert "status" in result
+    assert result["status"] == "demo"
