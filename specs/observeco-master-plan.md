@@ -2812,7 +2812,7 @@ CREATE INDEX idx_telemetry_day ON telemetry_events(received_at::date);
 **Success metrics:**
 - License status card renders in ≤500ms (static SSR, no network call on page load)
 - billing.json write completes in ≤200ms (local file, encrypt+rotating+lock)
-- billing.log stays under 3MB for single-user (RotatingFileHandler, 1MB×3 backups)
+- billing.log stays under 4MB for single-user (RotatingFileHandler, 1MB×3 backups — real usage ~20KB/month)
 - File lock acquisition succeeds on first attempt ≥99% (single-process)
 - File lock acquisition succeeds within 500ms under multi-process contention (10 retries × 50ms)
 **Acceptance criteria:**
