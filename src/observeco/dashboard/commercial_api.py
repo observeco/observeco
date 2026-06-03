@@ -326,4 +326,57 @@ async def stripe_webhook(request: Request):
             "metadata": {"session_id": getattr(session, "id", "")},
         })
 
+    elif event.type == "customer.subscription.deleted":
+        """Handle subscription cancellation — mark license as cancelled."""
+        sub = event.data.object
+        sub_id = getattr(sub, "id", None)
+        customer_id = getattr(sub, "customer", None)
+        if sub_id:
+            update("licenses", {
+                "status": "cancelled",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }, {"stripe_subscription_id": sub_id})
+        elif customer_id:
+            # Fallback: match by stripe_customer_id
+            update("licenses", {
+                "status": "cancelled",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }, {"stripe_customer_id": customer_id})
+
+    elif event.type == "customer.subscription.updated":
+        """Handle subscription status/plan changes — sync license status."""
+        sub = event.data.object
+        sub_id = getattr(sub, "id", None)
+        status = getattr(sub, "status", None)
+        if sub_id and status:
+            db_status = status  # Stripe: active/past_due/canceled/incomplete/trialing
+            if status == "active":
+                db_status = "active"
+            elif status == "past_due":
+                db_status = "past_due"
+            elif status in ("canceled", "incomplete_expired"):
+                db_status = "cancelled"
+            elif status == "trialing":
+                db_status = "trialing"
+            update("licenses", {
+                "status": db_status,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }, {"stripe_subscription_id": sub_id})
+
+    elif event.type == "invoice.payment_failed":
+        """Handle failed payment — mark as past_due with grace period."""
+        invoice = event.data.object
+        sub_id = getattr(invoice, "subscription", None)
+        customer_id = getattr(invoice, "customer", None)
+        if sub_id:
+            update("licenses", {
+                "status": "past_due",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }, {"stripe_subscription_id": sub_id})
+        elif customer_id:
+            update("licenses", {
+                "status": "past_due",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }, {"stripe_customer_id": customer_id})
+
     return {"received": True}

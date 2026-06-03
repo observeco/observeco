@@ -31,6 +31,7 @@ class LicenseState:
     trial_token: str | None = None   # Auto-generated trial token
     trial_start: int | None = None   # Unix ts
     trial_end: int | None = None     # Unix ts
+    trial_consumed: bool = False     # True if trial was cancelled or expired
     validated_at: int | None = None  # Last successful online validation
     customer_email: str | None = None
     plan: str | None = None          # "solo" | "team" | None
@@ -73,6 +74,7 @@ class LicenseState:
             "has_trial": bool(self.trial_token),
             "trial_days_remaining": self.remains_days,
             "trial_end": self.trial_end,
+            "trial_consumed": self.trial_consumed,
             "validation_stale": self.validation_stale,
             "plan": self.plan,
             "customer_email": self.customer_email,
@@ -106,6 +108,7 @@ def load() -> LicenseState:
         trial_token=raw.get("trial_token"),
         trial_start=raw.get("trial_start"),
         trial_end=raw.get("trial_end"),
+        trial_consumed=raw.get("trial_consumed", False),
         validated_at=raw.get("validated_at"),
         customer_email=raw.get("customer_email"),
         plan=raw.get("plan"),
@@ -120,6 +123,7 @@ def save(state: LicenseState) -> None:
         "trial_token": state.trial_token,
         "trial_start": state.trial_start,
         "trial_end": state.trial_end,
+        "trial_consumed": state.trial_consumed,
         "validated_at": state.validated_at,
         "customer_email": state.customer_email,
         "plan": state.plan,
@@ -130,6 +134,7 @@ def ensure_trial(state: LicenseState | None = None) -> LicenseState:
     """Auto-generate a trial token on first run if no license exists.
 
     Idempotent — only generates if no trial_token, no key, and type is 'free'.
+    Will NOT generate a new trial if trial_consumed is True (trial hardening).
     """
     if state is None:
         state = load()
@@ -137,12 +142,16 @@ def ensure_trial(state: LicenseState | None = None) -> LicenseState:
         return state
     if state.key or state.trial_token:
         return state
+    # Trial hardening — skip if trial was previously consumed (cancelled/expired)
+    if state.trial_consumed:
+        return state
 
     now = int(time.time())
     state.license_type = "trial"
     state.trial_token = "trial_" + secrets.token_hex(16)
     state.trial_start = now
     state.trial_end = now + 30 * 86400  # 30 days
+    state.trial_consumed = False
     save(state)
     return state
 
@@ -214,13 +223,22 @@ def _validate_online(key: str) -> dict:
 
 
 def start_trial() -> dict:
-    """Start or restart the 30-day trial."""
+    """Start or restart the 30-day trial.
+
+    Returns error if trial was previously consumed (trial hardening).
+    """
     state = load()
+    if state.trial_consumed:
+        return {
+            "status": "error",
+            "message": "Trial already used. Trial is a one-time offer. Subscribe via Stripe to unlock Pro features.",
+        }
     now = int(time.time())
     state.license_type = "trial"
     state.trial_token = "trial_" + secrets.token_hex(16)
     state.trial_start = now
     state.trial_end = now + 30 * 86400
+    state.trial_consumed = False
     save(state)
     return {
         "status": "trial_started",
@@ -229,14 +247,44 @@ def start_trial() -> dict:
     }
 
 
+def cancel_trial() -> dict:
+    """Cancel the current trial. Sets license_type back to free and marks trial consumed.
+
+    Data is preserved. Only Pro features are locked. The user can resubscribe
+    via Stripe Checkout at any time (Stripe enforces single-trial-per-customer).
+    """
+    state = load()
+    if state.license_type != "trial":
+        return {"status": "error", "message": "No active trial to cancel"}
+    state.license_type = "free"
+    state.trial_consumed = True
+    state.trial_token = None
+    state.trial_start = None
+    state.trial_end = None
+    save(state)
+    return {
+        "status": "cancelled",
+        "message": "Trial cancelled. Pro features locked. Your data is safe — subscribe anytime to unlock them.",
+    }
+
+
 def validate_cached() -> bool:
     """Check if the current license is valid, using cache.
 
     Called on startup. Returns True if Pro features should be enabled.
+    Also auto-expires stale trials (sets trial_consumed after expiry).
     """
     state = load()
     if state.is_pro:
         return True
+    # Auto-expire trial that has ended
+    if state.license_type == "trial" and state.trial_end:
+        if int(time.time()) >= state.trial_end:
+            state.license_type = "free"
+            state.trial_consumed = True
+            state.trial_token = None
+            save(state)
+            return False
     # No license at all — start trial
     state = ensure_trial(state)
     return state.is_pro

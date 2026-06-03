@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-| **Last updated:** 2026-06-09 (API routes deployed to observeco.com, client URLs patched, Supabase schema live)
+| **Last updated:** 2026-06-10 (Feature #26: Self-serve billing management spec'd — License card, Cancel Trial, Stripe Portal, trial hardening, webhooks)
 | **Author:** Main |
 
 ---
@@ -61,7 +61,8 @@
 ||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Live | ✅ All (detection + health — core infra for everything) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
 |||| **23** | **Skill Artifacts + Cards System** (`observeco chisel artifacts` + `chisel cards`) | **Analysis** | **✅ Live** | ✅ Cached compressed `.md.compressed` per skill, `cards.json` (156 cards), `manifests.json`, CLI `observeco chisel cards` for top-30 rank, `observeco chisel artifacts --refresh` to rebuild. SkillOS `_load_skill_content()` prefers compressed cache over raw. `max_skill_content_bytes` reduced 8192→4096. | ✅ Same for all | ~1d | observeco-master-plan.md §3.23 |
 ||| **24** | **Config Hygiene Audit** (`observeco chisel config`) — scans Hermes config for duplicated prompts, low cache TTL, stale references. **Synergy:** shares token counting, YAML parsing, and savings estimation with `chisel/skill_compress.py`. Same pipeline, different target. | **Analysis** | **✅ Live** | ✅ CLI audit report with line-by-line findings + `--fix` flag | ✅ Dashboard widget (Pro, Brain tab, live-updating) + scheduled daily scan (6am) | ~1d | observeco-master-plan.md §3.24 |
-|| **25** | **LLM-Powered Intelligence Service** — shared `llm_service` that every module calls for deeper diagnosis, alert enrichment, personalized first-run guidance, and per-agent summaries. | **AI** | **✅ Live — v1** | **✅ 4/7 consumers live** | llm_service/ extracted (4 modules). Deep consumers: agent discovery, first-run wizard, heal escalation. Shallow consumers: per-agent summary, health check suggestion, error translation framework. CLI --no-llm toggle. Alert enrichment, heal feedback loop, pathway anomaly deferred. | ~5d (3d built, 2 deferred) | observeco-master-plan.md §3.25 |
+||| **25** | **LLM-Powered Intelligence Service** — shared `llm_service` that every module calls for deeper diagnosis, alert enrichment, personalized first-run guidance, and per-agent summaries. | **AI** | **✅ Live — v1** | **✅ 4/7 consumers live** | llm_service/ extracted (4 modules). Deep consumers: agent discovery, first-run wizard, heal escalation. Shallow consumers: per-agent summary, health check suggestion, error translation framework. CLI --no-llm toggle. Alert enrichment, heal feedback loop, pathway anomaly deferred. | ~5d (3d built, 2 deferred) | observeco-master-plan.md §3.25 |
+||| **26** | **Self-serve billing management** — License status card (plan, trial countdown, action buttons), Stripe Customer Portal for paid subs, Cancel Trial with 7-day grace, end-of-trial banner, trial hardening (same-email re-trial blocked), 3 Stripe webhooks (subscription.deleted/updated/invoice.payment_failed) | **Commercial** | **🔴 Building** | ✅ Free features always free — trial = full Pro access, after trial: locked to Free | ✅ Pro features | ~4h | §3.28 |
 |
 |---
 
@@ -1347,11 +1348,12 @@ Layer 4 — Cross-Framework Dashboard (P0)
 | Auto-heal (configurable) | ✅ | 🔴 Planned ~1d |
 | Chisel compress auto-watch | ✅ | 🔴 Planned ~2d |
 | Per-turn token tracking (never-pruned) | ✅ | 🔴 Planned ~3d |
+| Self-serve billing (License card, trial cancel, Grace portal, end-of-trial banner) | ✅ | 🔴 Building now — Feature #26 |
 
 **Pricing:** Solo $9/mo only. Team tier ($49/mo) delayed — product not mature enough.
 30-day free trial via Stripe. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`.
 
-**⚠️ Reality check:** Pro features are spec'd but NOT fully built yet — a user who starts a trial today sees nothing unlocked. Stripe checkout + license key validation is the first step (v0 of Pro).
+**⚠️ Reality check:** Pro features beyond the 30-day trial are partially built. Trial auto-starts on first dashboard launch and unlocks all Pro features. License status card is building now (Feature #26). Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment. See §3.28.
 
 ---
 
@@ -2793,6 +2795,98 @@ CREATE INDEX idx_telemetry_day ON telemetry_events(received_at::date);
 - 30min: Update `license.py` validate URL + `telemetry_client.py` telemetry URL to point to observeco.com
 - 30min: Stripe webhook config in Stripe dashboard
 - 30min: End-to-end test
+
+---
+
+### 3.28 Self-Serve Billing Management
+
+**Tagline:** *Know your plan. Manage your subscription. Cancel in one click.*
+
+**Status:** 🔴 Building — Feature #26
+**Effort:** ~4h total
+**Customer principle:** The user should see their billing status clearly, manage it without contacting anyone, and never feel trapped.
+
+**Design philosophy:**
+- License keys are internal plumbing, not customer-facing — show "Pro ✓" or "Free", not `OBS-3B207C38`
+- Stripe sends receipts/invoices/retry emails — we don't build that
+- One-click Cancel Trial (no survey — add one later if churn data justifies it)
+- Paid subscribers get Stripe-hosted Customer Portal (update payment, cancel, invoices) — no custom UI
+- Trial is a single-use entitlement per email address — not a clock you can reset by deleting `license.json`
+
+**Customer-facing views:**
+
+**During trial:**
+```
+┌────────────────────────────────────────────────────────────┐
+│  🚀 Solo plan · 23 days left in free trial                 │
+│  No charge until 1 July. Cancel anytime.                   │
+│                                                            │
+│  [Subscribe via Stripe $9/mo]  [Cancel Trial]              │
+└────────────────────────────────────────────────────────────┘
+```
+
+**After cancelling trial:**
+```
+┌────────────────────────────────────────────────────────────┐
+│  Trial cancelled. Your data is safe — all Pro features     │
+│  are locked. Subscribe anytime to unlock them.             │
+│                                                            │
+│  [Resubscribe $9/mo →]                                     │
+└────────────────────────────────────────────────────────────┘
+```
+
+**When trial expires:**
+```
+┌────────────────────────────────────────────────────────────┐
+│  ⚠️ Your free trial ended on 1 July.                       │
+│  You're on Free plan — Pro features (Brain, Alerts, ...)   │
+│  are locked. Data stays.                                   │
+│                                                            │
+│  [Subscribe $9/mo]  [Dismiss]                              │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Pro subscriber (paid):**
+```
+┌────────────────────────────────────────────────────────────┐
+│  ✅ Pro · Solo $9/mo                                       │
+│  Next billing: 1 August 2026                               │
+│                                                            │
+│  [Manage Billing →]  (Stripe Customer Portal)              │
+└────────────────────────────────────────────────────────────┘
+```
+
+**Build plan:**
+
+| # | Component | Files | Time | Details |
+|---|-----------|-------|------|---------|
+| 1 | License status card UI | `server.py` template block + `index.html` | 1h | Banner showing plan, trial days left, action buttons. Appears above the agent grid. Reactive — updates via existing `/api/licenses/status` endpoint |
+| 2 | Cancel Trial endpoint | `licenses_api.py` | 30min | `POST /api/billing/cancel-trial` → sets license.json `license_type=free`, marks `trial_consumed=true`. Does NOT delete local data. Dashboard banner switches to cancelled state |
+| 3 | Cancel Trial UI | `server.py` + `index.html` | 30min | Confirmation dialog: "Cancel trial? You'll lose Pro features when the trial ends. Your data stays." Two buttons: [Yes, cancel] [Keep trial] |
+| 4 | Stripe Customer Portal | `billing.py` | 30min | `POST /api/billing/portal` → `stripe.billing_portal.Session.create(customer=customer_id)` → returns portal URL. Redirect user. Only shown when user has active Stripe subscription |
+| 5 | Stripe webhooks (CRM) | `commercial_api.py` on Vercel | 1h | Add 3 webhook event handlers to existing `/api/commercial/stripe/webhook` endpoint: `customer.subscription.deleted` → mark license `cancelled`, `customer.subscription.updated` → sync plan/status, `invoice.payment_failed` → mark `past_due` (7-day grace before lock) |
+| 6 | End-of-trial banner | `server.py` + `index.html` | 30min | Check `trial_end < now` on dashboard load. Show warning banner. Dismissable |
+| 7 | Trial hardening | `license.py` | 15min | When `ensure_trial()` called, check if `trial_consumed=true` in `license.json`. If yes, skip trial and stay Free. Re-trial requires a new email + Stripe Checkout (Stripe enforces the limit) |
+
+**What we deliberately DON'T build:**
+- ❌ Custom cancellation survey — Stripe portal has one, add custom after 100 churns
+- ❌ Invoice PDF download link — Stripe emails it
+- ❌ Payment failure handling — Stripe auto-retries + emails customer
+- ❌ Credit card update UI — Stripe portal handles this
+- ❌ Plan upgrade/downgrade UI — Stripe portal handles this
+- ❌ Email notifications — Stripe Billing automations handle this
+- ❌ License key display — users don't need to see it
+- ❌ Team tier ($49) — delayed post-v1
+
+**How trial hardening works:**
+| Scenario | What happens | Vectors left open |
+|----------|-------------|-------------------|
+| Same email re-trial | CRM stores `trial_consumed=true` per email. Blocked | None |
+| Same machine, delete `license.json` | `trial_consumed` flag survives in local `license.json`. If wiped, local trial regenerates but skimpy — **acceptable risk at early stage** | Accidental reset possible, loses 1 trial |
+| Different email, same machine | Local trial generates anew. CRM doesn't know. **Acceptable risk** — value of trial-hopping through email aliases is low. Stripe Checkout requires payment method which filters casual gamers | Email aliases |
+| Stripe-based re-trial | Stripe blocks: same customer ID → no second `trial_period_days` | None |
+
+**Grace period philosophy:** 7-day grace after trial expiry before Pro features hard-lock. During grace, show warning banner but keep Pro features accessible. After 7 days, soft-lock with "Upgrade to unlock" overlay. Data never deleted during grace.
 
 ---
 

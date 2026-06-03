@@ -105,8 +105,8 @@ def configure(stripe_secret: str, stripe_publishable: str,
 
 
 def create_checkout_session(email: str, plan: str = "solo",
-                            success_url: str = "http://localhost:9119/billing/success",
-                            cancel_url: str = "http://localhost:9119/billing/cancel") -> dict:
+                            success_url: str = "http://localhost:9121/api/billing/success",
+                            cancel_url: str = "http://localhost:9121/api/billing/cancel") -> dict:
     """Create a Stripe Checkout Session.
 
     In demo/probe mode when Stripe is not configured, returns a simulated session.
@@ -253,3 +253,35 @@ def add_billing_endpoints(app) -> None:
         payload = await request.body()
         sig = request.headers.get("stripe-signature", "")
         return handle_webhook(payload, sig)
+
+    @app.post("/api/billing/portal")
+    async def billing_portal(request: Request):
+        """Create a Stripe Customer Portal session for self-serve billing management.
+
+        Returns a redirect URL to the Stripe-hosted portal where users can:
+        - View/update payment method
+        - Cancel subscription
+        - View invoices
+        - Update billing info
+        """
+        try:
+            import stripe as stripe_lib
+            config = _load_config()
+            if not config.is_active or not config.stripe_secret_key:
+                return {"error": "Stripe not configured", "mode": "error"}
+            stripe_lib.api_key = config.stripe_secret_key
+
+            data = await request.json()
+            customer_id = data.get("customer_id", "")
+            if not customer_id:
+                return {"error": "customer_id is required", "mode": "error"}
+
+            session = stripe_lib.billing_portal.Session.create(
+                customer=customer_id,
+                return_url=data.get("return_url", "http://localhost:9121/"),
+            )
+            return {"url": session.url, "mode": "live"}
+        except ImportError:
+            return {"error": "stripe package not installed", "mode": "error"}
+        except Exception as e:
+            return {"error": str(e), "mode": "error"}
