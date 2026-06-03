@@ -970,7 +970,12 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
     if tab == "health":
         return _detail_health_tab(name, pulses, errors, circuit, framework)
     elif tab == "guard":
-        return _detail_guard_tab(name, errors, circuit, framework)
+        # Derive agent status from recent pulses
+        agent_status = "unknown"
+        if pulses:
+            # Status from most recent pulse
+            agent_status = pulses[0].get("status", "unknown")
+        return _detail_guard_tab(name, errors, circuit, framework, agent_status)
     elif tab == "errors":
         return _detail_errors_tab(name, errors, framework)
     elif tab == "tokens":
@@ -1278,13 +1283,24 @@ def _detail_drift_html(drift: list, name: str) -> str:
 </div>"""
 
 
-def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str) -> str:
+def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, agent_status: str = "unknown") -> str:
     """Guard detail — 5 sections: status, failure timeline, explanation, savings, settings."""
     now = int(time.time())
     is_tripped = circuit.get("tripped", False)
 
-    # Section 1: Status
-    if is_tripped:
+    # Section 1: Status — acknowledge agent's pulse status
+    is_dead = agent_status == "dead"
+    if is_dead:
+        status_html = """
+        <div style="font-size:13px;color:#eab308;font-weight:600;margin-bottom:8px;">
+            ⚠️ Agent is down — guard data may be misleading
+        </div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+            This agent has <strong>no running process</strong>. The guard checks are running against
+            a dead target — the "0 consecutive failures" reflects <strong>gaps between checks</strong>,
+            not actual health. The guard will resume monitoring when the agent comes back online.
+        </div>"""
+    elif is_tripped:
         status_html = """
         <div style="font-size:13px;color:#ef4444;font-weight:600;margin-bottom:8px;">
             🔴 Guard is STOPPED — not checking this agent
@@ -1316,6 +1332,8 @@ def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str) ->
 
         if is_tripped:
             failure_summary = f"The guard triggered after <strong>3 consecutive failures</strong>. In total, <strong>{len(errors)} error{'s' if len(errors) > 1 else ''}</strong> were logged before it stopped checking."
+        elif is_dead:
+            failure_summary = f"<strong>{len(errors)} error{'s' if len(errors) > 1 else ''}</strong> logged from this agent — but the agent <strong>has been down</strong> throughout. The guard never tripped because the errors are spaced across gap-detection checks, not 3+ in a row."
         else:
             failure_summary = f"{len(errors)} error{'s' if len(errors) > 1 else ''} detected but fewer than 3 in a row — the guard has not tripped."
     else:
@@ -2443,9 +2461,16 @@ async def api_agents(
                     drift_val = sum(vals) / len(vals)
                     drift_str = f"{'📈' if drift_val > 0 else '📉' if drift_val < 0 else '➡️'} {drift_val:+.1f}% this week" if abs(drift_val) > 0.1 else "➡️ 0.0% this week"
 
-            # Circuit/guard
-            guard_label = "🔴 Stopped (failed 3x)" if tripped else "✅ Guard OK"
-            guard_color = "var(--danger)" if tripped else "var(--accent)"
+            # Circuit/guard — acknowledge dead agent status
+            if status == 'dead':
+                guard_label = "⚠️ Agent is down"
+                guard_color = "var(--warn)"
+            elif tripped:
+                guard_label = "🔴 Stopped (failed 3x)"
+                guard_color = "var(--danger)"
+            else:
+                guard_label = "✅ Guard OK"
+                guard_color = "var(--accent)"
 
             # Error row label
             err_label = f"⚠️ {recent_error_count} in last 24h" if recent_error_count > 0 else "- No errors"
