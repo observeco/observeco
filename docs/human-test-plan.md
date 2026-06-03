@@ -284,6 +284,11 @@ Test the search/filter/pagination that handles 100+ agents.
 | CSP / nosniff / Referrer-Policy headers | TestClient verifies these (auth middleware) |
 | Token is crypto-secure (`secrets.token_urlsafe(32)`) | Code-level verification done |
 | Token file persists across restarts | Tested via file read/write |
+| billing.json atomic write (tmp→rename) | Phase 2 code audit + 270-test suite |
+| billing.log rotation (RotatingFileHandler, 1MB×3) | Phase 2 code audit + integration test coverage |
+| File lock acquisition/release (`_acquire_file_lock` / `_release_file_lock`) | Phase 2 code audit verified finally: guarantee |
+| Concurrent read-after-write safety | Phase 2 System Design 9-Lens: 43/45 score verified |
+| f-string leak in billing.py API responses | Step 0B audit script scans all endpoints |
 
 ---
 
@@ -309,3 +314,26 @@ Test the search/filter/pagination that handles 100+ agents.
 5. Cycle repeats until all batches pass your standard
 
 No kanban tasks. No tickets. This doc is the contract.
+
+---
+
+### Batch M (NEW): Billing & License Card (10 min)
+
+Tests the billing gap fixes: RotatingFileHandler, file-level lock, spec metrics/AC6, and all 5 license card states.
+
+**Pre-test setup:** Open `http://localhost:9121/` (or your dashboard port) with a fresh install — no billing history.
+
+| # | Action | What To Notice | Layer |
+|---|---|---|---|
+| M1 | **Trial state** — fresh install landing | License card shows 🚀 Solo plan · `N` days left + [Subscribe via Stripe $9/mo] + [Cancel Trial] buttons. Does the countdown match 30 days? | Perception |
+| M2 | **Cancel Trial** — click Cancel Trial → confirm "Yes, cancel" | Card transitions within 1s to "Trial cancelled" state. Subscribe button visible. Pro features lock. Does it feel safe or punitive? | Friction |
+| M3 | **Re-trial blocked** — close dashboard, reopen | Card still shows cancelled state. No "Start Trial" reappearing. Does it feel like "it remembered me" or "it locked me out"? | Confidence |
+| M4 | **Trial expiry** — close dashboard, set `OBSERVECO_TRIAL_DAYS=0`, restart, reopen | ⚠️ Warning banner: "Your free trial ended on..." with [Subscribe $9/mo] [Dismiss] buttons. Dismiss works. Does the warning feel urgent or aggressive? | Perception |
+| M5 | **Pro state** (if you have a Stripe sub or admin key) — activate Pro | ✅ Pro · Solo $9/mo with [Manage Billing →] button. Next billing date shown. Does the Pro card feel premium? | Perception |
+| M6 | **Log file exists** — run in terminal: `ls -la ~/.local/share/observeco/billing.log` | Does the file exist? Is the first line a timestamped log entry? No confused output? | Confidence |
+| M7 | **Corrupt billing.json** — close dashboard, run: `echo "{bad" > ~/.local/share/observeco/billing.json`, reopen | Dashboard loads without crashing. License card shows default/empty state. No traceback on screen. Does it feel like "graceful fallback" or "broken"? | Confidence |
+| M8 | **Trust audit** — read the license card and ask yourself: | Would I enter my credit card on this dashboard? Does the billing UI feel like a real product or an afterthought? | Emotional Load |
+| M9 | **Stripe not configured** — default state, no Stripe keys | "Subscribe" button opens simulated/demo checkout (no real Stripe). Does it feel like a preview or a broken integration? | Perception |
+| M10 | **State survives hard restart** — cancel trial → kill the dashboard process → restart | License card still says cancelled. No trial reset. Does the system remember you? | Confidence |
+
+**Submit all M1–M10 before touching any other section. Then re-test Batch A to ensure no billing-related regressions.**
