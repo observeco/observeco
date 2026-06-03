@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-| **Last updated:** 2026-06-10 (Feature #26: Self-serve billing management spec'd — License card, Cancel Trial, Stripe Portal, trial hardening, webhooks)
+| **Last updated:** 2026-06-10 (Feature #26: Self-serve billing management ✅ Live. LLM gating clarified: all-or-nothing, Pro-only. No split gate.)
 | **Author:** Main |
 
 ---
@@ -13,7 +13,7 @@
 | **One-liner** | ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes |
 | **Positioning** | "ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes." — Locked 2026-05-28 |
 | **What it does** | CLI + dashboard that discovers your agents, monitors their health, analyses token usage, detects drift, auto-heals failures, and uses your own LLM to diagnose crashes, classify alerts, and guide first-run setup — all local, no cloud |
-| **License** | MIT (free tier forever, with 30-day Pro trial), Stripe Pro ($9 Solo/month). **30-day trial unlocks ALL Pro features including LLM-powered diagnosis.** After trial: LLM features revert to static fallback, rest of free tier unchanged. Trial auto-starts on first `observeco dashboard`. Can be disabled via `--no-llm` or config. Team tier ($49) delayed post-v1. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`. |
+| **License** | MIT (free tier forever, with 30-day Pro trial), Stripe Pro ($9 Solo/month). **30-day trial unlocks ALL Pro features including LLM-powered diagnosis.** After trial: all LLM features turn off. No split gate — the LLM is inherently a Pro-tier capability. Free tier gets the LLM during trial because trial = Pro for feature access. After trial, free = no LLM, period. This is by design, not a gap. Trial auto-starts on first `observeco dashboard`. Can be disabled via `--no-llm` or config. Team tier ($49) delayed post-v1. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`. |
 | **Free badge** | `Free forever · MIT license · No cloud` — always visible in dashboard header and README |
 | **Supersedes** | ERIS (runtime integrity) + CHISEL (context observability) — merged into single product |
 | **Framework support** | Any framework via `observeco agent add` + health check. Full token/drift for Hermes + OpenClaw |
@@ -61,8 +61,8 @@
 ||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Live | ✅ All (detection + health — core infra for everything) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
 |||| **23** | **Skill Artifacts + Cards System** (`observeco chisel artifacts` + `chisel cards`) | **Analysis** | **✅ Live** | ✅ Cached compressed `.md.compressed` per skill, `cards.json` (156 cards), `manifests.json`, CLI `observeco chisel cards` for top-30 rank, `observeco chisel artifacts --refresh` to rebuild. SkillOS `_load_skill_content()` prefers compressed cache over raw. `max_skill_content_bytes` reduced 8192→4096. | ✅ Same for all | ~1d | observeco-master-plan.md §3.23 |
 ||| **24** | **Config Hygiene Audit** (`observeco chisel config`) — scans Hermes config for duplicated prompts, low cache TTL, stale references. **Synergy:** shares token counting, YAML parsing, and savings estimation with `chisel/skill_compress.py`. Same pipeline, different target. | **Analysis** | **✅ Live** | ✅ CLI audit report with line-by-line findings + `--fix` flag | ✅ Dashboard widget (Pro, Brain tab, live-updating) + scheduled daily scan (6am) | ~1d | observeco-master-plan.md §3.24 |
-||| **25** | **LLM-Powered Intelligence Service** — shared `llm_service` that every module calls for deeper diagnosis, alert enrichment, personalized first-run guidance, and per-agent summaries. | **AI** | **✅ Live — v1** | **✅ 4/7 consumers live** | llm_service/ extracted (4 modules). Deep consumers: agent discovery, first-run wizard, heal escalation. Shallow consumers: per-agent summary, health check suggestion, error translation framework. CLI --no-llm toggle. Alert enrichment, heal feedback loop, pathway anomaly deferred. | ~5d (3d built, 2 deferred) | observeco-master-plan.md §3.25 |
-||| **26** | **Self-serve billing management** — License status card (plan, trial countdown, action buttons), Stripe Customer Portal for paid subs, Cancel Trial with 7-day grace, end-of-trial banner, trial hardening (same-email re-trial blocked), 3 Stripe webhooks (subscription.deleted/updated/invoice.payment_failed) | **Commercial** | **🔴 Building** | ✅ Free features always free — trial = full Pro access, after trial: locked to Free | ✅ Pro features | ~4h | §3.28 |
+||| **25** | **LLM-Powered Intelligence Service** — shared `llm_service` that every module calls for deeper diagnosis, alert enrichment, personalized first-run guidance, and per-agent summaries. | **AI** | **✅ Live — v1** | ✅ Free = no LLM (static fallback). Trial = all 7 consumers active. Pro = all 7 permanently. **By design: LLM is Pro-only.** | ✅ All 7 consumers (3 deep + 4 shallow) | ~5d (3d built, 2 deferred) | observeco-master-plan.md §3.25 |
+||| **26** | **Self-serve billing management** — License status card (plan, trial countdown, action buttons), Stripe Customer Portal for paid subs, Cancel Trial with trial hardening (one-time offer), end-of-trial banner, 3 Stripe webhooks (subscription.deleted/updated/invoice.payment_failed) | **Commercial** | **✅ Live** | ✅ Free features always free. LLM is Pro-only (all 7 consumers shut off after trial). Trial = full Pro unlock. After trial: Free. | ✅ Pro features | ~4h | §3.28 |
 |
 |---
 
@@ -1348,12 +1348,13 @@ Layer 4 — Cross-Framework Dashboard (P0)
 | Auto-heal (configurable) | ✅ | 🔴 Planned ~1d |
 | Chisel compress auto-watch | ✅ | 🔴 Planned ~2d |
 | Per-turn token tracking (never-pruned) | ✅ | 🔴 Planned ~3d |
-| Self-serve billing (License card, trial cancel, Grace portal, end-of-trial banner) | ✅ | 🔴 Building now — Feature #26 |
+| Self-serve billing (License card, trial cancel, Grace portal, end-of-trial banner) | ✅ | ✅ Live — Feature #26 |
+| LLM Intelligence (7 consumers: discovery, onboarding, heal, alerts, summaries, etc.) | ✅ All 7 | ✅ Live — **Pro only** (unlocked during 30-day trial) |
 
 **Pricing:** Solo $9/mo only. Team tier ($49/mo) delayed — product not mature enough.
 30-day free trial via Stripe. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`.
 
-**⚠️ Reality check:** Pro features beyond the 30-day trial are partially built. Trial auto-starts on first dashboard launch and unlocks all Pro features. License status card is building now (Feature #26). Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment. See §3.28.
+**⚠️ Reality check:** Most Pro features are built and working during the 30-day trial. After trial, features marked Pro-only lock. LLM intelligence is all-or-nothing — no "free light" tier. See §3.25 and §3.28 for details. Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment (paying users managed offline for now).
 
 ---
 
@@ -2451,7 +2452,7 @@ Add "Skill Audit" card to dashboard (Pro-only):
 ### 3.25 LLM-Powered Intelligence Service (`llm_service/`)
 
 **Tagline:** *Your own LLM, finding agents, diagnosing crashes, and guiding first-run — before you notice anything wrong.*
-**Status:** ✅ Live — v1 built in 3 days. 3 deep consumers (agent discovery, onboarding wizard, heal escalation) + 4 shallow consumers (per-agent summary, health check suggestion, error translation, CLI --no-llm). 3 deferred (alert enrichment, heal feedback loop, pathway anomaly — have working static fallbacks).
+**Status:** ✅ Live — v1 built in 3 days. 3 deep consumers (agent discovery, onboarding wizard, heal escalation) + 4 shallow consumers (per-agent summary, health check suggestion, error translation, CLI --no-llm). 3 deferred (alert enrichment, heal feedback loop, pathway anomaly — have working static fallbacks). **All LLM consumers are Pro-only.** During the 30-day trial, all 7 consumers are active. After trial: all shut off. No split gate. This is by design — see License Gating section below.
 **Effort:** ~5d
 
 **What it is:** Extracted from the working `doctor/llm.py` (391 lines, 11+ providers) into a shared service layer that every ObserveCo module uses. Priority-ordered: deep in 3 mission-critical consumers, shallow in 6 value-add consumers.
@@ -2497,9 +2498,11 @@ These 6 consumers use LLM to enrich existing behaviour. If LLM fails, the featur
 | Phase | What user sees |
 |-------|---------------|
 | **First 30 days (trial)** | Tier 1 (deep) + Tier 2 (shallow) — full LLM intelligence everywhere. Trial auto-starts on first `observeco dashboard`. Trial = pro for feature access. |
-| **After trial (free)** | Tier 1 falls back to static rules (7 patterns for heal, generic guide, static agent discovery). Tier 2 degenerates to current behaviour (flat alerts, raw numbers). LLM service never called. |
-| **Pro $9/mo** | Full LLM intelligence permanently. User also saves on token costs (Pro flat fee replaces ~$0.60/mo pay-per-call). |
+| **After trial (free)** | All LLM features shut off. No split gate between deep and shallow. LLM is inherently a Pro-tier capability — not something we tier-split. Static fallbacks everywhere. |
+| **Pro $9/mo** | Full LLM intelligence permanently. |
 | **Opt-out (`--no-llm`)** | Everything uses static fallback. No trial clock consumed. Respects privacy-first users. |
+
+**Design rationale (all-or-nothing):** The 4 free-tier shallow consumers (agent discovery hints, health check suggestions, error translation, first-run guidance) are enhancement-level. They're convenient but not critical path — the core monitoring (pulse, alerts, errors) works without them. Splitting the LLM gate into "free light" and "pro deep" adds complexity (license levels, per-consumer checks, confusion about why some LLM works and some doesn't) for marginal value. Cleaner product: LLM is Pro. Trial unlocks Pro (all LLM). After trial: no LLM. No exceptions. Documented, intentional, not a gap.
 
 **Cache & cost control:**
 
@@ -2802,7 +2805,7 @@ CREATE INDEX idx_telemetry_day ON telemetry_events(received_at::date);
 
 **Tagline:** *Know your plan. Manage your subscription. Cancel in one click.*
 
-**Status:** 🔴 Building — Feature #26
+**Status:** ✅ Live — Feature #26 complete
 **Effort:** ~4h total
 **Customer principle:** The user should see their billing status clearly, manage it without contacting anyone, and never feel trapped.
 
