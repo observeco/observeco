@@ -2808,6 +2808,24 @@ CREATE INDEX idx_telemetry_day ON telemetry_events(received_at::date);
 **Status:** ✅ Live — Feature #26 complete
 **Effort:** ~4h total
 **Customer principle:** The user should see their billing status clearly, manage it without contacting anyone, and never feel trapped.
+**Test suite:** 270 tests (P0=100%, P1=95%+, P2=80%+) — see `spec/plumbing-sprint-review/comprehensive-test-plan.md`
+**Success metrics:**
+- License status card renders in ≤500ms (static SSR, no network call on page load)
+- billing.json write completes in ≤200ms (local file, encrypt+rotating+lock)
+- billing.log stays under 3MB for single-user (RotatingFileHandler, 1MB×3 backups)
+- File lock acquisition succeeds on first attempt ≥99% (single-process)
+- File lock acquisition succeeds within 500ms under multi-process contention (10 retries × 50ms)
+**Acceptance criteria:**
+- [AC1] License card shows correct state for each of Trial / Cancelled / Expired / Pro / Free-Exhausted
+- [AC2] Cancel Trial writes `trial_consumed=true` and transitions card to Cancelled state within 1s of click
+- [AC3] Re-trial after cancel shows Free-Exhausted — no second trial
+- [AC4] Concurrent process A writes customer, process B reads immediately after — B sees A's write (file lock)
+- [AC5] billing.log rotates when it exceeds 1MB — logs are not lost, oldest entry is discarded
+- [AC6] 270-test suite passes with 0 failures
+**Known constraints (documented, all closed in v0.2.0):**
+- Multi-process safety: ✅ resolved via file-level lock (`_acquire_file_lock` / `.billing.lock` atomic O_EXCL)
+- Log rotation: ✅ resolved via `RotatingFileHandler` (1MB × 3 backups)
+- Thread safety: ✅ resolved via `threading.Lock`
 
 **Design philosophy:**
 - License keys are internal plumbing, not customer-facing — show "Pro ✓" or "Free", not `OBS-3B207C38`

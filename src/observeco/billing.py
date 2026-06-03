@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import logging.handlers
 import os
 import threading
 import time
@@ -28,14 +29,48 @@ logger.setLevel(logging.INFO)
 CONFIG_DIR = get_data_dir()
 CONFIG_FILE = CONFIG_DIR / "billing.json"
 
-# Persistent file log for billing operations
+# Persistent file log for billing operations (rotating: 1MB × 3 backups)
 _BILLING_LOG = CONFIG_DIR / "billing.log"
-_handler = logging.FileHandler(str(_BILLING_LOG))
+_handler = logging.handlers.RotatingFileHandler(
+    str(_BILLING_LOG), maxBytes=1_048_576, backupCount=3
+)
 _handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 logger.addHandler(_handler)
 
 # Thread lock for safe concurrent access to billing.json
 _billing_lock = threading.Lock()
+
+# File-level lock for multi-process safety (used alongside thread lock)
+_BILLING_LOCK_FILE = CONFIG_DIR / ".billing.lock"
+_FILE_LOCK_RETRIES = 10
+_FILE_LOCK_DELAY = 0.05  # 50ms between retries
+
+
+def _acquire_file_lock() -> bool:
+    """Acquire a cross-process advisory lock via atomic file creation.
+
+    Uses O_CREAT|O_EXCL which is atomic on POSIX and NTFS (Windows).
+    Returns True if lock acquired, False if contention persists.
+    """
+    lock_path = str(_BILLING_LOCK_FILE)
+    for attempt in range(_FILE_LOCK_RETRIES):
+        try:
+            fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            return True
+        except OSError:
+            if attempt == _FILE_LOCK_RETRIES - 1:
+                return False
+            time.sleep(_FILE_LOCK_DELAY)
+    return False
+
+
+def _release_file_lock() -> None:
+    """Release the cross-process lock file."""
+    try:
+        os.unlink(str(_BILLING_LOCK_FILE))
+    except OSError:
+        pass
 
 
 @dataclass
@@ -65,61 +100,73 @@ class BillingConfig:
 
 
 def _save_config(config: BillingConfig) -> None:
-    """Save billing config to disk with encrypted secrets (atomic write, thread-safe)."""
-    with _billing_lock:
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    """Save billing config to disk with encrypted secrets (atomic write, thread-safe, multi-process-safe)."""
+    if not _acquire_file_lock():
+        logger.error("Failed to acquire file lock for billing write after %d retries", _FILE_LOCK_RETRIES)
+        raise OSError("Could not acquire billing file lock — another process is writing")
+    try:
+        with _billing_lock:
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-        from .crypto import encrypt_dict
+            from .crypto import encrypt_dict
 
-        data = {
-            "stripe_publishable_key": config.stripe_publishable_key,
-            "stripe_secret_key": config.stripe_secret_key,
-            "webhook_secret": config.webhook_secret,
-            "solo_price_id": config.solo_price_id,
-            "team_price_id": config.team_price_id,
-            "trial_days": config.trial_days,
-            "is_active": config.is_active,
-            "customers": config.customers,
-            "issued_keys": config.issued_keys,
-        }
+            data = {
+                "stripe_publishable_key": config.stripe_publishable_key,
+                "stripe_secret_key": config.stripe_secret_key,
+                "webhook_secret": config.webhook_secret,
+                "solo_price_id": config.solo_price_id,
+                "team_price_id": config.team_price_id,
+                "trial_days": config.trial_days,
+                "is_active": config.is_active,
+                "customers": config.customers,
+                "issued_keys": config.issued_keys,
+            }
 
-        # Encrypt sensitive fields
-        SENSITIVE = ["stripe_secret_key", "webhook_secret"]
-        encrypt_dict(data, SENSITIVE)
+            # Encrypt sensitive fields
+            SENSITIVE = ["stripe_secret_key", "webhook_secret"]
+            encrypt_dict(data, SENSITIVE)
 
-        # Atomic write: write to temp, then rename
-        tmp = CONFIG_FILE.with_suffix(".billing.tmp")
-        # Retry loop for concurrent access safety
-        for attempt in range(3):
-            try:
-                tmp.write_text(json.dumps(data, indent=2))
-                tmp.chmod(0o600)
-                tmp.replace(CONFIG_FILE)
-                break
-            except OSError as e:
-                if attempt == 2:
-                    logger.error("Failed to save billing config after 3 retries: %s", e)
-                    raise
-                logger.warning("Billing write attempt %d/3 failed: %s", attempt + 1, e)
-                time.sleep(0.1)
+            # Atomic write: write to temp, then rename
+            tmp = CONFIG_FILE.with_suffix(".billing.tmp")
+            # Retry loop for concurrent access safety
+            for attempt in range(3):
+                try:
+                    tmp.write_text(json.dumps(data, indent=2))
+                    tmp.chmod(0o600)
+                    tmp.replace(CONFIG_FILE)
+                    break
+                except OSError as e:
+                    if attempt == 2:
+                        logger.error("Failed to save billing config after 3 retries: %s", e)
+                        raise
+                    logger.warning("Billing write attempt %d/3 failed: %s", attempt + 1, e)
+                    time.sleep(0.1)
+    finally:
+        _release_file_lock()
 
 
 def _load_config() -> BillingConfig:
-    """Load billing config from disk with decryption (thread-safe)."""
-    with _billing_lock:
-        if CONFIG_FILE.exists():
-            try:
-                data = json.loads(CONFIG_FILE.read_text())
-
-                from .crypto import decrypt_dict
-
-                SENSITIVE = ["stripe_secret_key", "webhook_secret"]
-                decrypt_dict(data, SENSITIVE)
-
-                return BillingConfig(**data)
-            except Exception as e:
-                logger.error("Failed to load billing config: %s", e)
+    """Load billing config from disk with decryption (thread-safe, multi-process-safe)."""
+    if not _acquire_file_lock():
+        logger.error("Failed to acquire file lock for billing read after %d retries", _FILE_LOCK_RETRIES)
         return BillingConfig()
+    try:
+        with _billing_lock:
+            if CONFIG_FILE.exists():
+                try:
+                    data = json.loads(CONFIG_FILE.read_text())
+
+                    from .crypto import decrypt_dict
+
+                    SENSITIVE = ["stripe_secret_key", "webhook_secret"]
+                    decrypt_dict(data, SENSITIVE)
+
+                    return BillingConfig(**data)
+                except Exception as e:
+                    logger.error("Failed to load billing config: %s", e)
+            return BillingConfig()
+    finally:
+        _release_file_lock()
 
 
 def get_price_id(plan: str = "solo") -> str:
