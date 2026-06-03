@@ -33,10 +33,13 @@ class BillingConfig:
     trial_days: int = 30
     is_active: bool = False
     customers: list[dict] = None
+    issued_keys: dict = None  # {key: {issued_at, issued_to, revoked, plan}}
 
     def __post_init__(self):
         if self.customers is None:
             self.customers = []
+        if self.issued_keys is None:
+            self.issued_keys = {}
 
 
 def _save_config(config: BillingConfig) -> None:
@@ -54,6 +57,7 @@ def _save_config(config: BillingConfig) -> None:
         "trial_days": config.trial_days,
         "is_active": config.is_active,
         "customers": config.customers,
+        "issued_keys": config.issued_keys,
     }
 
     # Encrypt sensitive fields
@@ -210,6 +214,91 @@ def get_billing_status() -> dict:
         "customers": len(config.customers),
         "active_subscriptions": sum(1 for c in config.customers if c.get("status") == "active"),
         "trialing": sum(1 for c in config.customers if c.get("status") == "trialing"),
+        "issued_keys": len(config.issued_keys or {}),
+        "active_keys": sum(1 for v in (config.issued_keys or {}).values() if not v.get("revoked")),
+    }
+
+
+# ── Admin License Key Management ──────────────────────────────
+
+_ADMIN_KEY = None
+
+def _get_admin_key() -> str:
+    global _ADMIN_KEY
+    if _ADMIN_KEY is None:
+        import os
+        _ADMIN_KEY = os.environ.get("OBSERVECO_ADMIN_KEY", "observeco-admin-2026")
+    return _ADMIN_KEY
+
+
+def generate_key(issued_to: str = "", plan: str = "solo") -> dict:
+    """Generate a new Pro license key. Stores in billing.json for offline validation."""
+    import secrets
+    config = _load_config()
+    key = f"OBS-PRO-{secrets.token_hex(4).upper()}-{secrets.token_hex(3).upper()}"
+    now = int(time.time())
+    if config.issued_keys is None:
+        config.issued_keys = {}
+    config.issued_keys[key] = {
+        "issued_at": now,
+        "issued_to": issued_to,
+        "revoked": False,
+        "revoked_at": None,
+        "plan": plan,
+        "activated_by": None,
+        "activated_at": None,
+    }
+    _save_config(config)
+    return {"key": key, "plan": plan, "issued_at": now}
+
+
+def revoke_key(key: str) -> dict:
+    """Revoke a previously issued license key."""
+    config = _load_config()
+    if not config.issued_keys or key not in config.issued_keys:
+        return {"status": "error", "message": "Key not found"}
+    config.issued_keys[key]["revoked"] = True
+    config.issued_keys[key]["revoked_at"] = int(time.time())
+    _save_config(config)
+    return {"status": "revoked", "key": key}
+
+
+def list_keys() -> list[dict]:
+    """List all issued license keys with their status."""
+    config = _load_config()
+    if not config.issued_keys:
+        return []
+    result = []
+    for key, meta in config.issued_keys.items():
+        result.append({
+            "key": key,
+            "plan": meta.get("plan", "solo"),
+            "issued_at": meta.get("issued_at"),
+            "issued_to": meta.get("issued_to", ""),
+            "revoked": meta.get("revoked", False),
+            "revoked_at": meta.get("revoked_at"),
+            "activated_by": meta.get("activated_by"),
+            "activated_at": meta.get("activated_at"),
+        })
+    return sorted(result, key=lambda x: x.get("issued_at", 0), reverse=True)
+
+
+def validate_admin_key(key: str) -> dict:
+    """Validate a Pro license key against the local store.
+
+    Checks: key exists, not revoked. Returns same format as CRM validation.
+    """
+    config = _load_config()
+    if not config.issued_keys or key not in config.issued_keys:
+        return {"valid": False, "error": "License key not found"}
+    entry = config.issued_keys[key]
+    if entry.get("revoked"):
+        return {"valid": False, "error": "License key has been revoked"}
+    return {
+        "valid": True,
+        "product": entry.get("plan", "solo"),
+        "status": "active",
+        "plan": entry.get("plan", "solo"),
     }
 
 

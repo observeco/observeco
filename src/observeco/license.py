@@ -198,7 +198,27 @@ def activate_key(key: str, email: str = "", plan: str = "solo") -> dict:
 
 
 def _validate_online(key: str) -> dict:
-    """POST to the ObserveCo validation API."""
+    """Validate a Pro license key.
+
+    Priority:
+    1. Local admin key store (works offline, for keys you generate)
+    2. CRM API (Vercel, when Supabase is live)
+    Falls back to optimistic activation if both unavailable.
+    """
+    # First check local admin key store
+    from observeco.billing import validate_admin_key
+    local = validate_admin_key(key)
+    if local.get("valid"):
+        # Mark who activated it
+        from observeco.billing import _load_config, _save_config
+        cfg = _load_config()
+        if cfg.issued_keys and key in cfg.issued_keys:
+            cfg.issued_keys[key]["activated_by"] = "dashboard_user"
+            cfg.issued_keys[key]["activated_at"] = int(time.time())
+            _save_config(cfg)
+        return local
+
+    # Fall back to CRM API
     import urllib.request
     import urllib.error
 
