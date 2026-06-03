@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 import time
 from dataclasses import dataclass
 
@@ -22,9 +23,19 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from observeco.dirs import get_data_dir
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 CONFIG_DIR = get_data_dir()
 CONFIG_FILE = CONFIG_DIR / "billing.json"
+
+# Persistent file log for billing operations
+_BILLING_LOG = CONFIG_DIR / "billing.log"
+_handler = logging.FileHandler(str(_BILLING_LOG))
+_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+logger.addHandler(_handler)
+
+# Thread lock for safe concurrent access to billing.json
+_billing_lock = threading.Lock()
 
 
 @dataclass
@@ -54,55 +65,59 @@ class BillingConfig:
 
 
 def _save_config(config: BillingConfig) -> None:
-    """Save billing config to disk with encrypted secrets (atomic write)."""
-    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    """Save billing config to disk with encrypted secrets (atomic write, thread-safe)."""
+    with _billing_lock:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
-    from .crypto import encrypt_dict
+        from .crypto import encrypt_dict
 
-    data = {
-        "stripe_publishable_key": config.stripe_publishable_key,
-        "stripe_secret_key": config.stripe_secret_key,
-        "webhook_secret": config.webhook_secret,
-        "solo_price_id": config.solo_price_id,
-        "team_price_id": config.team_price_id,
-        "trial_days": config.trial_days,
-        "is_active": config.is_active,
-        "customers": config.customers,
-        "issued_keys": config.issued_keys,
-    }
+        data = {
+            "stripe_publishable_key": config.stripe_publishable_key,
+            "stripe_secret_key": config.stripe_secret_key,
+            "webhook_secret": config.webhook_secret,
+            "solo_price_id": config.solo_price_id,
+            "team_price_id": config.team_price_id,
+            "trial_days": config.trial_days,
+            "is_active": config.is_active,
+            "customers": config.customers,
+            "issued_keys": config.issued_keys,
+        }
 
-    # Encrypt sensitive fields
-    SENSITIVE = ["stripe_secret_key", "webhook_secret"]
-    encrypt_dict(data, SENSITIVE)
+        # Encrypt sensitive fields
+        SENSITIVE = ["stripe_secret_key", "webhook_secret"]
+        encrypt_dict(data, SENSITIVE)
 
-    # Atomic write: write to temp, then rename
-    tmp = CONFIG_FILE.with_suffix(".billing.tmp")
-    try:
-        tmp.write_text(json.dumps(data, indent=2))
-        tmp.chmod(0o600)
-        tmp.replace(CONFIG_FILE)
-    except Exception:
-        # Clean up temp file on failure
-        if tmp.exists():
-            tmp.unlink()
-        raise
+        # Atomic write: write to temp, then rename
+        tmp = CONFIG_FILE.with_suffix(".billing.tmp")
+        # Retry loop for concurrent access safety
+        for attempt in range(3):
+            try:
+                tmp.write_text(json.dumps(data, indent=2))
+                tmp.chmod(0o600)
+                tmp.replace(CONFIG_FILE)
+                break
+            except OSError:
+                if attempt == 2:
+                    raise
+                time.sleep(0.1)
 
 
 def _load_config() -> BillingConfig:
-    """Load billing config from disk with decryption."""
-    if CONFIG_FILE.exists():
-        try:
-            data = json.loads(CONFIG_FILE.read_text())
+    """Load billing config from disk with decryption (thread-safe)."""
+    with _billing_lock:
+        if CONFIG_FILE.exists():
+            try:
+                data = json.loads(CONFIG_FILE.read_text())
 
-            from .crypto import decrypt_dict
+                from .crypto import decrypt_dict
 
-            SENSITIVE = ["stripe_secret_key", "webhook_secret"]
-            decrypt_dict(data, SENSITIVE)
+                SENSITIVE = ["stripe_secret_key", "webhook_secret"]
+                decrypt_dict(data, SENSITIVE)
 
-            return BillingConfig(**data)
-        except Exception:
-            pass
-    return BillingConfig()
+                return BillingConfig(**data)
+            except Exception:
+                pass
+        return BillingConfig()
 
 
 def get_price_id(plan: str = "solo") -> str:
