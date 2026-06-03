@@ -11,6 +11,8 @@ Implements:
 from __future__ import annotations
 
 import json
+import logging
+import os
 import time
 from dataclasses import dataclass
 
@@ -18,6 +20,8 @@ from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from observeco.dirs import get_data_dir
+
+logger = logging.getLogger(__name__)
 
 CONFIG_DIR = get_data_dir()
 CONFIG_FILE = CONFIG_DIR / "billing.json"
@@ -40,10 +44,17 @@ class BillingConfig:
             self.customers = []
         if self.issued_keys is None:
             self.issued_keys = {}
+        # Allow OBSERVECO_TRIAL_DAYS env var to override for testing
+        env_trial = os.environ.get("OBSERVECO_TRIAL_DAYS")
+        if env_trial is not None:
+            try:
+                self.trial_days = int(env_trial)
+            except (ValueError, TypeError):
+                pass
 
 
 def _save_config(config: BillingConfig) -> None:
-    """Save billing config to disk with encrypted secrets."""
+    """Save billing config to disk with encrypted secrets (atomic write)."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
     from .crypto import encrypt_dict
@@ -64,8 +75,17 @@ def _save_config(config: BillingConfig) -> None:
     SENSITIVE = ["stripe_secret_key", "webhook_secret"]
     encrypt_dict(data, SENSITIVE)
 
-    CONFIG_FILE.write_text(json.dumps(data, indent=2))
-    CONFIG_FILE.chmod(0o600)
+    # Atomic write: write to temp, then rename
+    tmp = CONFIG_FILE.with_suffix(".billing.tmp")
+    try:
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.chmod(0o600)
+        tmp.replace(CONFIG_FILE)
+    except Exception:
+        # Clean up temp file on failure
+        if tmp.exists():
+            tmp.unlink()
+        raise
 
 
 def _load_config() -> BillingConfig:
@@ -93,7 +113,7 @@ def get_price_id(plan: str = "solo") -> str:
 
 def configure(stripe_secret: str, stripe_publishable: str,
               solo_price: str = "", team_price: str = "",
-              webhook_secret: str = "") -> None:
+              webhook_secret: str = "") -> dict:
     """Configure Stripe integration."""
     config = _load_config()
     config.stripe_secret_key = stripe_secret
@@ -106,6 +126,8 @@ def configure(stripe_secret: str, stripe_publishable: str,
         config.webhook_secret = webhook_secret
     config.is_active = True
     _save_config(config)
+    logger.info("Billing configured: stripe_active=True")
+    return {"status": "configured", "is_active": True}
 
 
 def create_checkout_session(email: str, plan: str = "solo",
@@ -249,6 +271,7 @@ def generate_key(issued_to: str = "", plan: str = "solo") -> dict:
         "activated_at": None,
     }
     _save_config(config)
+    logger.info("Key generated: %s -> %s (plan=%s)", key, issued_to or "unnamed", plan)
     return {"key": key, "plan": plan, "issued_at": now}
 
 
@@ -260,6 +283,7 @@ def revoke_key(key: str) -> dict:
     config.issued_keys[key]["revoked"] = True
     config.issued_keys[key]["revoked_at"] = int(time.time())
     _save_config(config)
+    logger.info("Key revoked: %s", key)
     return {"status": "revoked", "key": key}
 
 
@@ -290,10 +314,13 @@ def validate_admin_key(key: str) -> dict:
     """
     config = _load_config()
     if not config.issued_keys or key not in config.issued_keys:
+        logger.warning("Key validation failed: %s — not found", key)
         return {"valid": False, "error": "License key not found"}
     entry = config.issued_keys[key]
     if entry.get("revoked"):
+        logger.warning("Key validation failed: %s — revoked", key)
         return {"valid": False, "error": "License key has been revoked"}
+    logger.info("Key validated: %s (plan=%s)", key, entry.get("plan", "solo"))
     return {
         "valid": True,
         "product": entry.get("plan", "solo"),

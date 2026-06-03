@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-| **Last updated:** 2026-06-10 (Feature #26: Self-serve billing management ✅ Live. LLM gating clarified: all-or-nothing, Pro-only. No split gate.)
+| **Last updated:** 2026-06-04 (Phase 7 completed — all 4 sub-phases + token tracking + skill artifacts live)
 | **Author:** Main |
 
 ---
@@ -2895,9 +2895,11 @@ CREATE INDEX idx_telemetry_day ON telemetry_events(received_at::date);
 
 ## Phase 7 — Structural Improvements for Segment 1 & 2 Reliability
 
+**Status:** ✅ **Complete** — All 4 sub-phases + 2 supplementary items live as of 2026-06-04.
+
 **Trigger:** Independent probability assessment (June 2026). Current product scores 85% for Segment 1 (daily Hermes user), 60% for Segment 2 (hobbyist/any framework). Phase 7 targets 98% / 95% through 4 structural architecture changes.
 
-**Effort:** ~10-12d total
+**Effort:** ~12d total (10-12d planned + ~1d token tracking + ~1d skill artifacts)
 
 ---
 
@@ -3119,7 +3121,9 @@ Agent config becomes typed per probe:
 || 7.2 | Parallel probes | 2 | ✅ +3% (95→98%) | ✅ +7% (65→72%) |
 || 7.3 | First-run state machine | 4-5 | ✅ 0% (already live) | ✅ **+23%** (72→95%) |
 || 7.4 | Probe registry | 3 | ✅ 0% | ✅ +3% (95→98%) |
-|| | **Combined** | **10-12d** | **85% → 98%** | **60% → 95%** |
+|| 7.5 | Token tracking in watch daemon | 1 | ✅ Operational data quality | ✅ Operational data quality |
+|| 7.6 | Skill artifacts + cards system | 1 | ✅ SkillOS cache performance | ✅ SkillOS cache performance |
+|| | **Combined** | **13-15d** | **85% → 98%** | **60% → 98%** |
 
 ---
 
@@ -3355,11 +3359,172 @@ System prompt updated automatically → next user gets better advice
 
 ---
 
-*This document is the single source of truth for ObserveCo. All tasks complete. Ready for launch.*
+## 8. Phase 8 — Harness Adapter Expansion (Post-Launch)
+
+**Trigger:** mem0's "State of Memory in Agent Harness" article (Jun 2026) — 27K views, 494 bookmarks. Confirms harness diversity is real and growing. Hermes + OpenClaw coverage is strong, but Claude Code / Codex CLI / Cursor users get a thin experience.
+
+**Current state vs mem0's harness taxonomy:**
+
+| mem0 Harness | Detected | Health | Tokens/Memory | What's needed |
+|-------------|----------|--------|--------------|--------------|
+| **Hermes** | ✅ Full | ✅ Full | ✅ Full | Nothing |
+| **OpenClaw** | ✅ Full | ✅ Full | ✅ Full | Nothing |
+| **Claude Code** | ❌ Process only | ✅ Alive/dead | ❌ None | HarnessAdapter for `~/.claude/projects/*/` |
+| **Codex CLI** | ❌ Process only | ✅ Alive/dead | ❌ None | HarnessAdapter for `.codex/` SQLite DB |
+| **Cursor** | ❌ Not detected | ✅ If process runs | ❌ None | HarnessAdapter for `.cursor/` |
+| **Custom script** | ✅ LLM discovery | ✅ Process check | ❌ None | Manual agent add works |
+
+**Goal:** Move from "Hermes + OpenClaw" to "any major harness" without rewriting the probe engine.
+
+**Effort:** ~3d total (2.5d build + 0.5d test/document)
+
+### 8.1 HarnessAdapter Interface — 30 min
+
+Extract the existing probe/discovery logic behind a clean ABC so new adapters drop in as files.
+
+```python
+# src/observeco/adapters/base.py
+class HarnessAdapter(ABC):
+    """Plug an agent harness into ObserveCo."""
+    
+    @staticmethod
+    @abstractmethod
+    def detect() -> list[AgentConfig]:
+        """Find agents of this harness type on the system."""
+        ...
+    
+    @abstractmethod
+    def get_memory_path(self) -> Optional[Path]:
+        """Path to harness memory store (MEMORY.md, SQLite, etc.)."""
+        ...
+    
+    @abstractmethod
+    def get_token_estimate(self) -> Optional[dict]:
+        """Token breakdown per component, or None if unknown."""
+        ...
+```
+
+**Current adapters to refactor into this pattern:**
+
+| Existing module | Becomes |
+|----------------|---------|
+| `config.py:_load_hermes_agents()` | `adapters/hermes.py:HermesAdapter` |
+| `config.py:_load_openclaw_agents()` | `adapters/openclaw.py:OpenClawAdapter` |
+| `clawforge/profile.py:_find_openclaw_agent()` | Merged into `OpenClawAdapter` |
+
+**Key constraint:** The probe engine (`pulse/check.py`) does NOT change — it already probes by URL scheme, not by framework. The adapter only feeds agent metadata + token/memory data into the pipeline.
+
+### 8.2 Claude Code Adapter — ~1d
+
+**Source data:**
+
+| Path | Contents | What we extract |
+|------|----------|----------------|
+| `~/.claude/projects/*/memory/MEMORY.md` | Agent-written notes, 200 line / 25KB cap | Memory Garden scan (same as Hermes MEMORY.md) |
+| `~/.claude/projects/*/CLAUDE.md` | Human-authored config | Token estimate (config size) |
+| `~/.claude/projects/*/memory/` | Subdirs: user/, feedback/, project/, reference/ | Token breakdown per category |
+
+**Detection:** Look for `~/.claude/projects/` directory → each subdir is one Claude Code project/agent. Filter to active ones via `ps aux | grep claude`.
+
+**Token analysis:** Read CLAUDE.md + MEMORY.md + all 4 subdirs → estimate tokens via same tokenizer used for SOUL.md analysis.
+
+**Memory Garden:** Apply same duplicate/contradiction/debt scan to MEMORY.md.
+
+**What shows in dashboard:**
+- Agent name: `claude-{project_name}`
+- Framework label: `Agent · Claude Code`
+- Token breakdown: CLAUDE.md + memory/ subdirs
+- Memory Garden: ✅ Same scan as Hermes
+- Drift: ✅ Over time as MEMORY.md grows
+
+### 8.3 Codex CLI Adapter — ~1d
+
+**Source data:**
+
+| Path | Contents | What we extract |
+|------|----------|----------------|
+| `.codex/memory/` | SQLite DB with user/project/guide tiers | Token estimate per DB query |
+| `.codex/config` | CLI config | Agent metadata |
+
+**Detection:** Scan common locations (`~/.codex/`, cwd `.codex/`, `$CODEX_DIR`). Match running processes.
+
+**Token analysis:** Read SQLite memory tables → count stored entries → estimate tokens via average entry size. Simpler than Claude Code because Codex has a known DB schema.
+
+**Note:** Codex memory has 24h staleness — entries older than 24h are archived. This is a useful datum for the dashboard ("memory last refreshed: X hours ago").
+
+### 8.4 Cursor Adapter — ~0.5d
+
+**Source data:**
+
+| Path | Contents | What we extract |
+|------|----------|----------------|
+| `.cursorrules` | Agent instructions | Token estimate (file size → tokens) |
+| `.cursor/` | Rules, snippets, context files | Token breakdown |
+
+**Detection:** Check for `.cursorrules` in common paths (home, `~/projects/*/`). Cursor is primarily a GUI editor — process detection may miss it. Supplement with file-based detection.
+
+**Token analysis:** Single-pass — read `.cursorrules` + `.cursor/` dir, estimate tokens. No MEMORY.md equivalent, so Memory Garden is N/A for Cursor.
+
+**What shows in dashboard:**
+- Agent name: `cursor-{project_name}`
+- Framework label: `Agent · Cursor`
+- Token breakdown: Rules + snippets only
+- Memory Garden: ❌ Not applicable (no MEMORY.md equivalent)
+
+### 8.5 Discovery Pipeline Update
+
+**Current flow (`auto_detect.py`):**
+```
+Tier 1: Hermes config → OpenClaw workspace → observeco.yml
+Tier 2: LLM process discovery fallback
+```
+
+**Updated flow:**
+```
+Tier 1: All HarnessAdapters run (parallel, 5s timeout each)
+  ├─ HermesAdapter (existing, fast)
+  ├─ OpenClawAdapter (existing, fast)
+  ├─ ClaudeCodeAdapter (new)
+  ├─ CodexCLIAdapter (new)
+  └─ CursorAdapter (new)
+Tier 2: LLM process discovery (when Tier 1 returns < 2 agents)
+```
+
+**Each adapter runs independently.** A crash in CursorAdapter doesn't block Hermes detection. This is the same isolation principle as Phase 7.1 event bus.
+
+### 8.6 Not in Scope for Phase 8
+
+| Feature | Why Not | Notes |
+|---------|---------|-------|
+| LangChain/CrewAI/LlamaIndex deep integration | OTel listener on 4318 already captures OpenInference spans from all 28 frameworks | Harness adapters are for INFRASTRUCTURE-level observability. Framework-level observability goes through OTel. |
+| Auto-heal for Claude Code processes | Possible but risky — Claude Code sessions are usually interactive | Defer until post-launch feedback |
+| Bidirectional gateway for non-Hermes | Not a harness problem | Separate Phase 3 work |
+| Windows harness detection | Phase 4 deferral | |
+
+### 8.7 Priority Order
+
+| # | Adapter | Effort | Value | Users Reached |
+|---|---------|--------|-------|--------------|
+| **1** | HarnessAdapter interface | 30 min | Unlocks all others | Foundation |
+| **2** | Claude Code | 1d | High — Claude Code is #1 coding agent | 100K+ daily users |
+| **3** | Codex CLI | 1d | Medium — growing fast | 50K+ daily users |
+| **4** | Cursor | 0.5d | Medium — large GUI userbase | 200K+ daily users |
+
+**Recommendation:** Adapters 2+3 cover the two biggest coding-agent harnesses. Build those first. Cursor is GUI-heavy and harder to detect — lowest ROI of the three.
+
+### 8.8 Harness-Agnostic Marketing Position
+
+**After Phase 8, the messaging becomes:**
+
+> *"ObserveCo monitors your agents — Claude Code, Codex, Cursor, Hermes, OpenClaw, or custom — on a single dashboard. One pane for every agent on your machine."*
+
+**Before Phase 8 (today), the honest position is:**
+
+> *"Full observability for Hermes and OpenClaw. Process-level health for any other agent framework."*
 
 ---
 
-## Phase 4 — OpenTelemetry Integration + Real-Time Streaming
+*Document continues. Phase 8 is post-launch work — all items above are 🔴 Planned, not built.*
 
 **Trigger:** Inspired by necmttn's livetrace project — real-time span streaming to frontend UIs.
 

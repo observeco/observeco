@@ -306,8 +306,26 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
                             metadata_json=metadata_json,
                         )
                         # Auto-trim SOUL.md for all alive agents
+                        trim_result = None
                         if status_val == "alive" and getattr(agent, "config_path", None):
-                            run_trim_file(agent.name, agent.config_path)
+                            trim_result = run_trim_file(agent.name, agent.config_path)
+                        # Log token snapshot from trim results (feeds token_logs for dashboard)
+                        if trim_result and isinstance(trim_result, dict):
+                            try:
+                                turn_id = f"watch_{int(time.time())}_{agent.name}"
+                                db.log_token_turn(
+                                    agent_name=agent.name,
+                                    turn_id=turn_id,
+                                    total_tokens=trim_result.get("total_tokens", 0),
+                                    identity_tokens=trim_result.get("identity_tokens", 0),
+                                    skills_tokens=trim_result.get("skills_tokens", 0),
+                                    memory_tokens=trim_result.get("memory_tokens", 0),
+                                    tools_tokens=trim_result.get("tools_tokens", 0),
+                                    guidance_tokens=trim_result.get("guidance_tokens", 0),
+                                    provider="auto-detected",
+                                )
+                            except Exception:
+                                pass
                         results.append((agent.name, status_val, latency))
                         # Publish probe event
                         try:

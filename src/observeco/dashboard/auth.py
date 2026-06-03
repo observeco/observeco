@@ -28,6 +28,7 @@ Architecture:
 
 from __future__ import annotations
 
+import hmac
 import logging
 import secrets
 from pathlib import Path
@@ -114,7 +115,7 @@ class DashboardAuthMiddleware(BaseHTTPMiddleware):
             if not token:
                 token = request.query_params.get("token", "")
 
-            if token != self._secret:
+            if not hmac.compare_digest(token, self._secret):
                 return JSONResponse(
                     status_code=401,
                     content={

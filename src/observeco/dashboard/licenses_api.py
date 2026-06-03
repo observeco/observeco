@@ -65,11 +65,15 @@ async def license_badge():
 </div>""")
     elif is_pro and not is_trial:
         # Paid Pro subscriber
+        stale_warn = ""
+        if state.validation_stale:
+            stale_warn = '<span style="font-size:10px;color:#f59e0b;">⚠️ Validation not refreshed in 24h</span>'
         return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#064e3b;border:1px solid #059669;border-radius:10px;font-size:12px;">
   <span style="font-size:16px;">✅</span>
   <div style="display:flex;flex-direction:column;">
     <span style="font-weight:600;color:#86efac;">Pro · {plan} plan</span>
     <span style="font-size:10px;color:#64748b;">Active subscription</span>
+    {stale_warn}
   </div>
   <button onclick="showManageBilling()" class="header-btn" style="background:#059669;color:white;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-weight:600;font-size:11px;">Manage Billing →</button>
 </div>""")
