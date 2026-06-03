@@ -96,9 +96,11 @@ def _save_config(config: BillingConfig) -> None:
                 tmp.chmod(0o600)
                 tmp.replace(CONFIG_FILE)
                 break
-            except OSError:
+            except OSError as e:
                 if attempt == 2:
+                    logger.error("Failed to save billing config after 3 retries: %s", e)
                     raise
+                logger.warning("Billing write attempt %d/3 failed: %s", attempt + 1, e)
                 time.sleep(0.1)
 
 
@@ -115,8 +117,8 @@ def _load_config() -> BillingConfig:
                 decrypt_dict(data, SENSITIVE)
 
                 return BillingConfig(**data)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error("Failed to load billing config: %s", e)
         return BillingConfig()
 
 
@@ -200,11 +202,13 @@ def create_checkout_session(email: str, plan: str = "solo",
             "mode": "live",
         }
     except ImportError:
+        logger.error("Checkout session failed: stripe package not installed")
         return {
             "error": "stripe package not installed. Install with: pip install stripe",
             "mode": "error",
         }
     except Exception as e:
+        logger.error("Checkout session failed: %s", e)
         return {
             "error": str(e),
             "mode": "error",
@@ -237,8 +241,10 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
 
         return {"status": "ignored", "event": event["type"]}
     except ImportError:
+        logger.error("Webhook handling failed: stripe package not installed")
         return {"error": "stripe package not installed"}
     except Exception as e:
+        logger.error("Webhook handling failed: %s", e)
         return {"error": str(e)}
 
 
@@ -413,6 +419,8 @@ def add_billing_endpoints(app) -> None:
             )
             return {"url": session.url, "mode": "live"}
         except ImportError:
-            return {"error": "stripe package not installed", "mode": "error"}
+            logger.error("Portal session failed: stripe package not installed")
+            return {"error": "Stripe not installed", "mode": "error"}
         except Exception as e:
+            logger.error("Portal session failed: %s", e)
             return {"error": str(e), "mode": "error"}

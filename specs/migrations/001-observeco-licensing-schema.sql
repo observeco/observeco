@@ -1,10 +1,12 @@
 -- ============================================================
 -- ObserveCo Licensing — Supabase Migration
 -- Project: qivlbpklmwghtgeyxncg.supabase.co
+-- Source: specs/observeco-master-plan.md §3.3 (Schema Design)
 -- Run this in the Supabase Dashboard → SQL Editor
 -- ============================================================
 
 -- 1. Products table
+-- Source: billing.py BillingConfig.dataclass (stores product/price config)
 CREATE TABLE IF NOT EXISTS public.products (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
@@ -17,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.products (
 );
 
 -- 2. Licenses table
+-- Source: license.py LicenseState / LicenseManager (online activation flow)
 CREATE TABLE IF NOT EXISTS public.licenses (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   product_slug TEXT REFERENCES public.products(slug),
