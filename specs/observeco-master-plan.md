@@ -2911,6 +2911,76 @@ CREATE INDEX idx_telemetry_day ON telemetry_events(received_at::date);
 
 ---
 
+### 3.29 Confidence, False-Positive/FN Detection & Recommendations
+
+**Status:** ✅ Live — Feature #27 complete (commit 3e19d17+)
+**Effort:** ~2h total
+**Tagline:** *Every flag tells you how sure we are and what to do about it.*
+
+**Customer principle:** A red flag without a recommendation is just anxiety. A green flag without a confidence score is a trap. Every signal must tell the user: (1) how sure we are, (2) how likely it is to be wrong, and (3) what to do next.
+
+**How it works:** A single `_compute_confidence()` function cross-references 4 data signals (pulse state duration, consecutive check count, source agreement, error pattern stability) to produce a confidence level, FP risk, FN risk, and recommendation for every agent card metric row and every detail tab.
+
+**Confidence levels:**
+- 🟢 **High** (4/4 signals agree) — State persisted >2h, 3+ consecutive checks, all sources agree, error pattern is stable
+- 🟡 **Medium** (2-3/4 signals agree) — State <30min, 1-2 checks, sources disagree, errors vary
+- ⚪ **Low** (0-1/4 signals agree) — Single source, just changed, isolated reading, first check
+
+**Risk axes:**
+- **FP risk** (false positive — alarm when nothing's wrong): Low / Moderate / High
+- **FN risk** (false negative — quiet when something IS wrong): Low / Moderate / High
+
+**Per-signal contribution:**
+
+| Signal | What it measures | High confidence means |
+|--------|-----------------|---------------------|
+| **Duration** | How long has this state persisted? | >2h = high confidence. 1 miss could be transient. |
+| **Consecutive count** | How many checks in a row agree? | 3+ consecutive = high. Single = low. |
+| **Source agreement** | Do pulse + errors + circuit breaker agree? | All 3 say dead = high. Only 2/3 = medium. |
+| **Pattern stability** | Are errors consistent or random? | Same root cause every time = high. Random = medium/low. |
+
+**Recommendations by condition:**
+
+| Condition | Confidence | FP risk | FN risk | Recommendation |
+|-----------|-----------|---------|---------|---------------|
+| Agent dead, long duration | 🔵 High | ✅ Low | ✅ Low | `➤ Agent has been down for X days. Start manually: observeco start <name>` |
+| Agent dead, recent | 🟡 Med | ⚠️ Moderate | ✅ Low | `➤ Agent may be down. Run observeco pulse check <name> to confirm.` |
+| Guard tripped | 🔵 High | ✅ Low | ✅ Low | `➤ Guard stopped after 3 failures. Wait ~4h cooldown or restart agent.` |
+| Guard not tripped, agent dead | 🔵 High | ✅ Low | ✅ Low | `➤ Agent is down — guard can't check it. Start the agent first.` |
+| Multiple errors, dead agent | 🔵 High | ✅ Low | ✅ Low | `➤ X errors from a dead agent. Restart the agent to stop the noise.` |
+| Multiple errors, alive agent | 🟡 Med | ⚠️ Moderate | ✅ Low | `➤ X errors — could be transient or ongoing. Run observeco heal --diagnose.` |
+| Single error | ⚪ Low | ❌ High | ✅ Low | `➤ Single error — likely transient. No action unless it repeats.` |
+| Stale running (alive but old) | 🟡 Med | ✅ Low | ❌ High | `➤ Last check was Xh ago. Agent could have died since. Run observeco pulse check.` |
+| Perfect health, many checks | 🔵 High | ✅ Low | ✅ Low | `➤ All clear — all checks passed.` |
+| Perfect health, few checks | ⚪ Low | ✅ Low | ❌ High | `➤ No issues yet — but only X checks recorded. Continue monitoring.` |
+
+**Where it shows on the page:**
+
+| Location | What the user sees |
+|----------|-------------------|
+| **Agent card Health row** | `● Running` + 🟢 High confidence dot + recommendation inline (smaller text below row) |
+| **Agent card Guard row** | `⚠️ Agent is down` + 🔵 High confidence + FP risk: Low |
+| **Agent card Errors row** | `⚠️ 6 in last 24h` + 🔵 High confidence + recommendation inline |
+| **Health detail tab** | Confidence header with FP/FN risk badges + full recommendation section |
+| **Guard detail tab** | Confidence header with source agreement breakdown + recommendation |
+| **Errors detail tab** | Confidence header + FP risk badge + recommendation before Pro upsell |
+| **Handled separately:** | Stale status → shows FN risk prominently ("could be hiding something") |
+
+**Specific false-positive and false-negative guardrails:**
+- **FP guard: Green status with no recent pulses** → FN risk: High → warns user "could be missing data"
+- **FP guard: Red status with single miss** → Confidence: Low → says "transient — wait 2 min"
+- **FP guard: Guard stopped but agent recovered** → Reflected in recommendation ("agent may be fine, guard will auto-reset")
+- **FN guard: Multiple errors with low confidence** → Shows FP risk alongside to prevent panic
+- **FN guard: Perfect health on new agent** → Shows "only N checks recorded — not yet conclusive"
+
+**What we deliberately DON'T build:**
+- ❌ ML-based confidence — uses deterministic rules from existing DB signals
+- ❌ Historical confidence trends — single snapshot per check
+- ❌ User-configurable thresholds — sensible defaults for v1
+- ❌ Per-user recommendation preferences — same recommendations for all
+
+**Test coverage:** Tests for `_compute_confidence()` covering: dead agent long duration, single missed pulse, stale running, perfect health, guard tripped, single error, mixed signals.
+
 ## Phase 7 — Structural Improvements for Segment 1 & 2 Reliability
 
 **Status:** ✅ **Complete** — All 4 sub-phases + 2 supplementary items live as of 2026-06-04.

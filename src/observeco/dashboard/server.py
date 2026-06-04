@@ -967,16 +967,23 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
     fw_parts = [p.strip().capitalize() for p in raw_fw.split("+")] if raw_fw else []
     framework = " + ".join(fw_parts) if fw_parts else ""
 
-    if tab == "health":
-        return _detail_health_tab(name, pulses, errors, circuit, framework)
-    # Derive agent status from recent pulses (shared by guard + errors tabs)
+    from observeco.dashboard.server import _compute_confidence
+
+    # Derive agent status from recent pulses
     agent_status = "unknown"
     if pulses:
         agent_status = pulses[0].get("status", "unknown")
+
+    # Compute confidence for the agent's current state
+    state_since = pulses[0].get("timestamp", int(time.time())) if pulses else int(time.time()) - 86400
+    conf = _compute_confidence(agent_status, pulses, errors, circuit, state_since, int(time.time()))
+
+    if tab == "health":
+        return _detail_health_tab(name, pulses, errors, circuit, framework, conf)
     if tab == "guard":
-        return _detail_guard_tab(name, errors, circuit, framework, agent_status)
+        return _detail_guard_tab(name, errors, circuit, framework, agent_status, conf)
     elif tab == "errors":
-        return _detail_errors_tab(name, errors, framework, agent_status)
+        return _detail_errors_tab(name, errors, framework, agent_status, conf)
     elif tab == "tokens":
         return _detail_tokens_tab(name, trims, drift, framework)
     elif tab == "garden" or tab == "memory":
@@ -984,8 +991,226 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
     return HTMLResponse("<div>Unknown tab</div>")
 
 
-def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, framework: str) -> str:
+# ── Confidence, Risk & Recommendation Engine (§3.29) ──
+
+
+def _compute_confidence(status: str, pulses: list, errors: list,
+                         circuit: dict, state_since: int, now: int) -> dict:
+    """Score confidence, FP/FN risk, and produce recommendation for a signal.
+
+    Uses 4 independent signals:
+      1. Duration — how long in current state
+      2. Consecutive count — how many checks in a row agree
+      3. Source agreement — do pulse + errors + circuit breaker agree?
+      4. Pattern stability — are error messages consistent?
+
+    Returns dict with: level, fp_risk, fn_risk, recommendation, sources_agree.
+    """
+    # ── Signal 1: Duration ──
+    duration = max(0, now - state_since)
+    sig_duration = 1 if duration > 7200 else 0  # >2h = strong
+
+    # ── Signal 2: Consecutive count ──
+    consecutive = 0
+    for p in pulses:
+        if p.get("status") == status:
+            consecutive += 1
+        else:
+            break
+    sig_consecutive = 2 if consecutive >= 3 else 1 if consecutive >= 2 else 0
+
+    # ── Signal 3: Source agreement ──
+    has_errors = len(errors) > 0
+    is_tripped = circuit.get("tripped", False)
+    is_dead = status == "dead"
+    is_alive = status == "alive"
+
+    # How many sources agree with the current status
+    sources = 0
+    total_sources = 3  # pulse status, error presence, circuit breaker
+
+    if is_dead:
+        if has_errors:
+            sources += 1  # errors confirm problem
+        if not is_tripped:
+            sources += 1  # circuit not tripped = still checking = dead confirmed
+    elif is_alive:
+        if not has_errors:
+            sources += 1  # no errors confirms health
+        if not is_tripped:
+            sources += 1  # circuit not tripped = healthy
+    else:  # error/warning
+        if has_errors:
+            sources += 1
+        if is_tripped:
+            sources += 1
+
+    # Pulse itself always counts as 1 source
+    if pulses:
+        sources += 1
+
+    sig_source = 0
+    if sources == total_sources:
+        sig_source = 2  # all agree
+    elif sources >= total_sources - 1:
+        sig_source = 1  # most agree
+    # else: 0 — disagree
+
+    # ── Signal 4: Pattern stability ──
+    if has_errors and len(errors) > 1:
+        unique_msgs = len(set(e.get("error_message", "")[:30] for e in errors))
+        sig_stable = 1 if unique_msgs <= 2 else 0
+    else:
+        sig_stable = 1  # no errors or single error = stable
+
+    # ── Aggregate score ──
+    score = (sig_duration * 1) + (sig_consecutive * 1) + (sig_source * 1) + (sig_stable * 1)
+    # Max possible: 1 + 2 + 2 + 1 = 6
+
+    if score >= 5:
+        level = "high"
+    elif score >= 3:
+        level = "medium"
+    else:
+        level = "low"
+
+    # ── FP risk (how likely is this flag to be a false alarm?) ──
+    if is_dead or is_tripped or has_errors:
+        # Red/yellow flags — FP risk depends on duration + consecutive + source agreement
+        if duration > 7200 and consecutive >= 3 and sources >= total_sources - 1:
+            fp_risk = "low"
+        elif duration > 600 and consecutive >= 2:
+            fp_risk = "moderate"
+        else:
+            fp_risk = "high"
+    else:
+        # Green flags — FP risk is naturally low if no issues detected
+        fp_risk = "low"
+
+    # ── FN risk (how likely is green to be missing something?) ──
+    if is_alive:
+        if not pulses or consecutive < 3:
+            fn_risk = "high"  # too few checks to be confident
+        elif duration > 3600:
+            fn_risk = "high"  # last check was >1h ago — could have died
+        else:
+            fn_risk = "low"
+    else:
+        fn_risk = "low"  # non-green flags can't be false negatives
+
+    # ── Sources agreement text ──
+    if is_dead:
+        if sources >= total_sources - 1:
+            sources_agree = "pulse + errors + circuit all agree"
+        elif has_errors:
+            sources_agree = "pulse + errors agree"
+        else:
+            sources_agree = "pulse only"
+    elif is_alive:
+        if not has_errors and not is_tripped:
+            sources_agree = "pulse + errors + circuit all agree"
+        elif not pulses:
+            sources_agree = "no recent data"
+        else:
+            sources_agree = "pulse only"
+    else:
+        sources_agree = "mixed signals"
+
+    # ── Recommendation ──
+    recommendation = _recommendation_for(status, errors, circuit, pulses,
+                                          duration, is_dead, is_alive, is_tripped)
+
+    return {
+        "level": level,
+        "fp_risk": fp_risk,
+        "fn_risk": fn_risk,
+        "recommendation": recommendation,
+        "sources_agree": sources_agree,
+    }
+
+
+def _recommendation_for(status: str, errors: list, circuit: dict,
+                        pulses: list, duration: int,
+                        is_dead: bool, is_alive: bool, is_tripped: bool) -> str:
+    """Return actionable recommendation based on agent state."""
+    err_count = len(errors)
+    stale = pulses and (pulses[0].get("timestamp", 0) < int(time.time()) - 3600)
+
+    if is_dead:
+        days = max(1, duration // 86400)
+        if duration > 86400:
+            return f"➤ Agent has been down for {days}d. Start it manually: <code>observeco start</code>"
+        if err_count > 3:
+            return f"➤ Agent is down — all {err_count} errors are from failed reach attempts. Restart to stop the noise."
+        return "➤ Agent may be down. Run <code>observeco pulse check</code> to confirm."
+
+    if is_tripped:
+        return "➤ Guard stopped after 3 failures. Wait ~4h for cooldown, or restart the agent manually."
+
+    if is_alive:
+        if stale and len(pulses) >= 3:
+            return "➤ Last check was hours ago. Agent could have died since. Run <code>observeco pulse check</code>."
+        if stale:
+            return "➤ Only a few checks recorded — not yet conclusive. Continue monitoring."
+        if err_count == 0:
+            if len(pulses) >= 10:
+                return "➤ All clear — all checks passed."
+            return f"➤ No issues yet — but only {len(pulses)} checks recorded. Continue monitoring."
+        if err_count == 1:
+            return "➤ Single error — likely transient. No action needed unless it repeats."
+        return f"➤ {err_count} errors — could be transient or ongoing. Run <code>observeco heal --diagnose</code>."
+
+    # Error/warning state
+    if err_count >= 3:
+        return f"➤ {err_count} errors — may need attention. Check agent logs or restart."
+    if err_count >= 1:
+        return "➤ Warning state — monitor for next 5 minutes before acting."
+    return "➤ Unstable state — check agent configuration."
+
+
+def _confidence_badge(conf: dict) -> str:
+    """Render a small HTML confidence badge for agent cards."""
+    emoji = {"high": "🟢", "medium": "🟡", "low": "⚪"}.get(conf["level"], "⚪")
+    fp_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fp_risk"], "⚠️")
+    fn_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fn_risk"], "⚠️")
+    fp_label = conf["fp_risk"].capitalize()
+    fn_label = conf["fn_risk"].capitalize()
+    level_label = conf["level"].capitalize()
+    return f'''
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: {level_label} — {conf['sources_agree']}">{emoji} {level_label}</span>
+            <span title="False positive risk: {fp_label}">{fp_icon} FP {fp_label}</span>
+            <span title="False negative risk: {fn_label}">{fn_icon} FN {fn_label}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">{conf['recommendation']}</div>'''
+
+
+def _confidence_header(conf: dict) -> str:
+    """Render confidence header section for detail tabs."""
+    emoji = {"high": "🟢", "medium": "🟡", "low": "⚪"}.get(conf["level"], "⚪")
+    level_label = conf["level"].capitalize()
+    return f'''<div class="modal-section" style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;">
+            <span><strong>{emoji} Confidence:</strong> {level_label}</span>
+            <span style="color:{'#22c55e' if conf['fp_risk']=='low' else '#eab308' if conf['fp_risk']=='moderate' else '#ef4444'};">
+                <strong>FP risk:</strong> {conf['fp_risk'].capitalize()}
+            </span>
+            <span style="color:{'#22c55e' if conf['fn_risk']=='low' else '#eab308' if conf['fn_risk']=='moderate' else '#ef4444'};">
+                <strong>FN risk:</strong> {conf['fn_risk'].capitalize()}
+            </span>
+            <span style="color:#64748b;">Sources: {conf['sources_agree']}</span>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.05);">
+            {conf['recommendation']}
+        </div>
+    </div>'''
+
+
+def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, framework: str, conf: dict = None) -> str:
     now = int(time.time())
+
+    # ── Section 0: Confidence header ──
+    conf_header = _confidence_header(conf) if conf else ""
 
     # ── Section 1: Pulse timeline (all dots with legend) ──
     dot_row = []
@@ -1085,6 +1310,7 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
     </div>"""
 
     return HTMLResponse(f"""<div class="detail-content">
+    {conf_header}
     <div class="modal-section">
         <h4>Last 24 hours (every 30s)</h4>
         <div class="pulse-timeline">{dots_html}</div>
@@ -1282,10 +1508,13 @@ def _detail_drift_html(drift: list, name: str) -> str:
 </div>"""
 
 
-def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, agent_status: str = "unknown") -> str:
+def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, agent_status: str = "unknown", conf: dict = None) -> str:
     """Guard detail — 5 sections: status, failure timeline, explanation, savings, settings."""
     now = int(time.time())
     is_tripped = circuit.get("tripped", False)
+
+    # Section 0: Confidence header
+    conf_header = _confidence_header(conf) if conf else ""
 
     # Section 1: Status — acknowledge agent's pulse status
     is_dead = agent_status == "dead"
@@ -1353,6 +1582,7 @@ def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, ag
     </table>"""
 
     return HTMLResponse(f"""<div class="detail-content">
+    {conf_header}
     <div class="modal-section">
         <h4>Status</h4>
         {status_html}
@@ -1381,10 +1611,11 @@ def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, ag
 </div>""")
 
 
-def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: str = "unknown") -> str:
+def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: str = "unknown", conf: dict = None) -> str:
     """Error history — timeline table + categorized verdict + Pro upsell."""
     error_rows = ""
     is_dead = agent_status == "dead"
+    conf_header = _confidence_header(conf) if conf else ""
     if errors:
         for e in errors[:20]:
             ts_str = _fmt_ts(e["timestamp"])
@@ -1410,6 +1641,7 @@ def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: st
         verdict_msg = 'Multiple errors suggest an ongoing problem. Check the guard status to see if monitoring has been stopped automatically.'
 
     return HTMLResponse(f"""<div class="detail-content">
+    {conf_header}
     <div class="modal-section">
         <h4>Last 24 hours</h4>
         <table class="data-table">
@@ -2490,6 +2722,11 @@ async def api_agents(
             if stale and status == 'error':
                 status_label = '● Warning (stale)'
 
+            # Confidence & Recommendation (§3.29)
+            state_since = ts if ts else (now - 86400)  # approximate
+            conf = _compute_confidence(status, pulses, recent_errors, cb, state_since, now)
+            conf_badge = _confidence_badge(conf)
+
             cards_html.append(f"""<div class="agent-card" data-agent="{name}">
       <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('{name}')" title="Hide agent"></button>
       <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('{name}')" title="Remove agent">✕</button>
@@ -2507,6 +2744,7 @@ async def api_agents(
         <span class="value" style="color:{'var(--accent)' if status == 'alive' else 'var(--danger)' if status == 'dead' else 'var(--warn)'};font-weight:600;">{status_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
+      {conf_badge}
       <div class="metric-row" onclick="loadTab('{name}','guard')">
         <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
         <span class="value" style="color:{guard_color};font-weight:600;">{guard_label}</span>
