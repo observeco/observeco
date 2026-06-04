@@ -1024,6 +1024,7 @@ def _compute_confidence(status: str, pulses: list, errors: list,
     is_tripped = circuit.get("tripped", False)
     is_dead = status == "dead"
     is_alive = status == "alive"
+    is_unknown = status == "unknown"
 
     # How many sources agree with the current status
     sources = 0
@@ -1039,6 +1040,9 @@ def _compute_confidence(status: str, pulses: list, errors: list,
             sources += 1  # no errors confirms health
         if not is_tripped:
             sources += 1  # circuit not tripped = healthy
+    elif is_unknown:
+        # Unknown status — no pulse data to evaluate
+        sources = 0  # no sources can agree on an unknown state
     else:  # error/warning
         if has_errors:
             sources += 1
@@ -1075,7 +1079,10 @@ def _compute_confidence(status: str, pulses: list, errors: list,
         level = "low"
 
     # ── FP risk (how likely is this flag to be a false alarm?) ──
-    if is_dead or is_tripped or has_errors:
+    if is_unknown:
+        # Unknown status = no data to evaluate — neither FP nor FN applies
+        fp_risk = "moderate"
+    elif is_dead or is_tripped or has_errors:
         # Red/yellow flags — FP risk depends on duration + consecutive + source agreement
         if duration > 7200 and consecutive >= 3 and sources >= total_sources - 1:
             fp_risk = "low"
@@ -1088,7 +1095,9 @@ def _compute_confidence(status: str, pulses: list, errors: list,
         fp_risk = "low"
 
     # ── FN risk (how likely is green to be missing something?) ──
-    if is_alive:
+    if is_unknown:
+        fn_risk = "high"  # can't verify anything without data
+    elif is_alive:
         if not pulses or consecutive < 3:
             fn_risk = "high"  # too few checks to be confident
         elif duration > 3600:
@@ -1113,12 +1122,15 @@ def _compute_confidence(status: str, pulses: list, errors: list,
             sources_agree = "no recent data"
         else:
             sources_agree = "pulse only"
+    elif is_unknown:
+        sources_agree = "no pulse data — agent may not support pulse monitoring"
     else:
         sources_agree = "mixed signals"
 
     # ── Recommendation ──
     recommendation = _recommendation_for(status, errors, circuit, pulses,
-                                          duration, is_dead, is_alive, is_tripped)
+                                          duration, is_dead, is_alive, is_tripped,
+                                          is_unknown=is_unknown)
 
     return {
         "level": level,
@@ -1131,10 +1143,14 @@ def _compute_confidence(status: str, pulses: list, errors: list,
 
 def _recommendation_for(status: str, errors: list, circuit: dict,
                         pulses: list, duration: int,
-                        is_dead: bool, is_alive: bool, is_tripped: bool) -> str:
+                        is_dead: bool, is_alive: bool, is_tripped: bool,
+                        is_unknown: bool = False) -> str:
     """Return actionable recommendation based on agent state."""
     err_count = len(errors)
     stale = pulses and (pulses[0].get("timestamp", 0) < int(time.time()) - 3600)
+
+    if is_unknown:
+        return "➤ No pulse data — this agent may not be monitored via pulse checks. Configure a health check or use platform-specific monitoring."
 
     if is_dead:
         days = max(1, duration // 86400)
@@ -1284,18 +1300,24 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
 
     # ── Section 4: Latest check ──
     last_pulse = pulses[0] if pulses else {}
-    last_status = last_pulse.get("status", "unknown")
-    last_ts = _fmt_ts(last_pulse.get("timestamp", 0)) if last_pulse else "—"
-    last_latency = last_pulse.get("latency", "—") if last_pulse else "—"
-    if last_status == "alive":
-        latest_result = "✅ OK"
-        latest_cls = "good"
-    elif last_status == "error":
-        latest_result = "🟡 Warning"
-        latest_cls = "warn"
+    if not pulses:
+        last_ts = "—"
+        last_latency = "—"
+        latest_result = "⚪ No pulse data"
+        latest_cls = ""
     else:
-        latest_result = "🔴 Down"
-        latest_cls = "bad"
+        last_status = last_pulse.get("status", "unknown")
+        last_ts = _fmt_ts(last_pulse.get("timestamp", 0))
+        last_latency = last_pulse.get("latency", "—")
+        if last_status == "alive":
+            latest_result = "✅ OK"
+            latest_cls = "good"
+        elif last_status == "error":
+            latest_result = "🟡 Warning"
+            latest_cls = "warn"
+        else:
+            latest_result = "🔴 Down"
+            latest_cls = "bad"
 
     # ── Circuit section (compact) ──
     circuit_html = ""
@@ -2703,6 +2725,9 @@ async def api_agents(
             if status == 'dead':
                 guard_label = "⚠️ Agent is down"
                 guard_color = "var(--warn)"
+            elif status == 'unknown':
+                guard_label = "⚪ No data (not pulse-monitored)"
+                guard_color = "var(--muted)"
             elif tripped:
                 guard_label = "🔴 Stopped (failed 3x)"
                 guard_color = "var(--danger)"
@@ -2711,13 +2736,22 @@ async def api_agents(
                 guard_color = "var(--accent)"
 
             # Error row label
-            err_label = f"⚠️ {recent_error_count} in last 24h" if recent_error_count > 0 else "- No errors"
-            err_color = "var(--warn)" if recent_error_count > 0 else "var(--muted)"
+            if status == 'unknown':
+                err_label = "⚪ Not monitored by pulse"
+                err_color = "var(--muted)"
+            elif recent_error_count > 0:
+                err_label = f"⚠️ {recent_error_count} in last 24h"
+                err_color = "var(--warn)"
+            else:
+                err_label = "- No errors"
+                err_color = "var(--muted)"
 
             # Status label with staleness indicator
             stale = ts and (now - ts) > 3600  # stale if last pulse > 1h ago
             status_label = {'alive': '● Running', 'dead': '● Down', 'error': '● Warning'}.get(status, '○ Unknown')
-            if stale and status == 'alive':
+            if status == 'unknown':
+                status_label = '○ Not pulse-monitored'
+            elif stale and status == 'alive':
                 status_label = '● Running (stale)'
             if stale and status == 'error':
                 status_label = '● Warning (stale)'
@@ -3225,6 +3259,57 @@ GLOSSARY_DATA = {
             ("Can I get alerts on Telegram?", "Yes — that's a Pro feature. In the free tier, alerts are visible in the dashboard right rail."),
         ],
     },
+    "confidence": {
+        "title": "Confidence Score",
+        "icon": "🎯",
+        "one_liner": "How confident we are that a signal is accurate — based on duration, consecutive checks, source agreement, and pattern stability.",
+        "detail": """<div class="glossary-detail">
+    <strong>4 signals that determine confidence:</strong><br><br>
+    <strong>⏱ Duration</strong> — How long the agent has been in its current state. >2h = strong signal.<br>
+    <strong>🔢 Consecutive count</strong> — How many pulse checks in a row agree. >3 = strong signal.<br>
+    <strong>🤝 Source agreement</strong> — Do pulse status, error count, and circuit breaker agree on the state?<br>
+    <strong>📊 Pattern stability</strong> — Are error messages consistent (same root cause) or varied (different problems)?<br><br>
+    <strong>Score thresholds:</strong><br>
+    🟢 <strong style="color:#22c55e;">High</strong> (5-6/6) — All sources agree and duration is established. Actionable with confidence.<br>
+    🟡 <strong style="color:#eab308;">Medium</strong> (3-4/6) — Most sources agree but some signals are weak. Worth investigating.<br>
+    ⚪ <strong style="color:#64748b;">Low</strong> (0-2/6) — Insufficient data or conflicting signals. Needs more observation.
+</div>""",
+        "faq": [
+            ("How is confidence different from status?", "Status tells you WHAT the state is (alive/dead/error). Confidence tells you HOW RELIABLE that assessment is. An agent dead for 4 days has High confidence. An agent checked once 5s ago has Low confidence."),
+            ("What makes confidence drop?", "Sparse pulse data, contradictory sources (pulse says alive but errors exist), or very recent status changes (<2h)."),
+        ],
+    },
+    "fp": {
+        "title": "False Positive (FP) Risk",
+        "icon": "⚠️",
+        "one_liner": "How likely a red/yellow flag is to be a false alarm — the risk that the dashboard says 'problem' when everything is actually fine.",
+        "detail": """<div class="glossary-detail">
+    <strong>FP risk = "crying wolf" risk.</strong><br><br>
+    🟢 <strong style="color:#22c55e;">Low FP</strong> — Multiple data sources confirmed the problem over a sustained period. Confident this is real.<br>
+    🟡 <strong style="color:#eab308;">Moderate FP</strong> — Some evidence but short duration or partial source agreement. Monitor before acting.<br>
+    🔴 <strong style="color:#ef4444;">High FP</strong> — Very recent or single-source event. Could be a transient glitch. Investigate before escalating.<br><br>
+    <strong>What drives FP risk down:</strong> Long duration (>2h), multiple consecutive checks agreeing, and consistent error messages (same error repeating = real problem, not random noise).
+</div>""",
+        "faq": [
+            ("Why does a dead agent have Low FP risk?", "If an agent has been dead for 4 days with 48 consecutive dead checks, the odds of a false alarm are extremely low. The system is genuinely down."),
+        ],
+    },
+    "fn": {
+        "title": "False Negative (FN) Risk",
+        "icon": "🔍",
+        "one_liner": "How likely a green flag is to miss a real problem — the risk that the dashboard says 'all clear' when something is actually broken.",
+        "detail": """<div class="glossary-detail">
+    <strong>FN risk = "blind spot" risk.</strong><br><br>
+    🟢 <strong style="color:#22c55e;">Low FN</strong> — Recent check confirmed alive with no errors. Confident the agent is healthy.<br>
+    🟡 <strong style="color:#eab308;">Moderate FN</strong> — Agent is alive but only a few checks have run. Could still be missed.<br>
+    🔴 <strong style="color:#ef4444;">High FN</strong> — Last check was >1h ago, or only 1-2 checks were ever done. The agent could have died since then.<br><br>
+    <strong>Green is not a guarantee.</strong> A "🟢 Running" label means the agent responded to its last pulse check — not that it's still running right now. FN risk tells you how stale or thin that evidence is.
+</div>""",
+        "faq": [
+            ("Why does an alive agent with no recent pulses have High FN?", "Because the last known-good check was too long ago. The agent may have crashed since then. The system is giving you the benefit of the doubt but can't confirm current health."),
+            ("What's the difference between FP and FN?", "FP = the dashboard says something is wrong when it's not. FN = the dashboard says everything is fine when it's not. They're opposite sides of the same accuracy question."),
+        ],
+    },
 }
 
 @app.get("/api/glossary/{topic}", response_class=HTMLResponse)
@@ -3232,7 +3317,7 @@ async def api_glossary(topic: str):
     """Return glossary content for a topic — §3.20."""
     entry = GLOSSARY_DATA.get(topic)
     if not entry:
-        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, pulse-check, heal-button, alerts-panel.</div>')
+        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, pulse-check, heal-button, alerts-panel, confidence, fp, fn.</div>')
 
     faq_html = ""
     if entry.get("faq"):
