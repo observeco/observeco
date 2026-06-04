@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 import webbrowser
 from datetime import datetime, timezone
@@ -3799,6 +3800,13 @@ def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False,
 
     # Auto-launch the independent watch daemon if not running.
     _ensure_watch_running()
+
+    # Prevent zombie duplicates from restart races
+    _hermes_scripts = str(Path.home() / ".hermes" / "scripts")
+    if _hermes_scripts not in sys.path:
+        sys.path.insert(0, _hermes_scripts)
+    from replace_process import replace_existing
+    replace_existing(f"observeco-dashboard-{port}")
 
     actual_port = _find_free_port(host, port)
     url = f"http://{host}:{actual_port}"

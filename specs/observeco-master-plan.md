@@ -3199,6 +3199,34 @@ Agent config becomes typed per probe:
 - Day 2: Migrate systemd, shell, pgrep + update AgentConfig + backward compat
 - Day 3: Tests for each probe in isolation + end-to-end mixed fleet test
 
+### 7.7 Stale Daemon Guard & Stale Agent Cleanup
+
+**Status:** 🔧 Building — Phase 7.7 active.
+**Effort:** ~0.5d
+
+**Problem:** Two gaps discovered in Phase 7.4 probe deployment:
+
+1. **Stale watch daemon hides probe coverage gaps.** The probe registry works but if the user restarts (git pull, `observeco watch restart`), the old daemon keeps running with stale code. The dashboard shows "○ Not pulse-monitored" for service agents but the real issue is the daemon hasn't restarted — not that probes don't work. No dashboard warning for this.
+
+2. **DB-only stale agents accumulate.** `agent_configs` table holds agents registered by older discovery runs (e.g. `hermes`, `test-agent`, `Holiday Scraper`) that `load_config()` no longer returns. These get probed by the watch daemon → `PgrepProbe` returns `dead` → pulse_log fills with "no matching process" noise. No cleanup mechanism.
+
+**Solution:**
+
+**7.7a — Watch heartbeat freshness banner on dashboard:**
+- Read `.watch_heartbeat.json` from `_DATA_DIR`
+- If age > 120s (missed 4 cycles): show amber banner: "⚠️ Watch daemon may be stale — restart with `observeco watch restart`"
+- If no heartbeat file: show similar banner
+- Display on dashboard header, auto-dismiss after 8s (same pattern as phase banner)
+
+**7.7b — Stale agent auto-cleanup:**
+- Watch daemon cycle 1: run `purge_stale_agents()` — remove entries from `agent_configs` whose names don't appear in `load_config()`
+- Threshold: agents with `last_seen` > 7d AND zero pulse data are auto-removed
+- Log count of removed agents to daemon heartbeat metadata
+
+**What this changes:**
+- Segment 1: Dashboard now warns when monitoring stack itself is stale. Stale agent cleanup prevents noise.
+- Segment 2: Same guard protects non-Hermes users from silent probe failure.
+
 ---
 
 **Phase 7 total impact:**

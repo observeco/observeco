@@ -287,6 +287,14 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
 
         config = load_config()
         agents = getattr(config, "agents", [])
+        # ── Cycle 0.5: Purge stale DB-only agents ──
+        purged_cycle = 0
+        try:
+            from observeco.db import Database
+            valid = {a.name for a in agents}
+            purged_cycle = Database().purge_stale_agents(valid)
+        except Exception:
+            pass
 
         if agents:
             results = []
@@ -361,7 +369,7 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
             # Write heartbeat
             _write_heartbeat(
                 status="running", cycle=cycle, agents=len(results),
-                alive=alive, dead=dead, errors=error,
+                alive=alive, dead=dead, errors=error, purged=purged_cycle,
             )
 
         # Sleep in short intervals for responsive signal handling
@@ -379,7 +387,8 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
 
 
 def _write_heartbeat(status: str, cycle: int, agents: int = 0,
-                     alive: int = 0, dead: int = 0, errors: int = 0) -> None:
+                     alive: int = 0, dead: int = 0, errors: int = 0,
+                     purged: int = 0) -> None:
     """Write heartbeat file for external monitoring."""
     try:
         _HEARTBEAT_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -391,6 +400,7 @@ def _write_heartbeat(status: str, cycle: int, agents: int = 0,
             "alive": alive,
             "dead": dead,
             "errors": errors,
+            "purged": purged,
             "pid": os.getpid(),
         }, indent=2))
     except Exception:

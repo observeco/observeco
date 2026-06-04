@@ -50,8 +50,8 @@ class TestAgentRoutes:
         assert "agent-card" in html or "agent" in html.lower()
 
     def test_agent_detail_known_agent_returns_tabs(self):
-        """4.3: GET /api/agent-detail/hermes returns detail HTML."""
-        resp = client.get("/api/agent-detail/hermes", headers=AUTH)
+        """4.3: GET /api/agent-detail/dreamer returns detail HTML."""
+        resp = client.get("/api/agent-detail/dreamer", headers=AUTH)
         assert resp.status_code == 200
         html = resp.text
         assert "agent-detail" in html or "tab" in html or "health" in html.lower()
@@ -64,7 +64,7 @@ class TestAgentRoutes:
     def test_agent_detail_tabs(self):
         """4.3: Different tabs on agent detail work."""
         for tab in ["health", "tokens", "errors", "guard", "garden"]:
-            resp = client.get(f"/api/agent-detail/hermes?tab={tab}", headers=AUTH)
+            resp = client.get(f"/api/agent-detail/dreamer?tab={tab}", headers=AUTH)
             assert resp.status_code == 200, f"Tab {tab} failed: {resp.status_code}"
 
 
@@ -144,7 +144,7 @@ class TestTemplateMarkers:
 
     def test_agent_detail_has_tabs(self):
         """Agent detail page has tab switching."""
-        resp = client.get("/api/agent-detail/hermes", headers=AUTH)
+        resp = client.get("/api/agent-detail/dreamer", headers=AUTH)
         html = resp.text
         # Should contain tab navigation or health indicator
         assert "tab" in html.lower() or "health" in html.lower()
@@ -195,7 +195,7 @@ class TestUnauthenticated:
             "/api/agents",
             "/api/error-state",
             "/api/alerts",
-            "/api/agent-detail/hermes",
+            "/api/agent-detail/dreamer",
             "/api/fleet-summary",
         ]
         for ep in protected:

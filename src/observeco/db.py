@@ -1253,15 +1253,30 @@ class Database:
 
     def purge_stale_agents(self, valid_names: set[str]) -> int:
         """Remove agents from DB that aren't in the current valid set.
-        
-        Cleans up stale entries left by the old config.yaml parser that
-        treated every YAML key as an agent name.
+
+        Only removes agents with last_seen > 7 days ago AND zero pulse data
+        (pulse_log has no entries for them) — prevents removing agents that
+        were recently registered but haven't had a pulse cycle yet.
+
         Returns count of removed agents.
         """
+        now = int(time.time())
         conn = self._get_conn()
-        cur = conn.execute("SELECT agent_name FROM agent_configs")
-        all_agents = [r["agent_name"] for r in cur.fetchall()]
-        stale = [name for name in all_agents if name not in valid_names]
+        cur = conn.execute("SELECT agent_name, last_seen FROM agent_configs")
+        all_rows = cur.fetchall()
+        stale = []
+        for r in all_rows:
+            name = r["agent_name"]
+            if name in valid_names:
+                continue
+            last_seen = r["last_seen"] if r["last_seen"] else 0
+            # Only remove if: >24h since last_seen (enough for discovery cycles) AND zero pulse data
+            if now - last_seen > 86400:  # 24 hours
+                pulse_count = conn.execute(
+                    "SELECT COUNT(*) FROM pulse_log WHERE agent_name=?", (name,)
+                ).fetchone()[0]
+                if pulse_count == 0:
+                    stale.append(name)
         if stale:
             placeholders = ",".join("?" for _ in stale)
             conn.execute(
