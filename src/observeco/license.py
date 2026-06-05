@@ -14,8 +14,7 @@ import json
 import os
 import secrets
 import time
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 
 from observeco.dirs import get_data_dir
 
@@ -32,15 +31,27 @@ class LicenseState:
     trial_start: int | None = None   # Unix ts
     trial_end: int | None = None     # Unix ts
     trial_consumed: bool = False     # True if trial was cancelled or expired
+    past_due_at: int | None = None   # Unix ts when trial entered grace period
     validated_at: int | None = None  # Last successful online validation
     customer_email: str | None = None
     plan: str | None = None          # "solo" | "team" | None
+
+    GRACE_PERIOD_SECS = 3 * 86400  # 3 days
 
     @property
     def is_trial_active(self) -> bool:
         if self.license_type != "trial" or not self.trial_end:
             return False
         return int(time.time()) < self.trial_end
+
+    @property
+    def is_in_grace(self) -> bool:
+        """True if trial expired but within 3-day grace period."""
+        if self.license_type != "trial" or not self.trial_end or not self.past_due_at:
+            return False
+        if int(time.time()) < self.trial_end:
+            return False  # not yet expired
+        return int(time.time()) - self.past_due_at < self.GRACE_PERIOD_SECS
 
     @property
     def is_pro(self) -> bool:
@@ -51,7 +62,11 @@ class LicenseState:
                     return True
             # No fresh validation — trust key presence but flag stale
             return True
-        return self.is_trial_active  # trial counts as pro for feature access
+        if self.is_trial_active:
+            return True
+        if self.is_in_grace:
+            return True  # grace period still counts as Pro
+        return False
 
     @property
     def remains_days(self) -> int:
@@ -75,6 +90,8 @@ class LicenseState:
             "trial_days_remaining": self.remains_days,
             "trial_end": self.trial_end,
             "trial_consumed": self.trial_consumed,
+            "past_due_at": self.past_due_at,
+            "is_in_grace": self.is_in_grace,
             "validation_stale": self.validation_stale,
             "plan": self.plan,
             "customer_email": self.customer_email,
@@ -109,6 +126,7 @@ def load() -> LicenseState:
         trial_start=raw.get("trial_start"),
         trial_end=raw.get("trial_end"),
         trial_consumed=raw.get("trial_consumed", False),
+        past_due_at=raw.get("past_due_at"),
         validated_at=raw.get("validated_at"),
         customer_email=raw.get("customer_email"),
         plan=raw.get("plan"),
@@ -124,6 +142,7 @@ def save(state: LicenseState) -> None:
         "trial_start": state.trial_start,
         "trial_end": state.trial_end,
         "trial_consumed": state.trial_consumed,
+        "past_due_at": state.past_due_at,
         "validated_at": state.validated_at,
         "customer_email": state.customer_email,
         "plan": state.plan,
@@ -156,12 +175,25 @@ def ensure_trial(state: LicenseState | None = None) -> LicenseState:
     return state
 
 
+def _valid_key_format(key: str) -> bool:
+    """Check if key matches OBS-PRO-XXXXXXXX-XXXX format."""
+    import re
+    return bool(re.match(r"^OBS-PRO-[A-F0-9]{8}-[A-F0-9]{6}$", key.strip()))
+
+
 def activate_key(key: str, email: str = "", plan: str = "solo") -> dict:
     """Activate a Pro license key.
 
-    Performs online validation (POST to /api/licenses/validate).
+    Validates key format (OBS-PRO-XXXXXXXX-XXXX) before attempting
+    online validation. Junk keys are rejected immediately.
     Falls back to optimistic activation if offline.
     """
+    import re
+    key = key.strip()
+    if not _valid_key_format(key):
+        return {"status": "error",
+                "message": "Invalid key format. Expected format: OBS-PRO-XXXXXXXX-XXXX"}
+
     state = load()
 
     if state.key == key and state.license_type == "pro":
@@ -219,8 +251,8 @@ def _validate_online(key: str) -> dict:
         return local
 
     # Fall back to CRM API
-    import urllib.request
     import urllib.error
+    import urllib.request
 
     url = os.environ.get(
         "OBSERVECO_LICENSE_API",
@@ -292,19 +324,38 @@ def validate_cached() -> bool:
     """Check if the current license is valid, using cache.
 
     Called on startup. Returns True if Pro features should be enabled.
-    Also auto-expires stale trials (sets trial_consumed after expiry).
+    Enters 3-day grace period when trial expires before auto-consuming.
+    Also auto-expires stale trials after grace period ends.
     """
     state = load()
     if state.is_pro:
         return True
-    # Auto-expire trial that has ended
-    if state.license_type == "trial" and state.trial_end:
-        if int(time.time()) >= state.trial_end:
+    # Check if grace period has expired — consume the trial
+    if state.is_in_grace:
+        assert state.past_due_at is not None  # guaranteed by is_in_grace
+        if int(time.time()) - state.past_due_at >= LicenseState.GRACE_PERIOD_SECS:
             state.license_type = "free"
             state.trial_consumed = True
             state.trial_token = None
+            state.past_due_at = None
             save(state)
             return False
+        return True  # still in grace
+    # Trial has ended — enter grace period
+    if state.license_type == "trial" and state.trial_end:
+        now = int(time.time())
+        if now >= state.trial_end:
+            if state.past_due_at is None:
+                # Check if trial ended so long ago that grace would already be expired
+                if now - state.trial_end >= LicenseState.GRACE_PERIOD_SECS:
+                    state.license_type = "free"
+                    state.trial_consumed = True
+                    state.trial_token = None
+                    save(state)
+                    return False
+                state.past_due_at = now
+                save(state)
+            return True  # first time entering grace — still valid
     # No license at all — start trial
     state = ensure_trial(state)
     return state.is_pro
@@ -318,7 +369,7 @@ def status() -> dict:
 
 def require_pro() -> bool:
     """Check if Pro features are unlocked. Returns True if Pro or trial active.
-    
+
     Use this to gate backend endpoints and frontend sections.
     """
     state = load()

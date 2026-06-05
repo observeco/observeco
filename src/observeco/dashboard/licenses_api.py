@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import time
 
-from fastapi import APIRouter, HTTPException, Header
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Header, HTTPException
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 from observeco import license as lic
@@ -41,19 +41,30 @@ async def license_badge():
     """Return an HTML badge showing the current tier.
     Wire with: hx-get="/api/licenses/badge" hx-trigger="load, every 30s" hx-swap="outerHTML"
     """
-    # Auto-consume expired trials on badge load
+    # Auto-consume expired grace periods on badge load
     lic.validate_cached()
     state = lic.load()
     is_pro = state.is_pro
     is_trial = state.license_type == "trial"
     is_consumed = state.trial_consumed
+    is_in_grace = state.is_in_grace
     days = state.remains_days
     plan = state.plan or "Solo"
     now_ts = int(time.time())
 
-    if is_pro and is_trial:
+    if is_in_grace:
+        # Trial expired but within 3-day grace period — still Pro
+        grace_remaining = 3 - ((int(time.time()) - state.past_due_at) // 86400) if state.past_due_at else 3
+        return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1c1917;border:1px solid #dc2626;border-radius:10px;font-size:12px;">
+  <span style="font-size:16px;">⚠️</span>
+  <div style="display:flex;flex-direction:column;">
+    <span style="font-weight:600;color:#fca5a5;">Grace period — {grace_remaining}d left</span>
+    <span style="font-size:10px;color:#a8a29e;">Pro features still active. Subscribe to keep them.</span>
+  </div>
+  <a href="/api/checkout?plan={plan.lower()}&trial=30" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Subscribe $9/mo</a>
+</div>""")
+    elif is_pro and is_trial:
         # Active trial
-        label = f"TRIAL ({days}d)"
         return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1e1b4b;border:1px solid #3730a3;border-radius:10px;font-size:12px;">
   <span style="font-size:16px;">🚀</span>
   <div style="display:flex;flex-direction:column;">
@@ -114,7 +125,7 @@ async def activate_license(req: ActivateRequest):
     """Activate a Pro license key."""
     result = lic.activate_key(req.key, email=req.email, plan=req.plan)
     if result.get("status") == "error":
-        raise HTTPException(status_code=400, detail=result["message"])
+        return JSONResponse(status_code=400, content={"error": result["message"]})
     return result
 
 
@@ -170,7 +181,7 @@ async def admin_generate_key(
     x_admin_key: str | None = Header(None),
 ):
     """Generate a new Pro license key. Admin auth required."""
-    from observeco.billing import generate_key, _get_admin_key
+    from observeco.billing import _get_admin_key, generate_key
     expected = _get_admin_key()
     if not x_admin_key or x_admin_key != expected:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -184,7 +195,7 @@ async def admin_revoke_key(
     x_admin_key: str | None = Header(None),
 ):
     """Revoke a license key. Admin auth required."""
-    from observeco.billing import revoke_key, _get_admin_key
+    from observeco.billing import _get_admin_key, revoke_key
     expected = _get_admin_key()
     if not x_admin_key or x_admin_key != expected:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -196,7 +207,7 @@ async def admin_list_keys(
     x_admin_key: str | None = Header(None),
 ):
     """List all issued license keys. Admin auth required."""
-    from observeco.billing import list_keys, _get_admin_key
+    from observeco.billing import _get_admin_key, list_keys
     expected = _get_admin_key()
     if not x_admin_key or x_admin_key != expected:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -208,7 +219,7 @@ async def admin_keys_page(
     x_admin_key: str | None = Header(None),
 ):
     """Admin page to manage license keys. Admin auth required."""
-    from observeco.billing import list_keys, _get_admin_key
+    from observeco.billing import _get_admin_key, list_keys
     admin_key = _get_admin_key()
     expected = admin_key
     if not x_admin_key or x_admin_key != expected:
