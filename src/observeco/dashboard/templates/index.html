@@ -908,8 +908,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       <!-- Filter chips -->
       <div class="filter-chips" style="display:flex;gap:4px;flex-shrink:0;">
         <button class="filter-chip active" data-filter="" onclick="applyFilter(this,'')" style="background:var(--accent-on);color:#86efac;border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">All</button>
-        <button class="filter-chip" data-filter="alive" onclick="applyFilter(this,'alive')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Alive</button>
-        <button class="filter-chip" data-filter="error" onclick="applyFilter(this,'error')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Warning</button>
+        <button class="filter-chip" data-filter="alive" onclick="applyFilter(this,'alive')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Healthy</button>
         <button class="filter-chip" data-filter="dead" onclick="applyFilter(this,'dead')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Down</button>
       </div>
     </div>
@@ -2549,10 +2548,25 @@ function applyFilter(btn, filterValue) {
   btn.style.color = '#86efac';
   btn.style.fontWeight = '600';
 
-  // Reload agents with filter
-  var searchValue = document.getElementById('agentSearch') ? document.getElementById('agentSearch').value : '';
-  var url = '/api/agents?per_page=25&status=' + filterValue;
-  if (searchValue) url += '&q=' + encodeURIComponent(searchValue);
+  // Reload agents with filter — preserve state for auto-refresh
+  window._pageState = window._pageState || {};
+  window._pageState.status = filterValue;
+  window._pageState.page = 1;
+  window._pageState.q = document.getElementById('agentSearch') ? document.getElementById('agentSearch').value : '';
+  var url = '/api/agents?per_page=25&status=' + encodeURIComponent(filterValue);
+  if (window._pageState.q) url += '&q=' + encodeURIComponent(window._pageState.q);
+  htmx.ajax('GET', url, {target: '#fleetContainer', swap: 'innerHTML'});
+}
+
+function refreshAgentList() {
+  // Build URL from current page state, preserving user's view
+  var s = window._pageState || {};
+  var page = s.page || 1;
+  var status = s.status || '';
+  var q = s.q || '';
+  var url = '/api/agents?per_page=25&page=' + page;
+  if (status) url += '&status=' + encodeURIComponent(status);
+  if (q) url += '&q=' + encodeURIComponent(q);
   htmx.ajax('GET', url, {target: '#fleetContainer', swap: 'innerHTML'});
 }
 
@@ -2569,9 +2583,13 @@ function clearFilters() {
     allBtn.style.color = '#86efac';
     allBtn.style.fontWeight = '600';
   }
-  // Clear search input
+  // Clear search input and page state
   var searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.value = '';
+  window._pageState = window._pageState || {};
+  window._pageState.status = '';
+  window._pageState.page = 1;
+  window._pageState.q = '';
   htmx.ajax('GET', '/api/agents?per_page=25', {target: '#fleetContainer', swap: 'innerHTML'});
 }
 
@@ -2584,7 +2602,7 @@ function deleteAgent(name) {
   }).then(function(r) { return r.json(); }).then(function(d) {
     if (d.ok) {
       showToast('Removed ' + name);
-      htmx.ajax('GET', '/api/agents?per_page=25', {target: '#fleetContainer', swap: 'innerHTML'});
+      refreshAgentList();
     } else {
       showToast('Failed: ' + (d.error || 'Unknown'));
     }
@@ -2593,12 +2611,29 @@ function deleteAgent(name) {
   });
 }
 
-// Show search bar after page load
-document.addEventListener('DOMContentLoaded', showSearchBar);
+// Show search bar after page load + initial agent load + auto-refresh
+document.addEventListener('DOMContentLoaded', function() {
+  showSearchBar();
+  refreshAgentList();
+  setInterval(refreshAgentList, 30000);
+});
+
+// Track filter/page state on every htmx request that updates fleetContainer
+document.addEventListener('htmx:beforeRequest', function(evt) {
+  if (evt.detail.elt && evt.detail.elt.getAttribute('hx-target') === '#fleetContainer') {
+    window._pageState = window._pageState || {};
+    var url = evt.detail.requestConfig.path || '';
+    var params = new URLSearchParams(url.split('?')[1] || '');
+    if (params.has('page')) window._pageState.page = parseInt(params.get('page'), 10) || 1;
+    else window._pageState.page = 1;  // no page param → server returns page 1
+    if (params.has('status')) window._pageState.status = params.get('status');
+    if (params.has('q')) window._pageState.q = params.get('q');
+  }
+});
 </script>
 
-<!-- htmx: load agents on page load and every 30s -->
-<div hx-get="/api/agents" hx-trigger="load, every 30s, agents-updated from:body" hx-target="#fleetContainer" hx-swap="innerHTML"></div>
+<!-- htmx: agents-updated event handler — triggers refreshAgentList -->
+<div hx-trigger="agents-updated from:body" hx-target="#fleetContainer" hx-swap="innerHTML" script="on agents-updated from:body call refreshAgentList()"></div>
 
 <!-- Onboarding overlay (also loaded via /api/onboarding) -->
 <!-- Onboarding Overlay — self-contained, loaded via htmx on page load.

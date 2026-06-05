@@ -410,15 +410,14 @@ def add_billing_endpoints(app) -> None:
         email = data.get("email", "")
         plan = data.get("plan", "solo")
         if not email:
-            raise HTTPException(400, "Email is required")
+            return {"error": "Email is required", "mode": "error"}
         result = create_checkout_session(email, plan)
         return result
 
     @app.get("/api/billing/success")
     async def billing_success(request: Request):
         """Stripe checkout success page — redirects back to dashboard with toast."""
-        session_id = request.query_params.get("session_id", "")
-        return HTMLResponse(f"""<!DOCTYPE html><html><head><meta http-equiv="refresh" content="2;url=/"></head><body style="background:#0f172a;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;">
+        return HTMLResponse("""<!DOCTYPE html><html><head><meta http-equiv="refresh" content="2;url=/"></head><body style="background:#0f172a;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;">
         <div style="font-size:48px;">✅</div>
         <h2 style="margin:0;">Payment successful!</h2>
         <p style="color:#94a3b8;font-size:14px;">Your Pro license is being activated...</p>
