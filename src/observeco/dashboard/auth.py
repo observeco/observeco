@@ -31,8 +31,6 @@ from __future__ import annotations
 import hmac
 import logging
 import secrets
-from pathlib import Path
-from typing import Optional
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -106,7 +104,7 @@ class DashboardAuthMiddleware(BaseHTTPMiddleware):
         needs_auth = (
             path.startswith("/api/")
             and not path.startswith("/api/licenses/validate")
-            and path not in ("/api/agent-count", "/api/phase", "/api/onboarding", "/api/pathway-graph", "/api/heal-log", "/api/trigger-heal", "/api/plugin-stats", "/api/plugin-hooks", "/api/openclaw-plugins", "/api/phase/state", "/api/discover/run", "/api/discover/candidates", "/api/discover/confirm", "/api/discover/run-html")
+            and path not in ("/api/checkout", "/api/agent-count", "/api/phase", "/api/onboarding", "/api/pathway-graph", "/api/heal-log", "/api/trigger-heal", "/api/plugin-stats", "/api/plugin-hooks", "/api/openclaw-plugins", "/api/phase/state", "/api/no-llm/toggle", "/api/discover/run", "/api/discover/candidates", "/api/discover/confirm", "/api/discover/run-html")
         )
 
         # Check token for protected API routes
