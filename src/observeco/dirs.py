@@ -12,13 +12,22 @@ from platformdirs import user_data_dir
 
 _OLD_DIR = Path.home() / ".observeco"
 _DIR = Path(user_data_dir("observeco", "observeco"))
+_HOME_OVERRIDE = os.environ.get("OBSERVECO_HOME", "")
 
 # Env var override for shared database path
 _SHARED_DB_ENV = os.environ.get("OBSERVECO_SHARED_DB", "")
 
 
 def get_data_dir() -> Path:
-    """Return the canonical ObserveCo data directory (platformdirs-based)."""
+    """Return the canonical ObserveCo data directory.
+    
+    Override via OBSERVECO_HOME env var for isolated test environments.
+    Falls back to platformdirs-based default.
+    """
+    if _HOME_OVERRIDE:
+        p = Path(_HOME_OVERRIDE).expanduser().resolve()
+        p.mkdir(parents=True, exist_ok=True)
+        return p
     _DIR.mkdir(parents=True, exist_ok=True)
     return _DIR
 

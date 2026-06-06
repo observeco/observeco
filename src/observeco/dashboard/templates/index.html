@@ -331,6 +331,47 @@ body {
 }
 .sep-pipe { color: var(--border); font-size: 11px; padding: 0 2px; }
 
+/* Toggle switch */
+.llm-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.llm-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.llm-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #334155;
+  border-radius: 24px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.llm-toggle-slider::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: #94a3b8;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+.llm-toggle-switch input:checked + .llm-toggle-slider {
+  background: #22c55e;
+}
+.llm-toggle-switch input:checked + .llm-toggle-slider::before {
+  transform: translateX(20px);
+  background: #fff;
+}
+
 /* Drill-down modal */
 .modal-overlay {
   display: none; position: fixed; inset: 0;
@@ -895,6 +936,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
     <button class="tab-btn" onclick="switchTab('alerts', this)">🔔 Push Alerts</button>
     <button class="tab-btn" onclick="switchTab('plugin', this)">🔌 Plugin</button>
     <button class="tab-btn" onclick="switchTab('restarts', this)">🔄 Restarts</button>
+    <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ Settings</button>
   </div>
 
   <!-- Fleet tab -->
@@ -1507,6 +1549,47 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
     </div>
   </div>
 
+  <!-- Settings tab -->
+  <div class="tab-content" id="tabSettings">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">⚙️ Settings</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Configure ObserveCo dashboard behavior.</div>
+
+      <!-- LLM Toggle Card -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--fg);">🤖 LLM-Powered Features</div>
+            <div style="font-size:12px;color:var(--fg-2);margin-top:4px;">Use AI to detect, analyse, and suggest healing for your fleet</div>
+          </div>
+          <label class="llm-toggle-switch" id="llmToggleLabel">
+            <input type="checkbox" id="llmToggleCheckbox" onchange="handleLlmToggle(this.checked)">
+            <span class="llm-toggle-slider"></span>
+          </label>
+        </div>
+        <div id="llmStatusBadge" style="margin-top:10px;font-size:12px;color:var(--accent);">✅ LLM features enabled — proactive detection and healing active</div>
+      </div>
+
+      <!-- LLM Toggle Warning Modal -->
+      <div class="modal-overlay" id="llmWarningModal" onclick="if(event.target===this)closeLlmWarning()">
+        <div class="modal" style="max-width:480px;">
+          <div class="modal-body">
+            <div style="font-size:36px;margin-bottom:10px;">⚠️</div>
+            <h3 style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">Disable LLM Features?</h3>
+            <p style="font-size:13px;color:#94a3b8;line-height:1.5;margin-bottom:16px;">
+              Disabling LLM-powered features means ObserveCo won't be able to proactively detect and heal issues in your fleet. Agent discovery, health insights, and healing suggestions will use static rules instead of AI analysis. This is not recommended for production fleets.
+            </p>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+              <button class="modal-close" onclick="closeLlmWarning()" style="font-size:12px;padding:8px 18px;width:auto;">Cancel</button>
+              <button class="heal-trigger-btn" onclick="confirmDisableLlm()" style="background:rgba(239,68,68,0.15);color:#ef4444;border-color:rgba(239,68,68,0.3);font-size:12px;padding:8px 18px;">Disable Anyway</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
 <!-- Brain Pro modal -->
@@ -1805,6 +1888,79 @@ function switchTab(tab, btn) {
   }
   if (tab === 'plugin') {
     initPlugin();
+  }
+  if (tab === 'settings') {
+    initLlmToggle();
+  }
+}
+
+// ─── LLM Toggle ───
+let llmToggleInitDone = false;
+
+function initLlmToggle() {
+  if (llmToggleInitDone) return;
+  llmToggleInitDone = true;
+  fetch('/api/phase/state')
+    .then(r => r.json())
+    .then(data => {
+      const checkbox = document.getElementById('llmToggleCheckbox');
+      if (!checkbox) return;
+      const isDisabled = data.no_llm === true;
+      checkbox.checked = !isDisabled;
+      updateLlmStatusBadge(!isDisabled);
+    })
+    .catch(e => console.error('Failed to load LLM state:', e));
+}
+
+function handleLlmToggle(checked) {
+  if (checked === false) {
+    // Show warning modal before disabling
+    document.getElementById('llmWarningModal').classList.add('active');
+    // Revert the toggle visually for now
+    document.getElementById('llmToggleCheckbox').checked = true;
+  } else {
+    // Turning LLM back ON — no warning needed
+    callLlmToggle(true);
+  }
+}
+
+function closeLlmWarning() {
+  document.getElementById('llmWarningModal').classList.remove('active');
+}
+
+function confirmDisableLlm() {
+  document.getElementById('llmWarningModal').classList.remove('active');
+  document.getElementById('llmToggleCheckbox').checked = false;
+  callLlmToggle(false);
+}
+
+function callLlmToggle(enabled) {
+  fetch('/api/no-llm/toggle', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({enabled: enabled}),
+  })
+    .then(r => r.json())
+    .then(data => {
+      updateLlmStatusBadge(enabled);
+    })
+    .catch(e => {
+      console.error('LLM toggle failed:', e);
+      // Revert on error
+      document.getElementById('llmToggleCheckbox').checked = !enabled;
+      updateLlmStatusBadge(!enabled);
+    });
+}
+
+function updateLlmStatusBadge(enabled) {
+  const badge = document.getElementById('llmStatusBadge');
+  if (!badge) return;
+  if (enabled) {
+    badge.innerHTML = '✅ LLM features enabled — proactive detection and healing active';
+    badge.style.color = 'var(--accent)';
+  } else {
+    badge.innerHTML = '⚠️ LLM features disabled — using static rules only';
+    badge.style.color = 'var(--warn)';
   }
 }
 
@@ -2568,6 +2724,13 @@ function refreshAgentList() {
   if (status) url += '&status=' + encodeURIComponent(status);
   if (q) url += '&q=' + encodeURIComponent(q);
   htmx.ajax('GET', url, {target: '#fleetContainer', swap: 'innerHTML'});
+  // Restore filter chip visual state
+  document.querySelectorAll('.filter-chip').forEach(function(b) {
+    var isActive = b.getAttribute('data-filter') === status;
+    b.style.background = isActive ? 'var(--accent-on)' : 'var(--surface)';
+    b.style.color = isActive ? '#86efac' : '#94a3b8';
+    b.style.fontWeight = isActive ? '600' : '400';
+  });
 }
 
 function clearFilters() {
