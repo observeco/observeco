@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import json
-import sys
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -248,7 +246,7 @@ DANGEROUS_PATTERNS = [
 ]
 
 # Commands parsed as shlex list (safer than raw string for subprocess.run)
-import shlex
+import shlex  # noqa: E402
 
 
 def _validate_command(cmd: str) -> tuple[bool, str]:

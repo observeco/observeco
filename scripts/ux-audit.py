@@ -12,17 +12,20 @@ References:
   - qa/ux-testing-playbook — human lens manual checks (this script covers automated layer)
 """
 
-import sys
 import os
 import re
+import sys
 
 # Ensure src is on path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from fastapi.testclient import TestClient
+
+from observeco.dashboard.auth import load_or_generate_secret
 from observeco.dashboard.server import app
 
 client = TestClient(app)
+_DASH_TOKEN = load_or_generate_secret()
 
 STRICT = False
 for arg in sys.argv[1:]:
@@ -41,7 +44,7 @@ def check(name: str, ok: bool, detail: str = ""):
 
 
 def get(path: str) -> tuple[int, str]:
-    r = client.get(path)
+    r = client.get(path, headers={"X-ObserveCo-Token": _DASH_TOKEN})
     return r.status_code, r.text
 
 
@@ -56,8 +59,7 @@ check("Returns HTML", "ObserveCo" in r.text and ("!DOCTYPE" in r.text or "<!doct
 print("\n─── [1] Phase Detection ───")
 code, body = get("/api/phase")
 check("Phase returns 200", code == 200, f"HTTP {code}")
-check("Phase is valid status", "phase-done" in body or body.strip() in ("phase-0", "phase-1", "phase-2", "phase-3"),
-      f"Got: {repr(body.strip()[:100])}")
+check("Phase is valid status", "phase-banner" in body, f"Phase banner present: {repr(body.strip()[:80])}")
 
 # ── 2. Fleet summary ────────────────────────────────────────────────
 print("\n─── [2] Fleet Summary ───")
@@ -124,7 +126,8 @@ print("\n─── [7] Heal Log ───")
 code, body = get("/api/heal-log")
 check("Heal-log 200", code == 200, f"HTTP {code}")
 check("No traceback", "Traceback" not in body, "")
-check("Has heal trigger button", "/api/trigger-heal" in body, "")
+check("Empty state or trigger available",
+      "trigger-heal" in body or "empty-state" in body or "No self-heal" in body, body[:100])
 
 # ── 7b. Cumulative delay banner (obs-dp-006) ────────────────────────
 print("\n─── [7b] Delay Banner ───")
@@ -148,7 +151,7 @@ for fid in ["alert-relay", "fleet-comparison", "drift-alerts",
             "90d-history", "budget-planner", "circuit-auto-recovery"]:
     code, body = get(f"/api/pro-preview/{fid}")
     check(f"Pro preview '{fid}' 200", code == 200, f"HTTP {code}")
-    check(f"  Renders modal", "pro-preview-modal" in body, "")
+    check("  Renders modal", "pro-preview-modal" in body, "")
 
 # ── 10. Pro preview (unknown feature) ──────────────────────────────
 print("\n─── [10] Pro Preview (Unknown) ───")

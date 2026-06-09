@@ -103,7 +103,6 @@ def seed_demo_data(db: Optional[Database] = None) -> int:
     if existing.get("turns", 0) > 0:
         return 0  # Already has real data
 
-    now = int(time.time())
     demo_agents = ["kepler", "hound"]
     demo_intents = [
         ("debug/error-fix", 2, 18, 4200, 15, 80),

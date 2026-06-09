@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc; --fg-2: #94a3b8; --muted: #64748b;
+  --accent: #22c55e; --warn: #eab308; --danger: #ef4444; --meta: #3b82f6; --purple: #a855f7;
+  --border: #334155; --border-soft: #273548;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 11px; --text-sm: 12px; --text-base: 14px; --text-lg: 15px; --text-xl: 18px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 9999px;
+  --ease: cubic-bezier(0.2,0,0,1);
+}
+body { font-family: var(--font); background: var(--bg); color: #e2e8f0; -webkit-font-smoothing: antialiased; }
+.app { max-width: 920px; margin: 0 auto; padding: 20px 24px; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo svg { width: 32px; height: 32px; display: block; }
+.header-title { font-size: 22px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--muted); font-weight: 400; }
+.tier-badge {
+  background: rgba(34,197,94,0.12); color: #86efac;
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* ── Terminal ── */
+.terminal {
+  background: #000; border: 1px solid var(--border); border-radius: var(--radius-lg);
+  overflow: hidden; margin-bottom: 20px;
+}
+.terminal-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; background: #111; border-bottom: 1px solid var(--border);
+}
+.terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+.terminal-dot.red { background: #ef4444; }
+.terminal-dot.yellow { background: #eab308; }
+.terminal-dot.green { background: #22c55e; }
+.terminal-title {
+  font-family: var(--font-mono); font-size: var(--text-xs); color: var(--muted);
+  margin-left: 8px;
+}
+.terminal-body {
+  padding: 16px 20px; font-family: var(--font-mono); font-size: 13px;
+  line-height: 1.7; white-space: pre; overflow-x: auto;
+}
+.terminal-body .green { color: var(--accent); }
+.terminal-body .yellow { color: var(--warn); }
+.terminal-body .red { color: var(--danger); }
+.terminal-body .blue { color: var(--meta); }
+.terminal-body .purple { color: var(--purple); }
+.terminal-body .muted { color: var(--muted); }
+.terminal-body .bold { font-weight: 600; color: var(--fg); }
+.terminal-body .bg-surface { background: var(--surface); padding: 1px 4px; border-radius: 2px; }
+
+/* ── Command Input ── */
+.command-bar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 10px 16px;
+  margin-bottom: 20px;
+}
+.command-prompt {
+  font-family: var(--font-mono); font-size: var(--text-sm); color: var(--accent);
+  font-weight: 500; white-space: nowrap;
+}
+.command-input {
+  flex: 1; background: none; border: none; color: var(--fg);
+  font-family: var(--font-mono); font-size: var(--text-sm); outline: none;
+}
+.command-input::placeholder { color: var(--muted); }
+
+/* ── Feature Cards ── */
+.features {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.feature-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px;
+}
+.feature-icon { font-size: 20px; margin-bottom: 8px; }
+.feature-title { font-size: var(--text-base); font-weight: 600; color: var(--fg); margin-bottom: 4px; }
+.feature-desc { font-size: var(--text-sm); color: var(--fg-2); line-height: 1.5; }
+.feature-code {
+  margin-top: 8px; font-family: var(--font-mono); font-size: var(--text-xs);
+  background: var(--bg); padding: 6px 10px; border-radius: var(--radius-sm);
+  color: var(--accent);
+}
+
+/* ── Flags Reference ── */
+.flags-section { margin-top: 20px; }
+.flags-title {
+  font-size: var(--text-sm); font-weight: 600; color: var(--fg-2);
+  margin-bottom: 12px;
+}
+.flags-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+.flag-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 12px;
+  font-size: var(--text-xs);
+}
+.flag-cmd {
+  font-family: var(--font-mono); color: var(--accent); font-weight: 500;
+  white-space: nowrap;
+}
+.flag-desc { color: var(--fg-2); }
+
+/* ── Toast ── */
+.toast-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 200;
+}
+.toast {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 20px;
+  font-size: var(--text-base); color: var(--fg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateY(20px); transition: all 0.2s var(--ease);
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="32" height="32">
+          <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="header-title">ObserveCo <span>Companion</span></span>
+      <span class="tier-badge">Free</span>
+    </div>
+  </div>
+
+  <!-- Command Bar -->
+  <div class="command-bar">
+    <span class="command-prompt">$</span>
+    <input class="command-input" type="text" placeholder="observeco companion --help" id="cmdInput" readonly>
+  </div>
+
+  <!-- Terminal Output -->
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="terminal-dot red"></div>
+      <div class="terminal-dot yellow"></div>
+      <div class="terminal-dot green"></div>
+      <span class="terminal-title">observeco companion — Sean's Mac-mini</span>
+    </div>
+    <div class="terminal-body" id="terminalBody">
+<span class="bold">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="bold">│</span>  <span class="green bold">ObserveCo Fleet</span> <span class="muted">— Sat 6 Jun 2026, 5:03 PM</span>                      <span class="bold">│</span>
+<span class="bold">├─────────────────────────────────────────────────────────────────────┤</span>
+<span class="bold">│</span>                                                                     <span class="bold">│</span>
+<span class="bold">│</span>  <span class="green">🟢</span> <span class="bold">hound</span>        <span class="green bold">87</span>  <span class="green">● Alive</span>   <span class="muted">22.9K tok</span>  <span class="muted">0 errors</span>         <span class="bold">│</span>
+<span class="bold">│</span>  <span class="green">🟢</span> <span class="bold">raven</span>        <span class="green bold">87</span>  <span class="green">● Alive</span>   <span class="muted">20.4K tok</span>  <span class="muted">0 errors</span>         <span class="bold">│</span>
+<span class="bold">│</span>  <span class="green">🟢</span> <span class="bold">skeptical</span>    <span class="green bold">87</span>  <span class="green">● Alive</span>   <span class="muted">19.5K tok</span>  <span class="muted">0 errors</span>         <span class="bold">│</span>
+<span class="bold">│</span>  <span class="green">🟢</span> <span class="bold">pragma</span>       <span class="green bold">81</span>  <span class="green">● Alive</span>   <span class="muted">22.6K tok</span>  <span class="muted">0 errors</span>         <span class="bold">│</span>
+<span class="bold">│</span>  <span class="green">🟢</span> <span class="bold">dreamer</span>      <span class="green bold">81</span>  <span class="green">● Alive</span>   <span class="muted">20.6K tok</span>  <span class="muted">0.2% err</span>        <span class="bold">│</span>
+<span class="bold">│</span>  <span class="green">🟢</span> <span class="bold">pa</span>           <span class="green bold">80</span>  <span class="green">● Alive</span>   <span class="muted">21.5K tok</span>  <span class="yellow">1.4% err ⚠</span>     <span class="bold">│</span>
+<span class="bold">│</span>  <span class="yellow">🟡</span> <span class="bold">aleph</span>        <span class="yellow bold">79</span>  <span class="yellow">⚠ Stale</span>   <span class="muted">21.2K tok</span>  <span class="yellow">0.6% err</span>        <span class="bold">│</span>
+<span class="bold">│</span>  <span class="yellow">🟡</span> <span class="bold">kepler</span>       <span class="yellow bold">77</span>  <span class="red">● Down</span>    <span class="muted">20.1K tok</span>  <span class="red">2 signals</span>       <span class="bold">│</span>
+<span class="bold">│</span>                                                                     <span class="bold">│</span>
+<span class="bold">├─────────────────────────────────────────────────────────────────────┤</span>
+<span class="bold">│</span>  <span class="muted">📊 Fleet:</span> <span class="bold">8 agents</span> · <span class="green">6 healthy</span> · <span class="yellow">1 warning</span> · <span class="red">1 critical</span>     <span class="bold">│</span>
+<span class="bold">│</span>  <span class="muted">⚠️  Anomalies:</span> <span class="bold">3 active</span> (<span class="red">1 critical</span>, <span class="yellow">2 warnings</span>)           <span class="bold">│</span>
+<span class="bold">│</span>  <span class="muted">📡 Last scan:</span> <span class="bold">12s ago</span>                                       <span class="bold">│</span>
+<span class="bold">└─────────────────────────────────────────────────────────────────────┘</span></div>
+  </div>
+
+  <!-- Feature Cards -->
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Fleet Status</div>
+      <div class="feature-desc">All agents at a glance — health score, status, token usage, error rate.</div>
+      <div class="feature-code">$ observeco companion</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔔</div>
+      <div class="feature-title">Anomaly Filter</div>
+      <div class="feature-desc">Show only agents with active anomalies. Focus on what needs attention.</div>
+      <div class="feature-code">$ observeco companion --anomalies</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔄</div>
+      <div class="feature-title">Watch Mode</div>
+      <div class="feature-desc">Live-updating terminal view. Refreshes every 10s.</div>
+      <div class="feature-code">$ observeco companion --watch</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-title">JSON Output</div>
+      <div class="feature-desc">Scriptable output for automation, CI/CD, and custom integrations.</div>
+      <div class="feature-code">$ observeco companion --json</div>
+    </div>
+  </div>
+
+  <!-- Flags Reference -->
+  <div class="flags-section">
+    <div class="flags-title">CLI Flags</div>
+    <div class="flags-grid">
+      <div class="flag-item">
+        <span class="flag-cmd">--json</span>
+        <span class="flag-desc">Output as JSON</span>
+      </div>
+      <div class="flag-item">
+        <span class="flag-cmd">--watch</span>
+        <span class="flag-desc">Re-print every 10s</span>
+      </div>
+      <div class="flag-item">
+        <span class="flag-cmd">--agent &lt;name&gt;</span>
+        <span class="flag-desc">Show one agent</span>
+      </div>
+      <div class="flag-item">
+        <span class="flag-cmd">--anomalies</span>
+        <span class="flag-desc">Show anomalies only</span>
+      </div>
+      <div class="flag-item">
+        <span class="flag-cmd">--compact</span>
+        <span class="flag-desc">Single-line format</span>
+      </div>
+      <div class="flag-item">
+        <span class="flag-cmd">--no-colour</span>
+        <span class="flag-desc">Strip ANSI codes</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container"><div class="toast" id="toast"></div></div>
+
+<script>
+// Toast
+const toast = document.getElementById('toast');
+let toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Command bar click
+document.getElementById('cmdInput').addEventListener('click', () => {
+  showToast('Copy: observeco companion');
+});
+</script>
+</body>
+</html>

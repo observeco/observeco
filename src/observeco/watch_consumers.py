@@ -7,14 +7,13 @@ Failure in one consumer does not affect others — per §7.1 spec.
 from __future__ import annotations
 
 import logging
-import os
 import time
 from pathlib import Path
 from threading import Thread
 from typing import Optional
 
 from observeco.db import Database
-from observeco.event_bus import publish, subscribe, get_events, EventStream
+from observeco.event_bus import publish
 
 logger = logging.getLogger(__name__)
 
@@ -135,8 +134,10 @@ class GardenConsumer(BaseConsumer):
 
     def _tick(self) -> None:
         from observeco.clawforge.garden import (
-            _find_memory_files, _find_duplicates,
-            _find_contradictions, _find_stale,
+            _find_contradictions,
+            _find_duplicates,
+            _find_memory_files,
+            _find_stale,
         )
 
         memories = _find_memory_files()

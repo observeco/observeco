@@ -1,7 +1,7 @@
 """Tests for probe registry integration — _probe_agent should delegate to resolve_probe()."""
 from observeco.config import AgentConfig
+from observeco.probe.registry import get_probe
 from observeco.pulse.check import _probe_agent
-from observeco.probe.registry import resolve_probe, get_probe
 
 
 def test_probe_agent_http_delegates_to_http_probe():

@@ -1,8 +1,9 @@
 """Dashboard commercial + otel + remaining endpoint tests."""
 
 from fastapi.testclient import TestClient
-from observeco.dashboard.server import app
+
 from observeco.dashboard.auth import init_auth
+from observeco.dashboard.server import app
 
 SECRET = init_auth(app)
 client = TestClient(app)
@@ -31,7 +32,7 @@ class TestOtel:
 
 class TestConfigAgent:
     def test_config_agent_write(self):
-        from observeco.config import write_agent, AgentConfig
+        from observeco.config import AgentConfig, write_agent
         a = AgentConfig(name="test-config-agent", framework="cli")
         write_agent(a)
 
@@ -47,7 +48,7 @@ class TestConfigAgent:
         assert n in list_excluded()
 
     def test_config_pulse_interval(self):
-        from observeco.config import load_config, AgentConfig
+        from observeco.config import load_config
         cfg = load_config()
         # load_config returns an ObserveConfig object with agent list
         agents = getattr(cfg, "agents", [])

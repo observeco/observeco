@@ -13,7 +13,7 @@ from platformdirs import user_data_dir
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 8
+SCHEMA_VERSION = 12
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -68,11 +68,11 @@ CREATE TABLE IF NOT EXISTS telemetry_events (
 );
 CREATE INDEX IF NOT EXISTS idx_telemetry_event ON telemetry_events(event_type, created_at);
 CREATE INDEX IF NOT EXISTS idx_telemetry_machine ON telemetry_events(machine_id);
-
+-- Communication Pathway Map (§3.19)
 CREATE TABLE IF NOT EXISTS pathway_nodes (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    type TEXT NOT NULL CHECK(type IN ('cron','agent','platform','consumer','router')),
+    type TEXT NOT NULL CHECK(type IN ('filesystem','cron','agent','platform','consumer','router','daemon','watcher','gateway','service','mesh')),
     framework TEXT DEFAULT '',
     source TEXT DEFAULT 'manual' CHECK(source IN ('auto','manual')),
     confidence INTEGER DEFAULT 50 CHECK(confidence IN (0,25,50,75,100)),
@@ -86,11 +86,12 @@ CREATE TABLE IF NOT EXISTS pathway_edges (
     mechanism TEXT DEFAULT '',
     confidence INTEGER DEFAULT 50 CHECK(confidence IN (0,25,50,75,100)),
     scenario TEXT DEFAULT '',
+    metadata TEXT DEFAULT '{}',
     last_verified INTEGER,
     created_at INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS idx_edges_source ON pathway_edges(source_id);
-CREATE INDEX IF NOT EXISTS idx_edges_target ON pathway_edges(target_id);
+CREATE INDEX IF NOT EXISTS idx_pe_source ON pathway_edges(source_id);
+CREATE INDEX IF NOT EXISTS idx_pe_target ON pathway_edges(target_id);
 CREATE INDEX IF NOT EXISTS idx_edges_status ON pathway_edges(status);
 """),
     (5, """-- Migration 5: auth sessions + dead letter queue
@@ -215,14 +216,63 @@ INSERT OR IGNORE INTO retention_config (key, value) VALUES ('token_days', '7');
 INSERT OR IGNORE INTO retention_config (key, value) VALUES ('l2_days', '7');
 """),
     (8, """-- Migration 8: instance_id for shared-view mode
--- SAFE & IDEMPOTENT (ref requirements-fidelity Trap 3: lifecycle safety,
--- ref system-design Lens 9: multi-instance safety):
--- ALTER TABLE ADD COLUMN is a no-op if the column already exists
--- (SQLite ignores duplicate ADD COLUMN gracefully).
 ALTER TABLE pulse_log ADD COLUMN instance_id TEXT DEFAULT '';
 """),
     (9, """-- Migration 9: agent heartbeat metadata (daemon info, watchdog, PID)
 ALTER TABLE pulse_log ADD COLUMN metadata TEXT DEFAULT '';
+"""),
+    (10, """-- Migration 10: pathway edge metadata (deliver targets, channel IDs)
+ALTER TABLE pathway_edges ADD COLUMN metadata TEXT DEFAULT '{}';
+"""),
+    (11, """-- Migration 11: add 'filesystem' node type for Store-and-Forward pattern
+-- SQLite can't ALTER CHECK constraints, so rebuild with updated CHECK
+CREATE TABLE IF NOT EXISTS pathway_nodes_v11 (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('filesystem','cron','agent','platform','consumer','router','daemon','watcher','gateway','service','mesh')),
+    framework TEXT DEFAULT '',
+    source TEXT DEFAULT 'manual' CHECK(source IN ('auto','manual')),
+    confidence INTEGER DEFAULT 50 CHECK(confidence IN (0,25,50,75,100)),
+    metadata TEXT DEFAULT '{}'
+);
+INSERT OR IGNORE INTO pathway_nodes_v11 (id, name, type, framework, source, confidence, metadata)
+    SELECT id, name, type, framework, source, confidence, metadata FROM pathway_nodes;
+DROP TABLE pathway_nodes;
+ALTER TABLE pathway_nodes_v11 RENAME TO pathway_nodes;
+"""),
+    (12, """-- Migration 12: chisel_trims mode column + optimiser tables
+ALTER TABLE chisel_trims ADD COLUMN mode TEXT DEFAULT 'stdin';
+CREATE TABLE IF NOT EXISTS compress_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL, mode TEXT NOT NULL,
+    before_tokens INTEGER NOT NULL, after_tokens INTEGER NOT NULL,
+    savings INTEGER NOT NULL, savings_pct REAL NOT NULL,
+    file_path TEXT, backup_path TEXT,
+    triggered_by TEXT DEFAULT 'manual', timestamp INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS skill_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL, skill_name TEXT NOT NULL,
+    triggered INTEGER NOT NULL DEFAULT 0, turn_count INTEGER NOT NULL DEFAULT 1,
+    last_triggered INTEGER, timestamp INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS guidance_fire (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL, rule_hash TEXT NOT NULL, rule_text TEXT NOT NULL,
+    fire_count INTEGER NOT NULL DEFAULT 1, last_fired INTEGER, timestamp INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS turn_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL, total_tokens INTEGER NOT NULL DEFAULT 0,
+    prompt_tokens INTEGER DEFAULT 0, completion_tokens INTEGER DEFAULT 0,
+    skills_used TEXT DEFAULT '[]', guidance_hit TEXT DEFAULT '[]',
+    timestamp INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_compress_log_agent ON compress_log(agent_name);
+CREATE INDEX IF NOT EXISTS idx_skill_usage_agent ON skill_usage(agent_name, skill_name);
+CREATE INDEX IF NOT EXISTS idx_guidance_fire_agent ON guidance_fire(agent_name);
+CREATE INDEX IF NOT EXISTS idx_turn_log_agent ON turn_log(agent_name);
+CREATE INDEX IF NOT EXISTS idx_turn_log_ts ON turn_log(timestamp);
 """),
 ]
 
@@ -421,7 +471,7 @@ CREATE INDEX IF NOT EXISTS idx_dlq_retries ON dead_letter_queue(retries);
 CREATE TABLE IF NOT EXISTS pathway_nodes (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
-    type TEXT NOT NULL CHECK(type IN ('cron','agent','platform','consumer','router')),
+    type TEXT NOT NULL CHECK(type IN ('filesystem','cron','agent','platform','consumer','router','daemon','watcher','gateway','service','mesh')),
     framework TEXT DEFAULT '',
     source TEXT DEFAULT 'manual' CHECK(source IN ('auto','manual')),
     confidence INTEGER DEFAULT 50 CHECK(confidence IN (0,25,50,75,100)),
@@ -436,6 +486,7 @@ CREATE TABLE IF NOT EXISTS pathway_edges (
     mechanism TEXT DEFAULT '',
     confidence INTEGER DEFAULT 50 CHECK(confidence IN (0,25,50,75,100)),
     scenario TEXT DEFAULT '',
+    metadata TEXT DEFAULT '{}',
     last_verified INTEGER,
     created_at INTEGER NOT NULL
 );
@@ -453,7 +504,12 @@ INSERT OR IGNORE INTO pathway_node_types (type, icon, shape, color) VALUES
     ('agent', '🧠', 'round-rectangle', '#6366f1'),
     ('platform', '📱', 'round-rectangle', '#06b6d4'),
     ('consumer', '📖', 'ellipse', '#14b8a6'),
-    ('router', '🔀', 'round-rectangle', '#3b82f6');
+    ('router', '🔀', 'round-rectangle', '#3b82f6'),
+    ('daemon', '⚙️', 'round-rectangle', '#8b5cf6'),
+    ('watcher', '👁️', 'ellipse', '#ec4899'),
+    ('gateway', '🚪', 'round-rectangle', '#10b981'),
+    ('service', '📡', 'round-rectangle', '#f97316'),
+    ('mesh', '🔗', 'ellipse', '#06b6d4');
 
 CREATE INDEX IF NOT EXISTS idx_edges_source ON pathway_edges(source_id);
 CREATE INDEX IF NOT EXISTS idx_edges_target ON pathway_edges(target_id);
@@ -495,20 +551,33 @@ class Database:
                 try:
                     conn.executescript(migration_sql)
                     conn.execute(
-                        "UPDATE _meta SET value=? WHERE key='schema_version'",
+                        "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
                         (str(target_version),),
                     )
                     conn.commit()
                     current_version = target_version
                 except Exception as e:
-                    logger.error(f"Migration {current_version}→{target_version} failed: {e}")
-                    # Continue — next startup will retry
-                    break
+                    # SQLite throws 'duplicate column name' if ALTER TABLE ADD COLUMN
+                    # finds the column already exists from the initial schema.
+                    # Treat this specific case as idempotent success — the column exists.
+                    emsg = str(e)
+                    if "duplicate column name" in emsg:
+                        logger.warning(f"Migration {current_version}→{target_version} skipped (column already exists): {e}")
+                        conn.execute(
+                            "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
+                            (str(target_version),),
+                        )
+                        conn.commit()
+                        current_version = target_version
+                    else:
+                        logger.error(f"Migration {current_version}→{target_version} failed: {e}")
+                        # Continue — next startup will retry
+                        break
 
         # Ensure version is current
         if current_version < SCHEMA_VERSION:
             conn.execute(
-                "UPDATE _meta SET value=? WHERE key='schema_version'",
+                "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
                 (str(SCHEMA_VERSION),),
             )
             conn.commit()
@@ -524,7 +593,6 @@ class Database:
         Safe to call while the database is in use (WAL mode).
         Returns True on success.
         """
-        import shutil
         if dest_path is None:
             backup_dir = self.db_path.parent / "backups"
             backup_dir.mkdir(parents=True, exist_ok=True)
@@ -627,6 +695,22 @@ class Database:
         conn.execute(
             "INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)",
             ("first_run_complete", "true"),
+        )
+        conn.commit()
+
+    def get_no_llm(self) -> bool:
+        """Check if LLM-powered features are disabled (opt-in via Settings)."""
+        conn = self._get_conn()
+        cur = conn.execute("SELECT value FROM _meta WHERE key='no_llm'")
+        row = cur.fetchone()
+        return row is not None and row["value"] == "true"
+
+    def set_no_llm(self, disabled: bool) -> None:
+        """Persist the LLM disable toggle."""
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO _meta (key, value) VALUES (?, ?)",
+            ("no_llm", "true" if disabled else "false"),
         )
         conn.commit()
 
@@ -1379,7 +1463,6 @@ class Database:
 
         for name in summary:
             s = summary[name]
-            crash_labeled = s["crash"]
             actual_crashes = s["crash"]  # classified as crash = real crash
             # False alarm ratio: crashes labeled that were actually TOCTOU
             false_alarms = s["toctou"]
@@ -1413,10 +1496,12 @@ class Database:
     # -- Stats --
 
     def get_agent_status_summary(self) -> dict:
-        """Return per-agent latest pulse status."""
+        """Return per-agent latest pulse status + whether it's ever been alive."""
         conn = self._get_conn()
         cur = conn.execute("""
-            SELECT p.agent_name, p.status, p.latency_ms, p.timestamp, c.tripped as circuit_tripped
+            SELECT p.agent_name, p.status, p.latency_ms, p.timestamp, c.tripped as circuit_tripped,
+                   (SELECT COUNT(*) FROM pulse_log p2
+                    WHERE p2.agent_name = p.agent_name AND p2.status = 'alive' AND p2.id > 0) > 0 AS ever_alive
             FROM pulse_log p
             LEFT JOIN circuit_breakers c ON p.agent_name = c.agent_name
             WHERE p.id IN (SELECT MAX(id) FROM pulse_log GROUP BY agent_name)
@@ -1440,13 +1525,14 @@ class Database:
 
     def pathway_add_edge(self, source_id: str, target_id: str | None = None,
                           status: str = "green", mechanism: str = "",
-                          confidence: int = 50, scenario: str = "") -> int:
+                          confidence: int = 50, scenario: str = "",
+                          metadata: str = "{}") -> int:
         """Record a communication edge. target_id=None = dead end."""
         conn = self._get_conn()
         cur = conn.execute(
-            "INSERT INTO pathway_edges (source_id, target_id, status, mechanism, confidence, scenario, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (source_id, target_id, status, mechanism, confidence, scenario, int(time.time())),
+            "INSERT INTO pathway_edges (source_id, target_id, status, mechanism, confidence, scenario, metadata, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (source_id, target_id, status, mechanism, confidence, scenario, metadata, int(time.time())),
         )
         conn.commit()
         return cur.lastrowid or 0
@@ -1477,6 +1563,61 @@ class Database:
             "edges": self.pathway_get_edges(),
         }
 
+    def pathway_record_snapshot(self) -> int:
+        """Snapshot current pathway graph state for historical replay.
+        Returns the snapshot ID."""
+        conn = self._get_conn()
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS pathway_snapshots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                snapshot_time INTEGER NOT NULL,
+                raw_json TEXT NOT NULL
+            )
+        """)
+        graph = self.pathway_get_graph()
+        raw_json = json.dumps(graph)
+        cur = conn.execute(
+            "INSERT INTO pathway_snapshots (snapshot_time, raw_json) VALUES (?, ?)",
+            (int(time.time()), raw_json)
+        )
+        conn.commit()
+        return cur.lastrowid or 0
+
+    def pathway_get_snapshots(self, limit: int = 50) -> list[dict]:
+        """Get list of snapshots with metadata (no full data)."""
+        conn = self._get_conn()
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS pathway_snapshots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                snapshot_time INTEGER NOT NULL,
+                raw_json TEXT NOT NULL
+            )
+        """)
+        rows = conn.execute(
+            "SELECT id, snapshot_time, LENGTH(raw_json) as json_bytes FROM pathway_snapshots ORDER BY id DESC LIMIT ?",
+            (limit,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def pathway_get_snapshot(self, snapshot_id: int) -> dict | None:
+        """Get full snapshot data for replay."""
+        conn = self._get_conn()
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS pathway_snapshots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                snapshot_time INTEGER NOT NULL,
+                raw_json TEXT NOT NULL
+            )
+        """)
+        row = conn.execute(
+            "SELECT * FROM pathway_snapshots WHERE id=?", (snapshot_id,)
+        ).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        d["data"] = json.loads(d["raw_json"])
+        return d
+
     def pathway_scan(self) -> int:
         """Auto-detect pathways from registered agents and known infrastructure.
         Returns number of edges scanned/updated."""
@@ -1488,47 +1629,7 @@ class Database:
         conn.execute("DELETE FROM pathway_nodes WHERE source='auto'")
         count = 0
 
-        # 1. Register known consumer nodes
-        known_consumers = [("sean", "Sean", "consumer", "📖")]
-
-        for nid, nname, ntype, _ in known_consumers:
-            conn.execute(
-                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
-                "VALUES (?, ?, ?, 'auto', 50)",
-                (nid, nname, ntype),
-            )
-
-        # 2. Register known platform nodes — and connect each to the consumer
-        known_platforms = [("telegram", "Telegram", "platform", "📱"),
-                           ("slack", "Slack", "platform", "💬"),
-                           ("discord", "Discord", "platform", "🎮"),
-                           ("whatsapp", "WhatsApp", "platform", "📱"),
-                           ("bluebubbles", "BlueBubbles", "platform", "📱")]
-
-        for nid, nname, ntype, _ in known_platforms:
-            conn.execute(
-                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
-                "VALUES (?, ?, ?, 'auto', 50)",
-                (nid, nname, ntype),
-            )
-            # Link platform → consumer so no node dangles
-            conn.execute(
-                "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, mechanism, confidence, created_at) "
-                "VALUES (?, 'sean', 'green', 'message delivery', 75, ?)",
-                (nid, now),
-            )
-            count += 1
-
-        # 3. Register signal router
-        known_routers = [("signal-router", "Signal Router", "router", "🔀")]
-        for nid, nname, ntype, _ in known_routers:
-            conn.execute(
-                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
-                "VALUES (?, ?, ?, 'auto', 50)",
-                (nid, nname, ntype),
-            )
-
-        # 4. Scan agents from DB — register them as agent nodes
+        # 1. Scan agents from DB — register them as agent nodes
         agents = self.get_agents()
         for a in agents:
             aname = a["agent_name"]
@@ -1540,124 +1641,331 @@ class Database:
                 (nid, aname, fw),
             )
 
-            # Connect agent → Telegram (telegram is the primary delivery)
-            conn.execute(
-                "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, mechanism, confidence, created_at) "
-                "VALUES (?, 'telegram', 'green', 'pulse check', 75, ?)",
-                (nid, now),
-            )
+            # No automatic delivery edge — agents connect to platforms and crons
+            # through actual signal traffic and cron delivery edges discovered below
             count += 1
 
-        # 5. Scan cron jobs from filesystem (configurable path for framework-agnostic support)
-        import os
-        cron_dir_env = os.environ.get("OBSERVECO_PATHWAY_CRON_DIR", "")
-        hermes_cron_dir = Path(cron_dir_env) if cron_dir_env else (Path.home() / ".hermes" / "cron")
-        if hermes_cron_dir.exists():
-            jobs_file = hermes_cron_dir / "jobs.json"
-            if jobs_file.exists():
-                try:
-                    import json
-                    raw = json.loads(jobs_file.read_text())
-                    job_list = raw.get("jobs", []) if isinstance(raw, dict) else raw
-                    for jidx, job in enumerate(job_list):
-                        jname = job.get("name", job.get("id", f"cron-{jidx}"))
-                        nid = f"cron-{jname}"
+        # 2. Discover agents from framework config files (OpenClaw, etc.)
+        _agent_config_paths = [
+            (Path.home() / ".openclaw" / "openclaw.json", "openclaw"),
+        ]
+        for _cfg_path, _fw in _agent_config_paths:
+            if not _cfg_path.exists():
+                continue
+            try:
+                import json as _json2
+                _cfg = _json2.loads(_cfg_path.read_text())
+                _oc_agents = (_cfg.get("agents", {}) or {}).get("list", [])
+                for _oc_a in _oc_agents:
+                    _oc_name = _oc_a.get("id", "")
+                    if not _oc_name:
+                        continue
+                    _nid = f"agent-{_oc_name}"
+                    # Only insert if not already registered by the DB
+                    conn.execute(
+                        "INSERT OR IGNORE INTO pathway_nodes (id, name, type, framework, source, confidence) "
+                        "VALUES (?, ?, 'agent', ?, 'auto', 75)",
+                        (_nid, _oc_name, _fw),
+                    )
+                    count += 1
+            except Exception:
+                pass
+
+        # 5. Scan cron jobs — framework-agnostic (Hermes + OpenClaw + any format)
+        import os as _os
+        _cron_search_dirs = _os.environ.get("OBSERVECO_PATHWAY_CRON_DIR", "")
+        _cron_scan_dirs = []
+        if _cron_search_dirs:
+            _cron_scan_dirs = [Path(d) for d in _cron_search_dirs.split(":")]
+        else:
+            # Auto-discover all known framework cron directories
+            for _home_dir in [Path.home() / ".hermes", Path.home() / ".openclaw"]:
+                _cron_dir = _home_dir / "cron"
+                if _cron_dir.exists():
+                    _cron_scan_dirs.append(_cron_dir)
+        
+        _seen_cron_ids = set()
+        for _cron_dir in _cron_scan_dirs:
+            _jobs_file = _cron_dir / "jobs.json"
+            if not _jobs_file.exists():
+                continue
+            try:
+                import json as _json
+                _raw = _json.loads(_jobs_file.read_text())
+                _job_list = _raw.get("jobs", []) if isinstance(_raw, dict) else _raw
+                for _jidx, _job in enumerate(_job_list):
+                    _jname = _job.get("name", _job.get("id", f"cron-{_cron_dir.parent.name}-{_jidx}"))
+                    if _jname in _seen_cron_ids:
+                        continue
+                    _seen_cron_ids.add(_jname)
+                    _nid = f"cron-{_jname}"
+                    conn.execute(
+                        "INSERT OR REPLACE INTO pathway_nodes (id, name, type, source, confidence) "
+                        "VALUES (?, ?, 'cron', 'auto', 75)",
+                        (_nid, _jname),
+                    )
+
+                    # Framework-agnostic deliver parser:
+                    # Hermes format: job["deliver"] = "telegram:-1003985609979:29" (string)
+                    # OpenClaw format: job["delivery"] = {"mode": "announce", "channel": "telegram", "to": "-1003595059222"} (dict)
+                    _deliver = _job.get("deliver", "")
+                    if not _deliver or not isinstance(_deliver, str):
+                        # Try OpenClaw delivery dict format
+                        _dv = _job.get("delivery", {})
+                        if isinstance(_dv, dict):
+                            _ch = _dv.get("channel", "")
+                            _to = _dv.get("to", "")
+                            if _ch and _to:
+                                _deliver = f"{_ch}:{_to}"
+                            elif _dv.get("mode") == "none":
+                                _deliver = "local"
+                        if not _deliver:
+                            _deliver = "local"
+
+                    _target_nid = None
+                    if "telegram" in str(_deliver):
+                        _target_nid = "telegram"
+                    elif "whatsapp" in str(_deliver):
+                        _target_nid = "whatsapp"
+                    elif "slack" in str(_deliver):
+                        _target_nid = "slack"
+                    elif "discord" in str(_deliver):
+                        _target_nid = "discord"
+                    elif _deliver == "local":
+                        # Store-and-Forward pattern — writes to durable filesystem store
+                        # Mark as green to filesystem node. Other agents consume independently.
+                        _target_nid = "filesystem"
+                    elif _deliver in ("all", "origin"):
+                        _target_nid = "telegram"
+                    elif _deliver:
+                        for _a in agents:
+                            if _a["agent_name"] in str(_deliver):
+                                _target_nid = f"agent-{_a['agent_name']}"
+                                break
+
+                    _status = "green" if _target_nid else "red"
+                    _scenario = "" if _target_nid else "1"
+
+                    if _target_nid and _target_nid in ("telegram", "whatsapp", "slack", "discord", "email"):
                         conn.execute(
-                            "INSERT OR REPLACE INTO pathway_nodes (id, name, type, source, confidence) "
-                            "VALUES (?, ?, 'cron', 'auto', 75)",
-                            (nid, jname),
+                            "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                            "VALUES (?, ?, 'platform', 'manual', 100)",
+                            (_target_nid, _target_nid),
+                        )
+                    elif _target_nid == "filesystem":
+                        conn.execute(
+                            "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                            "VALUES (?, ?, 'filesystem', 'manual', 100)",
+                            (_target_nid, _target_nid),
                         )
 
-                        # Determine delivery target from cron config
-                        deliver = job.get("deliver", "local")
-                        target_nid = None
-                        if "telegram" in str(deliver):
-                            target_nid = "telegram"
-                        elif "whatsapp" in str(deliver):
-                            target_nid = "whatsapp"
-                        elif deliver == "local":
-                            target_nid = "signal-router"  # local cron output feeds signal pipeline
-                        elif deliver in ("all", "origin"):
-                            target_nid = "telegram"
-                        elif deliver:
-                            # Try to match to a known agent
-                            for a in agents:
-                                if a["agent_name"] in deliver:
-                                    target_nid = f"agent-{a['agent_name']}"
-                                    break
-                            if not target_nid:
-                                target_nid = "telegram"  # best guess
+                    _meta = _json.dumps({"deliver": _deliver})
+                    conn.execute(
+                        "INSERT OR REPLACE INTO pathway_edges (source_id, target_id, status, "
+                        "mechanism, confidence, scenario, metadata, last_verified, created_at) "
+                        "VALUES (?, ?, ?, 'cron_delivery', 75, ?, ?, ?, ?)",
+                        (_nid, _target_nid, _status, _scenario, _meta, now, now),
+                    )
+                    count += 1
+            except (_json.JSONDecodeError, Exception):
+                pass
 
-                        status = "green" if target_nid else "red"
-                        scenario = "" if target_nid else "1"  # scenario 1: dead-end delivery
-
-                        conn.execute(
-                            "INSERT OR REPLACE INTO pathway_edges (source_id, target_id, status, "
-                            "mechanism, confidence, scenario, last_verified, created_at) "
-                            "VALUES (?, ?, ?, 'cron_delivery', 75, ?, ?, ?)",
-                            (nid, target_nid, status, scenario, now, now),
-                        )
-                        count += 1
-                except (json.JSONDecodeError, Exception) as exc:
-                    pass
-
-        # 6. Detect agent-to-agent routing from signal inboxes (configurable path)
+        # 6. Detect agent-to-agent routing from signal inboxes, archives, outboxes, quarantine, failed
         import os
         signals_env = os.environ.get("OBSERVECO_PATHWAY_SIGNALS_DIR", "")
         signal_base = Path(signals_env) if signals_env else (Path.home() / ".hermes" / "signals")
+        signal_count_limit = int(os.environ.get("OBSERVECO_PATHWAY_SIGNAL_LIMIT", "500"))
+        scanned = 0
+        
+        # Helper: parse a signal JSON file and create an edge if valid
+        # Dedups on (from, to) — multiple signals between same agents are aggregated into one edge with count
+        _dedup_signal_edges = {}
+        _STATUS_SEVERITY = {"red": 3, "yellow": 2, "green": 1}
+        
+        def _pathway_scan_signal(sig_file, status, mechanism_prefix):
+            nonlocal scanned, count
+            if scanned >= signal_count_limit:
+                return
+            try:
+                sig = json.loads(sig_file.read_text())
+            except (json.JSONDecodeError, Exception):
+                return
+            sig_from = sig.get("from", "")
+            sig_to = sig.get("to", "")
+            if not sig_from or not sig_to or sig_from == sig_to:
+                return
+            
+            # Dedup key: (from, to) — aggregate all signals between same agents into one edge
+            dedup_key = f"{sig_from}→{sig_to}"
+            
+            sig_type = sig.get("type", "signal")
+            mechanism = f"{mechanism_prefix}_{sig_type}"
+            _written_at = sig.get("written_at", "")
+            _sig_id = sig.get("signal_id", sig_file.stem)
+            
+            prev = _dedup_signal_edges.get(dedup_key)
+            prev_sev = _STATUS_SEVERITY.get(prev["status"] if prev else "", 0) if prev else 0
+            cur_sev = _STATUS_SEVERITY.get(status, 0)
+            
+            if prev:
+                # Aggregate: increment count, collect types, collect sample IDs (up to 3)
+                prev["signal_count"] = prev.get("signal_count", 1) + 1
+                if cur_sev > prev_sev:
+                    prev["status"] = status
+                    prev["mechanism"] = mechanism
+                # Collect unique types
+                if sig_type not in prev.get("signal_types", []):
+                    prev.setdefault("signal_types", []).append(sig_type)
+                # Collect up to 3 signal IDs
+                if len(prev.get("signal_ids", [])) < 3:
+                    prev.setdefault("signal_ids", []).append(_sig_id)
+                # Track oldest written_at
+                if _written_at and (_written_at < prev.get("oldest_written_at", _written_at)):
+                    prev["oldest_written_at"] = _written_at
+            else:
+                _dedup_signal_edges[dedup_key] = {
+                    "from": sig_from, "to": sig_to,
+                    "status": status, "mechanism": mechanism,
+                    "signal_types": [sig_type],
+                    "signal_ids": [_sig_id],
+                    "signal_count": 1,
+                    "oldest_written_at": _written_at,
+                }
+            scanned += 1
+            count += 1
+        
+        def _flush_signal_edges():
+            nonlocal count
+            for dedup_key, info in _dedup_signal_edges.items():
+                src_nid = f"agent-{info['from']}"
+                tgt_nid = f"agent-{info['to']}"
+                conn.execute(
+                    "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                    "VALUES (?, ?, 'agent', 'auto', 75)",
+                    (src_nid, info['from']),
+                )
+                conn.execute(
+                    "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                    "VALUES (?, ?, 'agent', 'auto', 75)",
+                    (tgt_nid, info['to']),
+                )
+                _meta = {
+                    "source": "signal_scan",
+                    "signal_types": info.get("signal_types", ["signal"]),
+                    "signal_ids": info.get("signal_ids", []),
+                    "signal_count": info.get("signal_count", 1),
+                    "oldest_written_at": info.get("oldest_written_at", ""),
+                    "mechanism": info.get("mechanism", ""),
+                }
+                conn.execute(
+                    "INSERT OR REPLACE INTO pathway_edges (source_id, target_id, status, "
+                    "mechanism, confidence, scenario, metadata, last_verified, created_at) "
+                    "VALUES (?, ?, ?, ?, 75, '', ?, ?, ?)",
+                    (src_nid, tgt_nid, info['status'], info['mechanism'],
+                     json.dumps(_meta), now, now),
+                )
+        
         if signal_base.exists():
+            # 6a. Scan inboxes — signals waiting to be consumed → yellow (stale concern)
             for _agent_node_dir in signal_base.iterdir():
                 if not _agent_node_dir.is_dir():
                     continue
                 agent_name = _agent_node_dir.name
+                if agent_name in ("archive", "outbox", "failed", "quarantine", "inbox"):
+                    continue  # skip global dirs
                 inbox_dir = _agent_node_dir / "inbox"
                 if not inbox_dir.exists():
                     continue
-                # Read all signals in this inbox to find who sent them
                 try:
                     for sig_file in sorted(inbox_dir.iterdir()):
-                        if not sig_file.name.endswith(".json"):
+                        if not sig_file.name.endswith(".json") or scanned >= signal_count_limit:
                             continue
-                        try:
-                            sig = json.loads(sig_file.read_text())
-                            sig_from = sig.get("from", "")
-                            sig_to = sig.get("to", agent_name)
-                            if not sig_from or sig_from == agent_name:
-                                continue
-                            # Source: sender (map to agent- prefix or use as-is)
-                            src_nid = f"agent-{sig_from}"
-                            tgt_nid = f"agent-{sig_to}"
-                            # Ensure both nodes exist
-                            conn.execute(
-                                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
-                                "VALUES (?, ?, 'agent', 'auto', 75)",
-                                (src_nid, sig_from),
-                            )
-                            conn.execute(
-                                "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
-                                "VALUES (?, ?, 'agent', 'auto', 75)",
-                                (tgt_nid, sig_to),
-                            )
-                            # Create edge
-                            sig_type = sig.get("type", "signal")
-                            mechanism = f"signal_{sig_type}"
-                            conn.execute(
-                                "INSERT OR REPLACE INTO pathway_edges (source_id, target_id, status, "
-                                "mechanism, confidence, scenario, last_verified, created_at) "
-                                "VALUES (?, ?, 'green', ?, 75, '', ?, ?)",
-                                (src_nid, tgt_nid, mechanism, now, now),
-                            )
-                            count += 1
-                            # Only process first few signals per agent to avoid duplicates
-                            if count > 200:
-                                break
-                        except (json.JSONDecodeError, Exception):
-                            continue
-                        if count > 200:
-                            break
+                        _pathway_scan_signal(sig_file, "yellow", "inbox_stale")
                 except Exception:
                     continue
+            
+            # 6b. Scan per-agent archives — confirmed consumed signals → green (healthy)
+            for _agent_node_dir in signal_base.iterdir():
+                if not _agent_node_dir.is_dir():
+                    continue
+                agent_name = _agent_node_dir.name
+                if agent_name in ("archive", "outbox", "failed", "quarantine", "inbox"):
+                    continue
+                archive_dir = _agent_node_dir / "archive"
+                if not archive_dir.exists():
+                    continue
+                try:
+                    for sig_file in sorted(archive_dir.iterdir()):
+                        if not sig_file.name.endswith(".json") or scanned >= signal_count_limit:
+                            continue
+                        _pathway_scan_signal(sig_file, "green", "signal")
+                except Exception:
+                    continue
+            
+            # 6c. Scan global archive — consumed signals from all senders
+            global_archive = signal_base / "archive"
+            if global_archive.exists() and global_archive.is_dir():
+                try:
+                    for sig_file in sorted(global_archive.iterdir()):
+                        if not sig_file.name.endswith(".json") or scanned >= signal_count_limit:
+                            continue
+                        _pathway_scan_signal(sig_file, "green", "signal")
+                except Exception:
+                    pass
+            
+            # 6d. Scan outbox dirs — pending outbound signals → yellow (not yet consumed)
+            for _agent_node_dir in signal_base.iterdir():
+                if not _agent_node_dir.is_dir():
+                    continue
+                agent_name = _agent_node_dir.name
+                if agent_name in ("archive", "outbox", "failed", "quarantine", "inbox"):
+                    continue
+                outbox_dir = _agent_node_dir / "outbox"
+                if not outbox_dir.exists():
+                    continue
+                try:
+                    for sig_file in sorted(outbox_dir.iterdir()):
+                        if not sig_file.name.endswith(".json") or scanned >= signal_count_limit:
+                            continue
+                        _pathway_scan_signal(sig_file, "yellow", "outbox_pending")
+                except Exception:
+                    continue
+            
+            # 6e. Scan global outbox dir — cross-agent pending signals
+            global_outbox = signal_base / "outbox"
+            if global_outbox.exists() and global_outbox.is_dir():
+                try:
+                    for sig_file in sorted(global_outbox.iterdir()):
+                        if not sig_file.name.endswith(".json") or scanned >= signal_count_limit:
+                            continue
+                        _pathway_scan_signal(sig_file, "yellow", "outbox_pending")
+                except Exception:
+                    pass
+            
+            # 6f. Scan quarantine — signals that failed delivery / retrying → orange/concern
+            quarantine_dir = signal_base / "quarantine"
+            if quarantine_dir.exists() and quarantine_dir.is_dir():
+                try:
+                    for sig_file in sorted(quarantine_dir.iterdir()):
+                        if not sig_file.name.endswith(".json") or scanned >= signal_count_limit:
+                            continue
+                        _pathway_scan_signal(sig_file, "yellow", "quarantine")
+                except Exception:
+                    pass
+            
+            # 6g. Scan failed dir — permanently undelivered → red (dead end)
+            failed_dir = signal_base / "failed"
+            if failed_dir.exists() and failed_dir.is_dir():
+                try:
+                    for sig_file in sorted(failed_dir.iterdir()):
+                        if not sig_file.name.endswith(".json") or scanned >= signal_count_limit:
+                            continue
+                        _pathway_scan_signal(sig_file, "red", "failed")
+                except Exception:
+                    pass
 
+        _flush_signal_edges()
+        
         # 7. Detect daemons and watchers — long-running background processes
         # Sources: agent-provided metadata from pulse_log (generic), restart_log, launchd plists, running processes
         # Phase 1: Check agent-provided heartbeat metadata (fully generic, any framework)
@@ -1686,12 +1994,6 @@ class Database:
                     mechanism = "daemon_metadata"
                     if md.get("watchdog"):
                         mechanism = f"watchdog_{md['watchdog']}"
-                    conn.execute(
-                        "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
-                        "mechanism, confidence, created_at) "
-                        "VALUES (?, ?, 'green', ?, 75, ?)",
-                        (nid, "signal-router", mechanism, now),
-                    )
                     count += 1
         except Exception:
             pass
@@ -1710,12 +2012,6 @@ class Database:
                     "VALUES (?, ?, 'agent', 'auto', 75)",
                     (nid, aname),
                 )
-                conn.execute(
-                    "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
-                    "mechanism, confidence, created_at) "
-                    "VALUES (?, ?, 'green', 'daemon_restart_log', 50, ?)",
-                    (nid, "signal-router", now),
-                )
                 count += 1
         except Exception:
             pass
@@ -1733,46 +2029,73 @@ class Database:
                     "VALUES (?, 'ObserveCo Watch Daemon', 'daemon', 'auto', 75)",
                     (nid,),
                 )
-                conn.execute(
-                    "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
-                    "mechanism, confidence, created_at) "
-                    "VALUES (?, ?, 'green', 'daemon_active', 75, ?)",
-                    (nid, "signal-router", now),
-                )
                 count += 1
         except Exception:
             pass
 
-        # 7c. Detect launchd-managed agents (macOS)
+        # 7c. Detect launchd-managed agents — framework-agnostic (Hermes + OpenClaw + any)
         try:
             launchd_dir = Path.home() / "Library" / "LaunchAgents"
             if launchd_dir.exists():
-                for plist in launchd_dir.glob("ai.hermes.*.plist"):
-                    aname = plist.stem.replace("ai.hermes.", "")
-                    nid = f"agent-{aname}"
-                    conn.execute(
-                        "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
-                        "VALUES (?, ?, 'agent', 'auto', 75)",
-                        (nid, aname),
-                    )
-                    conn.execute(
-                        "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
-                        "mechanism, confidence, created_at) "
-                        "VALUES (?, ?, 'green', 'launchd_daemon', 50, ?)",
-                        (nid, "signal-router", now),
-                    )
+                for plist in launchd_dir.glob("*.plist"):
+                    stem = plist.stem
+                    # Skip Apple/OS system plists
+                    if stem.startswith("com.apple."):
+                        continue
+                    # Detect framework from plist name prefix
+                    framework = "unknown"
+                    if stem.startswith("ai.hermes."):
+                        aname = stem.replace("ai.hermes.", "")
+                        framework = "hermes"
+                    elif stem.startswith("ai.openclaw."):
+                        aname = stem.replace("ai.openclaw.", "")
+                        framework = "openclaw"
+                    elif stem.startswith("com.hermes."):
+                        aname = stem.replace("com.hermes.", "")
+                        framework = "hermes"
+                    else:
+                        continue  # skip unknown plists
+                    
+                    # Determine node type from name
+                    ntype = "daemon"
+                    if "watcher" in aname or "watch" in aname:
+                        ntype = "watcher"
+                    elif "gateway" in aname:
+                        ntype = "gateway"
+                    
+                    # Check if agent-{name} already exists (registered by Step 7 Phase 1/2)
+                    _existing = conn.execute(
+                        "SELECT type FROM pathway_nodes WHERE id = ?",
+                        (f"agent-{aname}",),
+                    ).fetchone()
+                    if _existing:
+                        # Update existing node to correct type + framework rather than creating duplicate
+                        conn.execute(
+                            "UPDATE pathway_nodes SET type = ?, framework = ? WHERE id = ?",
+                            (ntype, framework, f"agent-{aname}"),
+                        )
+                        nid = f"agent-{aname}"
+                    else:
+                        nid = f"{ntype}-{aname}"
+                        conn.execute(
+                            "INSERT OR IGNORE INTO pathway_nodes (id, name, type, framework, source, confidence) "
+                            "VALUES (?, ?, ?, ?, 'auto', 75)",
+                            (nid, aname, ntype, framework),
+                        )
                     count += 1
         except Exception:
             pass
 
         # 8. Detect ClawForge hub routing for OpenClaw agents
         try:
+            from observeco.config import hermes_home
+
             oc_agents = [a for a in agents if "openclaw" in a.get("framework", "").lower()]
             for a in oc_agents:
                 aname = a["agent_name"]
                 nid = f"agent-{aname}"
                 # Look for AGENTS.md in the OpenClaw agent's profile directory
-                profiles_dir = Path.home() / ".hermes" / "profiles"
+                profiles_dir = hermes_home() / "profiles"
                 agent_dir = profiles_dir / aname
                 if agent_dir.exists():
                     # AGENTS.md lists peer agents in an OpenClaw cluster
@@ -1793,17 +2116,299 @@ class Database:
                     # HEARTBEAT.md or cron dir shows internal scheduling
                     cron_dir = agent_dir / "cron"
                     if cron_dir.exists():
-                        conn.execute(
-                            "INSERT OR IGNORE INTO pathway_edges (source_id, target_id, status, "
-                            "mechanism, confidence, created_at) "
-                            "VALUES (?, ?, 'green', 'clawforge_scheduler', 50, ?)",
-                            (nid, "signal-router", now),
-                        )
                         count += 1
         except Exception:
             pass
 
+        # 9. Signal Consumption Health — check if agent-to-agent signals are actually consumed
+        try:
+            import json as _json9
+            from datetime import datetime as _dt9
+            _signal_consumption_edges = {}
+            _now_ts = now
+
+            def _parse_ts_iso9(ts_str):
+                """Parse ISO 8601 timestamp string to unix epoch."""
+                try:
+                    d = _dt9.fromisoformat(ts_str)
+                    return int(d.timestamp())
+                except Exception:
+                    return None
+
+            # Scan per-agent inboxes for unconsumed signals
+            for _agent_node_dir in signal_base.iterdir():
+                if not _agent_node_dir.is_dir():
+                    continue
+                _ag_name = _agent_node_dir.name
+                if _ag_name in ("archive", "outbox", "failed", "quarantine", "inbox"):
+                    continue
+                _inbox_dir = _agent_node_dir / "inbox"
+                if not _inbox_dir.exists():
+                    continue
+                try:
+                    for _sig_file in sorted(_inbox_dir.iterdir()):
+                        if not _sig_file.name.endswith(".json"):
+                            continue
+                        try:
+                            _sig = _json9.loads(_sig_file.read_text())
+                        except (_json9.JSONDecodeError, Exception):
+                            continue
+                        _consumed = _sig.get("consumed", False)
+                        if _consumed:
+                            continue
+                        _sig_from = _sig.get("from", _ag_name)
+                        _sig_to = _sig.get("to", "")
+                        if not _sig_to:
+                            continue
+                        _written_at = _sig.get("written_at", "")
+                        _retry_until = _sig.get("retry_until", "")
+                        # Determine expected consumption window
+                        _window_hours = 168  # 7-day fallback
+                        if _retry_until:
+                            try:
+                                _ru_ts = _parse_ts_iso9(_retry_until)
+                                _wa_val = None
+                                if _written_at:
+                                    _wa_val = _parse_ts_iso9(_written_at)
+                                if not _wa_val:
+                                    _wa_val = _now_ts
+                                if _ru_ts and _wa_val and _ru_ts > _wa_val:
+                                    _window_hours = max(1, (_ru_ts - _wa_val) / 3600)
+                            except Exception:
+                                pass
+                        # Calculate age in hours
+                        _sig_age_hours = 0
+                        if _written_at:
+                            try:
+                                _wa2 = _parse_ts_iso9(_written_at)
+                                if _wa2:
+                                    _sig_age_hours = (_now_ts - _wa2) / 3600
+                            except Exception:
+                                pass
+                        # Assign status based on age vs window
+                        _health_status = "green"
+                        if _sig_age_hours > _window_hours * 6 or _sig_age_hours > 720:  # 30d
+                            _health_status = "red"
+                        elif _sig_age_hours > _window_hours * 2:
+                            _health_status = "yellow"
+                        # else: within window, no edge update needed (green)
+                        if _health_status in ("yellow", "red"):
+                            _src_nid = f"agent-{_sig_from}"
+                            _tgt_nid = f"agent-{_sig_to}"
+                            _key = f"{_src_nid}→{_tgt_nid}"
+                            # Keep highest severity, aggregate metadata
+                            _prev = _signal_consumption_edges.get(_key)
+                            _sev = {"red": 3, "yellow": 2}
+                            _prev_sev = _sev.get(_prev, 0) if _prev else 0
+                            _sig_type = _sig.get("type", "unknown")
+                            _sig_id = _sig.get("signal_id", _sig_file.stem)
+                            if _prev:
+                                # Merge into existing aggregated entry
+                                _prev["signal_count"] = _prev.get("signal_count", 0) + 1
+                                _prev["oldest_age_hours"] = max(_prev.get("oldest_age_hours", 0), _sig_age_hours)
+                                _prev["signal_types"] = list(set(_prev.get("signal_types", []) + [_sig_type]))
+                                if len(_prev.get("sample_ids", [])) < 3:
+                                    _prev["sample_ids"].append(_sig_id)
+                                if _sev.get(_health_status, 0) > _prev_sev:
+                                    _prev["status"] = _health_status
+                                    _prev["mechanism"] = f"signal_unconsumed_{_health_status}"
+                            else:
+                                _signal_consumption_edges[_key] = {
+                                    "src": _src_nid, "tgt": _tgt_nid,
+                                    "status": _health_status,
+                                    "mechanism": f"signal_unconsumed_{_health_status}",
+                                    "signal_count": 1,
+                                    "oldest_age_hours": _sig_age_hours,
+                                    "signal_types": [_sig_type],
+                                    "sample_ids": [_sig_id],
+                                }
+                except Exception:
+                    continue
+            
+            # Flush consumption health edges with aggregated metadata
+            for _key, _info in _signal_consumption_edges.items():
+                _meta = {
+                    "source": "signal_health",
+                    "signal_count": _info.get("signal_count", 1),
+                    "oldest_age_hours": round(_info.get("oldest_age_hours", 0), 1),
+                    "signal_types": _info.get("signal_types", ["unknown"]),
+                    "sample_ids": _info.get("sample_ids", []),
+                }
+                _meta_json = _json9.dumps(_meta)
+                conn.execute(
+                    "INSERT OR REPLACE INTO pathway_edges (source_id, target_id, status, "
+                    "mechanism, confidence, scenario, metadata, last_verified, created_at) "
+                    "VALUES (?, ?, ?, ?, 75, 'stale_signal', ?, ?, ?)",
+                    (_info["src"], _info["tgt"], _info["status"],
+                     _info["mechanism"], _meta_json, _now_ts, _now_ts),
+                )
+                count += 1
+        except Exception:
+            pass
+
+        # ──────────────────────────────────────────────────────────────
+        # 10. Generic infrastructure connection rules — framework-agnostic
+        #     Links daemons, watchers, gateways to the agents/platforms they serve.
+        #     Uses only node type + name conventions, no framework-specific config.
+        # ──────────────────────────────────────────────────────────────
+        try:
+            # Collect all infra nodes (daemon, watcher, gateway)
+            _infra_nodes = conn.execute(
+                "SELECT id, name, type FROM pathway_nodes WHERE type IN ('daemon','watcher','gateway') AND source='auto'"
+            ).fetchall()
+
+            # Collect all node names (by name) for cross-type watcher matching
+            _all_names = set()
+            _name_rows = conn.execute(
+                "SELECT name, type FROM pathway_nodes WHERE source='auto'"
+            ).fetchall()
+            for _row in _name_rows:
+                _all_names.add(_row["name"])
+
+            # Collect agent-only names for daemon substring matching
+            _agent_only_names = set()
+            for _row in _name_rows:
+                if _row["type"] == "agent":
+                    _agent_only_names.add(_row["name"])
+
+            # Also keep all agent names (including compound) for watch-daemon fan-out
+            _agent_names = set(_agent_only_names)
+
+            # Collect platform nodes for gateway-to-platform links
+            _platform_nodes = set()
+            _plat_rows = conn.execute(
+                "SELECT id FROM pathway_nodes WHERE type='platform'"
+            ).fetchall()
+            for _row in _plat_rows:
+                _platform_nodes.add(_row["id"])
+
+            # Known platform tokens for gateways
+            _PLATFORM_TOKENS = {
+                "telegram", "whatsapp", "slack", "discord", "email", "imessage",
+                "signal", "matrix", "sms", "webhook", "irc",
+            }
+
+            for _node in _infra_nodes:
+                _nid = _node["id"]
+                _nname = _node["name"]
+                _ntype = _node["type"]
+
+                # ── Rule 10a: Gateway → platform bridge ──
+                if _ntype == "gateway":
+                    _nname_lower = _nname.lower()
+                    _found_platform = False
+                    # Scan name for platform tokens — skip nodes already named as platform
+                    for _token in _PLATFORM_TOKENS:
+                        if _token in _nname_lower and _token in _platform_nodes:
+                            conn.execute(
+                                "INSERT OR IGNORE INTO pathway_edges "
+                                "(source_id, target_id, status, mechanism, confidence, created_at) "
+                                "VALUES (?, ?, 'green', 'infra_bridge', 75, ?)",
+                                (_nid, _token, now),
+                            )
+                            count += 1
+                            _found_platform = True
+                    if not _found_platform:
+                        # Generic gateway with no platform token → link to all platforms
+                        # with lower confidence as a general-purpose messaging bridge
+                        for _plat in sorted(_platform_nodes):
+                            conn.execute(
+                                "INSERT OR IGNORE INTO pathway_edges "
+                                "(source_id, target_id, status, mechanism, confidence, created_at) "
+                                "VALUES (?, ?, 'green', 'infra_bridge_generic', 25, ?)",
+                                (_nid, _plat, now),
+                            )
+                            count += 1
+
+                # ── Rule 10b: Watcher → target agent ──
+                elif _ntype == "watcher":
+                    # Strip known suffixes to find the watched agent
+                    _candidate = _nname
+                    for _suffix in ("-acps-watcher", "_acps_watcher", "-acps-watch", "_acps_watch",
+                                     "-watcher", "_watcher", "-watch", "_watch"):
+                        if _candidate.endswith(_suffix):
+                            _candidate = _candidate[: -len(_suffix)]
+                            break
+                    if _candidate != _nname:
+                        # Case-insensitive match against ALL names (agent, daemon, gateway)
+                        _candidate_lower = _candidate.lower()
+                        _matched = False
+                        for _aname in _all_names:
+                            # Skip comma-separated compound names (routing artifacts)
+                            if "," in _aname:
+                                continue
+                            if _aname.lower() == _candidate_lower:
+                                _tgt_nid = f"agent-{_aname}"
+                                conn.execute(
+                                    "INSERT OR IGNORE INTO pathway_edges "
+                                    "(source_id, target_id, status, mechanism, confidence, created_at) "
+                                    "VALUES (?, ?, 'green', 'infra_watch', 75, ?)",
+                                    (_nid, _tgt_nid, now),
+                                )
+                                count += 1
+                                _matched = True
+                                break
+                        if not _matched:
+                            # Try platform token match — watcher may watch a platform (e.g. imessage-watcher)
+                            for _token in _PLATFORM_TOKENS:
+                                if _candidate_lower == _token:
+                                    # Auto-create platform node if it doesn't exist
+                                    conn.execute(
+                                        "INSERT OR IGNORE INTO pathway_nodes (id, name, type, source, confidence) "
+                                        "VALUES (?, ?, 'platform', 'auto', 75)",
+                                        (_token, _token),
+                                    )
+                                    conn.execute(
+                                        "INSERT OR IGNORE INTO pathway_edges "
+                                        "(source_id, target_id, status, mechanism, confidence, created_at) "
+                                        "VALUES (?, ?, 'green', 'infra_watch_platform', 50, ?)",
+                                        (_nid, _token, now),
+                                    )
+                                    count += 1
+                                    break
+
+                # ── Rule 10c: Daemon → agents it serves ──
+                elif _ntype == "daemon":
+                    # "watch" daemon probes all agents for health
+                    if "watch" in _nname.lower():
+                        for _aname in _agent_only_names:
+                            _tgt_nid = f"agent-{_aname}"
+                            conn.execute(
+                                "INSERT OR IGNORE INTO pathway_edges "
+                                "(source_id, target_id, status, mechanism, confidence, created_at) "
+                                "VALUES (?, ?, 'green', 'infra_health_monitor', 75, ?)",
+                                (_nid, _tgt_nid, now),
+                            )
+                            count += 1
+                    else:
+                        # Generic daemon: check if daemon name contains or matches an agent name
+                        _dname_lower = _nname.lower()
+                        for _aname in _agent_names:
+                            # Skip comma-separated compound names (routing artifacts)
+                            if "," in _aname:
+                                continue
+                            # Require at least 4 chars to avoid false positives on single tokens
+                            if len(_aname) < 4:
+                                continue
+                            if _aname.lower() in _dname_lower or _dname_lower in _aname.lower():
+                                _tgt_nid = f"agent-{_aname}"
+                                conn.execute(
+                                    "INSERT OR IGNORE INTO pathway_edges "
+                                    "(source_id, target_id, status, mechanism, confidence, created_at) "
+                                    "VALUES (?, ?, 'green', 'infra_daemon_serves', 50, ?)",
+                                    (_nid, _tgt_nid, now),
+                                )
+                                count += 1
+
+        except Exception:
+            pass
+
         conn.commit()
+        # Auto-record a snapshot so historical replay always has data
+        try:
+            self.pathway_record_snapshot()
+        except Exception:
+            pass
         return count
 
     def pathway_clear(self) -> int:

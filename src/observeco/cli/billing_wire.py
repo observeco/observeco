@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 
 INTELLIGENCE_DIR = Path.home() / ".hermes" / "intelligence" / "decisions"
-from observeco.dirs import get_data_dir
+from observeco.dirs import get_data_dir  # noqa: E402 - late import to control side effects
 
 BILLING_DIR = get_data_dir()
 BILLING_FILE = BILLING_DIR / "billing.json"

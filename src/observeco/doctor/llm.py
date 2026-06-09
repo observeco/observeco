@@ -11,10 +11,12 @@ from observeco.llm_service import (
     LLMProvider,
     detect_providers,
     get_auto_provider,
+)
+from observeco.llm_service import (
     ask as _ask_llm,
 )
-from .diagnostics import DiagnosticReport, DiagnosticCheck
 
+from .diagnostics import DiagnosticReport
 
 SYSTEM_PROMPT = """You are ObserveCo's intelligent troubleshooter. You help users fix installation and configuration issues for ObserveCo, a runtime observability tool for AI agents.
 
@@ -66,9 +68,8 @@ After all issues, add a summary line:
 SUMMARY: <one-line summary of total fixes>"""
 
 
-from dataclasses import dataclass
-from typing import Optional
-
+from dataclasses import dataclass  # noqa: E402
+from typing import Optional  # noqa: E402
 
 # Re-export for backward compat
 detect_llm_providers = detect_providers

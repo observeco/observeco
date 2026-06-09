@@ -22,9 +22,7 @@ import os
 import platform
 import sys
 import threading
-import traceback
 import urllib.request
-from typing import Optional
 
 from observeco import __version__
 from observeco.dirs import get_data_dir

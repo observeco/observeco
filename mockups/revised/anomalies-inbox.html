@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Anomalies Inbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --fg: #f8fafc;
+  --fg-2: #94a3b8;
+  --accent: #22c55e;
+  --accent-on: rgba(34, 197, 94, 0.12);
+  --warn: #eab308;
+  --danger: #ef4444;
+  --meta: #3b82f6;
+  --muted: #64748b;
+  --border: #334155;
+  --border-soft: #273548;
+  --rad-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+}
+
+.app { max-width: 1200px; margin: 0 auto; padding: 20px 24px; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo svg { width: 32px; height: 32px; display: block; }
+.header-title { font-size: 22px; font-weight: 700; color: var(--fg); }
+.header-position {
+  font-size: 11px; font-weight: 500; color: var(--muted);
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.tier-badge {
+  background: var(--accent-on); color: #86efac;
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* ── Status Row ── */
+.status-row {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px; padding: 12px 16px;
+  background: var(--surface); border-radius: 10px;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.stat-chip {
+  font-size: 12px; font-weight: 500;
+}
+.stat-chip .count {
+  font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+}
+.stat-chip .count.danger { color: var(--danger); }
+.stat-chip .count.warn { color: var(--warn); }
+.stat-chip .count.meta { color: var(--meta); }
+.stat-chip .count.accent { color: var(--accent); }
+.stat-sep { color: var(--border); font-size: 11px; }
+
+/* ── Tab Bar ── */
+.tab-bar {
+  display: flex; gap: 4px; margin-bottom: 16px;
+  background: var(--surface); border-radius: 10px; padding: 4px;
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; background: transparent; color: var(--muted);
+  transition: all 0.15s; font-family: inherit; text-align: center;
+}
+.tab-btn:hover { color: var(--fg-2); }
+.tab-btn.active { background: var(--bg); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+/* ── Agent Cards (dashboard pattern) ── */
+.agent-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  margin-bottom: 10px;
+  transition: all 0.3s cubic-bezier(0,0,0.2,1);
+  position: relative;
+  overflow: hidden;
+}
+.agent-card:hover {
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transform: translateY(-1px);
+}
+.agent-card.dismissed {
+  opacity: 0; transform: translateX(40px) scale(0.95);
+  max-height: 0; margin-bottom: 0; padding: 0 14px;
+  border-width: 0; pointer-events: none;
+  overflow: hidden; transition: all 0.4s ease;
+}
+.agent-card.hidden-by-filter { display: none; }
+
+.card-top {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 8px;
+}
+.severity-icon { font-size: 16px; line-height: 1.4; flex-shrink: 0; }
+.severity-badge {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; padding: 2px 8px; border-radius: var(--rad-sm);
+  flex-shrink: 0; margin-top: 2px;
+}
+.severity-badge.critical { background: rgba(239,68,68,0.15); color: #fca5a5; }
+.severity-badge.warning { background: rgba(234,179,8,0.12); color: #fcd34d; }
+.severity-badge.info { background: rgba(59,130,246,0.12); color: #93c5fd; }
+.severity-badge.success { background: var(--accent-on); color: #86efac; }
+
+.agent-tag {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--muted); background: var(--bg);
+  padding: 2px 8px; border-radius: var(--rad-sm);
+  border: 1px solid var(--border); flex-shrink: 0; margin-top: 2px;
+  margin-left: auto;
+}
+.time-ago {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--muted); flex-shrink: 0; margin-top: 4px;
+}
+
+.card-title {
+  font-size: 14px; font-weight: 600; margin-bottom: 4px;
+  color: var(--fg);
+}
+.card-detail {
+  font-size: 12px; color: var(--fg-2);
+  line-height: 1.5; margin-bottom: 12px;
+}
+.card-actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.card-actions button {
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  padding: 6px 14px; border-radius: var(--radius-md);
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-secondary {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--fg-2);
+}
+.btn-secondary:hover { border-color: var(--fg-2); color: var(--fg); }
+.btn-primary {
+  background: var(--accent); border: none; color: #052e16;
+}
+.btn-primary:hover { opacity: 0.85; }
+.btn-outline {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--meta);
+}
+.btn-outline:hover { border-color: var(--meta); color: #93c5fd; }
+
+/* ── Modal (dashboard pattern) ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  align-items: flex-start; justify-content: center;
+  z-index: 100; padding-top: 60px; overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; max-width: 560px; width: 90%;
+  margin-bottom: 40px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  max-height: 85vh;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+}
+.modal-header h3 { font-size: 14px; font-weight: 600; color: var(--fg); display: flex; align-items: center; gap: 8px; }
+.modal-close {
+  width: 24px; height: 24px; border-radius: 6px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: var(--border); color: #e2e8f0; }
+.modal-body { padding: 14px 18px; max-height: 400px; overflow-y: auto; }
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left; font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 8px; border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 8px; font-size: 12px; color: var(--fg-2);
+  border-bottom: 1px solid var(--border-soft);
+}
+.data-table td:first-child { font-weight: 500; color: var(--fg); }
+.data-table .green { color: var(--accent); }
+.data-table .amber { color: var(--warn); }
+.data-table .red { color: var(--danger); }
+.data-table .blue { color: var(--meta); }
+
+/* ── Toast ── */
+.toast-b {
+  position: fixed; bottom: 24px; right: 24px; z-index: 50;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 20px; font-size: 13px; color: var(--fg);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transform: translateY(20px); opacity: 0; transition: all 0.3s ease;
+  font-family: var(--font-mono);
+}
+.toast-b.show { transform: translateY(0); opacity: 1; }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center; padding: 60px 20px; color: var(--muted);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state h3 { font-size: 16px; color: var(--fg-2); margin-bottom: 6px; }
+.empty-state p { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14" stroke="#22c55e" stroke-width="1.5" opacity="0.3"/>
+          <circle cx="16" cy="16" r="8" stroke="#22c55e" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="3" fill="#22c55e"/>
+          <line x1="16" y1="2" x2="16" y2="9" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="16" y1="23" x2="16" y2="30" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="2" y1="16" x2="9" y2="16" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="23" y1="16" x2="30" y2="16" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="header-title">ObserveCo</div>
+        <div class="header-position">Anomalies Inbox</div>
+      </div>
+    </div>
+    <div class="tier-badge">OPENCLAW</div>
+  </div>
+
+  <!-- Status Row -->
+  <div class="status-row">
+    <span class="stat-chip"><span class="count accent" id="activeCount">4</span> active</span>
+    <span class="stat-sep">|</span>
+    <span class="stat-chip"><span class="count danger">1</span> critical</span>
+    <span class="stat-sep">|</span>
+    <span class="stat-chip"><span class="count warn">2</span> warning</span>
+    <span class="stat-sep">|</span>
+    <span class="stat-chip"><span class="count meta">1</span> info</span>
+    <span class="stat-sep">|</span>
+    <span class="stat-chip" id="remainingLabel" style="color:var(--fg-2);"></span>
+  </div>
+
+  <!-- Filter Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-filter="all">All</button>
+    <button class="tab-btn" data-filter="critical">Critical</button>
+    <button class="tab-btn" data-filter="warning">Warning</button>
+    <button class="tab-btn" data-filter="info">Info</button>
+  </div>
+
+  <!-- Card List -->
+  <div id="cardList">
+
+    <!-- Card 1: CRITICAL — hermes-main memory drift -->
+    <div class="agent-card" data-severity="critical" data-agent="hermes-main">
+      <div class="card-top">
+        <span class="severity-icon">🔴</span>
+        <span class="severity-badge critical">Critical</span>
+        <span class="agent-tag">hermes-main</span>
+        <span class="time-ago">12m ago</span>
+      </div>
+      <div class="card-title">Memory drift: skills ↑12% week over week</div>
+      <div class="card-detail">Skills grew 49K→55K (12.2%). Threshold 10%. Last trim 3d ago. May impact context quality.</div>
+      <div class="card-actions">
+        <button class="btn-secondary" data-action="dismiss">Dismiss</button>
+        <button class="btn-outline" data-action="view" data-agent="hermes-main" data-role="Primary Orchestrator" data-alive="true" data-brain="A-" data-chisel="87%" data-memory="55K">View Agent</button>
+        <button class="btn-primary" data-action="fix" data-fix="Run Chisel trim on hermes-main. Prune unused skills from config.">Fix</button>
+      </div>
+    </div>
+
+    <!-- Card 2: WARNING — openclaw error rate spike -->
+    <div class="agent-card" data-severity="warning" data-agent="openclaw-agent">
+      <div class="card-top">
+        <span class="severity-icon">🟡</span>
+        <span class="severity-badge warning">Warning</span>
+        <span class="agent-tag">openclaw-agent</span>
+        <span class="time-ago">38m ago</span>
+      </div>
+      <div class="card-title">Error rate spike: 15 errors in last hour</div>
+      <div class="card-detail">Circuit breaker tripped twice. 3 error types: timeout, auth, ratelimit. Baseline 2/h.</div>
+      <div class="card-actions">
+        <button class="btn-secondary" data-action="dismiss">Dismiss</button>
+        <button class="btn-outline" data-action="view" data-agent="openclaw-agent" data-role="Web Claw Agent" data-alive="true" data-brain="B+" data-chisel="62%" data-memory="67K">View Agent</button>
+        <button class="btn-primary" data-action="fix" data-fix="Check API key rotation and rate limit config. Restart if timeout persists.">Fix</button>
+      </div>
+    </div>
+
+    <!-- Card 3: WARNING — kepler restart quality -->
+    <div class="agent-card" data-severity="warning" data-agent="kepler">
+      <div class="card-top">
+        <span class="severity-icon">🟡</span>
+        <span class="severity-badge warning">Warning</span>
+        <span class="agent-tag">kepler</span>
+        <span class="time-ago">1h ago</span>
+      </div>
+      <div class="card-title">Restart quality: 4 restarts in 24h (2 crash, 1 OOM)</div>
+      <div class="card-detail">Crash at 09:15 (OOM). Second crash at 14:22 (segfault). Restart 1 normal.</div>
+      <div class="card-actions">
+        <button class="btn-secondary" data-action="dismiss">Dismiss</button>
+        <button class="btn-outline" data-action="view" data-agent="kepler" data-role="Brain Analysis Agent" data-alive="true" data-brain="B" data-chisel="71%" data-memory="42K">View Agent</button>
+        <button class="btn-primary" data-action="fix" data-fix="Review kepler daemon memory limits. Enable crash dump collection.">Fix</button>
+      </div>
+    </div>
+
+    <!-- Card 4: INFO — hermes-pa calibration complete -->
+    <div class="agent-card" data-severity="info" data-agent="hermes-pa">
+      <div class="card-top">
+        <span class="severity-icon">🔵</span>
+        <span class="severity-badge info">Info</span>
+        <span class="agent-tag">hermes-pa</span>
+        <span class="time-ago">2h ago</span>
+      </div>
+      <div class="card-title">Calibration: agent profile scores updated</div>
+      <div class="card-detail">Grade A → A+. Guidance alignment 96%. Skills pruning pending (3 unused). No action required.</div>
+      <div class="card-actions">
+        <button class="btn-secondary" data-action="dismiss">Dismiss</button>
+        <button class="btn-outline" data-action="view" data-agent="hermes-pa" data-role="Personal Assistant" data-alive="true" data-brain="A+" data-chisel="94%" data-memory="32K">View Agent</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Empty state (hidden by default) -->
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="icon">✨</div>
+    <h3>All clear!</h3>
+    <p>No anomalies matching the current filter.</p>
+  </div>
+
+</div>
+
+<!-- Agent Detail Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🤖 <span id="modalAgentName">Agent Stats</span></h3>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <table class="data-table">
+        <tr><th colspan="2">Agent Details</th></tr>
+        <tr><td>Name</td><td id="mdName" style="font-family:var(--font-mono);">—</td></tr>
+        <tr><td>Role</td><td id="mdRole">—</td></tr>
+        <tr><td>Status</td><td id="mdStatus" class="green">✓ Online</td></tr>
+        <tr><td>Brain Grade</td><td id="mdBrain">—</td></tr>
+        <tr><td>Chisel %</td><td id="mdChisel">—</td></tr>
+        <tr><td>Memory</td><td id="mdMemory" style="font-family:var(--font-mono);">—</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-b" id="toast">✓ Dismissed</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const cardList = document.getElementById('cardList');
+  const activeCount = document.getElementById('activeCount');
+  const remainingLabel = document.getElementById('remainingLabel');
+  const filterBtns = document.querySelectorAll('.tab-btn');
+  const overlay = document.getElementById('modalOverlay');
+  const modalClose = document.getElementById('modalClose');
+  const emptyState = document.getElementById('emptyState');
+  const toast = document.getElementById('toast');
+
+  let currentFilter = 'all';
+
+  // ── Helpers ──
+  function getCards() {
+    return cardList.querySelectorAll('.agent-card');
+  }
+
+  function getActiveCards() {
+    return Array.from(getCards()).filter(c => !c.classList.contains('dismissed'));
+  }
+
+  function getVisibleCards() {
+    return getActiveCards().filter(c => !c.classList.contains('hidden-by-filter'));
+  }
+
+  function updateCounts() {
+    const active = getActiveCards();
+    const visible = getVisibleCards();
+    activeCount.textContent = active.length;
+
+    if (active.length === 0) {
+      remainingLabel.textContent = '✨ All clear!';
+    } else if (visible.length === 0) {
+      remainingLabel.textContent = '0 shown (filter active)';
+    } else if (active.length < 5) {
+      remainingLabel.textContent = visible.length + ' of ' + active.length + ' shown';
+    } else {
+      remainingLabel.textContent = '';
+    }
+
+    emptyState.style.display = (visible.length === 0) ? 'block' : 'none';
+  }
+
+  // ── Filtering ──
+  function applyFilter() {
+    const cards = getCards();
+    cards.forEach(card => {
+      if (card.classList.contains('dismissed')) return;
+      const sev = card.dataset.severity;
+      if (currentFilter === 'all') {
+        card.classList.remove('hidden-by-filter');
+      } else {
+        card.classList.toggle('hidden-by-filter', sev !== currentFilter);
+      }
+    });
+    updateCounts();
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      currentFilter = this.dataset.filter;
+      applyFilter();
+    });
+  });
+
+  // ── Card actions (via delegation) ──
+  cardList.addEventListener('click', function(e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const card = btn.closest('.agent-card');
+    const action = btn.dataset.action;
+
+    if (action === 'dismiss') {
+      card.classList.add('dismissed');
+      setTimeout(applyFilter, 420);
+      showToast('✓ Anomaly dismissed');
+
+    } else if (action === 'view') {
+      openModal(btn);
+
+    } else if (action === 'fix') {
+      showToast('🔧 ' + (btn.dataset.fix || 'Fix action queued'));
+    }
+  });
+
+  // ── Modal ──
+  function openModal(btn) {
+    document.getElementById('mdName').textContent = btn.dataset.agent || '—';
+    document.getElementById('mdRole').textContent = btn.dataset.role || '—';
+    const alive = btn.dataset.alive === 'true';
+    const statusEl = document.getElementById('mdStatus');
+    statusEl.textContent = alive ? '✓ Online' : '✗ Offline';
+    statusEl.className = alive ? 'green' : 'red';
+    document.getElementById('mdBrain').textContent = btn.dataset.brain || '—';
+    document.getElementById('mdChisel').textContent = (btn.dataset.chisel || '—') + '%';
+    document.getElementById('mdMemory').textContent = btn.dataset.memory || '—';
+    document.getElementById('modalAgentName').textContent = '🤖 ' + (btn.dataset.agent || 'Agent Stats');
+    overlay.classList.add('active');
+  }
+
+  function closeModal() {
+    overlay.classList.remove('active');
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && overlay.classList.contains('active')) closeModal();
+  });
+
+  // ── Toast ──
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._hide);
+    toast._hide = setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  // ── Init ──
+  updateCounts();
+
+})();
+</script>
+</body>
+</html>

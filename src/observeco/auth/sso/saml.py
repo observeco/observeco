@@ -16,11 +16,11 @@ Environment variables:
 from __future__ import annotations
 
 import base64
-import hashlib
 import logging
 import os
 import time
 import urllib.parse
+
 try:
     import defusedxml.ElementTree as ET
     HAS_DEFUSEDXML = True
@@ -41,10 +41,10 @@ if not HAS_DEFUSEDXML:
     _XXE_ENTITY_PATTERN = re.compile(r'<!ENTITY|<\!DOCTYPE[^>]*\[|<!ELEMENT')
 else:
     pass
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
-from ..oauth2 import User, Session
+from ..oauth2 import Session, User
 
 logger = logging.getLogger(__name__)
 
@@ -214,9 +214,9 @@ class SAMLProvider:
             # Check Issuer matches IdP
             issuer = assertion.find("saml:Issuer", ns)
             if issuer is not None and self.config.x509_cert:
-                issuer_text = issuer.text or ""
                 # In production, verify the issuer matches the configured IdP
                 # (exact match or certificate pinning)
+                _ = issuer.text or ""
 
             # Cryptographic signature verification
             sig_verified = self._verify_signature(root, ns)
@@ -248,9 +248,9 @@ class SAMLProvider:
 
         try:
             import xmlsec
-            import xmlsec.tree
-            import xmlsec.signature
             import xmlsec.constants as consts
+            import xmlsec.signature
+            import xmlsec.tree
 
             # xmlsec is available — do proper verification
             # Find the signature node
@@ -263,7 +263,7 @@ class SAMLProvider:
 
             # Create template for verification
             ctx = xmlsec.SignatureContext()
-            
+
             # Load the IdP certificate
             if self.config.x509_cert:
                 key_data = self.config.x509_cert.strip()

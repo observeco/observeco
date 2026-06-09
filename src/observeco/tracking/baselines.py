@@ -6,9 +6,8 @@ CLI: observeco l2 baseline --agent <name> / --all
 from __future__ import annotations
 
 import json
-import time
 import logging
-from pathlib import Path
+import time
 from typing import Optional
 
 from observeco.db import Database

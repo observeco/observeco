@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Quick verification script for ObserveCo dashboard fixes."""
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.expanduser('~/projects/observeco'))
-from fastapi.testclient import TestClient
-from observeco.dashboard.server import app
 import re
 from collections import Counter
+
+from fastapi.testclient import TestClient
+
+from observeco.dashboard.server import app
 
 client = TestClient(app)
 
@@ -65,7 +69,7 @@ for path in endpoints:
     if r.status_code >= 400 or 'Traceback' in r.text:
         failed += 1
         print(f'  ❌ {path} — HTTP {r.status_code}')
-        
+
 if failed == 0:
     print(f'  ✅ All {len(endpoints)} endpoints healthy')
 

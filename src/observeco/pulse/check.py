@@ -16,9 +16,9 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from observeco.config import AgentConfig, load_config
+from observeco.config import AgentConfig, hermes_home, load_config
 from observeco.db import Database
-from observeco.probe.registry import resolve_probe, ProbeResult
+from observeco.probe.registry import ProbeResult, resolve_probe
 
 console = Console()
 db = Database()
@@ -83,7 +83,7 @@ def classify_restart(agent_name: str, error_message: str = "",
 def _find_agent_log(agent_name: str) -> Path | None:
     """Find the most recent log file for an agent."""
     log_dirs = [
-        Path.home() / ".hermes" / "logs",
+        hermes_home() / "logs",
         Path("/var/log"),
         Path("/tmp"),
     ]
@@ -152,7 +152,9 @@ def run_check(watch: bool = False) -> None:
 
     if not config.agents:
         console.print("[yellow]No agents detected. Run `observeco agents add <name>` to add one.[/yellow]")
-        console.print("Searched: ~/.hermes/config.yaml, ~/.hermes/agents/, SOUL.md, ~/.observeco/agents.json")
+        hermes_base = hermes_home()
+        console.print(f"Searched: {hermes_base}/config.yaml, {hermes_base}/agents/, "
+                      "SOUL.md, ~/.observeco/agents.json")
         return
 
     def _do_check() -> list[dict]:
@@ -231,4 +233,21 @@ def _display_results(results: list[dict], cycle: int = 0) -> None:
             alive_count += 1
 
     console.print(table)
-    console.print(f"[dim]{alive_count}/{len(results)} agents alive[/dim]")
+
+    # ── Recommendation footer ──
+    dead_agents = [r["name"] for r in results if r["status"] == "dead"]
+    error_agents = [r["name"] for r in results if r["status"] == "error"]
+    if dead_agents:
+        console.print(f"[red]🔴 {len(dead_agents)} agent(s) dead: {', '.join(dead_agents)}[/red]")
+        console.print("  [dim]➤ Run [bold]observeco heal[/bold] to diagnose and attempt auto-recovery.[/dim]")
+        console.print("  [dim]➤ Or start manually: [bold]observeco start <agent>[/bold][/dim]")
+    if error_agents:
+        console.print(f"[yellow]🟡 {len(error_agents)} agent(s) in error: {', '.join(error_agents)}[/yellow]")
+        console.print("  [dim]➤ Run [bold]observeco heal --diagnose <agent>[/bold] to investigate.[/dim]")
+        console.print("  [dim]➤ Check agent logs for crash or config issues.[/dim]")
+    if not dead_agents and not error_agents:
+        console.print(f"[dim]{alive_count}/{len(results)} agents alive — all clear.[/dim]")
+
+    # ── Signal quality disclosure ──
+    console.print(f"[dim]{len(results)} agent(s) checked. Results based on live probe — no stored history.[/dim]"
+                  f"[dim] For confidence scores and FP/FN risk, visit [bold]observeco dashboard[/bold].[/dim]")

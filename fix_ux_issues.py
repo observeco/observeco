@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Batch fix all 3 UX issues found during live dashboard break-test."""
-import re, sys
+import re
 
 INDEX = '/Users/seanfzc/projects/observeco/src/observeco/dashboard/templates/index.html'
 SERVER = '/Users/seanfzc/projects/observeco/src/observeco/dashboard/server.py'
@@ -13,7 +13,7 @@ def bump_fonts(content, file_label):
     """Replace font-size:10px -> 13px and font-size:11px -> 13px 
     except for inline badge/chip patterns where 11px is acceptable."""
     changes = 0
-    
+
     # Pattern 1: standalone 10px font-size
     new_content = content
     for old_size, new_size in [('10px', '13px'), ('11px', '13px')]:
@@ -23,7 +23,7 @@ def bump_fonts(content, file_label):
             start = max(0, match.start() - 40)
             end = min(len(new_content), match.end() + 40)
             ctx = new_content[start:end]
-            
+
             # Skip badge/chip patterns — these are intentional small elements
             # like "NEW", "Ai", badge counts, or inline code snippets
             skip_patterns = [
@@ -40,10 +40,10 @@ def bump_fonts(content, file_label):
             ]
             if any(p in ctx for p in skip_patterns):
                 continue
-            
+
             new_content = new_content[:match.start()] + f'font-size:{new_size}' + new_content[match.end():]
             changes += 1
-    
+
     print(f'  {file_label}: bumped {changes} font-size occurrences to 13px')
     return new_content
 
@@ -52,28 +52,28 @@ def bump_fonts(content, file_label):
 def add_oss_branding(content, file_label):
     """Add MIT License badge and Free & Open Source mentions."""
     changes = []
-    
+
     if 'MIT' not in content or 'MIT License' not in content:
         # Add MIT License badge in the header
         header_badge = '<span style="background:#1e293b;padding:2px 10px;border-radius:6px;font-size:11px;color:#64748b;border:1px solid #334155;">MIT License</span>'
-        
+
         # Find the header area — insert near the "AGENT FLEET DASHBOARD" text
         insert_after = 'AGENT FLEET DASHBOARD'
         if insert_after in content:
             idx = content.find(insert_after) + len(insert_after)
             content = content[:idx] + '\n            ' + header_badge + content[idx:]
             changes.append('Added MIT License badge beside header')
-    
+
     if 'Free & Open Source' not in content:
         # Add Free & Open Source note below Pro features
         free_note = '<div style="text-align:center;padding:16px 0;border-top:1px solid var(--border);margin-top:16px;"><span style="color:#64748b;font-size:12px;">🧡 Free & Open Source — Pro features are optional. <a href="https://github.com/observeco/observeco" style="color:#38bdf8;text-decoration:none;">Star on GitHub</a></span></div>'
-        
+
         # Insert before the closing </body>
         body_close = '</body>'
         if body_close in content:
             content = content.replace(body_close, free_note + '\n' + body_close)
             changes.append('Added Free & Open Source footer line')
-    
+
     print(f'  {file_label}: {", ".join(changes) if changes else "no changes needed"}')
     return content
 
@@ -83,7 +83,7 @@ def consolidate_empty_cards(content, file_label):
     """Replace the 3-4 fallback data rows with a single compact row when all are empty/no-data."""
     if file_label == 'server.py':
         return content  # Will handle in server.py separately
-    
+
     # In index.html, find the agent card generation section
     old_empty_block = '''<div class="detail-row">
             <span style="color:#94a3b8;">Brain size</span>
@@ -93,7 +93,7 @@ def consolidate_empty_cards(content, file_label):
             <span style="color:#94a3b8;">Composition</span>
             <span>{composition}</span>
         </div>'''
-    
+
     new_compact = '''<div class="detail-row">
             <span style="color:#94a3b8;">Brain size</span>
             <span>{brain_change}</span>
@@ -123,23 +123,23 @@ def consolidate_empty_cards(content, file_label):
             }}
         }})();
         </script>'''
-    
+
     if old_empty_block in content:
         content = content.replace(old_empty_block, old_empty_block)  # Keep template, add script at end
         print(f'  {file_label}: no template change needed — will handle client-side')
-    
+
     return content
 
 
-# ---- Apply ---- 
+# ---- Apply ----
 def apply_to_file(filepath, label):
     with open(filepath) as f:
         content = f.read()
-    
+
     content = bump_fonts(content, label)
     content = add_oss_branding(content, label)
     # content = consolidate_empty_cards(content, label)
-    
+
     with open(filepath, 'w') as f:
         f.write(content)
 

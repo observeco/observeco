@@ -1,9 +1,8 @@
 """OpenClaw adapter — hook registration and configuration."""
 
-import json
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 HOOKS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "hooks"
 

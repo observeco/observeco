@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import subprocess
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 import httpx
@@ -67,7 +67,6 @@ class BaseProbe:
 @register("http", "https")
 class HttpProbe(BaseProbe):
     def probe(self, agent: AgentConfig, timeout: float = 10.0) -> ProbeResult:
-        import httpx
         start = time.time()
         try:
             resp = httpx.get(agent.health_check, timeout=timeout)

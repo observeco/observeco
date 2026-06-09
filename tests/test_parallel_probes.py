@@ -1,7 +1,6 @@
 """Tests for Phase 7.2 — Parallel Probe Engine."""
 import time
 from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import patch
 
 from observeco.config import AgentConfig
 from observeco.pulse.check import _probe_agent
@@ -15,7 +14,7 @@ def _fake_probe(agent, delay=0.3):
 
 def test_parallel_probes_faster_than_sequential():
     """Probing 5 agents with parallel should be faster than sum of delays."""
-    agents = [AgentConfig(name=f"test-{i}", framework="custom", health_check=f"echo ok") for i in range(5)]
+    agents = [AgentConfig(name=f"test-{i}", framework="custom", health_check="echo ok") for i in range(5)]
 
     with ThreadPoolExecutor(max_workers=10) as pool:
         start = time.time()

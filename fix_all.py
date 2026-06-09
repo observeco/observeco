@@ -8,11 +8,13 @@ Batch fixes for 7 confirmed bugs:
 6. Kepler check
 7. Pro tiles / error banners check
 """
-import json, sys
+import sys
+
 sys.path.insert(0, '/Users/seanfzc/projects/observeco')
 
 # 1. Check Kepler rendering
 from observeco.db import Database
+
 db = Database()
 agents = db.get_agents()
 print(f"Total agents in DB: {len(agents)}")

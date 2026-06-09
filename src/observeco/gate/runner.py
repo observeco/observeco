@@ -5,10 +5,8 @@ Usage:
     results = run_gate(full=True)
 """
 
-import sys
-import os
 import re
-import json
+import sys
 from pathlib import Path
 
 RESULT_PASS = "PASS"
@@ -45,6 +43,7 @@ def _get_app():
     """Lazy-import the FastAPI app for TestClient checks."""
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent / "src"))
     from fastapi.testclient import TestClient
+
     from observeco.dashboard.server import app
 
     return TestClient(app)

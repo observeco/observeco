@@ -9,15 +9,12 @@ Uses lightweight statistical analysis (no heavy ML dependencies):
 from __future__ import annotations
 
 import json
-import math
-from collections import Counter, defaultdict
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
 
-from .session_log import SessionLogger
-from .risk_engine import RiskLevel
+from .config import hermes_home
 
 
 @dataclass
@@ -210,7 +207,7 @@ class RiskPredictor:
             # Primary: Hermes session directory (ObserveCo data dir is secondary)
             session_paths = [
                 get_data_dir() / "sessions",
-                Path.home() / ".hermes" / "sessions",
+                hermes_home() / "sessions",
             ]
 
             for sessions_dir in session_paths:
@@ -260,7 +257,7 @@ class RiskPredictor:
             # Primary: Hermes session directory
             session_paths = [
                 get_data_dir() / "sessions",
-                Path.home() / ".hermes" / "sessions",
+                hermes_home() / "sessions",
             ]
 
             for sessions_dir in session_paths:

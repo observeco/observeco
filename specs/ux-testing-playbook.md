@@ -10,6 +10,8 @@
 | 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, rename "Pre-Ship Gate" → "Golden Gate" |
 | 3.2 | 2026-06-01 | Added Trap 14 (Representation Overflows Container), Trap 15 (Inline Reference Not Verified), Trap 16 (JS Rename Leaves Dead Call). Updated Trap 5 detection (actionable empty state commands), Trap 9 detection (flush-content check). Added Lessons Learned entry for 6 post-launch issues. |
+| 3.3 | 2026-06-08 | Added Trap 18 (Overlay Dismiss on Text Selection). Updated Golden Gate checklist with text-selection test. Added Lessons Learned entry for Pro License Key modal bug. |
+| 3.4 | 2026-06-09 | Added Trap 20 (Cross-System Format/State Inconsistency), Trap 21 (Hardcoded Ephemeral Value), Trap 22 (Schema-Code Drift), Trap 23 (Render Order Drift), Trap 24 (Entity-Type-Aware Rendering). Added entity-type-awareness to Golden Gate as item 8.5. Golden Gate now 12-point. Added cross-system consistency and ephemeral-value detection patterns. Version history table fixed (removed stray pipe). |
 
 **Author:** Main (per Sean direction 2026-05-25)
 **Source:** Real testing session — dashboard v0 passed all AI checks, failed every human check
@@ -116,7 +118,7 @@ A feature that passes Layers 1-3 but fails Layer 4 (Accessibility) or Layer 5 (E
 
 ---
 
-## 3. The Ten Expectation Traps (Pattern Catalogue)
+## 3. The Expectation Traps (Pattern Catalogue)
 
 Each trap is a **recurring failure pattern** — not a specific bug in the current code, but a class of bug that will reappear in any frontend project.
 
@@ -316,7 +318,7 @@ This is the **minimum viable human-lens evaluation**. Apply it before any fronte
 ### 4.1 The Golden Gate (run by Hound or any agent)
 
 ```
-Before marking any frontend work done, run this 9-point gate:
+Before marking any frontend work done, run this 12-point gate:
 
 1. SCREENSHOT the page in its current state
 2. Answer for every section: does this look complete or broken?
@@ -327,11 +329,14 @@ Before marking any frontend work done, run this 9-point gate:
 7. CHECK for empty sections: does each one explain itself or sit there blank?
 8. CHECK for context breaks: every click stays on the same page or uses inline overlay — no page redirects for secondary actions
 9. CHECK every navigation path: is there a one-click way back? Does back button work?
+10. TEXT SELECTION — open every modal with an input, drag-select text across boundary, confirm overlay stays open
+11. ENTITY-TYPE-AWARE RENDERING — for any card list with heterogeneous types: confirm type-specific metrics (Confidence, Guard, Brain size, Composition) are gated behind entity type — never render irrelevant metrics with misleading empty states like "Learning..."
+12. RENDER ORDER — define the expected render order (top→bottom) in the spec, then verify template/section concatenation matches it
 
 One-line pass/fail per check. If any fails, the deliverable is not complete.
 
 For every check, also pass through the Accessibility lens (Layer 4):
-  - Can all 9 points be completed with keyboard-only navigation?
+  - Can all 12 points be completed with keyboard-only navigation?
   - Does every interactive element have an ARIA label?
   - Does any information rely on colour alone?
 ```
@@ -722,6 +727,163 @@ The gap: telling someone WHAT is wrong is not the same as telling them WHY it ma
 
 ---
 
+#### Trap 18: Overlay Dismiss on Text Selection
+
+**Pattern:** User opens a modal/overlay/popup with an input field. The overlay has a click-to-dismiss handler on the background (`if (event.target === this) close()`). The user triple-clicks or drag-selects text inside the input to copy a license key, token, or error message. The mouseup event lands on the overlay background (cursor drifted during selection), the click fires, and the overlay disappears — losing the user's work mid-copy.
+
+**Why AI misses this:** AI navigates via programmatic selectors. It types into the input, reads the value, and clicks submit — text selection never enters its test flow. The overlay dismissal feels correct during automated interaction because the click event never lands on the background. Only a human dragging with a mouse hits this.
+
+**Detection:**
+1. Open any overlay that contains an input or selectable text
+2. Triple-click a word inside the input field
+3. Drag-select from the start of the input to well past its boundary (simulating a user selecting an entire key string)
+4. Does the overlay dismiss itself when the mouseup fires?
+5. Repeat by selecting text in result/error/status messages inside the overlay (the success "✅ Key activated!" or error text)
+6. Also test: select text in the input, then right-click (context menu) — does the overlay dismiss on mousedown?
+
+**Root cause checklist:**
+- Overlay has an `onclick` or `addEventListener('click')` handler on the background that checks `e.target === this`
+- The inner content div does NOT call `event.stopPropagation()` on click
+- The overlay uses `click` (mouseup + mousedown within same element) instead of `mousedown` for dismissal — click events are cancelled by text selection, but a subsequent mouseup outside the content box after a drag fires the click handler
+
+**Fix pattern:**
+- Add `onclick="event.stopPropagation()"` to the inner content `<div>` — clicks inside the card never reach the overlay handler, but clicking the background directly still closes
+- Alternative: use `onmousedown` instead of `onclick` for dismissal (fewer false positives during selection) but this makes the overlay more aggressive
+- Verify: clicking the overlay background still dismisses; clicking inside the card never does
+- For input fields specifically: don't dismiss on click at all when the user has text selected (`window.getSelection().toString() !== ''`)
+
+**Golden Gate addition:** After item 8 (back navigation), insert: `8.5 TEXT SELECTION — open every modal with an input, drag-select text across boundary, confirm overlay stays open.`
+
+---
+
+#### Trap 20: Cross-System Format/State Inconsistency — Paired Paths That Must Agree
+
+**Pattern:** Two independent code paths generate, validate, or consume the same data shape (license key format, DB column set, state machine transitions). They are maintained by different developers or at different times. One changes — the other doesn't. The result is a silent inconsistency: keys that pass validation can't be generated, INSERT queries reference columns that don't exist, or state transitions mismatch.
+
+**Why AI misses this:** AI evaluates each path in isolation. When asked to fix a key generator, the AI fixes the generator without cross-referencing the validator. Both paths "look correct" individually. Only a cross-system assertion catches the mismatch.
+
+**Detection:**
+1. Find every pair of independent paths that must agree on a format or schema:
+   - Key generators ↔ validators (same regex/format string)
+   - INSERT queries ↔ CREATE TABLE DDL (same column set)
+   - State machine producer ↔ consumer (same states and transitions)
+   - Migration scripts ↔ startup runner (migration wired in?)
+2. Extract the actual format/column/state values from each path
+3. Compare them. Do they use the same format string, same column references, same ENUM values?
+
+**Fix pattern:**
+```python
+# Define the format ONCE, reference from both paths:
+LICENSE_KEY_PATTERN = r'^OBS-PRO-[A-Z0-9]{8}-[A-Z0-9]{6}$'
+
+# Generator:
+key = f"OBS-PRO-{secrets.token_hex(4).upper()}-{secrets.token_hex(3).upper()}"
+
+# Validator:
+import re
+if not re.match(LICENSE_KEY_PATTERN, key):
+    raise ValueError("Invalid key format")
+```
+- For DB columns: share a column definition dict between `CREATE TABLE` and `INSERT`
+- For migrations: add every migration to the auto-run list in the same PR that creates the migration file
+- **Rule of thumb:** If you can grep for a format string in two places without them referencing a shared constant, you have a bug waiting to happen
+
+**Real example (ObserveCo, 2026-06-08):** CRM admin issued `OBS-ADMIN-XXXXXXXX`. Stripe webhook issued `OBS-XXXXXXXX-XXXX`. Validator expected `OBS-PRO-XXXXXXXX-XXXXXX`. Three independent format strings, all correct individually, all wrong together. Fix: define format once, reference from all three paths.
+
+---
+
+#### Trap 21: Hardcoded Ephemeral Value — Single-Use Tokens/Sessions in Production Templates
+
+**Pattern:** A single-use URL or session token (Stripe Checkout `cs_live_...`, GitHub token `ghp_...`, API key `sk_live_...`) is hardcoded directly into a template or config file. It works when first written. Weeks later, the token expires or is consumed. The link silently breaks with no error, no 404, no fallback. The user clicks a dead button.
+
+**Why AI misses this:** AI tests the template at the time of writing — the URL works, so the test passes. The AI has no concept of "this value will expire" because it has no model of the external service's token lifecycle.
+
+**Detection (pre-ship CI gate):**
+```bash
+# Check for known ephemeral value patterns in templates
+grep -rnE '(cs_|sk_|pk_|tok_|ghp_|gho_|ghs_)[A-Za-z0-9]{20,}' templates/ src/ 2>/dev/null
+# Check for any 60+ character alphanumeric URL segment
+grep -rnE '/[A-Za-z0-9_-]{60,}' templates/ src/ 2>/dev/null | grep -v 'node_modules\|\.git\|test_'
+```
+Flag ALL matches. Each must have a comment explaining why it's static, or be replaced with a dynamic endpoint.
+
+**Fix pattern:**
+- Replace with a backend endpoint that generates or retrieves the value at request time: `href="/api/checkout?plan=solo&trial=30"` not `href="https://checkout.stripe.com/pay/cs_live_..."`
+- For truly static values (documentation links, icon URLs), add a comment: `<!-- STATIC: this is a permanent documentation URL -->`
+- If it must be a fixed value, add a cron job that checks the URL returns 200 and flags it if it goes stale
+
+**Real example (ObserveCo, 2026-06-08):** "Start Free Trial" button hardcoded a single-use Stripe Checkout session URL (`cs_live_a1xg...`). After the session was consumed, the link returned a Stripe 404. Three copies existed across `index.html` (2) and `licenses_api.py` (1). Fix: replace all three with `/api/checkout?plan=solo&trial=30`.
+
+---
+
+#### Trap 22: Schema-Code Drift — DDL and INSERT Query Don't Match
+
+**Pattern:** A column is added to an INSERT statement (new feature needs new data) but never added to the table's CREATE TABLE DDL. Or a migration script exists on disk but was never wired into the auto-run startup chain. Data writes fail silently — the error is logged but no one reads the error log for this specific table. Result: zero data in that table, empty dashboards, confusing "no data" states everywhere.
+
+**Why AI misses this:** AI adds the column to the INSERT without checking the DDL because the DDL is in a different file or was written months ago. The migration script "doesn't look broken" because it's syntactically valid SQL — it just never runs. The AI evaluates the INSERT and the migration as independent artifacts, not paired artifacts that must agree.
+
+**Detection:**
+1. For every INSERT or UPDATE query, find the corresponding CREATE TABLE or ALTER TABLE statement that defines those columns
+2. Extract the column set from each — do they match?
+3. For every migration file on disk: does it have a slot in the auto-run migration pipeline? Run `grep` for the migration filename in the startup code
+4. Check: if SCHEMA_VERSION was bumped, was the migration entry added to MIGRATIONS dict?
+
+**Fix pattern:**
+- Define columns once, reference from both places
+- Every migration script must be in the auto-run list before the PR merges
+- After adding a new column to an INSERT, run the create-table DDL to verify the column exists
+- When you bump SCHEMA_VERSION, immediately check that a MIGRATIONS entry exists for that version
+
+**Real example (ObserveCo, 2026-06-09):** `log_trim()` was updated to INSERT a `mode` column, but the `chisel_trims` table DDL at schema v11 never received the column. A migration script existed at `chisel/migrations.py` but was never wired into `db.py`'s auto-run pipeline. Every watch daemon probe crashed with `table chisel_trims has no column named mode` — 1,265 errors accumulated, trim and drift tables stayed empty for days. Fix: bumped schema to v12, wired the migration into `db.py:MIGRATIONS`, schema auto-upgraded on next init.
+
+---
+
+#### Trap 23: Render Order Drift — Information Hierarchy vs Template Order
+
+**Pattern:** The spec or mockup defines a clear information hierarchy (Section A → B → C, top to bottom). The server-side template builds sections in a different order (C → A → B or jumbled). Every section renders correctly with correct data — the order is just wrong. The human reads the page in a sequence that contradicts the designed narrative.
+
+**Why AI misses this:** AI verifies each section exists and renders correctly. The template builds sections by composing strings or JS templates; the AI evaluates the output as individual sections, never the sequence. Ordering is a presentational concern invisible to function-level verification.
+
+**Detection:**
+1. List every top-level section of the page in the order the spec/mockup specifies (top→bottom)
+2. Read the server template or mockup HTML — extract the section markers in the sequence they appear
+3. Compare. Do they match?
+4. For server-side `js_string` composition: grep for each section variable assignment and check the order they're concatenated
+
+**Fix pattern:**
+- Document the expected render order in the spec as part of every page design
+- In the template, concatenate sections in spec order — don't let code evolution reorder them
+- Add a comment at each concatenation point: `/* ORDER: A → B → C — keep in spec order */`
+- After any multi-section page edit: diff the template section concatenation order against the spec
+
+**Real example (ObserveCo health popup, 2026-06-08):** Mockup showed Last 24 Hours → Confidence → Signal Analysis. Server template built Confidence header first, then Last 24 Hours, then Signal Analysis. Fixed by moving `{conf_header}` into the Signal Analysis section during string concatenation.
+
+---
+
+#### Trap 24: Entity-Type-Aware Rendering — Irrelevant Metrics on Heterogeneous Card Lists
+
+**Pattern:** A dashboard renders a heterogeneous list of cards (agents, services, workflows, crons). All cards use the same template, which renders every metric row unconditionally. A cron card shows `📈 Learning...` for token drift, `⚪ No data (not pulse-monitored)` for Guard, and `No brain data` for Composition. The user interprets these as bugs or missing features — not as "this metric doesn't apply to my entity type."
+
+**Why AI misses this:** AI verifies the card renders (DOM exists) and the data is correct (no error state). The misleading empty state is technically correct — there's genuinely no data for that type. The AI doesn't reason about whether the metric *applies* to this entity type.
+
+**Detection:**
+1. List every metric row on each card type
+2. For each row, ask: "Does this concept apply to every entity type in this list?"
+3. If no: does the row actually tell the user "not applicable" — or does it just show an empty state that reads as "broken"?
+4. Check specifically for: `📈 Learning...` (sounds intentional — most dangerous), `⚪ No data` (sounds like missing data), `No brain data` (sounds like something failed)
+
+**Fix pattern:**
+```python
+# Gate type-specific rows by entity type. The classifier already exists.
+is_agent = agent_type == 'agent'
+```
+- Universal rows (Health, Errors) remain unconditional — every entity has status and can produce errors
+- See `ux-testing-playbook skill references/entity-type-aware-card-rendering.md` for the full pattern
+
+**Real example (ObserveCo agent cards, 2026-06-08):** All 6 metric rows (Confidence, Guard, Errors, Health, Brain, Composition) rendered for every entity type. Services showed `📈 Learning...` for token drift (irrelevant) and `⚪ No data` for Guard (no circuit breaker). Fixed by gating Confidence, Guard, Brain size, and Composition rows behind `agent_type == 'agent'`.
+
+---
+
 ## 7. Lessons Learned Log
 
 Append here every time a human catches something an AI missed. This is how the playbook stays alive.
@@ -823,6 +985,17 @@ Append here every time a human catches something an AI missed. This is how the p
 | 2026-06-01 | ObserveCo | "Pathway map renders" | `initializeCy()` calls `applyFilter(currentFilter)` — renamed to `applyFilters()` → `ReferenceError: applyFilter is not defined` on every page load | Trap 16 — JS Rename Leaves Dead Call | Fixed call site; added Trap 16 to playbook |
 | 2026-06-01 | ObserveCo | "Watch daemon start command shown" | Help text says `observeco watch --daemon` but CLI uses subcommands: `observeco watch start` | Trap 15 — Inline Reference Not Verified | Fixed help text; added Trap 15 to playbook |
 | 2026-06-01 | ObserveCo | "Pro modal has padding" | `.modal { overflow: hidden }` with no internal padding → content flush to edges | Trap 9 — Visual Consistency | Added `.modal-body { padding: 18px; overflow-y: auto }`; added flush-content check to Trap 9 detection |
+
+### 2026-06-08 — Pro License Key Modal UX Bugs
+
+| Date | Product | What AI said | What human found | Trap/Layer | Fix |
+|------|---------|-------------|------------------|-----------|-----|
+| 2026-06-08 | ObserveCo | "License key modal opens, input accepts text" | Dragging to select the entire license key string causes mouseup on overlay background → modal dismisses mid-copy | Trap 18 — Overlay Dismiss on Text Selection | Added `event.stopPropagation()` to inner content div. Added Trap 18 to playbook + Golden Gate item 10. |
+| 2026-06-08 | ObserveCo | "CRM issues license keys correctly" | CRM admin endpoint generates `OBS-ADMIN-XXXXXXXX` and Stripe webhook generates `OBS-XXXXXXXX-XXXX` — neither matches the `OBS-PRO-XXXXXXXX-XXXX` validator regex. All 7 active keys in Supabase unusable. | Data Integrity — CRM output ≠ client validator | Fixed both generation paths to `OBS-PRO-XXXXXXXX-XXXXXX`. Reissued all 7 active keys in Supabase. |
+| 2026-06-08 | ObserveCo | "Start Free Trial button works" | Hardcoded single-use Stripe Checkout session URL (`cs_live_a1xg...`). After session consumed, button returns Stripe 404. Three copies in codebase. | Trap 21 — Hardcoded Ephemeral Value | Replaced all 3 copies with `/api/checkout?plan=solo&trial=30` dynamic endpoint. Added Trap 21 to playbook. |
+| 2026-06-08 | ObserveCo | "Health popup shows correct data" | Confidence header renders before Last 24 Hours section — information hierarchy reversed. All data correct, order wrong. | Trap 23 — Render Order Drift | Moved `{conf_header}` into Signal Analysis section in `js_string` concatenation. Added Trap 23 to playbook. |
+| 2026-06-08 | ObserveCo | "All metric rows render correctly" | Services/workflows show `📈 Learning...` for token drift and `⚪ No data` for Guard — metrics that don't apply to those entity types. | Trap 24 — Entity-Type-Aware Rendering | Gated Confidence, Guard, Brain size, Composition rows behind `agent_type == 'agent'`. Added Trap 24 to playbook + Golden Gate item 11. |
+| 2026-06-09 | ObserveCo | "Brain analysis, fleet drift, composition all show data" | `chisel_trims` table missing `mode` column. `log_trim()` INSERTs `mode` but DDL at schema v11 never had it. Migration script existed but never wired into auto-run. 1,265 errors accumulated, trim/drift tables empty for days. | Trap 22 — Schema-Code Drift | Bumped schema to v12, wired migration into `db.py:MIGRATIONS`. Schema auto-upgraded on next Database() init. Added Trap 22 to playbook. |
 
 ---
 

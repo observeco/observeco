@@ -49,7 +49,7 @@ def _text_hash(text: str) -> str:
 
 def _split_skill(body: str) -> tuple[str, str]:
     """Split SKILL.md into (frontmatter, body_text).
-    
+
     Returns ("", body) if no frontmatter found.
     """
     if body.startswith("---"):
@@ -248,7 +248,6 @@ def _split_structural_prose(text: str) -> tuple[list[dict], list[str]]:
 def _validate_structure(original_structural: list[dict], compressed_text: str) -> list[str]:
     """Validate that compressed text preserves all non-prose structural elements."""
     errors = []
-    lines = compressed_text.splitlines()
 
     # Count headings
     orig_headings = sum(1 for s in original_structural if s["type"] == "heading")
@@ -275,18 +274,14 @@ def _validate_structure(original_structural: list[dict], compressed_text: str) -
             errors.append(f"Code fences: {orig_fences} → {comp_fences}")
 
     # Check URLs preserved
-    url_re = re.compile(r"https?://[^\s)\"']+")
-    orig_urls = set()
     for s in original_structural:
         for ln in range(s["start"], s.get("end_actual", s["end"])):
             pass
     # Get original URLs from the text before splitting
-    all_orig_lines = []
     for s in original_structural:
         for ln in range(s["start"], s["end"]):
             pass  # need original text
     # Simpler: read the original text from somewhere
-    orig_urls = set(url_re.findall(compressed_text))  # placeholder
 
     return errors
 
@@ -416,36 +411,36 @@ def _cloud_caveman_compress_body(body_text: str, max_retries: int = 2,
 
 def _rule_compress_body(body_text: str) -> str:
     """Apply the existing rule-based guidance compression.
-    
+
     Same algorithm as compress_guidance_block() in chisel/trim.py
     but without section detection — works on any prose text.
     """
     lines = body_text.splitlines()
     seen_rules = set()
     result = []
-    
+
     for line in lines:
         stripped = line.strip()
         if not stripped:
             result.append(line)
             continue
-        
+
         # Skip code blocks
         if stripped.startswith("```") or stripped.startswith("~~"):
             result.append(line)
             continue
-        
+
         # Skip headings
         if stripped.startswith("#"):
             result.append(line)
             continue
-        
+
         # Dedup identical guidance rules
         key = stripped.lower()
         if key in seen_rules and len(stripped) > 20:
             continue
         seen_rules.add(key)
-        
+
         # Apply shortenings
         shortened = stripped
         replacements = [
@@ -460,20 +455,20 @@ def _rule_compress_body(body_text: str) -> str:
         ]
         for old, new in replacements:
             shortened = shortened.replace(old, new)
-        
+
         # Preserve indentation
         if line.startswith(" ") or line.startswith("\t"):
             indent = line[:len(line) - len(line.lstrip())]
             shortened = indent + shortened
-        
+
         result.append(shortened)
-    
+
     return "\n".join(result)
 
 
 # ── Manifest generation ─────────────────────────────────────────────────────
 
-def _build_manifest(skill_path: Path, original_text: str, 
+def _build_manifest(skill_path: Path, original_text: str,
                     compressed_text: str, body_text: str,
                     compressed_body: str) -> dict:
     """Build manifest for a skill file."""
@@ -515,7 +510,7 @@ def estimate_structure(text: str) -> tuple[int, int]:
 def _build_card(skill_path: Path, meta: dict, original_text: str,
                 compressed_text: str, manifest: dict) -> dict:
     """Build a lightweight skill card for the progressive disclosure system.
-    
+
     ~200-400 tokens, contains everything needed for intent matching without
     loading the full body.
     """
@@ -523,13 +518,13 @@ def _build_card(skill_path: Path, meta: dict, original_text: str,
     tags = meta.get("tags", [])
     if isinstance(tags, str):
         tags = [t.strip() for t in tags.split(",") if t.strip()]
-    
+
     related = meta.get("related_skills", [])
     if isinstance(related, str):
         related = [t.strip() for t in related.split(",") if t.strip()]
-    
+
     description = meta.get("description", "") or ""
-    
+
     # Extract unique trigger phrases from body headings
     headings = re.findall(r"^#{1,4}\s+(.+)$", original_text, re.MULTILINE)
     triggers = []
@@ -537,7 +532,7 @@ def _build_card(skill_path: Path, meta: dict, original_text: str,
         cleaned = h.strip().lower()
         if cleaned and cleaned not in ("when to use", "introduction", "overview", "core identity"):
             triggers.append(cleaned[:60])
-    
+
     return {
         "name": meta.get("name", skill_path.parent.name),
         "category": skill_path.parent.parent.name,
@@ -615,7 +610,7 @@ def compress_skill_to_artifacts(skill_path: Path, dry_run: bool = False,
     return manifest
 
 
-def batch_compress_skills(skills_dir: Path = SKILLS_DIR, 
+def batch_compress_skills(skills_dir: Path = SKILLS_DIR,
                            dry_run: bool = False,
                            limit: int = 0,
                            engine: str = "rule") -> list[dict]:
@@ -628,13 +623,13 @@ def batch_compress_skills(skills_dir: Path = SKILLS_DIR,
     skill_files = sorted(skills_dir.rglob("SKILL.md"))
 
     # Filter out already-compressed backups and artifacts
-    skill_files = [sf for sf in skill_files 
-                   if not any(sf.name.endswith(ext) for ext in 
+    skill_files = [sf for sf in skill_files
+                   if not any(sf.name.endswith(ext) for ext in
                              [".compressed", ".manifest", ".card", ".bak"])]
 
     if limit > 0:
         # Sort by size descending first
-        with_sizes = [(sf, _count_tokens(sf.read_text(encoding="utf-8"))) 
+        with_sizes = [(sf, _count_tokens(sf.read_text(encoding="utf-8")))
                       for sf in skill_files]
         with_sizes.sort(key=lambda x: -x[1])
         skill_files = [sf for sf, _ in with_sizes[:limit]]
@@ -645,7 +640,7 @@ def batch_compress_skills(skills_dir: Path = SKILLS_DIR,
         done = 0
         start_ts = time.time()
         print(f"  Caveman batch: {total} skills, {_WORKERS} workers, model={_OLLAMA_MODEL}")
-        
+
         def _process(sf: Path) -> typing.Optional[dict]:
             return compress_skill_to_artifacts(sf, dry_run=False, engine="caveman")
 
@@ -694,7 +689,7 @@ def batch_compress_skills(skills_dir: Path = SKILLS_DIR,
 
 def generate_cards_json(skills_dir: Path = SKILLS_DIR) -> str:
     """Generate the consolidated cards.json from all individual cards.
-    
+
     Returns JSON string of cards array.
     """
     cards = []
@@ -709,7 +704,7 @@ def generate_cards_json(skills_dir: Path = SKILLS_DIR) -> str:
 
 def export_manifest_json(skills_dir: Path = SKILLS_DIR) -> str:
     """Generate consolidated manifest catalog.
-    
+
     Returns JSON string of all manifests keyed by skill name.
     """
     manifests = {}
@@ -756,7 +751,7 @@ if __name__ == "__main__":
         m = export_manifest_json()
         (SKILLS_DIR / "manifests.json").write_text(m)
         print(f"  Wrote {len(results)} manifests to skills/manifests.json")
-        
+
         # Write cards
         c = generate_cards_json()
         (SKILLS_DIR / "cards.json").write_text(c)

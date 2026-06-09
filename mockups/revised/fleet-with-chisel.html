@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Fleet with Chisel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc; --fg-2: #94a3b8; --muted: #64748b;
+  --accent: #22c55e; --warn: #eab308; --danger: #ef4444; --meta: #3b82f6; --purple: #a855f7;
+  --border: #334155; --border-soft: #273548;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 11px; --text-sm: 12px; --text-base: 14px; --text-lg: 15px; --text-xl: 18px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 9999px;
+  --ease: cubic-bezier(0.2,0,0,1);
+}
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--fg); -webkit-font-smoothing: antialiased; }
+.app { max-width: 920px; margin: 0 auto; padding: 20px 24px; }
+
+/* ── Dashboard Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo svg { width: 32px; height: 32px; display: block; }
+.header-title { font-size: 22px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--muted); font-weight: 400; }
+.tier-badge {
+  background: rgba(34,197,94,0.12); color: #86efac;
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+.header-actions { display: flex; gap: 8px; align-items: center; }
+
+.search-box {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 6px 12px;
+  width: 200px; transition: border-color 0.15s;
+}
+.search-box:focus-within { border-color: var(--muted); }
+.search-box input {
+  background: none; border: none; color: var(--fg); font-size: var(--text-sm);
+  outline: none; width: 100%; font-family: inherit;
+}
+.search-box input::placeholder { color: var(--muted); }
+
+/* Banner */
+.banner {
+  background: linear-gradient(135deg, rgba(168,85,247,0.08), rgba(59,130,246,0.08));
+  border: 1px solid rgba(168,85,247,0.2); border-radius: var(--radius-md);
+  padding: 12px 16px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: var(--text-sm); color: var(--fg-2);
+}
+.banner strong { color: var(--fg); }
+
+/* Summary bar */
+.summary-bar {
+  display: flex; gap: 16px; margin-bottom: 20px; overflow-x: auto;
+}
+.summary-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-pill);
+  padding: 5px 14px; font-size: var(--text-sm); white-space: nowrap;
+}
+.summary-chip .num { font-weight: 600; }
+.summary-chip .num.green { color: var(--accent); }
+.summary-chip .num.purple { color: var(--purple); }
+.summary-chip .num.amber { color: var(--warn); }
+
+/* Agent Card */
+.agent-list { display: flex; flex-direction: column; gap: 8px; }
+.agent-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 16px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.agent-card:hover { border-color: var(--border-soft); }
+.agent-card.selected { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(34,197,94,0.2); }
+
+.agent-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid var(--border); display: flex; align-items: center;
+  justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+.agent-info { flex: 1; min-width: 0; }
+.agent-name-line { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.agent-name { font-size: var(--text-base); font-weight: 600; color: var(--fg); }
+.agent-badge {
+  display: inline-block; padding: 1px 6px; border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: 600; letter-spacing: 0.03em;
+}
+.agent-badge.alive { background: rgba(34,197,94,0.1); color: var(--accent); }
+.agent-badge.stale { background: rgba(234,179,8,0.1); color: var(--warn); }
+.agent-badge.chisel-ready {
+  background: rgba(168,85,247,0.1); color: var(--purple); border: 1px solid rgba(168,85,247,0.2);
+}
+.agent-badge.chisel-done {
+  background: rgba(34,197,94,0.1); color: var(--accent); border: 1px solid rgba(34,197,94,0.2);
+}
+.agent-role { font-size: var(--text-xs); color: var(--muted); margin-top: 1px; }
+
+.agent-stats { display: flex; align-items: center; gap: 12px; font-size: var(--text-xs); flex-shrink: 0; }
+.agent-stat { display: flex; align-items: center; gap: 3px; color: var(--muted); }
+.agent-stat .val { color: var(--fg-2); font-weight: 500; }
+.agent-stat .val.good { color: var(--accent); }
+.agent-stat .val.warn { color: var(--warn); }
+
+/* Chisel column inline */
+.chisel-col {
+  width: 80px; text-align: center; flex-shrink: 0;
+}
+.chisel-col .tag {
+  padding: 2px 8px; border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.tag.ready { background: rgba(168,85,247,0.12); color: var(--purple); cursor: pointer; }
+.tag.done { background: rgba(34,197,94,0.12); color: var(--accent); }
+.tag.none { background: var(--border); color: var(--muted); }
+
+/* Action row */
+.action-row {
+  margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.action-btn {
+  padding: 8px 20px; border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--surface); color: var(--fg-2); font-size: var(--text-sm);
+  font-weight: 500; cursor: pointer; transition: all 0.15s;
+}
+.action-btn:hover { border-color: var(--muted); color: var(--fg); }
+.action-btn.primary { background: var(--purple); color: #1e1b4b; border-color: var(--purple); font-weight: 600; }
+.action-btn.primary:hover { opacity: 0.85; }
+
+/* Toast (dashboard bottom-right) */
+.toast-b {
+  position: fixed; bottom: 24px; right: 24px; z-index: 50;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 20px; font-size: 13px; color: var(--fg);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transform: translateY(20px); opacity: 0; transition: all 0.3s ease;
+  font-family: var(--font-mono);
+}
+.toast-b.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Dashboard Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14" stroke="#22c55e" stroke-width="1.5" opacity="0.3"/>
+          <circle cx="16" cy="16" r="8" stroke="#22c55e" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="3" fill="#22c55e"/>
+          <line x1="16" y1="2" x2="16" y2="9" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="16" y1="23" x2="16" y2="30" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="2" y1="16" x2="9" y2="16" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="23" y1="16" x2="30" y2="16" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+        </svg>
+      </div>
+      <span class="header-title">ObserveCo <span>Fleet</span></span>
+    </div>
+    <div class="tier-badge" style="margin-right:8px">OPENCLAW</div>
+    <div class="header-actions">
+      <div class="search-box">
+        <span style="color:var(--muted);font-size:12px">🔍</span>
+        <input type="text" placeholder="Search agents..." id="searchInput">
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner -->
+  <div class="banner">
+    <span>🔪</span>
+    <span><strong>Chisel compression available</strong> — 2 agents are ready for compression. Run a bulk analysis or inspect individual agents.</span>
+  </div>
+
+  <!-- Summary Chips -->
+  <div class="summary-bar">
+    <div class="summary-chip"><span class="num green">3</span> Agents</div>
+    <div class="summary-chip"><span class="num green">3</span> ● Alive</div>
+    <div class="summary-chip"><span class="num purple">2</span> 🔪 Chisel ready</div>
+    <div class="summary-chip"><span class="num amber">1</span> ⚠️ Drift &gt;25%</div>
+    <div class="summary-chip"><span class="num">0</span> ❌ Down</div>
+  </div>
+
+  <!-- Agent List -->
+  <div class="agent-list">
+    <!-- Agent 1: hermes-main — Chisel ready -->
+    <div class="agent-card selected" data-agent="hermes-main" data-chisel="ready">
+      <div class="agent-icon">🤖</div>
+      <div class="agent-info">
+        <div class="agent-name-line">
+          <span class="agent-name">hermes-main</span>
+          <span class="agent-badge alive">● Alive</span>
+          <span class="agent-badge chisel-ready">🔪 Chisel ready</span>
+        </div>
+        <div class="agent-role">Evaluator Agent · PID 41823 · 3.2h uptime</div>
+      </div>
+      <div class="agent-stats">
+        <div class="agent-stat">🧠 <span class="val good">A-</span></div>
+        <div class="agent-stat">📊 <span class="val">162K</span></div>
+        <div class="agent-stat">⚠️ <span class="val warn">14%</span></div>
+      </div>
+      <div class="chisel-col">
+        <span class="tag ready">+45K</span>
+      </div>
+    </div>
+
+    <!-- Agent 2: hermes-pa — Chisel applied -->
+    <div class="agent-card" data-agent="hermes-pa" data-chisel="applied">
+      <div class="agent-icon">📋</div>
+      <div class="agent-info">
+        <div class="agent-name-line">
+          <span class="agent-name">hermes-pa</span>
+          <span class="agent-badge alive">● Alive</span>
+          <span class="agent-badge chisel-done">🔪 Compressed</span>
+        </div>
+        <div class="agent-role">Personal Assistant · PID 38901 · 12.1h uptime</div>
+      </div>
+      <div class="agent-stats">
+        <div class="agent-stat">🧠 <span class="val good">B+</span></div>
+        <div class="agent-stat">📊 <span class="val">89K</span></div>
+        <div class="agent-stat">⚠️ <span class="val">7%</span></div>
+      </div>
+      <div class="chisel-col">
+        <span class="tag done">-22K ✓</span>
+      </div>
+    </div>
+
+    <!-- Agent 3: openclaw-agent — Chisel ready -->
+    <div class="agent-card" data-agent="openclaw-agent" data-chisel="ready">
+      <div class="agent-icon">🦀</div>
+      <div class="agent-info">
+        <div class="agent-name-line">
+          <span class="agent-name">openclaw-agent</span>
+          <span class="agent-badge alive">● Alive</span>
+          <span class="agent-badge chisel-ready">🔪 Chisel ready</span>
+        </div>
+        <div class="agent-role">Sub-agent Worker · PID 45211 · 1.8h uptime</div>
+      </div>
+      <div class="agent-stats">
+        <div class="agent-stat">🧠 <span class="val good">B</span></div>
+        <div class="agent-stat">📊 <span class="val">213K</span></div>
+        <div class="agent-stat">⚠️ <span class="val warn">32%</span></div>
+      </div>
+      <div class="chisel-col">
+        <span class="tag ready">+78K</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Row -->
+  <div class="action-row">
+    <button class="action-btn" id="inspectBtn">🔍 Inspect Selected</button>
+    <button class="action-btn" id="bulkBtn">📊 Bulk Chisel Analysis</button>
+    <button class="action-btn primary" id="compressBtn">⚡ Compress All Ready</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-b" id="toast">✓ Ready</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const toast = document.getElementById('toast');
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // Card selection
+  const cards = document.querySelectorAll('.agent-card');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    });
+  });
+
+  // Buttons
+  document.getElementById('inspectBtn').addEventListener('click', () => {
+    const selected = document.querySelector('.agent-card.selected');
+    const name = selected ? selected.dataset.agent : 'unknown';
+    showToast(`🔍 Opening profile for ${name}...`);
+  });
+
+  document.getElementById('bulkBtn').addEventListener('click', () => {
+    showToast('📊 Running bulk Chisel analysis across fleet...');
+  });
+
+  document.getElementById('compressBtn').addEventListener('click', () => {
+    showToast('⚡ Compressing 2 ready agents — saving ~123K tokens');
+  });
+
+  // Search
+  document.getElementById('searchInput').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    cards.forEach(card => {
+      const name = card.dataset.agent.toLowerCase();
+      card.style.display = name.includes(q) ? '' : 'none';
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

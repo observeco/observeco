@@ -14,7 +14,6 @@ from pathlib import Path
 from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich.tree import Tree
 
 from observeco.db import Database
 
@@ -22,7 +21,7 @@ console = Console()
 db = Database()
 
 # Rough token estimation: ~4 chars per token for English text
-CHARS_PER_TOKEN = 4.0
+CHARS_PER_TOKEN = 4.0  # Rough token estimation: ~4 chars per token for English text
 
 SECTIONS = {
     "identity": ["identity", "role", "persona", "who you are", "you are", "i am"],
@@ -212,7 +211,7 @@ def _parse_skill_yaml(path: Path) -> dict | None:
 
 def _compress_skill_body(body_text: str) -> tuple[str, int]:
     """Compress a skill's body text using the guidance compression engine.
-    
+
     Returns (compressed_text, tokens_saved).
     """
     compressed = compress_guidance_block(body_text)
@@ -226,17 +225,17 @@ def _compress_skill_body(body_text: str) -> tuple[str, int]:
 
 def compress_skill(skill_path: Path, dry_run: bool = False) -> dict | None:
     """Compress a single SKILL.md file's body text.
-    
+
     Args:
         skill_path: Path to SKILL.md
         dry_run: If True, don't write changes — only report savings.
-    
+
     Returns:
         dict with keys: name, saved_tokens, savings_pct, backup_path
         or None if skill has no compressible body.
     """
     body = skill_path.read_text(encoding="utf-8")
-    
+
     # Split frontmatter from body
     if body.startswith("---"):
         parts = body.split("---", 2)
@@ -245,31 +244,31 @@ def compress_skill(skill_path: Path, dry_run: bool = False) -> dict | None:
     else:
         frontmatter = ""
         body_text = body
-    
+
     if not body_text.strip():
         return None
-    
+
     before_tokens = _count_tokens(body_text)
     compressed, saved = _compress_skill_body(body_text)
-    
+
     if saved == 0:
         return None
-    
+
     savings_pct = round(saved / max(before_tokens, 1) * 100, 1)
     name = skill_path.parent.name
-    
+
     if not dry_run:
         # Create backup
         backup_path = skill_path.with_suffix(".md.bak")
         backup_path.write_text(body, encoding="utf-8")
-        
+
         # Write compressed version
         if frontmatter:
             new_content = f"---{frontmatter}---\n{compressed}"
         else:
             new_content = compressed
         skill_path.write_text(new_content, encoding="utf-8")
-        
+
         # Log to compress_log (raw SQL, consistent with watch.py)
         from observeco.db import Database
         db_local = Database()
@@ -285,7 +284,7 @@ def compress_skill(skill_path: Path, dry_run: bool = False) -> dict | None:
         conn.commit()
     else:
         backup_path = None
-    
+
     return {
         "name": name,
         "path": str(skill_path),
@@ -299,7 +298,7 @@ def compress_skill(skill_path: Path, dry_run: bool = False) -> dict | None:
 
 def run_skills(compress: bool = False, compress_limit: int = 0, dry_run: bool = True) -> None:
     """Audit all Hermes skill files: token cost, ranked by total tokens.
-    
+
     Args:
         compress: If True, compress skill body text after audit.
         compress_limit: Max number of skills to compress (0 = all compressible).
@@ -565,10 +564,6 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
 
     # Parse sections
     text = original_text
-    sections = _analyse_prompt(text)
-    guidance_tokens = sections.get("guidance_tokens", 0)
-    memory_tokens = sections.get("memory_tokens", 0)
-    skills_tokens = sections.get("skills_tokens", 0)
 
     # Lite mode: compress all content globally (section-agnostic)
     # Apply rule-based shortening to every line
@@ -576,10 +571,10 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
     new_lines = []
     blank_count = 0
     in_code_block = False
-    
+
     for line in lines:
         stripped = line.strip()
-        
+
         # Don't compress code blocks, headings, or empty lines
         if stripped.startswith("```"):
             in_code_block = not in_code_block
@@ -596,14 +591,14 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
             # Top-level heading — keep as-is
             new_lines.append(line)
             continue
-        
+
         # Skip lines that are clearly structural
         if re.match(r"^[-*_]{3,}$", stripped):
             new_lines.append(line)
             continue
-        
+
         blank_count = 0
-        
+
         # Apply guidance compression rules to every non-heading line
         shortened = stripped
         shortened = shortened.replace("you MUST", "must")
@@ -618,13 +613,13 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
         shortened = shortened.replace("Please ", "")
         shortened = shortened.replace("Do NOT", "Don't")
         shortened = shortened.replace("do NOT", "don't")
-        
+
         # Preserve indentation
         if line.startswith(" ") or line.startswith("\t"):
             indent = line[:len(line) - len(line.lstrip())]
             shortened = indent + shortened
         new_lines.append(shortened)
-    
+
     text = "\n".join(new_lines)
 
     # Full mode: additional compression on memory and skills
@@ -681,8 +676,6 @@ def _full_compress(text: str) -> str:
     in_skills = False
     memory_lines = []
     skills_lines = []
-    memory_start = None
-    skills_start = None
 
     for i, line in enumerate(lines):
         lower = line.strip().lower()
@@ -690,14 +683,12 @@ def _full_compress(text: str) -> str:
         if any(lower.startswith(f"## {kw}") or lower.startswith(f"# {kw}") for kw in ["memory", "context", "history", "recall"]):
             in_memory = True
             in_skills = False
-            memory_start = i
             memory_lines = [line]
             continue
         # Detect skills section
         if any(lower.startswith(f"## {kw}") or lower.startswith(f"# {kw}") for kw in ["skill", "tool", "command", "function"]):
             in_skills = True
             in_memory = False
-            skills_start = i
             skills_lines = [line]
             continue
         # End of a section
@@ -718,7 +709,7 @@ def _full_compress(text: str) -> str:
         header = memory_lines[0]
         body = memory_lines[1:]
         # Keep lines that aren't purely formatting
-        kept = [l for l in body if l.strip() and not re.match(r"^[-*_]{3,}$", l.strip())]
+        kept = [ln for ln in body if ln.strip() and not re.match(r"^[-*_]{3,}$", ln.strip())]
         # If more than 15 lines, keep first 10 + last 3
         if len(kept) > 15:
             kept = kept[:10] + ["", "... (trimmed by Full compression) ...", ""] + kept[-3:]
@@ -731,11 +722,11 @@ def _full_compress(text: str) -> str:
         body = skills_lines[1:]
         seen = set()
         deduped = []
-        for l in body:
-            key = l.strip().lower()
-            if key not in seen or not l.strip():
+        for line in body:
+            key = line.strip().lower()
+            if key not in seen or not line.strip():
                 seen.add(key)
-                deduped.append(l)
+                deduped.append(line)
         if len(deduped) != len(body):
             deduped.append("  (duplicates removed by Full compression)")
         result.append("")

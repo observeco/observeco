@@ -10,10 +10,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import time
 from typing import Optional
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Cookie
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 
 logger = logging.getLogger(__name__)

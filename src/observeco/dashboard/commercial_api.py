@@ -6,22 +6,18 @@ Registered in server.py on startup.
 
 from __future__ import annotations
 
-import json
 import os
-import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
-import httpx
 from fastapi import APIRouter, Header, HTTPException, Request
 from pydantic import BaseModel
 
 from observeco.dashboard.supabase_client import (
+    count,
+    insert,
     is_configured,
     select,
-    insert,
     update,
-    count,
 )
 
 router = APIRouter(prefix="/api/commercial", tags=["commercial"])
@@ -32,6 +28,7 @@ router = APIRouter(prefix="/api/commercial", tags=["commercial"])
 class ValidateRequest(BaseModel):
     license_key: str
     email: str = ""
+    machine_id: str = ""
 
 
 class TrialRequest(BaseModel):
@@ -54,10 +51,30 @@ class AdminIssueRequest(BaseModel):
     product_slug: str = "solo"
 
 
+class AdminActionRequest(BaseModel):
+    reason: str = ""
+
+
+class AdminUpdateRequest(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    product_slug: str | None = None
+    expires_at: str | None = None
+    status: str | None = None
+    metadata: dict | None = None
+
+
 # ── Helpers ────────────────────────────────────────────────────
 
 def _get_admin_key() -> str:
     return os.environ.get("OBSERVECO_ADMIN_KEY", "observeco-admin-2026")
+
+
+def _stripe_ts_to_iso(ts: int | float | None) -> str | None:
+    """Convert a Stripe unix timestamp to ISO 8601 string."""
+    if ts is None:
+        return None
+    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
 
 
 def _require_admin(x_admin_key: str | None = None) -> None:
@@ -139,9 +156,22 @@ async def validate_license(req: ValidateRequest):
             update("licenses", {"status": "expired"}, {"id": row["id"]})
             new_status = "expired"
 
+    elif row["status"] in ("cancelled", "past_due", "expired"):
+        # Explicitly invalid — Stripe webhook already set this status
+        valid = False
+        new_status = row["status"]
+
     # Update email if provided and different
     if req.email and req.email != row.get("email", ""):
         update("licenses", {"email": req.email}, {"id": row["id"]})
+
+    # Sync instance info back to CRM on every validation
+    if req.machine_id or valid:
+        sync_fields = {}
+        if req.machine_id:
+            sync_fields["last_machine_id"] = req.machine_id
+        sync_fields["last_seen_at"] = datetime.now(timezone.utc).isoformat()
+        update("licenses", sync_fields, {"id": row["id"]})
 
     return {
         "valid": valid,
@@ -179,6 +209,37 @@ async def start_trial(req: TrialRequest):
         "status": "trialing",
         "trial_ends_at": rows[0].get("trial_ends_at") if rows else None,
     }
+
+
+@router.post("/trials/cancel")
+async def cancel_trial(req: TrialRequest):
+    """Cancel a trial license by email — marks as cancelled in Supabase."""
+    _check_configured()
+
+    rows = select(
+        "licenses",
+        columns="id,status",
+        filters={"email": req.email, "status": "trialing"},
+        limit=1,
+    )
+    if not rows:
+        # Also try matching by name
+        if req.name:
+            rows = select(
+                "licenses",
+                columns="id,status",
+                filters={"name": req.name, "status": "trialing"},
+                limit=1,
+            )
+    if not rows:
+        return {"status": "error", "message": "No active trial found for this email"}
+    
+    update("licenses", {
+        "status": "cancelled",
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }, {"id": rows[0]["id"]})
+    
+    return {"status": "cancelled", "message": "Trial cancelled"}
 
 
 # ── Telemetry ──────────────────────────────────────────────────
@@ -235,7 +296,7 @@ async def admin_issue_license(
     _check_configured()
 
     import secrets
-    license_key = f"OBS-ADMIN-{secrets.token_hex(4).upper()}"
+    license_key = f"OBS-PRO-{secrets.token_hex(4).upper()}-{secrets.token_hex(3).upper()}"
 
     rows = insert("licenses", {
         "email": req.email,
@@ -248,6 +309,164 @@ async def admin_issue_license(
     })
 
     return rows[0] if rows else {"license_key": license_key}
+
+
+# ── Single license lookup, edit, suspend, reinstate, delete ───
+
+@router.get("/admin/licenses/{key}")
+async def admin_get_license(
+    key: str,
+    x_admin_key: str | None = Header(None),
+):
+    """Get a single license by key. Admin auth required."""
+    _require_admin(x_admin_key)
+    _check_configured()
+
+    rows = select("licenses", columns="*", filters={"license_key": key}, limit=1)
+    if not rows:
+        raise HTTPException(status_code=404, detail="License not found")
+    return rows[0]
+
+
+@router.put("/admin/licenses/{key}")
+async def admin_update_license(
+    key: str,
+    req: AdminUpdateRequest,
+    x_admin_key: str | None = Header(None),
+):
+    """Edit a license's fields. Admin auth required."""
+    _require_admin(x_admin_key)
+    _check_configured()
+
+    # Fetch existing
+    rows = select("licenses", columns="*", filters={"license_key": key}, limit=1)
+    if not rows:
+        raise HTTPException(status_code=404, detail="License not found")
+    existing = rows[0]
+
+    # Build updates dict from non-None fields
+    updates: dict = {}
+    provided = req.model_dump(exclude_none=True)
+    allowed = {"name", "email", "product_slug", "expires_at", "status", "metadata"}
+    for field in provided:
+        if field not in allowed:
+            continue
+        if field == "email":
+            updates["email"] = provided[field].lower()
+        elif field == "status":
+            valid_statuses = ("trialing", "active", "expired", "cancelled")
+            if provided[field] not in valid_statuses:
+                raise HTTPException(status_code=400, detail=f"Status must be one of: {', '.join(valid_statuses)}")
+            updates["status"] = provided[field]
+        elif field == "metadata":
+            # Merge existing metadata so we don't blow away suspend/reinstate records
+            merged = dict(existing.get("metadata", {}) or {})
+            merged.update(provided[field] or {})
+            updates["metadata"] = merged
+        else:
+            updates[field] = provided[field]
+
+    if not updates:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+
+    updates["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update("licenses", updates, {"id": existing["id"]})
+
+    # Re-fetch to return fresh data
+    refreshed = select("licenses", columns="*", filters={"license_key": key}, limit=1)
+    return {
+        "message": "License updated",
+        "license": refreshed[0] if refreshed else existing,
+        "changes": [k for k in updates if k != "updated_at"],
+    }
+
+
+@router.delete("/admin/licenses/{key}")
+async def admin_delete_license(
+    key: str,
+    x_admin_key: str | None = Header(None),
+):
+    """Soft-delete a license (set status=cancelled). Admin auth required."""
+    _require_admin(x_admin_key)
+    _check_configured()
+
+    rows = select("licenses", columns="*", filters={"license_key": key}, limit=1)
+    if not rows:
+        raise HTTPException(status_code=404, detail="License not found")
+    existing = rows[0]
+
+    updates = {"status": "cancelled", "updated_at": datetime.now(timezone.utc).isoformat()}
+    update("licenses", updates, {"id": existing["id"]})
+
+    refreshed = select("licenses", columns="id,email,name,product_slug,license_key,status,expires_at", filters={"license_key": key}, limit=1)
+    return {"message": "License cancelled", "license": refreshed[0] if refreshed else existing}
+
+
+@router.post("/admin/licenses/{key}/suspend")
+async def admin_suspend_license(
+    key: str,
+    req: AdminActionRequest | None = None,
+    x_admin_key: str | None = Header(None),
+):
+    """Suspend a license (set status=expired). Admin auth required."""
+    _require_admin(x_admin_key)
+    _check_configured()
+
+    rows = select("licenses", columns="*", filters={"license_key": key}, limit=1)
+    if not rows:
+        raise HTTPException(status_code=404, detail="License not found")
+    existing = rows[0]
+
+    reason = req.reason if req else ""
+
+    merged_meta = dict(existing.get("metadata", {}) or {})
+    merged_meta["suspended_at"] = datetime.now(timezone.utc).isoformat()
+    merged_meta["suspend_reason"] = reason
+
+    updates = {
+        "status": "expired",
+        "metadata": merged_meta,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    update("licenses", updates, {"id": existing["id"]})
+
+    refreshed = select("licenses", columns="id,email,name,product_slug,license_key,status,expires_at", filters={"license_key": key}, limit=1)
+    return {"message": "License suspended", "license": refreshed[0] if refreshed else existing}
+
+
+@router.post("/admin/licenses/{key}/reinstate")
+async def admin_reinstate_license(
+    key: str,
+    req: AdminActionRequest | None = None,
+    x_admin_key: str | None = Header(None),
+):
+    """Reinstate a suspended license (set status=active). Only expired licenses. Admin auth required."""
+    _require_admin(x_admin_key)
+    _check_configured()
+
+    rows = select("licenses", columns="*", filters={"license_key": key}, limit=1)
+    if not rows:
+        raise HTTPException(status_code=404, detail="License not found")
+    existing = rows[0]
+
+    if existing["status"] != "expired":
+        raise HTTPException(status_code=400, detail="Only expired/suspended licenses can be reinstated")
+
+    reason = req.reason if req else ""
+
+    merged_meta = dict(existing.get("metadata", {}) or {})
+    merged_meta["reinstated_at"] = datetime.now(timezone.utc).isoformat()
+    merged_meta["reinstated_reason"] = reason
+
+    updates = {
+        "status": "active",
+        "metadata": merged_meta,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    update("licenses", updates, {"id": existing["id"]})
+
+    refreshed = select("licenses", columns="id,email,name,product_slug,license_key,status,expires_at", filters={"license_key": key}, limit=1)
+    return {"message": "License reinstated", "license": refreshed[0] if refreshed else existing}
 
 
 @router.get("/admin/stats")
@@ -309,7 +528,7 @@ async def stripe_webhook(request: Request):
     if event.type == "checkout.session.completed":
         session = event.data.object
         import secrets
-        license_key = f"OBS-{secrets.token_hex(4).upper()}-{secrets.token_hex(2).upper()}"
+        license_key = f"OBS-PRO-{secrets.token_hex(4).upper()}-{secrets.token_hex(3).upper()}"
 
         insert("licenses", {
             "email": getattr(session, "customer_email", None)
@@ -327,27 +546,29 @@ async def stripe_webhook(request: Request):
         })
 
     elif event.type == "customer.subscription.deleted":
-        """Handle subscription cancellation — mark license as cancelled."""
+        """Handle subscription cancellation — mark license as cancelled with end-of-period expiry."""
         sub = event.data.object
         sub_id = getattr(sub, "id", None)
         customer_id = getattr(sub, "customer", None)
+        current_period_end = getattr(sub, "current_period_end", None)
+        update_fields = {
+            "status": "cancelled",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        if current_period_end:
+            update_fields["expires_at"] = _stripe_ts_to_iso(current_period_end)
         if sub_id:
-            update("licenses", {
-                "status": "cancelled",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }, {"stripe_subscription_id": sub_id})
+            update("licenses", update_fields, {"stripe_subscription_id": sub_id})
         elif customer_id:
             # Fallback: match by stripe_customer_id
-            update("licenses", {
-                "status": "cancelled",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }, {"stripe_customer_id": customer_id})
+            update("licenses", update_fields, {"stripe_customer_id": customer_id})
 
     elif event.type == "customer.subscription.updated":
-        """Handle subscription status/plan changes — sync license status."""
+        """Handle subscription status/plan changes — sync license status and expiry."""
         sub = event.data.object
         sub_id = getattr(sub, "id", None)
         status = getattr(sub, "status", None)
+        current_period_end = getattr(sub, "current_period_end", None)
         if sub_id and status:
             db_status = status  # Stripe: active/past_due/canceled/incomplete/trialing
             if status == "active":
@@ -358,25 +579,30 @@ async def stripe_webhook(request: Request):
                 db_status = "cancelled"
             elif status == "trialing":
                 db_status = "trialing"
-            update("licenses", {
+            update_fields = {
                 "status": db_status,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
-            }, {"stripe_subscription_id": sub_id})
+            }
+            if current_period_end:
+                update_fields["expires_at"] = _stripe_ts_to_iso(current_period_end)
+            update("licenses", update_fields, {"stripe_subscription_id": sub_id})
 
     elif event.type == "invoice.payment_failed":
         """Handle failed payment — mark as past_due with grace period."""
         invoice = event.data.object
         sub_id = getattr(invoice, "subscription", None)
         customer_id = getattr(invoice, "customer", None)
+        # Invoices carry period_end which reflects the end of the billing period
+        period_end = getattr(invoice, "period_end", None)
+        update_fields = {
+            "status": "past_due",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        if period_end:
+            update_fields["expires_at"] = _stripe_ts_to_iso(period_end)
         if sub_id:
-            update("licenses", {
-                "status": "past_due",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }, {"stripe_subscription_id": sub_id})
+            update("licenses", update_fields, {"stripe_subscription_id": sub_id})
         elif customer_id:
-            update("licenses", {
-                "status": "past_due",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }, {"stripe_customer_id": customer_id})
+            update("licenses", update_fields, {"stripe_customer_id": customer_id})
 
     return {"received": True}

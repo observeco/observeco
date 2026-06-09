@@ -12,22 +12,26 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
-from typing import Optional
 
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from observeco.config import AgentConfig, load_config, write_agent
+from observeco.config import (
+    _AGENTS_JSON,  # noqa: E402
+    AgentConfig,
+    hermes_home,
+    load_config,
+    write_agent,
+)
 from observeco.db import Database
-from observeco.llm_service import ask, detect_providers, get_auto_provider
+from observeco.llm_service import ask
 
 console = Console()
 db = Database()
 
 
-LLM_DISCOVERY_PROMPT = """You are an agent discovery assistant. Given the output of system commands (ps aux, lsof -i, common port scans), identify running processes that look like AI agents or agent frameworks.
+LLM_DISCOVERY_PROMPT = """You are an agent discovery assistant. Given the output of system commands (ps aux, lsof -i, docker ps, common port scans), identify running processes that look like AI agents or agent frameworks.
 
 Look for:
 - Python processes running agent frameworks (hermes, openclaw, crewai, langchain, autogen, etc.)
@@ -35,16 +39,19 @@ Look for:
 - Ollama models
 - Any process listening on common agent ports (3000-9999)
 - Processes named after known agents
+- Docker containers (listed under "=== Docker containers ===") — these are potential agents running inside containers
 
 For each candidate, provide:
 NAME: <short descriptive name>
-TYPE: <python|node|ollama|other>
+TYPE: <python|node|ollama|docker|other>
 PORT: <port if applicable, or 0>
 EVIDENCE: <what command output shows this>
 CONFIDENCE: <high|medium|low>
 
-If nothing looks like an agent, respond with: NONE_FOUND
-"""
+For Docker containers, set TYPE to "docker" and use the container name as NAME.
+The EVIDENCE should include the image name.
+
+If nothing looks like an agent, respond with: NONE_FOUND"""
 
 
 def run_llm_discovery() -> list[dict]:
@@ -80,21 +87,36 @@ def run_llm_discovery() -> list[dict]:
         )
         # Filter to LISTEN + common ports
         lines = lsof.stdout.split("\n")
-        listening = [l for l in lines if "LISTEN" in l]
+        listening = [line for line in lines if "LISTEN" in line]
         context_parts.append("=== Listening ports ===")
         context_parts.extend(listening[:30])  # cap at 30 lines
     except Exception:
         pass
 
-    # Check common Hermes paths
+    # Check common Hermes paths (using configured home)
+    hermes_base = hermes_home()
     hermes_paths = [
-        os.path.expanduser("~/.hermes/config.yaml"),
-        os.path.expanduser("~/.hermes/hermes-agent/venv/bin"),
+        str(hermes_base / "config.yaml"),
+        str(hermes_base / "hermes-agent" / "venv" / "bin"),
     ]
     context_parts.append("=== Hermes paths ===")
     for p in hermes_paths:
         if os.path.exists(p):
             context_parts.append(f"EXISTS: {p}")
+
+    # Check Docker containers — running containers are potential agents
+    try:
+        docker_ps = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if docker_ps.returncode == 0 and docker_ps.stdout.strip():
+            context_parts.append("=== Docker containers ===")
+            context_parts.extend(docker_ps.stdout.strip().split("\n")[:30])
+    except FileNotFoundError:
+        pass  # Docker not installed
+    except Exception:
+        pass
 
     user_context = "\n".join(context_parts)
 
@@ -163,7 +185,8 @@ def run_discover(show_all: bool = False) -> None:
         console.print("Next steps:")
         console.print("  1. Run [bold]observeco agents add <name>[/bold] to manually add an agent")
         console.print("  2. Create an [bold]observeco.yml[/bold] in your project directory")
-        console.print("  3. Ensure your agent config is at [bold]~/.hermes/config.yaml[/bold] or another supported path")
+        console.print("  3. Ensure your agent config is at a supported path "
+                      "(e.g. ~/.hermes/config.yaml, set via $OBSERVECO_HERMES_HOME)")
         return
 
     # Register all detected agents in DB
@@ -197,7 +220,7 @@ def run_add(name: str, framework: str = "custom", health_check: str = "") -> Non
     write_agent(agent)
     db.register_agent(name, framework, health_check)
     console.print(f"[green]Added agent [bold]{name}[/bold] ({framework})[/green]")
-    console.print("[dim]Config saved to ~/.observeco/agents.json[/dim]")
+    console.print(f"[dim]Config saved to {_AGENTS_JSON}[/dim]")
 
 
 def run_list() -> None:

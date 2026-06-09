@@ -8,15 +8,21 @@ and master-plan status accuracy.
 
 Usage: PYTHONPATH=src python3 scripts/comprehensive-audit.py
 """
-import sys, os, re, json, subprocess, time
-from collections import Counter, defaultdict
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from collections import Counter
 
 PROJECT = os.path.expanduser("/Users/seanfzc/observeco")
 sys.path.insert(0, os.path.join(PROJECT, "src"))
 
 from fastapi.testclient import TestClient
-from observeco.dashboard.server import app
+
 from observeco import __version__
+from observeco.dashboard.server import app
 
 client = TestClient(app)
 
@@ -35,8 +41,8 @@ def check(name, ok, detail=""):
 def assert_no_fstring_leaks(text, label):
     """Check for literal f-string placeholders in response body."""
     fstring_leaks = re.findall(r'(?<!\$)\{[a-z_][a-z0-9_]*\}', text)
-    real_leaks = [l for l in fstring_leaks 
-                  if l not in ('{}',) and not re.match(r'\{[a-z]\}', l)]
+    real_leaks = [leak for leak in fstring_leaks
+                  if leak not in ('{}',) and not re.match(r'\\{[a-z]\\}', leak)]
     if real_leaks:
         check(f"{label}: f-string leaks", False,
               f"{len(real_leaks)} occurrences: {set(real_leaks)}")
@@ -71,14 +77,14 @@ def get_endpoint(path, label=None):
         r = client.get(path)
         code = r.status_code
         text = r.text
-        
+
         # For auth callback, 400 is expected without OAuth params
         if path == "/auth/callback":
             ok = code in (200, 400)
             check(f"{label}", ok, f"HTTP {code} (expected with no params)")
             assert_no_traceback(text, label)
             return r
-        
+
         if code >= 400:
             check(f"{label}", False, f"HTTP {code}")
         else:
@@ -99,7 +105,7 @@ print("SECTION 1: Project Health")
 print("═══════════════════════════════════")
 
 # 1.1 Version
-check(f"Version read", True, f"observeco v{__version__}")
+check("Version read", True, f"observeco v{__version__}")
 
 # 1.2 Template files exist
 templates_dir = os.path.join(PROJECT, "src", "observeco", "dashboard", "templates")
@@ -112,17 +118,18 @@ for t in expected_templates:
 
 # 1.3 Pyproject reads correctly
 import tomllib
+
 try:
     with open(os.path.join(PROJECT, "pyproject.toml"), "rb") as f:
         meta = tomllib.load(f)
     project_name = meta.get("project", {}).get("name", "?")
-    check(f"pyproject.toml readable", True, f"name={project_name}")
+    check("pyproject.toml readable", True, f"name={project_name}")
 except Exception as e:
-    check(f"pyproject.toml readable", False, str(e))
+    check("pyproject.toml readable", False, str(e))
 
 # 1.4 README exists
 readme = os.path.join(PROJECT, "README.md")
-check(f"README.md exists", os.path.isfile(readme),
+check("README.md exists", os.path.isfile(readme),
       f"{os.path.getsize(readme)}b" if os.path.isfile(readme) else "MISSING")
 
 # 1.5 Source imports clean
@@ -163,11 +170,11 @@ if r and r.status_code == 200:
         ("Free", "Free badge"),
     ]:
         check(f"Root: {name}", marker in text)
-    
+
     # Anti-patterns
-    check(f"Root: no document.write", "document.write" not in text,
+    check("Root: no document.write", "document.write" not in text,
           "document.write found!" if "document.write" in text else "")
-    check(f"Root: has DOM append fallback", "document.createElement" in text or "appendix" in text.lower())
+    check("Root: has DOM append fallback", "document.createElement" in text or "appendix" in text.lower())
 
 # ──────────────────────────────────────────────────
 # SECTION 3: All API Endpoints
@@ -221,11 +228,11 @@ print("════════════════════════�
 
 # Add agent -- needs JSON body
 r = client.post("/api/agents/add", json={"name": "test-agent", "framework": "hermes"})
-check(f"Add agent POST", r.status_code in (200, 400), f"HTTP {r.status_code}, body: {r.text[:100]}")
+check("Add agent POST", r.status_code in (200, 400), f"HTTP {r.status_code}, body: {r.text[:100]}")
 
 # Feedback -- needs JSON with summary
 r = client.post("/v1/feedback", json={"summary": "test feedback", "severity": "low"})
-check(f"Feedback v1 POST", r.status_code in (200, 400), f"HTTP {r.status_code}, body: {r.text[:100]}")
+check("Feedback v1 POST", r.status_code in (200, 400), f"HTTP {r.status_code}, body: {r.text[:100]}")
 
 # ──────────────────────────────────────────────────
 # SECTION 5: Auth / Admin Endpoints
@@ -258,16 +265,16 @@ for path, text in responses_to_scan.items():
     if not text:
         check(f"{path}: framework bias scan", True, "Skipped (empty response)")
         continue
-    
+
     label_refs = len(re.findall(r'Agent\s*[·•]\s*[Hh]ermes|Agent\s*[·•]\s*[Oo]pen[Cc]law|Framework.*[Hh]ermes', text))
     agent_name_refs = len(re.findall(r'[Hh]ermes', text))
-    
+
     check(f"{path}: framework labels", label_refs <= 15,
           f"{label_refs} hardcoded framework labels" if label_refs > 15 else f"{agent_name_refs} total hermes refs ({label_refs} hardcoded labels)")
-    check(f"{path}: openclaw labels", 
+    check(f"{path}: openclaw labels",
           len(re.findall(r'[Oo]pen[Cc]law', text)) <= 15,
           f"{len(re.findall(r'[Oo]pen[Cc]law', text))} openclaw refs")
-    
+
     found_generic = False
     for term in ["Agent", "Service", "Workflow"]:
         if term.lower() in text.lower():
@@ -288,22 +295,22 @@ es = client.get("/api/error-state")
 if es.status_code == 200:
     text = es.text
     if len(text.strip()) == 0:
-        check(f"Error state: all clear (empty = no errors)", True,
+        check("Error state: all clear (empty = no errors)", True,
               "No error banners - all systems healthy")
     else:
-        check(f"Error state: has banners", True, f"{len(text)}b of content")
+        check("Error state: has banners", True, f"{len(text)}b of content")
 
 # Fleet summary should show agent counts
 fs = client.get("/api/fleet-summary")
 if fs.status_code == 200:
     text = fs.text
-    check(f"Fleet summary: has 'Agents' label", "Agents" in text or "agents" in text)
+    check("Fleet summary: has 'Agents' label", "Agents" in text or "agents" in text)
 
 # Phase should exist
 ph = client.get("/api/phase")
 if ph.status_code == 200:
     text = ph.text
-    check(f"Phase endpoint: has content", len(text.strip()) > 0, f"{len(text)}b")
+    check("Phase endpoint: has content", len(text.strip()) > 0, f"{len(text)}b")
 
 # ──────────────────────────────────────────────────
 # SECTION 8: CLI Commands
@@ -382,22 +389,22 @@ print("════════════════════════�
 plan_path = os.path.join(PROJECT, "specs", "observeco-master-plan.md")
 if os.path.isfile(plan_path):
     plan_text = open(plan_path).read()
-    
+
     live_count = len(re.findall(r'✅ Live', plan_text))
     partial_count = len(re.findall(r'🟡 Live', plan_text))
     not_built_count = len(re.findall(r'🔴 Not built', plan_text))
     planned_count = len(re.findall(r'🔴 Planned', plan_text))
-    
-    check(f"Master plan: status distribution", live_count > 0,
+
+    check("Master plan: status distribution", live_count > 0,
           f"{live_count} ✅ Live, {partial_count} 🟡 Partial, {not_built_count} 🔴 Not built, {planned_count} 🔴 Planned")
-    
+
     last_updated = re.search(r'\*\*Last updated:\*\*\s*([\d-]+)', plan_text)
     if last_updated:
-        check(f"Master plan: last updated", True, last_updated.group(1))
+        check("Master plan: last updated", True, last_updated.group(1))
     else:
-        check(f"Master plan: last updated", False, "No date found")
+        check("Master plan: last updated", False, "No date found")
 else:
-    check(f"Master plan: exists", False, "File not found")
+    check("Master plan: exists", False, "File not found")
 
 # ──────────────────────────────────────────────────
 # SECTION 11: Config File Health
@@ -409,30 +416,29 @@ print("════════════════════════�
 config_path = os.path.join(PROJECT, "src", "observeco", "config.py")
 if os.path.isfile(config_path):
     try:
-        from observeco import config
-        check(f"Config module: loads", True)
+        check("Config module: loads", True)
     except Exception as e:
-        check(f"Config module: loads", False, str(e)[:120])
+        check("Config module: loads", False, str(e)[:120])
 
 design_path = os.path.join(PROJECT, "assets", "design-system", "DESIGN.md")
-check(f"DESIGN.md exists", os.path.isfile(design_path),
+check("DESIGN.md exists", os.path.isfile(design_path),
       f"{os.path.getsize(design_path)}b" if os.path.isfile(design_path) else "MISSING")
 
 # ──────────────────────────────────────────────────
 # FINAL SUMMARY
 # ──────────────────────────────────────────────────
 print("\n" + "=" * 60)
-print(f"COMPREHENSIVE AUDIT COMPLETE")
+print("COMPREHENSIVE AUDIT COMPLETE")
 print("=" * 60)
 total = results["pass"] + results["fail"] + results["warn"]
 print(f"  ✅ Pass: {results['pass']}")
 print(f"  ⚠️  Warn: {results['warn']}")
 print(f"  ❌ Fail: {results['fail']}")
-print(f"  ─────────────────")
+print("  ─────────────────")
 print(f"  Total: {total} checks")
 
 if results["fail"] == 0:
-    print(f"\n🎉 ALL CHECKS PASSED")
+    print("\n🎉 ALL CHECKS PASSED")
 else:
     print(f"\n🔴 {results['fail']} FAILURES — see above for details")
 

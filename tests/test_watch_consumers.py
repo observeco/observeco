@@ -1,10 +1,12 @@
 """Tests for event-driven watch consumers."""
-import time
-from observeco.db import Database
 from observeco.watch_consumers import (
-    DriftConsumer, GardenConsumer, PathwayConsumer,
-    HealConsumer, PruneConsumer, ConsumerManager,
     BaseConsumer,
+    ConsumerManager,
+    DriftConsumer,
+    GardenConsumer,
+    HealConsumer,
+    PathwayConsumer,
+    PruneConsumer,
 )
 
 
@@ -54,7 +56,6 @@ def test_consumer_manager_start_stop_all():
 
 def test_drift_consumer_runs_without_crash():
     """DriftConsumer._tick should not crash with no data."""
-    from observeco.config import load_config
     c = DriftConsumer()
     c._tick()  # Should not raise with empty DB
     assert True

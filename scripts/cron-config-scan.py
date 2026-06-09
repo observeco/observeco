@@ -14,7 +14,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from observeco.chisel.config_scanner import scan_config, CONFIG_PATH
+from observeco.chisel.config_scanner import CONFIG_PATH, scan_config
 
 
 def main():

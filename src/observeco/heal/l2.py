@@ -11,8 +11,8 @@ can trigger pre-emptive restarts or circuit backoff.
 """
 from __future__ import annotations
 
-import time
 import logging
+import time
 from typing import Optional
 
 from observeco.db import Database
@@ -48,7 +48,6 @@ def run_l2_scan(db: Optional[Database] = None) -> list[dict]:
         try:
             pulses = db.get_recent_pulses(agent_name, limit=50)
             errors = db.get_errors(agent_name, limit=20)
-            breakers = db.get_circuit_breakers()
 
             # 1. Memory bloat — RSS growth trend
             rows = [p for p in pulses if p.get("latency_ms", 0) > 0]
@@ -113,7 +112,6 @@ def run_l2_scan(db: Optional[Database] = None) -> list[dict]:
                                  and t["severity"] == "critical"]
             if unresolved_active:
                 for trend in unresolved_active:
-                    trend_type = trend["trend_type"]
                     action = trend["auto_action"]
                     if action != "none":
                         logger.info(f"L2 auto-action for {agent_name}: {action}")

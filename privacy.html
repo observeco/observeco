@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — ObserveCo</title>
+  <meta name="description" content="ObserveCo's privacy policy. Local-first AI agent monitoring — your data never leaves your machine.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0f172a; --surface: #1e293b; --border: #334155;
+      --green: #22c55e; --green-dim: rgba(34,197,94,0.15);
+      --blue: #3b82f6; --yellow: #eab308; --red: #ef4444;
+      --fg: #f8fafc; --fg-2: #94a3b8; --fg-3: #64748b;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--fg); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(15,23,42,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    nav .container { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); font-weight: 700; font-size: 16px; }
+    .nav-brand svg { width: 24px; height: 24px; }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a { color: var(--fg-2); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--fg); }
+
+    /* Content */
+    .content { padding: 100px 0 60px; }
+    .page-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+    .page-meta { color: var(--fg-3); font-size: 14px; margin-bottom: 40px; }
+    h2 { font-size: 20px; font-weight: 700; margin: 40px 0 16px; color: var(--fg); }
+    h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--fg); }
+    p { margin-bottom: 16px; color: var(--fg-2); font-size: 15px; }
+    ul, ol { margin-bottom: 16px; padding-left: 24px; }
+    li { margin-bottom: 8px; color: var(--fg-2); font-size: 15px; }
+    strong { color: var(--fg); font-weight: 600; }
+    code { font-family: var(--font-mono); background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: 13px; color: var(--green); }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Highlight box */
+    .highlight { background: var(--green-dim); border: 1px solid rgba(34,197,94,0.25); border-radius: 8px; padding: 20px 24px; margin: 24px 0; }
+    .highlight p { color: var(--fg); margin-bottom: 0; }
+    .highlight strong { color: var(--green); }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14px; }
+    th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--border); color: var(--fg); font-weight: 600; }
+    td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--fg-2); }
+    tr:last-child td { border-bottom: none; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 24px 0; margin-top: 40px; text-align: center; }
+    footer p { color: var(--fg-3); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="/" class="nav-brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+          <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        ObserveCo
+      </a>
+      <div class="nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#install">Install</a>
+        <a href="https://github.com/observeco/observeco">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="container">
+      <h1 class="page-title">Privacy Policy</h1>
+      <p class="page-meta">Effective date: June 6, 2026 · Last updated: June 6, 2026</p>
+
+      <div class="highlight">
+        <p><strong>The short version:</strong> ObserveCo runs entirely on your machine. Your data never leaves your computer unless you explicitly opt in to telemetry. We don't run servers that store your data. We don't have user accounts. We don't sell your data because we never see it.</p>
+      </div>
+
+      <h2>1. What ObserveCo Is</h2>
+      <p>ObserveCo is a local-first AI agent monitoring tool. It runs as a CLI and dashboard on your machine, monitoring your AI agents' health, token usage, and configuration. It stores all data in a local SQLite database on your computer.</p>
+      <p><strong>ObserveCo is not a cloud service.</strong> There are no ObserveCo servers that process or store your data.</p>
+
+      <h2>2. What Data We Collect</h2>
+
+      <h3>2.1 Data Stored Locally (Always)</h3>
+      <p>ObserveCo stores the following data <strong>on your machine only</strong> in <code>~/.observeco/pulse.db</code>:</p>
+      <table>
+        <tr><th>Data Type</th><th>What It Is</th><th>Why We Store It</th></tr>
+        <tr><td>Agent health pulses</td><td>Agent name, status, PID, uptime, memory usage</td><td>Dashboard display, health monitoring</td></tr>
+        <tr><td>Token usage logs</td><td>Token counts per turn, cost estimates, provider</td><td>Cost tracking, anomaly detection</td></tr>
+        <tr><td>Error logs</td><td>Agent error messages, timestamps</td><td>Error analysis, auto-heal</td></tr>
+        <tr><td>Circuit breaker state</td><td>Failure counts, cooldown timers</td><td>Auto-heal logic</td></tr>
+        <tr><td>Plugin tracking stats</td><td>Plugin name, cost per call, error rate</td><td>Plugin Firewall feature</td></tr>
+        <tr><td>Anomaly records</td><td>Detected issues, severity, status</td><td>Anomaly Inbox</td></tr>
+        <tr><td>Alert history</td><td>Alerts sent, delivery status</td><td>Alert Management</td></tr>
+      </table>
+      <p><strong>This data never leaves your machine</strong> unless you explicitly opt in to telemetry (see §2.2).</p>
+
+      <h3>2.2 Telemetry (Opt-In Only)</h3>
+      <p>ObserveCo has an <strong>optional</strong> telemetry system. It is <strong>disabled by default</strong>.</p>
+      <p>When telemetry is enabled (via the opt-in file at <code>~/.observeco/.telemetry_opt_in</code>), we receive:</p>
+      <table>
+        <tr><th>Data Sent</th><th>Frequency</th><th>Purpose</th></tr>
+        <tr><td>Machine ID (random hash)</td><td>Once</td><td>Aggregate unique-user counts</td></tr>
+        <tr><td>Event type</td><td>Per event</td><td>Feature usage analytics</td></tr>
+        <tr><td>ObserveCo version</td><td>Per event</td><td>Version adoption tracking</td></tr>
+        <tr><td>OS platform</td><td>Per event</td><td>Platform compatibility</td></tr>
+      </table>
+      <p><strong>We never receive:</strong> your agent names, configurations, content, token usage, API keys, SOUL.md files, chat messages, or any personally identifiable information.</p>
+
+      <h3>2.3 License Validation</h3>
+      <p>When you have an active Pro subscription, ObserveCo validates your license key:</p>
+      <ul>
+        <li>License key stored locally in <code>~/.observeco/license.json</code> with restricted permissions</li>
+        <li>Validation checks our license server once every 24 hours</li>
+        <li>The request contains only your license key — no usage data, no agent data</li>
+        <li>Result cached locally — if the server is unreachable, Pro features continue working</li>
+      </ul>
+
+      <h2>3. What We Never Do</h2>
+      <ul>
+        <li><strong>We never read your agent content.</strong> We see token counts and file sizes, never the content of your SOUL.md, MEMORY.md, chat messages, or agent outputs.</li>
+        <li><strong>We never run servers that store your data.</strong> Your data lives in <code>~/.observeco/pulse.db</code> on your machine.</li>
+        <li><strong>We never sell your data.</strong> We sell a software product (Pro tier), not data.</li>
+        <li><strong>We never track you across the web.</strong> No cookies, no analytics scripts, no tracking pixels.</li>
+        <li><strong>We never access your machine remotely.</strong> ObserveCo runs locally.</li>
+        <li><strong>We never share your data with third parties.</strong> No third-party data processors.</li>
+      </ul>
+
+      <h2>4. How We Protect Your Data</h2>
+
+      <h3>4.1 Local Storage</h3>
+      <ul>
+        <li>All data stored in SQLite with WAL mode for concurrent access safety</li>
+        <li>License key stored with restricted file permissions (owner read/write only)</li>
+        <li>No data in world-readable directories</li>
+        <li>Daily pruning — Free: 7 days, Pro: configurable retention</li>
+      </ul>
+
+      <h3>4.2 Network Communication</h3>
+      <ul>
+        <li>License validation uses HTTPS (encrypted in transit)</li>
+        <li>Telemetry uses HTTPS (encrypted in transit)</li>
+        <li>Dashboard binds to localhost only — not accessible from your network</li>
+        <li>No data sent over unencrypted connections</li>
+      </ul>
+
+      <h2>5. Your Rights</h2>
+      <p>Since ObserveCo is local-first, you have full control:</p>
+      <ul>
+        <li><strong>Access:</strong> Your data is in <code>~/.observeco/pulse.db</code> — open it with any SQLite tool</li>
+        <li><strong>Delete:</strong> Delete <code>~/.observeco/pulse.db</code> to remove all ObserveCo data</li>
+        <li><strong>Export:</strong> Query the SQLite database directly — you already have the data</li>
+        <li><strong>Opt out:</strong> Delete <code>~/.observeco/.telemetry_opt_in</code> or never create it</li>
+        <li><strong>Downgrade:</strong> Switch to Free tier — all data remains local</li>
+      </ul>
+
+      <h2>6. Open Source</h2>
+      <p>ObserveCo is open source under the MIT license. You can verify our privacy claims by reading the source code:</p>
+      <ul>
+        <li><code>src/observeco/db.py</code> — local data storage (no outbound calls)</li>
+        <li><code>src/observeco/telemetry_client.py</code> — opt-in telemetry (disabled by default)</li>
+        <li><code>src/observeco/dashboard/server.py</code> — dashboard (localhost-only binding)</li>
+      </ul>
+
+      <h2>7. Changes to This Policy</h2>
+      <p>We will update this policy when our data practices change. The "Last updated" date will reflect the most recent change. We will not retroactively change how existing data is handled.</p>
+
+      <h2>8. Contact</h2>
+      <p>For privacy questions:</p>
+      <ul>
+        <li>Email: <a href="mailto:privacy@observeco.ai">privacy@observeco.ai</a></li>
+        <li>GitHub: <a href="https://github.com/observeco/observeco/issues">Open an issue</a></li>
+      </ul>
+
+      <div class="highlight" style="margin-top: 40px;">
+        <p><strong>ObserveCo: Your agents. Your data. Your machine.</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 ObserveCo · MIT License · Built with local-first principles</p>
+    </div>
+  </footer>
+</body>
+</html>

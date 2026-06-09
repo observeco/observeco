@@ -13,7 +13,6 @@ Environment variables:
 """
 from __future__ import annotations
 
-import hashlib
 import hmac
 import json
 import logging
@@ -21,8 +20,9 @@ import os
 import urllib.request
 from typing import Optional
 
-from .oef import OEFEvent
 from observeco.rate_limiter import get_rate_limiter
+
+from .oef import OEFEvent
 
 logger = logging.getLogger(__name__)
 
@@ -270,7 +270,7 @@ class TelegramAdapter:
                 logger.error(f"Telegram API call failed: {e}")
                 return False
 
-        logger.error(f"Telegram API call failed after 3 attempts (rate limited)")
+        logger.error("Telegram API call failed after 3 attempts (rate limited)")
         return False
 
     def test_connection(self) -> dict:

@@ -1,19 +1,22 @@
 """License API + core license module tests — Section 3 (22 cases)."""
 
-import json
 import time
-from unittest.mock import patch, MagicMock
 from pathlib import Path
+from unittest.mock import patch
 
-import pytest
 from fastapi.testclient import TestClient
+
+from observeco.dashboard.auth import init_auth
 
 # Server with auth middleware already initialized at import time
 from observeco.dashboard.server import app
-from observeco.dashboard.auth import init_auth
 from observeco.license import (
-    LicenseState, load, save, ensure_trial, activate_key,
-    start_trial, cancel_trial, validate_cached, status
+    LicenseState,
+    activate_key,
+    cancel_trial,
+    ensure_trial,
+    start_trial,
+    validate_cached,
 )
 
 # Generate a persistent secret for TestClient auth
@@ -185,7 +188,7 @@ class TestLicenseCore:
         """ensure_trial creates trial on first run."""
         with patch("observeco.license.LICENSE_FILE",
                    Path("/tmp/test_ensure_trial.json")), \
-             patch("observeco.license.save") as mock_save:
+             patch("observeco.license.save"):
             state = LicenseState(license_type="free")
             result = ensure_trial(state)
         assert result.license_type == "trial"

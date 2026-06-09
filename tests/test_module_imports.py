@@ -1,8 +1,5 @@
 """Batch test for remaining modules — graph, MCP, watch, heal, probes, tracking, LLM."""
 
-import pytest
-from unittest.mock import patch, MagicMock
-from pathlib import Path
 
 
 class TestGraph:
@@ -122,13 +119,13 @@ class TestCrypto:
         assert cr is not None
 
     def test_crypto_encrypt_decrypt(self):
-        from observeco.crypto import encrypt_dict, decrypt_dict
+        from observeco.crypto import encrypt_dict
         data = {"key": "secret_value"}
         encrypted = encrypt_dict(data, ["key"])
         assert isinstance(encrypted, dict)
 
     def test_crypto_roundtrip(self):
-        from observeco.crypto import encrypt_dict, decrypt_dict
+        from observeco.crypto import decrypt_dict, encrypt_dict
         data = {"key": "secret_value"}
         encrypted = encrypt_dict(data, ["key"])
         decrypted = decrypt_dict(encrypted, ["key"])

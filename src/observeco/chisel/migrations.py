@@ -8,12 +8,13 @@ Adds:
 5. turn_log table for per-turn token tracking
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+
 from observeco.db import Database
-from pathlib import Path
 
 MIGRATIONS = [
     # 1. Add mode column to chisel_trims

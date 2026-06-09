@@ -19,10 +19,8 @@ Usage:
 from __future__ import annotations
 
 import json
-import os
 import time
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Optional
 
 from observeco.dirs import get_data_dir
@@ -120,8 +118,6 @@ def add_exemption(
 ) -> dict:
     """Add a new metric exemption."""
     raw = _load_raw()
-    existing = [e for e in _parse_exemptions(raw)
-                if not (e.agent_name == agent_name and e.metric_name == e.metric_name)]
     # Re-read properly
     exemptions = [e for e in _parse_exemptions(raw)
                   if not (e.agent_name == agent_name and e.metric_name == metric_name)]

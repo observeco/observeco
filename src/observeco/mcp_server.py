@@ -12,8 +12,19 @@ from observeco.db import Database
 
 
 class MCPServer:
-    def __init__(self):
+    def __init__(self, require_pro_override=None):
         self.db = Database()
+        self._require_pro = require_pro_override
+
+    def _check_pro(self) -> None:
+        """Check Pro access. Raises PermissionError if not Pro."""
+        if self._require_pro is not None:
+            if not self._require_pro:
+                raise PermissionError("Pro feature locked")
+            return
+        from observeco import license as lic
+        if not lic.require_pro():
+            raise PermissionError("Pro feature locked — start a free trial")
 
     def _make_response(self, request_id: Any, result: Any) -> dict:
         return {"jsonrpc": "2.0", "id": request_id, "result": result}
@@ -216,11 +227,13 @@ class MCPServer:
             name = params.get("name", "")
             arguments = params.get("arguments", {})
             if name == "heal":
+                self._check_pro()
                 agent_name = arguments.get("agent_name", "")
                 summary = self.db.get_agent_status_summary()
                 s = summary.get(agent_name, {})
                 return self._make_response(rid, {"content": [{"type": "text", "text": f"heal executed on {agent_name}: status={s.get('status', 'unknown')}"}]})
             elif name == "snapshot":
+                self._check_pro()
                 snapshot_name = arguments.get("name", "mcp-snapshot")
                 try:
                     from observeco.snapshot import run_snapshot
@@ -229,12 +242,14 @@ class MCPServer:
                     pass
                 return self._make_response(rid, {"content": [{"type": "text", "text": f"Snapshot '{snapshot_name}' generated."}]})
             elif name == "pulse":
+                self._check_pro()
                 agent_name = arguments.get("agent_name", "")
                 pulses = self.db.get_recent_pulses(agent_name, limit=3)
                 if pulses:
                     return self._make_response(rid, {"content": [{"type": "text", "text": str(pulses[0])}]})
                 return self._make_response(rid, {"content": [{"type": "text", "text": f"No pulse data for {agent_name}"}]})
             elif name == "graph_search":
+                self._check_pro()
                 try:
                     from observeco.graph.db import GraphDB
                     gdb = GraphDB()
@@ -250,6 +265,7 @@ class MCPServer:
                 except Exception as e:
                     return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph search error: {e}"}]})
             elif name == "graph_callers":
+                self._check_pro()
                 try:
                     from observeco.graph.db import GraphDB
                     gdb = GraphDB()
@@ -267,6 +283,7 @@ class MCPServer:
                 except Exception as e:
                     return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph callers error: {e}"}]})
             elif name == "graph_callees":
+                self._check_pro()
                 try:
                     from observeco.graph.db import GraphDB
                     gdb = GraphDB()
@@ -284,6 +301,7 @@ class MCPServer:
                 except Exception as e:
                     return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph callees error: {e}"}]})
             elif name == "graph_impact":
+                self._check_pro()
                 try:
                     from observeco.graph.db import GraphDB
                     gdb = GraphDB()
@@ -302,8 +320,13 @@ class MCPServer:
                 except Exception as e:
                     return self._make_response(rid, {"content": [{"type": "text", "text": f"Graph impact error: {e}"}]})
             elif name == "classify_risk":
+                self._check_pro()
                 try:
-                    from observeco.risk_engine import ToolCall, classify_tool_call, classify_text_action
+                    from observeco.risk_engine import (
+                        ToolCall,
+                        classify_text_action,
+                        classify_tool_call,
+                    )
                     tool_name = arguments.get("tool_name", "")
                     tool_args = arguments.get("tool_args", {})
                     action_text = arguments.get("action_text", "")
@@ -324,7 +347,8 @@ class MCPServer:
                 except Exception as e:
                     return self._make_response(rid, {"content": [{"type": "text", "text": f"Risk classification error: {e}"}]})
             elif name == "get_risk_policy":
-                from observeco.risk_engine import RiskLevel, RISK_EMOJI
+                self._check_pro()
+                from observeco.risk_engine import RISK_EMOJI, RiskLevel
                 lines = ["ObserveCo Risk Policy:", "", "Risk Levels:"]
                 for level in RiskLevel:
                     emoji = RISK_EMOJI.get(level, "?")
@@ -340,6 +364,7 @@ class MCPServer:
                 lines.extend(["", "Platform-aware patterns:", "  - Database ops (DELETE, DROP, TRUNCATE) → CRITICAL", "  - Git push / deploy → HIGH", "  - File edits → MEDIUM", "  - Reads → LOW"])
                 return self._make_response(rid, {"content": [{"type": "text", "text": "\n".join(lines)}]})
             elif name == "log_tool_call":
+                self._check_pro()
                 try:
                     from observeco.session_log import SessionLogger
                     tool_name = arguments.get("tool_name", "unknown")
@@ -365,6 +390,7 @@ class MCPServer:
                 except Exception as e:
                     return self._make_response(rid, {"content": [{"type": "text", "text": f"Log error: {e}"}]})
             elif name == "verify_log_integrity":
+                self._check_pro()
                 try:
                     from observeco.session_log import SessionLogger
                     session_id = arguments.get("session_id", None)

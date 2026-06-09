@@ -33,15 +33,14 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 from typing import Optional
 
+from observeco.chisel.trim import run_trim_file
 from observeco.config import load_config
 from observeco.db import Database
 from observeco.dirs import get_data_dir
-from observeco.pulse.check import _probe_agent
-from observeco.chisel.trim import run_trim_file
 from observeco.event_bus import publish
+from observeco.pulse.check import _probe_agent
 from observeco.watch_consumers import ConsumerManager
 
 logger = logging.getLogger(__name__)
@@ -275,7 +274,6 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
 
     while running:
         cycle += 1
-        timestamp = int(time.time())
 
         # ── Cycle 1: Probe agent health ──────────────────────────────────────
         config = load_config()
@@ -290,7 +288,6 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
         # ── Cycle 0.5: Purge stale DB-only agents ──
         purged_cycle = 0
         try:
-            from observeco.db import Database
             valid = {a.name for a in agents}
             purged_cycle = Database().purge_stale_agents(valid)
         except Exception:

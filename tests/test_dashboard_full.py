@@ -1,15 +1,10 @@
 """Dashboard server tests — Section 4 (comprehensive coverage)."""
 
-import json
-import time
-from unittest.mock import patch, MagicMock
-from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
 
-from observeco.dashboard.server import app
 from observeco.dashboard.auth import init_auth
+from observeco.dashboard.server import app
 
 TEST_SECRET = init_auth(app)
 client = TestClient(app)

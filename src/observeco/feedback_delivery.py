@@ -8,7 +8,6 @@ import os
 import smtplib
 import urllib.request
 from email.mime.text import MIMEText
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

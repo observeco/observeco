@@ -2,7 +2,8 @@
 
 Tests all layers of crash classification, logging, UI, and heal integration.
 """
-import subprocess, sys, time, os
+import subprocess
+import sys
 
 checks = []
 def check(name, ok, detail=''):
@@ -71,6 +72,7 @@ except Exception:
     pass
 
 import http.client
+
 try:
     conn = http.client.HTTPConnection('localhost', 9130, timeout=5)
     headers = {'X-ObserveCo-Token': TOKEN} if TOKEN else {}

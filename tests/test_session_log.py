@@ -2,10 +2,9 @@
 
 import json
 import os
-import tempfile
 
-from observeco.session_log import SessionLogger
 from observeco.dirs import get_data_dir
+from observeco.session_log import SessionLogger
 
 
 class TestSessionLog:

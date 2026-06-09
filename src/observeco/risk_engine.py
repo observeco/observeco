@@ -2,12 +2,12 @@
 
 import json
 import re
+import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 from observeco.colors import Color
-import sys
 
 
 def get_platform_name() -> str:
@@ -333,6 +333,5 @@ def format_risk(level: RiskLevel, action: str, auto_approved: bool, use_ansi: bo
         status = "manual review"
 
     dim = Color.DIM if use_ansi else ""
-    bright = Color.BRIGHT if use_ansi else ""
 
     return f"  {color}{emoji}{reset} {dim}{action}{reset} {color}({status}){reset}"

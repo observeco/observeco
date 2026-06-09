@@ -1,10 +1,8 @@
 """Tests for Phase 7.1 — Event Pipeline: Event Stream."""
-import json
-import os
 import tempfile
 from pathlib import Path
 
-from observeco.event_bus import EventStream, subscribe, publish, get_events
+from observeco.event_bus import EventStream, get_events, publish
 
 
 def test_event_stream_writes_to_file():

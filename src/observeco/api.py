@@ -19,11 +19,11 @@ Authentication: Bearer token via Authorization header.
 from __future__ import annotations
 
 import json
+import os
 import time
-from typing import Optional
+from pathlib import Path
 
 from fastapi import APIRouter, Header, HTTPException, Request
-from fastapi.responses import JSONResponse
 
 from observeco.db import Database
 
@@ -31,8 +31,6 @@ router = APIRouter(prefix="/api/v1", tags=["v1"])
 db = Database()
 
 # Token store — persists to file for multi-process access
-import os
-from pathlib import Path
 
 _API_TOKENS_FILE = Path(os.environ.get("OBSERVECO_DATA_DIR", "~/.observeco")) / ".api_tokens.json"
 API_TOKENS: dict[str, dict] = {}
@@ -286,7 +284,7 @@ async def list_events(limit: int = 50, authorization: str = Header(None)):
 async def risk_summary(authorization: str = Header(None)):
     """Get risk classification summary."""
     _verify_auth(authorization)
-    from observeco.risk_engine import RiskLevel, RISK_EMOJI
+    from observeco.risk_engine import RISK_EMOJI, RiskLevel
     levels = {}
     for level in RiskLevel:
         levels[level.value] = {"emoji": RISK_EMOJI[level], "count": 0}
@@ -302,7 +300,7 @@ async def classify_risk(request: Request, authorization: str = Header(None)):
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    from observeco.risk_engine import ToolCall, classify_tool_call, classify_text_action
+    from observeco.risk_engine import ToolCall, classify_text_action, classify_tool_call
 
     tool_name = body.get("tool_name", "")
     tool_args = body.get("tool_args", {})

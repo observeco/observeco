@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Companion Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --fg: #f8fafc;
+  --fg-2: #94a3b8;
+  --accent: #22c55e;
+  --accent-on: rgba(34, 197, 94, 0.12);
+  --warn: #eab308;
+  --danger: #ef4444;
+  --meta: #3b82f6;
+  --muted: #64748b;
+  --border: #334155;
+  --border-soft: #273548;
+  --rad-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+}
+
+.app { max-width: 1200px; margin: 0 auto; padding: 20px 24px; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo svg { width: 32px; height: 32px; display: block; }
+.header-title { font-size: 22px; font-weight: 700; color: var(--fg); }
+.header-position {
+  font-size: 11px; font-weight: 500; color: var(--muted);
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.tier-badge {
+  background: var(--accent-on); color: #86efac;
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* ── Status Row ── */
+.status-row {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 20px; padding: 12px 16px;
+  background: var(--surface); border-radius: 10px;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.green { background: var(--accent); }
+.status-dot.amber { background: var(--warn); }
+.status-label { font-size: 12px; color: var(--fg-2); }
+
+/* ── Tab Bar ── */
+.tab-bar {
+  display: flex; gap: 4px; margin-bottom: 16px;
+  background: var(--surface); border-radius: 10px; padding: 4px;
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; background: transparent; color: var(--muted);
+  transition: all 0.15s; font-family: inherit; text-align: center;
+}
+.tab-btn:hover { color: var(--fg-2); }
+.tab-btn.active { background: var(--bg); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── Chat Panel ── */
+.chat-window {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex; flex-direction: column; height: 500px;
+}
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.msg {
+  max-width: 80%; padding: 10px 14px; border-radius: var(--radius-md);
+  font-size: 13px; line-height: 1.5;
+}
+.msg.system {
+  align-self: flex-start;
+  background: var(--bg); border: 1px solid var(--border-soft);
+  color: var(--fg-2); font-family: var(--font-mono); font-size: 12px;
+}
+.msg.user {
+  align-self: flex-end;
+  background: var(--accent-on); border: 1px solid rgba(34, 197, 94, 0.25);
+  color: var(--fg);
+}
+.msg .ts { font-size: 10px; color: var(--muted); margin-top: 4px; display: block; }
+.chat-input {
+  display: flex; gap: 8px; padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+.chat-input input {
+  flex: 1; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 10px 14px;
+  font-family: var(--font-mono); font-size: 13px; color: var(--fg); outline: none;
+}
+.chat-input input:focus { border-color: var(--accent); }
+.chat-input button {
+  background: var(--accent); color: #052e16; border: none;
+  border-radius: var(--radius-md); padding: 10px 18px;
+  font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+  transition: opacity 0.15s;
+}
+.chat-input button:hover { opacity: 0.85; }
+
+/* ── Files Panel ── */
+.file-breadcrumb {
+  display: flex; gap: 6px; align-items: center;
+  font-size: 12px; color: var(--muted); margin-bottom: 12px;
+  font-family: var(--font-mono);
+}
+.file-breadcrumb span { color: var(--fg-2); cursor: pointer; }
+.file-breadcrumb span:hover { color: var(--accent); }
+.file-tree { font-family: var(--font-mono); font-size: 13px; }
+.tree-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: var(--rad-sm);
+  cursor: pointer; color: var(--fg-2); transition: all 0.1s;
+}
+.tree-item:hover { background: var(--accent-on); color: var(--fg); }
+.tree-item .icon { width: 16px; text-align: center; flex-shrink: 0; }
+.tree-item .toggle { cursor: pointer; color: var(--muted); user-select: none; width: 16px; text-align: center; }
+.tree-item.dir { color: var(--fg); font-weight: 500; }
+.tree-children { padding-left: 24px; }
+
+/* ── Actions Panel ── */
+.acc-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); margin-bottom: 8px; overflow: hidden;
+}
+.acc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer; user-select: none;
+  transition: background 0.1s;
+}
+.acc-header:hover { background: var(--border-soft); }
+.acc-header .title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.acc-header .status-badge {
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+.acc-header .status-badge.green { background: var(--accent-on); color: #86efac; }
+.acc-header .status-badge.amber { background: rgba(234, 179, 8, 0.12); color: #fcd34d; }
+.acc-body { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--fg-2); line-height: 1.6; }
+.acc-body.hidden { display: none; }
+.acc-body code {
+  background: var(--bg); padding: 2px 6px; border-radius: var(--rad-sm);
+  font-family: var(--font-mono); font-size: 12px; color: var(--accent);
+}
+.acc-arrow { color: var(--muted); font-size: 10px; transition: transform 0.2s; }
+.acc-header.collapsed .acc-arrow { transform: rotate(-90deg); }
+
+/* ── Toast ── */
+.toast-b {
+  position: fixed; bottom: 24px; right: 24px; z-index: 50;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 20px; font-size: 13px; color: var(--fg);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transform: translateY(20px); opacity: 0; transition: all 0.3s ease;
+  font-family: var(--font-mono);
+}
+.toast-b.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14" stroke="#22c55e" stroke-width="1.5" opacity="0.3"/>
+          <circle cx="16" cy="16" r="8" stroke="#22c55e" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="3" fill="#22c55e"/>
+          <line x1="16" y1="2" x2="16" y2="9" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="16" y1="23" x2="16" y2="30" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="2" y1="16" x2="9" y2="16" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+          <line x1="23" y1="16" x2="30" y2="16" stroke="#22c55e" stroke-width="1.5" opacity="0.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="header-title">ObserveCo</div>
+        <div class="header-position">Companion Terminal</div>
+      </div>
+    </div>
+    <div class="tier-badge">OPENCLAW</div>
+  </div>
+
+  <!-- Status Row -->
+  <div class="status-row">
+    <span class="status-dot green"></span>
+    <span class="status-label">3/3 agents alive</span>
+    <span style="color:var(--muted);font-size:11px;">|</span>
+    <span class="status-label" style="color:var(--accent);">● linked</span>
+    <span style="color:var(--muted);font-size:11px;">|</span>
+    <span class="status-label">last pulse: <span id="pulseDisplay" style="font-family:var(--font-mono);color:var(--fg);">2s</span></span>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="chat">💬 Chat</button>
+    <button class="tab-btn" data-tab="files">📂 Files</button>
+    <button class="tab-btn" data-tab="actions">⚡ Actions</button>
+  </div>
+
+  <!-- Chat Panel -->
+  <div class="tab-content active" id="tabChat">
+    <div class="chat-window">
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg system">⏺ OpenClaw companion session started · agent fleet linked<span class="ts">14:32:05</span></div>
+        <div class="msg system">hermes-main · memory drift skills ↑12% · 3 unresolved errors<span class="ts">14:32:07</span></div>
+        <div class="msg user">run chisel trim on hermes-main<span class="ts">14:32:12</span></div>
+        <div class="msg system">⟳ Chisel trim initiated · targeting hermes-main skills (49K→55K, threshold 10%)<span class="ts">14:32:13</span></div>
+        <div class="msg system">✓ Chisel pass complete · trimmed 6.2K tokens · savings 11.3%<span class="ts">14:32:18</span></div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type a command…" autofocus spellcheck="false"/>
+        <button id="sendBtn">⏎ Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Files Panel -->
+  <div class="tab-content" id="tabFiles">
+    <div class="file-breadcrumb" id="breadcrumb">
+      <span data-path="root">~</span>
+      <span>/</span>
+      <span data-path="agents" style="color:var(--fg);">agents</span>
+    </div>
+    <div class="file-tree" id="fileTree">
+      <div class="tree-item dir" data-path="agents/hermes-main">
+        <span class="toggle">▼</span>
+        <span class="icon">📁</span>
+        <span>hermes-main</span>
+      </div>
+      <div class="tree-children" id="children-agents/hermes-main">
+        <div class="tree-item"><span class="icon">📄</span> <span style="color:var(--accent);">SOUL.md</span></div>
+        <div class="tree-item"><span class="icon">📄</span> config.yaml</div>
+        <div class="tree-item"><span class="icon">📄</span> memory.json</div>
+        <div class="tree-item dir" data-path="agents/hermes-main/skills">
+          <span class="toggle">▶</span>
+          <span class="icon">📁</span>
+          <span>skills</span>
+        </div>
+      </div>
+      <div class="tree-item dir" data-path="agents/hermes-pa">
+        <span class="toggle">▶</span>
+        <span class="icon">📁</span>
+        <span>hermes-pa</span>
+      </div>
+      <div class="tree-item dir" data-path="agents/openclaw">
+        <span class="toggle">▶</span>
+        <span class="icon">📁</span>
+        <span>openclaw-agent</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions Panel -->
+  <div class="tab-content" id="tabActions">
+    <div class="acc-section">
+      <div class="acc-header collapsed" data-section="fleet">
+        <span class="title">🚀 Fleet Management</span>
+        <span class="status-badge green">all healthy</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body hidden">
+        <code>hermes fleet-status</code> — show agent uptime and daemon health<br>
+        <code>hermes pulse</code> — trigger immediate health check across fleet<br>
+        <code>hermes restart &lt;agent&gt;</code> — restart a specific agent daemon
+      </div>
+    </div>
+    <div class="acc-section">
+      <div class="acc-header collapsed" data-section="memory">
+        <span class="title">🧠 Memory & Skills</span>
+        <span class="status-badge amber">12% drift</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body hidden">
+        <code>hermes chisel &lt;agent&gt;</code> — run chisel refinement pass<br>
+        <code>hermes brain-grade &lt;agent&gt;</code> — evaluate knowledge item quality<br>
+        <code>hermes memory-profile &lt;agent&gt;</code> — show token usage breakdown
+      </div>
+    </div>
+    <div class="acc-section">
+      <div class="acc-header collapsed" data-section="anomalies">
+        <span class="title">⚠ Anomalies</span>
+        <span class="status-badge amber">3 unresolved</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body hidden">
+        <code>hermes anomalies</code> — list all active anomalies by agent<br>
+        <code>hermes ack &lt;id&gt;</code> — acknowledge and dismiss an anomaly<br>
+        <code>hermes error-log &lt;agent&gt;</code> — tail error log for specific agent
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast-b" id="toast">✓ Command sent</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ── Tab switching ──
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = {
+    chat: document.getElementById('tabChat'),
+    files: document.getElementById('tabFiles'),
+    actions: document.getElementById('tabActions')
+  };
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', function(){
+      tabBtns.forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      Object.values(tabContents).forEach(tc => tc.classList.remove('active'));
+      const target = tabContents[this.dataset.tab];
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // ── Chat ──
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const chatMessages = document.getElementById('chatMessages');
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    const now = new Date();
+    const ts = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+
+    const div = document.createElement('div');
+    div.className = 'msg user';
+    div.innerHTML = text.replace(/</g, '&lt;') + '<span class="ts">' + ts + '</span>';
+    chatMessages.appendChild(div);
+    chatInput.value = '';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Simulated system response after 600ms
+    const sysDiv = document.createElement('div');
+    sysDiv.className = 'msg system';
+    sysDiv.innerHTML = '⏺ Command queued · ' + text.replace(/</g, '&lt;') + '<span class="ts">' + ts + '</span>';
+    setTimeout(() => {
+      chatMessages.appendChild(sysDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      showToast('✓ Command processed');
+    }, 600);
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMessage(); });
+
+  // ── Pulse timer ──
+  const pulseDisplay = document.getElementById('pulseDisplay');
+  let pulseSec = 2;
+  setInterval(() => {
+    pulseSec = pulseSec >= 60 ? 1 : pulseSec + 1;
+    pulseDisplay.textContent = pulseSec + 's';
+  }, 1000);
+
+  // ── File tree ──
+  document.querySelectorAll('.tree-item.dir').forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const path = this.dataset.path;
+      const children = document.getElementById('children-' + path.replace(/\//g, '-').replace(/^root$/, 'root'));
+      if (!children) return;
+      const toggle = this.querySelector('.toggle');
+      if (children.style.display === 'none') {
+        children.style.display = 'block';
+        if (toggle) toggle.textContent = '▼';
+      } else {
+        children.style.display = 'none';
+        if (toggle) toggle.textContent = '▶';
+      }
+    });
+  });
+
+  // Initialize folder children (first level is visible, rest hidden)
+  document.querySelectorAll('.tree-children').forEach((ch, i) => {
+    if (i > 0) ch.style.display = 'none';
+  });
+
+  // ── Accordion sections ──
+  document.querySelectorAll('.acc-header').forEach(h => {
+    h.addEventListener('click', function() {
+      const body = this.nextElementSibling;
+      if (!body || !body.classList.contains('acc-body')) return;
+      const isHidden = body.classList.contains('hidden');
+      if (isHidden) {
+        body.classList.remove('hidden');
+        this.classList.remove('collapsed');
+      } else {
+        body.classList.add('hidden');
+        this.classList.add('collapsed');
+      }
+    });
+  });
+
+  // ── Toast ──
+  const toast = document.getElementById('toast');
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._hide);
+    toast._hide = setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+})();
+</script>
+</body>
+</html>

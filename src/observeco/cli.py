@@ -116,9 +116,9 @@ def chisel_skills(
 @chisel_app.command(name="cards")
 def chisel_cards() -> None:
     """Show skill cards (metadata catalog) — compact view of all skills."""
-    from pathlib import Path
-    import json
-    cards_path = Path.home() / ".hermes" / "skills" / "cards.json"
+    from observeco.config import hermes_home
+
+    cards_path = hermes_home() / "skills" / "cards.json"
     if not cards_path.exists():
         print("No cards.json found. Run 'observeco chisel artifacts --refresh' first.")
         return
@@ -145,33 +145,39 @@ def chisel_artifacts(
     workers: int = typer.Option(3, "--workers", help="Parallel workers for caveman mode"),
 ) -> None:
     """Manage compressed skill artifacts (.md.compressed, cards.json, manifests.json)."""
-    from pathlib import Path
     import json
-    from observeco.chisel.skill_compress import batch_compress_skills, generate_cards_json, export_manifest_json
+
+    from observeco.chisel.skill_compress import (
+        batch_compress_skills,
+        export_manifest_json,
+        generate_cards_json,
+    )
+    from observeco.config import hermes_home
+
+    skills_dir = hermes_home() / "skills"
 
     if refresh:
         engine = "caveman" if caveman else "rule"
         print(f"Regenerating skill artifacts (engine={engine})...")
         results = batch_compress_skills(limit=0, engine=engine)
-        
+
         # Write consolidated cards.json
         cards_json = generate_cards_json()
         cards = json.loads(cards_json)
-        (Path.home() / ".hermes" / "skills" / "cards.json").write_text(cards_json)
+        (skills_dir / "cards.json").write_text(cards_json)
         print(f"  Written cards.json ({len(cards)} cards)")
-        
+
         # Write manifests
         manifests_json = export_manifest_json()
         manifests = json.loads(manifests_json)
-        (Path.home() / ".hermes" / "skills" / "manifests.json").write_text(manifests_json)
+        (skills_dir / "manifests.json").write_text(manifests_json)
         print(f"  Written manifests.json ({len(manifests)} manifests)")
-        
+
         total_before = sum(r["original_tokens"] for r in results)
         total_after = sum(r["compressed_tokens"] for r in results)
         saved = total_before - total_after
         print(f"\n  Total: {total_before} → {total_after} tok (saved {saved}, {round(saved/max(total_before,1)*100,1)}%)")
     else:
-        skills_dir = Path.home() / ".hermes" / "skills"
         compressed = list(skills_dir.rglob("SKILL.md.compressed"))
         manifests = list(skills_dir.rglob("SKILL.md.manifest"))
         cards = list(skills_dir.rglob("SKILL.md.card"))
@@ -180,7 +186,7 @@ def chisel_artifacts(
         print(f"Manifests:             {len(manifests)} files")
         print(f"Cards (individual):    {len(cards)} files")
         print(f"Cards (consolidated):  {'✅' if cards_json_path.exists() else '❌'} {'exists' if cards_json_path.exists() else 'missing'}")
-        
+
         if manifests:
             import json
             total_saved = 0
@@ -194,7 +200,7 @@ def chisel_artifacts(
                     pass
             pct = round(total_saved / max(total_before, 1) * 100, 1)
             print(f"\nTotal savings: {total_saved:,} tokens ({pct}%)")
-            print(f"Run --refresh to regenerate.")
+            print("Run --refresh to regenerate.")
 
 
 @chisel_app.command(name="compress")
@@ -364,7 +370,7 @@ def memory_garden(
 
 # -- Graph subcommands --
 
-from observeco.graph.cli import graph_app
+from observeco.graph.cli import graph_app  # noqa: E402 - late import avoids circular
 
 app.add_typer(graph_app, name="graph")
 
@@ -502,10 +508,11 @@ def l2_scan() -> None:
 @l2_app.command(name="status")
 def l2_status() -> None:
     """Show current L2 trends."""
-    from observeco.heal.l2 import get_l2_summary, get_l2_metrics
+    from rich import box
     from rich.console import Console
     from rich.table import Table
-    from rich import box
+
+    from observeco.heal.l2 import get_l2_metrics, get_l2_summary
     console = Console()
     metrics = get_l2_metrics()
     table = Table(title=f"L2 Trending — {metrics['total_trends']} total, {metrics['resolution_rate']}% resolved",
@@ -535,8 +542,9 @@ def alerts_subscribe(
                                     help="Filter: all, critical_only, heal_failure, drift, circuit_trip, agent_death"),
 ) -> None:
     """Subscribe to push alerts on a delivery channel."""
-    from observeco.alerts.push import add_subscription
     from rich.console import Console
+
+    from observeco.alerts.push import add_subscription
     console = Console()
     result = add_subscription(channel, target, event_types)
     console.print(f"[green]Subscribed: {channel} -> {target} (events: {event_types})[/green]")
@@ -547,8 +555,9 @@ def alerts_unsubscribe(
     sub_id: int = typer.Argument(..., help="Subscription ID to remove"),
 ) -> None:
     """Remove an alert subscription."""
-    from observeco.alerts.push import remove_subscription
     from rich.console import Console
+
+    from observeco.alerts.push import remove_subscription
     console = Console()
     remove_subscription(sub_id)
     console.print(f"[green]Subscription {sub_id} removed.[/green]")
@@ -556,10 +565,11 @@ def alerts_unsubscribe(
 @alerts_app.command(name="list")
 def alerts_list() -> None:
     """List all alert subscriptions."""
-    from observeco.alerts.push import list_subscriptions
+    from rich import box
     from rich.console import Console
     from rich.table import Table
-    from rich import box
+
+    from observeco.alerts.push import list_subscriptions
     console = Console()
     subs = list_subscriptions()
     if not subs:
@@ -579,10 +589,11 @@ def alerts_list() -> None:
 @alerts_app.command(name="log")
 def alerts_log() -> None:
     """Show recent alert delivery log."""
-    from observeco.alerts.push import get_delivery_log
+    from rich import box
     from rich.console import Console
     from rich.table import Table
-    from rich import box
+
+    from observeco.alerts.push import get_delivery_log
     console = Console()
     log = get_delivery_log(limit=10)
     if not log:
@@ -593,9 +604,9 @@ def alerts_log() -> None:
     table.add_column("Event")
     table.add_column("Delivered")
     table.add_column("Message")
-    for l in log:
-        icon = "✅" if l["delivered"] else "❌"
-        table.add_row(l["channel"], l["event_type"], icon, l["message"][:70])
+    for entry in log:
+        icon = "✅" if entry["delivered"] else "❌"
+        table.add_row(entry["channel"], entry["event_type"], icon, entry["message"][:70])
     console.print(table)
 
 
@@ -614,8 +625,9 @@ def plugin_log(
     saved: int = typer.Option(0, "--saved", help="Tokens saved"),
 ) -> None:
     """Log a plugin hook event (for OpenClaw plugin integration)."""
-    from observeco.clawforge.plugin import log_plugin_hook
     from rich.console import Console
+
+    from observeco.clawforge.plugin import log_plugin_hook
     console = Console()
     result = log_plugin_hook(agent_name, hook_point, intent_class, loaded, skipped, saved)
     console.print(f"[green]Logged {hook_point} for {agent_name}: {result['reduction_pct']}% reduction[/green]")
@@ -625,10 +637,9 @@ def plugin_stats(
     agent_name: str = typer.Option("", "--agent", "-a", help="Filter by agent"),
 ) -> None:
     """Show plugin tracking statistics."""
-    from observeco.clawforge.plugin import get_plugin_stats, get_recent_hooks
     from rich.console import Console
-    from rich.table import Table
-    from rich import box
+
+    from observeco.clawforge.plugin import get_plugin_stats
     console = Console()
     stats = get_plugin_stats(agent_name)
     if stats["turns"] == 0:
@@ -659,8 +670,9 @@ def tokens_log(
     provider: str = typer.Option("custom", "--provider", help="Provider name (deepseek, claude, etc.)"),
 ) -> None:
     """Log a single turn's token usage (anomaly detection + budget check)."""
-    from observeco.tracking.tokens import log_token_turn
     from rich.console import Console
+
+    from observeco.tracking.tokens import log_token_turn
     console = Console()
     result = log_token_turn(agent_name, turn_id, total_tokens, identity, skills,
                             memory, tools, guidance, provider)
@@ -677,10 +689,11 @@ def tokens_status(
     days: int = typer.Option(7, "--days", "-d", help="Lookback window"),
 ) -> None:
     """Show token tracking summary per agent."""
-    from observeco.tracking.tokens import get_token_summary
+    from rich import box
     from rich.console import Console
     from rich.table import Table
-    from rich import box
+
+    from observeco.tracking.tokens import get_token_summary
     console = Console()
     stats = get_token_summary(agent_name, days)
     if stats["turns"] == 0:
@@ -702,10 +715,11 @@ def tokens_trends(
     days: int = typer.Option(7, "--days", "-d", help="Lookback window"),
 ) -> None:
     """Show component growth trends over time."""
-    from observeco.tracking.tokens import get_trend_analysis
+    from rich import box
     from rich.console import Console
     from rich.table import Table
-    from rich import box
+
+    from observeco.tracking.tokens import get_trend_analysis
     console = Console()
     analysis = get_trend_analysis(agent_name)
     console.print(f"[bold]Trend Analysis[/bold] for {agent_name or 'all agents'}")
@@ -732,8 +746,9 @@ def tokens_budget(
     anomaly_sigma: float = typer.Option(3.0, "--anomaly-sigma", help="Anomaly detection sigma threshold"),
 ) -> None:
     """Set per-agent token budget thresholds."""
-    from observeco.db import Database
     from rich.console import Console
+
+    from observeco.db import Database
     console = Console()
     db = Database()
     db.set_token_budget(agent_name, max_daily_tokens, max_turn_cost,
@@ -749,8 +764,9 @@ def prune_command(
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be pruned"),
 ) -> None:
     """Prune old data per retention policy."""
-    from observeco.tracking.prune import run_prune
     from rich.console import Console
+
+    from observeco.tracking.prune import run_prune
     console = Console()
     result = run_prune()
     if result.get("status") == "disabled":
@@ -885,7 +901,8 @@ def adapters_send(
 ) -> None:
     """Send a test event to a channel."""
     from rich.console import Console
-    from observeco.adapters.oef import OEFEvent, make_heartbeat_event
+
+    from observeco.adapters.oef import OEFEvent
     console = Console()
 
     event = OEFEvent(
@@ -932,7 +949,8 @@ def adapters_openclaw() -> None:
     """List and validate OpenClaw hooks."""
     from rich.console import Console
     from rich.table import Table
-    from observeco.adapters.openclaw import list_hooks, validate_hooks, get_hook_config
+
+    from observeco.adapters.openclaw import get_hook_config, list_hooks, validate_hooks
 
     console = Console()
 
@@ -1024,7 +1042,7 @@ def agents_list() -> None:
 def agents_add(
     name: str = typer.Argument(..., help="Agent name"),
     framework: str = typer.Option("custom", "--framework", "-f", help="Agent framework (hermes, openclaw, custom)"),
-    health_check: str = typer.Option("", "--health-check", "-c", help="Health check URL or command"),
+    health_check: str = typer.Option("", "--health-check", "-c", help="Health check URL, docker:containername, or launchd:label"),
 ) -> None:
     """Manually add an agent."""
     from observeco.auto_detect import run_add
@@ -1033,10 +1051,11 @@ def agents_add(
     # LLM-powered health check suggestion (Tier 2 shallow)
     if not health_check:
         try:
-            from observeco.llm_service import ask
             import subprocess
+
+            from observeco.llm_service import ask
             lsof = subprocess.run(["lsof", "-i", "-P"], capture_output=True, text=True, timeout=5)
-            listening = [l for l in lsof.stdout.split("\n") if "LISTEN" in l][:10]
+            listening = [ln for ln in lsof.stdout.split("\n") if "LISTEN" in ln][:10]
             if listening:
                 port_context = "\n".join(listening)
                 suggestion = ask(
@@ -1072,8 +1091,9 @@ def otel_export(
 ) -> None:
     """Export session events as OTel-compatible trace."""
     from rich.console import Console
-    from observeco.session_log import SessionLogger
+
     from observeco.otel_bridge import OTelBridge
+    from observeco.session_log import SessionLogger
 
     console = Console()
     bridge = OTelBridge()
@@ -1102,6 +1122,7 @@ def otel_export(
     else:
         result = bridge.export_events(events)
 
+    import json
     print(json.dumps(result, indent=2))
 
 
@@ -1125,6 +1146,7 @@ def fleet_status() -> None:
     """Show fleet status — all agents, health, token usage."""
     from rich.console import Console
     from rich.table import Table
+
     from observeco.db import Database
 
     db = Database()
@@ -1176,6 +1198,7 @@ def risk_predict(
 ) -> None:
     """Predict risk for a tool call based on historical patterns."""
     from rich.console import Console
+
     from observeco.risk_predictor import RiskPredictor
 
     predictor = RiskPredictor()
@@ -1200,11 +1223,12 @@ def risk_profile(
 ) -> None:
     """Show risk profile for an agent or tool."""
     from rich.console import Console
+
     from observeco.risk_predictor import RiskPredictor
 
     predictor = RiskPredictor()
 
-    if entity_type == "agent" or (entity_type == "auto" and not "/" in entity):
+    if entity_type == "agent" or (entity_type == "auto" and "/" not in entity):
         profile = predictor.get_agent_profile(entity)
     else:
         profile = predictor.get_tool_profile(entity)
@@ -1228,6 +1252,7 @@ def risk_fleet() -> None:
     """Show risk profiles for all agents."""
     from rich.console import Console
     from rich.table import Table
+
     from observeco.risk_predictor import RiskPredictor
 
     predictor = RiskPredictor()
@@ -1265,7 +1290,7 @@ def pathway_scan() -> None:
     """Auto-discover communication pathways from agents, crons, and infrastructure."""
     from observeco.db import Database
     db = Database()
-    count = db.pathway_scan()
+    db.pathway_scan()
     graph = db.pathway_get_graph()
     print(f"🔍 Pathway scan complete: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges scanned")
 
@@ -1286,10 +1311,11 @@ def pathway_scan() -> None:
 @pathway_app.command(name="list")
 def pathway_list() -> None:
     """List all pathways with status."""
-    from observeco.db import Database
     from rich import box
     from rich.console import Console
     from rich.table import Table
+
+    from observeco.db import Database
 
     db = Database()
     graph = db.pathway_get_graph()
@@ -1323,8 +1349,9 @@ def pathway_add(
     status: str = typer.Option("green", "--status", help="Edge status (green, yellow, red, teal)"),
 ) -> None:
     """Manually add a pathway node + optional edge."""
-    from observeco.db import Database
     from rich.console import Console
+
+    from observeco.db import Database
 
     db = Database()
     console = Console()
@@ -1334,10 +1361,10 @@ def pathway_add(
     console.print(f"[green]Added node [bold]{node_id}[/bold] ({node_type})[/green]")
 
     if target:
-        edge_id = db.pathway_add_edge(node_id, target, status=status, mechanism="manual")
+        db.pathway_add_edge(node_id, target, status=status, mechanism="manual")
         console.print(f"[green]Added edge [bold]{node_id}[/bold] → [bold]{target}[/bold] ({status})[/green]")
     else:
-        edge_id = db.pathway_add_edge(node_id, None, status="red", scenario="manual_dead_end")
+        db.pathway_add_edge(node_id, None, status="red", scenario="manual_dead_end")
         console.print(f"[yellow]Added dead-end edge: [bold]{node_id}[/bold] → ∅[/yellow]")
 
 @pathway_app.command(name="clear")
@@ -1352,8 +1379,9 @@ def pathway_clear() -> None:
 @pathway_app.command(name="graph")
 def pathway_graph_export() -> None:
     """Export pathway graph as JSON (for rendering)."""
-    from observeco.db import Database
     import json
+
+    from observeco.db import Database
     db = Database()
     graph = db.pathway_get_graph()
     print(json.dumps(graph, indent=2, default=str))

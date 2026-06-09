@@ -1,9 +1,8 @@
 """Pulse check + circuit breaker tests — Sections 5-6."""
 
-from unittest.mock import patch
-from observeco.pulse.check import ProbeResult, AgentConfig, classify_restart
-from observeco.pulse.circuit import run_circuit
 from observeco.db import Database
+from observeco.pulse.check import AgentConfig, ProbeResult, classify_restart
+from observeco.pulse.circuit import run_circuit
 
 
 class TestProbeResult:

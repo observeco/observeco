@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Disk auto-cleanup pipeline — archive stale intelligence / correction files."""
+import json
 import os
 import shutil
 import time
-import json
 from pathlib import Path
 
 STALE_DAYS = 30
@@ -27,7 +27,6 @@ def run_cleanup(dry_run: bool = False) -> dict:
     now = time.time()
     total_freed = 0
     archived = 0
-    skipped = 0
 
     for target in TARGET_DIRS:
         if not target.exists():

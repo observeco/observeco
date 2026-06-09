@@ -1,12 +1,17 @@
 """Dirs, config, auto_detect tests — Sections 12-15 (28 cases)."""
 
-import pytest
-from unittest.mock import patch
 from pathlib import Path
 
-from observeco.dirs import get_data_dir, get_shared_db_path, is_shared_mode, get_instance_id
-from observeco.config import load_config, write_agent, exclude_agent, list_excluded, _get_excluded_set
+import pytest
 
+from observeco.config import (
+    _get_excluded_set,
+    exclude_agent,
+    list_excluded,
+    load_config,
+    write_agent,
+)
+from observeco.dirs import get_data_dir, get_instance_id, get_shared_db_path, is_shared_mode
 
 # ── 15. Directory Management ──────────────────────────────────
 

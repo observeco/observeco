@@ -22,8 +22,9 @@ import time
 import urllib.request
 from typing import Optional
 
-from .oef import OEFEvent
 from observeco.rate_limiter import get_rate_limiter
+
+from .oef import OEFEvent
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +283,7 @@ class SlackAdapter:
                 logger.error(f"Slack API call failed: {e}")
                 return False
 
-        logger.error(f"Slack API call failed after 3 attempts (rate limited)")
+        logger.error("Slack API call failed after 3 attempts (rate limited)")
         return False
 
     def test_connection(self) -> dict:

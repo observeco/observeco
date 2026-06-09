@@ -12,7 +12,7 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from observeco.config import load_config
+from observeco.config import hermes_home, load_config
 from observeco.db import Database
 
 console = Console()
@@ -442,3 +442,12 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
     healthy = sum(1 for r in results if r.get('status') == 'healthy')
     failed = sum(1 for r in results if r.get('status') == 'failed')
     console.print(f"[dim]Heal complete. {fixed} fixed, {healthy} healthy, {failed} failed.[/dim]")
+    if failed > 0:
+        failed_details = [r for r in results if r.get('status') == 'failed']
+        for fd in failed_details:
+            err = fd.get('error', 'unknown')
+            agent = fd['agent']
+            console.print(f"  [red]! {agent}:[/red] heal failed — {err}. [bold]Manual intervention needed.[/bold]")
+            hermes_base = hermes_home()
+            console.print(f"    [dim]➤ Check agent logs in {hermes_base}/logs/{agent}*.log[/dim]")
+            console.print(f"    [dim]➤ Restart manually: [bold]observeco start {agent}[/bold][/dim]")

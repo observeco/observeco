@@ -6,7 +6,6 @@ the cache window. Cleared on provider change or manual clear_cache() call.
 
 from __future__ import annotations
 
-import hashlib
 import time
 from collections import OrderedDict
 from typing import Optional

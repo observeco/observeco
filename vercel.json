@@ -2,6 +2,9 @@
   "version": 2,
   "buildCommand": null,
   "outputDirectory": "website",
+  "rewrites": [
+    { "source": "/privacy", "destination": "/privacy.html" }
+  ],
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30

@@ -1,6 +1,11 @@
 """Tests for pulse check and circuit breaker modules."""
 from observeco.config import AgentConfig
-from observeco.pulse.check import _probe_agent, classify_restart, _find_agent_log, _read_last_n_lines
+from observeco.pulse.check import (
+    _find_agent_log,
+    _probe_agent,
+    _read_last_n_lines,
+    classify_restart,
+)
 from observeco.pulse.circuit import run_circuit
 
 

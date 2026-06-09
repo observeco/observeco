@@ -1,8 +1,8 @@
 """Tests for Phase 7.3 — First-Run State Machine Day 2: Agent Discovery Wizard."""
-from pathlib import Path
 from fastapi.testclient import TestClient
-from observeco.dashboard.server import app
+
 from observeco.dashboard.auth import get_cached_secret
+from observeco.dashboard.server import app
 from observeco.db import Database
 
 _SECRET = get_cached_secret()

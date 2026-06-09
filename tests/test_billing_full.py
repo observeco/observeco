@@ -2,27 +2,22 @@
 
 import json
 import re
-import time
-import os
 import tempfile
+import time
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
-
-import stripe as stripe_lib
 from observeco.billing import (
     BillingConfig,
-    generate_key,
-    revoke_key,
-    list_keys,
-    validate_admin_key,
-    get_billing_status,
-    create_checkout_session,
-    handle_webhook,
     configure,
+    create_checkout_session,
+    generate_key,
+    get_billing_status,
+    handle_webhook,
+    list_keys,
+    revoke_key,
+    validate_admin_key,
 )
-
 
 # ── 2.1 Unit: Config ──────────────────────────────────────────
 
@@ -329,7 +324,7 @@ class TestPersistence:
 
             with patch("observeco.billing.CONFIG_FILE", billing_path), \
                  patch("observeco.billing.CONFIG_DIR", Path(tmpdir)):
-                from observeco.billing import _save_config, _load_config
+                from observeco.billing import _load_config, _save_config
 
                 # Create a config, save it
                 config = BillingConfig()

@@ -11,9 +11,9 @@ Tests at the USER layer (not source layer):
 Usage: cd /observeco && python3 scripts/independent-audit.py
 """
 
+import os
 import subprocess
 import sys
-import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -70,7 +70,8 @@ check("otel_listener: module imports clean", r.returncode == 0, r.stdout.strip()
 
 # 2b. OTel listener starts on port 4318 and accepts traces
 # Start in foreground with timeout, send trace, check DB
-import json, time, signal
+import json
+import time
 
 # Start server in background
 server = subprocess.Popen(
@@ -89,12 +90,12 @@ if server.poll() is None:  # Server is running
     sample = json.dumps({"resourceSpans": [{"resource": {"attributes": [{"key": "service.name", "value": {"stringValue": "audit-test-agent"}}, {"key": "telemetry.sdk.name", "value": {"stringValue": "opentelemetry"}}]}, "scopeSpans": [{"spans": [{"name": "audit_llm", "status": {"code": 1}, "attributes": [{"key": "llm.usage.token_count.prompt", "value": {"intValue": 100}}, {"key": "llm.usage.token_count.completion", "value": {"intValue": 25}}]}]}]}]})
     r2 = run(f"curl -s -X POST http://127.0.0.1:4318/v1/traces -H 'Content-Type: application/json' -d '{sample}'", timeout=5)
     check("OTel: POST /v1/traces returns ok", "spans_ingested" in r2.stdout, r2.stdout.strip()[:80])
-    
+
     # Verify in DB
     time.sleep(0.5)
     r3 = run("cd /Users/seanfzc/observeco && python3 -c 'import sys; sys.path.insert(0, \"src\"); import sqlite3; from observeco.db import Database; db=Database(); conn=sqlite3.connect(db.db_path); cur=conn.execute(\"SELECT agent_name, status FROM pulse_log WHERE agent_name=? ORDER BY timestamp DESC LIMIT 1\", (\"audit-test-agent\",)); rows=cur.fetchall(); conn.close(); print(rows[0][0] if rows else \"NOT_FOUND\")'", timeout=10)
     check("OTel: trace lands in pulse_log", "audit-test-agent" in r3.stdout, r3.stdout.strip()[:60])
-    
+
     server.terminate()
     server.wait(timeout=5)
 else:
@@ -118,7 +119,7 @@ check("platforms: button in fleet summary", "PASS" in r.stdout, r.stdout.strip()
 
 # 3c. Cross-framework labels work in fleet view
 r = run("cd /Users/seanfzc/observeco && python3 -c 'import sys; sys.path.insert(0, \"src\"); from observeco.config import load_config; cfg=load_config(); frameworks = set(a.framework for a in cfg.agents if \"launchd\" in a.framework.lower()); print(f\"frameworks with launchd: {len(frameworks)}\" if frameworks else \"NONE\")'", timeout=10)
-has_fw = len([l for l in r.stdout.split() if l.isdigit() and int(l) > 0]) > 0
+has_fw = len([fw for fw in r.stdout.split() if fw.isdigit() and int(fw) > 0]) > 0
 check("cross-framework: launchd agents in config", has_fw, r.stdout.strip()[:80])
 
 # ═══════════════════════════════════════════════════════════════════════════

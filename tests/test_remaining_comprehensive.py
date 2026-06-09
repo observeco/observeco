@@ -1,6 +1,6 @@
 """Event bus, risk, infra tests."""
 
-from observeco.event_bus import publish, get_events
+from observeco.event_bus import get_events, publish
 from observeco.risk_engine import RiskResult, classify_text_action
 
 

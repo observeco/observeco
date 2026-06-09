@@ -7,7 +7,6 @@ import platform
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Optional
 
 
@@ -229,7 +228,7 @@ def _check_config() -> list[DiagnosticCheck]:
 
     if config_file.exists():
         try:
-            data = json.loads(config_file.read_text())
+            json.loads(config_file.read_text())
             checks.append(DiagnosticCheck(
                 name="Config file valid",
                 status="ok",

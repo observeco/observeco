@@ -1,6 +1,5 @@
 """Tests for _compute_confidence() — confidence scoring + FP/FN risk + recommendations."""
 import time
-import pytest
 
 # We'll test through the function directly by importing server
 from observeco.dashboard.server import _compute_confidence

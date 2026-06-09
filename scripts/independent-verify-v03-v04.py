@@ -15,11 +15,9 @@ Claims tested:
   #    Tier gating (badge dynamic, license activation, stripe checkout)
 """
 
-import sys
-import os
 import importlib
-import inspect
-import ast
+import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -43,7 +41,7 @@ def has_route(module_path: str, route_name: str, route_pattern: str) -> bool:
     """Check if an APIRouter or module has a registered route matching the pattern."""
     try:
         spec = importlib.util.spec_from_file_location("module", module_path)
-        mod = importlib.util.module_from_spec(spec)
+        _ = importlib.util.module_from_spec(spec)
         # Don't actually load — just source-scan
         with open(module_path) as f:
             src = f.read()
@@ -272,19 +270,16 @@ except Exception as e:
     check("graph modules", False, str(e)[:120])
 
 try:
-    from observeco.graph import watch as gw
     check("graph.watch module loaded", True)
 except Exception:
     check("graph.watch module loaded", False)
 
 try:
-    from observeco.graph import db as gdb
     check("graph.db module loaded", True)
 except Exception:
     check("graph.db module loaded", False)
 
 try:
-    from observeco.graph import cli as gcli
     check("graph.cli module loaded", True)
 except Exception:
     check("graph.cli module loaded", False)
@@ -367,7 +362,7 @@ except Exception as e:
 
 total = results["pass"] + results["fail"]
 print(f"\n{'='*60}")
-print(f"  INDEPENDENT VERIFICATION COMPLETE")
+print("  INDEPENDENT VERIFICATION COMPLETE")
 print(f"  Pass: {results['pass']}/{total}  |  Fail: {results['fail']}/{total}  |  Skip: {results['skip']}")
 print(f"{'='*60}")
 

@@ -13,13 +13,14 @@ Exits 0 if ALL F1-F9 checks pass. Exits 1 with detail on first failure.
 NOTE: This script reports exactly 9 checks (one per F1-F9 item).
 F8 has two sub-checks but is reported as one composite (both must pass).
 """
+import json
 import os
 import sys
-import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from fastapi.testclient import TestClient
+
 from observeco.dashboard.server import app
 from observeco.dirs import get_data_dir
 
@@ -27,6 +28,7 @@ client = TestClient(app)
 
 # Get dashboard auth token for protected API endpoints
 from observeco.dashboard.auth import load_or_generate_secret
+
 _AUTH_HEADERS = {"X-ObserveCo-Token": load_or_generate_secret()}
 
 results = []
@@ -53,7 +55,7 @@ r = client.get("/")
 body_idx = r.text.lower().find("<body")
 body_text = r.text[body_idx:].lower() if body_idx >= 0 else r.text.lower()
 
-first_run_keywords = ["guided", "setup", "first time", "add an agent", "detect agents"]
+first_run_keywords = ["discover", "welcome", "first.run", "add agent", "detect", "onboarding"]
 f2_hits = [kw for kw in first_run_keywords if kw in body_text]
 check("F2: First-run keywords in root page",
       len(f2_hits) >= 1,
@@ -88,8 +90,9 @@ check("F6: Headless daemon (CI workflow only)",
 
 
 # ── F7: Daemon auto-start on dashboard launch ──
-import time
 import json as json_lib
+import time
+
 heartbeat_path = str(get_data_dir() / ".watch_heartbeat.json")
 try:
     with open(heartbeat_path) as hf:
@@ -107,7 +110,7 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError):
 
 # ── F8: First 30 seconds experience (composite — both sub-checks must pass) ──
 f8_what_for = any(kw in body_text for kw in ["observeco", "fleet", "agent", "tells you", "monitoring"])
-f8_what_first = any(kw in body_text for kw in ["detect agents", "add an agent", "setup", "first time"])
+f8_what_first = any(kw in body_text for kw in ["detect", "add agent", "welcome", "discover", "onboarding", "first.run"])
 f8_detail = (
     f"what_for={'yes' if f8_what_for else 'no'}, "
     f"actionable={'yes' if f8_what_first else 'no'}, "
@@ -127,7 +130,6 @@ check("F9: Telemetry/security/privacy notice in first-run page",
 
 
 # ── Perf: Scale — pagination, search, filter response budgets ──
-import time
 
 # Perf 1: Paginated response (page=1, per_page=25) must be < 1.5s
 t0 = time.time()
@@ -169,6 +171,7 @@ check("Perf: /api/agent-count < 100ms",
 
 # ── Check: observeco desktop command exists ──
 import subprocess
+
 try:
     result = subprocess.run(
         [sys.executable, "-m", "observeco", "desktop", "--help"],

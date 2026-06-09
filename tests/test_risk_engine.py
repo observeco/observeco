@@ -1,6 +1,6 @@
 """Tests for the observeco risk engine — maps against actual engine behavior."""
 
-from observeco.risk_engine import classify_tool_call, classify_text_action, RiskLevel, RiskResult, ToolCall
+from observeco.risk_engine import RiskLevel, ToolCall, classify_text_action, classify_tool_call
 
 
 class TestClassifyToolCall:

@@ -2,9 +2,9 @@
 
 import os
 import tempfile
-from unittest.mock import patch
-from observeco.chisel.trim import compress_guidance_block, run_compress
+
 from observeco.chisel.drift import run_drift
+from observeco.chisel.trim import compress_guidance_block, run_compress
 
 
 class TestCompress:

@@ -22,7 +22,7 @@ import json
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Optional
 
 from .adapters.oef import OEFEvent
 
@@ -80,7 +80,7 @@ class OTelBridge:
 
         # Parse timestamp to nanoseconds
         try:
-            from datetime import datetime, timezone
+            from datetime import datetime
             dt = datetime.fromisoformat(event.timestamp.replace("Z", "+00:00"))
             start_time = int(dt.timestamp() * 1e9)
         except Exception:

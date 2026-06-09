@@ -19,14 +19,11 @@ import json
 import logging
 import os
 import signal
-import subprocess
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-
-from observeco.chisel.trim import run_compress, _estimate_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +71,7 @@ def _agent_name_from_soul(soul_path: Path) -> str:
 
 def _get_mode_for_agent(agent_name: str) -> str:
     """Determine compression mode for an agent.
-    
+
     Checks config file for per-agent mode preference.
     Defaults to 'lite' if not configured.
     """
@@ -92,11 +89,10 @@ def compress_soul_file(soul_path: Path, triggered_by: str = "daemon") -> Optiona
     """Compress a single SOUL.md file and log the result."""
     agent = _agent_name_from_soul(soul_path)
     mode = _get_mode_for_agent(agent)
-    
-    original_text = soul_path.read_text(encoding="utf-8")
-    before = _estimate_tokens(original_text)
-    
+
+
     try:
+        from observeco.chisel.skill_compress import run_compress
         result = run_compress(agent_name=agent, mode=mode, filepath=str(soul_path))
         # Log to compress_log
         from observeco.db import Database
@@ -220,48 +216,48 @@ def stop_daemon() -> None:
 def _run_foreground() -> None:
     """Run the auto-compression loop in the foreground."""
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Write PID file
     _PID_PATH.write_text(str(os.getpid()))
-    
+
     # Find all SOUL.md files
     souls = _find_all_souls()
     print(f"Chisel watch: monitoring {len(souls)} SOUL.md files")
     for s in souls:
         print(f"  {_agent_name_from_soul(s):>20} → {s}")
-    
+
     if not souls:
         print("No SOUL.md files found. Nothing to watch.")
         return
-    
+
     # Initial compressed set
     soul_mtimes: dict[str, float] = {}
     last_compress: dict[str, float] = {}
     cycle = 0
-    
+
     def _handle_signal(sig, frame):
         print("\nChisel watch daemon shutting down...")
         _PID_PATH.unlink(missing_ok=True)
         sys.exit(0)
-    
+
     signal.signal(signal.SIGTERM, _handle_signal)
     signal.signal(signal.SIGINT, _handle_signal)
-    
+
     print(f"Chisel watch daemon running (PID {os.getpid()})")
     print(f"Mode: Lite (Free) compression, debounce: {DEBOUNCE_SECONDS}s")
     print("---")
-    
+
     while True:
         now = time.time()
         cycle += 1
-        
+
         for soul_path in souls:
             if not soul_path.exists():
                 continue
             mtime = soul_path.stat().st_mtime
             key = str(soul_path)
             prev_mtime = soul_mtimes.get(key)
-            
+
             if prev_mtime is not None and mtime != prev_mtime:
                 # File modified — check debounce
                 last_c = last_compress.get(key, 0)
@@ -275,12 +271,12 @@ def _run_foreground() -> None:
                             print(f"  Backup: {result['backup']}")
                         last_compress[key] = now
                     else:
-                        print(f"  ❌ Compression failed")
-            
+                        print("  ❌ Compression failed")
+
             soul_mtimes[key] = mtime
-        
+
         # Write heartbeat every 60s
         if cycle % 2 == 0:  # Every ~2s = write heartbeat roughly every 60s with 30s poll
             _write_heartbeat(cycle)
-        
+
         time.sleep(DEBOUNCE_SECONDS)  # Poll every 2 seconds

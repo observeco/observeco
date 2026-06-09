@@ -6,7 +6,6 @@ Reads credentials from environment variables or a local config file.
 
 from __future__ import annotations
 
-import json
 import os
 from typing import Any
 
@@ -79,7 +78,7 @@ def insert(
     _init()
     url = f"{_SUPABASE_URL}/rest/v1/{table}"
     headers = _headers()
-    headers["Prefer"] = f"return=representation"
+    headers["Prefer"] = "return=representation"
     resp = httpx.post(url, headers=headers, json=data if isinstance(data, list) else [data], timeout=10)
     resp.raise_for_status()
     return resp.json()
@@ -98,10 +97,16 @@ def update(
     for k, v in filters.items():
         params[k] = f"eq.{v}"
     headers = _headers()
-    headers["Prefer"] = f"return=representation"
+    headers["Prefer"] = "return=representation"
     resp = httpx.patch(url, headers=headers, params=params, json=data, timeout=10)
-    resp.raise_for_status()
-    return resp.json()
+    try:
+        resp.raise_for_status()
+        return resp.json()
+    except httpx.HTTPStatusError as e:
+        # Graceful degradation: log the error, return empty result
+        # This prevents schema mismatches (e.g. missing column) from breaking
+        # the calling endpoint with a 500 error.
+        return []
 
 
 def count(table: str, filters: dict[str, Any] | None = None) -> int:

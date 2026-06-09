@@ -33,3 +33,4 @@ observeco dashboard
 - `observeco --help` — full command list
 - `docs/commands.md` — detailed flag documentation
 - `docs/dashboard.md` — dashboard walkthrough
+- `docs/edge-cases.md` — what happens when things aren't configured yet

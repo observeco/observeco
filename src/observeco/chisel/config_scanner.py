@@ -16,12 +16,10 @@ Usage:
 
 import json
 import re
-import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
@@ -120,8 +118,6 @@ def check_duplicate_prompts(cfg: dict) -> list[Finding]:
     # and count repeated blocks
 
     # First, find repeated substrings by normalizing whitespace
-    normalized = {tid: re.sub(r"\s+", " ", body).strip()
-                  for tid, body in prompt_bodies.items()}
 
     # Find the most duplicated section — look for Reasoning Standards block
     rs_pattern = re.compile(

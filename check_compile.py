@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Compile check + fix the glossary emoji issue in server.py."""
-import sys, os
+import os
 
 path = os.path.expanduser('~/projects/observeco/src/observeco/dashboard/server.py')
 
@@ -34,9 +34,10 @@ if heart_idx >= 0:
     after = l1578[heart_idx:heart_idx+30]
     print(f'  Before ❓: {repr(before)}')
     print(f'  After ❓: {repr(after)}')
-    
+
 # Now compile
 import py_compile
+
 try:
     py_compile.compile(path, doraise=True)
     print('\n✅ Compile OK')

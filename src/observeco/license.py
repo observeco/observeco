@@ -121,6 +121,7 @@ class LicenseState:
             "is_in_grace": self.is_in_grace,
             "validation_stale": self.validation_stale,
             "plan": self.plan,
+            "provisioning_source": self.provisioning_source,
             "customer_email": self.customer_email,
             "expires_at": self.expires_at,
             "first_run_at": self.first_run_at,
@@ -243,7 +244,7 @@ def activate_key(key: str, email: str = "", plan: str = "solo") -> dict:
         state.license_type = "pro"
         state.key = key
         state.validated_at = int(time.time())
-        state.provisioning_source = result.get("source", "stripe")
+        state.provisioning_source = result.get("source", "admin_key")
         if result.get("email"):
             state.customer_email = result["email"]
         if result.get("plan"):

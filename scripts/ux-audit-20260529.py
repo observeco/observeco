@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """ObserveCo Dashboard API-level audit — run after a fresh server start."""
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from fastapi.testclient import TestClient
-from observeco.dashboard.server import app
 import re
 from collections import Counter
+
+from fastapi.testclient import TestClient
+
+from observeco.dashboard.server import app
 
 client = TestClient(app)
 
@@ -39,7 +43,7 @@ for path, name in endpoints.items():
             issues.append(f'HTTP {r.status_code}')
         if 'Traceback' in r.text or 'Internal Server Error' in r.text:
             issues.append('TRACEBACK')
-        
+
         body_no_scripts = re.sub(r'<script[^>]*>.*?</script>', '', r.text, flags=re.DOTALL)
         none_in_html = len(re.findall(r'>\s*None\s*<', body_no_scripts))
         null_in_html = len(re.findall(r'>\s*null\s*<', body_no_scripts))
@@ -47,7 +51,7 @@ for path, name in endpoints.items():
             issues.append(f'{none_in_html}x None')
         if null_in_html > 0:
             issues.append(f'{null_in_html}x null')
-        
+
         status = ' | '.join(issues) if issues else 'OK'
         print(f'[{status:45s}] {path:25s} ({r.status_code}) {len(r.text):5d}b')
         if status != 'OK':
@@ -92,7 +96,7 @@ print(f'  All font size counts: {dict(sorted(size_counts.items()))}')
 if small_sizes:
     print(f'  ⚠️  Sub-12px fonts found: {small_sizes}')
 else:
-    print(f'  ✅ No sub-12px fonts')
+    print('  ✅ No sub-12px fonts')
 
 print()
 print('=== SECTION STRUCTURE ===')
@@ -110,6 +114,6 @@ free_oss = len(re.findall(r'[Ff]ree\b|open.source|OS\s*[Ll]icense|[Mm][Ii][Tt]\b
 print(f'  Pro: {pro}  Free/OSS: {free_oss}')
 if pro > free_oss * 3 and free_oss > 0:
     print(f'  ⚠️  Heavy Pro bias: {pro}x Pro vs {free_oss}x free/OSS')
-    
+
 print()
 print('DONE')

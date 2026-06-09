@@ -8,8 +8,8 @@ CLI: observeco tokens log / status / budget / trends
 """
 from __future__ import annotations
 
-import time
 import logging
+import time
 from typing import Optional
 
 from observeco.db import Database
@@ -43,8 +43,6 @@ def compute_anomaly(total_tokens: int, agent_name: str,
     Returns None if insufficient data, or float z-score."""
     if db is None:
         db = Database()
-    budgets = db.get_token_budgets(agent_name)
-    sigma_threshold = float(budgets[0].get("anomaly_threshold_sigma", 3.0)) if budgets else 3.0
 
     # Get rolling average from last 50 turns
     turns = db.get_token_turns(agent_name, limit=50)
@@ -136,7 +134,6 @@ def get_trend_analysis(agent_name: str = "", db: Optional[Database] = None) -> d
     recent_since = now - 86400
     # Baseline: 7-14 days ago (before the recent window)
     baseline_since = now - 14 * 86400
-    baseline_until = now - 86400
 
     recent = db.get_token_summary(agent_name, since=recent_since)
     baseline = db.get_token_summary(agent_name, since=baseline_since)

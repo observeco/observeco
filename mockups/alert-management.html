@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Alert Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc; --fg-2: #94a3b8; --muted: #64748b;
+  --accent: #22c55e; --warn: #eab308; --danger: #ef4444; --meta: #3b82f6; --purple: #a855f7;
+  --border: #334155; --border-soft: #273548;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 11px; --text-sm: 12px; --text-base: 14px; --text-lg: 15px; --text-xl: 18px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 9999px;
+  --ease: cubic-bezier(0.2,0,0,1);
+}
+body { font-family: var(--font); background: var(--bg); color: #e2e8f0; -webkit-font-smoothing: antialiased; }
+.app { max-width: 920px; margin: 0 auto; padding: 20px 24px; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo svg { width: 32px; height: 32px; display: block; }
+.header-title { font-size: 22px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--muted); font-weight: 400; }
+.tier-badge {
+  background: rgba(34,197,94,0.12); color: #86efac;
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+.header-right { display: flex; align-items: center; gap: 10px; }
+.alert-count-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(239,68,68,0.12); color: var(--danger);
+  padding: 4px 12px; border-radius: var(--radius-pill);
+  font-size: var(--text-sm); font-weight: 600;
+}
+.alert-count-badge .num { font-family: var(--font-mono); }
+
+/* ── Tabs ── */
+.tab-bar {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab {
+  padding: 10px 18px; font-size: var(--text-sm); font-weight: 500;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.15s; background: none; border-left: none; border-right: none; border-top: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--fg-2); }
+.tab.active { color: var(--fg); border-bottom-color: var(--accent); }
+.tab .count {
+  background: var(--border); color: var(--fg-2);
+  padding: 1px 6px; border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: 600; font-family: var(--font-mono);
+}
+.tab.active .count { background: rgba(34,197,94,0.2); color: var(--accent); }
+
+/* ── Summary Bar ── */
+.summary-bar {
+  display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.summary-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-pill);
+  padding: 5px 14px; font-size: var(--text-sm); white-space: nowrap;
+}
+.summary-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+.summary-chip .dot.critical { background: var(--danger); }
+.summary-chip .dot.high { background: var(--warn); }
+.summary-chip .dot.medium { background: var(--meta); }
+.summary-chip .num { font-weight: 600; font-family: var(--font-mono); }
+
+/* ── Alert Card ── */
+.alert-list { display: flex; flex-direction: column; gap: 10px; }
+.alert-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 20px;
+  transition: border-color 0.15s, opacity 0.2s;
+}
+.alert-card:hover { border-color: var(--border-soft); }
+.alert-card.acknowledged { opacity: 0.5; }
+.alert-card.critical { border-left: 3px solid var(--danger); }
+.alert-card.high { border-left: 3px solid var(--warn); }
+.alert-card.medium { border-left: 3px solid var(--meta); }
+.alert-card.info { border-left: 3px solid var(--muted); }
+
+.alert-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; flex-wrap: wrap; gap: 8px;
+}
+.alert-title-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.alert-agent {
+  font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 500;
+  color: var(--fg); background: var(--bg); padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+.alert-type { font-size: var(--text-base); font-weight: 600; color: var(--fg); }
+.severity-badge {
+  display: inline-block; padding: 1px 7px; border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+}
+.severity-badge.critical { background: rgba(239,68,68,0.12); color: var(--danger); }
+.severity-badge.high { background: rgba(234,179,8,0.12); color: var(--warn); }
+.severity-badge.medium { background: rgba(59,130,246,0.12); color: var(--meta); }
+.severity-badge.info { background: rgba(100,116,139,0.12); color: var(--muted); }
+.alert-time { font-size: var(--text-xs); color: var(--muted); white-space: nowrap; }
+
+.alert-body { font-size: var(--text-sm); color: var(--fg-2); line-height: 1.5; margin-bottom: 10px; }
+
+.alert-meta {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  font-size: var(--text-xs); color: var(--muted); margin-bottom: 12px;
+}
+.delivery-status {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: var(--radius-pill);
+  font-weight: 500;
+}
+.delivery-status.delivered { background: rgba(34,197,94,0.1); color: var(--accent); }
+.delivery-status.failed { background: rgba(239,68,68,0.1); color: var(--danger); }
+.delivery-status.pending { background: rgba(234,179,8,0.1); color: var(--warn); }
+.delivery-status.dashboard-only { background: var(--border); color: var(--muted); }
+.gap-badge {
+  padding: 2px 8px; border-radius: var(--radius-pill); font-weight: 500;
+}
+.gap-badge.fast { background: rgba(34,197,94,0.1); color: var(--accent); }
+.gap-badge.slow { background: rgba(234,179,8,0.1); color: var(--warn); }
+.gap-badge.critical-gap { background: rgba(239,68,68,0.1); color: var(--danger); }
+
+/* ── Action Buttons ── */
+.alert-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.action-btn {
+  padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--fg-2); font-size: var(--text-xs);
+  font-weight: 500; cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.action-btn:hover { border-color: var(--muted); color: var(--fg); }
+.action-btn.primary { background: var(--accent); color: #0f172a; border-color: var(--accent); font-weight: 600; }
+.action-btn.danger { border-color: rgba(239,68,68,0.3); color: var(--danger); }
+.action-btn.danger:hover { background: rgba(239,68,68,0.1); }
+
+/* ── Config Tab ── */
+.config-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px;
+}
+.config-title {
+  font-size: var(--text-base); font-weight: 600; color: var(--fg);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.config-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border-soft);
+  font-size: var(--text-sm);
+}
+.config-row:last-child { border-bottom: none; }
+.config-label { color: var(--fg-2); }
+.config-value { color: var(--fg); font-family: var(--font-mono); font-size: var(--text-xs); }
+.toggle {
+  width: 36px; height: 20px; border-radius: 10px; background: var(--border);
+  position: relative; cursor: pointer; transition: background 0.2s;
+}
+.toggle.on { background: var(--accent); }
+.toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%; background: white;
+  transition: transform 0.2s;
+}
+.toggle.on::after { transform: translateX(16px); }
+
+/* ── History Tab ── */
+.history-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; border-bottom: 1px solid var(--border-soft);
+  font-size: var(--text-sm);
+}
+.history-row:last-child { border-bottom: none; }
+.history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.history-text { flex: 1; color: var(--fg-2); }
+.history-time { color: var(--muted); font-size: var(--text-xs); white-space: nowrap; }
+.history-action { color: var(--accent); font-size: var(--text-xs); white-space: nowrap; }
+
+/* ── Panel ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Toast ── */
+.toast-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 200;
+}
+.toast {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 20px;
+  font-size: var(--text-base); color: var(--fg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateY(20px); transition: all 0.2s var(--ease);
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center; padding: 48px 24px; color: var(--muted);
+}
+.empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+.empty-state .title { font-size: var(--text-lg); font-weight: 600; color: var(--fg-2); margin-bottom: 4px; }
+.empty-state .desc { font-size: var(--text-sm); }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="32" height="32">
+          <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="header-title">ObserveCo <span>Alerts</span></span>
+      <span class="tier-badge">Free</span>
+    </div>
+    <div class="header-right">
+      <div class="alert-count-badge">
+        🔔 <span class="num">3</span> open
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar" id="tabBar">
+    <button class="tab active" data-tab="open">Open <span class="count">3</span></button>
+    <button class="tab" data-tab="resolved">Resolved <span class="count">12</span></button>
+    <button class="tab" data-tab="history">History</button>
+    <button class="tab" data-tab="config">Config</button>
+  </div>
+
+  <!-- Open Panel -->
+  <div class="panel active" id="panelOpen">
+    <!-- Summary -->
+    <div class="summary-bar">
+      <div class="summary-chip"><div class="dot critical"></div> <span class="num">1</span> Critical</div>
+      <div class="summary-chip"><div class="dot high"></div> <span class="num">1</span> High</div>
+      <div class="summary-chip"><div class="dot medium"></div> <span class="num">1</span> Medium</div>
+      <div class="summary-chip" style="border-color:rgba(34,197,94,0.3);color:var(--accent)">⏱️ Avg resolve: 2.4h</div>
+    </div>
+
+    <!-- Alert 1: Critical -->
+    <div class="alert-list">
+      <div class="alert-card critical">
+        <div class="alert-header">
+          <div class="alert-title-line">
+            <span class="alert-agent">kepler</span>
+            <span class="alert-type">Circuit breaker tripped</span>
+            <span class="severity-badge critical">Critical</span>
+          </div>
+          <span class="alert-time">3:15 AM · 14h ago</span>
+        </div>
+        <div class="alert-body">
+          3 consecutive pulse failures. Auto-heal attempted restart but agent remained unresponsive. Circuit breaker engaged — all further attempts blocked until manual reset.
+        </div>
+        <div class="alert-meta">
+          <span class="delivery-status delivered">✅ Delivered to Telegram at 03:15:03</span>
+          <span class="gap-badge fast">3s gap</span>
+          <span style="color:var(--muted)">Source: circuit_breakers</span>
+        </div>
+        <div class="alert-actions">
+          <button class="action-btn primary" onclick="showToast('🔧 Resetting circuit breaker and restarting kepler...')">🔧 Heal</button>
+          <button class="action-btn" onclick="showToast('✓ Acknowledged')">✓ Acknowledge</button>
+          <button class="action-btn" onclick="showToast('⏰ Snoozed for 1 hour')">⏰ Snooze</button>
+          <button class="action-btn" onclick="showToast('→ Resolved — agent restarted manually')">→ Resolve</button>
+        </div>
+      </div>
+
+      <!-- Alert 2: High -->
+      <div class="alert-card high">
+        <div class="alert-header">
+          <div class="alert-title-line">
+            <span class="alert-agent">aleph</span>
+            <span class="alert-type">Error burst</span>
+            <span class="severity-badge high">High</span>
+          </div>
+          <span class="alert-time">2:47 AM · 14h ago</span>
+        </div>
+        <div class="alert-body">
+          7 errors in 60 minutes. Pattern: bridge-down flag spam — repeated "Skipping bridge-down flag" entries. Likely stale bridge connection.
+        </div>
+        <div class="alert-meta">
+          <span class="delivery-status delivered">✅ Delivered to Telegram at 02:47:12</span>
+          <span class="gap-badge fast">12s gap</span>
+          <span style="color:var(--muted)">Source: errors</span>
+        </div>
+        <div class="alert-actions">
+          <button class="action-btn primary" onclick="showToast('📋 Opening aleph logs...')">📋 Logs</button>
+          <button class="action-btn" onclick="showToast('✓ Acknowledged')">✓ Acknowledge</button>
+          <button class="action-btn" onclick="showToast('⏰ Snoozed for 1 hour')">⏰ Snooze</button>
+          <button class="action-btn" onclick="showToast('→ Resolved — bridge reconnected')">→ Resolve</button>
+        </div>
+      </div>
+
+      <!-- Alert 3: Medium -->
+      <div class="alert-card medium">
+        <div class="alert-header">
+          <div class="alert-title-line">
+            <span class="alert-agent">pa</span>
+            <span class="alert-type">Plugin turning red</span>
+            <span class="severity-badge medium">Medium</span>
+          </div>
+          <span class="alert-time">1:30 AM · 15h ago</span>
+        </div>
+        <div class="alert-body">
+          weather plugin: error rate jumped from 2% to 12%. Cost: $0.04/day. Latency P95: 2.1s. Rating changed from 🟢 green to 🔴 red.
+        </div>
+        <div class="alert-meta">
+          <span class="delivery-status dashboard-only">— Dashboard only (Free)</span>
+          <span style="color:var(--muted)">Source: plugin_tracking</span>
+        </div>
+        <div class="alert-actions">
+          <button class="action-btn primary" onclick="showToast('🔌 Disabling weather plugin...')">🔌 Disable Plugin</button>
+          <button class="action-btn" onclick="showToast('✓ Acknowledged')">✓ Acknowledge</button>
+          <button class="action-btn" onclick="showToast('⏰ Snoozed for 4 hours')">⏰ Snooze</button>
+          <button class="action-btn" onclick="showToast('→ Resolved — plugin updated')">→ Resolve</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolved Panel -->
+  <div class="panel" id="panelResolved">
+    <div class="summary-bar">
+      <div class="summary-chip" style="border-color:rgba(34,197,94,0.3);color:var(--accent)">✅ 12 resolved in 7d</div>
+      <div class="summary-chip">⏱️ Avg time to resolve: 2.4h</div>
+    </div>
+    <div class="alert-list">
+      <div class="alert-card" style="opacity:0.6; border-left: 3px solid var(--accent);">
+        <div class="alert-header">
+          <div class="alert-title-line">
+            <span class="alert-agent">hound</span>
+            <span class="alert-type">Context health drop</span>
+            <span class="severity-badge high">High</span>
+            <span style="color:var(--accent);font-size:var(--text-xs);font-weight:500">✓ Resolved</span>
+          </div>
+          <span class="alert-time">Yesterday · Resolved in 1.2h</span>
+        </div>
+        <div class="alert-body">Score dropped 22pts in 24h. Cause: SOUL.md edit added 340 tokens. Resolved by running Chisel compression.</div>
+        <div class="alert-meta">
+          <span class="delivery-status delivered">✅ Notified at 14:32:01</span>
+          <span style="color:var(--muted)">Resolution: Chisel compression applied</span>
+        </div>
+      </div>
+      <div class="alert-card" style="opacity:0.6; border-left: 3px solid var(--accent);">
+        <div class="alert-header">
+          <div class="alert-title-line">
+            <span class="alert-agent">dreamer</span>
+            <span class="alert-type">Drift spike</span>
+            <span class="severity-badge high">High</span>
+            <span style="color:var(--accent);font-size:var(--text-xs);font-weight:500">✓ Resolved</span>
+          </div>
+          <span class="alert-time">2 days ago · Resolved in 3.5h</span>
+        </div>
+        <div class="alert-body">Drift exceeded 8% threshold. Cause: MEMORY.md grew 1.2KB with stale entries. Resolved by memory garden cleanup.</div>
+        <div class="alert-meta">
+          <span class="delivery-status delivered">✅ Notified at 09:15:22</span>
+          <span style="color:var(--muted)">Resolution: Manual memory cleanup</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Panel -->
+  <div class="panel" id="panelHistory">
+    <div class="config-section">
+      <div class="config-title">📊 Alert Trend (7 days)</div>
+      <div style="display:flex;gap:4px;align-items:flex-end;height:80px;padding:8px 0">
+        <div style="flex:1;background:var(--border);border-radius:3px 3px 0 0;height:30%"></div>
+        <div style="flex:1;background:var(--border);border-radius:3px 3px 0 0;height:45%"></div>
+        <div style="flex:1;background:var(--warn);border-radius:3px 3px 0 0;height:60%"></div>
+        <div style="flex:1;background:var(--danger);border-radius:3px 3px 0 0;height:80%"></div>
+        <div style="flex:1;background:var(--warn);border-radius:3px 3px 0 0;height:50%"></div>
+        <div style="flex:1;background:var(--border);border-radius:3px 3px 0 0;height:25%"></div>
+        <div style="flex:1;background:var(--accent);border-radius:3px 3px 0 0;height:15%"></div>
+      </div>
+      <div style="display:flex;gap:4px;font-size:10px;color:var(--muted);font-family:var(--font-mono)">
+        <span style="flex:1;text-align:center">Mon</span>
+        <span style="flex:1;text-align:center">Tue</span>
+        <span style="flex:1;text-align:center">Wed</span>
+        <span style="flex:1;text-align:center">Thu</span>
+        <span style="flex:1;text-align:center">Fri</span>
+        <span style="flex:1;text-align:center">Sat</span>
+        <span style="flex:1;text-align:center">Sun</span>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">🕐 Timeline</div>
+      <div class="history-row">
+        <div class="history-dot" style="background:var(--danger)"></div>
+        <div class="history-text">kepler · Circuit breaker tripped</div>
+        <div class="history-action">✓ Resolved</div>
+        <div class="history-time">Thu 3:15 AM</div>
+      </div>
+      <div class="history-row">
+        <div class="history-dot" style="background:var(--warn)"></div>
+        <div class="history-text">aleph · Error burst (7 errors)</div>
+        <div class="history-action">✓ Resolved</div>
+        <div class="history-time">Thu 2:47 AM</div>
+      </div>
+      <div class="history-row">
+        <div class="history-dot" style="background:var(--meta)"></div>
+        <div class="history-text">pa · Plugin turning red (weather)</div>
+        <div class="history-action">⏳ Open</div>
+        <div class="history-time">Thu 1:30 AM</div>
+      </div>
+      <div class="history-row">
+        <div class="history-dot" style="background:var(--accent)"></div>
+        <div class="history-text">hound · Context health drop (22pts)</div>
+        <div class="history-action">✓ Resolved</div>
+        <div class="history-time">Wed 2:15 PM</div>
+      </div>
+      <div class="history-row">
+        <div class="history-dot" style="background:var(--warn)"></div>
+        <div class="history-text">dreamer · Drift spike (8.2%)</div>
+        <div class="history-action">✓ Resolved</div>
+        <div class="history-time">Tue 9:15 AM</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config Panel -->
+  <div class="panel" id="panelConfig">
+    <div class="config-section">
+      <div class="config-title">📡 Delivery Channels</div>
+      <div class="config-row">
+        <span class="config-label">Telegram</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="config-value">chat: 458083937</span>
+          <div class="toggle on" onclick="this.classList.toggle('on'); showToast(this.classList.contains('on') ? 'Telegram enabled' : 'Telegram disabled')"></div>
+        </div>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Webhook</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="config-value">—</span>
+          <div class="toggle" onclick="this.classList.toggle('on'); showToast(this.classList.contains('on') ? 'Webhook enabled' : 'Webhook disabled')"></div>
+        </div>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Email</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="config-value">—</span>
+          <div class="toggle" onclick="this.classList.toggle('on'); showToast(this.classList.contains('on') ? 'Email enabled' : 'Email disabled')"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">🔔 Routing Rules</div>
+      <div class="config-row">
+        <span class="config-label">Agent dead / Circuit tripped</span>
+        <span class="config-value" style="color:var(--accent)">Telegram · Immediate</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Drift spike / Error burst</span>
+        <span class="config-value" style="color:var(--warn)">Telegram · Hourly batch</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Context health drop</span>
+        <span class="config-value" style="color:var(--meta)">Telegram · Daily digest</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Plugin red / Cost spike</span>
+        <span class="config-value" style="color:var(--muted)">Dashboard only</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Stale inbox</span>
+        <span class="config-value" style="color:var(--muted)">Dashboard only</span>
+      </div>
+    </div>
+
+    <div class="config-section" style="border-color:rgba(168,85,247,0.3)">
+      <div class="config-title" style="color:var(--purple)">🔒 Pro: Custom Rules</div>
+      <div style="font-size:var(--text-sm);color:var(--fg-2);line-height:1.6">
+        Configure per-type routing, per-agent routing, multi-channel delivery, severity thresholds, and mute rules with the YAML rules engine.
+        <div style="margin-top:12px">
+          <button class="action-btn" style="border-color:var(--purple);color:var(--purple)" onclick="showToast('🔒 Upgrade to Pro to unlock custom alert rules')">Upgrade to Pro →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="config-title">⏰ Snooze Defaults</div>
+      <div class="config-row">
+        <span class="config-label">Default snooze duration</span>
+        <span class="config-value">1 hour</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Max snooze duration</span>
+        <span class="config-value">24 hours</span>
+      </div>
+      <div class="config-row">
+        <span class="config-label">Auto-resolve after</span>
+        <span class="config-value">7 days (Free) / 30 days (Pro)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container"><div class="toast" id="toast"></div></div>
+
+<script>
+// Tabs
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1)).classList.add('active');
+  });
+});
+
+// Toast
+const toast = document.getElementById('toast');
+let toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

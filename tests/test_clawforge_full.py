@@ -1,15 +1,14 @@
 """Clawforge comprehensive tests."""
 
-import pytest
-from observeco.clawforge.profile import run_profile
-from observeco.clawforge.load import run_load
 from observeco.clawforge.garden import run_garden
+from observeco.clawforge.load import run_load
+from observeco.clawforge.profile import run_profile
 
 
 class TestProfiles:
     def test_run_profile_runs(self):
         try:
-            result = run_profile("nonexistent-profile-xyz")
+            run_profile("nonexistent-profile-xyz")
         except Exception:
             pass  # graceful error acceptable
 
@@ -22,6 +21,6 @@ class TestProfiles:
 
     def test_run_garden_runs(self):
         try:
-            result = run_garden("test-agent")
+            run_garden("test-agent")
         except Exception:
             pass

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Anomalies Inbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc; --fg-2: #94a3b8; --muted: #64748b;
+  --accent: #22c55e; --warn: #eab308; --danger: #ef4444; --meta: #3b82f6; --purple: #a855f7;
+  --border: #334155; --border-soft: #273548;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 11px; --text-sm: 12px; --text-base: 14px; --text-lg: 15px; --text-xl: 18px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 9999px;
+  --ease: cubic-bezier(0.2,0,0,1);
+}
+body { font-family: var(--font); background: var(--bg); color: #e2e8f0; -webkit-font-smoothing: antialiased; }
+.app { max-width: 920px; margin: 0 auto; padding: 20px 24px; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-logo svg { width: 32px; height: 32px; display: block; }
+.header-title { font-size: 22px; font-weight: 700; color: var(--fg); }
+.header-title span { color: var(--muted); font-weight: 400; }
+.tier-badge {
+  background: rgba(34,197,94,0.12); color: #86efac;
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: var(--radius-pill);
+}
+.header-right { display: flex; align-items: center; gap: 10px; }
+.scan-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 4px 12px; border-radius: var(--radius-pill);
+  font-size: var(--text-xs); color: var(--muted); font-family: var(--font-mono);
+}
+
+/* ── Tabs ── */
+.tab-bar {
+  display: flex; gap: 0; border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab {
+  padding: 10px 18px; font-size: var(--text-sm); font-weight: 500;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.15s; background: none; border-left: none; border-right: none; border-top: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: var(--fg-2); }
+.tab.active { color: var(--fg); border-bottom-color: var(--accent); }
+.tab .count {
+  background: var(--border); color: var(--fg-2);
+  padding: 1px 6px; border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: 600; font-family: var(--font-mono);
+}
+.tab.active .count { background: rgba(34,197,94,0.2); color: var(--accent); }
+
+/* ── Summary Bar ── */
+.summary-bar {
+  display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.summary-chip {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-pill);
+  padding: 5px 14px; font-size: var(--text-sm); white-space: nowrap;
+}
+.summary-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.summary-chip .dot.critical { background: var(--danger); }
+.summary-chip .dot.high { background: var(--warn); }
+.summary-chip .dot.medium { background: var(--meta); }
+.summary-chip .num { font-weight: 600; font-family: var(--font-mono); }
+
+/* ── Anomaly Card ── */
+.anomaly-list { display: flex; flex-direction: column; gap: 10px; }
+.anomaly-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 20px;
+  transition: border-color 0.15s, opacity 0.2s;
+}
+.anomaly-card:hover { border-color: var(--border-soft); }
+.anomaly-card.critical { border-left: 3px solid var(--danger); }
+.anomaly-card.high { border-left: 3px solid var(--warn); }
+.anomaly-card.medium { border-left: 3px solid var(--meta); }
+
+.anomaly-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; flex-wrap: wrap; gap: 8px;
+}
+.anomaly-title-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.anomaly-agent {
+  font-family: var(--font-mono); font-size: var(--text-sm); font-weight: 500;
+  color: var(--fg); background: var(--bg); padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+.anomaly-type { font-size: var(--text-base); font-weight: 600; color: var(--fg); }
+.severity-badge {
+  display: inline-block; padding: 1px 7px; border-radius: var(--radius-pill);
+  font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
+}
+.severity-badge.critical { background: rgba(239,68,68,0.12); color: var(--danger); }
+.severity-badge.high { background: rgba(234,179,8,0.12); color: var(--warn); }
+.severity-badge.medium { background: rgba(59,130,246,0.12); color: var(--meta); }
+.new-badge {
+  background: rgba(239,68,68,0.15); color: var(--danger);
+  padding: 1px 6px; border-radius: var(--radius-pill);
+  font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+}
+.anomaly-time { font-size: var(--text-xs); color: var(--muted); white-space: nowrap; }
+
+.anomaly-body { font-size: var(--text-sm); color: var(--fg-2); line-height: 1.5; margin-bottom: 10px; }
+
+.anomaly-meta {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  font-size: var(--text-xs); color: var(--muted); margin-bottom: 12px;
+}
+.source-badge {
+  padding: 2px 8px; border-radius: var(--radius-pill);
+  background: var(--bg); color: var(--muted); font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.anomaly-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.action-btn {
+  padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--fg-2); font-size: var(--text-xs);
+  font-weight: 500; cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.action-btn:hover { border-color: var(--muted); color: var(--fg); }
+.action-btn.primary { background: var(--accent); color: #0f172a; border-color: var(--accent); font-weight: 600; }
+
+/* ── Recommended Action ── */
+.recommended-action {
+  background: var(--bg); border: 1px solid var(--border-soft); border-radius: var(--radius-md);
+  padding: 10px 14px; margin-bottom: 12px;
+  font-size: var(--text-xs); color: var(--fg-2); line-height: 1.5;
+}
+.recommended-action strong { color: var(--fg); font-weight: 600; }
+
+/* ── Related Events ── */
+.related-events {
+  font-size: var(--text-xs); color: var(--muted); margin-bottom: 10px;
+  padding-left: 12px; border-left: 2px solid var(--border);
+}
+.related-events .event { margin-bottom: 4px; }
+.related-events .event-type { color: var(--fg-2); font-weight: 500; }
+
+/* ── Panel ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Toast ── */
+.toast-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 200;
+}
+.toast {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 20px;
+  font-size: var(--text-base); color: var(--fg);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  opacity: 0; transform: translateY(20px); transition: all 0.2s var(--ease);
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center; padding: 48px 24px; color: var(--muted);
+}
+.empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+.empty-state .title { font-size: var(--text-lg); font-weight: 600; color: var(--fg-2); margin-bottom: 4px; }
+.empty-state .desc { font-size: var(--text-sm); }
+
+/* ── All resolved banner ── */
+.resolved-banner {
+  background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+  border-radius: var(--radius-md); padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: var(--text-sm); color: var(--accent); margin-bottom: 16px;
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="32" height="32">
+          <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="header-title">ObserveCo <span>Anomalies</span></span>
+      <span class="tier-badge">Free</span>
+    </div>
+    <div class="header-right">
+      <div class="scan-badge">🔍 Last scan: 12s ago</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar" id="tabBar">
+    <button class="tab active" data-tab="active">Active <span class="count">5</span></button>
+    <button class="tab" data-tab="resolved">Resolved <span class="count">8</span></button>
+  </div>
+
+  <!-- Active Panel -->
+  <div class="panel active" id="panelActive">
+    <!-- Summary -->
+    <div class="summary-bar">
+      <div class="summary-chip"><div class="dot critical"></div> <span class="num">1</span> Critical</div>
+      <div class="summary-chip"><div class="dot high"></div> <span class="num">2</span> High</div>
+      <div class="summary-chip"><div class="dot medium"></div> <span class="num">2</span> Medium</div>
+      <div class="summary-chip" style="border-color:rgba(34,197,94,0.3);color:var(--accent)">✅ 6 agents healthy</div>
+    </div>
+
+    <!-- Anomaly 1: Critical — Dead Agent -->
+    <div class="anomaly-list">
+      <div class="anomaly-card critical">
+        <div class="anomaly-header">
+          <div class="anomaly-title-line">
+            <span class="anomaly-agent">kepler</span>
+            <span class="anomaly-type">Agent unreachable</span>
+            <span class="severity-badge critical">Critical</span>
+            <span class="new-badge">NEW</span>
+          </div>
+          <span class="anomaly-time">3:15 AM · 14h ago</span>
+        </div>
+        <div class="anomaly-body">
+          No pulse received in 4 minutes (2 missed cycles). Process PID 41823 not found. Last known state: alive at 3:11 AM.
+        </div>
+        <div class="recommended-action">
+          <strong>Recommended:</strong> Check agent process. Run <code style="font-family:var(--font-mono);background:var(--surface);padding:1px 4px;border-radius:3px">observeco heal kepler</code> to restart.
+        </div>
+        <div class="anomaly-meta">
+          <span class="source-badge">pulse_log</span>
+          <span>Detected 14h ago · No config changes nearby</span>
+        </div>
+        <div class="anomaly-actions">
+          <button class="action-btn primary" onclick="showToast('🔧 Restarting kepler...')">🔧 Heal</button>
+          <button class="action-btn" onclick="showToast('✓ Acknowledged')">✓ Acknowledge</button>
+          <button class="action-btn" onclick="showToast('⏰ Snoozed 1h')">⏰ Snooze</button>
+        </div>
+      </div>
+
+      <!-- Anomaly 2: High — Error Burst -->
+      <div class="anomaly-card high">
+        <div class="anomaly-header">
+          <div class="anomaly-title-line">
+            <span class="anomaly-agent">aleph</span>
+            <span class="anomaly-type">Error burst</span>
+            <span class="severity-badge high">High</span>
+            <span class="new-badge">NEW</span>
+          </div>
+          <span class="anomaly-time">2:47 AM · 14h ago</span>
+        </div>
+        <div class="anomaly-body">
+          7 errors in 60 minutes. Pattern: bridge-down flag spam — repeated "Skipping bridge-down flag" entries. Likely stale bridge connection.
+        </div>
+        <div class="recommended-action">
+          <strong>Recommended:</strong> Check agent logs for bridge connectivity. May need to restart the bridge daemon.
+        </div>
+        <div class="related-events">
+          <div class="event"><span class="event-type">Config change:</span> No SOUL.md edits in 72h</div>
+          <div class="event"><span class="event-type">Context Health:</span> Score 79 (unchanged)</div>
+        </div>
+        <div class="anomaly-meta">
+          <span class="source-badge">errors</span>
+          <span>Detected 14h ago · Bridge-down since yesterday</span>
+        </div>
+        <div class="anomaly-actions">
+          <button class="action-btn primary" onclick="showToast('📋 Opening aleph logs...')">📋 View Logs</button>
+          <button class="action-btn" onclick="showToast('✓ Acknowledged')">✓ Acknowledge</button>
+          <button class="action-btn" onclick="showToast('⏰ Snoozed 4h')">⏰ Snooze</button>
+        </div>
+      </div>
+
+      <!-- Anomaly 3: High — Context Health Drop -->
+      <div class="anomaly-card high">
+        <div class="anomaly-header">
+          <div class="anomaly-title-line">
+            <span class="anomaly-agent">dreamer</span>
+            <span class="anomaly-type">Context Health dropped 24pts</span>
+            <span class="severity-badge high">High</span>
+          </div>
+          <span class="anomaly-time">Yesterday · 18h ago</span>
+        </div>
+        <div class="anomaly-body">
+          Score fell from 78 to 54 between Jun 4-5. No config changes detected in this window. Drift spike (+8%) correlates with score drop.
+        </div>
+        <div class="recommended-action">
+          <strong>Recommended:</strong> Run Context Fire Drill to project impact. Check memory bloat or increased error rate.
+        </div>
+        <div class="related-events">
+          <div class="event"><span class="event-type">Config change:</span> SOUL.md edited Jun 3 (+340 tokens)</div>
+          <div class="event"><span class="event-type">Drift:</span> +8% spike detected Jun 5</div>
+        </div>
+        <div class="anomaly-meta">
+          <span class="source-badge">context_health</span>
+          <span>Score: 78 → 54 · Possible unexplained degradation</span>
+        </div>
+        <div class="anomaly-actions">
+          <button class="action-btn primary" onclick="showToast('🔥 Running Context Fire Drill...')">🔥 Fire Drill</button>
+          <button class="action-btn" onclick="showToast('✓ Acknowledged')">✓ Acknowledge</button>
+          <button class="action-btn" onclick="showToast('⏰ Snoozed 12h')">⏰ Snooze</button>
+        </div>
+      </div>
+
+      <!-- Anomaly 4: Medium — Plugin Turning Red -->
+      <div class="anomaly-card medium">
+        <div class="anomaly-header">
+          <div class="anomaly-title-line">
+            <span class="anomaly-agent">pa</span>
+            <span class="anomaly-type">Plugin turning red</span>
+            <span class="severity-badge medium">Medium</span>
+          </div>
+          <span class="anomaly-time">1:30 AM · 15h ago</span>
+        </div>
+        <div class="anomaly-body">
+          weather plugin: error rate jumped from 2% to 12%. Cost: $0.04/day. Latency P95: 2.1s. Rating changed from 🟢 green to 🔴 red.
+        </div>
+        <div class="anomaly-meta">
+          <span class="source-badge">plugin_tracking</span>
+          <span>Rating: 🟢 → 🔴 in 24h</span>
+        </div>
+        <div class="anomaly-actions">
+          <button class="action-btn primary" onclick="showToast('🔌 Disabling weather plugin...')">🔌 Disable</button>
+          <button class="action-btn" onclick="showToast('✓ Acknowledged')">✓ Acknowledge</button>
+          <button class="action-btn" onclick="showToast('⏰ Snoozed 4h')">⏰ Snooze</button>
+        </div>
+      </div>
+
+      <!-- Anomaly 5: Medium — Stale Inbox -->
+      <div class="anomaly-card medium">
+        <div class="anomaly-header">
+          <div class="anomaly-title-line">
+            <span class="anomaly-agent">kepler</span>
+            <span class="anomaly-type">Stale inbox — 5 unconsumed signals</span>
+            <span class="severity-badge medium">Medium</span>
+          </div>
+          <span class="anomaly-time">Ongoing · 2d</span>
+        </div>
+        <div class="anomaly-body">
+          5 signals in kepler inbox older than 48h. Agent may not be consuming signals. Check daemon status.
+        </div>
+        <div class="anomaly-meta">
+          <span class="source-badge">signal_inboxes</span>
+          <span>5 signals · oldest: 2d ago</span>
+        </div>
+        <div class="anomaly-actions">
+          <button class="action-btn primary" onclick="showToast('📋 Checking kepler daemon...')">📋 Check Daemon</button>
+          <button class="action-btn" onclick="showToast('✓ Acknowledged')">✓ Acknowledge</button>
+          <button class="action-btn" onclick="showToast('⏰ Snoozed 24h')">⏰ Snooze</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolved Panel -->
+  <div class="panel" id="panelResolved">
+    <div class="resolved-banner">
+      ✅ All resolved. 8 anomalies handled in the last 7 days.
+    </div>
+    <div class="anomaly-list">
+      <div class="anomaly-card" style="opacity:0.6; border-left: 3px solid var(--accent);">
+        <div class="anomaly-header">
+          <div class="anomaly-title-line">
+            <span class="anomaly-agent">hound</span>
+            <span class="anomaly-type">Context Health drop (22pts)</span>
+            <span class="severity-badge high">High</span>
+            <span style="color:var(--accent);font-size:var(--text-xs);font-weight:500">✓ Resolved</span>
+          </div>
+          <span class="anomaly-time">Yesterday · Resolved in 1.2h</span>
+        </div>
+        <div class="anomaly-body">Score dropped 22pts. Cause: SOUL.md edit added 340 tokens. Resolved by Chisel compression.</div>
+      </div>
+      <div class="anomaly-card" style="opacity:0.6; border-left: 3px solid var(--accent);">
+        <div class="anomaly-header">
+          <div class="anomaly-title-line">
+            <span class="anomaly-agent">pragma</span>
+            <span class="anomaly-type">Drift spike (8.2%)</span>
+            <span class="severity-badge high">High</span>
+            <span style="color:var(--accent);font-size:var(--text-xs);font-weight:500">✓ Resolved</span>
+          </div>
+          <span class="anomaly-time">3 days ago · Resolved in 3.5h</span>
+        </div>
+        <div class="anomaly-body">Drift exceeded threshold. Cause: MEMORY.md grew 1.2KB. Resolved by memory garden cleanup.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container"><div class="toast" id="toast"></div></div>
+
+<script>
+// Tabs
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1)).classList.add('active');
+  });
+});
+
+// Toast
+const toast = document.getElementById('toast');
+let toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

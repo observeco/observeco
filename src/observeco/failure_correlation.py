@@ -10,8 +10,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime
 
 
 @dataclass
@@ -57,8 +56,9 @@ class FailureCorrelator:
 
     def _load_all_failures(self, session_dir: str = None) -> list[dict]:
         """Load all failure events from session logs."""
-        from .dirs import get_data_dir
         from pathlib import Path
+
+        from .dirs import get_data_dir
 
         if session_dir:
             sessions_path = Path(session_dir)

@@ -7,14 +7,11 @@ findings, and one-click fix. Pro-gated.
 Called as an API endpoint (HTMX) or CLI report.
 """
 
-import json
-import re
 import time
 from pathlib import Path
 from typing import Optional
 
-from observeco.chisel.config_scanner import scan_config, apply_fix, CONFIG_PATH
-
+from observeco.chisel.config_scanner import CONFIG_PATH, scan_config
 
 # ── Dashboard widget generator ──────────────────────────────────────────────
 
@@ -61,12 +58,13 @@ def generate_widget_html(hermes_home: Optional[str] = None) -> str:
     else:
         score_color = "#ef4444"
 
-    # Upsell for free users
+    # Waste-to-cost explanation
+    waste_k = round(report.total_waste_tok / 1000, 1)
     upsell = ""
     if not is_pro:
-        upsell = """<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1e1b4b;border-radius:8px;margin-top:8px;font-size:12px;">
+        upsell = f"""<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1e1b4b;border-radius:8px;margin-top:8px;font-size:12px;">
     <span style="font-size:16px;">🔒</span>
-    <span style="color:#94a3b8;flex:1;">One-click fixes, scheduled scans, drift alerts</span>
+    <span style="color:#94a3b8;flex:1;">Auto-detect token waste patterns that cost ~{waste_k}K tok/session — no manual audit needed</span>
     <button onclick="showBrainPro()" style="background:#6366f1;border:none;color:white;border-radius:6px;padding:4px 14px;font-size:12px;cursor:pointer;">Pro →</button>
 </div>"""
     if is_pro:
@@ -79,7 +77,7 @@ def generate_widget_html(hermes_home: Optional[str] = None) -> str:
 </div>"""
 
     html = f"""<div id="config-health-widget" style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;margin:8px 0;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:14px;">⚙️</span>
             <span style="font-size:14px;font-weight:600;color:#e2e8f0;">Config Health</span>
@@ -89,6 +87,9 @@ def generate_widget_html(hermes_home: Optional[str] = None) -> str:
                 <div style="width:32px;height:32px;border-radius:50%;background:#0f172a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:{score_color};">{report.config_health_score}</div>
             </div>
         </div>
+    </div>
+    <div style="font-size:11px;color:#64748b;margin:0 0 10px 0;line-height:1.5;">
+        Each finding represents tokens wasted <strong>every turn</strong> — duplicated boilerplate, stale references, cache misses. Streamlining topics removes redundant instructions, so the LLM processes less noise per request. At 50+ turns/day, waste compounds fast.
     </div>
     {findings_html}
     {upsell}

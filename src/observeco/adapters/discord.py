@@ -13,15 +13,15 @@ Environment variables:
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 import os
 import urllib.request
 from typing import Optional
 
-from .oef import OEFEvent
 from observeco.rate_limiter import get_rate_limiter
+
+from .oef import OEFEvent
 
 logger = logging.getLogger(__name__)
 
@@ -210,8 +210,8 @@ class DiscordAdapter:
             return False
 
         try:
-            from nacl.signing import VerifyKey
             from nacl.exceptions import BadSignatureError
+            from nacl.signing import VerifyKey
 
             verify_key = VerifyKey(bytes.fromhex(self.public_key))
             message = f"{timestamp}{body}".encode()
@@ -262,7 +262,7 @@ class DiscordAdapter:
                 logger.error(f"Discord API call failed: {e}")
                 return False
 
-        logger.error(f"Discord API call failed after 3 attempts (rate limited)")
+        logger.error("Discord API call failed after 3 attempts (rate limited)")
         return False
 
     def test_connection(self) -> dict:

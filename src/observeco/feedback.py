@@ -7,10 +7,7 @@ import os
 import platform
 from typing import Optional
 
-import typer
-
 from observeco import __version__
-
 
 FEEDBACK_TYPES = {
     "bug": "🐛 Bug Report",
@@ -46,8 +43,8 @@ def _get_environment_context() -> dict:
 def _preview_feedback(fb_type: str, summary: str, detail: str, severity: str) -> None:
     """Print a formatted preview so the user can confirm before sending."""
     from rich.console import Console
-    from rich.panel import Panel
     from rich.markdown import Markdown
+    from rich.panel import Panel
 
     console = Console()
 
@@ -58,7 +55,7 @@ def _preview_feedback(fb_type: str, summary: str, detail: str, severity: str) ->
         f"**Summary:** {summary}",
     ]
     if detail:
-        lines += ["", f"**Details:**", detail]
+        lines += ["", "**Details:**", detail]
 
     console.print()
     console.print(Panel(
@@ -71,7 +68,7 @@ def _preview_feedback(fb_type: str, summary: str, detail: str, severity: str) ->
 
 def _send_feedback(payload: dict) -> bool:
     """Send feedback to the ObserveCo telemetry server.
-    
+
     Default: https://telemetry.observeco.ai/v1/feedback
     Users can override with OBSERVECO_FEEDBACK_URL env var.
     """
@@ -107,9 +104,9 @@ def run_feedback(
 ) -> None:
     """Interactively collect and send feedback."""
     from rich.console import Console
-    from rich.panel import Panel
-    from rich.prompt import Prompt, Confirm
     from rich.markdown import Markdown
+    from rich.panel import Panel
+    from rich.prompt import Confirm, Prompt
 
     console = Console()
 

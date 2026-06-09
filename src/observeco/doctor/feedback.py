@@ -12,19 +12,14 @@ Privacy-first design:
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import platform
-import subprocess
-import sys
 import urllib.request
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Optional
 
 from .diagnostics import DiagnosticReport
-
 
 FEEDBACK_SERVER = "https://observeco-license-crm.vercel.app/api/telemetry"
 FEEDBACK_OPTOUT_VAR = "OBSERVECO_NO_TELEMETRY"

@@ -1,9 +1,9 @@
-# obs-spec-019: LLM-to-Human Feedback Protocol — Implementation Spec
+# obs-spec-019: Agent Signal Infrastructure v1 — Implementation Spec
 
 **Spec ID:** obs-spec-019
 **Author:** Hound (per Sean direction 2026-06-09)
 **Status:** Approved
-**Location:** `specs/obs-spec-019-llm-feedback-implementation.md`
+**Location:** `specs/obs-spec-019-agent-signal-infrastructure-v1.md`
 **Derived from:** Debate between Hound × Kepler (2026-06-09) — convergence on feedback protocol architecture with 3 unresolved implementation gaps.
 
 ---
@@ -63,10 +63,14 @@ The debate converged on a feedback protocol (4 categories, exception-based emiss
     {
       "flag_id": "lim_tool_timeout_001",
       "category": "limitation",
-      "fingerprint": "hash(limitation_type + detail_slug)",
+      "fingerprint": "limitation:stripe_auth_failure",
+      "tier": "critical",
       "emitted_at": "2026-06-09T08:15:00+08:00",
       "surface": "metadata",
-      "resolved": false
+      "resolved": false,
+      "resolved_at": null,
+      "propagated_from": null,
+      "propagated_to": ["flag_id_of_downstream_uncertainty"]
     }
   ],
   "resolved_at": null,
@@ -82,13 +86,17 @@ The debate converged on a feedback protocol (4 categories, exception-based emiss
 }
 ```
 
-**Ownership:** The ACPS session runner creates the registry at session start (before the LLM prompt is built). The LLM reads it via a prompt injection (`<feedback_registry>...</feedback_registry>`) and appends flags as it emits them. The session runner writes the file; the LLM reads and appends.
+**Ownership:** The ACPS session runner creates the empty registry template at session start (before the LLM prompt is built). The LLM writes the full registry file exclusively — it reads the existing file for dedup checks and writes updated JSON after each flag emission. The session runner never touches the file after creation. At session end, the session runner reads the final registry to populate summary surfaces.
 
 **Dedup mechanism:** Each flag has a `fingerprint` — the full `category + ":" + detail_slug` string (not a hash). Before emitting a limitation, the LLM checks: does this fingerprint already exist in the registry? If yes, skip. If no, append. Hash optimization deferred to v2 — using full plaintext avoids collision risk.
 
-**Resolution semantics:** A flag resolves when the condition that caused it no longer holds. The LLM checks on each subsequent turn whether prior limitations still apply. If `resolved_at` is set, the flag is excluded from summary surfaces but retained in metadata for audit. Cross-session: resolved flags do not persist — each session starts clean.
+**Resolution semantics:** A flag resolves when the condition that caused it no longer holds. The LLM checks on each subsequent turn whether prior limitations still apply. If `resolved_at` is set, the flag is excluded from summary surfaces but retained in metadata for audit.
+
+**Cross-session (v2 gap):** Each session starts clean — resolved flags do not persist. This is intentional for v1 but creates alarm fatigue: the same recurring limitation (e.g., a Stripe auth routing quirk) flags as Critical in every session. V2 should add a persistent `known_limitations.json` at `~/.hermes/state/known_limitations.json` with schema: `{ fingerprint, category, tier, first_seen, last_seen, occurrence_count, resolved }`. Session-start loads this and pre-populates the registry. Resolved items (confirmed by 2 consecutive sessions without recurrence) archived. The v1 schema does not prevent this addition — the `fingerprint` field provides the natural join key.
 
 **Lifecycle:** Created at session start. Destroyed when the session-end summary is written and delivered. Survives session runner restarts (disk-backed, not in-memory).
+
+**Crash recovery:** JSON file writes are not atomic on most filesystems. The LLM writes the registry using a write-to-temp-then-rename pattern: write to `~/.hermes/state/feedback_registry/<session_id>.json.tmp`, then `mv` to `<session_id>.json`. The `mv` (rename) is atomic on the same filesystem. If the session runner reads the registry and finds corrupt JSON (e.g., from a prior crash before rename completed), it creates a fresh empty registry and logs a warning — empty registry is always better than corrupt state.
 
 ### §4.2 Limitation Bag Compression
 
@@ -106,6 +114,8 @@ The debate converged on a feedback protocol (4 categories, exception-based emiss
 | Pragma | Single summary row per 5 identical-type flags. If <5, dropped at human surface (retained in metadata). | "12 timestamp formatting inconsistencies" → "Minor formatting variances noted" |
 
 **Pass 3 — Size-bounded output.** The surfaced list (conversational + summary surfaces) is capped at 5 items total. Exception: if all remaining items after Pass 2 are Critical, the cap is raised to accommodate all Critical flags. The 5-item cap applies only when mixed-tier output exists. Rationale: suppressing a Critical flag is worse than a longer summary. Log a warning when cap is exceeded so we can tune thresholds. If compression passes produce >5 under the normal rule, the lowest-tier items are dropped from the human-visible surfaces but retained in the metadata block. The summary surface includes a `"N more items in metadata"` footer.
+
+**Tie-breaking within same tier:** When items must be dropped and multiple items share the same lowest tier (e.g., 7 Major items, must drop 2), sort within the tier by emission timestamp (newest first) and drop the newest. Rationale: the OLDEST flag in the chain is most likely the root cause — dropping it while keeping downstream symptoms gives an incomplete picture. Keeping the oldest preserves the root-cause-first invariant. This is deterministic across runs.
 
 **Zero-item edge case:** If zero items survive compression for human-visible surfaces, emit a single placeholder: `[No significant issues in this session. N minor items logged in metadata.]` This prevents silent-zero confusion where a human reading empty feedback might assume the system is broken.
 
@@ -132,6 +142,11 @@ One JSONL entry per significant action:
 
 **v1 recommendation:** Post-hoc extraction. It costs one extra summarization pass but adds zero tokens to every production session. Only migrate to mid-session writing if post-hoc quality is insufficient.
 
+**Post-hoc extraction validation:** After the extraction prompt produces the JSONL file, a validation gate runs before any downstream consumer reads it:
+1. Every line must parse as valid JSON (skip malformed lines, log warning with line count)
+2. At least 3 of 4 entry types must be present (`source_load`, `tool_call`, `reasoning_step`, `confidence`)
+3. If validation fails, log a warning in the session runner and produce a minimal placeholder summary instead of garbage: `[Process log extraction failed — post-hoc quality gate did not pass. Raw summary: X lines, Y skipped. Consider retrying with mid-session flag write.]`
+
 ### §4.4 Surface Population
 
 **Metadata surface (always-on):**
@@ -153,6 +168,8 @@ A `feedback` field appended to every outbound signal payload:
 When a new limitation of tier Critical or Major is emitted, the agent appends 1-2 natural language sentences to its primary response, prefixed with a subtle marker:
 
 > *[Note: Confidence in the Stripe auth status is low (0.45). The last successful check was 12 hours ago. Consider verifying manually.]*
+
+**Per-session throttle:** Maximum 3 conversational notes per session. Beyond that, new Critical/Major flags are recorded in the metadata surface only, with a footnote: `[+N flags in metadata — conversational surface saturated]`. Rationale: a session where every turn generates a new Critical limitation is noise, not signal. The human is already aware of the problem from the first 3 notes. Additional notes after the throttle trigger degrade trust in the feedback system itself (user perception: "it's broken AND it won't stop telling me it's broken"). The 3-threshold is configurable via a feedback_conversational_limit config key for environments that want more/less verbosity. Setting to 0 disables conversational surface entirely (metadata-only mode).
 
 **Summary surface (session-end, opt-in):**
 A markdown document written to `~/.hermes/state/feedback_summary/<session_id>.md`:
@@ -223,7 +240,7 @@ A markdown document written to `~/.hermes/state/feedback_summary/<session_id>.md
 
 **Files to create:** `~/.hermes/state/compression/compress.py` — standalone Python script, not an agent dependency. Or implement as an inline prompt instruction.
 
-**Design decision needed:** Algorithm in code (deterministic, testable) vs algorithm in prompt (simpler but model-dependent). **Recommendation:** Prompt-level for v1. The 3-pass logic is simple enough to express as instructions. Only extract to Python if we need deterministic behavior across model providers.
+**Design decision needed:** Algorithm in code (deterministic, testable) vs algorithm in prompt (simpler but no dependency). **Recommendation:** Python utility for v1. Rationale: (a) compression is a pure function — deterministic across all model providers, even non-LLM shells. (b) A Python script is testable with known inputs: feed 12 flags, assert output ≤5, assert all Critical retained, assert Pragma <5 dropped. (c) Prompt-level means every session pays the token cost of re-deriving the same logic, with model-dependent output variance. (d) The trigger point (end-of-session) is well-defined: the script runs after the registry is finalized, before surfaces are populated. Implement as `~/.hermes/state/compression/compress.py`, callable with a registry JSON path. Prompt-level is a valid fallback only if Python execution is unavailable.
 
 **Verification:** Feed a known set of 12 flags (3 Critical, 4 Major, 3 Minor, 2 Pragma) through the compressor. Verify output ≤5 items, all Critical flags retained, Pragma with <5 count dropped from human surface.
 
@@ -275,14 +292,15 @@ Depends on Phases 1-3 all working. Metadata field depends on registry (Phase 2).
 
 ## §8 Risks & Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| **Prompt bloat from registry injection** | Medium | Medium | Registry block is ~200 chars + N×100 per flag. Cap registry at 20 flags max. Beyond 20, truncation priority (first to drop): Pragma → Minor → Major. Critical flags are never truncated. |
-| **LLM doesn't reliably write to registry mid-session** | Medium | High | Phase 1 fallback: post-hoc extraction exists. If mid-session writing is unreliable, fall back to post-hoc for the registry as well. |
-| **Compression drops a Critical flag** | Low | High | Invariant in Phase 3 spec: Critical flags never compress. Test with adversarial input (all Critical) before production. |
-| **Fingerprint collision suppresses genuine limitation** | Low | Medium | De-duplication uses full plaintext `category:detail_slug` as key (not a hash). Hash optimization deferred to v2 — collision impossible with plaintext keys. |
-| **Process log JSONL parsing errors** | Low | Low | Each line is independent. Parse errors skip one line, don't break the rest. Fallback: show raw lines. JSONL append is not atomic per-line — individual lines may be partial after a crash; the parser already handles this by skipping malformed lines. |
-| **Metadata field adds noise to every signal** | Low | Medium | Metadata field is 2-5% of payload size. If performance impact materializes, gate on `feedback_enabled: true` config flag (default: off). |
+|| Risk | Likelihood | Impact | Mitigation |
+||------|-----------|--------|------------|
+|| **Prompt bloat from registry injection** | Medium | Medium | Registry block is ~200 chars + N×100 per flag. Cap registry at 20 flags max. Beyond 20, truncation priority (first to drop): Pragma → Minor → Major. Critical flags are never truncated. |
+|| **LLM doesn't reliably write to registry mid-session** | Medium | High | Phase 1 fallback: post-hoc extraction exists. If mid-session writing is unreliable, fall back to post-hoc for the registry as well. |
+|| **Compression drops a Critical flag** | Low | High | Invariant in Phase 3 spec: Critical flags never compress. Test with adversarial input (all Critical) before production. |
+|| **Fingerprint collision suppresses genuine limitation** | Low | Medium | De-duplication uses full plaintext `category:detail_slug` as key (not a hash). Hash optimization deferred to v2 — collision impossible with plaintext keys. |
+|| **Process log JSONL parsing errors** | Low | Low | Each line is independent. Parse errors skip one line, don't break the rest. Fallback: show raw lines. JSONL append is not atomic per-line — individual lines may be partial after a crash; the parser already handles this by skipping malformed lines. |
+|| **Metadata field adds noise to every signal** | Low | Medium | Metadata field is 2-5% of payload size. If performance impact materializes, gate on `feedback_enabled: true` config flag (default: off). |
+|| **Fingerprint canonicalization drift** | Medium | Medium | Fingerprints are LLM-written — the same issue may produce `stripe_auth_failure` in one session and `stripe_api_authentication_error` in another. Mitigation: (a) canonical slug taxonomy in prompt preamble, (b) post-hoc fuzzy-match normalization, (c) v2 slug registry. |
 
 ---
 
@@ -295,3 +313,43 @@ Depends on Phases 1-3 all working. Metadata field depends on registry (Phase 2).
 - [ ] Rollback: Each phase rollback verified — no stale files, no orphaned prompt instructions.
 - [ ] Edge case: Zero-limitation session produces empty feedback with no errors.
 - [ ] Edge case: Session interrupted mid-write — registry file is valid JSON (file write is atomic).
+
+---
+
+## §10 Lifecycle & Hygiene
+
+**Mandatory:** Every artifact created by the feedback protocol must have a documented deletion policy. Unbounded disk growth degrades search and creates operational debt.
+
+### §10.1 Archival & Deletion Windows
+
+| Artifact | Path | Archive after | Delete after | Rationale |
+|----------|------|--------------|-------------|-----------|
+| Process log (JSONL) | `~/.hermes/state/process_log/` | 7 days (tarball + rename) | 30 days | Most recent week for debugging; historical logs rarely valuable after 30 days |
+| Feedback registry (JSON) | `~/.hermes/state/feedback_registry/` | N/A — deleted at session end per §4.1 | Session end | Registry is purely session-scoped per spec; enforcing this prevents orphan accumulation |
+| Summary markdown | `~/.hermes/state/feedback_summary/` | 14 days | 60 days | Summaries are human-readable — users may reference them for ~2 weeks. 60-day retention before deletion gives a safety margin |
+| Known limitations (v2) | `~/.hermes/state/known_limitations.json` | N/A | N/A — single file, indefinite | Persists across sessions by design. Entries archived internally when `resolved` is confirmed by 2 consecutive clean sessions |
+
+### §10.2 Enforcement Mechanism
+
+A cron job runs daily at 02:00 local time:
+
+```bash
+# Archive process logs older than 7 days
+find ~/.hermes/state/process_log/ -name '*.jsonl' -mtime +7 \
+  -exec tar rf /tmp/process_log_archive.tar {} + \
+  -delete
+
+# Delete archived logs older than 30 days
+find ~/.hermes/state/process_log/ -name '*.jsonl' -mtime +30 -delete
+
+# Delete summaries older than 14 days (direct, no archive)
+find ~/.hermes/state/feedback_summary/ -name '*.md' -mtime +14 -delete
+```
+
+**Registration:** Hook this into the existing `hermes cron create` pattern (see GS-011) so it survives host reboots without manual setup.
+
+### §10.3 Disaster Recovery
+
+- **Accidental deletion before summary delivery:** The session runner holds the final registry in memory until summary is written. If summary writing fails, the registry is preserved on disk for retry. The cron job's mtime-based check gives a 24-hour window before archiving applies — a failing summary delivery would trigger alerts long before then.
+- **Artifact explosion from a runaway session:** A single session producing 1000+ process_log entries (e.g., infinite loop) is capped by the session runner's turn limit. Post-session, the single large file is archived/deleted on the normal schedule. No special handling needed.
+- **Cron failure:** If the daily cron skips a run, the mtime-based checks catch up on the next run. The deletion windows are generous enough (7/14/30/60 days) that a single missed day is harmless. Two consecutive missed days → flag for human review.

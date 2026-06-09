@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Re-apply all UX fixes that were lost in git revert + fix for ❓ emoji bug."""
-import re, sys
+import re
 
 INDEX = '/Users/seanfzc/projects/observeco/src/observeco/dashboard/templates/index.html'
 SERVER = '/Users/seanfzc/projects/observeco/src/observeco/dashboard/server.py'
@@ -62,10 +62,10 @@ for old_size, new_size in [('10px', '13px'), ('11px', '13px')]:
         ctx_start = max(0, m.start() - 60)
         ctx_end = min(len(server), m.end() + 60)
         ctx = server[ctx_start:ctx_end]
-        
+
         # Skip badge/chip patterns
         skip = False
-        for marker in ['padding:1px', 'padding:2px', 'NEW', 'border-radius:4px;', 
+        for marker in ['padding:1px', 'padding:2px', 'NEW', 'border-radius:4px;',
                         'uppercase', 'letter-spacing', 'graph-toolbar',
                         'scroll to zoom', 'font-size:11px;color:var(--green)',
                         '>Ai<', 'font-size:11px;color:{fw_color}']:
@@ -74,7 +74,7 @@ for old_size, new_size in [('10px', '13px'), ('11px', '13px')]:
                 break
         if skip:
             continue
-        
+
         server = server[:m.start()] + f'font-size:{new_size}' + server[m.end():]
         if old_size == '10px':
             changes_10 += 1
@@ -200,22 +200,22 @@ if count_brain_size > 0:
     # These are in the f-string literal, so {name} is already used
     # Let's find the pattern: Error row -> Brain size row -> Composition row -> </div>\\n</div>
     # and replace the Brain+Comp pair with {brain_composition_html}
-    
+
     # Find all occurrences of 'title=\"Click for Brain size' in f-string content
     # (i.e., NOT inside the brain_composition_html variable definition)
     # Strategy: replace everything between Error row's second </div> and the </div>\\n</div>\\n<div class="agent-detail"
     import re
-    
+
     # Each card template ends one of these rows before agent-detail
     pattern = r'(title="Click for Brain size / drift details">[\s\S]*?</div>\s*</div>\s*<div class="agent-detail")'
     matches = list(re.finditer(pattern, server))
     print(f'Found {len(matches)} Brain+Composition blocks to replace')
-    
+
     for m in reversed(matches):
         full_match = m.group(0)
         replacement = '{brain_composition_html}\n        </div>\n        <div class="agent-detail"'
         server = server[:m.start()] + replacement + server[m.end():]
-    
+
     print(f'✅ Replaced {len(matches)} inline Brain+Comp blocks with {{brain_composition_html}}')
 
 with open(SERVER, 'w') as f:
@@ -223,6 +223,7 @@ with open(SERVER, 'w') as f:
 
 # ---- FINAL COMPILE CHECK ----
 import py_compile
+
 try:
     py_compile.compile(SERVER, doraise=True)
     print('\n✅ FINAL COMPILE: OK')

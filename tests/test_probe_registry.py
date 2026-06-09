@@ -1,6 +1,6 @@
 """Tests for Phase 7.4 — Probe Driver Registry."""
 from observeco.config import AgentConfig
-from observeco.probe.registry import BaseProbe, register, get_probe, list_probe_types, ProbeResult
+from observeco.probe.registry import BaseProbe, ProbeResult, get_probe, list_probe_types, register
 
 
 def test_register_decorator():

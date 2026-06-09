@@ -1114,29 +1114,9 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
           <div id="compressStatus" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.6;"></div>
         </div>
 
-        <!-- Auto tab (Pro locked) -->
+        <!-- Auto tab — license-aware (locked or unlocked) -->
         <div id="autoTab" style="display:none;">
-          <div class="auto-watch-card" onclick="showToastB('🔒 Pro feature — opening upgrade dialog');showBrainPro()">
-            <div class="icon" id="autoIcon">🔒</div>
-            <h4 id="autoTitle">Auto-Compression (Pro)</h4>
-            <p id="autoDesc">Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
-            <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#64748b;">
-              <span>⚡ Detects file changes</span>
-              <span>💾 Auto-backup before compress</span>
-              <span>📊 Logs savings to dashboard</span>
-            </div>
-            <div class="auto-log-preview">
-              <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified &mdash; auto-compressing...</span><br>
-              <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ 4,200 &rarr; 3,276 tok (guidance compress)</span><br>
-              <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
-              <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 &rarr; 2,470 tok (guidance + memory + skills)</span><br>
-              <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
-              <span style="color:#38bdf8;">📊 Cumulative fleet savings this week: 47,812 tokens saved</span>
-            </div>
-            <div style="margin-top:10px;">
-              <button class="pro-cta-btn" onclick="showToastB('🔓 Opening Pro settings...');showBrainPro()">Unlock with Pro &rarr;</button>
-            </div>
-          </div>
+          <div id="autoTabContent"></div>
         </div>
       </div>
 
@@ -2502,6 +2482,64 @@ function switchCompressTab(tab, btn) {
   btn.classList.add('active');
   document.getElementById('manualTab').style.display = tab === 'manual' ? '' : 'none';
   document.getElementById('autoTab').style.display = tab === 'auto' ? '' : 'none';
+  if (tab === 'auto') {
+    fetch('/api/licenses/status')
+      .then(r => r.json())
+      .then(status => {
+        const isPro = status.license_type === 'pro' || status.is_pro;
+        const container = document.getElementById('autoTabContent');
+        if (isPro) {
+          container.innerHTML = `
+            <div class="auto-watch-card" style="cursor:default;">
+              <div class="icon">&#x1F916;</div>
+              <h4>Auto-Compression &mdash; Active</h4>
+              <p>Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
+              <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#22c55e;">
+                <span>&#x2705; Detects file changes</span>
+                <span>&#x2705; Auto-backup before compress</span>
+                <span>&#x2705; Logs savings to dashboard</span>
+              </div>
+              <div class="auto-log-preview">
+                <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified &mdash; auto-compressing...</span><br>
+                <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">&#x2705; 4,200 &rarr; 3,276 tok (guidance compress)</span><br>
+                <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
+                <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 &rarr; 2,470 tok (guidance + memory + skills)</span><br>
+                <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
+                <span style="color:#38bdf8;">&#x1F4CA; Cumulative fleet savings this week: 47,812 tokens saved</span>
+              </div>
+              <div style="margin-top:10px;">
+                <button class="primary-btn" style="background:#6366f1;border:none;color:white;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;" onclick="showToast('&#x2699;&#xFE0F; Auto-Compress daemon status: running')">&#x2699;&#xFE0F; Daemon Status</button>
+              </div>
+            </div>`;
+        } else {
+          container.innerHTML = `
+            <div class="auto-watch-card" onclick="showBrainPro()" style="cursor:pointer;">
+              <div class="icon" id="autoIcon">&#x1F512;</div>
+              <h4 id="autoTitle">Auto-Compression (Pro)</h4>
+              <p id="autoDesc">Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
+              <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#64748b;">
+                <span>&#x26A1; Detects file changes</span>
+                <span>&#x1F4BE; Auto-backup before compress</span>
+                <span>&#x1F4CA; Logs savings to dashboard</span>
+              </div>
+              <div class="auto-log-preview">
+                <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified &mdash; auto-compressing...</span><br>
+                <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">&#x2705; 4,200 &rarr; 3,276 tok (guidance compress)</span><br>
+                <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
+                <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 &rarr; 2,470 tok (guidance + memory + skills)</span><br>
+                <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
+                <span style="color:#38bdf8;">&#x1F4CA; Cumulative fleet savings this week: 47,812 tokens saved</span>
+              </div>
+              <div style="margin-top:10px;">
+                <button class="pro-cta-btn" onclick="showBrainPro()">Unlock with Pro &rarr;</button>
+              </div>
+            </div>`;
+        }
+      })
+      .catch(() => {
+        document.getElementById('autoTabContent').innerHTML = '<div style="color:var(--warn);padding:12px;">Failed to check license status. Reload and try again.</div>';
+      });
+  }
 }
 function switchMode(mode, btn) {
   compressMode = mode;
@@ -2782,10 +2820,17 @@ function openChiselModal(agentName) {
           return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:#e2e8f0;font-weight:500;">' + name + '</span><span style="color:#94a3b8;">' + a.raw_tokens + ' tok → <span style="color:#22c55e;">' + a.lite_tokens + ' tok (-' + litePct + '%)</span> <span style="color:#a5b4fc;">| Full: ' + a.full_tokens + ' tok (-' + fullPct + '%)</span></span></div>';
         }).join('') + '</div>';
       }
-      html += '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:12px;color:#64748b;margin-bottom:8px;">🔒 Auto-Compression (Pro) — Every time your SOUL.md is edited, watch daemon runs compression automatically.</div><div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.8;"><span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified — compressing...</span><br><span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ Compression applied (savings vary per agent)</span><br><span style="color:#38bdf8;">📊 Cumulative: tracked in watch daemon logs</span></div><div style="margin-top:10px;text-align:center;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;" onclick="showBrainPro()">Unlock with Pro →</button></div></div>';
+      html += '<div id="chiselAutoCompressSection" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:12px;color:#64748b;margin-bottom:8px;">🔒 Auto-Compression (Pro) — Every time your SOUL.md is edited, watch daemon runs compression automatically.</div><div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.8;"><span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified — compressing...</span><br><span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ Compression applied (savings vary per agent)</span><br><span style="color:#38bdf8;">📊 Cumulative: tracked in watch daemon logs</span></div><div style="margin-top:10px;text-align:center;" id="chiselAutoCta"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;" onclick="showBrainPro()">Unlock with Pro →</button></div></div>';
       body.innerHTML = html;
+      // Hide locked sections if Pro
+      fetch('/api/licenses/status').then(function(r){return r.json()}).then(function(s){
+        if (s.license_type === 'pro' || s.is_pro) {
+          var sec = document.getElementById('chiselAutoCompressSection');
+          if (sec) sec.style.display = 'none';
+        }
+      }).catch(function(){});
     })
-    .catch(e => { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
+    .catch(function(e) { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
 }
 function showToast(msg) {
   showToastB(msg);
@@ -2817,11 +2862,18 @@ function openOpenclawModal() {
         html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;"><div style="font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:6px;">Recent Loads</div>' +
           data.recent_loads.map(l => '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border);"><span>' + l.source + '</span><span style="color:#94a3b8;">loaded: ' + l.loaded + ' · skipped: ' + l.skipped + ' · saved: ' + l.saved + ' tok</span></div>').join('') + '</div>';
       }
-      html += '<div style="display:flex;gap:8px;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" onclick="showToastB(\'Plugin sources refreshed\')">🔄 Re-scan Sources</button><button class="feedback-btn" onclick="showBrainPro()">🔒 Pro: Auto-Config</button></div>';
+      html += '<div style="display:flex;gap:8px;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" onclick="showToastB(\'Plugin sources refreshed\')">🔄 Re-scan Sources</button><span id="pluginAutoConfigBtn"><button class="feedback-btn" onclick="showBrainPro()">🔒 Pro: Auto-Config</button></span></div>';
       html += '<div style="margin-top:12px;font-size:11px;color:#64748b;text-align:center;">' + (data.agents || []).length + ' OpenClaw agent(s) · ' + data.profiles_count + ' profiles loaded</div>';
       body.innerHTML = html;
+      // Hide locked sections if Pro
+      fetch('/api/licenses/status').then(function(r){return r.json()}).then(function(s){
+        if (s.license_type === 'pro' || s.is_pro) {
+          var btn = document.getElementById('pluginAutoConfigBtn');
+          if (btn) btn.style.display = 'none';
+        }
+      }).catch(function(){});
     })
-    .catch(e => { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
+    .catch(function(e) { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
 }
 function closeModalById(id) {
   document.getElementById(id).classList.remove('active');
@@ -2927,6 +2979,8 @@ document.addEventListener('DOMContentLoaded', function() {
   showSearchBar();
   refreshAgentList();
   setInterval(refreshAgentList, 30000);
+  loadLicenseStatus();  // Hide locked upsells if already Pro
+  setInterval(loadLicenseStatus, 60000);  // Re-check license status periodically
 });
 
 // Track filter/page state on every htmx request that updates fleetContainer

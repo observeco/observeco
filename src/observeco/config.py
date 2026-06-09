@@ -1,8 +1,8 @@
 """Config reader/writer — agent detection configs.
 
 Reads agents from:
-1. ~/.hermes/config.yaml (Hermes agents)
-2. ~/.hermes/agents/ (Hermes SOUL.md files)
+1. $(OBSERVECO_HERMES_HOME)/config.yaml (Hermes agents, default ~/.hermes/)
+2. $(OBSERVECO_HERMES_HOME)/agents/ (Hermes SOUL.md files)
 3. OpenClaw AGENTS.md / SOUL.md
 4. ~/.observeco/agents.json
 5. cwd observeco.yml (fallback)
@@ -11,6 +11,7 @@ Reads agents from:
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from dataclasses import dataclass, field
@@ -18,6 +19,22 @@ from pathlib import Path
 from typing import Optional
 
 from platformdirs import user_data_dir
+
+
+def hermes_home() -> Path:
+    """Return the configured Hermes home directory.
+
+    Override via OBSERVECO_HERMES_HOME env var. Defaults to ~/.hermes.
+    """
+    override = os.environ.get("OBSERVECO_HERMES_HOME")
+    if override:
+        return Path(override).expanduser().resolve()
+    return Path.home() / ".hermes"
+
+
+_HERMES_CONFIG_PATH = hermes_home() / "config.yaml"
+_HERMES_AGENTS_DIR = hermes_home() / "agents"
+_AGENTS_JSON = Path(user_data_dir("observeco", "observeco")) / "agents.json"
 
 
 @dataclass
@@ -33,8 +50,8 @@ class ObserveConfig:
     agents: list[AgentConfig] = field(default_factory=list)
 
 
-_HERMES_CONFIG_PATH = Path.home() / ".hermes" / "config.yaml"
-_HERMES_AGENTS_DIR = Path.home() / ".hermes" / "agents"
+_HERMES_CONFIG_PATH = hermes_home() / "config.yaml"
+_HERMES_AGENTS_DIR = hermes_home() / "agents"
 _AGENTS_JSON = Path(user_data_dir("observeco", "observeco")) / "agents.json"
 
 
@@ -50,8 +67,10 @@ def _load_hermes_agents() -> list[AgentConfig]:
     seen: set[str] = set()
     excluded = _get_excluded_set()
 
-    # Method 1 (preferred): Scan ~/.hermes/profiles/ for SOUL.md — the canonical source
-    hermes_profiles_dir = Path.home() / ".hermes" / "profiles"
+    hermes_base = hermes_home()
+
+    # Method 1 (preferred): Scan $(HERMES_HOME)/profiles/ for SOUL.md — the canonical source
+    hermes_profiles_dir = hermes_base / "profiles"
     if hermes_profiles_dir.exists():
         for entry in sorted(hermes_profiles_dir.iterdir()):
             if entry.is_dir():
@@ -103,8 +122,8 @@ def _load_openclaw_agents() -> list[AgentConfig]:
                     agents.append(AgentConfig(name=name, framework="openclaw",
                                                config_path=str(soul)))
 
-    # Method 2: Check ~/.hermes/profiles/ for SOUL.md with OpenClaw ownership markers
-    profiles_dir = Path.home() / ".hermes" / "profiles"
+    # Method 2: Check $(HERMES_HOME)/profiles/ for SOUL.md with OpenClaw ownership markers
+    profiles_dir = hermes_home() / "profiles"
     if profiles_dir.exists():
         for entry in profiles_dir.iterdir():
             soul = entry / "SOUL.md"

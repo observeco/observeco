@@ -5,9 +5,11 @@ Runs against the local TestClient — no server needed.
 Exits 0 if all pass, 1 on any failure.
 """
 import sys
+
 sys.path.insert(0, "src")
 
 from fastapi.testclient import TestClient
+
 from observeco.dashboard.server import app
 
 client = TestClient(app)
