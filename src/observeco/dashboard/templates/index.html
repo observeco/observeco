@@ -2387,8 +2387,23 @@ function showLicenseKeyModal() {
   modal.id = 'licenseKeyModal';
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
   modal.onclick = function(e) { if (e.target === this) this.remove(); };
+
+  // Check if already activated
+  var badge = document.getElementById('tierBadge');
+  var hasPro = badge && badge.querySelector('.license-card');
+  var isKeyUser = hasPro && fetch('/api/licenses/status').then(function(){});
+  // Simpler: just check if the badge inner contains "License key" text (will be set by server)
+  var isLicenseKeyUser = hasPro && badge && badge.textContent.indexOf('License key') > -1;
+
+  var deactivateHtml = '';
+  if (hasPro) {
+    deactivateHtml = '<div style="margin-top:16px;padding-top:12px;border-top:1px solid #334155;">'
+      + '<button onclick="showDeactivateConfirm()" style="width:100%;background:transparent;border:1px solid #dc2626;color:#fca5a5;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">Deactivate License</button>'
+      + '</div>';
+  }
+
   modal.innerHTML = `<div onmousedown="event.stopPropagation()" onclick="event.stopPropagation()" style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:24px;max-width:460px;width:90%;">
-    <div style="font-size:28px;margin-bottom:8px;">🔑</div>
+    <div style="font-size:28px;margin-bottom:8px;">&#x1F511;</div>
     <h3 style="margin:0 0 6px;color:#f8fafc;font-size:18px;">Activate Pro License Key</h3>
     <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin:0 0 16px;">
       Enter your Pro license key to unlock all features. Keys are validated against our CRM — ensure the key has not expired.
@@ -2400,9 +2415,27 @@ function showLicenseKeyModal() {
       <button onclick="document.getElementById('licenseKeyModal').remove()" style="flex:1;background:transparent;border:1px solid #475569;color:#94a3b8;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;">Cancel</button>
       <button id="lkSubmitBtn" onclick="submitLicenseKey()" style="flex:1;background:#6366f1;border:none;color:white;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Activate</button>
     </div>
+    ${deactivateHtml}
   </div>`;
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById('lkInput').focus(), 100);
+}
+
+function showDeactivateConfirm() {
+  if (!confirm('Are you sure? Pro features will be locked. Your data is preserved. You can activate a new key at any time.')) return;
+  fetch('/api/licenses/deactivate', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.status === 'deactivated') {
+        showToast('License deactivated. Pro features locked.');
+        var modal = document.getElementById('licenseKeyModal');
+        if (modal) modal.remove();
+        htmx.trigger('#tierBadge', 'load');
+      } else {
+        showToast('Failed: ' + (data.detail || data.message || 'unknown'));
+      }
+    })
+    .catch(e => showToast('Failed: ' + e.message));
 }
 
 function submitLicenseKey() {

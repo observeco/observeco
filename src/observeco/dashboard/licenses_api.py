@@ -25,7 +25,6 @@ class ActivateRequest(BaseModel):
     email: str = ""
     plan: str = "solo"
 
-
 class TrialRequest(BaseModel):
     confirm: bool = True
 
@@ -51,6 +50,7 @@ async def license_badge():
     days = state.remains_days
     plan = state.plan or "Solo"
     now_ts = int(time.time())
+    source = state.provisioning_source or ""
 
     if is_in_grace:
         # Trial expired but within 3-day grace period — still Pro
@@ -75,18 +75,29 @@ async def license_badge():
   <button onclick="showCancelTrialConfirm()" class="header-btn" style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">Cancel Trial</button>
 </div>""")
     elif is_pro and not is_trial:
-        # Paid Pro subscriber
+        # Pro subscriber — distinguish key vs subscription
         stale_warn = ""
         if state.validation_stale:
-            stale_warn = '<span style="font-size:10px;color:#f59e0b;">⚠️ Validation not refreshed in 24h</span>'
-        return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#064e3b;border:1px solid #059669;border-radius:10px;font-size:12px;">
-  <span style="font-size:16px;">✅</span>
+            stale_warn = '<span style="font-size:10px;color:#f59e0b;">&#x26A0;&#xFE0F; Validation not refreshed in 24h</span>'
+        if source == "admin_key":
+            return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1e1b4b;border:1px solid #6366f1;border-radius:10px;font-size:12px;">
+  <span style="font-size:16px;">&#x1F511;</span>
   <div style="display:flex;flex-direction:column;">
-    <span style="font-weight:600;color:#86efac;">Pro · {plan} plan</span>
+    <span style="font-weight:600;color:#a5b4fc;">Pro &middot; {plan} plan</span>
+    <span style="font-size:10px;color:#818cf8;">License key</span>
+    {stale_warn}
+  </div>
+  <button onclick="showLicenseKeyModal()" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-weight:600;font-size:11px;">Manage Key &#x2192;</button>
+</div>""")
+        # Stripe subscriber
+        return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#064e3b;border:1px solid #059669;border-radius:10px;font-size:12px;">
+  <span style="font-size:16px;">&#x2705;</span>
+  <div style="display:flex;flex-direction:column;">
+    <span style="font-weight:600;color:#86efac;">Pro &middot; {plan} plan</span>
     <span style="font-size:10px;color:#64748b;">Active subscription</span>
     {stale_warn}
   </div>
-  <button onclick="showManageBilling()" class="header-btn" style="background:#059669;color:white;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-weight:600;font-size:11px;">Manage Billing →</button>
+  <button onclick="showManageBilling()" class="header-btn" style="background:#059669;color:white;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-weight:600;font-size:11px;">Manage Billing &#x2192;</button>
 </div>""")
     elif is_consumed:
         # Trial was cancelled or expired and consumed
@@ -116,7 +127,8 @@ async def license_badge():
     <span style="font-weight:600;color:var(--fg);">Free</span>
     <span style="font-size:10px;color:var(--muted);">No trial started</span>
   </div>
-  <a href="/api/checkout?plan=solo&trial=30" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Start Trial $9/mo</a>
+<a href="/api/checkout?plan=solo&trial=30" target="_blank" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Start Trial $9/mo</a>
+  <button onclick="showLicenseKeyModal()" class="header-btn" style="background:transparent;border:1px solid #6366f1;color:#a5b4fc;padding:5px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:11px;">Pro License Key</button>
 </div>""")
 
 
@@ -159,6 +171,15 @@ async def revalidate():
 async def cancel_trial():
     """Cancel the current trial. Pro features lock, data preserved."""
     result = lic.cancel_trial()
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result["message"])
+    return result
+
+
+@router.post("/deactivate")
+async def deactivate_license_key():
+    """Deactivate the current license key. Downgrades to Free."""
+    result = lic.deactivate_license()
     if result.get("status") == "error":
         raise HTTPException(status_code=400, detail=result["message"])
     return result

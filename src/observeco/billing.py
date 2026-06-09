@@ -414,6 +414,7 @@ def validate_admin_key(key: str) -> dict:
         "product": entry.get("plan", "solo"),
         "status": "active",
         "plan": entry.get("plan", "solo"),
+        "source": "admin_key",
     }
 
 
