@@ -5297,3 +5297,109 @@ async def api_agent_summary(name: str):
         response = f"{status} · {latency:.0f}ms · {error_count} errors · ⚡{drift}"
 
     return HTMLResponse(f"<span style='font-size:12px;color:#94a3b8;'>{response}</span>")
+
+
+@app.get("/api/self-monitor-summary")
+async def api_self_monitor_summary():
+    """G1.1: Self-monitoring budget cap — dashboard widget data."""
+    from observeco.llm_service.gate import get_self_monitor
+    summary = get_self_monitor().summary()
+    pct = summary["usage_pct"]
+    bar_color = "#22c55e" if pct < 70 else "#eab308" if pct < 90 else "#ef4444"
+    bar_width = min(pct, 100)
+    status = "🟢 Normal" if pct < 70 else "🟡 Approaching limit" if pct < 90 else "🔴 Near limit" if pct < 100 else "🔴 Exhausted"
+    banner = ""
+    if pct >= 90:
+        banner = '<div class="warning-banner" style="background:#451a03;border:1px solid #ef4444;padding:8px 12px;border-radius:6px;margin-bottom:8px;font-size:12px;">⚠️ <strong>Self-diagnosis budget nearly exhausted</strong> ({:.0f}K/{:.0f}K tokens). At 100%, LLM diagnosis will pause — static fallbacks will be used. Resets at midnight.</div>'.format(
+            summary["total_tokens"] / 1000, summary["ceiling"] / 1000)
+    if pct >= 100:
+        banner = '<div class="warning-banner" style="background:#450a03;border:1px solid #ef4444;padding:8px 12px;border-radius:6px;margin-bottom:8px;font-size:12px;">🔴 <strong>Self-diagnosis paused</strong> — daily budget exhausted ({:.0f}K/{:.0f}K tokens). Resets at midnight. All LLM diagnostics using static fallbacks.</div>'.format(
+            summary["total_tokens"] / 1000, summary["ceiling"] / 1000)
+    return HTMLResponse(f"""
+    <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+            <span>{status}</span>
+            <span>{summary['total_tokens']:,} / {summary['ceiling']:,} tokens ({pct}%)</span>
+        </div>
+        <div style="background:#1e293b;border-radius:4px;height:8px;overflow:hidden;">
+            <div style="background:{bar_color};width:{bar_width}%;height:100%;border-radius:4px;transition:width 0.3s;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#64748b;margin-top:2px;">
+            <span>Calls today: {summary['call_count']}</span>
+            <span>Floor: {summary['floor']:,}</span>
+        </div>
+    </div>
+    {banner}
+    """)
+
+
+@app.post("/api/agents/{agent_name}/stop")
+async def api_stop_agent(agent_name: str, request: Request):
+    """G1.2: Manual kill switch — stop an agent process.
+
+    2-step confirmation expected on the frontend. This endpoint is the
+    confirmed execution path. Sends SIGTERM first, SIGKILL after 5s if still alive.
+    """
+    from observeco.dashboard.auth import require_dash_auth
+    auth_error = require_dash_auth(request)
+    if auth_error:
+        return auth_error
+
+    import signal
+    import subprocess
+    try:
+        # Find agent process
+        result = subprocess.run(
+            ["pgrep", "-f", agent_name],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode != 0 or not result.stdout.strip():
+            # Process not found — might be a daemon or service
+            # Check launchd
+            launchd = subprocess.run(
+                ["launchctl", "list"], capture_output=True, text=True, timeout=5,
+            )
+            if agent_name in launchd.stdout:
+                subprocess.run(["launchctl", "stop", agent_name], timeout=10)
+                db.log_kill(agent_name, "SIGTERM (launchd)", True)
+                return JSONResponse({"ok": True, "message": f"Stopped {agent_name} via launchctl"})
+            db.log_kill(agent_name, "none", False, "Process not found")
+            return JSONResponse({"ok": True, "message": f"{agent_name} not running — already stopped"})
+
+        pids = result.stdout.strip().splitlines()
+        for pid in pids[:3]:  # Limit to 3 PIDs to avoid killing everything
+            pid = pid.strip()
+            if not pid:
+                continue
+            # SIGTERM first
+            subprocess.run(["kill", "-TERM", pid], timeout=5)
+            # Wait 5s, then SIGKILL if still alive
+            import time as _time
+            _time.sleep(5)
+            check = subprocess.run(["kill", "-0", pid], capture_output=True, timeout=5)
+            if check.returncode == 0:
+                subprocess.run(["kill", "-KILL", pid], timeout=5)
+                db.log_kill(agent_name, "SIGTERM→SIGKILL", True)
+            else:
+                db.log_kill(agent_name, "SIGTERM", True)
+
+        return JSONResponse({"ok": True, "message": f"Stopped {agent_name} ({len(pids[:3])} processes)"})
+    except Exception as e:
+        db.log_kill(agent_name, "none", False, str(e))
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@app.get("/api/agents/{agent_name}/kill-log", response_class=HTMLResponse)
+async def api_agent_kill_log(agent_name: str):
+    """G1.2: Kill switch audit log — HTML fragment for dashboard."""
+    entries = db.get_kill_log(agent_name, limit=10)
+    if not entries:
+        return '<div style="color:#64748b;font-size:12px;">No kill events recorded for this agent.</div>'
+    rows = ""
+    for e in entries:
+        ts = e["created_at"]
+        success = "✅" if e["success"] else "❌"
+        signal_txt = e["signal_sent"]
+        error = f' <span style="color:#ef4444;">({e["error_message"]})</span>' if e["error_message"] else ""
+        rows += f'<tr><td style="padding:4px 8px;font-size:11px;">{success}</td><td style="padding:4px 8px;font-size:11px;">{signal_txt}{error}</td></tr>'
+    return f'<table class="data-table"><tr><th style="padding:4px 8px;font-size:11px;">Result</th><th style="padding:4px 8px;font-size:11px;">Signal</th></tr>{rows}</table>'

@@ -1555,6 +1555,19 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">⚙️ Settings</h1>
       <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Configure ObserveCo dashboard behavior.</div>
 
+      <!-- G1.1: Self-Monitoring Budget Card -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--fg);">📊 Self-Diagnosis Budget</div>
+            <div style="font-size:12px;color:var(--fg-2);margin-top:4px;">ObserveCo's own LLM diagnosis calls — tracked separately from agent monitoring</div>
+          </div>
+        </div>
+        <div id="selfMonitorWidget" hx-get="/api/self-monitor-summary" hx-trigger="load, every 60s" hx-swap="innerHTML" style="margin-top:10px;">
+          <div style="color:#64748b;font-size:12px;">Loading...</div>
+        </div>
+      </div>
+
       <!-- LLM Toggle Card -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
@@ -1736,7 +1749,7 @@ function switchDetailTab(agentName, tab, btn) {
   fetch('/api/agent-detail/' + encodeURIComponent(agentName) + '?tab=' + tab)
     .then(r => r.text())
     .then(html => {
-      document.getElementById('detailContent').innerHTML = html;
+      document.getElementById('detailContent').innerHTML = html + renderKillSection(agentName);
     })
     .catch(e => {
       document.getElementById('detailContent').innerHTML = '<div style="color:#ef4444;padding:12px;">Failed: ' + e.message + '</div>';
@@ -2703,6 +2716,71 @@ function loadAlertLog() {
     .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
 }
 function initAlerts() { loadAlertSubs(); loadAlertLog(); }
+
+// ─── G1.2: Manual Kill Switch ───
+function renderKillSection(agentName) {
+  return `
+    <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--fg);">🛑 Stop Agent</div>
+          <div style="font-size:10px;color:var(--fg-2);">Sends SIGTERM (then SIGKILL after 5s)</div>
+        </div>
+        <button id="stopBtn" onclick="stopAgent('${agentName}')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">STOP</button>
+      </div>
+      <div id="stopResult" style="margin-top:6px;font-size:11px;color:var(--fg-2);"></div>
+      <div id="killLog" hx-get="/api/agents/${encodeURIComponent(agentName)}/kill-log" hx-trigger="load, every 30s" hx-swap="innerHTML" style="margin-top:8px;"></div>
+    </div>`;
+}
+function stopAgent(agentName) {
+  const btn = document.getElementById('stopBtn');
+  const result = document.getElementById('stopResult');
+  if (btn.dataset.confirming === 'true') {
+    // Second click — execute
+    btn.disabled = true;
+    btn.textContent = 'Stopping...';
+    btn.style.opacity = '0.5';
+    result.innerHTML = '';
+    fetch('/api/agents/' + encodeURIComponent(agentName) + '/stop', { method: 'POST' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          result.innerHTML = '<span style="color:#22c55e;">✅ ' + data.message + '</span>';
+        } else {
+          result.innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+        }
+        btn.textContent = 'STOP';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.dataset.confirming = 'false';
+        // Reload kill log
+        const kl = document.getElementById('killLog');
+        if (kl) fetch('/api/agents/' + encodeURIComponent(agentName) + '/kill-log').then(r => r.text()).then(html => kl.innerHTML = html);
+      })
+      .catch(e => {
+        result.innerHTML = '<span style="color:#ef4444;">❌ Error: ' + e.message + '</span>';
+        btn.textContent = 'STOP';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.dataset.confirming = 'false';
+      });
+  } else {
+    // First click — confirm
+    btn.dataset.confirming = 'true';
+    btn.textContent = 'Confirm STOP ' + agentName + '?';
+    btn.style.background = 'rgba(239,68,68,0.35)';
+    result.innerHTML = '<span style="color:#fde68a;">⚠️ Click again to confirm — this will terminate the agent process immediately.</span>';
+    // Auto-reset after 5s
+    setTimeout(() => {
+      if (btn.dataset.confirming === 'true') {
+        btn.dataset.confirming = 'false';
+        btn.textContent = 'STOP';
+        btn.style.background = 'rgba(239,68,68,0.15)';
+        result.innerHTML = '';
+      }
+    }, 5000);
+  }
+}
 
 // ─── Plugin Tracking ───
 function loadPluginStats() {

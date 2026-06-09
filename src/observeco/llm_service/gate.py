@@ -19,11 +19,32 @@ from __future__ import annotations
 import os
 
 from observeco.license import load as _load_license
+from observeco.llm_service.self_monitor import SelfMonitorBudget
 
 # Runtime opt-out flag — set by dashboard toggle POST endpoint.
 # Checked in addition to the env var so the dashboard toggle works
 # without requiring a process restart.
 _runtime_opt_out: bool = False
+# Global self-monitor budget instance
+_self_monitor: SelfMonitorBudget | None = None
+
+
+def get_self_monitor() -> SelfMonitorBudget:
+    """Get or create the shared self-monitor budget instance."""
+    global _self_monitor
+    if _self_monitor is None:
+        _self_monitor = SelfMonitorBudget()
+    return _self_monitor
+
+
+def _would_accept_budget(input_tokens_est: int = 5000, output_tokens_est: int = 500) -> bool:
+    """Check if a self-diagnosis LLM call fits within the daily budget cap.
+
+    Uses conservative default token estimates (5K input, 500 output) since
+    the actual token count is not known before the call is made. For tighter
+    accounting, pass specific estimates from the consumer.
+    """
+    return get_self_monitor().would_accept(input_tokens_est, output_tokens_est)
 
 
 def set_runtime_opt_out(disabled: bool) -> None:
@@ -71,11 +92,17 @@ class LLMGate:
 
         # Trial or Pro: full access
         if lic.is_trial_active or lic.is_pro:
+            # Check self-monitor budget cap before allowing the call
+            if not _would_accept_budget():
+                return False
             return True
 
         # New-user grace period: Tier 1 (deep) always ON for first 30 days
         # to show ObserveCo's value. Tier 2 (shallow) still requires trial/Pro.
         if tier == 1 and lic.is_new_user_llm_grace:
+            # Check self-monitor budget cap
+            if not _would_accept_budget():
+                return False
             return True
 
         # Free tier (outside 30-day grace): no LLM

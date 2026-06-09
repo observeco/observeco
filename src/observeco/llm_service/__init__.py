@@ -25,7 +25,7 @@ from typing import Optional
 
 from observeco.llm_service.cache import LLMCache
 from observeco.llm_service.cost_tracker import CostTracker
-from observeco.llm_service.gate import LLMGate
+from observeco.llm_service.gate import LLMGate, get_self_monitor
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -94,6 +94,9 @@ def ask(
         provider=provider.name,
         duration_sec=duration,
     )
+
+    # Track self-monitoring budget (G1.1)
+    get_self_monitor().record(consumer, input_tokens, output_tokens)
 
     # Cache it
     _cache.set(cache_key, response)

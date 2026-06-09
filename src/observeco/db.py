@@ -274,6 +274,29 @@ CREATE INDEX IF NOT EXISTS idx_guidance_fire_agent ON guidance_fire(agent_name);
 CREATE INDEX IF NOT EXISTS idx_turn_log_agent ON turn_log(agent_name);
 CREATE INDEX IF NOT EXISTS idx_turn_log_ts ON turn_log(timestamp);
 """),
+    (13, """-- Migration 13: self-monitoring budget cap (G1.1) + kill switch audit log (G1.2)
+CREATE TABLE IF NOT EXISTS self_monitor_budget (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    day INTEGER NOT NULL,
+    consumer TEXT NOT NULL,
+    input_tokens INTEGER DEFAULT 0,
+    output_tokens INTEGER DEFAULT 0,
+    total_tokens INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_self_monitor_day ON self_monitor_budget(day);
+
+CREATE TABLE IF NOT EXISTS agent_kill_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    trigger TEXT NOT NULL DEFAULT 'manual',
+    signal_sent TEXT DEFAULT 'SIGTERM',
+    success INTEGER NOT NULL DEFAULT 0,
+    error_message TEXT DEFAULT '',
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_kill_log_agent ON agent_kill_log(agent_name);
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -1059,6 +1082,83 @@ class Database:
             "ON CONFLICT(agent_name) DO UPDATE SET max_retries=excluded.max_retries",
             (agent_name, max_retries),
         )
+        conn.commit()
+
+    def log_self_monitor(self, consumer: str, input_tokens: int, output_tokens: int) -> None:
+        """Record a self-monitoring LLM call for budget tracking (G1.1)."""
+        conn = self._get_conn()
+        today = int(time.time()) // 86400
+        total = input_tokens + output_tokens
+        conn.execute(
+            "INSERT INTO self_monitor_budget (day, consumer, input_tokens, output_tokens, total_tokens, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (today, consumer, input_tokens, output_tokens, total, int(time.time())),
+        )
+        conn.commit()
+
+    def get_self_monitor_usage(self) -> dict:
+        """Return today's self-monitoring usage summary (G1.1)."""
+        conn = self._get_conn()
+        today = int(time.time()) // 86400
+        row = conn.execute(
+            "SELECT COALESCE(SUM(input_tokens), 0) as input_tokens, "
+            "COALESCE(SUM(output_tokens), 0) as output_tokens, "
+            "COALESCE(SUM(total_tokens), 0) as total_tokens, "
+            "COUNT(*) as call_count "
+            "FROM self_monitor_budget WHERE day=?", (today,),
+        ).fetchone()
+        return dict(row) if row else {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0, "call_count": 0}
+
+    def log_kill(self, agent_name: str, signal: str = "SIGTERM", success: bool = True, error: str = "") -> None:
+        """Record a kill action in the audit log (G1.2)."""
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO agent_kill_log (agent_name, trigger, signal_sent, success, error_message, created_at) "
+            "VALUES (?, 'manual', ?, ?, ?, ?)",
+            (agent_name, signal, int(success), error, int(time.time())),
+        )
+        conn.commit()
+
+    def get_kill_log(self, agent_name: str = "", limit: int = 20) -> list[dict]:
+        """Return recent kill log entries, optionally filtered by agent."""
+        conn = self._get_conn()
+        if agent_name:
+            rows = conn.execute(
+                "SELECT * FROM agent_kill_log WHERE agent_name=? ORDER BY created_at DESC LIMIT ?",
+                (agent_name, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM agent_kill_log ORDER BY created_at DESC LIMIT ?", (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def update_circuit_breaker_config(self, agent_name: str, max_retries: int | None = None,
+                                       max_turns_per_min: int | None = None) -> None:
+        """Update circuit breaker config including activity thresholds (G1.3)."""
+        conn = self._get_conn()
+        if max_retries is not None:
+            conn.execute(
+                "INSERT INTO circuit_breakers (agent_name, failure_count, max_retries, tripped) "
+                "VALUES (?, 0, ?, 0) "
+                "ON CONFLICT(agent_name) DO UPDATE SET max_retries=excluded.max_retries",
+                (agent_name, max_retries),
+            )
+        if max_turns_per_min is not None:
+            # Store in agent_configs as JSON metadata — circuit_breakers table has no turns/min column
+            existing = conn.execute(
+                "SELECT metadata FROM agent_configs WHERE agent_name=?", (agent_name,)
+            ).fetchone()
+            meta = {}
+            if existing and existing[0]:
+                import json
+                meta = json.loads(existing[0])
+            meta["max_turns_per_min"] = max_turns_per_min
+            conn.execute(
+                "INSERT INTO agent_configs (agent_name, framework, metadata) VALUES (?, 'custom', ?) "
+                "ON CONFLICT(agent_name) DO UPDATE SET metadata=excluded.metadata",
+                (agent_name, json.dumps(meta)),
+            )
         conn.commit()
 
     def _update_breaker(self, agent_name: str, failures: int, max_retries: int,
