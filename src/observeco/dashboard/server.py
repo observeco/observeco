@@ -5097,6 +5097,198 @@ async def api_alerts_subs():
     return HTMLResponse(html)
 
 
+@app.get("/api/alert-dashboard", response_class=HTMLResponse)
+async def api_alert_dashboard():
+    """Push Alerts Dashboard: integrated channel management with add/remove/test."""
+    from observeco import license as lic
+    from observeco.alerts.push import push_alert
+    from observeco.db import Database
+    d = Database()
+    is_pro = lic.require_pro()
+    subs = d.get_alert_subscriptions()
+    now = int(time.time())
+
+    # Channel health summary
+    channel_health = {}
+    recent_log = d.get_alert_log(limit=50)
+    for entry in recent_log:
+        ch = entry.get("channel", "")
+        if ch not in channel_health:
+            channel_health[ch] = {"total": 0, "failed": 0}
+        channel_health[ch]["total"] += 1
+        if not entry.get("delivered"):
+            channel_health[ch]["failed"] += 1
+
+    # Build subscribed channels list
+    sub_rows = ""
+    if subs:
+        for s in subs:
+            ch = s["channel"]
+            tgt = s["target"]
+            enabled = s.get("enabled", 1)
+            ch_icon = {"telegram": "📱", "discord": "🎮", "webhook": "🔗", "email": "📧"}
+            health = channel_health.get(ch, {})
+            fail_rate = (health.get("failed", 0) / max(health.get("total", 0), 1)) * 100
+            health_icon = "🟢" if fail_rate < 20 else "🟡" if fail_rate < 50 else "🔴"
+            masked = tgt[:30] + "..." if len(tgt) > 33 else tgt
+            sub_rows += f"""
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:16px;">{ch_icon.get(ch, '?')}</span>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--fg);">{ch}</div>
+                        <div style="font-size:10px;color:#64748b;">{_html_escape(masked)}</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10px;">{health_icon} {health.get("total", 0)} deliveries</span>
+                    <button onclick="testAlertChannel({s['id']})" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:#94a3b8;">Test</button>
+                    <button onclick="removeAlertChannel({s['id']})" style="background:none;border:1px solid #7f1d1d;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:#ef4444;">✕</button>
+                </div>
+            </div>
+            <div id="testResult_{s['id']}" style="font-size:10px;margin-top:4px;"></div>
+        </div>"""
+    else:
+        sub_rows = '<div class="empty-state" style="margin-bottom:8px;">No channels configured — add one below.</div>'
+
+    # Available channels to add
+    existing_channels = {s["channel"] for s in subs}
+    avail = []
+    for ch, icon, name in [("telegram", "📱", "Telegram Chat ID"), ("discord", "🎮", "Discord Webhook URL"),
+                            ("webhook", "🔗", "Webhook URL"), ("email", "📧", "Email Address")]:
+        if ch not in existing_channels:
+            avail.append(f"""
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">{icon}</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px;font-weight:600;color:var(--fg);">{name}</div>
+                    <div style="font-size:10px;color:#64748b;">{ch}</div>
+                </div>
+                <button onclick="showAddChannel('{ch}')" style="background:var(--accent-on);border:none;border-radius:4px;padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;color:#052e16;">+ Add</button>
+            </div>
+        </div>""")
+
+    return HTMLResponse(f"""
+    <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Active Channels</div>
+        {sub_rows}
+    </div>
+    <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Add Channel</div>
+        {"".join(avail) if avail else '<div class="empty-state" style="font-size:11px;">All channels configured. Remove one to add a different type.</div>'}
+    </div>
+    <!-- Add channel modal (hidden until triggered) -->
+    <div class="modal-overlay" id="addChannelModal" style="display:none;" onclick="if(event.target===this)closeAddChannel()">
+        <div class="modal" style="max-width:420px;">
+            <div class="modal-body">
+                <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;" id="addChannelTitle">Add Channel</div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Enter the target URL, chat ID, or email address.</div>
+                <input id="addChannelTarget" type="text" placeholder="https://discord.com/api/webhooks/..." style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:8px;font-family:inherit;">
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button onclick="closeAddChannel()" class="modal-close" style="font-size:12px;padding:8px 18px;width:auto;">Cancel</button>
+                    <button onclick="confirmAddChannel()" class="heal-trigger-btn" style="font-size:12px;padding:8px 18px;">Test & Save</button>
+                </div>
+                <div id="addChannelResult" style="margin-top:8px;font-size:12px;"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+    var _pendingChannel = '';
+    function showAddChannel(channel) {{
+        _pendingChannel = channel;
+        document.getElementById('addChannelTitle').textContent = '+ Add ' + channel;
+        document.getElementById('addChannelTarget').placeholder = {{
+            'telegram': 'Chat ID (e.g. 123456789)',
+            'discord': 'Webhook URL (https://discord.com/api/webhooks/...)',
+            'webhook': 'Webhook URL (https://hooks.example.com/alerts)',
+            'email': 'Email address (you@example.com)'
+        }}[channel] || 'Target value';
+        document.getElementById('addChannelTarget').value = '';
+        document.getElementById('addChannelResult').innerHTML = '';
+        document.getElementById('addChannelModal').style.display = 'flex';
+    }}
+    function closeAddChannel() {{
+        document.getElementById('addChannelModal').style.display = 'none';
+    }}
+    function confirmAddChannel() {{
+        var target = document.getElementById('addChannelTarget').value.trim();
+        if (!target) {{ document.getElementById('addChannelResult').innerHTML = '<span style="color:#ef4444;">❌ Target required</span>'; return; }}
+        document.getElementById('addChannelResult').innerHTML = '<span style="color:#64748b;">Testing...</span>';
+        fetch('/api/alert-subscribe', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{channel: _pendingChannel, target: target, event_types: 'all'}})
+        }})
+        .then(r => r.json())
+        .then(data => {{
+            if (data.status === 'ok') {{
+                document.getElementById('addChannelResult').innerHTML = '<span style="color:#22c55e;">✅ Saved! Sending test alert...</span>';
+                fetch('/api/alert-test/' + data.subscription.id, {{method: 'POST'}})
+                    .then(r => r.json())
+                    .then(t => {{
+                        if (t.ok) {{
+                            document.getElementById('addChannelResult').innerHTML = '<span style="color:#22c55e;">✅ Channel added and test alert sent!</span>';
+                        }} else {{
+                            document.getElementById('addChannelResult').innerHTML = '<span style="color:#fde68a;">⚠️ Saved but test failed: ' + (t.error || '') + '</span>';
+                        }}
+                        setTimeout(() => {{ closeAddChannel(); htmx.trigger('#alertPanel', 'load') }}, 1500);
+                    }})
+                    .catch(() => {{ setTimeout(() => {{ closeAddChannel(); htmx.trigger('#alertPanel', 'load') }}, 1500); }});
+            }} else {{
+                document.getElementById('addChannelResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+            }}
+        }})
+        .catch(e => {{
+            document.getElementById('addChannelResult').innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>';
+        }});
+    }}
+    function testAlertChannel(subId) {{
+        var el = document.getElementById('testResult_' + subId);
+        el.innerHTML = '<span style="color:#64748b;">Sending test...</span>';
+        fetch('/api/alert-test/' + subId, {{method: 'POST'}})
+            .then(r => r.json())
+            .then(data => {{
+                el.innerHTML = data.ok ? '<span style="color:#22c55e;">✅ Test alert sent</span>' : '<span style="color:#ef4444;">❌ ' + (data.error || '') + '</span>';
+                setTimeout(() => {{ el.innerHTML = ''; }}, 3000);
+            }})
+            .catch(e => {{ el.innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>'; }});
+    }}
+    function removeAlertChannel(subId) {{
+        if (!confirm('Remove this alert channel?')) return;
+        fetch('/api/alert-subscribe/' + subId, {{method: 'DELETE'}})
+            .then(r => r.json())
+            .then(data => {{
+                if (data.status === 'ok') htmx.trigger('#alertPanel', 'load');
+            }})
+            .catch(() => {{}});
+    }}
+    </script>
+    """)
+
+
+@app.post("/api/alert-test/{sub_id}")
+async def api_alert_test(sub_id: int):
+    """Send a test alert to a subscription."""
+    from observeco.db import Database
+    d = Database()
+    subs = d.get_alert_subscriptions()
+    sub = next((s for s in subs if s["id"] == sub_id), None)
+    if not sub:
+        return JSONResponse({"ok": False, "error": "Subscription not found"})
+    from observeco.alerts.push import push_alert
+    try:
+        results = push_alert("test", f"🧪 Test alert from ObserveCo — if you see this, push alerts are working! Sent at {__import__('datetime').datetime.now().strftime('%H:%M:%S')}", db=d)
+        # Check if the specific channel was delivered
+        for r in results:
+            if r.get("channel") == sub["channel"] and r.get("delivered"):
+                return JSONResponse({"ok": True})
+        return JSONResponse({"ok": False, "error": "Delivery failed — check your target value"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)})
+
+
 @app.get("/api/alert-log", response_class=HTMLResponse)
 async def api_alert_log():
     """Show alert delivery log as HTML snippet."""

@@ -320,6 +320,20 @@ CREATE TABLE IF NOT EXISTS heal_events (
 );
 CREATE INDEX IF NOT EXISTS idx_heal_events_agent ON heal_events(agent_name, created_at DESC);
 """),
+    (15, """-- Migration 15: add 'discord' to alert_subscriptions channel check
+CREATE TABLE IF NOT EXISTS alert_subscriptions_v15 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel TEXT NOT NULL CHECK(channel IN ('telegram','webhook','email','discord')),
+    target TEXT NOT NULL,
+    event_types TEXT NOT NULL DEFAULT 'all' CHECK(event_types IN ('all','critical_only','heal_failure','drift','circuit_trip','agent_death')),
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL
+);
+INSERT OR IGNORE INTO alert_subscriptions_v15 (id, channel, target, event_types, enabled, created_at)
+    SELECT id, channel, target, event_types, enabled, created_at FROM alert_subscriptions;
+DROP TABLE IF EXISTS alert_subscriptions;
+ALTER TABLE alert_subscriptions_v15 RENAME TO alert_subscriptions;
+"""),
 ]
 
 _SCHEMA_SQL = """

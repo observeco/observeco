@@ -1247,137 +1247,11 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <div class="tab-content" id="tabAlerts">
     <div class="app" style="padding:0;">
       <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔔 Push Alerts</h1>
-      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Know when something breaks — before your users tell you.</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Configure alert delivery channels — Telegram, Discord, webhook, email.</div>
 
-      <!-- 3-column scenario -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
-        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);">
-          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg-2);">🔓 Free (Dashboard Only)</div>
-          <div style="padding:14px;background:var(--surface);">
-            <div class="alert-entry" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--danger);background:var(--bg);">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🔴</span><span style="font-size:12px;font-weight:600;">Agent Down</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:#450a0a;color:#fca5a5;">Critical</span></div>
-              <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">hound has not checked in for 14 minutes</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">Found when you open dashboard</div>
-            </div>
-            <div class="outcome" style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#450a0a;border:1px solid #7f1d1d;color:#fca5a5;">
-              <strong>You discover it later</strong><br>
-              <span style="font-size:18px;font-weight:700;display:block;margin:3px 0;">~2h delayed</span>
-              No notification — you only see it when you check the dashboard.
-            </div>
-          </div>
-        </div>
-        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--accent-on);">
-          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--bg);color:#86efac;">🛡️ Pro — Silent Auto-Heal</div>
-          <div style="padding:14px;background:var(--surface);">
-            <div class="alert-entry silent" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--accent-on);background:var(--bg);opacity:0.7;">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🟢</span><span style="font-size:12px;font-weight:600;">Agent Down → Healed</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:var(--bg);color:#86efac;">Auto</span></div>
-              <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">hound auto-restarted in 47s</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">No notification needed — you're never woken up</div>
-            </div>
-            <div class="outcome" style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:var(--bg);border:1px solid var(--accent-on);color:#86efac;">
-              <strong>You never know (that's good)</strong><br>
-              <span style="font-size:18px;font-weight:700;display:block;margin:3px 0;">Auto-healed</span>
-              Agent recovered before you'd even notice. Zero alerts to your phone.
-            </div>
-          </div>
-        </div>
-        <div style="border-radius:12px;overflow:hidden;border:1px solid #854d0e;">
-          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:#422006;color:#fde68a;">📲 Pro — Alert on Exhaustion</div>
-          <div style="padding:14px;background:var(--surface);">
-            <div class="alert-entry warning" style="padding:10px 12px;margin-bottom:8px;border-radius:8px;border-left:3px solid var(--warn);background:var(--bg);">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="font-size:14px;">🟡</span><span style="font-size:12px;font-weight:600;">Circuit Breaker Tripped</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;background:#451a03;color:#fcd34d;">Warning</span></div>
-              <div style="font-size:11px;color:var(--fg-2);margin-bottom:3px;">dreamer: circuit tripped after 5 failures — auto-retry in 4h</div>
-              <div style="font-size:11px;color:var(--muted);margin-top:4px;">📱 Pushed to Telegram · 2s latency</div>
-            </div>
-            <div class="discovery-gap" style="display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 8px;border-radius:4px;margin-top:4px;background:var(--bg);color:#86efac;">
-              🔍 Discovery gap: ~10 min → you know in real time
-            </div>
-            <div class="outcome" style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#422006;border:1px solid #854d0e;color:#fde68a;">
-              <strong>Know instantly</strong><br>
-              <span style="font-size:18px;font-weight:700;display:block;margin:3px 0;">2s latency</span>
-              Push notification to Telegram/Slack/email. You decide if it needs attention.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Value comparison -->
-      <div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-        <table style="width:100%;border-collapse:collapse;">
-          <tr><th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);"></th>
-            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);">Free</th>
-            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg);">Pro Silent</th>
-            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);">Pro Alert</th></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Detection</td>
-            <td style="font-size:12px;color:#94a3b8;padding:10px 14px;border-bottom:1px solid var(--bg);">Dashboard only</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">Auto-heal silently</td>
-            <td style="font-size:12px;color:#fde68a;padding:10px 14px;border-bottom:1px solid var(--bg);">Push + Auto-heal</td></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Delivery</td>
-            <td style="font-size:12px;color:#fca5a5;padding:10px 14px;border-bottom:1px solid var(--bg);">❌ None</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">✅ None needed</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);">✅ Telegram / Slack / Email</td></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Discovery gap</td>
-            <td style="font-size:12px;color:#fca5a5;padding:10px 14px;border-bottom:1px solid var(--bg);">~2h</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">0 (auto-healed)</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);">~2s</td></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:none;">Cost</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;">$0</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;background:var(--bg);">$0 (Pro)</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;">$0 (Pro)</td></tr>
-        </table>
-      </div>
-
-      <!-- Channel config -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;">
-        <h3 style="font-size:13px;font-weight:600;color:var(--fg-2);margin-bottom:12px;">Channel Configuration <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:8px;">FREE</span></h3>
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface);">
-          <span style="font-size:18px;">🔔</span>
-          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">In-Dashboard</div><div style="font-size:11px;color:var(--muted);">Alerts appear in the dashboard alert panel</div></div>
-          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:var(--accent-on);color:#86efac;">Active</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface);">
-          <span style="font-size:18px;">📱</span>
-          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Telegram</div><div style="font-size:11px;color:var(--muted);">Push notifications to your Telegram channel</div></div>
-          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface);">
-          <span style="font-size:18px;">💬</span>
-          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Slack</div><div style="font-size:11px;color:var(--muted);">Post alerts to a Slack channel</div></div>
-          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface);">
-          <span style="font-size:18px;">📧</span>
-          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Email</div><div style="font-size:11px;color:var(--muted);">Email notifications for critical alerts</div></div>
-          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:none;">
-          <span style="font-size:18px;">🎮</span>
-          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Discord</div><div style="font-size:11px;color:var(--muted);">Push alerts to a Discord webhook</div></div>
-          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
-        </div>
-      </div>
-
-      <!-- Insight callout -->
-      <div style="background:#1e1b4b;border:1px solid #3730a3;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;">
-        <span style="font-size:22px;line-height:1;">💡</span>
-        <div style="font-size:13px;line-height:1.6;">
-          <strong style="color:#a5b4fc;">Discovery gap matters.</strong> Every minute between an agent going down and you finding out costs time, money, and user trust. Pro reduces that gap from hours to seconds — and Silent mode eliminates it entirely.
-        </div>
-      </div>
-
-      <!-- Pro upsell -->
-      <div onclick="showBrainPro()" style="margin-top:12px;padding:14px;border:1px dashed #3730a3;border-radius:10px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#6366f1';this.style.background='#1e1b4b'" onmouseout="this.style.borderColor='#3730a3';this.style.background='transparent'">
-        <div style="font-size:14px;font-weight:600;color:#a5b4fc;">🔒 Push Alerts are Pro</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Free: dashboard alerts only. Pro adds Telegram/Slack/email push — and Silent mode that heals before you need to know.</div>
-      </div>
-
-      <!-- Live subscriptions -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
-        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
-          <div><strong style="font-size:13px;color:var(--fg);">📡 Subscriptions</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">active alert channels</span></div>
-          <button onclick="loadAlertSubs()" class="heal-trigger-btn">🔄 Refresh</button>
-        </div>
-        <div id="alertSubs" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
+      <!-- Live channel management -->
+      <div id="alertPanel" hx-get="/api/alert-dashboard" hx-trigger="load, every 30s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading alert configuration...</div>
       </div>
 
       <!-- Delivery log -->
@@ -1386,7 +1260,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
           <div><strong style="font-size:13px;color:var(--fg);">📋 Delivery Log</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">recent alert deliveries</span></div>
           <button onclick="loadAlertLog()" class="heal-trigger-btn">🔄 Refresh</button>
         </div>
-        <div id="alertLog" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
+        <div id="alertLog" hx-get="/api/alert-log" hx-trigger="load, every 60s" hx-swap="innerHTML" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
       </div>
     </div>
   </div>

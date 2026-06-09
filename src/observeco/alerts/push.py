@@ -123,16 +123,43 @@ def _deliver_telegram(target: str, message: str) -> tuple[bool, str]:
 
 
 def _deliver_discord(target: str, message: str) -> tuple[bool, str]:
-    """Deliver via Discord webhook URL."""
+    """Deliver via Discord webhook URL with embed format.
+
+    Colour-coded embeds based on message content prefix:
+    - 🔴 error/🔴/critical → red (#ef4444)
+    - 🟡 warning/🟡/warning → yellow (#eab308)
+    - 🟢 recovery/✅/success → green (#22c55e)
+    - Default → blue (#6366f1)
+    """
     try:
         import requests
-        resp = requests.post(
-            target,
-            json={"content": message, "username": "ObserveCo"},
-            timeout=15,
-        )
+        # Determine embed color from message
+        color = 0x6366f1  # default blue
+        msg_lower = message.lower()
+        if "🔴" in message or "critical" in msg_lower or msg_lower.startswith("error"):
+            color = 0xef4444  # red
+        elif "🟡" in message or "warning" in msg_lower:
+            color = 0xeab308  # yellow
+        elif "🟢" in message or "✅" in message or "recover" in msg_lower or "success" in msg_lower:
+            color = 0x22c55e  # green
+
+        payload = {
+            "embeds": [{
+                "title": "🤖 ObserveCo Alert",
+                "description": message[:4000],
+                "color": color,
+                "footer": {"text": "ObserveCo Pro"},
+                "timestamp": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+            }]
+        }
+        resp = requests.post(target, json=payload, timeout=15)
         if 200 <= resp.status_code < 300:
             return True, ""
+        # Fallback to plain text if embed fails (e.g. old webhook format)
+        if resp.status_code == 400:
+            resp2 = requests.post(target, json={"content": message[:2000], "username": "ObserveCo"}, timeout=15)
+            if 200 <= resp2.status_code < 300:
+                return True, ""
         return False, f"HTTP {resp.status_code}: {resp.text[:200]}"
     except Exception as e:
         return False, str(e)
