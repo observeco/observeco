@@ -1282,8 +1282,10 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
         <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
           <div><strong style="font-size:13px;color:var(--fg);">📋 Delivery Log</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">recent alert deliveries</span></div>
-          <button onclick="loadAlertLog()" class="heal-trigger-btn">🔄 Refresh</button>
-        </div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="checkDriftAlerts()" class="heal-trigger-btn" style="background:var(--bg);border:1px solid var(--border);color:var(--fg-2);">📈 Check Drift</button>
+            <button onclick="loadAlertLog()" class="heal-trigger-btn">🔄 Refresh</button>
+          </div>
         <div id="alertLog" hx-get="/api/alert-log" hx-trigger="load, every 60s" hx-swap="innerHTML" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
       </div>
     </div>
@@ -2515,6 +2517,33 @@ function loadAlertLog() {
     .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
 }
 function initAlerts() { loadAlertSubs(); loadAlertLog(); }
+
+// ─── Drift Alerts UI trigger ───
+function checkDriftAlerts() {
+  const btn = document.querySelector('button[onclick*="checkDriftAlerts"]');
+  if (btn) { btn.textContent = '⏳ Checking...'; btn.disabled = true; }
+  const log = document.getElementById('alertLog');
+  const orig = log ? log.innerHTML : '';
+  fetch('/api/check-drift-alerts', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (btn) { btn.textContent = '📈 Check Drift'; btn.disabled = false; }
+      if (data.ok) {
+        const msg = data.fired > 0
+          ? '✅ ' + data.fired + ' drift alert(s) sent'
+          : '✅ No drift breaches found';
+        if (log) log.innerHTML = '<div style="padding:8px;font-size:12px;color:#22c55e;">' + msg + '</div>';
+        setTimeout(() => { if (log) log.innerHTML = orig; }, 3000);
+      } else {
+        if (log) log.innerHTML = '<div style="padding:8px;font-size:12px;color:#eab308;">⚠️ ' + (data.error || 'Failed') + '</div>';
+        if (btn) { btn.textContent = '📈 Check Drift'; btn.disabled = false; }
+      }
+    })
+    .catch(e => {
+      if (btn) { btn.textContent = '📈 Check Drift'; btn.disabled = false; }
+      if (log) log.innerHTML = '<div style="padding:8px;font-size:12px;color:#ef4444;">❌ ' + e.message + '</div>';
+    });
+}
 
 // ─── Auto-Heal Dashboard UI ───
 function toggleHeal(agentName, enabled, l2Enabled) {
