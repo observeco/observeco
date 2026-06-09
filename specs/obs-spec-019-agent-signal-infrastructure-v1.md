@@ -1,4 +1,4 @@
-# obs-spec-019: Agent Signal Infrastructure v1 — Implementation Spec
+# Agent Signal Infrastructure v1 (formerly obs-spec-019) — Implementation Spec
 
 **Spec ID:** obs-spec-019
 **Author:** Hound (per Sean direction 2026-06-09)

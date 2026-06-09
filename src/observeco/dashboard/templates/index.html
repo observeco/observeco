@@ -2923,21 +2923,34 @@ function openSkillsAuditModal(agentName) {
           });
           var litePct = totalRaw > 0 ? Math.round((1 - totalLite / totalRaw) * 100) : 0;
           var fullPct = totalRaw > 0 ? Math.round((1 - totalFull / totalRaw) * 100) : 0;
+
+          // Compute low-end estimates (conservative rates) for range display
+          var totalGuidance = 0, totalMemSkills = 0;
+          agents.forEach(function(e){
+            var c = e[1].components || {};
+            totalGuidance += c.guidance || 0;
+            totalMemSkills += (c.memory || 0) + (c.skills || 0);
+          });
+          var liteLow = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.5)) / totalRaw) * 100) : 0;
+          var liteHigh = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.7)) / totalRaw) * 100) : 0;
+          var fullLow = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.5) - Math.round(totalMemSkills * 0.25)) / totalRaw) * 100) : 0;
+          var fullHigh = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.7) - Math.round(totalMemSkills * 0.4)) / totalRaw) * 100) : 0;
+
           savings += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;"><div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
-            '<div style="font-size:20px;font-weight:700;color:#22c55e;">' + litePct + '%</div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Lite</div>' +
-            '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance @ 70% · ' + totalLite.toLocaleString() + ' tok</div></div>' +
+            '<div style="font-size:20px;font-weight:700;color:#22c55e;">' + liteLow + '–' + liteHigh + '%</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Lite · estimated</div>' +
+            '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance compressed · ' + totalLite.toLocaleString() + ' tok</div></div>' +
             '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
-            '<div style="font-size:20px;font-weight:700;color:#a5b4fc;">' + fullPct + '%</div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Full</div>' +
-            '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance @ 70% + memory/skills @ 40% · ' + totalFull.toLocaleString() + ' tok</div></div></div>';
+            '<div style="font-size:20px;font-weight:700;color:#a5b4fc;">' + fullLow + '–' + fullHigh + '%</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Full · estimated</div>' +
+            '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance + memory + skills compressed · ' + totalFull.toLocaleString() + ' tok</div></div></div>';
           // Per-agent breakdown
           savings += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Per-agent savings</div>';
           agents.forEach(function(e){
             var name = e[0], a = e[1];
             var lp = a.raw_tokens > 0 ? Math.round((1 - a.lite_tokens / a.raw_tokens) * 100) : 0;
             var fp = a.raw_tokens > 0 ? Math.round((1 - a.full_tokens / a.raw_tokens) * 100) : 0;
-            savings += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;"><span style="color:#e2e8f0;">' + name + '</span><span style="color:#94a3b8;">' + a.raw_tokens + ' tok → <span style="color:#22c55e;">-' + lp + '% Lite</span> <span style="color:#a5b4fc;">| -' + fp + '% Full</span></span></div>';
+            savings += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;"><span style="color:#e2e8f0;">' + name + '</span><span style="color:#94a3b8;">' + a.raw_tokens + ' tok → <span style="color:#22c55e;">~' + lp + '% Lite</span> <span style="color:#a5b4fc;">| ~' + fp + '% Full</span></span></div>';
           });
           // Pro gate for Apply
           fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
