@@ -185,6 +185,7 @@ body {
 .agent-status { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .agent-status.alive { background: var(--accent); box-shadow: 0 0 8px var(--accent)44; }
 .agent-status.dead { background: var(--danger); box-shadow: 0 0 8px var(--danger)44; }
+.agent-status.not_running { background: #475569; }
 .agent-status.error { background: var(--warn); box-shadow: 0 0 8px var(--warn)44; }
 .agent-status.unknown { background: #475569; }
 .agent-info { flex: 1; min-width: 0; }
@@ -407,6 +408,11 @@ body {
 }
 .modal-close:hover { background: var(--border); color: #e2e8f0; }
 .modal-body { padding: 14px 18px; max-height: 400px; overflow-y: auto; }
+/* Always show scrollbar thumb in modals (macOS hides by default) */
+.modal-body::-webkit-scrollbar { width: 6px; }
+.modal-body::-webkit-scrollbar-track { background: transparent; }
+.modal-body::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+.modal-body::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
 /* Data table in modal */
 .data-table { width: 100%; border-collapse: collapse; }
@@ -443,6 +449,11 @@ body {
 .modal-section h4 {
   font-size: 11px; color: var(--muted); text-transform: uppercase;
   letter-spacing: 0.05em; margin-bottom: 8px; font-weight: 500;
+}
+
+.modal-section h5 {
+  font-size: 12px; color: #94a3b8; font-weight: 600;
+  margin-bottom: 6px; margin-top: 4px;
 }
 
 /* Heal button and log */
@@ -950,8 +961,10 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       <!-- Filter chips -->
       <div class="filter-chips" style="display:flex;gap:4px;flex-shrink:0;">
         <button class="filter-chip active" data-filter="" onclick="applyFilter(this,'')" style="background:var(--accent-on);color:#86efac;border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">All</button>
-        <button class="filter-chip" data-filter="alive" onclick="applyFilter(this,'alive')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Healthy</button>
+        <button class="filter-chip" data-filter="alive" onclick="applyFilter(this,'alive')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Running</button>
+        <button class="filter-chip" data-filter="error" onclick="applyFilter(this,'error')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Warning</button>
         <button class="filter-chip" data-filter="dead" onclick="applyFilter(this,'dead')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">● Down</button>
+        <button class="filter-chip" data-filter="unknown" onclick="applyFilter(this,'unknown')" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">○ Unknown</button>
       </div>
     </div>
     <div id="fleetContainer"></div>
@@ -999,8 +1012,8 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         <div class="prov-cfg">
           <label>Provider cost:</label>
           <select id="brainProvider" onchange="renderBrain(document.getElementById('brainAgentSelect').value)">
-            <option value="0.15">DeepSeek v4 Flash — $0.15/M input</option>
-            <option value="0.15">Ollama Pro — $0.15/M input</option>
+            <option value="0.15">DeepSeek V4 Flash — $0.15/M input</option>
+            <option value="0.08">Ollama Pro — $0.08/M input</option>
             <option value="0.10">Zhipu — $0.10/M input</option>
             <option value="0">Ollama Local — FREE</option>
             <option value="custom">Custom</option>
@@ -1058,8 +1071,8 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         <!-- Manual tab -->
         <div id="manualTab">
           <div class="mode-select">
-            <button class="mode-btn active" onclick="switchMode('lite', this)" id="liteBtn">Lite (Free) &mdash; 22%</button>
-            <button class="mode-btn" onclick="switchMode('full', this)" id="fullBtn">Full (Pro) &mdash; 35%</button>
+            <button class="mode-btn active" onclick="switchMode('lite', this)" id="liteBtn">Lite (Free) &mdash; <span id="litePctLabel">22</span>%</button>
+            <button class="mode-btn" onclick="switchMode('full', this)" id="fullBtn">Full (Pro) &mdash; <span id="fullPctLabel">35</span>%</button>
             <span style="font-size:11px;color:#64748b;margin-left:auto;">
               Lite: compress guidance blocks &middot; Full: +memory culling +skill dedup +context refactor
             </span>
@@ -1074,7 +1087,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
               </div>
             </div>
             <div class="comp-panel">
-              <div class="comp-title" id="afterTitle">After (<span id="afterModeName">Lite</span> compression)</div>
+              <div class="comp-title" id="afterTitle">After (<span id="afterModeName">Lite</span> compression &mdash; <span id="afterModePct">22</span>%)</div>
               <div class="comp-tokens" style="color:#22c55e;" id="afterTokens">0 tok <span style="font-size:12px;color:#64748b;font-weight:400;">&mdash;</span></div>
               <div class="diff-preview" id="diffPreviewNew" style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.7;">
                 &nbsp;
@@ -1114,9 +1127,9 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             </div>
             <div class="auto-log-preview">
               <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified &mdash; auto-compressing...</span><br>
-              <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ 4,200 &rarr; 3,276 tok (-22%)</span><br>
+              <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ 4,200 &rarr; 3,276 tok (guidance compress)</span><br>
               <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
-              <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 &rarr; 2,470 tok (-35%)</span><br>
+              <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 &rarr; 2,470 tok (guidance + memory + skills)</span><br>
               <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
               <span style="color:#38bdf8;">📊 Cumulative fleet savings this week: 47,812 tokens saved</span>
             </div>
@@ -1157,22 +1170,22 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             <div class="optimiser-metric"><span class="label">Skills never triggered</span><span id="optimiserSkillsNever" class="value" style="color:#f97316;">3 of 8</span></div>
             <div class="optimiser-metric"><span class="label">Guidance rules stale</span><span id="optimiserGuidanceStale" class="value" style="color:#eab308;">2 of 5</span></div>
             <div class="optimiser-metric"><span class="label">Recent compressions</span><span id="optimiserRecentCompressions" class="value" style="color:#64748b;">—</span></div>
-            <div style="font-size:11px;color:#64748b;margin-top:8px;">At 200 turns, Optimiser will recommend what to prune &mdash; projected <strong style="color:#22c55e;">8-12%</strong> additional savings on top of compression.</div>
+            <div style="font-size:11px;color:#64748b;margin-top:8px;">At 200 turns, Optimiser will recommend what to prune &mdash; projected <strong id="optimiserExtraSavings" style="color:#22c55e;">varies</strong> additional savings on top of compression.</div>
           </div>
           <div class="optimiser-card">
             <h4>📈 Projected savings</h4>
             <div class="savings-mini-grid">
               <div class="mini-card">
-                <div class="mini-val" style="color:#22c55e;">-22%</div>
+                <div class="mini-val" style="color:#22c55e;" id="optimiserLiteVal">—</div>
                 <div class="mini-label">Lite (current)</div>
               </div>
               <div class="mini-card">
-                <div class="mini-val" style="color:#a5b4fc;">-35%</div>
+                <div class="mini-val" style="color:#a5b4fc;" id="optimiserFullVal">—</div>
                 <div class="mini-label">Full (available)</div>
               </div>
             </div>
             <div class="optimiser-highlight">
-              <div class="hl-val">-43% to -47%</div>
+              <div class="hl-val" id="optimiserProjectedVal">—</div>
               <div class="hl-label">Projected with Optimiser after 200 turns</div>
               <div class="hl-meta">Lite compression + Optimiser pruning = deeper savings</div>
             </div>
@@ -1197,7 +1210,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             • 24h per-turn timeline<br>
             • 7-day component trends
           </div>
-          <div class="cta free">22% savings per turn</div>
+          <div class="cta free" id="optimiserTierLiteCta">Guidance compression</div>
         </div>
         <div class="tier-box pro" onclick="showBrainPro()">
           <div class="tier pro">🔒 PRO</div>
@@ -1208,7 +1221,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             • Token Optimiser (learns from 200 turns)<br>
             • Never-pruned history & fleet comparison
           </div>
-          <div class="cta pro">Upgrade → Up to 47% savings</div>
+          <div class="cta pro" id="optimiserTierFullCta">Upgrade → Full compression</div>
         </div>
       </div>
 
@@ -1264,7 +1277,8 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             </div>
             <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:var(--bg);border:1px solid var(--accent-on);color:#86efac;">
               <strong>Outcome: ~1 min downtime</strong><br>
-              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0.02 saved / event</span>
+              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0.02 saved / event <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('heal-savings-l1', event)" style="font-size:12px;cursor:pointer;background:#86efac22;border-radius:4px;padding:1px 5px;color:#86efac;font-weight:400;">?</span></span>
+              <span style="font-size:10px;opacity:0.7;font-style:italic;">Based on $0.02/min downtime cost · 2h recovery · see how this is calculated</span><br>
               Instant detection, auto-restart. You don't lift a finger.
             </div>
           </div>
@@ -1280,7 +1294,8 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             </div>
             <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#422006;border:1px solid #854d0e;color:#fde68a;">
               <strong>Outcome: 0 downtime</strong><br>
-              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0.03 saved / event</span>
+              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0.03 saved / event <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('heal-savings-l2', event)" style="font-size:12px;cursor:pointer;background:#fde68a22;border-radius:4px;padding:1px 5px;color:#fde68a;font-weight:400;">?</span></span>
+              <span style="font-size:10px;opacity:0.7;font-style:italic;">Based on $0.02/min downtime cost · L2 adds $0.01 extra savings · see how this is calculated</span><br>
               Predicted failure before it happened. Zero impact.
             </div>
           </div>
@@ -1449,9 +1464,14 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
           <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Slack</div><div style="font-size:11px;color:var(--muted);">Post alerts to a Slack channel</div></div>
           <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:none;">
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--surface);">
           <span style="font-size:18px;">📧</span>
-          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Email</div><div style="font-size:11px;color:var(--muted);;">Email notifications for critical alerts</div></div>
+          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Email</div><div style="font-size:11px;color:var(--muted);">Email notifications for critical alerts</div></div>
+          <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:none;">
+          <span style="font-size:18px;">🎮</span>
+          <div style="flex:1;"><div style="font-size:13px;font-weight:500;">Discord</div><div style="font-size:11px;color:var(--muted);">Push alerts to a Discord webhook</div></div>
           <span style="font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;background:#3730a3;color:#a5b4fc;">Pro</span>
         </div>
       </div>
@@ -1594,13 +1614,14 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 
 <!-- Brain Pro modal -->
 <div class="modal-overlay" id="brainProModal" onclick="if(event.target===this)document.getElementById('brainProModal').classList.remove('active')">
-  <div class="modal">
+  <div class="modal" style="position:relative;">
+    <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="position:absolute;top:10px;right:10px;z-index:1;">✕</button>
     <div class="modal-body">
       <div style="font-size:40px;margin-bottom:12px;">🔒</div>
       <h3>Token Optimiser Pro</h3>
       <p style="margin-top:8px;font-size:13px;color:#94a3b8;">Turn passive observation into active optimisation.</p>
       <ul class="data-table" style="list-style:none;margin:12px 0;width:100%;">
-        <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Full compression (guidance + memory + skills + context)<br><span style="font-size:11px;color:#64748b;">35% savings vs Lite's 22%</span></li>
+<li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Full compression (guidance + memory + skills + context)<br><span style="font-size:11px;color:#64748b;">Savings vary per agent — computed from actual SOUL.md composition</span></li>
         <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Auto-Watch Daemon<br><span style="font-size:11px;color:#64748b;">Every SOUL.md edit triggers auto-compression</span></li>
         <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Token Optimiser<br><span style="font-size:11px;color:#64748b;">Analyses 200+ turns to prune unused skills</span></li>
         <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ 90-Day History & Fleet Comparison</li>
@@ -1608,18 +1629,9 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       <p style="font-size:12px;color:#64748b;">30-day free trial · <strong style="color:#e2e8f0;">$9/mo Solo</strong></p>
       <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
         <div id="proTrialStatus" style="font-size:12px;color:var(--fg-2);min-height:18px;"></div>
-        <div style="display:flex;gap:8px;justify-content:center;">
+<div style="display:flex;gap:8px;justify-content:center;">
           <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="font-size:13px;padding:8px 20px;width:auto;">Not now</button>
-          <button class="add-btn" onclick="startProTrial()" id="proTrialBtn" style="font-size:13px;padding:8px 20px;">Start Free Trial</button>
-          <button class="add-btn" onclick="subscribeStripe()" id="stripeSubscribeBtn" style="font-size:13px;padding:8px 20px;background:#6366f1;border-color:#6366f1;">Subscribe via Stripe ($9/mo)</button>
-        </div>
-        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:6px;">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Already have a license key?</div>
-          <div style="display:flex;gap:6px;">
-            <input type="text" id="proLicenseKey" placeholder="OBS-PRO-XXXXXXXX-XXXX" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:12px;color:#e2e8f0;font-family:var(--font-mono);outline:none;">
-            <button class="add-btn" onclick="activateProLicense()" style="font-size:11px;padding:7px 14px;white-space:nowrap;">Activate</button>
-          </div>
-          <div id="proLicenseStatus" style="font-size:11px;color:var(--muted);margin-top:4px;min-height:16px;"></div>
+          <a href="/api/checkout?plan=solo&trial=30" target="_blank" class="add-btn" style="font-size:13px;padding:8px 20px;text-decoration:none;display:inline-block;text-align:center;">Start Free Trial</a>
         </div>
       </div>
     </div>
@@ -1638,7 +1650,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       </div>
       <button class="modal-close" onclick="closePathwayModal()">✕</button>
     </div>
-    <iframe id="pathwayFrame" src="/pathway" style="width:100%;height:calc(100% - 50px);border:none;background:#0f172a;"></iframe>
+    <iframe id="pathwayFrame" style="width:100%;height:calc(100% - 50px);border:none;background:#0f172a;"></iframe>
   </div>
 </div>
 
@@ -2056,10 +2068,57 @@ function renderOptimiser(data) {
       '<div style="font-size:11px;color:#64748b;">' + c.agent_name + ': ' + c.mode + ' (' + c.savings_pct + '%)</div>'
     ).join('');
   }
+  // Dynamic savings from brain data
+  const litePct = data.savings?.lite || 22;
+  const fullPct = data.savings?.full || 35;
+  const optMin = data.savings?.optimiser_min || 43;
+  const optMax = data.savings?.optimiser_max || 47;
+  document.getElementById('optimiserLiteVal').textContent = '-' + litePct + '%';
+  document.getElementById('optimiserFullVal').textContent = '-' + fullPct + '%';
+  document.getElementById('optimiserProjectedVal').textContent = '-' + optMin + '% to -' + optMax + '%';
+  document.getElementById('optimiserTierLiteCta').textContent = litePct + '% savings per turn';
+  document.getElementById('optimiserTierFullCta').textContent = 'Upgrade → Up to ' + optMax + '% savings';
+  // Extra = Optimiser savings minus best compression (full)
+  const extraMin = Math.max(0, optMin - fullPct);
+  const extraMax = Math.max(0, optMax - fullPct);
+  const extraEl = document.getElementById('optimiserExtraSavings');
+  if (extraEl) extraEl.textContent = extraMin + '-' + extraMax + '%';
 }
 function renderBrain(agentName) {
   if (!brainData) return;
-  const a = brainData[agentName] || brainData['fleet'];
+  let a;
+  if (agentName === 'all') {
+    // Aggregate fleet: sum all agents
+    const keys = Object.keys(brainData).filter(k => k !== 'fleet');
+    let allTk = 0; let allRaw = 0; let allLite = 0; let allFull = 0;
+    const allComps = {};
+    const allTurnTimelines = [];
+    keys.forEach(k => {
+      const ag = brainData[k];
+      allTk += ag.total_tokens || 0;
+      allRaw += ag.raw_tokens || 0;
+      allLite += ag.lite_tokens || 0;
+      allFull += ag.full_tokens || 0;
+      if (ag.components) {
+        Object.entries(ag.components).forEach(([c, v]) => { allComps[c] = (allComps[c] || 0) + v; });
+      }
+      if (ag.turn_timeline && ag.turn_timeline.length) {
+        ag.turn_timeline.forEach((v, i) => { allTurnTimelines[i] = (allTurnTimelines[i] || 0) + v; });
+      }
+    });
+    a = {
+      framework: keys.length + ' agents',
+      total_tokens: allTk,
+      components: allComps,
+      raw_tokens: allRaw,
+      lite_tokens: allLite,
+      full_tokens: allFull,
+      turn_timeline: allTurnTimelines,
+      drift: brainData[keys[0]]?.drift || []
+    };
+  } else {
+    a = brainData[agentName];
+  }
   if (!a) return;
   const fw = a.framework;
   document.getElementById('brainFwBadge').textContent = fw;
@@ -2078,14 +2137,20 @@ function renderBrain(agentName) {
     </div>`;
   }).join('');
   document.getElementById('brainTokenBars').innerHTML = bars || '<div style="color:#64748b;font-size:12px;">No token data for this agent</div>';
-  // Savings
+  // Savings — compute cost per token
   const rawTk = a.raw_tokens || totalVal;
-  const liteTk = a.lite_tokens || Math.round(rawTk * 0.78);
-  const fullTk = a.full_tokens || Math.round(rawTk * 0.65);
+  const liteTk = a.lite_tokens != null ? a.lite_tokens : rawTk;
+  const fullTk = a.full_tokens != null ? a.full_tokens : rawTk;
   const selProv = document.getElementById('brainProvider');
-  let rate = parseFloat(selProv.value);
-  if (selProv.value === 'custom') rate = parseFloat(document.getElementById('brainCustomRate').value) || 0;
-  document.getElementById('brainCustomCost').style.display = selProv.value === 'custom' ? 'flex' : 'none';
+  const selVal = selProv.value;
+  let rate = parseFloat(selVal);
+  if (selVal === 'custom') {
+    const customVal = document.getElementById('brainCustomRate').value.replace('$','').trim();
+    rate = parseFloat(customVal);
+    if (isNaN(rate) || rate < 0) rate = 0;
+  }
+  if (isNaN(rate)) rate = 0;
+  document.getElementById('brainCustomCost').style.display = selVal === 'custom' ? 'flex' : 'none';
   const litePct = ((rawTk - liteTk) / rawTk * 100).toFixed(1);
   const fullPct = ((rawTk - fullTk) / rawTk * 100).toFixed(1);
   const turnsPerDay = 50;
@@ -2129,6 +2194,29 @@ function renderBrain(agentName) {
     return `<div class="per-turn-col" style="height:${h}px;"><span class="tip">${v.toLocaleString()} tok</span></div>`;
   }).join('');
   document.getElementById('brainTimeline').innerHTML = cols || '<div style="color:#64748b;font-size:12px;">No timeline data</div>';
+  // Update compression mode button labels with actual percentages
+  const lPct = Math.round(((rawTk - liteTk) / rawTk) * 100);
+  const fPct = Math.round(((rawTk - fullTk) / rawTk) * 100);
+  const liteLabel = document.getElementById('litePctLabel');
+  const fullLabel = document.getElementById('fullPctLabel');
+  if (liteLabel) liteLabel.textContent = lPct;
+  if (fullLabel) fullLabel.textContent = fPct;
+  // Also update the afterModePct on the preview card
+  const afterPct = document.getElementById('afterModePct');
+  if (afterPct && a) afterPct.textContent = (compressMode === 'lite' ? lPct : fPct) + '%';
+  // Update Optimiser mini cards
+  const optLiteVal = document.getElementById('optimiserLiteVal');
+  const optFullVal = document.getElementById('optimiserFullVal');
+  if (optLiteVal) optLiteVal.textContent = '-' + lPct + '%';
+  if (optFullVal) optFullVal.textContent = '-' + fPct + '%';
+  // Update Optimiser tier CTAs
+  const tierLiteCta = document.getElementById('optimiserTierLiteCta');
+  const tierFullCta = document.getElementById('optimiserTierFullCta');
+  if (tierLiteCta) tierLiteCta.textContent = lPct + '% savings per turn';
+  if (tierFullCta) tierFullCta.textContent = 'Upgrade → Up to ' + fPct + '% savings';
+  // The Optimiser projected value is estimable once we have Lite + Full
+  // but the actual Optimiser additional savings require 200 turns of data,
+  // so we leave it as "varies" / "—" until then
 }
 function showBrainPro() {
   document.getElementById('brainProModal').classList.add('active');
@@ -2156,7 +2244,6 @@ function loadLicenseStatus() {
           el.innerHTML = `<span style="color:#86efac;">✅ Pro active${status.plan ? ' (' + status.plan + ' plan)' : ''}</span>`;
         }
         document.getElementById('proTrialBtn').style.display = 'none';
-        document.getElementById('stripeSubscribeBtn').style.display = 'none';
         // Hide all locked UI elements
         document.querySelectorAll('.pro-upsell, .pro-upsell-block, [onclick*="showBrainPro"]').forEach(e => {
           if (e.id !== 'brainProModal' && !e.closest('#brainProModal')) e.style.display = 'none';
@@ -2173,25 +2260,39 @@ function startProTrial() {
   const status = document.getElementById('proTrialStatus');
   btn.disabled = true;
   btn.textContent = 'Starting...';
-  fetch('/api/licenses/trial', {
+  const email = prompt('Enter your email to start the 30-day free trial (no charge today):');
+  if (!email || !email.includes('@')) {
+    status.innerHTML = '<span style=color:#ef4444;>A valid email is required.</span>';
+    btn.disabled = false;
+    btn.textContent = 'Start Free Trial';
+    return;
+  }
+  const fullName = prompt('Enter your full name (first and last name):');
+  if (!fullName || fullName.trim().split(' ').length < 2) {
+    status.innerHTML = '<span style=color:#ef4444;>Please enter both first and last name.</span>';
+    btn.disabled = false;
+    btn.textContent = 'Start Free Trial';
+    return;
+  }
+  const phone = prompt('Enter your mobile number for account alerts (optional):');
+  fetch('/api/billing/checkout', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({confirm: true}),
+    body: JSON.stringify({email: email, name: fullName.trim(), phone: phone || '', plan: 'solo'}),
   })
     .then(r => r.json())
     .then(data => {
-      if (data.status === 'trial_started') {
-        status.innerHTML = `<span style="color:#86efac;">✅ Trial started — 30 days remaining</span>`;
-        btn.style.display = 'none';
-        showToast('🎉 30-day Pro trial started!');
+      if (data.url) {
+        status.innerHTML = '<span style=color:#eab308;>Redirecting to Stripe...</span>';
+        window.location.href = data.url;
       } else {
-        status.innerHTML = `<span style="color:#ef4444;">Error: ${data.detail || 'unknown'}</span>`;
+        status.innerHTML = '<span style=color:#ef4444;>Error: ' + (data.detail || data.error || 'Checkout failed') + '</span>';
         btn.disabled = false;
         btn.textContent = 'Start Free Trial';
       }
     })
     .catch(e => {
-      status.innerHTML = `<span style="color:#ef4444;">Failed: ${e.message}</span>`;
+      status.innerHTML = '<span style=color:#ef4444;>Failed: ' + e.message + '</span>';
       btn.disabled = false;
       btn.textContent = 'Start Free Trial';
     });
@@ -2274,78 +2375,83 @@ function showManageBilling() {
     .catch(e => showToast('Failed to open billing: ' + e.message));
 }
 
-function activateProLicense() {
-  const input = document.getElementById('proLicenseKey');
-  const status = document.getElementById('proLicenseStatus');
-  const key = input.value.trim();
-  if (!key) { status.innerHTML = '<span style="color:#eab308;">Enter a license key</span>'; return; }
-  status.innerHTML = '<span style="color:var(--muted);">Validating...</span>';
+// ── License Key Modal ──────────────────────────────────
+
+function showLicenseKeyModal() {
+  const existing = document.getElementById('licenseKeyModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'licenseKeyModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  modal.onclick = function(e) { if (e.target === this) this.remove(); };
+  modal.innerHTML = `<div onmousedown="event.stopPropagation()" onclick="event.stopPropagation()" style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:24px;max-width:460px;width:90%;">
+    <div style="font-size:28px;margin-bottom:8px;">🔑</div>
+    <h3 style="margin:0 0 6px;color:#f8fafc;font-size:18px;">Activate Pro License Key</h3>
+    <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin:0 0 16px;">
+      Enter your Pro license key to unlock all features. Keys are validated against our CRM — ensure the key has not expired.
+    </p>
+    <div id="lkError" style="display:none;background:#450a0a;border:1px solid #dc2626;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#fca5a5;"></div>
+    <div id="lkSuccess" style="display:none;background:#064e3b;border:1px solid #059669;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#86efac;"></div>
+    <input id="lkInput" type="text" placeholder="Enter your license key (e.g. OBS-PRO-XXXXXXXX-XXXX)" style="width:100%;background:#0f172a;border:1px solid #475569;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')submitLicenseKey()">
+    <div style="display:flex;gap:10px;">
+      <button onclick="document.getElementById('licenseKeyModal').remove()" style="flex:1;background:transparent;border:1px solid #475569;color:#94a3b8;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;">Cancel</button>
+      <button id="lkSubmitBtn" onclick="submitLicenseKey()" style="flex:1;background:#6366f1;border:none;color:white;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Activate</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById('lkInput').focus(), 100);
+}
+
+function submitLicenseKey() {
+  const key = document.getElementById('lkInput').value.trim();
+  const errorEl = document.getElementById('lkError');
+  const successEl = document.getElementById('lkSuccess');
+  const btn = document.getElementById('lkSubmitBtn');
+
+  errorEl.style.display = 'none';
+  successEl.style.display = 'none';
+
+  if (!key) {
+    errorEl.textContent = 'Please enter a license key.';
+    errorEl.style.display = '';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Validating...';
+
   fetch('/api/licenses/activate', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({key: key, plan: 'solo'}),
+    body: JSON.stringify({key: key}),
   })
     .then(r => r.json())
     .then(data => {
       if (data.status === 'activated') {
-        status.innerHTML = `<span style="color:#86efac;">✅ Activated — ${data.plan} plan</span>`;
-        input.value = '';
-        document.getElementById('proTrialBtn').style.display = 'none';
-        showToast('🎉 Pro license activated!');
-      } else if (data.status === 'activated_offline') {
-        status.innerHTML = `<span style="color:#eab308;">✅ Saved offline — will validate when online</span>`;
-        input.value = '';
-        document.getElementById('proTrialBtn').style.display = 'none';
-        showToast('📝 License saved (offline mode)');
+        const expiryMsg = data.expires_at ? ' Expires: ' + new Date(data.expires_at * 1000).toLocaleDateString() + '.' : '';
+        successEl.textContent = '✅ Key activated! Welcome to Pro.' + expiryMsg;
+        successEl.style.display = '';
+        setTimeout(() => {
+          const modal = document.getElementById('licenseKeyModal');
+          if (modal) modal.remove();
+          htmx.trigger('#tierBadge', 'load');
+        }, 1500);
       } else {
-        status.innerHTML = `<span style="color:#ef4444;">${data.detail || data.message || 'Invalid key'}</span>`;
-      }
-    })
-    .catch(e => {
-      status.innerHTML = `<span style="color:#ef4444;">Failed: ${e.message}</span>`;
-    });
-}
-function subscribeStripe() {
-  const status = document.getElementById('proTrialStatus');
-  const btn = document.getElementById('stripeSubscribeBtn');
-  btn.disabled = true;
-  btn.textContent = 'Opening Stripe...';
-  // Get email from any available source, or prompt
-  fetch('/api/licenses/status')
-    .then(r => r.json())
-    .then(s => {
-      const email = s.customer_email || '';
-      return fetch('/api/billing/checkout', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email: email || 'prospect@observeco.local', plan: 'solo'}),
-      });
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.url) {
-        if (data.mode === 'simulated') {
-          // Simulated mode — redirect to success page
-          status.innerHTML = `<span style="color:#eab308;">Demo mode: ${data.url}</span>`;
-          window.open(data.url, '_blank');
-          btn.disabled = false;
-          btn.textContent = 'Subscribe via Stripe ($9/mo)';
-        } else {
-          // Real Stripe — redirect
-          window.location.href = data.url;
-        }
-      } else {
-        status.innerHTML = `<span style="color:#ef4444;">Error: ${data.detail || data.error || 'Checkout failed'}</span>`;
+        errorEl.textContent = data.error || data.message || 'Activation failed. Check the key and try again.';
+        errorEl.style.display = '';
         btn.disabled = false;
-        btn.textContent = 'Subscribe via Stripe ($9/mo)';
+        btn.textContent = 'Activate';
       }
     })
     .catch(e => {
-      status.innerHTML = `<span style="color:#ef4444;">Failed: ${e.message}</span>`;
+      errorEl.textContent = 'Network error: ' + e.message;
+      errorEl.style.display = '';
       btn.disabled = false;
-      btn.textContent = 'Subscribe via Stripe ($9/mo)';
+      btn.textContent = 'Activate';
     });
 }
+
 // Custom provider toggle
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('brainProvider').addEventListener('change', function() {
@@ -2368,6 +2474,18 @@ function switchMode(mode, btn) {
   btn.classList.add('active');
   document.getElementById('afterModeName').textContent = mode === 'lite' ? 'Lite' : 'Full';
   document.getElementById('compressStatus').style.display = 'none';
+  // Update the active mode indicator on Free/Pro tier buttons
+  const sel = document.getElementById('brainAgentSelect');
+  if (sel) {
+    const agentName = sel.value;
+    const a = brainData && brainData[agentName];
+    if (a) {
+      const rawTk = a.raw_tokens || a.total_tokens;
+      const saved = mode === 'lite' ? rawTk - a.lite_tokens : rawTk - a.full_tokens;
+      const pct = Math.round((saved / rawTk) * 100);
+      document.getElementById('afterModePct').textContent = pct + '%';
+    }
+  }
 }
 function runCompressPreview() {
   const sel = document.getElementById('brainAgentSelect');
@@ -2382,9 +2500,9 @@ function runCompressPreview() {
     return;
   }
   const rawTk = a.raw_tokens || a.total_tokens;
-  const pct = compressMode === 'lite' ? 0.22 : 0.35;
-  const saved = Math.round(rawTk * pct);
-  const afterTk = rawTk - saved;
+  const afterTk = compressMode === 'lite' ? a.lite_tokens : a.full_tokens;
+  const saved = rawTk - afterTk;
+  const pct = Math.round((saved / rawTk) * 100);
   // Render "before" diff placeholder (first ~500 chars of the prompt)
   const oldLines = [
     'When using tools, you MUST:',
@@ -2398,7 +2516,7 @@ function runCompressPreview() {
     ? ['Call one tool per turn with exact params.', 'No extra text. Wait for response. Report errors.', '(Lite: guidance blocks compressed)']
     : ['Consolidated guidance + deduped skills.', 'Memory culled to active sections.', '(Full: memory + skills + context refactored)'];
   document.getElementById('beforeTokens').innerHTML = rawTk.toLocaleString() + ' tok';
-  document.getElementById('afterTokens').innerHTML = afterTk.toLocaleString() + ' tok <span style="font-size:12px;color:#64748b;font-weight:400;">-' + (pct*100).toFixed(0) + '%</span>';
+  document.getElementById('afterTokens').innerHTML = afterTk.toLocaleString() + ' tok <span style="font-size:12px;color:#64748b;font-weight:400;">-' + pct + '%</span>';
   document.getElementById('diffPreviewOld').innerHTML = oldLines.map(l => '<div class="diff-line old">' + l + '</div>').join('');
   document.getElementById('diffPreviewNew').innerHTML = newLines.map(l => '<div class="diff-line new">' + l + '</div>').join('') +
     '<div style="color:#475569;margin-top:4px;font-size:11px;">(' + saved.toLocaleString() + ' tokens saved)</div>';
@@ -2526,7 +2644,7 @@ function loadPluginHooks() {
     .then(html => { el.innerHTML = html; })
     .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
 }
-function initPlugin() { loadPluginStats(); loadPluginHooks(); }
+function initPlugin() { loadPluginStats(); loadPluginHooks(); setInterval(loadPluginStats, 15000); setInterval(loadPluginHooks, 30000); }
 
 // ─── Skills Audit ───
 function openSkillsAuditModal(agentName) {
@@ -2543,42 +2661,30 @@ function openSkillsAuditModal(agentName) {
       const cats = data.categories;
       let html = '<div class="sa-summary">' +
         '<div class="sa-card"><div class="n" style="color:#e2e8f0;">' + s.total_skills + '</div><div class="l">Skills installed</div></div>' +
-        '<div class="sa-card"><div class="n" style="color:#94a3b8;">' + s.tokens_per_session.toLocaleString() + '</div><div class="l">Tokens / session</div></div>' +
-        '<div class="sa-card hl"><div class="n">$' + s.yearly_cost + '</div><div class="l">Yearly cost (DeepSeek)</div><div class="sv">Manual trim saves $' + (s.yearly_cost - s.after_manual_save).toFixed(0) + '/yr</div></div>' +
-        '<div class="sa-card wn"><div class="n">$' + s.after_pro_save + '</div><div class="l">Yearly cost after Pro</div><div class="sv" style="color:#86efac;">⬇ $' + s.pro_savings + ' saved</div></div>' +
+        '<div class="sa-card"><div class="n" style="color:#94a3b8;">' + s.tokens_per_session.toLocaleString() + '</div><div class="l">Tokens per session</div><div class="sv">' + s.sessions_per_month + ' sessions/mo</div></div>' +
+        '<div class="sa-card hl"><div class="n" style="color:#22c55e;">$' + s.monthly_cost + '</div><div class="l">Monthly burn</div><div class="sv">' + s.model_pricing + '</div></div>' +
+        '<div class="sa-card"><div class="n" style="color:#f59e0b;">$' + s.yearly_cost + '</div><div class="l">Yearly cost</div></div>' +
         '</div>';
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;background:#1e1b4b;border:1px solid #3730a3;border-radius:10px;padding:14px 18px;margin-bottom:16px;">' +
-        '<div><div style="font-size:13px;font-weight:600;color:#a5b4fc;">🔒 Auto-Watch <span style="background:#3730a3;color:#a5b4fc;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;">Pro</span></div>' +
-        '<div style="font-size:12px;color:var(--muted);">Weekly scan + drift tracking + threshold alerts</div></div>' +
-        '<span style="font-size:18px;cursor:pointer;color:#6366f1;" onclick="showBrainPro()">🔒</span></div>';
+
+      // Skills table
       html += '<div class="sa-card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;padding:0;">';
-      html += '<table class="sa-table"><tr><th>#</th><th>Skill</th><th>Tokens</th><th>Composition</th><th>Drift</th><th>Last used</th><th>$/yr</th></tr>';
-      const COMP_KEYS = ['identity', 'skills', 'memory', 'tools', 'guidance'];
-      const COMP_CLS = { identity: 'sg', skills: 'sg sk', memory: 'sg me', tools: 'sg to', guidance: 'sg gu' };
-      const COMP_LABELS = { identity: 'sg me', skills: 'sg sk', memory: 'sg mm', tools: 'sg to', guidance: 'sg gu' };
+      html += '<table class="sa-table"><tr><th>#</th><th>Skill</th><th>Tokens</th>' +
+        '<th>Drift</th><th>$/yr</th></tr>';
       skills.forEach(sk => {
-        const tot = sk.tokens;
-        const comps = sk.comps || {};
-        const totalPct = Object.values(comps).reduce((a,b)=>a+b,0) || 1;
-        const bar = Object.entries(comps).map(([k,v]) => {
-          const w = (v / totalPct * 100).toFixed(0);
-          const cls = {identity:'sg',skills:'sg sk',memory:'sg mm',tools:'sg to',guidance:'sg gu'}[k] || 'sg';
-          return `<span class="${cls}" style="width:${w}%"></span>`;
-        }).join('');
-        const dirIcon = sk.drift_dir === 'up' ? '⬆' : sk.drift_dir === 'down' ? '⬇' : '—';
-        const driftCls = sk.drift_dir === 'up' ? 'up' : sk.drift_dir === 'down' ? 'dn' : 'fl';
-        const lastUsed = sk.last_used_days === 0 ? 'Today' : sk.last_used_days === 1 ? 'Yesterday' : sk.last_used_days + ' days ago';
-        const lastCls = sk.last_used_days > 60 ? 'lu st' : 'lu';
-        const tokenCls = sk.breach ? 'tk ov' : 'tk ok';
-        const badge = sk.breach ? '<span class="badge br">⛔ ' + sk.tokens + '</span>' : '<span class="badge ok">' + sk.tokens + '</span>';
-        const rowCls = sk.breach ? 'ov-th' : '';
-        html += '<tr class="' + rowCls + '"><td class="rnk">' + sk.rank + '</td><td><div class="sn">' + sk.name + ' ' + badge + '</div><div class="sc">' + sk.category + '</div></td>' +
-          '<td class="' + tokenCls + '">' + sk.tokens.toLocaleString() + '</td><td><div class="sa-bar">' + bar + '</div></td>' +
-          '<td class="dr ' + driftCls + '">' + dirIcon + (sk.drift_pct > 0 ? ' +' : ' ') + sk.drift_pct + '%</td>' +
-          '<td class="' + lastCls + '">' + lastUsed + '</td>' +
-          '<td class="co' + (sk.yearly_cost > 15 ? ' hi' : '') + '">$' + sk.yearly_cost.toFixed(2) + '</td></tr>';
+        const tokenCls = sk.tokens > 10000 ? 'tk ov' : 'tk ok';
+        const badge = sk.tokens > 10000
+          ? '<span class="badge br">⛔ ' + sk.tokens.toLocaleString() + '</span>'
+          : '<span class="badge ok">' + sk.tokens.toLocaleString() + '</span>';
+        const driftHtml = s.drift_available ? '—' : '<span style="color:var(--muted);font-size:11px;">Tracking…</span>';
+        const yearly = '~$' + ((sk.tokens * s.sessions_per_month * 12 / 1000000) * 0.15).toFixed(2);
+        html += '<tr><td class="rnk">' + sk.rank + '</td><td><div class="sn">' + sk.name + ' ' + badge + '</div><div class="sc">' + sk.category + '</div></td>' +
+          '<td class="' + tokenCls + '">' + sk.tokens.toLocaleString() + '</td>' +
+          '<td class="dr fl" style="color:var(--muted);">' + driftHtml + '</td>' +
+          '<td class="co' + (yearly > 15 ? ' hi' : '') + '">' + yearly + '</td></tr>';
       });
       html += '</table></div>';
+
+      // By Category
       html += '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">' +
         '<div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:10px;">🏷️ By Category</div>' +
         '<div class="sa-cat-grid">';
@@ -2586,9 +2692,15 @@ function openSkillsAuditModal(agentName) {
         html += '<div class="sa-cat-item"><span class="cn">' + cat.charAt(0).toUpperCase() + cat.slice(1) + '</span><span class="cc">' + info.skills + ' skills · ' + info.tokens.toLocaleString() + ' tokens</span></div>';
       });
       html += '</div></div>';
-      html += '<div style="text-align:center;margin-top:12px;">' +
-        '<div style="font-size:13px;color:#a5b4fc;margin-bottom:8px;">🔒 Pro Auto-Watch: weekly scan catches bloat the week it starts. $' + s.pro_savings + '/year savings.</div>' +
-        '<button onclick="showBrainPro()" style="background:var(--meta);border:none;color:white;padding:10px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Start Free Trial — $9/mo</button></div>';
+
+      // Honest state — no fake upsell
+      if (!s.drift_available) {
+        html += '<div style="background:rgba(100,116,139,0.08);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-top:8px;text-align:center;">' +
+          '<div style="font-size:12px;color:var(--sec);">📊 Drift tracking not yet active — data appears once the watch daemon completes a few cycles.</div></div>';
+      }
+      html += '<div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted);">' +
+        'Cost estimate based on <strong>' + s.model_pricing + '</strong> at ' + s.sessions_per_month + ' sessions/month. Your actual burn depends on session length and model used.</div>';
+
       body.innerHTML = html;
     })
     .catch(e => {
@@ -2606,6 +2718,7 @@ function openPathwayModal() {
   document.body.style.overflow = 'hidden';
   const frame = document.getElementById('pathwayFrame');
   if (frame && !frame.src) frame.src = '/pathway';
+  else if (frame) frame.contentWindow.location.reload();
 }
 function closePathwayModal() {
   document.getElementById('pathwayModal').classList.remove('active');
@@ -2634,7 +2747,7 @@ function openChiselModal(agentName) {
           return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><span style="color:#e2e8f0;font-weight:500;">' + name + '</span><span style="color:#94a3b8;">' + a.raw_tokens + ' tok → <span style="color:#22c55e;">' + a.lite_tokens + ' tok (-' + litePct + '%)</span> <span style="color:#a5b4fc;">| Full: ' + a.full_tokens + ' tok (-' + fullPct + '%)</span></span></div>';
         }).join('') + '</div>';
       }
-      html += '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:12px;color:#64748b;margin-bottom:8px;">🔒 Auto-Compression (Pro) — Every time your SOUL.md is edited, watch daemon runs compression automatically.</div><div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.8;"><span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified — compressing...</span><br><span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ 4,200 → 3,276 tok (-22%)</span><br><span style="color:#38bdf8;">📊 Cumulative: 47,812 tokens saved this week</span></div><div style="margin-top:10px;text-align:center;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;" onclick="showBrainPro()">Unlock with Pro →</button></div></div>';
+      html += '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:12px;color:#64748b;margin-bottom:8px;">🔒 Auto-Compression (Pro) — Every time your SOUL.md is edited, watch daemon runs compression automatically.</div><div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.8;"><span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified — compressing...</span><br><span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ Compression applied (savings vary per agent)</span><br><span style="color:#38bdf8;">📊 Cumulative: tracked in watch daemon logs</span></div><div style="margin-top:10px;text-align:center;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;" onclick="showBrainPro()">Unlock with Pro →</button></div></div>';
       body.innerHTML = html;
     })
     .catch(e => { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
