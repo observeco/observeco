@@ -2926,23 +2926,48 @@ function openSkillsAuditModal(agentName) {
 
           // Compute low-end estimates (conservative rates) for range display
           var totalGuidance = 0, totalMemSkills = 0;
+          var allActualLite = true, allActualFull = true;
           agents.forEach(function(e){
-            var c = e[1].components || {};
+            var a = e[1];
+            var c = a.components || {};
             totalGuidance += c.guidance || 0;
             totalMemSkills += (c.memory || 0) + (c.skills || 0);
+            if (a.actual_lite_pct == null) allActualLite = false;
+            if (a.actual_full_pct == null) allActualFull = false;
           });
-          var liteLow = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.5)) / totalRaw) * 100) : 0;
-          var liteHigh = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.7)) / totalRaw) * 100) : 0;
-          var fullLow = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.5) - Math.round(totalMemSkills * 0.25)) / totalRaw) * 100) : 0;
-          var fullHigh = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.7) - Math.round(totalMemSkills * 0.4)) / totalRaw) * 100) : 0;
+
+          // Show actual % if all agents have been compressed, otherwise show estimated range
+          var liteDisplay, liteLabel, fullDisplay, fullLabel;
+          if (allActualLite) {
+            var avgLite = 0;
+            agents.forEach(function(e){ avgLite += (e[1].actual_lite_pct || 0); });
+            liteDisplay = Math.round(avgLite / agents.length) + '%';
+            liteLabel = 'Lite · actual';
+          } else {
+            var liteLow = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.5)) / totalRaw) * 100) : 0;
+            var liteHigh = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.7)) / totalRaw) * 100) : 0;
+            liteDisplay = liteLow + '–' + liteHigh + '%';
+            liteLabel = 'Lite · estimated';
+          }
+          if (allActualFull) {
+            var avgFull = 0;
+            agents.forEach(function(e){ avgFull += (e[1].actual_full_pct || 0); });
+            fullDisplay = Math.round(avgFull / agents.length) + '%';
+            fullLabel = 'Full · actual';
+          } else {
+            var fullLow = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.5) - Math.round(totalMemSkills * 0.25)) / totalRaw) * 100) : 0;
+            var fullHigh = totalRaw > 0 ? Math.round((1 - Math.max(0, totalRaw - Math.round(totalGuidance * 0.7) - Math.round(totalMemSkills * 0.4)) / totalRaw) * 100) : 0;
+            fullDisplay = fullLow + '–' + fullHigh + '%';
+            fullLabel = 'Full · estimated';
+          }
 
           savings += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;"><div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
-            '<div style="font-size:20px;font-weight:700;color:#22c55e;">' + liteLow + '–' + liteHigh + '%</div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Lite · estimated</div>' +
+            '<div style="font-size:20px;font-weight:700;color:#22c55e;">' + liteDisplay + '</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + liteLabel + '</div>' +
             '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance compressed · ' + totalLite.toLocaleString() + ' tok</div></div>' +
             '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
-            '<div style="font-size:20px;font-weight:700;color:#a5b4fc;">' + fullLow + '–' + fullHigh + '%</div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Full · estimated</div>' +
+            '<div style="font-size:20px;font-weight:700;color:#a5b4fc;">' + fullDisplay + '</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + fullLabel + '</div>' +
             '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance + memory + skills compressed · ' + totalFull.toLocaleString() + ' tok</div></div></div>';
           // Per-agent breakdown
           savings += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Per-agent savings</div>';
@@ -2950,7 +2975,9 @@ function openSkillsAuditModal(agentName) {
             var name = e[0], a = e[1];
             var lp = a.raw_tokens > 0 ? Math.round((1 - a.lite_tokens / a.raw_tokens) * 100) : 0;
             var fp = a.raw_tokens > 0 ? Math.round((1 - a.full_tokens / a.raw_tokens) * 100) : 0;
-            savings += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;"><span style="color:#e2e8f0;">' + name + '</span><span style="color:#94a3b8;">' + a.raw_tokens + ' tok → <span style="color:#22c55e;">~' + lp + '% Lite</span> <span style="color:#a5b4fc;">| ~' + fp + '% Full</span></span></div>';
+            var actualL = a.actual_lite_pct != null ? a.actual_lite_pct + '%' : '~' + lp + '%';
+            var actualF = a.actual_full_pct != null ? a.actual_full_pct + '%' : '~' + fp + '%';
+            savings += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;"><span style="color:#e2e8f0;">' + name + '</span><span style="color:#94a3b8;">' + a.raw_tokens + ' tok → <span style="color:#22c55e;">' + actualL + ' Lite</span> <span style="color:#a5b4fc;">| ' + actualF + ' Full</span></span></div>';
           });
           // Pro gate for Apply
           fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
@@ -2958,7 +2985,7 @@ function openSkillsAuditModal(agentName) {
             .then(function(lic){
               var isPro = lic.license_type === 'pro' || lic.is_pro;
               if (isPro) {
-                savings += '<div style="display:flex;gap:8px;margin-top:12px;"><button class="heal-btn" style="flex:1;" onclick="showToastB(\'💾 Compression applied — backups saved\')">💾 Apply Compression</button><button class="feedback-btn" onclick="openChiselModal(\'all\')">📋 Full Details</button></div>';
+                savings += '<div style="display:flex;gap:8px;margin-top:12px;"><button class="heal-btn" style="flex:1;" onclick="applyChiselCompression()">💾 Apply Compression</button><button class="feedback-btn" onclick="openChiselModal(\'all\')">📋 Full Details</button></div>';
               } else {
                 savings += '<div style="margin-top:12px;text-align:center;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" onclick="showBrainPro()">🔒 Unlock with Pro →</button></div>';
               }
@@ -3032,6 +3059,53 @@ function openChiselModal(agentName) {
     })
     .catch(function(e) { body.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Failed: ' + e.message + '</div>'; });
 }
+
+// ─── Apply compression for all agents (Lite) ───
+function applyChiselCompression() {
+  showToastB('💾 Compressing agent SOUL.md files...');
+  var btn = document.querySelector('button[onclick="applyChiselCompression()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Compressing...'; }
+
+  var tokenHeaders = window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN, 'Content-Type': 'application/json'} : {'Content-Type': 'application/json'};
+
+  // Get agent names from the preview data
+  fetch('/api/chisel-preview?agent=all', {headers: tokenHeaders})
+    .then(function(r){ return r.json() })
+    .then(function(data){
+      var agents = Object.keys(data.agents || {});
+      if (agents.length === 0) { showToastB('No agents to compress'); return; }
+      var done = 0, errors = 0;
+      agents.forEach(function(name){
+        fetch('/api/chisel/compress', {
+          method: 'POST',
+          headers: tokenHeaders,
+          body: JSON.stringify({agent: name, mode: 'lite'})
+        })
+        .then(function(r){ return r.json() })
+        .then(function(result){
+          done++;
+          if (result.status === 'error') errors++;
+          if (done + errors >= agents.length) {
+            var msg = '✅ Compression done — ' + done + ' agents (' + errors + ' errors)';
+            showToastB(msg);
+            if (btn) { btn.disabled = false; btn.textContent = '💾 Apply Compression'; }
+            // Refresh the preview to show actual %s
+            window.openSkillsAuditModal(document.getElementById('saModalTitle')?.textContent?.includes('for ') ?
+              document.getElementById('saModalTitle').textContent.replace('Skill Audit for ', '') : 'all');
+          }
+        })
+        .catch(function(){
+          errors++;
+          if (done + errors >= agents.length) {
+            showToastB('Compression finished with ' + errors + ' errors');
+            if (btn) { btn.disabled = false; btn.textContent = '💾 Apply Compression'; }
+          }
+        });
+      });
+    })
+    .catch(function(){ showToastB('Failed to load agents for compression'); if (btn) { btn.disabled = false; btn.textContent = '💾 Apply Compression'; } });
+}
+
 function showToast(msg) {
   showToastB(msg);
 }

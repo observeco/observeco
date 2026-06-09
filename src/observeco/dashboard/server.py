@@ -3089,7 +3089,7 @@ async def api_skills_audit(agent: str = "all"):
 @app.get("/api/chisel-preview")
 async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
     """Chisel compression preview — real trim data from DB.
-    
+
     Lite = guidance-only compression (savings varies per agent).
     Full = guidance + memory + skills compression.
     Savings percentages are computed from actual component breakdown per agent.
@@ -3099,6 +3099,23 @@ async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
     for t in trims:
         if t["agent_name"] not in latest:
             latest[t["agent_name"]] = t
+
+    # Query actual savings from compress_log
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+    actual_lite = {}
+    actual_full = {}
+    try:
+        for row in conn.execute(
+            "SELECT agent_name, mode, savings_pct FROM compress_log ORDER BY timestamp DESC LIMIT 200"
+        ).fetchall():
+            if row["mode"] == "lite" and row["agent_name"] not in actual_lite:
+                actual_lite[row["agent_name"]] = row["savings_pct"]
+            if row["mode"] == "full" and row["agent_name"] not in actual_full:
+                actual_full[row["agent_name"]] = row["savings_pct"]
+    except Exception:
+        pass
+
     result = {}
     for name, t in latest.items():
         raw = t["total_tokens"]
@@ -3127,6 +3144,8 @@ async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
             "full_tokens": full_val,
             "lite_savings_pct": round((1 - lite / max(raw, 1)) * 100, 1),
             "full_savings_pct": round((1 - full_val / max(raw, 1)) * 100, 1),
+            "actual_lite_pct": actual_lite.get(name),
+            "actual_full_pct": actual_full.get(name),
             "savings_ratio": round(lite_savings_ratio, 3),
             "full_savings_ratio": round(full_savings_ratio, 3),
             "components": {"identity": identity_t, "skills": skills_t,
