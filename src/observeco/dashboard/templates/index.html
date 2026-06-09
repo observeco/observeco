@@ -2319,7 +2319,8 @@ function confirmCancelTrial() {
     .then(r => r.json())
     .then(data => {
       // Refresh badge
-      htmx.trigger('#tierBadge', 'load');
+      htmx.ajax('GET', '/api/licenses/badge', {target: '#tierBadge', swap: 'outerHTML'});
+      loadLicenseStatus();
       // Remove modal
       const modal = document.getElementById('cancelTrialModal');
       if (modal) modal.remove();
@@ -2408,7 +2409,8 @@ function showDeactivateConfirm() {
         showToast('License deactivated. Pro features locked.');
         var modal = document.getElementById('licenseKeyModal');
         if (modal) modal.remove();
-        htmx.trigger('#tierBadge', 'load');
+        htmx.ajax('GET', '/api/licenses/badge', {target: '#tierBadge', swap: 'outerHTML'});
+        loadLicenseStatus();
       } else {
         showToast('Failed: ' + (data.detail || data.message || 'unknown'));
       }
@@ -2448,7 +2450,8 @@ function submitLicenseKey() {
         setTimeout(() => {
           const modal = document.getElementById('licenseKeyModal');
           if (modal) modal.remove();
-          htmx.trigger('#tierBadge', 'load');
+          htmx.ajax('GET', '/api/licenses/badge', {target: '#tierBadge', swap: 'outerHTML'});
+          loadLicenseStatus();
         }, 1500);
       } else {
         errorEl.textContent = data.error || data.message || 'Activation failed. Check the key and try again.';
