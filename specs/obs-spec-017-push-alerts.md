@@ -28,6 +28,28 @@ Alerts are currently **in-dashboard only** — they appear in the right-rail ale
 - Different alert type for same agent → send (e.g., circuit trip + drift breach)
 - Store last-sent in `alert_delivery_log` table
 
+### Discord Delivery
+- HTTP POST to `discord_webhook_url` with JSON embed payload
+- Colour-coded embeds: 🔴 error (red), 🟡 warning (yellow), 🟢 recovery (green)
+- Embed format:
+  ```json
+  {
+    "embeds": [{
+      "title": "⚠️ ObserveCo Alert: agent_name",
+      "description": "circuit trip — 3 consecutive failures",
+      "color": 16711680,
+      "fields": [
+        {"name": "Agent", "value": "hermes-triage", "inline": true},
+        {"name": "Severity", "value": "🔴 Critical", "inline": true},
+        {"name": "Timestamp", "value": "03:15:03 UTC"}
+      ],
+      "footer": {"text": "ObserveCo Pro · Auto-heal integrated"}
+    }]
+  }
+  ```
+- Rate limit: max 1 webhook POST per 2s per URL (Discord API limit is 30/min)
+- Retry: 3 attempts with 30s backoff
+
 ### DB Schema
 ```sql
 CREATE TABLE IF NOT EXISTS alert_delivery_log (
@@ -48,6 +70,17 @@ CREATE TABLE IF NOT EXISTS alert_config (
     min_severity TEXT DEFAULT 'warning'
 );
 ```
+
+### Dashboard UI (Missing — See Master Plan §3.17 for full spec)
+- Channel management: add/edit/remove Telegram, Discord, webhook, email
+- "Test & Save" flow: send test alert → confirmed → save config
+- Delivery log: table with timestamp × agent × type × channel × status
+- Channel health: 🟢 active / 🟡 unverified / 🔴 3 consecutive failures
+- **AC1:** Configure Telegram chat ID → test alert verified
+- **AC2:** Configure Discord webhook → test alert via embed
+- **AC3:** Failed channel after 3 consecutive failures marked 🔴
+- **AC4:** Free tier: channel list visible but disabled with "Pro feature" tooltip
+- **Effort:** ~1.5d (0.5d Discord + 1d dashboard UI)
 
 ## §4 Implementation
 

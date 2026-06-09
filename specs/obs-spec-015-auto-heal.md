@@ -53,10 +53,18 @@ CREATE TABLE IF NOT EXISTS heal_config (
 );
 ```
 
-### Dashboard
+### Dashboard UI (Missing — See Master Plan §3.15 for full spec)
 - New "Auto-Heal" section in agent detail → Memory/health tab
-- Shows: `🟢 Auto-heal active (L1)` / `🟡 L1 + L2 active` / `⚪ Manual only`
-- Toggle button to enable/disable
+- Shows status per state: idle / healing / cooldown / error
+- Per-agent toggle: enable/disable auto-heal
+- Heal history table: last 20 events with outcome
+- L2 threshold config: drift %, memory debt
+- **AC1:** Toggle enabled → daemon picks up ≤30s
+- **AC2:** Status card shows daemon running/stopped within 5s
+- **AC3:** Heal history shows last 20 events
+- **AC4:** Free user sees toggle disabled with "Pro feature" tooltip
+- **AC5:** All states from state matrix render correctly (idle/active/success/failed/cooldown/daemon-down)
+- **Effort:** ~1 day (dashboard UI only — backend already built)
 
 ## §6 Failure Modes
 

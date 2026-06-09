@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-| **Last updated:** 2026-06-10 (§15/§17 status corrected — Backend ✅ / Dashboard UI ❌. Discord added to Push Alerts. Human-centric build lesson documented.)
+| **Last updated:** 2026-06-10 (§3.13/14/15/17/18/20/21 expanded with RDRs, state matrices, ACs. G1 guardrails spec'd. Feature matrix statuses corrected to match reality. Discord + Dashboard UI spec added to Push Alerts.)
 | **Author:** Main |
 
 ---
@@ -49,16 +49,16 @@
 | 12 | Local SQLite, zero cloud, zero telemetry | Infrastructure | ✅ Live | ✅ | ✅ | — | — |
 | | | | | | | | |
 | **PLANNED** | | | | | | | |
-| 13 | System prompt compression (`observeco chisel compress`) | Analysis | ✅ Live | ✅ `--mode lite` (guidance compression) | ✅ `--mode full` (memory culling + skill dedup + context refactor) | ~2.5d | observeco-master-plan.md §13 |
-| 14 | Per-turn token tracking (webhook + agent hooks) | Monitoring | ✅ Live | ✅ 24h timeline + component breakdown + cost tracking | ✅ never-pruned history + anomaly detection (+3σ flag) + budget thresholds (daily/cost/anomaly sigma) + fleet comparison + component trend analysis | ~4d (~2d if §18 built first) | observeco-master-plan.md §14 |
+|| 13 | System prompt compression (`observeco chisel compress`) | Analysis | ✅ CLI / 🔴 Phases 2-4 (auto-watch, dashboard, skill audit hook) | ✅ `--mode lite` (guidance compression) + `--dry-run` | ✅ `--mode full` (memory culling + skill dedup + context refactor) + auto-watch daemon + dashboard savings | ~2.5d | observeco-master-plan.md §13 |
+| 14 | Per-turn token tracking (webhook + agent hooks) | Monitoring | ✅ Backend / 🔴 Phases 2-4 (agent hooks + trend + budget alerts + dashboard) | ✅ 24h timeline + component breakdown + cost tracking | ✅ never-pruned history + anomaly detection (+3σ flag) + budget thresholds (daily/cost/anomaly sigma) + fleet comparison + component trend analysis | ~4d (~2d if §18 built first) | observeco-master-plan.md §14 |
 | 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Backend (heal.py) / ❌ Dashboard UI | ✅ manual Heal button + dashboard alerts + L2 trends | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) | ~1d + L2 built | observeco-master-plan.md §15 |
-| 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) — dashboard stats + hooks now auth-exempt (401 fix) | Analysis | ✅ Live | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
+| 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) — dashboard stats + hooks now auth-exempt (401 fix) | Analysis | 🔴 Planned (code partial — plugin + dashboard + intent classifier pending) | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
 | 17 | Push alerts (Telegram, Discord, webhook, email) | Alerts | ✅ Backend (push.py) / ❌ Dashboard UI | ❌ in-dashboard only (discovery gap) | ✅ Telegram + Discord + webhook + email + auto-heal integration + subscription management + delivery log | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
-| 18 | Extended history (7d free / never-pruned pro) | Dashboard | ✅ Live | ✅ 7d (pruning cron at 3am) + L2 baselines (RSS, P95, errors, upstream) | ✅ never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
-|| 19 | In-dashboard Glossary & FAQ | Dashboard | ✅ Live | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
-|| 20 | Skill Audit (`observeco chisel skills`) — now with --compress flag for body compression + `chisel cards` + `chisel artifacts` | Analysis | ✅ Live | ✅ manual CLI scan + ranked table + `--compress --dry-run` to preview savings + `cards` for metadata catalog + `artifacts --refresh` to rebuild compressed cache | ✅ auto-scan (weekly) + drift tracking + threshold alerts + 12-week trend chart | ~3d (built) + 1d (compress) + 1d (artifacts) | observeco-master-plan.md §3.21 |
+| 18 | Extended history (7d free / never-pruned pro) | Dashboard | ✅ Backend / 🔴 Phases 2-3 (prune cron + L2 baselines + range selector) | ✅ 7d (pruning cron at 3am) + L2 baselines (RSS, P95, errors, upstream) | ✅ never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
+||| 19 | In-dashboard Glossary & FAQ | Dashboard | 🔴 Planned (not built) | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
+|| 20 | Skill Audit (`observeco chisel skills`) — now with --compress flag for body compression + `chisel cards` + `chisel artifacts` | Analysis | ✅ CLI / 🔴 Phases 2-4 (drift DB + auto-scan cron + dashboard card) | ✅ manual CLI scan + ranked table + `--compress --dry-run` to preview savings + `cards` for metadata catalog + `artifacts --refresh` to rebuild compressed cache | ✅ auto-scan (weekly) + drift tracking + threshold alerts + 12-week trend chart | ~3d (built) + 1d (compress) + 1d (artifacts) | observeco-master-plan.md §3.21 |
 ||| 21 | Communication Pathway Map (subgraph folding, cron edge metadata, FK constraint fix, daemon heartbeat metadata, sticky header) | Diagnostics | ✅ Live | ✅ Interactive graph with 111 nodes + 80 edges + 77 cron_delivery edges + platform node + dead ends + subgraph folding + detail panel with metadata | ✅ Detail panel + drag + auto-alert | ~3d (built) + 1d (FK fix) | observeco-master-plan.md §3.19 |
-||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Live | ✅ All (detection + health — core infra for everything) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
+||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Layers 1-2 / 🔴 P2-P5 (platform connectivity, crash analysis, costs, comm tracing, CI/CD) | ✅ All (detection + health — core infra for everything) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
 |||| **23** | **Skill Artifacts + Cards System** (`observeco chisel artifacts` + `chisel cards`) | **Analysis** | **✅ Live** | ✅ Cached compressed `.md.compressed` per skill, `cards.json` (156 cards), `manifests.json`, CLI `observeco chisel cards` for top-30 rank, `observeco chisel artifacts --refresh` to rebuild. SkillOS `_load_skill_content()` prefers compressed cache over raw. `max_skill_content_bytes` reduced 8192→4096. | ✅ Same for all | ~1d | observeco-master-plan.md §3.23 |
 ||| **24** | **Config Hygiene Audit** (`observeco chisel config`) — scans Hermes config for duplicated prompts, low cache TTL, stale references. **Synergy:** shares token counting, YAML parsing, and savings estimation with `chisel/skill_compress.py`. Same pipeline, different target. | **Analysis** | **✅ Live** | ✅ CLI audit report with line-by-line findings + `--fix` flag | ✅ Dashboard widget (Pro, Brain tab, live-updating) + scheduled daily scan (6am) | ~1d | observeco-master-plan.md §3.24 |
 ||| **25** | **LLM-Powered Intelligence Service** — shared `llm_service` that every module calls for deeper diagnosis, alert enrichment, personalized first-run guidance, and per-agent summaries. | **AI** | **✅ Live — v1** | ✅ Free = no LLM (static fallback). Trial = all 7 consumers active. Pro = all 7 permanently. **By design: LLM is Pro-only.** | ✅ All 7 consumers (3 deep + 4 shallow) | ~5d (3d built, 2 deferred) | observeco-master-plan.md §3.25 |
@@ -609,25 +609,101 @@ This number grows the longer the user goes between dashboard visits — directly
 
 ### 3.13 System Prompt Compression (🔴 Planned)
 
-| | |
-|---|---|
-| **What** | `observeco chisel compress` — reads SOUL.md, applies Chisel Lite (guidance dedup/rewording) or Full (guidance + memory culling + skill dedup + context refactor). Free: manual `--dry-run` and `--apply`. Pro: auto-watch daemon triggers on every SOUL.md edit + Full compression methods. Integrates with Skill Audit: threshold-detected bloated skills trigger auto-compression on parent SOUL.md. |
-| **Implementation** | Phase 1: existing compression engine (no change). Phase 2: `observeco chisel compress --auto-watch` — watchdog-based file watcher on SOUL.md paths, 5s debounce, Full compression, write `.chisel` version. Phase 3: dashboard card with cumulative savings, compression history chart, auto-watch indicator. Phase 4: Skill Audit integration (§20) — auto-compress on threshold breach. |
-| **Free** | `observeco chisel compress --dry-run` (preview) + `--apply` (Lite only — 22% reduction). Manual per edit. |
-| **Pro** | Auto-watch daemon + Full compression (35% reduction) + memory culling + skill dedup + context refactor + dashboard cumulative savings + Skill Audit integration. |
-| **Effort** | ~2.5 days (1 auto-watch daemon + 1 dashboard card + 0.5 Skill Audit integration) |
-| **Depends on** | Compression engine (✅ exists), Skill Audit §20 (for integration — can ship standalone) |
+**Tagline:** *Your SOUL.md is a book. Make it a tweet.*
+
+**What it is:** `observeco chisel compress` reads SOUL.md, applies Chisel Lite (guidance dedup/rewording) or Full (guidance + memory culling + skill dedup + context refactor). CLI exists and works. Remaining: auto-watch daemon, dashboard card, Skill Audit integration.
+
+#### RDR — Phase 2 (Auto-Watch Daemon)
+
+```
+Problem: Compression is manual. User runs it once, saves tokens, then SOUL.md
+         grows back over 30 days and they forget to run it again. Token bloat
+         returns silently.
+Solution: `observeco chisel compress --auto-watch` — fswatch-based file watcher
+          on SOUL.md paths, 5s debounce, applies Full compression, writes `.chisel` version.
+Key constraint: Debounce prevents compress-on-every-keystroke. Circuit breaker:
+               3 failures → 10min cooldown. No compress while user mid-edit.
+Success metric: Auto-watch triggers within 5s of file save completion. <1% false
+               positives (compressing when user is still editing).
+```
+
+#### States — Phase 2
+
+| State | Behavior |
+|-------|----------|
+| Daemon launched, no files changed | "Watching SOUL.md for changes..." |
+| File changed, within 5s debounce | "Debouncing (3s remaining)..." |
+| Debounce expired, compress queued | Running `chisel compress --mode [lite/full]` |
+| Compress succeeded | Saved X tokens (Y%) |
+| Compress failed (file locked) | Retry in 5s (max 3) |
+| All retries exhausted | Critical flag: "Compression failed after 3 retries — file may be corrupt" |
+| Circuit breaker tripped (3 failures in 10min) | 10min cooldown, resume automatically |
+| Daemon stopped (SIGTERM/user) | Saves last state, resumes on restart |
+
+#### Acceptance Criteria — Phase 2
+
+- [ ] AC1: Auto-watch detects file save → runs compress within 5s of debounce
+- [ ] AC2: Debounce timer resets on each subsequent save event
+- [ ] AC3: Max 1 compress per 30s per file (prevents bulk-save storms)
+- [ ] AC4: Circuit breaker: 3 failures = 10min cooldown, auto-resume
+- [ ] AC5: Free: auto-watch runs Lite mode. Pro: auto-watch runs Full mode.
+
+**Phase 3 (Dashboard Card):** Cumulative savings display, compression history chart with daily breakdown sparkline, auto-watch on/off indicator. Renders in <500ms. Free sees Lite savings only. Pro sees Full savings + per-file breakdown.
+
+**Phase 4 (Skill Audit Integration):** Skill Audit §3.21 shows "Compress" action button per bloated skill. Click → runs compress on parent SOUL.md targeting the bloated skill content. Push alert when threshold detected.
+
+**Effort:** ~2.5 days (1 auto-watch daemon + 1 dashboard card + 0.5 Skill Audit integration)
 
 ### 3.14 Per-Turn Token Tracking (🔴 Planned)
 
-| | |
-|---|---|
-| **What** | Each agent POSTs token usage after every turn via webhook — agent name, turn timestamp, total tokens, component breakdown (identity, skills, memory, tools, guidance), provider. Dashboard shows per-turn timeline (24h Free / full history Pro), component breakdown, cost-per-turn, anomaly detection. |
-| **Implementation** | Phase 1: existing `POST /api/chisel/trim` endpoint (no change). Phase 2: component trend engine extends L2 baseline cron from §18. Phase 3: budget threshold + push alerts via §17. Phase 4: dashboard component trend chart + anomaly table. Shares 60% with §18 Extended History. |
-| **Free** | 24h per-turn timeline + component breakdown. |
-| **Pro** | Never-pruned history + fleet comparison + component trend (per-section drift) + anomaly detection (>3σ turn cost) + budget threshold alerts (daily/weekly tokens → Telegram). |
-| **Effort** | ~4 days (1 webhook + 1 trend engine + 1 alerts + 1 dashboard). ~2 days if §18 built first. |
-| **Depends on** | `POST /api/chisel/trim` endpoint (✅ exists), Extended History §18 data retention (shared infra), push alert infrastructure §17, Hermes + OpenClaw post-turn hooks |
+**Tagline:** *Every agent turn costs something. Know exactly what.*
+
+**What it is:** Each agent POSTs token usage after every turn via webhook — agent name, turn timestamp, total tokens, component breakdown (identity, skills, memory, tools, guidance), provider. Dashboard shows per-turn timeline (24h Free / full history Pro), component breakdown, cost-per-turn, anomaly detection.
+
+#### RDR
+
+```
+Problem: Users know their agents use tokens, but have no per-turn visibility into
+         where tokens go (identity vs skills vs memory vs tools vs guidance). Cost
+         attribution is manual spreadsheet work.
+Solution: Agent-side hook POSTs structured token payload per turn. Dashboard shows
+          timeline + component breakdown + anomaly detection.
+Key constraint: POST per turn must be fire-and-forget — never block agent response.
+               Payload max 4KB. Cache in agent for up to 3s if endpoint is down.
+Success metric: 95% of agent turns produce a POST within 2s of completion. <0.5%
+               of agent turns delayed by >50ms due to token tracking.
+```
+
+#### States
+
+| State | Display |
+|-------|---------|
+| No token data yet (agent just discovered) | "Collecting token data..." |
+| 24h of data available | Timeline view + component breakdown per agent |
+| Agent not configured to POST | "Agent not sending token data — install plugin" |
+| Webhook endpoint unreachable | "⚠ Last POST timed out — check agent connectivity" |
+| Budget threshold breached ($) | Push alert via §17 + dashboard banner |
+| Anomaly detected (>3σ turn cost) | 🔴 Spike marker on timeline + annotation |
+| Daily budget exhausted | "Daily budget exhausted — agent may be throttled" |
+| Never-pruned (Pro) | Full history + component trend chart across 30/90d |
+
+#### Phase Breakdown
+
+- **Phase 1 (✅ exists):** `POST /api/chisel/trim` endpoint receives token data. DB tables `turn_log`, `skill_usage`, `guidance_fire`, `compress_log` store it.
+- **Phase 2 (🔴 needs build):** Component trend engine extends L2 baseline cron from §18. Per-section drift tracking (identity tokens growing? skills ballooning?).
+- **Phase 3 (🔴 needs build):** Budget thresholds (daily/cost/anomaly sigma) → push alerts via §17 infrastructure.
+- **Phase 4 (🔴 needs build):** Dashboard component trend chart + anomaly table with spike markers.
+
+#### Acceptance Criteria
+
+- [ ] AC1: Hermes agent wrapper POSTs token data to endpoint after every turn
+- [ ] AC2: OpenClaw plugin has equivalent hook (if §16 built)
+- [ ] AC3: Dashboard timeline renders 24h of token data per agent, component breakdown visible
+- [ ] AC4: Pro user sees never-pruned history with component trend chart
+- [ ] AC5: Budget threshold (daily) triggers push alert via §17
+- [ ] AC6: Anomaly detection flags >3σ spikes on chart with annotation
+
+**Effort:** ~4 days (1 webhook + 1 trend engine + 1 alerts + 1 dashboard). ~2 days if §18 built first.
 
 ### 3.15 Auto-Heal (✅ Backend / ❌ Dashboard UI)
 
@@ -636,6 +712,42 @@ This number grows the longer the user goes between dashboard visits — directly
 **What it is:** The watch daemon automatically triggers `run_heal()` when pulse detects a dead agent. Detection-to-recovery: ~5 seconds. No human click, no SSH, no context switch.
 
 **Current status:** Backend fully built (`src/observeco/heal/__init__.py` — 453 lines). L1 auto-restart, L2 proactive detection, snapshot-before-heal, circuit breaker, LLM escalation all working via CLI (`observeco heal --auto-heal`). **Dashboard UI missing** — no toggle, no status card, no per-agent config. The upsell promises "auto-detects, auto-restarts, predicts failures" but a Pro user activating a key sees only the static scenario comparison grid.
+
+#### RDR — Dashboard UI
+
+```
+Problem: Auto-heal exists on the backend but has no dashboard controls. Pro users
+         paid for auto-detection & auto-recovery but see no way to enable, disable,
+         or monitor it. The upsell promises working features — the dashboard ships
+         empty cards.
+Solution: Dashboard panel with per-agent toggle + status card + heal history table.
+Key constraint: Must degrade gracefully when heal daemon not running.
+               Toggle must persist across server restarts.
+Success metric: Pro user can enable auto-heal in <2 clicks from Fleet view.
+```
+
+#### Dashboard UI States
+
+| State | Display |
+|-------|---------|
+| Heal daemon not running | "🔴 Heal daemon not running" + "Start daemon" button |
+| Daemon running, no agents configured | Toggle available but off by default |
+| Auto-heal enabled, idle | 🟢 Auto-heal enabled · "Waiting for issues" |
+| Healing in progress | 🟡 Healing agent X... · spinner + elapsed time |
+| Heal completed successfully | ✅ Healed agent X in 4.2s |
+| Heal failed (circuit tripped) | 🔴 Circuit tripped · waiting 4h cooldown |
+| Cooldown period | ⏳ Cooldown until HH:MM · N restarts this hour |
+| L2 tolerance exceeded | Warning — drift >15% for agent, auto-heal scheduled |
+| Free user sees toggle disabled | "Pro feature — upgrade to enable" tooltip |
+
+#### Acceptance Criteria (Dashboard UI)
+
+- [ ] AC1: Toggle enabled → heal daemon picks up config change ≤30s
+- [ ] AC2: Toggle disabled → existing heal events still tracked, no auto action
+- [ ] AC3: Status card shows daemon running/stopped within 5s of page load
+- [ ] AC4: Heal history table shows last 20 events with outcome (agent, timestamp, reason, result)
+- [ ] AC5: L2 threshold changes (drift %, memory debt) persist across server restart
+- [ ] AC6: Free user sees toggle but it's disabled with "Pro feature" tooltip
 
 **What the human sees with Free:** You wake up at 7am, open the dashboard — Kepler has a red dot. Pulse log shows it crashed at 3am. Guard tripped at 3:01. Agent was dead for 4 hours. You click Heal, it recovers.
 
@@ -1161,20 +1273,90 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 
 **Free:** ❌ In-dashboard only — alerts show with discovery gap badges.
 **Pro:** ✅ Telegram + webhook + email, multi-channel routing, custom thresholds. Zero discovery gap.
+
+#### RDR — Dashboard UI
+
+```
+Problem: Push alerts deliver to Telegram/webhook/email but (a) Discord is missing,
+         (b) there's no dashboard UI to manage subscriptions, and (c) no delivery
+         log to verify alerts are flowing. The upsell promises "Telegram/Slack/email
+         push" — a Pro user activating a key sees a static grid with no config.
+Solution: Add Discord delivery + dashboard subscription management panel +
+          delivery log + test button.
+Key constraint: Must support all 4 channels (Telegram, Discord, webhook, email)
+               with consistent delivery semantics. Dashboard must work without
+               any channel configured.
+Success metric: User can configure a new alert channel in <30s via dashboard.
+```
+
+#### Dashboard UI States
+
+| State | Display |
+|-------|---------|
+| No channels configured | "No alert channels configured" + "Add Channel" button |
+| Channel active | 🟢 Telegram connected · verified |
+| Channel pending verification | 🟡 Webhook configured · "Send test" to verify |
+| Channel failed (3 consecutive) | 🔴 Email delivery failed · "Last error: Connection timeout" |
+| Delivery log empty | "No alerts delivered yet — they'll appear here when triggered" |
+| Delivery log populated | Table: timestamp × agent × alert type × channel × status |
+| Test alert sent | Modal: "✅ Test alert sent to Telegram" |
+| Test alert failed | Modal: "Test alert failed — Invalid webhook URL" |
+| Free tier | Channel list visible but all "Pro feature" disabled |
+
+#### Acceptance Criteria
+
+- [ ] AC1: User can configure Telegram chat ID → test alert sent & verified
+- [ ] AC2: User can configure Discord webhook URL → test alert sent via embed
+- [ ] AC3: User can configure webhook URL → POST with JSON payload received
+- [ ] AC4: Delivery log shows status for each alert (sent/failed/pending)
+- [ ] AC5: Failed delivery shows error message in log
+- [ ] AC6: Channel marked 🔴 after 3 consecutive failures
+- [ ] AC7: Discord webhook sends colour-coded embeds (🔴 error / 🟡 warning / 🟢 recovery)
+- [ ] AC8: Free user sees UI but test/save disabled with "Pro feature" tooltip
 **Effort:** ~3 days
 **Mockup:** `mockups/push-alerts.html`
 
 ### 3.18 Extended History (🔴 Planned)
 
-| | |
-|---|---|
-| **What** | Dashboard queries expanded from 7d (Free) to full history (Pro). Powers Auto-Heal Layer 2's trend baseline engine — history depth determines which L2 detection signals are available. 7d = RSS only. 14d+ = P95 drift. 21d+ = output hallucination. 30d+ = combined multi-signal patterns. |
-| **Implementation** | Phase 1: retention config + daily prune cron. Phase 2: L2 baseline engine (`observeco l2 baseline`). Phase 3: dashboard `--range=full`. Same SQLite, same code path, different WHERE clause. |
-| **Free** | 7d window. L2 baselines computed from at most 7d. RSS trend detection only. |
-| **Pro** | Full history since install. Rolling 7d/14d/21d/30d/90d baselines. Full L2 detection: memory, P95, output, upstream. Value compounds with time. |
-| **Storage** | ~3MB/week/fleet. Same for both tiers — Pro just doesn't delete it. |
-| **Effort** | ~4 days (1 data layer, 2 baseline engine, 1 dashboard) |
-| **Depends on** | L2 detection signals being collected (RSS, P95, output structure — already available from existing metrics) |
+**Tagline:** *The longer you run ObserveCo, the smarter it gets — but only if it remembers.*
+
+**What it is:** Dashboard queries expanded from 7d (Free) to full history (Pro). Powers Auto-Heal Layer 2's trend baseline engine — history depth determines which L2 detection signals are available.
+
+#### RDR
+
+```
+Problem: Data accumulates daily but only 7d is visible. L2 detection signals need
+         14d+ baselines to be meaningful — P95 drift needs 14d, output patterns
+         need 21d, multi-signal patterns need 30d. 7d free retention loses value
+         that compounds over time.
+Solution: Free gets 7d with daily prune. Pro gets never-pruned full history + L2
+          baseline engine for 14d/21d/30d/90d windows + range selector in dashboard.
+Key constraint: Same SQLite, same code path, different WHERE clause. Pruning cron
+               at 3am must complete in <30s for 20-agent fleet.
+Success metric: Query performance for never-pruned Pro stays under 200ms for any range.
+```
+
+#### States
+
+| State | Display |
+|-------|---------|
+| First run (no data) | "Collecting data — history will appear as agents are monitored" |
+| <7d of data | Partial timeline with "N days of data collected" note |
+| 7d available (Free) | Full 7d timeline. Older data pruned yesterday at 3am |
+| Never-pruned (Pro, 30d+) | Full history + range selector (7d/14d/30d/90d/all) |
+| Full L2 detection (14d+) | P95 drift detection active |
+| Full L2 detection (21d+) | Output hallucination trend active |
+| Full L2 detection (30d+) | Multi-signal pattern detection active |
+
+#### Acceptance Criteria
+
+- [ ] AC1: Daily prune cron at 3am removes entries >7d for Free users
+- [ ] AC2: Prune completes in <30s for 20-agent fleet
+- [ ] AC3: L2 baseline engine supports --range=14d/21d/30d/90d
+- [ ] AC4: Dashboard chart range selector (7d/14d/30d/90d/all) works
+- [ ] AC5: Pro never-pruned: all data retained unless user explicitly configures otherwise
+
+**Effort:** ~4 days (1 data layer, 2 baseline engine, 1 dashboard)
 
 ### 3.19 Communication Pathway Map (✅ Live)
 
@@ -1439,16 +1621,55 @@ for each unconsumed signal:
 
 ### 3.20 Glossary & FAQ Panel (🔴 Planned)
 
-|| | |
-|---|---|---|
-|| **What** | In-dashboard glossary, definitions, and FAQ section explaining what every metric means — targeted at humans who see agent status dots, circuit badges, drift %, and token bars but don't know what they actually mean |
-|| **Why** | Bridge the "under the hood" gap. The dashboard's audience is fleet operators who may not be engineers. They see "🔴 Dead" or "✅ Circuit OK" but don't know how those were determined or what to do about them. Glossary lives in the dashboard UI, not a separate wiki. |
-|| **How it works** | Three-tier content per topic: **Glossary** (one-line definition), **Detailed Explanation** (how it's determined, with code walkthrough style examples), **FAQ** (common questions: "Why is my agent orange but circuit OK?", "What do I do when this turns red?") |
-|| **Content examples** | "Circuit OK" = no consecutive failures detected. "🔴 Dead" = process not found OR health endpoint timeout. "🟡 Error" = agent reachable but broken (e.g. HTTP 500). Examples use real agent names (Hound, Pragma, Kepler). |
-|| **Free** | Full glossary + FAQ, accessible from a "?" help icon on each dashboard section (status dot, circuit badge, token bar, drift sparkline) |
-|| **Pro** | Same |
-|| **Effort** | ~3 hours |
-|| **Implementation** | New `GET /api/glossary/{topic}` endpoint in `server.py` returning HTML content. "?" icon on each card metric opens a modal/overlay. Topics: `status-dot`, `circuit`, `token-bar`, `drift`, `error-badge`, `pulse-check`, `heal-button`, `alerts-panel` |
+**Tagline:** *Don't make users Google what a circuit breaker is.*
+
+**What it is:** In-dashboard glossary, definitions, and FAQ section explaining what every metric means — targeted at humans who see agent status dots, circuit badges, drift %, and token bars but don't know what they actually mean.
+
+#### RDR
+
+```
+Problem: New users see dashboard metrics (pulse, circuit, drift, error badge) but
+         don't understand what they mean or how to interpret them. Bridge the
+         "under the hood" gap without forcing users to leave the dashboard.
+Solution: "?" icon on every card metric → opens glossary modal/overlay with 8 topics.
+          Three-tier content per topic: one-liner, detailed explanation, FAQ.
+Key constraint: Must work offline (no external docs). No redirect to external page.
+               Free tier gets full content (not Pro-gated).
+Success metric: New user can understand any metric in <15s via glossary.
+```
+
+#### States
+
+| State | Display |
+|-------|---------|
+| Topic loading | Skeleton text placeholder |
+| Topic rendered | Formatted content: one-liner + explanation + FAQ |
+| Topic not found | "Glossary topic not found — it may have been removed" |
+| API error | "Could not load glossary — try again" + retry button |
+| Offline | Static content embedded in JS (fallback) |
+
+#### Topics (8)
+
+| Topic | One-liner | Appears on |
+|-------|-----------|-----------|
+| Status dot | 🟢 alive / 🔴 dead / 🟡 error | Agent card header |
+| Circuit breaker | N-failure detection, auto-cooldown | Agent card Guard row |
+| Token bar | Identity + skills + memory + tools + guidance | Agent card Brain size |
+| Drift sparkline | Component behaviour change over 7 days | Agent card Composition |
+| Error badge | Count of errors in last 24 hours | Agent card Errors row |
+| Pulse check | 30s health check per agent | Health modal |
+| Heal button | Manual trigger + auto-heal (Pro) | Heal panel |
+| Alerts panel | Alert types + discovery gap | Right-rail alerts |
+
+#### Acceptance Criteria
+
+- [ ] AC1: "?" icon appears next to each of the 8 metrics on fleet cards
+- [ ] AC2: Click → modal opens with correct topic content
+- [ ] AC3: Modal includes one-liner, detailed explanation, FAQ per topic
+- [ ] AC4: Works offline (static JS fallback if API unavailable)
+- [ ] AC5: All topics render in <200ms
+
+**Effort:** ~3 hours
 
 ---
 
@@ -7731,12 +7952,102 @@ An agent or agent service burning tokens uncontrollably is not one problem — i
 
 | # | Gap | Spec Ref | Effort | Category | Free/Pro |
 |---|-----|----------|--------|----------|----------|
-| G1.1 | **Self-monitoring budget cap** — ObserveCo's own LLM diagnosis calls tracked from a separate token pool with a non-configurable ceiling. **Ceiling is token-based (not fixed dollar amount) because users may use different LLMs with different costs.** Default: 500K tokens/day for self-diagnosis. Hard floor: 100K tokens/day. Graceful degradation at 100% (disable LLM diagnosis, continue all other monitoring). | §14.3.G1.1 | ~1d | Infrastructure | Both |
-| G1.2 | **Manual kill switch** — STOP button on dashboard with 2-step confirmation ('Are you sure? This will immediately terminate agent X'). API endpoint for programmatic kill. No single-click kills. No auto-kill. | §14.3.G1.2 | ~2d | Dashboard + API | Both |
-| G1.3 | **Activity-based circuit breaker config** — expose existing circuit breaker settings (activity thresholds, not just failure thresholds) in dashboard UI. Trip on turns/minute exceeding configurable N. | §14.3.G1.3 | ~0.5d | Dashboard | Both |
-| G1.4 | **Turn-rate alerting** — turns/minute metric tracked per agent. Dashboard widget showing current turn rate. Alert fires when rate exceeds configurable threshold (default: 30 turns/min). Covers S1, S2, S4, S7. | §14.3.G1.4 | ~1d | Monitoring + Alerts | Both |
-| G1.5 | **Tool-call count per turn** — track number of tool calls in each agent turn. Dashboard metric widget. Anomalous tool-call volume (default: >20 tools/turn) flagged. Covers S2, S5. | §14.3.G1.5 | ~0.5d | Monitoring | Both |
-| G1.6 | **Threat model documentation** — publish explicit boundaries: what ObserveCo monitors, what it doesn't, what's out of scope. Included in README and /docs. Honesty as competitive moat. | §14.3.G1.6 | ~0.5d | Documentation | — |
+| G1.1 | **Self-monitoring budget cap** — ObserveCo's own LLM diagnosis calls tracked from a separate token pool. **Token-based (not fixed $$)** because users may use different LLMs. Default: 500K tokens/day. Hard floor: 100K tokens/day. Graceful degradation at 100%. | §14.3.G1.1 | ~1d | Infrastructure | Both |
+| G1.2 | **Manual kill switch** — STOP button with 2-step confirmation. API endpoint for programmatic kill. No auto-kill in v1. | §14.3.G1.2 | ~2d | Dashboard + API | Both |
+| G1.3 | **Activity-based circuit breaker config** — expose circuit breaker settings in dashboard UI. Trip on turns/min exceeding configurable threshold. | §14.3.G1.3 | ~0.5d | Dashboard | Both |
+| G1.4 | **Turn-rate alerting** — turns/min per agent. Dashboard widget. Alert at configurable threshold (default 30/min). | §14.3.G1.4 | ~1d | Monitoring + Alerts | Both |
+| G1.5 | **Tool-call count per turn** — track tool calls per turn. Anomalous volume (>20/turn) flagged. | §14.3.G1.5 | ~0.5d | Monitoring | Both |
+| G1.6 | **Threat model documentation** — published boundaries: what's monitored, what's not. README + /docs. | §14.3.G1.6 | ~0.5d | Documentation | — |
+
+##### G1.1 — Self-Monitoring Budget Cap
+
+**Problem:** If heal system or LLM-powered diagnosis enters a loop, it consumes unbounded tokens on self-diagnosis.
+
+**Solution:** Separate token counter for all 7 LLM consumers. Default ceiling 500K tokens/day. Non-configurable floor 100K tokens/day. Graceful degradation at 100% — all self-diagnosis LLM calls blocked, static fallbacks used.
+
+**States:**
+
+| State | Behavior |
+|-------|----------|
+| Below floor (100K) | Normal operation |
+| Between floor and ceiling | Normal, self-usage widget shows % |
+| At ceiling (500K) | All self-diagnosis LLM blocked. Static fallbacks. Banner: "Self-diagnosis paused — budget exhausted. Resets at midnight." |
+| Near ceiling (90%+) | Dashboard warning banner |
+| Reset at midnight | Counter resets to 0 |
+| Crash/restart | Counter persists in SQLite, resumes from last value |
+
+**ACs:**
+- [ ] AC1: Separate counter tracks all 7 LLM consumer calls independently
+- [ ] AC2: Default ceiling 500K tokens/day enforced
+- [ ] AC3: At ceiling, all 7 consumers fall back to static responses gracefully
+- [ ] AC4: Counter persists across server restarts
+- [ ] AC5: Dashboard shows self-usage widget with %
+
+##### G1.2 — Manual Kill Switch
+
+**Problem:** A rogue agent cannot be stopped from the dashboard. User must SSH into the machine.
+
+**Solution:** STOP button per agent card with 2-step confirmation. `POST /api/agents/{id}/stop`.
+
+**States:**
+
+| State | Display |
+|-------|---------|
+| Agent running normally | STOP button visible (red, subtle) |
+| Step 1 clicked | "Are you sure?" dialog with agent name |
+| Confirmed | "Stopping agent..." spinner |
+| Success | Card shows 🔴 "Manually stopped" |
+| Failed (permission) | "Could not stop agent — insufficient permissions" |
+| Failed (process gone) | "Agent already stopped" |
+
+**ACs:**
+- [ ] AC1: STOP button on every agent card
+- [ ] AC2: 2-click confirmation: 1st → dialog, 2nd → execute. ESC cancels.
+- [ ] AC3: POST /api/agents/{id}/stop kills process (SIGTERM → 5s → SIGKILL)
+- [ ] AC4: Kill event audit-logged in `heal_log` with timestamp
+
+##### G1.3 — Activity-Based Circuit Breaker Config
+
+**Problem:** Circuit breaker trips on failures only. A runaway agent doing 100 turns/min (all successful) won't trip.
+
+**Solution:** Expose existing circuit breaker settings in dashboard UI. Add turns/min activity threshold alongside failure thresholds.
+
+**ACs:**
+- [ ] AC1: Dashboard shows circuit breaker config per agent
+- [ ] AC2: Turns/min threshold configurable alongside failure thresholds
+- [ ] AC3: Changing threshold persists across server restart
+
+##### G1.4 — Turn-Rate Alerting
+
+**Problem:** No visibility into agent turn rate. Silent runaway burns tokens unnoticed.
+
+**Solution:** Dashboard widget showing turns/min per agent. Alert when rate exceeds configurable threshold (default 30/min).
+
+**ACs:**
+- [ ] AC1: Dashboard widget shows current turn rate per agent
+- [ ] AC2: Alert fires when threshold exceeded
+- [ ] AC3: Threshold configurable per agent
+
+##### G1.5 — Tool-Call Count Per Turn
+
+**Problem:** An agent making 50 tool calls per turn is anomalous. No metric to detect.
+
+**Solution:** Track tool calls per turn. Dashboard metric. Flag >20 tools/turn.
+
+**ACs:**
+- [ ] AC1: Tool count tracked per turn
+- [ ] AC2: Dashboard widget shows average tool calls per turn
+- [ ] AC3: Anomalous volume flagged with visual indicator
+
+##### G1.6 — Threat Model Documentation
+
+**Problem:** Users don't know what ObserveCo monitors vs what it doesn't. False sense of security.
+
+**Solution:** Published boundaries in README + /docs page. What's monitored, what's not, what kill switch can/can't do, what auto-heal does/doesn't fix.
+
+**ACs:**
+- [ ] AC1: README has "What ObserveCo Monitors" section with explicit scope
+- [ ] AC2: /docs page has detailed threat model
 
 #### Phase G2 — Post-Launch, Month 2 (~10.5 days)
 
