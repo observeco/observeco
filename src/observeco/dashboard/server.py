@@ -2197,14 +2197,16 @@ async def api_fleet_summary():
 
 
 @app.get("/api/fleet-compare", response_class=HTMLResponse)
-async def api_fleet_compare():
-    """Side-by-side fleet comparison — § Fleet Comparison."""
+async def api_fleet_compare(sort: str = "name", order: str = "asc"):
+    """Side-by-side fleet comparison — § Fleet Comparison. Supports sort column + order."""
     summary = db.get_agent_status_summary()
     agents = db.get_agents()
     trims_all = db.get_trims(limit=30)
     drift_all = db.get_drift()
     circuit = db.get_circuit_breakers()
     all_errors = db.get_errors(limit=100)
+
+    order_asc = order.lower() != "desc"
 
     # Build per-agent data
     agent_cfg = {a["agent_name"]: a for a in agents}
@@ -2221,27 +2223,56 @@ async def api_fleet_compare():
     breakers = {b["agent_name"]: b for b in circuit}
 
     now = int(time.time())
-    all_names = sorted(set(
-        list(summary.keys()) + list(agent_cfg.keys()) +
-        list(latest_trims.keys()) + list(drift_latest.keys())
-    ))
 
-    rows = []
+    # Build agent data dicts
+    agent_data = {}
+    all_names = set(summary.keys()) | set(agent_cfg.keys()) | set(latest_trims.keys()) | set(drift_latest.keys())
+
     for name in all_names:
         s = summary.get(name, {})
-        status = s.get("status", "unknown")
-        status_color = {"alive": "#22c55e", "dead": "#ef4444", "error": "#eab308", "unknown": "#64748b"}.get(status, "#64748b")
-        status_dot = f'<span style="color:{status_color}">●</span>'
-
-        # Framework
         fw = agent_cfg.get(name, {}).get("framework", "") or ""
-        fw_display = fw.capitalize() if fw else "-"
-
-        # Tokens — latest trim total
         trim = latest_trims.get(name, {})
         tok_total = trim.get("total_tokens", 0)
+        dr = drift_latest.get(name, {})
+        drift_pct = dr.get("delta_pct", 0)
+        drift_breached = dr.get("breached", False)
+        recent_errors = [e for e in all_errors if e.get("agent_name") == name and now - e.get("timestamp", 0) < 86400]
+        err_count = len(recent_errors)
+        cb = breakers.get(name, {})
+        ts = s.get("timestamp", 0)
 
-        # Component bars
+        agent_data[name] = {
+            "status": s.get("status", "unknown"),
+            "framework": fw.capitalize() if fw else "-",
+            "tokens": tok_total,
+            "drift_pct": drift_pct,
+            "drift_breached": drift_breached,
+            "errors": err_count,
+            "circuit_tripped": cb.get("tripped", False),
+            "last_seen": ts,
+        }
+
+    # Sort by requested column
+    sort_key_map = {
+        "name": lambda n: n.lower(),
+        "framework": lambda n: agent_data[n]["framework"],
+        "tokens": lambda n: agent_data[n]["tokens"],
+        "drift": lambda n: agent_data[n]["drift_pct"],
+        "errors": lambda n: agent_data[n]["errors"],
+        "circuit": lambda n: 1 if agent_data[n]["circuit_tripped"] else 0,
+        "last": lambda n: agent_data[n]["last_seen"],
+    }
+    key_fn = sort_key_map.get(sort, sort_key_map["name"])
+    sorted_names = sorted(all_names, key=key_fn, reverse=not order_asc)
+
+    rows = []
+    for name in sorted_names:
+        d = agent_data[name]
+        status = d["status"]
+        status_color = {"alive": "#22c55e", "dead": "#ef4444", "error": "#eab308", "unknown": "#64748b"}.get(status, "#64748b")
+
+        trim = latest_trims.get(name, {})
+        tok_total = trim.get("total_tokens", 0)
         comps = [
             ("identity", trim.get("identity_tokens", 0), "#6366f1"),
             ("skills", trim.get("skills_tokens", 0), "#8b5cf6"),
@@ -2256,30 +2287,17 @@ async def api_fleet_compare():
                 comp_bars += f'<span style="display:inline-block;width:{pct:.0f}%;height:6px;background:{ccolor};border-radius:2px;margin-right:1px;" title="{cname}: {ctok}tok ({pct:.0f}%)"></span>'
 
         tok_label = f"{tok_total:,}" if tok_total else "-"
-
-        # Drift
-        dr = drift_latest.get(name, {})
-        drift_pct = dr.get("delta_pct", 0)
-        drift_breached = dr.get("breached", False)
+        drift_pct = d["drift_pct"]
         drift_label = f"{drift_pct:+.1f}%" if drift_pct else "-"
-        drift_color = "#ef4444" if drift_breached else "#22c55e" if abs(drift_pct) > 5 else "#64748b"
-
-        # Errors (24h)
-        recent_errors = [e for e in all_errors if e.get("agent_name") == name and now - e.get("timestamp", 0) < 86400]
-        err_count = len(recent_errors)
-        err_label = f'{err_count} <span style="color:var(--danger);font-size:10px;">⚠</span>' if err_count > 0 else "0"
-
-        # Circuit
-        cb = breakers.get(name, {})
-        cb_status = "🔴 Tripped" if cb.get("tripped") else "✅ OK"
-
-        # Last seen
-        ts = s.get("timestamp", 0)
+        drift_color = "#ef4444" if d["drift_breached"] else "#22c55e" if abs(drift_pct) > 5 else "#64748b"
+        err_label = f'{d["errors"]} <span style="color:var(--danger);font-size:10px;">⚠</span>' if d["errors"] > 0 else "0"
+        cb_status = "🔴 Tripped" if d["circuit_tripped"] else "✅ OK"
+        ts = d["last_seen"]
         last_seen = _fmt_ts(ts) if ts else "-"
 
         rows.append(f"""<tr>
     <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status {status}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>{name}</td>
-    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">{fw_display}</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">{d["framework"]}</td>
     <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">{tok_label}</td>
     <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;">{comp_bars if comp_bars else '<span style="color:#64748b;font-size:10px;">no data</span>'}</div></td>
     <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:{drift_color};">{drift_label}</td>
@@ -2299,14 +2317,14 @@ async def api_fleet_compare():
     <table style="width:100%;border-collapse:collapse;font-size:12px;">
         <thead>
             <tr style="border-bottom:1px solid var(--border);">
-                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Agent</th>
-                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Framework</th>
-                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Tokens</th>
+                <th onclick="sortCompare('name')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Agent <span id="sortIndicator_name" style="color:#86efac;">▲</span></th>
+                <th onclick="sortCompare('framework')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Framework <span id="sortIndicator_framework"></span></th>
+                <th onclick="sortCompare('tokens')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Tokens <span id="sortIndicator_tokens"></span></th>
                 <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Composition</th>
-                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Drift</th>
-                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Errors</th>
-                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Circuit</th>
-                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Last</th>
+                <th onclick="sortCompare('drift')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Drift <span id="sortIndicator_drift"></span></th>
+                <th onclick="sortCompare('errors')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Errors <span id="sortIndicator_errors"></span></th>
+                <th onclick="sortCompare('circuit')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Circuit <span id="sortIndicator_circuit"></span></th>
+                <th onclick="sortCompare('last')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Last <span id="sortIndicator_last"></span></th>
             </tr>
         </thead>
         <tbody>

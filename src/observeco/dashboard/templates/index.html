@@ -1510,6 +1510,44 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   </div>
 </div>
 
+<!-- Thresholds editor modal -->
+<div class="modal-overlay" id="thresholdsModal" onclick="if(event.target===this)closeThresholdsModal()">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">⚙️ Heal Thresholds</h3>
+        <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;" id="thresholdsModalSub">Configure per-agent auto-heal limits</div>
+      </div>
+      <button class="modal-close" onclick="closeThresholdsModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px;">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:block;margin-bottom:4px;">Max restarts per hour</label>
+        <input type="number" id="thresholdInputMaxR" min="1" max="20" value="3"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--fg);font-family:inherit;outline:none;">
+        <div style="font-size:10px;color:#64748b;margin-top:3px;">How many times the agent can restart in an hour before circuit trips</div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:block;margin-bottom:4px;">Drift threshold (%)</label>
+        <input type="number" id="thresholdInputDrift" min="1" max="100" step="0.1" value="15"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--fg);font-family:inherit;outline:none;">
+        <div style="font-size:10px;color:#64748b;margin-top:3px;">Token composition change % that triggers a drift alert</div>
+      </div>
+      <div style="margin-bottom:18px;">
+        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:block;margin-bottom:4px;">Memory debt threshold</label>
+        <input type="number" id="thresholdInputDebt" min="0" max="200" value="60"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--fg);font-family:inherit;outline:none;">
+        <div style="font-size:10px;color:#64748b;margin-top:3px;">Memory debt score that triggers L2 garden cleanup (0-200)</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="closeThresholdsModal()" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:12px;color:var(--fg-2);cursor:pointer;">Cancel</button>
+        <button id="thresholdsSaveBtn" onclick="saveThresholds()" style="background:var(--meta);border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;color:white;cursor:pointer;">Save</button>
+      </div>
+      <div id="thresholdsResult" style="font-size:11px;margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── Data ───
 const COMP_COLORS = { identity: '#6366f1', skills: '#8b5cf6', memory: '#ec4899', tools: '#14b8a6', guidance: '#f97316' };
@@ -1697,6 +1735,29 @@ function switchTab(tab, btn) {
   }
   if (tab === 'settings') {
     initLlmToggle();
+  }
+}
+
+// ─── Fleet Comparison sort ───
+let compareSort = { col: 'name', order: 'asc' };
+function sortCompare(col) {
+  if (compareSort.col === col) {
+    compareSort.order = compareSort.order === 'asc' ? 'desc' : 'asc';
+  } else {
+    compareSort.col = col;
+    compareSort.order = 'asc';
+  }
+  // Update indicator arrows
+  document.querySelectorAll('[id^="sortIndicator_"]').forEach(el => el.textContent = '');
+  const ind = document.getElementById('sortIndicator_' + col);
+  if (ind) ind.textContent = compareSort.order === 'asc' ? '▲' : '▼';
+  // Re-fetch panel
+  const panel = document.getElementById('comparePanel');
+  if (panel) {
+    panel.innerHTML = '<div style="color:#64748b;font-size:12px;">Sorting...</div>';
+    fetch('/api/fleet-compare?sort=' + compareSort.col + '&order=' + compareSort.order)
+      .then(r => r.text())
+      .then(html => { panel.innerHTML = html; });
   }
 }
 
@@ -2571,28 +2632,46 @@ function editHealThresholds(agentName) {
   const maxR = parseInt(document.getElementById('maxR_' + agentName).textContent) || 3;
   const driftT = parseFloat(document.getElementById('driftT_' + agentName).textContent) || 15;
   const debtT = parseInt(document.getElementById('debtT_' + agentName).textContent) || 60;
-  const input = prompt('Enter: max_restarts_per_hour, drift_threshold%, memory_debt\nCurrent: ' + maxR + ', ' + driftT + '%, ' + debtT, maxR + ', ' + driftT + ', ' + debtT);
-  if (!input) return;
-  const parts = input.split(',').map(s => s.trim());
-  const newMaxR = parseInt(parts[0]);
-  const newDrift = parseFloat(parts[1]);
-  const newDebt = parseInt(parts[2]);
-  if (isNaN(newMaxR) || isNaN(newDrift) || isNaN(newDebt)) {
-    document.getElementById('healResult_' + agentName).innerHTML = '<span style="color:#ef4444;">❌ Invalid format. Use: max_restarts, drift%, debt</span>';
+  document.getElementById('thresholdInputMaxR').value = maxR;
+  document.getElementById('thresholdInputDrift').value = driftT;
+  document.getElementById('thresholdInputDebt').value = debtT;
+  document.getElementById('thresholdsModal').dataset.agent = agentName;
+  document.getElementById('thresholdsResult').textContent = '';
+  document.getElementById('thresholdsModalSub').textContent = agentName;
+  document.getElementById('thresholdsModal').classList.add('active');
+}
+function closeThresholdsModal() {
+  document.getElementById('thresholdsModal').classList.remove('active');
+}
+function saveThresholds() {
+  const agentName = document.getElementById('thresholdsModal').dataset.agent;
+  const newMaxR = parseInt(document.getElementById('thresholdInputMaxR').value);
+  const newDrift = parseFloat(document.getElementById('thresholdInputDrift').value);
+  const newDebt = parseInt(document.getElementById('thresholdInputDebt').value);
+  const resultEl = document.getElementById('thresholdsResult');
+  if (isNaN(newMaxR) || isNaN(newDrift) || isNaN(newDebt) || newMaxR < 1 || newMaxR > 20) {
+    resultEl.innerHTML = '<span style="color:#ef4444;">❌ Enter valid numbers</span>';
     return;
   }
+  const btn = document.getElementById('thresholdsSaveBtn');
+  btn.textContent = 'Saving...'; btn.disabled = true;
   fetch('/api/heal-config/' + encodeURIComponent(agentName) + '/thresholds?max_restarts=' + newMaxR + '&drift_threshold=' + newDrift + '&memory_debt=' + newDebt, { method: 'POST' })
     .then(r => r.json())
     .then(data => {
+      btn.textContent = 'Save'; btn.disabled = false;
       if (data.ok) {
         document.getElementById('maxR_' + agentName).textContent = newMaxR;
         document.getElementById('driftT_' + agentName).textContent = newDrift + '%';
         document.getElementById('debtT_' + agentName).textContent = newDebt;
-        document.getElementById('healResult_' + agentName).innerHTML = '<span style="color:#22c55e;">✅ Thresholds updated</span>';
-        setTimeout(() => { document.getElementById('healResult_' + agentName).innerHTML = ''; }, 3000);
+        resultEl.innerHTML = '<span style="color:#22c55e;">✅ Thresholds updated</span>';
+        setTimeout(() => closeThresholdsModal(), 1200);
       } else {
-        document.getElementById('healResult_' + agentName).innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+        resultEl.innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
       }
+    })
+    .catch(e => {
+      btn.textContent = 'Save'; btn.disabled = false;
+      resultEl.innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>';
     });
 }
 
