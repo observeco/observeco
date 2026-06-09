@@ -2370,9 +2370,7 @@ function showLicenseKeyModal() {
 
   // Check if already activated
   var badge = document.getElementById('tierBadge');
-  var hasPro = badge && badge.querySelector('.license-card');
-  var isKeyUser = hasPro && fetch('/api/licenses/status').then(function(){});
-  // Simpler: just check if the badge inner contains "License key" text (will be set by server)
+  var hasPro = badge && (badge.classList.contains('license-card') || badge.querySelector('.license-card'));
   var isLicenseKeyUser = hasPro && badge && badge.textContent.indexOf('License key') > -1;
 
   var deactivateHtml = '';
