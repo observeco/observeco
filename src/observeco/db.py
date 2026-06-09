@@ -334,6 +334,9 @@ INSERT OR IGNORE INTO alert_subscriptions_v15 (id, channel, target, event_types,
 DROP TABLE IF EXISTS alert_subscriptions;
 ALTER TABLE alert_subscriptions_v15 RENAME TO alert_subscriptions;
 """),
+    (16, """-- Migration 16: add metadata column to agent_configs for circuit config storage
+ALTER TABLE agent_configs ADD COLUMN metadata TEXT DEFAULT '{}';
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -424,7 +427,8 @@ CREATE TABLE IF NOT EXISTS agent_configs (
     framework TEXT NOT NULL DEFAULT 'custom',
     health_check TEXT,
     is_active INTEGER NOT NULL DEFAULT 1,
-    last_seen INTEGER
+    last_seen INTEGER,
+    metadata TEXT DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS errors (
@@ -1184,12 +1188,12 @@ class Database:
             )
         if max_turns_per_min is not None or cooldown_minutes is not None:
             # Store in agent_configs as JSON metadata
+            import json
             existing = conn.execute(
                 "SELECT metadata FROM agent_configs WHERE agent_name=?", (agent_name,)
             ).fetchone()
             meta = {}
             if existing and existing[0]:
-                import json
                 meta = json.loads(existing[0])
             if max_turns_per_min is not None:
                 meta["max_turns_per_min"] = max_turns_per_min
