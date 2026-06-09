@@ -2212,7 +2212,7 @@ function fixConfigHygiene(checkName) {
     });
 }
 function loadLicenseStatus() {
-  fetch('/api/licenses/status')
+  fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
     .then(r => r.json())
     .then(status => {
       const el = document.getElementById('proTrialStatus');
@@ -2483,7 +2483,7 @@ function switchCompressTab(tab, btn) {
   document.getElementById('manualTab').style.display = tab === 'manual' ? '' : 'none';
   document.getElementById('autoTab').style.display = tab === 'auto' ? '' : 'none';
   if (tab === 'auto') {
-    fetch('/api/licenses/status')
+    fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
       .then(r => r.json())
       .then(status => {
         const isPro = status.license_type === 'pro' || status.is_pro;
@@ -2823,7 +2823,7 @@ function openChiselModal(agentName) {
       html += '<div id="chiselAutoCompressSection" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:12px;color:#64748b;margin-bottom:8px;">🔒 Auto-Compression (Pro) — Every time your SOUL.md is edited, watch daemon runs compression automatically.</div><div style="background:#0f172a;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.8;"><span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified — compressing...</span><br><span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ Compression applied (savings vary per agent)</span><br><span style="color:#38bdf8;">📊 Cumulative: tracked in watch daemon logs</span></div><div style="margin-top:10px;text-align:center;" id="chiselAutoCta"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;" onclick="showBrainPro()">Unlock with Pro →</button></div></div>';
       body.innerHTML = html;
       // Hide locked sections if Pro
-      fetch('/api/licenses/status').then(function(r){return r.json()}).then(function(s){
+      fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}}).then(function(r){return r.json()}).then(function(s){
         if (s.license_type === 'pro' || s.is_pro) {
           var sec = document.getElementById('chiselAutoCompressSection');
           if (sec) sec.style.display = 'none';
@@ -2866,7 +2866,7 @@ function openOpenclawModal() {
       html += '<div style="margin-top:12px;font-size:11px;color:#64748b;text-align:center;">' + (data.agents || []).length + ' OpenClaw agent(s) · ' + data.profiles_count + ' profiles loaded</div>';
       body.innerHTML = html;
       // Hide locked sections if Pro
-      fetch('/api/licenses/status').then(function(r){return r.json()}).then(function(s){
+      fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}}).then(function(r){return r.json()}).then(function(s){
         if (s.license_type === 'pro' || s.is_pro) {
           var btn = document.getElementById('pluginAutoConfigBtn');
           if (btn) btn.style.display = 'none';
