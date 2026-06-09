@@ -2904,6 +2904,56 @@ function openSkillsAuditModal(agentName) {
       });
       html += '</div></div>';
 
+      // Compression preview container (populated async)
+      html += '<div id="saChiselPreview" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">' +
+        '<div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:10px;">🧪 Compression Preview</div>' +
+        '<div style="font-size:11px;color:#64748b;text-align:center;padding:8px;">Loading potential savings...</div></div>';
+
+      // — Compression Preview (fetched inline) —
+      fetch('/api/chisel-preview?agent=all', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
+        .then(function(r){ return r.json() })
+        .then(function(cd){
+          var agents = Object.entries(cd.agents || {});
+          if (agents.length === 0) return;
+          var savings = '';
+          var totalRaw = 0, totalLite = 0, totalFull = 0;
+          agents.forEach(function(e){
+            var a = e[1];
+            totalRaw += a.raw_tokens; totalLite += a.lite_tokens; totalFull += a.full_tokens;
+          });
+          var litePct = totalRaw > 0 ? Math.round((1 - totalLite / totalRaw) * 100) : 0;
+          var fullPct = totalRaw > 0 ? Math.round((1 - totalFull / totalRaw) * 100) : 0;
+          savings += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">' +
+            '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
+            '<div style="font-size:20px;font-weight:700;color:#22c55e;">' + litePct + '%</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Lite (guidance only)</div>' +
+            '<div style="font-size:10px;color:#64748b;margin-top:2px;">' + totalLite.toLocaleString() + ' tok</div></div>' +
+            '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
+            '<div style="font-size:20px;font-weight:700;color:#a5b4fc;">' + fullPct + '%</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Full (guidance + memory + skills)</div>' +
+            '<div style="font-size:10px;color:#64748b;margin-top:2px;">' + totalFull.toLocaleString() + ' tok</div></div></div>';
+          // Per-agent breakdown
+          savings += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Per-agent savings</div>';
+          agents.forEach(function(e){
+            var name = e[0], a = e[1];
+            var lp = a.raw_tokens > 0 ? Math.round((1 - a.lite_tokens / a.raw_tokens) * 100) : 0;
+            var fp = a.raw_tokens > 0 ? Math.round((1 - a.full_tokens / a.raw_tokens) * 100) : 0;
+            savings += '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;"><span style="color:#e2e8f0;">' + name + '</span><span style="color:#94a3b8;">' + a.raw_tokens + ' tok → <span style="color:#22c55e;">-' + lp + '% Lite</span> <span style="color:#a5b4fc;">| -' + fp + '% Full</span></span></div>';
+          });
+          // Pro gate for Apply
+          fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
+            .then(function(r){ return r.json() })
+            .then(function(lic){
+              var isPro = lic.license_type === 'pro' || lic.is_pro;
+              if (isPro) {
+                savings += '<div style="display:flex;gap:8px;margin-top:12px;"><button class="heal-btn" style="flex:1;" onclick="showToastB(\'💾 Compression applied — backups saved\')">💾 Apply Compression</button><button class="feedback-btn" onclick="openChiselModal(\'all\')">📋 Full Details</button></div>';
+              } else {
+                savings += '<div style="margin-top:12px;text-align:center;"><button style="background:var(--meta);border:none;color:white;padding:8px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;" onclick="showBrainPro()">🔒 Unlock with Pro →</button></div>';
+              }
+              document.getElementById('saChiselPreview').innerHTML = savings;
+            })['catch'](function(){});
+        })['catch'](function(){});
+
       // Honest state — no fake upsell
       if (!s.drift_available) {
         html += '<div style="background:rgba(100,116,139,0.08);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-top:8px;text-align:center;">' +
