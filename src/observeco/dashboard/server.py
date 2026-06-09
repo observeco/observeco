@@ -1582,6 +1582,8 @@ def _detail_drift_html(drift: list, name: str) -> str:
 
 def _detail_guard_tab(name: str, pulses: list, errors: list, circuit: dict, framework: str, agent_status: str = "unknown", conf: dict = None) -> str:
     """Guard detail — 5 sections: status, failure timeline, explanation, savings, settings."""
+    if conf is None:
+        conf = {}
     now = int(time.time())
     is_tripped = circuit.get("tripped", False)
     stale_alive = agent_status == "alive" and pulses and (now - pulses[0].get("timestamp", 0)) > 3600
@@ -1685,10 +1687,19 @@ def _detail_guard_tab(name: str, pulses: list, errors: list, circuit: dict, fram
         cooldown_remaining = f" ({rem // 60}m {rem % 60}s remaining)"
 
     settings_html = f"""<table class="data-table">
-        <tr><td>Failures before stop</td><td>3</td></tr>
+        <tr><td>Failures before stop</td><td>
+          <span id="circuitMaxRetries">{circuit.get("max_retries", 3)}</span>
+          <button onclick="editCircuitRetries('{name}')" style="background:none;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:6px;">✏️</button>
+        </td></tr>
+        <tr><td>Max turns/min (activity threshold)</td><td>
+          <span id="circuitMaxTurns">{conf.get("metadata", {}).get("max_turns_per_min", "— (off)") if isinstance(conf.get("metadata"), dict) else "— (off)"}</span>
+          <button onclick="editCircuitTurns('{name}')" style="background:none;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:6px;">✏️</button>
+        </td></tr>
         <tr><td>Cooldown period</td><td>~4 hours{cooldown_remaining}</td></tr>
         <tr><td>Auto-retry after cooldown</td><td class="good">Yes</td></tr>
-    </table>"""
+        <tr><td>Current turn rate</td><td id="turnRate_{name}">—</td></tr>
+    </table>
+    <div id="circuitEditResult_{name}" style="font-size:11px;color:var(--fg-2);margin-top:4px;"></div>"""
 
     # Section 4: Recommendations (for dead/tripped/error agents)
     rec_html = ""
@@ -2029,6 +2040,44 @@ async def api_reset_circuit(agent_name: str):
     """Reset a tripped circuit breaker."""
     db.reset_breaker(agent_name)
     return HTMLResponse(f'<span class="circuit-result">Circuit reset for {agent_name}</span>')
+
+
+@app.post("/api/circuit-breaker/{agent_name}/config")
+async def api_circuit_breaker_config(agent_name: str, max_retries: int = None, max_turns_per_min: int = None):
+    """G1.3: Update circuit breaker config (max retries + activity threshold)."""
+    try:
+        db.update_circuit_breaker_config(agent_name, max_retries=max_retries, max_turns_per_min=max_turns_per_min)
+        return JSONResponse({"ok": True, "message": "Updated"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@app.get("/api/agents/{agent_name}/turn-rate")
+async def api_agent_turn_rate(agent_name: str):
+    """G1.4: Estimate turn rate from recent pulse data."""
+    try:
+        pulses = db.get_recent_pulses(agent_name, limit=50)
+        if not pulses or len(pulses) < 2:
+            return JSONResponse({"turns_per_min": None, "status": "insufficient_data"})
+        # Use time between pulses to estimate frequency
+        now = int(time.time())
+        recent = [p for p in pulses if now - p.get("timestamp", 0) < 3600]
+        if len(recent) >= 2:
+            timespan = recent[-1]["timestamp"] - recent[0]["timestamp"]
+            if timespan > 0:
+                turns_per_min = round((len(recent) / timespan) * 60, 1)
+                threshold = 30
+                alerted = turns_per_min > threshold
+                return JSONResponse({
+                    "turns_per_min": turns_per_min,
+                    "pulses_in_last_hour": len(recent),
+                    "threshold": threshold,
+                    "alerted": alerted,
+                    "status": "alerted" if alerted else "normal",
+                })
+        return JSONResponse({"turns_per_min": 0, "pulses_in_last_hour": len(recent), "status": "normal"})
+    except Exception as e:
+        return JSONResponse({"turns_per_min": None, "status": "error", "error": str(e)})
 
 
 # ---------------------------------------------------------------------------

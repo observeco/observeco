@@ -2717,6 +2717,76 @@ function loadAlertLog() {
 }
 function initAlerts() { loadAlertSubs(); loadAlertLog(); }
 
+// ─── G1.3: Circuit Breaker Config UI ───
+function editCircuitRetries(agentName) {
+  const span = document.getElementById('circuitMaxRetries');
+  const current = parseInt(span.textContent) || 3;
+  const newVal = prompt('Enter max failures before circuit trips:', current);
+  if (newVal === null) return;
+  const num = parseInt(newVal);
+  if (isNaN(num) || num < 1 || num > 20) {
+    document.getElementById('circuitEditResult_' + agentName).textContent = '❌ Enter a number between 1 and 20';
+    return;
+  }
+  fetch('/api/circuit-breaker/' + encodeURIComponent(agentName) + '/config?max_retries=' + num, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        span.textContent = num;
+        document.getElementById('circuitEditResult_' + agentName).textContent = '✅ Updated to ' + num;
+      } else {
+        document.getElementById('circuitEditResult_' + agentName).textContent = '❌ ' + (data.error || 'Failed');
+      }
+    })
+    .catch(e => {
+      document.getElementById('circuitEditResult_' + agentName).textContent = '❌ ' + e.message;
+    });
+}
+function editCircuitTurns(agentName) {
+  const span = document.getElementById('circuitMaxTurns');
+  const current = span.textContent === '— (off)' ? '' : parseInt(span.textContent);
+  const newVal = prompt('Enter max turns/min (leave empty to disable activity threshold):', current || '');
+  const num = newVal ? parseInt(newVal) : null;
+  if (newVal !== null && (isNaN(num) || num < 1 || num > 999)) {
+    document.getElementById('circuitEditResult_' + agentName).textContent = '❌ Enter a number between 1 and 999, or leave empty';
+    return;
+  }
+  const url = '/api/circuit-breaker/' + encodeURIComponent(agentName) + '/config' +
+    (num !== null ? '?max_turns_per_min=' + num : '');
+  fetch(url, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        span.textContent = num !== null ? num : '— (off)';
+        document.getElementById('circuitEditResult_' + agentName).textContent = '✅ ' + (num !== null ? 'Set to ' + num : 'Disabled');
+      } else {
+        document.getElementById('circuitEditResult_' + agentName).textContent = '❌ ' + (data.error || 'Failed');
+      }
+    })
+    .catch(e => {
+      document.getElementById('circuitEditResult_' + agentName).textContent = '❌ ' + e.message;
+    });
+}
+// G1.4: Load turn rate when guard tab loads
+function loadTurnRate(agentName) {
+  const el = document.getElementById('turnRate_' + agentName);
+  if (!el) return;
+  fetch('/api/agents/' + encodeURIComponent(agentName) + '/turn-rate')
+    .then(r => r.json())
+    .then(data => {
+      el.textContent = data.turns_per_min !== null ? data.turns_per_min + '/min' : '— (no data)';
+    })
+    .catch(() => { el.textContent = '—'; });
+}
+// Override switchDetailTab to also load turn rate when guard tab is selected
+const origSwitchDetailTab = switchDetailTab;
+switchDetailTab = function(agentName, tab, btn) {
+  origSwitchDetailTab(agentName, tab, btn);
+  if (tab === 'guard') {
+    setTimeout(() => loadTurnRate(agentName), 500);
+  }
+};
+
 // ─── G1.2: Manual Kill Switch ───
 function renderKillSection(agentName) {
   return `
