@@ -4017,6 +4017,150 @@ GLOSSARY_DATA = {
             ("Is this per-agent or per-fleet?", "Per event, per agent. If you have 10 agents and 2 go down daily, that's 2 events/day × $0.02 = $0.04/day savings from L1 alone."),
         ],
     },
+    "skills-audit": {
+        "title": "Skill Audit",
+        "icon": "🧩",
+        "one_liner": "Analyzes every skill your agents have loaded — ranked by token cost so you can find bloat.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it shows:</strong> Every skill installed across your agents, sorted from most expensive (most tokens) to cheapest.<br><br>
+    <strong style="color:#22c55e;">🟢 Skills ≤10K tokens</strong> — Normal size. No action needed.<br>
+    <strong style="color:#ef4444;">⛔ Skills >10K tokens</strong> — Bloated. Each one adds cost to every agent session.<br><br>
+    <strong>How token cost works:</strong> A skill's token count is added to the agent's system prompt on <em>every single turn</em>. A 15K-token skill means 15,000 tokens burned per session, every session. Over 250 sessions/month, that's 3.75M tokens just for one skill.<br><br>
+    <strong>What to do with bloated skills:</strong> Skills >10K tokens are candidates for compression (see Compression). Skills >20K tokens should be reviewed for removal or rewrite.<br><br>
+    <strong>By Category section:</strong> Groups skills by domain (devops, communication, etc.) so you can see which categories are costing you the most.
+</div>""",
+        "faq": [
+            ("Why does token count matter?", "Every token in your skills section is paid for on every AI call. If a skill has 15K tokens and your agent makes 250 calls/month, that skill alone costs ~$0.56/month. Remove or compress it and you save that instantly."),
+            ("What's a good token budget per skill?", "Aim for <5K tokens per skill. Skills between 5K–10K are acceptable but worth monitoring. Skills >10K should be compressed or split."),
+            ("Does Skill Audit work across all agents?", "Yes. It scans skills from all profiles. You can filter to a single agent using the agent detail modal."),
+        ],
+    },
+    "compression-lite": {
+        "title": "Lite Compression",
+        "icon": "✂️",
+        "one_liner": "Compresses only the guidance section — the safest, lowest-risk compression mode.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it compresses:</strong> Only the <strong style="color:#f97316;">guidance</strong> component — framework instructions, routing rules, do/don't lists.<br><br>
+    <strong>What it preserves (unchanged):</strong><br>
+    • <strong style="color:#6366f1;">Identity</strong> — Agent's role and personality (untouched)<br>
+    • <strong style="color:#8b5cf6;">Skills</strong> — Tool descriptions (untouched)<br>
+    • <strong style="color:#ec4899;">Memory</strong> — Conversation history (untouched)<br>
+    • <strong style="color:#14b8a6;">Tools</strong> — API schemas (untouched)<br><br>
+    <strong>When to use Lite:</strong> When you want safe, predictable savings without risk of breaking any functionality. Guidance is often the largest component (~40-60% of system prompt) so even compressing just this can save significantly.<br><br>
+    <strong>Estimated range (50-70%):</strong> The low end (50%) assumes conservative compression. The high end (70%) is optimistic. The actual % after compression is logged and replaces the estimate.
+</div>""",
+        "faq": [
+            ("Is Lite safe?", "Yes. It only compresses the guidance/rules section. Skills, memory, tools, and identity are completely untouched. Your agents will still have all their capabilities."),
+            ("Why does guidance need compression?","Guidance sections contain framework-level instructions that are often verbose — redundant safety rules, repeated formatting instructions, defensive wording. Compression shortens these without losing meaning."),
+        ],
+    },
+    "compression-full": {
+        "title": "Full Compression",
+        "icon": "🔬",
+        "one_liner": "Compresses guidance + memory + skills for maximum savings — Pro only.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it compresses:</strong><br>
+    • <strong style="color:#f97316;">Guidance</strong> @ 70% — Same as Lite<br>
+    • <strong style="color:#8b5cf6;">Skills</strong> @ 40% — Skill descriptions and instructions<br>
+    • <strong style="color:#ec4899;">Memory</strong> @ 40% — Shortens recollection patterns<br><br>
+    <strong>What it preserves (unchanged):</strong><br>
+    • <strong style="color:#6366f1;">Identity</strong> — Never compressed<br>
+    • <strong style="color:#14b8a6;">Tools</strong> — Never compressed (fragile) — helps those who lack understanding of the technical details<br><br>
+    <strong>Why it always saves more than Lite:</strong> Full does <em>everything Lite does</em> (compress guidance @ 70%) and adds skills + memory compression. The guidance part uses the same aggressive rate as Lite, so Full is always at least as good.
+</div>""",
+        "faq": [
+            ("What's the risk of Full compression?","Skills and memory compression uses a gentler rate (40%) to avoid breaking functionality. The compression is structural — removing redundant wording, shortening verbose descriptions — not semantic. Your agents should behave identically after compression."),
+            ("Why is Full Pro-only?", "Full compression modifies skill descriptions which can theoretically affect agent behavior. It requires the smart component analysis available in Pro to ensure safe compression."),
+        ],
+    },
+    "fleet-compare": {
+        "title": "Fleet Comparison",
+        "icon": "⚖️",
+        "one_liner": "Side-by-side comparison of all your agents — see who's healthy, drifting, or costing too much.",
+        "detail": """<div class="glossary-card-grid">
+    <div class="glossary-card"><div class="glossary-card-title" style="color:#22c55e;">Composition Bars</div><div class="glossary-card-body">Colored bars showing each agent's token breakdown (identity, skills, memory, tools, guidance). Longer bars = more tokens = more cost.</div></div>
+    <div class="glossary-card"><div class="glossary-card-title" style="color:#f59e0b;">Drift</div><div class="glossary-card-body">How much the system prompt has grown in the last 7 days. +5% is normal. +20%+ needs attention.</div></div>
+    <div class="glossary-card"><div class="glossary-card-title" style="color:#ef4444;">Errors</div><div class="glossary-card-body">Error count in the last 24 hours. Updated on every pulse check.</div></div>
+    <div class="glossary-card"><div class="glossary-card-title" style="color:#8b5cf6;">Circuit Status</div><div class="glossary-card-body">Whether the circuit breaker is tripped (not checking) or active (checking).</div></div>
+    <div class="glossary-card"><div class="glossary-card-title" style="color:#64748b;">Last Seen</div><div class="glossary-card-body">When the agent last responded to a pulse check. Stale agents are candidates for cleanup.</div></div>
+</div>""",
+        "faq": [
+            ("How do I sort the table?", "Click any column header to sort by that column. Click again to reverse order."),
+            ("What should I focus on?","Look for: (1) High drift + high errors = something is wrong. (2) Tripped circuits across many agents = possible infrastructure issue. (3) Stale last-seen = dead agents to remove."),
+        ],
+    },
+    "budget-planner": {
+        "title": "Budget Planner",
+        "icon": "💰",
+        "one_liner": "Estimates how much your agents cost per month and what you'd save with compression.",
+        "detail": """<div class="glossary-detail">
+    <strong>How costs are calculated:</strong><br>
+    • Based on <strong>250 sessions/month</strong> per agent (typical for active agents)<br>
+    • Token pricing: <strong>DeepSeek V3 @ $0.15/M tokens</strong> (input tokens)<br>
+    • Monthly burn = total tokens × 250 sessions × ($0.15 / 1,000,000)<br>
+    • Yearly cost = monthly × 12<br><br>
+    <strong>Lite savings:</strong> What you'd save by running Lite compression on all agents (guidance only). Conservative estimate.<br><br>
+    <strong>Full savings:</strong> What you'd save by running Full compression (guidance + memory + skills). Always ≥ Lite.<br><br>
+    <strong>Top spenders:</strong> Agents ranked by token count — the ones at the top are your biggest cost drivers.<br><br>
+    <span style="color:#64748b;">These are estimates based on typical usage. Actual costs depend on session length, model choice, and call frequency.</span>
+</div>""",
+        "faq": [
+            ("Is 250 sessions/month realistic?", "For most AI agents, yes — roughly 8-10 sessions per day. Heavy-use agents may hit 500+. Light-use agents may be <50. Adjust the estimate mentally based on your usage."),
+            ("Can I see cost per agent?","The Top Spenders table shows each agent's token count and projected cost. Multiply by your own model's pricing for more accurate numbers."),
+        ],
+    },
+    "drift-alerts": {
+        "title": "Drift Alerts",
+        "icon": "📈",
+        "one_liner": "Checks every agent for abnormal prompt growth and fires a notification if found.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it does:</strong> Scans all agents' drift data and flags any agent whose token composition has grown significantly. Within 1 hour, the same agent won't trigger again (dedup).<br><br>
+    <strong>What triggers an alert:</strong><br>
+    • Drift > <strong>+10%</strong> in the last 7 days = Warning<br>
+    • Drift > <strong>+20%</strong> = Critical<br><br>
+    <strong>What happens after:</strong> Alerts are delivered to all configured channels (Telegram, Discord, webhook, email). The alert message includes the agent name, drift %, and a link to investigate.<br><br>
+    <strong>When to run it:</strong> Run once daily (or set up auto-check via cron). Frequent checks aren't useful because drift is measured over 7-day windows.
+</div>""",
+        "faq": [
+            ("How often should I check drift?", "Once a day is plenty. Drift is measured over 7 days — checking more often will just see the same data."),
+            ("Can drift alerts auto-fire?", "Yes — set up a cron job calling the check endpoint. Pro users get scheduled auto-checks."),
+        ],
+    },
+    "heal-thresholds": {
+        "title": "Heal Thresholds",
+        "icon": "⚙️",
+        "one_liner": "Controls when auto-heal triggers for each agent — max restarts, drift % tolerance, and memory debt limit.",
+        "detail": """<div class="glossary-detail">
+    <strong>Three controls per agent:</strong><br><br>
+    <strong>🔄 Max Restarts (per 4h)</strong> — How many times auto-heal will restart this agent in a 4-hour window. Default: 3. Prevents infinite restart loops. If an agent keeps crashing, it's better to stop trying and investigate.<br><br>
+    <strong>📈 Max Drift %</strong> — How much token growth triggers a warning. Default: 20%. If the system prompt grows more than this in 7 days, auto-heal flags it. Set higher for agents you expect to grow (new skills being added).<br><br>
+    <strong>🧠 Max Memory Debt</strong> — Maximum accumulated memory tokens before cleanup triggers. Default: 10,000. Agents that accumulate conversation history will eventually hit this limit and get a memory trim.<br><br>
+    <strong>Pro tip:</strong> Raise max restarts for unstable but critical agents (they'll recover faster). Lower drift % for cost-sensitive agents.
+</div>""",
+        "faq": [
+            ("What happens when max restarts is exceeded?", "The circuit breaker trips and stops auto-heal attempts for the cooldown period (default 5 minutes). The agent stays down until you manually intervene or the cooldown expires."),
+            ("Should I set different thresholds per agent?", "Yes. A critical production agent might have max restarts=5 (more chances to recover). A development agent might have max restarts=1 (let it stay down so you notice)."),
+            ("What is memory debt?","Memory debt is accumulated conversation history that gets stored in the agent's system prompt. Over time, this grows and increases cost. Auto-heal trims it when it exceeds the threshold."),
+        ],
+    },
+    "token-optimiser": {
+        "title": "Token Optimiser",
+        "icon": "🧪",
+        "one_liner": "Analyses 200+ turns of agent conversations to find which skills are never used — so you can prune them.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it learns:</strong> The optimiser tracks which skills actually get triggered across 200+ real sessions. Any skill that never fires in 200 turns is a candidate for removal or compression.<br><br>
+    <strong>What you get:</strong><br>
+    • <strong>Skill usage table</strong> — Every skill ranked by how often it's triggered<br>
+    • <strong>Never-triggered skills</strong> — Skills loaded but never called. Likely waste.<br>
+    • <strong>Stale guidance rules</strong> — Instructions that never fire. Defensive wording that accumulated over time.<br><br>
+    <strong>Why 200 turns?</strong> Below 200, the sample is too small to be statistically meaningful. A skill used once in 50 turns might be essential but rarely needed. At 200+, patterns stabilise.<br><br>
+    <strong>For Pro users:</strong> Turn-by-turn analysis with auto-prune recommendations.
+</div>""",
+        "faq": [
+            ("How long does it take to reach 200 turns?","Depends on agent activity. A busy agent might hit 200 turns in 2-3 days. A seldom-used agent might take weeks. The optimiser shows your progress toward 200."),
+            ("What happens if I remove a skill that was never triggered?","Nothing — that's the point. The skill was loaded in every session consuming tokens but never used. Removing it saves tokens with zero impact on behavior."),
+        ],
+    },
     "heal-savings-l2": {
         "title": "L2 Proactive Savings",
         "icon": "🧠",
@@ -4043,7 +4187,7 @@ async def api_glossary(topic: str):
     """Return glossary content for a topic — §3.20."""
     entry = GLOSSARY_DATA.get(topic)
     if not entry:
-        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, error-tab, pulse-check, heal-button, alerts-panel, confidence, fp, fn.</div>')
+        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, error-tab, pulse-check, heal-button, alerts-panel, confidence, fp, fn, skills-audit, compression-lite, compression-full, fleet-compare, budget-planner, drift-alerts, heal-thresholds, token-optimiser.</div>')
 
     faq_html = ""
     if entry.get("faq"):

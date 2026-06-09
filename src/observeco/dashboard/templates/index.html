@@ -974,7 +974,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <!-- Compare tab -->
   <div class="tab-content" id="tabCompare">
     <div class="app" style="padding:0;">
-      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">📊 Fleet Comparison</h1>
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">📊 Fleet Comparison<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('fleet-compare', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h1>
       <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Side-by-side token, drift, and error profiles across all agents.</div>
 
       <!-- Compare table -->
@@ -1222,7 +1222,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       <!-- ====== BUDGET PLANNER (fleet-level cost widget) ====== -->
       <div class="brain-card" id="budgetPlannerCard">
         <h3>🎯 Budget Planner
-          <span style="font-size:11px;color:#64748b;font-weight:400;">fleet-level cost estimation</span>
+          <span style="font-size:11px;color:#64748b;font-weight:400;">fleet-level cost estimation<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('budget-planner', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></span>
         </h3>
         <div id="budgetPlannerContent" hx-get="/api/budget-planner" hx-trigger="load" hx-swap="innerHTML">
           <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Loading budget data...</div>
@@ -1284,6 +1284,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
           <div><strong style="font-size:13px;color:var(--fg);">📋 Delivery Log</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">recent alert deliveries</span></div>
           <div style="display:flex;gap:6px;">
             <button onclick="checkDriftAlerts()" class="heal-trigger-btn" style="background:var(--bg);border:1px solid var(--border);color:var(--fg-2);">📈 Check Drift</button>
+            <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift-alerts', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;display:inline-flex;align-items:center;">?</span>
             <button onclick="loadAlertLog()" class="heal-trigger-btn">🔄 Refresh</button>
           </div>
         </div>
@@ -1454,7 +1455,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <div class="modal" style="max-width: 700px; width: 90%; padding: 0; overflow: hidden;">
     <div class="modal-header" style="border-bottom: 1px solid var(--border);">
       <div>
-        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🧪 Token Optimiser</h3>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🧪 Token Optimiser<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('token-optimiser', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
         <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Preview & apply token compression</div>
       </div>
       <button class="modal-close" onclick="closeModalById('chiselModal')">✕</button>
@@ -1486,7 +1487,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <div class="modal" style="max-width: 800px; width: 95%; padding: 0; overflow: hidden;">
     <div class="modal-header" style="border-bottom: 1px solid var(--border);">
       <div>
-        <h3 id="saModalTitle" style="font-size:14px;font-weight:600;color:var(--fg);">Skill Audit</h3>
+        <h3 id="saModalTitle" style="font-size:14px;font-weight:600;color:var(--fg);">Skill Audit<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('skills-audit', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
         <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Skills ranked by token cost — see what's bloated</div>
       </div>
       <button class="modal-close" onclick="closeSkillsAudit()">✕</button>
@@ -1516,7 +1517,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <div class="modal" style="max-width:420px;">
     <div class="modal-header">
       <div>
-        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">⚙️ Heal Thresholds</h3>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">⚙️ Heal Thresholds<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('heal-thresholds', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
         <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;" id="thresholdsModalSub">Configure per-agent auto-heal limits</div>
       </div>
       <button class="modal-close" onclick="closeThresholdsModal()">✕</button>
@@ -2906,7 +2907,7 @@ function openSkillsAuditModal(agentName) {
 
       // Compression preview container (populated async)
       html += '<div id="saChiselPreview" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">' +
-        '<div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:10px;">🧪 Compression Preview</div>' +
+        '<div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:10px;">🧪 Compression Preview<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'compression-lite\', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></div>' +
         '<div style="font-size:11px;color:#64748b;text-align:center;padding:8px;">Loading potential savings...</div></div>';
 
       // — Compression Preview (fetched inline) —
@@ -2963,11 +2964,11 @@ function openSkillsAuditModal(agentName) {
 
           savings += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;"><div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
             '<div style="font-size:20px;font-weight:700;color:#22c55e;">' + liteDisplay + '</div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + liteLabel + '</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + liteLabel + '<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'compression-lite\', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:4px;">?</span></div>' +
             '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance compressed · ' + totalLite.toLocaleString() + ' tok</div></div>' +
             '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
             '<div style="font-size:20px;font-weight:700;color:#a5b4fc;">' + fullDisplay + '</div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + fullLabel + '</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + fullLabel + '<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'compression-full\', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:4px;">?</span></div>' +
             '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance + memory + skills compressed · ' + totalFull.toLocaleString() + ' tok</div></div></div>';
           // Per-agent breakdown
           savings += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Per-agent savings</div>';
