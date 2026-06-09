@@ -203,3 +203,20 @@ Hover the "?" icons on any agent card in the dashboard to get instant definition
 - **Composition** (token bar) — identity/skills/memory/tools/guidance breakdown
 
 Each popup includes FAQ. Click the topic header to open the full modal.
+
+---
+
+### 🔐 Observability Boundaries (Threat Model)
+
+ObserveCo monitors **agent processes, health, token usage, and inter-agent communication paths**. It does **not** monitor:
+
+- **API key compromise** — ObserveCo sees which provider you use but never stores API keys. Key hygiene is your responsibility.
+- **Prompt injection / data poisoning** — ObserveCo monitors agent health, not conversation content. A poisoned agent that behaves normally will not trigger alerts.
+- **Network-level attacks** — We monitor platform connectivity (Telegram/WhatsApp/Discord gateway health) but not TLS termination, DNS, or DDoS.
+- **Supply chain attacks** — Plugin dependencies are your risk. ObserveCo can detect bloated skills but not malicious ones.
+- **Storage encryption** — All data is local SQLite on your machine. Encrypt your disk; we don't add a separate encryption layer.
+
+**What a kill switch can do:** Stop a runaway agent process immediately (SIGTERM → SIGKILL after 5s). Audit-logged. Human-initiated only.
+**What a kill switch cannot do:** Prevent the agent from restarting (auto-restart daemons will re-launch unless you also remove the agent config).
+**What auto-heal does:** Restart dead agents, reset tripped circuits, trim bloated memory. Configurable thresholds. Circuit breaker stops after 3 failures.
+**What auto-heal does NOT do:** Modify config files, delete agents, change system settings, or execute any action with irreversible side effects.
