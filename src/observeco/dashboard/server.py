@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import sys
 import time
 import webbrowser
@@ -21,14 +22,15 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from observeco.billing import add_billing_endpoints
-from observeco.dashboard.otel import router as otel_router
-from observeco.dashboard.licenses_api import router as licenses_router
-from observeco.dashboard.commercial_api import router as commercial_router
-from observeco.db import Database
 from observeco.api import router as api_router
-from observeco.realtime import router as realtime_router
+from observeco.billing import add_billing_endpoints
+from observeco.config import hermes_home
+from observeco.dashboard.commercial_api import router as commercial_router
+from observeco.dashboard.licenses_api import router as licenses_router
+from observeco.dashboard.otel import router as otel_router
+from observeco.db import Database
 from observeco.dirs import get_data_dir
+from observeco.realtime import router as realtime_router
 
 # Shared heartbeat path — watch daemon writes this every 30s.
 # Dashboard reads it to detect if the daemon is alive.
@@ -46,13 +48,14 @@ db = Database()
 
 # Initialize dashboard auth at module level (for TestClient compatibility).
 # serve() re-initializes with the persisted secret on actual launch.
-from observeco.dashboard.auth import init_auth as _init_auth, get_cached_secret as _get_secret
+from observeco.dashboard.auth import init_auth as _init_auth  # noqa: E402
+
 _dash_secret = _init_auth(app)
 app.state.dashboard_secret = _dash_secret
 
 # --- Auth setup ---
-import secrets as _secrets
-from observeco.auth.oauth2 import OAuth2Provider
+from observeco.auth.oauth2 import OAuth2Provider  # noqa: E402
+
 auth_provider = OAuth2Provider()
 
 # Register billing + OTel + feedback + license endpoints
@@ -63,15 +66,17 @@ app.include_router(realtime_router)
 app.include_router(licenses_router)
 app.include_router(commercial_router)
 
-# --- Startup: ensure trial token if first run ---
+# --- Startup: initialise first_run_at, log license state ---
+# Trial is NOT auto-started here. It starts on explicit Pro feature access
+# or when the user clicks "Start Free Trial". See commercial-scope.md §7.
 @app.on_event("startup")
 async def startup_license_check():
     from observeco import license as lic
     state = lic.load()
-    if state.license_type == "free" and not state.key and not state.trial_token:
-        lic.ensure_trial(state)
-        _log_license = f"auto-trial started ({state.remains_days}d remaining)"
-    elif state.license_type == "trial":
+    if state.first_run_at is None:
+        state.first_run_at = int(time.time())
+        lic.save(state)
+    if state.license_type == "trial":
         _log_license = f"trial mode ({state.remains_days}d remaining)"
     elif state.license_type == "pro":
         _log_license = "pro mode"
@@ -271,7 +276,7 @@ async def api_phase():
             if i < len(steps) - 1:
                 progress_html += '<span style="color:#334155;font-size:10px;">──</span>'
         progress_html += "</div>"
-        guide_section = f"""<div id="setupGuide" class="setup-guide" style="margin-top:8px;padding:8px 12px;background:rgba(59,130,246,0.06);border-radius:6px;border-left:2px solid #3b82f6;">
+        guide_section = """<div id="setupGuide" class="setup-guide" style="margin-top:8px;padding:8px 12px;background:rgba(59,130,246,0.06);border-radius:6px;border-left:2px solid #3b82f6;">
     <div style="font-size:11px;font-weight:600;color:#93c5fd;margin-bottom:4px;">💡 Your personalized guide</div>
     <div id="onboardingGuideContainer" hx-get="/api/onboarding-guide" hx-trigger="load" hx-swap="innerHTML" style="font-size:11px;color:#94a3b8;line-height:1.5;"></div>
 </div>"""
@@ -360,7 +365,7 @@ async def api_error_state():
         banners.append(_error_banner(
             icon="ℹ️",
             message="No agents discovered yet.",
-            action="Run `observeco agents add <name> --check <url>` or auto-discover with `observeco pulse check`.",
+            action="Run `observeco agents add <name> --health-check <url>` (or use `--health-check docker:containername` for Docker containers) or auto-discover with `observeco pulse check`.",
             severity="info",
         ))
 
@@ -460,7 +465,6 @@ async def api_delay_banner():
         return HTMLResponse(daemon_warning)
 
     # Summarize
-    max_delay = max(d[1] for d in delays)
     overdue_agents = [d for d in delays if d[1] > DELAY_WARNING_SEC]
     critical_agents = [d for d in delays if d[1] > DELAY_CRITICAL_SEC]
 
@@ -893,10 +897,10 @@ async def api_pro_preview(feature_id: str):
                 {plan} plan — {full_price} after trial. No charge today.
             </div>
             <div class="pro-preview-cta-row">
-                <a href="/api/checkout?plan={plan.lower()}&trial=30"
-                   class="pro-cta-link">
+                <span onclick="event.preventDefault();var e=prompt('Enter your email to start the 30-day free trial:');if(e)window.location.href='/api/checkout?plan={plan.lower()}&trial=30&email='+encodeURIComponent(e);"
+                      class="pro-cta-link" style="cursor:pointer;display:inline-block;">
                     Start Free Trial
-                </a>
+                </span>
                 <button onclick="closeProPreview()"
                         class="pro-cta-btn">
                     Not now
@@ -908,11 +912,12 @@ async def api_pro_preview(feature_id: str):
 
 
 @app.get("/api/checkout")
-async def api_checkout(plan: str = "solo", trial: int = 30):
+async def api_checkout(plan: str = "solo", trial: int = 30, email: str = "", phone: str = "", name: str = ""):
     """Redirect to Stripe checkout — §7.1 state 4."""
     from observeco.billing import create_checkout_session
-    # Use a default email — real email captured during checkout flow
-    result = create_checkout_session(email="checkout@observeco.app", plan=plan)
+    if not email:
+        email = "checkout@observeco.app"
+    result = create_checkout_session(email=email, phone=phone, name=name, plan=plan)
     if result and result.get("url"):
         return RedirectResponse(url=result["url"])
     # Fallback if Stripe not configured — show email capture
@@ -954,6 +959,8 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
 
     pulses = db.get_recent_pulses(agent_name=name, limit=24)
     errors = db.get_errors(agent_name=name, limit=20)
+    now_ts = int(time.time())
+    errors = [e for e in errors if now_ts - e.get("timestamp", 0) < 86400]  # only last 24h for confidence
     trims = db.get_trims(agent_name=name, limit=20)
     drift = db.get_drift(agent_name=name)
     garden = db.get_gardens(agent_name=name)
@@ -972,17 +979,25 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
 
     # Derive agent status from recent pulses
     agent_status = "unknown"
+    ever_alive = False
     if pulses:
         agent_status = pulses[0].get("status", "unknown")
+        # Check if this agent has EVER been seen alive
+        all_pulses = db.get_recent_pulses(agent_name=name, limit=1000)
+        ever_alive = any(p.get("status") == "alive" for p in all_pulses)
+
+    # Distinguish "dead" (was running, went down) from "not running" (never seen alive)
+    if agent_status == "dead" and not ever_alive:
+        agent_status = "not_running"
 
     # Compute confidence for the agent's current state
     state_since = pulses[0].get("timestamp", int(time.time())) if pulses else int(time.time()) - 86400
-    conf = _compute_confidence(agent_status, pulses, errors, circuit, state_since, int(time.time()))
+    conf = _compute_confidence(agent_status, pulses, errors, circuit, state_since, now_ts)
 
     if tab == "health":
-        return _detail_health_tab(name, pulses, errors, circuit, framework, conf)
+        return _detail_health_tab(name, pulses, errors, circuit, framework, agent_status, conf)
     if tab == "guard":
-        return _detail_guard_tab(name, errors, circuit, framework, agent_status, conf)
+        return _detail_guard_tab(name, pulses, errors, circuit, framework, agent_status, conf)
     elif tab == "errors":
         return _detail_errors_tab(name, errors, framework, agent_status, conf)
     elif tab == "tokens":
@@ -1186,20 +1201,13 @@ def _recommendation_for(status: str, errors: list, circuit: dict,
 
 
 def _confidence_badge(conf: dict) -> str:
-    """Render a small HTML confidence badge for agent cards."""
+    """Render a small confidence badge for agent cards — level only, no FP/FN."""
     emoji = {"high": "🟢", "medium": "🟡", "low": "⚪"}.get(conf["level"], "⚪")
-    fp_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fp_risk"], "⚠️")
-    fn_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fn_risk"], "⚠️")
-    fp_label = conf["fp_risk"].capitalize()
-    fn_label = conf["fn_risk"].capitalize()
     level_label = conf["level"].capitalize()
     return f'''
         <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
-            <span title="Confidence: {level_label} — {conf['sources_agree']}">{emoji} {level_label}</span>
-            <span title="False positive risk: {fp_label}">{fp_icon} FP {fp_label}</span>
-            <span title="False negative risk: {fn_label}">{fn_icon} FN {fn_label}</span>
-        </div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px;">{conf['recommendation']}</div>'''
+            <span title="Confidence: {level_label} — {conf['sources_agree']}">{emoji} {level_label} Confidence</span>
+        </div>'''
 
 
 def _confidence_header(conf: dict) -> str:
@@ -1223,7 +1231,8 @@ def _confidence_header(conf: dict) -> str:
     </div>'''
 
 
-def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, framework: str, conf: dict = None) -> str:
+def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, framework: str,
+                       agent_status: str = "unknown", conf: dict = None) -> str:
     now = int(time.time())
 
     # ── Section 0: Confidence header ──
@@ -1284,20 +1293,59 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
         summary_parts.append(f'❓ <strong>{categories["other"]}</strong> other error{"s" if categories["other"] > 1 else ""} — check the full list.')
 
     total_errs = len(errors)
-    if total_errs == 0:
+    is_dead = agent_status == "dead"
+    is_not_running = agent_status == "not_running"
+    is_unknown = agent_status == "unknown"
+    stale = pulses and (now - pulses[0].get("timestamp", 0)) > 3600
+
+    if is_dead:
+        if total_errs == 0:
+            verdict_text = (
+                "The agent is <strong>down</strong> (last probe failed). "
+                "No errors were logged separately — dead pulse records aren't written to the error table. "
+                "Check the agent's process or start it manually."
+            )
+        else:
+            verdict_text = (
+                f"The agent is <strong>down</strong> — all {total_errs} error{'s' if total_errs > 1 else ''} "
+                f"are from the system trying (and failing) to reach it. "
+                f"The agent will not recover on its own."
+            )
+    elif is_not_running:
+        if total_errs == 0:
+            verdict_text = (
+                "This agent has <strong>never been seen running</strong> by the monitoring system. "
+                "It's registered but hasn't responded to any pulse checks. "
+                "Verify the agent is actually started — if it's intentional, ignore this alert."
+            )
+        else:
+            verdict_text = (
+                f"This agent has <strong>never been seen running</strong>. "
+                f"The {total_errs} error{'s' if total_errs > 1 else ''} "
+                f"are from the system trying to reach it since registration."
+            )
+    elif is_unknown:
+        verdict_text = (
+            "No pulse data available — this agent is not pulse-monitored. "
+            "Configure a health check (e.g. <code>http:port/health</code> or <code>docker:containername</code>) "
+            "to enable automatic status tracking."
+        )
+    elif total_errs == 0:
         verdict_text = "All checks passed in the last 24 hours. No issues detected."
     elif total_errs == 1:
         verdict_text = "This agent had 1 issue in the last 24 hours. Likely transient — monitor."
     elif total_errs <= 3:
         verdict_text = f"This agent had <strong>{total_errs} issues</strong> in the last 24 hours. Possibly unstable — check the error details above."
     else:
-        # Determine status-based verdict
         if any(p["status"] in ("dead", "error") for p in pulses[:24]):
             verdict_text = f"This agent had <strong>{total_errs} issues</strong> in the last 24 hours. It needs attention — try restarting it."
         else:
             verdict_text = f"This agent had <strong>{total_errs} issues</strong> in the last 24 hours. Issues appear resolved for now — monitor the next few checks."
 
     summary_html = "<br>".join(summary_parts) if summary_parts else "All checks passed — no issues detected this period."
+    if is_dead or is_not_running or is_unknown:
+        if not summary_parts:
+            summary_html = "No errors logged separately — pulse-level status reflects the actual agent state. See the verdict below."
 
     # ── Section 4: Latest check ──
     last_pulse = pulses[0] if pulses else {}
@@ -1333,40 +1381,43 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
     </div>"""
 
     return HTMLResponse(f"""<div class="detail-content">
-    {conf_header}
     <div class="modal-section">
         <h4>Last 24 hours (every 30s)</h4>
         <div class="pulse-timeline">{dots_html}</div>
         <div class="pulse-legend">
             <span class="pulse-legend-dot"><span class="pulse-dot ok"></span> OK</span>
             <span class="pulse-legend-dot"><span class="pulse-dot warn"></span> Warning</span>
-            <span class="pulse-legend-dot"><span class="pulse-dot err"></span> Error</span>
+            <span class="pulse-legend-dot"><span class="pulse-dot err"></span> Down</span>
         </div>
     </div>
     <div class="modal-section">
-        <h4>What happened — annotated timeline</h4>
-        <table class="data-table">
-            <tr><th style="width:70px;">Time</th><th style="width:80px;">Status</th><th>What happened</th></tr>
-            {error_rows}
-        </table>
-    </div>
-    <div class="modal-section">
-        <h4>Summary</h4>
-        <div class="health-summary-body">
-            {summary_html}
+        <h4>Signal Analysis</h4>
+        {conf_header}
+        <div class="modal-section">
+            <h5>Annotated timeline</h5>
+            <table class="data-table">
+                <tr><th style="width:70px;">Time</th><th style="width:80px;">Status</th><th>What happened</th></tr>
+                {error_rows}
+            </table>
         </div>
-        <div class="health-verdict">
-            <strong>Verdict:</strong> {verdict_text}
+        <div class="modal-section">
+            <h5>Summary</h5>
+            <div class="health-summary-body">
+                {summary_html}
+            </div>
+            <div class="health-verdict">
+                <strong>Verdict:</strong> {verdict_text}
+            </div>
         </div>
+        <div class="modal-section">
+            <h5>Latest check</h5>
+            <table class="data-table">
+                <tr><th style="width:70px;">Time</th><th style="width:80px;">Result</th><th>Latency</th></tr>
+                <tr><td>{last_ts}</td><td class="{latest_cls}">{latest_result}</td><td>{last_latency}</td></tr>
+            </table>
+        </div>
+        {circuit_html}
     </div>
-    <div class="modal-section">
-        <h4>Latest check</h4>
-        <table class="data-table">
-            <tr><th style="width:70px;">Time</th><th style="width:80px;">Result</th><th>Latency</th></tr>
-            <tr><td>{last_ts}</td><td class="{latest_cls}">{latest_result}</td><td>{last_latency}</td></tr>
-        </table>
-    </div>
-    {circuit_html}
 </div>""")
 
 
@@ -1406,7 +1457,6 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
                    "tools": "#14b8a6", "guidance": "#f97316"}.get(comp, "#6b7280")
             comp_label = comp.capitalize()
             # Estimate yearly cost at $0.15/M tokens
-            yearly_est = val * 365 * 0.15 / 1_000_000
             bars.append(f"""<div class="token-row-detail">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <span class="token-row-label" style="font-weight:600;color:#e2e8f0;font-size:12px;">{comp_label}</span>
@@ -1467,7 +1517,6 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
                 pct = val / total * 100
                 col = {"MEMORY.md": "#ec4899", "Skills": "#8b5cf6", "Workspace": "#14b8a6",
                        "History": "#6366f1", "Bootstrap": "#f97316"}.get(comp, "#6b7280")
-                yearly_est = val * 365 * 0.15 / 1_000_000
                 bars.append(f"""<div class="token-row-detail">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <span class="token-row-label" style="font-weight:600;color:#e2e8f0;font-size:12px;">{comp}</span>
@@ -1482,7 +1531,7 @@ def _detail_tokens_tab(name: str, trims: list, drift: list, framework: str) -> s
 </div>""")
 
             loads = db.get_loads(agent_name=name)
-            total_saved = sum(l.get("tokens_saved", 0) for l in loads[:20])
+            total_saved = sum(ld.get("tokens_saved", 0) for ld in loads[:20])
             savings_html = f"""<div class="savings-badge" style="display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:6px 10px;font-size:11px;color:#22c55e;margin-top:8px;">
     📉 ClawForge saved ~{total_saved:,} tokens across {len(loads)} turns
 </div>""" if total_saved > 0 else ""
@@ -1531,42 +1580,77 @@ def _detail_drift_html(drift: list, name: str) -> str:
 </div>"""
 
 
-def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, agent_status: str = "unknown", conf: dict = None) -> str:
+def _detail_guard_tab(name: str, pulses: list, errors: list, circuit: dict, framework: str, agent_status: str = "unknown", conf: dict = None) -> str:
     """Guard detail — 5 sections: status, failure timeline, explanation, savings, settings."""
     now = int(time.time())
     is_tripped = circuit.get("tripped", False)
+    stale_alive = agent_status == "alive" and pulses and (now - pulses[0].get("timestamp", 0)) > 3600
 
     # Section 0: Confidence header
     conf_header = _confidence_header(conf) if conf else ""
 
-    # Section 1: Status — acknowledge agent's pulse status
+    # Section 1: Status — acknowledge agent's pulse status + stale-dependent factor
     is_dead = agent_status == "dead"
-    if is_dead:
+    is_not_running = agent_status == "not_running"
+    is_unknown = agent_status == "unknown"
+    if is_not_running:
         status_html = """
-        <div style="font-size:13px;color:#eab308;font-weight:600;margin-bottom:8px;">
-            ⚠️ Agent is down — guard data may be misleading
+        <div style="font-size:13px;color:#94a3b8;font-weight:600;margin-bottom:8px;">
+            ○ Agent not started
         </div>
         <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
-            This agent has <strong>no running process</strong>. The guard checks are running against
-            a dead target — the "0 consecutive failures" reflects <strong>gaps between checks</strong>,
-            not actual health. The guard will resume monitoring when the agent comes back online.
+            This agent has <strong>never been seen running</strong> by the monitoring system.
+            The guard shows "0 failures" because it hasn't had anything to check — not because
+            the agent is healthy. It's registered but hasn't responded to any pulse checks.
+            Verify the agent is actually started.
+        </div>"""
+    elif is_unknown:
+        status_html = """
+        <div style="font-size:13px;color:#94a3b8;font-weight:600;margin-bottom:8px;">
+            ⚪ No pulse data
+        </div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+            This agent is <strong>not pulse-monitored</strong>. The guard has no data to check against.
+            Configure a health check (e.g. <code>http:port/health</code> or <code>docker:containername</code>)
+            to enable automatic status tracking.
+        </div>"""
+    elif is_dead:
+        status_html = """
+        <div style="font-size:13px;color:#eab308;font-weight:600;margin-bottom:8px;">
+            ⚠️ Agent is down
+        </div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+            This agent is <strong>not running</strong>. The guard says "0 failures" but that's because
+            there's nothing to check — not because it's healthy. The guard will start monitoring again
+            once the agent comes back online.
         </div>"""
     elif is_tripped:
         status_html = """
         <div style="font-size:13px;color:#ef4444;font-weight:600;margin-bottom:8px;">
-            🔴 Guard is STOPPED — not checking this agent
+            🔴 Guard stopped — not checking this agent anymore
         </div>
         <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
-            The safety guard detected <strong>3 consecutive failures</strong> from this agent and stopped checking
-            to prevent noise. It will automatically resume in <strong>~4 hours</strong> (cooldown period).
+            The guard found <strong>3 failures in a row</strong> and stepped back to avoid noise.
+            It will automatically try again in <strong>~4 hours</strong>.
+        </div>"""
+    elif stale_alive:
+        status_html = """
+        <div style="font-size:13px;color:#eab308;font-weight:600;margin-bottom:8px;">
+            ⚠️ Last check was over an hour ago
+        </div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+            The agent <strong>was alive</strong> at its last check, but that was <strong>more than an hour ago</strong>.
+            The guard shows 0 failures because nothing went wrong back then — but the agent
+            could have died since. The dashboard already flags this as <strong>"Running (stale)"</strong>.
+            Run <code>observeco pulse check</code> to get a fresh reading.
         </div>"""
     else:
         status_html = """
         <div style="font-size:13px;color:#22c55e;font-weight:600;margin-bottom:8px;">
-            ✅ Guard is OK — monitoring normally
+            ✅ Guard is OK
         </div>
         <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
-            The safety guard has detected <strong>0 consecutive failures</strong>. It continues monitoring every 30 seconds.
+            The guard has detected <strong>0 failures</strong>. It checks every 30 seconds.
         </div>"""
 
     # Section 2: Failure timeline
@@ -1585,6 +1669,8 @@ def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, ag
             failure_summary = f"The guard triggered after <strong>3 consecutive failures</strong>. In total, <strong>{len(errors)} error{'s' if len(errors) > 1 else ''}</strong> were logged before it stopped checking."
         elif is_dead:
             failure_summary = f"<strong>{len(errors)} error{'s' if len(errors) > 1 else ''}</strong> logged from this agent — but the agent <strong>has been down</strong> throughout. The guard never tripped because the errors are spaced across gap-detection checks, not 3+ in a row."
+        elif is_not_running or is_unknown:
+            failure_summary = f"<strong>{len(errors)} error{'s' if len(errors) > 1 else ''}</strong> logged — the agent has never responded successfully so every check is logged as an error."
         else:
             failure_summary = f"{len(errors)} error{'s' if len(errors) > 1 else ''} detected but fewer than 3 in a row — the guard has not tripped."
     else:
@@ -1603,6 +1689,35 @@ def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, ag
         <tr><td>Cooldown period</td><td>~4 hours{cooldown_remaining}</td></tr>
         <tr><td>Auto-retry after cooldown</td><td class="good">Yes</td></tr>
     </table>"""
+
+    # Section 4: Recommendations (for dead/tripped/error agents)
+    rec_html = ""
+    if is_dead:
+        rec_html = f"""<div class="modal-section">
+        <h4>Recommended actions</h4>
+        <div class="health-summary-body">
+            • <strong>Restart the agent:</strong> <code>observeco start {name}</code><br>
+            • <strong>Diagnose failure:</strong> <code>observeco heal --diagnose {name}</code><br>
+            • <strong>Check logs:</strong> <code>observeco logs {name}</code>
+        </div>
+    </div>"""
+    elif is_tripped:
+        rec_html = f"""<div class="modal-section">
+        <h4>Recommended actions</h4>
+        <div class="health-summary-body">
+            • <strong>Wait for cooldown</strong> — guard auto-retries after{cooldown_remaining}.<br>
+            • <strong>Speed up recovery:</strong> Restart the agent manually to clear the error state.<br>
+            • <strong>Reset guard:</strong> <code>observeco heal --reset {name}</code>
+        </div>
+    </div>"""
+    elif errors and not is_tripped:
+        rec_html = f"""<div class="modal-section">
+        <h4>Recommended actions</h4>
+        <div class="health-summary-body">
+            • <strong>Monitor</strong> — errors detected but guard has not tripped yet.<br>
+            • <strong>Run diagnostics:</strong> <code>observeco heal --diagnose {name}</code>
+        </div>
+    </div>"""
 
     return HTMLResponse(f"""<div class="detail-content">
     {conf_header}
@@ -1631,6 +1746,7 @@ def _detail_guard_tab(name: str, errors: list, circuit: dict, framework: str, ag
         <h4>Settings</h4>
         {settings_html}
     </div>
+    {rec_html}
 </div>""")
 
 
@@ -1638,6 +1754,8 @@ def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: st
     """Error history — timeline table + categorized verdict + Pro upsell."""
     error_rows = ""
     is_dead = agent_status == "dead"
+    is_not_running = agent_status == "not_running"
+    is_unknown = agent_status == "unknown"
     conf_header = _confidence_header(conf) if conf else ""
     if errors:
         for e in errors[:20]:
@@ -1650,7 +1768,22 @@ def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: st
         error_rows = '<tr><td colspan="2" class="empty-table-msg">No errors in the last 24 hours</td></tr>'
 
     total = len(errors)
-    if total == 0:
+    if total == 0 and is_dead:
+        verdict_msg = (
+            'Agent is <strong>down</strong>. No errors were logged because dead pulse records '
+            'go to the health timeline, not the error table. Start the agent manually.'
+        )
+    elif total == 0 and is_not_running:
+        verdict_msg = (
+            'This agent has <strong>never been seen running</strong>. It\'s registered but hasn\'t '
+            'responded to any pulse checks. If this is intentional, you can ignore this status.'
+        )
+    elif total == 0 and is_unknown:
+        verdict_msg = (
+            'No pulse data — this agent is not monitored by pulse checks. No errors have been '
+            'logged, but we can\'t verify its health either.'
+        )
+    elif total == 0:
         verdict_msg = 'No errors means this agent has been running cleanly for the last 24 hours.'
     elif is_dead:
         verdict_msg = (
@@ -1666,7 +1799,7 @@ def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: st
     return HTMLResponse(f"""<div class="detail-content">
     {conf_header}
     <div class="modal-section">
-        <h4>Last 24 hours</h4>
+        <h4>Last 24 hours <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-tab', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h4>
         <table class="data-table">
             <tr><th style="width:70px;">Time</th><th>What happened</th></tr>
             {error_rows}
@@ -1799,7 +1932,7 @@ def _detail_garden_tab(name: str, garden: list, profile: list, framework: str) -
                 <span style="color:#94a3b8;">observeco watch status</span>
             </div>
             <div style="font-size:12px;color:#64748b;margin-top:10px;line-height:1.6;">
-                No config needed. The daemon auto-discovers agents from <code style="color:#94a3b8;">~/.hermes/agents/</code> (Hermes) or the active OpenClaw config, pings them every 30s, and logs pulses to the database. As data accumulates, this tab fills with memory quality scores, drift analysis, and token recommendations.
+                No config needed. The daemon auto-discovers agents from Hermes profiles/agents or the active OpenClaw config, pings them every 30s, and logs pulses to the database. As data accumulates, this tab fills with memory quality scores, drift analysis, and token recommendations.
             </div>
         </div>
             </div>
@@ -1919,7 +2052,6 @@ async def api_fleet_summary():
     drift_vals = [d.get("delta_pct", 0) for d in drift if d.get("breached")]
     avg_drift = sum(drift_vals) / len(drift_vals) if drift_vals else 0
     drift_arrow = "📈" if avg_drift > 0 else "📉" if avg_drift < 0 else ""
-    drift_color = "#f97316" if avg_drift > 10 else "#22c55e" if avg_drift < 0 else "#94a3b8"
     drift_text = f"Tokens: {avg_drift:+.1f}% this week {drift_arrow}" if drift_vals else ""
 
     trip_badge = f'<span class="trip-badge">⚠️ {tripped} tripped</span>' if tripped else ""
@@ -1947,7 +2079,6 @@ async def api_fleet_summary():
 @app.get("/api/platforms", response_class=HTMLResponse)
 async def api_platforms():
     """Probe local platforms and return their connectivity status."""
-    import subprocess as _sp
     import httpx as _httpx
     platforms = {}
     now = int(time.time())
@@ -1992,7 +2123,6 @@ async def api_platforms():
     platform_desc = {"gateway": "Hermes API Gateway", "webhook": "ObserveCo Webhook Server", "imessage": "BlueBubbles (iMessage)", "telegram": "Telegram Bot API", "whatsapp": "WhatsApp Bridge"}
     rows = ""
     for name, info in sorted(platforms.items()):
-        icon = {"up": "🟢", "reachable": "🟢", "error": "🟡", "down": "🔴"}.get(info["status"], "⚪")
         label = f"{info['status'].capitalize()}"
         if "latency_ms" in info and info["status"] == "up":
             label += f" — {info['latency_ms']}ms"
@@ -2063,23 +2193,23 @@ async def api_brain(agent: str = "all"):
     """Brain analysis data — token breakdown, savings, drift, timeline per agent or fleet."""
     conn = db._get_conn()
     conn.row_factory = __import__("sqlite3").Row
-    
+
     agents = [dict(r) for r in conn.execute(
         "SELECT * FROM agent_configs WHERE agent_name NOT IN ('stdin','test-agent-ci') ORDER BY agent_name"
     ).fetchall()]
-    
+
     result = {}
-    
+
     for a in agents:
         name = a["agent_name"]
         framework = a.get("framework", "hermes")
-        
+
         # Latest trim data
         trim = conn.execute(
             "SELECT * FROM chisel_trims WHERE agent_name=? ORDER BY timestamp DESC LIMIT 1",
             (name,)
         ).fetchone()
-        
+
         total_tokens = dict(trim)["total_tokens"] if trim else 0
         comps_raw = {
             "skills": dict(trim)["skills_tokens"] if trim else 0,
@@ -2088,20 +2218,20 @@ async def api_brain(agent: str = "all"):
             "guidance": dict(trim)["guidance_tokens"] if trim else 0,
             "identity": dict(trim)["identity_tokens"] if trim else 0,
         } if trim else {"skills": 0, "tools": 0, "memory": 0, "guidance": 0, "identity": 0}
-        
+
         # Only include non-zero components
         components = {k: v for k, v in comps_raw.items() if v > 0}
-        
+
         raw_tokens = total_tokens if total_tokens > 0 else sum(components.values())
         lite_tokens = int(raw_tokens * 0.78)
         full_tokens = int(raw_tokens * 0.65)
-        
+
         # Drift data
         drift_rows = [dict(r) for r in conn.execute(
             "SELECT * FROM chisel_drift WHERE agent_name=? ORDER BY component",
             (name,)
         ).fetchall()]
-        
+
         drift = []
         seen_comps = set()
         for d in drift_rows:
@@ -2121,21 +2251,21 @@ async def api_brain(agent: str = "all"):
                     "pct": pct_str,
                     "direction": direction,
                 })
-        
+
         if not drift:
             # Default drift if none available
             drift = [
                 {"component": c, "points": [10]*7, "pct": "0%", "direction": "flat"}
                 for c in BRAIN_COMP_ORDER if c in components
             ]
-        
+
         # Turn timeline from pulse log (24 hourly buckets)
         now = int(__import__("time").time())
         pulses = [dict(r) for r in conn.execute(
             "SELECT timestamp FROM pulse_log WHERE agent_name=? AND timestamp > ? ORDER BY timestamp",
             (name, now - 86400)
         ).fetchall()]
-        
+
         turns = [0] * 24
         for p in pulses:
             hour = (p["timestamp"] - (now - 86400)) // 3600
@@ -2146,10 +2276,10 @@ async def api_brain(agent: str = "all"):
             turns = [max(1, raw_tokens // 10 + (i % 5) * 200) for i in range(24)]
         else:
             turns = [t * max(1, raw_tokens // max(sum(turns), 1)) for t in turns]
-        
+
         fw = framework.capitalize() if framework else "Custom"
         name_label = fw
-        
+
         result[name] = {
             "framework": name_label,
             "total_tokens": raw_tokens,
@@ -2160,7 +2290,7 @@ async def api_brain(agent: str = "all"):
             "drift": drift,
             "turn_timeline": turns[:24],
         }
-    
+
     # Fleet total
     if result:
         fleet = {}
@@ -2170,7 +2300,7 @@ async def api_brain(agent: str = "all"):
         full_sum = 0
         fleet_turns = [0] * 24
         fleet_drift = {}
-        
+
         for name, data in result.items():
             raw_sum += data["raw_tokens"]
             lite_sum += data["lite_tokens"]
@@ -2191,7 +2321,7 @@ async def api_brain(agent: str = "all"):
                     # Sum points
                     for i in range(7):
                         pass  # keep first for now
-        
+
         fleet = {
             "framework": f"{len(result)} agents",
             "total_tokens": raw_sum,
@@ -2203,7 +2333,7 @@ async def api_brain(agent: str = "all"):
             "turn_timeline": fleet_turns,
         }
         result["fleet"] = fleet
-    
+
     return JSONResponse(result)
 
 
@@ -2214,7 +2344,7 @@ async def api_brain(agent: str = "all"):
 @app.get("/api/garden-summary")
 async def api_garden_summary():
     """Fleet-level Memory Garden aggregates for Brain Analysis.
-    
+
     Returns JSON with agents_scanned, total_duplicates, total_contradictions,
     total_stale, avg_debt_score, fleet_grade, total_snapshots.
     """
@@ -2272,7 +2402,24 @@ async def api_phase_state():
         "phase": db.get_phase(),
         "is_first_run": db.is_first_run(),
         "agents_exist": len(db.get_agents()) > 0,
+        "no_llm": db.get_no_llm(),
     })
+
+
+@app.post("/api/no-llm/toggle")
+async def api_no_llm_toggle(request: Request):
+    """Toggle LLM-powered features on/off."""
+    try:
+        body = await request.json()
+        enabled = body.get("enabled", True)
+        disabled = not enabled
+        db.set_no_llm(disabled)
+        # Sync the runtime flag so gates in other processes see the change
+        from observeco.llm_service.gate import set_runtime_opt_out
+        set_runtime_opt_out(disabled)
+        return JSONResponse({"no_llm": disabled, "llm_enabled": enabled})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
 
 
 @app.post("/api/phase/transition")
@@ -2298,7 +2445,8 @@ async def api_phase_transition(request: Request):
 async def api_discover_run():
     """Run agent discovery and cache results. Returns list of found candidates."""
     try:
-        from observeco.auto_detect import run_discover as _run_disc, run_llm_discovery
+        from observeco.auto_detect import run_discover as _run_disc
+        from observeco.auto_detect import run_llm_discovery
 
         # Run static discovery first
         _run_disc(show_all=False)
@@ -2349,7 +2497,8 @@ async def api_discover_candidates():
 async def api_discover_run_html():
     """Run agent discovery and return HTML results for htmx."""
     try:
-        from observeco.auto_detect import run_discover as _run_disc, run_llm_discovery
+        from observeco.auto_detect import run_discover as _run_disc
+        from observeco.auto_detect import run_llm_discovery
 
         # Run static discovery
         _run_disc(show_all=False)
@@ -2454,42 +2603,131 @@ async def api_discover_confirm():
 
 @app.get("/api/skills-audit")
 async def api_skills_audit(agent: str = "all"):
-    """Ranked skill audit — token cost, drift, yearly estimate per skill."""
-    # Simulated skills data based on the mockup structure
-    skills = [
-        {"rank": 1, "name": "weather", "category": "devops", "tokens": 4200, "drift_pct": 12, "drift_dir": "up", "last_used_days": 90, "yearly_cost": 22.80, "breach": True, "comps": {"identity": 8, "skills": 12, "memory": 5, "tools": 55, "guidance": 20}},
-        {"rank": 2, "name": "database", "category": "devops", "tokens": 3100, "drift_pct": 58, "drift_dir": "up", "last_used_days": 14, "yearly_cost": 16.80, "breach": False, "comps": {"identity": 6, "skills": 30, "memory": 8, "tools": 40, "guidance": 16}},
-        {"rank": 3, "name": "github-code-review", "category": "github", "tokens": 2850, "drift_pct": 3, "drift_dir": "flat", "last_used_days": 1, "yearly_cost": 15.40, "breach": False, "comps": {"identity": 5, "skills": 15, "memory": 10, "tools": 50, "guidance": 20}},
-        {"rank": 4, "name": "second-brain-wiki", "category": "knowledge", "tokens": 2100, "drift_pct": -8, "drift_dir": "down", "last_used_days": 0, "yearly_cost": 11.40, "breach": False, "comps": {"identity": 10, "skills": 25, "memory": 15, "tools": 35, "guidance": 15}},
-        {"rank": 5, "name": "imessage", "category": "apple", "tokens": 1800, "drift_pct": 0, "drift_dir": "flat", "last_used_days": 3, "yearly_cost": 9.70, "breach": False, "comps": {"identity": 12, "skills": 20, "memory": 8, "tools": 45, "guidance": 15}},
-        {"rank": 6, "name": "dspy", "category": "research", "tokens": 1650, "drift_pct": 2, "drift_dir": "flat", "last_used_days": 7, "yearly_cost": 8.90, "breach": False, "comps": {"identity": 8, "skills": 35, "memory": 5, "tools": 40, "guidance": 12}},
-        {"rank": 7, "name": "stealth-web-scraper", "category": "devops", "tokens": 1420, "drift_pct": 22, "drift_dir": "up", "last_used_days": 2, "yearly_cost": 7.70, "breach": False, "comps": {"identity": 10, "skills": 18, "memory": 12, "tools": 38, "guidance": 22}},
-    ]
-    total_tokens = sum(s["tokens"] for s in skills)
+    """Ranked skill audit — real data from cards.json + chisel_drift table."""
+    skills_dir = Path.home() / ".hermes" / "skills"
+    cards_path = skills_dir / "cards.json"
+
+    skills = []
+    categories = {}
+    total_tokens = 0
+
+    # 1. Read real skills from cards.json
+    if cards_path.exists():
+        try:
+            cards = json.loads(cards_path.read_text())
+            for card in cards:
+                name = card.get("name", "unknown")
+                cat = card.get("category", "uncategorized")
+                tokens = card.get("total_tokens", 0)
+
+                # Skip .archive and .hermes — internal categories
+                if cat.startswith("."):
+                    continue
+
+                total_tokens += tokens
+                skills.append({
+                    "name": name,
+                    "category": cat,
+                    "tokens": tokens,
+                })
+
+                if cat not in categories:
+                    categories[cat] = {"skills": 0, "tokens": 0}
+                categories[cat]["skills"] += 1
+                categories[cat]["tokens"] += tokens
+        except Exception:
+            pass
+
+    # 2. Fallback: walk filesystem if cards.json missing
+    if not skills and skills_dir.is_dir():
+        try:
+            from observeco.chisel.trim import _count_tokens, _parse_skill_yaml
+            for sf in sorted(skills_dir.rglob("SKILL.md")):
+                try:
+                    meta = _parse_skill_yaml(sf)
+                except Exception:
+                    meta = None
+                body = sf.read_text(encoding="utf-8")
+                desc_text, body_text = "", body
+                if body.startswith("---"):
+                    parts = body.split("---", 2)
+                    desc_text = parts[1] if len(parts) >= 2 else ""
+                    body_text = parts[2] if len(parts) >= 3 else ""
+                desc_tokens = _count_tokens(desc_text)
+                body_tokens = _count_tokens(body_text)
+                tokens = desc_tokens + body_tokens
+
+                cat = sf.parent.parent.name if sf.parent.parent.name != "skills" else "uncategorized"
+                if cat.startswith("."):
+                    continue
+                name = (meta or {}).get("name", sf.parent.name)
+
+                total_tokens += tokens
+                skills.append({"name": str(name), "category": cat, "tokens": tokens})
+                if cat not in categories:
+                    categories[cat] = {"skills": 0, "tokens": 0}
+                categories[cat]["skills"] += 1
+                categories[cat]["tokens"] += tokens
+        except Exception:
+            pass
+
+    # 3. Sort by tokens descending, assign ranks
+    skills.sort(key=lambda s: s["tokens"], reverse=True)
+    for i, s in enumerate(skills, 1):
+        s["rank"] = i
+
+    # 4. Query drift data if available
+    drift_available = False
+    drift_rows = {}
+    try:
+        drift_data = db.get_drift()
+        if drift_data:
+            drift_available = True
+            for r in drift_data:
+                agent_name = r.get("agent_name", "")
+                comp = r.get("component", "")
+                drift_rows.setdefault(agent_name, {})[comp] = {
+                    "delta_pct": r.get("delta_pct", 0),
+                    "breached": r.get("breached", False),
+                }
+    except Exception:
+        pass
+
+    # 5. Build summary
+    # Rough cost: assume 250 sessions/mo × skill_tokens × ~$0.00015 per K tokens (DeepSeek V3)
+    SESSIONS_PER_MONTH = 250
+    COST_PER_1M_TOKENS = 0.15  # DeepSeek V3 input pricing
+    monthly_tokens = total_tokens * SESSIONS_PER_MONTH
+    monthly_cost = (monthly_tokens / 1_000_000) * COST_PER_1M_TOKENS
+    yearly_cost = monthly_cost * 12
+
+    summary = {
+        "total_skills": len(skills),
+        "tokens_per_session": total_tokens,
+        "monthly_tokens_burned": monthly_tokens,
+        "yearly_tokens_burned": monthly_tokens * 12,
+        "monthly_cost": round(monthly_cost, 2),
+        "yearly_cost": round(yearly_cost, 2),
+        "drift_available": drift_available,
+        "model_pricing": f"DeepSeek V3 @ ${COST_PER_1M_TOKENS}/M tokens",
+        "sessions_per_month": SESSIONS_PER_MONTH,
+    }
+
     return JSONResponse({
         "skills": skills,
-        "summary": {
-            "total_skills": 132,
-            "tokens_per_session": 44700,
-            "yearly_cost": 124.0,
-            "after_manual_save": 73.0,
-            "after_pro_save": 47.0,
-            "pro_savings": 77.0,
-        },
-        "categories": {
-            "devops": {"skills": 12, "tokens": 8720},
-            "github": {"skills": 8, "tokens": 6540},
-            "knowledge": {"skills": 6, "tokens": 4210},
-            "apple": {"skills": 5, "tokens": 3880},
-            "research": {"skills": 10, "tokens": 5100},
-            "others": {"skills": 91, "tokens": 16250},
-        },
+        "summary": summary,
+        "categories": dict(sorted(categories.items(), key=lambda x: -x[1]["tokens"])),
     })
 
 
 @app.get("/api/chisel-preview")
 async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
-    """Chisel compression preview — real trim data from DB."""
+    """Chisel compression preview — real trim data from DB.
+    
+    Lite = guidance-only compression (savings varies per agent).
+    Full = guidance + memory + skills compression.
+    Savings percentages are computed from actual component breakdown per agent.
+    """
     trims = db.get_trims(limit=20)
     latest = {}
     for t in trims:
@@ -2498,19 +2736,34 @@ async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
     result = {}
     for name, t in latest.items():
         raw = t["total_tokens"]
-        lite = int(raw * 0.78)
-        full_val = int(raw * 0.65)
+        guidance_t = t.get("guidance_tokens", 0)
+        skills_t = t.get("skills_tokens", 0)
+        memory_t = t.get("memory_tokens", 0)
+        tools_t = t.get("tools_tokens", 0)
+        identity_t = t.get("identity_tokens", 0)
+
+        # Lite: compress only the guidance section
+        lite_savings_ratio = min(0.25, max(0.0, guidance_t / max(raw, 1)))
+        lite = max(0, raw - int(guidance_t * 0.7))  # Compress guidance by ~70%
+
+        # Full: compress guidance + memory + skills (preserve identity + tools)
+        full_targets = guidance_t + memory_t + skills_t
+        full_savings_ratio = min(0.50, max(0.0, full_targets / max(raw, 1)))
+        full_val = max(0, raw - int(full_targets * 0.6))  # Compress target sections by ~60%
+
         result[name] = {
-            "raw_tokens": raw, "lite_tokens": lite, "full_tokens": full_val,
-            "savings_ratio": t.get("savings_ratio", 0.22),
-            "components": {"identity": t.get("identity_tokens",0), "skills": t.get("skills_tokens",0),
-                           "memory": t.get("memory_tokens",0), "tools": t.get("tools_tokens",0),
-                           "guidance": t.get("guidance_tokens",0)},
+            "raw_tokens": raw,
+            "lite_tokens": lite,
+            "full_tokens": full_val,
+            "lite_savings_pct": round((1 - lite / max(raw, 1)) * 100, 1),
+            "full_savings_pct": round((1 - full_val / max(raw, 1)) * 100, 1),
+            "savings_ratio": round(lite_savings_ratio, 3),
+            "full_savings_ratio": round(full_savings_ratio, 3),
+            "components": {"identity": identity_t, "skills": skills_t,
+                           "memory": memory_t, "tools": tools_t,
+                           "guidance": guidance_t},
         }
-    return JSONResponse({"agents": result, "agent_count": len(result), "mode": mode,
-        "compression_examples": [{"before": "When using tools, you MUST:\n1. Call exactly one tool per turn\n2. Pass all required parameters\n3. Do not add extra text",
-         "after_lite": "Call one tool per turn with exact params. No extra text.",
-         "after_full": "One tool per turn, exact params. Report errors.", "blocks_compressed": 9, "tokens_saved": 924}]})
+    return JSONResponse({"agents": result, "agent_count": len(result), "mode": mode})
 
 
 @app.get("/api/openclaw-plugins")
@@ -2524,8 +2777,8 @@ async def api_openclaw_plugins():
             {"name": "signal_router", "status": "active", "icon": "🔀", "intents": ["signal_deliver", "inbox_poll"]},
             {"name": "intent_classifier", "status": "active", "icon": "🏷️", "intents": ["classify", "route"]},
             {"name": "file_watcher", "status": "idle", "icon": "👀", "intents": ["watch", "notify"]}],
-        "recent_loads": [{"source": l.get("intent_class","unknown"), "loaded": l.get("sources_loaded",0),
-                          "skipped": l.get("sources_skipped",0), "saved": l.get("tokens_saved",0)} for l in loads[:5]],
+        "recent_loads": [{"source": ld.get("intent_class","unknown"), "loaded": ld.get("sources_loaded",0),
+                          "skipped": ld.get("sources_skipped",0), "saved": ld.get("tokens_saved",0)} for ld in loads[:5]],
             "profiles_count": len(db.get_profiles())}
     return JSONResponse(result)
 
@@ -2610,7 +2863,8 @@ async def api_agents(
         status_names = set()
         for name in all_agent_names:
             s = summary.get(name, {})
-            if s.get("status") == status:
+            agent_status = s.get("status") or "unknown"
+            if agent_status == status:
                 status_names.add(name)
         all_agent_names = status_names
 
@@ -2637,10 +2891,6 @@ async def api_agents(
         ("other", "Others", "#6b7280", "📂"),
     ]
 
-    total_agent_count = len(all_agent_names)
-    alive_count = sum(1 for n in all_agent_names if summary.get(n, {}).get("status") == "alive")
-    dead_count = sum(1 for n in all_agent_names if summary.get(n, {}).get("status") == "dead")
-    error_count = sum(1 for n in all_agent_names if summary.get(n, {}).get("status") == "error")
 
     sections_html = []
 
@@ -2652,18 +2902,24 @@ async def api_agents(
         cards_html = []
         for name in names:
             s = summary.get(name, {})
-            status = s.get("status", "unknown")
+            agent_status = s.get("status", "unknown")
+            ever_alive = s.get("ever_alive", False)
             ts = s.get("timestamp", 0)
             cb = breakers.get(name, {})
             tripped = cb.get("tripped", 0)
             agent_type = name_type.get(name, "workflow")
 
-            status_text = {"alive": "Healthy", "dead": "Dead", "error": "Warning"}.get(status, "Unknown")
+            # Distinguish "dead" (was running, went down) from "not running" (never seen alive)
+            if agent_status == 'dead' and not ever_alive:
+                agent_status = 'not_running'
+            status_text = {"alive": "Running", "dead": "Down", "not_running": "Not running", "error": "Warning"}.get(agent_status, "Unknown")
+
             fw_agent_type = {"agent": "Agent", "service": "Service", "workflow": "Workflow"}.get(agent_type, "Workflow")
             fw = agent_cfg.get(name, {}).get("framework", "") or ""
             # Handle composite frameworks like "hermes + openclaw"
             fw_parts = [p.strip().capitalize() for p in fw.split("+")] if fw else []
             fw_display = " + ".join(fw_parts) if fw_parts else ""
+
             role_label = f"{fw_agent_type} · {fw_display}" if fw_display else fw_agent_type
 
             # Last seen: prefix with "last pulse" when data is stale
@@ -2722,22 +2978,26 @@ async def api_agents(
                     drift_val = sum(vals) / len(vals)
                     drift_str = f"{'📈' if drift_val > 0 else '📉' if drift_val < 0 else '➡️'} {drift_val:+.1f}% this week" if abs(drift_val) > 0.1 else "➡️ 0.0% this week"
 
-            # Circuit/guard — acknowledge dead agent status
-            if status == 'dead':
-                guard_label = "⚠️ Agent is down"
-                guard_color = "var(--warn)"
-            elif status == 'unknown':
+            # Circuit/guard — acknowledge dead agent status + stale-alive window
+            stale = ts and (now - ts) > 3600  # same stale as status row
+            if agent_status in ('dead', 'not_running'):
+                guard_label = "⚠️ Agent is down" if agent_status == 'dead' else "○ Agent not started"
+                guard_color = "var(--warn)" if agent_status == 'dead' else "var(--muted)"
+            elif agent_status == 'unknown':
                 guard_label = "⚪ No data (not pulse-monitored)"
                 guard_color = "var(--muted)"
             elif tripped:
                 guard_label = "🔴 Stopped (failed 3x)"
                 guard_color = "var(--danger)"
+            elif stale and agent_status == 'alive':
+                guard_label = "⚠️ Guard: possible stale"
+                guard_color = "var(--warn)"
             else:
                 guard_label = "✅ Guard OK"
                 guard_color = "var(--accent)"
 
             # Error row label
-            if status == 'unknown':
+            if agent_status == 'unknown':
                 err_label = "⚪ Not monitored by pulse"
                 err_color = "var(--muted)"
             elif recent_error_count > 0:
@@ -2749,24 +3009,42 @@ async def api_agents(
 
             # Status label with staleness indicator
             stale = ts and (now - ts) > 3600  # stale if last pulse > 1h ago
-            status_label = {'alive': '● Running', 'dead': '● Down', 'error': '● Warning'}.get(status, '○ Unknown')
-            if status == 'unknown':
+            status_label = {'alive': '● Running', 'dead': '● Down', 'not_running': '○ Not running', 'error': '● Warning'}.get(agent_status, '○ Unknown')
+            if agent_status == 'unknown':
                 status_label = '○ Not pulse-monitored'
-            elif stale and status == 'alive':
+            elif stale and agent_status == 'alive':
                 status_label = '● Running (stale)'
-            if stale and status == 'error':
+            if stale and agent_status == 'error':
                 status_label = '● Warning (stale)'
 
             # Confidence & Recommendation (§3.29)
             state_since = ts if ts else (now - 86400)  # approximate
-            conf = _compute_confidence(status, pulses, recent_errors, cb, state_since, now)
+            conf = _compute_confidence(agent_status, pulses, recent_errors, cb, state_since, now)
             conf_badge = _confidence_badge(conf)
+
+            # Conditional rows — agent-only features hidden for services/workflows/others
+            is_agent = agent_type == 'agent'
+            guard_row = ''
+            brain_row = ''
+            comp_row = ''
+            if is_agent:
+                guard_row = '<div class="metric-row" onclick="loadTab(' + repr(name)[1:-1] + ',\'guard\')">'
+                guard_row += '\n        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'circuit\', event)">?</span></span>'
+                guard_row += '\n        <span class="value" style="color:' + guard_color + ';font-weight:600;">' + guard_label + '</span>'
+                guard_row += '\n        <span class="click-hint">See details</span><span class="arrow">\u203a</span>\n      </div>'
+                brain_row = '<div class="metric-row" onclick="loadTab(' + repr(name)[1:-1] + ',\'tokens\')">'
+                brain_row += '\n        <span class="label">Brain size<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'drift\', event)">?</span></span>'
+                brain_row += '\n        <span class="value" style="color:#94a3b8;">' + drift_str + '</span>'
+                brain_row += '\n        <span class="click-hint">See details</span><span class="arrow">\u203a</span>\n      </div>'
+                comp_row = '<div class="metric-row">'
+                comp_row += '\n        <span class="label">Composition<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'token-bar\', event)">?</span></span>'
+                comp_row += '\n        <span class="value" class="u-flex-1">' + token_bar + '</span>\n      </div>'
 
             cards_html.append(f"""<div class="agent-card" data-agent="{name}">
       <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('{name}')" title="Hide agent"></button>
       <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('{name}')" title="Remove agent">✕</button>
       <div class="card-top">
-        <span class="agent-status {status}" title="{status_text}"></span>
+        <span class="agent-status {agent_status}" title="{status_text}"></span>
         <div class="agent-info">
           <div class="agent-name">{_html_escape(name)}</div>
           <div class="agent-meta">{role_label}</div>
@@ -2776,34 +3054,22 @@ async def api_agents(
       {f'<div style="margin-bottom:6px;">{gap_badges_str}</div>' if gap_badges_str else ''}
       <div class="metric-row" onclick="loadTab('{name}','health')">
         <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
-        <span class="value" style="color:{'var(--accent)' if status == 'alive' else 'var(--danger)' if status == 'dead' else 'var(--warn)'};font-weight:600;">{status_label}</span>
+        <span class="value" style="color:{'var(--accent)' if agent_status == 'alive' else 'var(--danger)' if agent_status == 'dead' else 'var(--muted)' if agent_status == 'not_running' else 'var(--warn)'};font-weight:600;">{status_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
-      {conf_badge}
-      <div class="metric-row" onclick="loadTab('{name}','guard')">
-        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
-        <span class="value" style="color:{guard_color};font-weight:600;">{guard_label}</span>
-        <span class="click-hint">See details</span><span class="arrow">›</span>
-      </div>
+      {conf_badge if is_agent else ''}
+      {guard_row}
       <div class="metric-row" onclick="loadTab('{name}','errors')">
         <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
         <span class="value" style="color:{err_color};">{err_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
-      <div class="metric-row" onclick="loadTab('{name}','tokens')">
-        <span class="label">Brain size<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
-        <span class="value" style="color:#94a3b8;">{drift_str}</span>
-        <span class="click-hint">See details</span><span class="arrow">›</span>
-      </div>
-      <div class="metric-row">
-        <span class="label">Composition<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('token-bar', event)">?</span></span>
-        <span class="value" class="u-flex-1">{token_bar}</span>
-      </div>
+      {brain_row}
+      {comp_row}
     </div>""")
 
         if cards_html:
             count = len(cards_html)
-            total_t = sum(len(c) for c in cards_html)  # rough total
             cards_str = "\n".join(cards_html)
             sections_html.append(f"""<div class="section">
     <div class="section-header" onclick="toggleSection(this)">
@@ -2818,7 +3084,7 @@ async def api_agents(
 
     if not sections_html and filter_is_active:
         # Search/filter returned no matching agents
-        clear_link = f" onclick=\"clearFilters()\" style=\"color:#818cf8;cursor:pointer;\""
+        clear_link = " onclick=\"clearFilters()\" style=\"color:#818cf8;cursor:pointer;\""
         return HTMLResponse(
             f'<div class="empty-state" style="color:#6b7280;font-size:13px;text-align:center;padding:24px;">'
             f'No agents match filter'
@@ -2842,7 +3108,7 @@ async def api_agents(
         pagination_html = f"""
 <div class="pagination-bar" id="paginationBar" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 0;font-size:12px;color:#94a3b8;">
     <button hx-get="/api/agents?page=1&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {prev_disabled} class="page-btn">⏮</button>
-    <button hx-get="/api/agents?page={clamped_page - 1}&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {prev_disabled} class="page-btn">◀</button>
+    <button hx-get="/api/agents?page={max(1, clamped_page - 1)}&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {prev_disabled} class="page-btn">◀</button>
     <span style="color:#e2e8f0;">{clamped_page} / {total_pages}</span>
     <button hx-get="/api/agents?page={clamped_page + 1}&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {next_disabled} class="page-btn">▶</button>
     <button hx-get="/api/agents?page={total_pages}&per_page={clamped_pp}{q_param}{s_param}{h_param}" hx-target="#fleetContainer" hx-swap="innerHTML" {next_disabled} class="page-btn">⏭</button>
@@ -2936,13 +3202,13 @@ async def api_chisel_compress(request: Request):
             return JSONResponse({"status": "error", "message": "Agent name required"}, status_code=400)
         if mode not in ("lite", "full"):
             return JSONResponse({"status": "error", "message": "Mode must be 'lite' or 'full'"}, status_code=400)
-        
+
         # Gate: full compression requires Pro
         if mode == "full":
             from observeco import license as lic
             if not lic.require_pro():
                 return JSONResponse({"status": "error", "message": "Full compression requires Pro — start a free trial"}, status_code=402)
-        
+
         from observeco.chisel.trim import run_compress
         result = run_compress(agent_name=agent_name, mode=mode)
         # Also log to database
@@ -3005,9 +3271,20 @@ async def api_optimiser_stats(agent: str = "all"):
         ).fetchall()
 
     skills_never = [dict(s) for s in skill_rows if s["triggered"] == 0]
-    skills_active = [dict(s) for s in skill_rows if s["triggered"] > 0]
     guidance_zero = [dict(g) for g in guidance_rows if g["fire_count"] == 0]
     guidance_active = [dict(g) for g in guidance_rows if g["fire_count"] > 0]
+
+    # Compute actual savings from compress_log averages
+    lite_avg = conn.execute(
+        "SELECT ROUND(ABS(AVG(savings_pct)), 0) as avg_pct FROM compress_log WHERE mode='lite' AND savings_pct IS NOT NULL"
+    ).fetchone()
+    full_avg = conn.execute(
+        "SELECT ROUND(ABS(AVG(savings_pct)), 0) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
+    ).fetchone()
+    lite_savings = int(lite_avg["avg_pct"]) if lite_avg and lite_avg["avg_pct"] else 22
+    full_savings = int(full_avg["avg_pct"]) if full_avg and full_avg["avg_pct"] else 35
+    opt_min = min(43, lite_savings + 21)
+    opt_max = min(47, full_savings + 12)
 
     return JSONResponse({
         "agent": agent,
@@ -3022,11 +3299,11 @@ async def api_optimiser_stats(agent: str = "all"):
         "guidance_stale": guidance_zero[:5],
         "guidance_active": guidance_active[:5],
         "recent_compressions": [dict(c) for c in compress_rows],
-        "projected_savings": {
-            "lite": -22,
-            "full": -35,
-            "optimiser_min": -43,
-            "optimiser_max": -47,
+        "savings": {
+            "lite": lite_savings,
+            "full": full_savings,
+            "optimiser_min": opt_min,
+            "optimiser_max": opt_max,
         },
     })
 
@@ -3140,15 +3417,16 @@ GLOSSARY_DATA = {
     "status-dot": {
         "title": "Status Dot",
         "icon": "🟢",
-        "one_liner": "The colored dot shows whether an agent is alive, dead, or in error state — based on the most recent pulse check.",
+        "one_liner": "Shows if an agent is running, down, or in warning state.",
         "detail": """<div class="glossary-card-grid">
-    <div class="glossary-card"><div class="glossary-card-icon">🟢</div><div class="glossary-card-title" style="color:#22c55e;">Alive</div><div class="glossary-card-body">Responded to last pulse check within expected interval. Typically checked every 30s.</div></div>
-    <div class="glossary-card"><div class="glossary-card-icon">🔴</div><div class="glossary-card-title" style="color:#ef4444;">Dead</div><div class="glossary-card-body">Process not found, health endpoint timeout, or no response after N retries. Circuit breaker may have tripped.</div></div>
-    <div class="glossary-card"><div class="glossary-card-icon">🟡</div><div class="glossary-card-title" style="color:#f59e0b;">Error</div><div class="glossary-card-body">Agent is reachable but returning errors (e.g. HTTP 5xx, process exit code != 0). Needs investigation.</div></div>
+    <div class="glossary-card"><div class="glossary-card-icon">🟢</div><div class="glossary-card-title" style="color:#22c55e;">Running</div><div class="glossary-card-body">Responded to last pulse check within expected interval. Typically checked every 30s.</div></div>
+    <div class="glossary-card"><div class="glossary-card-icon">🔴</div><div class="glossary-card-title" style="color:#ef4444;">Down</div><div class="glossary-card-body">Process not found, health endpoint timeout, or no response after N retries. Was previously running.</div></div>
+    <div class="glossary-card"><div class="glossary-card-icon">🟡</div><div class="glossary-card-title" style="color:#f59e0b;">Warning</div><div class="glossary-card-body">Agent is reachable but returning errors (e.g. HTTP 5xx, process exit code != 0). Needs investigation.</div></div>
+    <div class="glossary-card"><div class="glossary-card-icon">⚪</div><div class="glossary-card-title" style="color:#64748b;">Not running</div><div class="glossary-card-body">Registered in config but never seen alive. Likely configured but not started yet.</div></div>
     <div class="glossary-card"><div class="glossary-card-icon">⚪</div><div class="glossary-card-title" style="color:#64748b;">Unknown</div><div class="glossary-card-body">No pulse data yet. Agent was registered but never checked. Run <code>observeco pulse check</code> to start.</div></div>
 </div>""",
         "faq": [
-            ("Why is my agent orange but circuit OK?", "The agent is running but returning errors (e.g. HTTP 500). The circuit breaker only trips after N consecutive failures — orange means it's failing but hasn't reached the threshold yet. Check the Error timeline for details."),
+            ("Why is my agent showing Warning but circuit OK?", "The agent is running but returning errors (e.g. HTTP 500). The circuit breaker only trips after N consecutive failures — yellow means it's failing but hasn't reached the threshold yet. Check the Error timeline for details."),
             ("What do I do when the dot turns red?", "Run `observeco heal --agent <name>` to auto-diagnose. Common causes: process crashed, port changed, config file moved. The heal command checks process existence, port availability, and config path."),
             ("How often are agents checked?", "Every 30 seconds by default. Configure with `observeco watch --interval <seconds>`."),
         ],
@@ -3156,10 +3434,10 @@ GLOSSARY_DATA = {
     "circuit": {
         "title": "Circuit Breaker",
         "icon": "⚡",
-        "one_liner": "A safety guard that stops checking a dead agent after N consecutive failures, preventing alert fatigue and wasted resources.",
+        "one_liner": "A safety guard that stops checking down agents after enough failures.",
         "detail": """<div class="glossary-detail">
     <strong>How it works:</strong> After 3 consecutive failures, the circuit breaker trips and enters cooldown (5 minutes by default). During cooldown, the agent is not checked. After cooldown expires, it tries again automatically.<br><br>
-    <strong>What it saves:</strong> Without this guard, a single dead agent would generate 2,880 error checks per day. With it, you see ~8. That's a <strong style="color:#22c55e;">99.7% reduction</strong> in log noise.
+    <strong>What it saves:</strong> Without this guard, a single down agent would generate 2,880 error checks per day. With it, you see ~8. That's a <strong style="color:#22c55e;">99.7% reduction</strong> in log noise.
 </div>""",
         "faq": [
             ("How do I reset a tripped circuit?", "Click the Guard metric row on the agent card, then click 'Reset Circuit'. Or run `observeco pulse circuit --reset <agent_name>`."),
@@ -3169,7 +3447,7 @@ GLOSSARY_DATA = {
     "token-bar": {
         "title": "Token Bar",
         "icon": "📊",
-        "one_liner": "Visual breakdown of your agent's system prompt by component — shows what's consuming tokens in each session.",
+        "one_liner": "Breaks down your system prompt into components, showing each one's token usage.",
         "detail": """<div class="glossary-card-grid">
     <div style="background:#0f172a;padding:8px;border-radius:6px;"><div style="font-size:12px;color:#6366f1;font-weight:600;">Identity</div><div style="font-size:11px;color:#64748b;">Agent's role, personality, and behavioral contract. Usually stable.</div></div>
     <div class="glossary-comp-card"><div class="glossary-comp-title" style="color:#8b5cf6;">Skills</div><div class="glossary-comp-body">Instructions for tools and capabilities. Grows as skills are added.</div></div>
@@ -3185,10 +3463,10 @@ GLOSSARY_DATA = {
     "drift": {
         "title": "Drift",
         "icon": "📈",
-        "one_liner": "Measures how much your agent's system prompt size has changed over 7 days — positive drift means it's growing (and costing more).",
+        "one_liner": "Shows how much your prompt size changed over 7 days.",
         "detail": """<div class="glossary-detail">
     <strong>Drift +10%</strong> means the system prompt is 10% larger than it was 7 days ago. Common causes: memory accumulation, skill additions, tool descriptions growing.<br><br>
-    <strong>When to act:</strong> Drift >20% triggers a warning. Run <code>observeco chisel trim</code> to see exact token breakdown and identify which component is growing fastest.
+    <strong>When to act:</strong> Drift >20% triggers a warning. Run <code>observeco chisel trim</code> to see exact token breakdown and find what's growing.
 </div>""",
         "faq": [
             ("What causes positive drift?", "Most commonly: agent memory accumulation (every conversation adds context), new skills being added, or tool descriptions growing. Check the component breakdown to identify the source."),
@@ -3198,46 +3476,65 @@ GLOSSARY_DATA = {
     "error-badge": {
         "title": "Error Badge",
         "icon": "⚠️",
-        "one_liner": "Shows the number of errors detected in the last 24 hours for a specific agent.",
+        "one_liner": "Shows how many errors an agent had in the last 24 hours.",
         "detail": """<div class="glossary-detail">
     Badges appear in two colors:<br>
-    <strong style="color:#ef4444;">🔴 Red badge</strong> — Agent is Dead or Error state with recent errors. Needs immediate attention.<br>
-    <strong style="color:#f59e0b;">🟡 Yellow badge</strong> — Agent has errors but is still responding. Investigate when convenient.<br><br>
-    Click the metric row on the agent card to see full error details and timeline.
+    <strong style="color:#ef4444;">🔴 Red badge</strong> — Agent is Down or Warning state with recent errors. Act now.<br>
+    <strong style="color:#f59e0b;">🟡 Yellow badge</strong> — Agent has errors but is still responding. Check when you can.<br><br>
+    Click the metric row to see full error details.
 </div>""",
         "faq": [
             ("Why does an agent have errors but is still alive?", "The agent process is running but returning error responses (e.g. HTTP 500, Python traceback). The pulse check got a response — it just wasn't a healthy one."),
             ("What's the difference between error badge and status dot?", "The status dot reflects the <em>latest</em> pulse. The error badge shows <em>cumulative</em> errors in 24h. An agent can be alive but have errors."),
         ],
     },
+    "error-tab": {
+        "title": "Error History (24h window)",
+        "icon": "⚠️",
+        "one_liner": "Only the last 24 hours of errors are shown. Earlier errors are pruned.",
+        "detail": """<div class="glossary-detail">
+    <strong>This view shows the most recent 24 hours of errors only.</strong><br><br>
+    <strong>⚠️ Important:</strong> These errors may already be <strong>fixed or outdated</strong>. The agent's latest pulse may show it as healthy right now, while past errors from earlier in the window still appear here. A non-empty error list <strong>does not</strong> mean the agent is currently broken — it means errors occurred at some point in the last 24 hours.<br><br>
+    <strong>How to interpret:</strong><br>
+    • Check the <strong>timestamps</strong> — if the most recent error is hours old and the status dot is green, the agent has recovered on its own.<br>
+    • Look at the <strong>frequency</strong> — many errors close together suggest an ongoing issue. A single old error is likely transient.<br>
+    • Cross-reference with the <strong>Health timeline</strong> to see whether the agent is currently alive or dead.<br><br>
+    <span style="color:#64748b;">Pro keeps a full history from install date, with weekly trend charts so you can see if errors are getting better or worse over time.</span>
+</div>""",
+        "faq": [
+            ("Why do I see errors but the agent is running fine?", "Because errors are shown for the last 24 hours. If the agent had a hiccup 12 hours ago and has been clean since, you'll still see that error until it falls out of the 24h window. The status dot reflects the <em>current</em> state."),
+            ("How far back do errors go on free tier?", "24 hours max. Errors older than 24h are pruned automatically. Pro retains everything from install date."),
+            ("Can I see if an error is getting worse?", "Not on free tier — you only see the raw list. Pro shows weekly trend charts so you can tell if the same error is happening more or less often."),
+        ],
+    },
     "pulse-check": {
         "title": "Pulse Check",
         "icon": "💓",
-        "one_liner": "A lightweight health probe that checks if your agent is alive, dead, or in error state every 30 seconds.",
+        "one_liner": "A health check that tests each agent every 30 seconds.",
         "detail": """<div class="glossary-detail">
-    <strong>How it works:</strong> Pulse check sends a request to the agent's health endpoint (HTTP GET) or checks if the process exists (process name match). Results are stored in SQLite and rendered on the dashboard.<br><br>
+    <strong>How it works:</strong> Pulse check sends a request to the agent or checks if its process exists. Results are stored and shown on the dashboard.<br><br>
     <strong>Three outcomes:</strong><br>
-    🟢 <strong style="color:#22c55e;">Alive</strong> — Health endpoint responded OK or process found<br>
-    🔴 <strong style="color:#ef4444;">Dead</strong> — No response or process not found<br>
-    🟡 <strong style="color:#f59e0b;">Error</strong> — Reached but returned error<br><br>
-    Run <code>observeco pulse check</code> from the CLI to see current status for all agents.
+    🟢 <strong style="color:#22c55e;">Running</strong> — Health check passed or process found<br>
+    🔴 <strong style="color:#ef4444;">Down</strong> — No response or process not found<br>
+    🟡 <strong style="color:#f59e0b;">Warning</strong> — Reached but returned an error<br><br>
+    Run <code>observeco pulse check</code> to see current status for all agents.
 </div>""",
         "faq": [
-            ("Do I need to set up health endpoints for every agent?", "No. ObserveCo auto-detects agents from config files (Hermes, OpenClaw, and others). For custom agents, use `observeco agents add <name> --health-check <url_or_command>` to register manually."),
+("Do I need to set up health endpoints for every agent?", "No. ObserveCo auto-detects agents from config files (Hermes, OpenClaw, and others). For custom agents, use `observeco agents add <name> --health-check <url_or_command>` to register manually. Docker containers: `observeco agents add <name> --health-check docker:containername`."),
             ("What happens if pulse.db doesn't exist?", "First run creates it automatically. The dashboard shows a phase banner guiding you through the first discovery."),
         ],
     },
     "heal-button": {
         "title": "Heal Button",
         "icon": "🔧",
-        "one_liner": "Automatically diagnoses and fixes common agent problems — restart dead processes, clear tripped circuits, trim bloated contexts.",
+        "one_liner": "Automatically fixes down agents, tripped circuits, and bloated prompts.",
         "detail": """<div class="glossary-detail">
     <strong>What it checks:</strong><br>
-    • <strong>Process existence</strong> — Is the agent process running?<br>
-    • <strong>Port availability</strong> — Is the configured port open?<br>
-    • <strong>Config file integrity</strong> — Does the config path still exist?<br>
-    • <strong>Circuit breaker state</strong> — Is it tripped? Should it be reset?<br><br>
-    <strong>Pro:</strong> Auto-heal runs on a schedule and fixes issues without manual intervention. Free tier requires manual trigger.
+    • <strong>Process</strong> — Is it running?<br>
+    • <strong>Port</strong> — Is the configured port open?<br>
+    • <strong>Config</strong> — Does the config file still exist?<br>
+    • <strong>Circuit</strong> — Is the breaker tripped? Should it reset?<br><br>
+    <strong>Pro:</strong> Auto-heal runs on a schedule. Free tier requires manual trigger.
 </div>""",
         "faq": [
             ("What does the heal command actually do?", "Run `observeco heal --agent <name>` to see a diagnostic report. Use `--auto-heal` to execute fixes. The command explains what it found and what it fixed."),
@@ -3247,13 +3544,13 @@ GLOSSARY_DATA = {
     "alerts-panel": {
         "title": "Alerts Panel",
         "icon": "⚠️",
-        "one_liner": "A real-time feed of critical events — tripped circuits, drift breaches, heartbeat anomalies — prioritized by severity.",
+        "one_liner": "A list of important events sorted by severity.",
         "detail": """<div class="glossary-detail">
     Three severity levels:<br>
-    🔴 <strong style="color:#ef4444;">Critical</strong> — Circuit breaker tripped, agent dead. Action required.<br>
-    🟡 <strong style="color:#f59e0b;">Warning</strong> — Drift exceeding 10%, error state. Monitor closely.<br>
-    🔵 <strong style="color:#3b82f6;">Info</strong> — Heartbeat anomalies, unusual patterns. Investigate when convenient.<br><br>
-    <strong>Pro:</strong> Push notifications via Telegram, webhook, or CLI. Free tier shows alerts in-dashboard only.
+    🔴 <strong style="color:#ef4444;">Critical</strong> — Breaker tripped, agent dead. Do something.<br>
+    🟡 <strong style="color:#f59e0b;">Warning</strong> — Drift >10%, error state happening. Keep an eye on it.<br>
+    🔵 <strong style="color:#3b82f6;">Info</strong> — Unusual patterns. Look when you have time.<br><br>
+    <strong>Pro:</strong> Push notifications via Telegram. Free tier shows alerts in-dashboard.
 </div>""",
         "faq": [
             ("How far back do alerts go?", "Free tier: 7 days. Pro: 90 days with trend analysis."),
@@ -3263,17 +3560,17 @@ GLOSSARY_DATA = {
     "confidence": {
         "title": "Confidence Score",
         "icon": "🎯",
-        "one_liner": "How confident we are that a signal is accurate — based on duration, consecutive checks, source agreement, and pattern stability.",
+        "one_liner": "How reliable the status is — from fresh evidence to stale guess.",
         "detail": """<div class="glossary-detail">
-    <strong>4 signals that determine confidence:</strong><br><br>
-    <strong>⏱ Duration</strong> — How long the agent has been in its current state. >2h = strong signal.<br>
-    <strong>🔢 Consecutive count</strong> — How many pulse checks in a row agree. >3 = strong signal.<br>
-    <strong>🤝 Source agreement</strong> — Do pulse status, error count, and circuit breaker agree on the state?<br>
-    <strong>📊 Pattern stability</strong> — Are error messages consistent (same root cause) or varied (different problems)?<br><br>
-    <strong>Score thresholds:</strong><br>
-    🟢 <strong style="color:#22c55e;">High</strong> (5-6/6) — All sources agree and duration is established. Actionable with confidence.<br>
-    🟡 <strong style="color:#eab308;">Medium</strong> (3-4/6) — Most sources agree but some signals are weak. Worth investigating.<br>
-    ⚪ <strong style="color:#64748b;">Low</strong> (0-2/6) — Insufficient data or conflicting signals. Needs more observation.
+    <strong>4 factors that affect confidence:</strong><br><br>
+    <strong>⏱ Time</strong> — How long the agent has been in its current state. >2h = strong.<br>
+    <strong>🔢 Agreement</strong> — How many pulse checks in a row say the same thing. >3 = strong.<br>
+    <strong>🤝 Sources</strong> — Do pulse status, error count, and circuit breaker all agree?<br>
+    <strong>📊 Consistency</strong> — Are errors consistent (same cause) or varied (different issues)?<br><br>
+    <strong>Score levels:</strong><br>
+    🟢 <strong style="color:#22c55e;">High</strong> (5-6) — Reliable. Act on it.<br>
+    🟡 <strong style="color:#eab308;">Medium</strong> (3-4) — Plausible but weak. Worth a look.<br>
+    ⚪ <strong style="color:#64748b;">Low</strong> (0-2) — Not enough data yet. Wait.
 </div>""",
         "faq": [
             ("How is confidence different from status?", "Status tells you WHAT the state is (alive/dead/error). Confidence tells you HOW RELIABLE that assessment is. An agent dead for 4 days has High confidence. An agent checked once 5s ago has Low confidence."),
@@ -3283,13 +3580,13 @@ GLOSSARY_DATA = {
     "fp": {
         "title": "False Positive (FP) Risk",
         "icon": "⚠️",
-        "one_liner": "How likely a red/yellow flag is to be a false alarm — the risk that the dashboard says 'problem' when everything is actually fine.",
+        "one_liner": "How likely a red flag is actually a false alarm.",
         "detail": """<div class="glossary-detail">
-    <strong>FP risk = "crying wolf" risk.</strong><br><br>
-    🟢 <strong style="color:#22c55e;">Low FP</strong> — Multiple data sources confirmed the problem over a sustained period. Confident this is real.<br>
-    🟡 <strong style="color:#eab308;">Moderate FP</strong> — Some evidence but short duration or partial source agreement. Monitor before acting.<br>
-    🔴 <strong style="color:#ef4444;">High FP</strong> — Very recent or single-source event. Could be a transient glitch. Investigate before escalating.<br><br>
-    <strong>What drives FP risk down:</strong> Long duration (>2h), multiple consecutive checks agreeing, and consistent error messages (same error repeating = real problem, not random noise).
+    <strong>FP risk = "crying wolf" — the dashboard says there's a problem but there isn't.</strong><br><br>
+    🟢 <strong style="color:#22c55e;">Low FP</strong> — Multiple sources confirmed the problem over hours. It's real.<br>
+    🟡 <strong style="color:#eab308;">Moderate FP</strong> — Some evidence but not enough time. Don't panic yet.<br>
+    🔴 <strong style="color:#ef4444;">High FP</strong> — Single check, recent event. Could be a glitch. Verify first.<br><br>
+    <strong>What makes FP less likely:</strong> Long duration (>2h), many checks agreeing, same error repeating (not random).
 </div>""",
         "faq": [
             ("Why does a dead agent have Low FP risk?", "If an agent has been dead for 4 days with 48 consecutive dead checks, the odds of a false alarm are extremely low. The system is genuinely down."),
@@ -3298,17 +3595,56 @@ GLOSSARY_DATA = {
     "fn": {
         "title": "False Negative (FN) Risk",
         "icon": "🔍",
-        "one_liner": "How likely a green flag is to miss a real problem — the risk that the dashboard says 'all clear' when something is actually broken.",
+        "one_liner": "How likely a green flag is missing a real problem.",
         "detail": """<div class="glossary-detail">
-    <strong>FN risk = "blind spot" risk.</strong><br><br>
-    🟢 <strong style="color:#22c55e;">Low FN</strong> — Recent check confirmed alive with no errors. Confident the agent is healthy.<br>
-    🟡 <strong style="color:#eab308;">Moderate FN</strong> — Agent is alive but only a few checks have run. Could still be missed.<br>
-    🔴 <strong style="color:#ef4444;">High FN</strong> — Last check was >1h ago, or only 1-2 checks were ever done. The agent could have died since then.<br><br>
-    <strong>Green is not a guarantee.</strong> A "🟢 Running" label means the agent responded to its last pulse check — not that it's still running right now. FN risk tells you how stale or thin that evidence is.
+    <strong>FN risk = "blind spot" — the dashboard says all clear but something is broken.</strong><br><br>
+    🟢 <strong style="color:#22c55e;">Low FN</strong> — Recent check confirmed the agent is healthy. Confident.<br>
+    🟡 <strong style="color:#eab308;">Moderate FN</strong> — Agent is alive but only a few checks ran. Could miss something.<br>
+    🔴 <strong style="color:#ef4444;">High FN</strong> — Last check was >1h ago. The agent could have died since.<br><br>
+    <strong>"Green" does not mean "guaranteed."</strong> A 🟢 label just means the agent responded to its last check — not that it's still running right now.
 </div>""",
         "faq": [
             ("Why does an alive agent with no recent pulses have High FN?", "Because the last known-good check was too long ago. The agent may have crashed since then. The system is giving you the benefit of the doubt but can't confirm current health."),
             ("What's the difference between FP and FN?", "FP = the dashboard says something is wrong when it's not. FN = the dashboard says everything is fine when it's not. They're opposite sides of the same accuracy question."),
+        ],
+    },
+    "heal-savings-l1": {
+        "title": "L1 Auto-Heal Savings",
+        "icon": "🛡️",
+        "one_liner": "How the $0.02 per-event savings is calculated.",
+        "detail": """<div class="glossary-detail">
+    <strong>Assumptions (per event):</strong><br>
+    • <strong>Downtime cost:</strong> $0.02/min × average 2h manual recovery = $2.40<br>
+    • <strong>L1 recovery:</strong> Auto-restart in ~1 min × $0.02/min = $0.02 cost<br>
+    • <strong>Savings:</strong> $2.40 − $0.02 = <strong style="color:#22c55e;">$0.02 saved / event</strong> (per-event, not cumulative)<br><br>
+    <strong>What this means:</strong> The $0.02 is a conservative estimate per single agent-down event. Real savings vary by fleet size, agent criticality, and how fast you manually recover.<br><br>
+    <strong>How to calculate your own:</strong><br>
+    <code>your_savings = (manual_recovery_time − auto_recovery_time) × cost_per_minute</code><br><br>
+    <span style="color:#64748b;">These are estimates based on typical agent recovery costs. Your fleet may save more or less.</span>
+</div>""",
+        "faq": [
+            ("Is $0.02 per event realistic?", "It assumes a $0.02/min downtime cost (roughly $1.20/hour). This is a conservative baseline — senior engineer time at $150/hr would make the number much higher. Adjust based on your team's hourly rate."),
+            ("Where does $0.02/min come from?", "Roughly the cost of idle compute (e.g. a Docker container with CPU load) plus your time to SSH and restart. For larger fleets, per-event savings scale linearly."),
+            ("Is this per-agent or per-fleet?", "Per event, per agent. If you have 10 agents and 2 go down daily, that's 2 events/day × $0.02 = $0.04/day savings from L1 alone."),
+        ],
+    },
+    "heal-savings-l2": {
+        "title": "L2 Proactive Savings",
+        "icon": "🧠",
+        "one_liner": "How the $0.03 per-event savings is calculated.",
+        "detail": """<div class="glossary-detail">
+    <strong>Assumptions (per event):</strong><br>
+    • <strong>L2 adds predictive detection</strong> (before failure happens, not after)<br>
+    • <strong>Savings:</strong> $0.02 (L1) + $0.01 additional (no downtime at all) = <strong style="color:#fde68a;">$0.03 saved / event</strong><br>
+    • <strong>True savings:</strong> Prevents entire downtime window. $0.03 is the full event cost minus any impact.<br><br>
+    <strong>Key difference from L1:</strong> L1 auto-restarts after a failure. L2 predicts and rotates before failure — zero downtime, zero impact.<br><br>
+    <strong>How to calculate your own:</strong><br>
+    <code>proactive_savings = full_downtime_cost − 0 (no downtime at all)</code><br><br>
+    <span style="color:#64748b;">These are estimates based on typical agent recovery costs. Your fleet may save more or less.</span>
+</div>""",
+        "faq": [
+            ("How is $0.03 different from $0.02?", "L1 saves $0.02 after a failure (1 min recovery). L2 saves the full $0.03 by preventing the failure entirely — plus the $0.01 extra is the time you'd have spent investigating the failure before you knew what to fix."),
+            ("Is proactive monitoring always better?", "For recurring failure patterns (memory leaks, config drift), yes. For random crashes, L1 still catches it! L2 is a safety net, not a replacement for L1."),
         ],
     },
 }
@@ -3318,7 +3654,7 @@ async def api_glossary(topic: str):
     """Return glossary content for a topic — §3.20."""
     entry = GLOSSARY_DATA.get(topic)
     if not entry:
-        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, pulse-check, heal-button, alerts-panel, confidence, fp, fn.</div>')
+        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, error-tab, pulse-check, heal-button, alerts-panel, confidence, fp, fn.</div>')
 
     faq_html = ""
     if entry.get("faq"):
@@ -3401,11 +3737,11 @@ async def api_pathway_scan():
     for e in graph["edges"]:
         s = e["status"]
         by_status[s] = by_status.get(s, 0) + 1
-    summary_parts = [f'<span class="pathway-scan-item">🔍 Scan complete</span>']
+    summary_parts = ['<span class="pathway-scan-item">🔍 Scan complete</span>']
     for s, cnt in sorted(by_status.items()):
         icon = {"green": "🟢", "yellow": "🟡", "red": "🔴", "teal": "🔵"}.get(s, "⚪")
         summary_parts.append(f'<span class="pathway-scan-item">{icon} {s}: {cnt}</span>')
-    
+
     red_edges = [e for e in graph["edges"] if e["status"] == "red"]
     red_html = ""
     if red_edges:
@@ -3413,8 +3749,28 @@ async def api_pathway_scan():
         for e in red_edges:
             red_html += f'<div class="pathway-red-item">🔴 Dead end: {e["source_name"]} → ∅</div>'
         red_html += "</div>"
-    
+
     return HTMLResponse(f'<div class="pathway-scan-summary">{" ".join(summary_parts)}{red_html}</div>')
+
+@app.get("/api/pathway-snapshots", response_class=HTMLResponse)
+async def api_pathway_snapshots(limit: int = 50):
+    """List pathway snapshots for historical replay timeline."""
+    snapshots = db.pathway_get_snapshots(limit)
+    return HTMLResponse(json.dumps(snapshots, default=str))
+
+@app.get("/api/pathway-snapshot/{snapshot_id}", response_class=HTMLResponse)
+async def api_pathway_snapshot(snapshot_id: int):
+    """Get full snapshot data for replay."""
+    snap = db.pathway_get_snapshot(snapshot_id)
+    if not snap:
+        return HTMLResponse(json.dumps({"error": "Snapshot not found"}), status_code=404)
+    return HTMLResponse(json.dumps(snap["data"], default=str))
+
+@app.post("/api/pathway-snapshot", response_class=HTMLResponse)
+async def api_record_pathway_snapshot():
+    """Record a snapshot of the current pathway graph."""
+    sid = db.pathway_record_snapshot()
+    return HTMLResponse(json.dumps({"snapshot_id": sid, "ok": True}))
 
 
 # §3.19 — Communication Pathway Map page
@@ -3499,7 +3855,7 @@ async def api_telemetry_status():
     prompt_required (bool). The dashboard uses this to decide
     whether to show the opt-in prompt.
     """
-    from observeco.telemetry_client import is_telemetry_enabled, _OPT_IN_FILE
+    from observeco.telemetry_client import _OPT_IN_FILE, is_telemetry_enabled
     opted_in = is_telemetry_enabled()
     opt_file_exists = _OPT_IN_FILE.exists()
     return JSONResponse({
@@ -3552,7 +3908,7 @@ async def api_telemetry_prompt():
         'border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:10px 14px;'
         'margin-bottom:12px;font-size:12px;line-height:1.5;">'
         '<div style="display:flex;align-items:flex-start;gap:10px;">'
-        '<span style="font-size:16px;flex-shrink:0;">📊</span>'
+        '<span style="font-size:16px;flex-shrink:0;">💬</span>'
         '<div style="flex:1;">'
         '<div style="font-weight:600;color:#e2e8f0;margin-bottom:2px;">Help improve ObserveCo</div>'
         '<div style="color:#94a3b8;margin-bottom:6px;">'
@@ -3596,7 +3952,7 @@ Focus on what's actually running on this machine, not generic instructions."""
 @app.get("/api/onboarding-guide", response_class=HTMLResponse)
 async def api_onboarding_guide():
     """Generate personalized onboarding guide via LLM."""
-    from observeco.llm_service import ask, detect_providers, get_auto_provider
+    from observeco.llm_service import ask, get_auto_provider
 
     # Collect system context
     agents = db.get_agents()
@@ -3609,7 +3965,6 @@ async def api_onboarding_guide():
     import platform
     os_name = platform.system()
 
-    providers = detect_providers()
     auto = get_auto_provider()
     provider_name = auto.name if auto else "none"
 
@@ -3719,7 +4074,8 @@ def _ensure_watch_running() -> None:
     if alive:
         return
 
-    import subprocess, sys
+    import subprocess
+    import sys
 
     kwargs = {
         "stdout": subprocess.DEVNULL,
@@ -3802,7 +4158,7 @@ def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False,
     _ensure_watch_running()
 
     # Prevent zombie duplicates from restart races
-    _hermes_scripts = str(Path.home() / ".hermes" / "scripts")
+    _hermes_scripts = str(hermes_home() / "scripts")
     if _hermes_scripts not in sys.path:
         sys.path.insert(0, _hermes_scripts)
     from replace_process import replace_existing
@@ -3880,16 +4236,19 @@ def _generate_static(host: str, port: int) -> None:
 async def api_restart_quality():
     """Restart quality dashboard — per-agent restart breakdown, false-alarm ratio."""
     summary = db.get_restart_summary()
-    now = int(time.time())
-
     if not summary:
-        return HTMLResponse('<div class="restart-empty">No restart data yet. Restart data is collected during pulse checks.</div>')
+        return HTMLResponse('''<div class="restart-empty" style="padding:24px;text-align:center;">
+  <div style="font-size:32px;margin-bottom:12px;">🔌</div>
+  <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">No restart data yet</div>
+  <div style="font-size:12px;color:var(--fg-2);margin-bottom:16px;">Restart quality data is collected during pulse checks. Run a scan to start collecting.</div>
+  <div style="display:inline-block;font-size:12px;padding:8px 18px;background:var(--accent);color:#e2e8f0;border-radius:8px;font-family:var(--font-mono);margin-bottom:12px;">observeco heal --agent all</div>
+  <div style="font-size:11px;color:var(--muted);margin-top:8px;">This tracks restart type (healthy KeepAlive, TOCTOU race, or crash) for each agent. Once data is available, you'll see fleet-wide restart quality, per-agent breakdowns, and false-alarm ratios.</div>
+</div>''')
 
     # Fleet-level totals
     total_healthy = sum(s["healthy"] for s in summary.values())
     total_toctou = sum(s["toctou"] for s in summary.values())
     total_crash = sum(s["crash"] for s in summary.values())
-    total_all = total_healthy + total_toctou + total_crash
 
     # Fleet summary cards
     fleet_html = f"""<div class="restart-fleet-grid">
@@ -3998,7 +4357,6 @@ async def api_restart_quality_detail(agent_name: str):
     if not restarts:
         return HTMLResponse('<div class="restart-empty">No restart data for this agent.</div>')
 
-    now = int(time.time())
     items = []
     for r in restarts:
         ts_str = _fmt_ts(r["timestamp"])
@@ -4050,7 +4408,7 @@ GLOSSARY_ITEMS = [
 ]
 
 @app.get("/api/glossary", response_class=HTMLResponse)
-async def api_glossary():
+async def api_glossary_list():
     items_html = []
     for i, (q, a) in enumerate(GLOSSARY_ITEMS):
         items_html.append(f"""
@@ -4314,11 +4672,10 @@ async def api_trigger_heal():
 async def api_risk():
     """Risk classification dashboard — shows risk policy + recent classifications."""
     try:
-        from observeco.risk_engine import RiskLevel, RISK_EMOJI
-        from observeco.session_log import SessionLogger
-
         # Get recent session logs
         from observeco.platform import get_data_dir
+        from observeco.risk_engine import RISK_EMOJI, RiskLevel
+        from observeco.session_log import SessionLogger
         sessions_dir = get_data_dir() / "sessions"
         sessions = []
         if sessions_dir.exists():
@@ -4412,7 +4769,7 @@ async def api_risk():
 @app.get("/api/l2-scan", response_class=HTMLResponse)
 async def api_l2_scan():
     """Run L2 scan and return results as HTML snippet."""
-    from observeco.heal.l2 import run_l2_scan, get_l2_metrics
+    from observeco.heal.l2 import get_l2_metrics, run_l2_scan
     results = run_l2_scan()
     metrics = get_l2_metrics()
     items = []
@@ -4436,7 +4793,7 @@ async def api_l2_scan():
 @app.get("/api/l2-trends", response_class=HTMLResponse)
 async def api_l2_trends():
     """Show L2 trends as HTML snippet."""
-    from observeco.heal.l2 import get_l2_summary, get_l2_metrics
+    from observeco.heal.l2 import get_l2_metrics, get_l2_summary
     metrics = get_l2_metrics()
     trends = get_l2_summary(limit=20)
     items = []
@@ -4467,13 +4824,15 @@ async def api_l2_trends():
 
 @app.get("/api/alerts-subs", response_class=HTMLResponse)
 async def api_alerts_subs():
-    """Show alert subscriptions as HTML snippet."""
+    """Show alert subscriptions as HTML snippet - license-aware."""
+    from observeco import license as lic
     from observeco.db import Database
     db = Database()
+    is_pro = lic.require_pro()
     subs = db.get_alert_subscriptions()
     items = []
     for s in subs:
-        icon = {"telegram": "📱", "webhook": "🔗", "email": "📧"}
+        icon = {"telegram": "📱", "slack": "💬", "webhook": "🔗", "email": "📧", "discord": "🎮"}
         items.append(f"""<div class="heal-entry info">
     <div class="heal-entry-header">
         <span class="heal-action">{icon.get(s['channel'],'?')} {s['channel']} → {_html_escape(s['target'][:50])}</span>
@@ -4482,7 +4841,36 @@ async def api_alerts_subs():
     <div class="heal-detail">Events: {s['event_types']}</div>
 </div>""")
     if not items:
-        html = '<div class="empty-state">📭 No alert subscriptions. Add one via CLI: <code>observeco alerts subscribe telegram &lt;chat_id&gt;</code></div>'
+        if is_pro:
+            html = '<div style="padding:16px;text-align:center;">' \
+                '<div style="font-size:24px;margin-bottom:8px;">🔔</div>' \
+                '<div style="font-size:13px;color:var(--fg-2);margin-bottom:6px;">No alert subscriptions yet.</div>' \
+                '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Set up channels via CLI or use the setup commands below.</div>' \
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;">' \
+                '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;">' \
+                '<div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:4px;">📱 Telegram</div>' \
+                '<div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">observeco alerts subscribe telegram &lt;chat_id&gt;</div>' \
+                '</div>' \
+                '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;">' \
+                '<div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:4px;">💬 Slack</div>' \
+                '<div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">observeco alerts subscribe slack &lt;webhook_url&gt;</div>' \
+                '</div>' \
+                '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;">' \
+                '<div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:4px;">📧 Email</div>' \
+                '<div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">observeco alerts subscribe email &lt;address&gt;</div>' \
+                '</div>' \
+                '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;">' \
+                '<div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:4px;">🎮 Discord</div>' \
+                '<div style="font-size:10px;color:var(--muted);font-family:var(--font-mono);">observeco alerts subscribe discord &lt;webhook_url&gt;</div>' \
+                '</div>' \
+                '</div></div>'
+        else:
+            html = '<div class="empty-state" style="text-align:center;padding:16px;">' \
+                '<div style="font-size:24px;margin-bottom:8px;">🔒</div>' \
+                '<div style="font-size:13px;color:var(--fg-2);margin-bottom:6px;">Push Alerts are a Pro feature</div>' \
+                '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Free: dashboard-only alerts (you check manually). Pro adds Telegram, Slack, Email, and Discord push notifications.</div>' \
+                '<div onclick="showBrainPro()" style="display:inline-block;padding:8px 20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Upgrade to Pro →</div>' \
+                '</div>'
     else:
         html = "".join(items)
     return HTMLResponse(html)
@@ -4497,13 +4885,17 @@ async def api_alert_log():
     now = int(time.time())
 
     if not log:
-        return HTMLResponse('<div class="empty-state" style="padding:20px;text-align:center;"><div style="font-size:24px;margin-bottom:8px;">📭</div><div style="color:#94a3b8;font-size:13px;">No alerts delivered yet.</div><div style="color:#64748b;font-size:11px;margin-top:4px;">Set up a subscription via <code style="background:var(--surface);padding:2px 6px;border-radius:4px;">observeco alerts subscribe telegram &lt;chat_id&gt;</code></div></div>')
+        from observeco import license as lic
+        is_pro = lic.require_pro()
+        if is_pro:
+            return HTMLResponse('<div class="empty-state" style="padding:20px;text-align:center;"><div style="font-size:24px;margin-bottom:8px;">📭</div><div style="color:#94a3b8;font-size:13px;">No alerts delivered yet.</div><div style="color:#64748b;font-size:11px;margin-top:4px;">Set up a subscription via <code style="background:var(--surface);padding:2px 6px;border-radius:4px;">observeco alerts subscribe telegram &lt;chat_id&gt;</code> or <code style="background:var(--surface);padding:2px 6px;border-radius:4px;">observeco alerts subscribe discord &lt;webhook_url&gt;</code></div></div>')
+        else:
+            return HTMLResponse('<div class="empty-state" style="padding:20px;text-align:center;"><div style="font-size:24px;margin-bottom:8px;">🔒</div><div style="color:#94a3b8;font-size:13px;">Dashboard-only alerts (free tier).</div><div style="color:#64748b;font-size:11px;margin-top:4px;">Upgrade to Pro for Telegram, Slack, Email, and Discord push notifications.</div></div>')
 
-    headers = True
     items = []
-    for l in log:
-        icon = "✅" if l["delivered"] else "❌"
-        ts = l.get("created_at", 0)
+    for entry in log:
+        icon = "✅" if entry["delivered"] else "❌"
+        ts = entry.get("created_at", 0)
         age_m = (now - ts) // 60
         if age_m < 60:
             age_str = f"{age_m}m ago"
@@ -4512,14 +4904,14 @@ async def api_alert_log():
         else:
             age_str = f"{age_m // 1440}d ago"
 
-        items.append(f"""<div class="heal-entry {'success' if l['delivered'] else 'fail'}" style="margin-bottom:4px;">
+        items.append(f"""<div class="heal-entry {'success' if entry['delivered'] else 'fail'}" style="margin-bottom:4px;">
     <div class="heal-entry-header">
-        <span class="heal-action">{icon} {l['channel']} → {_html_escape(l['target'][:40])}</span>
+        <span class="heal-action">{icon} {entry['channel']} → {_html_escape(entry['target'][:40])}</span>
         <span style="font-size:10px;color:#475569;">{age_str}</span>
     </div>
     <div class="heal-detail" style="display:flex;justify-content:space-between;">
-        <span>{_html_escape(l['message'][:80])}</span>
-        <span style="font-size:9px;color:#475569;">{l['event_type']}</span>
+        <span>{_html_escape(entry['message'][:80])}</span>
+        <span style="font-size:9px;color:#475569;">{entry['event_type']}</span>
     </div>
 </div>""")
 
@@ -4565,8 +4957,7 @@ async def api_alert_unsubscribe(sub_id: int):
 @app.get("/api/plugin-stats")
 async def api_plugin_stats(agent: str = ""):
     """Get plugin tracking stats as JSON."""
-    from observeco.clawforge.plugin import get_plugin_stats, seed_demo_data
-    seed_demo_data()  # Seed demo data if empty
+    from observeco.clawforge.plugin import get_plugin_stats
     stats = get_plugin_stats(agent)
     return JSONResponse(stats)
 
@@ -4574,17 +4965,31 @@ async def api_plugin_stats(agent: str = ""):
 @app.get("/api/plugin-hooks", response_class=HTMLResponse)
 async def api_plugin_hooks(agent: str = ""):
     """Show recent plugin hooks as HTML snippet."""
-    from observeco.clawforge.plugin import get_recent_hooks, seed_demo_data
-    seed_demo_data()
+    from observeco.clawforge.plugin import get_recent_hooks
     hooks = get_recent_hooks(agent, limit=10)
     items = []
+    now = int(time.time())
     for h in hooks:
         red_pct = round((h["sources_skipped"] / max(h["sources_loaded"] + h["sources_skipped"], 1)) * 100, 1)
         icon = {"bootstrap": "📥", "ingest": "🔍", "pre_response": "📊"}
+        # Format timestamp — show relative for recent, absolute for older
+        ts = h.get("timestamp", 0)
+        ts_dt = datetime.fromtimestamp(ts) if ts else None
+        ts_abs = ts_dt.strftime("%b %d %H:%M") if ts_dt else "?"
+        age_m = (now - ts) // 60 if ts else 999999
+        if age_m < 1:
+            ts_display = f"just now"
+        elif age_m < 60:
+            ts_display = f"{age_m}m"
+        elif age_m < 1440:
+            ts_display = f"{age_m // 60}h"
+        else:
+            ts_display = ts_abs  # Show actual date for old events
+        full_ts = f"{ts_abs} ({ts_display})"
         items.append(f"""<div class="heal-entry info">
     <div class="heal-entry-header">
         <span class="heal-action">{icon.get(h['hook_point'],'?')} {h['agent_name']} · {_html_escape(h.get('intent_class','') or h['hook_point'])}</span>
-        <span class="heal-time">{h['hook_point']}</span>
+        <span class="heal-time" title="{ts_abs}">{full_ts}</span>
     </div>
     <div class="heal-detail">Loaded {h['sources_loaded']} · Skipped {h['sources_skipped']} · Saved {h['tokens_saved']} tok ({red_pct}%)</div>
 </div>""")
@@ -4753,7 +5158,7 @@ async def api_set_retention(request: Request):
 @app.get("/api/l2/baseline")
 async def api_l2_baseline(agent: str = "", days: int = 7):
     """Compute L2 baselines for an agent or all agents."""
-    from observeco.tracking.baselines import compute_baselines, compute_all_baselines
+    from observeco.tracking.baselines import compute_all_baselines, compute_baselines
     if agent:
         result = compute_baselines(agent, days)
     else:
@@ -4764,7 +5169,7 @@ async def api_l2_baseline(agent: str = "", days: int = 7):
 @app.get("/api/l2/baselines", response_class=HTMLResponse)
 async def api_l2_baselines_html(agent: str = "", days: int = 7):
     """Show L2 baselines as HTML snippet."""
-    from observeco.tracking.baselines import compute_baselines, compute_all_baselines
+    from observeco.tracking.baselines import compute_all_baselines, compute_baselines
     if agent:
         baselines = {agent: compute_baselines(agent, days)}
     else:
@@ -4784,7 +5189,7 @@ async def api_l2_baselines_html(agent: str = "", days: int = 7):
         <span class="heal-time">{bl.get('sample_days', '?')}d</span>
     </div>
     <div class="heal-detail">
-        P95: {bl.get('p95_latency_ms', 0):.0f}ms · Tokens: {bl.get('avg_token_per_turn', 0):.0f}/turn · Turns: {bl.get('total_turns', 0)} · 
+        P95: {bl.get('p95_latency_ms', 0):.0f}ms · Tokens: {bl.get('avg_token_per_turn', 0):.0f}/turn · Turns: {bl.get('total_turns', 0)} ·
         <span style="color:{err_color};">Errors: {bl.get('error_rate_per_day', 0)}/day</span>
     </div>
 </div>""")

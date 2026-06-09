@@ -6,9 +6,9 @@
 <title>ObserveCo · Communication Pathway Map</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
-<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
-<script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
+<script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre@4.0.0/dist/cytoscape-dagre.js"></script>
+<script src="https://unpkg.com/cytoscape-cose-bilkent@4.1.0/dist/cytoscape-cose-bilkent.js"></script>
 <style>
 :root {
   --bg: #0c111d; --surface: #131a2b; --border: #1e293b; --border-light: #334155;
@@ -16,6 +16,14 @@
   --green: #22c55e; --red: #ef4444; --amber: #f59e0b; --blue: #38bdf8;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
+/* Scrollbars always visible — macOS default hides them on hover */
+* { scrollbar-width: thin; }
+::-webkit-scrollbar { width: 6px; height: 6px; display: block; }
+::-webkit-scrollbar-track { background: rgba(30,41,59,0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.5); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.8); }
+.scrollable { overflow-y: scroll; }
+.scrollable::-webkit-scrollbar { display: block; }
 body {
   font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--fg);
   min-height: 100vh;
@@ -45,6 +53,7 @@ body {
 .btn:hover { border-color: var(--green); color: var(--fg); background: #1a2332; }
 .btn-primary { background: var(--green); color: #000; border-color: var(--green); font-weight: 600; }
 .btn-primary:hover { background: #16a34a; }
+.btn-active { background: rgba(56,189,248,0.15); border-color: var(--blue); color: var(--blue); }
 
 /* Summary bar */
 .summary-bar {
@@ -60,10 +69,57 @@ body {
 .summary-num.amber { color: var(--amber); }
 
 /* Layout */
-.pane-layout { display: flex; gap: 14px; align-items: flex-start; }
+.pane-layout { display: flex; gap: 10px; align-items: flex-start; }
+
+/* Tree sidebar — permanent, Windows Explorer style */
+.tree-sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  display: flex; flex-direction: column;
+  height: 590px; position: sticky; top: 80px; overflow: hidden;
+}
+.tree-sidebar-header {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+}
+.tree-sidebar-count { font-size: 10px; color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: auto; }
+.tree-sidebar-body {
+  flex: 1; overflow-y: scroll; padding: 2px 0;
+}
+
+.tree-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 2px 8px 2px 8px; font-size: 11px; font-weight: 400;
+  color: var(--sec); cursor: default; user-select: none;
+  border-left: 2px solid transparent; transition: all 0.1s;
+}
+.tree-item:hover { background: rgba(255,255,255,0.03); }
+.tree-item input[type="checkbox"] {
+  accent-color: var(--green); width: 13px; height: 13px; cursor: pointer; flex-shrink: 0;
+}
+.tree-item-name {
+  cursor: pointer; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding: 1px 0;
+}
+.tree-item-name:hover { color: var(--fg); }
+
 .left-rail { flex: 1; min-width: 0; }
 .right-rail { width: 360px; flex-shrink: 0; position: sticky; top: 80px; }
-@media (max-width: 1000px) { .pane-layout { flex-direction: column; } .right-rail { width: 100%; position: static; } }
+@media (max-width: 1000px) { .pane-layout { flex-wrap: wrap; } .tree-sidebar { width: 100%; height: auto; max-height: 200px; position: static; } .right-rail { width: 100%; position: static; } }
+
+/* Tree group label in sidebar */
+.tree-group-label {
+  padding: 5px 8px 2px; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  color: var(--muted); letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;
+  cursor: pointer; user-select: none;
+}
+.tree-group-label:hover { color: var(--fg); }
+.tree-group-toggle { font-size: 8px; color: var(--muted); width: 12px; flex-shrink: 0; text-align: center; }
+.tree-group-label:hover .tree-group-toggle { color: var(--fg); }
+.tree-group-children { }
+.tree-group-children.collapsed { display: none; }
 
 /* Graph container */
 .graph-card {
@@ -76,10 +132,16 @@ body {
 }
 .graph-toolbar-label { font-size: 11px; color: var(--muted); font-weight: 500; }
 #cy {
-  width: 100%; height: 500px; background: var(--bg);
-  cursor: grab;
+  width: 100%; height: 550px; background: var(--bg);
+  cursor: grab; position: relative;
 }
 #cy:active { cursor: grabbing; }
+
+/* Particle canvas overlay */
+#particle-canvas {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 2;
+}
 
 /* Filter chips */
 .filter-chip {
@@ -88,6 +150,13 @@ body {
   border: 1px solid var(--border); background: transparent; color: var(--sec);
   transition: all 0.15s;
 }
+
+#filter-toolbar, #filter-toolbar * {
+  transition: opacity 0.15s;
+}
+
+/* Disabled type filter chip (when view != Full Graph) */
+.filter-chip.disabled { opacity: 0.3; pointer-events: none; }
 .filter-chip:hover { border-color: var(--green); color: var(--fg); }
 .filter-chip.active { background: rgba(34,197,94,0.15); border-color: var(--green); color: var(--green); }
 .filter-chip.active-red { background: rgba(239,68,68,0.15); border-color: var(--red); color: var(--red); }
@@ -115,7 +184,7 @@ body {
   display: flex; align-items: center; gap: 8px;
 }
 .detail-title { font-size: 14px; font-weight: 600; flex: 1; }
-.detail-body { padding: 12px 14px; min-height: 120px; max-height: 450px; overflow-y: auto; }
+.detail-body { padding: 12px 14px; min-height: 120px; max-height: 450px; overflow-y: scroll; }
 .detail-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 30px 10px; }
 .detail-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid rgba(30,41,59,0.5); }
 .detail-label { color: var(--muted); }
@@ -128,6 +197,50 @@ body {
 .dead-end-badge {
   display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;
   background: rgba(239,68,68,0.15); color: var(--red);
+}
+
+/* Timeline / Replay bar */
+.timeline-bar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 14px; margin-top: 8px; display: none; flex-direction: column; gap: 6px;
+}
+.timeline-bar.visible { display: flex; }
+.timeline-header { display: flex; align-items: center; justify-content: space-between; }
+.timeline-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+.timeline-range { display: flex; align-items: center; gap: 8px; }
+.timeline-range input[type="range"] {
+  flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+  background: var(--border-light); border-radius: 2px; outline: none;
+}
+.timeline-range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--blue); cursor: pointer; border: 2px solid var(--bg);
+}
+.timeline-range input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--blue); cursor: pointer; border: 2px solid var(--bg);
+}
+.timeline-date { font-size: 11px; color: var(--sec); font-weight: 500; min-width: 120px; text-align: right; }
+.timeline-controls { display: flex; align-items: center; gap: 6px; }
+.timeline-controls button {
+  background: var(--surface); border: 1px solid var(--border); color: var(--sec);
+  padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;
+}
+.timeline-controls button:hover { border-color: var(--green); color: var(--fg); }
+.timeline-controls button.active { background: rgba(56,189,248,0.15); border-color: var(--blue); color: var(--blue); }
+
+/* Layout badge */
+.layout-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+  background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3);
+}
+
+/* Focus mode badge */
+.focus-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+  background: rgba(245,158,11,0.15); color: var(--amber); border: 1px solid rgba(245,158,11,0.3);
 }
 
 /* Loading */
@@ -149,10 +262,14 @@ body {
     </div>
   </div>
   <div class="header-right">
-    <button class="btn" onclick="resetLayout()">🔁 Reset Layout</button>
-    <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+    <span class="layout-badge" id="layout-badge">⚡ dagre</span>
+    <button class="btn" onclick="resetLayout()">🗂️ Re-layout</button>
+    <button class="btn btn-active" onclick="toggleParticles()" id="particle-btn">💫 Particles ON</button>
+    <button class="btn btn-primary" onclick="refreshData()">📦 Data Reload</button>
   </div>
 </div>
+
+<!-- Filter toolbar (always visible — View=preset, Type=preset, Tree=master) -->
 
 <!-- Summary -->
 <div class="summary-bar" id="summary-bar">
@@ -164,29 +281,59 @@ body {
 
 <div class="pane-layout">
 
+<div class="tree-sidebar" id="tree-sidebar">
+  <div class="tree-sidebar-header">
+    📋 Node Tree
+    <span class="tree-sidebar-count" id="tree-count">0 nodes</span>
+  </div>
+  <div class="tree-sidebar-body" id="tree-body"></div>
+</div>
+
 <div class="left-rail">
+
   <div class="graph-card">
-    <div class="graph-toolbar">
+    <div class="graph-toolbar" id="filter-toolbar">
       <span class="graph-toolbar-label">View:</span>
       <button class="filter-chip active" data-filter="all" onclick="setFilter('all', this)">🌐 Full Graph</button>
       <button class="filter-chip" data-filter="green" onclick="setFilter('green', this)" style="color:var(--green);">✅ Complete</button>
       <button class="filter-chip active-amber" data-filter="yellow" onclick="setFilter('yellow', this)" style="color:var(--amber);">⚠️ Concerns</button>
       <button class="filter-chip active-red" data-filter="red" onclick="setFilter('red', this)" style="color:var(--red);">❌ Dead Ends</button>
       <span style="width:1px;height:20px;background:var(--border);display:inline-block;margin:0 4px;"></span>
-      <span class="graph-toolbar-label">Simplify:</span>
-      <button class="filter-chip" id="foldBtn" onclick="toggleFold()">📂 Hide leaf nodes</button>
-      <span style="width:1px;height:20px;background:var(--border);display:inline-block;margin:0 4px;"></span>
       <span class="graph-toolbar-label">Type:</span>
-      <button class="filter-chip active" data-type="all" onclick="setTypeFilter('all', this)">🧠 All</button>
-      <button class="filter-chip" data-type="agent" onclick="setTypeFilter('agent', this)">Agent</button>
-      <button class="filter-chip" data-type="cron" onclick="setTypeFilter('cron', this)">Cron</button>
-      <button class="filter-chip" data-type="platform" onclick="setTypeFilter('platform', this)">Platform</button>
-      <button class="filter-chip" data-type="consumer" onclick="setTypeFilter('consumer', this)">Consumer</button>
-      <button class="filter-chip" data-type="router" onclick="setTypeFilter('router', this)">Router</button>
+      <button class="filter-chip active" data-type="all" id="type-all-btn" onclick="setTypeFilter('all', this)">🧠 All</button>
+      <button class="filter-chip" data-type="agent" id="type-agent-btn" onclick="setTypeFilter('agent', this)">Agent</button>
+      <button class="filter-chip" data-type="cron" id="type-cron-btn" onclick="setTypeFilter('cron', this)">Cron</button>
+      <button class="filter-chip" data-type="platform" id="type-platform-btn" onclick="setTypeFilter('platform', this)">Platform</button>
+      <button class="filter-chip" data-type="consumer" id="type-consumer-btn" onclick="setTypeFilter('consumer', this)">Consumer</button>
+      <button class="filter-chip" data-type="router" id="type-router-btn" onclick="setTypeFilter('router', this)">Router</button>
       <span style="flex:1;"></span>
       <span class="graph-toolbar-label" style="color:var(--muted);font-size:11px;">Scroll to zoom · Drag to pan</span>
     </div>
+    <div class="filter-status-bar" id="filter-status-bar" style="display:none;padding:4px 14px;background:rgba(56,189,248,0.05);border-top:1px solid var(--border);font-size:11px;color:var(--sec);">
+      Showing <span id="filter-showing" style="color:var(--blue);font-weight:600;">0</span> of <span id="filter-total" style="color:var(--fg);font-weight:600;">0</span> nodes and <span id="filter-edges-visible" style="color:var(--blue);font-weight:600;">0</span> of <span id="filter-edges-total" style="color:var(--fg);font-weight:600;">0</span> edges
+      <span id="filter-active-label" style="margin-left:8px;padding:2px 6px;border-radius:4px;font-weight:600;"></span>
+    </div>
     <div id="cy"><div class="loading">Loading pathway map...</div></div>
+    <!-- Timeline bar (hidden by default) -->
+    <div class="timeline-bar" id="timeline-bar">
+      <div class="timeline-header">
+        <span class="timeline-label">📅 Historical Replay</span>
+        <div class="timeline-controls">
+          <button onclick="recordSnapshot()" title="Record current state">📷 Snapshot</button>
+          <button onclick="replayPlay()" id="replay-play-btn" title="Auto-play">▶</button>
+          <button onclick="closeTimeline()" title="Close">✕</button>
+        </div>
+      </div>
+      <div class="timeline-range">
+        <span class="timeline-date" id="timeline-start">—</span>
+        <input type="range" id="timeline-slider" min="0" max="0" value="0" oninput="onTimelineSlider(this.value)">
+        <span class="timeline-date" id="timeline-end">—</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="timeline-label" id="timeline-count">0 snapshots</span>
+        <span class="timeline-label" id="timeline-current" style="color:var(--fg);">—</span>
+      </div>
+    </div>
     <!-- Legend -->
     <div class="legend">
       <span class="legend-item"><span class="legend-line green"></span> Complete</span>
@@ -197,11 +344,16 @@ body {
       <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#06b6d4;"></span> Platform</span>
       <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#14b8a6;"></span> Consumer</span>
       <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#3b82f6;"></span> Router</span>
+      <span class="legend-item"><span class="legend-dot" style="width:8px;height:8px;border-radius:50%;background:#818cf8;"></span> Bundled edge (×N)</span>
     </div>
   </div>
 </div>
 
 <div class="right-rail">
+  <div class="route-table" id="route-table" style="display:none;padding:8px 12px;overflow-y:auto;flex-shrink:0;max-height:180px;background:rgba(12,17,29,0.5);border-bottom:1px solid var(--border);">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--blue);letter-spacing:0.5px;margin-bottom:6px;">📱 Routes to Platform</div>
+    <div id="route-table-body"></div>
+  </div>
   <div class="detail-panel" id="detail-panel">
     <div class="detail-header">
       <span style="font-size:16px;">🔍</span>
@@ -217,9 +369,63 @@ body {
 </div><!-- /.app -->
 
 <script>
+// ═══════════════════════════════════════════════════════
+// FEATURE 1: LAYOUT DETECTION (cose-bilkent → dagre → breadthfirst → preset)
+// ═══════════════════════════════════════════════════════
+var _HAVE_BILKENT = false;
+var _HAVE_DAGRE = false;
+
+try {
+  var _testCy = cytoscape({ headless: true, elements: [{data:{id:'a'}},{data:{id:'b'}}] });
+  _testCy.layout({name: 'dagre'});
+  _HAVE_DAGRE = true;
+  _testCy.destroy();
+} catch(_) {}
+
+try {
+  var _testCy2 = cytoscape({ headless: true, elements: [{data:{id:'a'}},{data:{id:'b'}}] });
+  _testCy2.layout({name: 'cose-bilkent'});
+  _HAVE_BILKENT = true;
+  _testCy2.destroy();
+} catch(_) {}
+
+const LAYOUTS = {
+  cosebilkent: {
+    name: 'cose-bilkent',
+    idealEdgeLength: 80, nodeRepulsion: 8000, gravity: 0.25,
+    numIter: 1000, fit: true, padding: 20,
+    animate: true, animationDuration: 300
+  },
+  dagre: {
+    name: 'dagre', rankDir: 'LR', spacingFactor: 1.05,
+    nodeSep: 24, rankSep: 50, fit: true, padding: 20,
+    animate: true, animationDuration: 300
+  },
+  breadthfirst: {
+    name: 'breadthfirst', fit: true, padding: 20,
+    animate: true, animationDuration: 300
+  },
+  preset: {
+    name: 'preset', fit: true, padding: 20,
+    animate: true, animationDuration: 300
+  }
+};
+
+// Pick best available layout
+var _activeLayout = 'dagre';
+if (_HAVE_BILKENT) { _activeLayout = 'cosebilkent'; }
+document.getElementById('layout-badge').textContent = '⚡ ' + _activeLayout;
+
+function getLayoutConfig(overrides) {
+  var base = Object.assign({}, LAYOUTS[_activeLayout]);
+  if (overrides) Object.keys(overrides).forEach(function(k) { base[k] = overrides[k]; });
+  return base;
+}
+
+// ═══════════════════════════════════════════════════════
+// GLOBALS
+// ═══════════════════════════════════════════════════════
 let cy = null;
-let currentFilter = 'all';
-let currentTypeFilter = 'all';
 let graphData = { nodes: [], edges: [] };
 
 const NODE_STYLES = {
@@ -228,6 +434,12 @@ const NODE_STYLES = {
   platform:   { icon: '📱', color: '#06b6d4', shape: 'round-rectangle' },
   consumer:   { icon: '📖', color: '#14b8a6', shape: 'ellipse' },
   router:     { icon: '🔀', color: '#3b82f6', shape: 'round-rectangle' },
+  daemon:     { icon: '⚙️', color: '#8b5cf6', shape: 'round-rectangle' },
+  watcher:    { icon: '👁️', color: '#ec4899', shape: 'ellipse' },
+  gateway:    { icon: '🚪', color: '#10b981', shape: 'round-rectangle' },
+  service:    { icon: '📡', color: '#f97316', shape: 'round-rectangle' },
+  mesh:       { icon: '🔗', color: '#06b6d4', shape: 'ellipse' },
+  filesystem: { icon: '💾', color: '#64748b', shape: 'ellipse' },
 };
 
 const EDGE_COLORS = { green: '#22c55e', yellow: '#eab308', red: '#ef4444', teal: '#14b8a6', unknown: '#64748b' };
@@ -236,17 +448,9 @@ function nodeStyle(nodeType) {
   return NODE_STYLES[nodeType] || { icon: '❓', color: '#6b7280', shape: 'round-rectangle' };
 }
 
-async function fetchGraph() {
-  try {
-    const resp = await fetch('/api/pathway-graph');
-    graphData = await resp.json();
-    return true;
-  } catch (e) {
-    console.error('Failed to fetch pathway graph:', e);
-    return false;
-  }
-}
-
+// ═══════════════════════════════════════════════════════
+// FEATURE 2: EDGE BUNDLING — group parallel edges by (source, target)
+// ═══════════════════════════════════════════════════════
 function buildCytoscapeElements() {
   const elements = [];
   const ns = graphData.nodes || [];
@@ -262,215 +466,421 @@ function buildCytoscapeElements() {
     elements.push({
       group: 'nodes',
       data: {
-        id: n.id,
-        label: n.name,
-        type: n.type,
-        icon: style.icon,
-        confidence: n.confidence || 50,
-        source: n.source || 'manual',
-        framework: n.framework || '',
-        nodeColor: style.color,
-        shape: style.shape,
-        raw: n
+        id: n.id, label: n.name, type: n.type, icon: style.icon,
+        confidence: n.confidence || 50, source: n.source || 'manual',
+        framework: n.framework || '', nodeColor: style.color,
+        shape: style.shape, raw: n
       }
     });
   });
 
-  // Create cytoscape edges
+  // Bundle edges by (source_id, target_id)
+  const edgeBundle = {};
+  const edgeMeta = {};
   es.forEach(function(e) {
     const targetId = e.target_id;
     const isDeadEnd = !targetId;
-    const status = e.status || 'unknown';
-
     if (isDeadEnd) {
-      // For dead ends, add an invisible stub node (dead-end marker)
+      // Dead ends: no bundling, add stub + edge
       const stubId = '__dead__' + e.source_id;
       if (!nodeMap[stubId]) {
         elements.push({
-          group: 'nodes',
-          data: {
-            id: stubId,
-            label: '∅',
-            type: 'dead-end',
-            icon: '✕',
-            nodeColor: '#ef4444',
-            shape: 'ellipse',
+          group: 'nodes', data: {
+            id: stubId, label: '∅', type: 'dead-end', icon: '✕',
+            nodeColor: '#ef4444', shape: 'ellipse',
             raw: { id: stubId, name: '∅ Dead End', type: 'dead-end' }
-          },
-          classes: 'dead-end-node'
+          }, classes: 'dead-end-node'
         });
         nodeMap[stubId] = { id: stubId };
       }
       elements.push({
-        group: 'edges',
-        data: {
+        group: 'edges', data: {
           id: e.id || ('edge-' + e.source_id + '-dead'),
-          source: e.source_id,
-          target: stubId,
-          status: 'red',
-          label: 'Dead End',
-          mechanism: e.mechanism || '',
-          confidence: e.confidence || 50,
-          scenario: e.scenario || '',
-          raw: e
-        },
-        classes: 'edge-red'
+          source: e.source_id, target: stubId, status: 'red',
+          label: 'Dead End', mechanism: e.mechanism || '',
+          confidence: e.confidence || 50, scenario: e.scenario || '',
+          metadata: e.metadata || '{}', raw: e, bundleCount: 1
+        }, classes: 'edge-red'
       });
     } else {
-      elements.push({
-        group: 'edges',
-        data: {
-          id: e.id || ('edge-' + e.source_id + '-' + targetId),
-          source: e.source_id,
-          target: targetId,
-          status: status,
-          label: '',
-          mechanism: e.mechanism || '',
-          confidence: e.confidence || 50,
-          scenario: e.scenario || '',
-          raw: e
-        },
-        classes: 'edge-' + status
-      });
+      // Normal edges: collect by key
+      const key = e.source_id + '→' + targetId;
+      if (!edgeBundle[key]) {
+        edgeBundle[key] = [];
+      }
+      edgeBundle[key].push(e);
     }
+  });
+
+  // Create bundled edges
+  Object.keys(edgeBundle).forEach(function(key) {
+    const edges = edgeBundle[key];
+    const first = edges[0];
+    const count = edges.length;
+    const status = first.status || 'unknown';
+
+    // Use the highest-status edge as visual reference
+    const statusOrder = { red: 3, yellow: 2, green: 1, teal: 1, unknown: 0 };
+    var useStatus = status;
+    edges.forEach(function(e) {
+      if ((statusOrder[e.status] || 0) > (statusOrder[useStatus] || 0)) {
+        useStatus = e.status;
+      }
+    });
+
+    const width = Math.min(2 + (count * 0.5), 6);
+
+    // Extract deliver target for display
+    var deliverLabel = '';
+    try { var m = JSON.parse(first.metadata || '{}'); if (m.deliver && m.deliver !== 'local' && m.deliver !== 'origin') { deliverLabel = m.deliver.replace('telegram:-1003985609979:', '📱T').replace('telegram:', '📱'); } } catch(e) {}
+    var edgeLabel = count > 1 ? ('×' + count + (deliverLabel ? ' ' + deliverLabel : '')) : deliverLabel;
+
+    elements.push({
+      group: 'edges', data: {
+        id: first.id || ('edge-' + first.source_id + '-' + first.target_id),
+        source: first.source_id, target: first.target_id, status: useStatus,
+        label: edgeLabel,
+        mechanism: first.mechanism || '', confidence: first.confidence || 50,
+        scenario: first.scenario || '', metadata: first.metadata || '{}',
+        raw: first, bundleCount: count, deliverLabel: deliverLabel
+      }, classes: 'edge-' + useStatus
+    });
   });
 
   return elements;
 }
 
+// ═══════════════════════════════════════════════════════
+// FEATURE 3: PARTICLE ANIMATION
+// ═══════════════════════════════════════════════════════
+let particlesEnabled = true; // default on
+let particleCtx = null;
+let particleCanvas = null;
+let particleAnimFrame = null;
+let particles = [];
+let particleResizeHandler = null;
+
+function initParticleCanvas() {
+  const cyContainer = document.getElementById('cy');
+  const canvas = document.createElement('canvas');
+  canvas.id = 'particle-canvas';
+  canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;';
+  cyContainer.style.position = 'relative';
+  cyContainer.appendChild(canvas);
+  particleCanvas = canvas;
+  particleCtx = canvas.getContext('2d');
+  particleResizeCanvas();
+  if (particleResizeHandler) window.removeEventListener('resize', particleResizeHandler);
+  particleResizeHandler = function() { particleResizeCanvas(); };
+  window.addEventListener('resize', particleResizeHandler);
+  if (cy) {
+    cy.on('viewport', function() { particleResizeCanvas(); });
+    cy.on('zoom', function() { particleResizeCanvas(); });
+    cy.on('pan', function() { particleResizeCanvas(); });
+  }
+}
+
+function particleResizeCanvas() {
+  if (!particleCanvas || !cy) return;
+  const rect = particleCanvas.parentElement.getBoundingClientRect();
+  particleCanvas.width = rect.width;
+  particleCanvas.height = rect.height;
+}
+
+function toggleParticles() {
+  particlesEnabled = !particlesEnabled;
+  const btn = document.getElementById('particle-btn');
+  if (particlesEnabled) {
+    btn.classList.add('btn-active');
+    btn.textContent = '💫 Particles ON';
+    if (!particleCanvas) initParticleCanvas();
+    startParticles();
+  } else {
+    btn.classList.remove('btn-active');
+    btn.textContent = '💫 Particles';
+    stopParticles();
+  }
+}
+
+function startParticles() {
+  if (particleAnimFrame) cancelAnimationFrame(particleAnimFrame);
+  particleAnimFrame = requestAnimationFrame(animateParticles);
+}
+
+function stopParticles() {
+  if (particleAnimFrame) cancelAnimationFrame(particleAnimFrame);
+  particleAnimFrame = null;
+  particles = [];
+  if (particleCtx && particleCanvas) {
+    particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+  }
+}
+
+function animateParticles() {
+  if (!particlesEnabled || !cy || !particleCtx) return;
+  particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+  const zoom = cy.zoom();
+  const panX = cy.pan().x;
+  const panY = cy.pan().y;
+
+  // Spawn new particles only on visible edges matching current filter
+  cy.edges(':visible').forEach(function(e) {
+    // Skip if edge status doesn't match current view filter
+    if (currentViewFilter && e.data('status') !== currentViewFilter) return;
+    const source = e.source();
+    const target = e.target();
+    if (!source || !target) return;
+    const srcPos = source.position();
+    const tgtPos = target.position();
+    if (!srcPos || !tgtPos) return;
+
+    // Random spawn chance
+    if (Math.random() > 0.03) return;
+
+    const status = e.data('status') || 'unknown';
+    const color = EDGE_COLORS[status] || '#64748b';
+    particles.push({
+      sx: srcPos.x, sy: srcPos.y,  // graph-space coords
+      tx: tgtPos.x, ty: tgtPos.y,
+      t: 0,
+      speed: 0.003 + Math.random() * 0.007,
+      color: color,
+      size: 1.2 + Math.random() * 0.8  // smaller: 1.2-2.0px
+    });
+  });
+
+  // Update and draw particles
+  const newParticles = [];
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    p.t += p.speed;
+    if (p.t >= 1) continue;
+    // Convert graph-space to screen-space each frame
+    const x = (p.sx + (p.tx - p.sx) * p.t) * zoom + panX;
+    const y = (p.sy + (p.ty - p.sy) * p.t) * zoom + panY;
+
+    // Glow
+    particleCtx.save();
+    particleCtx.globalAlpha = 0.3;
+    particleCtx.fillStyle = p.color;
+    particleCtx.beginPath();
+    particleCtx.arc(x, y, p.size * 2.5, 0, Math.PI * 2);
+    particleCtx.fill();
+    particleCtx.globalAlpha = 0.9;
+    particleCtx.fillStyle = p.color;
+    particleCtx.beginPath();
+    particleCtx.arc(x, y, p.size, 0, Math.PI * 2);
+    particleCtx.fill();
+    particleCtx.restore();
+
+    newParticles.push(p);
+  }
+  particles = newParticles;
+
+  particleAnimFrame = requestAnimationFrame(animateParticles);
+}
+
+// ═══════════════════════════════════════════════════════
+// HISTORICAL REPLAY
+// ═══════════════════════════════════════════════════════
+let timelineVisible = false;
+let snapshots = [];
+let replayInterval = null;
+
+function openTimeline() {
+  const bar = document.getElementById('timeline-bar');
+  timelineVisible = !timelineVisible;
+  bar.classList.toggle('visible', timelineVisible);
+  if (timelineVisible) loadSnapshots();
+}
+
+function closeTimeline() {
+  timelineVisible = false;
+  document.getElementById('timeline-bar').classList.remove('visible');
+  stopReplay();
+}
+
+async function loadSnapshots() {
+  try {
+    const resp = await fetch('/api/pathway-snapshots?limit=100');
+    snapshots = await resp.json();
+    const slider = document.getElementById('timeline-slider');
+    slider.max = Math.max(snapshots.length - 1, 0);
+    slider.value = snapshots.length - 1;
+    document.getElementById('timeline-count').textContent = snapshots.length + ' snapshot' + (snapshots.length !== 1 ? 's' : '');
+
+    if (snapshots.length > 0) {
+      const first = snapshots[0];
+      const last = snapshots[snapshots.length - 1];
+      document.getElementById('timeline-start').textContent = formatDate(first.recorded_at);
+      document.getElementById('timeline-end').textContent = formatDate(last.recorded_at);
+      onTimelineSlider(snapshots.length - 1);
+    } else {
+      document.getElementById('timeline-start').textContent = '—';
+      document.getElementById('timeline-end').textContent = '—';
+      document.getElementById('timeline-current').textContent = 'No snapshots recorded yet';
+    }
+  } catch(e) {
+    console.error('Failed to load snapshots:', e);
+  }
+}
+
+function formatDate(iso) {
+  try {
+    const d = new Date(iso);
+    const m = d.toLocaleString('en-US', { month: 'short' });
+    const day = d.getDate();
+    const h = d.getHours().toString().padStart(2, '0');
+    const min = d.getMinutes().toString().padStart(2, '0');
+    return m + ' ' + day + ' ' + h + ':' + min;
+  } catch(_) { return '—'; }
+}
+
+function onTimelineSlider(idx) {
+  idx = parseInt(idx);
+  if (idx < 0 || idx >= snapshots.length) return;
+  const snap = snapshots[idx];
+  document.getElementById('timeline-current').textContent = formatDate(snap.recorded_at);
+  // If snapshots contain full graph data, reload
+  if (snap.data) {
+    graphData = snap.data;
+    if (cy) {
+      cy.destroy();
+      cy = null;
+    }
+    initializeCy();
+  }
+}
+
+async function recordSnapshot() {
+  try {
+    await fetch('/api/pathway-snapshot', { method: 'POST' });
+    await loadSnapshots();
+  } catch(e) {
+    console.error('Failed to record snapshot:', e);
+  }
+}
+
+function replayPlay() {
+  const btn = document.getElementById('replay-play-btn');
+  if (replayInterval) {
+    stopReplay();
+    return;
+  }
+  btn.classList.add('active');
+  btn.textContent = '⏹';
+  const slider = document.getElementById('timeline-slider');
+  let idx = parseInt(slider.value) || 0;
+  replayInterval = setInterval(function() {
+    idx++;
+    if (idx >= snapshots.length) { stopReplay(); return; }
+    slider.value = idx;
+    onTimelineSlider(idx);
+  }, 1200);
+}
+
+function stopReplay() {
+  if (replayInterval) clearInterval(replayInterval);
+  replayInterval = null;
+  const btn = document.getElementById('replay-play-btn');
+  btn.classList.remove('active');
+  btn.textContent = '▶';
+}
+
+// ═══════════════════════════════════════════════════════
+// GRAPH FETCH
+// ═══════════════════════════════════════════════════════
+async function fetchGraph() {
+  try {
+    const resp = await fetch('/api/pathway-graph');
+    graphData = await resp.json();
+    return true;
+  } catch (e) {
+    console.error('Failed to fetch pathway graph:', e);
+    return false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// CYTOSCAPE INIT
+// ═══════════════════════════════════════════════════════
+const EDGE_STYLE_BASE = {
+  'width': 2, 'line-color': '#64748b', 'target-arrow-color': '#64748b',
+  'target-arrow-shape': 'triangle', 'arrow-scale': 1.2, 'curve-style': 'bezier',
+  'font-size': '10px', 'color': '#64748b', 'font-family': 'Inter, system-ui, sans-serif',
+  'text-rotation': 'autorotate', 'text-margin-y': -8, 'text-background-color': '#0c111d',
+  'text-background-opacity': 0.8, 'text-background-padding': '2px',
+};
+
 function initializeCy() {
   if (cy) { cy.destroy(); }
 
+  const cyContainer = document.getElementById('cy');
+  const loadingEl = cyContainer.querySelector('.loading');
+  if (loadingEl) loadingEl.remove();
+
   const elements = buildCytoscapeElements();
 
-  // cytoscape-dagre is registered globally via CDN script tag — no require() needed
-
   cy = cytoscape({
-    container: document.getElementById('cy'),
+    container: cyContainer,
     elements: elements,
     style: [
       {
         selector: 'node',
         style: {
           'label': 'data(label)',
-          'text-valign': 'center',
-          'text-halign': 'center',
-          'color': '#e2e8f0',
-          'font-size': '13px',
-          'font-weight': '600',
+          'text-valign': 'center', 'text-halign': 'center',
+          'color': '#e2e8f0', 'font-size': '13px', 'font-weight': '600',
           'font-family': 'Inter, system-ui, sans-serif',
-          'width': 'label',
-          'height': 'label',
+          'width': 'label', 'height': 'label',
           'padding': '8px 12px',
           'shape': function(ele) { return ele.data('shape'); },
           'background-color': function(ele) { return ele.data('nodeColor'); },
           'border-width': 2,
           'border-color': function(ele) { return ele.data('nodeColor'); },
           'border-opacity': 0.5,
-          'text-wrap': 'wrap',
-          'text-max-width': '200px',
-          'min-width': '60px',
-          'min-height': '30px',
+          'text-wrap': 'wrap', 'text-max-width': '200px',
+          'min-width': '60px', 'min-height': '30px',
         }
       },
       {
         selector: 'node.dead-end-node',
         style: {
-          'background-color': '#ef4444',
-          'border-color': '#ef4444',
-          'color': '#ef4444',
-          'font-size': '18px',
-          'font-weight': '800',
-          'padding': '4px 6px',
-          'min-width': '24px',
-          'min-height': '24px',
-          'shape': 'ellipse',
-          'text-valign': 'center',
-          'text-halign': 'center',
-          'width': '28px',
-          'height': '28px',
+          'background-color': '#ef4444', 'border-color': '#ef4444',
+          'color': '#ef4444', 'font-size': '18px', 'font-weight': '800',
+          'padding': '4px 6px', 'min-width': '24px', 'min-height': '24px',
+          'shape': 'ellipse', 'text-valign': 'center', 'text-halign': 'center',
+          'width': '28px', 'height': '28px',
         }
       },
       {
         selector: 'edge',
-        style: {
-          'width': 2,
-          'line-color': '#64748b',
-          'target-arrow-color': '#64748b',
-          'target-arrow-shape': 'triangle',
-          'arrow-scale': 1.2,
-          'curve-style': 'bezier',
-          'font-size': '9px',
-          'color': '#64748b',
-          'font-family': 'Inter, system-ui, sans-serif',
-        }
+        style: Object.assign({}, EDGE_STYLE_BASE)
       },
-      {
-        selector: 'edge.edge-green',
-        style: {
-          'line-color': '#22c55e',
-          'target-arrow-color': '#22c55e',
-          'width': 2.5,
-        }
-      },
-      {
-        selector: 'edge.edge-yellow',
-        style: {
-          'line-color': '#eab308',
-          'target-arrow-color': '#eab308',
-          'width': 2.5,
-          'line-style': 'dashed',
-        }
-      },
-      {
-        selector: 'edge.edge-red',
-        style: {
-          'line-color': '#ef4444',
-          'target-arrow-color': '#ef4444',
-          'width': 2,
-          'line-style': 'dashed',
-          'target-arrow-shape': 'tee',
-        }
-      },
-      {
-        selector: 'edge.edge-teal',
-        style: {
-          'line-color': '#14b8a6',
-          'target-arrow-color': '#14b8a6',
-          'width': 1.5,
-          'line-style': 'dashed',
-        }
-      },
-      // Hover
-      {
-        selector: 'node:selected',
-        style: { 'border-width': 3, 'border-opacity': 1 }
-      },
-      {
-        selector: 'edge:selected',
-        style: { 'width': 3.5 }
-      }
+      { selector: 'edge.edge-green', style: { 'line-color': '#22c55e', 'target-arrow-color': '#22c55e', 'width': 2.5 } },
+      { selector: 'edge.edge-yellow', style: { 'line-color': '#eab308', 'target-arrow-color': '#eab308', 'width': 2.5, 'line-style': 'dashed' } },
+      { selector: 'edge.edge-red', style: { 'line-color': '#ef4444', 'target-arrow-color': '#ef4444', 'width': 2, 'line-style': 'dashed', 'target-arrow-shape': 'tee' } },
+      { selector: 'edge.edge-teal', style: { 'line-color': '#14b8a6', 'target-arrow-color': '#14b8a6', 'width': 1.5, 'line-style': 'dashed' } },
+      { selector: 'node:selected', style: { 'border-width': 3, 'border-opacity': 1 } },
+      { selector: 'edge:selected', style: { 'width': 3.5 } }
     ],
-    layout: {
-      name: 'dagre',
-      rankDir: 'LR',
-      spacingFactor: 1.05,
-      nodeSep: 24,
-      rankSep: 50,
-      fit: true,
-      padding: 20,
-      animate: true,
-      animationDuration: 300,
-    },
-    minZoom: 0.4,
-    maxZoom: 2.5,
-    wheelSensitivity: 0.3,
+    layout: getLayoutConfig(),
+    minZoom: 0.4, maxZoom: 2.5, wheelSensitivity: 0.3,
   });
 
-  // Event handlers
+  // Event handlers — node click zooms + details
   cy.on('tap', 'node', function(evt) {
     const node = evt.target;
-    showNodeDetail(node);
+    const dtype = node.data('type');
+    if (dtype === 'platform') {
+      // Show platform route detail
+      showPlatformDetail(node.data('label'), node.connectedEdges());
+    } else {
+      showNodeDetail(node);
+    }
+    // Zoom to node (user can always pan/zoom manually)
+    cy.animate({ fit: { eles: node, padding: 40 }, duration: 300 });
   });
 
   cy.on('tap', 'edge', function(evt) {
@@ -484,7 +894,7 @@ function initializeCy() {
     }
   });
 
-  // Hover dimming (Datadog pattern: dim non-connected neighbors)
+  // Hover dimming
   cy.on('mouseover', 'node', function(evt) {
     const node = evt.target;
     const connected = new Set();
@@ -509,8 +919,11 @@ function initializeCy() {
     cy.edges().forEach(function(e) { e.style('opacity', 1); });
   });
 
-  // Apply current filter
-  applyFilters();
+  // Sync tree state to graph
+  syncTreeToGraph();
+
+  // Update status bar (Trap 13 fix)
+  updateFilterStatus();
 
   // Add failure-scenario markers on dead-end edges
   cy.edges('.edge-red').forEach(function(e) {
@@ -519,13 +932,25 @@ function initializeCy() {
 
   // Update summary
   updateSummary();
+
+  // Reinit particles if enabled
+  if (particlesEnabled) {
+    if (particleCanvas) {
+      particleResizeCanvas();
+    } else {
+      initParticleCanvas();
+      startParticles();
+    }
+  }
 }
 
+// ═══════════════════════════════════════════════════════
+// DETAIL PANELS
+// ═══════════════════════════════════════════════════════
 function showNodeDetail(node) {
   const d = node.data();
   const raw = d.raw || {};
   const panel = document.getElementById('detail-body');
-
   const style = nodeStyle(d.type);
   const color = d.nodeColor || style.color;
 
@@ -573,6 +998,37 @@ function showEdgeDetail(edge) {
   const sourceLabel = edge.source().data('label') || '?';
   const targetLabel = d.status === 'red' && !edge.target().data('label') ? '∅ (Dead End)' : (edge.target().data('label') || '?');
 
+  let metadataHtml = '';
+  let meta = null;
+  if (d.metadata && d.metadata !== '{}') {
+    try {
+      meta = JSON.parse(d.metadata);
+      const items = [];
+      if (meta.deliver) {
+        items.push('<div class="detail-row"><span class="detail-label">Deliver To</span><span class="detail-value" style="font-size:11px;word-break:break-all;">' + meta.deliver + '</span></div>');
+      }
+      if (meta.group_id) {
+        items.push('<div class="detail-row"><span class="detail-label">Group ID</span><span class="detail-value" style="font-size:11px;">' + meta.group_id + '</span></div>');
+      }
+      if (meta.platform) {
+        items.push('<div class="detail-row"><span class="detail-label">Platform</span><span class="detail-value">' + meta.platform + '</span></div>');
+      }
+      Object.keys(meta).forEach(function(k) {
+        if (k === 'deliver' || k === 'group_id' || k === 'platform') return;
+        items.push('<div class="detail-row"><span class="detail-label">' + k + '</span><span class="detail-value" style="font-size:11px;word-break:break-all;">' + JSON.stringify(meta[k]) + '</span></div>');
+      });
+      if (items.length > 0) {
+        metadataHtml = '<div class="detail-section"><div class="detail-section-title">Metadata</div>' + items.join('') + '</div>';
+      }
+    } catch(e) {}
+  }
+
+  const bundleCount = d.bundleCount || 1;
+  let bundleHtml = '';
+  if (bundleCount > 1) {
+    bundleHtml = `<div class="detail-row"><span class="detail-label">Bundled Edges</span><span class="detail-value" style="color:#818cf8;">×${bundleCount}</span></div>`;
+  }
+
   panel.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
       <span style="font-size:20px;">🔗</span>
@@ -585,9 +1041,51 @@ function showEdgeDetail(edge) {
     <div class="detail-row"><span class="detail-label">Target</span><span class="detail-value">${targetLabel}</span></div>
     <div class="detail-row"><span class="detail-label">Mechanism</span><span class="detail-value">${d.mechanism || '-'}</span></div>
     <div class="detail-row"><span class="detail-label">Confidence</span><span class="detail-value">${d.confidence}%</span></div>
+    ${bundleHtml}
     ${d.scenario ? `<div class="detail-row"><span class="detail-label">Scenario</span><span class="detail-value">#${d.scenario}</span></div>` : ''}
+    ${metadataHtml}
     ${d.status === 'red' ? '<div style="margin-top:10px;padding:8px;background:rgba(239,68,68,0.08);border-radius:6px;border-left:3px solid var(--red);font-size:12px;color:var(--sec);"><strong style="color:var(--red);">Dead End</strong> — This path has no consumer. Messages delivered here will be lost.</div>' : ''}
+    ${d.scenario === 'stale_signal' ? renderSignalHealthDetail(d, raw, meta) : ''}
+    ${meta && meta.source === 'signal_scan' && d.scenario !== 'stale_signal' ? renderSignalScanDetail(meta) : ''}
   `;
+}
+
+function renderSignalScanDetail(meta) {
+  const count = meta.signal_count || 1;
+  const types = (meta.signal_types || []).join(', ');
+  const ids = (meta.signal_ids || []).map(function(s) {
+    return '<code style="font-size:10px;background:#222;padding:1px 4px;border-radius:3px;">' + s + '</code>';
+  }).join(' ');
+  const writtenAt = meta.oldest_written_at || '';
+  const mechanism = meta.mechanism || '';
+  return '<div style="margin-top:10px;padding:8px;background:rgba(99,102,241,0.08);border-radius:6px;border-left:3px solid #6366f1;font-size:12px;color:var(--sec);">' +
+    '<div style="font-weight:600;color:#6366f1;margin-bottom:4px;">🔗 Signal Edge <span style="font-size:11px;font-weight:400;color:var(--muted);">×' + count + '</span></div>' +
+    '<div class="detail-row"><span class="detail-label">Count</span><span class="detail-value">' + count + '</span></div>' +
+    (types ? '<div class="detail-row"><span class="detail-label">Types</span><span class="detail-value">' + types + '</span></div>' : '') +
+    (mechanism ? '<div class="detail-row"><span class="detail-label">Mechanism</span><span class="detail-value">' + mechanism + '</span></div>' : '') +
+    (ids ? '<div class="detail-row"><span class="detail-label">Sample IDs</span><span class="detail-value">' + ids + '</span></div>' : '') +
+    (writtenAt ? '<div class="detail-row"><span class="detail-label">Oldest</span><span class="detail-value">' + writtenAt + '</span></div>' : '') +
+    '</div>';
+}
+
+function renderSignalHealthDetail(d, raw, meta) {
+  if (!meta || meta.source !== 'signal_health') return '';
+  const count = meta.signal_count || 1;
+  const ageHours = meta.oldest_age_hours || 0;
+  const days = Math.floor(ageHours / 24);
+  const hours = Math.floor(ageHours % 24);
+  const ageStr = days > 0 ? days + 'd ' + hours + 'h' : hours + 'h';
+  const types = (meta.signal_types || []).join(', ');
+  const samples = (meta.sample_ids || []).map(function(s) {
+    return '<code style="font-size:10px;background:#222;padding:1px 4px;border-radius:3px;">' + s + '</code>';
+  }).join(' ');
+  return '<div style="margin-top:10px;padding:8px;background:rgba(234,179,8,0.08);border-radius:6px;border-left:3px solid #eab308;font-size:12px;color:var(--sec);">' +
+    '<div style="font-weight:600;color:#eab308;margin-bottom:4px;">⚠ Unconsumed Signals</div>' +
+    '<div class="detail-row"><span class="detail-label">Count</span><span class="detail-value">' + count + '</span></div>' +
+    '<div class="detail-row"><span class="detail-label">Oldest</span><span class="detail-value">' + ageStr + '</span></div>' +
+    (types ? '<div class="detail-row"><span class="detail-label">Types</span><span class="detail-value">' + types + '</span></div>' : '') +
+    (samples ? '<div class="detail-row"><span class="detail-label">Samples</span><span class="detail-value">' + samples + '</span></div>' : '') +
+    '</div>';
 }
 
 function showEmptyDetail() {
@@ -607,222 +1105,475 @@ function updateSummary() {
   document.getElementById('total-green').textContent = green;
   document.getElementById('total-yellow').textContent = yellow;
   document.getElementById('total-red').textContent = red;
+  
+  // Also build route table
+  buildRouteTable();
 }
 
+// ═══════════════════════════════════════════════════════
+// ROUTE TABLE & PLATFORM DETAILS
+// ═══════════════════════════════════════════════════════
+function buildRouteTable() {
+  var es = graphData.edges || [];
+  var ns = graphData.nodes || [];
+  var nodeMap = {};
+  ns.forEach(function(n) { nodeMap[n.id] = n; });
+  
+  // Collect routes: source_name → deliver → count
+  var routes = {};
+  es.forEach(function(e) {
+    if (!e.target_id) return; // dead ends
+    var meta, deliver = '';
+    try { meta = JSON.parse(e.metadata || '{}'); deliver = meta.deliver || ''; } catch(x) {}
+    if (!deliver || deliver === 'local' || deliver === 'origin') return;
+    if (deliver === 'local' || deliver === 'origin') return;
+    var srcName = e.source_name || '?';
+    var key = srcName + '||' + deliver;
+    if (!routes[key]) routes[key] = { source: srcName, deliver: deliver, count: 0 };
+    routes[key].count++;
+  });
+  
+  var keys = Object.keys(routes);
+  var tableBody = document.getElementById('route-table-body');
+  var tableEl = document.getElementById('route-table');
+  
+  if (keys.length === 0) {
+    tableEl.style.display = 'none';
+    return;
+  }
+  tableEl.style.display = 'block';
+  
+  // Sort: group by platform prefix
+  var sorted = keys.sort(function(a, b) {
+    var da = routes[a].deliver, db = routes[b].deliver;
+    if (da.startsWith('telegram') && !db.startsWith('telegram')) return -1;
+    if (!da.startsWith('telegram') && db.startsWith('telegram')) return 1;
+    return da.localeCompare(db);
+  });
+  
+  var html = '';
+  sorted.forEach(function(key) {
+    var r = routes[key];
+    var chat = '';
+    if (r.deliver.startsWith('telegram:')) {
+      var parts = r.deliver.split(':');
+      chat = parts[parts.length - 1];
+      // Truncate long chat IDs
+      if (chat.startsWith('-100')) chat = 'T' + chat.replace('-100', '');
+    }
+    var platform = r.deliver.split(':')[0];
+    var platIcon = { telegram: '📱', whatsapp: '💬', slack: '🔷', discord: '💜' }[platform] || '📨';
+    html += '<div style="display:flex;align-items:center;gap:3px;font-size:10px;padding:1px 0;color:var(--sec);">'
+      + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-weight:400;">' + r.source + '</span>'
+      + '<span style="color:var(--muted);">→</span>'
+      + '<span>' + platIcon + '</span>'
+      + (chat ? '<span style="color:var(--blue);font-weight:500;">' + chat + '</span>' : '')
+      + (r.count > 1 ? '<span style="color:var(--muted);font-size:8px;">×' + r.count + '</span>' : '')
+      + '</div>';
+  });
+  
+  tableBody.innerHTML = html;
+}
+
+function showPlatformDetail(platformName, edges) {
+  // Build detail panel showing all incoming routes grouped by chat ID
+  var panel = document.getElementById('detail-body');
+  
+  var groups = {};
+  edges.forEach(function(e) {
+    var meta, deliver = '';
+    try { meta = JSON.parse(e.data('metadata') || '{}'); deliver = meta.deliver || ''; } catch(x) {}
+    if (!deliver) deliver = e.data('deliverLabel') || '';
+    if (!deliver || deliver === 'local' || deliver === 'origin') deliver = 'direct';
+    
+    var srcName = e.data('raw') ? (e.data('raw').source_name || e.source().data('label') || '?') : (e.source().data('label') || '?');
+    if (!groups[deliver]) groups[deliver] = [];
+    groups[deliver].push({ source: srcName, status: e.data('status') || 'unknown', raw: e.data('raw') });
+  });
+  
+  var html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'
+    + '<span style="font-size:24px;">📱</span>'
+    + '<div><div style="font-size:15px;font-weight:600;">' + platformName + '</div>'
+    + '<span class="detail-tag" style="background:rgba(6,182,212,0.15);color:#06b6d4;">platform</span></div></div>';
+  
+  html += '<div class="detail-section-title" style="margin-bottom:6px;">Incoming Routes</div>';
+  
+  var deliverKeys = Object.keys(groups).sort();
+  deliverKeys.forEach(function(deliver) {
+    var items = groups[deliver];
+    // Format deliver for display
+    var displayDeliver = deliver;
+    var chatId = '';
+    if (deliver.startsWith('telegram:-1003985609979:')) {
+      chatId = 'T' + deliver.split(':')[2];
+      displayDeliver = 'Telegram #' + chatId;
+    } else if (deliver.startsWith('telegram:')) {
+      chatId = deliver.split(':')[1];
+      displayDeliver = 'Telegram DM #' + chatId;
+    } else if (deliver === 'origin') {
+      displayDeliver = '↩ Origin';
+    }
+    
+    html += '<div style="padding:4px 0;margin-bottom:4px;border-bottom:1px solid rgba(30,41,59,0.3);">';
+    html += '<div style="font-size:11px;font-weight:600;color:var(--blue);margin-bottom:2px;">' + displayDeliver + ' <span style="font-weight:400;color:var(--muted);font-size:10px;">· ' + items.length + ' route' + (items.length !== 1 ? 's' : '') + '</span></div>';
+    
+    items.forEach(function(item) {
+      var statusIcon = { green:'🟢', yellow:'🟡', red:'🔴', teal:'🔵' }[item.status] || '⚪';
+      html += '<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--sec);padding:1px 0 1px 8px;">'
+        + '<span>' + statusIcon + '</span>'
+        + '<span>' + item.source + '</span>'
+        + '</div>';
+    });
+    html += '</div>';
+  });
+  
+  panel.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+// FILTERS — tree is master. Chips are batch presets.
+// ═══════════════════════════════════════════════════════
+var shortcutActive = false; // true when view/type chip is non-all
+var currentViewFilter = null; // 'green', 'yellow', 'red', or null for all
+
 function setFilter(filter, btn) {
-  currentFilter = filter;
-  // Update button states
-  document.querySelectorAll('[onclick^="setFilter("]').forEach(function(b) {
+  currentViewFilter = (filter === 'all') ? null : filter;
+  // Update button visual
+  document.querySelectorAll('[onclick^="setFilter"]').forEach(function(b) {
     b.classList.remove('active', 'active-red', 'active-amber');
   });
-  if (filter === 'red') {
-    btn.classList.add('active-red');
-  } else if (filter === 'yellow') {
-    btn.classList.add('active-amber');
+  if (filter === 'red') { btn.classList.add('active-red'); }
+  else if (filter === 'yellow') { btn.classList.add('active-amber'); }
+  else { btn.classList.add('active'); }
+
+  // Enable/disable type chips
+  var typeChips = document.querySelectorAll('[data-type]');
+  var typeDisabled = filter !== 'all';
+  typeChips.forEach(function(c) { c.classList.toggle('disabled', typeDisabled); });
+
+  if (filter === 'all') {
+    clearShortcuts();
   } else {
-    btn.classList.add('active');
+    applyShortcut(filter, null);
   }
-  applyFilters();
 }
 
 function setTypeFilter(type, btn) {
-  currentTypeFilter = type;
-  document.querySelectorAll('[onclick^="setTypeFilter("]').forEach(function(b) {
+  document.querySelectorAll('[onclick^="setTypeFilter"]').forEach(function(b) {
     b.classList.remove('active', 'active-red', 'active-amber');
   });
   btn.classList.add('active');
-  applyFilters();
+
+  if (type === 'all') {
+    clearShortcuts();
+  } else {
+    applyShortcut(null, type);
+  }
 }
 
-function applyFilters() {
+// Compute which node IDs match a filter view
+function getNodesForFilter(filter) {
+  if (filter === 'all') return null;
+  var es = graphData.edges || [];
+  var ids = new Set();
+  es.forEach(function(e) {
+    if (e.status === filter) {
+      ids.add(e.source_id);
+      if (e.target_id) ids.add(e.target_id);
+    }
+  });
+  return ids;
+}
+
+function getNodesForType(typeFilter) {
+  if (typeFilter === 'all') return null;
+  var ns = graphData.nodes || [];
+  var ids = new Set();
+  ns.forEach(function(n) {
+    if (n.type === typeFilter) ids.add(n.id);
+  });
+  return ids;
+}
+
+function applyShortcut(viewFilter, typeFilter) {
+  shortcutActive = true;
+
+  // Compute matched nodes
+  var viewIds = viewFilter ? getNodesForFilter(viewFilter) : null;
+  var typeIds = typeFilter ? getNodesForType(typeFilter) : null;
+
+  // Update tree checkboxes: check matched, uncheck unmatched
+  var allItems = document.querySelectorAll('#tree-body .tree-item');
+  var checkedCount = 0, totalCount = allItems.length;
+  allItems.forEach(function(item) {
+    var nid = item.getAttribute('data-node-id');
+    var cb = item.querySelector('input[type="checkbox"]');
+    if (!cb || !nid) return;
+
+    var visible = true;
+    if (viewIds && !viewIds.has(nid)) visible = false;
+    if (typeIds && !typeIds.has(nid)) visible = false;
+
+    cb.checked = visible;
+    cb.disabled = true; // lock tree
+    if (visible) checkedCount++;
+  });
+
+  // Clear in-flight particles so old red-edge particles don't linger
+  particles = [];
+
+  updateFilterStatus();
+  syncTreeToGraph();
+}
+
+function clearShortcuts() {
+  shortcutActive = false;
+
+  // Unlock all tree checkboxes, check all
+  document.querySelectorAll('#tree-body .tree-item input[type="checkbox"]').forEach(function(cb) {
+    cb.checked = true;
+    cb.disabled = false;
+  });
+
+  document.getElementById('filter-status-bar').style.display = 'none';
+  syncTreeToGraph();
+}
+
+// ═══════════════════════════════════════════════════════
+// TREE — the master visibility control
+// ═══════════════════════════════════════════════════════
+function buildNodeTree() {
+  var nodes = graphData.nodes || [];
+  var body = document.getElementById('tree-body');
+  var counts = {};
+  nodes.forEach(function(n) {
+    var t = n.type || 'unknown';
+    if (!counts[t]) counts[t] = [];
+    counts[t].push(n);
+  });
+
+  document.getElementById('tree-count').textContent = nodes.length + ' nodes';
+
+  var html = '';
+  var order = ['agent', 'cron', 'daemon', 'watcher', 'gateway', 'platform', 'consumer', 'router', 'filesystem'];
+  order.forEach(function(t) {
+    var items = counts[t] || [];
+    var style = NODE_STYLES[t] || { icon: '❓', color: '#6b7280' };
+    html += '<div>';
+    html += '<div class="tree-group-label" onclick="toggleTreeGroup(this)">'
+      + '<span class="tree-group-toggle">▼</span> <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + style.color + ';flex-shrink:0;"></span> ' + style.icon + ' ' + t + ' <span style="font-weight:400;color:var(--muted);">· ' + items.length + '</span></div>';
+    html += '<div class="tree-group-children">';
+    items.forEach(function(n) {
+      var nc = NODE_STYLES[n.type] || NODE_STYLES.agent;
+      var disabled = shortcutActive ? ' disabled' : '';
+      html += '<div class="tree-item" data-node-id="' + n.id + '">'
+        + '<input type="checkbox" checked' + disabled + ' onchange="treeCheckboxChange(\'' + n.id + '\', this.checked)">'
+        + '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:' + nc.color + ';flex-shrink:0;"></span>'
+        + '<span class="tree-item-name" onclick="treeFocusNode(\'' + n.id + '\')">' + n.name + '</span>'
+        + '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+  });
+
+  body.innerHTML = html;
+}
+
+function treeCheckboxChange(nodeId, checked) {
+  if (shortcutActive) return; // tree is locked during shortcuts
   if (!cy) return;
-  // Apply status filter
-  const filter = currentFilter;
-  // Reset everything visible first
-  cy.nodes().forEach(function(n) {
-    const isDead = n.data('type') === 'dead-end';
-    if (filter === 'all') {
-      n.style('display', 'element');
-    } else if (filter === 'red') {
-      // Show dead-end nodes + source nodes of red edges
-      const redEdgeSources = new Set();
-      cy.edges('.edge-red').forEach(function(e) {
-        redEdgeSources.add(e.source().id());
-      });
-      n.style('display', (isDead || redEdgeSources.has(n.id())) ? 'element' : 'none');
+  var node = cy.getElementById(nodeId);
+  if (!node || node.length === 0) return;
+  node.style('display', checked ? 'element' : 'none');
+  // Hide edges connected to hidden nodes
+  node.connectedEdges().forEach(function(e) {
+    var src = e.source().style('display') !== 'none';
+    var tgt = e.target().style('display') !== 'none';
+    e.style('display', (src && tgt) ? 'element' : 'none');
+  });
+  updateFilterStatus();
+}
+
+// Read all tree checkboxes and sync to graph — single source of truth
+function syncTreeToGraph() {
+  if (!cy) return;
+  document.querySelectorAll('#tree-body .tree-item').forEach(function(item) {
+    var nid = item.getAttribute('data-node-id');
+    var cb = item.querySelector('input[type="checkbox"]');
+    if (!cb || !nid) return;
+    var node = cy.getElementById(nid);
+    if (!node || node.length === 0) return;
+    node.style('display', cb.checked ? 'element' : 'none');
+  });
+  // Additional: hide dead-end stub nodes (∅) when filter hides red edges
+  cy.nodes('.dead-end-node').forEach(function(n) {
+    if (currentViewFilter === 'green' || currentViewFilter === 'yellow') {
+      n.style('display', 'none');
     } else {
       n.style('display', 'element');
     }
   });
+  // Hide edges where either endpoint is hidden
   cy.edges().forEach(function(e) {
-    if (filter === 'all') {
-      e.style('display', 'element');
-    } else if (filter === 'green') {
-      e.style('display', e.hasClass('edge-green') ? 'element' : 'none');
-    } else if (filter === 'yellow') {
-      e.style('display', e.hasClass('edge-yellow') ? 'element' : 'none');
-    } else if (filter === 'red') {
-      e.style('display', e.hasClass('edge-red') ? 'element' : 'none');
+    var src = e.source().style('display') !== 'none';
+    var tgt = e.target().style('display') !== 'none';
+    if (!src || !tgt) { e.style('display', 'none'); return; }
+    // When a view filter is active, also hide edges whose status doesn't match
+    if (currentViewFilter) {
+      var edgeStatus = e.data('status');
+      e.style('display', (edgeStatus === currentViewFilter) ? 'element' : 'none');
     } else {
       e.style('display', 'element');
     }
   });
+  // Update layout
+  var layout = cy.layout(getLayoutConfig({ animate: true, animationDuration: 200 }));
+  layout.run();
+  updateFilterStatus();
+}
 
-  // For green/yellow/red: hide orphaned nodes not connected to any visible edge
-  if (filter === 'green' || filter === 'yellow' || filter === 'red') {
-    cy.nodes().forEach(function(n) {
-      const isDead = n.data('type') === 'dead-end';
-      const visibleEdges = n.connectedEdges(':visible');
-      if (!isDead && visibleEdges.length === 0) {
-        n.style('display', 'none');
-      }
-      // Hide dead-end nodes in green/yellow filters (they have no real purpose there)
-      if (isDead && filter !== 'red') {
-        n.style('display', 'none');
-      }
-    });
-  }
+function treeFocusNode(nodeId) {
+  if (!cy) return;
+  var node = cy.getElementById(nodeId);
+  if (!node || node.length === 0) return;
+  cy.animate({ fit: { eles: node, padding: 40 }, duration: 300 });
+  // Brief highlight
+  node.style('border-width', 4);
+  node.style('border-color', '#fbbf24');
+  node.style('border-opacity', 1);
+  setTimeout(function() {
+    if (cy) {
+      node.style('border-width', 2);
+      node.style('border-color', function(ele) { return ele.data('nodeColor'); });
+      node.style('border-opacity', 0.5);
+    }
+  }, 1500);
+  showNodeDetail(node);
+}
 
-  // Apply type filter (after status filter)
-  if (currentTypeFilter !== 'all') {
-    cy.nodes().forEach(function(n) {
-      const ntype = n.data('type');
-      if (ntype === 'dead-end') return;
-      if (ntype !== currentTypeFilter) {
-        n.style('display', 'none');
-      }
-    });
-  }
+function toggleTreeGroup(el) {
+  var children = el.nextElementSibling;
+  var toggle = el.querySelector('.tree-group-toggle');
+  if (!children || !toggle) return;
+  children.classList.toggle('collapsed');
+  toggle.textContent = children.classList.contains('collapsed') ? '▶' : '▼';
+}
 
-  // Rerun layout with animation
-  cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.05, nodeSep: 24, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 200 }).run();
+// ═══════════════════════════════════════════════════════
+// FILTER STATUS BAR
+// ═══════════════════════════════════════════════════════
+function updateFilterStatus() {
+  if (!cy) return;
+  var totalNodes = graphData.nodes ? graphData.nodes.length : 0;
+  var totalEdges = graphData.edges ? graphData.edges.length : 0;
+  var visibleNodes = cy.nodes(':visible').filter(function(n) { return n.data('type') !== 'dead-end' && n.data('type') !== 'filesystem'; }).length;
+  var visibleEdges = cy.edges(':visible').length;
+
+  var statusBar = document.getElementById('filter-status-bar');
+  var filterLabel = document.getElementById('filter-active-label');
+  var showingEl = document.getElementById('filter-showing');
+  var totalEl = document.getElementById('filter-total');
+  var edgesVisibleEl = document.getElementById('filter-edges-visible');
+  var edgesTotalEl = document.getElementById('filter-edges-total');
+
+  var isActive = shortcutActive;
+  statusBar.style.display = isActive ? 'block' : 'none';
+
+  if (!isActive) return;
+
+  showingEl.textContent = visibleNodes;
+  totalEl.textContent = totalNodes;
+  edgesVisibleEl.textContent = visibleEdges;
+  edgesTotalEl.textContent = totalEdges;
+
+  // Active filter label
+  var chips = document.querySelectorAll('.filter-chip.active, .filter-chip.active-red, .filter-chip.active-amber');
+  var label = '';
+  chips.forEach(function(c) {
+    var v = c.getAttribute('data-filter') || c.getAttribute('data-type') || '';
+    if (v !== 'all') label += (label ? ' + ' : '') + v;
+  });
+  filterLabel.textContent = label || 'filtered';
+  filterLabel.style.color = 'var(--blue)';
+  filterLabel.style.background = 'rgba(56,189,248,0.15)';
 }
 
 function resetLayout() {
   if (!cy) return;
-  cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.05, nodeSep: 24, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 400 }).run();
+  var layout = cy.layout(getLayoutConfig({ animationDuration: 400 }));
+  layout.run();
 }
 
 async function refreshData() {
+  // Clean up particles before destroying DOM
+  stopParticles();
+  if (particleCanvas) {
+    particleCanvas.remove();
+    particleCanvas = null;
+    particleCtx = null;
+  }
   document.getElementById('cy').innerHTML = '<div class="loading">Refreshing...</div>';
   const ok = await fetchGraph();
   if (!ok) {
     document.getElementById('cy').innerHTML = '<div class="loading">Failed to load data. Retrying...</div>';
     return;
   }
-  isFolded = false;
-  document.getElementById('foldBtn').textContent = '📂 Hide leaf nodes';
   initializeCy();
+  buildNodeTree();
 }
 
-// ─── Subgraph Folding ───
-let isFolded = false;
-
-function toggleFold() {
-  if (!cy) return;
-  isFolded = !isFolded;
-  const btn = document.getElementById('foldBtn');
-  btn.textContent = isFolded ? '📂 Show all nodes' : '📂 Hide leaf nodes';
-  btn.classList.toggle('active', isFolded);
-
-  if (isFolded) {
-    foldLeaves();
-  } else {
-    unfoldAll();
-  }
-}
-
-function foldLeaves() {
-  // Identify leaf agents: agent nodes with exactly 1 edge to another agent (not platform/consumer/router)
-  // Group them by their parent and collapse into a badge
-  const parentGroups = {};
-  const hubNodeIds = new Set();
-
-  // First pass: identify hub nodes (platforms, routers, consumer, agents with 5+ connections)
-  cy.nodes().forEach(function(n) {
-    const t = n.data('type');
-    const degree = n.connectedEdges().length;
-    if (t === 'platform' || t === 'router' || t === 'consumer' || degree >= 5) {
-      hubNodeIds.add(n.id());
-      parentGroups[n.id()] = { node: n, children: [] };
-    }
-  });
-
-  // Second pass: group leaf agents under their hub parent
-  cy.nodes().forEach(function(n) {
-    if (hubNodeIds.has(n.id())) return;
-    if (n.data('type') !== 'agent') return;
-    if (n.data('type') === 'dead-end') return;
-
-    const edges = n.connectedEdges();
-    if (edges.length === 0) return;
-
-    // Find the hub parent among connected nodes
-    let parentId = null;
-    edges.forEach(function(e) {
-      const src = e.source().id();
-      const tgt = e.target().id();
-      if (hubNodeIds.has(src) && tgt === n.id()) parentId = src;
-      else if (hubNodeIds.has(tgt) && src === n.id()) parentId = tgt;
-    });
-
-    if (parentId && parentGroups[parentId]) {
-      parentGroups[parentId].children.push(n);
-    }
-  });
-
-  // Third pass: hide children, update parent badges
-  Object.keys(parentGroups).forEach(function(pid) {
-    const group = parentGroups[pid];
-    if (group.children.length === 0) return;
-
-    const childCount = group.children.length;
-    group.children.forEach(function(child) {
-      child.style('display', 'none');
-      child.connectedEdges().forEach(function(e) {
-        e.style('display', 'none');
-        e.style('width', 0);
-      });
-    });
-
-    // Update parent label to show count
-    const currentLabel = group.node.data('label');
-    group.node.data('foldedLabel', currentLabel);
-    group.node.data('label', currentLabel + ' (+' + childCount + ')');
-    group.node.style({ 'label': group.node.data('label') });
-  });
-
-  // Rerun layout
-  cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.1, nodeSep: 28, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 300 }).run();
-}
-
-function unfoldAll() {
-  // Restore all hidden nodes and edges
-  cy.nodes().forEach(function(n) {
-    const foldedLabel = n.data('foldedLabel');
-    if (foldedLabel) {
-      n.data('label', foldedLabel);
-    }
-    n.style('display', 'element');
-    n.style({ 'label': n.data('label') });
-  });
-  cy.edges().forEach(function(e) {
-    e.style('display', 'element');
-    e.style('width', 2);
-  });
-
-  cy.layout({ name: 'dagre', rankDir: 'LR', spacingFactor: 1.05, nodeSep: 24, rankSep: 50, fit: true, padding: 20, animate: true, animationDuration: 300 }).run();
-}
-
-// Initialize on load
+// ═══════════════════════════════════════════════════════
+// INIT (with retry + dimension guard)
+// ═══════════════════════════════════════════════════════
 (async function() {
+  const cyContainer = document.getElementById('cy');
+  function hasDimensions() {
+    const rect = cyContainer.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+  if (!hasDimensions()) {
+    console.log('pathway: cy container has zero dimensions, waiting for visibility...');
+    await new Promise(function(resolve) {
+      const ro = new ResizeObserver(function(entries) {
+        for (var i = 0; i < entries.length; i++) {
+          var rect = entries[i].contentRect;
+          if (rect.width > 0 && rect.height > 0) {
+            ro.disconnect();
+            resolve(true);
+            return;
+          }
+        }
+      });
+      ro.observe(cyContainer);
+      setTimeout(function() { ro.disconnect(); resolve(false); }, 5000);
+    });
+  }
+
   const ok = await fetchGraph();
   if (ok) {
-    try {
-      initializeCy();
-    } catch(e) {
-      console.error('Cytoscape initialization failed:', e);
-      document.getElementById('cy').innerHTML = '<div class="loading" style="color:#ef4444;">⚠️ Pathway map failed to render. <a href="/pathway" style="color:#38bdf8;">Reload page</a> or check console for details.</div>';
+    let cyInitOk = false;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      if (typeof cytoscape !== 'undefined') {
+        try {
+          initializeCy();
+          buildNodeTree();
+          cyInitOk = true;
+          break;
+        } catch(e) {
+          console.error('Cytoscape init attempt ' + (attempt+1) + ' failed:', e);
+          if (attempt < 4) await new Promise(r => setTimeout(r, 500));
+          else {
+            document.getElementById('cy').innerHTML = '<div class="loading" style="color:#ef4444;">⚠️ Pathway map failed to render. <a href="/pathway" style="color:#38bdf8;">Reload page</a> or check console for details.<br><span style="font-size:12px;color:#94a3b8;">' + (e.message || e) + '</span></div>';
+            cyInitOk = true;
+          }
+        }
+      } else {
+        console.warn('Cytoscape not loaded yet, attempt ' + (attempt+1) + '...');
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+    if (!cyInitOk) {
+      document.getElementById('cy').innerHTML = '<div class="loading" style="color:#ef4444;">⚠️ Pathway map failed to render. <a href="/pathway" style="color:#38bdf8;">Reload page</a> or check console for details.<br><span style="font-size:12px;color:#94a3b8;">Cytoscape library failed to load from CDN</span></div>';
     }
   } else {
     document.getElementById('cy').innerHTML = '<div class="loading" style="color:#ef4444;">⚠️ No pathway data. Run <code>observeco pathway scan</code> first.</div>';
