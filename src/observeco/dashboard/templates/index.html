@@ -2923,15 +2923,14 @@ function openSkillsAuditModal(agentName) {
           });
           var litePct = totalRaw > 0 ? Math.round((1 - totalLite / totalRaw) * 100) : 0;
           var fullPct = totalRaw > 0 ? Math.round((1 - totalFull / totalRaw) * 100) : 0;
-          savings += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">' +
-            '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
+          savings += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;"><div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
             '<div style="font-size:20px;font-weight:700;color:#22c55e;">' + litePct + '%</div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Lite (guidance only)</div>' +
-            '<div style="font-size:10px;color:#64748b;margin-top:2px;">' + totalLite.toLocaleString() + ' tok</div></div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Lite</div>' +
+            '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance @ 70% · ' + totalLite.toLocaleString() + ' tok</div></div>' +
             '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">' +
             '<div style="font-size:20px;font-weight:700;color:#a5b4fc;">' + fullPct + '%</div>' +
-            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Full (guidance + memory + skills)</div>' +
-            '<div style="font-size:10px;color:#64748b;margin-top:2px;">' + totalFull.toLocaleString() + ' tok</div></div></div>';
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Full</div>' +
+            '<div style="font-size:10px;color:#64748b;margin-top:2px;">guidance @ 70% + memory/skills @ 40% · ' + totalFull.toLocaleString() + ' tok</div></div></div>';
           // Per-agent breakdown
           savings += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">Per-agent savings</div>';
           agents.forEach(function(e){

@@ -3108,14 +3108,18 @@ async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
         tools_t = t.get("tools_tokens", 0)
         identity_t = t.get("identity_tokens", 0)
 
-        # Lite: compress only the guidance section
+        # Lite: compress guidance @ 70% — fast lightweight reduction
         lite_savings_ratio = min(0.25, max(0.0, guidance_t / max(raw, 1)))
         lite = max(0, raw - int(guidance_t * 0.7))  # Compress guidance by ~70%
 
-        # Full: compress guidance + memory + skills (preserve identity + tools)
+        # Full: guidance @ 70% (same as Lite) + memory + skills @ 40%
+        # Full always >= Lite because it applies Lite's aggressive rate on guidance,
+        # then adds gentler compression on the remainder.
+        base = int(guidance_t * 0.7)
+        extra = int((memory_t + skills_t) * 0.4)
+        full_val = max(0, raw - base - extra)
         full_targets = guidance_t + memory_t + skills_t
         full_savings_ratio = min(0.50, max(0.0, full_targets / max(raw, 1)))
-        full_val = max(0, raw - int(full_targets * 0.6))  # Compress target sections by ~60%
 
         result[name] = {
             "raw_tokens": raw,
