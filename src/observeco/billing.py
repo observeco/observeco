@@ -204,8 +204,8 @@ def configure(stripe_secret: str, stripe_publishable: str,
 
 
 def create_checkout_session(email: str, phone: str = "", name: str = "", plan: str = "solo",
-                            success_url: str = "http://localhost:9121/api/billing/success",
-                            cancel_url: str = "http://localhost:9121/api/billing/cancel") -> dict:
+success_url: str = None,
+    cancel_url: str = None) -> dict:
     """Create a Stripe Checkout Session.
 
     In demo/probe mode when Stripe is not configured, returns a simulated session.
@@ -244,11 +244,14 @@ def create_checkout_session(email: str, phone: str = "", name: str = "", plan: s
         if name:
             metadata["customer_name"] = name
 
+        # Append {CHECKOUT_SESSION_ID} so Stripe passes it back on redirect
+        live_success = (success_url or "http://localhost:9121/api/billing/success") + \
+                       "?session_id={CHECKOUT_SESSION_ID}"
         session = stripe.checkout.Session.create(
             line_items=[{"price": price_id, "quantity": 1}],
             mode="subscription",
-            success_url=success_url,
-            cancel_url=cancel_url,
+            success_url=live_success,
+            cancel_url=cancel_url or "http://localhost:9121/api/billing/cancel",
             metadata=metadata,
             subscription_data={
                 "trial_period_days": config.trial_days,
@@ -304,6 +307,10 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
                 "created_at": int(time.time()),
             })
             _save_config(config)
+            # Also start the trial so license.json reflects Pro status
+            from observeco.license import start_trial as _start_trial
+            _start_trial()
+            logger.info("Webhook checkout.session.completed: customer=%s, trial started", customer_email)
             return {"status": "success", "action": "customer_created"}
 
         return {"status": "ignored", "event": event["type"]}
@@ -495,14 +502,17 @@ def add_billing_endpoints(app) -> None:
                 except Exception:
                     logger.warning("Could not verify live Stripe session %s", session_id)
 
-        return HTMLResponse("""<!DOCTYPE html><html><head><meta http-equiv="refresh" content="2;url=/"></head><body style="background:#0f172a;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;">
+        return HTMLResponse("""<!DOCTYPE html><html><head>
+        <script>
+        // Auto-reload the tab that opened Stripe (if any), so Pro features light up
+        try { if (window.opener && !window.opener.closed) window.opener.location.reload(); } catch(e) {}
+        setTimeout(function() { window.location.href = '/'; }, 1500);
+        </script>
+        </head><body style="background:#0f172a;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;">
         <div style="font-size:48px;">✅</div>
         <h2 style="margin:0;">Payment successful!</h2>
         <p style="color:#94a3b8;font-size:14px;">Your Pro license is being activated...</p>
-        <p style="color:#64748b;font-size:12px;">Redirecting to dashboard...</p>
-        <script>
-        setTimeout(function() { window.location.href = '/'; }, 2000);
-        </script></body></html>""")
+        <p style="color:#64748b;font-size:12px;">Redirecting to dashboard...</p></body></html>""")
 
     @app.get("/api/billing/cancel")
     async def billing_cancel():

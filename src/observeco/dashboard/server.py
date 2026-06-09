@@ -2486,8 +2486,10 @@ async def api_brain(agent: str = "all"):
         components = {k: v for k, v in comps_raw.items() if v > 0}
 
         raw_tokens = total_tokens if total_tokens > 0 else sum(components.values())
+        # Estimated compression savings — replaced by real data after first compress run
         lite_tokens = int(raw_tokens * 0.78)
         full_tokens = int(raw_tokens * 0.65)
+        savings_estimated = True
 
         # Drift data
         drift_rows = [dict(r) for r in conn.execute(
@@ -2550,6 +2552,7 @@ async def api_brain(agent: str = "all"):
             "raw_tokens": raw_tokens,
             "lite_tokens": lite_tokens,
             "full_tokens": full_tokens,
+            "savings_estimated": True,
             "drift": drift,
             "turn_timeline": turns[:24],
         }
@@ -3670,10 +3673,15 @@ async def api_optimiser_stats(agent: str = "all"):
     full_avg = conn.execute(
         "SELECT ROUND(ABS(AVG(savings_pct)), 0) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
     ).fetchone()
-    lite_savings = int(lite_avg["avg_pct"]) if lite_avg and lite_avg["avg_pct"] else 22
-    full_savings = int(full_avg["avg_pct"]) if full_avg and full_avg["avg_pct"] else 35
-    opt_min = min(43, lite_savings + 21)
-    opt_max = min(47, full_savings + 12)
+    lite_savings = int(lite_avg["avg_pct"]) if lite_avg and lite_avg["avg_pct"] else None
+    full_savings = int(full_avg["avg_pct"]) if full_avg and full_avg["avg_pct"] else None
+    opt_min = None
+    opt_max = None
+    if lite_savings is not None or full_savings is not None:
+        lite_base = lite_savings or 22
+        full_base = full_savings or 35
+        opt_min = min(43, lite_base + 21)
+        opt_max = min(47, full_base + 12)
 
     return JSONResponse({
         "agent": agent,

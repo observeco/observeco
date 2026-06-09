@@ -1085,8 +1085,8 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         <!-- Manual tab -->
         <div id="manualTab">
           <div class="mode-select">
-            <button class="mode-btn active" onclick="switchMode('lite', this)" id="liteBtn">Lite (Free) &mdash; <span id="litePctLabel">22</span>%</button>
-            <button class="mode-btn" onclick="switchMode('full', this)" id="fullBtn">Full (Pro) &mdash; <span id="fullPctLabel">35</span>%</button>
+            <button class="mode-btn active" onclick="switchMode('lite', this)" id="liteBtn">Lite (Free) &mdash; <span id="litePctLabel">est.</span></button>
+            <button class="mode-btn" onclick="switchMode('full', this)" id="fullBtn">Full (Pro) &mdash; <span id="fullPctLabel">est.</span></button>
             <span style="font-size:11px;color:#64748b;margin-left:auto;">
               Lite: compress guidance blocks &middot; Full: +memory culling +skill dedup +context refactor
             </span>
@@ -1101,7 +1101,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
               </div>
             </div>
             <div class="comp-panel">
-              <div class="comp-title" id="afterTitle">After (<span id="afterModeName">Lite</span> compression &mdash; <span id="afterModePct">22</span>%)</div>
+              <div class="comp-title" id="afterTitle">After (<span id="afterModeName">Lite</span> compression &mdash; <span id="afterModePct">est.</span>)</div>
               <div class="comp-tokens" style="color:#22c55e;" id="afterTokens">0 tok <span style="font-size:12px;color:#64748b;font-weight:400;">&mdash;</span></div>
               <div class="diff-preview" id="diffPreviewNew" style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.7;">
                 &nbsp;
@@ -1157,29 +1157,29 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
                 <div class="bar-fill" id="optimiserProgressBar" style="width:58%;background:linear-gradient(90deg,#6366f1,#8b5cf6);"></div>
               </div>
               <div class="label-row">
-                <span id="optimiserProgressLabel">58% — learned from 116 turns</span>
+                <span id="optimiserProgressLabel" style="color:#64748b;">🔒 — turns logged after Pro activation</span>
                 <span id="optimiserGoalLabel" style="color:#6366f1;">Goal: 200 turns</span>
               </div>
             </div>
-            <div class="optimiser-metric"><span class="label">Skills never triggered</span><span id="optimiserSkillsNever" class="value" style="color:#f97316;">3 of 8</span></div>
-            <div class="optimiser-metric"><span class="label">Guidance rules stale</span><span id="optimiserGuidanceStale" class="value" style="color:#eab308;">2 of 5</span></div>
-            <div class="optimiser-metric"><span class="label">Recent compressions</span><span id="optimiserRecentCompressions" class="value" style="color:#64748b;">—</span></div>
+            <div class="optimiser-metric"><span class="label">Skills never triggered</span><span id="optimiserSkillsNever" class="value" style="color:#6b7280;">—</span></div>
+            <div class="optimiser-metric"><span class="label">Guidance rules stale</span><span id="optimiserGuidanceStale" class="value" style="color:#6b7280;">—</span></div>
+            <div class="optimiser-metric"><span class="label">Recent compressions</span><span id="optimiserRecentCompressions" class="value" style="color:#6b7280;">—</span></div>
             <div style="font-size:11px;color:#64748b;margin-top:8px;">At 200 turns, Optimiser will recommend what to prune &mdash; projected <strong id="optimiserExtraSavings" style="color:#22c55e;">varies</strong> additional savings on top of compression.</div>
           </div>
           <div class="optimiser-card">
             <h4>📈 Projected savings</h4>
             <div class="savings-mini-grid">
               <div class="mini-card">
-                <div class="mini-val" style="color:#22c55e;" id="optimiserLiteVal">—</div>
+                <div class="mini-val" style="color:#6b7280;" id="optimiserLiteVal">—</div>
                 <div class="mini-label">Lite (current)</div>
               </div>
               <div class="mini-card">
-                <div class="mini-val" style="color:#a5b4fc;" id="optimiserFullVal">—</div>
+                <div class="mini-val" style="color:#6b7280;" id="optimiserFullVal">—</div>
                 <div class="mini-label">Full (available)</div>
               </div>
             </div>
             <div class="optimiser-highlight">
-              <div class="hl-val" id="optimiserProjectedVal">—</div>
+              <div class="hl-val" id="optimiserProjectedVal" style="color:#6b7280;">—</div>
               <div class="hl-label">Projected with Optimiser after 200 turns</div>
               <div class="hl-meta">Lite compression + Optimiser pruning = deeper savings</div>
             </div>
@@ -1427,7 +1427,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         <div id="proTrialStatus" style="font-size:12px;color:var(--fg-2);min-height:18px;"></div>
 <div style="display:flex;gap:8px;justify-content:center;">
           <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="font-size:13px;padding:8px 20px;width:auto;">Not now</button>
-          <a href="/api/checkout?plan=solo&trial=30" target="_blank" class="add-btn" style="font-size:13px;padding:8px 20px;text-decoration:none;display:inline-block;text-align:center;">Start Free Trial</a>
+          <button onclick="startProTrial();" class="add-btn" style="font-size:13px;padding:8px 20px;text-decoration:none;display:inline-block;text-align:center;border:none;cursor:pointer;">Start Free Trial</button>
         </div>
       </div>
     </div>
@@ -1926,20 +1926,27 @@ function renderOptimiser(data) {
     ).join('');
   }
   // Dynamic savings from brain data
-  const litePct = data.savings?.lite || 22;
-  const fullPct = data.savings?.full || 35;
-  const optMin = data.savings?.optimiser_min || 43;
-  const optMax = data.savings?.optimiser_max || 47;
-  document.getElementById('optimiserLiteVal').textContent = '-' + litePct + '%';
-  document.getElementById('optimiserFullVal').textContent = '-' + fullPct + '%';
-  document.getElementById('optimiserProjectedVal').textContent = '-' + optMin + '% to -' + optMax + '%';
-  document.getElementById('optimiserTierLiteCta').textContent = litePct + '% savings per turn';
-  document.getElementById('optimiserTierFullCta').textContent = 'Upgrade → Up to ' + optMax + '% savings';
+  const litePct = data.savings?.lite;
+  const fullPct = data.savings?.full;
+  const optMin = data.savings?.optimiser_min;
+  const optMax = data.savings?.optimiser_max;
+  document.getElementById('optimiserLiteVal').textContent = litePct != null ? '-' + litePct + '%' : '—';
+  document.getElementById('optimiserFullVal').textContent = fullPct != null ? '-' + fullPct + '%' : '—';
+  document.getElementById('optimiserProjectedVal').textContent =
+    (optMin != null && optMax != null) ? '-' + optMin + '% to -' + optMax + '%' : '—';
+  document.getElementById('optimiserTierLiteCta').textContent = litePct != null ? litePct + '% savings per turn' : 'Guidance compression';
+  document.getElementById('optimiserTierFullCta').textContent = optMax != null ? 'Upgrade → Up to ' + optMax + '% savings' : 'Upgrade → Full compression';
   // Extra = Optimiser savings minus best compression (full)
-  const extraMin = Math.max(0, optMin - fullPct);
-  const extraMax = Math.max(0, optMax - fullPct);
   const extraEl = document.getElementById('optimiserExtraSavings');
-  if (extraEl) extraEl.textContent = extraMin + '-' + extraMax + '%';
+  if (extraEl) {
+    if (optMin != null && fullPct != null) {
+      const extraMin = Math.max(0, optMin - fullPct);
+      const extraMax = Math.max(0, optMax - fullPct);
+      extraEl.textContent = extraMin + '-' + extraMax + '%';
+    } else {
+      extraEl.textContent = 'varies';
+    }
+  }
 }
 function renderBrain(agentName) {
   if (!brainData) return;
