@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-| **Last updated:** 2026-06-10 (§5 Pro Tier table corrected — statuses now match feature matrix with backend/UI split. Skill Audit and Glossary rows added.)
+|| **Last updated:** 2026-06-10 (§5 Pro Tier table corrected — statuses now match feature matrix with backend/UI split. Fleet Comparison row added, marked ✅ Live.)
 | **Author:** Main |
 
 ---
@@ -48,6 +48,7 @@
 | 11 | All CLI commands (pulse, circuit, chisel, clawforge) | CLI | ✅ Live | ✅ | ✅ | — | — |
 | 12 | Local SQLite, zero cloud, zero telemetry | Infrastructure | ✅ Live | ✅ | ✅ | — | — |
 | | | | | | | | |
+|| **46** | **Fleet Comparison Tab** — side-by-side agent comparison matrix: tokens, composition bars, drift, errors, circuit, last seen | Dashboard | ✅ Live | ✅ Data table (all agents) | ✅ Same | ~1d | observeco-master-plan.md |
 | **PLANNED** | | | | | | | |
 || 13 | System prompt compression (`observeco chisel compress`) | Analysis | ✅ CLI / 🔴 Phases 2-4 (auto-watch, dashboard, skill audit hook) | ✅ `--mode lite` (guidance compression) + `--dry-run` | ✅ `--mode full` (memory culling + skill dedup + context refactor) + auto-watch daemon + dashboard savings | ~2.5d | observeco-master-plan.md §13 |
 | 14 | Per-turn token tracking (webhook + agent hooks) | Monitoring | ✅ Backend / 🔴 Phases 2-4 (agent hooks + trend + budget alerts + dashboard) | ✅ 24h timeline + component breakdown + cost tracking | ✅ never-pruned history + anomaly detection (+3σ flag) + budget thresholds (daily/cost/anomaly sigma) + fleet comparison + component trend analysis | ~4d (~2d if §18 built first) | observeco-master-plan.md §14 |

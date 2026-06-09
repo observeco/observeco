@@ -942,6 +942,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <!-- Tab bar -->
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('fleet', this)">🚀 Fleet</button>
+    <button class="tab-btn" onclick="switchTab('compare', this)">📊 Compare</button>
     <button class="tab-btn" onclick="switchTab('brain', this)">🧠 Brain Analysis</button>
     <button class="tab-btn" onclick="switchTab('heal', this)">🛠️ Auto-Heal</button>
     <button class="tab-btn" onclick="switchTab('alerts', this)">🔔 Push Alerts</button>
@@ -968,6 +969,19 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       </div>
     </div>
     <div id="fleetContainer"></div>
+  </div>
+
+  <!-- Compare tab -->
+  <div class="tab-content" id="tabCompare">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">📊 Fleet Comparison</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Side-by-side token, drift, and error profiles across all agents.</div>
+
+      <!-- Compare table -->
+      <div id="comparePanel" hx-get="/api/fleet-compare" hx-trigger="load, every 30s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading comparison data...</div>
+      </div>
+    </div>
   </div>
 
   <!-- Brain Analysis tab -->

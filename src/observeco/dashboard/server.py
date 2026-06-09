@@ -2120,6 +2120,126 @@ async def api_fleet_summary():
 </div>""")
 
 
+@app.get("/api/fleet-compare", response_class=HTMLResponse)
+async def api_fleet_compare():
+    """Side-by-side fleet comparison — § Fleet Comparison."""
+    summary = db.get_agent_status_summary()
+    agents = db.get_agents()
+    trims_all = db.get_trims(limit=30)
+    drift_all = db.get_drift()
+    circuit = db.get_circuit_breakers()
+    all_errors = db.get_errors(limit=100)
+
+    # Build per-agent data
+    agent_cfg = {a["agent_name"]: a for a in agents}
+    latest_trims = {}
+    for t in trims_all:
+        if t["agent_name"] not in latest_trims:
+            latest_trims[t["agent_name"]] = t
+
+    drift_latest = {}
+    for d in drift_all:
+        if d["agent_name"] not in drift_latest:
+            drift_latest[d["agent_name"]] = d
+
+    breakers = {b["agent_name"]: b for b in circuit}
+
+    now = int(time.time())
+    all_names = sorted(set(
+        list(summary.keys()) + list(agent_cfg.keys()) +
+        list(latest_trims.keys()) + list(drift_latest.keys())
+    ))
+
+    rows = []
+    for name in all_names:
+        s = summary.get(name, {})
+        status = s.get("status", "unknown")
+        status_color = {"alive": "#22c55e", "dead": "#ef4444", "error": "#eab308", "unknown": "#64748b"}.get(status, "#64748b")
+        status_dot = f'<span style="color:{status_color}">●</span>'
+
+        # Framework
+        fw = agent_cfg.get(name, {}).get("framework", "") or ""
+        fw_display = fw.capitalize() if fw else "-"
+
+        # Tokens — latest trim total
+        trim = latest_trims.get(name, {})
+        tok_total = trim.get("total_tokens", 0)
+
+        # Component bars
+        comps = [
+            ("identity", trim.get("identity_tokens", 0), "#6366f1"),
+            ("skills", trim.get("skills_tokens", 0), "#8b5cf6"),
+            ("memory", trim.get("memory_tokens", 0), "#ec4899"),
+            ("tools", trim.get("tools_tokens", 0), "#14b8a6"),
+            ("guidance", trim.get("guidance_tokens", 0), "#f97316"),
+        ]
+        comp_bars = ""
+        for cname, ctok, ccolor in comps:
+            pct = (ctok / tok_total * 100) if tok_total > 0 else 0
+            if pct > 0:
+                comp_bars += f'<span style="display:inline-block;width:{pct:.0f}%;height:6px;background:{ccolor};border-radius:2px;margin-right:1px;" title="{cname}: {ctok}tok ({pct:.0f}%)"></span>'
+
+        tok_label = f"{tok_total:,}" if tok_total else "-"
+
+        # Drift
+        dr = drift_latest.get(name, {})
+        drift_pct = dr.get("delta_pct", 0)
+        drift_breached = dr.get("breached", False)
+        drift_label = f"{drift_pct:+.1f}%" if drift_pct else "-"
+        drift_color = "#ef4444" if drift_breached else "#22c55e" if abs(drift_pct) > 5 else "#64748b"
+
+        # Errors (24h)
+        recent_errors = [e for e in all_errors if e.get("agent_name") == name and now - e.get("timestamp", 0) < 86400]
+        err_count = len(recent_errors)
+        err_label = f'{err_count} <span style="color:var(--danger);font-size:10px;">⚠</span>' if err_count > 0 else "0"
+
+        # Circuit
+        cb = breakers.get(name, {})
+        cb_status = "🔴 Tripped" if cb.get("tripped") else "✅ OK"
+
+        # Last seen
+        ts = s.get("timestamp", 0)
+        last_seen = _fmt_ts(ts) if ts else "-"
+
+        rows.append(f"""<tr>
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status {status}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>{name}</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">{fw_display}</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">{tok_label}</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;">{comp_bars if comp_bars else '<span style="color:#64748b;font-size:10px;">no data</span>'}</div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:{drift_color};">{drift_label}</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">{err_label}</td>
+    <td style="padding:10px 12px;font-size:11px;">{cb_status}</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">{last_seen}</td>
+</tr>""")
+
+    if not rows:
+        return HTMLResponse("""<div class="empty-state" style="text-align:center;padding:40px;color:#64748b;">
+    <div style="font-size:32px;margin-bottom:12px;">📊</div>
+    <div style="font-weight:600;margin-bottom:4px;">No agents to compare</div>
+    <div style="font-size:12px;">Agents will appear here once they're discovered and monitored.</div>
+</div>""")
+
+    return HTMLResponse(f"""<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Agent</th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Framework</th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Tokens</th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Composition</th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Drift</th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Errors</th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Circuit</th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Last</th>
+            </tr>
+        </thead>
+        <tbody>
+            {''.join(rows)}
+        </tbody>
+    </table>
+</div>""")
+
+
 # ---------------------------------------------------------------------------
 # § Platform Connectivity — live probe of messaging platforms
 # ---------------------------------------------------------------------------
