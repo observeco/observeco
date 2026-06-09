@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-| **Last updated:** 2026-06-10 (§3.13/14/15/17/18/20/21 expanded with RDRs, state matrices, ACs. G1 guardrails spec'd. Feature matrix statuses corrected to match reality. Discord + Dashboard UI spec added to Push Alerts.)
+| **Last updated:** 2026-06-10 (§5 Pro Tier table corrected — statuses now match feature matrix with backend/UI split. Skill Audit and Glossary rows added.)
 | **Author:** Main |
 
 ---
@@ -1850,20 +1850,22 @@ Layer 4 — Cross-Framework Dashboard (P0)
 
 ## 5. Pro Tier ($9 Solo/month) — What Upgrades Unlock
 
-| Feature | Solo ($9/mo) | Built? |
+| Feature | Solo ($9/mo) | Status |
 |---------|-------------|--------|
-| Push alerts (Telegram, webhook, email) | ✅ 1 channel | 🔴 Planned ~3d |
-| Extended history (never-pruned) | ✅ | 🔴 Planned ~2h |
-| Auto-heal (configurable) | ✅ | 🔴 Planned ~1d |
-| Chisel compress auto-watch | ✅ | 🔴 Planned ~2d |
-| Per-turn token tracking (never-pruned) | ✅ | 🔴 Planned ~3d |
-| Self-serve billing (License card, trial cancel, Grace portal, end-of-trial banner) | ✅ | ✅ Live — Feature #26 |
-| LLM Intelligence (7 consumers: discovery, onboarding, heal, alerts, summaries, etc.) | ✅ All 7 | ✅ Live — **Pro only** (unlocked during 30-day trial) |
+| Push alerts (Telegram, Discord, webhook, email) | ✅ All channels + zero discovery gap | ✅ Backend (Telegram/webhook/email) / ❌ Dashboard UI + Discord ~1.5d |
+| Extended history (never-pruned) | ✅ Full history + L2 baselines up to 90d | ✅ Backend / 🔴 Prune cron + L2 baseline engine + range selector ~4d |
+| Auto-heal (configurable L1+L2) | ✅ Auto-detect + auto-recover ~5s | ✅ Backend (L1+L2+CLI) / ❌ Dashboard UI ~1d |
+| Chisel compress auto-watch | ✅ Auto-watch daemon + Full compression | ✅ CLI exists / 🔴 Auto-watch daemon + dashboard + Skill Audit hook ~2.5d |
+| Per-turn token tracking (never-pruned) | ✅ Full history + anomaly detection + budget alerts | ✅ Backend (endpoint + DB tables) / 🔴 Agent hooks + trend engine + alerts + dashboard ~4d |
+| LLM Intelligence (7 consumers) | ✅ All 7 consumers (deep + shallow) permanently | ✅ Live — v1, 5 of 7 built, 2 deferred with fallbacks |
+| Self-serve billing | ✅ License card, trial cancel, Grace portal | ✅ Live — Feature #26 |
+| Skill Audit auto-scan | ✅ Weekly auto-scan + drift tracking + threshold alerts | ✅ CLI exists / 🔴 Phases 2-4 (drift DB + cron + dashboard) ~2d |
+| Glossary & FAQ | ✅ Full glossary (Free tier too) | 🔴 Planned, not built ~3h |
 
 **Pricing:** Solo $9/mo only. Team tier ($49/mo) delayed — product not mature enough.
 30-day free trial via Stripe. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`.
 
-**⚠️ Reality check:** Most Pro features are built and working during the 30-day trial. After trial, features marked Pro-only lock. LLM intelligence is all-or-nothing — no "free light" tier. See §3.25 and §3.28 for details. Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment (paying users managed offline for now).
+**⚠️ Reality check:** Backend for most Pro features is built (heal engine, push delivery, token tracking, compress CLI, LLM service). **Dashboard UIs are the gap** — users activating a Pro key see a comparison grid, not working controls. The 30-day trial unlocks the LLM Intelligence Service (all 7 consumers) immediately. After trial, LLM shuts off, other features remain visible as upsells. Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment (paying users managed offline for now).
 
 ---
 
