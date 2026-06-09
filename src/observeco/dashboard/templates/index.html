@@ -1286,6 +1286,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
             <button onclick="checkDriftAlerts()" class="heal-trigger-btn" style="background:var(--bg);border:1px solid var(--border);color:var(--fg-2);">📈 Check Drift</button>
             <button onclick="loadAlertLog()" class="heal-trigger-btn">🔄 Refresh</button>
           </div>
+        </div>
         <div id="alertLog" hx-get="/api/alert-log" hx-trigger="load, every 60s" hx-swap="innerHTML" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
       </div>
     </div>
@@ -3323,12 +3324,9 @@ document.addEventListener('htmx:beforeRequest', function(evt) {
   // Only show if not previously dismissed
   if (localStorage.getItem('observeco-onboarding-dismissed')) return;
 
-  // Detect phase from the body data attribute or API
-  var phase = document.body.getAttribute('data-phase') || 'phase-0';
-
-  // Don't show onboarding if agents already exist (dashboard is populated)
-  if (phase === 'phase-3') return;
-  if (phase !== 'phase-3' && window.allAgents && window.allAgents.length > 0) {
+  // Skip if agents are already visible on the page
+  var agentCards = document.querySelectorAll('.agent-card');
+  if (agentCards.length > 0) {
     localStorage.setItem('observeco-onboarding-dismissed', 'true');
     return;
   }
@@ -3336,15 +3334,20 @@ document.addEventListener('htmx:beforeRequest', function(evt) {
   var overlay = document.getElementById('onboardingOverlay');
   if (!overlay) return;
 
-  // Show matching panel
-  var panels = overlay.querySelectorAll('.onboarding-panel');
-  panels.forEach(function(p) {
-    if (p.getAttribute('data-phase') === phase) {
-      p.style.display = 'block';
+  // Phase 0 (no agents) — show the welcome overlay
+  var panel = overlay.querySelector('.onboarding-panel[data-phase="phase-0"]');
+  if (panel) panel.style.display = 'block';
+  overlay.style.display = 'flex';
+
+  // Watch for agents appearing and auto-dismiss overlay
+  var obs = new MutationObserver(function() {
+    if (document.querySelectorAll('.agent-card').length > 0) {
+      localStorage.setItem('observeco-onboarding-dismissed', 'true');
+      overlay.style.display = 'none';
+      obs.disconnect();
     }
   });
-
-  overlay.style.display = 'flex';
+  obs.observe(document.getElementById('fleetContainer') || document.body, { childList: true, subtree: true });
 })();
 
 function dismissOnboarding() {
