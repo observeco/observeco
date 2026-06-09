@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
 
 **Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-| **Last updated:** 2026-06-10 (§14 Token Rogue Guardrails — threat model + G1/G2/G3 build phases, token-based budget pool confirmed)
+| **Last updated:** 2026-06-10 (§15/§17 status corrected — Backend ✅ / Dashboard UI ❌. Discord added to Push Alerts. Human-centric build lesson documented.)
 | **Author:** Main |
 
 ---
@@ -51,9 +51,9 @@
 | **PLANNED** | | | | | | | |
 | 13 | System prompt compression (`observeco chisel compress`) | Analysis | ✅ Live | ✅ `--mode lite` (guidance compression) | ✅ `--mode full` (memory culling + skill dedup + context refactor) | ~2.5d | observeco-master-plan.md §13 |
 | 14 | Per-turn token tracking (webhook + agent hooks) | Monitoring | ✅ Live | ✅ 24h timeline + component breakdown + cost tracking | ✅ never-pruned history + anomaly detection (+3σ flag) + budget thresholds (daily/cost/anomaly sigma) + fleet comparison + component trend analysis | ~4d (~2d if §18 built first) | observeco-master-plan.md §14 |
-| 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Live | ✅ manual Heal button + dashboard alerts + L2 trends | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) | ~1d + L2 built | observeco-master-plan.md §15 |
+| 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Backend (heal.py) / ❌ Dashboard UI | ✅ manual Heal button + dashboard alerts + L2 trends | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) | ~1d + L2 built | observeco-master-plan.md §15 |
 | 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) — dashboard stats + hooks now auth-exempt (401 fix) | Analysis | ✅ Live | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
-| 17 | Push alerts (Telegram, webhook, email) | Alerts | ✅ Live | ❌ in-dashboard only (discovery gap) | ✅ Telegram + webhook + email + auto-heal integration + subscription management + delivery log | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
+| 17 | Push alerts (Telegram, Discord, webhook, email) | Alerts | ✅ Backend (push.py) / ❌ Dashboard UI | ❌ in-dashboard only (discovery gap) | ✅ Telegram + Discord + webhook + email + auto-heal integration + subscription management + delivery log | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
 | 18 | Extended history (7d free / never-pruned pro) | Dashboard | ✅ Live | ✅ 7d (pruning cron at 3am) + L2 baselines (RSS, P95, errors, upstream) | ✅ never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
 || 19 | In-dashboard Glossary & FAQ | Dashboard | ✅ Live | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
 || 20 | Skill Audit (`observeco chisel skills`) — now with --compress flag for body compression + `chisel cards` + `chisel artifacts` | Analysis | ✅ Live | ✅ manual CLI scan + ranked table + `--compress --dry-run` to preview savings + `cards` for metadata catalog + `artifacts --refresh` to rebuild compressed cache | ✅ auto-scan (weekly) + drift tracking + threshold alerts + 12-week trend chart | ~3d (built) + 1d (compress) + 1d (artifacts) | observeco-master-plan.md §3.21 |
@@ -629,11 +629,13 @@ This number grows the longer the user goes between dashboard visits — directly
 | **Effort** | ~4 days (1 webhook + 1 trend engine + 1 alerts + 1 dashboard). ~2 days if §18 built first. |
 | **Depends on** | `POST /api/chisel/trim` endpoint (✅ exists), Extended History §18 data retention (shared infra), push alert infrastructure §17, Hermes + OpenClaw post-turn hooks |
 
-### 3.15 Auto-Heal (🔴 Planned)
+### 3.15 Auto-Heal (✅ Backend / ❌ Dashboard UI)
 
 **The value, in one sentence:** Free = you notice a crash and click Heal. Pro = the system detects and recovers the crash within 5 seconds — you never know it happened.
 
 **What it is:** The watch daemon automatically triggers `run_heal()` when pulse detects a dead agent. Detection-to-recovery: ~5 seconds. No human click, no SSH, no context switch.
+
+**Current status:** Backend fully built (`src/observeco/heal/__init__.py` — 453 lines). L1 auto-restart, L2 proactive detection, snapshot-before-heal, circuit breaker, LLM escalation all working via CLI (`observeco heal --auto-heal`). **Dashboard UI missing** — no toggle, no status card, no per-agent config. The upsell promises "auto-detects, auto-restarts, predicts failures" but a Pro user activating a key sees only the static scenario comparison grid.
 
 **What the human sees with Free:** You wake up at 7am, open the dashboard — Kepler has a red dot. Pulse log shows it crashed at 3am. Guard tripped at 3:01. Agent was dead for 4 hours. You click Heal, it recovers.
 
@@ -1130,11 +1132,13 @@ $ openclaw gateway restart
 ✅ pre-response hook: active
 ```
 
-### 3.17 Push Alerts (🔴 Planned)
+### 3.17 Push Alerts (✅ Backend / ❌ Dashboard UI)
 
-**The value, in one sentence:** Free shows you alert history when you open the dashboard — hours after the event. Pro pushes every alert to Telegram within 3 seconds. You know before your agent fails twice.
+**The value, in one sentence:** Free shows you alert history when you open the dashboard — hours after the event. Pro pushes every alert to Telegram, Discord, or email within 3 seconds. You know before your agent fails twice.
 
-**What it is:** When a circuit trips, drift exceeds threshold, or heartbeat is missed, the alert delivery module (`src/observeco/alert/delivery.py`) pushes a notification to Telegram, webhook, or email. Free users see the same alerts in-dashboard — but only when they open it.
+**What it is:** When a circuit trips, drift exceeds threshold, or heartbeat is missed, the alert delivery module (`src/observeco/alerts/push.py` — 205 lines) pushes a notification to Telegram, Discord, webhook, or email. Free users see the same alerts in-dashboard — but only when they open it.
+
+**Current status:** Backend fully built — Telegram, webhook, email delivery working. Subscription management, delivery logging, event-type filtering all functional. **Discord not yet implemented** (needs Discord webhook integration). **Dashboard UI missing** — no subscription management UI, no delivery log view, no test button. The upsell promises "Telegram/Slack/email push" but a Pro user activating a key sees only the static scenario comparison grid.
 
 **The gap-aware design:** Free users see every alert with a "discovery gap" badge showing how late they found out:
 > *"⚡ hermes-triage circuit tripped — happened 03:15 · You discovered 07:00 (when you opened dashboard) — 3h 45m gap"*
@@ -1151,7 +1155,7 @@ This makes the Pro value visible even in the free tier: the gap becomes the pain
 | Overnight visibility | None — alerts pile up unseen | Full — notification arrives immediately |
 | Undiscovered downtime (24h) | **8h 47m** avg across 4 alerts | **0s** |
 | Context switches | High (you check proactively) | Low (alert finds you when relevant) |
-| Alert channels | Dashboard only | Telegram · Webhook · Email |
+| Alert channels | Dashboard only | Telegram · Discord · Webhook · Email |
 | Customizable thresholds | Fixed (drift >10%, 3 miss heartbeat) | Configurable per alert type |
 | Wasted attention per week | ~30 min (checking for alerts) | ~0 min (alerts come to you) |
 
@@ -2418,7 +2422,7 @@ Zero.
 | Signal-to-noise ratio | Poor — every crash visible | Excellent — alert means "something is wrong; auto-heal couldn't fix it" |
 | Undiscovered downtime (24h) | **8h 47m** across 4 alerts | **0s** — either healed or alerted instantly |
 | Context switches | High (you check proactively) | Low — alert finds you **only when something needs you** |
-| Alert channels | Dashboard only | Telegram · Webhook · Email |
+| Alert channels | Dashboard only | Telegram · Discord · Webhook · Email |
 | Customizable thresholds | Fixed | Configurable per alert type |
 
 **Cost anchor:** "Each notification costs $0.00. The cost IS the interruption — it has real attention value. Push alerts are premium precisely because we gate them: on Pro, alerts only fire when the system can't fix itself. That makes every buzz meaningful."

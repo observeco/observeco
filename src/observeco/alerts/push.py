@@ -61,6 +61,8 @@ def push_alert(event_type: str, message: str,
         try:
             if channel == "telegram":
                 delivered, error = _deliver_telegram(target, message)
+            elif channel == "discord":
+                delivered, error = _deliver_discord(target, message)
             elif channel == "webhook":
                 delivered, error = _deliver_webhook(target, message)
             elif channel == "email":
@@ -114,6 +116,22 @@ def _deliver_telegram(target: str, message: str) -> tuple[bool, str]:
             timeout=15,
         )
         if resp.status_code == 200:
+            return True, ""
+        return False, f"HTTP {resp.status_code}: {resp.text[:200]}"
+    except Exception as e:
+        return False, str(e)
+
+
+def _deliver_discord(target: str, message: str) -> tuple[bool, str]:
+    """Deliver via Discord webhook URL."""
+    try:
+        import requests
+        resp = requests.post(
+            target,
+            json={"content": message, "username": "ObserveCo"},
+            timeout=15,
+        )
+        if 200 <= resp.status_code < 300:
             return True, ""
         return False, f"HTTP {resp.status_code}: {resp.text[:200]}"
     except Exception as e:

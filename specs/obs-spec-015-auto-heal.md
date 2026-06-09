@@ -1,6 +1,6 @@
 # obs-spec-015: Auto-Heal L1/L2
 
-**Status:** Draft 2026-05-28
+**Status:** Updated 2026-06-10 — Backend built (L1 auto-restart, L2 proactive, LLM escalation, snapshot-before-heal, circuit breaker). Dashboard UI (toggle, status card, per-agent config) pending.
 **Product:** ObserveCo
 **Depends on:** obs-dp-007 (error history), existing observation-mode heal
 

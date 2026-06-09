@@ -2215,22 +2215,28 @@ function loadLicenseStatus() {
   fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
     .then(r => r.json())
     .then(status => {
-      const el = document.getElementById('proTrialStatus');
       const isPro = status.license_type === 'pro' || status.license_type === 'trial' || status.is_pro;
-      if (isPro) {
-        if (status.license_type === 'trial') {
-          el.innerHTML = `<span style="color:#a5b4fc;">✅ Trial active — ${status.trial_days_remaining}d remaining</span>`;
+      // Update trial/Pro status in Settings tab (element may not exist on other tabs)
+      const el = document.getElementById('proTrialStatus');
+      const btn = document.getElementById('proTrialBtn');
+      if (el && btn) {
+        if (isPro) {
+          if (status.license_type === 'trial') {
+            el.innerHTML = `<span style="color:#a5b4fc;">✅ Trial active — ${status.trial_days_remaining}d remaining</span>`;
+          } else {
+            el.innerHTML = `<span style="color:#86efac;">✅ Pro active${status.plan ? ' (' + status.plan + ' plan)' : ''}</span>`;
+          }
+          btn.style.display = 'none';
         } else {
-          el.innerHTML = `<span style="color:#86efac;">✅ Pro active${status.plan ? ' (' + status.plan + ' plan)' : ''}</span>`;
+          el.innerHTML = '<span style="color:var(--muted);">Free tier — no license found</span>';
+          btn.style.display = '';
         }
-        document.getElementById('proTrialBtn').style.display = 'none';
-        // Hide all locked UI elements
+      }
+      // Hide/show upsells — ALWAYS runs, regardless of which tab is active
+      if (isPro) {
         document.querySelectorAll('.pro-upsell, .pro-upsell-block, [onclick*="showBrainPro"]').forEach(e => {
           if (e.id !== 'brainProModal' && !e.closest('#brainProModal')) e.style.display = 'none';
         });
-      } else {
-        el.innerHTML = '<span style="color:var(--muted);">Free tier — no license found</span>';
-        document.getElementById('proTrialBtn').style.display = '';
       }
     })
     .catch(() => {});

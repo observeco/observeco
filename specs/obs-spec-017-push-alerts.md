@@ -1,6 +1,6 @@
 # obs-spec-017: Push Alerts Delivery (Pro)
 
-**Status:** Draft 2026-05-28
+**Status:** Updated 2026-06-10 — Backend built (Telegram, webhook, email). Discord + Dashboard UI pending.
 **Product:** ObserveCo Pro (Solo $9/mo, Team $49/mo)
 **Depends on:** obs-dp-007 (error history), existing in-dashboard alerts
 
@@ -10,9 +10,10 @@ Alerts are currently **in-dashboard only** — they appear in the right-rail ale
 
 ## §2 Delivery Channels (Priority Order)
 
-1. **Webhook** — fastest to ship, most flexible (can pipe to any service)
-2. **Telegram bot** — Sean's primary communication channel
-3. **CLI ping** — terminal bell / notification for users running `observeco watch`
+1. **Telegram bot** — Sean's primary communication channel
+2. **Discord webhook** — community/team channel
+3. **Webhook** — fastest to ship, most flexible (can pipe to any service)
+4. **CLI ping** — terminal bell / notification for users running `observeco watch`
 
 ## §3 Architecture
 
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS alert_config (
     agent_name TEXT PRIMARY KEY,
     webhook_url TEXT,
     telegram_chat_id TEXT,
+    discord_webhook_url TEXT,
     cli_notify INTEGER DEFAULT 0,
     min_severity TEXT DEFAULT 'warning'
 );
