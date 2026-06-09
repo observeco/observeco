@@ -154,6 +154,7 @@ def _load_config() -> BillingConfig:
         with _billing_lock:
             if CONFIG_FILE.exists():
                 try:
+                    logger.info("[billing] Config found, loading from %s", CONFIG_FILE)
                     data = json.loads(CONFIG_FILE.read_text())
 
                     from .crypto import decrypt_dict
@@ -161,7 +162,15 @@ def _load_config() -> BillingConfig:
                     SENSITIVE = ["stripe_secret_key", "webhook_secret"]
                     decrypt_dict(data, SENSITIVE)
 
-                    return BillingConfig(**data)
+                    config = BillingConfig(**data)
+                    if config.is_active:
+                        logger.info(
+                            "[billing] Stripe configured from disk — %s, %d-day trial, mode=%s",
+                            "live" if config.stripe_secret_key.startswith("sk_live") else "test",
+                            config.trial_days,
+                            "live" if config.stripe_secret_key.startswith("sk_live") else "test",
+                        )
+                    return config
                 except Exception as e:
                     logger.error("Failed to load billing config: %s", e)
             return BillingConfig()
@@ -194,7 +203,7 @@ def configure(stripe_secret: str, stripe_publishable: str,
     return {"status": "configured", "is_active": True}
 
 
-def create_checkout_session(email: str, plan: str = "solo",
+def create_checkout_session(email: str, phone: str = "", name: str = "", plan: str = "solo",
                             success_url: str = "http://localhost:9121/api/billing/success",
                             cancel_url: str = "http://localhost:9121/api/billing/cancel") -> dict:
     """Create a Stripe Checkout Session.
@@ -203,24 +212,20 @@ def create_checkout_session(email: str, plan: str = "solo",
     """
     config = _load_config()
 
-    if not config.is_active or not config.stripe_secret_key:
+    if not config.is_active:
+        # billing.json explicitly disabled or key invalid — use simulated mode
+        pass
+    elif not config.stripe_secret_key.startswith("sk_"):
+        # Decryption failed or key corrupted — fall back to simulated
+        config.is_active = False
+
+    if not config.is_active or not config.stripe_secret_key.startswith("sk_"):
         # Simulated mode — return demo session
+        # Customer + trial creation happens in billing_success callback,
+        # so the user must complete the redirect before anything activates.
         session_id = f"cs_demo_{int(time.time())}"
-        _save_config(config)
-
-        # Record simulated customer
-        config.customers.append({
-            "email": email,
-            "plan": plan,
-            "session_id": session_id,
-            "status": "trialing",
-            "trial_end": int(time.time()) + config.trial_days * 86400,
-            "created_at": int(time.time()),
-        })
-        _save_config(config)
-
         return {
-            "url": f"{success_url}?session_id={session_id}",
+            "url": f"{success_url}?session_id={session_id}&email={email}&phone={phone}&name={name}",
             "session_id": session_id,
             "mode": "simulated",
         }
@@ -231,13 +236,20 @@ def create_checkout_session(email: str, plan: str = "solo",
         stripe.api_key = config.stripe_secret_key
         price_id = config.solo_price_id if plan == "solo" else config.team_price_id
 
+        metadata = {"plan": plan}
+        if email:
+            metadata["customer_email"] = email
+        if phone:
+            metadata["customer_phone"] = phone
+        if name:
+            metadata["customer_name"] = name
+
         session = stripe.checkout.Session.create(
             line_items=[{"price": price_id, "quantity": 1}],
             mode="subscription",
             success_url=success_url,
             cancel_url=cancel_url,
-            customer_email=email,
-            metadata={"plan": plan},
+            metadata=metadata,
             subscription_data={
                 "trial_period_days": config.trial_days,
                 "metadata": {"plan": plan},
@@ -275,12 +287,20 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
 
         if event["type"] == "checkout.session.completed":
             session = event["data"]["object"]
+            meta = session.get("metadata", {})
+            customer_email = session.get("customer_email") or meta.get("customer_email", "unknown")
+            customer_phone = session.get("customer_phone") or meta.get("customer_phone", "") or \
+                session.get("customer_details", {}).get("phone", "")
+            customer_name = session.get("customer_details", {}).get("name", "") or meta.get("customer_name", "")
             config.customers.append({
-                "email": session.get("customer_email", "unknown"),
-                "plan": session.get("metadata", {}).get("plan", "solo"),
+                "email": customer_email,
+                "phone": customer_phone,
+                "name": customer_name,
+                "plan": meta.get("plan", "solo"),
                 "session_id": session["id"],
                 "status": "active",
                 "subscription_id": session.get("subscription"),
+                "stripe_customer_id": session.get("customer"),
                 "created_at": int(time.time()),
             })
             _save_config(config)
@@ -408,22 +428,79 @@ def add_billing_endpoints(app) -> None:
     async def billing_checkout(request: Request):
         data = await request.json()
         email = data.get("email", "")
+        name = data.get("name", "")
+        phone = data.get("phone", "")
         plan = data.get("plan", "solo")
         if not email:
             return {"error": "Email is required", "mode": "error"}
-        result = create_checkout_session(email, plan)
+        # Derive success/cancel URLs from the request's own host
+        base = str(request.base_url).rstrip("/")
+        success_url = f"{base}/api/billing/success"
+        cancel_url = f"{base}/api/billing/cancel"
+        result = create_checkout_session(email, phone, name, plan, success_url, cancel_url)
+        result["customer_name"] = name
         return result
 
     @app.get("/api/billing/success")
     async def billing_success(request: Request):
-        """Stripe checkout success page — redirects back to dashboard with toast."""
+        """Stripe checkout success page — starts trial, redirects to dashboard."""
+        session_id = request.query_params.get("session_id", "")
+
+        # Simulated mode: start trial and record customer on confirmed checkout
+        if session_id and session_id.startswith("cs_demo_"):
+            from observeco.license import start_trial as start_license_trial
+            trial_result = start_license_trial()
+            if trial_result.get("status") == "trial_started":
+                # Record simulated customer in billing.json
+                config = _load_config()
+                config.customers.append({
+                    "email": request.query_params.get("email", "checkout@observeco.app"),
+                    "phone": request.query_params.get("phone", ""),
+                    "name": request.query_params.get("name", ""),
+                    "plan": "solo",
+                    "session_id": session_id,
+                    "status": "trialing",
+                    "trial_end": int(time.time()) + config.trial_days * 86400,
+                    "created_at": int(time.time()),
+                })
+                _save_config(config)
+
+        # Live Stripe mode: verify and activate trial from redirect
+        elif session_id and session_id.startswith("cs_live_"):
+            config = _load_config()
+            if config.is_active and config.stripe_secret_key:
+                try:
+                    import stripe
+                    stripe.api_key = config.stripe_secret_key
+                    session = stripe.checkout.Session.retrieve(session_id)
+                    if session.status == "complete" or session.payment_status == "paid":
+                        from observeco.license import start_trial as start_license_trial
+                        trial_result = start_license_trial()
+                        if trial_result.get("status") == "trial_started":
+                            meta = getattr(session, "metadata", {}) or {}
+                            customer_details = getattr(session, "customer_details", None) or {}
+                            config.customers.append({
+                                "email": getattr(session, "customer_email", None) or meta.get("customer_email", "unknown"),
+                                "phone": getattr(customer_details, "phone", "") or meta.get("customer_phone", ""),
+                                "name": getattr(customer_details, "name", "") or meta.get("customer_name", ""),
+                                "plan": meta.get("plan", "solo"),
+                                "session_id": session_id,
+                                "status": "trialing",
+                                "subscription_id": getattr(session, "subscription", None),
+                                "trial_end": int(time.time()) + config.trial_days * 86400,
+                                "created_at": int(time.time()),
+                            })
+                            _save_config(config)
+                except Exception:
+                    logger.warning("Could not verify live Stripe session %s", session_id)
+
         return HTMLResponse("""<!DOCTYPE html><html><head><meta http-equiv="refresh" content="2;url=/"></head><body style="background:#0f172a;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;">
         <div style="font-size:48px;">✅</div>
         <h2 style="margin:0;">Payment successful!</h2>
         <p style="color:#94a3b8;font-size:14px;">Your Pro license is being activated...</p>
         <p style="color:#64748b;font-size:12px;">Redirecting to dashboard...</p>
         <script>
-        fetch('/api/licenses/validate', {{method: 'POST', headers: {{'Content-Type': 'application/json'}}, body: JSON.stringify({{force: true}})}}).then(() => {{ window.location.href = '/'; }}).catch(() => {{ window.location.href = '/'; }});
+        setTimeout(function() { window.location.href = '/'; }, 2000);
         </script></body></html>""")
 
     @app.get("/api/billing/cancel")
@@ -455,8 +532,19 @@ def add_billing_endpoints(app) -> None:
             stripe_lib.api_key = config.stripe_secret_key
 
             data = await request.json()
-            customer_id = data.get("customer_id", "")
+            customer_id = data.get("customer_id", "") or data.get("customer", "")
+            # If no customer_id provided, look up from saved config
             if not customer_id:
+                for c in config.customers:
+                    if c.get("stripe_customer_id"):
+                        customer_id = c["stripe_customer_id"]
+                        break
+            if not customer_id:
+                # No Stripe customer — user activated via license key, not subscription
+                from observeco.license import load as _load_license
+                lic = _load_license()
+                if lic.key or lic.is_pro:
+                    return {"error": "Your account uses a license key, not a Stripe subscription. There are no billing settings to manage here.", "mode": "license_key"}
                 return {"error": "customer_id is required", "mode": "error"}
 
             session = stripe_lib.billing_portal.Session.create(

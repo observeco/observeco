@@ -2368,6 +2368,8 @@ function showManageBilling() {
     .then(data => {
       if (data.url) {
         window.open(data.url, '_blank');
+      } else if (data.mode === 'license_key') {
+        showToast('🔑 ' + (data.error || 'License key account — no Stripe billing to manage.'));
       } else {
         showToast('Billing portal not available: ' + (data.error || 'unknown'));
       }
