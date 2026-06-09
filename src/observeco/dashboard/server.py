@@ -4595,6 +4595,178 @@ async def api_heal_log():
     return HTMLResponse(html)
 
 
+@app.get("/api/heal-config", response_class=HTMLResponse)
+async def api_heal_config():
+    """Auto-Heal Dashboard: per-agent config, status, and events."""
+    # Daemon status
+    daemon_running = False
+    daemon_btn = ""
+    try:
+        import subprocess
+        r = subprocess.run(["pgrep", "-f", "observeco watch"], capture_output=True, text=True, timeout=5)
+        if r.returncode == 0 and r.stdout.strip():
+            daemon_running = True
+    except Exception:
+        pass
+
+    if not daemon_running:
+        daemon_btn = """
+        <div class="empty-state" style="margin-bottom:12px;">
+            🔴 Heal daemon not running — auto-heal requires `observeco watch` to be running.
+            <div style="margin-top:8px;">
+                <code style="background:#1e293b;padding:4px 8px;border-radius:4px;font-size:11px;">observeco watch</code>
+            </div>
+        </div>"""
+
+    # Get all agents and their heal configs
+    from observeco.db import Database
+    d = Database()
+    agents = d.get_agents()
+    configs = {c["agent_name"]: c for c in d.get_heal_config()}
+
+    # Build per-agent rows
+    agent_rows = ""
+    for a in agents:
+        name = a["agent_name"]
+        cfg = configs.get(name, {})
+        ah = cfg.get("auto_heal", 0)
+        l2 = cfg.get("auto_heal_l2", 0)
+        max_r = cfg.get("max_restarts_per_hour", 3)
+        drift_t = cfg.get("drift_threshold", 15.0)
+        debt_t = cfg.get("memory_debt_threshold", 60)
+
+        status = "idle"
+        status_label = "🟢 Idle"
+        if ah and l2:
+            status_label = "🟢 L1 + L2 Active"
+        elif ah:
+            status_label = "🟢 L1 Active"
+
+        # Count recent heal events
+        events = d.get_heal_events(name, limit=5)
+        heal_count = len(events)
+        last_event = ""
+        if events:
+            ts = events[0]["created_at"]
+            etype = events[0]["event_type"]
+            estatus = events[0]["status"]
+            last_event = f'<span style="font-size:10px;color:#64748b;">Last: {etype} → {estatus}</span>'
+
+        toggle_checked = 'checked' if ah else ''
+        l2_checked = 'checked' if l2 else ''
+
+        agent_rows += f"""
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">{name}</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;">{status_label}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <label class="toggle-switch" title="Enable auto-heal L1">
+                        <input type="checkbox" {toggle_checked} onchange="toggleHeal('{name}', this.checked, document.getElementById('l2_{name}').checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span style="font-size:10px;color:#64748b;">L1</span>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+                <div style="display:flex;gap:16px;font-size:11px;color:#94a3b8;">
+                    <span>Max restarts/h: <strong id="maxR_{name}">{max_r}</strong></span>
+                    <span>Drift threshold: <strong id="driftT_{name}">{drift_t}%</strong></span>
+                    <span>Memory debt: <strong id="debtT_{name}">{debt_t}</strong></span>
+                </div>
+                <div id="healEventSummary_{name}" style="font-size:10px;color:#64748b;">
+                    {heal_count} events
+                </div>
+            </div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:12px;">
+                <label class="toggle-switch" style="opacity:0.6;">
+                    <input type="checkbox" id="l2_{name}" {l2_checked} onchange="toggleHealL2('{name}', this.checked)">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span style="font-size:10px;color:#64748b;">L2 Proactive (drift/memory)</span>
+                <button onclick="editHealThresholds('{name}')" style="margin-left:auto;background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;">⚙️ Thresholds</button>
+            </div>
+            <div id="healResult_{name}" style="margin-top:4px;font-size:11px;"></div>
+        </div>"""
+
+    # Heal events table
+    all_events = d.get_heal_events(limit=20)
+    events_html = ""
+    if all_events:
+        for e in all_events[:10]:
+            ts = e["created_at"]
+            age = int(time.time()) - ts
+            age_str = f"{age // 60}m ago" if age < 3600 else f"{age // 3600}h ago"
+            icon = "✅" if e["status"] == "success" else "❌" if e["status"] in ("failure", "escalated") else "⏳"
+            events_html += f"""<tr><td style="padding:6px 8px;font-size:11px;">{e['agent_name']}</td>
+                <td style="padding:6px 8px;font-size:11px;">{e['event_type']}</td>
+                <td style="padding:6px 8px;font-size:11px;">{icon} {e['status']}</td>
+                <td style="padding:6px 8px;font-size:11px;color:#64748b;">{age_str}</td></tr>"""
+    else:
+        events_html = '<tr><td colspan="4" style="padding:12px;text-align:center;color:#64748b;font-size:12px;">No heal events recorded yet. Run a heal check or enable auto-heal.</td></tr>'
+
+    return HTMLResponse(f"""{daemon_btn}
+    <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Per-Agent Configuration</div>
+        {agent_rows if agent_rows else '<div class="empty-state">No agents discovered yet.</div>'}
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--fg);">📋 Heal Events Log</div>
+        <table class="data-table" style="width:100%;border-collapse:collapse;">
+            <tr><th style="padding:6px 8px;font-size:10px;text-align:left;color:#64748b;">Agent</th>
+                <th style="padding:6px 8px;font-size:10px;text-align:left;color:#64748b;">Type</th>
+                <th style="padding:6px 8px;font-size:10px;text-align:left;color:#64748b;">Status</th>
+                <th style="padding:6px 8px;font-size:10px;text-align:left;color:#64748b;">When</th></tr>
+            {events_html}
+        </table>
+    </div>
+    """)
+
+
+@app.post("/api/heal-config/{agent_name}")
+async def api_set_heal_config(agent_name: str, auto_heal: bool = False, auto_heal_l2: bool = False):
+    """Toggle auto-heal for an agent."""
+    try:
+        d = Database()
+        cfg = d.get_heal_config(agent_name)
+        current = cfg[0] if cfg else {}
+        d.set_heal_config(
+            agent_name,
+            auto_heal=auto_heal,
+            auto_heal_l2=auto_heal_l2,
+            max_restarts_per_hour=current.get("max_restarts_per_hour", 3),
+            drift_threshold=current.get("drift_threshold", 15.0),
+            memory_debt_threshold=current.get("memory_debt_threshold", 60),
+        )
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@app.post("/api/heal-config/{agent_name}/thresholds")
+async def api_set_heal_thresholds(agent_name: str, max_restarts: int = 3,
+                                   drift_threshold: float = 15.0,
+                                   memory_debt: int = 60):
+    """Update heal thresholds for an agent."""
+    try:
+        d = Database()
+        cfg = d.get_heal_config(agent_name)
+        current = cfg[0] if cfg else {}
+        d.set_heal_config(
+            agent_name,
+            auto_heal=current.get("auto_heal", False),
+            auto_heal_l2=current.get("auto_heal_l2", False),
+            max_restarts_per_hour=max_restarts,
+            drift_threshold=drift_threshold,
+            memory_debt_threshold=memory_debt,
+        )
+        return JSONResponse({"ok": True})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
 @app.get("/api/trigger-heal", response_class=HTMLResponse)
 async def api_trigger_heal():
     """Diagnose agents and return results as HTML."""

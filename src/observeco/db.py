@@ -297,6 +297,29 @@ CREATE TABLE IF NOT EXISTS agent_kill_log (
 );
 CREATE INDEX IF NOT EXISTS idx_kill_log_agent ON agent_kill_log(agent_name);
 """),
+    (14, """-- Migration 14: heal_config table for auto-heal dashboard UI
+CREATE TABLE IF NOT EXISTS heal_config (
+    agent_name TEXT PRIMARY KEY,
+    auto_heal INTEGER NOT NULL DEFAULT 0,
+    auto_heal_l2 INTEGER NOT NULL DEFAULT 0,
+    max_restarts_per_hour INTEGER NOT NULL DEFAULT 3,
+    drift_threshold REAL NOT NULL DEFAULT 15.0,
+    memory_debt_threshold INTEGER NOT NULL DEFAULT 60,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS heal_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    event_type TEXT NOT NULL CHECK(event_type IN ('l1_restart','l2_trim','l2_garden','circuit_reset','manual_heal','escalation')),
+    status TEXT NOT NULL CHECK(status IN ('success','failure','escalated','cooldown')),
+    duration_ms INTEGER DEFAULT 0,
+    details TEXT DEFAULT '',
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_heal_events_agent ON heal_events(agent_name, created_at DESC);
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -1171,6 +1194,67 @@ class Database:
             (failures, max_retries, tripped, cooldown, last_failure, error, agent_name),
         )
         conn.commit()
+
+    # -- Auto-Heal Config (Dashboard UI) --
+
+    def get_heal_config(self, agent_name: str = "") -> list[dict]:
+        """Get auto-heal config for all agents or a specific agent."""
+        conn = self._get_conn()
+        if agent_name:
+            rows = conn.execute(
+                "SELECT * FROM heal_config WHERE agent_name=?", (agent_name,)
+            ).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM heal_config ORDER BY agent_name").fetchall()
+        return [dict(r) for r in rows]
+
+    def set_heal_config(self, agent_name: str, auto_heal: bool = False,
+                         auto_heal_l2: bool = False,
+                         max_restarts_per_hour: int = 3,
+                         drift_threshold: float = 15.0,
+                         memory_debt_threshold: int = 60) -> None:
+        """Set auto-heal config for an agent. Creates or updates."""
+        conn = self._get_conn()
+        now = int(time.time())
+        conn.execute(
+            """INSERT INTO heal_config (agent_name, auto_heal, auto_heal_l2, max_restarts_per_hour,
+               drift_threshold, memory_debt_threshold, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(agent_name) DO UPDATE SET
+               auto_heal=excluded.auto_heal, auto_heal_l2=excluded.auto_heal_l2,
+               max_restarts_per_hour=excluded.max_restarts_per_hour,
+               drift_threshold=excluded.drift_threshold,
+               memory_debt_threshold=excluded.memory_debt_threshold,
+               updated_at=excluded.updated_at""",
+            (agent_name, int(auto_heal), int(auto_heal_l2), max_restarts_per_hour,
+             drift_threshold, memory_debt_threshold, now, now),
+        )
+        conn.commit()
+
+    def log_heal_event(self, agent_name: str, event_type: str, status: str,
+                        duration_ms: int = 0, details: str = "") -> None:
+        """Record a heal event in the heal_events table."""
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO heal_events (agent_name, event_type, status, duration_ms, details, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (agent_name, event_type, status, duration_ms, details, int(time.time())),
+        )
+        conn.commit()
+
+    def get_heal_events(self, agent_name: str = "", limit: int = 20) -> list[dict]:
+        """Get recent heal events, optionally filtered by agent."""
+        conn = self._get_conn()
+        if agent_name:
+            rows = conn.execute(
+                "SELECT * FROM heal_events WHERE agent_name=? ORDER BY created_at DESC LIMIT ?",
+                (agent_name, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM heal_events ORDER BY created_at DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [dict(r) for r in rows]
 
     # -- Chisel --
 

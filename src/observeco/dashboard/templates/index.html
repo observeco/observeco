@@ -1222,122 +1222,23 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <div class="tab-content" id="tabHeal">
     <div class="app" style="padding:0;">
       <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🛠️ Auto-Heal</h1>
-      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">See how self-healing can recover agents automatically.</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Configure auto-detection and auto-recovery per agent.</div>
 
-      <!-- Scenario comparison -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;" id="healGrid">
-        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);">
-          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg-2);">🔓 Free (Manual)</div>
-          <div style="padding:14px;background:var(--surface);">
-            <div style="position:relative;padding-left:22px;">
-              <div style="position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--border);"></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32</span> <span class="event">Agent down</span></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--warn);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:44</span> <span class="event" style="color:#fde68a;">⚠️ You notice via dashboard</span></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--meta);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:58</span> <span class="event" style="color:#93c5fd;">💻 You investigate manually</span></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--danger);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">11:19</span> <span class="event" style="color:#fca5a5;">❌ Agent still down — 47 min</span></div>
-              <div style="font-style:italic;font-size:11px;padding:2px 0 2px 10px;color:var(--border);">...</div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">12:30</span> <span class="event" style="color:#86efac;">✅ You restart — back in 1h 58m</span></div>
-            </div>
-            <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#450a0a;border:1px solid #7f1d1d;color:#fca5a5;">
-              <strong>Outcome: 1h 58m downtime</strong><br>
-              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0 saved</span>
-              You did all the work. Downtime costs stack while you investigate.
-            </div>
-          </div>
-        </div>
-        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--accent-on);">
-          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:var(--bg);color:#86efac;">🛡️ Pro — L1 Auto-Heal</div>
-          <div style="padding:14px;background:var(--surface);">
-            <div style="position:relative;padding-left:22px;">
-              <div style="position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--accent);"></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32</span> <span class="event">Agent down</span></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32</span> <span class="event" style="color:#86efac;">⚡ Detected instantly</span></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--meta);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32</span> <span class="event" style="color:#93c5fd;">🔄 Auto-restart triggered</span></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:33</span> <span class="event" style="color:#86efac;">✅ Agent back online — ~1 min</span></div>
-            </div>
-            <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:var(--bg);border:1px solid var(--accent-on);color:#86efac;">
-              <strong>Outcome: ~1 min downtime</strong><br>
-              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0.02 saved / event <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('heal-savings-l1', event)" style="font-size:12px;cursor:pointer;background:#86efac22;border-radius:4px;padding:1px 5px;color:#86efac;font-weight:400;">?</span></span>
-              <span style="font-size:10px;opacity:0.7;font-style:italic;">Based on $0.02/min downtime cost · 2h recovery · see how this is calculated</span><br>
-              Instant detection, auto-restart. You don't lift a finger.
-            </div>
-          </div>
-        </div>
-        <div style="border-radius:12px;overflow:hidden;border:1px solid #854d0e;">
-          <div style="padding:12px 14px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;background:#422006;color:#fde68a;">🧠 Pro — L2 Proactive</div>
-          <div style="padding:14px;background:var(--surface);">
-            <div style="position:relative;padding-left:22px;">
-              <div style="position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:#ca8a04;"></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--warn);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:31:45</span> <span class="event" style="color:#fde68a;">📊 Memory pressure rising</span></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:31:50</span> <span class="event" style="color:#86efac;">🔧 Preemptive rotation</span></div>
-              <div style="position:relative;padding:5px 0 5px 10px;font-size:11px;line-height:1.5;"><span style="position:absolute;left:-18px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent);"></span><span class="ts" style="color:#475569;font-family:var(--font-mono);">10:32:00</span> <span class="event" style="color:#86efac;">✅ Crisis averted — no downtime</span></div>
-            </div>
-            <div style="margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.5;text-align:center;background:#422006;border:1px solid #854d0e;color:#fde68a;">
-              <strong>Outcome: 0 downtime</strong><br>
-              <span class="big" style="font-size:18px;font-weight:700;display:block;margin:3px 0;">$0.03 saved / event <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('heal-savings-l2', event)" style="font-size:12px;cursor:pointer;background:#fde68a22;border-radius:4px;padding:1px 5px;color:#fde68a;font-weight:400;">?</span></span>
-              <span style="font-size:10px;opacity:0.7;font-style:italic;">Based on $0.02/min downtime cost · L2 adds $0.01 extra savings · see how this is calculated</span><br>
-              Predicted failure before it happened. Zero impact.
-            </div>
-          </div>
+      <!-- Live config panel -->
+      <div id="healPanel">
+        <div id="healConfig" hx-get="/api/heal-config" hx-trigger="load, every 30s" hx-swap="innerHTML">
+          <div style="color:#64748b;font-size:12px;">Loading auto-heal configuration...</div>
         </div>
       </div>
 
-      <!-- Value comparison table -->
-      <div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-        <table style="width:100%;border-collapse:collapse;">
-          <tr><th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);"></th>
-            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);">Free</th>
-            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg);">Pro L1 Auto-Heal</th>
-            <th style="text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;padding:12px 14px;border-bottom:1px solid var(--border);">Pro L2 Proactive</th></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Detection speed</td>
-            <td style="font-size:12px;color:#94a3b8;padding:10px 14px;border-bottom:1px solid var(--bg);">Manual — you notice</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">Instant — pulse detects</td>
-            <td style="font-size:12px;color:#fde68a;padding:10px 14px;border-bottom:1px solid var(--bg);">Predictive — before failure</td></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Recovery action</td>
-            <td style="font-size:12px;color:#94a3b8;padding:10px 14px;border-bottom:1px solid var(--bg);">You SSH & restart</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">Auto-restart process</td>
-            <td style="font-size:12px;color:#fde68a;padding:10px 14px;border-bottom:1px solid var(--bg);">Auto-rotate + notify you</td></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Avg downtime</td>
-            <td style="font-size:12px;color:#fca5a5;padding:10px 14px;border-bottom:1px solid var(--bg);">~2 hours</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">~1 minute</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);">0 — prevented</td></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:1px solid var(--bg);">Cost / agent / month</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);">$0 (included)</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:1px solid var(--bg);background:var(--bg);">$0 (included in Pro)</td>
-            <td style="font-size:12px;color:#fde68a;padding:10px 14px;border-bottom:1px solid var(--bg);">$0 (included in Pro)</td></tr>
-          <tr><td style="font-size:12px;color:#e2e8f0;padding:10px 14px;border-bottom:none;">Circuit breaker</td>
-            <td style="font-size:12px;color:#fca5a5;padding:10px 14px;border-bottom:none;">❌ Not available</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;background:var(--bg);">✅ Stops cascade failures</td>
-            <td style="font-size:12px;color:var(--accent);padding:10px 14px;border-bottom:none;">✅ + predictive alerts</td></tr>
-        </table>
-      </div>
-
-      <!-- Heal log section -->
+      <!-- Heal log section (existing) -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
         <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
-          <div><strong style="font-size:13px;color:var(--fg);">Heal Log</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">recent events</span></div>
+          <div><strong style="font-size:13px;color:var(--fg);">Heal Diagnostics Log</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">investigation files</span></div>
           <button onclick="runHealCheck()" class="heal-trigger-btn">⚡ Run Heal Check</button>
         </div>
         <div id="healLog" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
       </div>
-
-      <!-- Pro upsell -->
-      <div onclick="showBrainPro()" style="margin-top:12px;padding:14px;border:1px dashed #3730a3;border-radius:10px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='#6366f1';this.style.background='#1e1b4b'" onmouseout="this.style.borderColor='#3730a3';this.style.background='transparent'">
-        <div style="font-size:14px;font-weight:600;color:#a5b4fc;">🔒 Auto-Heal is Pro</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Free: manual diagnose only. Pro auto-detects, auto-restarts, and predicts failures before they happen.</div>
-      </div>
-
-      <!-- L2 Proactive Monitoring section -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
-        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
-          <div><strong style="font-size:13px;color:var(--fg);">🧠 L2 Proactive Monitoring</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">trend-based pre-emptive detection</span></div>
-          <button onclick="runL2Scan()" class="heal-trigger-btn">🔬 Run L2 Scan</button>
-        </div>
-        <div id="l2Trends" style="padding:14px;font-size:12px;color:var(--fg-2);"><div class="empty-state">📊 No trends recorded yet. Click "Run L2 Scan" to start.</div></div>
-      </div>
-
-      <!-- L2 metrics summary -->
-      <div id="l2Metrics" style="display:none;"></div>
     </div>
   </div>
 
@@ -2716,6 +2617,57 @@ function loadAlertLog() {
     .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
 }
 function initAlerts() { loadAlertSubs(); loadAlertLog(); }
+
+// ─── Auto-Heal Dashboard UI ───
+function toggleHeal(agentName, enabled, l2Enabled) {
+  const resultEl = document.getElementById('healResult_' + agentName);
+  if (!resultEl) return;
+  resultEl.innerHTML = '<span style="color:#64748b;">Saving...</span>';
+  fetch('/api/heal-config/' + encodeURIComponent(agentName) + '?auto_heal=' + enabled + '&auto_heal_l2=' + l2Enabled, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        resultEl.innerHTML = '<span style="color:#22c55e;">✅ ' + (enabled ? 'Auto-heal enabled' : 'Auto-heal disabled') + '</span>';
+        setTimeout(() => { resultEl.innerHTML = ''; }, 3000);
+      } else {
+        resultEl.innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+      }
+    })
+    .catch(e => { resultEl.innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>'; });
+}
+function toggleHealL2(agentName, enabled) {
+  const l1Checkbox = document.querySelector('#healConfig .heal-agent-row:first-child input[type=checkbox]:first-of-type');
+  const l1 = l1Checkbox ? l1Checkbox.checked : false;
+  toggleHeal(agentName, l1, enabled);
+}
+function editHealThresholds(agentName) {
+  const maxR = parseInt(document.getElementById('maxR_' + agentName).textContent) || 3;
+  const driftT = parseFloat(document.getElementById('driftT_' + agentName).textContent) || 15;
+  const debtT = parseInt(document.getElementById('debtT_' + agentName).textContent) || 60;
+  const input = prompt('Enter: max_restarts_per_hour, drift_threshold%, memory_debt\nCurrent: ' + maxR + ', ' + driftT + '%, ' + debtT, maxR + ', ' + driftT + ', ' + debtT);
+  if (!input) return;
+  const parts = input.split(',').map(s => s.trim());
+  const newMaxR = parseInt(parts[0]);
+  const newDrift = parseFloat(parts[1]);
+  const newDebt = parseInt(parts[2]);
+  if (isNaN(newMaxR) || isNaN(newDrift) || isNaN(newDebt)) {
+    document.getElementById('healResult_' + agentName).innerHTML = '<span style="color:#ef4444;">❌ Invalid format. Use: max_restarts, drift%, debt</span>';
+    return;
+  }
+  fetch('/api/heal-config/' + encodeURIComponent(agentName) + '/thresholds?max_restarts=' + newMaxR + '&drift_threshold=' + newDrift + '&memory_debt=' + newDebt, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        document.getElementById('maxR_' + agentName).textContent = newMaxR;
+        document.getElementById('driftT_' + agentName).textContent = newDrift + '%';
+        document.getElementById('debtT_' + agentName).textContent = newDebt;
+        document.getElementById('healResult_' + agentName).innerHTML = '<span style="color:#22c55e;">✅ Thresholds updated</span>';
+        setTimeout(() => { document.getElementById('healResult_' + agentName).innerHTML = ''; }, 3000);
+      } else {
+        document.getElementById('healResult_' + agentName).innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+      }
+    });
+}
 
 // ─── G1.3: Circuit Breaker Config UI ───
 function editCircuitRetries(agentName) {
