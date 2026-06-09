@@ -3320,14 +3320,18 @@ document.addEventListener('htmx:beforeRequest', function(evt) {
 
 <script>
 (function() {
-  // Only show if not dismissed
+  // Only show if not previously dismissed
   if (localStorage.getItem('observeco-onboarding-dismissed')) return;
 
   // Detect phase from the body data attribute or API
   var phase = document.body.getAttribute('data-phase') || 'phase-0';
 
-  // If fully stabilised (phase-3), don't show automatically (show only if user explicitly re-opens)
+  // Don't show onboarding if agents already exist (dashboard is populated)
   if (phase === 'phase-3') return;
+  if (phase !== 'phase-3' && window.allAgents && window.allAgents.length > 0) {
+    localStorage.setItem('observeco-onboarding-dismissed', 'true');
+    return;
+  }
 
   var overlay = document.getElementById('onboardingOverlay');
   if (!overlay) return;
