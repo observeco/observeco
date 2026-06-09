@@ -1695,7 +1695,10 @@ def _detail_guard_tab(name: str, pulses: list, errors: list, circuit: dict, fram
           <span id="circuitMaxTurns">{conf.get("metadata", {}).get("max_turns_per_min", "— (off)") if isinstance(conf.get("metadata"), dict) else "— (off)"}</span>
           <button onclick="editCircuitTurns('{name}')" style="background:none;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:6px;">✏️</button>
         </td></tr>
-        <tr><td>Cooldown period</td><td>~4 hours{cooldown_remaining}</td></tr>
+        <tr><td>Cooldown period</td><td>
+          <span id="circuitCooldown_{name}">{conf.get("metadata", {}).get("cooldown_minutes", 240) if isinstance(conf.get("metadata"), dict) else 240} min</span>
+          <button onclick="editCircuitCooldown('{name}')" style="background:none;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:6px;">✏️</button>
+          {cooldown_remaining}</td></tr>
         <tr><td>Auto-retry after cooldown</td><td class="good">Yes</td></tr>
         <tr><td>Current turn rate</td><td id="turnRate_{name}">—</td></tr>
     </table>
@@ -1820,9 +1823,9 @@ def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: st
         <h4>What this means</h4>
         <div class="health-summary-body">{verdict_msg}</div>
     </div>
-    <div class="modal-section pro-preview" style="border:1px dashed #3730a3;border-radius:10px;padding:14px;cursor:pointer;" onclick="openProModal('{_html_escape(name)} - Error History')">
+    <div class="modal-section" id="historyRange_{name}" style="border:1px dashed #3730a3;border-radius:10px;padding:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
+            <div id="historyRangeContent_{name}">
                 <h4 style="margin-bottom:4px;font-size:13px;">🔒 More history unlocks patterns</h4>
                 <div style="font-size:11px;color:#64748b;line-height:1.6;">
                     Free: last 24h only. Pro keeps every day from install — so next week you can see if errors are getting
@@ -1832,7 +1835,47 @@ def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: st
             </div>
         </div>
     </div>
-</div>""")
+</div>
+<script>
+setTimeout(function() {{
+    // Check Pro and replace upsell with range selector
+    fetch('/api/licenses/status')
+        .then(r => r.json())
+        .then(data => {{
+            if (data.is_pro) {{
+                const container = document.getElementById('historyRangeContent_{name}');
+                if (container) {{
+                    container.innerHTML = `
+                        <h4 style="margin-bottom:6px;font-size:13px;">📅 Extended History</h4>
+                        <div style="display:flex;gap:6px;margin-bottom:8px;">
+                            <button onclick="loadAgentErrorHistory('{name}', 1)" class="range-btn active" id="range1d_{name}" style="background:var(--accent-on);color:#86efac;border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:600;cursor:pointer;">24h</button>
+                            <button onclick="loadAgentErrorHistory('{name}', 7)" class="range-btn" id="range7d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">7d</button>
+                            <button onclick="loadAgentErrorHistory('{name}', 30)" class="range-btn" id="range30d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">30d</button>
+                            <button onclick="loadAgentErrorHistory('{name}', 90)" class="range-btn" id="range90d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">90d</button>
+                        </div>
+                        <div id="extendedHistory_{name}" style="font-size:11px;color:#64748b;">Click a range above to load.</div>
+                    `;
+                    document.getElementById('historyRange_{name}').style.border = '1px solid var(--border)';
+                }}
+            }}
+        }})
+        .catch(function() {{}});
+}}, 100);
+function loadAgentErrorHistory(agent, days) {{
+    // Update active button
+    document.querySelectorAll('#historyRangeContent_' + agent + ' .range-btn').forEach(b => b.style.background = 'var(--surface)');
+    document.querySelectorAll('#historyRangeContent_' + agent + ' .range-btn').forEach(b => b.style.color = '#94a3b8');
+    const active = document.getElementById('range' + days + 'd_' + agent);
+    if (active) {{ active.style.background = 'var(--accent-on)'; active.style.color = '#86efac'; }}
+    fetch('/api/agent/' + encodeURIComponent(agent) + '/errors?days=' + days)
+        .then(r => r.text())
+        .then(html => {{
+            const el = document.getElementById('extendedHistory_' + agent);
+            if (el) el.innerHTML = html;
+        }})
+        .catch(function() {{}});
+}}
+</script>""")
 
 
 def _detail_garden_tab(name: str, garden: list, profile: list, framework: str) -> str:
@@ -2035,6 +2078,39 @@ async def api_errors():
     return HTMLResponse(html + "\n".join(items))
 
 
+@app.get("/api/agent/{agent_name}/errors", response_class=HTMLResponse)
+async def api_agent_errors_range(agent_name: str, days: int = 1):
+    """Extended error history for a specific agent over N days — Pro feature."""
+    from observeco import license as lic
+    if not lic.require_pro():
+        return HTMLResponse('<div style="color:#64748b;font-size:11px;padding:8px;">🔒 Extended history requires Pro</div>')
+
+    now = int(time.time())
+    since = now - (days * 86400)
+    errors = db.get_errors_since(agent_name, since, limit=200)
+
+    if not errors:
+        return HTMLResponse(f'<div style="color:#64748b;font-size:11px;padding:8px;">No errors in the last {days} day(s) for this agent.</div>')
+
+    items = []
+    for e in errors[:100]:
+        ts = _fmt_ts(e.get("timestamp", now))
+        msg = e.get("error_message", "") or e.get("message", "") or e.get("error_type", "?")
+        sev = e.get("severity", "warning")
+        col = {"critical": "#ef4444", "error": "#ef4444", "warning": "#eab308", "info": "#3b82f6"}.get(sev, "#6b7280")
+        icon = {"critical": "🔴", "error": "🔴", "warning": "🟡", "info": "🔵"}.get(sev, "⚪")
+        items.append(f"""<div style="border-left:3px solid {col};padding:6px 10px;margin-bottom:3px;border-radius:4px;background:rgba(15,23,42,0.5);font-size:11px;">
+    <div style="display:flex;justify-content:space-between;">
+        <span style="color:{col};font-weight:600;">{icon} {_html_escape(e.get('error_type','error'))}</span>
+        <span style="color:#64748b;">{ts}</span>
+    </div>
+    <div style="color:#94a3b8;margin-top:2px;">{_html_escape(msg[:120])}</div>
+</div>""")
+
+    return HTMLResponse(f"""<div style="font-size:10px;color:#64748b;margin-bottom:6px;">{len(errors)} error(s) in last {days}d</div>
+{"".join(items)}""")
+
+
 @app.get("/api/reset-circuit/{agent_name}")
 async def api_reset_circuit(agent_name: str):
     """Reset a tripped circuit breaker."""
@@ -2043,10 +2119,10 @@ async def api_reset_circuit(agent_name: str):
 
 
 @app.post("/api/circuit-breaker/{agent_name}/config")
-async def api_circuit_breaker_config(agent_name: str, max_retries: int = None, max_turns_per_min: int = None):
-    """G1.3: Update circuit breaker config (max retries + activity threshold)."""
+async def api_circuit_breaker_config(agent_name: str, max_retries: int = None, max_turns_per_min: int = None, cooldown_minutes: int = None):
+    """G1.3: Update circuit breaker config (max retries + activity threshold + cooldown)."""
     try:
-        db.update_circuit_breaker_config(agent_name, max_retries=max_retries, max_turns_per_min=max_turns_per_min)
+        db.update_circuit_breaker_config(agent_name, max_retries=max_retries, max_turns_per_min=max_turns_per_min, cooldown_minutes=cooldown_minutes)
         return JSONResponse({"ok": True, "message": "Updated"})
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -2504,6 +2580,109 @@ async def api_brain(agent: str = "all"):
         result["fleet"] = fleet
 
     return JSONResponse(result)
+
+
+# ---------------------------------------------------------------------------
+# § Budget Planner — fleet-level cost estimation widget
+# ---------------------------------------------------------------------------
+
+@app.get("/api/budget-planner", response_class=HTMLResponse)
+async def api_budget_planner():
+    """Fleet-level budget planner: estimate daily token spend and recommend allocation."""
+    from observeco.tracking.tokens import get_token_summary
+    from observeco import license as lic
+    is_pro = lic.require_pro()
+
+    # Read fleet data
+    agents = db.get_agents()
+    trims_all = db.get_trims(limit=30)
+    latest_trims = {}
+    for t in trims_all:
+        if t["agent_name"] not in latest_trims:
+            latest_trims[t["agent_name"]] = t
+
+    total_tokens = sum(t.get("total_tokens", 0) for t in latest_trims.values())
+    agent_count = len(latest_trims)
+    if total_tokens == 0 or agent_count == 0:
+        return HTMLResponse("""<div class="empty-state" style="text-align:center;padding:12px;color:#64748b;font-size:12px;">
+    Collect token data first — agents appear after `observeco context trim` runs.
+</div>""")
+
+    # Estimate daily spend: assume 50 turns/day, ~input tokens per turn
+    daily_input_tokens = total_tokens * 50
+    # Standard pricing assumptions
+    PROVIDER_RATES = {"DeepSeek v4 Flash": 0.15, "Ollama Pro": 0.15, "Zhipu": 0.10, "Local (Free)": 0.0}
+    provider_name = "Ollama Pro"
+    rate = 0.15
+
+    daily_cost = daily_input_tokens * rate / 1_000_000
+    monthly_cost = daily_cost * 30
+
+    # Find top spenders
+    ranked = sorted(latest_trims.items(), key=lambda x: x[1].get("total_tokens", 0), reverse=True)
+    top_agents = []
+    for name, trim in ranked[:3]:
+        tok = trim.get("total_tokens", 0)
+        pct = tok / total_tokens * 100 if total_tokens > 0 else 0
+        top_agents.append((name, tok, pct))
+
+    # Lite vs Full savings projections
+    lite_save_pct = 22
+    full_save_pct = 35
+    lite_save = daily_cost * lite_save_pct / 100
+    full_save = daily_cost * full_save_pct / 100
+
+    # Build agent recommendation rows
+    agent_recs = ""
+    for name, tok, pct in top_agents:
+        agent_recs += f"""<tr>
+    <td style="padding:4px 8px;font-size:11px;font-weight:600;">{name}</td>
+    <td style="padding:4px 8px;font-size:11px;font-family:var(--font-mono);">{tok:,}</td>
+    <td style="padding:4px 8px;font-size:11px;">{pct:.0f}%</td>
+</tr>"""
+
+    upsell = f"""<div style="margin-top:8px;font-size:11px;color:#6366f1;text-align:center;cursor:pointer;"
+     onclick="_pro_or_upsell ? _pro_or_upsell.innerHTML : showBrainPro()">
+    🔒 <span style="text-decoration:underline;" class="pro-upsell-trigger" onclick="showBrainPro()">Full compression saves ~${full_save:.2f}/day — upgrade to Pro</span></div>"""
+
+    return HTMLResponse(f"""<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Estimated Daily Spend</div>
+        <div style="font-size:22px;font-weight:700;color:var(--fg);margin-top:4px;">${daily_cost:.2f}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px;">at ${rate:.2f}/M input ({provider_name})</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Estimated Monthly</div>
+        <div style="font-size:22px;font-weight:700;color:var(--fg);margin-top:4px;">${monthly_cost:.2f}</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px;">based on 50 turns/day · {agent_count} agents</div>
+    </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Lite Saves</div>
+        <div style="font-size:16px;font-weight:700;color:#22c55e;margin-top:4px;">-${lite_save:.2f}/day</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px;">-{lite_save_pct}% via guidance compression</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Full Saves</div>
+        <div style="font-size:16px;font-weight:700;color:#a5b4fc;margin-top:4px;">-${full_save:.2f}/day</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px;">-{full_save_pct}% with Full + Optimiser</div>
+    </div>
+</div>
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:10px;">
+    <div style="font-size:11px;font-weight:600;color:var(--fg-2);margin-bottom:6px;">📊 Top agents by token size</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+                <th style="padding:4px 8px;text-align:left;color:#64748b;font-weight:600;">Agent</th>
+                <th style="padding:4px 8px;text-align:left;color:#64748b;font-weight:600;">Tokens</th>
+                <th style="padding:4px 8px;text-align:left;color:#64748b;font-weight:600;">% of Fleet</th>
+            </tr>
+        </thead>
+        <tbody>{agent_recs}</tbody>
+    </table>
+</div>
+{upsell if not is_pro else ''}""")
 
 
 # ---------------------------------------------------------------------------
@@ -5450,6 +5629,50 @@ async def api_alert_log():
 
     html = "".join(items)
     return HTMLResponse(f"""<div style="font-size:10px;color:#64748b;margin-bottom:8px;">Last {len(log)} deliveries:</div>{html}""")
+
+
+@app.post("/api/check-drift-alerts")
+async def api_check_drift_alerts():
+    """Check drift data and push alerts for breached thresholds — Drift Alerts feature."""
+    from observeco import license as lic
+    if not lic.require_pro():
+        return JSONResponse({"ok": False, "error": "Drift alerts require Pro"}, status_code=402)
+
+    drift = db.get_drift()
+    breached = [d for d in drift if d.get("breached")]
+    if not breached:
+        return JSONResponse({"ok": True, "checked": 0, "fired": 0, "detail": "No drift breaches found"})
+
+    from observeco.alerts.push import push_alert
+    # Deduplicate: one alert per agent per run, skip if logged within last hour
+    now = int(time.time())
+    recent = db.get_alert_log(limit=50)
+    recent_agents = set()
+    one_hour_ago = now - 3600
+    for r in recent:
+        if r.get("event_type") == "drift" and r.get("created_at", 0) > one_hour_ago:
+            msg = r.get("message", "")
+            # Extract agent name from "[Drift: agent_name ...]" pattern
+            for part in msg.split():
+                p = part.strip("📈:, ")
+                if p and p not in ("Drift", "grew"):
+                    recent_agents.add(p.lower())
+                    break
+
+    fired = 0
+    seen_agents = set()
+    for d in breached:
+        agent = d.get("agent_name", "")
+        if not agent or agent.lower() in seen_agents or agent.lower() in recent_agents:
+            continue
+        seen_agents.add(agent.lower())
+        delta = d.get("delta_pct", 0)
+        component = d.get("component", "unknown")
+        msg = f"📈 Drift: {agent} — {component} grew {delta:+.1f}% (exceeded threshold)"
+        push_alert("drift", msg, agent_name=agent, db=db)
+        fired += 1
+
+    return JSONResponse({"ok": True, "checked": len(breached), "fired": fired, "detail": f"{fired} drift alert(s) sent"})
 
 
 @app.post("/api/alert-subscribe")

@@ -1171,8 +1171,9 @@ class Database:
         return [dict(r) for r in rows]
 
     def update_circuit_breaker_config(self, agent_name: str, max_retries: int | None = None,
-                                       max_turns_per_min: int | None = None) -> None:
-        """Update circuit breaker config including activity thresholds (G1.3)."""
+                                       max_turns_per_min: int | None = None,
+                                       cooldown_minutes: int | None = None) -> None:
+        """Update circuit breaker config including activity thresholds (G1.3) and cooldown."""
         conn = self._get_conn()
         if max_retries is not None:
             conn.execute(
@@ -1181,8 +1182,8 @@ class Database:
                 "ON CONFLICT(agent_name) DO UPDATE SET max_retries=excluded.max_retries",
                 (agent_name, max_retries),
             )
-        if max_turns_per_min is not None:
-            # Store in agent_configs as JSON metadata — circuit_breakers table has no turns/min column
+        if max_turns_per_min is not None or cooldown_minutes is not None:
+            # Store in agent_configs as JSON metadata
             existing = conn.execute(
                 "SELECT metadata FROM agent_configs WHERE agent_name=?", (agent_name,)
             ).fetchone()
@@ -1190,7 +1191,10 @@ class Database:
             if existing and existing[0]:
                 import json
                 meta = json.loads(existing[0])
-            meta["max_turns_per_min"] = max_turns_per_min
+            if max_turns_per_min is not None:
+                meta["max_turns_per_min"] = max_turns_per_min
+            if cooldown_minutes is not None:
+                meta["cooldown_minutes"] = cooldown_minutes
             conn.execute(
                 "INSERT INTO agent_configs (agent_name, framework, metadata) VALUES (?, 'custom', ?) "
                 "ON CONFLICT(agent_name) DO UPDATE SET metadata=excluded.metadata",
@@ -1599,6 +1603,15 @@ class Database:
             cur = conn.execute(
                 "SELECT * FROM errors ORDER BY timestamp DESC LIMIT ?", (limit,)
             )
+        return [dict(r) for r in cur.fetchall()]
+
+    def get_errors_since(self, agent_name: str, since: int, limit: int = 200) -> list[dict]:
+        """Get errors for an agent since a unix timestamp."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "SELECT * FROM errors WHERE agent_name=? AND timestamp >= ? ORDER BY timestamp DESC LIMIT ?",
+            (agent_name, since, limit),
+        )
         return [dict(r) for r in cur.fetchall()]
 
     # -- Restart Log (obs-spec-018) --

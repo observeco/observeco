@@ -1219,6 +1219,16 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         </div>
       </div>
 
+      <!-- ====== BUDGET PLANNER (fleet-level cost widget) ====== -->
+      <div class="brain-card" id="budgetPlannerCard">
+        <h3>🎯 Budget Planner
+          <span style="font-size:11px;color:#64748b;font-weight:400;">fleet-level cost estimation</span>
+        </h3>
+        <div id="budgetPlannerContent" hx-get="/api/budget-planner" hx-trigger="load" hx-swap="innerHTML">
+          <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Loading budget data...</div>
+        </div>
+      </div>
+
       <!-- ====== MEMORY GARDEN (Section 5 — fleet summary) ====== -->
       <div class="brain-card">
         <h3>💾 Memory Garden
@@ -2599,6 +2609,30 @@ function editCircuitTurns(agentName) {
       if (data.ok) {
         span.textContent = num !== null ? num : '— (off)';
         document.getElementById('circuitEditResult_' + agentName).textContent = '✅ ' + (num !== null ? 'Set to ' + num : 'Disabled');
+      } else {
+        document.getElementById('circuitEditResult_' + agentName).textContent = '❌ ' + (data.error || 'Failed');
+      }
+    })
+    .catch(e => {
+      document.getElementById('circuitEditResult_' + agentName).textContent = '❌ ' + e.message;
+    });
+}
+function editCircuitCooldown(agentName) {
+  const span = document.getElementById('circuitCooldown_' + agentName);
+  const current = parseInt(span.textContent) || 240;
+  const newVal = prompt('Enter cooldown in minutes (default 240 = 4 hours):', current);
+  if (newVal === null) return;
+  const num = parseInt(newVal);
+  if (isNaN(num) || num < 1 || num > 1440) {
+    document.getElementById('circuitEditResult_' + agentName).textContent = '❌ Enter a number between 1 and 1440';
+    return;
+  }
+  fetch('/api/circuit-breaker/' + encodeURIComponent(agentName) + '/config?cooldown_minutes=' + num, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        span.textContent = num + ' min';
+        document.getElementById('circuitEditResult_' + agentName).textContent = '✅ Cooldown set to ' + num + ' min';
       } else {
         document.getElementById('circuitEditResult_' + agentName).textContent = '❌ ' + (data.error || 'Failed');
       }
