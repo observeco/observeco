@@ -2486,10 +2486,41 @@ async def api_brain(agent: str = "all"):
         components = {k: v for k, v in comps_raw.items() if v > 0}
 
         raw_tokens = total_tokens if total_tokens > 0 else sum(components.values())
-        # Estimated compression savings — replaced by real data after first compress run
-        lite_tokens = int(raw_tokens * 0.78)
-        full_tokens = int(raw_tokens * 0.65)
-        savings_estimated = True
+        # Compute potential savings from actual composition + known compressibility
+        # No fabricated data — only what we can derive from real SOUL.md analysis
+        guidance_pct = (components.get("guidance", 0) / max(raw_tokens, 1)) * 100
+        memory_pct = (components.get("memory", 0) / max(raw_tokens, 1)) * 100
+        skills_pct = (components.get("skills", 0) / max(raw_tokens, 1)) * 100
+        # Lite compresses guidance blocks (~70% reduction achievable on guidance)
+        # Full additionally compresses memory + skills (~40% on those components)
+        lite_potential_pct = round(guidance_pct * 0.70, 1)
+        full_potential_pct = round(guidance_pct * 0.70 + (memory_pct + skills_pct) * 0.40, 1)
+
+        # Check if actual compression has been run — if so, override with real data
+        has_compress = conn.execute(
+            "SELECT COUNT(*) as c FROM compress_log WHERE agent_name=? AND savings_pct IS NOT NULL",
+            (name,)
+        ).fetchone()
+        has_real_compress = has_compress and has_compress["c"] > 0
+        lite_tokens = None
+        full_tokens = None
+        if has_real_compress:
+            lite_row = conn.execute(
+                "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE agent_name=? AND mode='lite' AND savings_pct IS NOT NULL",
+                (name,)
+            ).fetchone()
+            full_row = conn.execute(
+                "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE agent_name=? AND mode='full' AND savings_pct IS NOT NULL",
+                (name,)
+            ).fetchone()
+            lite_avg = float(lite_row["avg_pct"]) if lite_row and lite_row["avg_pct"] else None
+            full_avg = float(full_row["avg_pct"]) if full_row and full_row["avg_pct"] else None
+            if lite_avg is not None and lite_avg > 0:
+                lite_tokens = int(raw_tokens * (1 - lite_avg / 100))
+            if full_avg is not None and full_avg > 0:
+                full_tokens = int(raw_tokens * (1 - full_avg / 100))
+
+        savings_source = "actual" if has_real_compress else "potential"
 
         # Drift data
         drift_rows = [dict(r) for r in conn.execute(
@@ -2518,11 +2549,8 @@ async def api_brain(agent: str = "all"):
                 })
 
         if not drift:
-            # Default drift if none available
-            drift = [
-                {"component": c, "points": [10]*7, "pct": "0%", "direction": "flat"}
-                for c in BRAIN_COMP_ORDER if c in components
-            ]
+            # No drift data available — don't fabricate
+            pass
 
         # Turn timeline from pulse log (24 hourly buckets)
         now = int(__import__("time").time())
@@ -2536,11 +2564,11 @@ async def api_brain(agent: str = "all"):
             hour = (p["timestamp"] - (now - 86400)) // 3600
             if 0 <= hour < 24:
                 turns[hour] += 1
-        # Scale: each pulse check = ~ some token usage. If no data, use default pattern
-        if sum(turns) == 0:
-            turns = [max(1, raw_tokens // 10 + (i % 5) * 200) for i in range(24)]
-        else:
+        # Scale: each pulse check = ~ some token usage. If no data, return empty
+        if sum(turns) > 0:
             turns = [t * max(1, raw_tokens // max(sum(turns), 1)) for t in turns]
+        else:
+            turns = []  # no real data
 
         fw = framework.capitalize() if framework else "Custom"
         name_label = fw
@@ -2552,7 +2580,9 @@ async def api_brain(agent: str = "all"):
             "raw_tokens": raw_tokens,
             "lite_tokens": lite_tokens,
             "full_tokens": full_tokens,
-            "savings_estimated": True,
+            "savings_source": savings_source,
+            "lite_potential_pct": lite_potential_pct if not has_real_compress else None,
+            "full_potential_pct": full_potential_pct if not has_real_compress else None,
             "drift": drift,
             "turn_timeline": turns[:24],
         }

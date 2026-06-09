@@ -1948,6 +1948,39 @@ function renderOptimiser(data) {
     }
   }
 }
+function renderSavingsAmount(rawTk, liteTk, fullTk, litePct, fullPct, rate, source) {
+  const turnsPerDay = 50;
+  const cpt = rate / 1000000;
+  const liteDaily = liteTk * turnsPerDay;
+  const fullDaily = fullTk ? fullTk * turnsPerDay : 0;
+  const rawDaily = rawTk * turnsPerDay;
+  const liteSavingsD = (rawDaily - liteDaily) * cpt;
+  const fullSavingsD = (rawDaily - fullDaily) * cpt;
+  const sourceLabel = source === 'actual' ? '' : '<span style="color:#94a3b8;font-size:11px;font-weight:400;"> (based on composition)</span>';
+  document.getElementById('brainSavingsChart').innerHTML =
+    `<div class="sav-row"><span class="sl" style="color:#94a3b8;">Original</span><div class="st"><div class="sf" style="width:100%;background:#475569;"></div></div><span class="sv" style="color:#94a3b8;">${rawTk.toLocaleString()} tok/turn</span></div>
+    <div class="sav-row"><span class="sl" style="color:#86efac;">Lite (Free)${source === 'potential' ? ' ▲' : ''}</span><div class="st"><div class="sf" style="width:${(liteTk/rawTk*100).toFixed(1)}%;background:#22c55e;"></div></div><span class="sv" style="color:#22c55e;">${liteTk.toLocaleString()} tok <span style="color:#64748b;">(-${litePct}%)</span>${rate > 0 ? ' <span style="color:#64748b;font-size:11px;">→ $' + liteSavingsD.toFixed(3) + '/day</span>' : ''}</span></div>` +
+    (fullTk != null ?
+    `<div class="sav-row"><span class="sl" style="color:#a5b4fc;">Full (Pro)${source === 'potential' ? ' ▲' : ''}</span><div class="st"><div class="sf" style="width:${(fullTk/rawTk*100).toFixed(1)}%;background:#6366f1;"></div></div><span class="sv" style="color:#a5b4fc;">${fullTk.toLocaleString()} tok <span style="color:#64748b;">(-${fullPct}%)</span>${rate > 0 ? ' <span style="color:#64748b;font-size:11px;">→ $' + fullSavingsD.toFixed(3) + '/day</span>' : ''}</span></div>` : '') +
+    (source === 'potential' ? '<div style="font-size:11px;color:#64748b;margin-top:4px;">▲ based on actual composition — run Preview for real numbers</div>' : '');
+  document.getElementById('brainSavingsCalc').innerHTML =
+    `<div class="cb green"><div class="big">-${litePct}%</div><div class="cbl">Lite saves / turn${source === 'potential' ? ' ▲' : ''}</div></div>
+    <div class="cb orange"><div class="big">${fullTk != null ? '-'+fullPct+'%' : '—'}</div><div class="cbl">Full saves / turn${source === 'potential' ? ' ▲' : ''}</div></div>
+    <div class="cb blue"><div class="big">${(fullSavingsD > 0 ? (rawDaily - fullDaily).toLocaleString() : '0')}</div><div class="cbl">Tokens saved / day</div></div>
+    <div class="cb purple"><div class="big">${rate > 0 ? '$' + fullSavingsD.toFixed(2) : 'FREE'}</div><div class="cbl">Dollars saved / day</div></div>`;
+  if (source === 'potential') {
+    document.getElementById('brainProUpsell').querySelector('.pt').innerHTML =
+      `🔒 Full could save ~$${fullSavingsD.toFixed(2)}/day vs Lite's $${liteSavingsD.toFixed(2)} — run Preview for exact numbers`;
+    document.getElementById('brainProUpsell').querySelector('.pd').textContent =
+      'Pro gives you Full compression + Auto-Watch + Token Optimiser + never-pruned history. Numbers shown are estimates based on your actual agent composition.';
+  } else {
+    document.getElementById('brainProUpsell').querySelector('.pt').innerHTML =
+      `🔒 Full saves $${fullSavingsD.toFixed(2)}/day vs Lite's $${liteSavingsD.toFixed(2)} — upgrade to apply Full compression`;
+  }
+  document.getElementById('brainSavingsChart').style.display = '';
+  document.getElementById('brainSavingsCalc').style.display = '';
+  document.getElementById('brainProUpsell').style.display = '';
+}
 function renderBrain(agentName) {
   if (!brainData) return;
   let a;
@@ -2003,8 +2036,13 @@ function renderBrain(agentName) {
   document.getElementById('brainTokenBars').innerHTML = bars || '<div style="color:#64748b;font-size:12px;">No token data for this agent</div>';
   // Savings — compute cost per token
   const rawTk = a.raw_tokens || totalVal;
-  const liteTk = a.lite_tokens != null ? a.lite_tokens : rawTk;
-  const fullTk = a.full_tokens != null ? a.full_tokens : rawTk;
+  const savingsSource = a.savings_source || 'potential'; // 'actual' | 'potential'
+  const hasLiteData = a.lite_tokens != null && a.lite_tokens < rawTk;
+  const hasFullData = a.full_tokens != null && a.full_tokens < rawTk;
+  const liteTk = hasLiteData ? a.lite_tokens : null;
+  const fullTk = hasFullData ? a.full_tokens : null;
+  const litePotentialPct = a.lite_potential_pct;
+  const fullPotentialPct = a.full_potential_pct;
   const selProv = document.getElementById('brainProvider');
   const selVal = selProv.value;
   let rate = parseFloat(selVal);
@@ -2015,26 +2053,33 @@ function renderBrain(agentName) {
   }
   if (isNaN(rate)) rate = 0;
   document.getElementById('brainCustomCost').style.display = selVal === 'custom' ? 'flex' : 'none';
-  const litePct = ((rawTk - liteTk) / rawTk * 100).toFixed(1);
-  const fullPct = ((rawTk - fullTk) / rawTk * 100).toFixed(1);
-  const turnsPerDay = 50;
-  const cpt = rate / 1000000;
-  const liteDaily = liteTk * turnsPerDay;
-  const fullDaily = fullTk * turnsPerDay;
-  const rawDaily = rawTk * turnsPerDay;
-  const liteSavingsD = (rawDaily - liteDaily) * cpt;
-  const fullSavingsD = (rawDaily - fullDaily) * cpt;
-  document.getElementById('brainSavingsChart').innerHTML =
-    `<div class="sav-row"><span class="sl" style="color:#94a3b8;">Original</span><div class="st"><div class="sf" style="width:100%;background:#475569;"></div></div><span class="sv" style="color:#94a3b8;">${rawTk.toLocaleString()} tok/turn</span></div>
-    <div class="sav-row"><span class="sl" style="color:#86efac;">Lite (Free)</span><div class="st"><div class="sf" style="width:${(liteTk/rawTk*100).toFixed(1)}%;background:#22c55e;"></div></div><span class="sv" style="color:#22c55e;">${liteTk.toLocaleString()} tok <span style="color:#64748b;">(-${litePct}%)</span>${rate > 0 ? ' <span style="color:#64748b;font-size:11px;">→ $' + liteSavingsD.toFixed(3) + '/day</span>' : ''}</span></div>
-    <div class="sav-row"><span class="sl" style="color:#a5b4fc;">Full (Pro)</span><div class="st"><div class="sf" style="width:${(fullTk/rawTk*100).toFixed(1)}%;background:#6366f1;"></div></div><span class="sv" style="color:#a5b4fc;">${fullTk.toLocaleString()} tok <span style="color:#64748b;">(-${fullPct}%)</span>${rate > 0 ? ' <span style="color:#64748b;font-size:11px;">→ $' + fullSavingsD.toFixed(3) + '/day</span>' : ''}</span></div>`;
-  document.getElementById('brainSavingsCalc').innerHTML =
-    `<div class="cb green"><div class="big">-${litePct}%</div><div class="cbl">Lite saves / turn</div></div>
-    <div class="cb orange"><div class="big">-${fullPct}%</div><div class="cbl">Full saves / turn</div></div>
-    <div class="cb blue"><div class="big">${(fullSavingsD > 0 ? (rawDaily - fullDaily).toLocaleString() : '0')}</div><div class="cbl">Tokens saved / day</div></div>
-    <div class="cb purple"><div class="big">${rate > 0 ? '$' + fullSavingsD.toFixed(2) : 'FREE'}</div><div class="cbl">Dollars saved / day</div></div>`;
-  document.getElementById('brainProUpsell').querySelector('.pt').innerHTML =
-    `🔒 Full compression saves <span class="sh">$${fullSavingsD.toFixed(2)}/day</span> vs Lite's <span style="color:#22c55e;">$${liteSavingsD.toFixed(2)}</span> — that's <span class="sh">$${(fullSavingsD * 365).toFixed(0)}/year</span> extra`;
+  if (hasLiteData || hasFullData) {
+    // ACTUAL savings from compress_log
+    const litePct = ((rawTk - liteTk) / rawTk * 100).toFixed(1);
+    const fullPct = hasFullData ? ((rawTk - fullTk) / rawTk * 100).toFixed(1) : '-';
+    const label = 'actual';
+    renderSavingsAmount(rawTk, liteTk, fullTk, litePct, fullPct, rate, label);
+  } else if (litePotentialPct != null && litePotentialPct > 0) {
+    // POTENTIAL savings from composition analysis
+    const litePct = litePotentialPct.toFixed(1);
+    const fullPct = fullPotentialPct != null ? fullPotentialPct.toFixed(1) : '-';
+    const liteTkPot = Math.round(rawTk * (1 - litePotentialPct / 100));
+    const fullTkPot = fullPotentialPct != null ? Math.round(rawTk * (1 - fullPotentialPct / 100)) : null;
+    const label = 'potential';
+    renderSavingsAmount(rawTk, liteTkPot, fullTkPot, litePct, fullPct, rate, label);
+  } else {
+    // No composition data yet
+    document.getElementById('brainSavingsChart').innerHTML =
+      '<div style="color:#64748b;font-size:13px;padding:16px 0;text-align:center;">📊 Run a compression preview to see what you can save</div>';
+    document.getElementById('brainSavingsCalc').innerHTML = '';
+    document.getElementById('brainProUpsell').querySelector('.pt').innerHTML =
+      '🔒 Full compression available with Pro — run a preview to see your potential savings';
+    if (document.getElementById('brainSavingsChart').style.display === 'none') {
+      document.getElementById('brainSavingsChart').style.display = '';
+      document.getElementById('brainSavingsCalc').style.display = '';
+      document.getElementById('brainProUpsell').style.display = '';
+    }
+  }
   // Drift
   const drift = a.drift || [];
   const driftHtml = drift.map(item => {
@@ -2053,26 +2098,33 @@ function renderBrain(agentName) {
   // Timeline
   const turns = a.turn_timeline || [];
   const maxTurn = Math.max(...turns, 1);
-  const cols = turns.map(v => {
+  const cols = turns.length > 0 ? turns.map(v => {
     const h = Math.max(3, (v / maxTurn) * 34);
     return `<div class="per-turn-col" style="height:${h}px;"><span class="tip">${v.toLocaleString()} tok</span></div>`;
-  }).join('');
-  document.getElementById('brainTimeline').innerHTML = cols || '<div style="color:#64748b;font-size:12px;">No timeline data</div>';
-  // Update compression mode button labels with actual percentages
-  const lPct = Math.round(((rawTk - liteTk) / rawTk) * 100);
-  const fPct = Math.round(((rawTk - fullTk) / rawTk) * 100);
+  }).join('') : '';
+  document.getElementById('brainTimeline').innerHTML = cols || '<div style="color:#64748b;font-size:12px;text-align:center;padding:12px;">No timeline data yet</div>';
+  // Update compression mode button labels
+  const lPct = hasLiteData ? Math.round(((rawTk - liteTk) / rawTk) * 100) :
+               (litePotentialPct != null ? Math.round(litePotentialPct) : null);
+  const fPct = hasFullData ? Math.round(((rawTk - fullTk) / rawTk) * 100) :
+               (fullPotentialPct != null ? Math.round(fullPotentialPct) : null);
   const liteLabel = document.getElementById('litePctLabel');
   const fullLabel = document.getElementById('fullPctLabel');
-  if (liteLabel) liteLabel.textContent = lPct;
-  if (fullLabel) fullLabel.textContent = fPct;
-  // Also update the afterModePct on the preview card
-  const afterPct = document.getElementById('afterModePct');
-  if (afterPct && a) afterPct.textContent = (compressMode === 'lite' ? lPct : fPct) + '%';
-  // Update Optimiser mini cards
+  if (liteLabel) liteLabel.textContent = lPct != null ? lPct + '%' : '--';
+  if (fullLabel) fullLabel.textContent = fPct != null ? fPct + '%' : '--';
+  // Show ▲ indicator for potential data
+  const liteBtn = document.getElementById('liteBtn');
+  const fullBtn = document.getElementById('fullBtn');
+  if (liteBtn && !hasLiteData && lPct != null) {
+    if (!liteBtn.textContent.includes('▲')) liteBtn.textContent = 'Lite (Free) ▲ — ' + lPct + '%';
+  }
+  if (fullBtn && !hasFullData && fPct != null) {
+    if (!fullBtn.textContent.includes('▲')) fullBtn.textContent = 'Full (Pro) ▲ — ' + fPct + '%';
+  }
   const optLiteVal = document.getElementById('optimiserLiteVal');
   const optFullVal = document.getElementById('optimiserFullVal');
-  if (optLiteVal) optLiteVal.textContent = '-' + lPct + '%';
-  if (optFullVal) optFullVal.textContent = '-' + fPct + '%';
+  if (optLiteVal) optLiteVal.textContent = lPct != null ? '-' + lPct + '%' : '—';
+  if (optFullVal) optFullVal.textContent = fPct != null ? '-' + fPct + '%' : '—';
   // Update Optimiser tier CTAs
   const tierLiteCta = document.getElementById('optimiserTierLiteCta');
   const tierFullCta = document.getElementById('optimiserTierFullCta');
