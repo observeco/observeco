@@ -11,6 +11,7 @@
 | 3.0 | 2026-05-31 | **Added Layer F: First-Run Audit** (8 pts then 9, all-items-must-pass) — forces every PR to verify fresh-install, incognito-load, empty-state, port-collision, cross-platform, headless, daemon-auto-start, and first-30-seconds experience. Total score increased 61→69→70, threshold 48→56. Lessons Learned: escape post-mortem from shallow risk assessment. |
 | 3.1 | 2026-05-31 | **Layer F hardened**: 8→9 items (added F9: telemetry opt-in / security warning). All evidence requirements made CI-enforceable (exact curl/grep/TestClient commands). Added cross-reference to requirements-fidelity-playbook.md Traps 1-3. Scoring table updated 69→70. Thesis "four lenses"→"six lenses" fixed. Duplicate empty tag removed. Lessons Log date inconsistency fixed. CI yaml threshold corrected 48→56 and total 61→69→70. |
 | 3.11 | 2026-06-01 | **Windows + Telemetry Hardening**: watch.py fully cross-platform (DETACHED_PROCESS, taskkill fallback, signal guards). Telemetry client gated on local opt-in file. Three new dashboard endpoints for opt-in prompt. CI audit searches `<body>` content. Cross-platform matrix updated. Lessons Learned entries added. |
+| 3.12 | 2026-06-10 | **Added Layer G: Payment-to-Feature Fidelity** (3 items, 8 pts). Updated scoring table to include Layer G. Updated version history. |
 **Source:** Real need — the 7-playbook system (see requirements-fidelity-playbook.md §Playbook Inventory) all work independently, but nothing forces them to run TOGETHER before shipping.
 
 This is the **single source of truth for "is this ready to ship?"** It combines all five lenses into one weighted gate that must pass before any change reaches production.
@@ -113,6 +114,16 @@ Max Layer F: 9 pts **Pass threshold: 9/9 (ALL items must pass — this layer is 
 
 **If F1–F9 are not ALL checked green, the feature ships without a verifiable first-run experience — which is the highest-probability failure mode for a CLI-to-web product aimed at a general audience. No exception process for this layer. If one fails, the feature does not ship.**
 
+### Layer G: Payment-to-Feature Fidelity (3 items, max 8 pts)
+
+| # | Item | Weight | Check | Evidence required |
+|---|------|--------|-------|-------------------|
+| G1 | Payment success → feature unlock verified | 3 | ☐ | End-to-end test: complete payment, verify Pro activated within 30s |
+| G2 | Email receipt sent from payment platform | 2 | ☐ | Stripe Dashboard → Payments → verify email sent flag |
+| G3 | Cancel/deactivate → badge updates without reload | 3 | ☐ | Open modal → cancel → verify badge changes without page reload |
+
+Max Layer G: 8 pts **Pass threshold: ≥6**
+
 **Success metric for this layer:** "% of first-run users seeing ≥1 agent card or guided setup wizard. Target: >90%. Measured via opt-in telemetry on /api/agents first call. Published as dashboard-accessible metric within 30 days of launch."
 
 ---
@@ -122,12 +133,13 @@ Max Layer F: 9 pts **Pass threshold: 9/9 (ALL items must pass — this layer is 
 | Layer | Max | Threshold | Actual | Pass? |
 |-------|-----|-----------|--------|-------|
 | A — Requirements | 14 | ≥11 | ___ | ☐ |
-| B — Coding Fidelity | 14 | ≥11 | ___ | ☐ |
-| C — UX Fidelity | 11 | ≥9 | ___ | ☐ |
+| B — Coding | 14 | ≥11 | ___ | ☐ |
+| C — UX | 11 | ≥9 | ___ | ☐ |
 | D — System Design | 18 | ≥14 | ___ | ☐ |
-| E — Session Governance | 4 | ≥3 | ___ | ☐ |
-| F — First-Run Audit | 9 | =9 (all pass) | ___ | ☐ |
-| **Total** | **70** | **≥56 (80%)** | ___ | ☐ |
+| E — Agent Session | 4 | ≥3 | ___ | ☐ |
+| F — First-Run | 9 | =9 (ALL MUST PASS) | ___ | ☐ |
+| G — Payment Pipeline | 8 | ≥6 | ___ | ☐ |
+| **Total** | **78** | **≥60** | **___** | **☐** |
 
 ---
 

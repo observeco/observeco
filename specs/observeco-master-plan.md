@@ -61,7 +61,7 @@
 ||| 21 | Communication Pathway Map (subgraph folding, cron edge metadata, FK constraint fix, daemon heartbeat metadata, sticky header) | Diagnostics | ✅ Live | ✅ Interactive graph with 111 nodes + 80 edges + 77 cron_delivery edges + platform node + dead ends + subgraph folding + detail panel with metadata | ✅ Detail panel + drag + auto-alert | ~3d (built) + 1d (FK fix) | observeco-master-plan.md §3.19 |
 ||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Layers 1-2 / 🔴 P2-P5 (platform connectivity, crash analysis, costs, comm tracing, CI/CD) | ✅ All (detection + health — core infra for everything) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
 |||| **23** | **Skill Artifacts + Cards System** (`observeco chisel artifacts` + `chisel cards`) | **Analysis** | **✅ Live** | ✅ Cached compressed `.md.compressed` per skill, `cards.json` (156 cards), `manifests.json`, CLI `observeco chisel cards` for top-30 rank, `observeco chisel artifacts --refresh` to rebuild. SkillOS `_load_skill_content()` prefers compressed cache over raw. `max_skill_content_bytes` reduced 8192→4096. | ✅ Same for all | ~1d | observeco-master-plan.md §3.23 |
-||| **24** | **Config Hygiene Audit** (`observeco chisel config`) — scans Hermes config for duplicated prompts, low cache TTL, stale references. **Synergy:** shares token counting, YAML parsing, and savings estimation with `chisel/skill_compress.py`. Same pipeline, different target. | **Analysis** | **✅ Live** | ✅ CLI audit report with line-by-line findings + `--fix` flag | ✅ Dashboard widget (Pro, Brain tab, live-updating) + scheduled daily scan (6am) | ~1d | observeco-master-plan.md §3.24 |
+||| **24** | **Config Hygiene Audit** (`observeco chisel config`) — scans Hermes config for duplicated prompts, low cache TTL, stale references. **Synergy:** shares token counting, YAML parsing, and savings estimation with `chisel/skill_compress.py`. Same pipeline, different target. | **Analysis** | **✅ Live** | ✅ CLI audit report with line-by-line findings + `--fix` flag | ✅ Dashboard widget (Free: diagnostics, Pro: fixes + schedule) | ~1d | observeco-master-plan.md §3.24 |
 ||| **25** | **LLM-Powered Intelligence Service** — shared `llm_service` that every module calls for deeper diagnosis, alert enrichment, personalized first-run guidance, and per-agent summaries. | **AI** | **✅ Live — v1** | ✅ Free = no LLM (static fallback). Trial = all 7 consumers active. Pro = all 7 permanently. **By design: LLM is Pro-only.** | ✅ All 7 consumers (3 deep + 4 shallow) | ~5d (3d built, 2 deferred) | observeco-master-plan.md §3.25 |
 ||| **26** | **Self-serve billing management** — License status card (plan, trial countdown, action buttons), Stripe Customer Portal for paid subs, Cancel Trial with trial hardening (one-time offer), end-of-trial banner, 3 Stripe webhooks (subscription.deleted/updated/invoice.payment_failed) | **Commercial** | **✅ Live** | ✅ Free features always free. LLM is Pro-only (all 7 consumers shut off after trial). Trial = full Pro unlock. After trial: Free. | ✅ Pro features | ~4h | §3.28 |
 |||
@@ -2956,16 +2956,19 @@ Add "Skill Audit" card to dashboard (Pro-only):
 - `observeco doctor config --watch` — daemon mode, re-scan on config.yaml modification
 - `observeco doctor config --fix` — apply auto-fixable findings (dedup prompts, raise TTL) with diff preview
 
-**Dashboard widget (Pro):**
-- Config health score (0-100)
-- Top 3 findings sorted by estimated token waste
-- "Fix" button that applies auto-fixes
-- Trend chart showing config hygiene over time (is it getting better or worse?)
+**Dashboard widget (Free: diagnostics, Pro: auto-fix):**
+- Config health score (0-100) with findings listed — visible to all
+- Free sees diagnostics + Pro upsell banner with token waste estimate
+- Pro sees one-click Fix buttons + daily scan status
+- One-click fixes (Pro):
+  - **Extract duplicated Reasoning Standards** — removes from all channel prompts, prepends to shared `system_prompt` (single cached copy)
+  - **Raise cache TTL** — sets `prompt_caching.cache_ttl` to 30m
+  - **Correct stale references** — auto-finds replacement paths by scanning intelligence/signals directories
+  - **Remove orphan agent references** — redacts "You are [agent]" lines for agents with no workspace profile
+- Trend chart showing config hygiene over time (is it getting better or worse?) — future
 
-**Implementation:** Lives in `observeco/chisel/config_scanner.py` (not `doctor/`). Shares `_count_tokens()`, YAML parsing helpers, and savings estimate format from `skill_compress.py`. Uses regex matching for prompt dedup (same approach: split on `\\n## Reasoning Standards` pattern). Reads prompts as raw strings, compares adjacent topic prompts for identical substrings over 100 chars.
-
-**Free:** CLI scan (single report).
-**Pro:** Auto-detect token waste patterns (~10K/session) + dashboard widget + one-click fix — no manual audit needed.
+**Free:** CLI scan (single report) + dashboard diagnostics (read-only).
+**Pro:** Dashboard diagnostics + one-click Fix buttons + daily scheduled scan (6am). **Pro saves real tokens** — extraction to system_prompt means one shared cached copy instead of N copies per session.
 
 **Effort:** ~1d (module + CLI + dashboard widget)
 

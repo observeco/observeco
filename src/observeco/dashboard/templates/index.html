@@ -978,7 +978,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Side-by-side token, drift, and error profiles across all agents.</div>
 
       <!-- Compare table -->
-      <div id="comparePanel" hx-get="/api/fleet-compare" hx-trigger="load, every 30s" hx-swap="innerHTML">
+      <div id="comparePanel" hx-get="/api/fleet-compare" hx-trigger="load, every 30s" hx-swap="innerHTML" hx-on::after-swap="updateCompareIndicators()">
         <div style="color:#64748b;font-size:12px;">Loading comparison data...</div>
       </div>
     </div>
@@ -987,7 +987,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
   <!-- Brain Analysis tab -->
   <div class="tab-content" id="tabBrain">
     <div class="app" style="padding:0;">
-      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🧠 Brain Analysis</h1>
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🧠 Brain Analysis<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('brain-analysis', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h1>
       <div style="font-size:13px;color:#64748b;margin-bottom:20px;">See what feeds your agents. See what you can save.</div>
 
       <!-- Agent selector -->
@@ -996,12 +996,12 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
           <option value="all">All Agents (fleet total)</option>
         </select>
         <span class="brain-fw-badge" id="brainFwBadge">13 agents</span>
-        <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">FREE</span>
+        <span id="brainTierBadge" style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;">FREE</span>
       </div>
 
       <!-- Composition -->
       <div class="brain-card">
-        <h3>Token Breakdown <span style="font-size:11px;color:#64748b;font-weight:400;">per component</span></h3>
+        <h3>Token Breakdown <span style="font-size:11px;color:#64748b;font-weight:400;">per component</span><span class="glossary-hint" onclick="event.stopPropagation();showGlossary('token-breakdown', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
         <div class="comp-grid">
           <div>
             <div class="token-total-display" id="brainTotal">0 <span>total</span></div>
@@ -1020,60 +1020,9 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         </div>
       </div>
 
-      <!-- Savings -->
+<!-- ====== COMPRESSION ====== -->
       <div class="brain-card">
-        <h3>What Token Optimiser Can Save You</h3>
-        <div class="prov-cfg">
-          <label>Provider cost:</label>
-          <select id="brainProvider" onchange="renderBrain(document.getElementById('brainAgentSelect').value)">
-            <option value="0.15">DeepSeek V4 Flash — $0.15/M input</option>
-            <option value="0.08">Ollama Pro — $0.08/M input</option>
-            <option value="0.10">Zhipu — $0.10/M input</option>
-            <option value="0">Ollama Local — FREE</option>
-            <option value="custom">Custom</option>
-          </select>
-          <span style="display:none;align-items:center;gap:4px;" id="brainCustomCost">
-            <span style="font-size:11px;color:#64748b;">$</span>
-            <input type="text" id="brainCustomRate" value="0.15" style="width:60px;" oninput="renderBrain(document.getElementById('brainAgentSelect').value)">
-            <span class="pn">/M input tokens</span>
-          </span>
-          <span class="pn">50 turns/day avg</span>
-        </div>
-        <div class="savings-vis" id="brainSavingsChart"></div>
-        <div class="sav-calc" id="brainSavingsCalc"></div>
-        <div class="pro-upsell" onclick="showBrainPro()" id="brainProUpsell">
-          <div class="pt">🔒 Full compression saves more — that's extra per year</div>
-          <div class="pd">Pro gives you Full compression + Auto-Watch + Token Optimiser + never-pruned history</div>
-        </div>
-      </div>
-
-      <!-- Drift & Usage -->
-      <div class="brain-card">
-        <h3>Drift & Usage <span style="font-size:11px;color:#64748b;font-weight:400;">7-day trend</span></h3>
-        <div class="drift-grid">
-          <div>
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">Component drift</div>
-            <div id="brainDrift"></div>
-          </div>
-          <div>
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
-              Per-turn token usage <span style="color:#64748b;">last 24h</span>
-              <span style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;">FREE</span>
-            </div>
-            <div class="per-turn-bar" id="brainTimeline"></div>
-            <div class="timeline-axis"><span>24h ago</span><span>Now</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ====== CONFIG HEALTH (Pro) ====== -->
-      <div class="brain-card" id="configHealthCard">
-        <div hx-get="/api/config-health" hx-trigger="load, every 60s" hx-swap="innerHTML"></div>
-      </div>
-
-      <!-- ====== COMPRESSION (Section 3) ====== -->
-      <div class="brain-card">
-        <h3>Compression
+        <h3>Compression<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('compression', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span>
           <span style="font-size:11px;color:#64748b;font-weight:400;">see the diff, then apply</span>
         </h3>
 
@@ -1134,11 +1083,64 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         </div>
       </div>
 
-      <!-- ====== TOKEN OPTIMISER (Section 4 — Pro teaser) ====== -->
-      <div class="brain-card optimiser-card-full" onclick="showBrainPro()">
+      <!-- Recent compression feed — powered by compress_log -->
+      <div class="brain-card" id="compressFeedCard">
+        <h3>⚡ Recent Compression Runs<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('compression', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span>
+          <span style="font-size:11px;color:#64748b;font-weight:400;">latest from your fleet</span>
+        </h3>
+        <div id="compressFeedContent" hx-get="/api/compress-feed" hx-trigger="load, every 30s" hx-swap="innerHTML">
+          <div style="text-align:center;padding:12px;color:var(--muted);font-size:12px;">Loading recent compression runs...</div>
+        </div>
+      </div>
+
+      <!-- ====== BUDGET PLANNER (fleet-level cost widget) ====== -->
+      <div class="brain-card" id="budgetPlannerCard">
+        <h3>🎯 Budget Planner
+          <span style="font-size:11px;color:#64748b;font-weight:400;">fleet-level cost estimation<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('budget-planner', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></span>
+        </h3>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:2px;">
+          <label style="font-size:11px;color:#64748b;">Provider:</label>
+          <select id="bpProvider" onchange="reloadBudgetPlanner()" style="font-size:11px;padding:2px 6px;border-radius:4px;background:var(--bg);border:1px solid var(--border);color:var(--fg);">
+            <option value="0.15">DeepSeek V4 Flash — $0.15/M</option>
+            <option value="0.08">Ollama Pro — $0.08/M</option>
+            <option value="0.10">Zhipu — $0.10/M</option>
+            <option value="0">Local (FREE)</option>
+          </select>
+        </div>
+        <div id="budgetPlannerContent" hx-get="/api/budget-planner" hx-trigger="load" hx-swap="innerHTML">
+          <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Loading budget data...</div>
+        </div>
+      </div>
+
+      <!-- Drift & Usage -->
+      <div class="brain-card">
+        <h3>Drift & Usage <span style="font-size:11px;color:#64748b;font-weight:400;">7-day trend</span><span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift-usage', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
+        <div class="drift-grid">
+          <div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">Component drift</div>
+            <div id="brainDrift"></div>
+          </div>
+          <div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:8px;">
+              Per-turn token usage <span style="color:#64748b;">last 24h</span>
+              <span id="brainPerTurnBadge" style="background:var(--accent-on);color:#86efac;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;">FREE</span>
+            </div>
+            <div class="per-turn-bar" id="brainTimeline"></div>
+            <div class="timeline-axis"><span>24h ago</span><span>Now</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== CONFIG HEALTH (Free: diagnostic, Pro: fix + daily scan) ====== -->
+      <div class="brain-card" id="configHealthCard">
+        <div hx-get="/api/config-health" hx-trigger="load, every 60s" hx-swap="innerHTML"></div>
+      </div>
+
+      <!-- ====== TOKEN OPTIMISER (Section 4 — Pro teaser, hidden for Pro) ====== -->
+      <div class="brain-card optimiser-card-full pro-upsell" onclick="showBrainPro()">
         <div class="optimiser-header">
           <div>
-            <h3>🧠 Token Optimiser
+            <h3>🧠 Token Optimiser<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('token-optimiser', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span>
               <span class="tier-tag pro">PRO</span>
               <span style="font-size:11px;color:#64748b;font-weight:400;">learns from 200+ turns</span>
             </h3>
@@ -1193,11 +1195,11 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         </div>
       </div>
 
-      <!-- Tier summary -->
-      <div class="tier-box-row">
+      <!-- Tier summary (hidden for Pro — both free comparison and Pro upsell) -->
+      <div class="tier-box-row pro-upsell" id="tierSummarySection">
         <div class="tier-box free">
           <div class="tier free">🔓 FREE</div>
-          <div class="name">Optimiser Lite</div>
+          <div class="name">Optimiser Lite<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tier-summary', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></div>
           <div class="items">
             • Compress guidance blocks<br>
             • Per-agent breakdown & drift<br>
@@ -1219,19 +1221,9 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         </div>
       </div>
 
-      <!-- ====== BUDGET PLANNER (fleet-level cost widget) ====== -->
-      <div class="brain-card" id="budgetPlannerCard">
-        <h3>🎯 Budget Planner
-          <span style="font-size:11px;color:#64748b;font-weight:400;">fleet-level cost estimation<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('budget-planner', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></span>
-        </h3>
-        <div id="budgetPlannerContent" hx-get="/api/budget-planner" hx-trigger="load" hx-swap="innerHTML">
-          <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Loading budget data...</div>
-        </div>
-      </div>
-
       <!-- ====== MEMORY GARDEN (Section 5 — fleet summary) ====== -->
       <div class="brain-card">
-        <h3>💾 Memory Garden
+        <h3>💾 Memory Garden<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span>
           <span style="font-size:11px;color:#64748b;font-weight:400;">fleet-wide memory health</span>
         </h3>
         <div id="gardenSummary">
@@ -1295,19 +1287,29 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 
   <!-- Restarts tab -->
   <div class="tab-content" id="tabRestarts">
-    <div class="app" style="padding:0;" id="restartQualityContainer" hx-get="/api/restart-quality" hx-trigger="load" hx-swap="innerHTML">
-      <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Loading restart quality data...</div>
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔄 Restart Quality<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('restart-quality', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:8px;">How agents come back — healthy restarts vs TOCTOU races vs real crashes.</div>
+      <div id="restartQualityContainer" hx-get="/api/restart-quality" hx-trigger="load" hx-swap="innerHTML">
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Loading restart quality data...</div>
+      </div>
     </div>
   </div>
 
-  <!-- Plugin tab -->
+<!-- Plugin tab -->
   <div class="tab-content" id="tabPlugin">
     <div class="app" style="padding:0;">
-      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔌 ClawForge Plugin</h1>
-      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Intent-aware context loading — save 40-60% per turn inside OpenClaw agents.</div>
+      <!-- Coming soon banner -->
+      <div style="background:linear-gradient(135deg,#1e1b4b,#2e1065);border:1px solid #4c1d95;border-radius:12px;padding:20px;margin-bottom:20px;text-align:center;">
+        <div style="font-size:18px;font-weight:700;color:#a78bfa;margin-bottom:4px;">⚡ ClawForge Plugin — Coming in v1</div>
+        <div style="font-size:12px;color:#a5b4fc;line-height:1.6;">
+          OpenClaw agents will auto-load intent-matched context &amp; skip irrelevant sources.
+          <span style="display:block;margin-top:4px;opacity:0.7;">Preview shows estimated impact — real data arrives with the plugin.</span>
+        </div>
+      </div>
 
-      <!-- Stats summary -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px;" id="pluginStatsGrid">
+      <!-- Stats summary (demo mode) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px;opacity:0.65;" id="pluginStatsGrid">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
           <div style="font-size:22px;font-weight:700;color:var(--accent);" id="pluginTurns">0</div>
           <div style="font-size:11px;color:var(--muted);margin-top:4px;">Turns Tracked</div>
@@ -1326,27 +1328,54 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
         </div>
       </div>
 
-      <!-- Recent hooks -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
-        <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
-          <div><strong style="font-size:13px;color:var(--fg);">Recent Hook Events</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">from OpenClaw agents</span></div>
-          <button onclick="loadPluginHooks()" class="heal-trigger-btn">🔄 Refresh</button>
+      <!-- Feature highlights for OpenClaw -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:6px;">🎯 Intent-Aware Loading</div>
+          <div style="font-size:11px;color:var(--fg-2);line-height:1.5;">Each message classifies into debug, feature, status, config, or general — loads only the context files that match. Unmatched sources get skipped.</div>
         </div>
-        <div id="pluginHooks" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:6px;">📦 Per-Agent Profiles</div>
+          <div style="font-size:11px;color:var(--fg-2);line-height:1.5;">Track context size (MEMORY.md, skills, workspace, BOOTSTRAP.md) per OpenClaw agent. Spot bloat, drift, and memory debt before they hurt.</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:6px;">🧹 Memory Garden</div>
+          <div style="font-size:11px;color:var(--fg-2);line-height:1.5;">Auto-detect duplicate entries, contradictions, and stale references across agent memory. Apply hygiene suggestions in one click.</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
+          <div style="font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:6px;">📊 Token Savings Dashboard</div>
+          <div style="font-size:11px;color:var(--fg-2);line-height:1.5;">See per-turn context reduction, tokens saved by intent class, and cost impact across your entire OpenClaw fleet. Live when the plugin ships.</div>
+        </div>
       </div>
 
-      <!-- Install card -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
-        <h3 style="font-size:13px;font-weight:600;color:var(--fg-2);margin-bottom:12px;">Install @observeco/clawforge-plugin</h3>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;font-family:var(--font-mono);font-size:12px;line-height:1.8;">
-          <span style="color:var(--muted);"># Install the plugin</span><br>
-          <span style="color:var(--accent);">npm install</span> <span style="color:#38bdf8;">@observeco/clawforge-plugin</span><br><br>
-          <span style="color:var(--muted);"># Add to OpenClaw config</span><br>
-          <span style="color:#64748b;">{</span><br>
-          &nbsp;&nbsp;<span style="color:#38bdf8;">"plugins"</span>: [<span style="color:#38bdf8;">"@observeco/clawforge-plugin"</span>]<br>
-          <span style="color:#64748b;">}</span><br><br>
-          <span style="color:var(--muted);"># Activate (no restart needed)</span><br>
-          <span style="color:var(--accent);">observeco plugin log</span> ... <span style="color:#94a3b8;">(or POST /api/plugin-log)</span>
+      <!-- Demo hooks + install card side by side -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <!-- Recent hooks (demo) -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+          <div style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+            <div><strong style="font-size:13px;color:var(--fg);">Recent Hook Events</strong> <span style="font-size:11px;color:var(--muted);margin-left:6px;">preview data</span></div>
+            <button onclick="loadPluginHooks()" class="heal-trigger-btn" style="font-size:11px;padding:4px 10px;">🔄 Refresh</button>
+          </div>
+          <div id="pluginHooks" style="padding:14px;font-size:12px;color:var(--fg-2);"></div>
+        </div>
+
+        <!-- Install / coming soon card -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
+          <h3 style="font-size:13px;font-weight:600;color:var(--fg-2);margin-bottom:8px;">📦 Available next version</h3>
+          <div style="font-size:11px;color:var(--fg-2);line-height:1.6;margin-bottom:12px;">
+            The <code style="background:var(--bg);padding:1px 5px;border-radius:3px;font-size:11px;">@observeco/clawforge-plugin</code> will ship with the next OpenClaw release.
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--font-mono);font-size:11px;line-height:1.7;">
+            <span style="color:var(--muted);"># How it will work</span><br>
+            <span style="color:#64748b;">{</span><br>
+            &nbsp;&nbsp;<span style="color:#38bdf8;">"plugins"</span>: [<span style="color:#38bdf8;">"@observeco/clawforge-plugin"</span>]<br>
+            <span style="color:#64748b;">}</span><br><br>
+            <span style="color:var(--muted);"># What it does</span><br>
+            <span style="color:#a5b4fc;">→</span> Classifies intent per-turn<br>
+            <span style="color:#a5b4fc;">→</span> Loads matched context sources<br>
+            <span style="color:#a5b4fc;">→</span> Skips irrelevant files<br>
+            <span style="color:#a5b4fc;">→</span> Reports savings to dashboard
+          </div>
         </div>
       </div>
     </div>
@@ -1387,12 +1416,17 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       </div>
 
       <!-- LLM Toggle Warning Modal -->
-      <div class="modal-overlay" id="llmWarningModal" onclick="if(event.target===this)closeLlmWarning()">
+      <div class="modal-overlay" id="llmWarningModal">
         <div class="modal" style="max-width:480px;">
+          <div class="modal-header">
+            <div>
+              <h3>⚠️ Disable LLM Features?<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('llm-warning', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
+              <div class="sub">This will affect how ObserveCo monitors and heals your fleet</div>
+            </div>
+            <button class="modal-close" onclick="closeLlmWarning()">✕</button>
+          </div>
           <div class="modal-body">
-            <div style="font-size:36px;margin-bottom:10px;">⚠️</div>
-            <h3 style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">Disable LLM Features?</h3>
-            <p style="font-size:13px;color:#94a3b8;line-height:1.5;margin-bottom:16px;">
+            <p style="font-size:13px;color:#94a3b8;line-height:1.5;margin:0 0 16px;">
               Disabling LLM-powered features means ObserveCo won't be able to proactively detect and heal issues in your fleet. Agent discovery, health insights, and healing suggestions will use static rules instead of AI analysis. This is not recommended for production fleets.
             </p>
             <div style="display:flex;gap:8px;justify-content:flex-end;">
@@ -1409,14 +1443,17 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 </div>
 
 <!-- Brain Pro modal -->
-<div class="modal-overlay" id="brainProModal" onclick="if(event.target===this)document.getElementById('brainProModal').classList.remove('active')">
-  <div class="modal" style="position:relative;">
-    <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active');" style="position:absolute;top:10px;right:10px;z-index:1;">✕</button>
+<div class="modal-overlay" id="brainProModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3>🔒 Token Optimiser Pro<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('brain-pro', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
+        <div class="sub">Turn passive observation into active optimisation</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('brainProModal').classList.remove('active')">✕</button>
+    </div>
     <div class="modal-body">
-      <div style="font-size:40px;margin-bottom:12px;">🔒</div>
-      <h3>Token Optimiser Pro</h3>
-      <p style="margin-top:8px;font-size:13px;color:#94a3b8;">Turn passive observation into active optimisation.</p>
-      <ul class="data-table" style="list-style:none;margin:12px 0;width:100%;">
+      <ul class="data-table" style="list-style:none;margin:0 0 12px;width:100%;">
 <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Full compression (guidance + memory + skills + context)<br><span style="font-size:11px;color:#64748b;">Savings vary per agent — computed from actual SOUL.md composition</span></li>
         <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Auto-Watch Daemon<br><span style="font-size:11px;color:#64748b;">Every SOUL.md edit triggers auto-compression</span></li>
         <li style="padding:6px 0;font-size:13px;color:#e2e8f0;">✅ Token Optimiser<br><span style="font-size:11px;color:#64748b;">Analyses 200+ turns to prune unused skills</span></li>
@@ -1437,11 +1474,11 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 <div class="toast-b" id="brainToast"></div>
 
 <!-- Pathway Map full-page modal -->
-<div class="modal-overlay" id="pathwayModal" onclick="if(event.target===this)closePathwayModal()">
+<div class="modal-overlay" id="pathwayModal">
   <div class="modal" style="max-width: 1400px; width: 95%; height: 90vh; padding: 0; overflow: hidden;">
     <div class="modal-header" style="border-bottom: 1px solid var(--border); flex-shrink: 0;">
       <div>
-        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🕸️ Pathway Map</h3>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🕸️ Pathway Map<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('pathway-map', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
         <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Agent ecosystem routing graph</div>
       </div>
       <button class="modal-close" onclick="closePathwayModal()">✕</button>
@@ -1451,7 +1488,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 </div>
 
 <!-- Chisel Compress modal -->
-<div class="modal-overlay" id="chiselModal" onclick="if(event.target===this)closeModalById('chiselModal')">
+<div class="modal-overlay" id="chiselModal">
   <div class="modal" style="max-width: 700px; width: 90%; padding: 0; overflow: hidden;">
     <div class="modal-header" style="border-bottom: 1px solid var(--border);">
       <div>
@@ -1467,11 +1504,11 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 </div>
 
 <!-- OpenClaw Plugin modal -->
-<div class="modal-overlay" id="openclawModal" onclick="if(event.target===this)closeModalById('openclawModal')">
+<div class="modal-overlay" id="openclawModal">
   <div class="modal" style="max-width: 700px; width: 90%; padding: 0; overflow: hidden;">
     <div class="modal-header" style="border-bottom: 1px solid var(--border);">
       <div>
-        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🔌 OpenClaw Plugins</h3>
+        <h3 style="font-size:14px;font-weight:600;color:var(--fg);">🔌 OpenClaw Plugins<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('openclaw-plugins', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h3>
         <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;">Plugin sources, intent classifiers, load status</div>
       </div>
       <button class="modal-close" onclick="closeModalById('openclawModal')">✕</button>
@@ -1483,7 +1520,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 </div>
 
 <!-- Skills Audit modal -->
-<div class="modal-overlay" id="skillsAuditModal" onclick="if(event.target===this)closeSkillsAudit()">
+<div class="modal-overlay" id="skillsAuditModal">
   <div class="modal" style="max-width: 800px; width: 95%; padding: 0; overflow: hidden;">
     <div class="modal-header" style="border-bottom: 1px solid var(--border);">
       <div>
@@ -1499,7 +1536,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 </div>
 
 <!-- Drill-down modal -->
-<div class="modal-overlay" id="drillModal" onclick="if(event.target===this)closeModal()">
+<div class="modal-overlay" id="drillModal">
   <div class="modal">
     <div class="modal-header">
       <div>
@@ -1513,7 +1550,7 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
 </div>
 
 <!-- Thresholds editor modal -->
-<div class="modal-overlay" id="thresholdsModal" onclick="if(event.target===this)closeThresholdsModal()">
+<div class="modal-overlay" id="thresholdsModal">
   <div class="modal" style="max-width:420px;">
     <div class="modal-header">
       <div>
@@ -1524,22 +1561,37 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
     </div>
     <div class="modal-body" style="padding:18px;">
       <div style="margin-bottom:14px;">
-        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:block;margin-bottom:4px;">Max restarts per hour</label>
+        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:flex;align-items:center;gap:4px;margin-bottom:4px;">Max restarts per hour <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('heal-thresholds', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;">?</span></label>
         <input type="number" id="thresholdInputMaxR" min="1" max="20" value="3"
           style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--fg);font-family:inherit;outline:none;">
-        <div style="font-size:10px;color:#64748b;margin-top:3px;">How many times the agent can restart in an hour before circuit trips</div>
+        <div style="font-size:10px;color:#64748b;margin-top:3px;line-height:1.5;">How many times auto-heal will restart this agent per hour. Prevents infinite loops.</div>
+        <div style="font-size:10px;color:#64748b;margin-top:4px;line-height:1.5;">
+          <strong>⬆️ Increase (5-10):</strong> ✅ Critical agents stay up through transient crashes. ❌ More restarts = more API cost (each restart re-loads the full system prompt).<br>
+          <strong>⬇️ Decrease (1-2):</strong> ✅ Forces you to notice real problems faster — agent stays down, you get alerted. ✅ Lower resource waste on permanently broken agents. ❌ One-off transient crashes won't self-recover — you'll be woken up for noise. ❌ Dev/staging agents that crash frequently will stay down.<br>
+          <span style="color:#475569;">🟢 Rule of thumb: Production agents → 5. Dev agents → 1. Unknown → keep at 3.</span>
+        </div>
       </div>
       <div style="margin-bottom:14px;">
-        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:block;margin-bottom:4px;">Drift threshold (%)</label>
+        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:flex;align-items:center;gap:4px;margin-bottom:4px;">Drift threshold (%) <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('heal-thresholds', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;">?</span></label>
         <input type="number" id="thresholdInputDrift" min="1" max="100" step="0.1" value="15"
           style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--fg);font-family:inherit;outline:none;">
-        <div style="font-size:10px;color:#64748b;margin-top:3px;">Token composition change % that triggers a drift alert</div>
+        <div style="font-size:10px;color:#64748b;margin-top:3px;line-height:1.5;">System prompt growth % that triggers a warning over 7 days.</div>
+        <div style="font-size:10px;color:#64748b;margin-top:4px;line-height:1.5;">
+          <strong>⬆️ Increase (20-30%):</strong> ✅ Fewer false positives — only flags significant bloat. ✅ Good for actively developed agents (expected growth from new skills). ❌ May miss gradual token creep that silently adds $5-10/mo over months.<br>
+          <strong>⬇️ Decrease (5-10%):</strong> ✅ Catches bloat early — every small composition change gets reviewed. ✅ Keeps token costs predictable. ❌ Will flag during active development even if changes are intentional. ❌ More notifications to review.<br>
+          <span style="color:#475569;">🟢 Rule of thumb: Stable production agents → 10%. Actively developed → 25%. Don't-know → 15%.</span>
+        </div>
       </div>
       <div style="margin-bottom:18px;">
-        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:block;margin-bottom:4px;">Memory debt threshold</label>
+        <label style="font-size:12px;font-weight:600;color:var(--fg-2);display:flex;align-items:center;gap:4px;margin-bottom:4px;">Memory debt threshold <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('heal-thresholds', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;">?</span></label>
         <input type="number" id="thresholdInputDebt" min="0" max="200" value="60"
           style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--fg);font-family:inherit;outline:none;">
-        <div style="font-size:10px;color:#64748b;margin-top:3px;">Memory debt score that triggers L2 garden cleanup (0-200)</div>
+        <div style="font-size:10px;color:#64748b;margin-top:3px;line-height:1.5;">Accumulated memory tokens before cleanup triggers.</div>
+        <div style="font-size:10px;color:#64748b;margin-top:4px;line-height:1.5;">
+          <strong>⬆️ Increase (80-120):</strong> ✅ Richer historical awareness — agent remembers more between sessions. ✅ Less frequent garden cleanups (disruptive if mid-conversation). ❌ Higher per-turn token cost. ❌ Memory debt can compound — duplicates and contradictions accumulate before cleanup fires.<br>
+          <strong>⬇️ Decrease (20-40):</strong> ✅ Keeps memory lean — lower token cost per turn. ✅ Catches contradictions and duplicates early before they compound. ❌ May trim useful context too aggressively — agent loses conversational threads. ❌ More frequent garden runs = more background processing.<br>
+          <span style="color:#475569;">🟢 Rule of thumb: Long-running agents with complex memory → 80-100. Simple stateless agents → 30. Not sure → 60.</span>
+        </div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button onclick="closeThresholdsModal()" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:12px;color:var(--fg-2);cursor:pointer;">Cancel</button>
@@ -1742,6 +1794,23 @@ function switchTab(tab, btn) {
 
 // ─── Fleet Comparison sort ───
 let compareSort = { col: 'name', order: 'asc' };
+
+function updateCompareIndicators() {
+  const activeCol = compareSort.col;
+  const activeOrder = compareSort.order;
+  document.querySelectorAll('.sort-indicator').forEach(el => {
+    if (el.id === 'sortIndicator_' + activeCol) {
+      el.textContent = activeOrder === 'asc' ? '▲' : '▼';
+      el.style.color = '#86efac';
+      el.style.opacity = '1';
+    } else {
+      el.textContent = '▲';
+      el.style.color = '#86efac';
+      el.style.opacity = '0.35';
+    }
+  });
+}
+
 function sortCompare(col) {
   if (compareSort.col === col) {
     compareSort.order = compareSort.order === 'asc' ? 'desc' : 'asc';
@@ -1749,17 +1818,14 @@ function sortCompare(col) {
     compareSort.col = col;
     compareSort.order = 'asc';
   }
-  // Update indicator arrows
-  document.querySelectorAll('[id^="sortIndicator_"]').forEach(el => el.textContent = '');
-  const ind = document.getElementById('sortIndicator_' + col);
-  if (ind) ind.textContent = compareSort.order === 'asc' ? '▲' : '▼';
+  updateCompareIndicators();
   // Re-fetch panel
   const panel = document.getElementById('comparePanel');
   if (panel) {
     panel.innerHTML = '<div style="color:#64748b;font-size:12px;">Sorting...</div>';
     fetch('/api/fleet-compare?sort=' + compareSort.col + '&order=' + compareSort.order)
       .then(r => r.text())
-      .then(html => { panel.innerHTML = html; });
+      .then(html => { panel.innerHTML = html; updateCompareIndicators(); });
   }
 }
 
@@ -1870,11 +1936,28 @@ function loadGardenSummary() {
     });
 }
 function renderGardenSummary(data) {
+  const licenseStatus = window.__lastLicenseStatus;
+  const isPro = licenseStatus?.license_type === 'pro' || licenseStatus?.license_type === 'trial' || licenseStatus?.is_pro;
+
   if (!data || data.agents_scanned === 0) {
-    document.getElementById('gardenSummary').innerHTML =
-      '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">📭 No garden data yet. Data accumulates as agents run and ClawForge scans their memory.</div>';
+    const emptyHtml = isPro ? `
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">
+        <div style="font-size:32px;margin-bottom:8px;">&#x1F4AD;</div>
+        <div style="font-weight:600;color:#94a3b8;margin-bottom:4px;">No garden data yet</div>
+        <div style="margin-bottom:12px;line-height:1.6;">Scan your agents' MEMORY.md files to find duplicates, contradictions, and stale entries.</div>
+        <button class="primary-btn" style="background:#6366f1;border:none;color:white;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;" onclick="runGardenScan()">&#x1F50D; Scan Memory Garden</button>
+        <div id="gardenScanStatus" style="margin-top:8px;font-size:11px;color:var(--muted);"></div>
+      </div>` : `
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">
+        <div style="font-size:32px;margin-bottom:8px;">🔒</div>
+        <div style="font-weight:600;color:#94a3b8;margin-bottom:4px;">Memory Garden</div>
+        <div style="margin-bottom:12px;line-height:1.6;">Scan agent MEMORY.md files for duplicates, contradictions, and stale entries.</div>
+        <button class="pro-cta-btn" onclick="showBrainPro()">Unlock with Pro &rarr;</button>
+      </div>`;
+    document.getElementById('gardenSummary').innerHTML = emptyHtml;
     return;
   }
+
   const gradeColor = {'A':'#22c55e','B':'#eab308','C':'#eab308','D':'#ef4444','F':'#ef4444','N/A':'#6b7280'}[data.fleet_grade] || '#6b7280';
   const baseScore = data.avg_debt_score.toFixed ? data.avg_debt_score.toFixed(0) : data.avg_debt_score;
   document.getElementById('gardenSummary').innerHTML =
@@ -1890,8 +1973,68 @@ function renderGardenSummary(data) {
         '<div><div style="font-size:12px;color:var(--fg-2);">Fleet Memory Grade</div>' +
         '<div style="font-size:11px;color:var(--muted);">Avg debt score: ' + baseScore + ' &middot; ' + data.total_snapshots + ' snapshots</div></div>' +
       '</div>' +
-      '<div style="text-align:right;font-size:11px;color:#64748b;">Click any agent card\'s Brain size row to see per-agent details</div>' +
+      '<div><button class="secondary-btn" style="padding:6px 14px;font-size:11px;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--fg);" onclick="runGardenScan()">&#x21BB; Re-scan</button></div>' +
     '</div>';
+}
+
+function runGardenScan() {
+  const statusEl = document.getElementById('gardenScanStatus') || document.createElement('div');
+  if (!statusEl.id) { statusEl.id = 'gardenScanStatus'; document.getElementById('gardenSummary')?.appendChild(statusEl); }
+  statusEl.textContent = 'Scanning agents ...';
+  statusEl.style.color = '#94a3b8';
+
+  fetch('/api/garden/scan', {method: 'POST', headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN, 'Content-Type': 'application/json'} : {}})
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        statusEl.textContent = 'Scan complete!';
+        statusEl.style.color = '#22c55e';
+        renderGardenSummary(data.summary);
+      } else {
+        statusEl.textContent = data.error || 'Scan failed';
+        statusEl.style.color = '#ef4444';
+      }
+    })
+    .catch(() => {
+      statusEl.textContent = 'Failed to connect';
+      statusEl.style.color = '#ef4444';
+    });
+}
+
+// ─── Restart Quality Scan ───
+function triggerRestartScan() {
+  const statusEl = document.getElementById('restartScanStatus');
+  if (statusEl) statusEl.textContent = 'Scanning agents ...';
+  const btn = document.querySelector('.restart-empty button');
+  if (btn) btn.disabled = true;
+
+  fetch('/api/restart-quality/scan', {method: 'POST', headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN, 'Content-Type': 'application/json'} : {}})
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        if (statusEl) {
+          statusEl.textContent = 'Scan complete ✓';
+          statusEl.style.color = '#22c55e';
+        }
+        // Refresh the tab content
+        const container = document.getElementById('restartQualityContainer');
+        if (container) htmx.trigger(container, 'load');
+      } else {
+        if (statusEl) {
+          statusEl.textContent = data.error || 'Scan failed';
+          statusEl.style.color = '#ef4444';
+        }
+      }
+    })
+    .catch(err => {
+      if (statusEl) {
+        statusEl.textContent = 'Request failed: ' + err.message;
+        statusEl.style.color = '#ef4444';
+      }
+    })
+    .finally(() => {
+      if (btn) btn.disabled = false;
+    });
 }
 
 // ─── Optimiser Data ───
@@ -1948,71 +2091,43 @@ function renderOptimiser(data) {
     }
   }
 }
-function renderSavingsAmount(rawTk, liteTk, fullTk, litePct, fullPct, rate, source) {
-  const turnsPerDay = 50;
-  const cpt = rate / 1000000;
-  const liteDaily = liteTk * turnsPerDay;
-  const fullDaily = fullTk ? fullTk * turnsPerDay : 0;
-  const rawDaily = rawTk * turnsPerDay;
-  const liteSavingsD = (rawDaily - liteDaily) * cpt;
-  const fullSavingsD = (rawDaily - fullDaily) * cpt;
-  const sourceLabel = source === 'actual' ? '' : '<span style="color:#94a3b8;font-size:11px;font-weight:400;"> (based on composition)</span>';
-  document.getElementById('brainSavingsChart').innerHTML =
-    `<div class="sav-row"><span class="sl" style="color:#94a3b8;">Original</span><div class="st"><div class="sf" style="width:100%;background:#475569;"></div></div><span class="sv" style="color:#94a3b8;">${rawTk.toLocaleString()} tok/turn</span></div>
-    <div class="sav-row"><span class="sl" style="color:#86efac;">Lite (Free)${source === 'potential' ? ' ▲' : ''}</span><div class="st"><div class="sf" style="width:${(liteTk/rawTk*100).toFixed(1)}%;background:#22c55e;"></div></div><span class="sv" style="color:#22c55e;">${liteTk.toLocaleString()} tok <span style="color:#64748b;">(-${litePct}%)</span>${rate > 0 ? ' <span style="color:#64748b;font-size:11px;">→ $' + liteSavingsD.toFixed(3) + '/day</span>' : ''}</span></div>` +
-    (fullTk != null ?
-    `<div class="sav-row"><span class="sl" style="color:#a5b4fc;">Full (Pro)${source === 'potential' ? ' ▲' : ''}</span><div class="st"><div class="sf" style="width:${(fullTk/rawTk*100).toFixed(1)}%;background:#6366f1;"></div></div><span class="sv" style="color:#a5b4fc;">${fullTk.toLocaleString()} tok <span style="color:#64748b;">(-${fullPct}%)</span>${rate > 0 ? ' <span style="color:#64748b;font-size:11px;">→ $' + fullSavingsD.toFixed(3) + '/day</span>' : ''}</span></div>` : '') +
-    (source === 'potential' ? '<div style="font-size:11px;color:#64748b;margin-top:4px;">▲ based on actual composition — run Preview for real numbers</div>' : '');
-  document.getElementById('brainSavingsCalc').innerHTML =
-    `<div class="cb green"><div class="big">-${litePct}%</div><div class="cbl">Lite saves / turn${source === 'potential' ? ' ▲' : ''}</div></div>
-    <div class="cb orange"><div class="big">${fullTk != null ? '-'+fullPct+'%' : '—'}</div><div class="cbl">Full saves / turn${source === 'potential' ? ' ▲' : ''}</div></div>
-    <div class="cb blue"><div class="big">${(fullSavingsD > 0 ? (rawDaily - fullDaily).toLocaleString() : '0')}</div><div class="cbl">Tokens saved / day</div></div>
-    <div class="cb purple"><div class="big">${rate > 0 ? '$' + fullSavingsD.toFixed(2) : 'FREE'}</div><div class="cbl">Dollars saved / day</div></div>`;
-  if (source === 'potential') {
-    document.getElementById('brainProUpsell').querySelector('.pt').innerHTML =
-      `🔒 Full could save ~$${fullSavingsD.toFixed(2)}/day vs Lite's $${liteSavingsD.toFixed(2)} — run Preview for exact numbers`;
-    document.getElementById('brainProUpsell').querySelector('.pd').textContent =
-      'Pro gives you Full compression + Auto-Watch + Token Optimiser + never-pruned history. Numbers shown are estimates based on your actual agent composition.';
-  } else {
-    document.getElementById('brainProUpsell').querySelector('.pt').innerHTML =
-      `🔒 Full saves $${fullSavingsD.toFixed(2)}/day vs Lite's $${liteSavingsD.toFixed(2)} — upgrade to apply Full compression`;
-  }
-  document.getElementById('brainSavingsChart').style.display = '';
-  document.getElementById('brainSavingsCalc').style.display = '';
-  document.getElementById('brainProUpsell').style.display = '';
-}
 function renderBrain(agentName) {
   if (!brainData) return;
   let a;
   if (agentName === 'all') {
-    // Aggregate fleet: sum all agents
-    const keys = Object.keys(brainData).filter(k => k !== 'fleet');
-    let allTk = 0; let allRaw = 0; let allLite = 0; let allFull = 0;
-    const allComps = {};
-    const allTurnTimelines = [];
-    keys.forEach(k => {
-      const ag = brainData[k];
-      allTk += ag.total_tokens || 0;
-      allRaw += ag.raw_tokens || 0;
-      allLite += ag.lite_tokens || 0;
-      allFull += ag.full_tokens || 0;
-      if (ag.components) {
-        Object.entries(ag.components).forEach(([c, v]) => { allComps[c] = (allComps[c] || 0) + v; });
-      }
-      if (ag.turn_timeline && ag.turn_timeline.length) {
-        ag.turn_timeline.forEach((v, i) => { allTurnTimelines[i] = (allTurnTimelines[i] || 0) + v; });
-      }
-    });
-    a = {
-      framework: keys.length + ' agents',
-      total_tokens: allTk,
-      components: allComps,
-      raw_tokens: allRaw,
-      lite_tokens: allLite,
-      full_tokens: allFull,
-      turn_timeline: allTurnTimelines,
-      drift: brainData[keys[0]]?.drift || []
-    };
+    // Use fleet aggregate from API if available (has proper savings fields)
+    if (brainData.fleet) {
+      a = brainData.fleet;
+    } else {
+      // Fallback: aggregate from individual agents
+      const keys = Object.keys(brainData).filter(k => k !== 'fleet');
+      let allTk = 0; let allRaw = 0; let allLite = 0; let allFull = 0;
+      const allComps = {};
+      const allTurnTimelines = [];
+      keys.forEach(k => {
+        const ag = brainData[k];
+        allTk += ag.total_tokens || 0;
+        allRaw += ag.raw_tokens || 0;
+        allLite += ag.lite_tokens || 0;
+        allFull += ag.full_tokens || 0;
+        if (ag.components) {
+          Object.entries(ag.components).forEach(([c, v]) => { allComps[c] = (allComps[c] || 0) + v; });
+        }
+        if (ag.turn_timeline && ag.turn_timeline.length) {
+          ag.turn_timeline.forEach((v, i) => { allTurnTimelines[i] = (allTurnTimelines[i] || 0) + v; });
+        }
+      });
+      a = {
+        framework: keys.length + ' agents',
+        total_tokens: allTk,
+        components: allComps,
+        raw_tokens: allRaw,
+        lite_tokens: allLite > 0 ? allLite : null,
+        full_tokens: allFull > 0 ? allFull : null,
+        turn_timeline: allTurnTimelines,
+        drift: brainData[keys[0]]?.drift || []
+      };
+    }
   } else {
     a = brainData[agentName];
   }
@@ -2034,52 +2149,12 @@ function renderBrain(agentName) {
     </div>`;
   }).join('');
   document.getElementById('brainTokenBars').innerHTML = bars || '<div style="color:#64748b;font-size:12px;">No token data for this agent</div>';
-  // Savings — compute cost per token
+  // Update compression mode labels from brain data
   const rawTk = a.raw_tokens || totalVal;
-  const savingsSource = a.savings_source || 'none'; // 'actual' | 'potential' | 'none'
   const hasLiteData = a.lite_tokens != null && a.lite_tokens < rawTk;
   const hasFullData = a.full_tokens != null && a.full_tokens < rawTk;
-  const liteTk = hasLiteData ? a.lite_tokens : null;
-  const fullTk = hasFullData ? a.full_tokens : null;
   const litePotentialPct = a.lite_potential_pct;
   const fullPotentialPct = a.full_potential_pct;
-  const selProv = document.getElementById('brainProvider');
-  const selVal = selProv.value;
-  let rate = parseFloat(selVal);
-  if (selVal === 'custom') {
-    const customVal = document.getElementById('brainCustomRate').value.replace('$','').trim();
-    rate = parseFloat(customVal);
-    if (isNaN(rate) || rate < 0) rate = 0;
-  }
-  if (isNaN(rate)) rate = 0;
-  document.getElementById('brainCustomCost').style.display = selVal === 'custom' ? 'flex' : 'none';
-  if (hasLiteData || hasFullData) {
-    // ACTUAL savings from compress_log
-    const litePct = ((rawTk - liteTk) / rawTk * 100).toFixed(1);
-    const fullPct = hasFullData ? ((rawTk - fullTk) / rawTk * 100).toFixed(1) : '-';
-    const label = 'actual';
-    renderSavingsAmount(rawTk, liteTk, fullTk, litePct, fullPct, rate, label);
-  } else if (litePotentialPct != null && litePotentialPct > 0) {
-    // POTENTIAL savings from composition analysis
-    const litePct = litePotentialPct.toFixed(1);
-    const fullPct = fullPotentialPct != null ? fullPotentialPct.toFixed(1) : '-';
-    const liteTkPot = Math.round(rawTk * (1 - litePotentialPct / 100));
-    const fullTkPot = fullPotentialPct != null ? Math.round(rawTk * (1 - fullPotentialPct / 100)) : null;
-    const label = 'potential';
-    renderSavingsAmount(rawTk, liteTkPot, fullTkPot, litePct, fullPct, rate, label);
-  } else {
-    // No composition data yet
-    document.getElementById('brainSavingsChart').innerHTML =
-      '<div style="color:#64748b;font-size:13px;padding:16px 0;text-align:center;">📊 Run a compression preview to see what you can save</div>';
-    document.getElementById('brainSavingsCalc').innerHTML = '';
-    document.getElementById('brainProUpsell').querySelector('.pt').innerHTML =
-      '🔒 Full compression available with Pro — run a preview to see your potential savings';
-    if (document.getElementById('brainSavingsChart').style.display === 'none') {
-      document.getElementById('brainSavingsChart').style.display = '';
-      document.getElementById('brainSavingsCalc').style.display = '';
-      document.getElementById('brainProUpsell').style.display = '';
-    }
-  }
   // Drift
   const drift = a.drift || [];
   const driftHtml = drift.map(item => {
@@ -2134,6 +2209,16 @@ function renderBrain(agentName) {
   // but the actual Optimiser additional savings require 200 turns of data,
   // so we leave it as "varies" / "—" until then
 }
+function reloadBudgetPlanner() {
+  const sel = document.getElementById('bpProvider');
+  const rate = sel.value;
+  const container = document.getElementById('budgetPlannerContent');
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Loading...</div>';
+  fetch('/api/budget-planner?rate=' + rate, {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
+    .then(r => r.text())
+    .then(html => { container.innerHTML = html; })
+    .catch(() => { container.innerHTML = '<div style="text-align:center;padding:12px;color:#ef4444;font-size:12px;">Failed to load.</div>'; });
+}
 function showBrainPro() {
   document.getElementById('brainProModal').classList.add('active');
   loadLicenseStatus();
@@ -2173,6 +2258,17 @@ function loadLicenseStatus() {
         document.querySelectorAll('.pro-upsell, .pro-upsell-block, [onclick*="showBrainPro"]').forEach(e => {
           if (e.id !== 'brainProModal' && !e.closest('#brainProModal')) e.style.display = 'none';
         });
+      }
+      // Update Brain Analysis tier badges
+      const brainTierBadge = document.getElementById('brainTierBadge');
+      const brainPerTurnBadge = document.getElementById('brainPerTurnBadge');
+      if (brainTierBadge) {
+        brainTierBadge.textContent = isPro ? 'PRO' : 'FREE';
+        brainTierBadge.style.color = isPro ? '#a5b4fc' : '#86efac';
+      }
+      if (brainPerTurnBadge) {
+        brainPerTurnBadge.textContent = isPro ? 'PRO' : 'FREE';
+        brainPerTurnBadge.style.color = isPro ? '#a5b4fc' : '#86efac';
       }
     })
     .catch(() => {});
@@ -2228,23 +2324,28 @@ function showCancelTrialConfirm() {
 
   const modal = document.createElement('div');
   modal.id = 'cancelTrialModal';
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
-  modal.onclick = function(e) { if (e.target === this) this.remove(); };
-  modal.innerHTML = `<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:24px;max-width:420px;width:90%;">
-    <div style="font-size:28px;margin-bottom:8px;">🗑️</div>
-    <h3 style="margin:0 0 6px;color:#f8fafc;font-size:18px;">Cancel your trial?</h3>
-    <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin:0 0 16px;">
-      You'll lose Pro features (Brain Analysis, Alerts, Auto-Compression, Push Alerts, etc.)
-      immediately. Your agent data stays — re-subscribe anytime to unlock them.
-    </p>
-    <p style="color:#64748b;font-size:12px;margin:0 0 20px;">
-      ⚠️ This cannot be undone. Trial is a one-time offer.
-    </p>
-    <div style="display:flex;gap:10px;">
-      <button onclick="this.closest('#cancelTrialModal').remove()"
-        style="flex:1;background:transparent;border:1px solid #475569;color:#94a3b8;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;">Keep Trial</button>
-      <button id="confirmCancelBtn" onclick="confirmCancelTrial()"
-        style="flex:1;background:#991b1b;border:none;color:white;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Yes, cancel</button>
+  modal.className = 'modal-overlay active';
+  modal.innerHTML = `<div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div>
+        <h3>🗑️ Cancel your trial?</h3>
+        <div class="sub">You'll lose Pro features immediately</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('cancelTrialModal').remove()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin:0 0 12px;">
+        You'll lose Pro features (Brain Analysis, Alerts, Auto-Compression, Push Alerts, etc.)
+        immediately. Your agent data stays — subscribe at $9/mo anytime to unlock them again.
+      </p>
+      <p style="color:#ef4444;font-size:12px;margin:0 0 20px;">
+        ⚠️ Free trial is a one-time offer and cannot be restored.
+      </p>
+      <div style="display:flex;gap:10px;">
+        <button class="modal-close" onclick="document.getElementById('cancelTrialModal').remove()" style="font-size:13px;padding:10px;width:auto;">Keep Trial</button>
+        <button id="confirmCancelBtn" onclick="confirmCancelTrial()"
+          style="flex:1;background:#991b1b;border:none;color:white;padding:10px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Yes, cancel</button>
+      </div>
     </div>
   </div>`;
   document.body.appendChild(modal);
@@ -2306,11 +2407,6 @@ function showLicenseKeyModal() {
   const existing = document.getElementById('licenseKeyModal');
   if (existing) existing.remove();
 
-  const modal = document.createElement('div');
-  modal.id = 'licenseKeyModal';
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
-  modal.onclick = function(e) { if (e.target === this) this.remove(); };
-
   // Check if already activated
   var badge = document.getElementById('tierBadge');
   var hasPro = badge && (badge.classList.contains('license-card') || badge.querySelector('.license-card'));
@@ -2318,25 +2414,35 @@ function showLicenseKeyModal() {
 
   var deactivateHtml = '';
   if (hasPro) {
-    deactivateHtml = '<div style="margin-top:16px;padding-top:12px;border-top:1px solid #334155;">'
-      + '<button onclick="showDeactivateConfirm()" style="width:100%;background:transparent;border:1px solid #dc2626;color:#fca5a5;padding:8px;border-radius:8px;cursor:pointer;font-size:12px;">Deactivate License</button>'
+    deactivateHtml = '<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">'
+      + '<button onclick="showDeactivateConfirm()" style="width:100%;background:transparent;border:1px solid #dc2626;color:#fca5a5;padding:8px;border-radius:6px;cursor:pointer;font-size:12px;">Deactivate License</button>'
       + '</div>';
   }
 
-  modal.innerHTML = `<div onmousedown="event.stopPropagation()" onclick="event.stopPropagation()" style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:24px;max-width:460px;width:90%;">
-    <div style="font-size:28px;margin-bottom:8px;">&#x1F511;</div>
-    <h3 style="margin:0 0 6px;color:#f8fafc;font-size:18px;">Activate Pro License Key</h3>
-    <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin:0 0 16px;">
-      Enter your Pro license key to unlock all features. Keys are validated against our CRM — ensure the key has not expired.
-    </p>
-    <div id="lkError" style="display:none;background:#450a0a;border:1px solid #dc2626;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#fca5a5;"></div>
-    <div id="lkSuccess" style="display:none;background:#064e3b;border:1px solid #059669;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#86efac;"></div>
-    <input id="lkInput" type="text" placeholder="Enter your license key (e.g. OBS-PRO-XXXXXXXX-XXXX)" style="width:100%;background:#0f172a;border:1px solid #475569;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')submitLicenseKey()">
-    <div style="display:flex;gap:10px;">
-      <button onclick="document.getElementById('licenseKeyModal').remove()" style="flex:1;background:transparent;border:1px solid #475569;color:#94a3b8;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;">Cancel</button>
-      <button id="lkSubmitBtn" onclick="submitLicenseKey()" style="flex:1;background:#6366f1;border:none;color:white;padding:10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Activate</button>
+  const modal = document.createElement('div');
+  modal.id = 'licenseKeyModal';
+  modal.className = 'modal-overlay active';
+  modal.innerHTML = `<div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <div>
+        <h3>🔑 Activate Pro License Key</h3>
+        <div class="sub">Enter your key to unlock all Pro features</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('licenseKeyModal').remove()">✕</button>
     </div>
-    ${deactivateHtml}
+    <div class="modal-body">
+      <p style="color:#94a3b8;font-size:13px;line-height:1.5;margin:0 0 16px;">
+        Enter your Pro license key to unlock all features. Keys are validated against our CRM — ensure the key has not expired.
+      </p>
+      <div id="lkError" style="display:none;background:#450a0a;border:1px solid #dc2626;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#fca5a5;"></div>
+      <div id="lkSuccess" style="display:none;background:#064e3b;border:1px solid #059669;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#86efac;"></div>
+      <input id="lkInput" type="text" placeholder="e.g. OBS-PRO-XXXXXXXX-XXXX" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;box-sizing:border-box;font-family:inherit;" onkeydown="if(event.key==='Enter')submitLicenseKey()">
+      <div style="display:flex;gap:10px;">
+        <button class="modal-close" onclick="document.getElementById('licenseKeyModal').remove()" style="font-size:13px;padding:10px;width:auto;">Cancel</button>
+        <button id="lkSubmitBtn" onclick="submitLicenseKey()" style="flex:1;background:#6366f1;border:none;color:white;padding:10px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">Activate</button>
+      </div>
+      ${deactivateHtml}
+    </div>
   </div>`;
   document.body.appendChild(modal);
   setTimeout(() => document.getElementById('lkInput').focus(), 100);
@@ -2410,14 +2516,6 @@ function submitLicenseKey() {
     });
 }
 
-// Custom provider toggle
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('brainProvider').addEventListener('change', function() {
-    document.getElementById('brainCustomCost').style.display = this.value === 'custom' ? 'flex' : 'none';
-    renderBrain(document.getElementById('brainAgentSelect').value);
-  });
-});
-
 // ─── Compression (Section 3) ───
 let compressMode = 'lite';
 function switchCompressTab(tab, btn) {
@@ -2426,63 +2524,99 @@ function switchCompressTab(tab, btn) {
   document.getElementById('manualTab').style.display = tab === 'manual' ? '' : 'none';
   document.getElementById('autoTab').style.display = tab === 'auto' ? '' : 'none';
   if (tab === 'auto') {
-    fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
-      .then(r => r.json())
-      .then(status => {
-        const isPro = status.license_type === 'pro' || status.is_pro;
-        const container = document.getElementById('autoTabContent');
-        if (isPro) {
-          container.innerHTML = `
-            <div class="auto-watch-card" style="cursor:default;">
-              <div class="icon">&#x1F916;</div>
-              <h4>Auto-Compression &mdash; Active</h4>
-              <p>Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
-              <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#22c55e;">
-                <span>&#x2705; Detects file changes</span>
-                <span>&#x2705; Auto-backup before compress</span>
-                <span>&#x2705; Logs savings to dashboard</span>
-              </div>
-              <div class="auto-log-preview">
-                <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified &mdash; auto-compressing...</span><br>
-                <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">&#x2705; 4,200 &rarr; 3,276 tok (guidance compress)</span><br>
-                <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
-                <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 &rarr; 2,470 tok (guidance + memory + skills)</span><br>
-                <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
-                <span style="color:#38bdf8;">&#x1F4CA; Cumulative fleet savings this week: 47,812 tokens saved</span>
-              </div>
-              <div style="margin-top:10px;">
-                <button class="primary-btn" style="background:#6366f1;border:none;color:white;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;" onclick="showToast('&#x2699;&#xFE0F; Auto-Compress daemon status: running')">&#x2699;&#xFE0F; Daemon Status</button>
-              </div>
-            </div>`;
-        } else {
-          container.innerHTML = `
-            <div class="auto-watch-card" onclick="showBrainPro()" style="cursor:pointer;">
-              <div class="icon" id="autoIcon">&#x1F512;</div>
-              <h4 id="autoTitle">Auto-Compression (Pro)</h4>
-              <p id="autoDesc">Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
-              <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#64748b;">
-                <span>&#x26A1; Detects file changes</span>
-                <span>&#x1F4BE; Auto-backup before compress</span>
-                <span>&#x1F4CA; Logs savings to dashboard</span>
-              </div>
-              <div class="auto-log-preview">
-                <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified &mdash; auto-compressing...</span><br>
-                <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">&#x2705; 4,200 &rarr; 3,276 tok (guidance compress)</span><br>
-                <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
-                <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 &rarr; 2,470 tok (guidance + memory + skills)</span><br>
-                <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
-                <span style="color:#38bdf8;">&#x1F4CA; Cumulative fleet savings this week: 47,812 tokens saved</span>
-              </div>
-              <div style="margin-top:10px;">
-                <button class="pro-cta-btn" onclick="showBrainPro()">Unlock with Pro &rarr;</button>
-              </div>
-            </div>`;
-        }
+    const container = document.getElementById('autoTabContent');
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">Loading live status...</div>';
+    Promise.all([
+      fetch('/api/watch-daemon-status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}}).then(r => r.json()),
+      fetch('/api/licenses/status', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}}).then(r => r.json()),
+    ])
+      .then(([daemonData, licenseStatus]) => {
+        const isPro = licenseStatus.license_type === 'pro' || licenseStatus.license_type === 'trial' || licenseStatus.is_pro;
+        renderAutoTab(container, daemonData, isPro);
       })
       .catch(() => {
-        document.getElementById('autoTabContent').innerHTML = '<div style="color:var(--warn);padding:12px;">Failed to check license status. Reload and try again.</div>';
+        container.innerHTML = '<div style="color:var(--warn);padding:12px;">Failed to load daemon status.</div>';
       });
   }
+}
+
+function renderAutoTab(container, data, isPro) {
+  const logs = data.logs || [];
+  const cumulative = data.cumulative_weekly_savings || 0;
+  const daemon = data.daemon || {};
+
+  // Build log lines
+  let logHtml = '';
+  if (logs.length > 0) {
+    const recent = logs.slice(0, 8);
+    recent.forEach(l => {
+      const timeStr = l.timestr || '';
+      const before = l.before || 0;
+      const after = l.after || 0;
+      const pct = l.pct;
+      const pctStr = pct != null ? (pct >= 0 ? '-' + pct.toFixed(0) : '+' + (-pct).toFixed(0)) : '--';
+      const modeLabel = l.mode === 'full' ? 'Full compress' : (l.mode === 'lite' ? 'guidance compress' : l.mode);
+      const color = l.mode === 'full' ? '#a5b4fc' : '#22c55e';
+      const saved = before - after;
+      if (saved > 0) {
+        logHtml += `<span style="color:#64748b;">${timeStr}</span> <span style="color:${color};">✅ ${before.toLocaleString()} → ${after.toLocaleString()} tok (${modeLabel})</span><br>`;
+      } else if (pct === 0) {
+        logHtml += `<span style="color:#64748b;">${timeStr}</span> <span style="color:#94a3b8;">File unchanged — 0% savings (${l.agent}, ${modeLabel})</span><br>`;
+      }
+    });
+  }
+
+  const cumulativeDisplay = cumulative > 0 ? cumulative.toLocaleString() : '0';
+
+  if (isPro) {
+    container.innerHTML = `
+      <div class="auto-watch-card" style="cursor:default;">
+        <div class="icon">&#x1F916;</div>
+        <h4>Auto-Compression &mdash; ${daemon.status === 'running' ? '<span style="color:#22c55e;">Active</span>' : '<span style="color:#eab308;">Stopped</span>'}</h4>
+        <p>Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
+        <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#22c55e;">
+          <span>&#x2705; Detects file changes</span>
+          <span>&#x2705; Auto-backup before compress</span>
+          <span>&#x2705; Logs savings to dashboard</span>
+        </div>
+        <div class="auto-log-preview">${logHtml || '<span style="color:#64748b;font-size:11px;">No compression runs yet — start the daemon and edit a SOUL.md to see results here.</span>'}</div>
+        <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
+        <span style="color:#38bdf8;">&#x1F4CA; Cumulative fleet savings this week: ${cumulativeDisplay} tokens saved</span>
+        <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
+          ${daemon.status === 'running' ? '<span style="font-size:11px;color:#22c55e;">&#x1F7E2; Running (PID ' + daemon.pid + ')</span>' : '<button class="primary-btn" style="background:#6366f1;border:none;color:white;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;" onclick="startWatchDaemon()">&#x25B6; Start Daemon</button>'}
+        </div>
+      </div>`;
+  } else {
+    container.innerHTML = `
+      <div class="auto-watch-card" onclick="showBrainPro()" style="cursor:pointer;">
+        <div class="icon" id="autoIcon">&#x1F512;</div>
+        <h4 id="autoTitle">Auto-Compression (Pro)</h4>
+        <p id="autoDesc">Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
+        <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#64748b;">
+          <span>&#x26A1; Detects file changes</span>
+          <span>&#x1F4BE; Auto-backup before compress</span>
+          <span>&#x1F4CA; Logs savings to dashboard</span>
+        </div>
+        <div class="auto-log-preview">${logHtml || '<span style="color:#64748b;font-size:11px;">Logs appear here after compression runs.</span>'}</div>
+        <div style="margin-top:10px;">
+          <button class="pro-cta-btn" onclick="showBrainPro()">Unlock with Pro &rarr;</button>
+        </div>
+      </div>`;
+  }
+}
+
+function startWatchDaemon() {
+  fetch('/api/heal-config/start-watch', {method: 'POST', headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
+    .then(r => r.json())
+    .then(d => {
+      showToast(d.message || 'Daemon started');
+      // Re-render Auto tab after a short delay
+      setTimeout(() => {
+        const autoBtn = document.getElementById('autoToggle');
+        if (autoBtn) switchCompressTab('auto', autoBtn);
+      }, 2000);
+    })
+    .catch(() => showToast('&#x274C; Failed to start daemon'));
 }
 function switchMode(mode, btn) {
   compressMode = mode;
@@ -2497,9 +2631,15 @@ function switchMode(mode, btn) {
     const a = brainData && brainData[agentName];
     if (a) {
       const rawTk = a.raw_tokens || a.total_tokens;
-      const saved = mode === 'lite' ? rawTk - a.lite_tokens : rawTk - a.full_tokens;
-      const pct = Math.round((saved / rawTk) * 100);
-      document.getElementById('afterModePct').textContent = pct + '%';
+      let pct;
+      if (mode === 'lite') {
+        pct = a.lite_tokens != null ? Math.round(((rawTk - a.lite_tokens) / rawTk) * 100) :
+              a.lite_potential_pct != null ? Math.round(a.lite_potential_pct) : null;
+      } else {
+        pct = a.full_tokens != null ? Math.round(((rawTk - a.full_tokens) / rawTk) * 100) :
+              a.full_potential_pct != null ? Math.round(a.full_potential_pct) : null;
+      }
+      document.getElementById('afterModePct').textContent = pct != null ? pct + '%' : '--';
     }
   }
 }
@@ -2517,6 +2657,25 @@ function runCompressPreview() {
   }
   const rawTk = a.raw_tokens || a.total_tokens;
   const afterTk = compressMode === 'lite' ? a.lite_tokens : a.full_tokens;
+  if (afterTk == null || afterTk >= rawTk) {
+    // No actual trim data — show estimated preview using potential percentages
+    const potentialPct = compressMode === 'lite'
+      ? (a.lite_potential_pct != null ? Math.round(a.lite_potential_pct) : null)
+      : (a.full_potential_pct != null ? Math.round(a.full_potential_pct) : null);
+    if (potentialPct != null) {
+      const estAfter = Math.round(rawTk * (1 - potentialPct / 100));
+      const saved = rawTk - estAfter;
+      document.getElementById('beforeTokens').innerHTML = rawTk.toLocaleString() + ' tok';
+      document.getElementById('afterTokens').innerHTML = estAfter.toLocaleString() + ' tok <span style="font-size:12px;color:#64748b;font-weight:400;">~' + potentialPct + '%</span>';
+      document.getElementById('diffPreviewOld').innerHTML = oldLines.map(l => '<div class="diff-line old">' + l + '</div>').join('');
+      document.getElementById('diffPreviewNew').innerHTML = newLines.map(l => '<div class="diff-line new">' + l + '</div>').join('') +
+        '<div style="color:#475569;margin-top:4px;font-size:11px;">(~' + saved.toLocaleString() + ' tokens saved — estimated, run actual compression to see real results)</div>';
+      showStatus('compressStatus', '📊 Estimated preview — based on composition analysis. Run <strong>observeco chisel trim</strong> for an exact preview.', 'info');
+    } else {
+      showStatus('compressStatus', 'No composition data for this agent yet — trim an agent first to see compression estimates.', 'warn');
+    }
+    return;
+  }
   const saved = rawTk - afterTk;
   const pct = Math.round((saved / rawTk) * 100);
   // Render "before" diff placeholder (first ~500 chars of the prompt)
@@ -2671,23 +2830,77 @@ function checkDriftAlerts() {
 function toggleHeal(agentName, enabled, l2Enabled) {
   const resultEl = document.getElementById('healResult_' + agentName);
   if (!resultEl) return;
-  resultEl.innerHTML = '<span style="color:#64748b;">Saving...</span>';
+
+  // When L1 is turned OFF, also uncheck and disable L2
+  if (!enabled) {
+    l2Enabled = false;
+    const l2Cb = document.getElementById('l2_' + agentName);
+    if (l2Cb) {
+      l2Cb.checked = false;
+      l2Cb.disabled = true;
+      l2Cb.style.opacity = '0.4';
+      l2Cb.style.pointerEvents = 'none';
+    }
+    const l2Container = document.getElementById('l2_container_' + agentName);
+    if (l2Container) l2Container.style.opacity = '0.4';
+  } else {
+    // L1 turned ON — re-enable L2 checkbox
+    const l2Cb = document.getElementById('l2_' + agentName);
+    if (l2Cb) {
+      l2Cb.disabled = false;
+      l2Cb.style.opacity = '1';
+      l2Cb.style.pointerEvents = 'auto';
+    }
+    const l2Container = document.getElementById('l2_container_' + agentName);
+    if (l2Container) l2Container.style.opacity = '1';
+  }
+
   fetch('/api/heal-config/' + encodeURIComponent(agentName) + '?auto_heal=' + enabled + '&auto_heal_l2=' + l2Enabled, { method: 'POST' })
     .then(r => r.json())
     .then(data => {
       if (data.ok) {
-        resultEl.innerHTML = '<span style="color:#22c55e;">✅ ' + (enabled ? 'Auto-heal enabled' : 'Auto-heal disabled') + '</span>';
-        setTimeout(() => { resultEl.innerHTML = ''; }, 3000);
+        // Update status inline without popup toast
+        const row = resultEl.closest('.heal-agent-row');
+        if (row) {
+          const statusEl = row.querySelector('.heal-status-label');
+          if (statusEl) {
+            if (enabled && l2Enabled) statusEl.textContent = '🟢 L1 + L2 Active';
+            else if (enabled) statusEl.textContent = '🟢 L1 Active';
+            else statusEl.textContent = '🟡 Disabled';
+          }
+        }
       } else {
-        resultEl.innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+        resultEl.innerHTML = '<span style="color:#ef4444;font-size:11px;">❌ ' + (data.error || 'Failed') + '</span>';
+        setTimeout(() => { resultEl.innerHTML = ''; }, 2000);
       }
     })
-    .catch(e => { resultEl.innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>'; });
+    .catch(e => { resultEl.innerHTML = '<span style="color:#ef4444;font-size:11px;">❌ ' + e.message + '</span>'; setTimeout(() => { resultEl.innerHTML = ''; }, 2000); });
+}
+function startWatchDaemon() {
+  fetch('/api/heal-config/start-watch', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        showToast('✅ Watch daemon started — auto-heal is now active');
+        setTimeout(() => htmx.trigger('#healConfig', 'load'), 2000);
+      } else {
+        showToast('❌ ' + (data.error || 'Failed to start daemon'));
+      }
+    })
+    .catch(e => showToast('❌ ' + e.message));
 }
 function toggleHealL2(agentName, enabled) {
-  const l1Checkbox = document.querySelector('#healConfig .heal-agent-row:first-child input[type=checkbox]:first-of-type');
-  const l1 = l1Checkbox ? l1Checkbox.checked : false;
-  toggleHeal(agentName, l1, enabled);
+  const resultEl = document.getElementById('healResult_' + agentName);
+  const row = resultEl ? resultEl.closest('.heal-agent-row') : null;
+  // Use the id-based L1 selector
+  const l1 = row ? row.querySelector('#l1_' + agentName) : null;
+  if (l1 && !l1.checked) {
+    // L1 is off — block L2 toggle
+    const l2Cb = document.getElementById('l2_' + agentName);
+    if (l2Cb) l2Cb.checked = false;
+    return;
+  }
+  toggleHeal(agentName, l1 ? l1.checked : false, enabled);
 }
 function editHealThresholds(agentName) {
   const maxR = parseInt(document.getElementById('maxR_' + agentName).textContent) || 3;
@@ -2724,6 +2937,17 @@ function saveThresholds() {
         document.getElementById('maxR_' + agentName).textContent = newMaxR;
         document.getElementById('driftT_' + agentName).textContent = newDrift + '%';
         document.getElementById('debtT_' + agentName).textContent = newDebt;
+        // Update the threshold pills in the agent row
+        const row = document.getElementById('maxR_' + agentName).closest('.heal-agent-row');
+        if (row) {
+          const pills = row.querySelectorAll('span[style*="border-radius:4px;padding:2px 8px"]');
+          pills.forEach(pill => {
+            const text = pill.textContent;
+            if (text.startsWith('Restarts:')) pill.textContent = 'Restarts: ' + newMaxR + '/hr';
+            else if (text.startsWith('Drift:')) pill.textContent = 'Drift: ' + newDrift + '%';
+            else if (text.startsWith('Debt:')) pill.textContent = 'Debt: ' + newDebt;
+          });
+        }
         resultEl.innerHTML = '<span style="color:#22c55e;">✅ Thresholds updated</span>';
         setTimeout(() => closeThresholdsModal(), 1200);
       } else {
@@ -2836,7 +3060,7 @@ function renderKillSection(agentName) {
     <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>
-          <div style="font-size:12px;font-weight:600;color:var(--fg);">🛑 Stop Agent</div>
+          <div style="font-size:12px;font-weight:600;color:var(--fg);">🛑 Stop Agent<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('stop-agent', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></div>
           <div style="font-size:10px;color:var(--fg-2);">Sends SIGTERM (then SIGKILL after 5s)</div>
         </div>
         <button id="stopBtn" onclick="stopAgent('${agentName}')" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">STOP</button>
@@ -3592,10 +3816,10 @@ document.addEventListener('click', function(e) {
   <div id="glossaryBody" class="gt-body">Loading...</div>
 </div>
 <!-- Glossary modal -->
-<div class="modal-overlay" id="glossaryModal" onclick="if(event.target===this)closeGlossaryModal()">
+<div class="modal-overlay" id="glossaryModal">
   <div class="modal" style="max-width:600px;width:90%;">
     <div class="modal-header" style="border-bottom:1px solid var(--border);">
-      <span style="font-size:14px;font-weight:600;">ObserveCo Glossary</span>
+      <h3>ObserveCo Glossary</h3>
       <button class="modal-close" onclick="closeGlossaryModal()">✕</button>
     </div>
     <div class="modal-body" id="glossaryModalBody" style="max-height:70vh;overflow-y:auto;padding:16px;">

@@ -71,7 +71,6 @@ async def license_badge():
     <span style="font-weight:600;color:#c7d2fe;">{plan} plan — <span style="color:#a5b4fc;">{days}d left</span></span>
     <span style="font-size:10px;color:#64748b;">No charge until trial ends. Cancel anytime.</span>
   </div>
-  <a href="/api/checkout?plan={plan.lower()}&trial=30" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Subscribe $9/mo</a>
   <button onclick="showCancelTrialConfirm()" class="header-btn" style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">Cancel Trial</button>
 </div>""")
     elif is_pro and not is_trial:
@@ -107,7 +106,7 @@ async def license_badge():
     <span style="font-weight:600;color:#a8a29e;">Free · Trial ended</span>
     <span style="font-size:10px;color:#78716c;">Your data is safe. Subscribe to unlock Pro.</span>
   </div>
-  <a href="/api/checkout?plan={plan.lower()}&trial=30" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Subscribe $9/mo</a>
+  <a href="/api/checkout?plan={plan.lower()}&trial=0" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Subscribe $9/mo</a>
 </div>""")
     elif state.license_type == "free" and state.trial_end and state.trial_end < now_ts:
         # Trial expired but not yet consumed (grace period)
@@ -117,7 +116,7 @@ async def license_badge():
     <span style="font-weight:600;color:#fca5a5;">Free · Trial expired</span>
     <span style="font-size:10px;color:#a8a29e;">Pro features are now locked.</span>
   </div>
-  <a href="/api/checkout?plan={plan.lower()}&trial=30" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Restart $9/mo</a>
+  <a href="/api/checkout?plan={plan.lower()}&trial=0" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Subscribe $9/mo</a>
 </div>""")
     else:
         # Fresh free — no trial yet

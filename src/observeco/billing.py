@@ -204,9 +204,13 @@ def configure(stripe_secret: str, stripe_publishable: str,
 
 
 def create_checkout_session(email: str, phone: str = "", name: str = "", plan: str = "solo",
+                            trial_days: int | None = None,
 success_url: str = None,
     cancel_url: str = None) -> dict:
     """Create a Stripe Checkout Session.
+
+    trial_days override: pass 0 for no trial (cancelled/expired users),
+    pass None (default) to use config.trial_days (e.g. 30 for fresh trials).
 
     In demo/probe mode when Stripe is not configured, returns a simulated session.
     """
@@ -244,19 +248,19 @@ success_url: str = None,
         if name:
             metadata["customer_name"] = name
 
-        # Append {CHECKOUT_SESSION_ID} so Stripe passes it back on redirect
+        effective_trial = config.trial_days if trial_days is None else trial_days
         live_success = (success_url or "http://localhost:9121/api/billing/success") + \
                        "?session_id={CHECKOUT_SESSION_ID}"
+        sub_data = {"metadata": {"plan": plan}}
+        if effective_trial > 0:
+            sub_data["trial_period_days"] = effective_trial
         session = stripe.checkout.Session.create(
             line_items=[{"price": price_id, "quantity": 1}],
             mode="subscription",
             success_url=live_success,
             cancel_url=cancel_url or "http://localhost:9121/api/billing/cancel",
             metadata=metadata,
-            subscription_data={
-                "trial_period_days": config.trial_days,
-                "metadata": {"plan": plan},
-            },
+            subscription_data=sub_data,
         )
         return {
             "url": session.url,
@@ -445,7 +449,7 @@ def add_billing_endpoints(app) -> None:
         base = str(request.base_url).rstrip("/")
         success_url = f"{base}/api/billing/success"
         cancel_url = f"{base}/api/billing/cancel"
-        result = create_checkout_session(email, phone, name, plan, success_url, cancel_url)
+        result = create_checkout_session(email, phone, name, plan, trial_days=None, success_url=success_url, cancel_url=cancel_url)
         result["customer_name"] = name
         return result
 

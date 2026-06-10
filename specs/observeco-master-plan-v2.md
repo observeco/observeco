@@ -140,9 +140,13 @@ ObserveCo makes AI agent failures visible, diagnosable, and fixable. We sit betw
 | **2.22** | **Watch daemon self-check (health heartbeat file)** | **Hound** | **⬜ TODO** | **P2** |
 | **2.23** | **SQLite WAL backup schedule + thread-safety audit** | **Hound** | **⬜ TODO** | **P2** |
 | **2.24** | **Database migration strategy (versioned SQL migrations)** | **Hound** | **⬜ TODO** | **P2** |
+| **2.25** | **Gateway Health Monitor — sidecar for OpenClaw + Hermes gateways** | **Hound** | **⬜ TODO** | **P0** |
+| **2.26** | **Connection pool exhaustion auto-recovery** | **Hound** | **⬜ TODO** | **P0** |
+| **2.27** | **Memory leak detection + graceful restart** | **Hound** | **⬜ TODO** | **P1** |
 
 > **Note:** Codex adapter deferred to Phase 3 pending API feasibility verification.
 > **Note:** Task 2.5 and 2.6 are sequenced: 2.5 builds dashboard framework, 2.6 adds WebSocket to it.
+> **Note (2026-06-10):** Tasks 2.25-2.27 added after Hermes gateway pool exhaustion failure (325 errors, 3 days undetected). See §11.4.
 
 **Phase 2 Success Criteria:**
 - [ ] MCP server works with any MCP-compatible agent
@@ -497,6 +501,69 @@ All agents, regardless of runtime, send events in this format:
 | 17 | 3.18 Graceful shutdown | 3 | P2 |
 
 > **Note:** Gap #8 (Multi-Tenancy — single-user data model blocks Team tier) is acknowledged in §11.1 but **deferred** — requires full data model redesign (workspace/team/role tables). tracked as a Phase 3 design task, not part of this plumbing remediation cycle.
+
+---
+
+## 11.4 Gateway Health Monitor (2026-06-10)
+
+**Trigger:** Hermes gateway Telegram connection pool exhaustion ran for 3 days undetected (June 7-10). 325 "Pool timeout" errors, 562MB memory growth, zero agent activations. Required manual kill + restart.
+
+**Root cause:** No monitoring layer on gateway infrastructure. Failure was invisible until agents stopped responding.
+
+**Solution:** Lightweight Python sidecar that monitors both OpenClaw and Hermes gateways.
+
+### Architecture
+
+```
+┌──────────────────────┐     ┌──────────────────────┐
+│   OpenClaw Gateway    │     │   Hermes Gateway      │
+│   (port 18789)       │     │   (PID-based)         │
+└──────────┬───────────┘     └──────────┬───────────┘
+           │                            │
+           ▼                            ▼
+┌──────────────────────────────────────────────────┐
+│            Gateway Monitor Sidecar                │
+│  • Reads logs every 60s                          │
+│  • Parses gateway_state.json                     │
+│  • Tracks error rates, memory, pool health       │
+│  • Threshold alerting → Telegram                  │
+│  • Auto-recovery: pool recycle, graceful restart  │
+└──────────────────────┬───────────────────────────┘
+                       │
+                       ▼
+              ┌────────────────┐
+              │  Alert Channel  │
+              │  (Telegram)     │
+              └────────────────┘
+```
+
+### Metrics Collected
+
+| Metric | Source | Frequency | Threshold |
+|--------|--------|------------|-----------|
+| Pool timeout count | gateway.error.log | 60s | >5 in 10min → CRITICAL |
+| Memory RSS | gateway_state.json / psutil | 60s | >50MB/hour growth → WARN |
+| Error rate | gateway.error.log | 60s | >1% of requests → WARN |
+| Active agents | gateway_state.json | 60s | 0 for >15min → CRITICAL |
+| Platform connectivity | gateway_state.json | 60s | disconnected → CRITICAL |
+| Gateway uptime | process start time | 60s | >24h → WARN |
+
+### Auto-Recovery Actions
+
+| Condition | Action |
+|-----------|--------|
+| Pool exhaustion (>5 timeouts/10min) | SIGTERM gateway, let launchd restart |
+| Memory >800MB | SIGTERM gateway, let launchd restart |
+| Platform disconnected | Log warning, attempt reconnect |
+| Zero agents >15min | Wake agents via signal inbox |
+
+### Success Criteria
+
+- [ ] Sidecar runs as launchd agent, auto-starts on boot
+- [ ] Alerts arrive in Telegram within 60s of threshold breach
+- [ ] Pool exhaustion triggers auto-restart within 2 minutes
+- [ ] Memory leak detected before RSS exceeds 800MB
+- [ ] Zero false positives in 7-day burn-in
 
 ---
 

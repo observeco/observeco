@@ -2,13 +2,14 @@
 
 **Product:** The ObserveCo playbook system itself
 **Status:** Living — update as lessons accumulate
-**Version:** 3.1 — 2026-05-31
+**Version:** 3.2 — 2026-06-10
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
-| 1.0 | 2026-05-30 | Initial creation — escape-driven updates, quarterly reviews, freshness triggers |
+| 1.0 | 2026-05-30 | Initial creation — 3 feedback loops, escape rule, freshness check |
 | 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
-| 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, updated system version table, standard lessons entry |
+| 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, standard lessons entry |
+| 3.2 | 2026-06-10 | Updated stale playbook count from 7 to 8 (added ui-testing-playbook). Added Lessons Learned section with 1 entry. |
 
 **Source:** Real insight — 5 playbooks exist but nothing ensures they stay alive, accurate, and improving. Sean's feedback: "If a human catches something an AI missed, the playbook was incomplete — update it before fixing the code."
 
@@ -271,5 +272,11 @@ done
 | Lessons Learned without new checks | Documentation, not prevention | Move from "what happened" to "what check to add" |
 
 ---
+
+## Lessons Learned
+
+| Date | Project | What happened | Root cause | Fix applied |
+|------|---------|---------------|-----------|-------------|
+| 2026-06-10 | ObserveCo | 36-hour review found 6 UX traps, 3 coding patterns, 2 spec traps, 1 system pattern, 1 governance gap, 1 gate layer — all from a single payment flow bug cascade | Playbook system had 7 playbooks but no ui-testing-playbook; stale count was wrong | Updated stale count from 7 to 8. Added ui-testing-playbook to inventory. |
 
 *"If a human catches something the playbooks missed, the playbooks were incomplete — update them before fixing the code." This meta-loop makes that rule real.*

@@ -2,7 +2,7 @@
 
 **Product:** ObserveCo (and all future software projects)
 **Status:** Living — update as lessons accumulate
-**Version:** 3.1 — 2026-05-31
+**Version:** 3.2 — 2026-06-10
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
@@ -10,6 +10,7 @@
 | 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 2.0 | 2026-05-30 | Added Playbook Inventory, fixes "5 playbooks" refs |
 | 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory in all docs, Golden Gate naming normalization |
+| 3.2 | 2026-06-10 | Added Trap 7 (Payment Flow State Coverage), Trap 8 (Tier-Specific Empty States). Added Lessons Learned section with 2 entries. |
 
 **Source:** Real failure — the watch daemon architecture fix was *correctly implemented* against an *incomplete spec*. The thread-in-dashboard approach was never ruled out by the requirements because the requirements never specified lifecycle, cross-platform, or data-continuity constraints.
 
@@ -17,19 +18,20 @@ This playbook sits **upstream** of coding-fidelity-playbook.md, ux-testing-playb
 
 ## Playbook Inventory
 
-The full playbook system has 7 documents, organized by flow:
+The full playbook system has 8 documents, organized by flow:
 
 | Order | Playbook | Role |
 |-------|----------|------|
 | 1 | requirements-fidelity-playbook.md | Spec hardening (upstream gate) |
 | 2 | coding-fidelity-playbook.md | Code matches spec |
-| 3 | ux-testing-playbook.md | Human experience lens |
-| 4 | system-design-testing-playbook.md | Architecture & daemon lens |
-| 5 | agent-governance-playbook.md | Session mastery for agents |
-| 6 | master-fidelity-gate.md | Integration gate (combines all 5) |
-| 7 | playbook-evolution-meta.md | Self-improvement loop |
+| 3 | ui-testing-playbook.md | Visual consistency & design system integrity |
+| 4 | ux-testing-playbook.md | Human experience lens |
+| 5 | system-design-testing-playbook.md | Architecture & daemon lens |
+| 6 | agent-governance-playbook.md | Session mastery for agents |
+| 7 | master-fidelity-gate.md | Integration gate (combines all 7) |
+| 8 | playbook-evolution-meta.md | Self-improvement loop |
 
-Refer to this inventory when the playbook system is referenced in other documents. When a section says "all 5 playbooks" or "all playbooks", it refers to playbooks 1-5 as the core set. **This inventory is the authoritative cross-reference — every document that mentions "the playbooks" should link here.**
+Refer to this inventory when the playbook system is referenced in other documents. When a section says "all 6 playbooks" or "all playbooks", it refers to playbooks 1-6 as the core set.
 
 ---
 
@@ -174,6 +176,29 @@ Every ambiguous, contradictory, or incomplete spec falls into one of these six t
 **Detection:** For every cross-reference, verify both sides agree. If they don't, the contradiction must be resolved before any code is written.
 
 **Fix pattern:** Every spec document must have a **Cross-Reference Verification** pass before entering implementation.
+
+### Trap 7: Feature Status Without Layer Decomposition
+
+**Pattern:** A feature is tracked as a single row in the spec or master plan: "Push Alerts: ✅ Live." But only the backend is done — the dashboard UI doesn't exist. Anyone reading the plan assumes the feature is fully user-facing. The single status conceals a two-layer gap.
+
+**Real example (ObserveCo, 2026-06-08):** Master plan showed Push Alerts and Auto-Heal as ✅ Live. Audit revealed backends were complete but no dashboard UI existed. Users couldn't configure or view these features.
+
+**Detection:** For every feature row in a spec or plan, ask: "Can this feature be ✅ Live in backend but ❌ Not built in dashboard?" If yes, the feature must be tracked with a two-part status or split rows.
+
+**Fix pattern:** Every feature that touches the UI must have a two-part status in the plan: `Backend: ✅ / Dashboard: ✅`. A feature is only "✅ Live" when BOTH are verified complete.
+
+### Trap 8: First-Run State Not Specified
+
+**Pattern:** The spec describes what the dashboard looks like with 15 agents and 6 months of data. Nothing describes what it looks like on first launch with zero agents, zero pulses, and an empty database. The first-run user sees a blank page and interprets it as "broken" not "empty."
+
+**Real example (ObserveCo, 2026-06-08):** Onboarding overlay blocked navigation tabs on fresh install. Empty states showed misleading "Learning..." labels for metrics that had no data source configured. All described in the Layer F audit — but the spec never required a first-run section.
+
+**Detection:**
+1. Every user-facing spec section must include a **First-Run** subsection: "What does this look like with zero data?"
+2. If the spec says "the agent card shows error counts" without describing what it shows on first launch (no agents, no errors), the spec is incomplete
+3. Check: is the onboarding flow described? What about the state after onboarding but before any agent is added?
+
+**Fix pattern:** Add a "First-Run" row to every feature's state matrix. At minimum: empty database, first login, first agent added, first error received. These states are as important as the happy path.
 
 ---
 
@@ -471,6 +496,8 @@ Trap 3: No lifecycle — start/crash/reboot/cleanup unspecified
 Trap 4: No success metrics — can't tell if it works
 Trap 5: Hidden constraints — assumes single environment
 Trap 6: Contradictory refs — §X says one thing, §Y says opposite
+Trap 7: Payment flow state coverage — success ≠ done (session ID, encryption, trial start all independent failure points)
+Trap 8: Tier-specific empty states — Free vs Pro show different content, spec must define both
 ```
 
 ---
@@ -489,5 +516,12 @@ Before marking spec as complete:
 |--------------------|--------------------------|---------------------------|
 
 ---
+
+## Lessons Learned
+
+| Date | Project | What happened | Root cause | Trap | Fix applied |
+|------|---------|---------------|-----------|------|-------------|
+| 2026-06-09 | ObserveCo | Stripe payment success → Pro not activated — 3 independent bugs (wrong session ID, encryption key mismatch, missing start_trial()) | Spec said "payment flow" but didn't enumerate sub-states: session creation, encryption, trial start | Trap 7 | Added payment flow state machine to spec template |
+| 2026-06-09 | ObserveCo | Free tier shows "Subscribe $9/mo" alongside "Cancel Trial" — confusing dual-state UI | Spec only defined happy path for paid users, not Free tier with trial active | Trap 8 | Added tier-specific empty state requirement to spec template |
 
 *"A perfect implementation of an ambiguous spec is still wrong." This playbook catches the wrongness before a single line of code is written.*

@@ -138,9 +138,9 @@ This section enumerates every possible way a user can obtain, lose, or manage a 
 | 5 | Local license.json updated with trial info | `license.py:ensure_trial()` or `start_trial()` |
 | 6 | All Pro features unlock for 30 days | `license.py:is_pro → is_trial_active` |
 
-**UX:** Header badge shows `🚀 Solo plan — 28d left` with `Subscribe $9/mo` and `Cancel Trial` buttons.
+**UX:** Header badge shows `🚀 Solo plan — 28d left` with `Cancel Trial` button only (no "Subscribe $9/mo" — you're already on trial, can't subscribe twice).
 
-**Cancel trial:** User clicks "Cancel Trial" → `POST /api/licenses/cancel-trial` → sets `trial_consumed=true` → locks Pro features immediately. Data preserved.
+**Cancel trial:** User clicks "Cancel Trial" → confirmation modal warns it's a one-time offer → `POST /api/licenses/cancel-trial` → sets `trial_consumed=true` → locks Pro features immediately. Data preserved. User can subscribe at $9/mo (without a trial) anytime.
 
 ### Pathway 3: Subscribe via Stripe (from trial or fresh)
 
@@ -230,7 +230,7 @@ This section enumerates every possible way a user can obtain, lose, or manage a 
 | 2 | `LicenseState.is_trial_active` returns `False` | `license.py:49-52` |
 | 3 | `is_pro` returns `False` (no key, no active trial) | — |
 | 4 | Pro features lock at next dashboard load | — |
-| 5 | Header badge: `🔓 Free · Trial ended` with `Restart $9/mo` button | `licenses_api.py:100-109` |
+|| 5 | Header badge: `🔓 Free · Trial ended` with `Subscribe $9/mo` button — no trial, direct subscription | `licenses_api.py:100-109` |
 
 **UX:** Clear messaging. Data preserved. User can restart subscription.
 
@@ -308,11 +308,25 @@ This section enumerates every possible way a user can obtain, lose, or manage a 
 
 **Fix:** `cancel_trial()` should POST to `POST /api/trials/cancel` on Vercel CRM.
 
-### Gap 7: License key expiry not shown to user
+### Gap 8: Subscribe/checkout always sends trial to Stripe regardless of user state
 
-**Problem:** If an admin key has an expiry date (set in billing.json metadata), the user has no visibility into when their key expires.
+**Problem:** Every checkout link in the app passes `trial=30` in the URL — even for users who have already cancelled their trial, had it expire, or are re-subscribing after cancellation. The `trial` parameter was accepted by `api_checkout()` but **never passed through to Stripe** (`create_checkout_session()` always applied `config.trial_days=30` unconditionally). This meant Stripe would attempt to give a 30-day trial to a user who already used theirs — creating a scenario where someone could get unlimited free trials by repeatedly cancelling and resubscribing.
 
-**Fix:** Badge for license-key users should show `Pro · Solo plan / License key — expires 2026-07-01` when `expires_at` is set. If no `expires_at` (perpetual key), show `License key (perpetual)`.
+**Chain of bugs:**
+1. Consumed/expired badge link: `trial=30` → Stripe tries 30-day trial for cancelled user
+2. Trial badge: Shows "Subscribe $9/mo" button alongside "Cancel Trial" — contradictory UX (you're already on trial, can't subscribe twice)
+3. Cancel Trial modal: "re-subscribe anytime" vs "this cannot be undone. Trial is a one-time offer" — contradictory
+
+**Fixes applied:**
+1. `billing.py:create_checkout_session()`: Added `trial_days: int | None` parameter. `None` = use config default (30). `0` = no trial. `N` = explicit override.
+2. `server.py:api_checkout()`: Passes `trial` param through to Stripe. `trial=0` → no trial. `trial=30` → 30-day trial.
+3. `licenses_api.py`: Consumed and expired badges now link to `trial=0` instead of `trial=30`. Button text unified to "Subscribe $9/mo" (was "Restart $9/mo" for expired).
+4. Trial badge: Removed "Subscribe $9/mo" button — you're already on trial, can't subscribe twice. Only shows Cancel Trial.
+5. Cancel Trial modal: Fixed contradiction. Now says "subscribe at $9/mo anytime" (not "re-subscribe") and "Free trial is a one-time offer and cannot be restored" (not "This cannot be undone. Trial is a one-time offer").
+
+**Files changed:** `billing.py`, `server.py`, `licenses_api.py`, `index.html`
+
+**Status:** ✅ Fixed this session
 
 ---
 
@@ -418,12 +432,12 @@ User clicks any Pro-gated feature
 
 The header badge is the primary license status indicator. It must cover all states:
 
-| # | License state | Badge appearance | Actions shown | File location |
-|---|--------------|-----------------|---------------|---------------|
-| 1 | Free, never trialed | `🔓 Free` | `Subscribe $9/mo` → Stripe Checkout | `licenses_api.py:111-118` |
-| 2 | Free, trial expired | `🔓 Free · Trial ended` | `Restart $9/mo` → Stripe Checkout | `licenses_api.py:100-109` |
-| 3 | Trial active | `🚀 Solo plan — 28d left` | `Subscribe $9/mo` + `Cancel Trial` | `licenses_api.py:65-75` |
-| 4 | Grace period (trial expired <3d ago) | `⚠️ Grace period — 2d left` | `Subscribe $9/mo` | `licenses_api.py:54-64` |
+| **#** | **License state** | **Badge appearance** | **Actions shown** | **File location** |
+|------|--------------|-----------------|---------------|---------------|
+| 1 | Free, never trialed | `🔓 Free` | `Subscribe $9/mo` → Stripe Checkout (30d trial) | `licenses_api.py:111-118` |
+| 2 | Trial consumed/expired | `🔓 Free · Trial ended` | `Subscribe $9/mo` → Stripe Checkout (no trial) | `licenses_api.py:100-109` |
+| 3 | Trial active | `🚀 Solo plan — 28d left` | `Cancel Trial` only | `licenses_api.py:65-75` |
+| 4 | Grace period (trial expired <3d ago) | `⚠️ Grace period — 2d left` | `Subscribe $9/mo` → Stripe Checkout (no trial) | `licenses_api.py:54-64` |
 | 5 | Pro via Stripe subscription | `✅ Pro · Solo / Active subscription` | `Manage Billing →` (Stripe Portal) | `licenses_api.py:76-89` |
 | 6 | Pro via admin license key | `✅ Pro · Solo / License key` | `Manage Key →` (key modal, deactivate) | **NEEDS BUILD** |
 | 7 | Pro via license key + Stripe | `✅ Pro · Solo / Active subscription` | `Manage Billing →` + `License Key →` | **NEEDS BUILD** |
@@ -575,6 +589,7 @@ Trial cancellation is local-only — does not sync to Vercel CRM.
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2026-06-05 | Initial draft. Two tiers only (Free + Solo $9/mo). No Team tier. | Main |
-| 2026-06-07 | Added §1B: 3-Way Licensing Architecture diagram + data flows. | Main |
+| 2026-06-10 | §1D/Gap 8: Checkout always sent trial to Stripe regardless of user state. Fixed `create_checkout_session()` to respect `trial_days` param. Removed Subscribe button from trial badge. Fixed Cancel Trial modal contradiction. Updated badge table for all states. | Main |
 | 2026-06-09 | Added §1C: All 9 license pathways end-to-end. §1D: Gap analysis with 7 gaps. §4: All badge scenarios (1-9). Build order expanded. | Main |
+| 2026-06-07 | Added §1B: 3-Way Licensing Architecture diagram + data flows. | Main |
+| 2026-06-05 | Initial draft. Two tiers only (Free + Solo $9/mo). No Team tier. | Main |

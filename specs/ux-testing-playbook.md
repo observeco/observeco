@@ -2,7 +2,7 @@
 
 **Product:** ObserveCo (and all future frontend projects)
 **Status:** Living — update as lessons accumulate
-**Version:** 3.2 — 2026-06-01
+**Version:** 3.5 — 2026-06-10
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
@@ -12,6 +12,7 @@
 | 3.2 | 2026-06-01 | Added Trap 14 (Representation Overflows Container), Trap 15 (Inline Reference Not Verified), Trap 16 (JS Rename Leaves Dead Call). Updated Trap 5 detection (actionable empty state commands), Trap 9 detection (flush-content check). Added Lessons Learned entry for 6 post-launch issues. |
 | 3.3 | 2026-06-08 | Added Trap 18 (Overlay Dismiss on Text Selection). Updated Golden Gate checklist with text-selection test. Added Lessons Learned entry for Pro License Key modal bug. |
 | 3.4 | 2026-06-09 | Added Trap 20 (Cross-System Format/State Inconsistency), Trap 21 (Hardcoded Ephemeral Value), Trap 22 (Schema-Code Drift), Trap 23 (Render Order Drift), Trap 24 (Entity-Type-Aware Rendering). Added entity-type-awareness to Golden Gate as item 8.5. Golden Gate now 12-point. Added cross-system consistency and ephemeral-value detection patterns. Version history table fixed (removed stray pipe). |
+| 3.5 | 2026-06-10 | Added Trap 25 (Misleading Data — Real Enough to Confuse), Trap 26 (Subscription State Confusion), Trap 27 (Pro Activation Gap), Trap 28 (Backend Status ≠ Dashboard Status), Trap 29 (Silent Crash on Missing DOM Element), Trap 30 (Badge/State Refresh Missing After State Change). Golden Gate updated to 14-point. Added Lessons Learned entries for all 6 new traps. |
 
 **Author:** Main (per Sean direction 2026-05-25)
 **Source:** Real testing session — dashboard v0 passed all AI checks, failed every human check
@@ -318,7 +319,7 @@ This is the **minimum viable human-lens evaluation**. Apply it before any fronte
 ### 4.1 The Golden Gate (run by Hound or any agent)
 
 ```
-Before marking any frontend work done, run this 12-point gate:
+Before marking any frontend work done, run this 14-point gate:
 
 1. SCREENSHOT the page in its current state
 2. Answer for every section: does this look complete or broken?
@@ -332,6 +333,8 @@ Before marking any frontend work done, run this 12-point gate:
 10. TEXT SELECTION — open every modal with an input, drag-select text across boundary, confirm overlay stays open
 11. ENTITY-TYPE-AWARE RENDERING — for any card list with heterogeneous types: confirm type-specific metrics (Confidence, Guard, Brain size, Composition) are gated behind entity type — never render irrelevant metrics with misleading empty states like "Learning..."
 12. RENDER ORDER — define the expected render order (top→bottom) in the spec, then verify template/section concatenation matches it
+13. STATE REFRESH — after any modal action (activate, deactivate, cancel, subscribe), does the badge/status update within 1 second without page reload?
+14. DATA PROVENANCE — for every number on the page: can it be traced to a real computation? If not, is it clearly labeled as estimated or unavailable?
 
 One-line pass/fail per check. If any fails, the deliverable is not complete.
 
@@ -884,6 +887,149 @@ is_agent = agent_type == 'agent'
 
 ---
 
+#### Trap 25: Misleading Data — "Real Enough to Confuse"
+
+**Pattern:** A data point that is fabricated, estimated, or derived from a heuristic is presented in the same visual style as real data. The user cannot distinguish "this is a real measurement" from "this is a rough guess." The product looks active and data-rich — but the numbers are theatre.
+
+**Why AI misses this:** AI verifies the data renders correctly (correct value, correct unit, correct position). The AI has no concept of data provenance — it cannot distinguish "this 58% came from real compress_log entries" from "this 58% was hardcoded as a sales upsell."
+
+**Detection:**
+1. Trace every number rendered in the UI back to its source: is it a real computation, a heuristic, a hardcoded default, or a fallback?
+2. If it's a heuristic or estimate: is it visually distinguished from real data? (different colour, different icon, explicit "(estimated)" label)
+3. If it's hardcoded: can the user tell this is static content and not a live measurement?
+4. Specifically check: savings percentages, usage statistics, "learned from X turns" counters, "optimised X skills" claims, comparison metrics
+
+**Fix pattern:**
+- Every number in the UI must have a `data-source` attribute: `data-source="real"`, `data-source="potential"`, or `data-source="none"`
+- Estimated/potential values must be visually distinct: muted colour, "(based on composition)" suffix, ▲ indicator
+- Hardcoded default/fallback values must NEVER resemble real data — use `—` (em dash) or "Run X to see data" empty state
+- Add a data provenance section to every analytics/insights page: "Sources: real compress_log (agent A, B) · potential from composition (agent C, D)"
+
+**Real example (ObserveCo, 2026-06-09):** Brain Analysis tab showed "58% savings — learned from 116 turns" for the Token Optimiser. The 58% was hardcoded. The "116 turns" was hardcoded. "3 of 8 skills" was hardcoded. All looked like real data. Fixed: replaced with `—` placeholders until real compress_log data exists. Added `savings_source` field with 3 states: `actual`, `potential`, `none`.
+
+---
+
+#### Trap 26: Subscription State Confusion — Action Visible When It Shouldn't Be
+
+**Pattern:** A billing or subscription button is visible in a state where it doesn't make sense. User sees "Subscribe $9/mo" while actively on a Solo plan trial. The user wonders: "Can I subscribe twice? Will I lose my trial? Is this an upgrade or a new subscription?"
+
+**Why AI misses this:** AI verifies the button exists, the button is clickable, and the payment flow starts. The AI has no model of the user's current subscription state, so it cannot detect that the button's presence contradicts that state.
+
+**Detection:**
+1. Enumerate ALL possible license states: free trial (solo), free trial (pro), solo paid, pro paid, pro license-key, cancelled, expired, deactivated, grace period
+2. For each state, list every billing/subscription button and whether it should be visible:
+   - On solo trial: "Subscribe $9/mo" is confusing — should be "Manage Trial" or hidden
+   - On pro trial: "Subscribe" buttons should be visible (they upgrade)
+   - On cancelled: "Reactivate" should replace "Cancel"
+   - On expired: "Renew" should replace "Subscribe"
+3. Test each state → each button state in a matrix. Any mismatch is a violation
+
+**Fix pattern:**
+- The billing button must be a function of `(current_plan, current_status, is_active)`, not a static label
+- Never show a primary action button whose result contradicts the user's current state
+- If a button would produce an confusing result (charging someone who's already subscribed), hide it or add explanatory text
+
+**Real example (ObserveCo, 2026-06-09):** Solo trial user saw "Subscribe $9/mo Cancel Trial" buttons. "Cancel Trial" makes sense. "Subscribe $9/mo" alongside it raises "will I be charged twice?" confusion. Fixed: hide "Subscribe" when user is on an active paid-or-trial plan; show "Manage Subscription" instead.
+
+---
+
+#### Trap 27: Pro Activation Gap — Payment Success ≠ Feature Unlock
+
+**Pattern:** User completes payment. Stripe says "successful." The dashboard still shows Free tier. Payment went through — Pro didn't activate. The gap between "payment accepted" and "feature unlocked" has a bug that's invisible unless you test the full pipeline.
+
+**Why AI misses this:** AI tests the payment flow and the license activation flow as separate units. The Stripe webhook handler was tested in isolation ("it records the customer OK"). The license state change was tested in isolation ("set_state(pro) works OK"). Nobody ran the end-to-end test: pay → webhook fires → license changes → badge updates.
+
+**Detection:**
+1. Map every state transition: user clicks pay → Stripe session → user pays → success URL → webhook fires → license state changes → badge refreshes → email sent
+2. Each transition must have a verifiable output (log, state file, DOM change, email)
+3. Test: complete a real payment. Wait 60 seconds. Is Pro active IN THE DASHBOARD?
+4. Test: fail the payment. Does the user get a helpful error or a broken state?
+5. Walk backwards from the badge: if badge says "Free" but payment says "paid", where did the chain break?
+
+**Fix pattern:**
+- The webhook handler must do THREE things: (1) record the customer, (2) activate the license, (3) verify activation took effect
+- If any of the three fails, the whole transaction should be flagged for manual review
+- Add a post-payment audit: after checkout.session.completed, re-read the license state and compare to expected
+- Never assume "Stripe says paid → user has Pro." Verify it.
+
+**Real example (ObserveCo, 2026-06-09):** Three independent bugs created a silent activation gap:
+1. Success URL missing `{CHECKOUT_SESSION_ID}` template variable → webhook couldn't correlate session
+2. Encryption key file corrupted (two Fernet keys concatenated) → `load_key()` silently fell back to simulation mode
+3. Webhook handler recorded the customer but never called `start_trial()`
+Fix: all three corrected, end-to-end payment→activation test now part of release protocol.
+
+---
+
+#### Trap 28: Backend Status ≠ Dashboard Status — The Incomplete Feature Claim
+
+**Pattern:** A feature is marked "✅ Live" in the master plan, spec, or sprint review because the backend is complete. The dashboard UI for that feature was never built, or exists as a stub. Anyone reading the plan assumes the feature is fully done and user-facing.
+
+**Why AI misses this:** AI evaluates the backend feature endpoint (HTTP 200, correct data) and sees no reason to check the frontend. The backend team says "done" and the AI accepts it. The frontend doesn't exist — but nobody asked "done where?"
+
+**Detection:**
+1. For every feature claim in the master plan, spec, or README: verify backend AND frontend independently
+2. If the feature is "Push Alerts" but only the backend API exists, the correct status is "🟡 Partial — Backend ✅ / Dashboard ❌"
+3. If a feature has a single row in the plan but needs both backend and frontend, split the row or use a two-part status column
+
+**Fix pattern:**
+- Every feature that touches the UI must have a two-part status: "Backend: ✅ / Dashboard: ✅"
+- A feature is only "✅ Live" when BOTH are done and verified
+- The master plan must independently audit backend+frontend status after every sprint
+- Specs must define feature completion requirements for EACH layer, not just the backend
+
+**Real example (ObserveCo, 2026-06-08):** Master plan showed Push Alerts and Auto-Heal as ✅ Live. Audit revealed both had complete backends but ❌ No dashboard UI. Users couldn't configure or see these features. Fixed: all features split into backend/dashboard status columns in master plan.
+
+---
+
+#### Trap 29: Silent Crash on Missing DOM Element
+
+**Pattern:** A JavaScript function calls `document.getElementById('someElement')` and immediately accesses `.innerHTML`, `.classList`, or `.style` on the result. The element doesn't exist on the current page (different tab, different modal state, different user role). The function throws a silent TypeError that's caught by no one — it fires in an `onclick` handler or `setTimeout` callback, so the error bubbles to nowhere.
+
+**Why AI misses this:** AI tests the function on the page where the element exists (Settings tab, Pro user). The function works — test passes. The AI never switches to a tab where the element is absent. A tab-switching test isn't part of any standard AI testing flow.
+
+**Detection:**
+1. Every JS function that accesses `document.getElementById()`, `querySelector()`, or `$()` must guard for null
+2. Specifically check functions that are called FROM multiple tabs: `loadLicenseStatus()`, `updateBadge()`, `refreshPlan()`
+3. Test every function on every tab/view where it could be invoked — not just the one where it was developed
+4. Enable "Pause on uncaught exceptions" in DevTools and trigger every action across all tabs
+
+**Fix pattern:**
+```javascript
+// Before accessing any property on a DOM lookup:
+function updateBadge() {
+    const badge = document.getElementById('tierBadge');
+    if (!badge) return;  // Element not on this page — safe to skip
+    badge.textContent = newStatus;
+}
+```
+- This is the safest pattern: early return, no error, no crash.
+- For tab-switching functions: add a guard at the top and return silently if the target element doesn't exist.
+- Never assume `getElementById` returns a non-null value — every DOM lookup is a candidate for null.
+
+**Real example (ObserveCo, 2026-06-08):** `loadLicenseStatus()` was called on every tab switch. It tried `document.getElementById('proTrialStatus').textContent = ...` on Fleet/Brain/Auto-Heal/Push tabs where `proTrialStatus` didn't exist. The crash was silent — no error visible to the user, but upsells never hid when Pro was active. 5 bugs traced to this single null access. Fix: added `if (!el) return;` guard.
+
+---
+
+#### Trap 30: Badge/State Refresh Missing After State Change
+
+**Pattern:** User performs an action (activate license, deactivate license, cancel trial, subscribe). The backend state changes correctly. The UI badge, button labels, and feature access don't update until the user manually reloads the page.
+
+**Why AI misses this:** AI tests the action and then checks the backend state. The backend says "activated" — test passes. The AI doesn't verify that the UI badge changed from "Free" to "Pro" without page reload, because the AI never looks at the badge after the action.
+
+**Detection:**
+1. For every state-changing action (activate, deactivate, cancel, subscribe): verify the UI updates WITHOUT page reload
+2. Specifically check: tier badge text, button labels, locked/unlocked feature visibility, pricing display
+3. Test the full loop: open modal → perform action → close modal → badge updated → correct buttons visible → locked features unlocked
+4. If the badge updates only after a manual page refresh, it's a violation — even if the backend state is correct
+
+**Fix pattern:**
+- After any state-changing modal action, call a refresh function immediately: `loadLicenseStatus()` or `refreshBadge()`
+- The refresh function should re-fetch state from the API, not assume the local state is correct
+- If the modal needs to close before the refresh: call refresh in the modal's "onclose" handler, not inline
+- Verify: open modal → change state → close modal → badge changes within 1 second without user action
+
+**Real example (ObserveCo, 2026-06-08):** Activating or deactivating a license key updated the backend (license table status flipped) but the badge still showed the old state. The subscribe → cancel → re-subscribe cycle on Stripe side had the same problem. Fix: added `loadLicenseStatus()` call after every modal close, badge now refreshes from API on each modal dismiss.
+
 ## 7. Lessons Learned Log
 
 Append here every time a human catches something an AI missed. This is how the playbook stays alive.
@@ -996,6 +1142,12 @@ Append here every time a human catches something an AI missed. This is how the p
 | 2026-06-08 | ObserveCo | "Health popup shows correct data" | Confidence header renders before Last 24 Hours section — information hierarchy reversed. All data correct, order wrong. | Trap 23 — Render Order Drift | Moved `{conf_header}` into Signal Analysis section in `js_string` concatenation. Added Trap 23 to playbook. |
 | 2026-06-08 | ObserveCo | "All metric rows render correctly" | Services/workflows show `📈 Learning...` for token drift and `⚪ No data` for Guard — metrics that don't apply to those entity types. | Trap 24 — Entity-Type-Aware Rendering | Gated Confidence, Guard, Brain size, Composition rows behind `agent_type == 'agent'`. Added Trap 24 to playbook + Golden Gate item 11. |
 | 2026-06-09 | ObserveCo | "Brain analysis, fleet drift, composition all show data" | `chisel_trims` table missing `mode` column. `log_trim()` INSERTs `mode` but DDL at schema v11 never had it. Migration script existed but never wired into auto-run. 1,265 errors accumulated, trim/drift tables empty for days. | Trap 22 — Schema-Code Drift | Bumped schema to v12, wired migration into `db.py:MIGRATIONS`. Schema auto-upgraded on next Database() init. Added Trap 22 to playbook. |
+| 2026-06-09 | ObserveCo | "Brain Analysis shows 58% savings, 116 turns, 3 of 8 skills" | All hardcoded upsell data — no real compress_log entries existed | Trap 25 — Misleading Data | Replaced with `—` placeholders, added `savings_source` field with 3 states |
+| 2026-06-09 | ObserveCo | "Solo trial user sees correct billing UI" | "Subscribe $9/mo" visible alongside "Cancel Trial" — confusing state | Trap 26 — Subscription Confusion | Hidden "Subscribe" for active trial users; shown "Manage Subscription" |
+| 2026-06-09 | ObserveCo | "Stripe payment flow completes" | Payment successful, Pro not activated — 3 independent bugs | Trap 27 — Pro Activation Gap | Fixed session ID, encryption key, missing start_trial(). E2E test added |
+| 2026-06-09 | ObserveCo | "Master plan shows Push Alerts as ✅ Live" | Backend complete, dashboard UI never built | Trap 28 — Status Split | Features split into backend/dashboard status columns |
+| 2026-06-09 | ObserveCo | "loadLicenseStatus() works on Settings tab" | Crashes silently on 4 other tabs — null element access | Trap 29 — Silent DOM Crash | Added null guard to all cross-tab JS functions |
+| 2026-06-09 | ObserveCo | "License deactivation updates backend" | Badge shows old state until manual reload | Trap 30 — Badge Refresh | Added loadLicenseStatus() after every modal close |
 
 ---
 

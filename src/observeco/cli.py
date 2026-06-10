@@ -209,7 +209,7 @@ def chisel_compress(
     mode: str = typer.Option("lite", "--mode", "-m", help="Compression mode: lite or full"),
     filepath: Optional[str] = typer.Option(None, "--file", "-f", help="Explicit path to SOUL.md"),
 ) -> None:
-    """Compress an agent's SOUL.md — Lite (22% guidance) or Full (35% + memory + skills)."""
+    """Compress an agent's SOUL.md — Lite (guidance only) or Full (guidance + memory + skills)."""
     if not agent_name and not filepath:
         print("Usage: observeco chisel compress --agent <name> [--mode lite|full]")
         return

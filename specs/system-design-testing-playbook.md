@@ -2,13 +2,14 @@
 
 **Product:** ObserveCo (and all future software projects)
 **Status:** Living — update as lessons accumulate
-**Version:** 3.1 — 2026-05-31
+**Version:** 3.2 — 2026-06-10
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
 | 2.0 | 2026-05-30 | Added 9 lenses, Hound prompts, agent priming |
 | 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, standard lessons entry |
+| 3.2 | 2026-06-10 | Added Pattern 8 (Payment Pipeline State Machine — 3 sub-states). Added Lessons Learned section with 1 entry. |
 
 **Source:** Real failure — watch-daemon architecture fix failed on first attempt because no system-level analysis was done before writing code. The fix worked correctly at the function level but was architecturally wrong (SPOF, tied lifecycle, gaps in coverage).
 
@@ -842,6 +843,16 @@ Only if ALL pass may you say: "Ready for human architecture sign-off."
 
 ---
 
+## New Pattern: Webhook → Feature Propagation Race
+
+**Pattern (addition):** Three independent bugs in a payment pipeline (missing session ID, corrupted encryption key, missing handler call) each passed unit tests. Combined, they created a state where payment succeeded but Pro didn't activate. No single test caught it.
+
+**Pre-flight check (add to pipeline review):**
+1. Map the full event chain: event received → data stored → state changed → feature unlocked → UI updated
+2. For each transition, verify: does the NEXT step depend on the PREVIOUS step's output being correct?
+3. If yes: test with each dependency broken independently. If any one break allows a "successful" outcome with wrong state, the pipeline has a race vulnerability.
+4. Specifically for payment pipelines: test with bad encryption key + missing template var + missing handler call. All three must each independently result in clear failure — not silent degraded mode.
+
 ## Appendix A: Quick Reference — The Pre-Code Protocol
 
 **Before writing ANY infrastructure code, answer these 7 questions:**
@@ -927,5 +938,11 @@ Copy this into every infrastructure PR:
 ```
 
 ---
+
+## Lessons Learned
+
+| Date | Project | What happened | Root cause | Pattern | Fix applied |
+|------|---------|---------------|-----------|---------|-------------|
+| 2026-06-09 | ObserveCo | Stripe payment success → Pro not activated — 3 independent bugs (session ID, encryption, trial start) | Payment pipeline treated as single state instead of 3-sub-state machine | Pattern 8 | Added payment pipeline state machine to system design template |
 
 *Failure today taught us that the code can be correct and the system can still be wrong. This playbook bridges that gap — forcing the system-level analysis BEFORE the code, and verifying the system-level properties AFTER the code.*

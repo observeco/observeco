@@ -183,8 +183,36 @@ def _deliver_webhook(target: str, message: str) -> tuple[bool, str]:
 
 
 def _deliver_email(target: str, message: str) -> tuple[bool, str]:
-    """Deliver via local sendmail or configured SMTP."""
+    """Deliver via configured SMTP. Falls back to sendmail only if Postfix is running."""
+    # First, try configured SMTP (preferred — reliable delivery)
+    smtp_config = __import__("pathlib").Path.home() / ".observeco" / "smtp.json"
+    if smtp_config.exists():
+        try:
+            cfg = json.loads(smtp_config.read_text())
+            import smtplib
+            from email.message import EmailMessage
+            msg = EmailMessage()
+            msg.set_content(message)
+            msg["Subject"] = "ObserveCo Alert"
+            msg["From"] = cfg.get("from", "alerts@observeco.local")
+            msg["To"] = target
+            with smtplib.SMTP(cfg["host"], cfg.get("port", 587), timeout=15) as server:
+                if cfg.get("tls", True):
+                    server.starttls()
+                if cfg.get("user"):
+                    server.login(cfg["user"], cfg.get("password", ""))
+                server.send_message(msg)
+            return True, ""
+        except Exception as e:
+            return False, f"SMTP delivery failed: {e}"
+
+    # Fallback: sendmail — but only claim success if Postfix is actually running
     try:
+        # Verify Postfix is running by checking the master process
+        _pf = subprocess.run(["pgrep", "-x", "master"], capture_output=True, timeout=5)
+        if _pf.returncode != 0:
+            return False, "Postfix not running. Configure SMTP via ~/.observeco/smtp.json for reliable delivery."
+
         proc = subprocess.run(
             ["sendmail", "-t"],
             input=f"To: {target}\nSubject: ObserveCo Alert\n\n{message}\n",
@@ -194,28 +222,7 @@ def _deliver_email(target: str, message: str) -> tuple[bool, str]:
             return True, ""
         return False, proc.stderr[:200]
     except FileNotFoundError:
-        # No sendmail — try SMTP from config
-        smtp_config = __import__("pathlib").Path.home() / ".observeco" / "smtp.json"
-        if smtp_config.exists():
-            try:
-                cfg = json.loads(smtp_config.read_text())
-                import smtplib
-                from email.message import EmailMessage
-                msg = EmailMessage()
-                msg.set_content(message)
-                msg["Subject"] = "ObserveCo Alert"
-                msg["From"] = cfg.get("from", "alerts@observeco.local")
-                msg["To"] = target
-                with smtplib.SMTP(cfg["host"], cfg.get("port", 587), timeout=15) as server:
-                    if cfg.get("tls", True):
-                        server.starttls()
-                    if cfg.get("user"):
-                        server.login(cfg["user"], cfg.get("password", ""))
-                    server.send_message(msg)
-                return True, ""
-            except Exception as e:
-                return False, str(e)
-        return False, "No sendmail or SMTP config found"
+        return False, "No sendmail or SMTP config found. Configure SMTP via ~/.observeco/smtp.json"
     except Exception as e:
         return False, str(e)
 

@@ -2,13 +2,14 @@
 
 **Product:** ObserveCo development workflow (and all future agent-driven projects)
 **Status:** Living — update as lessons accumulate
-**Version:** 3.1 — 2026-05-31
+**Version:** 3.2 — 2026-06-10
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
 | 1.0 | 2026-05-30 | Initial creation — 5 session failure modes, priming protocol, HOUND.md mandate, tool-use guardrails, session discipline gate |
 | 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, rename "Session Discipline" → "Golden Gate" |
+| 3.2 | 2026-06-10 | Added Priming Item 6 (Payment Pipeline Priming — verify payment flow end-to-end before marking feature done). Added Lessons Learned section with 1 entry. |
 
 **Source:** Real failure — 4 rework cycles on the watch daemon because the agent (me) didn't manage its own session discipline: no checkpoint on the first bad idea, no mandatory re-prime after context drift, no tool-use guardrails.
 
@@ -67,6 +68,9 @@ Session discipline:
 □ I WILL output screenshots + DOM dumps before claiming a fix
 □ I WILL checkpoint every 30 minutes or 5 patches (whichever comes first)
 □ I WILL ask for human sign-off before merging ANY infrastructure change
+□ I WILL NOT claim a feature is "done" without verifying which layers are complete (backend? dashboard? both?)
+□ I WILL be precise in status reporting: "Push Alerts backend is done; dashboard UI remains" not "Push Alerts is done"
+□ I WILL verify payment flow end-to-end before marking any paid feature done — session ID mapping, encryption key round-trip, trial/Pro activation call. Each sub-state independently tested.
 ```
 
 ### 3.2 The HOUND.md Mandate
@@ -453,5 +457,11 @@ Before ending ANY coding session:
 | [no checkpoint in >30 min] | Discipline failure | Stop. Now. |
 
 ---
+
+## Lessons Learned
+
+| Date | Project | What happened | Root cause | Gap | Fix applied |
+|------|---------|---------------|-----------|------|-------------|
+| 2026-06-09 | ObserveCo | Stripe payment success → Pro not activated — 3 independent bugs missed across 3 sessions | No priming item for payment pipeline verification — agent assumed "payment works" without end-to-end verification | Priming Item 6 | Added "verify payment flow end-to-end before marking feature done" to priming block |
 
 *The agent is the most expensive dependency. This playbook governs it with the same rigour we govern our daemons.*

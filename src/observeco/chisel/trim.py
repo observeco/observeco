@@ -509,12 +509,32 @@ def compress_guidance_block(block: str) -> str:
     return "\n".join(compressed)
 
 
+def _log_compress_result(agent_name: str, mode: str, before_tokens: int, after_tokens: int,
+                          savings: int, savings_pct: float, soul_path: Path,
+                          backup_path: Path) -> None:
+    """Log a compression result to compress_log (dashboard SSOT)."""
+    from observeco.db import Database
+    try:
+        db = Database()
+        conn = db._get_conn()
+        conn.execute(
+            "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, savings, "
+            "savings_pct, file_path, backup_path, triggered_by, timestamp) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (agent_name, mode, before_tokens, after_tokens, savings, savings_pct,
+             str(soul_path), str(backup_path), "cli", int(time.time())),
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+
 def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = None) -> dict:
     """Compress an agent's SOUL.md file.
 
     Args:
         agent_name: Name of the agent.
-        mode: 'lite' (guidance only, 22%) or 'full' (guidance + memory + skills, 35%).
+        mode: 'lite' (guidance only) or 'full' (guidance + memory + skills).
         filepath: Optional explicit path to SOUL.md. If None, auto-discover.
 
     Returns:
@@ -642,7 +662,7 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
     # Write compressed version
     soul_path.write_text(text, encoding="utf-8")
 
-    # Log to database
+    # Log to database — both chisel_trims (for analysis) and compress_log (for dashboard)
     from observeco.db import Database
     analysis = _analyse_prompt(text)
     db_local = Database()
@@ -654,6 +674,8 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
         analysis.get("savings_ratio", 0),
         mode=mode,
     )
+    # Also log to compress_log for the dashboard (Budget Planner / Brain Analysis)
+    _log_compress_result(agent_name, mode, before_tokens, after_tokens, savings, savings_pct, soul_path, backup_path)
 
     return {
         "status": "ok",

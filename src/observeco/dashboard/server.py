@@ -917,7 +917,7 @@ async def api_checkout(plan: str = "solo", trial: int = 30, email: str = "", pho
     from observeco.billing import create_checkout_session
     if not email:
         email = "checkout@observeco.app"
-    result = create_checkout_session(email=email, phone=phone, name=name, plan=plan)
+    result = create_checkout_session(email=email, phone=phone, name=name, plan=plan, trial_days=trial if trial > 0 else 0)
     if result and result.get("url"):
         return RedirectResponse(url=result["url"])
     # Fallback if Stripe not configured — show email capture
@@ -999,7 +999,8 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
     if tab == "guard":
         return _detail_guard_tab(name, pulses, errors, circuit, framework, agent_status, conf)
     elif tab == "errors":
-        return _detail_errors_tab(name, errors, framework, agent_status, conf)
+        from observeco import license as lic
+        return _detail_errors_tab(name, errors, framework, agent_status, conf, is_pro=lic.require_pro())
     elif tab == "tokens":
         return _detail_tokens_tab(name, trims, drift, framework)
     elif tab == "garden" or tab == "memory":
@@ -1764,8 +1765,8 @@ def _detail_guard_tab(name: str, pulses: list, errors: list, circuit: dict, fram
 </div>""")
 
 
-def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: str = "unknown", conf: dict = None) -> str:
-    """Error history — timeline table + categorized verdict + Pro upsell."""
+def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: str = "unknown", conf: dict = None, is_pro: bool = False) -> str:
+    """Error history — timeline table + categorized verdict + Pro upsell (or range selector for Pro)."""
     error_rows = ""
     is_dead = agent_status == "dead"
     is_not_running = agent_status == "not_running"
@@ -1810,6 +1811,33 @@ def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: st
     else:
         verdict_msg = 'Multiple errors suggest an ongoing problem. Check the guard status to see if monitoring has been stopped automatically.'
 
+    # Server-side decide: Pro gets range buttons, Free gets upsell
+    history_section = ""
+    if is_pro:
+        history_section = f"""<div class="modal-section" id="historyRange_{name}" style="border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <h4 style="margin-bottom:6px;font-size:13px;">📅 Extended History</h4>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <button onclick="loadAgentErrorHistory('{name}', 1)" class="range-btn active" id="range1d_{name}" style="background:var(--accent-on);color:#86efac;border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:600;cursor:pointer;">24h</button>
+            <button onclick="loadAgentErrorHistory('{name}', 7)" class="range-btn" id="range7d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">7d</button>
+            <button onclick="loadAgentErrorHistory('{name}', 30)" class="range-btn" id="range30d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">30d</button>
+            <button onclick="loadAgentErrorHistory('{name}', 90)" class="range-btn" id="range90d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">90d</button>
+        </div>
+        <div id="extendedHistory_{name}" style="font-size:11px;color:#64748b;">Click a range above to load.</div>
+    </div>"""
+    else:
+        history_section = f"""<div class="modal-section" id="historyRange_{name}" style="border:1px dashed #3730a3;border-radius:10px;padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div id="historyRangeContent_{name}">
+                <h4 style="margin-bottom:4px;font-size:13px;">🔒 More history unlocks patterns</h4>
+                <div style="font-size:11px;color:#64748b;line-height:1.6;">
+                    Free: last 24h only. Pro keeps every day from install — so next week you can see if errors are getting
+                    <strong style="color:#f97316;">better or worse</strong>.<br>
+                    <span style="color:#a5b4fc;">Weekly trend charts · regression alerts · never pruned</span>
+                </div>
+            </div>
+        </div>
+    </div>"""
+
     return HTMLResponse(f"""<div class="detail-content">
     {conf_header}
     <div class="modal-section">
@@ -1823,46 +1851,10 @@ def _detail_errors_tab(name: str, errors: list, framework: str, agent_status: st
         <h4>What this means</h4>
         <div class="health-summary-body">{verdict_msg}</div>
     </div>
-    <div class="modal-section" id="historyRange_{name}" style="border:1px dashed #3730a3;border-radius:10px;padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div id="historyRangeContent_{name}">
-                <h4 style="margin-bottom:4px;font-size:13px;">🔒 More history unlocks patterns</h4>
-                <div style="font-size:11px;color:#64748b;line-height:1.6;">
-                    Free: last 24h only. Pro keeps every day from install — so next week you can see if errors are getting
-                    <strong style="color:#f97316;">better or worse</strong>.<br>
-                    <span style="color:#a5b4fc;">Weekly trend charts · regression alerts · never pruned</span>
-                </div>
-            </div>
-        </div>
-    </div>
+    {history_section}
 </div>
 <script>
-setTimeout(function() {{
-    // Check Pro and replace upsell with range selector
-    fetch('/api/licenses/status')
-        .then(r => r.json())
-        .then(data => {{
-            if (data.is_pro) {{
-                const container = document.getElementById('historyRangeContent_{name}');
-                if (container) {{
-                    container.innerHTML = `
-                        <h4 style="margin-bottom:6px;font-size:13px;">📅 Extended History</h4>
-                        <div style="display:flex;gap:6px;margin-bottom:8px;">
-                            <button onclick="loadAgentErrorHistory('{name}', 1)" class="range-btn active" id="range1d_{name}" style="background:var(--accent-on);color:#86efac;border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:4px 10px;font-size:10px;font-weight:600;cursor:pointer;">24h</button>
-                            <button onclick="loadAgentErrorHistory('{name}', 7)" class="range-btn" id="range7d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">7d</button>
-                            <button onclick="loadAgentErrorHistory('{name}', 30)" class="range-btn" id="range30d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">30d</button>
-                            <button onclick="loadAgentErrorHistory('{name}', 90)" class="range-btn" id="range90d_{name}" style="background:var(--surface);color:#94a3b8;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;">90d</button>
-                        </div>
-                        <div id="extendedHistory_{name}" style="font-size:11px;color:#64748b;">Click a range above to load.</div>
-                    `;
-                    document.getElementById('historyRange_{name}').style.border = '1px solid var(--border)';
-                }}
-            }}
-        }})
-        .catch(function() {{}});
-}}, 100);
 function loadAgentErrorHistory(agent, days) {{
-    // Update active button
     document.querySelectorAll('#historyRangeContent_' + agent + ' .range-btn').forEach(b => b.style.background = 'var(--surface)');
     document.querySelectorAll('#historyRangeContent_' + agent + ' .range-btn').forEach(b => b.style.color = '#94a3b8');
     const active = document.getElementById('range' + days + 'd_' + agent);
@@ -2317,14 +2309,14 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
     <table style="width:100%;border-collapse:collapse;font-size:12px;">
         <thead>
             <tr style="border-bottom:1px solid var(--border);">
-                <th onclick="sortCompare('name')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Agent <span id="sortIndicator_name" style="color:#86efac;">▲</span></th>
-                <th onclick="sortCompare('framework')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Framework <span id="sortIndicator_framework"></span></th>
-                <th onclick="sortCompare('tokens')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Tokens <span id="sortIndicator_tokens"></span></th>
+                <th onclick="sortCompare('name')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Agent <span id="sortIndicator_name" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('framework')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Framework <span id="sortIndicator_framework" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('tokens')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Tokens <span id="sortIndicator_tokens" class="sort-indicator"></span></th>
                 <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Composition</th>
-                <th onclick="sortCompare('drift')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Drift <span id="sortIndicator_drift"></span></th>
-                <th onclick="sortCompare('errors')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Errors <span id="sortIndicator_errors"></span></th>
-                <th onclick="sortCompare('circuit')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Circuit <span id="sortIndicator_circuit"></span></th>
-                <th onclick="sortCompare('last')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Last <span id="sortIndicator_last"></span></th>
+                <th onclick="sortCompare('drift')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Drift <span id="sortIndicator_drift" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('errors')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Errors <span id="sortIndicator_errors" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('circuit')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Circuit <span id="sortIndicator_circuit" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('last')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Last <span id="sortIndicator_last" class="sort-indicator"></span></th>
             </tr>
         </thead>
         <tbody>
@@ -2498,8 +2490,8 @@ async def api_brain(agent: str = "all"):
         fleet_full_avg = conn.execute(
             "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
         ).fetchone()
-        fleet_lite_pct = float(fleet_lite_avg["avg_pct"]) if fleet_lite_avg and fleet_lite_avg["avg_pct"] else None
-        fleet_full_pct = float(fleet_full_avg["avg_pct"]) if fleet_full_avg and fleet_full_avg["avg_pct"] else None
+        fleet_lite_pct = float(fleet_lite_avg["avg_pct"]) if fleet_lite_avg and fleet_lite_avg["avg_pct"] is not None else None
+        fleet_full_pct = float(fleet_full_avg["avg_pct"]) if fleet_full_avg and fleet_full_avg["avg_pct"] is not None else None
 
         # Per-agent actual compression data
         has_compress = conn.execute(
@@ -2522,8 +2514,8 @@ async def api_brain(agent: str = "all"):
                 "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE agent_name=? AND mode='full' AND savings_pct IS NOT NULL",
                 (name,)
             ).fetchone()
-            lite_avg = float(lite_row["avg_pct"]) if lite_row and lite_row["avg_pct"] else None
-            full_avg = float(full_row["avg_pct"]) if full_row and full_row["avg_pct"] else None
+            lite_avg = float(lite_row["avg_pct"]) if lite_row and lite_row["avg_pct"] is not None else None
+            full_avg = float(full_row["avg_pct"]) if full_row and full_row["avg_pct"] is not None else None
             if lite_avg is not None and lite_avg > 0:
                 lite_tokens = int(raw_tokens * (1 - lite_avg / 100))
             if full_avg is not None and full_avg > 0:
@@ -2640,13 +2632,33 @@ async def api_brain(agent: str = "all"):
                     for i in range(7):
                         pass  # keep first for now
 
+        # Fleet-level savings: compute potential from aggregate composition
+        fleet_guidance_pct = (all_comps.get("guidance", 0) / max(raw_sum, 1)) * 100
+        fleet_memory_pct = (all_comps.get("memory", 0) / max(raw_sum, 1)) * 100
+        fleet_skills_pct = (all_comps.get("skills", 0) / max(raw_sum, 1)) * 100
+        if fleet_lite_pct is not None:
+            fleet_lite_potential_pct = round(fleet_guidance_pct * (fleet_lite_pct / 100), 1)
+            fleet_full_potential_pct = round(
+                fleet_guidance_pct * (fleet_lite_pct / 100) +
+                (fleet_memory_pct + fleet_skills_pct) * (fleet_full_pct / 100),
+                1
+            ) if fleet_full_pct else fleet_lite_potential_pct
+            fleet_savings_source = "potential"
+        else:
+            fleet_lite_potential_pct = None
+            fleet_full_potential_pct = None
+            fleet_savings_source = "none"
+
         fleet = {
             "framework": f"{len(result)} agents",
             "total_tokens": raw_sum,
             "components": all_comps,
             "raw_tokens": raw_sum,
-            "lite_tokens": lite_sum,
-            "full_tokens": full_sum,
+            "lite_tokens": lite_sum if lite_sum > 0 else None,
+            "full_tokens": full_sum if full_sum > 0 else None,
+            "savings_source": fleet_savings_source,
+            "lite_potential_pct": fleet_lite_potential_pct,
+            "full_potential_pct": fleet_full_potential_pct,
             "drift": list(fleet_drift.values())[:5],
             "turn_timeline": fleet_turns,
         }
@@ -2656,11 +2668,128 @@ async def api_brain(agent: str = "all"):
 
 
 # ---------------------------------------------------------------------------
-# § Budget Planner — fleet-level cost estimation widget
+# § Watch Daemon Status — live data for Auto tab
 # ---------------------------------------------------------------------------
 
+
+@app.get("/api/watch-daemon-status", response_class=JSONResponse)
+async def api_watch_daemon_status():
+    """Live status for the Auto: Watch Daemon tab.
+
+    Returns daemon health, recent auto-compression logs, and cumulative
+    fleet savings so the Pro view shows real data instead of a hardcoded demo.
+    """
+    from observeco.chisel.watch import status as _watch_status
+
+    dstat = _watch_status()
+    now = int(time.time())
+
+    # Recent compress_log entries — prefer daemon-triggered, fall back to all
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+    rows = conn.execute(
+        "SELECT agent_name, mode, before_tokens, after_tokens, savings_pct, "
+        "backup_path, triggered_by, timestamp "
+        "FROM compress_log "
+        "ORDER BY timestamp DESC LIMIT 20"
+    ).fetchall()
+
+    logs = []
+    for r in rows:
+        d = dict(r)
+        ts = d.get("timestamp")
+        ago = ""
+        if ts:
+            diff = now - ts
+            if diff < 60:
+                ago = "just now"
+            elif diff < 3600:
+                ago = f"{diff // 60}m ago"
+            elif diff < 86400:
+                ago = f"{diff // 3600}h ago"
+            else:
+                ago = f"{diff // 86400}d ago"
+        logs.append({
+            "agent": d["agent_name"],
+            "mode": d["mode"],
+            "before": d["before_tokens"],
+            "after": d["after_tokens"],
+            "pct": d["savings_pct"],
+            "backup": d["backup_path"],
+            "triggered_by": d["triggered_by"],
+            "ago": ago,
+            "ts": ts,
+            "timestr": __import__("datetime").datetime.fromtimestamp(ts).strftime("%H:%M") if ts else "",
+        })
+
+    # Cumulative savings this week (from compress_log)
+    week_ago = now - 7 * 86400
+    row = conn.execute(
+        "SELECT COALESCE(SUM(before_tokens - after_tokens), 0) as total_saved "
+        "FROM compress_log WHERE timestamp >= ? AND savings_pct IS NOT NULL",
+        (week_ago,),
+    ).fetchone()
+    cumulative_saved = dict(row)["total_saved"] if row else 0
+
+    # Daemon is "running" if PID alive or if there are recent auto-compress entries
+    # Also consider a heartbeat file
+    if dstat.get("running"):
+        daemon_status = "running"
+    else:
+        recent_daemon = [l for l in logs if l.get("triggered_by") == "daemon"]
+        if recent_daemon and (now - recent_daemon[0].get("ts", 0)) < 3600:
+            daemon_status = "recently_seen"
+        elif logs:
+            daemon_status = "stopped"
+        else:
+            daemon_status = "never_started"
+
+    return {
+        "daemon": {
+            "status": daemon_status,
+            "pid": dstat.get("pid"),
+            "heartbeat_age": dstat.get("heartbeat_age"),
+        },
+        "logs": logs,
+        "cumulative_weekly_savings": cumulative_saved,
+    }
+
+
+# ---------------------------------------------------------------------------
+# § Memory Garden — scan endpoint
+# ---------------------------------------------------------------------------
+
+
+@app.post("/api/garden/scan", response_class=JSONResponse)
+async def api_garden_scan():
+    """Run observeco memory garden scan and return results."""
+    from observeco import license as lic
+    if not lic.require_pro():
+        return JSONResponse({"ok": False, "error": "Pro license required"}, status_code=403)
+
+    try:
+        import subprocess
+        from observeco.db import Database as _GardenDB
+        r = subprocess.run(
+            [sys.executable, "-m", "observeco", "memory", "garden"],
+            capture_output=True, text=True, timeout=120,
+        )
+        # Re-read garden summary
+        garden_db = _GardenDB()
+        summary = garden_db.get_garden_summary()
+        return {
+            "ok": True,
+            "summary": summary,
+            "stdout": r.stdout[-500:],
+            "stderr": r.stderr[-500:],
+        }
+    except subprocess.TimeoutExpired:
+        return JSONResponse({"ok": False, "error": "Garden scan timed out (120s)"}, status_code=500)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
 @app.get("/api/budget-planner", response_class=HTMLResponse)
-async def api_budget_planner():
+async def api_budget_planner(rate: float = 0.15):
     """Fleet-level budget planner: estimate daily token spend and recommend allocation."""
     from observeco.tracking.tokens import get_token_summary
     from observeco import license as lic
@@ -2683,10 +2812,16 @@ async def api_budget_planner():
 
     # Estimate daily spend: assume 50 turns/day, ~input tokens per turn
     daily_input_tokens = total_tokens * 50
-    # Standard pricing assumptions
-    PROVIDER_RATES = {"DeepSeek v4 Flash": 0.15, "Ollama Pro": 0.15, "Zhipu": 0.10, "Local (Free)": 0.0}
-    provider_name = "Ollama Pro"
-    rate = 0.15
+    # Rate from query param (default 0.15)
+    provider_name = "Custom"
+    if rate == 0.15:
+        provider_name = "DeepSeek V4 Flash / Ollama Pro"
+    elif rate == 0.08:
+        provider_name = "Ollama Pro"
+    elif rate == 0.10:
+        provider_name = "Zhipu"
+    elif rate == 0:
+        provider_name = "Local (FREE)"
 
     daily_cost = daily_input_tokens * rate / 1_000_000
     monthly_cost = daily_cost * 30
@@ -2700,7 +2835,19 @@ async def api_budget_planner():
         top_agents.append((name, tok, pct))
 
     # Lite vs Full savings — computed from actual composition, not hardcoded
-    # Check compress_log for real data first; fall back to composition-derived estimate
+    # Check compress_log for real data first; no data → "run scan first"
+
+    def _compress_count(db, mode: str) -> int:
+        """Count compress_log entries for a mode — used for source badge."""
+        try:
+            c = db._get_conn()
+            r = c.execute("SELECT COUNT(*) as n FROM compress_log WHERE mode=?", (mode,)).fetchone()
+            if r and r["n"]:
+                return r["n"]
+        except Exception:
+            pass
+        return 0
+
     actual_lite_pct = None
     actual_full_pct = None
     try:
@@ -2712,9 +2859,9 @@ async def api_budget_planner():
         full_row = conn2.execute(
             "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
         ).fetchone()
-        if lite_row and lite_row["avg_pct"]:
+        if lite_row and lite_row["avg_pct"] is not None:
             actual_lite_pct = float(lite_row["avg_pct"])
-        if full_row and full_row["avg_pct"]:
+        if full_row and full_row["avg_pct"] is not None:
             actual_full_pct = float(full_row["avg_pct"])
     except Exception:
         pass
@@ -2722,40 +2869,18 @@ async def api_budget_planner():
     if actual_lite_pct is not None:
         # Real data from actual compression runs
         lite_save_pct = actual_lite_pct
-        lite_save_label = f"-{lite_save_pct}% actual savings"
+        lite_save_label = f"-{lite_save_pct}% actual (n={_compress_count(db, 'lite')})"
     else:
-        # Derive from per-agent composition: guidance% × compressibility
-        tot_lite_pct = 0
-        tot_weight = 0
-        for name, t in latest_trims.items():
-            gw = t.get("total_tokens", 0)
-            if gw == 0:
-                continue
-            g = t.get("guidance_tokens", 0)
-            lite_pct = (g / gw) * 0.70 * 100  # guidance compressibility
-            tot_lite_pct += lite_pct * gw
-            tot_weight += gw
-        lite_save_pct = round(tot_lite_pct / max(tot_weight, 1), 1) if tot_weight > 0 else 0
-        lite_save_label = f"-{lite_save_pct}% estimated"
+        # No data yet — show CTA instead of fabricated estimate
+        lite_save_pct = 0
+        lite_save_label = "run scan first"
 
     if actual_full_pct is not None:
         full_save_pct = actual_full_pct
-        full_save_label = f"-{full_save_pct}% actual savings"
+        full_save_label = f"-{full_save_pct}% actual (n={_compress_count(db, 'full')})"
     else:
-        tot_full_pct = 0
-        tot_weight = 0
-        for name, t in latest_trims.items():
-            gw = t.get("total_tokens", 0)
-            if gw == 0:
-                continue
-            g = t.get("guidance_tokens", 0)
-            m = t.get("memory_tokens", 0)
-            s = t.get("skills_tokens", 0)
-            full_pct = ((g * 0.70) + (m + s) * 0.40) / gw * 100
-            tot_full_pct += full_pct * gw
-            tot_weight += gw
-        full_save_pct = round(tot_full_pct / max(tot_weight, 1), 1) if tot_weight > 0 else 0
-        full_save_label = f"-{full_save_pct}% estimated"
+        full_save_pct = 0
+        full_save_label = "run scan first"
 
     lite_save = daily_cost * lite_save_pct / 100
     full_save = daily_cost * full_save_pct / 100
@@ -2825,6 +2950,54 @@ async def api_garden_summary():
     total_stale, avg_debt_score, fleet_grade, total_snapshots.
     """
     return JSONResponse(db.get_garden_summary())
+
+
+@app.get("/api/compress-feed", response_class=HTMLResponse)
+async def api_compress_feed():
+    """Recent compression runs from compress_log — live feed for Brain Analysis."""
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+    rows = conn.execute(
+        "SELECT agent_name, mode, savings_pct, before_tokens, after_tokens, timestamp "
+        "FROM compress_log WHERE savings_pct IS NOT NULL "
+        "ORDER BY timestamp DESC LIMIT 10"
+    ).fetchall()
+    if not rows:
+        return HTMLResponse('<div style="color:#64748b;font-size:12px;padding:8px 0;text-align:center;">No compression runs yet — run a preview above.</div>')
+
+    items = []
+    for r in rows:
+        d = dict(r)
+        agent = d["agent_name"]
+        mode = d["mode"]
+        pct = d["savings_pct"]
+        before_tok = d.get("before_tokens", 0) or 0
+        after_tok = d.get("after_tokens", 0) or 0
+        ts = d["timestamp"]
+        ago = ""
+        if ts:
+            now = int(__import__("time").time())
+            diff = now - ts
+            if diff < 60:
+                ago = "just now"
+            elif diff < 3600:
+                ago = f"{diff // 60}m ago"
+            elif diff < 86400:
+                ago = f"{diff // 3600}h ago"
+            else:
+                ago = f"{diff // 86400}d ago"
+        mode_icon = "⚡" if mode == "full" else "✂️"
+        mode_label = "Full" if mode == "full" else "Lite"
+        saved_tok = before_tok - after_tok
+        items.append(f"""<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
+    <span style="flex-shrink:0;">{mode_icon}</span>
+    <span style="font-weight:600;min-width:80px;">{_html_escape(agent)}</span>
+    <span style="color:#64748b;min-width:40px;">{mode_label}</span>
+    <span style="color:#22c55e;font-weight:600;min-width:70px;">-{pct:.0f}%</span>
+    <span style="color:#64748b;">{before_tok:,} → {after_tok:,} tok</span>
+    <span style="margin-left:auto;color:#475569;font-size:11px;">{ago}</span>
+</div>""")
+    return HTMLResponse("".join(items))
 
 
 @app.get("/api/token-summary")
@@ -3780,13 +3953,13 @@ async def api_optimiser_stats(agent: str = "all"):
     full_avg = conn.execute(
         "SELECT ROUND(ABS(AVG(savings_pct)), 0) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
     ).fetchone()
-    lite_savings = int(lite_avg["avg_pct"]) if lite_avg and lite_avg["avg_pct"] else None
-    full_savings = int(full_avg["avg_pct"]) if full_avg and full_avg["avg_pct"] else None
+    lite_savings = int(lite_avg["avg_pct"]) if lite_avg and lite_avg["avg_pct"] is not None else None
+    full_savings = int(full_avg["avg_pct"]) if full_avg and full_avg["avg_pct"] is not None else None
     opt_min = None
     opt_max = None
     if lite_savings is not None or full_savings is not None:
-        lite_base = lite_savings or 22
-        full_base = full_savings or 35
+        lite_base = lite_savings if lite_savings is not None else 22
+        full_base = full_savings if full_savings is not None else 35
         opt_min = min(43, lite_base + 21)
         opt_max = min(47, full_base + 12)
 
@@ -4181,7 +4354,7 @@ GLOSSARY_DATA = {
     <strong>What it preserves (unchanged):</strong><br>
     • <strong style="color:#6366f1;">Identity</strong> — Never compressed<br>
     • <strong style="color:#14b8a6;">Tools</strong> — Never compressed (fragile) — helps those who lack understanding of the technical details<br><br>
-    <strong>Why it always saves more than Lite:</strong> Full does <em>everything Lite does</em> (compress guidance @ 70%) and adds skills + memory compression. The guidance part uses the same aggressive rate as Lite, so Full is always at least as good.
+    <strong>Why it always saves more than Lite:</strong> Full does <em>everything Lite does</em> (compress guidance blocks) and adds skills + memory compression. The guidance part uses the same aggressive rate as Lite, so Full is always at least as good.
 </div>""",
         "faq": [
             ("What's the risk of Full compression?","Skills and memory compression uses a gentler rate (40%) to avoid breaking functionality. The compression is structural — removing redundant wording, shortening verbose descriptions — not semantic. Your agents should behave identically after compression."),
@@ -4241,6 +4414,23 @@ GLOSSARY_DATA = {
             ("Can drift alerts auto-fire?", "Yes — set up a cron job calling the check endpoint. Pro users get scheduled auto-checks."),
         ],
     },
+    "auto-heal": {
+        "title": "Auto-Heal",
+        "icon": "🛠️",
+        "one_liner": "Auto-detects dead agents and restarts them — optional L2 layer fixes drift, memory bloat, and config issues proactively.",
+        "detail": """<div class="glossary-detail">
+    <strong>Two layers — both optional:</strong><br><br>
+    <strong>L1 — Reactive (Auto-Restart):</strong> When pulse detects an agent is dead (process crashed, port closed), auto-heal restarts it. Max restarts per 4h prevents infinite loops. Default: 3.<br><br>
+    <strong>L2 — Proactive (Drift + Memory):</strong> Checks for token composition changes (drift > threshold), memory debt accumulation, and config bloat. Triggers cleanup before it becomes a problem.<br><br>
+    <strong>Per-agent configuration:</strong> Enable L1, L2, or both per agent. Thresholds control how aggressive each layer is — see Heal Thresholds glossary.<br><br>
+    <strong>Requires:</strong> <code>observeco watch</code> daemon running in background.
+</div>""",
+        "faq": [
+            ("Can I heal manually without the daemon?", "Yes. The 'Heal' button in Fleet View works independently. Auto-heal is just the automated version — it runs the same heal logic when the daemon detects a failure."),
+            ("What happens if L1 and L2 both fire at once?", "L1 (restart) runs first. After the agent is back up, L2 runs its proactive checks. They don't conflict — restart happens, then cleanup happens after."),
+            ("Does auto-heal work for every agent type?", "It works for any agent registered in the fleet (Hermes profiles, OpenClaw workspaces, custom). The heal logic checks process liveness and attempts restart — it doesn't need to know what kind of agent it is."),
+        ],
+    },
     "heal-thresholds": {
         "title": "Heal Thresholds",
         "icon": "⚙️",
@@ -4295,6 +4485,237 @@ GLOSSARY_DATA = {
             ("Is proactive monitoring always better?", "For recurring failure patterns (memory leaks, config drift), yes. For random crashes, L1 still catches it! L2 is a safety net, not a replacement for L1."),
         ],
     },
+    "brain-analysis": {
+        "title": "Brain Analysis",
+        "icon": "🧠",
+        "one_liner": "See what feeds your agents — token composition, savings potential, drift trends, and compression tools.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it shows:</strong> Every agent's system prompt broken down by component (identity, skills, memory, tools, guidance). See how many tokens each part uses, how much you could save with compression, and how your prompts are changing over time.<br><br>
+    <strong>Sections:</strong><br>
+    • <strong>Token Breakdown</strong> — Per-component token usage with visual bars<br>
+    • <strong>Savings</strong> — What Lite (Free) and Full (Pro) compression would save<br>
+    • <strong>Drift & Usage</strong> — 7-day trend and 24h per-turn timeline<br>
+    • <strong>Compression</strong> — Preview and apply compression per agent<br>
+    • <strong>Token Optimiser</strong> — Pro feature that learns from 200+ turns<br>
+    • <strong>Budget Planner</strong> — Fleet-level cost estimation<br>
+    • <strong>Memory Garden</strong> — Fleet-wide memory health
+</div>""",
+        "faq": [
+            ("What should I look at first?", "Start with Token Breakdown to see which components are largest. Then check Savings to see what compression would save. Finally, look at Drift to see if any agents are growing too fast."),
+            ("Why are some numbers estimates?", "Actual savings require running a compression preview. Before that, we estimate based on your agent's composition and fleet-wide compression averages."),
+        ],
+    },
+    "token-breakdown": {
+        "title": "Token Breakdown",
+        "icon": "📊",
+        "one_liner": "Shows how many tokens each component of your agent's system prompt uses.",
+        "detail": """<div class="glossary-detail">
+    <strong>Five components:</strong><br>
+    <strong style="color:#8b5cf6;">Skills</strong> — Task instructions and tool descriptions. Grows as skills are added.<br>
+    <strong style="color:#14b8a6;">Tools</strong> — API descriptions and function schemas. Grows with tool count.<br>
+    <strong style="color:#ec4899;">Memory</strong> — User context and conversation history. The most dynamic component.<br>
+    <strong style="color:#f97316;">Guidance</strong> — Behavioural rules and framework instructions. Often the largest.<br>
+    <strong style="color:#6366f1;">Identity</strong> — Agent's role and personality. Usually stable.<br><br>
+    <strong>Why it matters:</strong> Every token is paid for on every AI call. A 10K-token guidance section costs ~$0.0015 per call. Over 250 calls/month, that's ~$0.38 just for guidance.
+</div>""",
+        "faq": [
+            ("Why is Guidance always the biggest?", "Because it includes framework-level instructions, routing rules, and do/don't lists. This is normal — guidance is typically 40-60% of the system prompt."),
+            ("What should I do if Memory is growing?", "Memory grows naturally with conversations. If it's >20% of total, consider running compression or checking if memory retention is configured correctly."),
+        ],
+    },
+    "savings-estimate": {
+        "title": "Savings Estimate",
+        "icon": "💰",
+        "one_liner": "How much you'd save per turn with Lite (Free) and Full (Pro) compression.",
+        "detail": """<div class="glossary-detail">
+    <strong>How savings are calculated:</strong><br>
+    • Based on your agent's actual token composition<br>
+    • Lite compresses only <strong style="color:#f97316;">guidance</strong> blocks<br>
+    • Full compresses guidance + <strong style="color:#8b5cf6;">skills</strong> + <strong style="color:#ec4899;">memory</strong><br>
+    • Dollar savings use your selected provider rate<br><br>
+    <strong>▲ = estimate</strong> — based on composition analysis, not actual compression run. Run Preview for real numbers.<br><br>
+    <strong>No ▲ = actual</strong> — from real compression runs logged in compress_log.
+</div>""",
+        "faq": [
+            ("Why does it say 'based on composition'?", "Before you run a compression preview, we estimate savings by applying fleet-wide compression averages to your agent's specific composition. The ▲ indicator means it's an estimate."),
+            ("How accurate are the estimates?", "Typically within 5-10% of actual results. The estimate uses real fleet-wide compression data, so it's grounded in actual runs — not guesswork."),
+        ],
+    },
+    "drift-usage": {
+        "title": "Drift & Usage",
+        "icon": "📈",
+        "one_liner": "Shows how your agent's prompt size is changing over 7 days and token usage over 24 hours.",
+        "detail": """<div class="glossary-detail">
+    <strong>Component Drift (7-day):</strong> Each component's token count trend over the last week. Upward drift means the component is growing — common causes are memory accumulation, new skills, or guidance additions.<br><br>
+    <strong>Per-turn Timeline (24h):</strong> Shows how many tokens were used per turn in each of the last 24 hours. Helps identify peak usage periods and whether token consumption is consistent.<br><br>
+    <strong>When to act:</strong><br>
+    • Drift > <strong>+10%</strong> — Worth monitoring<br>
+    • Drift > <strong>+20%</strong> — Needs investigation<br>
+    • Spikes in per-turn timeline — Could indicate a misconfigured agent
+</div>""",
+        "faq": [
+            ("What causes positive drift?", "Most commonly: agent memory accumulation (every conversation adds context), new skills being added, or tool descriptions growing. Check the component breakdown to identify the source."),
+            ("Is drift always bad?", "Not necessarily. Controlled growth from adding genuine capabilities is expected. Runaway drift (30%+ in a week) indicates memory bloat or skill sprawl."),
+        ],
+    },
+    "compression": {
+        "title": "Compression",
+        "icon": "✂️",
+        "one_liner": "Preview and apply token compression to reduce your agent's system prompt size.",
+        "detail": """<div class="glossary-detail">
+    <strong>Two modes:</strong><br>
+    <strong style="color:#22c55e;">Lite (Free)</strong> — Compresses only the guidance section. Safe, predictable, no risk of breaking functionality.<br>
+    <strong style="color:#a5b4fc;">Full (Pro)</strong> — Compresses guidance + memory + skills. Higher savings but requires Pro license.<br><br>
+    <strong>Workflow:</strong><br>
+    1. Select an agent from the dropdown<br>
+    2. Choose Lite or Full mode<br>
+    3. Click <strong>Run Preview</strong> to see the diff (no files modified)<br>
+    4. Click <strong>Apply to File</strong> to write the compressed version<br><br>
+    <strong>Auto tab:</strong> Set up a watch daemon that auto-compresses on every SOUL.md edit (Pro feature).
+</div>""",
+        "faq": [
+            ("Is compression safe?", "Lite is very safe — it only touches guidance blocks. Full is safe for most agents but modifies skill descriptions, which could theoretically affect behaviour. Always preview first."),
+            ("Can I undo compression?", "Yes. Apply creates a backup automatically. You can restore from the backup file."),
+        ],
+    },
+    "tier-summary": {
+        "title": "Tier Summary",
+        "icon": "🔓",
+        "one_liner": "Free vs Pro feature comparison for the Token Optimiser.",
+        "detail": """<div class="glossary-detail">
+    <strong>Free (Lite):</strong><br>
+    • Compress guidance blocks<br>
+    • Per-agent breakdown & drift<br>
+    • 24h per-turn timeline<br>
+    • 7-day component trends<br><br>
+    <strong>Pro (Full):</strong><br>
+    • Full compression (memory + skills + context)<br>
+    • Auto-Watch daemon (auto-compress on edit)<br>
+    • Token Optimiser (learns from 200 turns)<br>
+    • Never-pruned history & fleet comparison<br><br>
+    <strong>$9/mo Solo</strong> — 30-day free trial available.
+</div>""",
+        "faq": [
+            ("What do I get with Pro that I don't have on Free?", "Full compression (saves more), Auto-Watch (auto-compresses on edit), Token Optimiser (prunes unused skills after 200 turns), and never-pruned history with fleet comparison."),
+            ("Can I try Pro before buying?", "Yes — 30-day free trial. Start it from the Pro modal."),
+        ],
+    },
+    "memory-garden": {
+        "title": "Memory Garden",
+        "icon": "💾",
+        "one_liner": "Fleet-wide memory health summary — duplicates, contradictions, stale entries, and debt score.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it tracks:</strong><br>
+    • <strong>Duplicates</strong> — Redundant memory entries that waste tokens<br>
+    • <strong>Contradictions</strong> — Conflicting information stored across agents<br>
+    • <strong>Stale entries</strong> — Outdated or irrelevant memories<br>
+    • <strong>Debt score</strong> — Overall memory health (lower is better)<br>
+    • <strong>Fleet grade</strong> — A-F letter grade for fleet memory hygiene<br><br>
+    <strong>Why it matters:</strong> Bloated memory increases token costs and can cause agents to act on outdated information. Regular garden maintenance keeps your fleet efficient.
+</div>""",
+        "faq": [
+            ("What's a good debt score?", "Below 20 is excellent. 20-50 is acceptable. Above 50 needs attention."),
+            ("How do I clean up memory?", "Run `observeco garden prune` to remove stale entries. Pro users get auto-pruning on a schedule."),
+        ],
+    },
+    "llm-warning": {
+        "title": "LLM Features Warning",
+        "icon": "⚠️",
+        "one_liner": "Disabling LLM-powered features affects how ObserveCo monitors and heals your fleet.",
+        "detail": """<div class="glossary-detail">
+    <strong>What changes:</strong><br>
+    • Agent discovery uses static rules instead of AI analysis<br>
+    • Health insights are rule-based, not AI-driven<br>
+    • Healing suggestions use predefined templates<br><br>
+    <strong>Not recommended for production fleets.</strong> LLM features enable proactive detection and smarter healing. Disabling them reduces ObserveCo to a basic monitoring tool.
+</div>""",
+        "faq": [
+            ("Why would I disable LLM features?", "If you're running on a strict budget or have privacy concerns about sending data to LLM providers. Note that token data is anonymised."),
+            ("Can I re-enable later?", "Yes — toggle it back on from the Settings tab at any time."),
+        ],
+    },
+    "brain-pro": {
+        "title": "Token Optimiser Pro",
+        "icon": "🔒",
+        "one_liner": "Pro features: Full compression, Auto-Watch, Token Optimiser, and 90-day history.",
+        "detail": """<div class="glossary-detail">
+    <strong>Pro unlocks:</strong><br>
+    • <strong>Full compression</strong> — Compresses guidance + memory + skills + context<br>
+    • <strong>Auto-Watch Daemon</strong> — Every SOUL.md edit triggers auto-compression<br>
+    • <strong>Token Optimiser</strong> — Analyses 200+ turns to prune unused skills<br>
+    • <strong>90-Day History & Fleet Comparison</strong> — Never-pruned data<br><br>
+    <strong>$9/mo Solo</strong> with a 30-day free trial.
+</div>""",
+        "faq": [
+            ("What's the difference between compression and Optimiser?", "Compression shortens existing content. The Optimiser learns which skills are never used and removes them entirely — deeper savings."),
+            ("Can I cancel anytime?", "Yes. Cancel from Settings and you keep Pro until the end of your billing period."),
+        ],
+    },
+    "pathway-map": {
+        "title": "Pathway Map",
+        "icon": "🕸️",
+        "one_liner": "Visual graph of your agent ecosystem — see how agents communicate and route signals.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it shows:</strong> A directed graph of your entire agent ecosystem. Each node is an agent or service. Each edge is a communication pathway (signal, webhook, direct call).<br><br>
+    <strong>Use cases:</strong><br>
+    • Understand how data flows between agents<br>
+    • Identify single points of failure<br>
+    • Discover orphaned agents (no connections)<br>
+    • Plan architecture changes<br><br>
+    <strong>Interactive:</strong> Click nodes to see details, drag to rearrange, zoom in/out.
+</div>""",
+        "faq": [
+            ("How is the map generated?", "From your agent config files, signal routing rules, and webhook subscriptions. It's auto-discovered — no manual setup needed."),
+            ("Can I export the map?", "Yes — use the export button in the modal to save as PNG or SVG."),
+        ],
+    },
+    "openclaw-plugins": {
+        "title": "OpenClaw Plugins",
+        "icon": "🔌",
+        "one_liner": "Plugin sources, intent classifiers, and load status for OpenClaw agents.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it shows:</strong> All plugins registered with OpenClaw — their source (local, git, registry), intent classifiers (what they handle), and current load status (loaded, failed, pending).<br><br>
+    <strong>Why it matters:</strong> Plugins extend agent capabilities. A failed plugin means the agent can't handle certain intents. Monitor this to ensure all capabilities are available.
+</div>""",
+        "faq": [
+            ("What does 'failed' mean?", "The plugin couldn't be loaded — check the error log for details. Common causes: missing dependencies, syntax errors, or incompatible versions."),
+            ("How do I add a new plugin?", "Use `openclaw plugin add <source>` from the CLI, or add it to your OpenClaw config file."),
+        ],
+    },
+    "stop-agent": {
+        "title": "Stop Agent",
+        "icon": "🛑",
+        "one_liner": "Emergency kill switch — sends SIGTERM, then SIGKILL after 5s if the process doesn't shut down cleanly.",
+        "detail": """<div class="glossary-detail">
+    <strong>What it does:</strong> Stops a running agent process by sending a <code>SIGTERM</code> signal (graceful shutdown). If the process doesn't exit within 5 seconds, it sends <code>SIGKILL</code> (force kill).<br><br>
+    <strong>Confirmation:</strong> You must click STOP twice — the first click prepares, the second executes. This prevents accidental kills.<br><br>
+    <strong>Why it matters:</strong> Stuck or misbehaving agents can waste tokens, produce bad results, or block restarts. Use this to force-stop an agent so it can be restarted cleanly. Check the kill log below for history.
+</div>""",
+        "faq": [
+            ("Is this safe?", "Yes. The 5-second grace period gives the agent time to save state and exit cleanly. SIGKILL is only used if SIGTERM doesn't work."),
+            ("Will the agent auto-restart?", "If managed by launchd/systemd, it will restart automatically. If started manually, you'll need to start it again."),
+            ("What's the difference between SIGTERM and SIGKILL?", "SIGTERM (signal 15) asks the process to shut down — it can clean up files, flush logs, etc. SIGKILL (signal 9) terminates immediately — no cleanup, no save. SIGKILL is the nuclear option."),
+        ],
+    },
+    "restart-quality": {
+        "title": "Restart Quality",
+        "icon": "🔄",
+        "one_liner": "Classifies each agent restart into healthy KeepAlive, TOCTOU race, or real crash.",
+        "detail": """<div class="glossary-detail">
+    <strong>Three restart types:</strong><br><br>
+    🟢 <strong>Healthy (KeepAlive)</strong> — sub-second restart via KeepAlive protocol. No data loss, no error. This is the ideal restart path — the agent caught a signal, saved state, and came back clean.<br><br>
+    🟡 <strong>TOCTOU race</strong> — file consumed between fsnotify event and .stat() check. The daemon detected a file change, but another process consumed the file before the daemon could read it. Not a crash, but indicates a timing issue in agent file watchers.<br><br>
+    🔴 <strong>Real crash</strong> — SIGSEGV, OOM, config error, or unhandled exception. Requires investigation. Recorded as a circuit breaker failure.<br><br>
+    <strong>What it saves:</strong> Differentiating TOCTOU from crash prevents false alarms. A TOCTOU loop looks like repeated crashes, but the fix is different (code fix vs restart).
+</div>""",
+        "faq": [
+            ("Why does restart quality matter?", "Without classification, every dead status looks like a crash. TOCTOU races are not crashes but look identical in logs. This tab separates signal from noise, showing you which restarts are safe (KeepAlive), which need a code fix (TOCTOU), and which are real emergencies (crash)."),
+            ("How is data collected?", "Every pulse check logs a restart event when an agent is found dead. The classification runs server-side by analyzing the agent's crash log, error message, and timing. Data is kept for 24 hours."),
+            ("What is a healthy restart? How is it detected?", "A KeepAlive restart happens when the agent process reconnects within seconds with no crash log. The pulse check sees a brief 'dead' state followed by a 'live' response before the next check cycle. This is the normal hot-reload path."),
+            ("What is a TOCTOU race?", "Time-of-check-to-time-of-use: a file watcher fires an fsnotify event, but by the time the daemon calls .stat(), the file has been consumed or replaced. Common in agents that watch directories for file-based communication. The fix is a guard + retry in the file handler."),
+            ("What should I do if I see >50% crash rate?", "Investigate immediately. Run <code>observeco heal --agent &lt;name&gt;</code> for automated diagnosis, or check the Error timeline on the agent card. Common causes: OOM, missing dependencies, port conflicts."),
+        ],
+    },
 }
 
 @app.get("/api/glossary/{topic}", response_class=HTMLResponse)
@@ -4302,7 +4723,7 @@ async def api_glossary(topic: str):
     """Return glossary content for a topic — §3.20."""
     entry = GLOSSARY_DATA.get(topic)
     if not entry:
-        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, error-tab, pulse-check, heal-button, alerts-panel, confidence, fp, fn, skills-audit, compression-lite, compression-full, fleet-compare, budget-planner, drift-alerts, heal-thresholds, token-optimiser.</div>')
+        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, error-tab, pulse-check, heal-button, alerts-panel, confidence, fp, fn, skills-audit, compression-lite, compression-full, fleet-compare, budget-planner, drift-alerts, heal-thresholds, token-optimiser, stop-agent, restart-quality.</div>')
 
     faq_html = ""
     if entry.get("faq"):
@@ -4883,12 +5304,31 @@ def _generate_static(host: str, port: int) -> None:
 @app.get("/api/restart-quality", response_class=HTMLResponse)
 async def api_restart_quality():
     """Restart quality dashboard — per-agent restart breakdown, false-alarm ratio."""
+    from observeco import license as lic
+    is_pro = lic.require_pro()
+
     summary = db.get_restart_summary()
     if not summary:
-        return HTMLResponse('''<div class="restart-empty" style="padding:24px;text-align:center;">
+        # Pro-aware empty state
+        if is_pro:
+            return HTMLResponse('''<div class="restart-empty" style="padding:24px;text-align:center;">
   <div style="font-size:32px;margin-bottom:12px;">🔌</div>
   <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">No restart data yet</div>
-  <div style="font-size:12px;color:var(--fg-2);margin-bottom:16px;">Restart quality data is collected during pulse checks. Run a scan to start collecting.</div>
+  <div style="font-size:12px;color:var(--fg-2);margin-bottom:16px;">Most agents restart cleanly. If not, this tab shows you exactly what went wrong — TOCTOU race or real crash.</div>
+  <button onclick="triggerRestartScan()" style="background:var(--accent);color:#e2e8f0;border:none;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;">
+    🔄 Run Pulse Scan
+  </button>
+  <div id="restartScanStatus" style="font-size:11px;color:var(--muted);margin-top:8px;"></div>
+  <div style="font-size:11px;color:var(--muted);margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+    Restart data is also collected automatically when the Watch Daemon is running.<br>
+    Three restart types: 🟢 healthy KeepAlive · 🟡 TOCTOU race · 🔴 real crash
+  </div>
+</div>''')
+        else:
+            return HTMLResponse('''<div class="restart-empty" style="padding:24px;text-align:center;">
+  <div style="font-size:32px;margin-bottom:12px;">🔌</div>
+  <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">No restart data yet</div>
+  <div style="font-size:12px;color:var(--fg-2);margin-bottom:16px;">Restart quality data is collected during pulse checks.</div>
   <div style="display:inline-block;font-size:12px;padding:8px 18px;background:var(--accent);color:#e2e8f0;border-radius:8px;font-family:var(--font-mono);margin-bottom:12px;">observeco heal --agent all</div>
   <div style="font-size:11px;color:var(--muted);margin-top:8px;">This tracks restart type (healthy KeepAlive, TOCTOU race, or crash) for each agent. Once data is available, you'll see fleet-wide restart quality, per-agent breakdowns, and false-alarm ratios.</div>
 </div>''')
@@ -5039,6 +5479,20 @@ async def api_restart_quality_detail(agent_name: str):
         {''.join(items)}
     </div>
 </div>""")
+
+
+@app.post("/api/restart-quality/scan", response_class=JSONResponse)
+async def api_restart_quality_scan():
+    """Run a full pulse scan to collect restart data — Pro only."""
+    from observeco import license as lic
+    if not lic.require_pro():
+        return JSONResponse({"ok": False, "error": "Pro license required"}, status_code=403)
+    try:
+        from observeco.pulse.check import run_check
+        run_check(watch=False)
+        return JSONResponse({"ok": True, "message": "Pulse scan complete"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)})
 
 
 # ---------------------------------------------------------------------------
@@ -5210,17 +5664,80 @@ async def api_heal_config():
 
     if not daemon_running:
         daemon_btn = """
-        <div class="empty-state" style="margin-bottom:12px;">
-            🔴 Heal daemon not running — auto-heal requires `observeco watch` to be running.
-            <div style="margin-top:8px;">
-                <code style="background:#1e293b;padding:4px 8px;border-radius:4px;font-size:11px;">observeco watch</code>
+        <div class="empty-state" style="margin-bottom:12px;padding:16px;">
+            <div style="font-size:13px;font-weight:600;color:#f97316;margin-bottom:6px;">⚠️ Watch Daemon Required</div>
+            <div style="font-size:12px;color:#94a3b8;line-height:1.6;">
+                Auto-heal listens for pulse failures and restarts agents automatically.
+                It runs inside <code style="background:#1e293b;padding:2px 6px;border-radius:4px;font-size:11px;">observeco watch</code> — the same daemon that powers pulse checks,
+                drift detection, and the heal button.
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+                <button onclick="startWatchDaemon()" style="background:#6366f1;border:none;color:white;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;">▶️ Start Watch Daemon</button>
+                <span style="font-size:11px;color:#64748b;">or run <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco watch</code> in terminal</span>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:#64748b;">
+                Once running, this tab refreshes every 30s and shows per-agent auto-heal controls.
+                <span class="glossary-hint" onclick="event.stopPropagation();showGlossary('auto-heal', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:4px;">?</span>
             </div>
         </div>"""
 
     # Get all agents and their heal configs
     from observeco.db import Database
+    from observeco import license as lic
+    is_pro = lic.require_pro()
     d = Database()
     agents = d.get_agents()
+    configs = {c["agent_name"]: c for c in d.get_heal_config()}
+
+    # Pro users: auto-enable L1+L2 for any agent without a config yet
+    if is_pro:
+        for a in agents:
+            name = a["agent_name"]
+            if name not in configs:
+                d.set_heal_config(
+                    name,
+                    auto_heal=True,
+                    auto_heal_l2=True,
+                    max_restarts_per_hour=3,
+                    drift_threshold=15.0,
+                    memory_debt_threshold=60,
+                )
+
+        # --- Change 7: Migrate existing Pro users with auto_heal=0 ---
+        _migration_flag = get_data_dir() / ".heal_pro_migrated"
+        if not _migration_flag.exists():
+            for a in agents:
+                name = a["agent_name"]
+                cfg = configs.get(name)
+                if cfg and not cfg.get("auto_heal", 0) and not cfg.get("auto_heal_l2", 0):
+                    d.set_heal_config(
+                        name,
+                        auto_heal=True,
+                        auto_heal_l2=True,
+                        max_restarts_per_hour=cfg.get("max_restarts_per_hour", 3),
+                        drift_threshold=cfg.get("drift_threshold", 15.0),
+                        memory_debt_threshold=cfg.get("memory_debt_threshold", 60),
+                    )
+            _migration_flag.touch()
+
+        # --- Change 1: Auto-start daemon on Pro first visit ---
+        if not daemon_running:
+            _autostart_flag = get_data_dir() / ".watch_autostarted"
+            if not _autostart_flag.exists():
+                try:
+                    import subprocess as _sp
+                    _sp.Popen(
+                        ["observeco", "watch"],
+                        stdout=_sp.DEVNULL,
+                        stderr=_sp.DEVNULL,
+                    )
+                    _autostart_flag.touch()
+                    daemon_running = True
+                    daemon_btn = ""  # Skip the daemon warning
+                except Exception:
+                    pass  # Fall through — show the daemon warning as before
+
+    # Re-read configs (includes newly initialized/migrated rows for Pro)
     configs = {c["agent_name"]: c for c in d.get_heal_config()}
 
     # Build per-agent rows
@@ -5254,38 +5771,51 @@ async def api_heal_config():
         toggle_checked = 'checked' if ah else ''
         l2_checked = 'checked' if l2 else ''
 
+        # L2 disabled state when L1 is off
+        if ah:
+            l2_extra_attrs = ''
+            l2_cb_style = 'accent-color:#6366f1;'
+        else:
+            l2_extra_attrs = 'disabled'
+            l2_cb_style = 'opacity:0.4;pointer-events:none;accent-color:#6366f1;'
+
         agent_rows += f"""
         <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
             <div style="display:flex;align-items:center;justify-content:space-between;">
                 <div>
                     <div style="font-size:13px;font-weight:600;color:var(--fg);">{name}</div>
-                    <div style="font-size:11px;color:#64748b;margin-top:2px;">{status_label}</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">{status_label} · {heal_count} events · {last_event}</div>
                 </div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <label class="toggle-switch" title="Enable auto-heal L1">
-                        <input type="checkbox" {toggle_checked} onchange="toggleHeal('{name}', this.checked, document.getElementById('l2_{name}').checked)">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span style="font-size:10px;color:#64748b;">L1</span>
-                </div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-                <div style="display:flex;gap:16px;font-size:11px;color:#94a3b8;">
-                    <span>Max restarts/h: <strong id="maxR_{name}">{max_r}</strong></span>
-                    <span>Drift threshold: <strong id="driftT_{name}">{drift_t}%</strong></span>
-                    <span>Memory debt: <strong id="debtT_{name}">{debt_t}</strong></span>
-                </div>
-                <div id="healEventSummary_{name}" style="font-size:10px;color:#64748b;">
-                    {heal_count} events
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: {max_r}/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: {drift_t}%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: {debt_t}</span>
+                    <button onclick="editHealThresholds('{name}')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
                 </div>
             </div>
-            <div style="margin-top:8px;display:flex;align-items:center;gap:12px;">
-                <label class="toggle-switch" style="opacity:0.6;">
-                    <input type="checkbox" id="l2_{name}" {l2_checked} onchange="toggleHealL2('{name}', this.checked)">
-                    <span class="toggle-slider"></span>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_{name}" style="display:none;">{max_r}</span>
+            <span id="driftT_{name}" style="display:none;">{drift_t}</span>
+            <span id="debtT_{name}" style="display:none;">{debt_t}</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_{name}" {toggle_checked} onchange="toggleHeal('{name}', this.checked, document.getElementById('l2_{name}').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
                 </label>
-                <span style="font-size:10px;color:#64748b;">L2 Proactive (drift/memory)</span>
-                <button onclick="editHealThresholds('{name}')" style="margin-left:auto;background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;">⚙️ Thresholds</button>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_{name}">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_{name}" {l2_checked} onchange="toggleHealL2('{name}', this.checked)" style="{l2_cb_style}" {l2_extra_attrs}>
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
             </div>
             <div id="healResult_{name}" style="margin-top:4px;font-size:11px;"></div>
         </div>"""
@@ -5322,6 +5852,25 @@ async def api_heal_config():
         </table>
     </div>
     """)
+
+
+@app.post("/api/heal-config/start-watch")
+async def api_start_watch():
+    """Start the observeco watch daemon in background."""
+    try:
+        import subprocess
+        r = subprocess.run(["pgrep", "-f", "observeco watch"], capture_output=True, text=True, timeout=5)
+        if r.returncode == 0 and r.stdout.strip():
+            return JSONResponse({"ok": True, "message": "Already running"})
+        # Start watch in background
+        subprocess.Popen(
+            ["observeco", "watch"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return JSONResponse({"ok": True, "message": "Started"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)})
 
 
 @app.post("/api/heal-config/{agent_name}")
@@ -5707,6 +6256,22 @@ async def api_alert_dashboard():
     subs = d.get_alert_subscriptions()
     now = int(time.time())
 
+    # Check provider config status
+    _home = Path.home()
+    _has_telegram_token = (_home / ".observeco" / "telegram_bot_token").exists()
+    _has_smtp = (_home / ".observeco" / "smtp.json").exists()
+    _telegram_token_preview = ""
+    if _has_telegram_token:
+        _tok = (_home / ".observeco" / "telegram_bot_token").read_text().strip()
+        _telegram_token_preview = _tok[:12] + "..." if len(_tok) > 15 else _tok
+    _smtp_preview = ""
+    if _has_smtp:
+        try:
+            _scfg = json.loads((_home / ".observeco" / "smtp.json").read_text())
+            _smtp_preview = _scfg.get("host", "") + ":" + str(_scfg.get("port", ""))
+        except Exception:
+            _smtp_preview = "invalid config"
+
     # Channel health summary
     channel_health = {}
     recent_log = d.get_alert_log(limit=50)
@@ -5765,7 +6330,7 @@ async def api_alert_dashboard():
                     <div style="font-size:12px;font-weight:600;color:var(--fg);">{name}</div>
                     <div style="font-size:10px;color:#64748b;">{ch}</div>
                 </div>
-                <button onclick="showAddChannel('{ch}')" style="background:var(--accent-on);border:none;border-radius:4px;padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;color:#052e16;">+ Add</button>
+                <button onclick="showAddChannel('{ch}')" style="background:#6366f1;border:none;border-radius:4px;padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;color:white;">+ Add</button>
             </div>
         </div>""")
 
@@ -5777,6 +6342,30 @@ async def api_alert_dashboard():
     <div style="margin-bottom:16px;">
         <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Add Channel</div>
         {"".join(avail) if avail else '<div class="empty-state" style="font-size:11px;">All channels configured. Remove one to add a different type.</div>'}
+    </div>
+    <!-- Provider Settings -->
+    <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">⚙️ Provider Settings</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">📱</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px;font-weight:600;color:var(--fg);">Telegram Bot Token</div>
+                    <div style="font-size:10px;color:#64748b;">{_telegram_token_preview if _has_telegram_token else 'Not configured — needed for Telegram alerts'}</div>
+                </div>
+                <button onclick="showTelegramTokenConfig()" style="background:#6366f1;border:none;border-radius:4px;padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;color:white;">{ 'Update' if _has_telegram_token else 'Set Token' }</button>
+            </div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">📧</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px;font-weight:600;color:var(--fg);">SMTP Relay</div>
+                    <div style="font-size:10px;color:#64748b;">{_smtp_preview if _has_smtp else 'Not configured — needed for email alerts'}</div>
+                </div>
+                <button onclick="showSmtpConfig()" style="background:#6366f1;border:none;border-radius:4px;padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;color:white;">{ 'Update' if _has_smtp else 'Set SMTP' }</button>
+            </div>
+        </div>
     </div>
     <!-- Add channel modal (hidden until triggered) -->
     <div class="modal-overlay" id="addChannelModal" style="display:none;" onclick="if(event.target===this)closeAddChannel()">
@@ -5862,6 +6451,72 @@ async def api_alert_dashboard():
                 if (data.status === 'ok') htmx.trigger('#alertPanel', 'load');
             }})
             .catch(() => {{}});
+    }}
+
+    // ─── Provider Config ───
+    function showTelegramTokenConfig() {{
+        document.getElementById('telegramTokenInput').value = '';
+        document.getElementById('telegramTokenResult').innerHTML = '';
+        document.getElementById('telegramTokenModal').style.display = 'flex';
+    }}
+    function closeTelegramToken() {{
+        document.getElementById('telegramTokenModal').style.display = 'none';
+    }}
+    function saveTelegramToken() {{
+        var token = document.getElementById('telegramTokenInput').value.trim();
+        if (!token) {{ document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#ef4444;">❌ Token required</span>'; return; }}
+        document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#64748b;">Saving and testing...</span>';
+        fetch('/api/provider-config/telegram', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{token: token}})
+        }})
+        .then(r => r.json())
+        .then(data => {{
+            if (data.ok) {{
+                document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#22c55e;">✅ Token saved and verified!</span>';
+                setTimeout(() => {{ closeTelegramToken(); htmx.trigger('#alertPanel', 'load'); }}, 1500);
+            }} else {{
+                document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+            }}
+        }})
+        .catch(e => {{ document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>'; }});
+    }}
+    function showSmtpConfig() {{
+        document.getElementById('smtpHost').value = '';
+        document.getElementById('smtpPort').value = '587';
+        document.getElementById('smtpUser').value = '';
+        document.getElementById('smtpPassword').value = '';
+        document.getElementById('smtpFrom').value = '';
+        document.getElementById('smtpConfigResult').innerHTML = '';
+        document.getElementById('smtpConfigModal').style.display = 'flex';
+    }}
+    function closeSmtpConfig() {{
+        document.getElementById('smtpConfigModal').style.display = 'none';
+    }}
+    function saveSmtpConfig() {{
+        var host = document.getElementById('smtpHost').value.trim();
+        var port = document.getElementById('smtpPort').value.trim() || '587';
+        var user = document.getElementById('smtpUser').value.trim();
+        var password = document.getElementById('smtpPassword').value.trim();
+        var from = document.getElementById('smtpFrom').value.trim();
+        if (!host) {{ document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#ef4444;">❌ SMTP host required</span>'; return; }}
+        document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#64748b;">Saving and testing...</span>';
+        fetch('/api/provider-config/smtp', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/json'}},
+            body: JSON.stringify({{host: host, port: parseInt(port), user: user, password: password, from: from}})
+        }})
+        .then(r => r.json())
+        .then(data => {{
+            if (data.ok) {{
+                document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#22c55e;">✅ SMTP saved and verified!</span>';
+                setTimeout(() => {{ closeSmtpConfig(); htmx.trigger('#alertPanel', 'load'); }}, 1500);
+            }} else {{
+                document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+            }}
+        }})
+        .catch(e => {{ document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>'; }});
     }}
     </script>
     """)
@@ -5990,6 +6645,12 @@ async def api_alert_subscribe(request: Request):
         event_types = body.get("event_types", "all")
         if not target:
             return JSONResponse({"error": "target required"}, status_code=400)
+        # Validate Discord URLs — reject invite links
+        if channel == "discord":
+            if "discord.gg/" in target.lower() or "discord.com/invite/" in target.lower():
+                return JSONResponse({"error": "That's a Discord invite link, not a webhook URL. Webhooks look like: https://discord.com/api/webhooks/123456/abc-def"}, status_code=400)
+            if not target.startswith("https://discord.com/api/webhooks/"):
+                return JSONResponse({"error": "Discord webhook URL must start with https://discord.com/api/webhooks/..."}, status_code=400)
         result = db.add_alert_subscription(channel, target, event_types)
         return JSONResponse({"status": "ok", "subscription": result})
     except Exception as e:
@@ -6005,6 +6666,64 @@ async def api_alert_unsubscribe(sub_id: int):
     return JSONResponse({"status": "ok"})
 
 
+# ─── Provider Config API ───
+
+
+@app.post("/api/provider-config/telegram")
+async def api_provider_telegram(request: Request):
+    """Save and verify Telegram bot token."""
+    try:
+        body = await request.json()
+        token = body.get("token", "").strip()
+        if not token or ":" not in token:
+            return JSONResponse({"ok": False, "error": "Invalid token format — get one from @BotFather"})
+        # Save to file
+        tok_path = Path.home() / ".observeco" / "telegram_bot_token"
+        tok_path.parent.mkdir(parents=True, exist_ok=True)
+        tok_path.write_text(token.strip())
+        # Test by calling getMe
+        import requests as _req
+        resp = _req.get(f"https://api.telegram.org/bot{token}/getMe", timeout=10)
+        if resp.status_code == 200:
+            bot_name = resp.json().get("result", {}).get("first_name", "Bot")
+            return JSONResponse({"ok": True, "bot": bot_name})
+        return JSONResponse({"ok": False, "error": f"Telegram rejected token: HTTP {resp.status_code}"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)})
+
+
+@app.post("/api/provider-config/smtp")
+async def api_provider_smtp(request: Request):
+    """Save and verify SMTP config."""
+    try:
+        body = await request.json()
+        host = body.get("host", "").strip()
+        port = body.get("port", 587)
+        user = body.get("user", "").strip()
+        password = body.get("password", "").strip()
+        from_addr = body.get("from", "").strip() or user
+        if not host:
+            return JSONResponse({"ok": False, "error": "SMTP host required"})
+        # Save to file
+        cfg = {"host": host, "port": port, "user": user, "password": password, "from": from_addr}
+        cfg_path = Path.home() / ".observeco" / "smtp.json"
+        cfg_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg_path.write_text(json.dumps(cfg, indent=2))
+        # Test by connecting
+        import smtplib as _smtp
+        _smtp = _smtp  # bind to satisfy linter
+        server = _smtp.SMTP(host, port, timeout=10)
+        server.starttls()
+        if user:
+            server.login(user, password)
+        server.quit()
+        return JSONResponse({"ok": True})
+    except _smtp.SMTPAuthenticationError:
+        return JSONResponse({"ok": False, "error": "SMTP authentication failed — check username/password"})
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": f"Connection failed: {e}"})
+
+
 # ---------------------------------------------------------------------------
 # § OpenClaw Plugin tracking
 # ---------------------------------------------------------------------------
@@ -6013,8 +6732,12 @@ async def api_alert_unsubscribe(sub_id: int):
 @app.get("/api/plugin-stats")
 async def api_plugin_stats(agent: str = ""):
     """Get plugin tracking stats as JSON."""
-    from observeco.clawforge.plugin import get_plugin_stats
+    from observeco.clawforge.plugin import get_plugin_stats, get_recent_hooks
     stats = get_plugin_stats(agent)
+    # Detect demo data: all hooks share the exact same timestamp
+    hooks = get_recent_hooks(agent, limit=100)
+    ts_set = {h.get("timestamp", 0) for h in hooks}
+    stats["is_demo"] = len(ts_set) <= 1 and len(hooks) > 0
     return JSONResponse(stats)
 
 
@@ -6286,9 +7009,9 @@ async def api_history():
 
 @app.get("/api/config-health", response_class=HTMLResponse)
 async def api_config_health():
-    """Config hygiene widget — Pro gated. Returns HTML card or upsell."""
+    """Config hygiene widget — always visible (free sees diagnostics, Pro gets fixes)."""
     from observeco.chisel.config_widget import generate_widget_html
-    return _pro_response(generate_widget_html())
+    return HTMLResponse(generate_widget_html())
 
 
 # ── Per-agent LLM summary (Tier 2 shallow — §3.25) ─────────────────

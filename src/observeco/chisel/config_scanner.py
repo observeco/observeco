@@ -236,7 +236,7 @@ def check_stale_references(cfg: dict) -> list[Finding]:
                 detail=f"Path '{ref_path}' does not exist on disk. Agent following this instruction "
                        f"will encounter a dead end. Recommend updating prompt to point to active path.",
                 estimated_waste_tok=waste,
-                auto_fixable=False,
+                auto_fixable=True,
             ))
 
     return findings
@@ -276,7 +276,7 @@ def check_orphaned_agents(cfg: dict) -> list[Finding]:
                 detail=f"Mentioned in Telegram channel prompts but no profile found at {profile_dir}. "
                        f"Agent may have been removed or renamed.",
                 estimated_waste_tok=50,
-                auto_fixable=False,
+                auto_fixable=True,
             ))
 
     return findings
@@ -356,21 +356,46 @@ def apply_fix(finding: Finding, config_path: Path = CONFIG_PATH) -> bool:
         except Exception:
             return False
 
-        count_before = raw_text.count("Reasoning Standards (Mandatory)")
+        # Step 1: Check if RS already exists in system_prompt
+        sys_start = raw_text.find("system_prompt:")
         channel_start = raw_text.find("channel_prompts:")
-        if channel_start < 0:
+        if sys_start < 0 or channel_start < 0:
             return False
-        before_channel = raw_text[:channel_start]
+
+        between_sys_channel = raw_text[sys_start:channel_start]
+        has_rs_in_sys = "Reasoning Standards" in between_sys_channel
+
+        # Step 2: Remove RS blocks from ALL channel prompt text
         after_channel = raw_text[channel_start:]
         new_after = re.sub(
             r"(?:\\n)+## Reasoning Standards \(Mandatory\)[^\"\n]*(?:\n\s+\\[^\n]*)*",
             "",
             after_channel,
         )
-        new_text = before_channel + new_after
+
+        # Step 3: If RS not in system_prompt yet, prepend it
+        if not has_rs_in_sys:
+            before_sys = raw_text[:sys_start]
+            # Find the system_prompt content start (after the "system_prompt: |" line)
+            sys_value_start = raw_text.find("|", sys_start)
+            if sys_value_start < 0:
+                sys_value_start = sys_start + len("system_prompt:")
+            # Insert RS into system_prompt — add it before the first actual content line
+            # Find the first non-empty line of the system_prompt value
+            sys_body = raw_text[sys_value_start + 1:channel_start]
+            # Prepend RS block (with a separator comment) before existing system prompt content
+            nl = "\n"
+            rs_as_indent = nl + rs_block.replace(nl, nl + "  ")  # indent for YAML block scalar
+            new_sys_body = rs_as_indent + "\n" + sys_body
+            before_sys = raw_text[:sys_value_start + 1]
+            new_text = before_sys + new_sys_body + new_after
+        else:
+            before_channel = raw_text[:channel_start]
+            new_text = before_channel + new_after
+
         config_path.write_text(new_text, encoding="utf-8")
         count_after = new_text.count("Reasoning Standards (Mandatory)")
-        return count_after < count_before
+        return count_after == 1  # exactly one copy, in system_prompt
 
     if finding.check == "low_cache_ttl":
         try:
@@ -385,6 +410,79 @@ def apply_fix(finding: Finding, config_path: Path = CONFIG_PATH) -> bool:
         if new_text != raw_text:
             config_path.write_text(new_text, encoding="utf-8")
             return True
+
+    if finding.check == "stale_references":
+        # Try to auto-correct the stale path by finding a valid alternative
+        try:
+            raw_text = config_path.read_text(encoding="utf-8")
+        except Exception:
+            return False
+
+        path_match = __import__("re").search(r"stale path[^:]*: ([^\n]+)", finding.description.lower())
+        if not path_match:
+            return False
+        stale_path = path_match.group(1).strip()
+
+        # Try to find a valid path by checking common alternatives
+        stale_p = Path(stale_path)
+        alternatives = []
+        # Check without "~/" prefix
+        if stale_path.startswith("~/"):
+            alternatives.append(Path.home() / stale_path[2:])
+        # Check intelligence/ subdirs
+        parts = stale_p.parts
+        for i, p in enumerate(parts):
+            if p in ("intelligence", "signals"):
+                sub = Path(*parts[i:])
+                alt = Path.home() / ".hermes" / sub
+                if alt.exists():
+                    alternatives.append(alt)
+        # Check if parent exists and just filename changed
+        if stale_p.parent.exists():
+            for child in stale_p.parent.iterdir():
+                if child.suffix == stale_p.suffix:
+                    alternatives.append(child)
+
+        alternative_paths = [p for p in alternatives if p.exists()]
+        if alternative_paths:
+            replacement = str(alternative_paths[0])
+            new_text = raw_text.replace(stale_path, replacement)
+            if new_text != raw_text:
+                config_path.write_text(new_text, encoding="utf-8")
+                return True
+
+        # If no alternative found, flag with suggestion in the description
+        return False
+
+    if finding.check == "orphaned_agents":
+        # Remove orphan agent identity lines from channel prompts
+        try:
+            raw_text = config_path.read_text(encoding="utf-8")
+        except Exception:
+            return False
+
+        # Simple approach: find and redact "You are {agent_name}" in channel prompt strings
+        agent_match = __import__("re").search(r"'(\w+)' with no workspace", finding.description)
+        if not agent_match:
+            return False
+        agent_name = agent_match.group(1)
+
+        # Redact mentions of this agent in channel prompt strings
+        new_text = raw_text.replace(
+            f" You are {agent_name} \\u2014",
+            " [redacted] \\u2014"
+        ).replace(
+            f"You are {agent_name} \\u2014",
+            "[redacted] \\u2014"
+        ).replace(
+            f"You are {agent_name}. ",
+            "[redacted]. "
+        )
+
+        if new_text != raw_text:
+            config_path.write_text(new_text, encoding="utf-8")
+            return True
+        return False
 
     return False
 

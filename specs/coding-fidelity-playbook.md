@@ -1,7 +1,7 @@
 # Coding Best Practices & Spec-Fidelity Playbook
 
 **Product:** ObserveCo (and all future software projects)
-**Version:** 3.11 — 2026-06-01 (Windows + Telemetry Hardening)
+**Version:** 3.12 — 2026-06-10 (UI Testing + Pipeline Learnings)
 
 **Version History:**
 | Version | Date | What changed |
@@ -10,6 +10,7 @@
 | 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, Golden Gate naming normalization |
 | 3.11 | 2026-06-01 | Windows + Telemetry Hardening: added `_start_windows()`, `_windows_kill()`, signal handler guards, graceful degradation. Telemetry client now requires local opt-in file before sending. Three new dashboard endpoints for opt-in prompt. CI audit searches `<body>` content for F2/F9 keywords. Cross-platform matrix updated. |
+| 3.12 | 2026-06-10 | Added Pattern 17 (Webhook State Transition Coverage), Pattern 18 (Encryption Key Integrity on Load), Pattern 19 (Payment URL Template Variables). Updated Golden Gate with payment-pipeline integration check. |
 
 **Source:** Real coding sessions — all bugs traced back to spec-to-implementation gaps, inline-style over-reliance, missing verification layers, and graph visualization blind spots
 
@@ -244,7 +245,23 @@ Edge Cases: [empty state, error state, loading state]
 
 **Fix:** Run two independent verifier agents (one "Critic", one "Implementer") and require consensus. The critic does NOT see the builder's code — it only has the spec and mockup, and must list what sections should exist. The implementer then checks those against the actual code.
 
-### 4.13 Dependency & version hallucination
+### 4.20 Payment pipeline — success ≠ done (3 sub-states)
+
+**Pattern:** Payment flow completes at Stripe level but Pro is not activated. Three independent failure points: wrong session ID (Stripe Checkout session not matched to user), encryption key mismatch (key stored in one format, decrypted in another), missing start_trial() call (payment success handler doesn't trigger trial activation).
+
+**Prevention:** Payment pipeline spec must enumerate all 3 sub-states: (1) Stripe Checkout session creation + ID mapping, (2) encryption key generation + storage + retrieval, (3) trial/Pro activation call. Each sub-state must have its own test.
+
+### 4.21 Cross-tab DOM access without null guard
+
+**Pattern:** A JS function like `loadLicenseStatus()` works on the Settings tab where the DOM element exists, but crashes silently on 4 other tabs where the element is null. The crash is silent because it happens in a callback or async context with no error handler.
+
+**Prevention:** Every cross-tab JS function must null-guard every DOM access. Pattern: `const el = document.getElementById('x'); if (!el) return;`. Add to code review checklist.
+
+### 4.22 Badge/state refresh missing after state change
+
+**Pattern:** License deactivation updates the backend, but the UI badge still shows the old state until manual page reload. The state change handler updates the data model but doesn't trigger a UI refresh.
+
+**Prevention:** Every state-changing operation (modal close, form submit, deactivation) must call the relevant refresh function. Add to PR checklist: "Does this state change trigger a UI refresh?"
 
 **Pattern:** Agent suggests `pip install mcp>=1.0` when `mcp` doesn't exist on PyPI yet, or calls `pandas.DataFrame.merge` with parameters from a newer version than installed.
 
@@ -280,6 +297,42 @@ check all call sites of the modified function
 **Pattern:** Human (or agent) forgets to update `observeco-master-plan.md` after a feature is built → feature row stays 🔴 forever → next human reads the plan and thinks the feature doesn't exist.
 
 **Automation:** Agent must propose the exact markdown diff for the master plan status line in the same response as the code change. If the diff is not proposed, the task is not complete.
+
+### 4.17 Webhook State Transition Coverage
+
+**Pattern:** A webhook handler records an event (Stripe payment received, customer created) but never propagates the state change to the downstream system (license activation, feature unlock). The handler was built against "record the event" not "activate the downstream effect."
+
+**Real example (ObserveCo, 2026-06-09):** Stripe `checkout.session.completed` webhook recorded the customer in the CRM but never called `start_trial()`. Payment succeeded. Pro never activated. Three independent bugs in the same pipeline.
+
+**Detection:**
+1. Every webhook handler must have a **state transition map**: event received → what changes → what propagates → what follows
+2. If a webhook stores data but doesn't trigger a downstream effect, it's half-implemented
+3. After the webhook fires, verify: did the downstream state actually change? (not "did it call the function" but "did the license switch to Pro?")
+
+**Prevention:** Add a post-webhook audit step: after every checkout.session.completed, re-read the license state and compare to expected. If they don't match, flag for manual review.
+
+### 4.18 Encryption Key / Config File Integrity on Load
+
+**Pattern:** A critical config file (encryption key, API token, database URL) is corrupted, truncated, or duplicated. The load function silently falls back to a degraded mode (simulated Stripe, local-only mode) instead of failing loud. The degraded mode is never tested — the app works differently in production than in dev without anyone noticing.
+
+**Real example (ObserveCo, 2026-06-09):** Fernet key file had two concatenated keys. `load_key()` silently fell back to simulation mode. Stripe payments appeared to work but never actually charged — every transaction was in simulation mode. The difference was invisible unless you checked the Stripe Dashboard.
+
+**Detection:**
+- Any critical config file must have integrity validation on load (expected length, expected format, checksum)
+- If decryption fails, log the failure AND prevent the degraded mode from silently activating
+- Prefer failing loud (error message, blocked startup) over silent degradation for security-critical config
+- Test: corrupt the config file. Does the app fail informatively or silently switch modes?
+
+### 4.19 Payment URL Template Variables
+
+**Pattern:** A payment checkout URL is constructed without required template variables. The checkout works in development (Stripe allows test sessions without certain parameters) but fails in production, or the webhook can't correlate the session back to the user.
+
+**Real example (ObserveCo, 2026-06-09):** Stripe `success_url` was missing `{CHECKOUT_SESSION_ID}` template variable. Stripe allows this in test mode — sessions are created, payments complete, but the webhook has no way to map the successful payment back to the original session. Three users paid and never got Pro.
+
+**Detection:**
+- For any payment/checkout integration, verify the success_url includes ALL required session identifier template variables
+- Check the payment platform docs for: required URL parameters, optional-but-recommended parameters, and environment-specific parameters
+- Test in production-like mode (not just test mode — Stripe test mode accepts URLs that production rejects)
 
 ---
 
@@ -1006,3 +1059,15 @@ Copy this into any feature spec or PR description to document the data pipeline 
 **Tables that should be written but aren't:** [gaps]
 **Cross-platform verified?** [Mac / Linux / Windows]
 ```
+
+## Lessons Learned
+
+| Date | Project | What happened | Root cause | Pattern | Fix applied |
+|------|---------|---------------|-----------|---------|-------------|
+| 2026-06-09 | ObserveCo | Stripe payment success → Pro not activated — 3 independent bugs | Payment pipeline had 3 sub-states not covered by any test | 4.20 | Added payment pipeline sub-state enumeration to spec template |
+| 2026-06-09 | ObserveCo | loadLicenseStatus() crashes silently on 4 of 5 tabs | Cross-tab JS function assumes DOM element exists everywhere | 4.21 | Added null guard to all cross-tab JS functions |
+| 2026-06-09 | ObserveCo | License deactivation updates backend but badge shows old state | State change handler doesn't trigger UI refresh | 4.22 | Added refresh call after every modal close |
+
+---
+
+*Failure today taught us that the code can be correct and the system can still be wrong. This playbook bridges that gap — forcing the system-level analysis BEFORE the code, and verifying the system-level properties AFTER the code.*
