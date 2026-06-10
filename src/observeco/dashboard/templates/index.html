@@ -1266,7 +1266,9 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
       <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Configure alert delivery channels — Telegram, Discord, webhook, email.</div>
 
       <!-- Live channel management -->
-      <div id="alertPanel" hx-get="/api/alert-dashboard" hx-trigger="load, every 30s" hx-swap="innerHTML">
+      <div id="alertPanel" hx-get="/api/alert-dashboard" hx-trigger="load, every 30s" hx-swap="innerHTML"
+           hx-on:htmx:response-error="this.innerHTML='<div style=\"color:#ef4444;padding:12px;font-size:12px;text-align:center;\">📡 Server unreachable. Run <code style=\"background:#1e293b;padding:2px 6px;border-radius:4px;\">observeco dashboard --restart</code> to fix.</div>'"
+           hx-on:htmx:send-error="this.innerHTML='<div style=\"color:#ef4444;padding:12px;font-size:12px;text-align:center;\">📡 Connection failed. Check the server is still running.</div>'">
         <div style="color:#64748b;font-size:12px;">Loading alert configuration...</div>
       </div>
 
@@ -1627,8 +1629,6 @@ function openModal(title, sub, bodyHtml) {
       <button class="detail-tab-btn active" data-tab="health" onclick="switchDetailTab('${agentName}', 'health', this)">🩺 Health</button>
       <button class="detail-tab-btn" data-tab="guard" onclick="switchDetailTab('${agentName}', 'guard', this)">🛡️ Guard</button>
       <button class="detail-tab-btn" data-tab="errors" onclick="switchDetailTab('${agentName}', 'errors', this)">⚠️ Errors</button>
-      <button class="detail-tab-btn" data-tab="tokens" onclick="switchDetailTab('${agentName}', 'tokens', this)">📊 Tokens</button>
-      <button class="detail-tab-btn" data-tab="memory" onclick="switchDetailTab('${agentName}', 'memory', this)">🧠 Memory</button>
     </div>
     <div id="detailContent" style="padding:14px;font-size:12px;color:var(--fg-2);max-height:60vh;overflow-y:auto;">Loading health data...</div>`;
   document.getElementById('drillModal').classList.add('active');
@@ -1661,19 +1661,16 @@ function loadTab(name, tab) {
   const tabLabels = {
     health: { title: 'Health timeline', sub: 'Health' },
     guard: { title: 'Safety guard', sub: 'Guard' },
-    errors: { title: 'Error history', sub: 'Errors' },
-    tokens: { title: 'Token breakdown', sub: 'Tokens' },
-    memory: { title: 'Memory & Context', sub: 'Memory' }
+    errors: { title: 'Error history', sub: 'Errors' }
   };
   const tabIcons = {
-    health: '🩺', guard: '🛡️', errors: '⚠️',
-    tokens: '💎', memory: '🧠'
+    health: '🩺', guard: '🛡️', errors: '⚠️'
   };
   const info = tabLabels[tab] || { title: 'Detail', sub: 'Detail' };
   title.textContent = name + ' — ' + info.title;
   sub.textContent = info.sub;
-  // Render full 5-tab bar
-  const allTabs = ['health', 'guard', 'errors', 'tokens', 'memory'];
+  // Render 3-tab bar
+  const allTabs = ['health', 'guard', 'errors'];
   var tabBar = '<div class="detail-tab-bar">';
   allTabs.forEach(function(t) {
     var active = t === tab ? ' active' : '';
@@ -2804,7 +2801,6 @@ function checkDriftAlerts() {
   const btn = document.querySelector('button[onclick*="checkDriftAlerts"]');
   if (btn) { btn.textContent = '⏳ Checking...'; btn.disabled = true; }
   const log = document.getElementById('alertLog');
-  const orig = log ? log.innerHTML : '';
   fetch('/api/check-drift-alerts', { method: 'POST' })
     .then(r => r.json())
     .then(data => {
@@ -2814,7 +2810,6 @@ function checkDriftAlerts() {
           ? '✅ ' + data.fired + ' drift alert(s) sent'
           : '✅ No drift breaches found';
         if (log) log.innerHTML = '<div style="padding:8px;font-size:12px;color:#22c55e;">' + msg + '</div>';
-        setTimeout(() => { if (log) log.innerHTML = orig; }, 3000);
       } else {
         if (log) log.innerHTML = '<div style="padding:8px;font-size:12px;color:#eab308;">⚠️ ' + (data.error || 'Failed') + '</div>';
         if (btn) { btn.textContent = '📈 Check Drift'; btn.disabled = false; }
@@ -3128,6 +3123,11 @@ function loadPluginStats() {
       document.getElementById('pluginSaved').textContent = (stats.saved || 0).toLocaleString();
       document.getElementById('pluginReduction').textContent = (stats.avg_reduction_pct || 0) + '%';
       document.getElementById('pluginLoaded').textContent = (stats.loaded || 0).toLocaleString();
+      // Full brightness when real data arrives; demo stays dimmed via HTML inline
+      if (!stats.is_demo) {
+        const grid = document.getElementById('pluginStatsGrid');
+        if (grid) grid.style.opacity = '1';
+      }
     })
     .catch(() => {});
 }
@@ -3139,7 +3139,7 @@ function loadPluginHooks() {
     .then(html => { el.innerHTML = html; })
     .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
 }
-function initPlugin() { loadPluginStats(); loadPluginHooks(); setInterval(loadPluginStats, 15000); setInterval(loadPluginHooks, 30000); }
+function initPlugin() { loadPluginStats(); loadPluginHooks(); }
 
 // ─── Skills Audit ───
 function openSkillsAuditModal(agentName) {
@@ -3154,16 +3154,20 @@ function openSkillsAuditModal(agentName) {
       const s = data.summary;
       const skills = data.skills;
       const cats = data.categories;
-      let html = '<div class="sa-summary">' +
+let html = '<div class="sa-summary">' +
         '<div class="sa-card"><div class="n" style="color:#e2e8f0;">' + s.total_skills + '</div><div class="l">Skills installed</div></div>' +
         '<div class="sa-card"><div class="n" style="color:#94a3b8;">' + s.tokens_per_session.toLocaleString() + '</div><div class="l">Tokens per session</div><div class="sv">' + s.sessions_per_month + ' sessions/mo</div></div>' +
         '<div class="sa-card hl"><div class="n" style="color:#22c55e;">$' + s.monthly_cost + '</div><div class="l">Monthly burn</div><div class="sv">' + s.model_pricing + '</div></div>' +
         '<div class="sa-card"><div class="n" style="color:#f59e0b;">$' + s.yearly_cost + '</div><div class="l">Yearly cost</div></div>' +
-        '</div>';
+        '</div>' +
+        // Compression preview first — actions at the top
+        '<div id="saChiselPreview" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">' +
+        '<div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:10px;">🧪 Compression Preview<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'compression-lite\', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></div>' +
+        '<div style="font-size:11px;color:#64748b;text-align:center;padding:8px;">Loading potential savings...</div></div>' +
 
-      // Skills table
-      html += '<div class="sa-card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;padding:0;">';
-      html += '<table class="sa-table"><tr><th>#</th><th>Skill</th><th>Tokens</th>' +
+        // Skills table — details below
+        '<div class="sa-card" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;padding:0;">' +
+        '<table class="sa-table"><tr><th>#</th><th>Skill</th><th>Tokens</th>' +
         '<th>Drift</th><th>$/yr</th></tr>';
       skills.forEach(sk => {
         const tokenCls = sk.tokens > 10000 ? 'tk ov' : 'tk ok';
@@ -3187,11 +3191,6 @@ function openSkillsAuditModal(agentName) {
         html += '<div class="sa-cat-item"><span class="cn">' + cat.charAt(0).toUpperCase() + cat.slice(1) + '</span><span class="cc">' + info.skills + ' skills · ' + info.tokens.toLocaleString() + ' tokens</span></div>';
       });
       html += '</div></div>';
-
-      // Compression preview container (populated async)
-      html += '<div id="saChiselPreview" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">' +
-        '<div style="font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:10px;">🧪 Compression Preview<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'compression-lite\', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></div>' +
-        '<div style="font-size:11px;color:#64748b;text-align:center;padding:8px;">Loading potential savings...</div></div>';
 
       // — Compression Preview (fetched inline) —
       fetch('/api/chisel-preview?agent=all', {headers: window.__OBSERVECO_TOKEN ? {'X-ObserveCo-Token': window.__OBSERVECO_TOKEN} : {}})
@@ -3311,6 +3310,7 @@ function closePathwayModal() {
 
 // ─── Token Optimiser ───
 function openChiselModal(agentName) {
+  closeSkillsAudit(); // Close parent modal first — prevents z-index stacking conflict
   const modal = document.getElementById('chiselModal');
   const body = document.getElementById('chiselBody');
   modal.classList.add('active');

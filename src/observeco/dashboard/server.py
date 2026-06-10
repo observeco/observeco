@@ -3694,23 +3694,14 @@ async def api_agents(
             conf = _compute_confidence(agent_status, pulses, recent_errors, cb, state_since, now)
             conf_badge = _confidence_badge(conf)
 
-            # Conditional rows — agent-only features hidden for services/workflows/others
+# Conditional rows — agent-only features hidden for services/workflows/others
             is_agent = agent_type == 'agent'
             guard_row = ''
-            brain_row = ''
-            comp_row = ''
-            if is_agent:
-                guard_row = '<div class="metric-row" onclick="loadTab(' + repr(name)[1:-1] + ',\'guard\')">'
+if is_agent:
+                guard_row = '<div class="metric-row" onclick="loadTab(' + repr(name)[1:-1] + ",'guard')" + '">'
                 guard_row += '\n        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'circuit\', event)">?</span></span>'
                 guard_row += '\n        <span class="value" style="color:' + guard_color + ';font-weight:600;">' + guard_label + '</span>'
                 guard_row += '\n        <span class="click-hint">See details</span><span class="arrow">\u203a</span>\n      </div>'
-                brain_row = '<div class="metric-row" onclick="loadTab(' + repr(name)[1:-1] + ',\'tokens\')">'
-                brain_row += '\n        <span class="label">Brain size<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'drift\', event)">?</span></span>'
-                brain_row += '\n        <span class="value" style="color:#94a3b8;">' + drift_str + '</span>'
-                brain_row += '\n        <span class="click-hint">See details</span><span class="arrow">\u203a</span>\n      </div>'
-                comp_row = '<div class="metric-row">'
-                comp_row += '\n        <span class="label">Composition<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'token-bar\', event)">?</span></span>'
-                comp_row += '\n        <span class="value" class="u-flex-1">' + token_bar + '</span>\n      </div>'
 
             cards_html.append(f"""<div class="agent-card" data-agent="{name}">
       <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('{name}')" title="Hide agent"></button>
@@ -6369,7 +6360,7 @@ async def api_alert_dashboard():
     </div>
     <!-- Add channel modal (hidden until triggered) -->
     <div class="modal-overlay" id="addChannelModal" style="display:none;" onclick="if(event.target===this)closeAddChannel()">
-        <div class="modal" style="max-width:420px;">
+        <div class="modal" style="max-width:420px;" onmousedown="event.stopPropagation()">
             <div class="modal-body">
                 <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;" id="addChannelTitle">Add Channel</div>
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Enter the target URL, chat ID, or email address.</div>
@@ -6379,6 +6370,47 @@ async def api_alert_dashboard():
                     <button onclick="confirmAddChannel()" class="heal-trigger-btn" style="font-size:12px;padding:8px 18px;">Test & Save</button>
                 </div>
                 <div id="addChannelResult" style="margin-top:8px;font-size:12px;"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Telegram Bot Token modal -->
+    <div class="modal-overlay" id="telegramTokenModal" style="display:none;" onclick="if(event.target===this)closeTelegramToken()">
+        <div class="modal" style="max-width:420px;" onmousedown="event.stopPropagation()">
+            <div class="modal-body">
+                <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">🤖 Telegram Bot Token</div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Paste your bot token from <a href="https://t.me/BotFather" target="_blank" style="color:#6366f1;">@BotFather</a>. It will be tested before saving.</div>
+                <input id="telegramTokenInput" type="password" placeholder="123456:ABCdefGHIjklMNOpqrsTUVwxyz" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:8px;font-family:var(--font-mono);">
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button onclick="closeTelegramToken()" class="modal-close" style="font-size:12px;padding:8px 18px;width:auto;">Cancel</button>
+                    <button onclick="saveTelegramToken()" class="heal-trigger-btn" style="font-size:12px;padding:8px 18px;">Save & Verify</button>
+                </div>
+                <div id="telegramTokenResult" style="margin-top:8px;font-size:12px;"></div>
+            </div>
+        </div>
+    </div>
+    <!-- SMTP Config modal -->
+    <div class="modal-overlay" id="smtpConfigModal" style="display:none;" onclick="if(event.target===this)closeSmtpConfig()">
+        <div class="modal" style="max-width:440px;" onmousedown="event.stopPropagation()">
+            <div class="modal-body">
+                <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">📧 SMTP Relay</div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Configure an SMTP server for email alert delivery.</div>
+                <input id="smtpHost" type="text" placeholder="smtp.gmail.com" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:6px;font-family:inherit;">
+                <div style="display:flex;gap:6px;margin-bottom:6px;">
+                    <input id="smtpPort" type="number" placeholder="587" value="587" style="flex:0 0 80px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;font-family:inherit;">
+                    <select id="smtpSecurity" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;">
+                        <option value="starttls">STARTTLS (587)</option>
+                        <option value="ssl">SSL/TLS (465)</option>
+                        <option value="none">No encryption</option>
+                    </select>
+                </div>
+                <input id="smtpUser" type="text" placeholder="you@gmail.com" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:6px;font-family:inherit;">
+                <input id="smtpPassword" type="password" placeholder="App password or SMTP password" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:6px;font-family:inherit;">
+                <input id="smtpFrom" type="text" placeholder="From: alerts@example.com" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:8px;font-family:inherit;">
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button onclick="closeSmtpConfig()" class="modal-close" style="font-size:12px;padding:8px 18px;width:auto;">Cancel</button>
+                    <button onclick="saveSmtpConfig()" class="heal-trigger-btn" style="font-size:12px;padding:8px 18px;">Save & Test</button>
+                </div>
+                <div id="smtpConfigResult" style="margin-top:8px;font-size:12px;"></div>
             </div>
         </div>
     </div>
@@ -6421,9 +6453,9 @@ async def api_alert_dashboard():
                         }} else {{
                             document.getElementById('addChannelResult').innerHTML = '<span style="color:#fde68a;">⚠️ Saved but test failed: ' + (t.error || '') + '</span>';
                         }}
-                        setTimeout(() => {{ closeAddChannel(); htmx.trigger('#alertPanel', 'load') }}, 1500);
+                        setTimeout(() => {{ closeAddChannel(); htmx.ajax('GET', '/api/alert-dashboard', {{target: '#alertPanel', swap: 'innerHTML'}}) }}, 1500);
                     }})
-                    .catch(() => {{ setTimeout(() => {{ closeAddChannel(); htmx.trigger('#alertPanel', 'load') }}, 1500); }});
+                    .catch(() => {{ setTimeout(() => {{ closeAddChannel(); htmx.ajax('GET', '/api/alert-dashboard', {{target: '#alertPanel', swap: 'innerHTML'}}) }}, 1500); }});
             }} else {{
                 document.getElementById('addChannelResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
             }}
@@ -6448,7 +6480,7 @@ async def api_alert_dashboard():
         fetch('/api/alert-subscribe/' + subId, {{method: 'DELETE'}})
             .then(r => r.json())
             .then(data => {{
-                if (data.status === 'ok') htmx.trigger('#alertPanel', 'load');
+                if (data.status === 'ok') htmx.ajax('GET', '/api/alert-dashboard', {{target: '#alertPanel', swap: 'innerHTML'}});
             }})
             .catch(() => {{}});
     }}
@@ -6475,7 +6507,7 @@ async def api_alert_dashboard():
         .then(data => {{
             if (data.ok) {{
                 document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#22c55e;">✅ Token saved and verified!</span>';
-                setTimeout(() => {{ closeTelegramToken(); htmx.trigger('#alertPanel', 'load'); }}, 1500);
+                setTimeout(() => {{ closeTelegramToken(); htmx.ajax('GET', '/api/alert-dashboard', {{target: '#alertPanel', swap: 'innerHTML'}}); }}, 1500);
             }} else {{
                 document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
             }}
@@ -6497,6 +6529,7 @@ async def api_alert_dashboard():
     function saveSmtpConfig() {{
         var host = document.getElementById('smtpHost').value.trim();
         var port = document.getElementById('smtpPort').value.trim() || '587';
+        var security = document.getElementById('smtpSecurity').value;
         var user = document.getElementById('smtpUser').value.trim();
         var password = document.getElementById('smtpPassword').value.trim();
         var from = document.getElementById('smtpFrom').value.trim();
@@ -6505,13 +6538,13 @@ async def api_alert_dashboard():
         fetch('/api/provider-config/smtp', {{
             method: 'POST',
             headers: {{'Content-Type': 'application/json'}},
-            body: JSON.stringify({{host: host, port: parseInt(port), user: user, password: password, from: from}})
+            body: JSON.stringify({{host: host, port: parseInt(port), security: security, user: user, password: password, from: from}})
         }})
         .then(r => r.json())
         .then(data => {{
             if (data.ok) {{
                 document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#22c55e;">✅ SMTP saved and verified!</span>';
-                setTimeout(() => {{ closeSmtpConfig(); htmx.trigger('#alertPanel', 'load'); }}, 1500);
+                setTimeout(() => {{ closeSmtpConfig(); htmx.ajax('GET', '/api/alert-dashboard', {{target: '#alertPanel', swap: 'innerHTML'}}); }}, 1500);
             }} else {{
                 document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
             }}
