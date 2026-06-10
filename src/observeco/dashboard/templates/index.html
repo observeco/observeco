@@ -2036,7 +2036,7 @@ function renderBrain(agentName) {
   document.getElementById('brainTokenBars').innerHTML = bars || '<div style="color:#64748b;font-size:12px;">No token data for this agent</div>';
   // Savings — compute cost per token
   const rawTk = a.raw_tokens || totalVal;
-  const savingsSource = a.savings_source || 'potential'; // 'actual' | 'potential'
+  const savingsSource = a.savings_source || 'none'; // 'actual' | 'potential' | 'none'
   const hasLiteData = a.lite_tokens != null && a.lite_tokens < rawTk;
   const hasFullData = a.full_tokens != null && a.full_tokens < rawTk;
   const liteTk = hasLiteData ? a.lite_tokens : null;

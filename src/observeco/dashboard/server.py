@@ -2486,17 +2486,22 @@ async def api_brain(agent: str = "all"):
         components = {k: v for k, v in comps_raw.items() if v > 0}
 
         raw_tokens = total_tokens if total_tokens > 0 else sum(components.values())
-        # Compute potential savings from actual composition + known compressibility
-        # No fabricated data — only what we can derive from real SOUL.md analysis
+        # Potential savings from fleet-wide compress_log averages (if any real runs exist)
         guidance_pct = (components.get("guidance", 0) / max(raw_tokens, 1)) * 100
         memory_pct = (components.get("memory", 0) / max(raw_tokens, 1)) * 100
         skills_pct = (components.get("skills", 0) / max(raw_tokens, 1)) * 100
-        # Lite compresses guidance blocks (~70% reduction achievable on guidance)
-        # Full additionally compresses memory + skills (~40% on those components)
-        lite_potential_pct = round(guidance_pct * 0.70, 1)
-        full_potential_pct = round(guidance_pct * 0.70 + (memory_pct + skills_pct) * 0.40, 1)
 
-        # Check if actual compression has been run — if so, override with real data
+        # Fleet-wide compress_log averages — real data from any agent that's been compressed
+        fleet_lite_avg = conn.execute(
+            "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE mode='lite' AND savings_pct IS NOT NULL"
+        ).fetchone()
+        fleet_full_avg = conn.execute(
+            "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
+        ).fetchone()
+        fleet_lite_pct = float(fleet_lite_avg["avg_pct"]) if fleet_lite_avg and fleet_lite_avg["avg_pct"] else None
+        fleet_full_pct = float(fleet_full_avg["avg_pct"]) if fleet_full_avg and fleet_full_avg["avg_pct"] else None
+
+        # Per-agent actual compression data
         has_compress = conn.execute(
             "SELECT COUNT(*) as c FROM compress_log WHERE agent_name=? AND savings_pct IS NOT NULL",
             (name,)
@@ -2504,7 +2509,11 @@ async def api_brain(agent: str = "all"):
         has_real_compress = has_compress and has_compress["c"] > 0
         lite_tokens = None
         full_tokens = None
+        lite_potential_pct = None
+        full_potential_pct = None
+
         if has_real_compress:
+            # Use this agent's actual compress data
             lite_row = conn.execute(
                 "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE agent_name=? AND mode='lite' AND savings_pct IS NOT NULL",
                 (name,)
@@ -2519,8 +2528,20 @@ async def api_brain(agent: str = "all"):
                 lite_tokens = int(raw_tokens * (1 - lite_avg / 100))
             if full_avg is not None and full_avg > 0:
                 full_tokens = int(raw_tokens * (1 - full_avg / 100))
-
-        savings_source = "actual" if has_real_compress else "potential"
+            savings_source = "actual"
+        elif fleet_lite_pct is not None:
+            # No per-agent data, but fleet-wide compress averages exist — apply real % to composition
+            # Lite compresses only guidance, Full compresses guidance + memory + skills
+            lite_potential_pct = round(guidance_pct * (fleet_lite_pct / 100), 1)
+            full_potential_pct = round(
+                guidance_pct * (fleet_lite_pct / 100) +
+                (memory_pct + skills_pct) * (fleet_full_pct / 100),
+                1
+            ) if fleet_full_pct else lite_potential_pct
+            savings_source = "potential"
+        else:
+            # No compression has ever been run — can't estimate
+            savings_source = "none"
 
         # Drift data
         drift_rows = [dict(r) for r in conn.execute(
@@ -2599,13 +2620,14 @@ async def api_brain(agent: str = "all"):
 
         for name, data in result.items():
             raw_sum += data["raw_tokens"]
-            lite_sum += data["lite_tokens"]
-            full_sum += data["full_tokens"]
+            lite_sum += data["lite_tokens"] or 0
+            full_sum += data["full_tokens"] or 0
             for c, v in data["components"].items():
                 all_comps[c] = all_comps.get(c, 0) + v
-            for i in range(24):
-                fleet_turns[i] += data["turn_timeline"][i]
-            for d in data["drift"]:
+            timeline = data.get("turn_timeline", [])
+            for i in range(min(24, len(timeline))):
+                fleet_turns[i] += timeline[i]
+            for d in data.get("drift", []):
                 if d["component"] not in fleet_drift:
                     fleet_drift[d["component"]] = {
                         "component": d["component"],
@@ -2677,9 +2699,64 @@ async def api_budget_planner():
         pct = tok / total_tokens * 100 if total_tokens > 0 else 0
         top_agents.append((name, tok, pct))
 
-    # Lite vs Full savings projections
-    lite_save_pct = 22
-    full_save_pct = 35
+    # Lite vs Full savings — computed from actual composition, not hardcoded
+    # Check compress_log for real data first; fall back to composition-derived estimate
+    actual_lite_pct = None
+    actual_full_pct = None
+    try:
+        conn2 = db._get_conn()
+        conn2.row_factory = __import__("sqlite3").Row
+        lite_row = conn2.execute(
+            "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE mode='lite' AND savings_pct IS NOT NULL"
+        ).fetchone()
+        full_row = conn2.execute(
+            "SELECT ROUND(AVG(savings_pct), 1) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
+        ).fetchone()
+        if lite_row and lite_row["avg_pct"]:
+            actual_lite_pct = float(lite_row["avg_pct"])
+        if full_row and full_row["avg_pct"]:
+            actual_full_pct = float(full_row["avg_pct"])
+    except Exception:
+        pass
+
+    if actual_lite_pct is not None:
+        # Real data from actual compression runs
+        lite_save_pct = actual_lite_pct
+        lite_save_label = f"-{lite_save_pct}% actual savings"
+    else:
+        # Derive from per-agent composition: guidance% × compressibility
+        tot_lite_pct = 0
+        tot_weight = 0
+        for name, t in latest_trims.items():
+            gw = t.get("total_tokens", 0)
+            if gw == 0:
+                continue
+            g = t.get("guidance_tokens", 0)
+            lite_pct = (g / gw) * 0.70 * 100  # guidance compressibility
+            tot_lite_pct += lite_pct * gw
+            tot_weight += gw
+        lite_save_pct = round(tot_lite_pct / max(tot_weight, 1), 1) if tot_weight > 0 else 0
+        lite_save_label = f"-{lite_save_pct}% estimated"
+
+    if actual_full_pct is not None:
+        full_save_pct = actual_full_pct
+        full_save_label = f"-{full_save_pct}% actual savings"
+    else:
+        tot_full_pct = 0
+        tot_weight = 0
+        for name, t in latest_trims.items():
+            gw = t.get("total_tokens", 0)
+            if gw == 0:
+                continue
+            g = t.get("guidance_tokens", 0)
+            m = t.get("memory_tokens", 0)
+            s = t.get("skills_tokens", 0)
+            full_pct = ((g * 0.70) + (m + s) * 0.40) / gw * 100
+            tot_full_pct += full_pct * gw
+            tot_weight += gw
+        full_save_pct = round(tot_full_pct / max(tot_weight, 1), 1) if tot_weight > 0 else 0
+        full_save_label = f"-{full_save_pct}% estimated"
+
     lite_save = daily_cost * lite_save_pct / 100
     full_save = daily_cost * full_save_pct / 100
 
@@ -2712,12 +2789,12 @@ async def api_budget_planner():
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
         <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Lite Saves</div>
         <div style="font-size:16px;font-weight:700;color:#22c55e;margin-top:4px;">-${lite_save:.2f}/day</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px;">-{lite_save_pct}% via guidance compression</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px;">Lite: {lite_save_label}</div>
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;">
         <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Full Saves</div>
         <div style="font-size:16px;font-weight:700;color:#a5b4fc;margin-top:4px;">-${full_save:.2f}/day</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px;">-{full_save_pct}% with Full + Optimiser</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px;">Full: {full_save_label}</div>
     </div>
 </div>
 <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:10px;">
@@ -4085,7 +4162,7 @@ GLOSSARY_DATA = {
     • <strong style="color:#ec4899;">Memory</strong> — Conversation history (untouched)<br>
     • <strong style="color:#14b8a6;">Tools</strong> — API schemas (untouched)<br><br>
     <strong>When to use Lite:</strong> When you want safe, predictable savings without risk of breaking any functionality. Guidance is often the largest component (~40-60% of system prompt) so even compressing just this can save significantly.<br><br>
-    <strong>Estimated range (50-70%):</strong> The low end (50%) assumes conservative compression. The high end (70%) is optimistic. The actual % after compression is logged and replaces the estimate.
+    <strong>Savings vary per agent:</strong> Actual compression % depends on guidance verbosity and composition. The result is logged after each run — no estimates, no guesswork.
 </div>""",
         "faq": [
             ("Is Lite safe?", "Yes. It only compresses the guidance/rules section. Skills, memory, tools, and identity are completely untouched. Your agents will still have all their capabilities."),
@@ -4098,9 +4175,9 @@ GLOSSARY_DATA = {
         "one_liner": "Compresses guidance + memory + skills for maximum savings — Pro only.",
         "detail": """<div class="glossary-detail">
     <strong>What it compresses:</strong><br>
-    • <strong style="color:#f97316;">Guidance</strong> @ 70% — Same as Lite<br>
-    • <strong style="color:#8b5cf6;">Skills</strong> @ 40% — Skill descriptions and instructions<br>
-    • <strong style="color:#ec4899;">Memory</strong> @ 40% — Shortens recollection patterns<br><br>
+    • <strong style="color:#f97316;">Guidance</strong> — Framework instructions, routing rules, do/don't lists<br>
+    • <strong style="color:#8b5cf6;">Skills</strong> — Skill descriptions and instructions<br>
+    • <strong style="color:#ec4899;">Memory</strong> — Shortens recollection patterns<br><br>
     <strong>What it preserves (unchanged):</strong><br>
     • <strong style="color:#6366f1;">Identity</strong> — Never compressed<br>
     • <strong style="color:#14b8a6;">Tools</strong> — Never compressed (fragile) — helps those who lack understanding of the technical details<br><br>
