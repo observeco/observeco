@@ -2521,7 +2521,7 @@ async def api_brain(agent: str = "all"):
             if full_avg is not None and full_avg > 0:
                 full_tokens = int(raw_tokens * (1 - full_avg / 100))
             savings_source = "actual"
-        elif fleet_lite_pct is not None:
+        elif fleet_lite_pct is not None and fleet_lite_pct > 0:
             # No per-agent data, but fleet-wide compress averages exist — apply real % to composition
             # Lite compresses only guidance, Full compresses guidance + memory + skills
             lite_potential_pct = round(guidance_pct * (fleet_lite_pct / 100), 1)
@@ -2532,8 +2532,15 @@ async def api_brain(agent: str = "all"):
             ) if fleet_full_pct else lite_potential_pct
             savings_source = "potential"
         else:
-            # No compression has ever been run — can't estimate
-            savings_source = "none"
+            # No compression has ever been run — derive estimates from composition
+            # Lite: ~60% of guidance is compressible (guidance blocks are verbose)
+            # Full: ~60% guidance + ~40% of memory+skills
+            lite_potential_pct = round(guidance_pct * 0.6, 1)
+            full_potential_pct = round(
+                guidance_pct * 0.6 + (memory_pct + skills_pct) * 0.4,
+                1
+            )
+            savings_source = "potential"
 
         # Drift data
         drift_rows = [dict(r) for r in conn.execute(
@@ -2636,7 +2643,7 @@ async def api_brain(agent: str = "all"):
         fleet_guidance_pct = (all_comps.get("guidance", 0) / max(raw_sum, 1)) * 100
         fleet_memory_pct = (all_comps.get("memory", 0) / max(raw_sum, 1)) * 100
         fleet_skills_pct = (all_comps.get("skills", 0) / max(raw_sum, 1)) * 100
-        if fleet_lite_pct is not None:
+        if fleet_lite_pct is not None and fleet_lite_pct > 0:
             fleet_lite_potential_pct = round(fleet_guidance_pct * (fleet_lite_pct / 100), 1)
             fleet_full_potential_pct = round(
                 fleet_guidance_pct * (fleet_lite_pct / 100) +
@@ -2645,9 +2652,13 @@ async def api_brain(agent: str = "all"):
             ) if fleet_full_pct else fleet_lite_potential_pct
             fleet_savings_source = "potential"
         else:
-            fleet_lite_potential_pct = None
-            fleet_full_potential_pct = None
-            fleet_savings_source = "none"
+            # No meaningful fleet averages — derive from composition
+            fleet_lite_potential_pct = round(fleet_guidance_pct * 0.6, 1)
+            fleet_full_potential_pct = round(
+                fleet_guidance_pct * 0.6 + (fleet_memory_pct + fleet_skills_pct) * 0.4,
+                1
+            )
+            fleet_savings_source = "potential"
 
         fleet = {
             "framework": f"{len(result)} agents",
@@ -3697,7 +3708,7 @@ async def api_agents(
 # Conditional rows — agent-only features hidden for services/workflows/others
             is_agent = agent_type == 'agent'
             guard_row = ''
-if is_agent:
+            if is_agent:
                 guard_row = '<div class="metric-row" onclick="loadTab(' + repr(name)[1:-1] + ",'guard')" + '">'
                 guard_row += '\n        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'circuit\', event)">?</span></span>'
                 guard_row += '\n        <span class="value" style="color:' + guard_color + ';font-weight:600;">' + guard_label + '</span>'
@@ -3727,8 +3738,6 @@ if is_agent:
         <span class="value" style="color:{err_color};">{err_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
-      {brain_row}
-      {comp_row}
     </div>""")
 
         if cards_html:

@@ -13,6 +13,7 @@
 | 3.3 | 2026-06-08 | Added Trap 18 (Overlay Dismiss on Text Selection). Updated Golden Gate checklist with text-selection test. Added Lessons Learned entry for Pro License Key modal bug. |
 | 3.4 | 2026-06-09 | Added Trap 20 (Cross-System Format/State Inconsistency), Trap 21 (Hardcoded Ephemeral Value), Trap 22 (Schema-Code Drift), Trap 23 (Render Order Drift), Trap 24 (Entity-Type-Aware Rendering). Added entity-type-awareness to Golden Gate as item 8.5. Golden Gate now 12-point. Added cross-system consistency and ephemeral-value detection patterns. Version history table fixed (removed stray pipe). |
 | 3.5 | 2026-06-10 | Added Trap 25 (Misleading Data — Real Enough to Confuse), Trap 26 (Subscription State Confusion), Trap 27 (Pro Activation Gap), Trap 28 (Backend Status ≠ Dashboard Status), Trap 29 (Silent Crash on Missing DOM Element), Trap 30 (Badge/State Refresh Missing After State Change). Golden Gate updated to 14-point. Added Lessons Learned entries for all 6 new traps. |
+| 3.6 | 2026-06-10 | Added Trap 31 (Modal Stacking — Overlay Hides Overlay), Trap 32 (Action Buried Below Scroll Threshold), Trap 33 (Pro-Empty-State Mismatch). Added Lessons Learned entries for 6 bugs caught in post-Skill-Audit review. Golden Gate updated to 16-point. |
 
 **Author:** Main (per Sean direction 2026-05-25)
 **Source:** Real testing session — dashboard v0 passed all AI checks, failed every human check
@@ -319,7 +320,7 @@ This is the **minimum viable human-lens evaluation**. Apply it before any fronte
 ### 4.1 The Golden Gate (run by Hound or any agent)
 
 ```
-Before marking any frontend work done, run this 14-point gate:
+Before marking any frontend work done, run this 16-point gate:
 
 1. SCREENSHOT the page in its current state
 2. Answer for every section: does this look complete or broken?
@@ -335,6 +336,8 @@ Before marking any frontend work done, run this 14-point gate:
 12. RENDER ORDER — define the expected render order (top→bottom) in the spec, then verify template/section concatenation matches it
 13. STATE REFRESH — after any modal action (activate, deactivate, cancel, subscribe), does the badge/status update within 1 second without page reload?
 14. DATA PROVENANCE — for every number on the page: can it be traced to a real computation? If not, is it clearly labeled as estimated or unavailable?
+15. MODAL STACKING — after clicking any "Full Details" or "Details" button inside a modal: verify the parent modal is closed before the child modal opens. Confirm only one modal overlay is active at a time.
+16. SCROLL-FIRST-MODAL — for every modal with action buttons: are the buttons visible without scrolling? If the modal has a scrollable detail section, action buttons must be above the fold or in a sticky footer.
 
 One-line pass/fail per check. If any fails, the deliverable is not complete.
 
@@ -1030,6 +1033,74 @@ function updateBadge() {
 
 **Real example (ObserveCo, 2026-06-08):** Activating or deactivating a license key updated the backend (license table status flipped) but the badge still showed the old state. The subscribe → cancel → re-subscribe cycle on Stripe side had the same problem. Fix: added `loadLicenseStatus()` call after every modal close, badge now refreshes from API on each modal dismiss.
 
+---
+
+#### Trap 31: Modal Stacking — Overlay Hides Overlay
+
+**Pattern:** Clicking "Full Details" on a modal (A) opens a second modal (B). Modal B renders correctly but is invisible because modal A's overlay (same z-index: 100) stays on top. User sees no change and assumes nothing happened.
+
+**Why AI misses this:** AI tests each modal in isolation — opens it, verifies content, closes it, moves on. Never tests modal A → modal B → interaction, because the AI calls `openChiselModal()` which renders content, but the AI doesn't check z-index stacking.
+
+**Detection:**
+1. Open every modal that has a "details" or "full view" button
+2. Click the button. Can you see the new modal?
+3. Check the DOM: are both modals now `class="active"` or `display: flex`?
+4. If both overlays are active simultaneously, the second one is invisible
+
+**Fix pattern:**
+- Before opening modal B, close modal A (`closeModalA()` first)
+- Or: set modal B's z-index to 101 (one above modal A)
+- Better: use a single modal slot with content-swap instead of separate overlay elements
+- After any `openChiselModal()` or `openDetailModal()` call, verify the parent modal overlay is not still active
+
+**Real example (ObserveCo, 2026-06-10):** Skill Audit modal → "Full Details" button opens Token Optimiser modal. Both `skillsAuditModal` and `chiselModal` had `.active` class. Chisel modal rendered behind Skills Audit overlay. Fix: `closeSkillsAudit()` called before `openChiselModal()`.
+
+---
+
+#### Trap 32: Action Buried Below Scroll Threshold
+
+**Pattern:** A modal or page contains summary data, a large scrollable detail section (50+ rows), and action buttons at the bottom. User must scroll past all detail content to reach "Apply" or "Save" buttons. The action is functionally correct — the user just never finds it.
+
+**Why AI misses this:** AI reads the full content linearly (summary → table → category → actions). The AI's rendering context is infinite — it doesn't scroll. The AI sees the action buttons because it's already "at the bottom." The human, who must scroll through 50+ rows, may not reach them.
+
+**Detection:**
+1. Open the modal. Take a mental snapshot of what's visible without scrolling
+2. If action buttons (Apply, Save, Close, Submit, Full Details) are NOT visible in that first viewport, it's a violation
+3. Specifically check: modal height vs content height. If content height > viewport height and action buttons are below the fold, the actions are buried
+4. Test on a 768px viewport (common laptop) — mobile-first users are most affected
+
+**Fix pattern (in order of preference):**
+1. **Reorder:** action-critical sections first, detail sections after. If Apply + Full Details are the reason the user opened the modal, show them immediately after the summary, before the scrollable detail
+2. **Sticky footer:** make the action bar `position: sticky; bottom: 0` so it's always visible regardless of scroll position
+3. **Separate panel:** split the modal into two areas — top (summary + actions) and bottom (scrollable detail)
+4. **Never:** bury the primary action below a non-summary scrollable section
+
+**Real example (ObserveCo, 2026-06-10):** Skill Audit modal had Summary → Skills Table (50+ rows) → Category → Compression Preview (with Apply + Full Details). User had to scroll past 50+ skills to reach the buttons. Fix: reordered to Summary → Compression Preview (with buttons) → Skills Table → Category.
+
+---
+
+#### Trap 33: Pro-Empty-State Mismatch
+
+**Pattern:** A tab or feature shows an empty state designed for Free users even when the user has a Pro license. Same "run this CLI command" empty state for all users, ignoring that Pro users can trigger the action from the UI.
+
+**Why AI misses this:** AI tests the endpoint returns the correct empty state content. The AI checks "does this show the empty state?" and gets a pass. The AI doesn't check whether the empty state's call-to-action matches the user's license tier.
+
+**Detection:**
+1. For every tab/section that has an empty state: what does it tell the user to do?
+2. If it says "Run `observeco heal --agent all` in your terminal" — check if the user has Pro
+3. If Pro: the empty state should offer a UI button instead of (or in addition to) a CLI command
+4. If Free: CLI command is correct — that's the only option
+
+**Fix pattern:**
+- Pro empty states should offer server-side actions that don't require CLI access
+- Free empty states keep CLI instructions (it's their only path)
+- If the action is available in both modes, the Pro state should prefer the UI button
+- The empty state endpoint must check license tier before rendering
+
+**Real example (ObserveCo, 2026-06-10):** Restart Quality tab showed "Run `observeco heal --agent all`" for all users. Pro users got the same empty state as Free users despite having a "Run Pulse Scan" button available. Fix: Pro empty state now shows a clickable scan button, Free keeps the CLI hint.
+
+---
+
 ## 7. Lessons Learned Log
 
 Append here every time a human catches something an AI missed. This is how the playbook stays alive.
@@ -1148,6 +1219,17 @@ Append here every time a human catches something an AI missed. This is how the p
 | 2026-06-09 | ObserveCo | "Master plan shows Push Alerts as ✅ Live" | Backend complete, dashboard UI never built | Trap 28 — Status Split | Features split into backend/dashboard status columns |
 | 2026-06-09 | ObserveCo | "loadLicenseStatus() works on Settings tab" | Crashes silently on 4 other tabs — null element access | Trap 29 — Silent DOM Crash | Added null guard to all cross-tab JS functions |
 | 2026-06-09 | ObserveCo | "License deactivation updates backend" | Badge shows old state until manual reload | Trap 30 — Badge Refresh | Added loadLicenseStatus() after every modal close |
+
+### 2026-06-10 — Post-Skill-Audit Review (6 Bugs)
+
+| Date | Product | What AI said | What human found | Trap/Layer | Fix |
+|------|---------|-------------|------------------|-----------|-----|
+| 2026-06-10 | ObserveCo | "Full Details button opens Token Optimiser modal" | Modal opens behind Skills Audit overlay — both modals have z-index:100. User sees no change. | Trap 31 — Modal Stacking | Added closeSkillsAudit() before openChiselModal() |
+| 2026-06-10 | ObserveCo | "Modal content renders correctly" | Actions (Apply Compression + Full Details) at bottom of 50+ row skill table. User must scroll past all skills. | Trap 32 — Action Buried Below Scroll | Reordered: Summary → Compression Preview (with buttons) → Skills Table → Category |
+| 2026-06-10 | ObserveCo | "Tab shows 'No restart data yet' with CLI hint" | Same empty state for Pro and Free users. Pro has a server-side scan button available but gets CLI hint instead. | Trap 33 — Pro-Empty-State Mismatch | Added Pro-aware empty state with clickable "Run Pulse Scan" button |
+| 2026-06-10 | ObserveCo | "Restart Quality tab renders empty state" | No glossary entry explaining what restart types mean. No "?" hint on tab heading. | Missing glossary | Added restart-quality glossary entry (3 types, 5 FAQ) + "?" hint on tab heading |
+| 2026-06-10 | ObserveCo | "Apply Compression button present" | Button exists but no server-side trigger to scan for data first. User must run CLI separately. | Pro empty state (Trap 33 variant) | Added POST /api/restart-quality/scan endpoint + triggerRestartScan() JS |
+| 2026-06-10 | ObserveCo | "Memory Garden scan button planned" | POST endpoint built (api_garden_scan) but frontend button never completed. | Missing feature | *(carried over — tables empty, endpoint wired but button not built)* |
 
 ---
 

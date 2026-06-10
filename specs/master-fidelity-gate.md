@@ -2,7 +2,7 @@
 
 **Product:** ObserveCo (and all future software projects)
 **Status:** Living — update as lessons accumulate
-**Version:** 3.11 — 2026-06-01 (Windows + Telemetry Hardening)
+**Version:** 3.13 — 2026-06-10 (UX Interaction Fidelity Layer H)
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
@@ -12,6 +12,7 @@
 | 3.1 | 2026-05-31 | **Layer F hardened**: 8→9 items (added F9: telemetry opt-in / security warning). All evidence requirements made CI-enforceable (exact curl/grep/TestClient commands). Added cross-reference to requirements-fidelity-playbook.md Traps 1-3. Scoring table updated 69→70. Thesis "four lenses"→"six lenses" fixed. Duplicate empty tag removed. Lessons Log date inconsistency fixed. CI yaml threshold corrected 48→56 and total 61→69→70. |
 | 3.11 | 2026-06-01 | **Windows + Telemetry Hardening**: watch.py fully cross-platform (DETACHED_PROCESS, taskkill fallback, signal guards). Telemetry client gated on local opt-in file. Three new dashboard endpoints for opt-in prompt. CI audit searches `<body>` content. Cross-platform matrix updated. Lessons Learned entries added. |
 | 3.12 | 2026-06-10 | **Added Layer G: Payment-to-Feature Fidelity** (3 items, 8 pts). Updated scoring table to include Layer G. Updated version history. |
+| 3.13 | 2026-06-10 | **Added Layer H: UX Interaction Fidelity** (2 items, 4 pts: H1 modal stacking, H2 scroll-first actions). Scoring table updated 78→82, threshold 60→63. |
 **Source:** Real need — the 7-playbook system (see requirements-fidelity-playbook.md §Playbook Inventory) all work independently, but nothing forces them to run TOGETHER before shipping.
 
 This is the **single source of truth for "is this ready to ship?"** It combines all five lenses into one weighted gate that must pass before any change reaches production.
@@ -126,6 +127,15 @@ Max Layer G: 8 pts **Pass threshold: ≥6**
 
 **Success metric for this layer:** "% of first-run users seeing ≥1 agent card or guided setup wizard. Target: >90%. Measured via opt-in telemetry on /api/agents first call. Published as dashboard-accessible metric within 30 days of launch."
 
+### Layer H: UX Interaction Fidelity (2 items, max 4 pts)
+
+| # | Item | Weight | Check | Evidence required |
+|---|------|--------|-------|-------------------|
+| H1 | Modal stacking guard — no two overlays active simultaneously | 2 | ☐ | For every "Full Details" / "Details" button inside a modal: verify parent modal is closed before child opens |
+| H2 | Scroll-first actions — primary buttons visible without scrolling | 2 | ☐ | Open each modal with action buttons: confirm Apply/Save/Full Details are above the fold, not below a large scrollable detail section |
+
+Max Layer H: 4 pts **Pass threshold: ≥3**
+
 ---
 
 ## 3. Scoring
@@ -139,7 +149,8 @@ Max Layer G: 8 pts **Pass threshold: ≥6**
 | E — Agent Session | 4 | ≥3 | ___ | ☐ |
 | F — First-Run | 9 | =9 (ALL MUST PASS) | ___ | ☐ |
 | G — Payment Pipeline | 8 | ≥6 | ___ | ☐ |
-| **Total** | **78** | **≥60** | **___** | **☐** |
+| H — UX Interaction | 4 | ≥3 | ___ | ☐ |
+| **Total** | **82** | **≥63** | **___** | **☐** |
 
 ---
 

@@ -2176,9 +2176,9 @@ function renderBrain(agentName) {
   }).join('') : '';
   document.getElementById('brainTimeline').innerHTML = cols || '<div style="color:#64748b;font-size:12px;text-align:center;padding:12px;">No timeline data yet</div>';
   // Update compression mode button labels
-  const lPct = hasLiteData ? Math.round(((rawTk - liteTk) / rawTk) * 100) :
+  const lPct = hasLiteData ? Math.round(((rawTk - a.lite_tokens) / rawTk) * 100) :
                (litePotentialPct != null ? Math.round(litePotentialPct) : null);
-  const fPct = hasFullData ? Math.round(((rawTk - fullTk) / rawTk) * 100) :
+  const fPct = hasFullData ? Math.round(((rawTk - a.full_tokens) / rawTk) * 100) :
                (fullPotentialPct != null ? Math.round(fullPotentialPct) : null);
   const liteLabel = document.getElementById('litePctLabel');
   const fullLabel = document.getElementById('fullPctLabel');
@@ -2664,8 +2664,8 @@ function runCompressPreview() {
       const saved = rawTk - estAfter;
       document.getElementById('beforeTokens').innerHTML = rawTk.toLocaleString() + ' tok';
       document.getElementById('afterTokens').innerHTML = estAfter.toLocaleString() + ' tok <span style="font-size:12px;color:#64748b;font-weight:400;">~' + potentialPct + '%</span>';
-      document.getElementById('diffPreviewOld').innerHTML = oldLines.map(l => '<div class="diff-line old">' + l + '</div>').join('');
-      document.getElementById('diffPreviewNew').innerHTML = newLines.map(l => '<div class="diff-line new">' + l + '</div>').join('') +
+      document.getElementById('diffPreviewOld').innerHTML = '<div class="diff-line old">When using tools, you MUST:</div><div class="diff-line old">1. Call exactly one tool per turn</div><div class="diff-line old">2. Pass all required parameters as shown</div><div class="diff-line old">3. No extra text before/after</div><div class="diff-line old" style="color:#475569;">(estimated — needs real compression run)</div>';
+      document.getElementById('diffPreviewNew').innerHTML = '<div class="diff-line new">Call one tool per turn with exact params.</div><div class="diff-line new">No extra text. Wait for response.</div>' +
         '<div style="color:#475569;margin-top:4px;font-size:11px;">(~' + saved.toLocaleString() + ' tokens saved — estimated, run actual compression to see real results)</div>';
       showStatus('compressStatus', '📊 Estimated preview — based on composition analysis. Run <strong>observeco chisel trim</strong> for an exact preview.', 'info');
     } else {

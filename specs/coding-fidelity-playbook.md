@@ -1,7 +1,7 @@
 # Coding Best Practices & Spec-Fidelity Playbook
 
 **Product:** ObserveCo (and all future software projects)
-**Version:** 3.12 — 2026-06-10 (UI Testing + Pipeline Learnings)
+**Version:** 3.13 — 2026-06-10 (Modal Stacking, Action Position, Tier-Aware Empty States)
 
 **Version History:**
 | Version | Date | What changed |
@@ -10,7 +10,8 @@
 | 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, Golden Gate naming normalization |
 | 3.11 | 2026-06-01 | Windows + Telemetry Hardening: added `_start_windows()`, `_windows_kill()`, signal handler guards, graceful degradation. Telemetry client now requires local opt-in file before sending. Three new dashboard endpoints for opt-in prompt. CI audit searches `<body>` content for F2/F9 keywords. Cross-platform matrix updated. |
-| 3.12 | 2026-06-10 | Added Pattern 17 (Webhook State Transition Coverage), Pattern 18 (Encryption Key Integrity on Load), Pattern 19 (Payment URL Template Variables). Updated Golden Gate with payment-pipeline integration check. |
+|| 3.12 | 2026-06-10 | Added Pattern 17 (Webhook State Transition Coverage), Pattern 18 (Encryption Key Integrity on Load), Pattern 19 (Payment URL Template Variables). Updated Golden Gate with payment-pipeline integration check. |
+| 3.13 | 2026-06-10 | Added Pattern 4.23 (Modal Stacking — child modal invisible behind parent overlay), Pattern 4.24 (Action Position — verify action buttons are visible without scrolling), Pattern 4.25 (Tier-Aware Empty States — empty states must vary by license tier). Updated Golden Gate with UX interaction checks. |
 
 **Source:** Real coding sessions — all bugs traced back to spec-to-implementation gaps, inline-style over-reliance, missing verification layers, and graph visualization blind spots
 
@@ -263,15 +264,35 @@ Edge Cases: [empty state, error state, loading state]
 
 **Prevention:** Every state-changing operation (modal close, form submit, deactivation) must call the relevant refresh function. Add to PR checklist: "Does this state change trigger a UI refresh?"
 
-**Pattern:** Agent suggests `pip install mcp>=1.0` when `mcp` doesn't exist on PyPI yet, or calls `pandas.DataFrame.merge` with parameters from a newer version than installed.
+### 4.23 Modal stacking — child modal invisible behind parent overlay
 
-**Prevention:** Before every patch that introduces a new dependency:
-```bash
-pip list | grep <package>  # or npm ls <package>
-# If not found: propose the exact version, verify it exists, pin it
-```
+**Pattern:** Clicking "Full Details" inside modal A opens modal B. Both modals use the same z-index (100). Modal B renders correctly but is invisible behind modal A's active overlay. User sees no change and assumes the button is broken.
 
-**Detection in review:** Every new import must have a corresponding entry in `pyproject.toml` or be verified as already installed.
+**Prevention:** Before opening any modal from within another modal, close the parent modal first. Verify: only one modal overlay has `.active` class or `display: flex` at any time. If modal stacking is architecturally required (e.g., overlay-on-overlay), use incremental z-index (parent=100, child=101).
+
+**Detection in review:** grep for `openModal` or `classList.add('active')` inside modal event handlers. If a modal opens another modal without closing itself first, flag it.
+
+**Real example (2026-06-10):** Skill Audit → "Full Details" opened Token Optimiser behind Skills Audit overlay. Fix: `closeSkillsAudit()` called before `openChiselModal()`.
+
+### 4.24 Action position — primary actions below scrollable detail
+
+**Pattern:** A modal or page renders summary data, a large scrollable detail section (50+ rows), and primary action buttons (Apply, Save, Full Details) at the very bottom. User must scroll past all detail content to reach the action. Functionally correct, interactionally broken.
+
+**Prevention:** Action-critical UI (Apply, Save, Submit, Full Details) must be visible without scrolling. Place them immediately after the summary, before any scrollable detail section. For long modals with many action buttons, use a sticky footer (`position: sticky; bottom: 0`).
+
+**Detection in review:** For every modal or page with a scrollable content area and action buttons: are the buttons above the fold at modal-open? If the modal contains a table with 50+ rows and the buttons are after the table, they're buried.
+
+**Real example (2026-06-10):** Skill Audit modal had actions at the end of 50+ row table. Fix: reordered so Compression Preview (with buttons) comes before the Skills Table.
+
+### 4.25 Tier-aware empty states
+
+**Pattern:** An empty state shows the same content for all license tiers — typically a CLI command hint. Pro users who could trigger the action from the UI get a terminal command instead of a button. Free users get the same instruction even though the CLI is their only option.
+
+**Prevention:** Every empty state endpoint must check the user's license tier before rendering. Pro empty states should offer server-side actions (UI buttons) over CLI instructions. Free states keep CLI instructions as the primary path. If the action exists in both modes, Pro users should see the UI button first.
+
+**Detection in review:** Search for empty state HTML strings that contain CLI commands (`observeco `, `hermes `, etc.). If found, check whether the endpoint is license-aware. If not, the empty state needs a Pro variant.
+
+**Real example (2026-06-10):** Restart Quality tab showed `observeco heal --agent all` for all users. Pro users got no scan button. Fix: Pro empty state shows "Run Pulse Scan" button; Free keeps CLI hint.
 
 ### 4.14 Over-defensive / lazy boilerplate
 

@@ -10,6 +10,7 @@
 | 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, standard lessons entry |
 | 3.2 | 2026-06-10 | Updated stale playbook count from 7 to 8 (added ui-testing-playbook). Added Lessons Learned section with 1 entry. |
+| 3.3 | 2026-06-10 | Updated stale playbook count from 8 to 9 (added master-fidelity-gate as separate layer H). UX playbook v3.6 (3 new traps). Coding playbook v3.13 (3 new patterns). Master gate v3.13 (Layer H). Total traps across all playbooks now 33. |
 
 **Source:** Real insight — 5 playbooks exist but nothing ensures they stay alive, accurate, and improving. Sean's feedback: "If a human catches something an AI missed, the playbook was incomplete — update it before fixing the code."
 
