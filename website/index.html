@@ -42,375 +42,201 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
     /* ─── NAV ─── */
     nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
-    nav .container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 64px;
-    }
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--fg);
-    }
+    nav .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); }
     .nav-logo svg { width: 32px; height: 32px; }
     .nav-logo span { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
     .nav-links { display: flex; gap: 32px; align-items: center; }
-    .nav-links a {
-      color: var(--fg-2);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.15s;
-    }
+    .nav-links a { color: var(--fg-2); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
     .nav-links a:hover { color: var(--fg); }
     .nav-cta {
-      background: var(--green) !important;
-      color: #000 !important;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: 600 !important;
-      font-family: var(--font-mono);
-      font-size: 13px !important;
+      background: var(--green) !important; color: #000 !important; padding: 8px 16px;
+      border-radius: 6px; font-weight: 600 !important; font-family: var(--font-mono); font-size: 13px !important;
     }
     .nav-cta:hover { opacity: 0.9; }
 
     /* ─── HERO ─── */
-    .hero {
-      padding: 140px 0 80px;
-      text-align: center;
-    }
+    .hero { padding: 140px 0 80px; text-align: center; }
     .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--green-dim);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      color: var(--green);
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 24px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green-dim); border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--green); padding: 6px 14px; border-radius: 999px;
+      font-size: 13px; font-weight: 500; margin-bottom: 24px;
     }
-    .hero-badge .dot {
-      width: 6px;
-      height: 6px;
-      background: var(--green);
-      border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
+    .hero-badge .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     .hero h1 {
-      font-size: clamp(36px, 5vw, 64px);
-      font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      margin-bottom: 20px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
+      font-size: clamp(36px, 5vw, 64px); font-weight: 700; line-height: 1.1;
+      letter-spacing: -0.03em; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto;
     }
     .hero h1 .green { color: var(--green); }
-    .hero p {
-      font-size: 18px;
-      color: var(--fg-2);
-      max-width: 560px;
-      margin: 0 auto 32px;
-      line-height: 1.6;
-    }
+    .hero p { font-size: 18px; color: var(--fg-2); max-width: 560px; margin: 0 auto 32px; line-height: 1.6; }
     .hero-install {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 24px;
-      font-family: var(--font-mono);
-      font-size: 15px;
-      color: var(--green);
-      cursor: pointer;
-      transition: border-color 0.15s;
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px 24px; font-family: var(--font-mono); font-size: 15px;
+      color: var(--green); cursor: pointer; transition: border-color 0.15s;
     }
     .hero-install:hover { border-color: var(--green); }
     .hero-install .copy { color: var(--fg-3); font-size: 13px; margin-left: 8px; }
-    .hero-note {
-      margin-top: 16px;
-      font-size: 13px;
-      color: var(--fg-3);
-    }
+    .hero-note { margin-top: 16px; font-size: 13px; color: var(--fg-3); }
     .hero-note span { color: var(--fg-2); }
 
-    /* ─── DASHBOARD PREVIEW ─── */
-    .preview {
-      padding: 0 0 100px;
-    }
+    /* ─── DASHBOARD PREVIEW (interactive mockup) ─── */
+    .preview { padding: 0 0 100px; }
     .preview-frame {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 48px 96px rgba(0, 0, 0, 0.4);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; box-shadow: 0 48px 96px rgba(0, 0, 0, 0.4);
     }
     .preview-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background: rgba(15, 23, 42, 0.6);
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+      background: rgba(15, 23, 42, 0.6); border-bottom: 1px solid var(--border);
     }
-    .preview-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
+    .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
     .preview-dot.r { background: #ef4444; }
     .preview-dot.y { background: #eab308; }
     .preview-dot.g { background: #22c55e; }
-    .preview-url {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-      color: var(--fg-3);
-      font-family: var(--font-mono);
+    .preview-url { flex: 1; text-align: center; font-size: 12px; color: var(--fg-3); font-family: var(--font-mono); }
+
+    /* Mockup dashboard */
+    .mockup {
+      padding: 20px;
+      display: flex; flex-direction: column; gap: 16px;
     }
-    .preview-img {
-      width: 100%;
-      display: block;
+    .mockup-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
     }
+    .mockup-card {
+      background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px;
+    }
+    .mockup-card h4 {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--fg-3); margin-bottom: 8px;
+    }
+    .mockup-card .big {
+      font-size: 28px; font-weight: 700; font-family: var(--font-mono);
+    }
+    .mockup-card .big.green { color: var(--green); }
+    .mockup-card .big.yellow { color: var(--yellow); }
+    .mockup-card .big.red { color: var(--red); }
+    .mockup-card .sub { font-size: 12px; color: var(--fg-3); margin-top: 2px; }
+    .mockup-card .bar {
+      height: 6px; border-radius: 3px; margin-top: 8px;
+      background: var(--border); overflow: hidden;
+    }
+    .mockup-card .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .mockup-card .bar-fill.green { background: var(--green); }
+    .mockup-card .bar-fill.yellow { background: var(--yellow); }
+    .mockup-card .bar-fill.red { background: var(--red); }
+    .mockup-card .bar-fill.blue { background: var(--blue); }
+
+    .mockup-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .mockup-table th { text-align: left; color: var(--fg-3); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    .mockup-table td { padding: 6px 8px; border-bottom: 1px solid rgba(51, 65, 85, 0.4); }
+    .mockup-table .status { display: inline-flex; align-items: center; gap: 4px; }
+    .mockup-table .dot-sm { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+    .mockup-table .dot-sm.green { background: var(--green); }
+    .mockup-table .dot-sm.yellow { background: var(--yellow); }
+    .mockup-table .dot-sm.red { background: var(--red); }
+
+    .mockup-nav {
+      display: flex; gap: 16px; margin-bottom: 4px;
+    }
+    .mockup-nav a {
+      font-size: 12px; color: var(--fg-3); text-decoration: none; padding-bottom: 4px;
+      border-bottom: 2px solid transparent; transition: all 0.15s;
+    }
+    .mockup-nav a.active { color: var(--green); border-bottom-color: var(--green); }
+    .mockup-nav a:hover { color: var(--fg); }
 
     /* ─── SECTION ─── */
     section { padding: 100px 0; }
     .section-label {
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--green);
-      margin-bottom: 12px;
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--green); margin-bottom: 12px;
     }
     .section-title {
-      font-size: clamp(28px, 3.5vw, 40px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 16px;
-      line-height: 1.2;
+      font-size: clamp(28px, 3.5vw, 40px); font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 16px; line-height: 1.2;
     }
-    .section-desc {
-      font-size: 16px;
-      color: var(--fg-2);
-      max-width: 560px;
-      line-height: 1.6;
-    }
+    .section-desc { font-size: 16px; color: var(--fg-2); max-width: 560px; line-height: 1.6; }
 
     /* ─── FEATURES GRID ─── */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-top: 48px;
-    }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
     .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 24px;
-      transition: border-color 0.15s;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 24px; transition: border-color 0.15s;
     }
     .feature-card:hover { border-color: var(--green); }
     .feature-icon {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--green-dim);
-      border-radius: 8px;
-      margin-bottom: 16px;
-      font-size: 18px;
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      background: var(--green-dim); border-radius: 8px; margin-bottom: 16px; font-size: 18px;
     }
-    .feature-card h3 {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .feature-card p {
-      font-size: 13px;
-      color: var(--fg-2);
-      line-height: 1.5;
-    }
+    .feature-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .feature-card p { font-size: 13px; color: var(--fg-2); line-height: 1.5; }
     .feature-card .tag {
-      display: inline-block;
-      margin-top: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 2px 8px;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-      color: var(--fg-3);
+      display: inline-block; margin-top: 12px; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px;
+      border-radius: 4px; border: 1px solid var(--border); color: var(--fg-3);
     }
     .feature-card .tag.free { border-color: var(--green); color: var(--green); }
 
     /* ─── HOW IT WORKS ─── */
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px;
-      margin-top: 48px;
-    }
-    .step {
-      text-align: center;
-    }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 48px; }
+    .step { text-align: center; }
     .step-num {
-      font-family: var(--font-mono);
-      font-size: 40px;
-      font-weight: 700;
-      color: var(--green);
-      opacity: 0.3;
-      margin-bottom: 16px;
+      font-family: var(--font-mono); font-size: 40px; font-weight: 700;
+      color: var(--green); opacity: 0.3; margin-bottom: 16px;
     }
-    .step h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .step p {
-      font-size: 14px;
-      color: var(--fg-2);
-      line-height: 1.5;
-    }
+    .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .step p { font-size: 14px; color: var(--fg-2); line-height: 1.5; }
 
     /* ─── COMPARISON ─── */
     .comparison {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 48px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; margin-top: 48px;
     }
-    .comparison-row {
-      display: grid;
-      grid-template-columns: 200px 1fr 1fr;
-      border-bottom: 1px solid var(--border);
-    }
+    .comparison-row { display: grid; grid-template-columns: 200px 1fr 1fr; border-bottom: 1px solid var(--border); }
     .comparison-row:last-child { border-bottom: none; }
-    .comparison-row.header {
-      background: rgba(15, 23, 42, 0.5);
-    }
-    .comparison-cell {
-      padding: 14px 20px;
-      font-size: 14px;
-      border-right: 1px solid var(--border);
-    }
+    .comparison-row.header { background: rgba(15, 23, 42, 0.5); }
+    .comparison-cell { padding: 14px 20px; font-size: 14px; border-right: 1px solid var(--border); }
     .comparison-cell:last-child { border-right: none; }
-    .comparison-row.header .comparison-cell {
-      font-weight: 600;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--fg-3);
-    }
+    .comparison-row.header .comparison-cell { font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-3); }
     .comparison-cell .check { color: var(--green); }
     .comparison-cell .cross { color: var(--fg-3); }
 
     /* ─── ROADMAP ─── */
-    .roadmap-items {
-      margin-top: 48px;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .roadmap-item {
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 24px;
-      padding: 24px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    .roadmap-items { margin-top: 48px; display: flex; flex-direction: column; gap: 0; }
+    .roadmap-item { display: grid; grid-template-columns: 120px 1fr; gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--border); }
     .roadmap-item:last-child { border-bottom: none; }
-    .roadmap-version {
-      font-family: var(--font-mono);
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--green);
-    }
-    .roadmap-item h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .roadmap-item p {
-      font-size: 14px;
-      color: var(--fg-2);
-    }
+    .roadmap-version { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--green); }
+    .roadmap-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .roadmap-item p { font-size: 14px; color: var(--fg-2); }
 
     /* ─── CTA ─── */
-    .cta {
-      text-align: center;
-      padding: 100px 0;
-      border-top: 1px solid var(--border);
-    }
-    .cta h2 {
-      font-size: clamp(28px, 3.5vw, 40px);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 16px;
-    }
-    .cta p {
-      font-size: 16px;
-      color: var(--fg-2);
-      margin-bottom: 32px;
-    }
+    .cta { text-align: center; padding: 100px 0; border-top: 1px solid var(--border); }
+    .cta h2 { font-size: clamp(28px, 3.5vw, 40px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
+    .cta p { font-size: 16px; color: var(--fg-2); margin-bottom: 32px; }
     .cta-install {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--green);
-      color: #000;
-      padding: 14px 28px;
-      border-radius: 8px;
-      font-family: var(--font-mono);
-      font-size: 15px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: opacity 0.15s;
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--green); color: #000; padding: 14px 28px; border-radius: 8px;
+      font-family: var(--font-mono); font-size: 15px; font-weight: 600;
+      text-decoration: none; transition: opacity 0.15s;
     }
     .cta-install:hover { opacity: 0.9; }
 
     /* ─── FOOTER ─── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 0;
-      text-align: center;
-      font-size: 13px;
-      color: var(--fg-3);
-    }
+    footer { border-top: 1px solid var(--border); padding: 32px 0; text-align: center; font-size: 13px; color: var(--fg-3); }
     footer a { color: var(--fg-2); text-decoration: none; }
     footer a:hover { color: var(--fg); }
 
@@ -423,19 +249,14 @@
       .comparison-cell:last-child { border-bottom: none; }
       .roadmap-item { grid-template-columns: 1fr; gap: 8px; }
       .nav-links { display: none; }
+      .mockup-row { grid-template-columns: 1fr; }
     }
 
     /* ─── TERMINAL DEMO ─── */
     .terminal {
-      background: #0b1120;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 24px;
-      font-family: var(--font-mono);
-      font-size: 14px;
-      line-height: 1.8;
-      margin-top: 48px;
-      overflow-x: auto;
+      background: #0b1120; border: 1px solid var(--border); border-radius: 8px;
+      padding: 24px; font-family: var(--font-mono); font-size: 14px;
+      line-height: 1.8; margin-top: 48px; overflow-x: auto;
     }
     .terminal .prompt { color: var(--green); }
     .terminal .cmd { color: var(--fg); }
@@ -479,19 +300,19 @@
   <div class="container">
     <div class="hero-badge">
       <span class="dot"></span>
-      Open source · MIT license · No cloud
+      v0.3 · Ship Ready · 610 tests · Open source · MIT license · No cloud
     </div>
     <h1>Tells you if your AI agents are <span class="green">working</span>, what they're doing, and where your <span class="green">money</span> goes.</h1>
-    <p>20+ features. One install. 60 seconds to first health data. Your data never leaves your machine.</p>
+    <p>18 features. One install. 60 seconds to first health data. Your data never leaves your machine.</p>
     <div class="hero-install" onclick="navigator.clipboard.writeText('pip install observeco && observeco dashboard'); this.querySelector('.copy').textContent='copied!'">
       <span>$</span> pip install observeco && observeco dashboard
       <span class="copy">click to copy</span>
     </div>
-    <p class="hero-note"><span>Works with Hermes, OpenClaw, Ollama, LangChain, CrewAI, or any framework.</span></p>
+    <p class="hero-note"><span>Works with Hermes, OpenClaw, Ollama, or any agent framework.</span></p>
   </div>
 </section>
 
-<!-- DASHBOARD PREVIEW -->
+<!-- DASHBOARD PREVIEW (interactive mockup) -->
 <section class="preview">
   <div class="container">
     <div class="preview-frame">
@@ -499,9 +320,260 @@
         <div class="preview-dot r"></div>
         <div class="preview-dot y"></div>
         <div class="preview-dot g"></div>
-        <div class="preview-url">localhost:8080</div>
+        <div class="preview-url">observeco dashboard</div>
       </div>
-      <img src="assets/dashboard-preview.png" alt="ObserveCo dashboard showing fleet health, token breakdown, and error timeline" class="preview-img">
+      <div class="mockup" id="mockup-dashboard">
+        <div class="mockup-nav">
+          <a href="#" class="active" data-tab="Fleet">Fleet</a>
+          <a href="#" data-tab="Tokens">Tokens</a>
+          <a href="#" data-tab="Drift">Drift</a>
+          <a href="#" data-tab="Errors">Errors</a>
+          <a href="#" data-tab="Alerts">Alerts</a>
+          <a href="#" data-tab="Settings">Settings</a>
+        </div>
+
+        <!-- FLEET -->
+        <div class="tab-panel" data-tab="Fleet">
+          <div class="mockup-row">
+            <div class="mockup-card">
+              <h4>Fleet Health</h4>
+              <div class="big green">6/8</div>
+              <div class="sub">agents alive · 2 degraded</div>
+              <div class="bar"><div class="bar-fill green" style="width: 75%;"></div></div>
+            </div>
+            <div class="mockup-card">
+              <h4>Total Tokens Today</h4>
+              <div class="big">1.2M</div>
+              <div class="sub">across all agents · <span style="color: var(--green);">$0.04</span> estimated cost</div>
+              <div class="bar"><div class="bar-fill blue" style="width: 60%;"></div></div>
+            </div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-card" style="grid-column: 1 / -1;">
+              <h4>Agent Fleet</h4>
+              <table class="mockup-table">
+                <tr><th>Agent</th><th>Status</th><th>Tokens</th><th>Drift</th><th>Errors</th><th>Circuit</th></tr>
+                <tr><td>hound</td><td><span class="status"><span class="dot-sm green"></span> alive</span></td><td>12.4K</td><td>+2%</td><td>0</td><td>closed</td></tr>
+                <tr><td>kepler</td><td><span class="status"><span class="dot-sm green"></span> alive</span></td><td>8.2K</td><td>-1%</td><td>0</td><td>closed</td></tr>
+                <tr><td>aleph</td><td><span class="status"><span class="dot-sm green"></span> alive</span></td><td>15.6K</td><td>+5%</td><td>1</td><td>closed</td></tr>
+                <tr><td>dreamer</td><td><span class="status"><span class="dot-sm yellow"></span> degraded</span></td><td>6.1K</td><td>+12%</td><td>3</td><td>open</td></tr>
+                <tr><td>raven</td><td><span class="status"><span class="dot-sm red"></span> dead</span></td><td>—</td><td>—</td><td>5</td><td>open</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOKENS -->
+        <div class="tab-panel" data-tab="Tokens" style="display: none;">
+          <div class="mockup-row">
+            <div class="mockup-card">
+              <h4>Cost Today</h4>
+              <div class="big green">$0.04</div>
+              <div class="sub">1.2M tokens · across 5 agents</div>
+              <div class="bar"><div class="bar-fill blue" style="width: 60%;"></div></div>
+            </div>
+            <div class="mockup-card">
+              <h4>Cache Efficiency</h4>
+              <div class="big">68%</div>
+              <div class="sub">cache hit rate · saving ~$0.08/day</div>
+              <div class="bar"><div class="bar-fill green" style="width: 68%;"></div></div>
+            </div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-card" style="grid-column: 1 / -1;">
+              <h4>Tokens Today by Agent</h4>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">aleph</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 100%;"></div></div>
+                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px;">15.6K</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">hound</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 79%;"></div></div>
+                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px;">12.4K</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">kepler</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 53%;"></div></div>
+                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px;">8.2K</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">dreamer</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 39%;"></div></div>
+                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px;">6.1K</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">raven</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 0%;"></div></div>
+                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--fg-3);">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-card" style="grid-column: 1 / -1;">
+              <h4>Token Composition</h4>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">identity</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill green" style="width: 18%;"></div></div>
+                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">18%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">skills</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 32%;"></div></div>
+                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">32%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">memory</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill yellow" style="width: 24%;"></div></div>
+                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">24%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">tools</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 14%;"></div></div>
+                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">14%</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">guidance</span>
+                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill green" style="width: 12%;"></div></div>
+                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">12%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DRIFT -->
+        <div class="tab-panel" data-tab="Drift" style="display: none;">
+          <div class="mockup-row">
+            <div class="mockup-card">
+              <h4>Fleet Drift</h4>
+              <div class="big yellow">+3.6%</div>
+              <div class="sub">average across all agents · 7-day window</div>
+              <div class="bar"><div class="bar-fill yellow" style="width: 36%;"></div></div>
+            </div>
+            <div class="mockup-card">
+              <h4>Worst Offender</h4>
+              <div class="big red">dreamer</div>
+              <div class="sub">+12% · memory bloat detected</div>
+              <div class="bar"><div class="bar-fill red" style="width: 80%;"></div></div>
+            </div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-card" style="grid-column: 1 / -1;">
+              <h4>Drift by Component</h4>
+              <table class="mockup-table">
+                <tr><th>Agent</th><th>Identity</th><th>Skills</th><th>Memory</th><th>Tools</th><th>Guidance</th><th>Overall</th></tr>
+                <tr><td>hound</td><td style="color: var(--green);">+1%</td><td style="color: var(--green);">+2%</td><td style="color: var(--green);">+3%</td><td style="color: var(--green);">0%</td><td style="color: var(--green);">+1%</td><td style="color: var(--green);">+2%</td></tr>
+                <tr><td>kepler</td><td style="color: var(--green);">0%</td><td style="color: var(--green);">-2%</td><td style="color: var(--green);">-1%</td><td style="color: var(--green);">0%</td><td style="color: var(--green);">-1%</td><td style="color: var(--green);">-1%</td></tr>
+                <tr><td>aleph</td><td style="color: var(--green);">+2%</td><td style="color: var(--yellow);">+6%</td><td style="color: var(--yellow);">+7%</td><td style="color: var(--green);">+1%</td><td style="color: var(--green);">+3%</td><td style="color: var(--yellow);">+5%</td></tr>
+                <tr><td>dreamer</td><td style="color: var(--green);">+3%</td><td style="color: var(--yellow);">+8%</td><td style="color: var(--red);">+24%</td><td style="color: var(--yellow);">+7%</td><td style="color: var(--green);">+2%</td><td style="color: var(--red);">+12%</td></tr>
+                <tr><td>raven</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ERRORS -->
+        <div class="tab-panel" data-tab="Errors" style="display: none;">
+          <div class="mockup-row">
+            <div class="mockup-card">
+              <h4>Errors Today</h4>
+              <div class="big red">9</div>
+              <div class="sub">across 5 agents · 2 agents affected</div>
+              <div class="bar"><div class="bar-fill red" style="width: 45%;"></div></div>
+            </div>
+            <div class="mockup-card">
+              <h4>Clean Agents</h4>
+              <div class="big green">2/5</div>
+              <div class="sub">hound &amp; kepler · 0 errors</div>
+              <div class="bar"><div class="bar-fill green" style="width: 40%;"></div></div>
+            </div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-card" style="grid-column: 1 / -1;">
+              <h4>Recent Errors</h4>
+              <table class="mockup-table">
+                <tr><th>Time</th><th>Agent</th><th>Error</th><th>Status</th></tr>
+                <tr><td>—</td><td>hound</td><td style="color: var(--fg-3);">no errors</td><td><span class="status"><span class="dot-sm green"></span> ok</span></td></tr>
+                <tr><td>—</td><td>kepler</td><td style="color: var(--fg-3);">no errors</td><td><span class="status"><span class="dot-sm green"></span> ok</span></td></tr>
+                <tr><td>14:02</td><td>aleph</td><td>timeout in skill load</td><td><span class="status"><span class="dot-sm yellow"></span> recovered</span></td></tr>
+                <tr><td>13:47</td><td>dreamer</td><td>memory overflow</td><td><span class="status"><span class="dot-sm yellow"></span> degraded</span></td></tr>
+                <tr><td>13:31</td><td>dreamer</td><td>tool call failed</td><td><span class="status"><span class="dot-sm yellow"></span> degraded</span></td></tr>
+                <tr><td>13:12</td><td>dreamer</td><td>rate limited</td><td><span class="status"><span class="dot-sm yellow"></span> degraded</span></td></tr>
+                <tr><td>12:58</td><td>raven</td><td>connection refused (×3)</td><td><span class="status"><span class="dot-sm red"></span> dead</span></td></tr>
+                <tr><td>12:40</td><td>raven</td><td>auth expired (×2)</td><td><span class="status"><span class="dot-sm red"></span> dead</span></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="tab-panel" data-tab="Alerts" style="display: none;">
+          <div class="mockup-row">
+            <div class="mockup-card">
+              <h4>Channels Active</h4>
+              <div class="big green">3/3</div>
+              <div class="sub">Telegram · Discord · Email</div>
+              <div class="bar"><div class="bar-fill green" style="width: 100%;"></div></div>
+            </div>
+            <div class="mockup-card">
+              <h4>Last Alert Sent</h4>
+              <div class="big">12:58</div>
+              <div class="sub"><span style="color: var(--red);">raven</span> dead · delivered to 3 channels</div>
+              <div class="bar"><div class="bar-fill red" style="width: 100%;"></div></div>
+            </div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-card" style="grid-column: 1 / -1;">
+              <h4>Alert Channels</h4>
+              <table class="mockup-table">
+                <tr><th>Channel</th><th>Status</th><th>Delivered</th><th>Toggle</th></tr>
+                <tr><td>Telegram</td><td><span class="status"><span class="dot-sm green"></span> connected ✓</span></td><td>14 today</td><td style="color: var(--green); font-family: var(--font-mono);">on</td></tr>
+                <tr><td>Discord</td><td><span class="status"><span class="dot-sm green"></span> connected ✓</span></td><td>14 today</td><td style="color: var(--green); font-family: var(--font-mono);">on</td></tr>
+                <tr><td>Email</td><td><span class="status"><span class="dot-sm green"></span> connected ✓</span></td><td>14 today</td><td style="color: var(--green); font-family: var(--font-mono);">on</td></tr>
+              </table>
+              <div style="margin-top: 14px;">
+                <span style="display: inline-flex; align-items: center; gap: 8px; background: var(--green); color: #000; padding: 8px 16px; border-radius: 6px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; cursor: pointer;">Send Test Alert</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="tab-panel" data-tab="Settings" style="display: none;">
+          <div class="mockup-row">
+            <div class="mockup-card">
+              <h4>Dashboard Port</h4>
+              <div class="big">8123</div>
+              <div class="sub">http://localhost:8123</div>
+            </div>
+            <div class="mockup-card">
+              <h4>Auto-Refresh Interval</h4>
+              <div class="big">30s</div>
+              <div class="sub">dashboard polling cadence</div>
+            </div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-card">
+              <h4>Pulse Check Interval</h4>
+              <div class="big">30s</div>
+              <div class="sub">agent heartbeat polling</div>
+            </div>
+            <div class="mockup-card">
+              <h4>Watch Daemon</h4>
+              <div class="big green">enabled</div>
+              <div class="sub">auto-heal dead agents on trip</div>
+              <div class="bar"><div class="bar-fill green" style="width: 100%;"></div></div>
+            </div>
+          </div>
+          <div class="mockup-row">
+            <div class="mockup-card" style="grid-column: 1 / -1;">
+              <h4>Pro License Key</h4>
+              <input type="text" placeholder="OBS-PRO-XXXXXXXX-XXXXXX" style="width: 100%; margin-top: 4px; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; color: var(--green); font-family: var(--font-mono); font-size: 13px;">
+              <div class="sub">unlocks Pro licensing, SSO, and Stripe billing</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -510,8 +582,8 @@
 <section id="features">
   <div class="container">
     <div class="section-label">What you get</div>
-    <h2 class="section-title">20+ features. Auto-detects your agent stack.</h2>
-    <p class="section-desc">Everything you need to know if your agents are alive, what's in their context, and when something breaks. Plus webhook ingestion from Slack, Discord, and Telegram.</p>
+    <h2 class="section-title">18 features. Auto-detects your agent stack.</h2>
+    <p class="section-desc">Everything you need to know if your agents are alive, what's in their context, and when something breaks.</p>
 
     <div class="features-grid">
       <div class="feature-card">
@@ -524,12 +596,6 @@
         <div class="feature-icon">⚡</div>
         <h3>Circuit Breaker</h3>
         <p>N-failure trip → auto-block → cooldown. Stops cascade failures before they spread.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🛡️</div>
-        <h3>Safety Guard</h3>
-        <p>99.7% noise reduction. Only surfaces real issues, not flapping or transient errors.</p>
         <span class="tag free">Free</span>
       </div>
       <div class="feature-card">
@@ -553,19 +619,13 @@
       <div class="feature-card">
         <div class="feature-icon">🔍</div>
         <h3>Brain Analysis</h3>
-        <p>Find bloated, duplicate, or unused skills eating your context window — now with compression preview and per-skill actions.</p>
+        <p>Find bloated, duplicate, or unused skills eating your context window. Compression preview with per-skill actions.</p>
         <span class="tag free">Free</span>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🌱</div>
         <h3>Memory Garden</h3>
         <p>Duplicates, contradictions, stale entries — find and fix memory bloat.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3>Context Profiler</h3>
-        <p>See what's loading into your agent's context — MEMORY.md, skills, workspace.</p>
         <span class="tag free">Free</span>
       </div>
       <div class="feature-card">
@@ -587,57 +647,51 @@
         <span class="tag free">Free</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🌐</div>
-        <h3>Webhook Ingestion</h3>
-        <p>Receive events from Slack, Discord, and Telegram. Translates to OEF → risk engine → alerts.</p>
+        <div class="feature-icon">⚖️</div>
+        <h3>Fleet Comparison</h3>
+        <p>Side-by-side agent matrix — tokens, composition, drift, errors, circuit status. Compare any two agents instantly.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📬</div>
+        <h3>Push Alerts</h3>
+        <p>Telegram, Discord, and email alerts when agents break. Delivery log, test button, channel management.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🩺</div>
+        <h3>Auto-Heal</h3>
+        <p>Per-agent toggle, L2 thresholds, heal events log. Watch daemon auto-restarts dead agents.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔑</div>
+        <h3>Pro License</h3>
+        <p>Generate & revoke admin keys, self-serve billing via Stripe, trial management. Enterprise-ready licensing.</p>
+        <span class="tag">Pro</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📖</div>
+        <h3>Glossary</h3>
+        <p>20+ entries with hint buttons across all tabs. Learn what drift, chisel, pulse, and clawforge mean — in context.</p>
+        <span class="tag free">Free</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Confidence Framework</h3>
+        <p>FP/FN risk badges on every card. Know when to trust a recommendation and when to double-check.</p>
         <span class="tag free">Free</span>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🔀</div>
-        <h3>Event Pipeline</h3>
-        <p>Tool calls flow through risk classification → session log → alert dispatch → circuit breaker.</p>
+        <h3>Hermes Plugin</h3>
+        <p>Native OTEL plugin with 11 hooks. Real token tracking from every LLM call. Ships as a bundled Hermes plugin.</p>
         <span class="tag free">Free</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">⏳</div>
-        <h3>Rate Limiting</h3>
-        <p>Built-in 429 handling with exponential backoff. Slack, Discord, Telegram calls never silently fail.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📮</div>
-        <h3>Dead Letter Queue</h3>
-        <p>Failed events are stored, not dropped. Retry, resolve, or purge from the API.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔐</div>
-        <h3>SAML SSO</h3>
-        <p>Enterprise single sign-on with XML signature validation. Just-in-time user provisioning.</p>
-        <span class="tag">Enterprise</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🪪</div>
-        <h3>OAuth2 + Sessions</h3>
-        <p>Google, GitHub login. Sessions persist across restarts via SQLite.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3>Encrypted Tokens</h3>
-        <p>API tokens encrypted at rest via OS keychain. No plaintext secrets on disk.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔄</div>
-        <h3>DB Migrations</h3>
-        <p>Versioned schema migrations. Upgrade safely — no data loss, no breakage.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💓</div>
-        <h3>Watch Self-Check</h3>
-        <p>Heartbeat file every cycle. External monitors can detect if the daemon is stuck.</p>
+        <div class="feature-icon">📊</div>
+        <h3>Token Analytics</h3>
+        <p>Chart.js time-series dashboard with per-agent breakdown, cost estimation, and cache efficiency tracking.</p>
         <span class="tag free">Free</span>
       </div>
     </div>
@@ -670,7 +724,7 @@
 
     <div class="terminal">
       <div><span class="prompt">$</span> <span class="cmd">pip install observeco</span></div>
-      <div class="output">✓ Installed observeco-0.1.0</div>
+      <div class="output">✓ Installed observeco-0.3.0</div>
       <div>&nbsp;</div>
       <div><span class="prompt">$</span> <span class="cmd">observeco pulse check</span></div>
       <div class="output">Agent Fleet Health</div>
@@ -681,7 +735,7 @@
       <div><span class="err">● raven</span> <span class="output">dead · no response in 5m</span></div>
       <div>&nbsp;</div>
       <div><span class="prompt">$</span> <span class="cmd">observeco dashboard</span></div>
-      <div class="output">Dashboard running at <span style="color: var(--blue);">http://localhost:8080</span></div>
+      <div class="output">Dashboard running at <span style="color: var(--blue);">http://localhost:8123</span></div>
     </div>
   </div>
 </section>
@@ -719,24 +773,19 @@
         <div class="comparison-cell"><span class="cross">✗</span> Manual configuration</div>
       </div>
       <div class="comparison-row">
-        <div class="comparison-cell" style="font-weight: 500;">Webhook ingestion</div>
-        <div class="comparison-cell"><span class="check">✓</span> Slack, Discord, Telegram → OEF → risk engine</div>
+        <div class="comparison-cell" style="font-weight: 500;">Auto-heal</div>
+        <div class="comparison-cell"><span class="check">✓</span> Per-agent toggle, L2 thresholds</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Manual restart required</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Push alerts</div>
+        <div class="comparison-cell"><span class="check">✓</span> Telegram, Discord, email</div>
         <div class="comparison-cell"><span class="cross">✗</span> Manual integration required</div>
       </div>
       <div class="comparison-row">
-        <div class="comparison-cell" style="font-weight: 500;">Rate limiting</div>
-        <div class="comparison-cell"><span class="check">✓</span> Built-in 429 retry + backoff</div>
-        <div class="comparison-cell"><span class="cross">✗</span> Silent failures on rate limits</div>
-      </div>
-      <div class="comparison-row">
-        <div class="comparison-cell" style="font-weight: 500;">Dead letter queue</div>
-        <div class="comparison-cell"><span class="check">✓</span> Failed events stored, retryable</div>
-        <div class="comparison-cell"><span class="cross">✗</span> Events silently dropped</div>
-      </div>
-      <div class="comparison-row">
-        <div class="comparison-cell" style="font-weight: 500;">SSO / SAML</div>
-        <div class="comparison-cell"><span class="check">✓</span> Built-in with signature validation</div>
-        <div class="comparison-cell"><span class="cross">✗</span> Not available</div>
+        <div class="comparison-cell" style="font-weight: 500;">Hermes plugin</div>
+        <div class="comparison-cell"><span class="check">✓</span> Native OTEL plugin — 11 hooks</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Manual integration required</div>
       </div>
       <div class="comparison-row">
         <div class="comparison-cell" style="font-weight: 500;">Cost</div>
@@ -756,22 +805,29 @@
 <section id="roadmap" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
   <div class="container">
     <div class="section-label">What's coming</div>
-    <h2 class="section-title">v0.1 is just the beginning.</h2>
+    <h2 class="section-title">v0.3 is just the beginning.</h2>
     <p class="section-desc">We ship fast. Every week, new capabilities. The dashboard that sees problems also fixes them.</p>
 
     <div class="roadmap-items">
       <div class="roadmap-item">
-        <div class="roadmap-version">v0.2 · Now</div>
+        <div class="roadmap-version">v0.2 · Shipped</div>
         <div>
-          <h3>20+ features — monitoring + integration</h3>
-          <p>Pulse check, circuit breakers, token breakdown, drift tracking, memory garden, skill audit, heal button, error timeline, webhook ingestion, event pipeline, rate limiting, dead letter queue, SAML SSO, OAuth2, encrypted tokens, DB migrations.</p>
+          <h3>Token Analytics + Data Infrastructure</h3>
+          <p>Chart.js time-series dashboard, per-component token breakdown, drift tracking, memory garden, skill audit, heal button, error timeline, DB migrations.</p>
         </div>
       </div>
       <div class="roadmap-item">
-        <div class="roadmap-version">v0.3 · Next</div>
+        <div class="roadmap-version">v0.3 · Now</div>
         <div>
-          <h3>Auto-heal + push alerts</h3>
-          <p>Watch daemon auto-restarts dead agents. Telegram, webhook, and email alerts when agents break. Close the discovery gap.</p>
+          <h3>Auto-heal + Push Alerts + Pro Licensing</h3>
+          <p>Watch daemon auto-restarts dead agents. Telegram, Discord, and email alerts. Fleet comparison, drift alerts UI, circuit breaker config UI, glossary, confidence framework, Pro license key management with Stripe billing. 610 tests. Hermes OTEL plugin.</p>
+        </div>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-version">v0.4 · Next</div>
+        <div>
+          <h3>CI gates + Eval capture</h3>
+          <p>CI quality gates with health thresholds. Eval dataset capture — save any agent turn as a regression test case. Static fleet report export.</p>
         </div>
       </div>
       <div class="roadmap-item">
@@ -805,6 +861,27 @@
     <p>© 2026 ObserveCo · Built with ❤️ for AI agent operators · <a href="https://github.com/observeco/observeco" target="_blank">GitHub</a></p>
   </div>
 </footer>
+
+<!-- DASHBOARD MOCKUP TAB SWITCHING -->
+<script>
+(function () {
+  var mock = document.getElementById('mockup-dashboard');
+  if (!mock) return;
+  var tabs = mock.querySelectorAll('.mockup-nav a');
+  var panels = mock.querySelectorAll('.tab-panel');
+  function show(name) {
+    tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
+    panels.forEach(function (p) { p.style.display = p.getAttribute('data-tab') === name ? '' : 'none'; });
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function (e) {
+      e.preventDefault();
+      show(t.getAttribute('data-tab'));
+    });
+  });
+  show('Fleet');
+})();
+</script>
 
 </body>
 </html>
