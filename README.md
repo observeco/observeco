@@ -6,7 +6,7 @@
 pip install 'observeco[dashboard]' && observeco dashboard
 ```
 
-> **v0.1 — 12 features live. Pro tier available ($9/mo).** Built and dogfooded on a 7-agent fleet running on a single M4 Mac Mini.
+> **v0.3.1 — Official Hermes Agent Observability Plugin.** 18 features. 610 tests. Built and dogfooded on a 7-agent fleet running on a single M4 Mac Mini.
 
 <p align="center">
   <img src="docs/assets/dashboard-screenshot.png" alt="ObserveCo Dashboard" width="720">
@@ -22,6 +22,42 @@ pip install 'observeco[dashboard]' && observeco dashboard
 [![GitHub stars](https://img.shields.io/github/stars/observeco/observeco?style=social)](https://github.com/observeco/observeco)
 
 </div>
+
+---
+
+## 🔌 Official Hermes Agent Integration
+
+ObserveCo ships a **native Hermes plugin** that exports real-time telemetry from every agent conversation — no sidecars, no proxies, no manual instrumentation.
+
+**What the plugin exports (11 hooks):**
+
+| Hook | Data |
+|------|------|
+| `post_api_request` | Token usage (input, output, cache, cost, model, provider) |
+| `api_request_error` | LLM failures with error message |
+| `on_session_start` / `on_session_end` | Session lifecycle |
+| `pre_tool_call` / `post_tool_call` | Tool invocation + result summary |
+| `subagent_start` / `subagent_stop` | Child agent spawn + completion |
+| `pre_gateway_dispatch` | Incoming message routing |
+
+**Quick start for Hermes users:**
+
+```bash
+# 1. Enable the plugin
+hermes plugins enable observability/observeco
+
+# 2. Set the endpoint
+echo 'HERMES_OBSERVECO_ENDPOINT=http://127.0.0.1:4318' >> ~/.hermes/.env
+
+# 3. Restart the gateway
+launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway
+
+# 4. Start the OTEL listener & dashboard
+observeco otel listen start --port 4318
+observeco dashboard
+```
+
+The plugin is bundled with Hermes Agent and contributed upstream via [PR #52357](https://github.com/NousResearch/hermes-agent/pull/52357). Full integration guide at [`docs/hermes-plugin-integration.md`](docs/hermes-plugin-integration.md).
 
 ---
 
@@ -119,39 +155,48 @@ Run `observeco dashboard` and click "Unlock with Pro" to start your free trial.
 
 ---
 
-## What Ships Now (v0.1)
+## What Ships Now (v0.3.1)
 
-12 features. One `pip install`. 60 seconds to first health data.
+18 features. One `pip install`. 60 seconds to first health data.
 
 ### Fleet Health
-| Feature | Command | What it does |
-|---------|---------|-------------|
-| **Pulse Check** | `observeco pulse check` | Agent liveness — alive / dead / error. Auto-detects from config. |
-| **Circuit Breaker** | `observeco pulse circuit` | N-failure trip → auto-block → cooldown. Stops cascade failures. |
-| **Safety Guard** | built-in | Noise reduction — only surfaces real issues, not flapping |
-| **Heal Button** | dashboard | One-click restart for dead agents. Manual trigger, you're in control. |
+| Feature | What it does |
+|---------|-------------|
+| **Pulse Check** | Agent liveness — alive / dead / error. Auto-detects from config. |
+| **Circuit Breaker** | N-failure trip → auto-block → cooldown. Stops cascade failures. |
+| **Heal Button** | One-click restart for dead agents. Manual trigger, you're in control. |
+| **Auto-Heal** | Per-agent toggle, L2 thresholds. Watch daemon auto-restarts dead agents. |
+| **Push Alerts** | Telegram, Discord, and email alerts when agents break. Delivery log, test button. |
 
 ### Token Intelligence
-| Feature | Command | What it does |
-|---------|---------|-------------|
-| **Context Trim** | `observeco context trim` (or `observeco chisel trim`) | System prompt compression with per-component token breakdown |
-| **Drift Tracking** | `observeco context drift` (or `observeco chisel drift`) | 7-day rolling token drift trend per component per agent |
-| ~~**Skill Audit**~~ | ~~`observeco context skills` (or `observeco chisel skills`)~~ | ~~Merged into Brain Analysis — find bloated, duplicate, or unused skills eating context~~ |
+| Feature | What it does |
+|---------|-------------|
+| **Token Breakdown** | Per-component token breakdown (identity, skills, memory, tools, guidance) |
+| **Drift Tracking** | 7-day rolling token drift trend per component per agent |
+| **Token Analytics** | Chart.js time-series dashboard with cost estimation and cache efficiency |
+| **Brain Analysis** | Find bloated, duplicate, or unused skills. Compression preview with per-skill actions. |
 
 ### Memory & Context
-| Feature | Command | What it does |
-|---------|---------|-------------|
-| **Memory Garden** | `observeco memory garden` (or `observeco clawforge garden`) | Find duplicates, contradictions, stale entries in agent memory |
-| **Context Profiler** | `observeco context profile` (or `observeco clawforge profile`) | See what's in your agent's context — MEMORY.md, skills, workspace |
-| **Intent Classifier** | `observeco context load` (or `observeco clawforge load`) | Dry-run which sources would load per message type |
+| Feature | What it does |
+|---------|-------------|
+| **Memory Garden** | Find duplicates, contradictions, stale entries in agent memory |
+| **Fleet Comparison** | Side-by-side agent matrix — tokens, composition, drift, errors, circuit status |
 
 ### Dashboard & Alerts
-| Feature | Access | What it does |
-|---------|--------|-------------|
-| **Fleet View** | `observeco dashboard` | All agents at a glance — green/yellow/red status cards |
-| **In-Dashboard Alerts** | free | See alerts when you open the dashboard. Shows discovery gap ("happened 3am, found 7am") |
-| **Error Timeline** | free | Full error history with context snapshots |
-| **Push Alerts** | v0.3 (D+7) | Telegram / webhook / email — know before you check |
+| Feature | What it does |
+|---------|-------------|
+| **Fleet View** | All agents at a glance — green/yellow/red status cards |
+| **In-Dashboard Alerts** | See alerts when you open the dashboard. Shows discovery gap. |
+| **Error Timeline** | Full error history with context snapshots |
+| **Glossary** | 20+ entries with hint buttons across all tabs |
+| **Confidence Framework** | FP/FN risk badges on every card |
+
+### Pro Features
+| Feature | What it does |
+|---------|-------------|
+| **Pro License** | Generate & revoke admin keys, self-serve billing via Stripe |
+| **Drift Alerts UI** | Configure drift thresholds from the dashboard |
+| **Circuit Breaker Config** | Turn-rate alerting, budget cap, manual kill switch |
 
 ---
 
@@ -218,12 +263,13 @@ pip install observeco
 
 ## Roadmap
 
-| Version | Timing | What |
+| Version | Status | What |
 |---------|--------|------|
-| **v0.1** | Now | 12 features — monitoring + diagnostics + dashboard |
-| **v0.2** | D+3 | Auto-heal (93% coverage) + Extended history |
-| **v0.3** | D+7 | Chisel compression + Push alerts (Telegram/webhook/email) |
-| **v1.1** | D+14 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) |
+| **v0.2** | ✅ Shipped | Token Analytics + Data Infrastructure |
+| **v0.3** | ✅ Shipped | Auto-heal, Push Alerts, Pro Licensing, Fleet Comparison, Hermes Plugin |
+| **v0.3.1** | 🔥 Now | Official Hermes Agent Observability Plugin — 11 hooks, bundled upstream |
+| **v0.4** | 🔜 Next | CI quality gates, eval dataset capture, static fleet report export |
+| **v1.0** | 🔜 Soon | OpenClaw runtime plugin — 40-60% fewer tokens per turn |
 
 **What's the OpenClaw plugin?** A Node.js plugin that hooks into the ContextEngine to load only what's needed per turn. Your agents stop carrying 100k tokens of context they never use. That's the v1.1 headline.
 
@@ -231,14 +277,12 @@ pip install observeco
 
 ## Supported Frameworks
 
-| Framework | Health | Circuit | Tokens | Memory | Dashboard |
-|-----------|:------:|:-------:|:------:|:------:|:---------:|
-| **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full |
-| **OpenClaw** | ✅ | ◐ | ◐ | ✅ | ✅ ~85% |
-| **Ollama** | ✅ | ⬜ | ⬜ | ⬜ | ✅ Basic |
-| **LangChain** | ◐ | ◐ | ⬜ | ⬜ | ✅ Basic |
-| **CrewAI** | ◐ | ⬜ | ⬜ | ⬜ | ✅ Basic |
-| **Custom** | ◐ | ◐ | ◐ | ⬜ | ✅ Basic |
+| Framework | Health | Circuit | Tokens | Memory | Dashboard | Hermes Plugin |
+|-----------|:------:|:-------:|:------:|:------:|:---------:|:-------------:|
+| **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full | ✅ Native (11 hooks) |
+| **OpenClaw** | ✅ | ◐ | ◐ | ✅ | ✅ ~85% | ⬜ |
+| **Ollama** | ✅ | ⬜ | ⬜ | ⬜ | ✅ Basic | ⬜ |
+| **Custom** | ◐ | ◐ | ◐ | ⬜ | ✅ Basic | ⬜ |
 
 ✅ = Auto-detect & works · ◐ = Works with config · ⬜ = Coming
 
