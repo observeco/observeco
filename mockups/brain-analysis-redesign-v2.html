@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ObserveCo Brain — Save Tokens (v2)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --fg: #f8fafc;
+      --accent: #22c55e;
+      --accent-on: #0c1628;
+      --status-healthy: #22c55e;
+      --status-warning: #eab308;
+      --status-critical: #ef4444;
+      --success: #22c55e;
+      --warn: #eab308;
+      --danger: #ef4444;
+      --meta: #3b82f6;
+      --fg-2: #94a3b8;
+      --muted: #64748b;
+      --border: #334155;
+      --border-soft: #273548;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --text-xs: 11px;
+      --text-sm: 12px;
+      --text-base: 14px;
+      --text-lg: 15px;
+      --text-xl: 18px;
+      --text-2xl: 24px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-pill: 9999px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--fg); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+    /* ── Header ── */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--border); background: var(--surface); }
+    .header-left { display: flex; align-items: center; gap: var(--space-3); }
+    .header-title { font-size: var(--text-xl); font-weight: 600; }
+    .header-title span { color: var(--fg-2); font-weight: 400; }
+    .tier-badge { padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tier-badge.free { background: #166534; color: #86efac; }
+    .tier-badge.pro { background: #3730a3; color: #a5b4fc; }
+    .tier-toggle { display: flex; align-items: center; gap: var(--space-2); background: var(--bg); padding: 2px 4px; border-radius: var(--radius-pill); border: 1px solid var(--border); }
+    .tier-toggle button { border: none; background: transparent; color: var(--fg-2); font-size: var(--text-sm); font-weight: 500; padding: 4px 12px; border-radius: var(--radius-pill); cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
+    .tier-toggle button.active { background: var(--accent); color: var(--accent-on); }
+    .tier-toggle button:hover:not(.active) { color: var(--fg); }
+
+    /* ── Container ── */
+    .container { max-width: 1200px; margin: 0 auto; padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-6); }
+
+    /* ── Section ── */
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .section-header { padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-size: var(--text-lg); font-weight: 600; }
+    .section-subtitle { font-size: var(--text-sm); color: var(--fg-2); }
+    .section-body { padding: var(--space-5); }
+
+    /* ── Save Tokens Grid ── */
+    .save-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-3); }
+    .save-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); cursor: pointer; transition: border-color 0.15s, transform 0.15s; position: relative; }
+    .save-card:hover { border-color: var(--muted); transform: translateY(-1px); }
+    .save-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2); }
+    .save-card-name { font-weight: 600; font-size: var(--text-base); }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.green { background: var(--status-healthy); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+    .status-dot.yellow { background: var(--status-warning); box-shadow: 0 0 8px rgba(234,179,8,0.4); }
+    .status-dot.red { background: var(--status-critical); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+    .save-card-metric { font-size: var(--text-2xl); font-weight: 700; font-family: var(--font-mono); margin: var(--space-2) 0; }
+    .save-card-metric.green { color: var(--status-healthy); }
+    .save-card-metric.yellow { color: var(--status-warning); }
+    .save-card-metric.red { color: var(--status-critical); }
+    .save-card-label { font-size: var(--text-xs); color: var(--fg-2); }
+    .save-card-detail { margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border); font-size: var(--text-xs); color: var(--muted); }
+
+    /* ── Pro Lock ── */
+    .pro-lock-btn { position: absolute; top: var(--space-3); right: var(--space-3); padding: 2px 8px; border-radius: var(--radius-pill); border: 1px solid #3730a3; background: rgba(55,48,163,0.3); color: #a5b4fc; font-size: 10px; font-weight: 600; cursor: default; }
+    .pro-upsell { font-size: 10px; color: #a5b4fc; margin-top: var(--space-2); }
+
+    /* ── Compression ── */
+    .compress-global-toggle { display: flex; gap: var(--space-2); padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); align-items: center; }
+    .compress-global-label { font-size: var(--text-sm); font-weight: 600; color: var(--fg-2); margin-right: var(--space-3); }
+    .level-btn { padding: var(--space-2) var(--space-4); border-radius: var(--radius-md); border: 2px solid var(--border); background: transparent; color: var(--fg-2); cursor: pointer; font-family: var(--font-body); font-size: var(--text-sm); font-weight: 500; transition: all 0.15s; }
+    .level-btn:hover { border-color: var(--muted); color: var(--fg); }
+    .level-btn.active.lite { border-color: var(--accent); color: var(--accent); background: rgba(34,197,94,0.08); }
+    .level-btn.active.full { border-color: var(--meta); color: var(--meta); background: rgba(59,130,246,0.08); }
+    .level-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+    .level-btn .tier-label { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: var(--radius-pill); margin-left: 4px; vertical-align: middle; }
+    .level-btn .tier-label.free { background: #166534; color: #86efac; }
+    .level-btn .tier-label.pro { background: #3730a3; color: #a5b4fc; }
+    .compress-global-hint { font-size: var(--text-xs); color: var(--muted); margin-left: auto; }
+
+    .compress-tier { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); margin: var(--space-4) var(--space-5); }
+    .compress-tier:last-child { margin-bottom: var(--space-5); }
+    .compress-tier-header { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .compress-tier-title { font-weight: 600; font-size: var(--text-base); }
+    .compress-tier-stats { font-size: var(--text-sm); color: var(--fg-2); }
+
+    .diff-panel { margin: var(--space-3) var(--space-4); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+    .diff-header { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); font-size: var(--text-xs); font-weight: 500; color: var(--fg-2); }
+    .diff-row { display: flex; align-items: center; padding: var(--space-2) var(--space-3); font-family: var(--font-mono); font-size: var(--text-sm); border-bottom: 1px solid var(--border-soft); }
+    .diff-row:last-child { border-bottom: none; }
+    .diff-label { flex: 1; color: var(--fg-2); }
+    .diff-before { color: var(--danger); margin-right: var(--space-3); }
+    .diff-arrow { color: var(--muted); margin: 0 var(--space-2); }
+    .diff-after { color: var(--accent); }
+
+    .apply-row { padding: var(--space-3) var(--space-4); display: flex; align-items: center; gap: var(--space-3); }
+    .btn-apply { padding: var(--space-2) var(--space-5); border-radius: var(--radius-md); border: none; font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn-apply.primary { background: var(--accent); color: var(--accent-on); }
+    .btn-apply.primary:hover { background: #16a34a; }
+    .btn-apply.pro-locked { background: #3730a3; color: #a5b4fc; cursor: not-allowed; }
+    .apply-scope { font-size: var(--text-xs); color: var(--muted); }
+
+    .skill-filter { display: flex; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+    .filter-btn { padding: var(--space-1) var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--border); background: transparent; color: var(--fg-2); font-size: var(--text-xs); font-weight: 500; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
+    .filter-btn.active { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+    .filter-btn:hover:not(.active) { border-color: var(--muted); color: var(--fg); }
+    .skill-list { padding: var(--space-2) 0; }
+    .skill-row { display: flex; align-items: center; padding: var(--space-2) var(--space-4); font-size: var(--text-sm); transition: background 0.1s; }
+    .skill-row:hover { background: rgba(255,255,255,0.02); }
+    .skill-name { flex: 1; color: var(--fg); }
+    .skill-tokens { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--fg-2); margin-right: var(--space-3); }
+    .skill-badge { font-size: 10px; padding: 1px 6px; border-radius: var(--radius-pill); font-weight: 600; }
+    .skill-badge.ok { background: rgba(34,197,94,0.15); color: var(--status-healthy); }
+    .skill-badge.bloated { background: rgba(239,68,68,0.15); color: var(--status-critical); }
+    .skill-expand { padding: var(--space-2) var(--space-4); font-size: var(--text-xs); color: var(--meta); cursor: pointer; border-top: 1px solid var(--border); }
+    .skill-expand:hover { color: #60a5fa; }
+    .skill-total { padding: var(--space-3) var(--space-4); border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: var(--text-sm); font-weight: 600; }
+
+    /* ── Content Cleanup ── */
+    .cleanup-overlap { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: var(--space-3); overflow: hidden; }
+    .cleanup-overlap-header { padding: var(--space-3) var(--space-4); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+    .cleanup-overlap-header:hover { background: rgba(255,255,255,0.02); }
+    .cleanup-overlap-title { font-weight: 500; font-size: var(--text-sm); }
+    .cleanup-overlap-locations { font-size: var(--text-xs); color: var(--fg-2); padding: 0 var(--space-4) var(--space-3); }
+    .cleanup-overlap-actions { padding: var(--space-2) var(--space-4) var(--space-3); display: flex; gap: var(--space-2); }
+    .btn-consolidate { padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--accent); background: transparent; color: var(--accent); font-size: var(--text-xs); font-weight: 500; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
+    .btn-consolidate:hover { background: rgba(34,197,94,0.1); }
+    .btn-keep { padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--fg-2); font-size: var(--text-xs); font-weight: 500; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
+    .btn-keep:hover { border-color: var(--muted); color: var(--fg); }
+    .btn-scan { padding: var(--space-2) var(--space-5); border-radius: var(--radius-md); border: none; background: var(--meta); color: white; font-size: var(--text-sm); font-weight: 600; cursor: pointer; font-family: var(--font-body); transition: all 0.15s; }
+    .btn-scan:hover { background: #2563eb; }
+
+    /* ── Input Tokens Table ── */
+    .tokens-table { width: 100%; border-collapse: collapse; }
+    .tokens-table th { text-align: left; font-size: var(--text-xs); font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); }
+    .tokens-table th:nth-child(2), .tokens-table th:nth-child(3) { text-align: right; }
+    .tokens-table td { padding: var(--space-3); border-bottom: 1px solid var(--border-soft); font-size: var(--text-sm); vertical-align: middle; }
+    .tokens-table tr:last-child td { border-bottom: none; }
+    .tokens-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .token-agent-cell { display: flex; align-items: center; gap: var(--space-2); }
+    .token-agent-name { font-weight: 600; }
+    .token-tokens-num { text-align: right; font-family: var(--font-mono); font-weight: 600; }
+    .token-bar-cell { width: 40%; }
+    .token-bar-wrap { display: flex; align-items: center; gap: var(--space-2); }
+    .token-bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .token-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+    .token-bar-fill.green { background: var(--status-healthy); }
+    .token-bar-fill.yellow { background: var(--status-warning); }
+    .token-bar-fill.red { background: var(--status-critical); }
+    .token-pct { font-size: var(--text-xs); font-family: var(--font-mono); color: var(--fg-2); min-width: 32px; text-align: right; }
+    .token-status-cell { text-align: right; width: 40px; }
+
+    /* ── Log Panel ── */
+    .log-toggle { padding: var(--space-2) var(--space-4); font-size: var(--text-xs); color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: var(--space-2); border-top: 1px solid var(--border); }
+    .log-toggle:hover { color: var(--fg-2); }
+    .log-toggle .chevron { transition: transform 0.15s; font-size: 10px; }
+    .log-toggle.open .chevron { transform: rotate(90deg); }
+    .log-panel { max-height: 0; overflow: hidden; transition: max-height 0.2s ease; }
+    .log-panel.open { max-height: 300px; overflow-y: auto; }
+    .log-entries { padding: var(--space-2) var(--space-4); }
+    .log-entry { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--fg-2); padding: var(--space-1) 0; border-bottom: 1px solid var(--border-soft); }
+    .log-entry:last-child { border-bottom: none; }
+    .log-entry .time { color: var(--muted); margin-right: var(--space-2); }
+    .log-entry .success { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <div class="header-title">🧠 Brain Analysis <span>— Save Tokens</span></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:var(--space-3);">
+      <span class="tier-badge free" id="tierBadge">FREE</span>
+      <div class="tier-toggle">
+        <button class="active" onclick="switchTier('free', this)">Free</button>
+        <button onclick="switchTier('pro', this)">Pro</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- §3  SAVE TOKENS — All Agents               -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section" id="saveTokensSection">
+      <div class="section-header">
+        <div>
+          <div class="section-title">💰 Save Tokens</div>
+          <div class="section-subtitle">Where you can save — agents, skills, and configuration</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <div class="save-grid" id="saveGrid">
+          <!-- Main -->
+          <div class="save-card" onclick="scrollToSection('compressSection')">
+            <div class="save-card-header">
+              <span class="save-card-name">🧠 Main</span>
+              <span class="status-dot yellow"></span>
+            </div>
+            <div class="save-card-metric yellow">42%</div>
+            <div class="save-card-label">bloat detected</div>
+            <div class="save-card-detail">12,400 input tokens</div>
+            <div class="pro-upsell pro-only" style="display:none;">🔒 Auto-fix available in Pro</div>
+          </div>
+          <!-- Dreamer -->
+          <div class="save-card">
+            <div class="save-card-header">
+              <span class="save-card-name">📝 Dreamer</span>
+              <span class="status-dot green"></span>
+            </div>
+            <div class="save-card-metric green">18%</div>
+            <div class="save-card-label">no context bloat — no action needed</div>
+            <div class="save-card-detail">5,200 input tokens</div>
+          </div>
+          <!-- PA -->
+          <div class="save-card" onclick="scrollToSection('compressSection')">
+            <div class="save-card-header">
+              <span class="save-card-name">🤖 PA</span>
+              <span class="status-dot red"></span>
+            </div>
+            <div class="save-card-metric red">78%</div>
+            <div class="save-card-label">critically bloated</div>
+            <div class="save-card-detail">15,600 input tokens</div>
+            <div class="pro-upsell pro-only" style="display:none;">🔒 Auto-fix available in Pro</div>
+          </div>
+          <!-- Kepler -->
+          <div class="save-card">
+            <div class="save-card-header">
+              <span class="save-card-name">📦 Kepler</span>
+              <span class="status-dot green"></span>
+            </div>
+            <div class="save-card-metric green">12%</div>
+            <div class="save-card-label">no context bloat — no action needed</div>
+            <div class="save-card-detail">3,100 input tokens</div>
+          </div>
+          <!-- Hound -->
+          <div class="save-card">
+            <div class="save-card-header">
+              <span class="save-card-name">🐾 Hound</span>
+              <span class="status-dot green"></span>
+            </div>
+            <div class="save-card-metric green">10%</div>
+            <div class="save-card-label">no context bloat — no action needed</div>
+            <div class="save-card-detail">2,800 input tokens</div>
+          </div>
+          <!-- Hermes -->
+          <div class="save-card" onclick="scrollToSection('compressSection')">
+            <div class="save-card-header">
+              <span class="save-card-name">⚡ Hermes</span>
+              <span class="status-dot yellow"></span>
+            </div>
+            <div class="save-card-metric yellow">38%</div>
+            <div class="save-card-label">bloat detected</div>
+            <div class="save-card-detail">10,800 input tokens</div>
+            <div class="pro-upsell pro-only" style="display:none;">🔒 Auto-fix available in Pro</div>
+          </div>
+          <!-- Skills card -->
+          <div class="save-card" onclick="scrollToSection('skillTier')">
+            <div class="save-card-header">
+              <span class="save-card-name">📦 Skills</span>
+              <span class="status-dot yellow"></span>
+            </div>
+            <div class="save-card-metric yellow">5</div>
+            <div class="save-card-label">bloated of 18 total</div>
+            <div class="save-card-detail">62,400 input tokens</div>
+          </div>
+          <!-- Content card -->
+          <div class="save-card" onclick="scrollToSection('cleanupSection')">
+            <div class="save-card-header">
+              <span class="save-card-name">🧹 Content</span>
+              <span class="status-dot yellow"></span>
+            </div>
+            <div class="save-card-metric yellow">3</div>
+            <div class="save-card-label">duplicates found</div>
+            <div class="save-card-detail">across system, skills, memory</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- §4  COMPRESSION                            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section" id="compressSection">
+      <div class="section-header">
+        <div>
+          <div class="section-title">⚡ Compression</div>
+          <div class="section-subtitle">Preview changes, then apply</div>
+        </div>
+      </div>
+
+      <!-- Global Level Toggle -->
+      <div class="compress-global-toggle">
+        <span class="compress-global-label">Compression Level:</span>
+        <button class="level-btn active lite" onclick="switchLevel('lite', this)">Lite <span class="tier-label free">FREE</span></button>
+        <button class="level-btn full pro-only" style="display:none;" onclick="switchLevel('full', this)">Full <span class="tier-label pro">PRO</span></button>
+        <button class="level-btn full disabled" id="fullLocked">Full <span class="tier-label pro">PRO</span> 🔒</button>
+        <span class="compress-global-hint">Applies to System Level + Skill Level below</span>
+      </div>
+
+      <!-- System Level -->
+      <div class="compress-tier">
+        <div class="compress-tier-header">
+          <span class="compress-tier-title">System Level <span style="font-weight:400;color:var(--fg-2);font-size:var(--text-sm);">— SOUL.md + guidance</span></span>
+          <span class="compress-tier-stats">12,400 input tokens (42% of context)</span>
+        </div>
+        <div class="diff-panel" id="systemDiff">
+          <div class="diff-header">Preview — <span id="systemDiffLevel">Lite</span> compression</div>
+          <div class="diff-row"><span class="diff-label">SOUL.md</span><span class="diff-before">8,200</span><span class="diff-arrow">→</span><span class="diff-after">3,690</span><span style="font-size:10px;color:var(--muted);margin-left:var(--space-2);">tokens</span></div>
+          <div class="diff-row"><span class="diff-label">Agent Identity</span><span class="diff-before">4,200</span><span class="diff-arrow">→</span><span class="diff-after">1,890</span><span style="font-size:10px;color:var(--muted);margin-left:var(--space-2);">tokens</span></div>
+        </div>
+        <div class="apply-row">
+          <button class="btn-apply primary">Apply</button>
+          <span class="apply-scope">Compresses System Level only</span>
+        </div>
+        <div class="log-toggle" onclick="toggleLog('systemLog', this)"><span class="chevron">▶</span> Activity log</div>
+        <div class="log-panel" id="systemLog"><div class="log-entries">
+          <div class="log-entry"><span class="time">12:34:05</span> Compressing SOUL.md (Lite)...</div>
+          <div class="log-entry"><span class="time">12:34:06</span> <span class="success">✓ Done.</span> 8,200 → 3,690 tokens (55% reduction)</div>
+        </div></div>
+      </div>
+
+      <!-- Skill Level -->
+      <div class="compress-tier" id="skillTier">
+        <div class="compress-tier-header">
+          <span class="compress-tier-title">Skill Level</span>
+          <span class="compress-tier-stats">62,400 input tokens total</span>
+        </div>
+        <div class="skill-filter">
+          <button class="filter-btn active" onclick="filterSkills('all', this)">All (18)</button>
+          <button class="filter-btn" onclick="filterSkills('bloated', this)">Bloated (5)</button>
+          <button class="filter-btn" onclick="filterSkills('ok', this)">OK (13)</button>
+        </div>
+        <div class="skill-list" id="skillList">
+          <div class="skill-row" data-status="bloated"><span class="skill-name">skill:chisel-compression</span><span class="skill-tokens">8,400</span><span class="skill-badge bloated">bloated</span></div>
+          <div class="skill-row" data-status="bloated"><span class="skill-name">skill:second-brain-wiki</span><span class="skill-tokens">6,200</span><span class="skill-badge bloated">bloated</span></div>
+          <div class="skill-row" data-status="bloated"><span class="skill-name">skill:qaq-culture</span><span class="skill-tokens">5,800</span><span class="skill-badge bloated">bloated</span></div>
+          <div class="skill-row" data-status="ok"><span class="skill-name">skill:hermes-agent</span><span class="skill-tokens">3,200</span><span class="skill-badge ok">ok</span></div>
+          <div class="skill-row" data-status="ok"><span class="skill-name">skill:mockup-driven-dashboard</span><span class="skill-tokens">2,800</span><span class="skill-badge ok">ok</span></div>
+          <div class="skill-row extra" data-status="bloated" style="display:none;"><span class="skill-name">skill:deep-research-playbook</span><span class="skill-tokens">5,400</span><span class="skill-badge bloated">bloated</span></div>
+          <div class="skill-row extra" data-status="bloated" style="display:none;"><span class="skill-name">skill:subagent-driven-development</span><span class="skill-tokens">4,800</span><span class="skill-badge bloated">bloated</span></div>
+          <div class="skill-row extra" data-status="ok" style="display:none;"><span class="skill-name">skill:sean-facing-output</span><span class="skill-tokens">1,900</span><span class="skill-badge ok">ok</span></div>
+          <div class="skill-row extra" data-status="ok" style="display:none;"><span class="skill-name">skill:github-pr-workflow</span><span class="skill-tokens">1,600</span><span class="skill-badge ok">ok</span></div>
+          <div class="skill-row extra" data-status="ok" style="display:none;"><span class="skill-name">skill:airtable</span><span class="skill-tokens">1,400</span><span class="skill-badge ok">ok</span></div>
+          <div class="skill-row extra" data-status="ok" style="display:none;"><span class="skill-name">skill:notion</span><span class="skill-tokens">1,200</span><span class="skill-badge ok">ok</span></div>
+          <div class="skill-row extra" data-status="ok" style="display:none;"><span class="skill-name">skill:obsidian</span><span class="skill-tokens">900</span><span class="skill-badge ok">ok</span></div>
+          <div class="skill-row extra" data-status="ok" style="display:none;"><span class="skill-name">skill:caveman</span><span class="skill-tokens">800</span><span class="skill-badge ok">ok</span></div>
+        </div>
+        <div class="skill-expand" id="skillExpand" onclick="toggleSkillExpand()"><span id="skillExpandLabel">▸ Show all 18 skills</span></div>
+        <div class="skill-total"><span>Total input tokens</span><span>62,400</span></div>
+        <div class="apply-row">
+          <button class="btn-apply primary">Apply All Bloated</button>
+          <span class="apply-scope">Compresses 5 bloated skills only</span>
+        </div>
+        <div class="log-toggle" onclick="toggleLog('skillLog', this)"><span class="chevron">▶</span> Activity log</div>
+        <div class="log-panel" id="skillLog"><div class="log-entries">
+          <div class="log-entry"><span class="time">12:34:10</span> Compressing skill:chisel-compression (Lite)...</div>
+          <div class="log-entry"><span class="time">12:34:12</span> <span class="success">✓ Done.</span> 8,400 → 3,780 tokens (55% reduction)</div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- §5  CONTENT CLEANUP                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section" id="cleanupSection">
+      <div class="section-header">
+        <div>
+          <div class="section-title">🧹 Content Cleanup</div>
+          <div class="section-subtitle">Find duplicate or conflicting content across your files</div>
+        </div>
+        <button class="btn-scan">Scan Again</button>
+      </div>
+      <div class="section-body">
+        <div style="font-size:var(--text-sm);color:var(--fg-2);margin-bottom:var(--space-4);">Scans: System guidance • Skills • Memory — finds overlapping content to consolidate</div>
+        <div class="cleanup-overlap">
+          <div class="cleanup-overlap-header" onclick="toggleOverlap(this)"><span class="cleanup-overlap-title">🔴 Overlap 1: "Response format rules"</span><span style="font-size:var(--text-xs);color:var(--muted);">▾</span></div>
+          <div class="cleanup-overlap-locations">Found in: <strong>SOUL.md</strong> (line 42) + <strong>skill:communication</strong> (line 8)</div>
+          <div class="cleanup-overlap-actions"><button class="btn-consolidate">Consolidate to SOUL.md</button><button class="btn-keep">Keep both</button></div>
+        </div>
+        <div class="cleanup-overlap">
+          <div class="cleanup-overlap-header" onclick="toggleOverlap(this)"><span class="cleanup-overlap-title">🟡 Overlap 2: "Tool usage constraints"</span><span style="font-size:var(--text-xs);color:var(--muted);">▸</span></div>
+          <div class="cleanup-overlap-locations" style="display:none;">Found in: <strong>SOUL.md</strong> (line 78) + <strong>skill:llm-coding-rules</strong> (line 15) + <strong>MEMORY.md</strong> (line 22)</div>
+          <div class="cleanup-overlap-actions" style="display:none;"><button class="btn-consolidate">Consolidate to SOUL.md</button><button class="btn-keep">Keep both</button></div>
+        </div>
+        <div class="cleanup-overlap">
+          <div class="cleanup-overlap-header" onclick="toggleOverlap(this)"><span class="cleanup-overlap-title">🟡 Overlap 3: "Agent boundary definitions"</span><span style="font-size:var(--text-xs);color:var(--muted);">▸</span></div>
+          <div class="cleanup-overlap-locations" style="display:none;">Found in: <strong>SOUL.md</strong> (line 105) + <strong>skill:role-isolation-and-signal-routing</strong> (line 3)</div>
+          <div class="cleanup-overlap-actions" style="display:none;"><button class="btn-consolidate">Consolidate to SOUL.md</button><button class="btn-keep">Keep both</button></div>
+        </div>
+        <div class="log-toggle" onclick="toggleLog('cleanupLog', this)"><span class="chevron">▶</span> Activity log</div>
+        <div class="log-panel" id="cleanupLog"><div class="log-entries">
+          <div class="log-entry"><span class="time">12:30:00</span> Scan complete — 3 overlaps found across 8 files</div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- §6  INPUT TOKENS — All Agents              -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="section" id="tokensSection">
+      <div class="section-header">
+        <div>
+          <div class="section-title">📊 Input Tokens</div>
+          <div class="section-subtitle">What goes into your agents per session — sorted worst first</div>
+        </div>
+        <span class="pro-lock-btn pro-only" style="display:none;">🔒 90-day trend</span>
+      </div>
+      <div class="section-body" style="padding:0;">
+        <table class="tokens-table">
+          <thead><tr><th>Agent</th><th>Input Tokens</th><th>% of Context</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><div class="token-agent-cell"><span class="status-dot red"></span><span class="token-agent-name">🤖 PA</span></div></td><td class="token-tokens-num">15,600</td><td class="token-bar-cell"><div class="token-bar-wrap"><div class="token-bar-track"><div class="token-bar-fill red" style="width:78%"></div></div><span class="token-pct">78%</span></div></td><td class="token-status-cell"><span class="status-dot red"></span></td></tr>
+            <tr><td><div class="token-agent-cell"><span class="status-dot yellow"></span><span class="token-agent-name">🧠 Main</span></div></td><td class="token-tokens-num">12,400</td><td class="token-bar-cell"><div class="token-bar-wrap"><div class="token-bar-track"><div class="token-bar-fill yellow" style="width:42%"></div></div><span class="token-pct">42%</span></div></td><td class="token-status-cell"><span class="status-dot yellow"></span></td></tr>
+            <tr><td><div class="token-agent-cell"><span class="status-dot yellow"></span><span class="token-agent-name">⚡ Hermes</span></div></td><td class="token-tokens-num">10,800</td><td class="token-bar-cell"><div class="token-bar-wrap"><div class="token-bar-track"><div class="token-bar-fill yellow" style="width:38%"></div></div><span class="token-pct">38%</span></div></td><td class="token-status-cell"><span class="status-dot yellow"></span></td></tr>
+            <tr><td><div class="token-agent-cell"><span class="status-dot green"></span><span class="token-agent-name">📝 Dreamer</span></div></td><td class="token-tokens-num">5,200</td><td class="token-bar-cell"><div class="token-bar-wrap"><div class="token-bar-track"><div class="token-bar-fill green" style="width:18%"></div></div><span class="token-pct">18%</span></div></td><td class="token-status-cell"><span class="status-dot green"></span></td></tr>
+            <tr><td><div class="token-agent-cell"><span class="status-dot green"></span><span class="token-agent-name">📦 Kepler</span></div></td><td class="token-tokens-num">3,100</td><td class="token-bar-cell"><div class="token-bar-wrap"><div class="token-bar-track"><div class="token-bar-fill green" style="width:12%"></div></div><span class="token-pct">12%</span></div></td><td class="token-status-cell"><span class="status-dot green"></span></td></tr>
+            <tr><td><div class="token-agent-cell"><span class="status-dot green"></span><span class="token-agent-name">🐾 Hound</span></div></td><td class="token-tokens-num">2,800</td><td class="token-bar-cell"><div class="token-bar-wrap"><div class="token-bar-track"><div class="token-bar-fill green" style="width:10%"></div></div><span class="token-pct">10%</span></div></td><td class="token-status-cell"><span class="status-dot green"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentTier = 'free';
+
+    function switchTier(tier, btn) {
+      currentTier = tier;
+      document.querySelectorAll('.tier-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const badge = document.getElementById('tierBadge');
+      if (tier === 'pro') {
+        badge.className = 'tier-badge pro'; badge.textContent = 'PRO';
+        document.querySelectorAll('.pro-only').forEach(el => el.style.display = '');
+        document.getElementById('fullLocked').style.display = 'none';
+      } else {
+        badge.className = 'tier-badge free'; badge.textContent = 'FREE';
+        document.querySelectorAll('.pro-only').forEach(el => el.style.display = 'none');
+        document.getElementById('fullLocked').style.display = '';
+      }
+    }
+
+    function switchLevel(level, btn) {
+      document.querySelectorAll('.level-btn:not(.disabled)').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('systemDiff').classList.add('visible');
+      document.getElementById('systemDiffLevel').textContent = level === 'lite' ? 'Lite' : 'Full';
+    }
+
+    function scrollToSection(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+    function filterSkills(filter, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.skill-row').forEach(row => {
+        const s = row.dataset.status;
+        row.style.display = (filter === 'all' || filter === s) ? '' : 'none';
+      });
+    }
+
+    let skillsExpanded = false;
+    function toggleSkillExpand() {
+      skillsExpanded = !skillsExpanded;
+      document.querySelectorAll('.skill-row.extra').forEach(r => r.style.display = skillsExpanded ? '' : 'none');
+      document.getElementById('skillExpandLabel').textContent = skillsExpanded ? '▸ Show less' : '▸ Show all 18 skills';
+    }
+
+    function toggleLog(id, toggleEl) {
+      const panel = document.getElementById(id);
+      panel.classList.toggle('open');
+      toggleEl.classList.toggle('open');
+    }
+
+    function toggleOverlap(header) {
+      const o = header.parentElement;
+      const loc = o.querySelector('.cleanup-overlap-locations');
+      const act = o.querySelector('.cleanup-overlap-actions');
+      const ch = header.querySelector('span:last-child');
+      const open = loc.style.display !== 'none';
+      loc.style.display = open ? 'none' : '';
+      act.style.display = open ? 'none' : '';
+      ch.textContent = open ? '▸' : '▾';
+    }
+  </script>
+</body>
+</html>

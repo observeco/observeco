@@ -10,19 +10,27 @@ import json
 import time
 from pathlib import Path
 
-INTELLIGENCE_DIR = Path.home() / ".hermes" / "intelligence" / "decisions"
-from observeco.dirs import get_data_dir  # noqa: E402 - late import to control side effects
+from observeco.dirs import get_data_dir, hermes_home  # noqa: E402 - late import to control side effects
 
 BILLING_DIR = get_data_dir()
 BILLING_FILE = BILLING_DIR / "billing.json"
 
 
+def _intelligence_dir() -> Path | None:
+    """Return the intelligence decisions directory, or None if Hermes not found."""
+    hh = hermes_home()
+    if hh is None:
+        return None
+    return hh / "intelligence" / "decisions"
+
+
 def find_latest_credentials() -> dict | None:
     """Find the most recent Stripe credentials decision artifact."""
-    if not INTELLIGENCE_DIR.exists():
+    intel_dir = _intelligence_dir()
+    if intel_dir is None or not intel_dir.exists():
         return None
 
-    creds_files = sorted(INTELLIGENCE_DIR.glob("stripe-credentials-*.json"))
+    creds_files = sorted(intel_dir.glob("stripe-credentials-*.json"))
     if not creds_files:
         return None
 

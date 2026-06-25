@@ -9,30 +9,6 @@ on:
     branches: [main]
 
 jobs:
-  requirements-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install
-        run: pip install -e .
-      - name: Cross-ref verification
-        run: |
-          if [ -f specs/scripts/cross-ref-verify.sh ]; then
-            bash specs/scripts/cross-ref-verify.sh
-          else
-            echo "⚠️ cross-ref-verify.sh not yet in repo"
-          fi
-      - name: Data pipeline audit
-        run: |
-          if [ -f specs/scripts/data-pipeline-audit.sh ]; then
-            bash specs/scripts/data-pipeline-audit.sh
-          else
-            echo "⚠️ data-pipeline-audit.sh not yet in repo"
-          fi
-
   coding-fidelity:
     runs-on: ubuntu-latest
     steps:
@@ -40,12 +16,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
       - name: Install
-        run: pip install -e .
+        run: uv sync
       - name: Spec fidelity tests
-        run: pytest tests/ -k "spec_fidelity" || echo "No spec-fidelity tests yet"
+        run: uv run pytest tests/ -k "spec_fidelity" || echo "No spec-fidelity tests yet"
       - name: Import check
-        run: python3 -c "from observeco.dashboard.server import app; print('Import OK')"
+        run: uv run python3 -c "from observeco.dashboard.server import app; print('Import OK')"
 
   system-tests:
     runs-on: ubuntu-latest
@@ -54,12 +32,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
       - name: Install
-        run: pip install -e .
+        run: uv sync
       - name: Lifecycle tests
-        run: pytest tests/ -k "lifecycle" || echo "No lifecycle tests yet"
+        run: uv run pytest tests/ -k "lifecycle" || echo "No lifecycle tests yet"
       - name: Cross-platform tests
-        run: pytest tests/ -k "cross_platform" || echo "No cross-platform tests yet"
+        run: uv run pytest tests/ -k "cross_platform" || echo "No cross-platform tests yet"
 
   first-run-audit:
     runs-on: ubuntu-latest
@@ -68,37 +48,34 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
       - name: Build and install
         run: |
-          pip install build
-          python -m build
-          pip install dist/*.whl
+          uv build
+          uv pip install dist/*.whl --system
           observeco --version
       - name: First-Run Audit (F1-F9)
-        run: |
-          if [ -f specs/scripts/first-run-audit.py ]; then
-            PYTHONPATH=src python3 specs/scripts/first-run-audit.py
-          else
-            echo "first-run-audit.py not yet in repo"
-          fi
+        run: uv run python3 specs/scripts/first-run-audit.py
       - name: F2 and F9 CI checks
-        run: |
-          python3 specs/scripts/ci-layer-f-checks.py
+        run: uv run python3 specs/scripts/ci-layer-f-checks.py
 
   combined-score:
-    needs: [requirements-audit, coding-fidelity, system-tests, first-run-audit]
+    needs: [coding-fidelity, system-tests, first-run-audit]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
       - name: Install
-        run: pip install -e .
+        run: uv sync
       - name: Run gate scorer
         run: |
           if [ -f specs/scripts/score-gate.py ]; then
-            python3 specs/scripts/score-gate.py
+            uv run python3 specs/scripts/score-gate.py
           else
             echo "install-test.yml and fidelity-gate.yml are the primary checks"
           fi

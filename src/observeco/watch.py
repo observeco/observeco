@@ -318,6 +318,12 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
                         if trim_result and isinstance(trim_result, dict):
                             try:
                                 turn_id = f"watch_{int(time.time())}_{agent.name}"
+                                # §10: all trim components are input tokens
+                                input_from_components = sum(
+                                    trim_result.get(k, 0) for k in
+                                    ["identity_tokens", "skills_tokens", "memory_tokens",
+                                     "tools_tokens", "guidance_tokens"]
+                                )
                                 db.log_token_turn(
                                     agent_name=agent.name,
                                     turn_id=turn_id,
@@ -327,7 +333,10 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
                                     memory_tokens=trim_result.get("memory_tokens", 0),
                                     tools_tokens=trim_result.get("tools_tokens", 0),
                                     guidance_tokens=trim_result.get("guidance_tokens", 0),
+                                    input_tokens=input_from_components,
+                                    output_tokens=0,
                                     provider="auto-detected",
+                                    source="watch",
                                 )
                             except Exception:
                                 pass

@@ -59,4 +59,4 @@ def test_handle_webhook_simulated():
         result = handle_webhook(payload.encode())
     assert result is not None
     assert "status" in result
-    assert result["status"] == "demo"
+    assert result["status"] == "rejected"

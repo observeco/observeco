@@ -101,11 +101,24 @@ class DashboardAuthMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         # Determine if this path needs token auth
+        # Security audit: narrowed exclusions to only routes a non-authenticated user legitimately hits
+        AUTH_EXEMPT = {
+            "/api/billing/success",        # Stripe redirect
+            "/api/billing/cancel",         # Stripe redirect
+            "/api/billing/webhook",        # Stripe webhook
+            "/api/phase",                  # Phase banner — loaded before auth on page init
+        }
+        # ponytail: all other /api/ routes now require auth. If a new public route is needed,
+        # add it here explicitly. Remove routes by migration to internal auth flow.
         needs_auth = (
             path.startswith("/api/")
+            and path not in AUTH_EXEMPT
             and not path.startswith("/api/licenses/validate")
             and not path.startswith("/api/licenses/status")
-            and path not in ("/api/checkout", "/api/agent-count", "/api/phase", "/api/onboarding", "/api/pathway-graph", "/api/heal-log", "/api/trigger-heal", "/api/plugin-stats", "/api/plugin-hooks", "/api/openclaw-plugins", "/api/phase/state", "/api/no-llm/toggle", "/api/discover/run", "/api/discover/candidates", "/api/discover/confirm", "/api/discover/run-html", "/api/billing/success", "/api/billing/cancel", "/api/billing/webhook", "/api/billing/status")
+            and not path.startswith("/api/billing/success")
+            and not path.startswith("/api/billing/cancel")
+            and not path.startswith("/api/billing/webhook")
+            and not path.startswith("/api/glossary/")
         )
 
         # Check token for protected API routes
@@ -132,7 +145,7 @@ class DashboardAuthMiddleware(BaseHTTPMiddleware):
         # Add security headers to every response
         response.headers.setdefault("Content-Security-Policy", (
             "default-src 'self'; "
-            "script-src 'self' https://unpkg.com 'unsafe-inline'; "
+            "script-src 'self' https://unpkg.com 'unsafe-inline' 'unsafe-eval'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data:; "
@@ -145,13 +158,15 @@ class DashboardAuthMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def init_auth(app_obj) -> str:
+def init_auth(app_obj, secret: str | None = None) -> str:
     """Initialize the dashboard auth middleware and return the secret.
 
     Must be called during server startup (in serve()).
+    If *secret* is provided (e.g. from a pre-loaded secret at module level),
+    it is used directly instead of calling load_or_generate_secret() again.
     Returns the secret for display on first run.
     """
     global _cached_secret
-    _cached_secret = load_or_generate_secret()
+    _cached_secret = secret if secret is not None else load_or_generate_secret()
     app_obj.add_middleware(DashboardAuthMiddleware, secret=_cached_secret)
     return _cached_secret

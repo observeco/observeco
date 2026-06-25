@@ -11,7 +11,6 @@ Spec: observeco-master-plan.md §14.3.G1.1
 """
 from __future__ import annotations
 
-import time
 from typing import Optional
 
 from observeco.db import Database

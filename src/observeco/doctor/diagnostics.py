@@ -94,6 +94,136 @@ def run_diagnostics() -> DiagnosticReport:
     return report
 
 
+def check_data_health() -> list[DiagnosticCheck]:
+    """GS-019: Data continuity health checks.
+
+    Checks:
+    1. Schema version (compare current vs expected)
+    2. Backup recency (last backup < 7 days old)
+    3. Stranded migration tables
+    """
+    from ..db import SCHEMA_VERSION, Database
+
+    checks = []
+    try:
+        db = Database()
+        conn = db._get_conn()
+
+        # 1. Schema version check
+        try:
+            cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
+            row = cur.fetchone()
+            meta_version = int(row["value"]) if row else 1
+            if meta_version < SCHEMA_VERSION:
+                checks.append(DiagnosticCheck(
+                    name="schema_version",
+                    status="error",
+                    message=f"Database version {meta_version} < expected {SCHEMA_VERSION}. Pending migrations.",
+                    auto_fix="Restart the application to run migrations",
+                    category="data_health"
+                ))
+            elif meta_version > SCHEMA_VERSION:
+                checks.append(DiagnosticCheck(
+                    name="schema_version",
+                    status="warning",
+                    message=f"Database version {meta_version} > code version {SCHEMA_VERSION}. Possible downgrade.",
+                    category="data_health"
+                ))
+            else:
+                checks.append(DiagnosticCheck(
+                    name="schema_version",
+                    status="ok",
+                    message=f"Schema version {meta_version} (current)",
+                    category="data_health"
+                ))
+        except Exception as e:
+            checks.append(DiagnosticCheck(
+                name="schema_version",
+                status="error",
+                message=f"Cannot read schema version: {e}",
+                category="data_health"
+            ))
+
+        # 2. Backup recency
+        import time
+        backup_dir = db.db_path.parent / "backups"
+        if backup_dir.exists():
+            backups = sorted(backup_dir.glob("pulse_*.db"))
+            if backups:
+                last_backup_age_days = (time.time() - backups[-1].stat().st_mtime) / 86400
+                if last_backup_age_days > 7:
+                    checks.append(DiagnosticCheck(
+                        name="backup_recency",
+                        status="warning",
+                        message=f"Last backup was {last_backup_age_days:.0f} days ago",
+                        category="data_health"
+                    ))
+                else:
+                    checks.append(DiagnosticCheck(
+                        name="backup_recency",
+                        status="ok",
+                        message=f"Last backup: {last_backup_age_days:.1f} days ago",
+                        category="data_health"
+                    ))
+            else:
+                checks.append(DiagnosticCheck(
+                    name="backup_exists",
+                    status="warning",
+                    message="No backups found",
+                    category="data_health"
+                ))
+        else:
+            checks.append(DiagnosticCheck(
+                name="backup_exists",
+                status="warning",
+                message="No backup directory found",
+                category="data_health"
+            ))
+
+        # 3. Stranded migration tables
+        for temp in ["pathway_nodes_v11", "alert_subscriptions_v15"]:
+            exists = conn.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+                (temp,)
+            ).fetchone()[0] > 0
+            if exists:
+                checks.append(DiagnosticCheck(
+                    name=f"stranded_table_{temp}",
+                    status="error",
+                    message=f"Table {temp} exists — partial migration not completed",
+                    auto_fix="Restart the application to auto-recover",
+                    category="data_health"
+                ))
+
+        # 4. Row counts summary
+        row_counts = {}
+        for table in ["pulse_log", "compress_log", "heal_events", "token_logs"]:
+            try:
+                cur = conn.execute(f"SELECT COUNT(*) FROM {table}")
+                row_counts[table] = cur.fetchone()[0]
+            except Exception:
+                row_counts[table] = 0
+
+        total_rows = sum(row_counts.values())
+        checks.append(DiagnosticCheck(
+            name="row_counts",
+            status="ok",
+            message=f"User data: {total_rows:,} rows across {len(row_counts)} tables",
+            category="data_health"
+        ))
+
+        db.close()
+    except Exception as e:
+        checks.append(DiagnosticCheck(
+            name="data_health_error",
+            status="error",
+            message=f"Cannot run data health check: {e}",
+            category="data_health"
+        ))
+
+    return checks
+
+
 def _check_packages() -> list[DiagnosticCheck]:
     """Check required and optional packages."""
     checks = []

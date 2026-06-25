@@ -82,31 +82,24 @@ class LLMGate:
         Args:
             consumer: Name of the consumer module (for future per-consumer gates).
             tier: 1 (deep/mission-critical) or 2 (shallow/value-add).
+
+        BYOK model: OBSERVECO_LLM_API_KEY set → allow (with budget check).
+        No key configured → static fallback. --no-llm → always static.
         """
         # Check runtime opt-out (dashboard toggle) + env var
         is_opted_out = _runtime_opt_out or os.environ.get("OBSERVECO_NO_LLM", "").lower() in ("1", "true", "yes")
         if is_opted_out:
             return False
 
-        lic = _load_license()
+        # BYOK: user's own API key must be configured
+        byok_key = os.environ.get("OBSERVECO_LLM_API_KEY", "")
+        if not byok_key:
+            return False
 
-        # Trial or Pro: full access
-        if lic.is_trial_active or lic.is_pro:
-            # Check self-monitor budget cap before allowing the call
-            if not _would_accept_budget():
-                return False
-            return True
-
-        # New-user grace period: Tier 1 (deep) always ON for first 30 days
-        # to show ObserveCo's value. Tier 2 (shallow) still requires trial/Pro.
-        if tier == 1 and lic.is_new_user_llm_grace:
-            # Check self-monitor budget cap
-            if not _would_accept_budget():
-                return False
-            return True
-
-        # Free tier (outside 30-day grace): no LLM
-        return False
+        # Check self-monitor budget cap before allowing the call
+        if not _would_accept_budget():
+            return False
+        return True
 
     def is_trial_active(self) -> bool:
         """Check if trial is active (for trial-specific UI)."""

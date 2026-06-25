@@ -173,38 +173,12 @@ def _dispatch_alert(event: OEFEvent, risk_level: str) -> None:
 
 
 def _update_circuit_breaker(event: OEFEvent) -> None:
-    """Update circuit breaker state for error events."""
+    """Record a circuit breaker failure event (append-only event log)."""
     agent_id = event.agent_id
     if not agent_id:
         return
-
-    conn = db._get_conn()
-    # Increment failure count
-    conn.execute(
-        """INSERT INTO circuit_breakers (agent_name, failure_count, last_failure, last_failure_error)
-        VALUES (?, 1, ?, ?)
-        ON CONFLICT(agent_name) DO UPDATE SET
-            failure_count = failure_count + 1,
-            last_failure = excluded.last_failure,
-            last_failure_error = excluded.last_failure_error""",
-        (agent_id, event.timestamp, event.payload.get("error_message", "")),
-    )
-
-    # Check if breaker should trip (3 failures)
-    row = conn.execute(
-        "SELECT failure_count, max_retries FROM circuit_breakers WHERE agent_name=?",
-        (agent_id,),
-    ).fetchone()
-
-    if row and row["failure_count"] >= row["max_retries"]:
-        cooldown_until = int(time.time()) + 300  # 5 min cooldown
-        conn.execute(
-            "UPDATE circuit_breakers SET tripped=1, cooldown_until=? WHERE agent_name=?",
-            (cooldown_until, agent_id),
-        )
-        logger.warning(f"Circuit breaker TRIPPED for {agent_id} (failures: {row['failure_count']})")
-
-    conn.commit()
+    error = event.payload.get("error_message", "") if isinstance(event.payload, dict) else str(event.payload)
+    db.record_failure(agent_id, error)
 
 
 # ---------------------------------------------------------------------------

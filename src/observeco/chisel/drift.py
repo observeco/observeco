@@ -18,7 +18,7 @@ from observeco.db import Database
 console = Console()
 db = Database()
 
-DRIFT_THRESHOLD_PCT = 10.0
+from observeco.constants import DRIFT_CRITICAL_PCT as DRIFT_THRESHOLD_PCT
 
 
 def run_drift(agent: Optional[str] = None) -> None:

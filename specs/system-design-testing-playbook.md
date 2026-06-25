@@ -2,14 +2,16 @@
 
 **Product:** ObserveCo (and all future software projects)
 **Status:** Living — update as lessons accumulate
-**Version:** 3.2 — 2026-06-10
+**Version:** 3.3 — 2026-06-12
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
 | 2.0 | 2026-05-30 | Added 9 lenses, Hound prompts, agent priming |
-| 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
-| 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, standard lessons entry |
-| 3.2 | 2026-06-10 | Added Pattern 8 (Payment Pipeline State Machine — 3 sub-states). Added Lessons Learned section with 1 entry. |
+| 2.0 | 2026-05-30 | Added 9 lenses, Hound prompts, agent priming |
+| 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory |
+| 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1 |
+| 3.2 | 2026-06-10 | Added Pattern 8 (Payment Pipeline State Machine). Added Lessons Learned section. |
+| 3.3 | 2026-06-12 | Added Pattern 9 (Migration Infrastructure Testing — GS-019 fixes, test matrix, anti-patterns). |
 
 **Source:** Real failure — watch-daemon architecture fix failed on first attempt because no system-level analysis was done before writing code. The fix worked correctly at the function level but was architecturally wrong (SPOF, tied lifecycle, gaps in coverage).
 
@@ -843,6 +845,156 @@ Only if ALL pass may you say: "Ready for human architecture sign-off."
 
 ---
 
+## Pattern 9: Migration Infrastructure Testing (GS-019)
+
+**Pattern:** SQLite migration systems with dual definitions (`_SCHEMA_SQL` bootstrap + versioned `MIGRATIONS`) silently skip migrations on fresh installs, mask data loss during recreate-table operations, and have no downgrade protection. Unit tests must cover every GS-019 fix independently.
+
+**Prevent:** Backup storms, silent data loss on migration crash, version corruption on downgrade, orphaned migration tables.
+
+### 9.1 The Dual-Definition Problem
+
+```
+_SCHEMA_SQL runs first (IF NOT EXISTS)
+    ↓
+MIGRATIONS run second (skip if table/column exists)
+    ↓
+10+ tables exist only in _SCHEMA_SQL with no migration provenance
+```
+
+**Why it's dangerous:** On fresh install, `_SCHEMA_SQL` creates all tables. Migrations 2-5 run but are no-ops. The migration chain is decorative — `_SCHEMA_SQL` is the real schema. If a migration adds a column that `_SCHEMA_SQL` doesn't have, the migration silently succeeds (column already exists from bootstrap) but the schema is wrong.
+
+**Test:** Verify `_SCHEMA_SQL` tables match the union of all migration CREATE TABLE statements. Flag any table in `_SCHEMA_SQL` that isn't also created by a migration.
+
+### 9.2 The Six GS-019 Fixes and Their Test Matrix
+
+| Fix | What it prevents | Test approach |
+|-----|-----------------|---------------|
+| **1. Backup before migrations** | Data loss on failed migration | Mock `backup()`, verify called when `has_pending && has_data()`, not called otherwise |
+| **2. Pre/post row count verification** | Silent data loss during migration | Snapshot counts before, verify after, assert warning on >10% drop, assert error when table disappears |
+| **3. Stranded table recovery** | Data stranded in `_v11` temp tables after crash | Create `_v11` table with data, drop target, re-init → verify rename + data preserved |
+| **4. Downgrade guard** | Version corruption when DB > code | Set `schema_version` higher than `SCHEMA_VERSION`, re-init → verify version unchanged + warning logged |
+| **5. Doctor data health checks** | No visibility into schema/backup health | Call `check_data_health()`, assert schema version check, backup recency, stranded table detection |
+| **6. Backup rotation + cooldown** | Backup storms from multiple processes | Create N+1 backups → verify only N kept; create recent backup → verify next backup skipped |
+
+### 9.3 The Stranded Table Pattern
+
+Recreate-table migrations (ALTER CHECK constraints) follow this pattern:
+
+```sql
+CREATE TABLE target_v11 (...);
+INSERT INTO target_v11 SELECT ... FROM target;
+DROP TABLE target;
+ALTER TABLE target_v11 RENAME TO target;
+```
+
+**If crash occurs between DROP and RENAME:** Data is stranded in `_v11`. The target table doesn't exist. All subsequent writes fail silently.
+
+**Recovery pattern (run on every `_init_db()`):**
+
+```python
+recovery_map = {
+    "pathway_nodes_v11": "pathway_nodes",
+    "alert_subscriptions_v15": "alert_subscriptions",
+}
+for temp_table, target_table in recovery_map.items():
+    temp_exists = check sqlite_master for temp_table
+    target_exists = check sqlite_master for target_table
+    if temp_exists and not target_exists:
+        ALTER TABLE temp_table RENAME TO target_table
+```
+
+**Test:** Create the `_v11` table manually, drop the target, call `_init_db()` → verify the target exists with data.
+
+### 9.4 The Downgrade Guard Anti-Pattern
+
+**Broken (original code):**
+
+```python
+# Force version to current — OVERWRITES higher versions
+if current_version < SCHEMA_VERSION:
+    conn.execute("INSERT OR REPLACE INTO _meta ...")
+    conn.commit()
+# Missing: what if current_version > SCHEMA_VERSION?
+```
+
+**Fixed:**
+
+```python
+if current_version < SCHEMA_VERSION:
+    conn.execute("INSERT OR REPLACE INTO _meta ...")
+    conn.commit()
+elif current_version > SCHEMA_VERSION:
+    logger.warning(
+        f"GS-019: Database version ({current_version}) > code version "
+        f"({SCHEMA_VERSION}). Possible downgrade. Not modifying version."
+    )
+```
+
+**Test:** Set `_meta(schema_version)` to `SCHEMA_VERSION + 10`, re-init → verify version unchanged + warning logged.
+
+### 9.5 The Backup Cooldown Anti-Pattern
+
+**Original cooldown mechanism (spec):** A `.last_backup` timestamp file.
+
+**Actual implementation:** `_get_last_backup_time()` scans `pulse_*.db` file modification times.
+
+**Why the mismatch matters:** Tests must create actual `pulse_*.db` files with controlled `mtime` — not a `.last_backup` file — to trigger or skip the cooldown.
+
+**Test pattern:**
+
+```python
+# Cooldown active: create recent pulse_*.db
+(backup_dir / "pulse_recent.db").write_text("backup")
+result = db.backup(dest_path=...)  # → False (skipped)
+
+# Cooldown expired: create old pulse_*.db
+old_backup = backup_dir / "pulse_old.db"
+os.utime(old_backup, (old_time, old_time))  # mtime > 4h ago
+result = db.backup(dest_path=...)  # → True (allowed)
+```
+
+### 9.6 The caplog Contamination Anti-Pattern
+
+**Problem:** Using `caplog` to verify that `_verify_migration_integrity()` does NOT log warnings fails because `_init_db()` runs first and logs migration skip warnings (e.g., "column already exists"). These contaminate `caplog.text`.
+
+**Fix:** Don't use `caplog` for negative assertions. Instead, patch the specific logger:
+
+```python
+logger = logging.getLogger("observeco.db")
+with patch.object(logger, "warning") as mock_warn, \
+     patch.object(logger, "error") as mock_err:
+    db._verify_migration_integrity(pre, post)
+mock_warn.assert_not_called()
+mock_err.assert_not_called()
+```
+
+### 9.7 The Path.touch() Platform Trap
+
+**Problem:** `Path.touch(times=(atime, mtime))` is not supported on all Python versions / platforms. On macOS Python 3.11, it raises `TypeError: Path.touch() got an unexpected keyword argument 'times'`.
+
+**Fix:** Use `os.utime(path, (atime, mtime))` instead — works everywhere.
+
+### 9.8 Migration Infrastructure Test Checklist
+
+Before merging any migration infrastructure change, verify:
+
+- [ ] `_has_data()` — returns True when tables have rows, False when empty
+- [ ] Backup called when `has_pending && has_data()`, NOT called when no pending or no data
+- [ ] Downgrade guard logs warning, doesn't overwrite version when `current > SCHEMA_VERSION`
+- [ ] Stranded `_v11` tables detected and renamed on `_init_db()`
+- [ ] Stranded recovery is no-op when both tables exist
+- [ ] Pre/post row count snapshot works (captures counts for all user tables)
+- [ ] Row count verification warns on >10% drop
+- [ ] Row count verification errors when table disappears
+- [ ] Row count verification skips empty pre-counts (0 rows)
+- [ ] Backup rotation keeps only `BACKUP_MAX_COUNT` backups
+- [ ] Backup cooldown skips when recent `pulse_*.db` exists
+- [ ] Backup cooldown allows when mtime > `BACKUP_COOLDOWN_HOURS`
+- [ ] Doctor `check_data_health()` runs schema version, backup recency, stranded table checks
+- [ ] All 24 tests in `test_migration_infra.py` pass
+
+---
+
 ## New Pattern: Webhook → Feature Propagation Race
 
 **Pattern (addition):** Three independent bugs in a payment pipeline (missing session ID, corrupted encryption key, missing handler call) each passed unit tests. Combined, they created a state where payment succeeded but Pro didn't activate. No single test caught it.
@@ -944,5 +1096,6 @@ Copy this into every infrastructure PR:
 | Date | Project | What happened | Root cause | Pattern | Fix applied |
 |------|---------|---------------|-----------|---------|-------------|
 | 2026-06-09 | ObserveCo | Stripe payment success → Pro not activated — 3 independent bugs (session ID, encryption, trial start) | Payment pipeline treated as single state instead of 3-sub-state machine | Pattern 8 | Added payment pipeline state machine to system design template |
+| 2026-06-12 | ObserveCo | Migration infra audit claimed 3 HIGH open → all 4 were already fixed in code. Summary was stale. | Stale audit summary doesn't match implementation state | Pattern 9 | Added migration infrastructure test matrix (24 tests). Always verify audit findings against current code before reporting status. |
 
 *Failure today taught us that the code can be correct and the system can still be wrong. This playbook bridges that gap — forcing the system-level analysis BEFORE the code, and verifying the system-level properties AFTER the code.*

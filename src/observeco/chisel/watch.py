@@ -1,7 +1,7 @@
 """observeco chisel watch — Auto-compression daemon.
 
 Monitors SOUL.md files for changes and auto-compresses them.
-Uses fswatch for file system events.
+Uses polling (stat().st_mtime + time.sleep) — no external dependencies.
 
 Two modes:
   - Daemon mode: background process with PID file (run via CLI)
@@ -25,18 +25,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from observeco.dirs import hermes_home, get_data_dir
+
 logger = logging.getLogger(__name__)
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 
-_DATA_DIR = Path.home() / ".observeco"
+_DATA_DIR = get_data_dir()
 _HEARTBEAT_PATH = _DATA_DIR / ".chisel_watch_heartbeat.json"
 _PID_PATH = _DATA_DIR / ".chisel_watch.pid"
 _LOG_PATH = _DATA_DIR / ".chisel_watch.log"
-
-# SOUL.md directories to watch
-_PROFILES_DIR = Path.home() / ".hermes" / "profiles"
-_ROOT_SOUL = Path.home() / ".hermes" / "SOUL.md"
 
 # ── Timing ───────────────────────────────────────────────────────────────────
 
@@ -45,27 +43,44 @@ HEARTBEAT_INTERVAL = 60  # Write heartbeat every 60s
 
 
 def _find_all_souls() -> list[Path]:
-    """Discover all SOUL.md files across profiles and root."""
+    """Discover all agent config files from the config_format_registry.
+    Falls back to legacy Hermes paths if DB is unavailable."""
+    from observeco.db import Database
+    try:
+        db = Database()
+        formats = db.get_config_formats()
+        db.close()
+    except Exception:
+        formats = []
+
     souls = []
-    if _ROOT_SOUL.exists():
-        souls.append(_ROOT_SOUL)
-    if _PROFILES_DIR.is_dir():
-        for p in _PROFILES_DIR.rglob("SOUL.md"):
-            souls.append(p)
+    if formats:
+        for fmt in formats:
+            filename = fmt["config_filename"]
+            for scan_path_str in fmt["scan_paths"]:
+                scan_path = Path(scan_path_str).expanduser()
+                if scan_path.is_file() and scan_path.name == filename:
+                    souls.append(scan_path)
+                elif scan_path.is_dir():
+                    for p in scan_path.rglob(filename):
+                        souls.append(p)
+    else:
+        # Fallback: legacy Hermes paths
+        hh = hermes_home()
+        if hh is not None:
+            profiles_dir = hh / "profiles"
+            root_soul = hh / "SOUL.md"
+            if root_soul.exists():
+                souls.append(root_soul)
+            if profiles_dir.is_dir():
+                for p in profiles_dir.rglob("SOUL.md"):
+                    souls.append(p)
     return souls
 
 
 def _agent_name_from_soul(soul_path: Path) -> str:
-    """Derive agent name from SOUL.md file path."""
-    # Root SOUL → "hermes"
-    if soul_path == _ROOT_SOUL:
-        return "hermes"
-    # Profile SOUL → profile directory name
-    if "profiles" in soul_path.parts:
-        idx = soul_path.parts.index("profiles")
-        if idx + 1 < len(soul_path.parts):
-            return soul_path.parts[idx + 1]
-    # Fallback: parent directory name
+    """Derive agent name from config file path.
+    Uses parent directory name — works for any framework."""
     return soul_path.parent.name
 
 

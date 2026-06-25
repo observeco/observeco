@@ -7,7 +7,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from .diagnostics import DiagnosticReport, run_diagnostics
+from .diagnostics import DiagnosticReport, check_data_health, run_diagnostics
 from .feedback import collect_fix_outcome, is_telemetry_opted_out
 from .llm import (
     LLMFix,
@@ -25,8 +25,15 @@ def doctor_run(
     auto_fix: bool = typer.Option(False, "--auto-fix", "-y", help="Apply fixes automatically without prompts"),
     provider: str = typer.Option("auto", "--provider", "-p", help="LLM provider: auto, openai, anthropic, google, ollama, none"),
     json_output: bool = typer.Option(False, "--json", help="Output diagnostics as JSON"),
+    data_health: bool = typer.Option(False, "--data-health", help="Run data continuity health checks only"),
 ) -> None:
     """Diagnose environment issues and get AI-powered fixes."""
+
+    # GS-019: Data health check mode
+    if data_health:
+        _display_data_health()
+        return
+
     # 1. Run diagnostics
     console.print("\n🔍 Running diagnostics...\n")
     report = run_diagnostics()
@@ -191,6 +198,37 @@ def _display_diagnostics(report: DiagnosticReport) -> None:
     console.print(f"\n  OS: {report.os_name} | Python: {report.python_version} | Issues: {len(report.issues)}")
 
 
+def _display_data_health() -> None:
+    """GS-019: Display data continuity health checks."""
+    console.print("\n🔍 Running data health checks...\n")
+
+    checks = check_data_health()
+
+    table = Table(title="Data Health Check")
+    table.add_column("Check", style="cyan")
+    table.add_column("Status")
+    table.add_column("Details")
+
+    for check in checks:
+        status_style = {
+            "ok": "[green]✓[/green]",
+            "warning": "[yellow]⚠[/yellow]",
+            "error": "[red]✗[/red]",
+        }.get(check.status, "?")
+        table.add_row(check.name, status_style, check.message[:60])
+
+    console.print(table)
+
+    issues = [c for c in checks if c.status != "ok"]
+    if not issues:
+        console.print("\n[green]✓ All data health checks passed.[/green]")
+    else:
+        console.print(f"\n[yellow]⚠ {len(issues)} issue(s) found.[/yellow]")
+        for issue in issues:
+            if issue.auto_fix:
+                console.print(f"  → Fix: {issue.auto_fix}")
+
+
 def _display_fixes(fixes: list[LLMFix]) -> None:
     """Display recommended fixes."""
     for i, fix in enumerate(fixes, 1):
@@ -308,3 +346,42 @@ def _run_command(cmd: str, auto_fix: bool = False) -> tuple[bool, str]:
         return False, "Command timed out after 30s"
     except Exception as e:
         return False, f"Error: {e}"
+
+
+# --- GS-019 §Recovery: Backup/Restore commands ---
+
+
+@doctor_app.command(name="backup")
+def backup_command():
+    """Create a backup of the database."""
+    from ..db import Database
+    db = Database()
+    result = db.backup()
+    if result:
+        backup_dir = db.db_path.parent / "backups"
+        console.print(f"[green]✅ Backup created:[/green] {backup_dir}")
+    else:
+        console.print("[yellow]⚠️  Backup skipped (cooldown active)[/yellow]")
+
+
+@doctor_app.command(name="restore")
+def restore_command(
+    backup_file: str = typer.Option(None, help="Specific backup file to restore"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation prompt"),
+):
+    """Restore database from backup."""
+    from ..db import Database
+    db = Database()
+
+    if not force:
+        confirm = typer.confirm("This will replace your current database. Continue?")
+        if not confirm:
+            typer.echo("Aborted.")
+            raise typer.Exit()
+
+    result = db.restore(backup_path=backup_file)
+    if result["status"] == "restored":
+        console.print(f"[green]✅ Restored from {result['from']}[/green] — {result['rows']} rows recovered")
+    else:
+        console.print(f"[red]❌ Restore failed:[/red] {result['message']}")
+        raise typer.Exit(code=1)

@@ -762,6 +762,10 @@ The gap: telling someone WHAT is wrong is not the same as telling them WHY it ma
 
 ---
 
+#### Trap 19: (reserved — Trap 18 added in v3.3, Trap 20 added in v3.4; this slot intentionally left empty to keep numbering aligned with version history)
+
+---
+
 #### Trap 20: Cross-System Format/State Inconsistency — Paired Paths That Must Agree
 
 **Pattern:** Two independent code paths generate, validate, or consume the same data shape (license key format, DB column set, state machine transitions). They are maintained by different developers or at different times. One changes — the other doesn't. The result is a silent inconsistency: keys that pass validation can't be generated, INSERT queries reference columns that don't exist, or state transitions mismatch.

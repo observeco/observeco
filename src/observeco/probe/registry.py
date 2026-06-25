@@ -7,6 +7,7 @@ a registry of typed probes, each in its own file under probe/.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import time
 from dataclasses import dataclass
@@ -203,7 +204,7 @@ class PgrepProbe(BaseProbe):
         start = time.time()
         try:
             result = subprocess.run(
-                ["pgrep", "-f", agent.name],
+                ["pgrep", "-f", re.escape(agent.name)],
                 capture_output=True, text=True, timeout=5,
             )
             latency = (time.time() - start) * 1000

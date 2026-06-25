@@ -140,7 +140,7 @@ When the mockup is a static HTML/JS file with hardcoded data:
 
 ---
 
-## 4. Known Bug Patterns (12+)
+## 4. Known Bug Patterns (24 patterns, 4.1–4.25)
 
 ### 4.1 f-string leak (critical)
 

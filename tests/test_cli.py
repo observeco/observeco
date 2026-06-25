@@ -76,7 +76,11 @@ def test_db_module():
     db = Database(db_path=os.path.join(tempfile.gettempdir(), "test_observeco.db"))
     assert db is not None
     db.close()
-    os.remove(os.path.join(tempfile.gettempdir(), "test_observeco.db"))
+    # ponytail: file only created on first _get_conn() call (lazy init)
+    # so it may not exist yet — that's fine, just clean up if it does
+    f = os.path.join(tempfile.gettempdir(), "test_observeco.db")
+    if os.path.exists(f):
+        os.remove(f)
 
 
 def test_config_auto_detect():

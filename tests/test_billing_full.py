@@ -296,8 +296,8 @@ class TestPersistence:
             billing_path = Path(tmpdir) / "billing.json"
             assert not billing_path.exists()
 
-            with patch("observeco.billing.CONFIG_FILE", billing_path), \
-                 patch("observeco.billing.CONFIG_DIR", Path(tmpdir)):
+            with patch("observeco.billing._get_config_file", return_value=billing_path), \
+                 patch("observeco.billing._get_config_dir", return_value=Path(tmpdir)):
                 from observeco.billing import _load_config
                 config = _load_config()
                 assert config.is_active is False
@@ -311,8 +311,8 @@ class TestPersistence:
             billing_path = Path(tmpdir) / "billing.json"
             billing_path.write_text("this is not valid json {{{")
 
-            with patch("observeco.billing.CONFIG_FILE", billing_path), \
-                 patch("observeco.billing.CONFIG_DIR", Path(tmpdir)):
+            with patch("observeco.billing._get_config_file", return_value=billing_path), \
+                 patch("observeco.billing._get_config_dir", return_value=Path(tmpdir)):
                 from observeco.billing import _load_config
                 config = _load_config()
                 assert config.is_active is False
@@ -322,8 +322,8 @@ class TestPersistence:
         with tempfile.TemporaryDirectory() as tmpdir:
             billing_path = Path(tmpdir) / "billing.json"
 
-            with patch("observeco.billing.CONFIG_FILE", billing_path), \
-                 patch("observeco.billing.CONFIG_DIR", Path(tmpdir)):
+            with patch("observeco.billing._get_config_file", return_value=billing_path), \
+                 patch("observeco.billing._get_config_dir", return_value=Path(tmpdir)):
                 from observeco.billing import _load_config, _save_config
 
                 # Create a config, save it

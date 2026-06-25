@@ -33,6 +33,65 @@ This is normal. The tools to fix it don't exist — yet.
 
 ---
 
+## Service Architecture
+
+ObserveCo runs as a service with health monitoring and auto-recovery.
+
+### Quick Start
+
+```bash
+# Start the service
+observeco service start
+
+# Check status
+observeco service status
+
+# Stop the service
+observeco service stop
+
+# Restart the service
+observeco service restart
+```
+
+### Components
+
+| Component | Port | Purpose |
+|-----------|------|---------|
+| OTEL Listener | 4318 | Receives traces from agents |
+| Dashboard | 8787 | Web UI for visualization |
+
+### Health Monitoring
+
+ObserveCo monitors two levels of health:
+
+**Level 1: Operational** (runs every 30s)
+- OTEL listener responding
+- Dashboard responding
+- Database writable
+- Ports available
+
+**Level 2: Functional** (runs every 60s)
+- Data flowing (recent events)
+- Schema current
+- Disk usage <80%
+- Resources healthy (CPU, memory)
+
+### Auto-Recovery
+
+Failed components are automatically restarted:
+- Max 3 restart attempts in 5 minutes
+- Port conflicts resolved by killing old processes
+- Database locks retried with backoff
+
+### Updates
+
+Check for updates on dashboard load:
+- "Update available: v0.3.0 (you have v0.2.0)"
+- Click "Update now" to upgrade
+- Service restarts automatically
+
+---
+
 ## From the Trenches (Dogfood)
 
 > We run 7 autonomous agents on an M4 Mac Mini — Hermes, Kepler, Hound, Dreamer, Aleph, PA, and an orchestrator. They talk via ACPS signals, trigger on file changes, get scheduled via cron. For months we ran `ps aux | grep python` and hoped for the best.
@@ -77,7 +136,7 @@ Run `observeco dashboard` and click "Unlock with Pro" to start your free trial.
 |---------|---------|-------------|
 | **Context Trim** | `observeco context trim` (or `observeco chisel trim`) | System prompt compression with per-component token breakdown |
 | **Drift Tracking** | `observeco context drift` (or `observeco chisel drift`) | 7-day rolling token drift trend per component per agent |
-| **Skill Audit** | `observeco context skills` (or `observeco chisel skills`) | Find bloated, duplicate, or unused skills eating context |
+| ~~**Skill Audit**~~ | ~~`observeco context skills` (or `observeco chisel skills`)~~ | ~~Merged into Brain Analysis — find bloated, duplicate, or unused skills eating context~~ |
 
 ### Memory & Context
 | Feature | Command | What it does |

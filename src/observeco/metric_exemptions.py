@@ -33,7 +33,7 @@ class MetricExemption:
     agent_name: str
     metric_name: str
     reason: str
-    exempted_by: str = "hound"
+    exempted_by: str = ""
     exempted_at: int = 0
     expires_at: Optional[int] = None
     active: bool = True
@@ -113,7 +113,7 @@ def add_exemption(
     agent_name: str,
     metric_name: str,
     reason: str,
-    exempted_by: str = "hound",
+    exempted_by: str = "",
     expires_at: Optional[int] = None,
 ) -> dict:
     """Add a new metric exemption."""
@@ -139,6 +139,7 @@ def add_exemption(
         "status": "exempted",
         "agent_name": agent_name,
         "metric_name": metric_name,
+        "exempted_by": exempted_by,
         "exempted_at": now,
         "expires_at": expires_at,
     }

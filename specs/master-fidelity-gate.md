@@ -2,7 +2,7 @@
 
 **Product:** ObserveCo (and all future software projects)
 **Status:** Living — update as lessons accumulate
-**Version:** 3.13 — 2026-06-10 (UX Interaction Fidelity Layer H)
+**Version:** 3.15 — 2026-06-19 (Installation Testing Layer J)
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
@@ -13,23 +13,25 @@
 | 3.11 | 2026-06-01 | **Windows + Telemetry Hardening**: watch.py fully cross-platform (DETACHED_PROCESS, taskkill fallback, signal guards). Telemetry client gated on local opt-in file. Three new dashboard endpoints for opt-in prompt. CI audit searches `<body>` content. Cross-platform matrix updated. Lessons Learned entries added. |
 | 3.12 | 2026-06-10 | **Added Layer G: Payment-to-Feature Fidelity** (3 items, 8 pts). Updated scoring table to include Layer G. Updated version history. |
 | 3.13 | 2026-06-10 | **Added Layer H: UX Interaction Fidelity** (2 items, 4 pts: H1 modal stacking, H2 scroll-first actions). Scoring table updated 78→82, threshold 60→63. |
-**Source:** Real need — the 7-playbook system (see requirements-fidelity-playbook.md §Playbook Inventory) all work independently, but nothing forces them to run TOGETHER before shipping.
+| 3.14 | 2026-06-18 | **Added Layer I: Observability Fail-Safes** (4 items, 12 pts: I1 data integrity, I2 disk space, I3 startup validation, I4 staleness detection). Scoring table updated 82→94, threshold 63→72. |
+| 3.15 | 2026-06-19 | **Added Layer J: Installation Testing** (6 binary pass/fail items, 6 pts). Updated scoring table 94→100, threshold 72→76. Registered installation-test-playbook.md. |
+**Source:** Real need — the 12-playbook system (see installation-test-playbook.md §Playbook Inventory) all work independently, but nothing forces them to run TOGETHER before shipping.
 
-This is the **single source of truth for "is this ready to ship?"** It combines all five lenses into one weighted gate that must pass before any change reaches production.
+This is the **single source of truth for "is this ready to ship?"** It combines all ten layers into one weighted gate that must pass before any change reaches production.
 
 ---
 
 ## 1. Thesis
 
-**A feature that passes all seven playbooks independently can still fail when they aren't checked together.**
+**A feature that passes all ten playbooks independently can still fail when they aren't checked together.**
 
 The requirements spec says "show live data." The coding fidelity says "cards render correctly." The UX says "the cards feel populated." The system-design says "the daemon survives restart." But nobody checked that the REQUIREMENTS spec's "live data" means the SAME THING as the SYSTEM-DESIGN daemon's 30-second interval. The feature ships. The data is stale. The user is confused.
 
-This document is the **integration gate** — the single checklist that forces all six lenses to converge before anything ships.
+This document is the **integration gate** — the single checklist that forces all eight layers to converge before anything ships.
 
 ---
 
-## 2. The 25-Point Combined Checklist (Weighted)
+## 2. The 45-Point Combined Checklist (Weighted, 10 Layers A–J)
 
 Each item has a weight: 1 (informational), 2 (important), or 3 (critical). Minimum pass threshold: 80% of total possible score.
 
@@ -138,6 +140,36 @@ Max Layer H: 4 pts **Pass threshold: ≥3**
 
 ---
 
+### Layer I: Observability Fail-Safes (4 items, max 12 pts)
+
+| # | Item | Weight | Check | Evidence required |
+|---|------|--------|-------|-------------------|
+| I1 | Data integrity verification — PRAGMA checks pass on startup | 3 | ☐ | `run_integrity_check()` output — passed=True |
+| I2 | Disk space monitoring — pre-write check active with 30s cache | 3 | ☐ | `check_disk_space()` returns status != 'critical' |
+| I3 | Startup validation — all 5 checks pass before service start | 3 | ☐ | `run_checks()` output — passed=True |
+| I4 | Staleness detection — every time-series endpoint returns last_updated | 3 | ☐ | grep for `add_last_updated` in all `/api/` time-series endpoints |
+
+Max Layer I: 12 pts **Pass threshold: ≥9**
+
+### Layer J: Installation Testing (6 items, max 6 pts) — BINARY PASS
+
+Layer J exists because layers A–I all assume the product is already installed. They miss the class of failure where `pip install observeco` fails, or `observeco dashboard` crashes on a machine that has never seen it. **Every item has weight 1. ALL 6 must pass — this layer is binary. No exceptions.**
+
+Layer J directly covers the scenarios enumerated in installation-test-playbook.md §2 (13 scenarios across fresh install, upgrade, downgrade, and failure modes). See that document for detailed simulation commands.
+
+| # | Item | Weight | Check | Evidence required |
+|---|------|--------|-------|-------------------|
+| J1 | Fresh install on clean machine (no Hermes, no config) | 1 | ☐ | CI run: `python3 -m venv /tmp/j1-venv && /tmp/j1-venv/bin/pip install observeco && timeout 5 /tmp/j1-venv/bin/observeco dashboard --no-browser 2>&1` exits 0 or is killed by timeout (dashboard started successfully and is waiting for connections). If it exits non-zero before timeout, the install is broken. |
+| J2 | Fresh install with Hermes present (auto-discovery) | 1 | ☐ | Same as J1 but on a machine with `~/.hermes/` present. Verify: `curl -s http://localhost:9119/api/agents | python3 -c "import sys,json; d=json.load(sys.stdin); assert len(d)>0, 'No agents discovered'"` |
+| J3 | Upgrade preserves data (DB migration) | 1 | ☐ | Install old version → start dashboard → create data → upgrade → verify data preserved (row counts match). See installation-test-playbook.md §Scenario 4 for exact commands. |
+| J4 | Downgrade detected gracefully (newer schema) | 1 | ☐ | Bump `PRAGMA user_version` ahead → start dashboard → verify graceful message, no crash. See installation-test-playbook.md §Scenario 5 for exact commands. |
+| J5 | Uninstall + reinstall preserves data | 1 | ☐ | `pip uninstall observeco -y` → verify data dir exists → `pip install observeco` → start dashboard → verify historical data available. See §Scenario 6. |
+| J6 | Corrupted DB handled gracefully | 1 | ☐ | Corrupt `pulse.db` with garbage bytes → start dashboard → verify no crash, user-visible error, recovery path exists. See §Scenario 8. |
+
+Max Layer J: 6 pts **Pass threshold: 6/6 (ALL items must pass — this layer is binary)**
+
+---
+
 ## 3. Scoring
 
 | Layer | Max | Threshold | Actual | Pass? |
@@ -150,7 +182,9 @@ Max Layer H: 4 pts **Pass threshold: ≥3**
 | F — First-Run | 9 | =9 (ALL MUST PASS) | ___ | ☐ |
 | G — Payment Pipeline | 8 | ≥6 | ___ | ☐ |
 | H — UX Interaction | 4 | ≥3 | ___ | ☐ |
-| **Total** | **82** | **≥63** | **___** | **☐** |
+| I — Observability Fail-Safes | 12 | ≥9 | ___ | ☐ |
+| J — Installation Testing | 6 | =6 (ALL MUST PASS) | ___ | ☐ |
+| **Total** | **100** | **≥76** | **___** | **☐** |
 
 ---
 
@@ -224,7 +258,7 @@ assert any(kw in r.text.lower() for kw in ['telemetry', 'localhost', 'warning', 
         run: python3 -c "
           import json;
           score = json.load(open('gate-score.json'));
-          assert score['total'] >= 56, f'Gate FAIL: {score[total]}/70'
+          assert score['total'] >= 72, f'Gate FAIL: {score[total]}/94'
         "
 ```
 
@@ -233,7 +267,7 @@ assert any(kw in r.text.lower() for kw in ['telemetry', 'localhost', 'warning', 
 Even if all automated gates pass, the human must:
 
 1. Review the **evidence bundle** — screenshots, test output, API responses, session log
-2. Check the **combined score** ≥56/70
+2. Check the **combined score** ≥72/94
 3. Verify the **"Human Lens Override"** rule: if anything feels wrong, reject regardless of score
 4. **Sign off** by replying "GATE PASSED — [name] — [date]"
 
@@ -258,7 +292,7 @@ This is not optional. The human override exists for scenarios the playbooks cann
 
 ## 5. Trade-off & Risk Decision Framework
 
-All seven playbooks are score-based (pass/fail, ≥threshold, ≥4/5). Real shipping involves deliberate trade-offs: "We accept partial Windows support for 2 weeks because Mac/Linux is 95% of users."
+All ten playbooks are score-based (pass/fail, ≥threshold, ≥4/5). Real shipping involves deliberate trade-offs: "We accept partial Windows support for 2 weeks because Mac/Linux is 95% of users."
 
 Without a risk framework, the playbooks become religious dogma that slows shipping instead of protecting it.
 
@@ -401,8 +435,8 @@ Fix: [playbook update applied]
 Before ANY change reaches production:
 
 ```
-|□ 1. Combined score ≥56/70
-|□ 2. All 6 layer thresholds met (A≥11, B≥11, C≥9, D≥14, E≥3, F=9/9)
+|□ 1. Combined score ≥72/94
+|□ 2. All 9 layer thresholds met (A≥11, B≥11, C≥9, D≥14, E≥3, F=9/9, G≥6, H≥3, I≥9)
 |□ 3. Automated CI gate green
 |□ 4. Human gate signed off (no override)
 |□ 5. Evidence bundle attached (screenshots, test output, API responses, session log)
@@ -413,6 +447,7 @@ Before ANY change reaches production:
 |□ 10. If infrastructure change: lifecycle tests committed to repository
 |□ 11. Risk Matrix filled if any exceptions accepted
 |□ 12. **Layer F (First-Run Audit) ALL PASS — no exceptions permitted for this layer**
+|□ 13. Cross-refs verified: spec-gated-workflow-playbook.md, orchestration-anti-patterns-playbook.md, security-stride-playbook.md all referenced in relevant ADR/PR context
 ```
 
 **The final sign-off message must be:**
@@ -420,13 +455,16 @@ Before ANY change reaches production:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MASTER FIDELITY GATE — [FEATURE NAME]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-|Combined score: ___/70 (threshold ≥56)
+|Combined score: ___/94 (threshold ≥72)
 |Layer A (Requirements): ___/14 ≥11 ☐
 |Layer B (Coding): ___/14 ≥11 ☐
 |Layer C (UX): ___/11 ≥9 ☐
 |Layer D (System): ___/18 ≥14 ☐
 |Layer E (Session): ___/4 ≥3 ☐
 |Layer F (First-Run): ___/9 =9 (ALL MUST PASS) ☐
+|Layer G (Payment): ___/8 ≥6 ☐
+|Layer H (UX Interaction): ___/4 ≥3 ☐
+|Layer I (Observability Fail-Safes): ___/12 ≥9 ☐
 Human override: NONE
 Risk Matrix: [NONE / filled — linked to ___]
 Post-ship review: SCHEDULED
@@ -515,7 +553,7 @@ STATUS: ✅ GATE PASSED — [signing authority] — [date]
 
 1. Run the data-pipeline-audit.sh
 2. Run cross-ref-verify.sh
-3. Check combined score ≥56/70
+3. Check combined score ≥72/94
 4. Verify Layer F (First-Run) ALL 9 items pass — this layer has NO exceptions
 5. Get human sign-off
 6. Ship
@@ -534,4 +572,4 @@ specs/scripts/
 
 ---
 
-A feature that passes all seven playbooks independently can still fail when they aren't checked together. This gate prevents that — by forcing convergence before every ship.
+A feature that passes all ten playbooks independently can still fail when they aren't checked together. This gate prevents that — by forcing convergence before every ship.

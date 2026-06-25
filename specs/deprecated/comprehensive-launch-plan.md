@@ -103,7 +103,7 @@ This plan was rewritten from a full filesystem + test audit. Every claim below w
 | | | | | |
 | **NEW FEATURES (2026-05-26):** | | | | |
 | **obs-L-045** | System prompt compression: port Hermes Chisel to `observeco chisel compress` (file-in/file-out) | 2d | P2 | Spec: `specs/pulse-depth-spec.md` §1 |
-| **obs-L-046** | Per-turn token tracking: `POST /api/chisel/trim` endpoint + Hermes post-turn hook | 3d | P2 | Spec: `specs/pulse-depth-spec.md` §2 |
+| **obs-L-046** | Per-turn token tracking: `POST /api/tokens/log` endpoint + Hermes post-turn hook | 3d | P2 | Spec: `specs/pulse-depth-spec.md` §2 |
 | **obs-L-047** | Auto-heal: integrate heal trigger into watch daemon (3-line change) | 1d | P2 | Spec: `specs/pulse-depth-spec.md` §3. Heal logic already exists. |
 | **obs-L-048** | OpenClaw ClawForge plugin: `@observeco/clawforge-plugin` Node.js ContextEngine hooks | 5-7d | P3 | Spec: `specs/pulse-depth-spec.md` §4. Separate package. |
 | **obs-L-049** | Push alerts: Telegram, webhook, email delivery module | 3d | P2 | Spec: `specs/pulse-depth-spec.md` §5. Alert detection pipeline exists. |

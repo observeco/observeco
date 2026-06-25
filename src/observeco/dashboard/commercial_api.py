@@ -233,12 +233,12 @@ async def cancel_trial(req: TrialRequest):
             )
     if not rows:
         return {"status": "error", "message": "No active trial found for this email"}
-    
+
     update("licenses", {
         "status": "cancelled",
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }, {"id": rows[0]["id"]})
-    
+
     return {"status": "cancelled", "message": "Trial cancelled"}
 
 

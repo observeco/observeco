@@ -22,6 +22,8 @@ A user looking at a card with `4.2K total` can't tell:
 
 ## §3 Database Schema
 
+**Canonical table:** `token_logs` (existing, populated by proxy/OTel). `token_events` (defined below) is a secondary view for per-turn analysis — all downstream specs read `token_logs` as the source of truth.
+
 New table `token_events`:
 ```sql
 CREATE TABLE IF NOT EXISTS token_events (
@@ -39,6 +41,8 @@ CREATE TABLE IF NOT EXISTS token_events (
 );
 CREATE INDEX IF NOT EXISTS idx_token_events_agent_ts ON token_events(agent_name, timestamp);
 ```
+
+**Migration:** This table is additive (no existing data affected). Migration number TBD — coordinate with obs-spec-020/021 to avoid collision.
 
 ## §4 Implementation
 

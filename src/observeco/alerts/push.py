@@ -5,6 +5,9 @@ Delivery log in alert_log table.
 
 Fire-and-forget: push_alert returns immediately. Deliveries that fail
 are logged with error; subscriptions with repeated failures can be disabled.
+
+Alert enrichment: LLM classifies alerts as duplicate (suppress) vs novel
+(enrichment body). Falls back to raw message if LLM unavailable.
 """
 from __future__ import annotations
 
@@ -12,11 +15,147 @@ import json
 import logging
 import subprocess
 import time
-from typing import Optional
+from typing import NamedTuple, Optional
 
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Alert enrichment result types
+# ---------------------------------------------------------------------------
+
+SUPPRESS = "suppress"
+RAW_FALLBACK = "raw"
+ENRICHED = "enriched"
+
+
+class _EnrichResult(NamedTuple):
+    status: str  # SUPPRESS | RAW_FALLBACK | ENRICHED
+    text: str    # populated only when status == ENRICHED
+
+
+# ---------------------------------------------------------------------------
+# Alert enrichment prompt
+# ---------------------------------------------------------------------------
+
+ALERT_ENRICHMENT_PROMPT = """\
+You are an alert analyst for ObserveCo. You receive a new alert event and \
+recent alert history for the same agent. Your job is to decide:
+
+1. SUPPRESS — if this is the same crash pattern / duplicate as one or more \
+recent alerts. Do NOT send a separate notification for repeated failures.
+2. ENRICHED: <enriched message> — if this is a novel or significantly \
+different failure mode. Provide a concise, actionable enriched message that \
+explains the likely root cause and any suggested next steps.
+3. CANNOT_DETERMINE — if you cannot make a confident classification.
+
+Format your response as exactly ONE of these three lines (no extra text):
+
+- SUPPRESS
+- ENRICHED: <your enriched message here>
+- CANNOT_DETERMINE
+
+Current alert:
+- Event type: {event_type}
+- Message: {message}
+- Agent: {agent_name}
+
+Recent alerts for this agent (most recent first):
+{recent_alerts}
+"""
+
+
+def _enrich_alert(
+    event_type: str,
+    message: str,
+    agent_name: str,
+    db: "Database",
+) -> _EnrichResult:
+    """Classify and optionally enrich an alert via LLM.
+
+    Returns:
+        _EnrichResult with status:
+        - SUPPRESS: duplicate pattern, caller should skip delivery
+        - RAW_FALLBACK: LLM unavailable or unsure, use original message
+        - ENRICHED: novel failure, text field contains enriched message
+    """
+    try:
+        from observeco.llm_service import ask as llm_ask
+    except ImportError:
+        logger.debug("llm_service not available; passing alert through raw")
+        return _EnrichResult(RAW_FALLBACK, "")
+
+    # Fetch recent alert_log entries for this agent (limit 5)
+    recent_entries = db.get_alert_log(limit=5)
+    if agent_name:
+        recent_entries = [
+            r for r in recent_entries
+            if agent_name.lower() in (r.get("message", "") + " " + r.get("event_type", "")).lower()
+        ]
+
+    if not recent_entries:
+        recent_lines = "  (no recent alerts for this agent)"
+    else:
+        lines = []
+        for entry in recent_entries[:5]:
+            ts = time.strftime(
+                "%Y-%m-%d %H:%M:%S",
+                time.localtime(entry.get("created_at", 0)),
+            )
+            lines.append(
+                f"  [{ts}] event={entry.get('event_type', '?')} "
+                f"msg={entry.get('message', '')[:120]}"
+            )
+        recent_lines = "\n".join(lines)
+
+    user_context = ALERT_ENRICHMENT_PROMPT.format(
+        event_type=event_type,
+        message=message,
+        agent_name=agent_name or "(unknown)",
+        recent_alerts=recent_lines,
+    )
+
+    try:
+        response = llm_ask(
+            system_prompt="You are an ObserveCo alert analyst. Be concise.",
+            user_context=user_context,
+            consumer="alert_enrichment",
+            max_cost_cents=0.005,
+            cache_ttl_secs=3600,
+            tier=2,
+        )
+    except Exception as exc:
+        logger.warning("LLM enrichment call failed: %s — using raw message", exc)
+        return _EnrichResult(RAW_FALLBACK, "")
+
+    if response is None:
+        logger.debug("LLM returned None (gated/budget); using raw message")
+        return _EnrichResult(RAW_FALLBACK, "")
+
+    response = response.strip()
+
+    # --- Classify LLM response ---
+    upper = response.upper()
+
+    if upper == "SUPPRESS":
+        logger.info("Alert suppressed by LLM (duplicate pattern): %s", event_type)
+        return _EnrichResult(SUPPRESS, "")
+
+    if upper == "CANNOT_DETERMINE":
+        logger.debug("LLM returned CANNOT_DETERMINE; using raw message")
+        return _EnrichResult(RAW_FALLBACK, "")
+
+    if response.upper().startswith("ENRICHED:"):
+        enriched = response[len("ENRICHED:"):].strip()
+        if enriched:
+            logger.info("Alert enriched by LLM: %s", enriched[:80])
+            return _EnrichResult(ENRICHED, enriched)
+        # Empty enrichment — fall through to raw
+
+    # Unknown format — pass through raw
+    logger.debug("LLM returned unrecognized format; using raw message")
+    return _EnrichResult(RAW_FALLBACK, "")
 
 
 def push_alert(event_type: str, message: str,
@@ -35,6 +174,23 @@ def push_alert(event_type: str, message: str,
     """
     if db is None:
         db = Database()
+
+    # --- Alert enrichment: classify & optionally enrich before delivery ---
+    original_message = message
+    try:
+        result = _enrich_alert(event_type, message, agent_name, db)
+    except Exception as exc:
+        logger.debug("Alert enrichment failed, using raw: %s", exc)
+        result = _EnrichResult(RAW_FALLBACK, "")
+
+    if result.status == SUPPRESS:
+        logger.info("Alert suppressed (duplicate pattern): %s", event_type)
+        return []  # skip delivery entirely
+
+    if result.status == ENRICHED and result.text:
+        message = result.text
+
+    # RAW_FALLBACK or empty ENRICHED → use original_message as-is
 
     results: list[dict] = []
     subs = db.get_alert_subscriptions()

@@ -4,18 +4,43 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sqlite3
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 from platformdirs import user_data_dir
 
+from observeco.dirs import hermes_home, openclaw_home
+
+# ponytail: multiple pulse dirs could be configurable via observeco.yml
+# Lazy — evaluated at first call, not import time, so hermes_home() returning None
+# doesn't crash the import. Upgrade path: make configurable via observeco.yml.
+def _get_default_pulse_dirs() -> list[Path]:
+    hh = hermes_home()
+    if hh is None:
+        return []
+    return [hh / "state" / "pulses"]
+
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 12
+SCHEMA_VERSION = 29
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
+
+# GS-019 §Recovery: Migration failure notification
+_last_migration_failure: Optional[dict] = None
+
+
+def get_migration_failure() -> Optional[dict]:
+    """Get last migration failure info (for dashboard notification)."""
+    return _last_migration_failure
+
+# Backup policy constants
+BACKUP_MAX_COUNT = 5          # Keep last N backups
+BACKUP_COOLDOWN_HOURS = 4     # Minimum hours between backups
 
 # Versioned migrations — each entry is (version, sql)
 # Run in order when upgrading from an older version.
@@ -337,6 +362,198 @@ ALTER TABLE alert_subscriptions_v15 RENAME TO alert_subscriptions;
     (16, """-- Migration 16: add metadata column to agent_configs for circuit config storage
 ALTER TABLE agent_configs ADD COLUMN metadata TEXT DEFAULT '{}';
 """),
+    (17, """-- Migration 17: token_logs workflow/service metadata + system_prompt_hash
+ALTER TABLE token_logs ADD COLUMN workflow_name TEXT DEFAULT '';
+ALTER TABLE token_logs ADD COLUMN service_name TEXT DEFAULT '';
+ALTER TABLE token_logs ADD COLUMN session_id TEXT DEFAULT '';
+ALTER TABLE token_logs ADD COLUMN system_prompt_hash TEXT DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_token_workflow ON token_logs(workflow_name);
+CREATE INDEX IF NOT EXISTS idx_token_service ON token_logs(service_name);
+CREATE INDEX IF NOT EXISTS idx_token_session ON token_logs(session_id);
+CREATE INDEX IF NOT EXISTS idx_token_prompt_hash ON token_logs(system_prompt_hash);
+"""),
+    (18, """-- Migration 18: input/output/cache token breakdown + cost_computed + cache_savings
+ALTER TABLE token_logs ADD COLUMN input_tokens INTEGER DEFAULT 0;
+ALTER TABLE token_logs ADD COLUMN output_tokens INTEGER DEFAULT 0;
+ALTER TABLE token_logs ADD COLUMN cache_creation_tokens INTEGER DEFAULT 0;
+ALTER TABLE token_logs ADD COLUMN cache_read_tokens INTEGER DEFAULT 0;
+ALTER TABLE token_logs ADD COLUMN cost_computed TEXT DEFAULT "flat";
+ALTER TABLE token_logs ADD COLUMN cache_savings REAL DEFAULT 0;
+CREATE INDEX IF NOT EXISTS idx_token_input ON token_logs(input_tokens);
+CREATE INDEX IF NOT EXISTS idx_token_output ON token_logs(output_tokens);
+CREATE INDEX IF NOT EXISTS idx_token_cost_computed ON token_logs(cost_computed);
+"""),
+    (19, """-- Migration 19: per-message cost attribution
+CREATE TABLE IF NOT EXISTS token_message_breakdown (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_log_id INTEGER NOT NULL,
+    message_index INTEGER NOT NULL,
+    message_role TEXT NOT NULL,
+    content_hash TEXT DEFAULT "",
+    token_count INTEGER NOT NULL,
+    is_system_prompt INTEGER DEFAULT 0,
+    is_cached INTEGER DEFAULT 0,
+    cost REAL DEFAULT 0,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_msg_breakdown_log ON token_message_breakdown(token_log_id);
+CREATE INDEX IF NOT EXISTS idx_msg_breakdown_role ON token_message_breakdown(message_role);
+CREATE INDEX IF NOT EXISTS idx_msg_breakdown_hash ON token_message_breakdown(content_hash);
+"""),
+    (20, """-- Migration 20: unified action log
+CREATE TABLE IF NOT EXISTS action_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    action_type TEXT NOT NULL,
+    action_detail TEXT NOT NULL,
+    tokens_saved INTEGER DEFAULT 0,
+    cost_saved REAL DEFAULT 0.0,
+    status TEXT NOT NULL DEFAULT 'success',
+    metadata TEXT DEFAULT '{}',
+    triggered_by TEXT DEFAULT 'daemon',
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_action_log_agent ON action_log(agent_name, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_action_log_type ON action_log(action_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_action_log_ts ON action_log(created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_action_log_unique ON action_log(agent_name, action_type, created_at, action_detail);
+"""),
+    (21, """-- Migration 21: token_history for 90-day trend chart
+CREATE TABLE IF NOT EXISTS token_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    snapshot_date INTEGER NOT NULL,
+    total_input_tokens INTEGER NOT NULL DEFAULT 0,
+    total_output_tokens INTEGER NOT NULL DEFAULT 0,
+    agent_count INTEGER NOT NULL DEFAULT 0,
+    metadata TEXT DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_token_history_date ON token_history(snapshot_date DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_token_history_day ON token_history(snapshot_date);
+"""),
+    (22, """-- Migration 22: add cache token columns to token_history
+ALTER TABLE token_history ADD COLUMN total_cache_creation_tokens INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE token_history ADD COLUMN total_cache_read_tokens INTEGER NOT NULL DEFAULT 0;
+"""),
+    (23, """-- Migration 23: add source column to token_logs (watch vs otel vs manual)
+ALTER TABLE token_logs ADD COLUMN source TEXT NOT NULL DEFAULT 'unknown';
+CREATE INDEX IF NOT EXISTS idx_token_logs_source ON token_logs(source);
+"""),
+    (24, """-- Migration 24: add agent type classification to agent_configs
+ALTER TABLE agent_configs ADD COLUMN type TEXT NOT NULL DEFAULT 'agent';
+-- Seed known infrastructure/test patterns
+UPDATE agent_configs SET type = 'infrastructure' WHERE agent_name IN ('hermes-agent');
+UPDATE agent_configs SET type = 'test' WHERE agent_name LIKE 'hermes-test%' OR agent_name LIKE 'test%' OR agent_name LIKE 'test2%';
+CREATE INDEX IF NOT EXISTS idx_agent_configs_type ON agent_configs(type);
+"""),
+(25, """-- Migration 25: token component config table
+CREATE TABLE IF NOT EXISTS token_component_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    label TEXT NOT NULL,
+    color TEXT NOT NULL DEFAULT '#6366f1',
+    display_order INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%%s', 'now'))
+);
+-- Seed default 5 components
+INSERT OR IGNORE INTO token_component_config (name, label, color, display_order) VALUES
+    ('identity', 'Identity', '#6366f1', 1),
+    ('skills', 'Skills', '#8b5cf6', 2),
+    ('memory', 'Memory', '#ec4899', 3),
+    ('tools', 'Tools', '#14b8a6', 4),
+    ('guidance', 'Guidance', '#f97316', 5);
+CREATE INDEX IF NOT EXISTS idx_token_component_config_name ON token_component_config(name);
+"""),
+(26, """-- Migration 26: config format registry for chisel discovery
+CREATE TABLE IF NOT EXISTS config_format_registry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    framework TEXT NOT NULL,
+    config_filename TEXT NOT NULL DEFAULT 'SOUL.md',
+    scan_paths TEXT NOT NULL DEFAULT '[]',
+    section_keywords TEXT NOT NULL DEFAULT '{}',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%%s', 'now')),
+    UNIQUE(framework, config_filename)
+);
+-- Seed Hermes: SOUL.md with 5-section taxonomy
+INSERT OR IGNORE INTO config_format_registry (framework, config_filename, scan_paths, section_keywords) VALUES
+    ('hermes', 'SOUL.md',
+     '["~/.hermes/profiles", "~/.hermes"]',
+     '{"identity": ["identity", "role", "persona", "who you are", "you are", "i am"], "skills": ["skill", "tool", "command", "function", "available action", "you can use", "you have access to"], "memory": ["memory", "context", "history", "previous", "conversation", "recall", "user profile", "personal info"], "tools": ["tool description", "tool schema", "api spec", "json schema", "parameter", "endpoint", "request format"], "guidance": ["guideline", "rule", "instruction", "constraint", "policy", "format", "output format", "do not", "never", "always", "must", "should"]}');
+-- Seed OpenClaw: same SOUL.md format
+INSERT OR IGNORE INTO config_format_registry (framework, config_filename, scan_paths, section_keywords) VALUES
+    ('openclaw', 'SOUL.md',
+     '["~/.openclaw/workspace"]',
+     '{"identity": ["identity", "role", "persona", "who you are", "you are", "i am"], "skills": ["skill", "tool", "command", "function", "available action", "you can use", "you have access to"], "memory": ["memory", "context", "history", "previous", "conversation", "recall", "user profile", "personal info"], "tools": ["tool description", "tool schema", "api spec", "json schema", "parameter", "endpoint", "request format"], "guidance": ["guideline", "rule", "instruction", "constraint", "policy", "format", "output format", "do not", "never", "always", "must", "should"]}');
+CREATE INDEX IF NOT EXISTS idx_config_format_registry_framework ON config_format_registry(framework);
+"""),
+(27, """-- Migration 27: token pricing table (single source of truth for cost calculations)
+CREATE TABLE IF NOT EXISTS token_pricing (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    provider TEXT NOT NULL,
+    model TEXT NOT NULL DEFAULT 'default',
+    input_per_1m REAL NOT NULL DEFAULT 0.0,
+    output_per_1m REAL NOT NULL DEFAULT 0.0,
+    cache_read_per_1m REAL NOT NULL DEFAULT 0.0,
+    cache_write_per_1m REAL NOT NULL DEFAULT 0.0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%%s', 'now')),
+    UNIQUE(provider, model)
+);
+-- Seed from existing hardcoded values
+INSERT OR IGNORE INTO token_pricing (provider, model, input_per_1m, output_per_1m, cache_read_per_1m, cache_write_per_1m) VALUES
+    ('deepseek', 'deepseek-chat', 0.15, 0.60, 0.015, 0.15),
+    ('openai', 'gpt-4o', 2.50, 10.00, 1.25, 2.50),
+    ('openai', 'gpt-4', 10.00, 30.00, 5.00, 10.00),
+    ('anthropic', 'claude-sonnet-4', 3.00, 15.00, 0.30, 3.75),
+    ('anthropic', 'claude-3-haiku', 0.25, 1.25, 0.025, 0.30),
+    ('google', 'gemini-2.0-flash', 0.15, 0.60, 0.015, 0.15),
+    ('ollama', 'default', 0.0, 0.0, 0.0, 0.0),
+    ('custom', 'default', 0.15, 0.60, 0.015, 0.15);
+CREATE INDEX IF NOT EXISTS idx_token_pricing_provider ON token_pricing(provider);
+"""),
+(28, """-- Migration 28: LLM provider registry (extends provider dispatch beyond hardcoded if/elif)
+CREATE TABLE IF NOT EXISTS llm_provider_registry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL,
+    provider_type TEXT NOT NULL DEFAULT 'cloud',
+    base_url TEXT,
+    default_model TEXT,
+    detect_endpoint TEXT,
+    detect_timeout INTEGER DEFAULT 2,
+    api_format TEXT DEFAULT 'openai',
+    priority INTEGER DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%%s', 'now'))
+);
+-- Seed cloud providers
+INSERT OR IGNORE INTO llm_provider_registry (name, display_name, provider_type, base_url, default_model, api_format, priority) VALUES
+    ('anthropic', 'Anthropic', 'cloud', 'https://api.anthropic.com', 'claude-sonnet-4-20250514', 'anthropic', 90),
+    ('openai', 'OpenAI', 'cloud', 'https://api.openai.com', 'gpt-4o', 'openai', 80),
+    ('deepseek', 'DeepSeek', 'cloud', 'https://api.deepseek.com', 'deepseek-chat', 'openai', 70),
+    ('google', 'Google', 'cloud', 'https://generativelanguage.googleapis.com', 'gemini-2.0-flash', 'google', 60),
+    ('mistral', 'Mistral', 'cloud', 'https://api.mistral.ai', 'mistral-large-latest', 'openai', 50),
+    ('groq', 'Groq', 'cloud', 'https://api.groq.com/openai', 'llama-3.1-70b-versatile', 'openai', 40),
+    ('together', 'Together', 'cloud', 'https://api.together.xyz', 'meta-llama/Llama-3-70b-chat-hf', 'openai', 30),
+    ('openrouter', 'OpenRouter', 'cloud', 'https://openrouter.ai/api', 'anthropic/claude-sonnet-4', 'openai', 20);
+-- Seed local providers
+INSERT OR IGNORE INTO llm_provider_registry (name, display_name, provider_type, base_url, default_model, detect_endpoint, detect_timeout, api_format, priority) VALUES
+    ('ollama', 'Ollama', 'local', 'http://localhost:11434', 'llama3.1', 'http://localhost:11434/api/tags', 2, 'ollama', 10),
+    ('lmstudio', 'LM Studio', 'local', 'http://localhost:1234/v1', 'default', 'http://localhost:1234/v1/models', 2, 'openai', 9),
+    ('vllm', 'vLLM', 'local', 'http://localhost:8000/v1', 'default', 'http://localhost:8000/v1/models', 2, 'openai', 8),
+    ('textgen', 'text-generation-webui', 'local', 'http://localhost:5000/v1', 'default', 'http://localhost:5000/v1/models', 2, 'openai', 7),
+    ('localai', 'LocalAI', 'local', 'http://localhost:8080/v1', 'default', 'http://localhost:8080/v1/models', 2, 'openai', 6);
+CREATE INDEX IF NOT EXISTS idx_llm_provider_registry_name ON llm_provider_registry(name);
+"""),
+    (29, """-- Migration 29: model, latency_ms, tool_calls, topic_id for token_logs
+ALTER TABLE token_logs ADD COLUMN model TEXT DEFAULT '';
+ALTER TABLE token_logs ADD COLUMN latency_ms INTEGER DEFAULT 0;
+ALTER TABLE token_logs ADD COLUMN tool_calls TEXT DEFAULT '[]';
+ALTER TABLE token_logs ADD COLUMN topic_id TEXT DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_token_logs_model ON token_logs(model);
+CREATE INDEX IF NOT EXISTS idx_token_logs_topic_id ON token_logs(topic_id);
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -365,6 +582,16 @@ CREATE TABLE IF NOT EXISTS circuit_breakers (
     last_failure TEXT,
     last_failure_error TEXT
 );
+
+-- circuit_events: append-only event log for circuit breaker state
+CREATE TABLE IF NOT EXISTS circuit_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    payload TEXT,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_circuit_events_agent ON circuit_events(agent_name, created_at);
 
 CREATE TABLE IF NOT EXISTS chisel_trims (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -587,7 +814,11 @@ class Database:
     def __init__(self, db_path: str | Path = DB_PATH):
         self.db_path = Path(db_path)
         self._conn: Optional[sqlite3.Connection] = None
-        self._init_db()
+        self._init_called = False
+        # ponytail: _init_db() is deferred to first _get_conn() call so that
+        # module-level `db = Database()` doesn't crash on import when Hermes
+        # isn't installed or the data dir is unwritable.
+        # Upgrade path: make Database a proper lazy singleton.
 
     def _get_conn(self) -> sqlite3.Connection:
         if self._conn is None:
@@ -597,10 +828,19 @@ class Database:
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA busy_timeout=5000")
             self._conn.execute("PRAGMA foreign_keys=ON")
+            # ponytail: _init_db() runs on first connection so schema + migrations
+            # are applied before any query. This is the lazy init that prevents
+            # import-time crashes when Hermes isn't installed.
+            self._init_db()
         return self._conn
 
     def _init_db(self) -> None:
-        conn = self._get_conn()
+        conn = self._conn
+        assert conn is not None, "_init_db called before _get_conn set up self._conn"
+
+        # GS-019 §Recovery: Check for stranded migration tables
+        self._recover_stranded_tables(conn)
+
         # Run full schema to ensure all tables exist (IF NOT EXISTS makes it idempotent)
         conn.executescript(_SCHEMA_SQL)
 
@@ -608,6 +848,17 @@ class Database:
         cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
         row = cur.fetchone()
         current_version = int(row["value"]) if row else 1
+
+        # Check if any migrations are pending
+        has_pending = any(current_version < tv for tv, _ in MIGRATIONS)
+
+        # GS-019 §Principle 2: Backup ONLY before destructive migrations
+        # CRITICAL: Do NOT backup on every Database() instantiation — causes backup storms
+        if has_pending and self._has_data(conn):
+            self.backup()
+
+        # GS-019 §Principle 3: Record pre-migration state
+        pre_counts = self._snapshot_row_counts(conn)
 
         # Run pending migrations in order
         for target_version, migration_sql in MIGRATIONS:
@@ -635,8 +886,33 @@ class Database:
                         current_version = target_version
                     else:
                         logger.error(f"Migration {current_version}→{target_version} failed: {e}")
-                        # Continue — next startup will retry
+
+                        # GS-019 §Recovery: Auto-restore from backup
+                        restore_result = self._auto_restore_on_failure()
+                        if restore_result["status"] == "restored":
+                            logger.info(f"GS-019: Auto-restored from {restore_result['from']}")
+                            # Re-initialize from restored state
+                            self._conn = None
+                            conn = self._get_conn()
+                            current_version = self._get_schema_version(conn)
+                        else:
+                            logger.error(f"GS-019: Auto-restore failed: {restore_result['message']}")
+
+                        # Set notification flag for dashboard
+                        global _last_migration_failure
+                        _last_migration_failure = {
+                            "failed_at": int(time.time()),
+                            "from_version": current_version,
+                            "to_version": target_version,
+                            "error": str(e),
+                            "restored": restore_result["status"] == "restored",
+                            "restored_from": restore_result.get("from"),
+                        }
                         break
+
+        # GS-019 §Principle 3: Verify post-migration state
+        post_counts = self._snapshot_row_counts(conn)
+        self._verify_migration_integrity(pre_counts, post_counts)
 
         # Ensure version is current
         if current_version < SCHEMA_VERSION:
@@ -645,6 +921,12 @@ class Database:
                 (str(SCHEMA_VERSION),),
             )
             conn.commit()
+        elif current_version > SCHEMA_VERSION:
+            # GS-019 §Downgrade: Log warning, don't force-set
+            logger.warning(
+                f"GS-019: Database version ({current_version}) > code version "
+                f"({SCHEMA_VERSION}). Possible downgrade. Not modifying version."
+            )
 
     def close(self) -> None:
         if self._conn is not None:
@@ -655,11 +937,20 @@ class Database:
         """Create a backup of the database using SQLite's online backup API.
 
         Safe to call while the database is in use (WAL mode).
-        Returns True on success.
+        Includes rotation (keeps last 5) and cooldown (4 hours minimum).
+        Returns True on success, False if skipped due to cooldown.
         """
+        backup_dir = self.db_path.parent / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+
+        # Cooldown check: prevent backup storms
+        last_backup_time = self._get_last_backup_time(backup_dir)
+        if last_backup_time and (time.time() - last_backup_time) < BACKUP_COOLDOWN_HOURS * 3600:
+            logger.debug("Backup skipped: cooldown active (%.1f hours since last)",
+                        (time.time() - last_backup_time) / 3600)
+            return False
+
         if dest_path is None:
-            backup_dir = self.db_path.parent / "backups"
-            backup_dir.mkdir(parents=True, exist_ok=True)
             ts = time.strftime("%Y%m%d_%H%M%S")
             dest_path = backup_dir / f"pulse_{ts}.db"
         dest_path = Path(dest_path)
@@ -669,10 +960,176 @@ class Database:
             src_conn.backup(dest_conn)
             dest_conn.close()
             logger.info(f"Database backed up to {dest_path}")
+
+            # Rotation: delete old backups
+            self._rotate_backups(backup_dir)
             return True
         except Exception as e:
             logger.error(f"Database backup failed: {e}")
             return False
+
+    def _get_last_backup_time(self, backup_dir: Path) -> Optional[float]:
+        """Get timestamp of most recent backup file."""
+        backups = backup_dir.glob("pulse_*.db")
+        latest = None
+        for b in backups:
+            try:
+                mtime = b.stat().st_mtime
+                if latest is None or mtime > latest:
+                    latest = mtime
+            except OSError:
+                pass
+        return latest
+
+    def _rotate_backups(self, backup_dir: Path) -> None:
+        """Keep only last BACKUP_MAX_COUNT backups, delete older ones."""
+        backups = sorted(backup_dir.glob("pulse_*.db"), key=lambda p: p.stat().st_mtime)
+        while len(backups) > BACKUP_MAX_COUNT:
+            oldest = backups.pop(0)
+            try:
+                oldest.unlink()
+                logger.info(f"Rotated old backup: {oldest.name}")
+            except OSError as e:
+                logger.warning(f"Failed to rotate backup {oldest.name}: {e}")
+
+    # --- GS-019 §Recovery: Restore from backup ---
+
+    def restore(self, backup_path: Optional[str | Path] = None) -> dict:
+        """Restore database from backup.
+
+        If no path given, restores from most recent backup.
+        GS-019: Creates a backup of current state before restoring.
+
+        Returns: {"status": "restored", "from": str, "rows": int} or error dict.
+        """
+        backup_dir = self.db_path.parent / "backups"
+
+        if backup_path is None:
+            # Find most recent backup
+            backups = sorted(backup_dir.glob("pulse_*.db"), key=lambda p: p.stat().st_mtime)
+            if not backups:
+                return {"status": "error", "message": "No backups found"}
+            backup_path = backups[-1]
+        else:
+            backup_path = Path(backup_path)
+
+        if not backup_path.exists():
+            return {"status": "error", "message": f"Backup not found: {backup_path}"}
+
+        # Validate backup is a valid SQLite database
+        try:
+            import sqlite3 as _sqlite3
+            test_conn = _sqlite3.connect(str(backup_path))
+            test_conn.execute("SELECT COUNT(*) FROM sqlite_master")
+            test_conn.close()
+        except Exception as e:
+            return {"status": "error", "message": f"Backup is corrupted: {e}"}
+
+        # GS-019: Backup current state before restoring
+        try:
+            self.backup(dest_path=backup_dir / f"pulse_pre_restore_{int(time.time())}.db")
+        except Exception:
+            pass  # Best effort — don't fail restore because pre-restore backup failed
+
+        # Close current connection
+        self.close()
+
+        # Replace current DB with backup
+        import shutil
+        shutil.copy2(str(backup_path), str(self.db_path))
+
+        # Reopen connection
+        self._conn = None
+        conn = self._get_conn()
+
+        # Count rows to verify
+        row_count = 0
+        for table in ["pulse_log", "compress_log", "heal_events", "token_logs",
+                       "action_log", "token_history"]:
+            try:
+                cur = conn.execute(f"SELECT COUNT(*) FROM {table}")
+                row_count += cur.fetchone()[0]
+            except Exception:
+                pass
+
+        logger.info(f"GS-019: Restored from {backup_path.name} — {row_count} rows recovered")
+        return {"status": "restored", "from": backup_path.name, "rows": row_count}
+
+    def _auto_restore_on_failure(self) -> dict:
+        """Attempt auto-restore from most recent backup on migration failure."""
+        try:
+            return self.restore()
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _get_schema_version(self, conn: sqlite3.Connection) -> int:
+        """Get current schema version from _meta table."""
+        try:
+            cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
+            row = cur.fetchone()
+            return int(row["value"]) if row else 1
+        except Exception:
+            return 1
+
+    # --- GS-019: Data & Observability Continuity helpers ---
+
+    def _has_data(self, conn: sqlite3.Connection) -> bool:
+        """Check if database has user data (not just schema). GS-019 §Principle 2."""
+        try:
+            for table in ["pulse_log", "compress_log", "heal_events", "token_logs"]:
+                cur = conn.execute(f"SELECT COUNT(*) FROM {table}")
+                if cur.fetchone()[0] > 0:
+                    return True
+        except Exception:
+            pass
+        return False
+
+    def _recover_stranded_tables(self, conn: sqlite3.Connection) -> None:
+        """Recover from partial recreate-table migration failures. GS-019 §Recovery."""
+        recovery_map = {
+            "pathway_nodes_v11": "pathway_nodes",
+            "alert_subscriptions_v15": "alert_subscriptions",
+        }
+        for temp_table, target_table in recovery_map.items():
+            try:
+                temp_exists = conn.execute(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+                    (temp_table,)
+                ).fetchone()[0] > 0
+                target_exists = conn.execute(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+                    (target_table,)
+                ).fetchone()[0] > 0
+
+                if temp_exists and not target_exists:
+                    logger.warning(f"GS-019 RECOVERY: Renaming {temp_table} → {target_table}")
+                    conn.execute(f"ALTER TABLE {temp_table} RENAME TO {target_table}")
+                    conn.commit()
+            except Exception as e:
+                logger.error(f"GS-019 RECOVERY FAILED: {temp_table}: {e}")
+
+    def _snapshot_row_counts(self, conn: sqlite3.Connection) -> dict:
+        """Record row counts for all user tables. GS-019 §Principle 3."""
+        counts = {}
+        for table in ["pulse_log", "compress_log", "heal_events", "token_logs",
+                       "pathway_nodes", "pathway_edges", "errors", "chisel_drift"]:
+            try:
+                cur = conn.execute(f"SELECT COUNT(*) FROM {table}")
+                counts[table] = cur.fetchone()[0]
+            except Exception:
+                counts[table] = -1  # Table doesn't exist yet
+        return counts
+
+    def _verify_migration_integrity(self, pre: dict, post: dict) -> None:
+        """Verify row counts didn't drop unexpectedly. GS-019 §Principle 3."""
+        for table, pre_count in pre.items():
+            if pre_count <= 0:
+                continue  # Table didn't exist or was empty
+            post_count = post.get(table, -1)
+            if post_count == -1:
+                logger.error(f"GS-019 VIOLATION: {table} missing after migration (had {pre_count} rows)")
+            elif post_count < pre_count * 0.9:  # >10% drop is suspicious
+                logger.warning(f"GS-019 WARNING: {table} row count dropped: {pre_count} → {post_count}")
 
     def vacuum(self) -> bool:
         """Reclaim space and clean WAL. Run periodically."""
@@ -686,9 +1143,26 @@ class Database:
             return False
 
     def purge_old_data(self, days: int = 90) -> dict:
-        """Remove data older than N days. Returns counts of deleted rows."""
+        """Remove data older than N days. Returns counts of deleted rows.
+
+        GS-019 §Principle 2: Backs up if deleting >1000 rows.
+        """
         conn = self._get_conn()
         cutoff = int(time.time()) - (days * 86400)
+
+        # GS-019 §Principle 2: Check if significant deletion is about to happen
+        total_pending = 0
+        for table in ["pulse_log", "chisel_trims", "chisel_drift", "errors",
+                      "restart_log", "telemetry_events"]:
+            try:
+                cur = conn.execute(f"SELECT COUNT(*) FROM {table} WHERE timestamp < ?", (cutoff,))
+                total_pending += cur.fetchone()[0]
+            except Exception:
+                pass
+
+        if total_pending > 1000:
+            self.backup()  # GS-019 §Principle 2
+
         counts = {}
         for table in ["pulse_log", "chisel_trims", "chisel_drift", "errors",
                       "restart_log", "telemetry_events"]:
@@ -796,6 +1270,49 @@ class Database:
             self.log_error(agent_name, f"pulse_{status}", error_message,
                            severity="critical" if status == "dead" else "error")
 
+    @staticmethod
+    def _read_pulse_files(agent_name: Optional[str] = None, limit: int = 20) -> list[dict]:
+        """Read agent pulse JSON files as fallback when pulse_log is empty.
+
+        Scans DEFAULT_PULSE_DIRS for <agent>.json files written by Hermes agents.
+        Returns list matching get_recent_pulses() schema for drop-in compatibility.
+        Configurable via observeco.yml in future (ponytail:DEFAULT_PULSE_DIRS).
+        """
+        pulses: list[dict] = []
+        for d in _get_default_pulse_dirs():
+            if not d.exists():
+                continue
+            pattern = f"{agent_name}.json" if agent_name else "*.json"
+            for f in sorted(d.glob(pattern), key=os.path.getmtime, reverse=True):
+                try:
+                    data = json.loads(f.read_text())
+                    ts_str = data.get("beaten_at", "")
+                    ts = int(datetime.fromisoformat(ts_str).timestamp()) if ts_str else int(time.time())
+                    pulses.append({
+                        "agent_name": data.get("agent", f.stem),
+                        "status": data.get("status", "alive"),
+                        "timestamp": ts,
+                        "latency_ms": 0,
+                        "error_message": "",
+                        "agent_framework": "hermes",
+                        "instance_id": "",
+                        "metadata": "",
+                    })
+                except (json.JSONDecodeError, ValueError, OSError):
+                    continue
+                if agent_name and len([p for p in pulses if p["agent_name"] == agent_name]) >= limit:
+                    break
+        # Dedup by agent_name — keep latest per agent when fetching all
+        if not agent_name and pulses:
+            seen: set[str] = set()
+            unique: list[dict] = []
+            for p in pulses:
+                if p["agent_name"] not in seen:
+                    seen.add(p["agent_name"])
+                    unique.append(p)
+            pulses = unique
+        return pulses[:limit]
+
     def get_recent_pulses(self, agent_name: Optional[str] = None, limit: int = 20) -> list[dict]:
         conn = self._get_conn()
         if agent_name:
@@ -807,7 +1324,11 @@ class Database:
             cur = conn.execute(
                 "SELECT * FROM pulse_log ORDER BY timestamp DESC LIMIT ?", (limit,)
             )
-        return [dict(r) for r in cur.fetchall()]
+        rows = [dict(r) for r in cur.fetchall()]
+        # Fallback to pulse files when DB is empty
+        if not rows:
+            rows = self._read_pulse_files(agent_name=agent_name, limit=limit)
+        return rows
 
     def get_instances(self) -> list[dict]:
         """Get all unique dashboard instances that have written pulse data.
@@ -1058,70 +1579,117 @@ class Database:
         conn.commit()
         return cur.rowcount
 
-    # -- Circuit Breakers --
+    # -- Circuit Breakers (append-only event log) --
+
+    # ponytail: O(n) on read -- reconstructs state from all events for an agent.
+    # Upgrade: paginate events for agents with 10K+ events, or snapshot state periodically.
+
+    _COOLDOWN_SECONDS = 300  # 5 min
+
+    @staticmethod
+    def _rebuild_state(rows: list[dict]) -> dict:
+        """Reconstruct circuit breaker state from events."""
+        state = {"failure_count": 0, "max_retries": 3, "tripped": False,
+                 "cooldown_until": None, "last_failure": None, "last_failure_error": None,
+                 "agent_name": ""}
+        now = int(time.time())
+        for r in rows:
+            state["agent_name"] = r["agent_name"]
+            if r["event_type"] == "failure":
+                state["failure_count"] += 1
+                state["last_failure"] = str(r["created_at"])
+                state["last_failure_error"] = (r.get("payload") or "")[:500]
+            elif r["event_type"] == "reset":
+                state["failure_count"] = 0
+                state["tripped"] = False
+                state["cooldown_until"] = None
+                state["last_failure"] = None
+                state["last_failure_error"] = None
+            elif r["event_type"] == "set_threshold":
+                try:
+                    state["max_retries"] = int(r["payload"]) if r["payload"] else 3
+                except (ValueError, TypeError):
+                    pass
+            elif r["event_type"] == "cooldown_clear":
+                state["tripped"] = False
+                state["cooldown_until"] = None
+            elif r["event_type"] == "cooldown":
+                # Manual cooldown override (e.g. heal cooldown)
+                try:
+                    state["cooldown_until"] = int(r["payload"])
+                except (ValueError, TypeError):
+                    pass
+                state["tripped"] = True
+        # Recompute tripped + cooldown
+        if state["failure_count"] >= state["max_retries"] and state["failure_count"] > 0:
+            state["tripped"] = True
+            if state["cooldown_until"] is None:
+                lf = state.get("last_failure")
+                if lf:
+                    try:
+                        state["cooldown_until"] = int(lf) + Database._COOLDOWN_SECONDS
+                    except (ValueError, TypeError):
+                        pass
+        # Auto-clear expired cooldowns
+        if state["cooldown_until"] and state["cooldown_until"] < now:
+            state["tripped"] = False
+            state["cooldown_until"] = None
+        return state
 
     def get_circuit_breakers(self) -> list[dict]:
         conn = self._get_conn()
-        cur = conn.execute("SELECT * FROM circuit_breakers ORDER BY agent_name")
-        now = int(time.time())
-        rows = []
-        for r in cur.fetchall():
-            d = dict(r)
-            # Auto-clear expired cooldowns
-            if d["cooldown_until"] and d["cooldown_until"] < now and d["tripped"]:
-                d["tripped"] = 0
-                d["cooldown_until"] = None
-                self._update_breaker(d["agent_name"], d["failure_count"], d["max_retries"],
-                                     0, None, d.get("last_failure"), d.get("last_failure_error"))
-            rows.append(d)
-        return rows
+        # Get all distinct agent names from the event log
+        agents = conn.execute(
+            "SELECT DISTINCT agent_name FROM circuit_events ORDER BY agent_name"
+        ).fetchall()
+        if not agents:
+            # Fallback to old table for backward compat during migration
+            old = conn.execute("SELECT * FROM circuit_breakers ORDER BY agent_name").fetchall()
+            if old:
+                return [dict(r) for r in old]
+            return []
+
+        results = []
+        for (agent_name,) in agents:
+            events = conn.execute(
+                "SELECT * FROM circuit_events WHERE agent_name=? ORDER BY created_at ASC, id ASC",
+                (agent_name,)
+            ).fetchall()
+            state = self._rebuild_state([dict(e) for e in events])
+            results.append(state)
+        return results
 
     def record_failure(self, agent_name: str, error: str) -> dict:
         conn = self._get_conn()
-        cur = conn.execute("SELECT * FROM circuit_breakers WHERE agent_name=?",
-                           (agent_name,))
-        row = cur.fetchone()
         now = int(time.time())
-
-        if row:
-            failures = row["failure_count"] + 1
-            max_r = row["max_retries"]
-            tripped = 1 if failures >= max_r else 0
-            cooldown = (now + 300) if tripped else None
-            conn.execute(
-                "UPDATE circuit_breakers SET failure_count=?, tripped=?, cooldown_until=?, "
-                "last_failure=?, last_failure_error=? WHERE agent_name=?",
-                (failures, tripped, cooldown, str(now), error[:500], agent_name),
-            )
-        else:
-            failures = 1
-            max_r = 3
-            tripped = 0
-            cooldown = None
-            conn.execute(
-                "INSERT INTO circuit_breakers (agent_name, failure_count, max_retries, tripped, "
-                "cooldown_until, last_failure, last_failure_error) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (agent_name, failures, max_r, tripped, cooldown, str(now), error[:500]),
-            )
+        conn.execute(
+            "INSERT INTO circuit_events (agent_name, event_type, payload, created_at) VALUES (?, 'failure', ?, ?)",
+            (agent_name, error[:500], now),
+        )
         conn.commit()
-        return {"agent_name": agent_name, "failures": failures, "tripped": bool(tripped)}
+        # Rebuild state from events
+        events = conn.execute(
+            "SELECT * FROM circuit_events WHERE agent_name=? ORDER BY created_at ASC, id ASC",
+            (agent_name,)
+        ).fetchall()
+        state = self._rebuild_state([dict(e) for e in events])
+        return {"agent_name": agent_name,
+                "failures": state["failure_count"],
+                "tripped": state["tripped"]}
 
     def reset_breaker(self, agent_name: str) -> None:
         conn = self._get_conn()
         conn.execute(
-            "UPDATE circuit_breakers SET failure_count=0, tripped=0, cooldown_until=NULL, "
-            "last_failure=NULL, last_failure_error=NULL WHERE agent_name=?",
-            (agent_name,),
+            "INSERT INTO circuit_events (agent_name, event_type, payload, created_at) VALUES (?, 'reset', NULL, ?)",
+            (agent_name, int(time.time())),
         )
         conn.commit()
 
     def set_threshold(self, agent_name: str, max_retries: int) -> None:
         conn = self._get_conn()
         conn.execute(
-            "INSERT INTO circuit_breakers (agent_name, failure_count, max_retries, tripped) "
-            "VALUES (?, 0, ?, 0) "
-            "ON CONFLICT(agent_name) DO UPDATE SET max_retries=excluded.max_retries",
-            (agent_name, max_retries),
+            "INSERT INTO circuit_events (agent_name, event_type, payload, created_at) VALUES (?, 'set_threshold', ?, ?)",
+            (agent_name, str(max_retries), int(time.time())),
         )
         conn.commit()
 
@@ -1181,10 +1749,8 @@ class Database:
         conn = self._get_conn()
         if max_retries is not None:
             conn.execute(
-                "INSERT INTO circuit_breakers (agent_name, failure_count, max_retries, tripped) "
-                "VALUES (?, 0, ?, 0) "
-                "ON CONFLICT(agent_name) DO UPDATE SET max_retries=excluded.max_retries",
-                (agent_name, max_retries),
+                "INSERT INTO circuit_events (agent_name, event_type, payload, created_at) VALUES (?, 'set_threshold', ?, ?)",
+                (agent_name, str(max_retries), int(time.time())),
             )
         if max_turns_per_min is not None or cooldown_minutes is not None:
             # Store in agent_configs as JSON metadata
@@ -1408,7 +1974,7 @@ class Database:
         """Get fleet-level Memory Garden aggregates.
 
         Returns fleet-wide totals and averages to populate the Brain Analysis
-        Memory Garden section.
+        Memory Garden section. Only uses the latest scan per agent.
         """
         conn = self._get_conn()
         row = conn.execute(
@@ -1419,7 +1985,8 @@ class Database:
             "COALESCE(SUM(stale_entries), 0) AS total_stale, "
             "COALESCE(AVG(memory_debt_score), 0) AS avg_debt_score, "
             "COUNT(*) AS total_snapshots "
-            "FROM clawforge_garden"
+            "FROM clawforge_garden "
+            "WHERE id IN (SELECT MAX(id) FROM clawforge_garden GROUP BY agent_name)"
         ).fetchone()
 
         if not row or not row["agents_scanned"]:
@@ -1722,7 +2289,21 @@ class Database:
             WHERE p.id IN (SELECT MAX(id) FROM pulse_log GROUP BY agent_name)
         """)
         rows = cur.fetchall()
-        return {r["agent_name"]: dict(r) for r in rows}
+        if rows:
+            return {r["agent_name"]: dict(r) for r in rows}
+        # Fallback to pulse files when DB is empty
+        from_pulses = self._read_pulse_files(limit=50)
+        return {
+            p["agent_name"]: {
+                "agent_name": p["agent_name"],
+                "status": p["status"],
+                "latency_ms": p["latency_ms"],
+                "timestamp": p["timestamp"],
+                "circuit_tripped": 0,
+                "ever_alive": 1,
+            }
+            for p in from_pulses
+        }
 
     # -- Communication Pathway Map (§3.19) --
 
@@ -1898,7 +2479,7 @@ class Database:
                 _cron_dir = _home_dir / "cron"
                 if _cron_dir.exists():
                     _cron_scan_dirs.append(_cron_dir)
-        
+
         _seen_cron_ids = set()
         for _cron_dir in _cron_scan_dirs:
             _jobs_file = _cron_dir / "jobs.json"
@@ -1991,12 +2572,12 @@ class Database:
         signal_base = Path(signals_env) if signals_env else (Path.home() / ".hermes" / "signals")
         signal_count_limit = int(os.environ.get("OBSERVECO_PATHWAY_SIGNAL_LIMIT", "500"))
         scanned = 0
-        
+
         # Helper: parse a signal JSON file and create an edge if valid
         # Dedups on (from, to) — multiple signals between same agents are aggregated into one edge with count
         _dedup_signal_edges = {}
         _STATUS_SEVERITY = {"red": 3, "yellow": 2, "green": 1}
-        
+
         def _pathway_scan_signal(sig_file, status, mechanism_prefix):
             nonlocal scanned, count
             if scanned >= signal_count_limit:
@@ -2009,19 +2590,19 @@ class Database:
             sig_to = sig.get("to", "")
             if not sig_from or not sig_to or sig_from == sig_to:
                 return
-            
+
             # Dedup key: (from, to) — aggregate all signals between same agents into one edge
             dedup_key = f"{sig_from}→{sig_to}"
-            
+
             sig_type = sig.get("type", "signal")
             mechanism = f"{mechanism_prefix}_{sig_type}"
             _written_at = sig.get("written_at", "")
             _sig_id = sig.get("signal_id", sig_file.stem)
-            
+
             prev = _dedup_signal_edges.get(dedup_key)
             prev_sev = _STATUS_SEVERITY.get(prev["status"] if prev else "", 0) if prev else 0
             cur_sev = _STATUS_SEVERITY.get(status, 0)
-            
+
             if prev:
                 # Aggregate: increment count, collect types, collect sample IDs (up to 3)
                 prev["signal_count"] = prev.get("signal_count", 1) + 1
@@ -2048,7 +2629,7 @@ class Database:
                 }
             scanned += 1
             count += 1
-        
+
         def _flush_signal_edges():
             nonlocal count
             for dedup_key, info in _dedup_signal_edges.items():
@@ -2079,7 +2660,7 @@ class Database:
                     (src_nid, tgt_nid, info['status'], info['mechanism'],
                      json.dumps(_meta), now, now),
                 )
-        
+
         if signal_base.exists():
             # 6a. Scan inboxes — signals waiting to be consumed → yellow (stale concern)
             for _agent_node_dir in signal_base.iterdir():
@@ -2098,7 +2679,7 @@ class Database:
                         _pathway_scan_signal(sig_file, "yellow", "inbox_stale")
                 except Exception:
                     continue
-            
+
             # 6b. Scan per-agent archives — confirmed consumed signals → green (healthy)
             for _agent_node_dir in signal_base.iterdir():
                 if not _agent_node_dir.is_dir():
@@ -2116,7 +2697,7 @@ class Database:
                         _pathway_scan_signal(sig_file, "green", "signal")
                 except Exception:
                     continue
-            
+
             # 6c. Scan global archive — consumed signals from all senders
             global_archive = signal_base / "archive"
             if global_archive.exists() and global_archive.is_dir():
@@ -2127,7 +2708,7 @@ class Database:
                         _pathway_scan_signal(sig_file, "green", "signal")
                 except Exception:
                     pass
-            
+
             # 6d. Scan outbox dirs — pending outbound signals → yellow (not yet consumed)
             for _agent_node_dir in signal_base.iterdir():
                 if not _agent_node_dir.is_dir():
@@ -2145,7 +2726,7 @@ class Database:
                         _pathway_scan_signal(sig_file, "yellow", "outbox_pending")
                 except Exception:
                     continue
-            
+
             # 6e. Scan global outbox dir — cross-agent pending signals
             global_outbox = signal_base / "outbox"
             if global_outbox.exists() and global_outbox.is_dir():
@@ -2156,7 +2737,7 @@ class Database:
                         _pathway_scan_signal(sig_file, "yellow", "outbox_pending")
                 except Exception:
                     pass
-            
+
             # 6f. Scan quarantine — signals that failed delivery / retrying → orange/concern
             quarantine_dir = signal_base / "quarantine"
             if quarantine_dir.exists() and quarantine_dir.is_dir():
@@ -2167,7 +2748,7 @@ class Database:
                         _pathway_scan_signal(sig_file, "yellow", "quarantine")
                 except Exception:
                     pass
-            
+
             # 6g. Scan failed dir — permanently undelivered → red (dead end)
             failed_dir = signal_base / "failed"
             if failed_dir.exists() and failed_dir.is_dir():
@@ -2180,7 +2761,7 @@ class Database:
                     pass
 
         _flush_signal_edges()
-        
+
         # 7. Detect daemons and watchers — long-running background processes
         # Sources: agent-provided metadata from pulse_log (generic), restart_log, launchd plists, running processes
         # Phase 1: Check agent-provided heartbeat metadata (fully generic, any framework)
@@ -2270,14 +2851,14 @@ class Database:
                         framework = "hermes"
                     else:
                         continue  # skip unknown plists
-                    
+
                     # Determine node type from name
                     ntype = "daemon"
                     if "watcher" in aname or "watch" in aname:
                         ntype = "watcher"
                     elif "gateway" in aname:
                         ntype = "gateway"
-                    
+
                     # Check if agent-{name} already exists (registered by Step 7 Phase 1/2)
                     _existing = conn.execute(
                         "SELECT type FROM pathway_nodes WHERE id = ?",
@@ -2439,7 +3020,7 @@ class Database:
                                 }
                 except Exception:
                     continue
-            
+
             # Flush consumption health edges with aggregated metadata
             for _key, _info in _signal_consumption_edges.items():
                 _meta = {
@@ -2764,18 +3345,201 @@ class Database:
                        identity_tokens: int = 0, skills_tokens: int = 0,
                        memory_tokens: int = 0, tools_tokens: int = 0,
                        guidance_tokens: int = 0, provider: str = "",
-                       cost: float = 0, anomaly_score: float | None = None) -> dict:
+                       cost: float = 0, anomaly_score: float | None = None,
+                       input_tokens: int = 0, output_tokens: int = 0,
+                       cache_creation_tokens: int = 0, cache_read_tokens: int = 0,
+                       cost_computed: str = "flat", source: str = "unknown",
+                       model: str = "", latency_ms: int = 0,
+                       tool_calls: str = "[]", topic_id: str = "") -> dict:
+        # Auto-compute cost when provider given but cost not set
+        if cost == 0 and provider:
+            from observeco.tracking.tokens import compute_cost
+            cost = compute_cost(total_tokens, provider)
         conn = self._get_conn()
         cur = conn.execute(
             "INSERT INTO token_logs (agent_name, turn_id, total_tokens, identity_tokens, "
             "skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
-            "provider, cost, anomaly_score, recorded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "provider, cost, anomaly_score, input_tokens, output_tokens, "
+            "cache_creation_tokens, cache_read_tokens, cost_computed, source, "
+            "model, latency_ms, tool_calls, topic_id, recorded_at) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (agent_name, turn_id, total_tokens, identity_tokens, skills_tokens,
              memory_tokens, tools_tokens, guidance_tokens, provider, cost,
-             anomaly_score, int(time.time()))
+             anomaly_score, input_tokens, output_tokens,
+             cache_creation_tokens, cache_read_tokens, cost_computed, source,
+             model, latency_ms, tool_calls, topic_id,
+             int(time.time()))
         )
         conn.commit()
+
+        # Auto-register new agent in agent_configs (type classified by name pattern)
+        self._ensure_agent_registered(conn, agent_name)
+
         return {"id": cur.lastrowid}
+
+    def _ensure_agent_registered(self, conn, agent_name: str) -> None:
+        """Upsert agent into agent_configs if not already registered.
+        Classifies type by name pattern: hermes-agent → infrastructure, test* → test, else agent."""
+        exists = conn.execute(
+            "SELECT 1 FROM agent_configs WHERE agent_name = ?", (agent_name,)
+        ).fetchone()
+        if exists:
+            # Update last_seen
+            conn.execute(
+                "UPDATE agent_configs SET last_seen = ? WHERE agent_name = ?",
+                (int(time.time()), agent_name)
+            )
+            conn.commit()
+            return
+
+        # Classify type by name pattern
+        name_lower = agent_name.lower()
+        if name_lower == "hermes-agent":
+            agent_type = "infrastructure"
+        elif name_lower.startswith("test") or name_lower.startswith("hermes-test"):
+            agent_type = "test"
+        else:
+            agent_type = "agent"
+
+        conn.execute(
+            "INSERT INTO agent_configs (agent_name, framework, is_active, last_seen, type) "
+            "VALUES (?, 'auto-registered', 1, ?, ?)",
+            (agent_name, int(time.time()), agent_type)
+        )
+        conn.commit()
+
+    def log_action(self, agent_name: str, action_type: str, action_detail: str,
+                   tokens_saved: int = 0, cost_saved: float = 0.0,
+                   status: str = "success", metadata: str = "{}",
+                   triggered_by: str = "daemon") -> dict:
+        """Log a unified action to action_log (§21). Idempotent via unique constraint."""
+        conn = self._get_conn()
+        now = int(time.time())
+        try:
+            cur = conn.execute(
+                "INSERT INTO action_log (agent_name, action_type, action_detail, "
+                "tokens_saved, cost_saved, status, metadata, triggered_by, created_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (agent_name, action_type, action_detail,
+                 tokens_saved, cost_saved, status, metadata, triggered_by, now)
+            )
+            conn.commit()
+            return {"id": cur.lastrowid, "created_at": now}
+        except Exception:
+            # Unique constraint violation — duplicate action, skip silently
+            conn.rollback()
+            return {"id": None, "created_at": now}
+
+    def get_actions(self, agent: str = "", action_type: str = "",
+                    status: str = "", limit: int = 50, since: int = 0) -> list[dict]:
+        """Query action_log with optional filters."""
+        conn = self._get_conn()
+        conditions = []
+        params = []
+        if agent:
+            conditions.append("agent_name = ?")
+            params.append(agent)
+        if action_type:
+            conditions.append("action_type = ?")
+            params.append(action_type)
+        if status:
+            conditions.append("status = ?")
+            params.append(status)
+        if since:
+            conditions.append("created_at >= ?")
+            params.append(since)
+        where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+        rows = conn.execute(
+            f"SELECT * FROM action_log {where} ORDER BY created_at DESC LIMIT ?",
+            params + [limit]
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def backfill_action_log(self) -> dict:
+        """One-time backfill from existing siloed tables. Idempotent (INSERT OR IGNORE via unique constraint)."""
+        import json as _json
+
+        from observeco.tracking.tokens import _estimate_cost
+        conn = self._get_conn()
+        counts = {"compress": 0, "heal": 0, "restart": 0}
+
+        # compress_log → action_log
+        try:
+            for row in conn.execute("SELECT * FROM compress_log").fetchall():
+                r = dict(row)
+                savings_pct = r.get("savings_pct", 0) or 0
+                savings = r.get("savings", 0) or 0
+                before = r.get("before_tokens", 0) or 0
+                after = r.get("after_tokens", 0) or 0
+                mode = r.get("mode", "lite")
+                agent = r.get("agent_name", "unknown")
+                triggered = r.get("triggered_by", "daemon")
+                ts = r.get("timestamp", r.get("created_at", int(time.time())))
+                if savings_pct <= 5:
+                    detail = "SOUL.md compression \u2014 already condensed (no further savings)"
+                    status = "no_action"
+                    tok_saved, cost_saved = 0, 0
+                else:
+                    detail = f"{mode.capitalize()} compression: {before:,} \u2192 {after:,} tok ({savings_pct:+.1f}%)"
+                    status = "success"
+                    tok_saved, cost_saved = savings, _estimate_cost(savings)
+                try:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO action_log (agent_name, action_type, action_detail, "
+                        "tokens_saved, cost_saved, status, metadata, triggered_by, created_at) "
+                        "VALUES (?, 'compress', ?, ?, ?, ?, ?, ?, ?)",
+                        (agent, detail, tok_saved, cost_saved, status,
+                         _json.dumps({"mode": mode, "savings_pct": savings_pct, "source": "backfill"}),
+                         triggered, ts)
+                    )
+                    counts["compress"] += 1
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # heal_events → action_log
+        try:
+            for row in conn.execute("SELECT * FROM heal_events").fetchall():
+                r = dict(row)
+                try:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO action_log (agent_name, action_type, action_detail, "
+                        "tokens_saved, cost_saved, status, metadata, triggered_by, created_at) "
+                        "VALUES (?, 'heal', ?, 0, 0, ?, ?, 'daemon', ?)",
+                        (r.get("agent_name", "unknown"),
+                         f"{r.get('event_type', 'heal')}: {r.get('details', '')}",
+                         r.get("status", "success"),
+                         _json.dumps({"event_type": r.get("event_type", ""), "duration_ms": r.get("duration_ms", 0), "source": "backfill"}),
+                         r.get("created_at", int(time.time())))
+                    )
+                    counts["heal"] += 1
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # restart_log → action_log
+        try:
+            for row in conn.execute("SELECT * FROM restart_log").fetchall():
+                r = dict(row)
+                try:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO action_log (agent_name, action_type, action_detail, "
+                        "tokens_saved, cost_saved, status, metadata, triggered_by, created_at) "
+                        "VALUES (?, 'restart', ?, 0, 0, 'success', '{}', 'daemon', ?)",
+                        (r.get("agent_name", "unknown"),
+                         f"Gateway restart: {r.get('reason', '')}",
+                         r.get("timestamp", r.get("created_at", int(time.time()))))
+                    )
+                    counts["restart"] += 1
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        conn.commit()
+        return counts
 
     def get_token_turns(self, agent_name: str = "", limit: int = 100,
                         since: int = 0) -> list[dict]:
@@ -2813,10 +3577,10 @@ class Database:
             params.append(since)
         where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
         row = conn.execute(
-            f"SELECT COUNT(*) as turns, COALESCE(SUM(total_tokens),0) as total_tokens, "
+            f"SELECT COUNT(*) as turns, COALESCE(SUM(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens),0) as total_tokens, "
             f"COALESCE(SUM(cost),0) as total_cost, "
-            f"COALESCE(AVG(total_tokens),0) as avg_tokens, "
-            f"COALESCE(MAX(total_tokens),0) as max_tokens "
+            f"COALESCE(AVG(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens),0) as avg_tokens, "
+            f"COALESCE(MAX(input_tokens + output_tokens + cache_read_tokens + cache_creation_tokens),0) as max_tokens "
             f"FROM token_logs {where_clause}", params
         ).fetchone()
         if not row:
@@ -2830,14 +3594,14 @@ class Database:
         if agent_name:
             rows = conn.execute(
                 "SELECT skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
-                "identity_tokens, total_tokens, recorded_at "
+                "identity_tokens, input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens, recorded_at "
                 "FROM token_logs WHERE agent_name=? AND recorded_at>=? ORDER BY recorded_at",
                 (agent_name, since)
             ).fetchall()
         else:
             rows = conn.execute(
                 "SELECT agent_name, skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
-                "identity_tokens, total_tokens, recorded_at "
+                "identity_tokens, input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens, recorded_at "
                 "FROM token_logs WHERE recorded_at>=? ORDER BY recorded_at",
                 (since,)
             ).fetchall()
@@ -2849,7 +3613,7 @@ class Database:
             rd = dict(r)
             for c in comps:
                 comps[c] += rd.get(f"{c}_tokens", 0) or 0
-            total += rd.get("total_tokens", 0) or 0
+            total += (rd.get("input_tokens", 0) or 0) + (rd.get("output_tokens", 0) or 0) + (rd.get("cache_read_tokens", 0) or 0) + (rd.get("cache_creation_tokens", 0) or 0)
         avg = total / max(len(rows), 1)
         return {"components": comps, "total_tokens": total,
                 "avg_per_turn": round(avg, 1), "turns": len(rows), "days": days}
@@ -2933,7 +3697,7 @@ class Database:
                 (agent_name, since)
             ).fetchall()
             tokens = conn.execute(
-                "SELECT total_tokens, recorded_at FROM token_logs WHERE agent_name=? AND recorded_at>=? ORDER BY recorded_at",
+                "SELECT input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens, recorded_at FROM token_logs WHERE agent_name=? AND recorded_at>=? ORDER BY recorded_at",
                 (agent_name, since)
             ).fetchall()
             errors = conn.execute(
@@ -2946,7 +3710,7 @@ class Database:
                 (since,)
             ).fetchall()
             tokens = conn.execute(
-                "SELECT agent_name, total_tokens, recorded_at FROM token_logs WHERE recorded_at>=? ORDER BY recorded_at",
+                "SELECT agent_name, input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens, recorded_at FROM token_logs WHERE recorded_at>=? ORDER BY recorded_at",
                 (since,)
             ).fetchall()
             errors = conn.execute(
@@ -2961,7 +3725,7 @@ class Database:
             p95_latency = latencies[int(len(latencies) * 0.95)] if len(latencies) > 10 else (latencies[-1] if latencies else 0)
 
         rss_baseline = p95_latency  # RSS approximated by latency trend
-        avg_tokens = round(sum(t["total_tokens"] for t in tokens) / max(len(tokens), 1), 1) if tokens else 0
+        avg_tokens = round(sum((t.get("input_tokens", 0) or 0) + (t.get("output_tokens", 0) or 0) + (t.get("cache_read_tokens", 0) or 0) + (t.get("cache_creation_tokens", 0) or 0) for t in tokens) / max(len(tokens), 1), 1) if tokens else 0
         error_rate = round(len(errors) / max(days, 1), 2)
 
         upstream_errors = sum(1 for e in errors if
@@ -2977,3 +3741,217 @@ class Database:
             "upstream_error_count": upstream_errors,
             "sample_days": days,
         }
+
+    # ── Token Component Config ────────────────────────────────────────
+
+    def get_token_components(self) -> list[dict]:
+        """Return enabled token component config from DB, ordered by display_order."""
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT name, label, color, display_order FROM token_component_config "
+            "WHERE enabled = 1 ORDER BY display_order"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_all_token_components(self) -> list[dict]:
+        """Return ALL token component config (including disabled), ordered by display_order."""
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT name, label, color, display_order, enabled FROM token_component_config "
+            "ORDER BY display_order"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def update_token_component(self, name: str, **kwargs) -> bool:
+        """Update a token component config entry. Accepts label, color, display_order, enabled."""
+        allowed = {"label", "color", "display_order", "enabled"}
+        updates = {k: v for k, v in kwargs.items() if k in allowed}
+        if not updates:
+            return False
+        conn = self._get_conn()
+        set_clause = ", ".join(f"{k} = ?" for k in updates)
+        values = list(updates.values()) + [name]
+        conn.execute(f"UPDATE token_component_config SET {set_clause} WHERE name = ?", values)
+        conn.commit()
+        return True
+
+    def add_token_component(self, name: str, label: str, color: str = "#6366f1", display_order: int = 0) -> dict:
+        """Add a new token component config entry."""
+        conn = self._get_conn()
+        try:
+            conn.execute(
+                "INSERT INTO token_component_config (name, label, color, display_order) VALUES (?, ?, ?, ?)",
+                (name, label, color, display_order),
+            )
+            conn.commit()
+            return {"ok": True, "name": name}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    # ── Config Format Registry ────────────────────────────────────────
+
+    def get_config_formats(self, enabled_only: bool = True) -> list[dict]:
+        """Return config format registry entries. Each entry defines how to discover
+        and classify agent config files for a given framework."""
+        import json as _json
+        conn = self._get_conn()
+        where = "WHERE enabled = 1" if enabled_only else ""
+        rows = conn.execute(
+            f"SELECT framework, config_filename, scan_paths, section_keywords FROM config_format_registry {where} ORDER BY framework"
+        ).fetchall()
+        result = []
+        for r in rows:
+            entry = dict(r)
+            entry["scan_paths"] = _json.loads(entry["scan_paths"])
+            entry["section_keywords"] = _json.loads(entry["section_keywords"])
+            result.append(entry)
+        return result
+
+    def add_config_format(self, framework: str, config_filename: str = "SOUL.md",
+                          scan_paths: list[str] = None, section_keywords: dict[str, list[str]] = None) -> dict:
+        """Register a new config format for a framework."""
+        import json as _json
+        conn = self._get_conn()
+        try:
+            conn.execute(
+                "INSERT INTO config_format_registry (framework, config_filename, scan_paths, section_keywords) VALUES (?, ?, ?, ?)",
+                (framework, config_filename,
+                 _json.dumps(scan_paths or []),
+                 _json.dumps(section_keywords or {})),
+            )
+            conn.commit()
+            return {"ok": True, "framework": framework}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    # ── Token Pricing ──────────────────────────────────────────────────
+
+    def get_token_pricing(self, provider: Optional[str] = None) -> list[dict]:
+        """Return token pricing entries. If provider specified, filter to that provider.
+        Returns list of dicts with provider, model, input_per_1m, output_per_1m, etc."""
+        conn = self._get_conn()
+        if provider:
+            rows = conn.execute(
+                "SELECT provider, model, input_per_1m, output_per_1m, "
+                "cache_read_per_1m, cache_write_per_1m FROM token_pricing "
+                "WHERE enabled = 1 AND provider = ? ORDER BY provider, model",
+                (provider,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT provider, model, input_per_1m, output_per_1m, "
+                "cache_read_per_1m, cache_write_per_1m FROM token_pricing "
+                "WHERE enabled = 1 ORDER BY provider, model"
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_pricing_for_provider(self, provider: str) -> dict:
+        """Return pricing dict for a provider (legacy format compatibility).
+        Returns {input: X, output: Y, cache_read: Z, cache_write: W} using the 'default' model."""
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT input_per_1m, output_per_1m, cache_read_per_1m, cache_write_per_1m "
+            "FROM token_pricing WHERE enabled = 1 AND provider = ? AND model = 'default' "
+            "LIMIT 1",
+            (provider,),
+        ).fetchone()
+        if row:
+            return {"input": row["input_per_1m"], "output": row["output_per_1m"],
+                    "cache_read": row["cache_read_per_1m"], "cache_write": row["cache_write_per_1m"]}
+        # Fallback: first entry for this provider
+        row = conn.execute(
+            "SELECT input_per_1m, output_per_1m, cache_read_per_1m, cache_write_per_1m "
+            "FROM token_pricing WHERE enabled = 1 AND provider = ? LIMIT 1",
+            (provider,),
+        ).fetchone()
+        if row:
+            return {"input": row["input_per_1m"], "output": row["output_per_1m"],
+                    "cache_read": row["cache_read_per_1m"], "cache_write": row["cache_write_per_1m"]}
+        return {"input": 0.15, "output": 0.60, "cache_read": 0.015, "cache_write": 0.15}
+
+    def get_all_pricing_flat(self) -> dict:
+        """Return pricing as flat dict keyed by provider (for backward compatibility).
+        Uses first model per provider as the representative rate."""
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT provider, input_per_1m, output_per_1m FROM token_pricing "
+            "WHERE enabled = 1 GROUP BY provider ORDER BY provider"
+        ).fetchall()
+        return {r["provider"]: {"input": r["input_per_1m"], "output": r["output_per_1m"]}
+                for r in rows}
+
+    def upsert_token_pricing(self, provider: str, model: str = "default",
+                             input_per_1m: float = 0.0, output_per_1m: float = 0.0,
+                             cache_read_per_1m: float = 0.0, cache_write_per_1m: float = 0.0) -> dict:
+        """Insert or update pricing for a provider/model combination."""
+        conn = self._get_conn()
+        try:
+            conn.execute(
+                "INSERT INTO token_pricing (provider, model, input_per_1m, output_per_1m, "
+                "cache_read_per_1m, cache_write_per_1m) VALUES (?, ?, ?, ?, ?, ?) "
+                "ON CONFLICT(provider, model) DO UPDATE SET "
+                "input_per_1m = excluded.input_per_1m, output_per_1m = excluded.output_per_1m, "
+                "cache_read_per_1m = excluded.cache_read_per_1m, cache_write_per_1m = excluded.cache_write_per_1m",
+                (provider, model, input_per_1m, output_per_1m, cache_read_per_1m, cache_write_per_1m),
+            )
+            conn.commit()
+            return {"ok": True, "provider": provider, "model": model}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    # ── LLM Provider Registry ─────────────────────────────────────────
+
+    def get_provider_registry(self, enabled_only: bool = True) -> list[dict]:
+        """Return LLM provider registry entries. Each entry defines how to
+        discover, authenticate, and call a provider."""
+        conn = self._get_conn()
+        where = "WHERE enabled = 1" if enabled_only else ""
+        rows = conn.execute(
+            f"SELECT name, display_name, provider_type, base_url, default_model, "
+            f"detect_endpoint, detect_timeout, api_format, priority "
+            f"FROM llm_provider_registry {where} ORDER BY priority DESC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_provider_config(self, name: str) -> Optional[dict]:
+        """Return config for a single provider by name."""
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT name, display_name, provider_type, base_url, default_model, "
+            "detect_endpoint, detect_timeout, api_format, priority "
+            "FROM llm_provider_registry WHERE name = ? AND enabled = 1",
+            (name,),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def add_provider(self, name: str, display_name: str, provider_type: str = "custom",
+                     base_url: str = None, default_model: str = "default",
+                     detect_endpoint: str = None, api_format: str = "openai",
+                     priority: int = 0) -> dict:
+        """Register a new LLM provider."""
+        conn = self._get_conn()
+        try:
+            conn.execute(
+                "INSERT INTO llm_provider_registry "
+                "(name, display_name, provider_type, base_url, default_model, detect_endpoint, api_format, priority) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (name, display_name, provider_type, base_url, default_model, detect_endpoint, api_format, priority),
+            )
+            conn.commit()
+            return {"ok": True, "name": name}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def update_provider(self, name: str, **kwargs) -> bool:
+        """Update a provider registry entry."""
+        allowed = {"display_name", "provider_type", "base_url", "default_model",
+                    "detect_endpoint", "detect_timeout", "api_format", "priority", "enabled"}
+        updates = {k: v for k, v in kwargs.items() if k in allowed}
+        if not updates:
+            return False
+        conn = self._get_conn()
+        set_clause = ", ".join(f"{k} = ?" for k in updates)
+        values = list(updates.values()) + [name]
+        conn.execute(f"UPDATE llm_provider_registry SET {set_clause} WHERE name = ?", values)
+        conn.commit()
+        return True

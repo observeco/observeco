@@ -4,7 +4,7 @@
 **Spec basis:** `specs/unified-dashboard.md`  
 **Author:** Main  
 **Target:** Strong stars, downloads, and usage for ObserveCo OSS launch  
-**Status:** Draft
+**Status:** Ready
 
 ---
 
@@ -18,7 +18,7 @@ A CLI/devtool goes viral when three things align:
 
 ObserveCo scores well on all three. **TAM expansion note:** Initially scoped to Hermes users only (~1K–5K developers). With OpenClaw as a second first-class framework, the addressable market doubles — OpenClaw's community is ~500–2K active users but growing fast. The ClawForge feature also attracts non-Hermes, non-OpenClaw users who just want "context profiling for any file-based agent" — a third wedge that expands TAM further.
 
-**Timeline from pattern analysis:**
+**Timeline from pattern analysis (incl. OpenClaw+ClawForge reach):**
 
 | Phase | Stars | Timeline | Trigger |
 |-------|-------|----------|---------|
@@ -159,6 +159,7 @@ observeco/
 | `observeco chisel trim` | Needs extraction from Hermes | ✅ Critical | Low — compression logic is pure text manipulation, no OS dependencies |
 | `observeco clawforge profile` | Needs implementation | ✅ Critical | Medium — reads OpenClaw agent configs and MEMORY.md. Needs OpenClaw running for testing. |
 | `observeco clawforge load` | Needs implementation | ✅ Critical | Medium — lightweight classifier (TF-IDF/keyword). Needs ContextEngine hook integration. |
+| `observeco clawforge garden` | Needs implementation | ✅ Critical | Medium — memory dedup, archive, contradiction flagging |
 | `observeco dashboard` | Needs implementation | ✅ **Critical — ships at D-0** | Medium — FastAPI + htmx is well-understood. Ships WITH the CLI, not after. |
 | `observeco agents add` | Not started | 🟡 Launch+7 days | Low — simple CLI prompt → config file writer |
 | `observeco alerts list` | Not started | 🟡 Launch+14 days | Low — SQLite query → formatted output |
@@ -172,6 +173,7 @@ observeco pulse circuit        # show tripped breakers, reset <agent>
 observeco chisel trim          # compress stdin text, show savings ratio
 observeco clawforge profile    # show context composition for OpenClaw agents
 observeco clawforge load       # dry-run intent-aware classifier
+observeco clawforge garden     # memory hygiene — dedup, archive, flag contradictions
 observeco --help               # beautiful help output
 ```
 
@@ -181,7 +183,7 @@ That's it. 6 commands. Each one works instantly. No config file required for `ch
 
 The README **is the product** at launch. The code is downloaded after the README convinces them.
 
-**Branding note:** "ObserveCo" is the product name confirmed as of 2026-05-22. Domain `observeco.com` registered (Cloudflare). **Domain insurance:** Register `observeco.io` and `observeco.ai` before launch (D-21 minimum) — ~$30/year for both, prevents squatters on the day the repo hits HN. GitHub org `observeco` created (needs Sean added as owner), PyPI name `observeco` reserved. All distribution channels (PyPI, GitHub, docs) use `observeco` consistently — no ERIS/CHISEL naming anywhere in the public-facing product.
+**Branding note:** "ObserveCo" is the product name confirmed as of 2026-05-22. Domain `observeco.com` registered (Cloudflare). **Domain insurance:** Register `observeco.io` and `observeco.ai` before launch (D-21 minimum, see §3.1 D-28 checklist for actual deadline) — ~$30/year for both, prevents squatters on the day the repo hits HN. GitHub org `observeco` created (needs Sean added as owner), PyPI name `observeco` reserved. All distribution channels (PyPI, GitHub, docs) use `observeco` consistently — no ERIS/CHISEL naming anywhere in the public-facing product.
 
 **Structure (in order):**
 
@@ -292,9 +294,9 @@ Minimum for launch:
 | **Reddit r/AI_Agents** | "I built X" | Directly relevant — this is the exact audience. Circuit breakers + token profiling for agent fleets. |
 | **X/Twitter** | Thread + X Article | Tag AI agent builders + indie dev community. Short thread for virality, long-form X Article with embedded diagrams for depth. X Premium unlocks Articles — use it. |
 
-### 3.4 X Article Strategy (X Premium Channel)
+### 3.3 X Article Strategy (X Premium Channel)
 
-X Premium subscription unlocks **X Articles** (formerly Notes) — long-form posts up to ~25,000 characters with embedded images, GIFs, videos, and rich formatting. This is a first-class distribution channel, not an afterthought.
+X Premium subscription unlocks **X Articles** (formerly known as X Notes) — long-form posts up to ~25,000 characters with embedded images, GIFs, videos, and rich formatting. This is a first-class distribution channel, not an afterthought.
 
 **Article topic: "How we monitor 7 AI agents on a single Mac Mini"**
 - Hook: "Your agents are getting dumber every day and you don't know it"
@@ -329,7 +331,7 @@ X Premium subscription unlocks **X Articles** (formerly Notes) — long-form pos
 | **Awesome-CLI-Tools** (GitHub) | Open PR | Launch +1d |
 | **Ollama blog/discord** | Post if relevant to Ollama users | Launch +2d |
 
-### 3.3 Hacker News Strategy
+### 3.4 Hacker News Strategy
 
 HN is the highest-leverage single channel. One frontpage post can drive 500–2,000 stars.
 
@@ -347,7 +349,7 @@ HN is the highest-leverage single channel. One frontpage post can drive 500–2,
 
 **Timing:** Post Tuesday–Thursday 9–11 AM ET (US tech workers mid-morning). Avoid weekends and Monday mornings (US)/Friday afternoons (global).
 
-### 3.4 GitHub Profile Polish
+### 3.5 GitHub Profile Polish
 
 Before launch:
 
@@ -437,7 +439,7 @@ If HN frontpage hits, Trending follows automatically. If not, seed stars + consi
 | Pitfall | Why to Avoid | Instead |
 |---------|-------------|---------|
 | Adding features before dashboard is solid | Users try CLI → want dashboard. If dashboard is late, they leave. | **Dashboard ships at D-0** — it's the primary experience, not an add-on. |
-| Building Pro features before Stripe is live | No one pays without a checkout | Ship Stripe at launch with trial — ACRA no longer a blocker |
+| Building Pro features before Stripe is live | No one pays without a checkout | Ship Stripe at launch with trial — Pro billing no longer a blocker |
 | Posting on too many channels at once | Diluted effort. 1 good HN post > 10 mediocre posts. | Focus 80% on HN + Reddit r/AI_Agents |
 | Ignoring "why not X?" questions | Every comment will ask this. If unaddressed, they leave. | Have answer pre-written in README |
 | Writing docs last | Docs are 50% of the product for CLI tools | Docs ship WITH the code |
@@ -473,7 +475,7 @@ Most OSS tools invent fake use cases. ObserveCo has 7 real Hermes agents + 1 rea
 
 This is the #1 selling point. **Every piece of marketing should include real data from both the Hermes and OpenClaw fleets.**
 
-### 6.3 Bidirectional Architecture — The Three New Pillars
+### 6.2 Bidirectional Architecture — The Three New Pillars
 
 The product thesis of ObserveCo has been reframed. ObserveCo is not a monitoring dashboard. It is a **runtime integrity layer for AI agents** built on three pillars no competitor can replicate. 
 
@@ -544,7 +546,7 @@ observeco snapshot --name "7-agents-one-mac-mini" --out launch-paper/
 
 Without these fallbacks, snapshot produces broken output for the first week. **Ship snapshot at D+14 only if at least one user has 7+ days of data.** Otherwise D+21 is safer.
 
-#### Pillar 3: MCP Discovery Protocol (`observeco mcp serve` — **v1.1**)
+#### Pillar 3: MCP Discovery Protocol (`observeco mcp serve` — **v1.2**)
 
 Auto-discovers all agents and exposes them as MCP resources:
 
@@ -563,7 +565,7 @@ observeco mcp serve
 
 **Corrected from earlier draft.** The v1.1 thesis "we fix them, tell you, let them ask" is the post-launch evolution. See the IMPORTANT note above for the v1 vs v1.1 phasing rationale. The v1.1 thesis lands 14 days later on an already-engaged user base who've been monitoring their fleet and know exactly why they need self-healing. That's stronger than launching delayed with features nobody has asked for yet.
 
-### 6.2 The Onboarding Funnel
+### 6.3 The Onboarding Funnel
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -574,7 +576,7 @@ observeco mcp serve
 │    → Works immediately on first attempt              │
 ├─────────────────────────────────────────────────────┤
 │ 3. observeco pulse check or clawforge profile (10 seconds)   │
-│    → Falls through 3-tier detection:                         │
+│    → Falls through 4-tier detection:                         │
 │      (a) Hermes/Ollama/LangGraph config found                │
 │      (b) OpenClaw SOUL.md / AGENTS.md found                  │
 │      (c) Explicit observeco.yml in cwd                       │
@@ -589,6 +591,7 @@ observeco mcp serve
 │    → Starts FastAPI server, opens browser           │
 │    → Shows "Observing your fleet" loading state     │
 │    → If no agents: guided add flow in the browser   │
+│    → Default port 8123 (see CLAUDE.md for current port config) │
 ├─────────────────────────────────────────────────────┤
 │ 6. Star on GitHub (if value delivered)               │
 │    → Social proof for next user                      │
@@ -608,7 +611,7 @@ observeco mcp serve
 | **Step 5: No browser available** | Headless Linux server, CI environment | Fallback: "Dashboard started. Visit http://localhost:8889 or run `observeco pulse check` for CLI output." Never crash. |
 | **Cross-platform: Windows paths** | `~/.observeco/` may not resolve correctly | Use `platformdirs` library for OS-correct config paths. `appdirs.user_data_dir("observeco")` on all platforms. |
 
-### 6.3 Differentiation (The "Why Not X" Table)
+### 6.4 Differentiation (The "Why Not X" Table)
 
 || "Why not just..." | Answer |
 |-------------------|--------|
@@ -636,17 +639,19 @@ observeco mcp serve
 
 ## 8. Launch Day Timeline (D-0)
 
+> X Article goes live D-1 per §3.3 strategy. This timeline picks up at D-0.
+
 | Time (SGT) | Action | Detail |
 |------------|--------|--------|
-| **06:00** | Final `pip install observeco` test | Clean macOS VM. Confirm `pip install` → all 4 commands work. |
+| **06:00** | Final `pip install observeco` test | Clean macOS VM. Confirm `pip install` → all 6 commands work. |
 | **07:00** | Push v0.1.0 release to GitHub | Tagged release with changelog. PyPI package published. |
-| **08:00** | Post "Show HN" | Title: "I built an observability tool because my 7-agent fleet broke silently." |
-| **08:05** | Post on r/AI_Agents | Same narrative, adapted for Reddit format |
-| **08:10** | Post on r/LocalLLM | Local-first angle. "Runs on a Mac Mini, no cloud." |
-| **08:15** | Post X thread | GIF + bullet points + link. Tag @AIagents, @localLLM accounts. |
-| **08:30** | Monitor all 4 channels | Reply to every comment. No automated responses — real answers. |
-| **09:00–18:00** | Bugfix mode | Any user-reported bugs → fix within hours → v0.1.1 push |
-| **18:00** | End-of-day summary | Stars count, downloads, top feedback, issues opened. Post to Telegram. |
+| **21:00** | Post "Show HN" | Title: "I built an observability tool because my 7-agent fleet broke silently." |
+| **21:05** | Post on r/AI_Agents | Same narrative, adapted for Reddit format |
+| **21:10** | Post on r/LocalLLM | Local-first angle. "Runs on a Mac Mini, no cloud." |
+| **21:15** | Post X thread | GIF + bullet points + link. Tag @AIagents, @localLLM accounts. |
+| **21:30** | Monitor all 4 channels | Reply to every comment. No automated responses — real answers. |
+| **22:00–07:00** | Bugfix mode | Any user-reported bugs → fix within hours → v0.1.1 push |
+| **07:00** | End-of-day summary | Stars count, downloads, top feedback, issues opened. Post to Telegram. |
 
 ---
 

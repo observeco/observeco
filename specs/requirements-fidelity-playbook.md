@@ -18,18 +18,21 @@ This playbook sits **upstream** of coding-fidelity-playbook.md, ux-testing-playb
 
 ## Playbook Inventory
 
-The full playbook system has 8 documents, organized by flow:
+The full playbook system has 11 documents, organized by flow:
 
 | Order | Playbook | Role |
 |-------|----------|------|
 | 1 | requirements-fidelity-playbook.md | Spec hardening (upstream gate) |
-| 2 | coding-fidelity-playbook.md | Code matches spec |
-| 3 | ui-testing-playbook.md | Visual consistency & design system integrity |
-| 4 | ux-testing-playbook.md | Human experience lens |
-| 5 | system-design-testing-playbook.md | Architecture & daemon lens |
-| 6 | agent-governance-playbook.md | Session mastery for agents |
-| 7 | master-fidelity-gate.md | Integration gate (combines all 7) |
-| 8 | playbook-evolution-meta.md | Self-improvement loop |
+| 2 | spec-gated-workflow-playbook.md | 4-phase gated spec process (SPECIFY → PLAN → TASKS → IMPLEMENT) |
+| 3 | coding-fidelity-playbook.md | Code matches spec |
+| 4 | ui-testing-playbook.md | Visual consistency & design system integrity |
+| 5 | ux-testing-playbook.md | Human experience lens |
+| 6 | system-design-testing-playbook.md | Architecture & daemon lens |
+| 7 | agent-governance-playbook.md | Session mastery for agents |
+| 8 | orchestration-anti-patterns-playbook.md | Multi-agent governance patterns |
+| 9 | security-stride-playbook.md | STRIDE threat model + OWASP LLM Top 10 |
+| 10 | master-fidelity-gate.md | Integration gate (combines all playbooks) |
+| 11 | playbook-evolution-meta.md | Self-improvement loop |
 
 Refer to this inventory when the playbook system is referenced in other documents. When a section says "all 6 playbooks" or "all playbooks", it refers to playbooks 1-6 as the core set.
 
@@ -52,9 +55,9 @@ This document is not a spec template. It is a **spec hardening process** — a r
 
 ---
 
-## 2. The 6 Spec Traps
+## 2. The 8 Spec Traps
 
-Every ambiguous, contradictory, or incomplete spec falls into one of these six traps.
+Every ambiguous, contradictory, or incomplete spec falls into one of these eight traps.
 
 ### Trap 1: Assumed Happy Path Only
 

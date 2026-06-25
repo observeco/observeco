@@ -117,13 +117,78 @@ _SENSITIVE_ARG_KEYS = {
     "password", "token", "secret", "api_key", "credential",
 }
 
-_PRODUCTION_PATHS = [
+# Platform-aware production paths
+_PROD_PATHS_UNIX = [
     "/prod", "/production", "/etc/", "/var/www",
     "production", "prod.db", "main.db",
 ]
 
+_PROD_PATHS_WINDOWS = [
+    "C:\\Windows", "C:\\Program Files", "C:\\ProgramData",
+    "C:\\inetpub", "C:\\nginx",
+    "production", "prod.db", "main.db",
+]
 
-def _classify_structured(tool_call: ToolCall) -> Optional[RiskResult]:
+_PROD_PATHS_DARWIN = [
+    "/Library/LaunchDaemons", "/Library/LaunchAgents",
+    "/Applications", "/usr/local/etc",
+    "production", "prod.db", "main.db",
+]
+
+
+def _get_production_paths(platform: str = None) -> list:
+    """Return platform-appropriate production paths."""
+    if platform is None:
+        platform = get_platform_name()
+    if platform == "windows":
+        return _PROD_PATHS_WINDOWS
+    elif platform == "macos":
+        return _PROD_PATHS_DARWIN
+    return _PROD_PATHS_UNIX
+
+
+# Platform-specific dangerous command names
+_DANGEROUS_COMMANDS = {
+    "delete_file", "remove", "unlink", "rmdir",
+    "drop_table", "truncate_table", "drop_database",
+    "format_disk", "shutdown", "reboot",
+    "sudo", "su",
+}
+
+_DANGEROUS_COMMANDS_WINDOWS = {
+    "del", "rmdir", "rd", "format", "shutdown", "Restart-Computer",
+    "Stop-Process", "Remove-Item",
+    "net user", "net localgroup", "reg delete",
+}
+
+_DANGEROUS_COMMANDS_LINUX = {
+    "rm", "rmdir", "dd", "shutdown", "reboot",
+    "systemctl stop", "systemctl disable", "kill -9",
+    "iptables", "ufw disable",
+}
+
+_DANGEROUS_COMMANDS_DARWIN = {
+    "rm", "rmdir", "dd", "shutdown", "reboot",
+    "launchctl unload", "launchctl stop",
+    "csrutil disable",
+}
+
+
+def _get_dangerous_commands(platform: str = None) -> set:
+    """Return platform-specific dangerous command names."""
+    if platform is None:
+        platform = get_platform_name()
+    base = _DANGEROUS_COMMANDS.copy()
+    if platform == "windows":
+        base.update(_DANGEROUS_COMMANDS_WINDOWS)
+    elif platform == "linux":
+        base.update(_DANGEROUS_COMMANDS_LINUX)
+    elif platform == "macos":
+        base.update(_DANGEROUS_COMMANDS_DARWIN)
+    return base
+
+
+def _classify_structured(tool_call: ToolCall, platform: str = None) -> Optional[RiskResult]:
     """Try structured classification by inspecting tool call arguments.
 
     Looks at the tool name and argument keys/values directly
@@ -133,8 +198,9 @@ def _classify_structured(tool_call: ToolCall) -> Optional[RiskResult]:
     name = tool_call.name.lower()
     args = tool_call.arguments
 
-    # 1. Check by command name
-    if name in _DANGEROUS_COMMANDS:
+    # 1. Check by command name (platform-aware)
+    dangerous_cmds = _get_dangerous_commands(platform or get_platform_name())
+    if name in dangerous_cmds:
         return RiskResult(
             level=RiskLevel.CRITICAL,
             category="destructive",
@@ -174,10 +240,11 @@ def _classify_structured(tool_call: ToolCall) -> Optional[RiskResult]:
                 action="flag",
             )
 
-    # 4. Check paths for production paths
+    # 4. Check paths for production paths (platform-aware)
+    prod_paths = _get_production_paths(platform or get_platform_name())
     for key in ("path", "filepath", "dest", "destination", "target"):
         val = str(args.get(key, ""))
-        for prod_path in _PRODUCTION_PATHS:
+        for prod_path in prod_paths:
             if prod_path in val:
                 return RiskResult(
                     level=RiskLevel.HIGH,
@@ -247,8 +314,8 @@ def classify_tool_call(tool_call: ToolCall, platform: str = None) -> RiskResult:
     if platform is None:
         platform = get_platform_name()
 
-    # Try structured classification first
-    structured_result = _classify_structured(tool_call)
+    # Try structured classification first (platform-aware)
+    structured_result = _classify_structured(tool_call, platform)
     if structured_result is not None:
         return structured_result
 

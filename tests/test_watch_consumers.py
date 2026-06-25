@@ -7,6 +7,8 @@ from observeco.watch_consumers import (
     HealConsumer,
     PathwayConsumer,
     PruneConsumer,
+    TokenHistoryConsumer,
+    DataSourceWatchdog,
 )
 
 
@@ -33,13 +35,15 @@ def test_consumer_manager_registers_all():
     """ConsumerManager should register all 5 standard consumers."""
     mgr = ConsumerManager()
     mgr.register_all()
-    assert len(mgr.consumers) == 5
+    assert len(mgr.consumers) == 7
     names = [c.name for c in mgr.consumers]
     assert "drift" in names
     assert "garden" in names
     assert "pathway" in names
     assert "heal" in names
     assert "prune" in names
+    assert "token_history" in names
+    assert "data_source_watchdog" in names
 
 
 def test_consumer_manager_start_stop_all():
@@ -86,4 +90,29 @@ def test_prune_consumer_runs_without_crash():
     """PruneConsumer._tick should handle missing prune module."""
     c = PruneConsumer()
     c._tick()
+    assert True
+
+
+def test_token_history_consumer_start_stop():
+    """TokenHistoryConsumer should start and stop cleanly."""
+    c = TokenHistoryConsumer()
+    c.start()
+    assert c._running is True
+    assert c._thread is not None
+    assert c._thread.is_alive()
+    c.stop()
+    assert c._running is False
+
+
+def test_token_history_consumer_runs_without_crash():
+    """TokenHistoryConsumer._tick should not crash with empty token_logs."""
+    c = TokenHistoryConsumer()
+    c._tick()  # Should not raise with empty DB
+    assert True
+
+
+def test_data_source_watchdog_runs_without_crash():
+    """DataSourceWatchdog._tick should not crash."""
+    c = DataSourceWatchdog()
+    c._tick()  # Should not raise
     assert True

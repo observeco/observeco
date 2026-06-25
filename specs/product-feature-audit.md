@@ -191,7 +191,7 @@ After auditing what was lost in the Hermes→ObserveCo transition, 6 features we
 | Feature | In ObserveCo? | Why | Effort | Spec |
 |---------|-------------|-----|--------|------|
 | System prompt compression (`observeco chisel compress`) | ✅ Yes | Pure text manipulation, not Hermes-dependent. Port compression engine from `run_agent.py` as file-in/file-out. | ~2 days | `specs/pulse-depth-spec.md` §1 |
-| Per-turn token cost tracking | ✅ Yes | `POST /api/chisel/trim` endpoint + agent-side post-turn hook (Hermes `run_agent.py`, OpenClaw ContextEngine) | ~3 days | `specs/pulse-depth-spec.md` §2 |
+| Per-turn token cost tracking | ✅ Yes | `POST /api/tokens/log` endpoint + agent-side post-turn hook (Hermes `run_agent.py`, OpenClaw ContextEngine) | ~3 days | `specs/pulse-depth-spec.md` §2 |
 | Auto-heal dead agents | ✅ Yes | 3-line integration in watch loop — heal logic (`heal.py`) already exists with circuit breaker and cooldown | ~1 day | `specs/pulse-depth-spec.md` §3 |
 | Intent-aware loading at runtime | ✅ Separate plugin | OpenClaw ContextEngine plugin (`@observeco/clawforge-plugin`) — Node.js package that hooks into bootstrap/ingest/pre-response lifecycle. ObserveCo receives reports via API but cannot control loading from outside. | ~5-7 days | `specs/pulse-depth-spec.md` §4 |
 | Push alerts (Telegram, webhook, email) | ✅ Yes | Delivery module — alert detection pipeline already exists, only delivery layer missing | ~3 days | `specs/pulse-depth-spec.md` §5 |

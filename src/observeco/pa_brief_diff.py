@@ -16,21 +16,41 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from observeco.dirs import hermes_home
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 
 HOME = Path.home()
-BRIEF_SNAPSHOT_DIR = HOME / ".hermes" / "cron" / "output"
-EVENING_SNAPSHOT_FILE = BRIEF_SNAPSHOT_DIR / "pa_evening_brief_snapshot.json"
+
+
+def _brief_snapshot_dir() -> Path | None:
+    """Return the cron output directory, or None if Hermes not found."""
+    hh = hermes_home()
+    if hh is None:
+        return None
+    return hh / "cron" / "output"
+
+
+def _evening_snapshot_file() -> Path | None:
+    """Return the evening brief snapshot file, or None if Hermes not found."""
+    d = _brief_snapshot_dir()
+    if d is None:
+        return None
+    return d / "pa_evening_brief_snapshot.json"
 
 
 def _find_latest_evening_snapshot() -> Optional[Path]:
     """Find the most recent evening brief snapshot."""
-    if EVENING_SNAPSHOT_FILE.exists():
-        return EVENING_SNAPSHOT_FILE
+    evening_file = _evening_snapshot_file()
+    if evening_file and evening_file.exists():
+        return evening_file
     # Fallback: search for any evening brief files
-    candidates = sorted(BRIEF_SNAPSHOT_DIR.glob("*evening*"), reverse=True)
+    brief_dir = _brief_snapshot_dir()
+    if brief_dir is None:
+        return None
+    candidates = sorted(brief_dir.glob("*evening*"), reverse=True)
     if candidates:
         return candidates[0]
     return None
@@ -45,8 +65,13 @@ def _load_snapshot(path: Path) -> dict:
 
 def _save_snapshot(data: dict) -> None:
     """Save current state as an evening snapshot."""
-    BRIEF_SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-    EVENING_SNAPSHOT_FILE.write_text(json.dumps(data, indent=2))
+    d = _brief_snapshot_dir()
+    if d is None:
+        return
+    d.mkdir(parents=True, exist_ok=True)
+    evening_file = _evening_snapshot_file()
+    if evening_file:
+        evening_file.write_text(json.dumps(data, indent=2))
 
 
 # ---------------------------------------------------------------------------
@@ -55,9 +80,12 @@ def _save_snapshot(data: dict) -> None:
 
 def _count_flags(prefix: str = "") -> int:
     """Count signal/flag files in intelligence directories."""
+    hh = hermes_home()
+    if hh is None:
+        return 0
     paths_to_check = [
-        HOME / ".hermes" / "intelligence" / "flags",
-        HOME / ".hermes" / "intelligence" / "decisions",
+        hh / "intelligence" / "flags",
+        hh / "intelligence" / "decisions",
     ]
     total = 0
     for p in paths_to_check:
@@ -97,9 +125,7 @@ def _check_pulse_status() -> dict:
 def _list_calendar_events() -> int:
     """Count upcoming calendar events (best-effort)."""
     cal_paths = [
-        HOME / "seanfzc.ics",
         HOME / "Library" / "Calendars",
-        Path("/tmp") / "seanfzc_calendar.json",
     ]
     for p in cal_paths:
         if p.exists():

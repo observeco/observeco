@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import secrets
 import sys
 import time
@@ -30,11 +31,14 @@ from observeco.dashboard.licenses_api import router as licenses_router
 from observeco.dashboard.otel import router as otel_router
 from observeco.db import Database
 from observeco.dirs import get_data_dir
+from observeco.discover.api import router as discover_router
 from observeco.realtime import router as realtime_router
 
 # Shared heartbeat path — watch daemon writes this every 30s.
 # Dashboard reads it to detect if the daemon is alive.
-_HEARTBEAT_PATH = get_data_dir() / ".watch_heartbeat.json"
+# ponytail: lazy property to avoid crash on import when data dir is unwritable
+def _get_heartbeat_path() -> Path:
+    return get_data_dir() / ".watch_heartbeat.json"
 
 # Token component colors (matching mockup design system)
 COMP_COLORS = {"identity": "#6366f1", "skills": "#8b5cf6", "memory": "#ec4899",
@@ -65,6 +69,7 @@ app.include_router(api_router)
 app.include_router(realtime_router)
 app.include_router(licenses_router)
 app.include_router(commercial_router)
+app.include_router(discover_router)
 
 # --- Startup: initialise first_run_at, log license state ---
 # Trial is NOT auto-started here. It starts on explicit Pro feature access
@@ -426,8 +431,8 @@ async def api_delay_banner():
     daemon_warning = ""
     try:
         hb_data = None
-        if _HEARTBEAT_PATH.exists():
-            hb_data = json.loads(_HEARTBEAT_PATH.read_text())
+        if _get_heartbeat_path().exists():
+            hb_data = json.loads(_get_heartbeat_path().read_text())
         daemon_alive = False
         if hb_data:
             hb_age = now - hb_data.get("timestamp", 0)
@@ -1003,6 +1008,8 @@ async def api_agent_detail(agent_name: str, tab: str = "health"):
         return _detail_errors_tab(name, errors, framework, agent_status, conf, is_pro=lic.require_pro())
     elif tab == "tokens":
         return _detail_tokens_tab(name, trims, drift, framework)
+    elif tab == "drift":
+        return _detail_drift_tab(name, drift, framework)
     elif tab == "garden" or tab == "memory":
         return _detail_garden_tab(name, garden, profile, framework)
     return HTMLResponse("<div>Unknown tab</div>")
@@ -1418,6 +1425,68 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
             </table>
         </div>
         {circuit_html}
+    </div>
+</div>""")
+
+
+def _detail_drift_tab(name: str, drift: list, framework: str) -> str:
+    """Drift detail — 14-day trend with component breakdown."""
+    if not drift:
+        return HTMLResponse(f"""<div class="detail-content">
+    <div class="empty-state">
+        <div class="empty-state-title">📈 No drift data yet</div>
+        <div class="empty-state-body">Drift appears after the agent has been monitored for at least 24 hours.</div>
+    </div>
+</div>""")
+
+    vals = [d.get("delta_pct", 0) for d in drift[-7:]]
+    avg = sum(vals) / len(vals) if vals else 0
+    trend = "📈" if avg > 0.1 else "📉" if avg < -0.1 else "➡️"
+    direction = "increasing" if avg > 0.1 else "decreasing" if avg < -0.1 else "stable"
+
+    rows = ""
+    breaches = 0
+    for d in drift[-14:]:
+        raw_ts = d.get("timestamp", 0)
+        # Convert Unix timestamp to readable date
+        ts = datetime.fromtimestamp(raw_ts).strftime("%b %d") if raw_ts else ""
+        pct = d.get("delta_pct", 0)
+        breached = d.get("breached", False)
+        if breached:
+            breaches += 1
+        bar_w = min(abs(pct) * 2, 100)
+        bar_col = "#ef4444" if breached else ("#f59e0b" if abs(pct) > 5 else "#22c55e")
+        rows += f"""<div class="drift-row" style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(30,41,59,0.3);">
+    <span style="font-size:11px;color:#64748b;flex:1;font-family:var(--font-mono);">{ts}</span>
+    <div style="flex:1;height:6px;background:#1e293b;border-radius:3px;">
+        <div style="width:{bar_w}%;height:6px;background:{bar_col};border-radius:3px;"></div>
+    </div>
+    <span style="font-size:11px;font-family:var(--font-mono);color:{bar_col};flex:1;font-weight:600;">{pct:+.1f}%</span>
+    {'<span style="font-size:11px;color:#ef4444;" title="Breach">⛔</span>' if breached else ''}
+</div>"""
+
+    # Summary cards
+    max_pct = max(abs(v) for v in vals) if vals else 0
+    risk_color = "#ef4444" if breaches > 0 else ("#f59e0b" if max_pct > 5 else "#22c55e")
+    risk_label = "High" if breaches > 0 else ("Moderate" if max_pct > 5 else "Low")
+
+    return HTMLResponse(f"""<div class="detail-content">
+    <div class="detail-section" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div class="modal-section-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <h4 style="font-size:13px;font-weight:600;color:#e2e8f0;margin:0;">📈 Drift — 14-Day Trend</h4>
+            <span style="font-size:11px;background:{risk_color}20;color:{risk_color};padding:2px 10px;border-radius:999px;font-weight:600;">{risk_label} Risk</span>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">
+            {trend} Drift is <strong>{direction}</strong> at <strong>{avg:+.1f}%</strong> avg over last 7 days
+        </div>
+        <div>
+            <div style="display:flex;align-items:center;gap:10px;padding:4px 0 6px;border-bottom:1px solid var(--border);font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                <span style="flex:1;text-align:left;">Date</span>
+                <span style="flex:1;text-align:left;">Change</span>
+                <span style="flex:1;text-align:left;">Delta</span>
+            </div>
+            {rows}
+        </div>
     </div>
 </div>""")
 
@@ -2181,7 +2250,6 @@ async def api_fleet_summary():
     {f'<span class="status-stat"><strong>{drift_text}</strong></span>' if drift_text else ''}
     {trip_badge}
       <button class="feedback-btn" onclick="toggleFeedback()">+ Missing an agent?</button>
-      <button class="feedback-btn u-ml-8" onclick="openSkillsAuditModal('all')">🧩 Skill Audit</button>
       <button class="feedback-btn u-ml-8" onclick="openPathwayModal()">🕸️ Pathway map</button>
       <button class="feedback-btn u-ml-8" onclick="loadPlatforms()">🔌 Platforms</button>
       <span id="platformStatus"></span>
@@ -2788,9 +2856,30 @@ async def api_garden_scan():
         # Re-read garden summary
         garden_db = _GardenDB()
         summary = garden_db.get_garden_summary()
+
+        # Also fetch individual stale/duplicate/contradiction entries
+        # by re-running the detection on each agent's MEMORY.md
+        details = {"duplicates": [], "contradictions": [], "stale": []}
+        try:
+            from observeco.clawforge.garden import _find_memory_files, _find_duplicates, _find_contradictions, _find_stale
+            from pathlib import Path
+            for mem in _find_memory_files():
+                path = Path(mem["path"])
+                if not path.exists():
+                    continue
+                lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
+                for line_no, text, reason in _find_duplicates(lines):
+                    details["duplicates"].append({"agent": mem["agent"], "line": line_no + 1, "text": text, "reason": reason})
+                for line_no, text, reason in _find_contradictions(lines):
+                    details["contradictions"].append({"agent": mem["agent"], "line": line_no + 1, "text": text, "reason": reason})
+                for line_no, text, reason in _find_stale(lines, str(path)):
+                    details["stale"].append({"agent": mem["agent"], "line": line_no + 1, "text": text, "reason": reason})
+        except Exception:
+            pass
+
         return {
             "ok": True,
-            "summary": summary,
+            "summary": {**summary, "details": details},
             "stdout": r.stdout[-500:],
             "stderr": r.stderr[-500:],
         }
@@ -2798,6 +2887,36 @@ async def api_garden_scan():
         return JSONResponse({"ok": False, "error": "Garden scan timed out (120s)"}, status_code=500)
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@app.post("/api/garden/remove-stale", response_class=JSONResponse)
+async def api_garden_remove_stale(request: Request):
+    """Remove a stale entry from an agent's MEMORY.md."""
+    from observeco import license as lic
+    if not lic.require_pro():
+        return JSONResponse({"ok": False, "error": "Pro license required"}, status_code=403)
+    try:
+        body = await request.json()
+        agent = body.get("agent", "")
+        line = body.get("line")
+        if not agent or line is None:
+            return JSONResponse({"ok": False, "error": "Missing agent or line"}, status_code=400)
+        from observeco.clawforge.garden import _find_memory_files
+        memories = _find_memory_files(agent)
+        if not memories:
+            return JSONResponse({"ok": False, "error": f"No MEMORY.md found for {agent}"}, status_code=404)
+        from pathlib import Path
+        path = Path(memories[0]["path"])
+        lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
+        idx = line - 1
+        if idx < 0 or idx >= len(lines):
+            return JSONResponse({"ok": False, "error": f"Line {line} out of range"}, status_code=400)
+        removed = lines.pop(idx)
+        path.write_text("\\n".join(lines), encoding="utf-8")
+        return {"ok": True, "message": f"Removed line {line}: {removed.strip()[:60]}"}
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
 
 @app.get("/api/budget-planner", response_class=HTMLResponse)
 async def api_budget_planner(rate: float = 0.15):
@@ -3285,10 +3404,20 @@ async def api_skills_audit(agent: str = "all"):
                     continue
 
                 total_tokens += tokens
+                # Check if .bak exists → skill is compressed
+                compressed = False
+                try:
+                    bak_path = skills_dir / cat / name / "SKILL.md.bak"
+                    if bak_path.exists():
+                        compressed = True
+                except Exception:
+                    pass
+
                 skills.append({
                     "name": name,
                     "category": cat,
                     "tokens": tokens,
+                    "compressed": compressed,
                 })
 
                 if cat not in categories:
@@ -3323,7 +3452,9 @@ async def api_skills_audit(agent: str = "all"):
                 name = (meta or {}).get("name", sf.parent.name)
 
                 total_tokens += tokens
-                skills.append({"name": str(name), "category": cat, "tokens": tokens})
+                # Check if .bak exists → skill is compressed
+                compressed = sf.with_suffix(".md.bak").exists()
+                skills.append({"name": str(name), "category": cat, "tokens": tokens, "compressed": compressed})
                 if cat not in categories:
                     categories[cat] = {"skills": 0, "tokens": 0}
                 categories[cat]["skills"] += 1
@@ -3709,10 +3840,23 @@ async def api_agents(
             is_agent = agent_type == 'agent'
             guard_row = ''
             if is_agent:
-                guard_row = '<div class="metric-row" onclick="loadTab(' + repr(name)[1:-1] + ",'guard')" + '">'
+                guard_row = f'<div class="metric-row" onclick="loadTab(\'{name}\',\'guard\',\'agent\')">'
                 guard_row += '\n        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'circuit\', event)">?</span></span>'
                 guard_row += '\n        <span class="value" style="color:' + guard_color + ';font-weight:600;">' + guard_label + '</span>'
                 guard_row += '\n        <span class="click-hint">See details</span><span class="arrow">\u203a</span>\n      </div>'
+
+            # Token & Drift rows — agent-only
+            token_row = ''
+            drift_row = ''
+            if is_agent:
+                token_row = f'<div class="metric-row" onclick="loadTab(\'{name}\',\'tokens\',\'agent\')">'
+                token_row += '\n        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'tokens\', event)">?</span></span>'
+                token_row += '\n        <span class="value">' + token_bar + '</span>'
+                token_row += '\n        <span class="click-hint">See details</span><span class="arrow">\u203a</span>\n      </div>'
+                drift_row = f'<div class="metric-row" onclick="loadTab(\'{name}\',\'drift\',\'agent\')">'
+                drift_row += '\n        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary(\'drift\', event)">?</span></span>'
+                drift_row += '\n        <span class="value" style="color:var(--muted);">' + drift_str + '</span>'
+                drift_row += '\n        <span class="click-hint">See details</span><span class="arrow">\u203a</span>\n      </div>'
 
             cards_html.append(f"""<div class="agent-card" data-agent="{name}">
       <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('{name}')" title="Hide agent"></button>
@@ -3726,13 +3870,15 @@ async def api_agents(
         <div class="agent-last-seen">{last_check_str}</div>
       </div>
       {f'<div style="margin-bottom:6px;">{gap_badges_str}</div>' if gap_badges_str else ''}
-      <div class="metric-row" onclick="loadTab('{name}','health')">
+      <div class="metric-row" onclick="loadTab('{name}','health','{agent_type}')">
         <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
         <span class="value" style="color:{'var(--accent)' if agent_status == 'alive' else 'var(--danger)' if agent_status == 'dead' else 'var(--muted)' if agent_status == 'not_running' else 'var(--warn)'};font-weight:600;">{status_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
       {conf_badge if is_agent else ''}
       {guard_row}
+      {token_row}
+      {drift_row}
       <div class="metric-row" onclick="loadTab('{name}','errors')">
         <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
         <span class="value" style="color:{err_color};">{err_label}</span>
@@ -3900,6 +4046,418 @@ async def api_chisel_compress(request: Request):
         return JSONResponse({"status": "error", "message": str(e)}, status_code=404)
     except ValueError as e:
         return JSONResponse({"status": "error", "message": str(e)}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.get("/api/token-history")
+async def api_token_history(days: int = 90, agent: str = ""):
+    """90-day token trend data — aggregated from token_logs (consistent with Token Analytics tab)."""
+    from observeco.tracking.token_analytics import aggregate_tokens, compute_summary
+    now = int(time.time())
+    from_ts = now - days * 86400
+    data = aggregate_tokens(agent=agent, from_ts=from_ts, to_ts=now, granularity="day", include_source="sdk,otel,watch")
+    if not data:
+        return {"has_real_data": False, "snapshots": []}
+    snapshots = [{
+        "date": d["bucket_start"],
+        "input_tokens": d.get("input_tokens", 0),
+        "output_tokens": d.get("output_tokens", 0),
+        "cache_creation": d.get("cache_creation_tokens", 0),
+        "cache_read": d.get("cache_read_tokens", 0),
+        "total_tokens": d.get("total_tokens", 0),
+        "turn_count": d.get("turn_count", 0),
+    } for d in data]
+    summary = compute_summary(data)
+    return {"has_real_data": True, "snapshots": snapshots, "summary": summary}
+
+
+@app.get("/api/tokens/chart")
+async def api_tokens_chart(
+    granularity: str = "hour",
+    component: str = "total",
+    from_ts: int = 0,
+    to_ts: int = 0,
+    agent: str = "",
+    provider: str = "",
+    include_source: str = "sdk,otel,watch",
+):
+    """Chart data for Token Analytics tab — matches frontend fetchTokenData() expectations."""
+    from observeco.tracking.token_analytics import aggregate_tokens, compute_summary
+    data = aggregate_tokens(
+        agent=agent, provider=provider,
+        from_ts=from_ts, to_ts=to_ts,
+        granularity=granularity, include_source=include_source,
+    )
+    if not data:
+        return {"data": [], "summary": {"total_tokens": 0, "total_cost": 0, "avg_per_turn": 0, "turn_count": 0}, "granularity": granularity, "component": component}
+    summary = compute_summary(data)
+    return {
+        "data": data,
+        "summary": summary,
+        "granularity": granularity,
+        "component": component,
+    }
+
+
+@app.get("/api/tokens/verdict")
+async def api_tokens_verdict(from_ts: int = 0, to_ts: int = 0):
+    """One-sentence cost health verdict — top spender, cache trend, recommendation."""
+    from observeco.tracking.token_analytics import get_verdict
+    return JSONResponse(get_verdict(from_ts=from_ts, to_ts=to_ts))
+
+
+@app.get("/api/tokens/cache-by-agent")
+async def api_tokens_cache_by_agent(from_ts: int = 0, to_ts: int = 0):
+    """Per-agent cache hit rate — surfaces agents with 0% cache."""
+    from observeco.tracking.token_analytics import get_cache_by_agent
+    return JSONResponse(get_cache_by_agent(from_ts=from_ts, to_ts=to_ts))
+
+
+@app.get("/api/tokens/agents")
+async def api_tokens_agents():
+    """Distinct agent names from token_logs for the Token Analytics dropdown."""
+    from observeco.db import Database
+    db = Database()
+    conn = db._get_conn()
+    rows = conn.execute("SELECT DISTINCT agent_name FROM token_logs ORDER BY agent_name").fetchall()
+    return {"agents": [r["agent_name"] for r in rows]}
+
+
+@app.get("/api/tokens/providers")
+async def api_tokens_providers():
+    """Distinct provider names from token_logs for the Token Analytics dropdown."""
+    from observeco.db import Database
+    db = Database()
+    conn = db._get_conn()
+    rows = conn.execute("SELECT DISTINCT provider FROM token_logs WHERE provider != '' ORDER BY provider").fetchall()
+    return {"providers": [r["provider"] for r in rows]}
+
+
+@app.get("/api/tokens/breakdown")
+async def api_tokens_breakdown(
+    dimension: str = "agent",
+    from_ts: int = 0,
+    to_ts: int = 0,
+):
+    """Token breakdown by dimension (agent/provider/workflow/service)."""
+    from observeco.db import Database
+    db = Database()
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+
+    dim_col = {"agent": "agent_name", "provider": "provider", "workflow": "workflow_name", "service": "service_name"}
+    col = dim_col.get(dimension, "agent_name")
+
+    where = "WHERE 1=1"
+    params: list = []
+    if from_ts:
+        where += " AND recorded_at >= ?"
+        params.append(from_ts)
+    if to_ts:
+        where += " AND recorded_at <= ?"
+        params.append(to_ts)
+
+    rows = conn.execute(
+        f"SELECT {col} as name, SUM(total_tokens) as total_tokens, SUM(input_tokens) as input, "
+        f"SUM(output_tokens) as output, SUM(cache_creation_tokens) as cache_create, "
+        f"SUM(cache_read_tokens) as cache_read, COUNT(*) as turn_count, "
+        f"SUM(cost) as cost "
+        f"FROM token_logs {where} GROUP BY {col} ORDER BY total_tokens DESC LIMIT 50",
+        params,
+    ).fetchall()
+
+    data = []
+    for r in rows:
+        rd = dict(r)
+        rd["avg_per_turn"] = round(rd["total_tokens"] / max(rd["turn_count"], 1))
+        data.append(rd)
+    return {"data": data, "dimension": dimension}
+
+
+@app.get("/api/tokens/system-prompts")
+async def api_tokens_system_prompts(
+    from_ts: int = 0,
+    to_ts: int = 0,
+    limit: int = 20,
+):
+    """Top system prompts by token usage."""
+    from observeco.tracking.token_analytics import get_system_prompts
+    return JSONResponse(get_system_prompts(from_ts=from_ts, to_ts=to_ts, limit=limit))
+
+
+@app.get("/api/compress-log")
+async def api_compress_log(limit: int = 5):
+    """Recent compression log entries."""
+    from observeco.db import Database
+    db = Database()
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+    rows = conn.execute(
+        "SELECT agent_name, mode, before_tokens, after_tokens, savings_pct, "
+        "backup_path, triggered_by, timestamp "
+        "FROM compress_log ORDER BY timestamp DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.get("/api/migration-status")
+async def api_migration_status():
+    """Check if a schema migration failed and needs attention."""
+    from observeco.db import get_migration_failure
+    fail = get_migration_failure()
+    if fail:
+        return {
+            "has_failure": True,
+            "restored": fail.get("restored", False),
+            "restored_from": fail.get("restored_from", ""),
+            "error": fail.get("error", ""),
+            "failed_at": fail.get("failed_at", 0),
+        }
+    return {"has_failure": False}
+
+
+@app.get("/api/pipeline/health")
+async def api_pipeline_health():
+    """Data quality tier and pipeline health for the Data Quality bar."""
+    from observeco.db import Database
+    db = Database()
+    conn = db._get_conn()
+
+    # Determine data quality tier
+    otel_count = conn.execute(
+        "SELECT COUNT(*) as c FROM token_logs WHERE source='otel'"
+    ).fetchone()["c"]
+    sdk_count = conn.execute(
+        "SELECT COUNT(*) as c FROM token_logs WHERE source='sdk' OR source='proxy'"
+    ).fetchone()["c"]
+    watch_count = conn.execute(
+        "SELECT COUNT(*) as c FROM token_logs WHERE source='watch'"
+    ).fetchone()["c"]
+
+    if sdk_count > 0:
+        tier = "full"
+    elif otel_count > 0:
+        tier = "accurate"
+    else:
+        tier = "estimated"
+
+    # Check if OTEL data is stale (> 1 hour since last OTEL record)
+    otel_stale = False
+    if otel_count > 0:
+        last_otel = conn.execute(
+            "SELECT MAX(recorded_at) as ts FROM token_logs WHERE source='otel'"
+        ).fetchone()
+        if last_otel and last_otel["ts"]:
+            otel_stale = (int(__import__("time").time()) - last_otel["ts"]) > 3600
+
+    return {
+        "tier": tier,
+        "otel_stale": otel_stale,
+        "sources": {
+            "otel": otel_count,
+            "sdk": sdk_count,
+            "watch": watch_count,
+        },
+        "upgrade_path": "Add the OTEL SDK to your agents for accurate per-call data"
+            if tier == "estimated" else
+            "Add the ObserveCo SDK for full per-call breakdown"
+            if tier == "accurate" else "",
+    }
+
+
+@app.post("/api/config-hygiene/fix")
+async def api_config_hygiene_fix(request: Request):
+    """Apply auto-fixable config hygiene findings. Accepts {check: "check_name"|"all"}."""
+    try:
+        body = await request.json()
+        check = body.get("check", "all")
+        from observeco.chisel.config_scanner import scan_config, apply_fix
+        report = scan_config()
+        if check == "all":
+            targets = [f for f in report.findings if f.auto_fixable]
+        else:
+            targets = [f for f in report.findings if f.check == check and f.auto_fixable]
+        fixed, failed = [], []
+        for f in targets:
+            try:
+                if apply_fix(f):
+                    fixed.append(f.check)
+                else:
+                    failed.append(f.check)
+            except Exception:
+                failed.append(f.check)
+        return JSONResponse({"fixed": fixed, "failed": failed})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.post("/api/chisel/compress-skill")
+async def api_chisel_compress_skill(request: Request):
+    """Compress one or more skills by name. Accepts {skills: [name, ...], mode, provider}."""
+    try:
+        body = await request.json()
+        skill_names = body.get("skills", [])
+        mode = body.get("mode", "lite")
+        provider = body.get("provider", "auto")
+        if not skill_names:
+            return JSONResponse({"status": "error", "message": "No skills specified"}, status_code=400)
+        from observeco.chisel.skill_compress import compress_skill_to_artifacts, _skills_dir, generate_cards_json
+        from observeco.db import Database
+        from observeco.tracking.tokens import _estimate_cost
+        import json as _json
+        sd = _skills_dir()
+        if sd is None:
+            return JSONResponse({"status": "error", "message": "Skills directory not found"}, status_code=500)
+        engine = "caveman" if mode == "full" else "rule"
+        details = []
+        _db = Database()
+        for name in skill_names:
+            # Skills live in nested dirs: category/skill-name/SKILL.md
+            skill_paths = list(sd.rglob(f"{name}/SKILL.md"))
+            if not skill_paths:
+                details.append({"name": name, "status": "error", "message": "SKILL.md not found"})
+                continue
+            skill_path = skill_paths[0]
+            manifest = compress_skill_to_artifacts(skill_path, dry_run=False, engine=engine, provider=provider, apply=True)
+            if manifest is None:
+                details.append({"name": name, "status": "skip", "message": "Already compressed or no savings"})
+            else:
+                saved = manifest.get("savings_tokens", 0)
+                pct = manifest.get("savings_pct", 0)
+                details.append({
+                    "name": name, "status": "ok",
+                    "saved_tokens": saved, "savings_pct": pct,
+                    "before_tokens": manifest.get("original_tokens", 0),
+                    "after_tokens": manifest.get("compressed_tokens", 0),
+                    "applied": True,
+                })
+                # Log to compress_log
+                try:
+                    _db._get_conn().execute(
+                        "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, "
+                        "savings, savings_pct, file_path, backup_path, triggered_by, timestamp) "
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        ("fleet", mode,
+                         manifest.get("pre_compress_tokens", manifest.get("original_tokens", 0)),
+                         manifest.get("compressed_tokens", 0),
+                         saved, pct,
+                         str(skill_path),
+                         str(skill_path.with_suffix(".md.bak")),
+                         "dashboard", int(time.time()))
+                    )
+                    _db._get_conn().commit()
+                except Exception:
+                    pass  # fire-and-forget
+                # Log to action_log
+                try:
+                    _db.log_action(
+                        agent_name="fleet",
+                        action_type="skill_compress",
+                        action_detail=f"{name} — compressed {manifest.get('pre_compress_tokens', 0):,} → {manifest.get('compressed_tokens', 0):,} tok ({pct:.0f}%)",
+                        tokens_saved=saved,
+                        cost_saved=_estimate_cost(saved),
+                        status="success",
+                        metadata=_json.dumps({"mode": mode, "engine": engine, "applied": True}),
+                        triggered_by="dashboard",
+                    )
+                except Exception:
+                    pass  # fire-and-forget
+
+        # Regenerate cards.json so dashboard reads correct token counts
+        try:
+            cards_json = generate_cards_json()
+            (sd / "cards.json").write_text(cards_json)
+        except Exception:
+            pass  # non-critical
+
+        return JSONResponse({"status": "ok", "details": details})
+    except Exception as e:
+        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
+
+
+@app.post("/api/chisel/revert-skill")
+async def api_chisel_revert_skill(request: Request):
+    """Revert a compressed skill back to its original content from .bak file."""
+    try:
+        body = await request.json()
+        skill_names = body.get("skills", [])
+        if not skill_names:
+            return JSONResponse({"status": "error", "message": "No skills specified"}, status_code=400)
+        from observeco.chisel.skill_compress import _skills_dir, _count_tokens, _text_hash, _atomic_write, generate_cards_json
+        from observeco.db import Database
+        import json as _json
+        sd = _skills_dir()
+        if sd is None:
+            return JSONResponse({"status": "error", "message": "Skills directory not found"}, status_code=500)
+        details = []
+        _db = Database()
+        for name in skill_names:
+            skill_paths = list(sd.rglob(f"{name}/SKILL.md"))
+            if not skill_paths:
+                details.append({"name": name, "status": "error", "message": "SKILL.md not found"})
+                continue
+            skill_path = skill_paths[0]
+            bak_path = skill_path.with_suffix(".md.bak")
+            if not bak_path.exists():
+                details.append({"name": name, "status": "error", "message": "No backup file found (.md.bak)"})
+                continue
+            try:
+                original_text = bak_path.read_text(encoding="utf-8")
+                # Overwrite SKILL.md with original content
+                _atomic_write(skill_path, original_text)
+                # Delete .bak
+                bak_path.unlink()
+                # Update manifest
+                manifest_path = skill_path.with_suffix(".md.manifest")
+                if manifest_path.exists():
+                    try:
+                        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                        manifest["reverted_at"] = int(time.time())
+                        manifest["original_hash"] = _text_hash(original_text)
+                        manifest["original_tokens"] = _count_tokens(original_text)
+                        _atomic_write(manifest_path, json.dumps(manifest, indent=2))
+                    except Exception:
+                        pass
+                # Update card
+                card_path = skill_path.with_suffix(".md.card")
+                if card_path.exists():
+                    try:
+                        card = json.loads(card_path.read_text(encoding="utf-8"))
+                        card["total_tokens"] = _count_tokens(original_text)
+                        _atomic_write(card_path, json.dumps(card))
+                    except Exception:
+                        pass
+                # Log revert
+                try:
+                    _db.log_action(
+                        agent_name="fleet",
+                        action_type="skill_revert",
+                        action_detail=f"{name} — reverted to original ({_count_tokens(original_text):,} tok)",
+                        tokens_saved=0,
+                        cost_saved=0,
+                        status="success",
+                        metadata=_json.dumps({"action": "revert"}),
+                        triggered_by="dashboard",
+                    )
+                except Exception:
+                    pass
+                details.append({
+                    "name": name, "status": "ok",
+                    "tokens": _count_tokens(original_text),
+                })
+            except Exception as e:
+                details.append({"name": name, "status": "error", "message": str(e)})
+
+        # Regenerate cards.json
+        try:
+            cards_json = generate_cards_json()
+            (sd / "cards.json").write_text(cards_json)
+        except Exception:
+            pass
+
+        return JSONResponse({"status": "ok", "details": details})
     except Exception as e:
         return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
 
@@ -4175,13 +4733,12 @@ GLOSSARY_DATA = {
     <strong>How to interpret:</strong><br>
     • Check the <strong>timestamps</strong> — if the most recent error is hours old and the status dot is green, the agent has recovered on its own.<br>
     • Look at the <strong>frequency</strong> — many errors close together suggest an ongoing issue. A single old error is likely transient.<br>
-    • Cross-reference with the <strong>Health timeline</strong> to see whether the agent is currently alive or dead.<br><br>
-    <span style="color:#64748b;">Pro keeps a full history from install date, with weekly trend charts so you can see if errors are getting better or worse over time.</span>
+    • Cross-reference with the <strong>Health timeline</strong> to see whether the agent is currently alive or dead.
 </div>""",
         "faq": [
             ("Why do I see errors but the agent is running fine?", "Because errors are shown for the last 24 hours. If the agent had a hiccup 12 hours ago and has been clean since, you'll still see that error until it falls out of the 24h window. The status dot reflects the <em>current</em> state."),
-            ("How far back do errors go on free tier?", "24 hours max. Errors older than 24h are pruned automatically. Pro retains everything from install date."),
-            ("Can I see if an error is getting worse?", "Not on free tier — you only see the raw list. Pro shows weekly trend charts so you can tell if the same error is happening more or less often."),
+            ("How far back do errors go?", "24 hours max. Errors older than 24h are pruned automatically."),
+            ("Can I see if an error is getting worse?", "The error list shows raw events. Check the Health timeline to see if the same error is happening more or less often."),
         ],
     },
     "pulse-check": {
@@ -4211,7 +4768,7 @@ GLOSSARY_DATA = {
     • <strong>Port</strong> — Is the configured port open?<br>
     • <strong>Config</strong> — Does the config file still exist?<br>
     • <strong>Circuit</strong> — Is the breaker tripped? Should it reset?<br><br>
-    <strong>Pro:</strong> Auto-heal runs on a schedule. Free tier requires manual trigger.
+    <strong>Auto-heal:</strong> Runs on a schedule via the watch daemon. Manual trigger available from the Fleet view.
 </div>""",
         "faq": [
             ("What does the heal command actually do?", "Run `observeco heal --agent <name>` to see a diagnostic report. Use `--auto-heal` to execute fixes. The command explains what it found and what it fixed."),
@@ -4227,11 +4784,11 @@ GLOSSARY_DATA = {
     🔴 <strong style="color:#ef4444;">Critical</strong> — Breaker tripped, agent dead. Do something.<br>
     🟡 <strong style="color:#f59e0b;">Warning</strong> — Drift >10%, error state happening. Keep an eye on it.<br>
     🔵 <strong style="color:#3b82f6;">Info</strong> — Unusual patterns. Look when you have time.<br><br>
-    <strong>Pro:</strong> Push notifications via Telegram. Free tier shows alerts in-dashboard.
+    Alerts are visible in the dashboard right rail. Configure push notifications via Telegram, Discord, or webhook from the Alerts tab.
 </div>""",
         "faq": [
-            ("How far back do alerts go?", "Free tier: 7 days. Pro: 90 days with trend analysis."),
-            ("Can I get alerts on Telegram?", "Yes — that's a Pro feature. In the free tier, alerts are visible in the dashboard right rail."),
+            ("How far back do alerts go?", "7 days. Alerts older than 7 days are pruned automatically."),
+            ("Can I get alerts on Telegram?", "Yes — configure it from the Alerts tab. Supports Telegram, Discord, and webhook delivery."),
         ],
     },
     "confidence": {
@@ -4345,7 +4902,7 @@ GLOSSARY_DATA = {
     "compression-full": {
         "title": "Full Compression",
         "icon": "🔬",
-        "one_liner": "Compresses guidance + memory + skills for maximum savings — Pro only.",
+        "one_liner": "Compresses guidance + memory + skills for maximum savings.",
         "detail": """<div class="glossary-detail">
     <strong>What it compresses:</strong><br>
     • <strong style="color:#f97316;">Guidance</strong> — Framework instructions, routing rules, do/don't lists<br>
@@ -4353,12 +4910,11 @@ GLOSSARY_DATA = {
     • <strong style="color:#ec4899;">Memory</strong> — Shortens recollection patterns<br><br>
     <strong>What it preserves (unchanged):</strong><br>
     • <strong style="color:#6366f1;">Identity</strong> — Never compressed<br>
-    • <strong style="color:#14b8a6;">Tools</strong> — Never compressed (fragile) — helps those who lack understanding of the technical details<br><br>
+    • <strong style="color:#14b8a6;">Tools</strong> — Never compressed (fragile)<br><br>
     <strong>Why it always saves more than Lite:</strong> Full does <em>everything Lite does</em> (compress guidance blocks) and adds skills + memory compression. The guidance part uses the same aggressive rate as Lite, so Full is always at least as good.
 </div>""",
         "faq": [
             ("What's the risk of Full compression?","Skills and memory compression uses a gentler rate (40%) to avoid breaking functionality. The compression is structural — removing redundant wording, shortening verbose descriptions — not semantic. Your agents should behave identically after compression."),
-            ("Why is Full Pro-only?", "Full compression modifies skill descriptions which can theoretically affect agent behavior. It requires the smart component analysis available in Pro to ensure safe compression."),
         ],
     },
     "fleet-compare": {
@@ -4411,7 +4967,7 @@ GLOSSARY_DATA = {
 </div>""",
         "faq": [
             ("How often should I check drift?", "Once a day is plenty. Drift is measured over 7 days — checking more often will just see the same data."),
-            ("Can drift alerts auto-fire?", "Yes — set up a cron job calling the check endpoint. Pro users get scheduled auto-checks."),
+            ("Can drift alerts auto-fire?", "Yes — set up a cron job calling the check endpoint."),
         ],
     },
     "auto-heal": {
@@ -4458,8 +5014,7 @@ GLOSSARY_DATA = {
     • <strong>Skill usage table</strong> — Every skill ranked by how often it's triggered<br>
     • <strong>Never-triggered skills</strong> — Skills loaded but never called. Likely waste.<br>
     • <strong>Stale guidance rules</strong> — Instructions that never fire. Defensive wording that accumulated over time.<br><br>
-    <strong>Why 200 turns?</strong> Below 200, the sample is too small to be statistically meaningful. A skill used once in 50 turns might be essential but rarely needed. At 200+, patterns stabilise.<br><br>
-    <strong>For Pro users:</strong> Turn-by-turn analysis with auto-prune recommendations.
+    <strong>Why 200 turns?</strong> Below 200, the sample is too small to be statistically meaningful. A skill used once in 50 turns might be essential but rarely needed. At 200+, patterns stabilise.
 </div>""",
         "faq": [
             ("How long does it take to reach 200 turns?","Depends on agent activity. A busy agent might hit 200 turns in 2-3 days. A seldom-used agent might take weeks. The optimiser shows your progress toward 200."),
@@ -4493,10 +5048,10 @@ GLOSSARY_DATA = {
     <strong>What it shows:</strong> Every agent's system prompt broken down by component (identity, skills, memory, tools, guidance). See how many tokens each part uses, how much you could save with compression, and how your prompts are changing over time.<br><br>
     <strong>Sections:</strong><br>
     • <strong>Token Breakdown</strong> — Per-component token usage with visual bars<br>
-    • <strong>Savings</strong> — What Lite (Free) and Full (Pro) compression would save<br>
+    • <strong>Savings</strong> — What Lite and Full compression would save<br>
     • <strong>Drift & Usage</strong> — 7-day trend and 24h per-turn timeline<br>
     • <strong>Compression</strong> — Preview and apply compression per agent<br>
-    • <strong>Token Optimiser</strong> — Pro feature that learns from 200+ turns<br>
+    • <strong>Token Optimiser</strong> — Learns from 200+ turns to find unused skills<br>
     • <strong>Budget Planner</strong> — Fleet-level cost estimation<br>
     • <strong>Memory Garden</strong> — Fleet-wide memory health
 </div>""",
@@ -4526,7 +5081,7 @@ GLOSSARY_DATA = {
     "savings-estimate": {
         "title": "Savings Estimate",
         "icon": "💰",
-        "one_liner": "How much you'd save per turn with Lite (Free) and Full (Pro) compression.",
+        "one_liner": "How much you'd save per turn with Lite and Full compression.",
         "detail": """<div class="glossary-detail">
     <strong>How savings are calculated:</strong><br>
     • Based on your agent's actual token composition<br>
@@ -4564,14 +5119,14 @@ GLOSSARY_DATA = {
         "one_liner": "Preview and apply token compression to reduce your agent's system prompt size.",
         "detail": """<div class="glossary-detail">
     <strong>Two modes:</strong><br>
-    <strong style="color:#22c55e;">Lite (Free)</strong> — Compresses only the guidance section. Safe, predictable, no risk of breaking functionality.<br>
-    <strong style="color:#a5b4fc;">Full (Pro)</strong> — Compresses guidance + memory + skills. Higher savings but requires Pro license.<br><br>
+    <strong style="color:#22c55e;">Lite</strong> — Compresses only the guidance section. Safe, predictable, no risk of breaking functionality.<br>
+    <strong style="color:#a5b4fc;">Full</strong> — Compresses guidance + memory + skills. Higher savings.<br><br>
     <strong>Workflow:</strong><br>
     1. Select an agent from the dropdown<br>
     2. Choose Lite or Full mode<br>
     3. Click <strong>Run Preview</strong> to see the diff (no files modified)<br>
     4. Click <strong>Apply to File</strong> to write the compressed version<br><br>
-    <strong>Auto tab:</strong> Set up a watch daemon that auto-compresses on every SOUL.md edit (Pro feature).
+    <strong>Auto tab:</strong> Set up a watch daemon that auto-compresses on every SOUL.md edit.
 </div>""",
         "faq": [
             ("Is compression safe?", "Lite is very safe — it only touches guidance blocks. Full is safe for most agents but modifies skill descriptions, which could theoretically affect behaviour. Always preview first."),
@@ -4581,23 +5136,21 @@ GLOSSARY_DATA = {
     "tier-summary": {
         "title": "Tier Summary",
         "icon": "🔓",
-        "one_liner": "Free vs Pro feature comparison for the Token Optimiser.",
+        "one_liner": "Lite vs Full compression comparison.",
         "detail": """<div class="glossary-detail">
-    <strong>Free (Lite):</strong><br>
+    <strong>Lite:</strong><br>
     • Compress guidance blocks<br>
     • Per-agent breakdown & drift<br>
     • 24h per-turn timeline<br>
     • 7-day component trends<br><br>
-    <strong>Pro (Full):</strong><br>
+    <strong>Full:</strong><br>
     • Full compression (memory + skills + context)<br>
     • Auto-Watch daemon (auto-compress on edit)<br>
     • Token Optimiser (learns from 200 turns)<br>
-    • Never-pruned history & fleet comparison<br><br>
-    <strong>$9/mo Solo</strong> — 30-day free trial available.
+    • Never-pruned history & fleet comparison
 </div>""",
         "faq": [
-            ("What do I get with Pro that I don't have on Free?", "Full compression (saves more), Auto-Watch (auto-compresses on edit), Token Optimiser (prunes unused skills after 200 turns), and never-pruned history with fleet comparison."),
-            ("Can I try Pro before buying?", "Yes — 30-day free trial. Start it from the Pro modal."),
+            ("What's the difference between Lite and Full?", "Lite compresses only guidance blocks. Full compresses guidance + memory + skills for deeper savings."),
         ],
     },
     "memory-garden": {
@@ -4615,7 +5168,7 @@ GLOSSARY_DATA = {
 </div>""",
         "faq": [
             ("What's a good debt score?", "Below 20 is excellent. 20-50 is acceptable. Above 50 needs attention."),
-            ("How do I clean up memory?", "Run `observeco garden prune` to remove stale entries. Pro users get auto-pruning on a schedule."),
+            ("How do I clean up memory?", "Run `observeco garden prune` to remove stale entries."),
         ],
     },
     "llm-warning": {
@@ -4635,20 +5188,17 @@ GLOSSARY_DATA = {
         ],
     },
     "brain-pro": {
-        "title": "Token Optimiser Pro",
-        "icon": "🔒",
-        "one_liner": "Pro features: Full compression, Auto-Watch, Token Optimiser, and 90-day history.",
+        "title": "Token Optimiser",
+        "icon": "🧪",
+        "one_liner": "Full compression, Auto-Watch, Token Optimiser, and never-pruned history.",
         "detail": """<div class="glossary-detail">
-    <strong>Pro unlocks:</strong><br>
-    • <strong>Full compression</strong> — Compresses guidance + memory + skills + context<br>
+    <strong>Full compression</strong> — Compresses guidance + memory + skills + context<br>
     • <strong>Auto-Watch Daemon</strong> — Every SOUL.md edit triggers auto-compression<br>
     • <strong>Token Optimiser</strong> — Analyses 200+ turns to prune unused skills<br>
-    • <strong>90-Day History & Fleet Comparison</strong> — Never-pruned data<br><br>
-    <strong>$9/mo Solo</strong> with a 30-day free trial.
+    • <strong>Never-pruned history & fleet comparison</strong>
 </div>""",
         "faq": [
             ("What's the difference between compression and Optimiser?", "Compression shortens existing content. The Optimiser learns which skills are never used and removes them entirely — deeper savings."),
-            ("Can I cancel anytime?", "Yes. Cancel from Settings and you keep Pro until the end of your billing period."),
         ],
     },
     "pathway-map": {
@@ -4723,7 +5273,7 @@ async def api_glossary(topic: str):
     """Return glossary content for a topic — §3.20."""
     entry = GLOSSARY_DATA.get(topic)
     if not entry:
-        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, error-tab, pulse-check, heal-button, alerts-panel, confidence, fp, fn, skills-audit, compression-lite, compression-full, fleet-compare, budget-planner, drift-alerts, heal-thresholds, token-optimiser, stop-agent, restart-quality.</div>')
+        return HTMLResponse('<div class="glossary-not-found">Topic not found. Available: status-dot, circuit, token-bar, drift, error-badge, error-tab, pulse-check, heal-button, alerts-panel, confidence, fp, fn, skills-audit, compression-lite, compression-full, fleet-compare, budget-planner, drift-alerts, heal-thresholds, token-optimiser, stop-agent, restart-quality, brain-analysis, token-breakdown, savings-estimate, drift-usage, compression, tier-summary, memory-garden, llm-warning, brain-pro, pathway-map, openclaw-plugins.</div>')
 
     faq_html = ""
     if entry.get("faq"):
@@ -4924,9 +5474,9 @@ async def api_telemetry_status():
     prompt_required (bool). The dashboard uses this to decide
     whether to show the opt-in prompt.
     """
-    from observeco.telemetry_client import _OPT_IN_FILE, is_telemetry_enabled
+    from observeco.telemetry_client import _get_opt_in_file, is_telemetry_enabled
     opted_in = is_telemetry_enabled()
-    opt_file_exists = _OPT_IN_FILE.exists()
+    opt_file_exists = _get_opt_in_file().exists()
     return JSONResponse({
         "opted_in": opted_in,
         "opted_out_file_exists": opt_file_exists,
@@ -4969,8 +5519,8 @@ async def api_telemetry_prompt():
 
     This is loaded by htmx on page load.
     """
-    from observeco.telemetry_client import _OPT_IN_FILE
-    if _OPT_IN_FILE.exists():
+    from observeco.telemetry_client import _get_opt_in_file
+    if _get_opt_in_file().exists():
         return HTMLResponse("")  # Already decided — no prompt
     return HTMLResponse(
         '<div id="telemetryPrompt" class="telemetry-prompt" style="background:rgba(99,102,241,0.08);'
@@ -5119,7 +5669,7 @@ def _ensure_watch_running() -> None:
     or the daemon process has died, spawns a new independent process
     via ``observeco watch start``.
     """
-    hb = _HEARTBEAT_PATH
+    hb = _get_heartbeat_path()
     now = time.time()
     stale_threshold = 90  # 3 missed cycles at 30s
 
@@ -5227,9 +5777,11 @@ def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False,
     _ensure_watch_running()
 
     # Prevent zombie duplicates from restart races
-    _hermes_scripts = str(hermes_home() / "scripts")
-    if _hermes_scripts not in sys.path:
-        sys.path.insert(0, _hermes_scripts)
+    _hermes_home = hermes_home()
+    if _hermes_home:
+        _hermes_scripts = str(_hermes_home / "scripts")
+        if _hermes_scripts not in sys.path:
+            sys.path.insert(0, _hermes_scripts)
     from replace_process import replace_existing
     replace_existing(f"observeco-dashboard-{port}")
 
@@ -5505,7 +6057,6 @@ GLOSSARY_ITEMS = [
     ("What is drift?", "Token composition change over time. If an agent's system prompt grows +15% in a week, that's drift. Tracked per component (identity, skills, memory, tools, guidance)."),
     ("What is context compression?", "ObserveCo's system prompt compression. Decomposes the prompt by component, measures tokens per section, and saves 15-30% per session via intelligent trimming. Run `observeco context trim` to see breakdown."),
     ("What is memory gardening?", "Memory hygiene automation: scans agent memory for duplicates, contradictions, and stale entries. Assigns a health score (A-F). Run `observeco memory garden` to audit any agent."),
-    ("What is Pro?", "Paid tier ($9/mo Solo, $49/mo Team) with push alerts via Telegram/webhook, never-pruned error history, fleet comparison, drift alerts, circuit auto-recovery, and multi-machine relay. 30-day free trial."),
     ("What do the gauge colors mean?", "🟢 Green = healthy. 🟡 Yellow = warning (1-2 missed heartbeats, drift >10%). 🔴 Red = critical (dead agent, tripped circuit). 🟠 Orange = token growth. 🔵 Blue = info/baseline."),
 ]
 
@@ -7049,6 +7600,42 @@ async def api_history():
     return HTMLResponse(html)
 
 
+@app.get("/api/health/l1")
+async def api_health_l1():
+    """L1 health check — OTEL listener, dashboard, database status."""
+    import socket
+    otel_up = False
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(1)
+        otel_up = s.connect_ex(("127.0.0.1", 4318)) == 0
+        s.close()
+    except Exception:
+        pass
+    db_ok = True
+    try:
+        from observeco.db import get_engine
+        with get_engine().connect() as conn:
+            conn.execute(conn.default_schema_name or "SELECT 1")
+    except Exception:
+        db_ok = False
+
+    components = {
+        "otel_listener": "up" if otel_up else "down",
+        "dashboard": "up",
+        "database": "up" if db_ok else "down",
+    }
+    statuses = list(components.values())
+    if all(s == "up" for s in statuses):
+        overall = "healthy"
+    elif any(s == "down" for s in statuses):
+        overall = "critical"
+    else:
+        overall = "degraded"
+
+    return {"overall": overall, "level1": components}
+
+
 @app.get("/api/config-health", response_class=HTMLResponse)
 async def api_config_health():
     """Config hygiene widget — always visible (free sees diagnostics, Pro gets fixes)."""
@@ -7171,7 +7758,7 @@ async def api_stop_agent(agent_name: str, request: Request):
     try:
         # Find agent process
         result = subprocess.run(
-            ["pgrep", "-f", agent_name],
+            ["pgrep", "-f", re.escape(agent_name)],
             capture_output=True, text=True, timeout=10,
         )
         if result.returncode != 0 or not result.stdout.strip():

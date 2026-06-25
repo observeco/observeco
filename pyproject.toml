@@ -1,6 +1,6 @@
 [project]
 name = "observeco"
-version = "0.2.0"
+version = "0.3.0"
 description = "Observability for local AI agents"
 authors = [
     {name = "Sean Foo"},
@@ -13,6 +13,7 @@ dependencies = [
     "jinja2>=3.0",
     "packaging>=23.0",
     "platformdirs>=4.0",
+    "colorama>=0.4.6",
     "psutil>=5.9",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
@@ -23,8 +24,12 @@ dependencies = [
     "sqlalchemy>=2.0",
     "typer>=0.10",
     "uvicorn[standard]>=0.20",
-    "watchfiles>=0.20",
+    "tree-sitter>=0.25.2",
+    "tree-sitter-python>=0.25.0",
 ]
+
+[project.optional-dependencies]
+desktop = ["pywebview"]
 
 [project.scripts]
 observeco = "observeco.cli:app"
@@ -55,3 +60,12 @@ markers = [
     "integration: marks tests as integration (deselect with '-m \"not integration\"')",
     "license: tests for license/trial/grace functionality",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.0",
+    "ruff>=0.15.19",
+]
+
+[tool.setuptools.package-data]
+observeco = ["dashboard/templates/*.html", "dashboard/static/*"]

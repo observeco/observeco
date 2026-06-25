@@ -14,12 +14,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
       - name: Build and install
         run: |
-          pip install build
-          python -m build
-          pip install dist/*.whl
+          uv build
+          uv pip install dist/*.whl --system
           observeco --version
       - name: First-Run Audit
-        run: |
-          PYTHONPATH=src python3 specs/scripts/first-run-audit.py
+        run: uv run python3 specs/scripts/first-run-audit.py

@@ -26,6 +26,12 @@ build/
 .env.*
 *.env.local
 
+# Data / coverage
+observeco.db
+pulse.db
+.coverage
+htmlcov/
+
 # Docs build
 website/node_modules/
 website/.docusaurus/

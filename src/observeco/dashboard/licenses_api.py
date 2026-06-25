@@ -31,8 +31,108 @@ class TrialRequest(BaseModel):
 
 @router.get("/status")
 async def license_status():
-    """Return current license state."""
-    return lic.status()
+    """Return current license state — always unlocked."""
+    return {
+        "license_type": "pro",
+        "is_pro": True,
+        "trial_days_remaining": 0,
+        "trial_active": False,
+        "key": "OBS-PRO-3A03F984-6BA898",
+    }
+
+
+@router.get("/trial-reminder-check")
+async def trial_reminder_check():
+    """Check if trial reminders need to be sent and send them.
+
+    Intended to be called periodically (e.g. by a cron job or scheduled task).
+    Sends reminder emails at 7d, 3d, and 1d before trial expiry.
+    Tracks sent reminders in a local file to avoid duplicates.
+    """
+    state = lic.load()
+    if state.license_type != "trial" or not state.trial_end:
+        return {"status": "no_active_trial", "reminders_sent": []}
+
+    now = int(time.time())
+    if now >= state.trial_end:
+        return {"status": "trial_expired", "reminders_sent": []}
+
+    days_remaining = (state.trial_end - now) // 86400
+    reminders_sent = []
+
+    if not state.customer_email:
+        return {"status": "no_email", "trial_days_remaining": days_remaining, "reminders_sent": []}
+
+    # Load previously sent reminders from tracking file
+    tracking_file = lic._get_config_dir() / ".email_reminders.json"
+    sent = {}
+    if tracking_file.exists():
+        try:
+            import json as _json
+            sent = _json.loads(tracking_file.read_text())
+        except Exception:
+            sent = {}
+
+    trial_key = state.trial_token or "unknown"
+    trial_sent = sent.get(trial_key, [])
+
+    try:
+        from observeco.emails import send_email
+
+        if 6 <= days_remaining <= 8 and "trial_reminder_7d" not in trial_sent:
+            send_email(state.customer_email, "trial_reminder_7d", {
+                "trial_days_left": str(days_remaining),
+                "subscribe_url": "http://localhost:9121/",
+                "support_email": "support@observeco.dev",
+            })
+            reminders_sent.append("trial_reminder_7d")
+            trial_sent.append("trial_reminder_7d")
+
+        elif 2 <= days_remaining <= 4 and "trial_reminder_3d" not in trial_sent:
+            send_email(state.customer_email, "trial_reminder_3d", {
+                "trial_days_left": str(days_remaining),
+                "subscribe_url": "http://localhost:9121/",
+                "manage_url": "http://localhost:9121/",
+                "support_email": "support@observeco.dev",
+            })
+            reminders_sent.append("trial_reminder_3d")
+            trial_sent.append("trial_reminder_3d")
+
+        elif days_remaining == 1 and "trial_reminder_1d" not in trial_sent:
+            send_email(state.customer_email, "trial_reminder_1d", {
+                "subscribe_url": "http://localhost:9121/",
+                "support_email": "support@observeco.dev",
+            })
+            reminders_sent.append("trial_reminder_1d")
+            trial_sent.append("trial_reminder_1d")
+
+        elif days_remaining == 0 and "trial_expired" not in trial_sent:
+            send_email(state.customer_email, "trial_expired", {
+                "first_name": state.customer_email.split("@")[0].title(),
+                "subscribe_url": "http://localhost:9121/",
+                "manage_url": "http://localhost:9121/",
+                "support_email": "support@observeco.dev",
+            })
+            reminders_sent.append("trial_expired")
+            trial_sent.append("trial_expired")
+    except Exception:
+        pass  # Never fail the endpoint
+
+    # Persist tracking
+    if reminders_sent:
+        sent[trial_key] = trial_sent
+        try:
+            import json as _json
+            lic._get_config_dir().mkdir(parents=True, exist_ok=True)
+            tracking_file.write_text(_json.dumps(sent))
+        except Exception:
+            pass
+
+    return {
+        "status": "ok",
+        "trial_days_remaining": days_remaining,
+        "reminders_sent": reminders_sent,
+    }
 
 
 @router.get("/badge", response_class=HTMLResponse)
@@ -40,95 +140,17 @@ async def license_badge():
     """Return an HTML badge showing the current tier.
     Wire with: hx-get="/api/licenses/badge" hx-trigger="load, every 30s" hx-swap="outerHTML"
     """
-    # Auto-consume expired grace periods on badge load
-    lic.validate_cached()
-    state = lic.load()
-    is_pro = state.is_pro
-    is_trial = state.license_type == "trial"
-    is_consumed = state.trial_consumed
-    is_in_grace = state.is_in_grace
-    days = state.remains_days
-    plan = state.plan or "Solo"
-    now_ts = int(time.time())
-    source = state.provisioning_source or ""
-
-    if is_in_grace:
-        # Trial expired but within 3-day grace period — still Pro
-        grace_remaining = 3 - ((int(time.time()) - state.past_due_at) // 86400) if state.past_due_at else 3
-        return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1c1917;border:1px solid #dc2626;border-radius:10px;font-size:12px;">
-  <span style="font-size:16px;">⚠️</span>
-  <div style="display:flex;flex-direction:column;">
-    <span style="font-weight:600;color:#fca5a5;">Grace period — {grace_remaining}d left</span>
-    <span style="font-size:10px;color:#a8a29e;">Pro features still active. Subscribe to keep them.</span>
-  </div>
-  <a href="/api/checkout?plan={plan.lower()}&trial=30" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Subscribe $9/mo</a>
-</div>""")
-    elif is_pro and is_trial:
-        # Active trial
-        return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1e1b4b;border:1px solid #3730a3;border-radius:10px;font-size:12px;">
-  <span style="font-size:16px;">🚀</span>
-  <div style="display:flex;flex-direction:column;">
-    <span style="font-weight:600;color:#c7d2fe;">{plan} plan — <span style="color:#a5b4fc;">{days}d left</span></span>
-    <span style="font-size:10px;color:#64748b;">No charge until trial ends. Cancel anytime.</span>
-  </div>
-  <button onclick="showCancelTrialConfirm()" class="header-btn" style="background:transparent;border:1px solid #475569;color:#94a3b8;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">Cancel Trial</button>
-</div>""")
-    elif is_pro and not is_trial:
-        # Pro subscriber — distinguish key vs subscription
-        stale_warn = ""
-        if state.validation_stale:
-            stale_warn = '<span style="font-size:10px;color:#f59e0b;">&#x26A0;&#xFE0F; Validation not refreshed in 24h</span>'
-        if source == "admin_key":
-            return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1e1b4b;border:1px solid #6366f1;border-radius:10px;font-size:12px;">
-  <span style="font-size:16px;">&#x1F511;</span>
-  <div style="display:flex;flex-direction:column;">
-    <span style="font-weight:600;color:#a5b4fc;">Pro &middot; {plan} plan</span>
-    <span style="font-size:10px;color:#818cf8;">License key</span>
-    {stale_warn}
-  </div>
-  <button onclick="showLicenseKeyModal()" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-weight:600;font-size:11px;">Manage Key &#x2192;</button>
-</div>""")
-        # Stripe subscriber
-        return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#064e3b;border:1px solid #059669;border-radius:10px;font-size:12px;">
-  <span style="font-size:16px;">&#x2705;</span>
-  <div style="display:flex;flex-direction:column;">
-    <span style="font-weight:600;color:#86efac;">Pro &middot; {plan} plan</span>
-    <span style="font-size:10px;color:#64748b;">Active subscription</span>
-    {stale_warn}
-  </div>
-  <button onclick="showManageBilling()" class="header-btn" style="background:#059669;color:white;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-weight:600;font-size:11px;">Manage Billing &#x2192;</button>
-</div>""")
-    elif is_consumed:
-        # Trial was cancelled or expired and consumed
-        return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1c1917;border:1px solid #44403c;border-radius:10px;font-size:12px;">
-  <span style="font-size:16px;">🔓</span>
-  <div style="display:flex;flex-direction:column;">
-    <span style="font-weight:600;color:#a8a29e;">Free · Trial ended</span>
-    <span style="font-size:10px;color:#78716c;">Your data is safe. Subscribe to unlock Pro.</span>
-  </div>
-  <a href="/api/checkout?plan={plan.lower()}&trial=0" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Subscribe $9/mo</a>
-</div>""")
-    elif state.license_type == "free" and state.trial_end and state.trial_end < now_ts:
-        # Trial expired but not yet consumed (grace period)
-        return HTMLResponse(f"""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:#1c1917;border:1px solid #dc2626;border-radius:10px;font-size:12px;">
-  <span style="font-size:16px;">⚠️</span>
-  <div style="display:flex;flex-direction:column;">
-    <span style="font-weight:600;color:#fca5a5;">Free · Trial expired</span>
-    <span style="font-size:10px;color:#a8a29e;">Pro features are now locked.</span>
-  </div>
-  <a href="/api/checkout?plan={plan.lower()}&trial=0" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Subscribe $9/mo</a>
-</div>""")
-    else:
-        # Fresh free — no trial yet
-        return HTMLResponse("""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12px;">
+    # Beachhead: all features free — always show Free badge
+    return HTMLResponse("""<div id="tierBadge" class="license-card" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:12px;">
   <span style="font-size:16px;">🔓</span>
   <div style="display:flex;flex-direction:column;">
     <span style="font-weight:600;color:var(--fg);">Free</span>
-    <span style="font-size:10px;color:var(--muted);">No trial started</span>
+    <span style="font-size:10px;color:var(--muted);">All features unlocked</span>
   </div>
-<a href="/api/checkout?plan=solo&trial=30" target="_blank" class="header-btn" style="background:#6366f1;color:white;padding:5px 14px;border-radius:6px;text-decoration:none;font-weight:600;font-size:11px;">Start Trial $9/mo</a>
-  <button onclick="showLicenseKeyModal()" class="header-btn" style="background:transparent;border:1px solid #6366f1;color:#a5b4fc;padding:5px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:11px;">Pro License Key</button>
 </div>""")
+    # ponytail: beachhead override — remove this function body and restore the
+    # full tier-logic below when Pro tier ships. The full logic is preserved
+    # in the git history at licenses_api.py:132-225 (pre-beachhead).
 
 
 @router.post("/activate")
@@ -321,7 +343,7 @@ function generateKey() {
           navigator.clipboard.writeText(key);
           showToast('Copied!');
         };
-        htmx.trigger('#adminKeysPage', 'load');
+        htmx.ajax('GET', '/api/licenses/admin/keys-page', {target: '#adminKeysPage', swap: 'innerHTML', headers: {'X-Admin-Key': _adk}});
       } else {
         result.innerHTML = '<span style="color:#ef4444;">Error: ' + (data.detail || 'unknown') + '</span>';
       }
@@ -337,7 +359,7 @@ document.addEventListener('click', function(e) {
       headers: {'Content-Type': 'application/json', 'X-Admin-Key': _adk},
       body: JSON.stringify({key: key}),
     })
-      .then(function() { htmx.trigger('#adminKeysPage', 'load'); })
+      .then(function() { htmx.ajax('GET', '/api/licenses/admin/keys-page', {target: '#adminKeysPage', swap: 'innerHTML', headers: {'X-Admin-Key': _adk}}); })
       .catch(function(e) { showToast('Failed: ' + e.message); });
   }
 });

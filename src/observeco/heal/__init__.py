@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import time
 from datetime import datetime
@@ -12,7 +13,8 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from observeco.config import hermes_home, load_config
+from observeco.dirs import hermes_home
+from observeco.config import load_config
 from observeco.db import Database
 
 console = Console()
@@ -196,6 +198,29 @@ CONFIDENCE: <high|medium|low>
 If you cannot diagnose, respond with: CANNOT_DIAGNOSE
 """
 
+HEAL_FEEDBACK_PROMPT = """You are a post-heal evaluator. After a healing action was taken on an agent, evaluate whether the agent recovered successfully.
+
+Agent name: {agent_name}
+Heal action taken: {action_taken}
+Post-heal pulse statuses: {statuses}
+Post-heal latencies (ms): {latencies}
+
+Evaluate whether the agent recovered. Respond in ONE line:
+- If recovered: "Agent {{name}}: recovered. Diagnosis confirmed: {{root cause}}."
+- If still failing: "Agent {{name}}: still degraded ({{brief reason}})."
+- If inconclusive: "Agent {{name}}: insufficient data to evaluate."
+
+Keep it concise — one sentence only.
+"""
+
+ERROR_TRANSLATION_PROMPT = """You are a technical error translator. Translate the following error message into plain English that a non-technical user can understand.
+
+Error message:
+{error_msg}
+
+Respond in ONE sentence, plain English, no jargon. If the error is self-explanatory, say so. Be concise — 20 words max.
+"""
+
 
 def _llm_escalation(agent_name: str, db: Database, pulses: list, errors: list, status: str | None) -> Optional[dict]:
     """Call LLM to diagnose novel failures when static patterns fail."""
@@ -244,26 +269,107 @@ def _llm_escalation(agent_name: str, db: Database, pulses: list, errors: list, s
     return result
 
 
+def _post_heal_evaluation(agent_name: str, action_taken: str, db: Database) -> None:
+    """After a successful heal, wait for recovery and have LLM evaluate the result."""
+    try:
+        time.sleep(5)
+        pulses = db.get_recent_pulses(agent_name, limit=5)
+        statuses = [p.get("status", "?") for p in pulses]
+        latencies = [f"{p.get('latency_ms', 0):.0f}" for p in pulses]
+
+        from observeco.llm_service import ask
+        evaluation = ask(
+            HEAL_FEEDBACK_PROMPT.format(
+                agent_name=agent_name,
+                action_taken=action_taken,
+                statuses=", ".join(statuses) if statuses else "none",
+                latencies=", ".join(latencies) if latencies else "none",
+            ),
+            "",
+            consumer="heal_feedback",
+            max_cost_cents=0.005,
+            cache_ttl_secs=3600,
+            tier=2,
+        )
+
+        if evaluation:
+            console.print(f"  [dim]Heal feedback: {evaluation}[/dim]")
+            db.log_heal_event(
+                agent_name, "heal_feedback", "evaluated",
+                duration_ms=0, details=evaluation,
+            )
+    except Exception:
+        pass  # fire-and-forget; LLM feedback is non-critical
+
+
+def _translate_error(error_msg: str) -> str | None:
+    """Translate an obscure error message to plain English via LLM.
+
+    Returns translated text, or None if LLM is unavailable (caller
+    should fall back to the raw error message).
+    """
+    from observeco.llm_service import ask
+
+    try:
+        response = ask(
+            ERROR_TRANSLATION_PROMPT.format(error_msg=error_msg[:300]),
+            "",
+            consumer="error_translation",
+            max_cost_cents=0.005,
+            cache_ttl_secs=3600,
+            tier=2,
+        )
+        return response
+    except Exception:
+        return None
+
+
+def translate_error(error_msg: str) -> str:
+    """Public API: translate a technical error to plain English.
+
+    Returns the LLM-translated text if available, otherwise the raw
+    error message unchanged. Designed to be called from any module
+    that displays error messages to users.
+    """
+    translated = _translate_error(error_msg)
+    return translated if translated else error_msg
+
+
 def _execute_action(action: str, args: dict) -> tuple[bool, str]:
     agent_name = args["agent_name"]
     if action == "restart_with_cap":
         try:
             env = os.environ.copy()
             env.update(args.get("env", {}))
-            result = subprocess.run(["pgrep", "-f", agent_name], capture_output=True, text=True, timeout=5)
+            # ponytail: pgrep/kill are POSIX-only. Windows fallback uses tasklist/taskkill.
+            # Upgrade path: add cross-platform process-utils module if more signals needed.
+            try:
+                result = subprocess.run(["pgrep", "-f", re.escape(agent_name)], capture_output=True, text=True, timeout=5)
+            except FileNotFoundError:
+                result = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {agent_name}"], capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 for pid in result.stdout.strip().split("\n"):
-                    subprocess.run(["kill", pid], timeout=3)
+                    try:
+                        subprocess.run(["kill", pid], timeout=3)
+                    except FileNotFoundError:
+                        subprocess.run(["taskkill", "/PID", pid, "/F"], timeout=3)
                 time.sleep(1)
             return True, f"Restarted {agent_name} with memory cap"
         except Exception as e:
             return False, str(e)
     elif action == "restart":
         try:
-            result = subprocess.run(["pgrep", "-f", agent_name], capture_output=True, text=True, timeout=5)
+            # ponytail: same pgrep/kill fallback as restart_with_cap
+            try:
+                result = subprocess.run(["pgrep", "-f", re.escape(agent_name)], capture_output=True, text=True, timeout=5)
+            except FileNotFoundError:
+                result = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {agent_name}"], capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 for pid in result.stdout.strip().split("\n"):
-                    subprocess.run(["kill", pid], timeout=3)
+                    try:
+                        subprocess.run(["kill", pid], timeout=3)
+                    except FileNotFoundError:
+                        subprocess.run(["taskkill", "/PID", pid, "/F"], timeout=3)
                 time.sleep(1)
             return True, f"Restarted {agent_name}"
         except Exception as e:
@@ -282,9 +388,15 @@ def _execute_action(action: str, args: dict) -> tuple[bool, str]:
     elif action == "cooldown":
         try:
             seconds = args.get("seconds", 300)
-            conn = Database()._get_conn()
-            conn.execute("UPDATE circuit_breakers SET failure_count=0, tripped=1, cooldown_until=? WHERE agent_name=?",
-                         (int(time.time()) + seconds, agent_name))
+            db = Database()
+            conn = db._get_conn()
+            now = int(time.time())
+            db.reset_breaker(agent_name)
+            # Record cooldown as a dedicated event so state reconstruction can handle it
+            conn.execute(
+                "INSERT INTO circuit_events (agent_name, event_type, payload, created_at) VALUES (?, 'cooldown', ?, ?)",
+                (agent_name, str(now + seconds), now),
+            )
             conn.commit()
             return True, f"Cooldown set for {seconds}s on {agent_name}"
         except Exception as e:
@@ -319,7 +431,10 @@ def _execute_action(action: str, args: dict) -> tuple[bool, str]:
 def _check_config_integrity() -> list[dict]:
     """Check infrastructure config files for corruption that would crash the gateway."""
     findings = []
-    config_path = Path.home() / ".hermes" / "config.yaml"
+    hh = hermes_home()
+    if hh is None:
+        return findings
+    config_path = hh / "config.yaml"
     if config_path.exists():
         try:
             import yaml
@@ -327,7 +442,7 @@ def _check_config_integrity() -> list[dict]:
         except Exception as e:
             findings.append({"component": "config.yaml", "status": "broken",
                              "message": f"YAML parse error: {e}"})
-    env_path = Path.home() / ".hermes" / ".env"
+    env_path = hh / ".env"
     if env_path.exists():
         for i, line in enumerate(env_path.read_text().split("\n"), 1):
             line = line.strip()
@@ -405,11 +520,28 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
         # --- END SNAPSHOT ---
 
         if auto_heal:
-            success, msg = _execute_action(diagnosis['action'], diagnosis['action_args'])
+            # ponytail: safe_actions allowlist blocks pip_install/code_fix from auto-execution.
+            # Upgrade path: add config-driven allowlist (per-agent heal_config table has max_restarts_per_hour already).
+            safe_actions = {"restart", "restart_with_cap", "cooldown", "trim", "garden_cleanup"}
+            if diagnosis['action'] in safe_actions:
+                success, msg = _execute_action(diagnosis['action'], diagnosis['action_args'])
+            elif diagnosis['action'] in ("acknowledge", "pip_install", "code_fix"):
+                table.add_row(name, f"[yellow]{diagnosis['diagnosis']}[/yellow]", diagnosis['action'],
+                             f"[yellow]Skipped (requires user confirmation)[/yellow]")
+                results.append({"agent": name, "status": "skipped_safe", "action": diagnosis['action']})
+                continue
+            else:
+                # Unknown action — skip auto execution
+                table.add_row(name, f"[yellow]{diagnosis['diagnosis']}[/yellow]", diagnosis['action'],
+                             "[yellow]Skipped (unknown action)[/yellow]")
+                results.append({"agent": name, "status": "skipped_safe", "action": diagnosis['action']})
+                continue
             if success:
                 table.add_row(name, f"[yellow]{diagnosis['diagnosis']}[/yellow]", diagnosis['action'],
                              f"[green]OK {msg}[/green]")
                 results.append({"agent": name, "status": "fixed", "action": diagnosis['action']})
+                # Post-heal feedback: wait for recovery, then LLM evaluates
+                _post_heal_evaluation(name, diagnosis['action'], db)
             else:
                 record["failures"] += 1
                 if record["failures"] >= MAX_HEAL_RETRIES:
@@ -442,6 +574,31 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
     healthy = sum(1 for r in results if r.get('status') == 'healthy')
     failed = sum(1 for r in results if r.get('status') == 'failed')
     console.print(f"[dim]Heal complete. {fixed} fixed, {healthy} healthy, {failed} failed.[/dim]")
+
+    # §21: Log heal actions to unified action_log
+    import json as _json
+    try:
+        _db = Database()
+        for _r in results:
+            _status = _r.get("status", "unknown")
+            _agent = _r.get("agent", "unknown")
+            _action = _r.get("action", "heal")
+            if _status == "fixed":
+                _db.log_action(
+                    agent_name=_agent, action_type="heal",
+                    action_detail=f"L1 restart: {_agent} restarted ({_action})",
+                    status="success", triggered_by="daemon",
+                    metadata=_json.dumps({"action": _action}),
+                )
+            elif _status == "failed":
+                _db.log_action(
+                    agent_name=_agent, action_type="heal",
+                    action_detail=f"Heal failed: {_r.get('error', 'unknown')}",
+                    status="failure", triggered_by="daemon",
+                    metadata=_json.dumps({"error": _r.get("error", "")}),
+                )
+    except Exception:
+        pass  # fire-and-forget
     if failed > 0:
         failed_details = [r for r in results if r.get('status') == 'failed']
         for fd in failed_details:

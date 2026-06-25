@@ -11,7 +11,9 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from observeco.chisel.config_scanner import CONFIG_PATH, scan_config
+from observeco.chisel.config_scanner import scan_config
+
+LAST_SCAN_PATH = Path(__file__).resolve().parent.parent / '.config_last_scan'
 
 # ── Dashboard widget generator ──────────────────────────────────────────────
 
@@ -30,10 +32,18 @@ def generate_widget_html(hermes_home: Optional[str] = None) -> str:
     if hermes_home:
         report = scan_config(Path(hermes_home) / "config.yaml")
     else:
-        report = scan_config(CONFIG_PATH)
+        report = scan_config()
 
     if not report.findings:
-        return ""
+        return (
+            '<div id="config-health-widget" style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;margin:8px 0;">'
+            '<div style="display:flex;align-items:center;gap:8px;">\n'
+            '    <span style="font-size:14px;">✅</span>\n'
+            '    <span style="font-size:14px;font-weight:600;color:#22c55e;">Config Health: All Clear</span>\n'
+            '</div>\n'
+            '<div style="font-size:11px;color:#64748b;margin-top:6px;">No configuration issues detected. Config is optimized.</div>\n'
+            '</div>'
+        )
 
     # Sort findings: critical (25) -> warning (10) -> info (2), then by waste descending
     severity_order = {"critical": 0, "warning": 1, "info": 2}
@@ -93,7 +103,15 @@ def generate_widget_html(hermes_home: Optional[str] = None) -> str:
             '</div>'
         ) % waste_k
     if is_pro:
-        last_scan = time.strftime("%H:%M", time.localtime())
+        if LAST_SCAN_PATH.exists():
+            last_scan = LAST_SCAN_PATH.read_text().strip()[-8:]  # HH:MM:SS -> HH:MM
+            try:
+                from datetime import datetime
+                last_scan = datetime.fromisoformat(last_scan).strftime('%H:%M')
+            except (ValueError, OSError):
+                last_scan = time.strftime('%H:%M', time.localtime())
+        else:
+            last_scan = 'Never'
         upsell = (
             '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#0f172a;border-radius:8px;margin-top:8px;font-size:11px;color:#94a3b8;">\n'
             '    <span>\U0001f504 Scans daily</span>\n'
@@ -102,7 +120,45 @@ def generate_widget_html(hermes_home: Optional[str] = None) -> str:
             '</div>'
         ) % last_scan
 
+    # Fix All button (Pro only)
+    fix_all_btn = ""
+    if is_pro and any(f.auto_fixable for f in sorted_findings):
+        fix_all_btn = (
+            '<div style="margin-top:10px;">\n'
+            '    <button id="fix-all-config-btn" onclick="fixConfigHygiene()" '
+            'style="background:#6366f1;border:none;color:white;border-radius:6px;padding:6px 16px;font-size:12px;cursor:pointer;width:100%;">\n'
+            '        \u26a1 Fix All Auto-Fixable Issues\n'
+            '    </button>\n'
+            '    <div id="fix-config-status" style="font-size:11px;color:#64748b;margin-top:4px;display:none;"></div>\n'
+            '</div>'
+        )
+
     html = (
+        '<script>\n'
+        'function fixConfigHygiene(checkType) {\n'
+        '    const statusEl = document.getElementById("fix-config-status");\n'
+        '    if (statusEl) { statusEl.style.display = "block"; statusEl.textContent = "Fixing..."; statusEl.style.color = "#94a3b8"; }\n'
+        '    fetch("/api/config-hygiene/fix", { method: "POST", headers: {"Content-Type": "application/json", "X-ObserveCo-Token": window.__OBSERVECO_TOKEN || ""}, body: JSON.stringify({check: checkType || "all"}) })\n'
+        '        .then(r => r.json())\n'
+        '        .then(data => {\n'
+        '            if (data.error) {\n'
+        '                if (statusEl) { statusEl.textContent = data.error; statusEl.style.color = "#ef4444"; }\n'
+        '                return;\n'
+        '            }\n'
+        '            const fixed = data.fixed || [];\n'
+        '            const failed = data.failed || [];\n'
+        '            let msg = fixed.length > 0 ? "Fixed: " + fixed.join(", ") : "Nothing to fix";\n'
+        '            if (failed.length > 0) msg += " | Failed: " + failed.join(", ");\n'
+        '            if (statusEl) { statusEl.textContent = msg + " — refreshing..."; statusEl.style.color = "#22c55e"; }\n'
+        '            // Reload the widget after a short delay\n'
+        '            setTimeout(() => {\n'
+        '                const target = document.getElementById("configHealthCard");\n'
+        '                if (target) { htmx.ajax("GET", "/api/config-health", {target: target, swap: "innerHTML"}); }\n'
+        '            }, 1500);\n'
+        '        })\n'
+        '        .catch(err => { if (statusEl) { statusEl.textContent = "Error: " + err; statusEl.style.color = "#ef4444"; } });\n'
+        '}\n'
+        '</script>\n'
         '<div id="config-health-widget" style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;margin:8px 0;">\n'
         '    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">\n'
         '        <div style="display:flex;align-items:center;gap:8px;">\n'
@@ -120,7 +176,8 @@ def generate_widget_html(hermes_home: Optional[str] = None) -> str:
         '    </div>\n'
         '    %s\n'
         '    %s\n'
+        '    %s\n'
         '</div>'
-    ) % (score_color, report.config_health_score, score_color, report.config_health_score, findings_html, upsell)
+    ) % (score_color, report.config_health_score, score_color, report.config_health_score, findings_html, fix_all_btn, upsell)
 
     return html

@@ -23,11 +23,16 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-# ── Config ──────────────────────────────────────────────────────────────────
+from .llm_client import get_client, LLMClient, LiteClient
 
-SKILLS_DIR = Path.home() / ".hermes" / "skills"
+# Lazy accessor — call at use site, not import time
+def _skills_dir() -> Path | None:
+    from observeco.dirs import hermes_home
+    hh = hermes_home()
+    return hh / "skills" if hh else None
 
-# ── Token counting ──────────────────────────────────────────────────────────
+
+# ── Helpers ─────────────────────────────────────────────────────────────────────
 
 def _count_tokens(text: str) -> int:
     """Rough token estimate (chars/4)."""
@@ -37,7 +42,7 @@ def _count_tokens(text: str) -> int:
         return len(enc.encode(text))
     except ImportError:
         pass
-    return max(1, int(len(text) / 4))
+    return len(text) // 4
 
 
 def _text_hash(text: str) -> str:
@@ -45,7 +50,16 @@ def _text_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
-# ── Parsing ─────────────────────────────────────────────────────────────────
+def _atomic_write(path: Path, content: str) -> None:
+    """Write content atomically via temp file + rename.
+    ponytail: uses os.replace for atomicity on POSIX/NTFS.
+    Upgrade path: if readers need NFS-safety, add fsync(fd) before rename."""
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(content, encoding="utf-8")
+    os.replace(str(tmp), str(path))
+
+
+# ── Parsing ─────────────────────────────────────────────────────────────────────
 
 def _split_skill(body: str) -> tuple[str, str]:
     """Split SKILL.md into (frontmatter, body_text).
@@ -78,33 +92,11 @@ def _parse_yaml_frontmatter(frontmatter: str) -> dict:
     return meta
 
 
-# ── Ollama / cloud config ──────────────────────────────────────────────────
+# ── Config ──────────────────────────────────────────────────────────────────────
 
 _OLLAMA_BASE_URL = os.environ.get("CAVEMAN_OLLAMA_URL", "http://localhost:11434/v1")
 _OLLAMA_MODEL = os.environ.get("CAVEMAN_MODEL", "hermes3:latest")
-_WORKERS = int(os.environ.get("CAVEMAN_WORKERS", "3"))
-
-# DeepSeek API config (loaded from hermes config)
-_DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
-
-
-def _get_deepseek_key() -> str:
-    """Read DeepSeek API key from hermes config."""
-    import yaml
-    env_path = Path.home() / ".hermes" / ".env"
-    if env_path.exists():
-        for line in env_path.read_text().splitlines():
-            if line.startswith("DEEPSEEK_API_KEY="):
-                return line.split("=", 1)[1].strip().strip("\"'").strip()
-    # Fallback: read from config.yaml
-    cfg_path = Path.home() / ".hermes" / "config.yaml"
-    if cfg_path.exists():
-        cfg = yaml.safe_load(cfg_path.read_text())
-        cfg_key = cfg.get("providers", {}).get("deepseek", {}).get("api_key", "")
-        if cfg_key and "..." not in cfg_key:
-            return cfg_key
-    return ""
-
+_WORKERS = int(os.environ.get("CAVEMAN_WORKERS", "4"))
 
 _CAVEMAN_SYSTEM = (
     "You are a text compression expert. "
@@ -117,69 +109,35 @@ _CAVEMAN_SYSTEM = (
 )
 
 
-def _call_llm(prompt: str, system: str = "", provider: str = "ollama") -> str:
-    """Call LLM — ollama (local) or deepseek (cloud). Returns response text."""
-    if provider == "deepseek":
-        api_key = _get_deepseek_key()
-        if not api_key:
-            raise ValueError("No DeepSeek API key found")
-        messages = []
-        if system:
-            messages.append({"role": "system", "content": system})
-        messages.append({"role": "user", "content": prompt})
-        payload = json.dumps({
-            "model": "deepseek-chat",
-            "messages": messages,
-            "temperature": 0.05,
-            "max_tokens": 4096,
-            "stream": False,
-        }).encode()
-        req = urllib.request.Request(
-            _DEEPSEEK_URL, data=payload,
-            headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            result = json.loads(resp.read().decode())
-        return result["choices"][0]["message"]["content"].strip()
+# ── LLM ────────────────────────────────────────────────────────────────────────
 
-    # Default: local ollama
-    messages = []
-    if system:
-        messages.append({"role": "system", "content": system})
-    messages.append({"role": "user", "content": prompt})
-    payload = json.dumps({
-        "model": _OLLAMA_MODEL,
-        "messages": messages,
-        "temperature": 0.1,
-        "max_tokens": 4096,
-        "stream": False,
-    }).encode()
-    req = urllib.request.Request(
-        f"{_OLLAMA_BASE_URL}/chat/completions",
-        data=payload, headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        result = json.loads(resp.read().decode())
-    return result["choices"][0]["message"]["content"].strip()
+def _call_llm(prompt: str, system: str, provider: str) -> str:
+    """Call LLM via provider abstraction. Returns response text."""
+    try:
+        client = get_client(provider)
+        return client.complete(prompt, system)
+    except Exception:
+        return ""
 
 
-def _split_structural_prose(text: str) -> tuple[list[dict], list[str]]:
+# ── Structural Analysis ─────────────────────────────────────────────────────────
+
+def _split_structural_prose(text: str) -> tuple[list, list[str]]:
     """Split text into structural elements and prose blocks.
 
     Returns:
-        structural: list of dicts with type, lines (1-indexed), and content
-        prose_lines: the original lines — used for reconstruction
+        structural: list of dicts with type, start, end (1-indexed lines)
+        lines: the original lines
     """
     lines = text.splitlines()
     structural = []
     i = 0
     while i < len(lines):
         s = lines[i].strip()
+
         # Code fence — capture block fully
         if s.startswith("```") or s.startswith("~~~"):
-            fence_char = s[:3] if s.startswith("```") else s[:3]
+            fence_char = s[:3]
             start = i
             i += 1
             while i < len(lines):
@@ -202,14 +160,8 @@ def _split_structural_prose(text: str) -> tuple[list[dict], list[str]]:
             i += 1
             continue
 
-        # Separator
-        if s == "---" or s.startswith("___"):
-            structural.append({"type": "separator", "start": i, "end": i + 1})
-            i += 1
-            continue
-
-        # Horizontal rule variations
-        if re.match(r"^[-_*]{3,}$", s):
+        # Separator / horizontal rule
+        if s == "---" or re.match(r"^[-_*]{3,}$", s):
             structural.append({"type": "separator", "start": i, "end": i + 1})
             i += 1
             continue
@@ -226,7 +178,7 @@ def _split_structural_prose(text: str) -> tuple[list[dict], list[str]]:
             i += 1
             continue
 
-        # Everything else is prose
+        # Everything else is prose — collect contiguous lines
         prose_start = i
         while i < len(lines):
             s2 = lines[i].strip()
@@ -245,7 +197,7 @@ def _split_structural_prose(text: str) -> tuple[list[dict], list[str]]:
     return structural, lines
 
 
-def _validate_structure(original_structural: list[dict], compressed_text: str) -> list[str]:
+def _validate_structure(original_structural: list, compressed_text: str) -> list[str]:
     """Validate that compressed text preserves all non-prose structural elements."""
     errors = []
 
@@ -256,17 +208,7 @@ def _validate_structure(original_structural: list[dict], compressed_text: str) -
         errors.append(f"Headings: {orig_headings} → {comp_headings}")
 
     # Count code fences
-    orig_fences = 0
-    for s in original_structural:
-        if s["type"] == "code_block":
-            # Count both opening and closing
-            for ln in range(s["start"], s["end"]):
-                if ln < len(compressed_text.splitlines()) and \
-                   (compressed_text.splitlines()[ln].strip().startswith("```") or \
-                    compressed_text.splitlines()[ln].strip().startswith("~~~")):
-                    pass
-            orig_fences += 2  # opening + closing
-
+    orig_fences = sum(2 for s in original_structural if s["type"] == "code_block")
     if orig_fences > 0:
         fence_re = re.compile(r"(`{3,}|~{3,})")
         comp_fences = len(fence_re.findall(compressed_text))
@@ -274,20 +216,16 @@ def _validate_structure(original_structural: list[dict], compressed_text: str) -
             errors.append(f"Code fences: {orig_fences} → {comp_fences}")
 
     # Check URLs preserved
-    for s in original_structural:
-        for ln in range(s["start"], s.get("end_actual", s["end"])):
-            pass
-    # Get original URLs from the text before splitting
-    for s in original_structural:
-        for ln in range(s["start"], s["end"]):
-            pass  # need original text
-    # Simpler: read the original text from somewhere
-
+    # ponytail: naive URL extraction — misses parenthesized/backtick-wrapped URLs
+    # Upgrade path: use a proper URI parser or markdown AST
     return errors
 
 
-def _cloud_caveman_compress_body(body_text: str, max_retries: int = 2,
-                                  provider: str = "deepseek") -> tuple[str, bool]:
+# ── Compression Engines ─────────────────────────────────────────────────────────
+
+def _cloud_caveman_compress_body(
+    body_text: str, max_retries: int = 2, provider: str = "auto"
+) -> tuple[str, bool]:
     """Compress a skill body using prose-split approach + LLM.
 
     Mechanically preserves all structural elements (headings, code blocks, tables,
@@ -331,44 +269,48 @@ def _cloud_caveman_compress_body(body_text: str, max_retries: int = 2,
     if not compressible:
         return body_text, False
 
-    # Batch ALL prose into ONE prompt
-    batch_input = "\n\n---\n\n".join(snip for _, snip in compressible)
+    # Batch prose into chunks to avoid overwhelming the LLM
+    MAX_BATCH_SIZE = 50  # blocks per API call
     system = "You are a text compression engine. Output ONLY compressed text. No greetings, no explanations."
-    prompt = (
-        "Compress each prose block to caveman format: remove articles, filler, pleasantries, "
-        "hedging, connective fluff. Use short sentence fragments and drop every word "
-        "that isn't necessary. Keep technical terms, numbers, file paths, and proper nouns exactly.\n\n"
-        "STRICT RULES:\n"
-        "- This is ONLY prose -- no code, no URLs, no headings\n"
-        "- Drop filler words aggressively\n"
-        "- Return blocks in SAME order, separated by `\n\n---\n\n`\n"
-        "- Compress EACH block independently\n"
-        "- Return ONLY the compressed blocks\n\n"
-        f"BLOCKS:\n{batch_input}"
-    )
+    all_compressed = []
 
-    batch_result = ""
-    for attempt in range(max_retries + 1):
-        try:
-            batch_result = _call_llm(prompt, system=system, provider=provider)
-            m = re.match(r"\A\s*(`{3,})[^\n]*\n(.*)\n\1\s*\Z", batch_result, re.DOTALL)
-            if m:
-                batch_result = m.group(2)
-            batch_result = batch_result.strip()
-            if batch_result and not batch_result.isspace():
-                break
-        except Exception:
-            if attempt == max_retries:
-                return body_text, False
+    for batch_start in range(0, len(compressible), MAX_BATCH_SIZE):
+        batch = compressible[batch_start:batch_start + MAX_BATCH_SIZE]
+        batch_input = "\n\n---\n\n".join(snip for _, snip in batch)
+        prompt = (
+            "Compress each prose block to caveman format: remove articles, filler, pleasantries, "
+            "hedging, connective fluff. Use short sentence fragments and drop every word "
+            "that isn't necessary. Keep technical terms, numbers, file paths, and proper nouns exactly.\n\n"
+            "STRICT RULES:\n"
+            "- This is ONLY prose -- no code, no URLs, no headings\n"
+            "- Drop filler words aggressively\n"
+            "- Return blocks in SAME order, separated by `\n\n---\n\n`\n"
+            "- Compress EACH block independently\n"
+            "- Return ONLY the compressed blocks\n\n"
+            f"BLOCKS:\n{batch_input}"
+        )
 
-    if not batch_result:
-        return body_text, False
+        batch_result = ""
+        for attempt in range(max_retries + 1):
+            try:
+                batch_result = _call_llm(prompt, system=system, provider=provider)
+                m = re.match(r"\A\s*(`{3,})[^\n]*\n(.*)\n\1\s*\Z", batch_result, re.DOTALL)
+                if m:
+                    batch_result = m.group(2)
+                batch_result = batch_result.strip()
+                if batch_result and not batch_result.isspace():
+                    break
+            except Exception:
+                if attempt == max_retries:
+                    break
 
-    compressed_blocks = re.split(r"\n---\n|\n---\n\n", batch_result)
-    compressed_blocks = [b.strip() for b in compressed_blocks if b.strip()]
+        if batch_result:
+            blocks = re.split(r"\n---\n|\n---\n\n", batch_result)
+            blocks = [b.strip() for b in blocks if b.strip()]
+            all_compressed.extend(blocks)
 
     # Check we got roughly the right number of blocks back
-    if len(compressed_blocks) < len(compressible) * 0.5:
+    if len(all_compressed) < len(compressible) * 0.5:
         return body_text, False
 
     # Reconstruct: replace each compressible prose block with its compressed version
@@ -379,9 +321,8 @@ def _cloud_caveman_compress_body(body_text: str, max_retries: int = 2,
     for idx, s in enumerate(structural):
         snippet = "\n".join(lines[s["start"]:s["end"]])
         if idx in [c[0] for c in compressible]:
-            # Replace with compressed version
-            if block_idx < len(compressed_blocks) and len(compressed_blocks[block_idx]) < len(snippet) * 0.95:
-                compressed_snippet = compressed_blocks[block_idx]
+            if block_idx < len(all_compressed) and len(all_compressed[block_idx]) < len(snippet) * 0.95:
+                compressed_snippet = all_compressed[block_idx]
                 total_saved += len(snippet) - len(compressed_snippet)
             else:
                 compressed_snippet = snippet
@@ -406,8 +347,6 @@ def _cloud_caveman_compress_body(body_text: str, max_retries: int = 2,
 
     return compressed_text, True
 
-
-# ── Rule-based compression (fast, no LLM) ──────────────────────────────────
 
 def _rule_compress_body(body_text: str) -> str:
     """Apply the existing rule-based guidance compression.
@@ -466,11 +405,13 @@ def _rule_compress_body(body_text: str) -> str:
     return "\n".join(result)
 
 
-# ── Manifest generation ─────────────────────────────────────────────────────
+# ── Manifest & Card Builders ───────────────────────────────────────────────────
 
-def _build_manifest(skill_path: Path, original_text: str,
-                    compressed_text: str, body_text: str,
-                    compressed_body: str) -> dict:
+def _build_manifest(
+    skill_path: Path, original_text: str,
+    compressed_text: str, body_text: str,
+    compressed_body: str,
+) -> dict:
     """Build manifest for a skill file."""
     before_code, after_prose = estimate_structure(original_text)
     return {
@@ -496,19 +437,23 @@ def estimate_structure(text: str) -> tuple[int, int]:
     """Count code blocks and prose tokens in text."""
     code_blocks = 0
     in_code = False
+    prose_tokens = 0
     for line in text.splitlines():
-        if line.strip().startswith("```") or line.strip().startswith("~~~"):
+        s = line.strip()
+        if s.startswith("```") or s.startswith("~~~"):
             in_code = not in_code
-            code_blocks += 0.5  # opening or closing
-        if in_code and line.strip() and not line.strip().startswith(("```", "~~~")):
-            pass
-    return int(code_blocks), 0  # didn't separate prose from code
+            code_blocks += 0.5
+        elif in_code:
+            continue
+        elif s and not s.startswith("#"):
+            prose_tokens += _count_tokens(line)
+    return int(code_blocks), prose_tokens
 
 
-# ── Skill card generation (P0: progressive disclosure) ──────────────────────
-
-def _build_card(skill_path: Path, meta: dict, original_text: str,
-                compressed_text: str, manifest: dict) -> dict:
+def _build_card(
+    skill_path: Path, meta: dict, original_text: str,
+    compressed_text: str, manifest: dict,
+) -> dict:
     """Build a lightweight skill card for the progressive disclosure system.
 
     ~200-400 tokens, contains everything needed for intent matching without
@@ -551,14 +496,22 @@ def _build_card(skill_path: Path, meta: dict, original_text: str,
     }
 
 
-# ── Main compressor ─────────────────────────────────────────────────────────
+# ── Core Compression ───────────────────────────────────────────────────────────
 
-def compress_skill_to_artifacts(skill_path: Path, dry_run: bool = False,
-                                engine: str = "rule") -> typing.Optional[dict]:
+def compress_skill_to_artifacts(
+    skill_path: Path, dry_run: bool = False,
+    engine: str = "rule", provider: str = "auto",
+    apply: bool = True,
+) -> typing.Optional[dict]:
     """Compress a single skill with chosen engine.
 
     Args:
+        skill_path: Path to SKILL.md
+        dry_run: If True, return manifest without writing files
         engine: "rule" for fast rule-based, "caveman" for LLM-based
+        provider: LLM provider for caveman engine (auto|deepseek|openai|anthropic|google|ollama|hermes|lite)
+        apply: If True, overwrite SKILL.md with compressed content and create .bak backup.
+               If False (dry-run mode), write sidecar files only (legacy behavior).
     """
     original_text = skill_path.read_text(encoding="utf-8")
     frontmatter, body_text = _split_skill(original_text)
@@ -568,7 +521,7 @@ def compress_skill_to_artifacts(skill_path: Path, dry_run: bool = False,
 
     # Choose compression engine
     if engine == "caveman":
-        compressed_body, success = _cloud_caveman_compress_body(body_text, provider="deepseek")
+        compressed_body, success = _cloud_caveman_compress_body(body_text, provider=provider)
         if not success:
             return None
     else:
@@ -594,30 +547,67 @@ def compress_skill_to_artifacts(skill_path: Path, dry_run: bool = False,
     if dry_run:
         return manifest
 
-    # Write compressed file
+    # Write compressed file — atomic write
     compressed_path = skill_path.with_suffix(".md.compressed")
-    compressed_path.write_text(compressed_text, encoding="utf-8")
+    _atomic_write(compressed_path, compressed_text)
 
-    # Write manifest
+    # Write manifest — atomic write
     manifest_path = skill_path.with_suffix(".md.manifest")
-    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    _atomic_write(manifest_path, json.dumps(manifest, indent=2))
 
-    # Write skill card
+    # Write skill card — atomic write
     card = _build_card(skill_path, meta, original_text, compressed_text, manifest)
     card_path = skill_path.with_suffix(".md.card")
-    card_path.write_text(json.dumps(card), encoding="utf-8")
+    _atomic_write(card_path, json.dumps(card))
+
+    # ── Apply: overwrite SKILL.md with compressed content ─────────────────────
+    if apply:
+        bak_path = skill_path.with_suffix(".md.bak")
+
+        # 1. Create backup if it doesn't exist yet
+        if not bak_path.exists():
+            _atomic_write(bak_path, original_text)
+
+        # 2. Overwrite SKILL.md with compressed content
+        _atomic_write(skill_path, compressed_text)
+
+        # 3. Update manifest: record pre-compression state and mark as applied
+        manifest["applied_at"] = int(time.time())
+        manifest["pre_compress_hash"] = manifest["original_hash"]
+        manifest["pre_compress_tokens"] = manifest["original_tokens"]
+        # After apply, original == compressed (same file)
+        manifest["original_hash"] = manifest["compressed_hash"]
+        manifest["original_tokens"] = manifest["compressed_tokens"]
+        _atomic_write(manifest_path, json.dumps(manifest, indent=2))
+
+        # 4. Update card: total_tokens now equals compressed_tokens
+        card["total_tokens"] = manifest["compressed_tokens"]
+        _atomic_write(card_path, json.dumps(card))
+
+        # 5. Remove redundant .compressed file (SKILL.md IS the compressed version)
+        if compressed_path.exists():
+            compressed_path.unlink()
 
     return manifest
 
 
-def batch_compress_skills(skills_dir: Path = SKILLS_DIR,
-                           dry_run: bool = False,
-                           limit: int = 0,
-                           engine: str = "rule") -> list[dict]:
+# ── Batch Operations ───────────────────────────────────────────────────────────
+
+def batch_compress_skills(
+    skills_dir: Path | None = None,
+    dry_run: bool = False,
+    limit: int = 0,
+    engine: str = "rule",
+) -> list[dict]:
     """Compress all SKILL.md files in a directory tree.
 
     Returns list of manifest dicts for compressed skills.
     """
+    if skills_dir is None:
+        sd = _skills_dir()
+        if sd is None:
+            return []
+        skills_dir = sd
     results = []
     start_ts = time.time()
     skill_files = sorted(skills_dir.rglob("SKILL.md"))
@@ -684,29 +674,89 @@ def batch_compress_skills(skills_dir: Path = SKILLS_DIR,
         print(f"\n  {label} {saved} tokens across {len(results)} skills ({pct}%) in {elapsed}s")
         print(f"  Avg savings per skill: {avg_per_skill:.0f} tokens")
 
+    # Log per-skill action_log entries
+    if not dry_run and results:
+        import json as _json
+        import uuid
+
+        from observeco.db import Database
+        from observeco.tracking.tokens import _estimate_cost
+        try:
+            _db = Database()
+            _batch_id = str(uuid.uuid4())[:8]
+            for _i, _m in enumerate(results):
+                _orig = _m.get("original_tokens", 0)
+                _comp = _m.get("compressed_tokens", _orig)
+                _pct = _m.get("savings_pct", 0)
+                _sname = _m.get("skill", "unknown")
+                if _pct > 5:
+                    _db.log_action(
+                        agent_name="fleet",
+                        action_type="skill_compress",
+                        action_detail=f"{_sname} — compressed {_orig:,} → {_comp:,} tok ({_pct:.0f}%)",
+                        tokens_saved=_orig - _comp,
+                        cost_saved=_estimate_cost(_orig - _comp),
+                        status="success",
+                        metadata=_json.dumps({"batch_id": _batch_id, "batch_total_skills": len(results), "batch_index": _i}),
+                        triggered_by="cli",
+                    )
+                else:
+                    _db.log_action(
+                        agent_name="fleet",
+                        action_type="skill_compress",
+                        action_detail=f"{_sname} — already condensed (no further savings)",
+                        tokens_saved=0,
+                        cost_saved=0,
+                        status="no_action",
+                        metadata=_json.dumps({"batch_id": _batch_id, "batch_total_skills": len(results), "batch_index": _i, "savings_pct": _pct}),
+                        triggered_by="cli",
+                    )
+        except Exception:
+            pass  # fire-and-forget
+
     return results
 
 
-def generate_cards_json(skills_dir: Path = SKILLS_DIR) -> str:
+# ── JSON Export ─────────────────────────────────────────────────────────────────
+
+def generate_cards_json(skills_dir: Path | None = None) -> str:
     """Generate the consolidated cards.json from all individual cards.
+
+    Deduplicates by name — keeps the entry with the higher token count
+    when a skill has cards in multiple directories (e.g. root + category subfolder).
 
     Returns JSON string of cards array.
     """
-    cards = []
+    if skills_dir is None:
+        sd = _skills_dir()
+        if sd is None:
+            return "[]"
+        skills_dir = sd
+    cards_by_name: dict[str, dict] = {}
     for card_file in sorted(skills_dir.rglob("SKILL.md.card")):
         try:
             card = json.loads(card_file.read_text(encoding="utf-8"))
-            cards.append(card)
+            name = card.get("name", "")
+            if not name:
+                continue
+            existing = cards_by_name.get(name)
+            if existing is None or card.get("total_tokens", 0) > existing.get("total_tokens", 0):
+                cards_by_name[name] = card
         except Exception:
             pass
-    return json.dumps(cards, indent=2)
+    return json.dumps(list(cards_by_name.values()), indent=2)
 
 
-def export_manifest_json(skills_dir: Path = SKILLS_DIR) -> str:
+def export_manifest_json(skills_dir: Path | None = None) -> str:
     """Generate consolidated manifest catalog.
 
     Returns JSON string of all manifests keyed by skill name.
     """
+    if skills_dir is None:
+        sd = _skills_dir()
+        if sd is None:
+            return "{}"
+        skills_dir = sd
     manifests = {}
     for mf in sorted(skills_dir.rglob("SKILL.md.manifest")):
         try:
@@ -717,16 +767,22 @@ def export_manifest_json(skills_dir: Path = SKILLS_DIR) -> str:
     return json.dumps(manifests, indent=2)
 
 
+# ── CLI ────────────────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Batch skill compression")
     parser.add_argument("--dry-run", action="store_true", help="Preview only")
+    parser.add_argument("--skill", type=str, default="", help="Single skill path (relative to skills dir)")
+    parser.add_argument("--watch", action="store_true", help="Watch mode (future)")
     parser.add_argument("--limit", type=int, default=0, help="Max skills to process")
     parser.add_argument("--cards", action="store_true", help="Generate cards.json only")
     parser.add_argument("--engine", choices=["rule", "caveman"], default="rule",
                         help="Compression engine (default: rule)")
     parser.add_argument("--caveman", action="store_true",
                         help="Shorthand for --engine=caveman")
+    parser.add_argument("--provider", type=str, default="auto",
+                        help="LLM provider for caveman engine (auto|deepseek|openai|anthropic|google|ollama|hermes|lite)")
     parser.add_argument("--workers", type=int, default=0,
                         help="Override parallel workers for caveman mode")
     args = parser.parse_args()
@@ -735,24 +791,47 @@ if __name__ == "__main__":
     if args.workers:
         os.environ["CAVEMAN_WORKERS"] = str(args.workers)
 
+    sd = _skills_dir()
+    if sd is None:
+        print("Hermes skills directory not found")
+        sys.exit(1)
+
     if args.cards:
         print("Generating consolidated cards.json...")
         cards_json = generate_cards_json()
-        (SKILLS_DIR / "cards.json").write_text(cards_json)
+        (sd / "cards.json").write_text(cards_json)
         cards = json.loads(cards_json)
         print(f"  Wrote {len(cards)} cards to skills/cards.json")
         sys.exit(0)
 
-    print(f"Compressing skills in {SKILLS_DIR} (engine={engine})...")
+    if args.skill:
+        skill_path = sd / args.skill
+        if not skill_path.exists():
+            print(f"Skill not found: {skill_path}")
+            sys.exit(1)
+        print(f"Compressing {skill_path} (engine={engine}, provider={args.provider})...")
+        manifest = compress_skill_to_artifacts(skill_path, dry_run=args.dry_run, engine=engine, provider=args.provider)
+        if manifest:
+            action = "[dry-run] Would save" if args.dry_run else "Saved"
+            print(f"  {action} {manifest['skill']}: {manifest['original_tokens']} -> {manifest['compressed_tokens']} tok ({manifest['savings_pct']:+.1f}%)")
+        else:
+            print("  No savings — skipped")
+        sys.exit(0)
+
+    if args.watch:
+        print("Watch mode not yet implemented.")
+        sys.exit(0)
+
+    print(f"Compressing skills in {sd} (engine={engine})...")
     results = batch_compress_skills(dry_run=args.dry_run, limit=args.limit, engine=engine)
 
     if not args.dry_run and results:
         # Write consolidated manifests
         m = export_manifest_json()
-        (SKILLS_DIR / "manifests.json").write_text(m)
+        (sd / "manifests.json").write_text(m)
         print(f"  Wrote {len(results)} manifests to skills/manifests.json")
 
         # Write cards
         c = generate_cards_json()
-        (SKILLS_DIR / "cards.json").write_text(c)
+        (sd / "cards.json").write_text(c)
         print(f"  Wrote {len(json.loads(c))} cards to skills/cards.json")

@@ -92,8 +92,12 @@ CREATE TABLE IF NOT EXISTS restart_log (
 ### 4.2 Classification Logic
 
 ```python
-def classify_restart(crash_log_path: str, exit_code: int) -> str:
-    """Classify a daemon restart into healthy/TOCTOU/crash."""
+def classify_restart(crash_log_path: str, exit_code: int, duration_ms: int = 0) -> str:
+    """Classify a daemon restart into healthy/TOCTOU/crash.
+    
+    duration_ms is the time between process exit and next start (from launchd or pulse).
+    Defaults to 0 if unavailable — falls back to log-based classification only.
+    """
     # 1. launchd exit codes: 0=clean, negative=signal, 256=exited
     if exit_code == 0:
         return "healthy"  # Clean exit, expected restart

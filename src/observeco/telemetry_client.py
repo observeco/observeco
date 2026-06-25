@@ -28,16 +28,26 @@ from observeco import __version__
 from observeco.dirs import get_data_dir
 from observeco.event_bus import publish as _event_publish
 
-TELEMETRY_URL = os.environ.get(
-    "OBSERVECO_TELEMETRY_URL",
-    "https://observeco-license-crm.vercel.app/api/telemetry",
-)
 
-# Env override: set OBSERVECO_TELEMETRY=off to disable regardless of opt-in
-_ENV_ALLOWED = os.environ.get("OBSERVECO_TELEMETRY", "on").lower() not in ("off", "0", "false", "no")
+def _get_telemetry_url() -> str:
+    return os.environ.get(
+        "OBSERVECO_TELEMETRY_URL",
+        "https://observeco-license-crm.vercel.app/api/telemetry",
+    )
 
-# Local opt-in persisted file path
-_OPT_IN_FILE = get_data_dir() / ".telemetry_opt_in"
+
+def _is_telemetry_allowed() -> bool:
+    """Env override: set OBSERVECO_TELEMETRY=off to disable regardless of opt-in."""
+    return os.environ.get("OBSERVECO_TELEMETRY", "on").lower() not in ("off", "0", "false", "no")
+
+# Local opt-in persisted file path — lazy to avoid crash on import when data dir is unwritable
+# ponytail: evaluated at first call, not import time
+_OPT_IN_FILE: Path | None = None
+def _get_opt_in_file() -> Path:
+    global _OPT_IN_FILE
+    if _OPT_IN_FILE is None:
+        _OPT_IN_FILE = get_data_dir() / ".telemetry_opt_in"
+    return _OPT_IN_FILE
 
 logger = logging.getLogger("observeco.telemetry")
 
@@ -46,12 +56,12 @@ def _is_opted_in() -> bool:
     """Check whether the user has explicitly opted in to telemetry.
 
     Returns True only if the local opt-in file exists and its content is "yes".
-    If _ENV_ALLOWED is False, the env override blocks all telemetry.
+    If _is_telemetry_allowed() is False, the env override blocks all telemetry.
     """
-    if not _ENV_ALLOWED:
+    if not _is_telemetry_allowed():
         return False
     try:
-        return _OPT_IN_FILE.read_text().strip().lower() == "yes"
+        return _get_opt_in_file().read_text().strip().lower() == "yes"
     except (FileNotFoundError, OSError):
         return False
 
@@ -63,8 +73,8 @@ def set_opt_in(consent: bool) -> None:
         consent: True to opt in, False to opt out.
     """
     try:
-        _OPT_IN_FILE.parent.mkdir(parents=True, exist_ok=True)
-        _OPT_IN_FILE.write_text("yes" if consent else "no")
+        _get_opt_in_file().parent.mkdir(parents=True, exist_ok=True)
+        _get_opt_in_file().write_text("yes" if consent else "no")
         logger.info("Telemetry opt-in set to: %s", consent)
     except OSError as e:
         logger.warning("Could not persist telemetry opt-in: %s", e)
@@ -72,7 +82,7 @@ def set_opt_in(consent: bool) -> None:
 
 def is_telemetry_enabled() -> bool:
     """Public accessor for telemetry state (used by dashboard UI)."""
-    return _ENV_ALLOWED and _is_opted_in()
+    return _is_telemetry_allowed() and _is_opted_in()
 
 
 def _build_envelope(event_type: str, payload: dict) -> dict:
@@ -146,7 +156,7 @@ def send_sync(event_type: str, payload: dict) -> None:
 
     Will NOT send unless the user has explicitly opted in.
     """
-    _send(TELEMETRY_URL, _build_envelope(event_type, payload))
+    _send(_get_telemetry_url(), _build_envelope(event_type, payload))
     # Also publish locally to event bus
     try:
         _event_publish(None, f"telemetry_{event_type}", **payload)
@@ -163,7 +173,7 @@ def send(event_type: str, payload: dict) -> None:
         return
     t = threading.Thread(
         target=_send,
-        args=(TELEMETRY_URL, _build_envelope(event_type, payload)),
+        args=(_get_telemetry_url(), _build_envelope(event_type, payload)),
         daemon=True,
     )
     t.start()

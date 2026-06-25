@@ -20,7 +20,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 import signal
 import sys
 import time
@@ -33,14 +32,27 @@ try:
 except ImportError:
     psutil = None
 
+from observeco.dirs import hermes_home, openclaw_home
+
 logger = logging.getLogger("observeco.gateway_monitor")
 
 # ---------------------------------------------------------------------------
-# Configuration
+# Configuration — lazy init to avoid import-time I/O
 # ---------------------------------------------------------------------------
 
-HERMES_HOME = Path(os.environ.get("HERMES_HOME", os.path.expanduser("~/.hermes")))
-OPENCLAW_HOME = Path(os.environ.get("OPENCLAW_HOME", os.path.expanduser("~/.openclaw")))
+def _get_hermes_home() -> Path:
+    hh = hermes_home()
+    return hh if hh is not None else Path.home() / ".hermes"
+
+def _get_openclaw_home() -> Path:
+    oc = openclaw_home()
+    return oc if oc is not None else Path.home() / ".openclaw"
+
+HERMES_HOME = _get_hermes_home()
+OPENCLAW_HOME = _get_openclaw_home()
+# ponytail: fallback to Path.home() / ".hermes"|".openclaw" when dirs returns None.
+# If Hermes/OpenClaw is genuinely absent the downstream code still gets a valid
+# Path — callers that need "is it installed?" should check dirs directly.
 
 HERMES_LOG_DIR = HERMES_HOME / "logs"
 HERMES_STATE_FILE = HERMES_HOME / "gateway_state.json"
@@ -103,7 +115,6 @@ def parse_hermes_error_log(log_path: Path, window_seconds: int = POOL_TIMEOUT_WI
     if not log_path.exists():
         return {"pool_timeouts": 0, "errors": [], "total_lines": 0}
 
-    cutoff = time.time() - window_seconds
     pool_timeouts = 0
     errors = []
     total_lines = 0
@@ -260,13 +271,23 @@ def collect_openclaw_metrics() -> GatewayMetrics:
 
 def send_telegram_alert(message: str) -> bool:
     """Send alert via OpenClaw gateway (best-effort)."""
+    import os
+    chat_id = os.environ.get("OBSERVECO_TG_CHAT_ID", "")
+    if not chat_id:
+        logger.warning("OBSERVECO_TG_CHAT_ID not set, skipping Telegram alert")
+        return False
     try:
         import subprocess
         # Use the openclaw CLI to send a message
         result = subprocess.run(
-            ["openclaw", "send", "--chat", "458083937", "--message", f"⚠️ Gateway Monitor: {message}"],
+            ["openclaw", "message", "send",
+             "--channel", "telegram",
+             "--target", chat_id,
+             "--message", f"⚠️ Gateway Monitor: {message}"],
             capture_output=True, text=True, timeout=10
         )
+        if result.returncode != 0 and result.stderr:
+            logger.warning(f"openclaw send failed: {result.stderr.strip()}")
         return result.returncode == 0
     except Exception as e:
         logger.warning(f"Failed to send Telegram alert: {e}")

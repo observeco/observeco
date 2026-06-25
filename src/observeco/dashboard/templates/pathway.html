@@ -120,6 +120,7 @@ body {
 .tree-group-label:hover .tree-group-toggle { color: var(--fg); }
 .tree-group-children { }
 .tree-group-children.collapsed { display: none; }
+.right-rail { width: 360px; flex-shrink: 0; position: sticky; top: 80px; display: flex; flex-direction: column; max-height: calc(100vh - 100px); }
 
 /* Graph container */
 .graph-card {
@@ -177,14 +178,15 @@ body {
 
 /* Detail panel */
 .detail-panel {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;
 }
 .detail-header {
   padding: 12px 14px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 8px;
 }
 .detail-title { font-size: 14px; font-weight: 600; flex: 1; }
-.detail-body { padding: 12px 14px; min-height: 120px; max-height: 450px; overflow-y: scroll; }
+.detail-body { padding: 12px 14px; min-height: 120px; overflow-y: auto; flex: 1; }
 .detail-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 30px 10px; }
 .detail-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid rgba(30,41,59,0.5); }
 .detail-label { color: var(--muted); }
@@ -277,6 +279,7 @@ body {
   <div class="summary-stat"><span class="summary-num green" id="total-green">-</span> 🟢 Complete</div>
   <div class="summary-stat"><span class="summary-num amber" id="total-yellow">-</span> 🟡 Concerns</div>
   <div class="summary-stat"><span class="summary-num red" id="total-red">-</span> 🔴 Dead Ends</div>
+  <span id="summary-timestamp" style="margin-left:auto;font-size:11px;color:var(--muted);">—</span>
 </div>
 
 <div class="pane-layout">
@@ -793,7 +796,11 @@ function stopReplay() {
 // ═══════════════════════════════════════════════════════
 async function fetchGraph() {
   try {
-    const resp = await fetch('/api/pathway-graph');
+    const headers = {};
+    if (window.__OBSERVECO_TOKEN) {
+      headers['X-ObserveCo-Token'] = window.__OBSERVECO_TOKEN;
+    }
+    const resp = await fetch('/api/pathway-graph', { headers });
     graphData = await resp.json();
     return true;
   } catch (e) {
@@ -1105,7 +1112,22 @@ function updateSummary() {
   document.getElementById('total-green').textContent = green;
   document.getElementById('total-yellow').textContent = yellow;
   document.getElementById('total-red').textContent = red;
-  
+
+  // Find oldest written_at from edge metadata
+  var oldestTs = null;
+  es.forEach(function(e) {
+    if (!e.metadata) return;
+    try {
+      var meta = JSON.parse(e.metadata);
+      var written = meta.oldest_written_at || meta.written_at;
+      if (written && (!oldestTs || written < oldestTs)) oldestTs = written;
+    } catch(_) {}
+  });
+  var el = document.getElementById('summary-timestamp');
+  if (el) {
+    el.textContent = oldestTs ? formatDate(oldestTs) + ' (' + green + ' healthy · ' + yellow + ' degraded · ' + red + ' dead)' : '—';
+  }
+
   // Also build route table
   buildRouteTable();
 }

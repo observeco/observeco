@@ -7,9 +7,9 @@ personalized guidance, and per-agent summaries. Three tiers:
 - Tier 2 (shallow, value-add): alert enrichment, per-agent summary, health check
   suggestion, heal feedback, pathway anomaly, error translation
 
-License gating:         trial/Pro → full LLM
-                        free → static fallback only
-                        --no-llm → opt-out, no trial clock consumed
+BYOK model:         OBSERVECO_LLM_API_KEY set → full LLM (user's own key)
+                    no key configured → static fallback only
+                    --no-llm → opt-out, always static
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -157,9 +156,16 @@ def _detect_llm_providers() -> list[LLMProvider]:
     """Detect available LLM providers from environment.
 
     Checks 20+ provider env vars plus local LLM servers.
+    Primary BYOK path: OBSERVECO_LLM_API_KEY (user's own key, OpenAI-compatible).
     """
     providers = []
     seen_providers = set()
+
+    # --- BYOK: user's own API key (primary path for free tier) ---
+    byok_key = os.environ.get("OBSERVECO_LLM_API_KEY", "")
+    if byok_key and "byok" not in seen_providers:
+        providers.append(LLMProvider(name="byok", available=True, api_key=byok_key))
+        seen_providers.add("byok")
 
     # --- Major providers (env vars) ---
     env_providers = [
@@ -186,21 +192,23 @@ def _detect_llm_providers() -> list[LLMProvider]:
             providers.append(LLMProvider(name="openrouter", available=True, api_key=openai_key))
             seen_providers.add("openrouter")
 
-    # --- Local LLM servers ---
-    local_servers = [
-        ("ollama", "http://localhost:11434/api/tags"),
-        ("lmstudio", "http://localhost:1234/v1/models"),
-        ("vllm", "http://localhost:8000/v1/models"),
-        ("textgen", "http://localhost:5000/v1/models"),
-        ("localai", "http://localhost:8080/v1/models"),
-    ]
+    # --- Local LLM servers (from DB registry) ---
+    try:
+        from observeco.db import Database
+        _db = Database()
+        _registry = _db.get_provider_registry()
+        _db.close()
+        local_providers = [p for p in _registry if p["provider_type"] == "local" and p["detect_endpoint"]]
+    except Exception:
+        local_providers = []
 
-    for name, url in local_servers:
+    for prov in local_providers:
+        name = prov["name"]
         if name in seen_providers:
             continue
         try:
             import urllib.request
-            urllib.request.urlopen(url, timeout=2)
+            urllib.request.urlopen(prov["detect_endpoint"], timeout=prov.get("detect_timeout", 2))
             providers.append(LLMProvider(name=name, available=True))
             seen_providers.add(name)
         except Exception:
@@ -211,80 +219,55 @@ def _detect_llm_providers() -> list[LLMProvider]:
 
 def _get_auto_provider(providers: list[LLMProvider]) -> Optional[LLMProvider]:
     """Auto-detect the best available provider.
-
-    Preference order: cloud providers > local servers.
+    Uses DB registry priority ordering (higher = preferred).
     """
-    cloud_preferred = [
-        "anthropic", "openai", "deepseek", "google", "mistral",
-        "groq", "together", "openrouter", "cohere",
-    ]
-    for preferred in cloud_preferred:
-        for p in providers:
-            if p.name == preferred and p.available:
-                return p
+    # Build priority map from registry
+    try:
+        from observeco.db import Database
+        _db = Database()
+        _registry = _db.get_provider_registry()
+        _db.close()
+        priority_map = {p["name"]: p["priority"] for p in _registry}
+    except Exception:
+        priority_map = {}
 
-    local_preferred = ["ollama", "lmstudio", "vllm", "textgen", "localai"]
-    for preferred in local_preferred:
-        for p in providers:
-            if p.name == preferred and p.available:
-                return p
-
-    return None
+    # Sort available providers by registry priority (descending)
+    available = [p for p in providers if p.available]
+    available.sort(key=lambda p: priority_map.get(p.name, 0), reverse=True)
+    return available[0] if available else None
 
 
 def _call_provider(provider: LLMProvider, system: str, prompt: str) -> str | None:
-    """Route to the correct provider API."""
+    """Route to the correct provider API using DB registry config."""
+    # Look up provider config from registry
     try:
-        if provider.name == "anthropic":
+        from observeco.db import Database
+        _db = Database()
+        _config = _db.get_provider_config(provider.name)
+        _db.close()
+    except Exception:
+        _config = None
+
+    api_format = _config["api_format"] if _config else provider.name
+    base_url = _config["base_url"] if _config else None
+    model = _config["default_model"] if _config else "default"
+
+    try:
+        if api_format == "anthropic":
             return _call_anthropic(provider.api_key, system, prompt)
-        elif provider.name == "openai":
-            return _call_openai(provider.api_key, system, prompt)
-        elif provider.name == "google":
+        elif api_format == "google":
             return _call_google(provider.api_key, system, prompt)
-        elif provider.name == "ollama":
+        elif api_format == "ollama":
             return _call_ollama(system, prompt)
-        elif provider.name == "deepseek":
+        elif api_format == "openai" and base_url:
             return _call_openai_compatible(
-                provider.api_key, system, prompt,
-                base_url="https://api.deepseek.com",
-                model="deepseek-chat",
+                provider.api_key or "", system, prompt,
+                base_url=base_url,
+                model=model,
             )
-        elif provider.name == "mistral":
-            return _call_openai_compatible(
-                provider.api_key, system, prompt,
-                base_url="https://api.mistral.ai",
-                model="mistral-large-latest",
-            )
-        elif provider.name == "groq":
-            return _call_openai_compatible(
-                provider.api_key, system, prompt,
-                base_url="https://api.groq.com/openai",
-                model="llama-3.1-70b-versatile",
-            )
-        elif provider.name == "together":
-            return _call_openai_compatible(
-                provider.api_key, system, prompt,
-                base_url="https://api.together.xyz",
-                model="meta-llama/Llama-3-70b-chat-hf",
-            )
-        elif provider.name == "openrouter":
-            return _call_openai_compatible(
-                provider.api_key, system, prompt,
-                base_url="https://openrouter.ai/api",
-                model="anthropic/claude-sonnet-4",
-            )
-        elif provider.name in ("lmstudio", "vllm", "textgen", "localai"):
-            base_urls = {
-                "lmstudio": "http://localhost:1234/v1",
-                "vllm": "http://localhost:8000/v1",
-                "textgen": "http://localhost:5000/v1",
-                "localai": "http://localhost:8080/v1",
-            }
-            return _call_openai_compatible(
-                "", system, prompt,
-                base_url=base_urls[provider.name],
-                model="default",
-            )
+        elif api_format == "openai":
+            # Fallback for known providers without registry entry
+            return _call_openai(provider.api_key, system, prompt)
         else:
             return None
     except Exception as e:

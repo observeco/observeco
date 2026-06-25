@@ -13,7 +13,7 @@
 
 **Source:** Real failure — 4 rework cycles on the watch daemon because the agent (me) didn't manage its own session discipline: no checkpoint on the first bad idea, no mandatory re-prime after context drift, no tool-use guardrails.
 
-This playbook is **meta**: it governs how agents use the other six playbooks (requirements, coding, UX, system-design, and the evolution meta-playbook). Without this, even perfect playbooks get undermined by context pollution, over-confidence loops, and 9-minute streaming drift.
+This playbook is **meta**: it governs how agents use the other nine playbooks (requirements-fidelity, coding-fidelity, UX-testing, system-design-testing, UI-testing, spec-gated-workflow, orchestration-anti-patterns, security-stride, and the evolution meta-playbook). Without this, even perfect playbooks get undermined by context pollution, over-confidence loops, and 9-minute streaming drift.
 
 ---
 
@@ -55,14 +55,20 @@ Active priorities (from MISSIONS.json):
 2. [priority 2]
 3. [priority 3]
 
-Loaded playbooks:
+|Loaded playbooks:
 □ requirements-fidelity-playbook.md — spec hardening first
 □ coding-fidelity-playbook.md — code matches spec
 □ ux-testing-playbook.md — human lens
 □ system-design-testing-playbook.md — architecture lens
+□ ui-testing-playbook.md — UI interaction lens
+□ agent-governance-playbook.md — session discipline (this file)
+□ master-fidelity-gate.md — integration gate
+□ spec-gated-workflow-playbook.md — 4-phase spec gate
+□ orchestration-anti-patterns-playbook.md — multi-agent governance
+□ security-stride-playbook.md — security threat model
 
 Session discipline:
-□ I will NOT propose a solution before checking all 5 playbooks
+□ I will NOT propose a solution before checking all 10 playbooks
 □ I will NOT skip verification ("All checks pass" is not proof)
 □ I will NOT accept my own first idea without considering alternatives
 □ I WILL output screenshots + DOM dumps before claiming a fix
@@ -85,6 +91,11 @@ Session discipline:
 2. coding-fidelity-playbook.md — §2 5 Pillars + §8 Golden Gate
 3. ux-testing-playbook.md — §2 5 Human Layers + §7 Golden Gate
 4. system-design-testing-playbook.md — §2 Pre-Code Protocol + §5 9 Lenses
+5. ui-testing-playbook.md — §2 UI Interaction Layers + §7 Golden Gate
+6. master-fidelity-gate.md — §2 Combined Checklist (all layers)
+7. spec-gated-workflow-playbook.md — §3.1 Surface Assumptions + §3.2 Write the Spec
+8. orchestration-anti-patterns-playbook.md — §3 Endorsed Patterns + §4 Anti-Patterns
+9. security-stride-playbook.md — §2 STRIDE Threat Model + §3 3-Tier Boundary
 
 ## Before Every Patch
 - Run cross-ref-verify.sh to check spec references are current
@@ -126,7 +137,7 @@ Session discipline:
 ║ Actions:                                         ║
 ║ □ Save all changes (git commit or stash)         ║
 ║ □ Export decision log (what was decided, why)    ║
-║ □ Re-prime with all 5 playbooks                  ║
+║ □ Re-prime with all 10 playbooks                  ║
 ║ □ Confirm: are we still working on the right     ║
 ║   thing, or did the spec drift?                  ║
 ║ □ Get human sign-off before continuing            ║
@@ -295,8 +306,11 @@ GOOD: "Test output: 12/12 lifecycle tests pass.
 | UI fidelity check | UX-only subagent | ux-testing-playbook.md + mockup URL |
 | Architecture critic | System-only subagent | system-design-testing-playbook.md + ADR |
 | Spec hardener | Requirements-only subagent | requirements-fidelity-playbook.md + original ticket |
-| CI gate runner | Gate-only subagent | all 5 playbooks + feature name |
+| CI gate runner | Gate-only subagent | all 10 playbooks + feature name |
 | Code review | Coding-fidelity-only agent | coding-fidelity-playbook.md + PR diff |
+| Spec-gated workflow | Spec-hardening subagent | spec-gated-workflow-playbook.md + feature spec |
+| Orchestration critic | Multi-agent governance subagent | orchestration-anti-patterns-playbook.md + agent topology |
+| Security reviewer | Threat-model subagent | security-stride-playbook.md + system boundary |
 
 ### 7.2 Handoff Protocol
 

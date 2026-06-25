@@ -1,0 +1,1 @@
+"""Ecosystem gap scanner — finds what's not being monitored."""

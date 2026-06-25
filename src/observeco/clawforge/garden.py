@@ -11,6 +11,8 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from observeco.dirs import hermes_home
+
 from rich import box
 from rich.console import Console
 from rich.table import Table
@@ -24,11 +26,14 @@ db = Database()
 def _find_memory_files(agent_name: Optional[str] = None) -> list[dict]:
     """Find MEMORY.md files for all or specific agents."""
     memories = []
+    hh = hermes_home()
     search_paths = [
-        Path.home() / ".hermes" / "profiles",
-        Path.home() / ".hermes" / "agents",
+        hh / "profiles" if hh else None,
+        hh / "agents" if hh else None,
         Path.home() / "projects" / "openclaw",
     ]
+    # Filter out None entries
+    search_paths = [p for p in search_paths if p is not None]
 
     for base in search_paths:
         if not base.exists():
@@ -36,7 +41,10 @@ def _find_memory_files(agent_name: Optional[str] = None) -> list[dict]:
         if base.is_dir():
             for entry in base.iterdir():
                 if entry.is_dir():
+                    # Check both profiles/<agent>/MEMORY.md and profiles/<agent>/memories/MEMORY.md
                     mem = entry / "MEMORY.md"
+                    if not mem.exists():
+                        mem = entry / "memories" / "MEMORY.md"
                     if mem.exists():
                         memories.append({
                             "agent": entry.name,

@@ -2,15 +2,17 @@
 
 **Product:** The ObserveCo playbook system itself
 **Status:** Living — update as lessons accumulate
-**Version:** 3.2 — 2026-06-10
+**Version:** 3.5 — 2026-06-19
 **Version History:**
 | Version | Date | What changed |
 |---------|------|-------------|
 | 1.0 | 2026-05-30 | Initial creation — 3 feedback loops, escape rule, freshness check |
-| 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, standard lessons entry |
+| 3.1 | 2026-05-31 | Standardization pass: all 7 playbooks bumped to v3.1. Fixed stale playbook-count references. Confirmed cross-references to Playbook Inventory (requirements-fidelity-playbook.md §Playbook Inventory) and Layer F First-Run Audit (master-fidelity-gate.md §2 Layer F). Removed stray empty FILE tags. |
 | 3.2 | 2026-06-10 | Updated stale playbook count from 7 to 8 (added ui-testing-playbook). Added Lessons Learned section with 1 entry. |
-| 3.3 | 2026-06-10 | Updated stale playbook count from 8 to 9 (added master-fidelity-gate as separate layer H). UX playbook v3.6 (3 new traps). Coding playbook v3.13 (3 new patterns). Master gate v3.13 (Layer H). Total traps across all playbooks now 33. |
+| 3.3 | 2026-06-10 | Updated stale playbook count from 8 to 9. Added Layer H (UX Interaction Fidelity) to master-fidelity-gate.md. UX playbook v3.6 (3 new traps). Coding playbook v3.13 (3 new patterns). Master gate v3.13 (Layer H). Total traps across all playbooks now 33. |
+| 3.4 | 2026-06-11 | Phase 8 Meta & Evolution complete: Ran Gate 3 (Diff Gate) on obs-spec-020/021/022 sprint. 12-item checklist result: 10 pass, 1 fail (test coverage). Documented patterns: safety-first migration flow, unified action log, on-the-fly aggregation, three-tier billing gate. See gate3-report.md. |
+| 3.5 | 2026-06-19 | Registered installation-test-playbook (v2.0) in Playbook Inventory. Version table updated. Playbook system now has 12 active documents. |
 
 **Source:** Real insight — 5 playbooks exist but nothing ensures they stay alive, accurate, and improving. Sean's feedback: "If a human catches something an AI missed, the playbook was incomplete — update it before fixing the code."
 
@@ -50,13 +52,18 @@ The current system's version table:
 
 | Playbook | Current Version | Latest Update |
 |----------|----------------|---------------|
-| requirements-fidelity-playbook.md | 2.1 | 2026-05-31 |
-| coding-fidelity-playbook.md | 2.1 | 2026-05-31 |
-| ux-testing-playbook.md | 2.1 | 2026-05-31 |
-| system-design-testing-playbook.md | 2.1 | 2026-05-31 |
-| agent-governance-playbook.md | 2.1 | 2026-05-31 |
-| master-fidelity-gate.md | 2.1 | 2026-05-31 |
-| **this file** | 2.1 | 2026-05-31 |
+| requirements-fidelity-playbook.md | 3.2 | 2026-06-10 |
+| coding-fidelity-playbook.md | 3.13 | 2026-06-10 |
+| ux-testing-playbook.md | 3.6 | 2026-06-10 |
+| system-design-testing-playbook.md | 3.3 | 2026-06-12 |
+| agent-governance-playbook.md | 3.2 | 2026-06-10 |
+| master-fidelity-gate.md | 3.13 | 2026-06-10 |
+| ui-testing-playbook.md | 2.0 | 2026-06-09 |
+| spec-gated-workflow-playbook.md | 1.0 | 2026-06-12 |
+| orchestration-anti-patterns-playbook.md | 1.0 | 2026-06-12 |
+| security-stride-playbook.md | 1.0 | 2026-06-12 |
+| installation-test-playbook.md | 2.0 | 2026-06-19 |
+|| **this file** | 3.4 | 2026-06-11 |
 
 ---
 
@@ -229,13 +236,6 @@ Any of these triggers initiates an immediate playbook review:
 
 ---
 
-## 5. Version History (This File)
-
-| Version | Date | What changed |
-|---------|------|-------------|
-| 1.0 | 2026-05-30 | Initial creation — escape-driven updates, quarterly reviews, freshness triggers |
-| 2.1 | 2026-05-31 | Standardization pass: uniform versioning, cross-ref to Playbook Inventory, updated system version table, standard lessons entry |
-
 ---
 
 ## Appendix A: Playbook Freshness Command
@@ -279,5 +279,6 @@ done
 | Date | Project | What happened | Root cause | Fix applied |
 |------|---------|---------------|-----------|-------------|
 | 2026-06-10 | ObserveCo | 36-hour review found 6 UX traps, 3 coding patterns, 2 spec traps, 1 system pattern, 1 governance gap, 1 gate layer — all from a single payment flow bug cascade | Playbook system had 7 playbooks but no ui-testing-playbook; stale count was wrong | Updated stale count from 7 to 8. Added ui-testing-playbook to inventory. |
+| 2026-06-11 | ObserveCo | Phase 8 (Meta & Evolution) Gate 3 Diff Gate found 1 failure out of 12 items — test coverage for migration infrastructure, action log, and token analytics is critically missing (7 untested areas). Code is generic/not overfitted. | Sprint focused on implementation speed; test writing was deferred. Pattern: spec-driven features consistently skip test writing. | Add "New tests written" as a required Gate 3 item. Test coverage must be ≥80% for new endpoints and DB methods before passing Gate 3. |
 
 *"If a human catches something the playbooks missed, the playbooks were incomplete — update them before fixing the code." This meta-loop makes that rule real.*

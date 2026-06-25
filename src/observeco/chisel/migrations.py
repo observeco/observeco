@@ -8,13 +8,7 @@ Adds:
 5. turn_log table for per-turn token tracking
 """
 
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-
-from observeco.db import Database
+from __future__ import annotations
 
 MIGRATIONS = [
     # 1. Add mode column to chisel_trims
@@ -73,7 +67,10 @@ MIGRATIONS = [
     "CREATE INDEX IF NOT EXISTS idx_turn_log_ts ON turn_log(timestamp)",
 ]
 
+
 def run_migrations():
+    from observeco.db import Database
+
     db = Database()
     conn = db._get_conn()
     applied = 0
@@ -88,6 +85,7 @@ def run_migrations():
                 errors.append(f"{sql[:60]}...: {e}")
     conn.commit()
     return applied, errors
+
 
 if __name__ == "__main__":
     applied, errors = run_migrations()

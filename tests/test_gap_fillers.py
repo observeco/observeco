@@ -16,7 +16,7 @@ class TestCommercialAPI:
         assert router is not None
 
     def test_commercial_endpoints_exist(self):
-        resp = client.get("/api/checkout", headers=AUTH)
+        resp = client.get("/api/billing/status", headers=AUTH)
         assert resp.status_code in (200, 302)
 
 

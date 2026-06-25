@@ -30,78 +30,50 @@ AUTH_HEADER = {"X-ObserveCo-Token": TEST_TOKEN}
 
 class TestLicenseStatus:
     def test_status_trial_active_is_pro(self):
-        """3.1: GET /api/licenses/status with active trial shows is_pro=true."""
-        with patch("observeco.license.LICENSE_FILE",
-                   Path("/tmp/test_license_status_active.json")), \
-             patch("observeco.license.load") as mock_load:
-            state = LicenseState(
-                license_type="trial",
-                trial_token="trial_test",
-                trial_start=int(time.time()) - 100,
-                trial_end=int(time.time()) + 86400 * 20,
-                trial_consumed=False,
-            )
-            mock_load.return_value = state
-            resp = client.get("/api/licenses/status", headers=AUTH_HEADER)
+        """3.1: GET /api/licenses/status returns pro (beachhead: all features free)."""
+        resp = client.get("/api/licenses/status", headers=AUTH_HEADER)
         assert resp.status_code == 200
         data = resp.json()
+        # Beachhead: endpoint hardcodes pro — all features unlocked
         assert data["is_pro"] is True
-        assert data["license_type"] == "trial"
-        assert data["trial_days_remaining"] > 0
+        assert data["license_type"] == "pro"
 
     def test_status_trial_consumed_not_pro(self):
-        """3.2: GET /api/licenses/status with consumed trial is_pro=false."""
-        with patch("observeco.license.load") as mock_load:
-            state = LicenseState(
-                license_type="free",
-                trial_consumed=True,
-            )
-            mock_load.return_value = state
-            resp = client.get("/api/licenses/status", headers=AUTH_HEADER)
+        """3.2: GET /api/licenses/status returns pro (beachhead: all features free)."""
+        resp = client.get("/api/licenses/status", headers=AUTH_HEADER)
         assert resp.status_code == 200
         data = resp.json()
-        assert data["is_pro"] is False
-        assert data["license_type"] == "free"
+        # Beachhead: endpoint hardcodes pro — all features unlocked
+        assert data["is_pro"] is True
+        assert data["license_type"] == "pro"
 
     def test_status_pro_key_active(self):
-        """3.3: GET /api/licenses/status with Pro key shows is_pro=true."""
-        with patch("observeco.license.load") as mock_load:
-            state = LicenseState(
-                license_type="pro",
-                key="OBS-PRO-TEST1234-TEST56",
-                validated_at=int(time.time()),
-                plan="solo",
-            )
-            mock_load.return_value = state
-            resp = client.get("/api/licenses/status", headers=AUTH_HEADER)
+        """3.3: GET /api/licenses/status returns pro (beachhead: all features free)."""
+        resp = client.get("/api/licenses/status", headers=AUTH_HEADER)
         assert resp.status_code == 200
         data = resp.json()
+        # Beachhead: endpoint hardcodes pro — all features unlocked
         assert data["is_pro"] is True
-        assert data["plan"] == "solo"
+        assert data["license_type"] == "pro"
 
     def test_status_revoked_key_not_pro(self):
-        """3.4: GET /api/licenses/status with revoked key shows is_pro=false after revalidation."""
-        with patch("observeco.license.load") as mock_load:
-            state = LicenseState(
-                license_type="free",
-                trial_consumed=True,
-            )
-            mock_load.return_value = state
-            resp = client.get("/api/licenses/status", headers=AUTH_HEADER)
+        """3.4: GET /api/licenses/status returns pro (beachhead: all features free)."""
+        resp = client.get("/api/licenses/status", headers=AUTH_HEADER)
         assert resp.status_code == 200
         data = resp.json()
-        assert data["is_pro"] is False
+        # Beachhead: endpoint hardcodes pro — all features unlocked
+        assert data["is_pro"] is True
 
-    def test_status_no_auth_returns_401(self):
-        """3.5: GET /api/licenses/status without auth returns 401."""
+    def test_status_no_auth_returns_200(self):
+        """3.5: GET /api/licenses/status without auth returns 200 (public endpoint for badge)."""
         resp = client.get("/api/licenses/status")  # No token
-        assert resp.status_code == 401
+        assert resp.status_code == 200
 
-    def test_status_invalid_token_returns_401(self):
-        """3.6: GET /api/licenses/status with invalid token returns 401."""
+    def test_status_invalid_token_returns_200(self):
+        """3.6: GET /api/licenses/status with any token returns 200 (public endpoint for badge)."""
         resp = client.get("/api/licenses/status",
                           headers={"X-ObserveCo-Token": "invalid"})
-        assert resp.status_code == 401
+        assert resp.status_code == 200
 
 
 # ── 3.2 Admin Key Endpoints ───────────────────────────────────
@@ -186,8 +158,8 @@ class TestBadge:
 class TestLicenseCore:
     def test_ensure_trial_creates_token(self):
         """ensure_trial creates trial on first run."""
-        with patch("observeco.license.LICENSE_FILE",
-                   Path("/tmp/test_ensure_trial.json")), \
+        with patch("observeco.license._get_license_file",
+                   return_value=Path("/tmp/test_ensure_trial.json")), \
              patch("observeco.license.save"):
             state = LicenseState(license_type="free")
             result = ensure_trial(state)
@@ -217,29 +189,58 @@ class TestLicenseCore:
     def test_activate_key_sets_pro(self):
         """activate_key with valid key sets license_type='pro'."""
         with patch("observeco.license._validate_online") as mock_val, \
-             patch("observeco.license.save"):
+             patch("observeco.license.save"), \
+             patch("observeco.license._check_rate_limit", return_value=None), \
+             patch("observeco.license._record_attempt"):
             mock_val.return_value = {"valid": True, "plan": "solo"}
-            result = activate_key("OBS-PRO-TEST-KEY")
+            result = activate_key("OBS-PRO-A1B2C3D4-E5F6A7")
         assert result["status"] == "activated"
 
     def test_activate_key_invalid_key_returns_error(self):
         """activate_key with invalid key returns error."""
-        with patch("observeco.license._validate_online") as mock_val:
+        with patch("observeco.license._validate_online") as mock_val, \
+             patch("observeco.license._check_rate_limit", return_value=None):
             mock_val.return_value = {"valid": False, "error": "Invalid license key"}
-            result = activate_key("OBS-PRO-BAD-KEY")
+            result = activate_key("OBS-PRO-BADC0DE1-234567")
         assert result["status"] == "error"
 
     def test_activate_key_offline_fallback(self):
-        """activate_key when offline uses optimistic activation."""
+        """activate_key when offline rejects unknown keys (no optimistic activation for unknown keys)."""
         with patch("observeco.license._validate_online") as mock_val, \
-             patch("observeco.license.save"):
+             patch("observeco.license.save"), \
+             patch("observeco.license._check_rate_limit", return_value=None), \
+             patch("observeco.license._record_attempt"), \
+             patch("observeco.billing.validate_admin_key", return_value={"valid": False}):
             mock_val.return_value = {"offline": True, "message": "Could not reach validation server"}
-            result = activate_key("OBS-PRO-OFFLINE-KEY")
+            result = activate_key("OBS-PRO-00000000-AAAAAA")
+        assert result["status"] == "error"  # offline + unknown key = rejected
+        assert "unreachable" in result["message"]
+
+    def test_activate_key_offline_known_key(self):
+        """activate_key when offline with known admin key activates."""
+        with patch("observeco.license._validate_online") as mock_val, \
+             patch("observeco.license.save"), \
+             patch("observeco.license._check_rate_limit", return_value=None), \
+             patch("observeco.license._record_attempt"), \
+             patch("observeco.billing.validate_admin_key", return_value={"valid": True, "plan": "solo"}):
+            mock_val.return_value = {"offline": True, "message": "Could not reach validation server"}
+            result = activate_key("OBS-PRO-00000000-AAAAAA")
         assert result["status"] == "activated_offline"
+
+    def test_activate_key_rate_limited(self):
+        """activate_key rejects when rate limit exceeded."""
+        with patch("observeco.license._check_rate_limit", return_value="Too many attempts"):
+            result = activate_key("OBS-PRO-A1B2C3D4-E5F6A7")
+        assert result["status"] == "error"
+        assert "Too many" in result["message"]
 
     def test_start_trial_creates_trial(self):
         """start_trial creates fresh trial."""
-        with patch("observeco.license.save"):
+        with patch("observeco.license.save"), \
+             patch("observeco.license.load") as mock_load, \
+             patch("observeco.license.record_machine_activation"), \
+             patch("observeco.license._sync_trial_to_crm"):
+            mock_load.return_value = LicenseState(license_type="free")
             result = start_trial()
         assert result["status"] == "trial_started"
         assert result["days"] == 30

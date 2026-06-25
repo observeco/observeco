@@ -121,8 +121,8 @@ class TestProPreview:
 
     def test_checkout_redirects(self):
         """GET /api/checkout redirects or returns info."""
-        resp = client.get("/api/checkout", headers=AUTH)
-        assert resp.status_code in (200, 302)
+        resp = client.get("/api/checkout", headers=AUTH, follow_redirects=False)
+        assert resp.status_code in (200, 302, 307)
 
 
 # ── 4.7 Templates / HTML Markers ──────────────────────────────

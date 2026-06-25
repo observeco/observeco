@@ -29,12 +29,16 @@ db = Database()
 # ---------------------------------------------------------------------------
 
 def classify_restart(agent_name: str, error_message: str = "",
-                     exit_code: int = -1) -> tuple[str, str, str]:
+                     exit_code: int = -1) -> tuple[str | None, str, str]:
     """Classify a daemon restart into healthy/TOCTOU/crash.
 
     Returns (restart_type, snippet, evidence).
+    restart_type is one of: 'healthy', 'toctou', 'crash', or None if no
+    evidence of a restart type can be determined.
 
-    restart_type is one of: 'healthy', 'toctou', 'crash'
+    IMPORTANT: None means "we detected the agent is dead but have no evidence
+    of what caused it." This is NOT the same as a healthy restart. The caller
+    must NOT log a restart entry when type is None — dead != restarted.
     """
     # 1. Try to read agent logs for contextual evidence
     crash_log_path = _find_agent_log(agent_name)
@@ -76,25 +80,43 @@ def classify_restart(agent_name: str, error_message: str = "",
             if ".stat()" not in log_lines and "FileNotFoundError" not in log_lines:
                 return ("crash", log_lines[:500], evidence)
 
-    # 6. Duration heuristic: no data — default to healthy for KeepAlive patterns
-    return ("healthy", log_lines[:500], evidence)
+    # 6. No evidence found — return None.
+    # The caller skips logging when rtype is None, so this death is invisible
+    # in the restart quality tab. That's honest: we don't know why it died.
+    # Upgrade path: add duration_ms parameter and classify sub-second restarts
+    # as healthy even without log evidence.
+    return (None, log_lines[:500], evidence)
 
 
 def _find_agent_log(agent_name: str) -> Path | None:
-    """Find the most recent log file for an agent."""
+    """Find the most recent log file for an agent.
+
+    Uses precise naming patterns to avoid false matches (e.g. 'kanban_ack.log'
+    matching 'kanban'). Searches in order of preference:
+      1. {agent_name}_agent.log   (e.g. dreamer_agent.log)
+      2. {agent_name}.log         (e.g. gateway.log)
+      3. {agent_name}_daemon.log  (e.g. dreamer_daemon.log)
+    """
     log_dirs = [
         hermes_home() / "logs",
         Path("/var/log"),
         Path("/tmp"),
     ]
+    # Precise patterns — no fuzzy globs
+    patterns = [
+        f"{agent_name}_agent.log",
+        f"{agent_name}.log",
+        f"{agent_name}_daemon.log",
+    ]
     for d in log_dirs:
         if not d.exists():
             continue
-        candidates = sorted(d.glob(f"{agent_name}*.log"),
-                            key=lambda p: p.stat().st_mtime if p.exists() else 0,
-                            reverse=True)
-        if candidates:
-            return candidates[0]
+        for pat in patterns:
+            candidates = sorted(d.glob(pat),
+                                key=lambda p: p.stat().st_mtime if p.exists() else 0,
+                                reverse=True)
+            if candidates:
+                return candidates[0]
     return None
 
 
@@ -167,23 +189,26 @@ def run_check(watch: bool = False) -> None:
                 # obs-spec-018: Classify the restart before recording failure
                 rtype, snippet, evidence = classify_restart(agent.name, error)
 
-                # Log to restart_log regardless
-                db.log_restart(
-                    agent_name=agent.name,
-                    restart_type=rtype,
-                    duration_ms=int(latency),
-                    crash_log_snippet=snippet,
-                    evidence=evidence,
-                )
+                # Only log restart when we have positive evidence of a type.
+                # None means "agent is dead but we can't determine cause" —
+                # that's NOT the same as a restart. Dead != restarted.
+                if rtype is not None:
+                    db.log_restart(
+                        agent_name=agent.name,
+                        restart_type=rtype,
+                        duration_ms=int(latency),
+                        crash_log_snippet=snippet,
+                        evidence=evidence,
+                    )
 
-                # Only record circuit breaker failure for real crashes
+                # Circuit breaker logic
                 if rtype == "crash":
                     cb = db.record_failure(agent.name, error)
                     if cb["tripped"]:
                         db.log_error(agent.name, "circuit_tripped",
                                      f"Circuit breaker tripped after {cb['failures']} failures", "error")
-                else:
-                    # TOCTOU or healthy restart: auto-reset breaker so they don't accumulate
+                elif rtype in ("healthy", "toctou"):
+                    # Known safe restart: auto-reset breaker so they don't accumulate
                     db.reset_breaker(agent.name)
 
             results.append({

@@ -1,0 +1,90 @@
+{
+  "_meta": {
+    "description": "Severity classification for job health signal types. P0=total outage/data loss (immediate alert). P1=partial outage/degraded data (alert within 5min). P2=performance degraded (alert within 30min). P3=warning threshold (log only, no alert).",
+    "version": "1.0.0"
+  },
+  "severity_levels": {
+    "P0": {
+      "label": "critical",
+      "alert_seconds": 0,
+      "description": "Total outage or data loss risk — immediate alert"
+    },
+    "P1": {
+      "label": "high",
+      "alert_seconds": 300,
+      "description": "Partial outage or degraded data — alert within 5 minutes"
+    },
+    "P2": {
+      "label": "medium",
+      "alert_seconds": 1800,
+      "description": "Performance degraded — alert within 30 minutes"
+    },
+    "P3": {
+      "label": "low",
+      "alert_seconds": null,
+      "description": "Warning threshold — log only, no alert"
+    }
+  },
+  "signal_mapping": {
+    "empty_output": {
+      "severity": "P1",
+      "reason": "Job produces no output — partial data outage. Two consecutive empty runs signal probable failure."
+    },
+    "stale_output": {
+      "severity": "P2",
+      "reason": "Job output identical to previous run — data staleness. Input-change aware to avoid false positives."
+    },
+    "corrupt_output": {
+      "severity": "P1",
+      "reason": "Output is malformed (invalid JSON, truncated) — downstream consumers receive garbage."
+    },
+    "error_in_output": {
+      "severity": "P1",
+      "reason": "Output contains error text (403, rate limit, timeout) — data is polluted."
+    },
+    "volume_collapse": {
+      "severity": "P1",
+      "reason": "Output volume dropped >80% below 14-day median + 3×IQR — significant data loss."
+    },
+    "progressive_shrinkage": {
+      "severity": "P2",
+      "reason": "Output size trending downward over 28-day window — gradual degradation."
+    },
+    "latency_degradation": {
+      "severity": "P2",
+      "reason": "Run duration > median + 3×MAD — performance degradation. Escalates to P1 if sustained 2+ runs."
+    },
+    "output_duplication": {
+      "severity": "P2",
+      "reason": "Five consecutive identical outputs despite input changes — idempotency failure."
+    },
+    "concurrent_overlap": {
+      "severity": "P1",
+      "reason": "Two instances running simultaneously — data corruption risk."
+    },
+    "cascading_failure": {
+      "severity": "P0",
+      "reason": "Dependent job processed bad upstream data — compound failure across pipeline."
+    },
+    "temp_file_leak": {
+      "severity": "P3",
+      "reason": "Orphan temp files accumulating over time — low-priority resource waste."
+    },
+    "zombie_process": {
+      "severity": "P2",
+      "reason": "Orphaned child processes still running after parent exited — resource accumulation."
+    },
+    "config_drift": {
+      "severity": "P2",
+      "reason": "Job config hash changed without known deploy — may cause gradual degradation."
+    },
+    "output_path_drift": {
+      "severity": "P1",
+      "reason": "Job writes output to unexpected location — data produced but not consumed by pipeline."
+    },
+    "schedule_anomaly": {
+      "severity": "P2",
+      "reason": "Job ran at unexpected time or missed expected runs — data staleness risk."
+    }
+  }
+}

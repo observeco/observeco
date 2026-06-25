@@ -41,7 +41,9 @@ class GateResult:
 
 def _get_app():
     """Lazy-import the FastAPI app for TestClient checks."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent / "src"))
+    _src = Path(__file__).resolve().parent.parent.parent.parent / "src"
+    if _src.is_dir() and str(_src) not in sys.path:
+        sys.path.insert(0, str(_src))
     from fastapi.testclient import TestClient
 
     from observeco.dashboard.server import app

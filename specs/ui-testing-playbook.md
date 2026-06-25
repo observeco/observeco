@@ -41,7 +41,7 @@ This document does not replace the UX playbook (which tests human perception). I
 
 ---
 
-## 2. The Nine UI Dimensions
+## 2. The Nine UI Dimensions (D1–D9, with D6 split into Hard + Configurable)
 
 All UI consistency failures fall into one of nine dimensions:
 

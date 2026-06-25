@@ -102,7 +102,7 @@ def update(
     try:
         resp.raise_for_status()
         return resp.json()
-    except httpx.HTTPStatusError as e:
+    except httpx.HTTPStatusError:
         # Graceful degradation: log the error, return empty result
         # This prevents schema mismatches (e.g. missing column) from breaking
         # the calling endpoint with a 500 error.

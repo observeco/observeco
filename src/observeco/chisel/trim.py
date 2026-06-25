@@ -6,11 +6,14 @@ estimates tokens, and reports savings.
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
+from observeco.dirs import hermes_home
 from rich import box
 from rich.console import Console
 from rich.table import Table
@@ -23,17 +26,39 @@ db = Database()
 # Rough token estimation: ~4 chars per token for English text
 CHARS_PER_TOKEN = 4.0  # Rough token estimation: ~4 chars per token for English text
 
-SECTIONS = {
-    "identity": ["identity", "role", "persona", "who you are", "you are", "i am"],
-    "skills": ["skill", "tool", "command", "function", "available action", "you can use",
-               "you have access to"],
-    "memory": ["memory", "context", "history", "previous", "conversation", "recall",
-               "user profile", "personal info"],
-    "tools": ["tool description", "tool schema", "api spec", "json schema", "parameter",
-              "endpoint", "request format"],
-    "guidance": ["guideline", "rule", "instruction", "constraint", "policy", "format",
-                 "output format", "do not", "never", "always", "must", "should"],
-}
+def _load_sections() -> dict[str, list[str]]:
+    """Load section keywords from config_format_registry. Falls back to defaults."""
+    from observeco.db import Database
+    try:
+        db = Database()
+        formats = db.get_config_formats()
+        db.close()
+        # Merge keywords from all enabled frameworks (first match wins)
+        merged: dict[str, list[str]] = {}
+        for fmt in formats:
+            for section, keywords in fmt.get("section_keywords", {}).items():
+                if section not in merged:
+                    merged[section] = keywords
+        if merged:
+            return merged
+    except Exception:
+        pass
+    # Fallback: hardcoded defaults
+    return {
+        "identity": ["identity", "role", "persona", "who you are", "you are", "i am"],
+        "skills": ["skill", "tool", "command", "function", "available action", "you can use",
+                   "you have access to"],
+        "memory": ["memory", "context", "history", "previous", "conversation", "recall",
+                   "user profile", "personal info"],
+        "tools": ["tool description", "tool schema", "api spec", "json schema", "parameter",
+                  "endpoint", "request format"],
+        "guidance": ["guideline", "rule", "instruction", "constraint", "policy", "format",
+                     "output format", "do not", "never", "always", "must", "should"],
+    }
+
+
+# Load sections from registry (cached at import time)
+SECTIONS = _load_sections()
 
 
 def _classify_line(line: str) -> str:
@@ -43,7 +68,8 @@ def _classify_line(line: str) -> str:
         for kw in keywords:
             if kw in lower:
                 return section
-    return "guidance"  # Default catch-all
+    # Default to guidance for unmatched lines
+    return "guidance"
 
 
 def _estimate_tokens(text: str) -> int:
@@ -60,9 +86,7 @@ def _analyse_prompt(prompt: str) -> dict:
     total_tokens = _estimate_tokens(prompt)
 
     lines = prompt.split("\n")
-    section_texts: dict[str, list[str]] = {
-        "identity": [], "skills": [], "memory": [], "tools": [], "guidance": [],
-    }
+    section_texts: dict[str, list[str]] = {s: [] for s in SECTIONS}
 
     current_section = "guidance"
     for line in lines:
@@ -70,7 +94,7 @@ def _analyse_prompt(prompt: str) -> dict:
         if re.match(r"^#{1,4}\s+", line):
             current_section = classified
         elif any(line.lower().startswith(f"## {s}") or line.lower().startswith(f"# {s}")
-                 for s in ["identity", "skills", "memory", "tools", "guidance"]):
+                 for s in SECTIONS):
             for s in SECTIONS:
                 if line.lower().startswith(("#", "##")) and any(kw in line.lower() for kw in SECTIONS[s]):
                     current_section = s
@@ -307,7 +331,11 @@ def run_skills(compress: bool = False, compress_limit: int = 0, dry_run: bool = 
     Walks ~/.hermes/skills/, finds SKILL.md files, parses YAML frontmatter,
     measures token counts, and reports a ranked table with per-category totals.
     """
-    skills_dir = Path.home() / ".hermes" / "skills"
+    hh = hermes_home()
+    if hh is None:
+        console.print("[yellow]Hermes home not found — set OBSERVECO_HERMES_HOME[/yellow]")
+        return
+    skills_dir = hh / "skills"
     if not skills_dir.is_dir():
         console.print(f"[yellow]Skills directory not found: {skills_dir}[/yellow]")
         return
@@ -552,20 +580,24 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
         soul_path = Path(filepath)
     else:
         # Auto-discover from profiles directory
-        profiles_dir = Path.home() / ".hermes" / "profiles"
+        hh = hermes_home()
+        if hh is None:
+            raise FileNotFoundError(
+                f"Could not find SOUL.md for agent '{agent_name}'. "
+                f"Set OBSERVECO_HERMES_HOME or ensure ~/.hermes/ exists."
+            )
+        profiles_dir = hh / "profiles"
         if (profiles_dir / agent_name / "SOUL.md").exists():
             soul_path = profiles_dir / agent_name / "SOUL.md"
-        elif (Path.home() / ".hermes" / "profiles" / agent_name / "SOUL.md").exists():
-            soul_path = Path.home() / ".hermes" / "profiles" / agent_name / "SOUL.md"
         else:
             # Check root .hermes
-            root_soul = Path.home() / ".hermes" / "SOUL.md"
+            root_soul = hh / "SOUL.md"
             if agent_name == "hermes" and root_soul.exists():
                 soul_path = root_soul
             else:
                 # Search broadly
                 import glob as glob_mod
-                matches = list(glob_mod.glob(str(Path.home() / ".hermes" / "**" / "SOUL.md"), recursive=True))
+                matches = list(glob_mod.glob(str(hh / "**" / "SOUL.md"), recursive=True))
                 # Filter matches by proximity to agent_name in path
                 agent_matches = [m for m in matches if agent_name in m]
                 if agent_matches:
@@ -573,7 +605,7 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
                 else:
                     raise FileNotFoundError(
                         f"Could not find SOUL.md for agent '{agent_name}'. "
-                        f"Searched: ~/.hermes/profiles/{agent_name}/SOUL.md"
+                        f"Searched: {profiles_dir / agent_name / 'SOUL.md'}"
                     )
 
     if not soul_path.exists():
@@ -676,6 +708,25 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
     )
     # Also log to compress_log for the dashboard (Budget Planner / Brain Analysis)
     _log_compress_result(agent_name, mode, before_tokens, after_tokens, savings, savings_pct, soul_path, backup_path)
+
+    # §21: Log to unified action_log
+    from observeco.tracking.tokens import _estimate_cost
+    try:
+        db_local.log_action(
+            agent_name=agent_name,
+            action_type="compress",
+            action_detail=(
+                "SOUL.md compression \u2014 already condensed (no further savings)" if savings_pct <= 5
+                else f"{mode.capitalize()} compression: {before_tokens:,} \u2192 {after_tokens:,} tok ({savings_pct:+.1f}%)"
+            ),
+            tokens_saved=savings if savings_pct > 5 else 0,
+            cost_saved=_estimate_cost(savings) if savings_pct > 5 else 0,
+            status="no_action" if savings_pct <= 5 else "success",
+            metadata=json.dumps({"mode": mode, "before": before_tokens, "after": after_tokens, "savings_pct": savings_pct}),
+            triggered_by="cli",
+        )
+    except Exception:
+        pass  # fire-and-forget
 
     return {
         "status": "ok",

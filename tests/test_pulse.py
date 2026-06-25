@@ -55,9 +55,9 @@ def test_classify_restart_healthy_exit_code_0():
 
 
 def test_classify_restart_healthy_keepalive_default():
-    """No error info and no crash signals should default to 'healthy'."""
+    """No error info and no crash signals should return None (no evidence)."""
     rtype, _, _ = classify_restart("test-agent", error_message="", exit_code=-1)
-    assert rtype == "healthy"
+    assert rtype is None  # No evidence found — caller skips logging
 
 
 def test_classify_restart_toctou_file_not_found_stat():

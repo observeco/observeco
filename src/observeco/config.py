@@ -11,29 +11,35 @@ Reads agents from:
 from __future__ import annotations
 
 import json
-import os
 import re
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
 from platformdirs import user_data_dir
 
+from observeco.dirs import hermes_home
 
-def hermes_home() -> Path:
-    """Return the configured Hermes home directory.
+# ── Lazy path accessors (call-time, not import-time) ──────────────────
 
-    Override via OBSERVECO_HERMES_HOME env var. Defaults to ~/.hermes.
-    """
-    override = os.environ.get("OBSERVECO_HERMES_HOME")
-    if override:
-        return Path(override).expanduser().resolve()
-    return Path.home() / ".hermes"
+def _hermes_config_path() -> Path:
+    """Return hermes_home() / config.yaml, or raise if Hermes not found."""
+    hh = hermes_home()
+    if hh is None:
+        raise FileNotFoundError("Hermes home not found — set OBSERVECO_HERMES_HOME")
+    return hh / "config.yaml"
 
 
-_HERMES_CONFIG_PATH = hermes_home() / "config.yaml"
-_HERMES_AGENTS_DIR = hermes_home() / "agents"
+def _hermes_agents_dir() -> Path:
+    """Return hermes_home() / agents, or raise if Hermes not found."""
+    hh = hermes_home()
+    if hh is None:
+        raise FileNotFoundError("Hermes home not found — set OBSERVECO_HERMES_HOME")
+    return hh / "agents"
+
+
 _AGENTS_JSON = Path(user_data_dir("observeco", "observeco")) / "agents.json"
 
 
@@ -50,11 +56,6 @@ class ObserveConfig:
     agents: list[AgentConfig] = field(default_factory=list)
 
 
-_HERMES_CONFIG_PATH = hermes_home() / "config.yaml"
-_HERMES_AGENTS_DIR = hermes_home() / "agents"
-_AGENTS_JSON = Path(user_data_dir("observeco", "observeco")) / "agents.json"
-
-
 def _load_hermes_agents() -> list[AgentConfig]:
     """Detect Hermes agents from profiles/ directory (SOUL.md) and agents/ directory.
 
@@ -68,6 +69,8 @@ def _load_hermes_agents() -> list[AgentConfig]:
     excluded = _get_excluded_set()
 
     hermes_base = hermes_home()
+    if hermes_base is None:
+        return agents
 
     # Method 1 (preferred): Scan $(HERMES_HOME)/profiles/ for SOUL.md — the canonical source
     hermes_profiles_dir = hermes_base / "profiles"
@@ -83,8 +86,9 @@ def _load_hermes_agents() -> list[AgentConfig]:
                                                    config_path=str(soul)))
 
     # Method 2 (fallback): Scan ~/.hermes/agents/ for SOUL.md
-    if _HERMES_AGENTS_DIR.exists():
-        for entry in sorted(_HERMES_AGENTS_DIR.iterdir()):
+    agents_dir = _hermes_agents_dir()
+    if agents_dir.exists():
+        for entry in sorted(agents_dir.iterdir()):
             if entry.is_dir():
                 soul = entry / "SOUL.md"
                 if soul.exists() and entry.name not in seen and entry.name not in excluded:
@@ -116,14 +120,17 @@ def _load_openclaw_agents() -> list[AgentConfig]:
             if "openclaw" in text:
                 name = soul.parent.name  # "workspace" — but we need the actual agent name
                 # Try to extract name from SOUL content
-                name = "kepler" if "kepler" in soul.read_text().lower() else name
+                name = soul.parent.name
                 if name not in seen and name not in excluded:
                     seen.add(name)
                     agents.append(AgentConfig(name=name, framework="openclaw",
                                                config_path=str(soul)))
 
     # Method 2: Check $(HERMES_HOME)/profiles/ for SOUL.md with OpenClaw ownership markers
-    profiles_dir = hermes_home() / "profiles"
+    hh = hermes_home()
+    if hh is None:
+        return agents
+    profiles_dir = hh / "profiles"
     if profiles_dir.exists():
         for entry in profiles_dir.iterdir():
             soul = entry / "SOUL.md"
@@ -139,17 +146,14 @@ def _load_openclaw_agents() -> list[AgentConfig]:
                         agents.append(AgentConfig(name=name, framework="openclaw",
                                                    config_path=str(soul)))
 
-    # Method 3: Legacy — AGENTS.md / SOUL.md in home or cwd
+    # Method 3: Legacy — AGENTS.md / SOUL.md in cwd
     search_paths = [
-        Path.home() / "AGENTS.md",
-        Path.home() / "SOUL.md",
         Path.cwd() / "AGENTS.md",
         Path.cwd() / "SOUL.md",
     ]
     for sp in search_paths:
         if sp.exists() and "openclaw" in sp.read_text().lower():
-            text = sp.read_text().lower()
-            name = "kepler" if "kepler" in text else sp.stem.lower()
+            name = sp.stem.lower()
             if name not in seen and name not in excluded:
                 seen.add(name)
                 agents.append(AgentConfig(name=name, framework="openclaw",
@@ -213,10 +217,13 @@ def _scan_launchd_agents() -> list[AgentConfig]:
         if result.returncode != 0:
             return []
         for line in result.stdout.splitlines():
-            parts = line.split("\t")
-            if len(parts) < 3:
+            try:
+                parts = line.split("\t")
+                if len(parts) < 3:
+                    continue
+                label = parts[2].strip()
+            except (IndexError, ValueError, AttributeError):
                 continue
-            label = parts[2].strip()
             # Only include known agent patterns
             if any(label.startswith(p) for p in
                    ["ai.hermes.", "ai.openclaw.", "com.observeco.",
@@ -264,6 +271,8 @@ def _scan_docker_agents() -> list[AgentConfig]:
 
 def _scan_systemd_agents() -> list[AgentConfig]:
     """Scan systemd for agent-like services. Returns [] if not Linux."""
+    if sys.platform != "linux":
+        return []
     agents: list[AgentConfig] = []
     excluded = _get_excluded_set()
     try:

@@ -15,20 +15,39 @@ Usage:
 """
 
 import json
+import os
 import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-# ── Config ──────────────────────────────────────────────────────────────────
+from observeco.dirs import hermes_home
 
-HERMES_HOME = Path.home() / ".hermes"
-CONFIG_PATH = HERMES_HOME / "config.yaml"
-PROFILES_DIR = HERMES_HOME / "profiles"
-SKILLS_DIR = HERMES_HOME / "skills"
-SIGNALS_DIR = HERMES_HOME / "signals"
-INTELLIGENCE_DIR = HERMES_HOME / "intelligence"
+# ── Lazy path accessors (call-time, not import-time) ──────────────────
+
+def _hermes_home() -> Path | None:
+    return hermes_home()
+
+def _config_path() -> Path | None:
+    hh = hermes_home()
+    return hh / "config.yaml" if hh else None
+
+def _profiles_dir() -> Path | None:
+    hh = hermes_home()
+    return hh / "profiles" if hh else None
+
+def _skills_dir() -> Path | None:
+    hh = hermes_home()
+    return hh / "skills" if hh else None
+
+def _signals_dir() -> Path | None:
+    hh = hermes_home()
+    return hh / "signals" if hh else None
+
+def _intelligence_dir() -> Path | None:
+    hh = hermes_home()
+    return hh / "intelligence" if hh else None
 
 
 # ── Types ───────────────────────────────────────────────────────────────────
@@ -83,8 +102,13 @@ def _count_tokens(text: str) -> int:
     return max(1, int(len(text) / 4))
 
 
-def _load_config(path: Path = CONFIG_PATH) -> Optional[dict]:
+def _load_config(path: Path | None = None) -> Optional[dict]:
     """Load and parse config.yaml. Returns None on failure."""
+    if path is None:
+        p = _config_path()
+        if p is None:
+            return None
+        path = p
     if not path.exists():
         return None
     try:
@@ -163,6 +187,7 @@ def check_duplicate_prompts(cfg: dict) -> list[Finding]:
                 description=f"Duplicate paragraph ({tok} tok) found in {len(topic_ids)} topics: {', '.join(topic_ids)}",
                 detail=f"\"{para_text[:80]}...\" — appears in topics {', '.join(topic_ids)}",
                 estimated_waste_tok=tok * (len(topic_ids) - 1),
+                auto_fixable=True,
             ))
 
     return findings
@@ -200,7 +225,7 @@ def check_cache_ttl(cfg: dict) -> list[Finding]:
                    f"~100% at 30m. Each miss costs ~3x on the cached prefix.",
             estimated_waste_tok=2000,
             auto_fixable=True,
-            fix_command=f"Set prompt_caching.cache_ttl to 30m in {CONFIG_PATH}",
+            fix_command=f"Set prompt_caching.cache_ttl to 30m in config.yaml",
         ))
 
     return findings
@@ -246,7 +271,10 @@ def check_orphaned_agents(cfg: dict) -> list[Finding]:
     """Check if channel prompts reference agents with no workspace/profile."""
     findings = []
     channel_prompts = cfg.get("telegram", {}).get("channel_prompts", {})
-    profiles_dir = PROFILES_DIR
+    pd = _profiles_dir()
+    if pd is None:
+        return findings
+    profiles_dir = pd
 
     # Extract agent names from "You are [Name]" patterns in prompts
     mentioned_agents = set()
@@ -267,7 +295,11 @@ def check_orphaned_agents(cfg: dict) -> list[Finding]:
             continue
         profile_dir = profiles_dir / agent_name
         has_profile = profile_dir.exists()
-        has_workspace = (Path.home() / ".openclaw" / "workspace" / f"{agent_name}.md").exists()
+        has_workspace = False
+        from observeco.dirs import openclaw_home
+        oc = openclaw_home()
+        if oc is not None:
+            has_workspace = (oc / "workspace" / f"{agent_name}.md").exists()
         if not has_profile and not has_workspace:
             findings.append(Finding(
                 check="orphaned_agents",
@@ -285,8 +317,13 @@ def check_orphaned_agents(cfg: dict) -> list[Finding]:
 # ── Scanner ─────────────────────────────────────────────────────────────────
 
 
-def scan_config(config_path: Path = CONFIG_PATH) -> ScanReport:
+def scan_config(config_path: Path | None = None) -> ScanReport:
     """Run all checks against a Hermes config.yaml. Returns ScanReport."""
+    if config_path is None:
+        cp = _config_path()
+        if cp is None:
+            return ScanReport(config_path="(none)")
+        config_path = cp
     start_ts = time.monotonic()
     report = ScanReport(config_path=str(config_path))
 
@@ -327,8 +364,24 @@ def scan_config(config_path: Path = CONFIG_PATH) -> ScanReport:
 # ── Fix operations ──────────────────────────────────────────────────────────
 
 
-def apply_fix(finding: Finding, config_path: Path = CONFIG_PATH) -> bool:
+def _dump_yaml_safe(cfg: dict, config_path: Path) -> bool:
+    """Write config dict back to YAML. Returns True on success."""
+    try:
+        import yaml
+        text = yaml.dump(cfg, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        config_path.write_text(text, encoding="utf-8")
+        return True
+    except Exception:
+        return False
+
+
+def apply_fix(finding: Finding, config_path: Path | None = None) -> bool:
     """Apply an auto-fixable finding. Returns True if successful."""
+    if config_path is None:
+        cp = _config_path()
+        if cp is None:
+            return False
+        config_path = cp
     if not finding.auto_fixable:
         return False
 
@@ -397,6 +450,72 @@ def apply_fix(finding: Finding, config_path: Path = CONFIG_PATH) -> bool:
         count_after = new_text.count("Reasoning Standards (Mandatory)")
         return count_after == 1  # exactly one copy, in system_prompt
 
+    if finding.check == "duplicate_prompts" and "Reasoning Standards" not in finding.description:
+        # Generic duplicate: remove redundant paragraphs from the smaller topic's prompt
+        # Uses yaml.safe_load + dict manipulation + yaml.dump (safe, no raw-text regex)
+        channel_prompts = cfg.get("telegram", {}).get("channel_prompts", {})
+        if not channel_prompts or len(channel_prompts) < 2:
+            return False
+
+        import re as _re
+
+        # Parse the topic IDs from the finding description
+        m = _re.search(r"found in \d+ topics: ([\d, -]+)", finding.description)
+        if not m:
+            return False
+        topic_ids_raw = [t.strip() for t in m.group(1).split(",")]
+
+        # Normalize to match YAML-parsed keys (integers)
+        topic_ids = []
+        for tid in topic_ids_raw:
+            try:
+                topic_ids.append(int(tid))
+            except ValueError:
+                topic_ids.append(tid)
+
+        # Find the shared paragraph prefix from the detail
+        detail_m = _re.search(r'"(.+?)"', finding.detail)
+        if not detail_m:
+            return False
+        para_prefix = detail_m.group(1)
+
+        # Find which topic has the least content (remove from the smaller one)
+        topic_sizes = {}
+        for tid in topic_ids:
+            prompt = channel_prompts.get(tid, channel_prompts.get(str(tid), ""))
+            topic_sizes[tid] = len(prompt)
+
+        keep_topic = max(topic_sizes, key=lambda k: topic_sizes[k])
+
+        # Modify the parsed dict (safe — no raw-text regex)
+        changed = False
+        for tid in topic_ids:
+            if tid == keep_topic:
+                continue
+
+            prompt = channel_prompts.get(tid, channel_prompts.get(str(tid), ""))
+            if not prompt:
+                continue
+
+            # Find the paragraph in this prompt and remove it
+            paragraphs = _re.split(r'\n(?=\n## )|\n\n', prompt)
+            new_paragraphs = []
+            removed = False
+            for para in paragraphs:
+                normalized = _re.sub(r'\s+', ' ', para).strip()
+                if not removed and para_prefix[:40] in normalized and len(normalized) > 100:
+                    removed = True
+                    continue
+                new_paragraphs.append(para)
+
+            if removed:
+                cfg['telegram']['channel_prompts'][tid] = '\n\n'.join(new_paragraphs)
+                changed = True
+
+        if changed:
+            return _dump_yaml_safe(cfg, config_path)
+        return False
+
     if finding.check == "low_cache_ttl":
         try:
             raw_text = config_path.read_text(encoding="utf-8")
@@ -456,32 +575,36 @@ def apply_fix(finding: Finding, config_path: Path = CONFIG_PATH) -> bool:
 
     if finding.check == "orphaned_agents":
         # Remove orphan agent identity lines from channel prompts
-        try:
-            raw_text = config_path.read_text(encoding="utf-8")
-        except Exception:
-            return False
-
-        # Simple approach: find and redact "You are {agent_name}" in channel prompt strings
-        agent_match = __import__("re").search(r"'(\w+)' with no workspace", finding.description)
+        # Uses yaml.safe_load + dict manipulation + yaml.dump (safe, no raw-text regex)
+        agent_match = __import__("re").search(r"'(\w+)' with no workspace profile", finding.description)
         if not agent_match:
             return False
         agent_name = agent_match.group(1)
 
-        # Redact mentions of this agent in channel prompt strings
-        new_text = raw_text.replace(
-            f" You are {agent_name} \\u2014",
-            " [redacted] \\u2014"
-        ).replace(
-            f"You are {agent_name} \\u2014",
-            "[redacted] \\u2014"
-        ).replace(
-            f"You are {agent_name}. ",
-            "[redacted]. "
-        )
+        import re as _re
 
-        if new_text != raw_text:
-            config_path.write_text(new_text, encoding="utf-8")
-            return True
+        channel_prompts = cfg.get('telegram', {}).get('channel_prompts', {})
+        if not channel_prompts:
+            return False
+
+        changed = False
+        for tid in list(channel_prompts.keys()):
+            prompt = channel_prompts[tid]
+            if not prompt or agent_name.lower() not in prompt.lower():
+                continue
+            # Remove "You are {agent_name} ..." identity paragraphs
+            paragraphs = prompt.split('\n\n')
+            new_paragraphs = []
+            for para in paragraphs:
+                if _re.search(rf'You are {_re.escape(agent_name)}[\s]', para, _re.IGNORECASE):
+                    changed = True
+                    continue
+                new_paragraphs.append(para)
+            if changed:
+                cfg['telegram']['channel_prompts'][tid] = '\n\n'.join(new_paragraphs)
+
+        if changed:
+            return _dump_yaml_safe(cfg, config_path)
         return False
 
     return False
@@ -490,20 +613,14 @@ def apply_fix(finding: Finding, config_path: Path = CONFIG_PATH) -> bool:
 # ── CLI entry point ─────────────────────────────────────────────────────────
 
 
-def run_scan(hermes_home: Optional[str] = None, json_output: bool = False,
+def run_scan(hermes_home_path: Optional[str] = None, json_output: bool = False,
              fix: bool = False) -> ScanReport:
     """Run scan and print results. Called from observeco chisel config."""
-    global HERMES_HOME, CONFIG_PATH, PROFILES_DIR, SKILLS_DIR, SIGNALS_DIR, INTELLIGENCE_DIR
+    if hermes_home_path:
+        # Override env var so lazy accessors pick it up
+        os.environ["OBSERVECO_HERMES_HOME"] = hermes_home_path
 
-    if hermes_home:
-        HERMES_HOME = Path(hermes_home)
-        CONFIG_PATH = HERMES_HOME / "config.yaml"
-        PROFILES_DIR = HERMES_HOME / "profiles"
-        SKILLS_DIR = HERMES_HOME / "skills"
-        SIGNALS_DIR = HERMES_HOME / "signals"
-        INTELLIGENCE_DIR = HERMES_HOME / "intelligence"
-
-    report = scan_config(CONFIG_PATH)
+    report = scan_config()
 
     if json_output:
         print(json.dumps(report.to_dict(), indent=2))
@@ -514,7 +631,7 @@ def run_scan(hermes_home: Optional[str] = None, json_output: bool = False,
         auto_fixed = 0
         for f in report.findings:
             if f.auto_fixable:
-                success = apply_fix(f, CONFIG_PATH)
+                success = apply_fix(f)
                 if success:
                     auto_fixed += 1
         if auto_fixed > 0:

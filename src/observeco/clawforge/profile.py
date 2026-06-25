@@ -14,6 +14,7 @@ from rich.console import Console
 from rich.table import Table
 
 from observeco.db import Database
+from observeco.dirs import hermes_home
 
 console = Console()
 db = Database()
@@ -26,7 +27,10 @@ def _find_openclaw_agent(agent_name: Optional[str] = None) -> list[dict]:
     agents = []
 
     # ~/.hermes/profiles/<name>/SOUL.md
-    profiles_dir = Path.home() / ".hermes" / "profiles"
+    hh = hermes_home()
+    if hh is None:
+        return agents
+    profiles_dir = hh / "profiles"
     if profiles_dir.exists():
         for entry in profiles_dir.iterdir():
             if entry.is_dir():
@@ -39,7 +43,7 @@ def _find_openclaw_agent(agent_name: Optional[str] = None) -> list[dict]:
                     })
 
     # Also check ~/.hermes/agents/
-    agents_dir = Path.home() / ".hermes" / "agents"
+    agents_dir = hh / "agents"
     if agents_dir.exists():
         for entry in agents_dir.iterdir():
             if entry.suffix == ".md" or entry.is_dir():

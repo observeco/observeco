@@ -81,7 +81,7 @@ CREATE TABLE products (
 INSERT INTO products (name, slug, stripe_price_id, features, trial_days, price_display)
 VALUES
   ('Free', 'free', NULL, '["fleet_view", "pulse_check", "circuit_breakers", "token_breakdown", "drift_trend", "error_history", "heal_button", "alerts", "memory_garden", "cli_tools"]', 0, '$0'),
-  ('Solo', 'solo', 'price_solo_monthly', '["free_features", "pro_badge", "license_validation", "stripe_checkout"]', 30, '$9/mo');
+  ('Solo', 'solo', '<real-price-id-from-stripe>', '["free_features", "pro_badge", "license_validation", "stripe_checkout"]', 30, '$9/mo');
 ```
 
 ### Table: `licenses`
@@ -94,8 +94,9 @@ CREATE TABLE licenses (
   name TEXT,
   license_key TEXT UNIQUE NOT NULL,
   status TEXT DEFAULT 'trialing' CHECK (status IN ('trialing', 'active', 'expired', 'cancelled')),
-  trial_ends_at TIMESTAMPTZ,
-  expires_at TIMESTAMPTZ,
+  trial_ends_at TIMESTAMPTZ,         -- set when status='trialing'; NULL otherwise
+  expires_at TIMESTAMPTZ,             -- for 'active': current_period_end (Stripe); for 'cancelled': end of paid period
+                                       -- for 'expired': when the licence became invalid
   stripe_subscription_id TEXT,
   stripe_customer_id TEXT,
   issued_by TEXT DEFAULT 'self' CHECK (issued_by IN ('self', 'stripe', 'admin')),
@@ -110,19 +111,16 @@ CREATE INDEX idx_licenses_email ON licenses(email);
 CREATE INDEX idx_licenses_status ON licenses(status);
 ```
 
-### RLS Policies
+### RLS Policies (⚠️ placeholder — not enforcing anything with `USING (true)`; relies on Vercel middleware for validation)
 
 ```sql
 -- Allow anon key to read products (public)
 CREATE POLICY "products_public_read" ON products
   FOR SELECT USING (true);
 
--- Allow anon key to insert/select licenses with their own key
-CREATE POLICY "licenses_insert_own" ON licenses
-  FOR INSERT WITH CHECK (true);  -- validated by Vercel middleware
-
-CREATE POLICY "licenses_select_own" ON licenses
-  FOR SELECT USING (true);  -- validated by Vercel middleware
+-- RLS POLICY PLACEHOLDER - actual enforcement is via Vercel middleware (service key).
+-- These `USING (true)` policies are open by design; Supabase RLS is not the auth layer here.
+-- Replace with proper RLS if switching to direct Supabase access from the client.
 ```
 
 ---
@@ -141,19 +139,27 @@ Repo: `github.com/observeco/observeco` (new `api/` directory at repo root)
 | `SUPABASE_ANON_KEY` | from Hermes config | Existing |
 | `SUPABASE_SERVICE_KEY` | from Supabase dashboard | **Need from Sean** |
 | `STRIPE_SECRET_KEY` | `sk_liv...dlNy` | From credentials file |
-| `STRIPE_PUBLISHABLE_KEY` | `pk_live_51QvYh428lPxgyYMp8jP7vA...` | From credentials file |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_a5i3m7k2l9n8p6q1r4s5t7u8v0w2x3y4z5a6b7c8d9e0f1g2h3badv` | From credentials file |
 | `ADMIN_API_KEY` | Generated on deploy | Random UUID |
+
+> `STRIPE_PUBLISHABLE_KEY` is stored in env but unused by Vercel server-side routes — it exists for future frontend-only Stripe integration (e.g., Stripe Elements in the dashboard). Server-side routes use only the secret key and webhook secret.
 
 ### Routes
 
 #### `POST /api/stripe/webhook`
 
-Validates Stripe signature, processes `checkout.session.completed`:
+Validates Stripe signature, processes:
+
+**`checkout.session.completed`:**
 1. Extract email, subscription ID, customer ID from session
-2. Generate license key: `UUID v4` (or `hash(email + timestamp)`)
+2. Generate license key: `OBS-PRO-XXXXXXXX-XXXX` (UUID v4 based, matching existing `billing.py` format)
 3. Insert into `licenses` table with `status='active'`, `issued_by='stripe'`
 4. Return 200
+
+**`customer.subscription.deleted`:**
+1. Look up license by `stripe_subscription_id` or `stripe_customer_id`
+2. Set `status='cancelled'`, update `expires_at` to `current_period_end`
+3. Return 200
 
 #### `POST /api/licenses/validate`
 
@@ -168,7 +174,7 @@ Request body: `{"license_key": "..."}`
   "valid": true,
   "product": "solo",
   "status": "active",
-  "features": ["fleet_view", "pro_badge", "license_validation"],
+  "features": ["free_features", "pro_badge", "license_validation", "stripe_checkout"],
   "expires_at": "2027-06-01T00:00:00Z"
 }
 ```
@@ -267,6 +273,10 @@ def check_license():
         )
         result = resp.json()
         if result["valid"]:
+            # Persist cached result for 24h offline tolerance
+            license_data["cached_until"] = int(time.time()) + 86400
+            license_data["features"] = result.get("features", [])
+            LICENSE_FILE.write_text(json.dumps(license_data, indent=2))
             return {"pro": True, "features": result["features"]}
     except requests.RequestException:
         # Offline — use cached result (stale tolerance: 24h)
@@ -285,7 +295,6 @@ def start_local_trial():
     trial = {
         "started_at": int(time.time()),
         "expires_at": int(time.time()) + 30 * 86400,
-        "version": 1,
     }
     trial_file = Path.home() / ".observeco" / "trial.json"
     trial_file.write_text(json.dumps(trial))
@@ -330,7 +339,7 @@ In the dashboard header or Pro tile:
 
 | Product | Price ID | Amount |
 |---------|----------|--------|
-| Solo | `price_solo_monthly` | $9/month |
+| Solo | `<real-price-id-from-stripe>` | $9/month |
 | Trial period | 30 days | Set in `billing.py:subscription_data.trial_period_days` |
 
 ---
@@ -339,7 +348,7 @@ In the dashboard header or Pro tile:
 
 You can issue free Pro licenses at any time:
 
-1. Open admin dashboard: `https://observeco.com/admin/licenses`
+1. Open admin dashboard: `https://observeco.com/admin` (see §4 for HTML dashboard layout) or use the API directly at `POST /api/admin/licenses`
 2. Click "Issue Free License"
 3. Enter email + name + duration
 4. Click "Create License"

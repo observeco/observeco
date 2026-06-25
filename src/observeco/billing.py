@@ -18,7 +18,7 @@ import threading
 import time
 from dataclasses import dataclass
 
-from fastapi import HTTPException, Request
+from fastapi import Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from observeco.dirs import get_data_dir
@@ -26,22 +26,37 @@ from observeco.dirs import get_data_dir
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-CONFIG_DIR = get_data_dir()
-CONFIG_FILE = CONFIG_DIR / "billing.json"
+# ponytail: lazy — evaluated at first call, not import time, so get_data_dir() failure
+# doesn't crash the import. Upgrade path: make configurable via observeco.yml.
+_CONFIG_DIR: Path | None = None
+_CONFIG_FILE: Path | None = None
+_BILLING_LOG: Path | None = None
+_BILLING_LOCK_FILE: Path | None = None
 
-# Persistent file log for billing operations (rotating: 1MB × 3 backups)
-_BILLING_LOG = CONFIG_DIR / "billing.log"
-_handler = logging.handlers.RotatingFileHandler(
-    str(_BILLING_LOG), maxBytes=1_048_576, backupCount=3
-)
-_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-logger.addHandler(_handler)
+def _get_config_dir() -> Path:
+    global _CONFIG_DIR, _CONFIG_FILE, _BILLING_LOG, _BILLING_LOCK_FILE
+    if _CONFIG_DIR is None:
+        _CONFIG_DIR = get_data_dir()
+        _CONFIG_FILE = _CONFIG_DIR / "billing.json"
+        _BILLING_LOG = _CONFIG_DIR / "billing.log"
+        _BILLING_LOCK_FILE = _CONFIG_DIR / ".billing.lock"
+    return _CONFIG_DIR
+
+def _get_config_file() -> Path:
+    _get_config_dir()
+    return _CONFIG_FILE  # type: ignore[return-value]
+
+def _get_billing_log() -> Path:
+    _get_config_dir()
+    return _BILLING_LOG  # type: ignore[return-value]
+
+def _get_billing_lock_file() -> Path:
+    _get_config_dir()
+    return _BILLING_LOCK_FILE  # type: ignore[return-value]
 
 # Thread lock for safe concurrent access to billing.json
 _billing_lock = threading.Lock()
 
-# File-level lock for multi-process safety (used alongside thread lock)
-_BILLING_LOCK_FILE = CONFIG_DIR / ".billing.lock"
 _FILE_LOCK_RETRIES = 10
 _FILE_LOCK_DELAY = 0.05  # 50ms between retries
 
@@ -52,13 +67,21 @@ def _acquire_file_lock() -> bool:
     Uses O_CREAT|O_EXCL which is atomic on POSIX and NTFS (Windows).
     Returns True if lock acquired, False if contention persists.
     """
-    lock_path = str(_BILLING_LOCK_FILE)
+    lock_path = str(_get_billing_lock_file())
     for attempt in range(_FILE_LOCK_RETRIES):
         try:
             fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             os.close(fd)
             return True
         except OSError:
+            # Check if existing lock is stale (>30s old from a crashed process)
+            try:
+                age = time.time() - os.path.getmtime(_get_billing_lock_file())
+                if age > 30:
+                    os.unlink(lock_path)
+                    continue  # Retry immediately after clearing stale lock
+            except OSError:
+                pass  # Race: another process cleared it
             if attempt == _FILE_LOCK_RETRIES - 1:
                 return False
             time.sleep(_FILE_LOCK_DELAY)
@@ -68,7 +91,7 @@ def _acquire_file_lock() -> bool:
 def _release_file_lock() -> None:
     """Release the cross-process lock file."""
     try:
-        os.unlink(str(_BILLING_LOCK_FILE))
+        os.unlink(str(_get_billing_lock_file()))
     except OSError:
         pass
 
@@ -84,6 +107,10 @@ class BillingConfig:
     is_active: bool = False
     customers: list[dict] = None
     issued_keys: dict = None  # {key: {issued_at, issued_to, revoked, plan}}
+    resend_api_key: str = ""
+    sender_email: str = "noreply@observeco.com"
+    sender_name: str = "ObserveCo"
+    support_email: str = "support@observeco.com"
 
     def __post_init__(self):
         if self.customers is None:
@@ -106,7 +133,7 @@ def _save_config(config: BillingConfig) -> None:
         raise OSError("Could not acquire billing file lock — another process is writing")
     try:
         with _billing_lock:
-            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            _get_config_dir().mkdir(parents=True, exist_ok=True)
 
             from .crypto import encrypt_dict
 
@@ -120,20 +147,24 @@ def _save_config(config: BillingConfig) -> None:
                 "is_active": config.is_active,
                 "customers": config.customers,
                 "issued_keys": config.issued_keys,
+                "resend_api_key": config.resend_api_key,
+                "sender_email": config.sender_email,
+                "sender_name": config.sender_name,
+                "support_email": config.support_email,
             }
 
             # Encrypt sensitive fields
-            SENSITIVE = ["stripe_secret_key", "webhook_secret"]
+            SENSITIVE = ["stripe_secret_key", "webhook_secret", "resend_api_key"]
             encrypt_dict(data, SENSITIVE)
 
             # Atomic write: write to temp, then rename
-            tmp = CONFIG_FILE.with_suffix(".billing.tmp")
+            tmp = _get_config_file().with_suffix(".billing.tmp")
             # Retry loop for concurrent access safety
             for attempt in range(3):
                 try:
                     tmp.write_text(json.dumps(data, indent=2))
                     tmp.chmod(0o600)
-                    tmp.replace(CONFIG_FILE)
+                    tmp.replace(_get_config_file())
                     break
                 except OSError as e:
                     if attempt == 2:
@@ -152,17 +183,27 @@ def _load_config() -> BillingConfig:
         return BillingConfig()
     try:
         with _billing_lock:
-            if CONFIG_FILE.exists():
+            if _get_config_file().exists():
                 try:
-                    logger.info("[billing] Config found, loading from %s", CONFIG_FILE)
-                    data = json.loads(CONFIG_FILE.read_text())
+                    logger.info("[billing] Config found, loading from %s", _get_config_file())
+                    data = json.loads(_get_config_file().read_text())
 
                     from .crypto import decrypt_dict
 
-                    SENSITIVE = ["stripe_secret_key", "webhook_secret"]
+                    SENSITIVE = ["stripe_secret_key", "webhook_secret", "resend_api_key"]
                     decrypt_dict(data, SENSITIVE)
 
                     config = BillingConfig(**data)
+                    # Overlay: env var > macOS Keychain > billing.json
+                    _stripe_secret = (
+                        os.environ.get("STRIPE_SECRET_KEY")
+                        or _keychain_get("observeco")
+                        or config.stripe_secret_key
+                    )
+                    config.stripe_secret_key = _stripe_secret
+
+                    # ponytail: Keychain fetch spawns a subprocess per call.
+                    # If this becomes a hot path, cache the result in a module-level var.
                     if config.is_active:
                         logger.info(
                             "[billing] Stripe configured from disk — %s, %d-day trial, mode=%s",
@@ -176,6 +217,25 @@ def _load_config() -> BillingConfig:
             return BillingConfig()
     finally:
         _release_file_lock()
+
+
+def _keychain_get(service: str) -> str | None:
+    """Read a password from the default macOS Keychain via `security` CLI.
+
+    Returns None if not found or not on macOS — no dependencies, no exceptions.
+    """
+    import subprocess
+    import sys
+    if sys.platform != "darwin":
+        return None
+    try:
+        r = subprocess.run(
+            ["security", "find-generic-password", "-s", service, "-w"],
+            capture_output=True, text=True, timeout=5,
+        )
+        return r.stdout.strip() if r.returncode == 0 else None
+    except (subprocess.SubprocessError, OSError):
+        return None
 
 
 def get_price_id(plan: str = "solo") -> str:
@@ -282,10 +342,15 @@ success_url: str = None,
 
 
 def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
-    """Handle Stripe webhook events."""
+    """Handle Stripe webhook events.
+
+    Gap #5 fix: reject webhooks in demo mode (no signature verification possible).
+    Gap #15 fix: handle invoice.paid and customer.subscription.updated for trial→paid conversion.
+    """
     config = _load_config()
     if not config.is_active or not config.stripe_secret_key:
-        return {"status": "demo", "message": "Stripe not configured, webhook skipped"}
+        # Gap #5 fix: reject webhook in demo mode — can't verify signature
+        return {"status": "rejected", "message": "Stripe not configured — webhook rejected (demo mode)"}
 
     try:
         import stripe
@@ -316,6 +381,117 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
             _start_trial()
             logger.info("Webhook checkout.session.completed: customer=%s, trial started", customer_email)
             return {"status": "success", "action": "customer_created"}
+
+        # Gap #15 fix: handle subscription updates → activate Pro from Stripe
+        if event["type"] in ("invoice.paid", "customer.subscription.updated", "customer.subscription.created"):
+            subscription = event["data"]["object"]
+            sub_id = subscription.get("id") or subscription.get("subscription")
+            customer_id = subscription.get("customer")
+            status = subscription.get("status")
+            logger.info("Webhook %s: sub=%s customer=%s status=%s", event["type"], sub_id, customer_id, status)
+
+            # If subscription is active, activate Pro for this customer
+            if status in ("active", "trialing"):
+                from observeco.license import load as _load_license, save as _save_license, LicenseState
+                lic = _load_license()
+                if lic.license_type != "pro":
+                    # Find customer email from billing config
+                    cust_email = ""
+                    for c in config.customers:
+                        if c.get("stripe_customer_id") == customer_id:
+                            cust_email = c.get("email", "")
+                            break
+                    # Update customer status in billing config
+                    for c in config.customers:
+                        if c.get("stripe_customer_id") == customer_id or c.get("subscription_id") == sub_id:
+                            c["status"] = "active"
+                            c["subscription_id"] = sub_id
+                    _save_config(config)
+                    # Activate Pro in license.json
+                    lic.license_type = "pro"
+                    lic.provisioning_source = "stripe"
+                    lic.customer_email = lic.customer_email or cust_email
+                    lic.validated_at = int(time.time())
+                    lic.downgraded_at = None
+                    lic.downgraded_reason = None
+                    _save_license(lic)
+                    logger.info("Activated Pro from Stripe subscription: customer=%s", cust_email)
+
+                    # Send welcome email (fire-and-forget — never fail local operation)
+                    if cust_email:
+                        try:
+                            from observeco.emails import send_email
+                            send_email(cust_email, "welcome", {
+                                "first_name": cust_email.split("@")[0].title(),
+                                "trial_days_left": "N/A",
+                                "subscribe_url": "http://localhost:9121/",
+                                "support_email": "support@observeco.com",
+                            })
+                        except Exception:
+                            logger.warning("Could not send welcome email (non-fatal)")
+
+                    return {"status": "success", "action": "pro_activated_from_subscription"}
+
+            if status in ("canceled", "unpaid", "past_due"):
+                # Subscription ended — downgrade
+                from observeco.license import load as _load_license, save as _save_license
+                lic = _load_license()
+                if lic.license_type == "pro" and lic.provisioning_source == "stripe":
+                    lic.license_type = "free"
+                    lic.key = None
+                    lic.validated_at = None
+                    lic.expires_at = None
+                    lic.downgraded_at = int(time.time())
+                    lic.downgraded_reason = f"Stripe subscription {status}"
+                    _save_license(lic)
+                    logger.info("Downgraded Pro from Stripe subscription %s: status=%s", sub_id, status)
+
+                    # Find customer email for cancellation email
+                    cust_email = ""
+                    for c in config.customers:
+                        if c.get("stripe_customer_id") == customer_id or c.get("subscription_id") == sub_id:
+                            cust_email = c.get("email", "")
+                            break
+
+                    # Send cancellation confirmed email (fire-and-forget — never fail local operation)
+                    if cust_email:
+                        try:
+                            from observeco.emails import send_email
+                            send_email(cust_email, "cancellation_confirmed", {
+                                "first_name": cust_email.split("@")[0].title(),
+                                "subscribe_url": "http://localhost:9121/",
+                                "support_email": "support@observeco.com",
+                            })
+                        except Exception:
+                            logger.warning("Could not send cancellation email (non-fatal)")
+
+                    return {"status": "success", "action": "pro_downgraded_from_subscription"}
+
+        # Handle invoice.payment_failed — send payment failure notification
+        if event["type"] == "invoice.payment_failed":
+            invoice = event["data"]["object"]
+            customer_id = invoice.get("customer")
+            # Find customer email from billing config
+            cust_email = ""
+            for c in config.customers:
+                if c.get("stripe_customer_id") == customer_id:
+                    cust_email = c.get("email", "")
+                    break
+
+            # Send payment_failed email (fire-and-forget — never fail local operation)
+            if cust_email:
+                try:
+                    from observeco.emails import send_email
+                    send_email(cust_email, "payment_failed", {
+                        "first_name": cust_email.split("@")[0].title(),
+                        "manage_url": "http://localhost:9121/api/billing/status",
+                        "support_email": "support@observeco.com",
+                    })
+                except Exception:
+                    logger.warning("Could not send payment_failed email (non-fatal)")
+
+            logger.info("Webhook invoice.payment_failed: customer=%s", customer_id)
+            return {"status": "success", "action": "payment_failed_notified"}
 
         return {"status": "ignored", "event": event["type"]}
     except ImportError:
@@ -459,22 +635,27 @@ def add_billing_endpoints(app) -> None:
         session_id = request.query_params.get("session_id", "")
 
         # Simulated mode: start trial and record customer on confirmed checkout
+        # Gap #14 fix: verify demo session exists in billing.json before activating
         if session_id and session_id.startswith("cs_demo_"):
+            config = _load_config()
+            # Check if this session was already recorded (prevents replay)
+            existing = [c for c in config.customers if c.get("session_id") == session_id]
+            if not existing:
+                # Unknown demo session — reject (prevents URL crafting attack)
+                return HTMLResponse("""<!DOCTYPE html><html><head>
+                <script>setTimeout(function() { window.location.href = '/'; }, 2000);</script>
+                </head><body style="background:#0f172a;color:#e2e8f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;">
+                <div style="font-size:48px;">⚠️</div>
+                <h2 style="margin:0;">Invalid checkout session</h2>
+                <p style="color:#64748b;font-size:12px;">Redirecting to dashboard...</p></body></html>""")
             from observeco.license import start_trial as start_license_trial
             trial_result = start_license_trial()
             if trial_result.get("status") == "trial_started":
-                # Record simulated customer in billing.json
-                config = _load_config()
-                config.customers.append({
-                    "email": request.query_params.get("email", "checkout@observeco.app"),
-                    "phone": request.query_params.get("phone", ""),
-                    "name": request.query_params.get("name", ""),
-                    "plan": "solo",
-                    "session_id": session_id,
-                    "status": "trialing",
-                    "trial_end": int(time.time()) + config.trial_days * 86400,
-                    "created_at": int(time.time()),
-                })
+                # Mark existing customer as trialing
+                for c in config.customers:
+                    if c.get("session_id") == session_id:
+                        c["status"] = "trialing"
+                        c["trial_end"] = int(time.time()) + config.trial_days * 86400
                 _save_config(config)
 
         # Live Stripe mode: verify and activate trial from redirect
@@ -486,25 +667,26 @@ def add_billing_endpoints(app) -> None:
                     stripe.api_key = config.stripe_secret_key
                     session = stripe.checkout.Session.retrieve(session_id)
                     if session.status == "complete" or session.payment_status == "paid":
+                        meta = getattr(session, "metadata", {}) or {}
+                        customer_details = getattr(session, "customer_details", None) or {}
+                        # Save record BEFORE start_trial — webhook saves first too
+                        config.customers.append({
+                            "email": getattr(session, "customer_email", None) or meta.get("customer_email", "unknown"),
+                            "phone": getattr(customer_details, "phone", "") or meta.get("customer_phone", ""),
+                            "name": getattr(customer_details, "name", "") or meta.get("customer_name", ""),
+                            "plan": meta.get("plan", "solo"),
+                            "session_id": session_id,
+                            "status": "trialing",
+                            "subscription_id": getattr(session, "subscription", None),
+                            "stripe_customer_id": getattr(session, "customer", None),
+                            "trial_end": int(time.time()) + config.trial_days * 86400,
+                            "created_at": int(time.time()),
+                        })
+                        _save_config(config)
                         from observeco.license import start_trial as start_license_trial
                         trial_result = start_license_trial()
-                        if trial_result.get("status") == "trial_started":
-                            meta = getattr(session, "metadata", {}) or {}
-                            customer_details = getattr(session, "customer_details", None) or {}
-                            config.customers.append({
-                                "email": getattr(session, "customer_email", None) or meta.get("customer_email", "unknown"),
-                                "phone": getattr(customer_details, "phone", "") or meta.get("customer_phone", ""),
-                                "name": getattr(customer_details, "name", "") or meta.get("customer_name", ""),
-                                "plan": meta.get("plan", "solo"),
-                                "session_id": session_id,
-                                "status": "trialing",
-                                "subscription_id": getattr(session, "subscription", None),
-                                "trial_end": int(time.time()) + config.trial_days * 86400,
-                                "created_at": int(time.time()),
-                            })
-                            _save_config(config)
-                except Exception:
-                    logger.warning("Could not verify live Stripe session %s", session_id)
+                except Exception as e:
+                    logger.warning("Could not verify live Stripe session %s: %s", session_id, e)
 
         return HTMLResponse("""<!DOCTYPE html><html><head>
         <script>
@@ -573,3 +755,52 @@ def add_billing_endpoints(app) -> None:
         except Exception as e:
             logger.error("Portal session failed: %s", e)
             return {"error": str(e), "mode": "error"}
+
+    @app.get('/api/billing/admin/subscriptions')
+    async def admin_list_subscriptions():
+        """Admin: list all active/trialing Stripe subscriptions."""
+        config = _load_config()
+        if not config.is_active or not config.stripe_secret_key.startswith('sk_'):
+            return JSONResponse({'subscriptions': [], 'error': 'Stripe not configured'})
+        try:
+            import stripe as stripe_lib
+            stripe_lib.api_key = config.stripe_secret_key
+            subs = []
+            for s in stripe_lib.Subscription.list(limit=100).auto_paging_iter():
+                if s.status in ('active', 'trialing', 'past_due'):
+                    subs.append({
+                        'id': s.id,
+                        'status': s.status,
+                        'customer_id': s.customer,
+                        'trial_end': s.trial_end,
+                        'created': s.created,
+                        'current_period_end': getattr(s, 'current_period_end', None),
+                        'cancel_at_period_end': getattr(s, 'cancel_at_period_end', False),
+                    })
+            return JSONResponse({'subscriptions': subs})
+        except ImportError:
+            return JSONResponse({'subscriptions': [], 'error': 'Stripe not installed'})
+        except Exception as e:
+            return JSONResponse({'subscriptions': [], 'error': str(e)})
+
+    @app.post('/api/billing/admin/cancel/{sub_id}')
+    async def admin_cancel_subscription(sub_id: str):
+        """Admin: cancel a Stripe subscription directly via API."""
+        config = _load_config()
+        if not config.is_active or not config.stripe_secret_key.startswith('sk_'):
+            return JSONResponse({'error': 'Stripe not configured'}, status_code=400)
+        try:
+            import stripe as stripe_lib
+            stripe_lib.api_key = config.stripe_secret_key
+            # Cancel immediately (not at period end)
+            stripe_lib.Subscription.delete(sub_id, prorate=False)
+            # Also update billing.json if the sub is tracked there
+            for c in config.customers:
+                if c.get('subscription_id') == sub_id:
+                    c['status'] = 'cancelled'
+            _save_config(config)
+            return JSONResponse({'ok': True, 'subscription_id': sub_id, 'status': 'cancelled'})
+        except ImportError:
+            return JSONResponse({'error': 'Stripe not installed'}, status_code=400)
+        except Exception as e:
+            return JSONResponse({'error': str(e)}, status_code=400)

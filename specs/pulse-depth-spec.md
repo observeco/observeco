@@ -42,7 +42,7 @@ Never built anywhere. The Chisel session hook in Hermes was one-shot at session 
 
 ### Implementation
 **ObserveCo side:**
-- `POST /api/chisel/trim` endpoint accepting `{agent_name, identity_tokens, skills_tokens, memory_tokens, tools_tokens, guidance_tokens, total_tokens}`
+- `POST /api/tokens/log` endpoint accepting `{agent_name, identity_tokens, skills_tokens, memory_tokens, tools_tokens, guidance_tokens, total_tokens, model, latency_ms, tool_calls, topic_id}`
 - Existing `chisel_trims` table schema supports per-agent data already
 - Dashboard Tokens tab shows per-turn breakdown with timestamp
 
@@ -106,7 +106,7 @@ OpenClaw Agent
             ├── bootstrap: load minimal context (SOUL.md + recent MEMORY.md summary only)
             ├── ingest: classify intent → load matching skills + MEMORY entries + workspace files
             └── pre-response: estimate tokens → demote low-value content if near window limit
-                 └── reports stats to ObserveCo API (POST /api/chisel/trim)
+                 └── reports stats to ObserveCo API (POST /api/tokens/log)
                       └── stored in SQLite → dashboard shows savings
 ```
 
