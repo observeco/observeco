@@ -193,6 +193,7 @@
 | Full deterministic replay | LLM non-determinism, state capture complexity, storage volume | Dedicated replay engine (not SQLite), LLM response caching layer, per-framework adapters. ~2-4 weeks. |
 | Cross-framework plugin system | No common API across LangGraph/CrewAI/Claude Code, maintenance burden | Dedicated adapter per framework (500-2000 lines each), weekly CI against latest versions. ~3-5 days per adapter + ongoing. |
 | Compliance-grade audit trail | Immutability, cryptographic signing, 1-7 year retention | Append-only log storage, hash chain signing, configurable retention, export to CEF/LEEF. ~1-2 weeks + compliance certification. |
+| Cross-agent signal flow visibility (G3.1) | Requires agent-side instrumentation across Hermes + OpenClaw ecosystems. Single-machine covers 90% of target market. | Track signal delivery between agents, detect sent-but-never-acknowledged, surface "alive but not producing." ~5d. Deferred until post-launch. |
 | Multi-machine swarm observability | Conflicts with "local-first" positioning, clock skew, auth complexity | Central server mode, agent-side buffering/sync, auth tokens, clock sync. ~3-4 weeks. |
 | Financial controls (NORNR-style) | Enforcement point (proxy deprecated), false positives, multi-provider complexity | Lightweight proxy or SDK interceptor, per-agent budget tracking, configurable escalation. ~1-2 weeks. |
 

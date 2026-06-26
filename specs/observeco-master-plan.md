@@ -2085,6 +2085,8 @@ Layer 4 — Cross-Framework Dashboard (P0)
 | Data integrity / cache poisoning detection (S16) | Application-layer concern. Corrupted data produces normal agent behavior | Hard boundary — see §14.6 |
 | Fully automated spend-rate enforcement | False positive on automated kill = trust destroyed. Kill switch is manual v1, auto-escalation v2+ opt-in only | Layered approach — see §14.5 |
 ||| Inline API proxying / request blocking | **Deprecated.** Former §42 MITM proxy removed 2026-06-19. Replaced by SDK-sidecar (`observeco instrument`) — out-of-band, framework-aware, zero crash risk. Cloud LLM tracking uses post-turn webhook (§43) + provider billing API fallback (§44). | ~~See `specs/adr-proxy-attribution.md`~~ → `specs/adr-proxy-attribution.md` (deprecated — proxy removal record) |
+|| **Compliance-grade audit trail** | Immutable, cryptographically signed audit log of every agent action (SOC 2, HIPAA). Requires append-only storage, hash chain signing, 1-7 year retention. | **Deferred.** Shared by every OSS tool in this space — no competitor under $50K/year offers it. If enterprise users demand it, partner with a compliance-focused logging platform rather than building in-house. |
+|| **Cross-agent signal flow visibility (G3.1)** | Track signal delivery between agents, detect sent-but-never-acknowledged, surface "alive but not producing." Requires agent-side instrumentation across Hermes + OpenClaw ecosystems. | **Deferred.** Already spec'd as G3.1 in master plan §14.3. ~5d effort. Deferred until post-launch — single-machine observability covers 90% of target market. |
 
 ---
 

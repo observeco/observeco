@@ -4071,7 +4071,7 @@ async def api_token_history(days: int = 90, agent: str = ""):
     from_ts = now - days * 86400
     data = aggregate_tokens(agent=agent, from_ts=from_ts, to_ts=now, granularity="day", include_source="sdk,otel,watch")
     if not data:
-        return {"has_real_data": False, "snapshots": []}
+        return {"has_real_data": False, "snapshots": [], "summary": {}}
     snapshots = [{
         "date": d["bucket_start"],
         "input_tokens": d.get("input_tokens", 0),
