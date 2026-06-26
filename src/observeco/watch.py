@@ -378,6 +378,15 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
                 alive=alive, dead=dead, errors=error, purged=purged_cycle,
             )
 
+            # PID-fallback auto-restart check (Docker/CI/Windows)
+            try:
+                from observeco.process_supervision import pid_fallback_maybe_restart
+                restarted, msg = pid_fallback_maybe_restart()
+                if restarted:
+                    logger.info(f"PID-fallback auto-restart: {msg}")
+            except Exception:
+                pass
+
         # Sleep in short intervals for responsive signal handling
         for _ in range(interval):
             if not running:
@@ -399,16 +408,22 @@ def _write_heartbeat(status: str, cycle: int, agents: int = 0,
     try:
         _HEARTBEAT_PATH.parent.mkdir(parents=True, exist_ok=True)
         _HEARTBEAT_PATH.write_text(json.dumps({
+            "timestamp": int(time.time()),
             "status": status,
             "cycle": cycle,
-            "timestamp": int(time.time()),
             "agents": agents,
             "alive": alive,
             "dead": dead,
             "errors": errors,
             "purged": purged,
-            "pid": os.getpid(),
-        }, indent=2))
+        }))
+    except OSError as e:
+        logger.warning("failed to write heartbeat: %s", e)
+
+    # Also write self_monitoring heartbeat for dashboard health check
+    try:
+        from observeco.self_monitoring import write_heartbeat as _sm_write
+        _sm_write(pid=os.getpid(), cycle_count=cycle, uptime_seconds=0, status=status)
     except Exception:
         pass
 

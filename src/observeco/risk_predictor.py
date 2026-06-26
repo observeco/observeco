@@ -1,10 +1,13 @@
-"""ML-based risk prediction — analyze historical patterns to predict future risks.
+"""Tool denial risk prediction — analyze historical patterns to predict which tool calls are likely to be denied.
 
-Uses lightweight statistical analysis (no heavy ML dependencies):
-- Frequency analysis: which tools fail most often
-- Time-series patterns: when failures cluster
-- Agent-specific risk profiles: per-agent failure patterns
-- Tool-call sequences: which tool combinations lead to failures
+Uses lightweight statistical analysis (no ML dependencies):
+- Frequency analysis: which tools are denied most often
+- Time-series patterns: when denials cluster
+- Agent-specific denial profiles: per-agent denial patterns
+- Tool-call sequences: which tool combinations lead to denials
+
+ponytail: Predicts tool *denials* (permission-gate outcomes), not agent health.
+If agent-health prediction is needed, build from pulse_log/errors/restart_log instead.
 """
 from __future__ import annotations
 

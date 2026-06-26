@@ -3,7 +3,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-26 — Runtime Health spec audit: fixed #15/#17/#22 status markers, added #17b (Action Buttons in Push Notifications) and #64 (Agent Health Report Card) feature rows. Updated §3.15, §3.17 status to reflect backend/dashboard split. |
+| **Last updated** | 2026-06-26 — v0.4.0 re-scoped to "Credibility Release" (Tier 1 + Tier 2 signal fixes). v0.5.0 re-scoped to "Intelligence Layer" (Tier 3: predictions table, anomaly detection, failure_correlation rebuild + OpenClaw plugin). See specs/signal-audit.md and specs/revolutionary-proposal.md. Updated roadmap table. |
 | **Author** | Main |
 
 ---
@@ -2287,8 +2287,8 @@ ponytail: Phase 0/1 effort is ~18h (~2.5d) — once these ship, the product is p
 | **Phase 1** (D+1) | Agent invocation banner, graceful degradation, `observeco init`, env var docs | **First public-ready release.** Any Mac Mini Hermes user gets full ObserveCo. |
 | **v0.2 (D+3)** | G1 guardrails + generic discovery | Safety layer v1. Generic agents (Claude Code, Ollama) appear in dashboard. |
 | **v0.3 (D+7)** | Extended history + auto-heal + Skill audit | Users see token history, agents auto-recover, skill bloat measured |
-| **v0.4 (D+14)** | Chisel compress + push alerts | Measure AND fix token bloat. Get Telegram alerts when agents break. |
-| **v0.5 (D+21)** | Per-turn tracking + OpenClaw plugin | Per-turn cost visibility. OpenClaw users save 40-60% tokens at runtime. |
+| **v0.4 (D+14) — Credibility Release** | Tier 1 + Tier 2 signal fixes: wire L2 auto-actions to real heal executor, rename memory_bloat→latency_growth, relabel risk_predictor, fix heal_events CHECK violation, wire L2→baselines, connect/delete dead self_monitoring/pid_fallback, implement L2 drift signal or delete docstring | **Stops lying to users.** Resolution rate becomes honest. Memory signal measures what it claims. No dead code with false docstrings. |
+| **v0.5 (D+21) — Intelligence Layer** | Tier 3: predictions table + reconciler, compute_anomaly implementation, failure_correlation rebuild or delete + OpenClaw runtime plugin (`@observeco/clawforge-plugin`) | **Earns "intelligence" claims.** Every prediction is falsifiable. Anomaly detection works. OpenClaw parity closed. |
 | **Phase G2** (Month 2) | Fleet alerts, auto-stop escalation, lineage tracking, output consistency, drift lookback | Pro-level safety escalation. S4/S7/S14/S12 coverage. |
 | **Phase G3** (Month 3+) | Signal flow visibility, sophisticated auto-escalation, per-turn model attribution | Ecosystem-level deadlock detection + escalation policy engine. |
 | **Phase 5** (Month 3+) | OTel trace ingestion + delegate_task protocol + trace tree dashboard + A2A adapter | Multi-agent delegation with full trace visibility.

@@ -1551,6 +1551,48 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
           <div style="color:var(--muted);font-size:12px;">Loading token data…</div>
         </div>
       </div>
+
+      <!-- ⑤ Runtime Savings: ClawForge plugin stats -->
+      <div class="brain-card" id="runtimeSavingsCard">
+        <h3>⚡ Runtime Savings<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('runtime-savings', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span>
+          <span style="font-size:11px;color:#64748b;font-weight:400;">tokens saved by ClawForge intent-aware context loading</span>
+        </h3>
+        <!-- Summary metrics -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;" id="runtimeSavingsMetrics">
+          <div class="garden-metric-card">
+            <div class="garden-metric-num" style="color:var(--accent);" id="rsTokensSaved">—</div>
+            <div class="garden-metric-label">Tokens Saved Today</div>
+          </div>
+          <div class="garden-metric-card">
+            <div class="garden-metric-num" style="color:#38bdf8;" id="rsAvgSavings">—</div>
+            <div class="garden-metric-label">Avg Savings / Turn</div>
+          </div>
+          <div class="garden-metric-card">
+            <div class="garden-metric-num" style="color:#a78bfa;" id="rsActiveAgents">—</div>
+            <div class="garden-metric-label">Active Agents</div>
+          </div>
+          <div class="garden-metric-card">
+            <div class="garden-metric-num" style="color:#f97316;" id="rsIntentCount">—</div>
+            <div class="garden-metric-label">Intent Classes</div>
+          </div>
+        </div>
+        <!-- Per-agent breakdown -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Per-Agent Breakdown</div>
+          <div id="rsAgentBreakdown" style="font-size:12px;color:var(--muted);">Loading agent data…</div>
+        </div>
+        <!-- Intent distribution -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Intent Distribution</div>
+            <div id="rsIntentDist" style="font-size:12px;color:var(--muted);">Loading…</div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Recent Timeline</div>
+            <div id="rsTimeline" style="font-size:12px;color:var(--muted);">Loading…</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2347,6 +2389,9 @@ function switchTab(tab, btn) {
   document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
   if (tab === 'brain' && !window.brainLoaded) {
     loadBrainData();
+  }
+  if (tab === 'brain') {
+    loadRuntimeSavings();
   }
   if (tab === 'heal') {
     runHealCheck();
@@ -5529,6 +5574,87 @@ function loadPluginHooks() {
     .catch(e => { el.innerHTML = '<div style="color:#ef4444;padding:12px;">' + e.message + '</div>'; });
 }
 function initPlugin() { loadPluginStats(); loadPluginHooks(); }
+
+// ─── Runtime Savings (Brain Analysis card) ───
+function loadRuntimeSavings() {
+  fetch('/api/plugin-stats/summary')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('rsTokensSaved').textContent = (data.total_tokens_saved_today || 0).toLocaleString();
+      document.getElementById('rsAvgSavings').textContent = (data.avg_savings_per_turn || 0).toLocaleString();
+      document.getElementById('rsActiveAgents').textContent = (data.active_agents || []).length;
+      document.getElementById('rsIntentCount').textContent = Object.keys(data.intent_distribution || {}).length;
+
+      // Per-agent breakdown
+      const agents = data.active_agents || [];
+      if (agents.length === 0) {
+        document.getElementById('rsAgentBreakdown').innerHTML = '<div style="color:var(--muted);padding:8px 0;">No plugin data yet — run agents with ClawForge plugin enabled.</div>';
+      } else {
+        let html = '<table class="data-table"><tr><th>Agent</th><th>Turns</th><th>Tokens Saved</th><th>Avg/Turn</th><th>Reduction</th></tr>';
+        agents.forEach(a => {
+          html += '<tr><td>' + _htmlEscape(a.agent_name) + '</td><td>' + a.turns + '</td><td class="good">' + (a.tokens_saved || 0).toLocaleString() + '</td><td>' + (a.avg_savings || 0) + '</td><td>' + (a.reduction_pct || 0) + '%</td></tr>';
+        });
+        html += '</table>';
+        document.getElementById('rsAgentBreakdown').innerHTML = html;
+      }
+
+      // Intent distribution
+      const intents = data.intent_distribution || {};
+      const intentKeys = Object.keys(intents);
+      if (intentKeys.length === 0) {
+        document.getElementById('rsIntentDist').innerHTML = '<div style="color:var(--muted);">No intent data yet.</div>';
+      } else {
+        const total = intentKeys.reduce((s, k) => s + intents[k], 0);
+        let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
+        const colors = ['#22c55e', '#38bdf8', '#a78bfa', '#f97316', '#ef4444', '#facc15'];
+        intentKeys.forEach((k, i) => {
+          const pct = Math.round((intents[k] / total) * 100);
+          const color = colors[i % colors.length];
+          html += '<div style="display:flex;align-items:center;gap:8px;font-size:11px;">'
+            + '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>'
+            + '<span style="flex:1;color:var(--fg-2);">' + _htmlEscape(k) + '</span>'
+            + '<span style="color:var(--fg);font-weight:600;font-family:var(--font-mono);">' + intents[k] + '</span>'
+            + '<span style="color:var(--muted);font-family:var(--font-mono);">(' + pct + '%)</span>'
+            + '</div>';
+        });
+        html += '</div>';
+        document.getElementById('rsIntentDist').innerHTML = html;
+      }
+
+      // Timeline
+      const timeline = data.timeline || [];
+      if (timeline.length === 0) {
+        document.getElementById('rsTimeline').innerHTML = '<div style="color:var(--muted);">No timeline data yet.</div>';
+      } else {
+        const maxSaved = Math.max(...timeline.map(t => t.tokens_saved), 1);
+        let html = '<div style="display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto;">';
+        timeline.slice(-20).forEach(t => {
+          const pct = Math.round((t.tokens_saved / maxSaved) * 100);
+          html += '<div style="display:flex;align-items:center;gap:6px;font-size:10px;">'
+            + '<span style="width:32px;color:var(--muted);flex-shrink:0;">' + _htmlEscape(t.time) + '</span>'
+            + '<div style="flex:1;height:12px;background:var(--border);border-radius:3px;overflow:hidden;">'
+            + '<div style="width:' + pct + '%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.3s;"></div></div>'
+            + '<span style="width:50px;text-align:right;color:var(--fg-2);font-family:var(--font-mono);">' + t.tokens_saved + '</span>'
+            + '</div>';
+        });
+        html += '</div>';
+        document.getElementById('rsTimeline').innerHTML = html;
+      }
+    })
+    .catch(e => {
+      document.getElementById('rsTokensSaved').textContent = '—';
+      document.getElementById('rsAvgSavings').textContent = '—';
+      document.getElementById('rsActiveAgents').textContent = '—';
+      document.getElementById('rsIntentCount').textContent = '—';
+      document.getElementById('rsAgentBreakdown').innerHTML = '<div style="color:#ef4444;padding:8px 0;">Error loading data: ' + e.message + '</div>';
+    });
+}
+
+// Helper: HTML-escape a string
+function _htmlEscape(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 // ─── Skills Audit ───
 function openSkillsAuditModal(agentName) {

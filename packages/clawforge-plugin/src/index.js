@@ -2,10 +2,11 @@
 // Saves 40-50% on input tokens by loading only relevant context per turn.
 // Part of the ObserveCo observability suite.
 //
-// Three hooks in OpenClaw's lifecycle:
+// Lifecycle hooks:
 //   - bootstrap:   load minimal context at session start
 //   - ingest:      classify intent → load matching files
-//   - pre_response: estimate tokens → demote low-value content
+//   - assemble:    estimate tokens → demote low-value content if >70% window
+//   - afterTurn:   post-turn stats logging
 //
 // Stats are written to local SQLite and POSTed to ObserveCo dashboard.
 
@@ -14,7 +15,6 @@ import { registerContextEngine } from "openclaw/plugin-sdk";
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 
 // ── Intent Classification ──────────────────────────────────────────────
 
@@ -38,7 +38,9 @@ const INTENT_CLASSES = {
   ],
   "research/explore": [
     "research", "explore", "investigate", "find", "search",
-    "look up", "discover", "learn", "understand",
+    "look up", "discover", "learn", "understand", "analyze",
+    "study", "survey", "literature", "paper", "article",
+    "source", "reference", "documentation",
   ],
   "config/setup": [
     "config", "change", "update", "modify", "set", "edit",
@@ -48,6 +50,7 @@ const INTENT_CLASSES = {
   "cron/automate": [
     "cron", "schedule", "automate", "periodic", "recurring",
     "every", "daily", "hourly", "nightly", "batch", "routine",
+    "nightly build", "daily task", "scheduled",
   ],
 };
 
@@ -181,6 +184,25 @@ async function postStats(endpoint, payload) {
   }
 }
 
+// ── Token Estimation ──────────────────────────────────────────────────
+
+// Rough token estimate: ~4 chars per token for English text
+function estimateTokens(text) {
+  if (!text) return 0;
+  return Math.ceil(text.length / 4);
+}
+
+function estimateMessagesTokens(messages) {
+  if (!messages || !messages.length) return 0;
+  let total = 0;
+  for (const msg of messages) {
+    total += estimateTokens(msg.content ?? "");
+    // Role tokens (~4 tok per message overhead)
+    total += 4;
+  }
+  return total;
+}
+
 // ── Context Engine Implementation ──────────────────────────────────────
 
 function createClawForgeEngine(config) {
@@ -203,12 +225,11 @@ function createClawForgeEngine(config) {
     },
 
     // ── Bootstrap: load minimal context at session start ──────────
-    async bootstrap({ sessionKey }) {
+    async bootstrap({ sessionId, sessionKey, sessionFile }) {
       const agentName = sessionKey?.agentName ?? "unknown";
       const db = getStatsDb(statsPath);
       logHook(db, agentName, "bootstrap", "", 2, ALL_SOURCES.length - 2, 0, 0);
 
-      // POST to ObserveCo
       await postStats(observecoEndpoint, {
         agent_name: agentName,
         hook_point: "bootstrap",
@@ -216,28 +237,30 @@ function createClawForgeEngine(config) {
         sources_skipped: ALL_SOURCES.length - 2,
         tokens_saved: 0,
       });
+
+      return { bootstrapped: true };
     },
 
     // ── Maintain: periodic maintenance between turns ───────────────
-    async maintain({ sessionKey }) {
+    async maintain({ sessionId, sessionKey, sessionFile, runtimeContext }) {
       // Clear stale intent cache entries
       if (intentCache.size > 50) {
         intentCache.clear();
       }
+      return {};
     },
 
     // ── Ingest: classify intent and load matching sources ──────────
-    async ingest({ sessionKey, messages }) {
+    async ingest({ sessionId, sessionKey, message, isHeartbeat }) {
       const agentName = sessionKey?.agentName ?? "unknown";
-      const lastMessage = messages?.[messages.length - 1]?.content ?? "";
+      const content = message?.content ?? "";
       const db = getStatsDb(statsPath);
 
       // Check cache for similar messages
-      const cacheKey = lastMessage.slice(0, 100);
+      const cacheKey = content.slice(0, 100);
       let intentResult = intentCache.get(cacheKey);
       if (!intentResult) {
-        intentResult = classifyIntent(lastMessage);
-        // Cache with TTL (50 entries max)
+        intentResult = classifyIntent(content);
         if (intentCache.size < 50) {
           intentCache.set(cacheKey, intentResult);
         }
@@ -265,49 +288,136 @@ function createClawForgeEngine(config) {
         tokens_saved: tokensSaved,
       });
 
-      return { intent, confidence, sourcesToLoad, sourcesToSkip };
+      return { ingested: true };
     },
 
     // ── IngestBatch: batch message ingestion ───────────────────────
-    async ingestBatch({ sessionKey, messages }) {
-      if (!messages || messages.length === 0) return;
+    async ingestBatch({ sessionId, sessionKey, messages, isHeartbeat }) {
+      if (!messages || messages.length === 0) return { ingestedCount: 0 };
       // Process the last message in the batch
-      return await this.ingest({ sessionKey, messages });
+      const last = messages[messages.length - 1];
+      await this.ingest({ sessionId, sessionKey, message: last, isHeartbeat });
+      return { ingestedCount: 1 };
     },
 
-    // ── Assemble: build the context prompt ─────────────────────────
-    // ponytail: pre-response demotion (Phase 3) — estimate tokens, demote if >70% window.
-    // Currently a pass-through. Phase 3 will add: stale memory → unused skills → workspace files.
-    async assemble({ sessionKey, prompt }) {
-      return prompt;
-    },
-
-    // ── AfterTurn: post-turn stats logging ──────────────────────────
-    // ponytail: pre-response demotion fires here for logging only (Phase 3 will move to assemble).
-    async afterTurn({ sessionKey, usage }) {
+    // ── Assemble: build the context prompt with pre-response demotion ──
+    // Phase 3: estimate tokens, demote low-value content if >70% window.
+    // Demotion order: stale memory → unused skills → workspace files.
+    async assemble({ sessionId, sessionKey, messages, tokenBudget, availableTools, citationsMode, model, prompt }) {
       const agentName = sessionKey?.agentName ?? "unknown";
       const db = getStatsDb(statsPath);
 
-      const inputTokens = usage?.inputTokens ?? 0;
-      const outputTokens = usage?.outputTokens ?? 0;
-      const contextWindowPct = usage?.contextWindowPct ?? 0;
-
-      if (enablePreResponse && contextWindowPct > demoteThreshold) {
-        logHook(db, agentName, "pre_response", "", 0, 0, 0, contextWindowPct);
-
-        await postStats(observecoEndpoint, {
-          agent_name: agentName,
-          hook_point: "pre_response",
-          context_window_pct: contextWindowPct,
-          tokens_saved: 0,
-        });
+      if (!messages || !messages.length || !enablePreResponse) {
+        return { messages: messages ?? [], estimatedTokens: estimateMessagesTokens(messages ?? []) };
       }
+
+      const currentTokens = estimateMessagesTokens(messages);
+      const budget = tokenBudget ?? 128000; // Default context window
+      const windowPct = currentTokens / budget;
+
+      if (windowPct <= demoteThreshold) {
+        // Under threshold — no demotion needed, just log
+        logHook(db, agentName, "assemble", "", messages.length, 0, 0, windowPct * 100);
+        return { messages, estimatedTokens: currentTokens };
+      }
+
+      // ── Demotion: reduce context when >70% window ────────────────
+      // Strategy: remove oldest non-essential messages first.
+      // Keep: system messages, last 2 user/assistant turns, any tool results referenced by recent turns.
+      const kept = [];
+      const demoted = [];
+
+      // Always keep system messages (first messages with role "system")
+      let systemCount = 0;
+      for (const msg of messages) {
+        if (msg.role === "system") {
+          kept.push(msg);
+          systemCount++;
+        } else {
+          break;
+        }
+      }
+
+      // Keep the last 2 user/assistant exchanges (4 messages: user, asst, user, asst)
+      const recentWindow = Math.min(4, messages.length - systemCount);
+      const recentMessages = messages.slice(messages.length - recentWindow);
+      const middleMessages = messages.slice(systemCount, messages.length - recentWindow);
+
+      // Keep recent messages
+      for (const msg of recentMessages) {
+        kept.push(msg);
+      }
+
+      // For middle messages, keep only tool results that are referenced by recent messages
+      // and the first user message that started the session context
+      if (middleMessages.length > 0) {
+        // Keep the first user message (establishes session context)
+        const firstUser = middleMessages.find(m => m.role === "user");
+        if (firstUser) {
+          kept.push(firstUser);
+        }
+
+        // Keep tool results that are referenced by recent messages
+        const recentContent = recentMessages.map(m => m.content ?? "").join(" ");
+        for (const msg of middleMessages) {
+          if (msg.role === "tool") {
+            const toolName = msg.name ?? "";
+            // Keep tool results that are mentioned in recent messages
+            if (toolName && recentContent.includes(toolName)) {
+              kept.push(msg);
+            } else {
+              demoted.push(msg);
+            }
+          }
+        }
+      }
+
+      const demotedTokens = estimateMessagesTokens(demoted);
+      const keptTokens = estimateMessagesTokens(kept);
+
+      logHook(db, agentName, "assemble", "", kept.length, demoted.length, demotedTokens, windowPct * 100);
+
+      if (logSkipped) {
+        console.log(`[clawforge] ${agentName}: demoted ${demoted.length} messages (${demotedTokens} tok) — ${kept.length} kept (${keptTokens} tok, ${(keptTokens / budget * 100).toFixed(0)}% window)`);
+      }
+
+      await postStats(observecoEndpoint, {
+        agent_name: agentName,
+        hook_point: "assemble",
+        sources_loaded: kept.length,
+        sources_skipped: demoted.length,
+        tokens_saved: demotedTokens,
+        context_window_pct: windowPct * 100,
+      });
+
+      return { messages: kept, estimatedTokens: keptTokens };
+    },
+
+    // ── AfterTurn: post-turn stats logging ──────────────────────────
+    async afterTurn({ sessionId, sessionKey, sessionFile, messages, prePromptMessageCount, autoCompactionSummary, isHeartbeat, tokenBudget, runtimeContext }) {
+      const agentName = sessionKey?.agentName ?? "unknown";
+      const db = getStatsDb(statsPath);
+
+      const currentTokens = estimateMessagesTokens(messages ?? []);
+      const budget = tokenBudget ?? 128000;
+      const contextWindowPct = budget > 0 ? (currentTokens / budget) * 100 : 0;
+
+      logHook(db, agentName, "after_turn", "", messages?.length ?? 0, 0, 0, contextWindowPct);
+
+      await postStats(observecoEndpoint, {
+        agent_name: agentName,
+        hook_point: "after_turn",
+        context_window_pct: contextWindowPct,
+        tokens_saved: 0,
+        messages_count: messages?.length ?? 0,
+        pre_prompt_count: prePromptMessageCount ?? 0,
+      });
     },
 
     // ── Compact: reduce context size ───────────────────────────────
-    async compact({ sessionKey }) {
-      // Default compaction — OpenClaw handles the actual compaction
-      return { compacted: false };
+    async compact({ sessionId, sessionKey, sessionFile, tokenBudget, force, currentTokenCount, compactionTarget, customInstructions, runtimeContext }) {
+      // Delegate to OpenClaw's built-in runtime compaction
+      return { ok: true, compacted: false, reason: "delegated to runtime" };
     },
   };
 }

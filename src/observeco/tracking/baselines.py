@@ -72,7 +72,7 @@ def format_baseline_report(agent_name: str, baseline: dict) -> str:
     lines = [
         f"Agent: {agent_name}",
         f"  Samples: {baseline.get('sample_days', '?')} days",
-        f"  RSS baseline: {baseline.get('rss_baseline_ms', 0):.0f}ms",
+        f"  Latency baseline: {baseline.get('latency_baseline_ms', 0):.0f}ms",
         f"  P95 latency: {baseline.get('p95_latency_ms', 0):.0f}ms",
         f"  Avg tokens/turn: {baseline.get('avg_token_per_turn', 0):.0f}",
         f"  Total turns: {baseline.get('total_turns', 0)}",

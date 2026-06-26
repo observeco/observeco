@@ -27,7 +27,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 29
+SCHEMA_VERSION = 31
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -554,6 +554,45 @@ ALTER TABLE token_logs ADD COLUMN tool_calls TEXT DEFAULT '[]';
 ALTER TABLE token_logs ADD COLUMN topic_id TEXT DEFAULT '';
 CREATE INDEX IF NOT EXISTS idx_token_logs_model ON token_logs(model);
 CREATE INDEX IF NOT EXISTS idx_token_logs_topic_id ON token_logs(topic_id);
+"""),
+    (30, """-- Migration 30: rename memory_bloat to latency_growth in l2_trending CHECK
+-- SQLite cannot alter CHECK constraints, so recreate the table.
+CREATE TABLE IF NOT EXISTS l2_trending_v30 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    trend_type TEXT NOT NULL CHECK(trend_type IN ('latency_growth','stuck','drift','upstream_fail')),
+    signal_label TEXT NOT NULL DEFAULT '',
+    severity TEXT NOT NULL DEFAULT 'warning' CHECK(severity IN ('info','warning','critical')),
+    metric_value REAL DEFAULT 0,
+    threshold REAL DEFAULT 0,
+    auto_action TEXT NOT NULL DEFAULT 'none' CHECK(auto_action IN ('none','graceful_restart','sigabort','circuit_backoff','restart_fallback')),
+    resolved INTEGER NOT NULL DEFAULT 0,
+    resolved_action TEXT DEFAULT '',
+    timestamp INTEGER NOT NULL,
+    resolved_at INTEGER
+);
+INSERT INTO l2_trending_v30 SELECT * FROM l2_trending;
+DROP TABLE l2_trending;
+ALTER TABLE l2_trending_v30 RENAME TO l2_trending;
+CREATE INDEX IF NOT EXISTS idx_l2_trending_agent ON l2_trending(agent_name, timestamp);
+CREATE INDEX IF NOT EXISTS idx_l2_trending_type ON l2_trending(trend_type, resolved);
+"""),
+    (31, """-- Migration 31: widen heal_events CHECK constraints to match actual callers
+-- The only caller passes event_type='heal_feedback', status='evaluated'
+-- which violates the original CHECK. Widen both constraints.
+CREATE TABLE IF NOT EXISTS heal_events_v31 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    event_type TEXT NOT NULL CHECK(event_type IN ('l1_restart','l2_trim','l2_garden','circuit_reset','manual_heal','escalation','heal_feedback')),
+    status TEXT NOT NULL CHECK(status IN ('success','failure','escalated','cooldown','evaluated')),
+    duration_ms INTEGER DEFAULT 0,
+    details TEXT DEFAULT '',
+    created_at INTEGER NOT NULL
+);
+INSERT INTO heal_events_v31 SELECT * FROM heal_events;
+DROP TABLE heal_events;
+ALTER TABLE heal_events_v31 RENAME TO heal_events;
+CREATE INDEX IF NOT EXISTS idx_heal_events_agent ON heal_events(agent_name, created_at DESC);
 """),
 ]
 
@@ -3340,6 +3379,98 @@ class Database:
         d["avg_reduction_pct"] = round((d["skipped"] / max(total, 1)) * 100, 1)
         return d
 
+    def get_plugin_stats_summary(self) -> dict:
+        """Rich plugin stats summary for the Brain Analysis Runtime Savings card.
+
+        Returns:
+            total_tokens_saved_today: tokens saved in the last 24h
+            avg_savings_per_turn: average tokens saved per turn
+            active_agents: list of {name, turns, tokens_saved, avg_savings}
+            intent_distribution: {intent_class: count}
+            timeline: [{time, tokens_saved, intent}] for last 24h
+        """
+        conn = self._get_conn()
+        conn.row_factory = __import__("sqlite3").Row
+        now = int(__import__("time").time())
+        today_start = now - 86400
+
+        # Total tokens saved today
+        row = conn.execute(
+            "SELECT COALESCE(SUM(tokens_saved), 0) as total "
+            "FROM plugin_tracking WHERE timestamp >= ?",
+            (today_start,)
+        ).fetchone()
+        total_tokens_saved_today = dict(row)["total"] if row else 0
+
+        # Average savings per turn
+        row = conn.execute(
+            "SELECT COUNT(*) as turns, COALESCE(SUM(tokens_saved), 0) as saved "
+            "FROM plugin_tracking WHERE timestamp >= ?",
+            (today_start,)
+        ).fetchone()
+        if row:
+            d = dict(row)
+            turns = d["turns"]
+            saved = d["saved"]
+            avg_savings_per_turn = round(saved / max(turns, 1), 1)
+        else:
+            avg_savings_per_turn = 0
+
+        # Active agents with per-agent stats
+        rows = conn.execute(
+            "SELECT agent_name, COUNT(*) as turns, "
+            "COALESCE(SUM(tokens_saved), 0) as tokens_saved, "
+            "COALESCE(SUM(sources_loaded), 0) as sources_loaded, "
+            "COALESCE(SUM(sources_skipped), 0) as sources_skipped "
+            "FROM plugin_tracking WHERE timestamp >= ? "
+            "GROUP BY agent_name ORDER BY tokens_saved DESC",
+            (today_start,)
+        ).fetchall()
+        active_agents = []
+        for r in rows:
+            d = dict(r)
+            total_src = d["sources_loaded"] + d["sources_skipped"]
+            d["avg_savings"] = round(d["tokens_saved"] / max(d["turns"], 1), 1)
+            d["reduction_pct"] = round((d["sources_skipped"] / max(total_src, 1)) * 100, 1)
+            active_agents.append(d)
+
+        # Intent distribution
+        rows = conn.execute(
+            "SELECT intent_class, COUNT(*) as count "
+            "FROM plugin_tracking WHERE intent_class != '' "
+            "GROUP BY intent_class ORDER BY count DESC"
+        ).fetchall()
+        intent_distribution = {}
+        for r in rows:
+            d = dict(r)
+            intent_distribution[d["intent_class"]] = d["count"]
+
+        # Timeline — last 24h in hourly buckets
+        rows = conn.execute(
+            "SELECT timestamp, tokens_saved, intent_class "
+            "FROM plugin_tracking WHERE timestamp >= ? "
+            "ORDER BY timestamp ASC",
+            (today_start,)
+        ).fetchall()
+        timeline = []
+        for r in rows:
+            d = dict(r)
+            ts = d.get("timestamp", 0)
+            if ts:
+                timeline.append({
+                    "time": __import__("datetime").datetime.fromtimestamp(ts).strftime("%H:%M"),
+                    "tokens_saved": d.get("tokens_saved", 0),
+                    "intent": d.get("intent_class", ""),
+                })
+
+        return {
+            "total_tokens_saved_today": total_tokens_saved_today,
+            "avg_savings_per_turn": avg_savings_per_turn,
+            "active_agents": active_agents,
+            "intent_distribution": intent_distribution,
+            "timeline": timeline,
+        }
+
     # --- Token Tracking (#14) ---
     def log_token_turn(self, agent_name: str, turn_id: str, total_tokens: int,
                        identity_tokens: int = 0, skills_tokens: int = 0,
@@ -3724,7 +3855,7 @@ class Database:
             latencies = sorted(p["latency_ms"] for p in pulses)
             p95_latency = latencies[int(len(latencies) * 0.95)] if len(latencies) > 10 else (latencies[-1] if latencies else 0)
 
-        rss_baseline = p95_latency  # RSS approximated by latency trend
+        latency_baseline = p95_latency  # P95 latency baseline
         avg_tokens = round(sum((t.get("input_tokens", 0) or 0) + (t.get("output_tokens", 0) or 0) + (t.get("cache_read_tokens", 0) or 0) + (t.get("cache_creation_tokens", 0) or 0) for t in tokens) / max(len(tokens), 1), 1) if tokens else 0
         error_rate = round(len(errors) / max(days, 1), 2)
 
@@ -3733,7 +3864,7 @@ class Database:
                               or "timeout" in (e.get("error_message", "") or "").lower())
 
         return {
-            "rss_baseline_ms": rss_baseline,
+            "latency_baseline_ms": latency_baseline,
             "p95_latency_ms": p95_latency,
             "avg_token_per_turn": avg_tokens,
             "total_turns": len(tokens),

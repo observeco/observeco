@@ -6717,7 +6717,7 @@ async def api_l2_scan():
     metrics = get_l2_metrics()
     items = []
     for r in results:
-        icon = {"memory_bloat": "📈", "stuck": "⏱️", "drift": "📋", "upstream_fail": "🌐"}
+        icon = {"latency_growth": "📈", "stuck": "⏱️", "drift": "📋", "upstream_fail": "🌐"}
         sev_icon = {"warning": "🟡", "critical": "🔴", "info": "🔵"}
         items.append(f"""<div class="heal-entry warning">
     <div class="heal-entry-header"><span class="heal-action">{sev_icon.get('warning','⚠️')} {icon.get(r['trend_type'],'?')} {r['agent']}</span></div>
@@ -7350,6 +7350,17 @@ async def api_plugin_stats(agent: str = ""):
     ts_set = {h.get("timestamp", 0) for h in hooks}
     stats["is_demo"] = len(ts_set) <= 1 and len(hooks) > 0
     return JSONResponse(stats)
+
+
+@app.get("/api/plugin-stats/summary")
+async def api_plugin_stats_summary():
+    """Rich plugin stats summary for Brain Analysis Runtime Savings card.
+
+    Returns:
+        total_tokens_saved_today, avg_savings_per_turn, active_agents,
+        intent_distribution, timeline (last 24h)
+    """
+    return JSONResponse(db.get_plugin_stats_summary())
 
 
 @app.get("/api/plugin-hooks", response_class=HTMLResponse)
