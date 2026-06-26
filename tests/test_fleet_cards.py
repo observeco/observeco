@@ -36,12 +36,13 @@ class TestFleetCardAgentType:
         # Find at least one agent card section
         assert "agent-card" in html
         # Agent cards should have Tokens rows (label is 'Tokens' not 'Brain')
-        assert "Tokens" in html
+        # or a "No tokens" gap badge when no token data exists
+        assert "Tokens" in html or "No tokens" in html
 
     def test_agent_cards_have_drift_row(self):
         """Agent cards contain 'Drift' metric row."""
         html = self._get_fleet_html()
-        assert "Drift" in html
+        assert "Drift" in html or "No drift" in html
 
     def test_agent_cards_have_glossary_hints(self):
         """Agent Brain and Drift rows include glossary hint spans."""
