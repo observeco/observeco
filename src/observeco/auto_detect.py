@@ -95,10 +95,12 @@ def run_llm_discovery() -> list[dict]:
 
     # Check common Hermes paths (using configured home)
     hermes_base = hermes_home()
-    hermes_paths = [
-        str(hermes_base / "config.yaml"),
-        str(hermes_base / "hermes-agent" / "venv" / "bin"),
-    ]
+    hermes_paths = []
+    if hermes_base is not None:
+        hermes_paths = [
+            str(hermes_base / "config.yaml"),
+            str(hermes_base / "hermes-agent" / "venv" / "bin"),
+        ]
     context_parts.append("=== Hermes paths ===")
     for p in hermes_paths:
         if os.path.exists(p):
