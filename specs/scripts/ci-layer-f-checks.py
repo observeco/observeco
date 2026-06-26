@@ -23,7 +23,7 @@ body_idx = r.text.lower().find("<body")
 body_text = r.text[body_idx:].lower() if body_idx >= 0 else r.text.lower()
 
 # F2 — first-run keywords in /
-f2_keywords = ["guided", "setup", "first time", "add an agent", "detect agents"]
+f2_keywords = ["welcome", "discover", "onboarding", "first time", "add an agent", "detect agents"]
 f2_hits = [kw for kw in f2_keywords if kw in body_text]
 if not f2_hits:
     failures.append("F2: No first-run experience keywords in page body")
