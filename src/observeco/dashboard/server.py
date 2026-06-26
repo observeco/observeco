@@ -3913,8 +3913,18 @@ async def api_agents(
         )
 
     if not sections_html:
-        # No agents at all (first run) — return empty so first-run banners show
-        return HTMLResponse("")
+        # No agents at all (first run) — show setup guidance
+        return HTMLResponse(
+            '<div class="empty-state" style="text-align:center;padding:40px 20px;color:#6b7280;">'
+            '<div style="font-size:48px;margin-bottom:12px;">🔍</div>'
+            '<div style="font-size:16px;font-weight:600;margin-bottom:8px;color:#94a3b8;">No agents detected</div>'
+            '<div style="font-size:13px;line-height:1.6;">'
+            'Add your first agent to start monitoring.<br>'
+            'Use <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco discover</code> to scan for running agents,<br>'
+            'or <code style="background:#1e293b;padding:2px 6px;border-radius:4px;">observeco add &lt;name&gt;</code> to register one manually.'
+            '</div>'
+            '</div>'
+        )
 
     count = sum(len(sections[sk]) for sk, _, _, _ in section_configs if sections.get(sk))
 
