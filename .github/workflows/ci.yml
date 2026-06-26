@@ -30,6 +30,20 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
 
+      - name: Debug — print environment
+        run: |
+          echo "=== Python version ==="
+          python3 --version
+          echo "=== uv version ==="
+          uv --version
+          echo "=== Installed packages ==="
+          uv run pip list 2>/dev/null || uv run python3 -m pip list
+          echo "=== Package import check ==="
+          uv run python3 -c "from observeco.dashboard.server import app; print('Import OK')" 2>&1 || echo "IMPORT FAILED"
+          echo "=== Working directory ==="
+          pwd
+          ls -la
+
       - name: Lint with ruff
         run: uv run ruff check src/observeco/
 

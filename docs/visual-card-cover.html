@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Cover Banner</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0d0f;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.card{width:1200px;height:480px;background:linear-gradient(135deg,#0a0a0c 0%,#111113 40%,#0f0f1a 70%,#0a0a0c 100%);border-radius:0;padding:0;display:flex;position:relative;overflow:hidden}
+
+/* Subtle grid pattern */
+.card::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 1px 1px,#1a1a1e 1px,transparent 0);background-size:32px 32px;opacity:0.4}
+
+/* Accent glow */
+.card::after{content:'';position:absolute;top:-30%;right:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(34,197,94,0.06) 0%,transparent 70%);pointer-events:none}
+
+.tag{position:absolute;top:24px;right:32px;color:#52525b;font-size:12px;font-weight:500;letter-spacing:0.5px;border:1px solid #27272a;border-radius:100px;padding:4px 14px;z-index:2}
+
+/* Left content area */
+.content{flex:1;padding:56px 48px;display:flex;flex-direction:column;justify-content:center;z-index:2;position:relative}
+
+.kicker{font-size:13px;font-weight:600;color:#22c55e;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+
+.headline{font-size:38px;font-weight:800;color:#f4f4f5;line-height:1.2;max-width:95%}
+.headline .highlight{background:linear-gradient(135deg,#22c55e,#16a34a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.subhead{font-size:16px;color:#a1a1aa;line-height:1.5;margin-top:16px;max-width:90%}
+
+.stats-row{display:flex;gap:32px;margin-top:28px}
+.stat-item{display:flex;align-items:center;gap:10px}
+.stat-dot{width:8px;height:8px;border-radius:50%}
+.stat-dot.green{background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,0.4)}
+.stat-dot.red{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.4)}
+.stat-dot.amber{background:#eab308;box-shadow:0 0 8px rgba(234,179,8,0.4)}
+.stat-text{font-size:14px;color:#f4f4f5;font-weight:500}
+.stat-text span{color:#71717a;font-weight:400}
+
+/* Right visual area */
+.visual{width:380px;display:flex;flex-direction:column;justify-content:center;padding:48px 40px 48px 0;z-index:2;position:relative}
+
+.hero-number{font-size:72px;font-weight:900;line-height:1;background:linear-gradient(135deg,#ef4444,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-label{font-size:14px;color:#a1a1aa;margin-top:4px;font-weight:500}
+
+.hero-sub{font-size:13px;color:#52525b;margin-top:2px}
+
+.divider{width:1px;height:120px;background:linear-gradient(to bottom,transparent,#27272a,transparent);position:absolute;right:380px;top:50%;transform:translateY(-50%)}
+
+/* Bottom bar */
+.bottom-bar{position:absolute;bottom:0;left:0;right:0;height:40px;background:rgba(24,24,27,0.6);border-top:1px solid #27272a;display:flex;align-items:center;padding:0 32px;z-index:2;gap:24px}
+.bottom-bar .item{font-size:12px;color:#52525b;display:flex;align-items:center;gap:6px}
+.bottom-bar .item strong{color:#71717a;font-weight:600}
+.bottom-bar .item .green{color:#22c55e}
+.bottom-bar .item .red{color:#ef4444}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="tag">observeco.ai</div>
+
+  <div class="content">
+    <div class="kicker">● Live from production</div>
+    <div class="headline">
+      <span class="highlight">96%</span> of my AI agent prompts<br>
+      were recomputed from scratch
+    </div>
+    <div class="subhead">
+      39 agents on one Mac Mini. $149 in untraceable spend.<br>
+      11 were silently failing. I had no idea.
+    </div>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-dot green"></div>
+        <div class="stat-text">28 alive <span>· 72%</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-dot red"></div>
+        <div class="stat-text">11 down <span>· 28% failure rate</span></div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-dot amber"></div>
+        <div class="stat-text">0.3% <span>output/input ratio</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="visual">
+    <div class="hero-number">99.7%</div>
+    <div class="hero-label">waste ratio</div>
+    <div class="hero-sub">For every 100K tokens fed in,<br>only 300 tokens came out useful</div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="item"><strong class="green">●</strong> Fleet health: <strong class="green">28/39</strong> alive</div>
+    <div class="item"><strong class="red">●</strong> Most bloated: <strong class="red">+709%</strong> in 7 days</div>
+    <div class="item"><strong>●</strong> Cache hit: <strong>36%</strong> · 64% recomputed</div>
+    <div class="item" style="margin-left:auto"><strong>pip install observeco</strong></div>
+  </div>
+</div>
+</body>
+</html>
