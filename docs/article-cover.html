@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Article Cover</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  background: #0a0a0b; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+}
+.card {
+  width: 1200px;
+  height: 630px;
+  background: #0f0f11;
+  border: 1px solid #1a1a1e;
+  border-radius: 20px;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* Subtle grid pattern */
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+/* Glow accent */
+.card::after {
+  content: '';
+  position: absolute;
+  top: -300px;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.06) 0%, transparent 60%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 60px 70px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  width: fit-content;
+  margin-bottom: 32px;
+}
+.badge .dot {
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.title {
+  font-size: 48px;
+  font-weight: 700;
+  color: #f4f4f5;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  max-width: 900px;
+  margin-bottom: 20px;
+}
+.title .highlight {
+  color: #22c55e;
+}
+.subtitle {
+  font-size: 20px;
+  color: #71717a;
+  line-height: 1.5;
+  max-width: 700px;
+  margin-bottom: auto;
+}
+.stats-row {
+  display: flex;
+  gap: 32px;
+  padding-top: 28px;
+  border-top: 1px solid #1e1e21;
+  margin-top: auto;
+}
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'JetBrains Mono', ui-monospace, monospace;
+}
+.stat-num.green { color: #22c55e; }
+.stat-num.red { color: #ef4444; }
+.stat-num.gray { color: #a1a1aa; }
+.stat-label {
+  font-size: 13px;
+  color: #52525b;
+  line-height: 1.3;
+}
+.stat-label strong {
+  color: #a1a1aa;
+  font-weight: 500;
+}
+.url {
+  position: absolute;
+  top: 60px;
+  right: 70px;
+  font-size: 13px;
+  color: #52525b;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.url strong {
+  color: #71717a;
+}
+.byline {
+  font-size: 13px;
+  color: #3f3f46;
+  margin-top: 8px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="content">
+    <div class="badge">
+      <span class="dot"></span>
+      Open Source · MIT · Local-First
+    </div>
+    <div class="url">observeco.ai</div>
+    <h1 class="title">
+      I finally saw what my <span class="highlight">39 AI agents and services</span> were actually doing.
+    </h1>
+    <p class="subtitle">
+      Half of it was waste. Here's what the data showed — and what I did about it.
+    </p>
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-num green">28</span>
+        <div class="stat-label">alive<br><strong>running</strong></div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num red">11</span>
+        <div class="stat-label">down<br><strong>silent failures</strong></div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num gray">$112</span>
+        <div class="stat-label">wasted tokens<br><strong>91.5% from one agent</strong></div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num gray">0.3%</span>
+        <div class="stat-label">output/input ratio<br><strong>99.7% was context noise</strong></div>
+      </div>
+    </div>
+    <div class="byline">pip install observeco && observeco dashboard</div>
+  </div>
+</div>
+</body>
+</html>

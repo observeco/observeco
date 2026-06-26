@@ -789,8 +789,6 @@ dependencies = [
 desktop = [
     { name = "pywebview" },
 ]
-
-[package.dev-dependencies]
 dev = [
     { name = "cryptography" },
     { name = "pytest" },
@@ -803,6 +801,7 @@ dev = [
 requires-dist = [
     { name = "click", specifier = ">=8.0" },
     { name = "colorama", specifier = ">=0.4.6" },
+    { name = "cryptography", marker = "extra == 'dev'", specifier = ">=35.0" },
     { name = "fastapi", specifier = ">=0.100" },
     { name = "httpx", specifier = ">=0.24" },
     { name = "jinja2", specifier = ">=3.0" },
@@ -811,27 +810,22 @@ requires-dist = [
     { name = "psutil", specifier = ">=5.9" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pydantic-settings", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "python-multipart", specifier = ">=0.0.5" },
     { name = "pywebview", marker = "extra == 'desktop'" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "requests", specifier = ">=2.28" },
     { name = "rich", specifier = ">=13.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.19" },
     { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "stripe", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "tree-sitter", specifier = ">=0.25.2" },
     { name = "tree-sitter-python", specifier = ">=0.25.0" },
     { name = "typer", specifier = ">=0.10" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.20" },
 ]
-provides-extras = ["desktop"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "cryptography", specifier = ">=35.0" },
-    { name = "pytest", specifier = ">=9.1.0" },
-    { name = "pytest-cov", specifier = ">=6.0" },
-    { name = "ruff", specifier = ">=0.15.19" },
-    { name = "stripe", specifier = ">=5.0" },
-]
+provides-extras = ["desktop", "dev"]
 
 [[package]]
 name = "packaging"
