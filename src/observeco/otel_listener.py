@@ -20,8 +20,8 @@ import os
 import signal
 import time
 import uuid
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI, Request

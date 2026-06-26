@@ -16,12 +16,11 @@ Usage:
 
 import json
 import time
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
 from typing import Optional
 
-from observeco.constants import DRIFT_WARN_PCT, DRIFT_CRITICAL_PCT
-
+from observeco.constants import DRIFT_CRITICAL_PCT, DRIFT_WARN_PCT
 
 # ── Constants ──────────────────────────────────────────────────────
 

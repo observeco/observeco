@@ -10,7 +10,10 @@ import json
 import time
 from pathlib import Path
 
-from observeco.dirs import get_data_dir, hermes_home  # noqa: E402 - late import to control side effects
+from observeco.dirs import (  # noqa: E402 - late import to control side effects
+    get_data_dir,
+    hermes_home,
+)
 
 BILLING_DIR = get_data_dir()
 BILLING_FILE = BILLING_DIR / "billing.json"

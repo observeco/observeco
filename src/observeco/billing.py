@@ -17,9 +17,10 @@ import os
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 from fastapi import Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from observeco.dirs import get_data_dir
 
@@ -392,7 +393,8 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
 
             # If subscription is active, activate Pro for this customer
             if status in ("active", "trialing"):
-                from observeco.license import load as _load_license, save as _save_license, LicenseState
+                from observeco.license import load as _load_license
+                from observeco.license import save as _save_license
                 lic = _load_license()
                 if lic.license_type != "pro":
                     # Find customer email from billing config
@@ -434,7 +436,8 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
 
             if status in ("canceled", "unpaid", "past_due"):
                 # Subscription ended — downgrade
-                from observeco.license import load as _load_license, save as _save_license
+                from observeco.license import load as _load_license
+                from observeco.license import save as _save_license
                 lic = _load_license()
                 if lic.license_type == "pro" and lic.provisioning_source == "stripe":
                     lic.license_type = "free"

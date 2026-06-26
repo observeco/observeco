@@ -11,14 +11,13 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
-from observeco.dirs import hermes_home
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
 from observeco.db import Database
+from observeco.dirs import hermes_home
 
 console = Console()
 db = Database()

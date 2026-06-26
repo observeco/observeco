@@ -19,11 +19,11 @@ import re
 import sys
 import time
 import typing
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from .llm_client import get_client, LLMClient, LiteClient
+from .llm_client import get_client
+
 
 # Lazy accessor — call at use site, not import time
 def _skills_dir() -> Path | None:

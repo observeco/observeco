@@ -1,6 +1,7 @@
 """Token tracking — logging, summaries, trends, cost estimation."""
-from typing import Optional
 import time
+from typing import Optional
+
 from observeco.db import Database
 
 

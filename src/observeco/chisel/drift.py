@@ -13,12 +13,11 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
+from observeco.constants import DRIFT_CRITICAL_PCT as DRIFT_THRESHOLD_PCT
 from observeco.db import Database
 
 console = Console()
 db = Database()
-
-from observeco.constants import DRIFT_CRITICAL_PCT as DRIFT_THRESHOLD_PCT
 
 
 def run_drift(agent: Optional[str] = None) -> None:

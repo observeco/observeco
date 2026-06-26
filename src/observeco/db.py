@@ -13,7 +13,8 @@ from typing import Optional
 
 from platformdirs import user_data_dir
 
-from observeco.dirs import hermes_home, openclaw_home
+from observeco.dirs import hermes_home
+
 
 # ponytail: multiple pulse dirs could be configurable via observeco.yml
 # Lazy — evaluated at first call, not import time, so hermes_home() returning None
@@ -2787,9 +2788,8 @@ class Database:
                         "VALUES (?, ?, 'agent', 'auto', 75)",
                         (nid, aname),
                     )
-                    mechanism = "daemon_metadata"
                     if md.get("watchdog"):
-                        mechanism = f"watchdog_{md['watchdog']}"
+                        pass  # mechanism available as f"watchdog_{md['watchdog']}" if needed
                     count += 1
         except Exception:
             pass

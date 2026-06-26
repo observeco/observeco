@@ -12,14 +12,11 @@ GS-019: Data & Observability Continuity
 from __future__ import annotations
 
 import logging
-import os
-import signal
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 from typing import Optional
 
 import psutil
@@ -80,7 +77,7 @@ class ServiceManager:
         self._components: dict[str, ComponentInfo] = {}
         self._processes: dict[str, subprocess.Popen] = {}
         self._restart_history: dict[str, list[float]] = {}
-        
+
         # Ensure PID directory exists
         SERVICE_PID_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -112,10 +109,10 @@ class ServiceManager:
                 stderr=subprocess.PIPE,
                 stdin=subprocess.DEVNULL,
             )
-            
+
             # Wait for process to start
             time.sleep(2)
-            
+
             # Check if process is still running OR if it was a daemon that exited successfully
             returncode = process.poll()
             if returncode is not None:
@@ -134,7 +131,7 @@ class ServiceManager:
                         self._components[name] = component
                         logger.info(f"Component {name} started as daemon on port {port}")
                         return component
-                
+
                 # Process failed to start
                 stdout, stderr = process.communicate()
                 logger.error(f"Component {name} failed to start: {stderr.decode()}")
@@ -143,7 +140,7 @@ class ServiceManager:
                     state=ComponentState.FAILED,
                     error=f"Process exited immediately: {stderr.decode()[:200]}",
                 )
-            
+
             component = ComponentInfo(
                 name=name,
                 state=ComponentState.RUNNING,
@@ -151,17 +148,17 @@ class ServiceManager:
                 port=port,
                 started_at=time.time(),
             )
-            
+
             self._components[name] = component
             self._processes[name] = process
-            
+
             # Write PID file
             pid_file = SERVICE_PID_DIR / f"{name}.pid"
             pid_file.write_text(str(process.pid))
-            
+
             logger.info(f"Started component {name} (PID {process.pid})")
             return component
-            
+
         except Exception as e:
             logger.error(f"Failed to start component {name}: {e}")
             return ComponentInfo(
@@ -201,7 +198,7 @@ class ServiceManager:
         component.state = ComponentState.STOPPED
         component.pid = None
         component.started_at = None
-        
+
         logger.info(f"Stopped component {name}")
         return component
 
@@ -265,7 +262,7 @@ class ServiceManager:
 
         # Start again
         component = self.start_component(name, command, port)
-        
+
         # Record restart
         if component.state == ComponentState.RUNNING:
             self._record_restart(name)
@@ -315,11 +312,11 @@ class ServiceManager:
         """Check if we can restart a component (within limits)."""
         now = time.time()
         history = self._restart_history.get(name, [])
-        
+
         # Remove old entries outside the window
         history = [t for t in history if (now - t) < RESTART_WINDOW]
         self._restart_history[name] = history
-        
+
         # Can restart if we have fewer than max attempts
         return len(history) < RESTART_MAX_ATTEMPTS
 
@@ -331,7 +328,7 @@ class ServiceManager:
         """Clean up all components."""
         # First, discover running components from PID files
         self.get_status()
-        
+
         # Now stop all discovered components
         for name in list(self._components.keys()):
             self.stop_component(name)
@@ -342,21 +339,21 @@ class ServiceManager:
 def start_service(port: int = 8787, otel_port: int = 4318) -> dict:
     """Start the ObserveCo service."""
     manager = ServiceManager()
-    
+
     # Start OTEL listener (daemon mode via observeco CLI)
     otel_component = manager.start_component(
         "otel_listener",
         [sys.executable, "-m", "observeco", "otel", "listen", "start", "--port", str(otel_port)],
         port=otel_port,
     )
-    
+
     # Start dashboard (use observeco CLI)
     dashboard_component = manager.start_component(
         "dashboard",
         [sys.executable, "-m", "observeco", "dashboard", "--port", str(port), "--no-browser"],
         port=port,
     )
-    
+
     return {
         "otel_listener": otel_component.to_dict(),
         "dashboard": dashboard_component.to_dict(),

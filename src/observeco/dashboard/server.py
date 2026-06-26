@@ -34,6 +34,7 @@ from observeco.dirs import get_data_dir
 from observeco.discover.api import router as discover_router
 from observeco.realtime import router as realtime_router
 
+
 # Shared heartbeat path — watch daemon writes this every 30s.
 # Dashboard reads it to detect if the daemon is alive.
 # ponytail: lazy property to avoid crash on import when data dir is unwritable
@@ -1304,7 +1305,6 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
     is_dead = agent_status == "dead"
     is_not_running = agent_status == "not_running"
     is_unknown = agent_status == "unknown"
-    stale = pulses and (now - pulses[0].get("timestamp", 0)) > 3600
 
     if is_dead:
         if total_errs == 0:
@@ -1432,7 +1432,7 @@ def _detail_health_tab(name: str, pulses: list, errors: list, circuit: dict, fra
 def _detail_drift_tab(name: str, drift: list, framework: str) -> str:
     """Drift detail — 14-day trend with component breakdown."""
     if not drift:
-        return HTMLResponse(f"""<div class="detail-content">
+        return HTMLResponse("""<div class="detail-content">
     <div class="empty-state">
         <div class="empty-state-title">📈 No drift data yet</div>
         <div class="empty-state-body">Drift appears after the agent has been monitored for at least 24 hours.</div>
@@ -2329,7 +2329,6 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
     for name in sorted_names:
         d = agent_data[name]
         status = d["status"]
-        status_color = {"alive": "#22c55e", "dead": "#ef4444", "error": "#eab308", "unknown": "#64748b"}.get(status, "#64748b")
 
         trim = latest_trims.get(name, {})
         tok_total = trim.get("total_tokens", 0)
@@ -2815,7 +2814,7 @@ async def api_watch_daemon_status():
     if dstat.get("running"):
         daemon_status = "running"
     else:
-        recent_daemon = [l for l in logs if l.get("triggered_by") == "daemon"]
+        recent_daemon = [log for log in logs if log.get("triggered_by") == "daemon"]
         if recent_daemon and (now - recent_daemon[0].get("ts", 0)) < 3600:
             daemon_status = "recently_seen"
         elif logs:
@@ -2848,6 +2847,7 @@ async def api_garden_scan():
 
     try:
         import subprocess
+
         from observeco.db import Database as _GardenDB
         r = subprocess.run(
             [sys.executable, "-m", "observeco", "memory", "garden"],
@@ -2861,8 +2861,14 @@ async def api_garden_scan():
         # by re-running the detection on each agent's MEMORY.md
         details = {"duplicates": [], "contradictions": [], "stale": []}
         try:
-            from observeco.clawforge.garden import _find_memory_files, _find_duplicates, _find_contradictions, _find_stale
             from pathlib import Path
+
+            from observeco.clawforge.garden import (
+                _find_contradictions,
+                _find_duplicates,
+                _find_memory_files,
+                _find_stale,
+            )
             for mem in _find_memory_files():
                 path = Path(mem["path"])
                 if not path.exists():
@@ -2921,12 +2927,10 @@ async def api_garden_remove_stale(request: Request):
 @app.get("/api/budget-planner", response_class=HTMLResponse)
 async def api_budget_planner(rate: float = 0.15):
     """Fleet-level budget planner: estimate daily token spend and recommend allocation."""
-    from observeco.tracking.tokens import get_token_summary
     from observeco import license as lic
     is_pro = lic.require_pro()
 
     # Read fleet data
-    agents = db.get_agents()
     trims_all = db.get_trims(limit=30)
     latest_trims = {}
     for t in trims_all:
@@ -3118,7 +3122,6 @@ async def api_compress_feed():
                 ago = f"{diff // 86400}d ago"
         mode_icon = "⚡" if mode == "full" else "✂️"
         mode_label = "Full" if mode == "full" else "Lite"
-        saved_tok = before_tok - after_tok
         items.append(f"""<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
     <span style="flex-shrink:0;">{mode_icon}</span>
     <span style="font-weight:600;min-width:80px;">{_html_escape(agent)}</span>
@@ -4273,7 +4276,7 @@ async def api_config_hygiene_fix(request: Request):
     try:
         body = await request.json()
         check = body.get("check", "all")
-        from observeco.chisel.config_scanner import scan_config, apply_fix
+        from observeco.chisel.config_scanner import apply_fix, scan_config
         report = scan_config()
         if check == "all":
             targets = [f for f in report.findings if f.auto_fixable]
@@ -4303,10 +4306,15 @@ async def api_chisel_compress_skill(request: Request):
         provider = body.get("provider", "auto")
         if not skill_names:
             return JSONResponse({"status": "error", "message": "No skills specified"}, status_code=400)
-        from observeco.chisel.skill_compress import compress_skill_to_artifacts, _skills_dir, generate_cards_json
+        import json as _json
+
+        from observeco.chisel.skill_compress import (
+            _skills_dir,
+            compress_skill_to_artifacts,
+            generate_cards_json,
+        )
         from observeco.db import Database
         from observeco.tracking.tokens import _estimate_cost
-        import json as _json
         sd = _skills_dir()
         if sd is None:
             return JSONResponse({"status": "error", "message": "Skills directory not found"}, status_code=500)
@@ -4385,9 +4393,16 @@ async def api_chisel_revert_skill(request: Request):
         skill_names = body.get("skills", [])
         if not skill_names:
             return JSONResponse({"status": "error", "message": "No skills specified"}, status_code=400)
-        from observeco.chisel.skill_compress import _skills_dir, _count_tokens, _text_hash, _atomic_write, generate_cards_json
-        from observeco.db import Database
         import json as _json
+
+        from observeco.chisel.skill_compress import (
+            _atomic_write,
+            _count_tokens,
+            _skills_dir,
+            _text_hash,
+            generate_cards_json,
+        )
+        from observeco.db import Database
         sd = _skills_dir()
         if sd is None:
             return JSONResponse({"status": "error", "message": "Skills directory not found"}, status_code=500)
@@ -5350,7 +5365,6 @@ async def api_pathway_graph():
 @app.get("/api/pathway-scan", response_class=HTMLResponse)
 async def api_pathway_scan():
     """Trigger a pathway scan and return results."""
-    count = db.pathway_scan()
     graph = db.pathway_get_graph()
     by_status = {}
     for e in graph["edges"]:
@@ -6233,8 +6247,8 @@ async def api_heal_config():
         </div>"""
 
     # Get all agents and their heal configs
-    from observeco.db import Database
     from observeco import license as lic
+    from observeco.db import Database
     is_pro = lic.require_pro()
     d = Database()
     agents = d.get_agents()
@@ -6302,7 +6316,6 @@ async def api_heal_config():
         drift_t = cfg.get("drift_threshold", 15.0)
         debt_t = cfg.get("memory_debt_threshold", 60)
 
-        status = "idle"
         status_label = "🟢 Idle"
         if ah and l2:
             status_label = "🟢 L1 + L2 Active"
@@ -6799,13 +6812,9 @@ async def api_alerts_subs():
 @app.get("/api/alert-dashboard", response_class=HTMLResponse)
 async def api_alert_dashboard():
     """Push Alerts Dashboard: integrated channel management with add/remove/test."""
-    from observeco import license as lic
-    from observeco.alerts.push import push_alert
     from observeco.db import Database
     d = Database()
-    is_pro = lic.require_pro()
     subs = d.get_alert_subscriptions()
-    now = int(time.time())
 
     # Check provider config status
     _home = Path.home()
@@ -6840,7 +6849,6 @@ async def api_alert_dashboard():
         for s in subs:
             ch = s["channel"]
             tgt = s["target"]
-            enabled = s.get("enabled", 1)
             ch_icon = {"telegram": "📱", "discord": "🎮", "webhook": "🔗", "email": "📧"}
             health = channel_health.get(ch, {})
             fail_rate = (health.get("failed", 0) / max(health.get("total", 0), 1)) * 100
@@ -7350,7 +7358,7 @@ async def api_plugin_hooks(agent: str = ""):
         ts_abs = ts_dt.strftime("%b %d %H:%M") if ts_dt else "?"
         age_m = (now - ts) // 60 if ts else 999999
         if age_m < 1:
-            ts_display = f"just now"
+            ts_display = "just now"
         elif age_m < 60:
             ts_display = f"{age_m}m"
         elif age_m < 1440:
@@ -7753,7 +7761,6 @@ async def api_stop_agent(agent_name: str, request: Request):
     if auth_error:
         return auth_error
 
-    import signal
     import subprocess
     try:
         # Find agent process
@@ -7805,7 +7812,6 @@ async def api_agent_kill_log(agent_name: str):
         return '<div style="color:#64748b;font-size:12px;">No kill events recorded for this agent.</div>'
     rows = ""
     for e in entries:
-        ts = e["created_at"]
         success = "✅" if e["success"] else "❌"
         signal_txt = e["signal_sent"]
         error = f' <span style="color:#ef4444;">({e["error_message"]})</span>' if e["error_message"] else ""

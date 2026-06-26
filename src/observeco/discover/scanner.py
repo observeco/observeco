@@ -5,10 +5,8 @@ Spec: observeco-master-plan.md §3.64
 """
 
 import json
-import os
 import re
 import time
-from pathlib import Path
 from typing import Any
 
 from observeco.config import hermes_home, write_agent

@@ -347,7 +347,8 @@ class DataSourceWatchdog(BaseConsumer):
         # OTel is down — try to restart
         logger.warning("OTel listener is down — attempting restart")
         try:
-            import subprocess, sys
+            import subprocess
+            import sys
             proc = subprocess.Popen(
                 [sys.executable, "-m", "observeco", "otel", "listen", "start", "--port", "4318"],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -374,7 +375,6 @@ class DataSourceWatchdog(BaseConsumer):
     def _check_data_freshness(self) -> None:
         """Check token_logs for recent data by source. Log warning if stale."""
         now = time.time()
-        cutoff = now - 3600  # 1 hour
         rows = self.db._get_conn().execute("""
             SELECT source, MAX(recorded_at) as last_ts
             FROM token_logs

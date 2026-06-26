@@ -530,9 +530,9 @@ def proxy_stop() -> None:
     from observeco.proxy.process import stop_proxy
     stopped = stop_proxy(9200)
     if stopped:
-        print(f"✓ Proxy stopped")
+        print("✓ Proxy stopped")
     else:
-        print(f"ℹ Nothing running on port 9200")
+        print("ℹ Nothing running on port 9200")
 
 @proxy_app.command(name="status")
 def proxy_status() -> None:
@@ -542,7 +542,7 @@ def proxy_status() -> None:
     if result["state"] == "running":
         health = result.get("health", {})
         proxy_stats = health.get("proxy", {})
-        print(f"✓ Proxy running")
+        print("✓ Proxy running")
         print(f"  PID: {result['pid']}")
         print(f"  Port: {result['port']}")
         print(f"  Requests: {proxy_stats.get('requests', '?')}")
@@ -574,7 +574,7 @@ def proxy_configure(
         for c in result["changes"]:
             print(f"  {c}")
         print(f"\n  Backup: {result.get('backup', 'none')}")
-        print(f"\n  Restart Hermes gateway to apply changes.")
+        print("\n  Restart Hermes gateway to apply changes.")
     else:
         print(f"ℹ {result.get('message', 'No changes needed')}")
 
@@ -600,9 +600,10 @@ app.add_typer(sdk_app, name="sdk")
 @sdk_app.command(name="detect")
 def sdk_detect() -> None:
     """Detect installed AI SDKs."""
-    from observeco.tracking.sdk.detector import detect_sdks
     from rich.console import Console
     from rich.table import Table
+
+    from observeco.tracking.sdk.detector import detect_sdks
 
     detected = detect_sdks()
     console = Console()
@@ -630,9 +631,9 @@ def sdk_install(
     sdk_name: str = typer.Argument("", help="Specific SDK to patch (empty = all detected)"),
 ) -> None:
     """Apply token-logging patches to detected SDKs."""
-    from observeco.tracking.sdk.detector import detect_sdks
-    from observeco.tracking.sdk.patcher_registry import apply_patcher, apply_all_patchers
     from rich.console import Console
+
+    from observeco.tracking.sdk.patcher_registry import apply_all_patchers, apply_patcher
 
     console = Console()
 
@@ -658,6 +659,7 @@ def sdk_enable() -> None:
     import shutil
     import site
     from pathlib import Path
+
     from rich.console import Console
 
     console = Console()
@@ -704,9 +706,10 @@ def sdk_enable() -> None:
 @sdk_app.command(name="providers")
 def sdk_providers() -> None:
     """Detect provider configs from installed tools."""
-    from observeco.tracking.sdk.provider_registry import detect_and_report
     from rich.console import Console
     from rich.table import Table
+
+    from observeco.tracking.sdk.provider_registry import detect_and_report
 
     report = detect_and_report()
     console = Console()
@@ -1776,19 +1779,19 @@ def service_start(
     otel_port: int = typer.Option(4318, "--otel-port", help="OTEL listener port"),
 ) -> None:
     """Start ObserveCo service (OTEL listener + Dashboard)."""
+
     from observeco.service import start_service
-    import json
-    
+
     result = start_service(port=port, otel_port=otel_port)
-    
+
     otel = result.get("otel_listener", {})
     dashboard = result.get("dashboard", {})
-    
+
     if otel.get("state") == "running" and dashboard.get("state") == "running":
-        print(f"✓ Service started")
+        print("✓ Service started")
         print(f"  OTEL listener: PID {otel.get('pid')} on port {otel_port}")
         print(f"  Dashboard: PID {dashboard.get('pid')} on port {port}")
-        print(f"  Token: show with `observeco dashboard --show-token`")
+        print("  Token: show with `observeco dashboard --show-token`")
     else:
         print("✗ Service failed to start")
         if otel.get("error"):
@@ -1801,18 +1804,18 @@ def service_start(
 def service_stop() -> None:
     """Stop ObserveCo service."""
     from observeco.service import stop_service
-    
-    result = stop_service()
-    print(f"✓ Service stopped")
+
+    stop_service()
+    print("✓ Service stopped")
 
 
 @service_app.command(name="status")
 def service_status() -> None:
     """Show ObserveCo service status."""
-    from observeco.service import get_service_status
-    from observeco.health import HealthChecker
     from observeco.dirs import get_data_dir
+    from observeco.health import HealthChecker
     from observeco.process_supervision import get_status as get_supervisor_status
+    from observeco.service import get_service_status
 
     # Get component status
     status = get_service_status()
@@ -1833,24 +1836,21 @@ def service_status() -> None:
         print("No components running")
         print("\nStart with: observeco service start")
         return
-    
+
     # Show component status
     for name, info in status.items():
         state = info.get("state", "unknown")
         pid = info.get("pid")
         port = info.get("port")
         uptime = info.get("uptime")
-        
+
         if state == "running":
             icon = "✓"
-            color = "green"
         elif state == "failed":
             icon = "✗"
-            color = "red"
         else:
             icon = "●"
-            color = "yellow"
-        
+
         print(f"{icon} {name}: {state}")
         if pid:
             print(f"  PID: {pid}")
@@ -1858,15 +1858,14 @@ def service_status() -> None:
             print(f"  Port: {port}")
         if uptime:
             print(f"  Uptime: {int(uptime)}s")
-    
+
     # Run health check
     print("\nHealth Check:")
     try:
-        from pathlib import Path
         db_path = get_data_dir() / "pulse.db"
         checker = HealthChecker(db_path=db_path)
         health = checker.check_all()
-        
+
         overall = health.overall.value
         if overall == "healthy":
             icon = "✓"
@@ -1874,19 +1873,19 @@ def service_status() -> None:
             icon = "⚠"
         else:
             icon = "✗"
-        
+
         print(f"{icon} Overall: {overall}")
-        
+
         # Show L1 checks
         for check, status in health.level1.items():
             icon = "✓" if status.value == "up" else "✗"
             print(f"  {icon} {check}: {status.value}")
-        
+
         # Show L2 checks
         for check, status in health.level2.items():
             icon = "✓" if status.value == "up" else "⚠" if status.value == "degraded" else "✗"
             print(f"  {icon} {check}: {status.value}")
-        
+
         # Show resources
         if health.resources:
             print("\nResources:")
@@ -1896,7 +1895,7 @@ def service_status() -> None:
                 print(f"  CPU: {health.resources['cpu_percent']:.1f}%")
             if "memory_mb" in health.resources:
                 print(f"  Memory: {health.resources['memory_mb']:.1f} MB")
-                
+
     except Exception as e:
         print(f"  Health check failed: {e}")
 
@@ -1915,7 +1914,7 @@ def service_install() -> None:
 @service_app.command(name="uninstall")
 def service_uninstall() -> None:
     """Remove the ObserveCo system service."""
-    from observeco.process_supervision import uninstall, UNSUPPORTED_MSG
+    from observeco.process_supervision import uninstall
 
     ok, msg = uninstall()
     print(msg)
@@ -1929,19 +1928,19 @@ def service_restart(
     otel_port: int = typer.Option(4318, "--otel-port", help="OTEL listener port"),
 ) -> None:
     """Restart ObserveCo service."""
-    from observeco.service import stop_service, start_service
-    
+    from observeco.service import start_service, stop_service
+
     print("Stopping service...")
     stop_service()
-    
+
     print("Starting service...")
     result = start_service(port=port, otel_port=otel_port)
-    
+
     otel = result.get("otel_listener", {})
     dashboard = result.get("dashboard", {})
-    
+
     if otel.get("state") == "running" and dashboard.get("state") == "running":
-        print(f"✓ Service restarted")
+        print("✓ Service restarted")
         print(f"  OTEL listener: PID {otel.get('pid')} on port {otel_port}")
         print(f"  Dashboard: PID {dashboard.get('pid')} on port {port}")
     else:
@@ -2010,8 +2009,8 @@ def run_agent(
         child_env["OBSERVECO_RUNTIME"] = runtime
 
     if mode == "proxy-config" and not no_probe:
-        from observeco.proxy.reconciler import reconcile_loop
         from observeco.proxy.process import ensure_proxy_alive
+        from observeco.proxy.reconciler import reconcile_loop
 
         if runtime == "hermes":
             from observeco.capability.adapters.hermes import HermesSchemaV16 as Adapter
@@ -2039,7 +2038,7 @@ def run_agent(
                 existing_proxies=existing,
                 ensure_proxy_alive=ensure_proxy_alive,
             )
-            typer.echo(f"observeco run: reconciler started (mode=proxy-config, tick=10s)")
+            typer.echo("observeco run: reconciler started (mode=proxy-config, tick=10s)")
         else:
             typer.echo("observeco run: no config_path detected, reconciler skipped", err=True)
 

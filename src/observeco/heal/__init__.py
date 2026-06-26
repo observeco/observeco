@@ -13,9 +13,9 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 
-from observeco.dirs import hermes_home
 from observeco.config import load_config
 from observeco.db import Database
+from observeco.dirs import hermes_home
 
 console = Console()
 HEAL_CIRCUIT: dict[str, dict] = {}
@@ -527,7 +527,7 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
                 success, msg = _execute_action(diagnosis['action'], diagnosis['action_args'])
             elif diagnosis['action'] in ("acknowledge", "pip_install", "code_fix"):
                 table.add_row(name, f"[yellow]{diagnosis['diagnosis']}[/yellow]", diagnosis['action'],
-                             f"[yellow]Skipped (requires user confirmation)[/yellow]")
+                             "[yellow]Skipped (requires user confirmation)[/yellow]")
                 results.append({"agent": name, "status": "skipped_safe", "action": diagnosis['action']})
                 continue
             else:

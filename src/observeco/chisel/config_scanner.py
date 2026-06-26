@@ -225,7 +225,7 @@ def check_cache_ttl(cfg: dict) -> list[Finding]:
                    f"~100% at 30m. Each miss costs ~3x on the cached prefix.",
             estimated_waste_tok=2000,
             auto_fixable=True,
-            fix_command=f"Set prompt_caching.cache_ttl to 30m in config.yaml",
+            fix_command="Set prompt_caching.cache_ttl to 30m in config.yaml",
         ))
 
     return findings

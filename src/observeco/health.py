@@ -333,7 +333,6 @@ class HealthChecker:
 
     def _calculate_overall(self) -> HealthLevel:
         """Calculate overall health from L1 + L2 checks."""
-        all_statuses = list(self.status.level1.values()) + list(self.status.level2.values())
 
         # Any L1 DOWN = CRITICAL
         if any(s == ComponentStatus.DOWN for s in self.status.level1.values()):

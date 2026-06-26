@@ -7,13 +7,11 @@ Auto-detects available providers with configurable fallback chain.
 
 import json
 import os
-import urllib.request
 import urllib.error
-from pathlib import Path
+import urllib.request
 from typing import Optional
 
 from observeco.dirs import hermes_home
-
 
 # ── Provider Defaults ──────────────────────────────────────────────────────────
 
