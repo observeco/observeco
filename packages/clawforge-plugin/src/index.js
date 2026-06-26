@@ -45,6 +45,10 @@ const INTENT_CLASSES = {
     "configure", "setting", "parameter", "option", "toggle",
     "install", "setup", "init",
   ],
+  "cron/automate": [
+    "cron", "schedule", "automate", "periodic", "recurring",
+    "every", "daily", "hourly", "nightly", "batch", "routine",
+  ],
 };
 
 // Context sources to load per intent class
@@ -68,6 +72,9 @@ const INTENT_SOURCES = {
   "config/setup": [
     "config.yaml", "current_settings", "SOUL.md",
   ],
+  "cron/automate": [
+    "cron_config", "scheduled_tasks", "SOUL.md",
+  ],
 };
 
 const ALL_SOURCES = [
@@ -80,6 +87,7 @@ const ALL_SOURCES = [
 // ── TF-IDF Intent Classifier ───────────────────────────────────────────
 
 function classifyIntent(message) {
+  message = message ?? "";
   const lower = message.toLowerCase();
   const scores = {};
 
@@ -146,25 +154,37 @@ function logHook(db, agentName, hookPoint, intentClass, loaded, skipped, saved, 
 // ── ObserveCo API Client ──────────────────────────────────────────────
 
 async function postStats(endpoint, payload) {
-  try {
-    const url = `${endpoint}/api/tokens/log`;
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!resp.ok) {
-      console.error(`[clawforge] POST ${url} returned ${resp.status}`);
+  const maxRetries = 2;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const url = `${endpoint}/api/tokens/log`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) {
+        console.error(`[clawforge] POST ${url} returned ${resp.status}`);
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+          continue;
+        }
+      }
+      return; // Success or final failure
+    } catch (err) {
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      // Silent on final failure — don't crash the agent if ObserveCo is down
     }
-  } catch (err) {
-    // Silent — don't crash the agent if ObserveCo is down
   }
 }
 
 // ── Context Engine Implementation ──────────────────────────────────────
 
 function createClawForgeEngine(config) {
-  const cfg = config?.plugins?.config?.clawforge ?? {};
+  const cfg = config?.plugins?.entries?.clawforge?.config ?? {};
   const statsPath = cfg.statsPath ?? "~/.observeco/plugin-stats.db";
   const observecoEndpoint = cfg.observecoEndpoint ?? "http://localhost:8420";
   const intentThreshold = cfg.intentThreshold ?? 0.3;
@@ -256,14 +276,14 @@ function createClawForgeEngine(config) {
     },
 
     // ── Assemble: build the context prompt ─────────────────────────
+    // ponytail: pre-response demotion (Phase 3) — estimate tokens, demote if >70% window.
+    // Currently a pass-through. Phase 3 will add: stale memory → unused skills → workspace files.
     async assemble({ sessionKey, prompt }) {
-      // Pass through — the actual context assembly is handled by OpenClaw's
-      // built-in context builder. We just provide the intent classification
-      // that determines which sources to load.
       return prompt;
     },
 
     // ── AfterTurn: post-turn stats logging ──────────────────────────
+    // ponytail: pre-response demotion fires here for logging only (Phase 3 will move to assemble).
     async afterTurn({ sessionKey, usage }) {
       const agentName = sessionKey?.agentName ?? "unknown";
       const db = getStatsDb(statsPath);
