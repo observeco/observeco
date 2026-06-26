@@ -142,6 +142,11 @@
 3. **Single-framework focus** — currently Hermes/OpenClaw ecosystem, needs broader agent framework support
 4. **No deterministic replay** — competitors (Observability & Replay project) offer replay for regression testing
 5. **No financial controls** — competitors (NORNR) offer policy-based spend approval
+6. **Auto-heal dashboard UI missing** — backend built, but no dashboard toggle/status card/history. Pro users can't enable what they paid for from the UI. (~1d to fix)
+7. **Push alerts dashboard UI missing** — backend delivers to Telegram/webhook/email, but no subscription management UI, delivery log, or test button. Discord not implemented. (~1.5d to fix)
+8. **No dollar cost conversion** — tokens tracked but no pricing table to show "$0.03/run." Cost Estimation Engine (#58) planned but not built. (~2d)
+9. **No generic discovery** — currently Hermes/OpenClaw only. Non-framework agents must be added manually. Generic discovery (#71) P2 priority. (~5.5h)
+10. **No OTel ingestion** — 28 frameworks auto-emit OTel, but ObserveCo has no listener. OTel ingestion (#53) planned but not built. (~2d)
 
 ---
 
@@ -149,10 +154,47 @@
 
 ### 4.1 Product Gaps to Fill (Priority Order)
 
-1. **Deterministic replay** — record and replay agent runs for regression testing (high demand, unique differentiator)
-2. **Framework adapters** — LangGraph, CrewAI, Claude Code hooks (where "all the chaos happens")
-3. **Financial controls** — per-agent spend limits, policy-based approval (growing demand)
-4. **Compliance audit trail** — structured human oversight, compliance-grade logging (enterprise need)
+**P0 — Pre-Launch (ship before public launch):**
+
+| # | Gap | Pain Point | Effort | Why Now |
+|---|-----|------------|--------|---------|
+| 1 | **Auto-heal dashboard UI** — toggle, status card, heal history table, per-agent config. Backend already built. | Missing Runtime Health | ~1d | Pro users can't enable what they paid for. Dashboard ships empty cards. |
+| 2 | **Push alerts dashboard UI** — subscription management, delivery log, test button, Discord delivery. Backend already built. | Missing Runtime Health | ~1.5d | Pro users can't configure channels. Discord is #2 requested channel. |
+| 3 | **Generic discovery layer (#71)** — `ollama list`, `~/.claude/projects/`, `psutil`, port scanner. | Tool Fragmentation | ~5.5h | Without this, non-Hermes/OpenClaw users see an empty fleet. Blocks adoption. |
+
+**P1 — Launch+Week 1:**
+
+| # | Gap | Pain Point | Effort | Why Now |
+|---|-----|------------|--------|---------|
+| 4 | **Cost Estimation Engine (#58)** — pricing table (model→$/token), per-session/agent/day cost estimates, dashboard widget. | Cost Blindness | ~2d | Users see tokens but not dollars. Dollar cost is the #1 Reddit pain point. |
+| 5 | **Budget alerts (Phase 4 of #14)** — daily/cost/anomaly thresholds → push alerts via existing §17 infra. | Cost Blindness | ~0.5d | Closes the loop: track → alert → act. |
+| 6 | **OTel trace ingestion (#53)** — OTLP listener on port 4318, store spans in `trace_spans` table. | Tool Fragmentation | ~2d | Zero-instrument entry point for 28 frameworks. Removes "Hermes-only" perception. |
+
+**P2 — Launch+Month 1:**
+
+| # | Gap | Pain Point | Effort | Why Now |
+|---|-----|------------|--------|---------|
+| 7 | **Context Health Score (#27)** — 0-100 score from bloat, drift, error rate, window utilisation. | Context/Memory Bloat | ~2d | "Is my agent's brain healthy?" — the question no competitor answers. |
+| 8 | **Anomalies Inbox (#33)** — fleet-wide issue surfacing across all data sources. | Missing Runtime Health | ~3d | "Your agent has 3 problems right now" — turns passive monitoring into active alerting. |
+| 9 | **Deterministic replay (lightweight)** — record turns to replay log, CLI `observeco replay --turn <id>`. | Debugging Blindness | ~3d | The #1 debugging pain point: "when something breaks at step 4, I can't see step 2." |
+
+**P3 — Launch+Month 2-3 (post-launch, community-driven):**
+
+| # | Gap | Pain Point | Effort | Why Now |
+|---|-----|------------|--------|---------|
+| 10 | **LangGraph adapter** — callback handler that POSTs trace data to ObserveCo. | Tool Fragmentation | ~3d | 53M PyPI downloads/month. "Where all the chaos happens." |
+| 11 | **CrewAI adapter** — callback handler for task-level observability. | Tool Fragmentation | ~2d | 14M PyPI downloads/month. |
+| 12 | **CI quality gates (#61)** — `observeco gate` with `--fail-under-health`, `--fail-on-critical` flags. | Debugging Blindness | ~2d | Turns observability from passive dashboard into active quality gate. |
+
+**Deferred (too hard for small OSS project):**
+
+| Gap | Why Deferred | What It Would Take |
+|-----|-------------|-------------------|
+| Full deterministic replay | LLM non-determinism, state capture complexity, storage volume | Dedicated replay engine (not SQLite), LLM response caching layer, per-framework adapters. ~2-4 weeks. |
+| Cross-framework plugin system | No common API across LangGraph/CrewAI/Claude Code, maintenance burden | Dedicated adapter per framework (500-2000 lines each), weekly CI against latest versions. ~3-5 days per adapter + ongoing. |
+| Compliance-grade audit trail | Immutability, cryptographic signing, 1-7 year retention | Append-only log storage, hash chain signing, configurable retention, export to CEF/LEEF. ~1-2 weeks + compliance certification. |
+| Multi-machine swarm observability | Conflicts with "local-first" positioning, clock skew, auth complexity | Central server mode, agent-side buffering/sync, auth tokens, clock sync. ~3-4 weeks. |
+| Financial controls (NORNR-style) | Enforcement point (proxy deprecated), false positives, multi-provider complexity | Lightweight proxy or SDK interceptor, per-agent budget tracking, configurable escalation. ~1-2 weeks. |
 
 ### 4.2 Messaging Priorities
 

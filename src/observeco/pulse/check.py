@@ -98,10 +98,10 @@ def _find_agent_log(agent_name: str) -> Path | None:
       3. {agent_name}_daemon.log  (e.g. dreamer_daemon.log)
     """
     log_dirs = [
-        hermes_home() / "logs",
-        Path("/var/log"),
-        Path("/tmp"),
+        d / "logs" if d else None
+        for d in [hermes_home(), Path("/var/log"), Path("/tmp")]
     ]
+    log_dirs = [d for d in log_dirs if d is not None]
     # Precise patterns — no fuzzy globs
     patterns = [
         f"{agent_name}_agent.log",

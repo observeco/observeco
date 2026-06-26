@@ -3,7 +3,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Last updated** | 2026-06-24 — Token Analytics: verdict card, cache-by-agent chart, breakdown sort by cost + % column, confidence indicator, model field wired in OTEL parser. Updated §3.14 Phase 3 status. |
+| **Last updated** | 2026-06-26 — Runtime Health spec audit: fixed #15/#17/#22 status markers, added #17b (Action Buttons in Push Notifications) and #64 (Agent Health Report Card) feature rows. Updated §3.15, §3.17 status to reflect backend/dashboard split. |
 | **Author** | Main |
 
 ---
@@ -54,21 +54,23 @@
 | **PLANNED** | | | | | | | |
 ||| 13 | System prompt compression (`observeco chisel compress`) | Analysis | ✅ Live — CLI + auto-watch daemon + dashboard savings card | ✅ `--mode lite` (guidance compression) + `--dry-run` | ✅ `--mode full` (memory culling + skill dedup + context refactor) + auto-watch daemon + dashboard savings | ~2.5d | observeco-master-plan.md §13 |
 ||| 14 | Cloud token tracking — post-turn webhook (Hermes hook → `POST /api/tokens/log`) + provider billing API fallback | Monitoring | ✅ Backend endpoint + ✅ DB migration 29 + ✅ Hermes hook + ✅ Dashboard (recent turns + trend endpoint + verdict card + cache-by-agent chart + confidence indicator + breakdown sorted by cost + % column) / ✅ Model field wired in OTEL parser | ✅ 24h component breakdown per agent + per-provider cost + gap % + cost verdict + per-agent cache rates | ✅ Never-pruned history + anomaly (+3σ) + budget alerts (daily/cost/anomaly) + fleet comparison | ~3d | observeco-master-plan.md §14 |
-|| 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Live — dashboard heal config page with per-agent L1/L2 toggles, thresholds, events log, start-watch | ✅ manual Heal button + dashboard alerts + L2 trends | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) | ~1d + L2 built | observeco-master-plan.md §15 |
+||| 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Backend (L1 auto-restart, L2 proactive, LLM escalation, HealCircuit) / ❌ Dashboard UI (toggle, status card, heal history, per-agent config) | ✅ manual Heal button + dashboard alerts + L2 trends / ❌ Dashboard config UI | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) + dashboard config UI | ~1d + L2 built | observeco-master-plan.md §15 |
 | 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) — dashboard stats + hooks now auth-exempt (401 fix) | Analysis | 🔴 Planned (code partial — plugin + dashboard + intent classifier pending) | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
-|| 17 | Push alerts (Telegram, Discord, webhook, email) | Alerts | ✅ Live — dashboard subscription form, test/delete buttons, delivery log | ✅ All channels + delivery log | ✅ Auto-heal integration + subscription management | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
+||| 17 | Push alerts (Telegram, webhook, email) — Discord pending | Alerts | ✅ Backend (Telegram, webhook, email delivery) / 🔴 Discord / ❌ Dashboard UI (subscription management, delivery log, test button) | ✅ Backend delivery (Telegram, webhook, email) / ❌ Dashboard subscription UI | ✅ Auto-heal integration + subscription management + Discord delivery + dashboard UI | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
 || 18 | Extended history (7d, pruning cron at 3am) | Dashboard | ✅ Live — error tab range selector (24h/7d/30d/90d) + prune cron + L2 baselines | ✅ 7d + L2 baselines (RSS, P95, errors, upstream) | ✅ Never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
 ||| 19 | In-dashboard Glossary & FAQ | Dashboard | ✅ Live — 51 topics with detail + FAQ | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
 || ~~**20**~~ | ~~**Skill Audit**~~ — ~~merged into Brain Analysis~~ | ~~**Analysis**~~ | ~~**✅ Merged**~~ | ~~✅~~ | ~~✅~~ | ~~—~~ | ~~—~~ |
 ||| 21 | Communication Pathway Map (subgraph folding, cron edge metadata, FK constraint fix, daemon heartbeat metadata, sticky header) | Diagnostics | ✅ Live | ✅ Interactive graph with 111 nodes + 80 edges + 77 cron_delivery edges + platform node + dead ends + subgraph folding + detail panel with metadata | ✅ Detail panel + drag + auto-alert | ~3d (built) + 1d (FK fix) | observeco-master-plan.md §3.19 |
-||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Layers 1-2 / 🔴 P2-P5 (platform connectivity, crash analysis, costs, comm tracing, CI/CD) | ✅ All (detection + health — core infra for everything) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
+|||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Layers 1-2 / 🔴 P2-P5 (platform connectivity, crash analysis, costs, comm tracing, CI/CD) | ✅ Layers 1-2 only (process health, OTel, cross-framework) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
 |||| **23** | **Skill Artifacts + Cards System** (`observeco chisel artifacts` + `chisel cards`) | **Analysis** | **✅ Live** | ✅ Cached compressed `.md.compressed` per skill, `cards.json` (156 cards), `manifests.json`, CLI `observeco chisel cards` for top-30 rank, `observeco chisel artifacts --refresh` to rebuild. SkillOS `_load_skill_content()` prefers compressed cache over raw. `max_skill_content_bytes` reduced 8192→4096. | ✅ Same for all | ~1d | observeco-master-plan.md §3.23 |
 ||| **24** | **Config Hygiene Audit** (`observeco chisel config`) — scans Hermes config for duplicated prompts, low cache TTL, stale references. **Synergy:** shares token counting, YAML parsing, and savings estimation with `chisel/skill_compress.py`. Same pipeline, different target. | **Analysis** | **✅ Live** | ✅ CLI audit report with line-by-line findings + `--fix` flag + dashboard widget | ✅ Dashboard widget with scheduled auto-fix | ~1d | observeco-master-plan.md §3.24 |
 ||| **25** | **LLM-Powered Intelligence Service** — shared `llm_service` that every module calls for deeper diagnosis, alert enrichment, personalized first-run guidance, and per-agent summaries. Uses `OBSERVECO_LLM_API_KEY` (bring-your-own-key). Static fallbacks when no key configured. | **AI** | **✅ Live — v1** | ✅ BYOK — user provides their own LLM API key. Static fallbacks when no key. | ✅ All 7 consumers (3 deep + 4 shallow) | ~5d (3d built, 2 deferred) | observeco-master-plan.md §3.25 |
 |||| **26** | **Self-serve billing management** — License status card (plan, trial countdown, action buttons), Stripe Customer Portal for paid subs, Cancel Trial with trial hardening (one-time offer), end-of-trial banner, 3 Stripe webhooks (subscription.deleted/updated/invoice.payment_failed) | **Commercial** | **✅ Live** | ✅ Free features always free. LLM uses BYOK (`OBSERVECO_LLM_API_KEY`). Trial = full Pro unlock (future). After trial: Free. | ✅ Pro features | ~4h | §3.28 |
 |||| ~~**42** | **Transparent API Proxy** (`observeco proxy start`) — MITM proxy for **local LLM token tracking only** (ollama, llama.cpp). Routes by API key prefix, captures token usage from responses. Cloud LLM tracking delegated to post-turn webhook (§43).~~ **REMOVED 2026-06-19** — SDK-sidecar (`observeco instrument`) replaces the MITM proxy. Proxy was in the execution path with SSE torn-read risk and no supervisor process. SDK instrumentation is out-of-band, framework-aware, and zero crash risk. See `specs/adr-proxy-attribution.md` for deprecation record. | **REMOVED** | ❌ Deprecated | ❌ | ❌ | ~2d (built, then removed) | specs/adr-proxy-attribution.md (deprecated) |
 |||| **43** | **Post-Turn Webhook (Cloud Token Tracking – Hermes)** — Agent-side fire-and-forget POST after every LLM turn. Payload: agent_name, turn_id, model, provider, total_tokens, component breakdown (identity/skills/memory/tools/guidance), latency_ms, tool_calls, topic_id. Sent to `POST /api/tokens/log` (endpoint exists + extended with model/latency/tool_calls/topic_id). Webhook is **primary** cloud tracking mechanism. Proxy covers local only. | **Monitoring** | ✅ Backend endpoint (`/api/tokens/log`) + ✅ DB migration 29 + ✅ **Hermes hook built** (fire-and-forget daemon thread, 2s timeout, OBSERVECO_URL configurable) / 🔴 Dashboard trend charts | ✅ 24h component breakdown per agent + per-provider cost attribution + per-model breakdown + per-topic model usage | ✅ Never-pruned history + anomaly detection (+3σ) + budget alerts (daily/cost/anomaly) + fleet comparison | ~1d (built) | specs/obs-spec-043-hermes-post-turn-hook.md |
-|||| **44** | **Provider Billing API Fallback** — Query OpenAI/Anthropic/DeepSeek billing endpoints for aggregate token totals. Used to compute **attribution gap**: "92% attributed, 8% unattributed." Catches agents not instrumented with the webhook. | **Monitoring** | 🔴 Planned | ✅ Aggregate cloud spend total + gap % indicator on dashboard | ✅ Same | ~1d | specs/adr-proxy-attribution.md |
+||||| **44** | **Provider Billing API Fallback** — Query OpenAI/Anthropic/DeepSeek billing endpoints for aggregate token totals. Used to compute **attribution gap**: "92% attributed, 8% unattributed." Catches agents not instrumented with the webhook. | **Monitoring** | 🔴 Planned | ✅ Aggregate cloud spend total + gap % indicator on dashboard | ✅ Same | ~1d | specs/adr-proxy-attribution.md |
+||||| **17b** | **Action Buttons in Push Notifications** — Telegram inline keyboards (restart/cooldown/trim), Discord buttons, webhook action URLs. Calls `/api/heal-action/{agent}/{action}`. Requires heal system `_execute_action()` (already built) + push alert infra (already built). | **Alerts** | 🔴 Planned | ❌ Pro | ✅ Same | ~4h | observeco-master-plan.md §3.17b |
+||||| **64** | **Agent Health Report Card** — weekly digest via push alert. Aggregates 7d of: pulse uptime %, auto-heal count, circuit trips, compressions, token cost. One SQL query per metric, one Jinja2 template. All data exists in pulse_log, heal_events, circuit_events, compress_log, token_logs. | **Alerts** | 🔴 Planned | ✅ Weekly digest in dashboard | ✅ Push delivery + trend comparison | ~3h | observeco-master-plan.md §3.64 |
 |||
 || **Quality Standards (ongoing — tracked here, not in feature rows above)** |
 || | | | | | | |
@@ -1978,11 +1980,98 @@ Layer 4 — Cross-Framework Dashboard (P0)
 |**Pricing:** TBD — deferred until beachhead validated. Solo $9/mo anticipated. Team tier ($49/mo) delayed.
 |30-day free trial via Stripe. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`.
 
-|**⚠️ Reality check:** Backend for most Pro features is built (heal engine, push delivery, token tracking, compress CLI, LLM service). **Dashboard UIs are the gap** — users activating a Pro key see a comparison grid, not working controls. The 30-day trial unlocks the LLM Intelligence Service (all 7 consumers) immediately. After trial, LLM shuts off, other features remain visible as upsells. Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment (paying users managed offline for now).
-
+||**⚠️ Reality check:** Backend for most Pro features is built (heal engine, push delivery, token tracking, compress CLI, LLM service). **Dashboard UIs are the gap** — users activating a Pro key see a comparison grid, not working controls. The 30-day trial unlocks the LLM Intelligence Service (all 7 consumers) immediately. After trial, LLM shuts off, other features remain visible as upsells. Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment (paying users managed offline for now).
+|
 |**Current priority:** Beachhead first (Phase 0 / Phase 1). All features free for Hermes users. Pro pricing ships after we prove the product works on someone else's machine. See `specs/commercial-strategy-v2.md`.
-
----
+|
+|---
+|
+|### 3.17b Action Buttons in Push Notifications (🔴 Planned)
+|
+|**Tagline:** *From "something is wrong" to "here's the fix" in one tap.*
+|
+|**What it is:** Action buttons embedded in push alert notifications. Telegram inline keyboards (restart/cooldown/trim), Discord buttons, webhook action URLs. Each button calls `/api/heal-action/{agent}/{action}` which invokes the heal system's `_execute_action()`.
+|
+|**How it works:**
+|
+|```
+|Push alert fires → notification includes action buttons
+|→ User taps "Restart" → POST /api/heal-action/kepler/restart
+|→ Heal system runs _execute_action('restart', 'kepler')
+|→ Result sent back as follow-up notification
+|```
+|
+|**Available actions:**
+|- `restart` — restart agent process
+|- `cooldown` — reset circuit breaker cooldown
+|- `trim` — run chisel trim on agent
+|- `garden` — run memory garden cleanup
+|- `ignore` — acknowledge alert, suppress duplicates for 1h
+|
+|**What's already built:**
+|- Heal system `_execute_action()` with restart/cooldown/pip_install/trim/garden_cleanup — ✅ Live
+|- Push alert delivery (Telegram, webhook, email) — ✅ Backend
+|- `/api/trigger-heal` endpoint — ✅ Live
+|
+|**What needs building:**
+|- `/api/heal-action/{agent}/{action}` endpoint — simple wrapper around `_execute_action()`
+|- Telegram inline keyboard payload in push alert format
+|- Discord button payload in embed format
+|- Webhook action URL generation
+|- Follow-up notification on action result
+|
+|**Free:** ❌ Pro only (requires push alert infra)
+|**Pro:** ✅ All actions + follow-up notifications
+|
+|**Effort:** ~4h
+|
+|---
+|
+|### 3.64 Agent Health Report Card (🔴 Planned)
+|
+|**Tagline:** *Your fleet's weekly checkup, delivered to your phone.*
+|
+|**What it is:** A weekly digest push alert that aggregates 7 days of fleet health data. One SQL query per metric, one Jinja2 template. Delivered via existing push alert infra.
+|
+|**Metrics (all from existing tables):**
+|- **Uptime %** — `SELECT AVG(status='alive') FROM pulse_log WHERE recorded_at > ?`
+|- **Auto-heal count** — `SELECT COUNT(*) FROM heal_events WHERE timestamp > ? AND outcome='success'`
+|- **Circuit trips** — `SELECT COUNT(*) FROM circuit_events WHERE timestamp > ?`
+|- **Compressions run** — `SELECT COUNT(*) FROM compress_log WHERE timestamp > ?`
+|- **Token cost** — `SELECT SUM(cost) FROM token_logs WHERE recorded_at > ?`
+|- **Fleet size** — `SELECT COUNT(DISTINCT agent_name) FROM agents`
+|
+|**Format:**
+|```
+|📊 Your Fleet This Week
+|━━━━━━━━━━━━━━━━━━━
+|🟢 Uptime: 99.2%
+|🔄 Auto-heals: 3
+|⛔ Circuit trips: 1
+|✂️ Compressions: 2
+|💰 Spend: $14.23
+|👥 Agents: 6
+|
+|Saved $8.47 vs last week by circuit breakers.
+|```
+|
+|**What's already built:**
+|- All data tables (pulse_log, heal_events, circuit_events, compress_log, token_logs) — ✅ Live
+|- Push alert delivery (Telegram, webhook, email) — ✅ Backend
+|- Jinja2 templating — ✅ Live (used by dashboard)
+|
+|**What needs building:**
+|- Weekly cron job (scheduled push alert)
+|- 6 SQL queries (one per metric)
+|- Jinja2 template for the digest format
+|- Trend comparison vs previous week
+|
+|**Free:** ✅ Weekly digest in dashboard
+|**Pro:** ✅ Push delivery + trend comparison
+|
+|**Effort:** ~3h
+|
+|---
 
 ## 6. Not Building (Explicit Scope Boundaries)
 
