@@ -64,8 +64,13 @@ markers = [
 [dependency-groups]
 dev = [
     "pytest>=9.1.0",
+    "pytest-cov>=6.0",
     "ruff>=0.15.19",
 ]
 
 [tool.setuptools.package-data]
 observeco = ["dashboard/templates/*.html", "dashboard/static/*"]
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
