@@ -304,6 +304,91 @@ def clawforge_garden(
     from observeco.clawforge.garden import run_garden
     run_garden(apply=apply, agent_name=agent_name)
 
+@clawforge_app.command(name="plugin")
+def clawforge_plugin(
+    action: str = typer.Argument("status", help="Action: install, activate, status, inspect"),
+    path: Optional[str] = typer.Option(None, "--path", "-p", help="Path to plugin package (default: packages/clawforge-plugin)"),
+) -> None:
+    """Manage the ClawForge OpenClaw plugin — install, activate, status, inspect."""
+    from pathlib import Path
+    from rich.console import Console
+
+    console = Console()
+    plugin_dir = Path(path) if path else Path(__file__).parent.parent.parent / "packages" / "clawforge-plugin"
+
+    if action == "install":
+        import subprocess
+        pkg_path = plugin_dir.resolve()
+        console.print(f"[bold]Installing ClawForge plugin from {pkg_path}...[/bold]")
+        result = subprocess.run(
+            ["openclaw", "plugins", "install", str(pkg_path)],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode == 0:
+            console.print(f"[green]{result.stdout.strip()}[/green]")
+        else:
+            console.print(f"[red]Install failed: {result.stderr.strip()}[/red]")
+            raise typer.Exit(code=1)
+
+    elif action == "activate":
+        import subprocess
+        console.print("[bold]Activating ClawForge ContextEngine...[/bold]")
+        result = subprocess.run(
+            ["openclaw", "config", "set", "plugins.slots.contextEngine", "clawforge"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            console.print(f"[green]{result.stdout.strip() or 'ContextEngine set to clawforge'}[/green]")
+            console.print("[yellow]Restart gateway: openclaw gateway restart[/yellow]")
+        else:
+            console.print(f"[red]Activation failed: {result.stderr.strip()}[/red]")
+            raise typer.Exit(code=1)
+
+    elif action == "status":
+        import subprocess
+        result = subprocess.run(
+            ["openclaw", "plugins", "inspect", "clawforge", "--runtime", "--json"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            import json
+            try:
+                info = json.loads(result.stdout)
+                console.print(f"[bold]ClawForge Plugin Status[/bold]")
+                console.print(f"  Name: {info.get('plugin', {}).get('name', '?')}")
+                console.print(f"  Version: {info.get('plugin', {}).get('version', '?')}")
+                console.print(f"  Status: {'[green]loaded[/green]' if info.get('plugin', {}).get('status') == 'loaded' else '[yellow]' + info.get('plugin', {}).get('status', 'unknown') + '[/yellow]'}")
+                console.print(f"  Enabled: {'[green]yes[/green]' if info.get('plugin', {}).get('enabled') else '[red]no[/red]'}")
+                console.print(f"  Source: {info.get('plugin', {}).get('source', '?')}")
+                hook_names = info.get('plugin', {}).get('hookNames', [])
+                if hook_names:
+                    console.print(f"  Hooks: {', '.join(hook_names)}")
+            except json.JSONDecodeError:
+                console.print(result.stdout)
+        else:
+            console.print("[yellow]Plugin not installed or not found[/yellow]")
+            console.print("  Install: observeco clawforge plugin install")
+
+    elif action == "inspect":
+        import subprocess
+        result = subprocess.run(
+            ["openclaw", "plugins", "inspect", "clawforge", "--runtime", "--json"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            import json
+            try:
+                info = json.loads(result.stdout)
+                console.print(json.dumps(info, indent=2))
+            except json.JSONDecodeError:
+                console.print(result.stdout)
+        else:
+            console.print("[yellow]Plugin not installed[/yellow]")
+
+    else:
+        console.print(f"[red]Unknown action: {action}. Use: install, activate, status, inspect[/red]")
+        raise typer.Exit(code=1)
+
 # -- Generic aliases (framework-agnostic naming) --
 #
 # These alias internal-branded commands to generic names so users

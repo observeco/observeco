@@ -1,0 +1,56 @@
+{
+  "id": "clawforge",
+  "name": "ClawForge",
+  "description": "Intent-aware context engine — classifies each turn's intent and loads only relevant context sources. Saves 40-50% on input tokens with no quality regression.",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": []
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": true
+      },
+      "classifyModel": {
+        "type": "string",
+        "default": "local",
+        "description": "Intent classifier: 'local' (TF-IDF, no API) or 'openai' (GPT-4o-mini, higher accuracy)"
+      },
+      "intentThreshold": {
+        "type": "number",
+        "default": 0.3,
+        "description": "Minimum confidence to load intent-specific context. Below this, loads default set"
+      },
+      "demoteThreshold": {
+        "type": "number",
+        "default": 0.7,
+        "description": "Context window usage % that triggers pre-response demotion"
+      },
+      "statsPath": {
+        "type": "string",
+        "default": "~/.observeco/plugin-stats.db",
+        "description": "Local SQLite path for per-turn stats"
+      },
+      "observecoEndpoint": {
+        "type": "string",
+        "default": "http://localhost:8420",
+        "description": "ObserveCo server URL for stats reporting"
+      },
+      "enablePreResponse": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable/disable pre-response demotion hook"
+      },
+      "logSkippedSources": {
+        "type": "boolean",
+        "default": false,
+        "description": "Log every skipped source (verbose, for debugging)"
+      }
+    }
+  }
+}

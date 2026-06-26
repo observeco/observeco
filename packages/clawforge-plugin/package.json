@@ -1,0 +1,16 @@
+{
+  "name": "@observeco/clawforge-plugin",
+  "version": "0.1.0",
+  "description": "Intent-aware context engine for OpenClaw — saves tokens by loading only relevant context per turn",
+  "type": "module",
+  "main": "./src/index.js",
+  "openclaw": {
+    "extensions": ["./src/index.js"],
+    "compat": {
+      "pluginApi": ">=2026.5.7",
+      "minGatewayVersion": "2026.5.7"
+    }
+  },
+  "keywords": ["openclaw", "context-engine", "token-savings", "observeco"],
+  "license": "MIT"
+}
