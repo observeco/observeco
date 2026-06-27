@@ -6,7 +6,7 @@
 pip install 'observeco[dashboard]' && observeco dashboard
 ```
 
-> **v0.3.1 — Official Hermes Agent Observability Plugin.** 18 features. 610 tests. Built and dogfooded on a 7-agent fleet running on a single M4 Mac Mini.
+> **v0.3.1 — Hermes Agent Observability Plugin (PR in review).** 18 features. 610 tests. Built and dogfooded on a 7-agent fleet running on a single M4 Mac Mini.
 
 <p align="center">
   <img src="docs/assets/dashboard-screenshot.png" alt="ObserveCo Dashboard" width="720">
@@ -25,7 +25,7 @@ pip install 'observeco[dashboard]' && observeco dashboard
 
 ---
 
-## 🔌 Official Hermes Agent Integration
+## 🔌 Hermes Agent Integration
 
 ObserveCo ships a **native Hermes plugin** that exports real-time telemetry from every agent conversation — no sidecars, no proxies, no manual instrumentation.
 
@@ -57,7 +57,7 @@ observeco otel listen start --port 4318
 observeco dashboard
 ```
 
-The plugin is bundled with Hermes Agent and contributed upstream via [PR #52357](https://github.com/NousResearch/hermes-agent/pull/52357). Full integration guide at [`docs/hermes-plugin-integration.md`](docs/hermes-plugin-integration.md).
+The plugin has been contributed upstream via [PR #52357](https://github.com/NousResearch/hermes-agent/pull/52357) (in review). Full integration guide at [`docs/hermes-plugin-integration.md`](docs/hermes-plugin-integration.md).
 
 ---
 
@@ -267,7 +267,7 @@ pip install observeco
 |---------|--------|------|
 | **v0.2** | ✅ Shipped | Token Analytics + Data Infrastructure |
 | **v0.3** | ✅ Shipped | Auto-heal, Push Alerts, Pro Licensing, Fleet Comparison, Hermes Plugin |
-| **v0.3.1** | 🔥 Now | Official Hermes Agent Observability Plugin — 11 hooks, bundled upstream |
+| **v0.3.1** | 🔥 Now | Hermes Agent Observability Plugin — 11 hooks, PR #52357 (in review) |
 | **v0.4** | 🔜 Next | CI quality gates, eval dataset capture, static fleet report export |
 | **v1.0** | 🔜 Soon | OpenClaw runtime plugin — 40-60% fewer tokens per turn |
 
@@ -279,7 +279,7 @@ pip install observeco
 
 | Framework | Health | Circuit | Tokens | Memory | Dashboard | Hermes Plugin |
 |-----------|:------:|:-------:|:------:|:------:|:---------:|:-------------:|
-| **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full | ✅ Native (11 hooks) |
+| **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full | ✅ PR in review (11 hooks) |
 | **OpenClaw** | ✅ | ◐ | ◐ | ✅ | ✅ ~85% | ⬜ |
 | **Ollama** | ✅ | ⬜ | ⬜ | ⬜ | ✅ Basic | ⬜ |
 | **Custom** | ◐ | ◐ | ◐ | ⬜ | ✅ Basic | ⬜ |

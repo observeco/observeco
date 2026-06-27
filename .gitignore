@@ -29,8 +29,20 @@ build/
 # Data / coverage
 observeco.db
 pulse.db
+*.db-shm
+*.db-wal
+mlruns/
 .coverage
 htmlcov/
+
+# Internal / plans
+.hermes/
+AUDIT_REPORT.md
+KANBAN.md
+CLAUDE.md
+gate3-report.md
+observability_pricing_research.md
+observeco-launch-integration-proposal.md
 
 # Docs build
 website/node_modules/
