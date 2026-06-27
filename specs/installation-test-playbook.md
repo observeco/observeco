@@ -7,11 +7,11 @@
 | Version | Date | What changed |
 |---------|------|-------------|
 | 1.0 | 2026-06-19 | Initial creation — 8 scenarios covering fresh install, upgrade, downgrade, and failure modes |
-| 2.0 | 2026-06-19 | Independent review: fixed default port (8123→9119), fixed DB name (observeco.db→pulse.db), added 5 missing scenarios (port collision, OBSERVECO_HOME override, headless mode, old data migration, startup validation), added Expert Prompts for Hound, added Playbook Inventory cross-ref, added master-fidelity-gate.md Layer F cross-ref, added Lessons Learned entries, standardized format to match sibling playbooks |
+| 2.0 | 2026-06-19 | Independent review: fixed default port (8123→9119), fixed DB name (observeco.db→pulse.db), added 5 missing scenarios (port collision, OBSERVECO_HOME override, headless mode, old data migration, startup validation), added Expert Prompts for Hound, added Playbook Inventory cross-ref, added internal master fidelity gate Layer F cross-ref, added Lessons Learned entries, standardized format to match sibling playbooks |
 
 **Source:** Beachhead readiness — Phase 0 removed all Sean-specific artifacts. The product must now survive a stranger's first `pip install observeco` on a machine that has never seen it. No playbook existed for this class of test.
 
-**Relationship to other playbooks:** This playbook sits **downstream** of requirements-fidelity-playbook.md (spec hardening) and **upstream** of ux-testing-playbook.md (first-run UX). It catches the class of problem where the code is correct but the *installation experience* is broken — the product works on the developer's machine but fails on a clean install.
+**Relationship to other playbooks:** This playbook sits **downstream** of internal requirements fidelity playbook (spec hardening) and **upstream** of internal UX testing playbook (first-run UX). It catches the class of problem where the code is correct but the *installation experience* is broken — the product works on the developer's machine but fails on a clean install.
 
 ## Playbook Inventory
 
@@ -19,20 +19,20 @@ The full playbook system has 12 documents, organized by flow:
 
 | Order | Playbook | Role |
 |-------|----------|------|
-| 1 | requirements-fidelity-playbook.md | Spec hardening (upstream gate) |
-| 2 | spec-gated-workflow-playbook.md | 4-phase gated spec process (SPECIFY → PLAN → TASKS → IMPLEMENT) |
-| 3 | coding-fidelity-playbook.md | Code matches spec |
+| 1 | internal requirements fidelity playbook | Spec hardening (upstream gate) |
+| 2 | internal spec-gated workflow playbook | 4-phase gated spec process (SPECIFY → PLAN → TASKS → IMPLEMENT) |
+| 3 | internal coding fidelity playbook | Code matches spec |
 | 4 | ui-testing-playbook.md | Visual consistency & design system integrity |
-| 5 | ux-testing-playbook.md | Human experience lens |
-| 6 | system-design-testing-playbook.md | Architecture & daemon lens |
-| 7 | agent-governance-playbook.md | Session mastery for agents |
+| 5 | internal UX testing playbook | Human experience lens |
+| 6 | internal system design testing playbook | Architecture & daemon lens |
+| 7 | internal agent governance playbook | Session mastery for agents |
 | 8 | **installation-test-playbook.md** | **Installation & upgrade testing (this document)** |
-| 9 | orchestration-anti-patterns-playbook.md | Multi-agent governance patterns |
-| 10 | security-stride-playbook.md | STRIDE threat model + OWASP LLM Top 10 |
-| 11 | master-fidelity-gate.md | Integration gate (combines all playbooks) |
-| 12 | playbook-evolution-meta.md | Self-improvement loop |
+| 9 | internal orchestration anti-patterns playbook | Multi-agent governance patterns |
+| 10 | internal security stride playbook | STRIDE threat model + OWASP LLM Top 10 |
+| 11 | internal master fidelity gate | Integration gate (combines all playbooks) |
+| 12 | internal playbook evolution meta | Self-improvement loop |
 
-Refer to this inventory when the playbook system is referenced in other documents. Registered in master-fidelity-gate.md (Layer J) and playbook-evolution-meta.md (version table) on 2026-06-19.
+Refer to this inventory when the playbook system is referenced in other documents. Registered in internal master fidelity gate (Layer J) and internal playbook evolution meta (version table) on 2026-06-19.
 
 ---
 
@@ -982,9 +982,9 @@ Report: PASS/FAIL per scenario, with exact terminal output and error messages.
 
 ## 6. Registration Checklist
 
-This playbook must be registered in the master-fidelity-gate.md and playbook-evolution-meta.md to be part of the official playbook system.
+This playbook must be registered in the internal master fidelity gate and internal playbook evolution meta to be part of the official playbook system.
 
-### master-fidelity-gate.md
+### internal master fidelity gate
 
 - [ ] Add **Layer J: Installation Fidelity** with items covering:
   - J1: Fresh install in clean venv (weight 3)
@@ -998,7 +998,7 @@ This playbook must be registered in the master-fidelity-gate.md and playbook-evo
 - [ ] Update scoring table (add ~16 pts, adjust threshold)
 - [ ] Add this playbook to the Playbook Inventory reference
 
-### playbook-evolution-meta.md
+### internal playbook evolution meta
 
 - [ ] Add this playbook to the version table (v2.0, 2026-06-19)
 - [ ] Update stale playbook count from 11 to 12

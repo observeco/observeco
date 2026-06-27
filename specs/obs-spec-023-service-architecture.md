@@ -590,7 +590,7 @@ When no data available, show:
 
 ## 17. Missing Observability Fail-Safes (P0 — Must Fix Before Launch)
 
-Six mission-critical fail-safes are missing from the current architecture. All are P0 — they cause trust erosion on Day 1. Cross-referenced from `expectations-gap.md §2026-06-18 Update`.
+Six mission-critical fail-safes are missing from the current architecture. All are P0 — they cause trust erosion on Day 1. Cross-referenced from internal expectations gap document.
 
 ### 17.1 Process Supervision
 
@@ -740,4 +740,4 @@ Empty state: No heartbeat file → report "Daemon not running — no heartbeat f
 | Data integrity | ✓ Added | ✓ Added | — | — |
 | Self-monitoring | ✓ Added | ✓ Added | — | §9.3 (heartbeat exists, escalation missing) |
 
-**See also:** `expectations-gap.md §2026-06-18 Update` (all 15 items with P0/P1/P2 ranking), `observeco-master-plan.md §16` (full priority table).
+**See also:** internal expectations gap document (all 15 items with P0/P1/P2 ranking), internal strategic documents.
