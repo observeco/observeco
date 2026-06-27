@@ -29,11 +29,22 @@ build/
 # Data / coverage
 observeco.db
 pulse.db
+mlflow.db
 *.db-shm
 *.db-wal
 mlruns/
 .coverage
 htmlcov/
+
+# Build & utility scripts
+scripts/check_compile.py
+scripts/fix_all.py
+scripts/fix_ux_v2.py
+scripts/fix_htmx_loading.py
+scripts/fix_ux_issues.py
+
+# Placeholder / junk
+specs/1GB
 
 # Internal / plans
 .hermes/

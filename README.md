@@ -6,7 +6,7 @@
 pip install 'observeco[dashboard]' && observeco dashboard
 ```
 
-> **v0.3.1 — Hermes Agent Observability Plugin (PR in review).** 18 features. 610 tests. Built and dogfooded on a 7-agent fleet running on a single M4 Mac Mini.
+> **v0.3.1 — Hermes plugin (beta) — PR in review.** 18 features. 610 tests. Built and dogfooded on a 7-agent fleet running on a single M4 Mac Mini.
 
 <p align="center">
   <img src="docs/assets/dashboard-screenshot.png" alt="ObserveCo Dashboard" width="720">
@@ -25,9 +25,9 @@ pip install 'observeco[dashboard]' && observeco dashboard
 
 ---
 
-## 🔌 Hermes Agent Integration
+## 🛠️ Hermes Integration
 
-ObserveCo ships a **native Hermes plugin** that exports real-time telemetry from every agent conversation — no sidecars, no proxies, no manual instrumentation.
+ObserveCo includes a **beta plugin for Hermes Agent** that exports real-time telemetry from every agent conversation — no sidecars, no proxies, no manual instrumentation.
 
 **What the plugin exports (11 hooks):**
 
@@ -57,7 +57,7 @@ observeco otel listen start --port 4318
 observeco dashboard
 ```
 
-The plugin has been contributed upstream via [PR #52357](https://github.com/NousResearch/hermes-agent/pull/52357) (in review). Full integration guide at [`docs/hermes-plugin-integration.md`](docs/hermes-plugin-integration.md).
+The plugin is currently under review upstream via [PR #52357](https://github.com/NousResearch/hermes-agent/pull/52357). Full integration guide at [`docs/hermes-plugin-integration.md`](docs/hermes-plugin-integration.md).
 
 ---
 
@@ -73,7 +73,7 @@ This is normal. The tools to fix it don't exist — yet.
 
 ObserveCo runs as a service with health monitoring and auto-recovery.
 
-### Quick Start
+### Start / Stop / Restart
 
 ```bash
 # Start the service
@@ -133,25 +133,6 @@ Check for updates on dashboard load:
 > We run 7 autonomous agents on an M4 Mac Mini — Hermes, Kepler, Hound, Dreamer, Aleph, PA, and an orchestrator. They talk via ACPS signals, trigger on file changes, get scheduled via cron. For months we ran `ps aux | grep python` and hoped for the best.
 
 > **Then we built ObserveCo.** It caught Hermes' SOUL.md growing 15% week-over-week. It showed Kepler's context carrying 40k tokens of memory it never used. It exposed 3 silent circuit trips in 2 days that nobody saw. These are not edge cases — they're the normal state of any agent fleet older than a week.
-
----
-
-## Pro Tier ($9/mo — 30-day free trial)
-
-Get the full Observability Engine:
-
-| Feature | Free | Pro |
-|---------|:----:|:---:|
-| Fleet health monitoring | ✅ | ✅ |
-| Circuit breakers | ✅ | ✅ |
-| Token breakdown | ✅ (read-only) | ✅ |
-| Memory garden | ✅ | ✅ |
-| **Drift tracking (7-day history)** | ❌ | ✅ |
-| **Push alerts (Telegram / email)** | ❌ | ✅ |
-| **CRM & license management** | ❌ | ✅ |
-| **Dashboard auto-refresh** | every 60s | every 10s |
-
-Run `observeco dashboard` and click "Unlock with Pro" to start your free trial.
 
 ---
 
@@ -220,6 +201,25 @@ observeco dashboard
 
 ---
 
+## Pro Tier ($9/mo — 30-day free trial)
+
+Get the full Observability Engine:
+
+| Feature | Free | Pro |
+|---------|:----:|:---:|
+| Fleet health monitoring | ✅ | ✅ |
+| Circuit breakers | ✅ | ✅ |
+| Token breakdown | ✅ (read-only) | ✅ |
+| Memory garden | ✅ | ✅ |
+| **Drift tracking (7-day history)** | ❌ | ✅ |
+| **Push alerts (Telegram / email)** | ❌ | ✅ |
+| **CRM & license management** | ❌ | ✅ |
+| **Dashboard auto-refresh** | every 60s | every 10s |
+
+Run `observeco dashboard` and click "Unlock with Pro" to start your free trial.
+
+---
+
 ## The Discovery Gap
 
 Every yellow banner in the dashboard shows two timestamps:
@@ -257,7 +257,7 @@ pip install observeco
 - **Storage:** Local SQLite (`~/.observeco/pulse.db`) — zero setup
 - **Web server:** FastAPI + htmx — no build step, ships with CLI
 - **CLI:** Typer — shell completion, rich output
-- **Telemetry:** Optional crash/usage reports to help improve ObserveCo. Opt-out via `OBSERVECO_TELEMETRY=off`. No data collected otherwise.
+- **Telemetry:** Opt-in crash/usage reports. Set `OBSERVECO_TELEMETRY=on` to help improve ObserveCo. No data collected by default.
 
 ---
 
