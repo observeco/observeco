@@ -43,6 +43,7 @@ CLAUDE.md
 gate3-report.md
 observability_pricing_research.md
 observeco-launch-integration-proposal.md
+.internal/
 
 # Docs build
 website/node_modules/

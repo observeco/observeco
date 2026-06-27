@@ -424,4 +424,4 @@ This directly counters:
 - **OpenLIT:** openlit.io (homepage, pricing page), GitHub (2.5k★, Apache 2.0)
 - **Datadog Bits AI/LLM Obs:** datadoghq.com/product/bits-ai-agents/, datadoghq.com/product/llm-observability/, datadoghq.com/pricing/
 - **AgentTrace:** github.com/luoyuctl/agenttrace (README, issues, discussions), agenttrace website (GitHub Pages)
-- **ObserveCo internal:** `docs/comparison.md`, `specs/commercial-scope.md`, `specs/observeco-master-plan.md`, `docs/market-analysis.md` (this file), `observability_pricing_research.md` (industry deep-dive)
+- **ObserveCo internal:** `docs/comparison.md`, `docs/market-analysis.md` (this file), internal strategic documents
