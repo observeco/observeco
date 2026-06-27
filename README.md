@@ -268,10 +268,12 @@ pip install observeco
 | **v0.2** | ✅ Shipped | Token Analytics + Data Infrastructure |
 | **v0.3** | ✅ Shipped | Auto-heal, Push Alerts, Pro Licensing, Fleet Comparison, Hermes Plugin |
 | **v0.3.1** | 🔥 Now | Hermes Agent Observability Plugin — 11 hooks, PR #52357 (in review) |
-| **v0.4** | 🔜 Next | CI quality gates, eval dataset capture, static fleet report export |
-| **v1.0** | 🔜 Soon | OpenClaw runtime plugin — 40-60% fewer tokens per turn |
+| **v0.4** | 🔜 Branch active | **ClawForge OpenClaw plugin** — ContextEngine, intent classifier, stats pipeline |
+| **v0.5** | 📋 Planned | Making the Theatre Real — real risk predictions, context bloat detection, L2 heal |
+| **v0.6** | 📋 Planned | Beachhead — public release readiness, `observeco init`, generic discovery |
+| **v1.0** | 📋 Planned | Per-turn tracking, OTel trace ingestion, trace tree dashboard |
 
-**What's the OpenClaw plugin?** A Node.js plugin that hooks into the ContextEngine to load only what's needed per turn. Your agents stop carrying 100k tokens of context they never use. That's the v1.1 headline.
+**What's the ClawForge plugin?** A Node.js plugin that hooks into the ContextEngine to load only what's needed per turn. Your agents stop carrying 100k tokens of context they never use. Already built in v0.4 — install via `observeco clawforge plugin install`.
 
 ---
 

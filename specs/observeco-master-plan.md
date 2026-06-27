@@ -2169,38 +2169,25 @@ ponytail: Process scan uses `psutil` keyword filter. Ceiling: misses agents runn
 
 ---
 |
-|## 8. Build Roadmap
+||## 8. Build Roadmap
 
-| Phase | Features | Cumulative Effort | Notes |
-|-------|----------|-------------------|-------|
-| **Now** | Everything in ✅ Live — 12 features | ✅ Done | Ship current code |
-| **Phase 0** (D+0, blocks any public release) | `hermes_home()` + `openclaw_home()` + `is_hermes_active()` in `dirs.py` (2h), Lazy path constants + fix duplicate definitions (1h), Refactor 30+ `~/.hermes` hardcodes → dirs functions (4h), Refactor 10+ `~/.openclaw` hardcodes (1.5h), Remove personal artifacts (1h), Fix `require_pro()` (5min), Delete `invocation_counter.py` (5min), Add `OBSERVECO_LLM_API_KEY` to `llm_service` + `gate.py` (1h), Add BYOK to `chisel/llm_client.py` (30min), Fix `gateway_monitor.py` constants (15min) | **~12h** | **Ship-stoppers.** Without these, the product has Sean's agents, Sean's files, a broken license gate, a 5/day invocation cap, and no BYOK path for LLM features. See Features #64-68 + P0-10 through P0-14. |
-|| **Phase 1** (D+1, beachhead readiness) | Dashboard banner (1h), Graceful degradation (2h), Env var consolidation (1h), `observeco init` (2h), `observeco discover` (3h) | **~9h** (14h cum.) | Product works on `pip install && observeco dashboard` on any Mac Mini with Hermes. `discover` widget shows gaps + one-click fix. See Features #69-73, #79. |
-| **Phase G1** (D+2, blocks Pro launch) | Self-monitoring budget cap (1d), Manual kill switch (2d), Circuit breaker config (0.5d), Turn-rate alerting (1d), Tool-count metric (0.5d), Threat model docs (0.5d) | ~5.5d | **Non-negotiable.** Token-rogue guardrails — see §14.3.G1. |
-| **Phase 2** (D+3) | Extended history (2h), Auto-heal (1d), Skill audit (4h), Generic discovery layer (5.5h) | ~3d | Zero-dependency + generic discovery (ollama, psutil, ports). Dashboard shows Claude Code / Ollama agents alongside Hermes. |
-| **Phase 3** (D+7) | System prompt compression (2d), Push alerts (3d) | ~5d | Compression = pure text extraction |
-| **Phase 4** (D+14) | Per-turn tracking (3d), OpenClaw plugin (5-7d) | ~8-10d | Per-turn needs agent-side hooks |
-| **Phase G2** (Month 2) | Fleet spend alerts (2d), Alert→wait→auto-stop (3d), Lineage tracking (3d), Output consistency (2d), Drift lookback (0.5d) | ~10.5d | See §14.3.G2 |
-| **Phase G3** (Month 3+) | Signal flow visibility (5d), Auto-escalation (3d), Model attribution (1d) | ~9d | See §14.3.G3 |
-| **Phase 5** (Month 3+) | OTel trace ingestion (2d), delegate_task router (2d), Trace tree dashboard (3d), A2A adapter (5d) | ~12d | Multi-agent delegation + observability layer. See §3.53-§3.56 |
+| Version | Status | What | Notes |
+|---------|--------|------|-------|
+| **v0.1.0** | ✅ Shipped | Initial release | GitHub tag |
+| **v0.2.0** | ✅ Shipped | Token Analytics + Data Infrastructure | GitHub tag |
+| **v0.3.0** | ✅ Shipped | Auto-heal, Push Alerts, Pro Licensing, Fleet Comparison, Hermes Plugin | GitHub tag |
+| **v0.3.1** | 🔥 Now | Hermes Plugin — PR #52357 (in review), root cleanup, README corrections | GitHub tag |
+| **v0.4.0** | 🔜 Branch active | **ClawForge OpenClaw plugin** — ContextEngine, TF-IDF intent classifier, SQLite stats pipeline, CLI commands | `spec/v.0.4.0` branch. Real code, verified, installed. |
+| **v0.5.0** | 📋 Planned | Making the Theatre Real — real risk predictions, context bloat detection, proactive L2 heal, wire into dashboard | Replaces previous fake ML features with honest implementations. |
+| **v0.6.0** | 📋 Planned | Beachhead — public release readiness. `hermes_home()` refactor, `require_pro()` fix, personal artifact removal, env var consolidation, `observeco init`, `observeco discover` | Blocks public release. Without these, first non-Sean user sees broken product. |
+| **v0.7.0** | 📋 Planned | G1 guardrails — self-monitoring budget cap, manual kill switch, circuit breaker config, turn-rate alerting, tool-count metric, threat model docs | Non-negotiable before Pro launch. See §14.3.G1. |
+| **v0.8.0** | 📋 Planned | Extended history, generic discovery layer (ollama, psutil, ports), dashboard shows Claude Code / Ollama agents alongside Hermes | Zero-dependency discovery. |
+| **v0.9.0** | 📋 Planned | System prompt compression (Lite/Full), push alerts (Telegram, webhook, email) | Compression = pure text extraction. |
+| **v1.0.0** | 📋 Planned | Per-turn tracking (agent-side hooks), OTel trace ingestion, trace tree dashboard | Per-turn needs agent-side hooks. |
+| **v1.1.0** | 📋 Planned | Fleet spend alerts, alert→wait→auto-stop, lineage tracking, output consistency, drift lookback | Pro-level safety escalation. See §14.3.G2. |
+| **v1.2.0** | 📋 Planned | Signal flow visibility, auto-escalation, model attribution, delegate_task router, A2A adapter | Multi-agent delegation + observability layer. See §3.53-§3.56. |
 
-**Total planned effort:** ~12h (Phase 0) + ~6h (Phase 1) + ~5.5d (G1) + ~3d (Phase 2) + ~5d (Phase 3) + ~8-10d (Phase 4) + ~10.5d (G2) + ~9d (G3) + ~12d (Phase 5) = **~60-65 days across all features**.
-
-ponytail: Phase 0/1 effort is ~18h (~2.5d) — once these ship, the product is publishable as "ObserveCo for Hermes — free forever, no signup."
-
-### What Ships When
-
-| Shipment | What | Value to User |
-|----------|------|---------------|
-| **Phase 0** (D+0) | Generic Hermes discovery via `hermes_home()`, zero personal artifacts, `require_pro()` fix | **Blocks public release.** Without this, first non-Sean user sees broken product. |
-| **Phase 1** (D+1) | Agent invocation banner, graceful degradation, `observeco init`, env var docs | **First public-ready release.** Any Mac Mini Hermes user gets full ObserveCo. |
-| **v0.2 (D+3)** | G1 guardrails + generic discovery | Safety layer v1. Generic agents (Claude Code, Ollama) appear in dashboard. |
-| **v0.3 (D+7)** | Extended history + auto-heal + Skill audit | Users see token history, agents auto-recover, skill bloat measured |
-| **v0.4 (D+14)** | Chisel compress + push alerts | Measure AND fix token bloat. Get Telegram alerts when agents break. |
-| **v0.5 (D+21)** | Per-turn tracking + OpenClaw plugin | Per-turn cost visibility. OpenClaw users save 40-60% tokens at runtime. |
-| **Phase G2** (Month 2) | Fleet alerts, auto-stop escalation, lineage tracking, output consistency, drift lookback | Pro-level safety escalation. S4/S7/S14/S12 coverage. |
-| **Phase G3** (Month 3+) | Signal flow visibility, sophisticated auto-escalation, per-turn model attribution | Ecosystem-level deadlock detection + escalation policy engine. |
-| **Phase 5** (Month 3+) | OTel trace ingestion + delegate_task protocol + trace tree dashboard + A2A adapter | Multi-agent delegation with full trace visibility.
+|ponytail: v0.6.0 (beachhead) absorbs what was previously called Phase 0 + Phase 1. The G1/G2/G3 guardrails are real work items tracked as release features, not separate phases.
 
 ---
 
