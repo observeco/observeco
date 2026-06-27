@@ -201,24 +201,7 @@ observeco dashboard
 
 ---
 
-## Pro Tier ($9/mo — 30-day free trial)
-
-Get the full Observability Engine:
-
-| Feature | Free | Pro |
-|---------|:----:|:---:|
-| Fleet health monitoring | ✅ | ✅ |
-| Circuit breakers | ✅ | ✅ |
-| Token breakdown | ✅ (read-only) | ✅ |
-| Memory garden | ✅ | ✅ |
-| **Drift tracking (7-day history)** | ❌ | ✅ |
-| **Push alerts (Telegram / email)** | ❌ | ✅ |
-| **CRM & license management** | ❌ | ✅ |
-| **Dashboard auto-refresh** | every 60s | every 10s |
-
-Run `observeco dashboard` and click "Unlock with Pro" to start your free trial.
-
----
+<!-- Pro removed — all features free for now. See .internal/specs/commercial-scope.md -->
 
 ## The Discovery Gap
 
