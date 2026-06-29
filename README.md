@@ -1,12 +1,12 @@
 # ObserveCo
 
-> ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes.
+> ObserveCo tells you if your Hermes agents are working, what they're doing, and where your money goes.
 
 ```bash
 pip install 'observeco[dashboard]' && observeco dashboard
 ```
 
-> **v0.3.1 — Hermes plugin (beta) — PR in review.** 18 features. 610 tests. Built and dogfooded on a 7-agent fleet running on a single M4 Mac Mini.
+> **v0.4.0 — Hermes Beachhead.** True agent-specific observability for Hermes on macOS. Tracing, evaluation, and behavioral monitoring for your local agent fleet.
 
 <p align="center">
   <img src="docs/assets/dashboard-screenshot.png" alt="ObserveCo Dashboard" width="720">
@@ -25,9 +25,9 @@ pip install 'observeco[dashboard]' && observeco dashboard
 
 ---
 
-## 🛠️ Hermes Integration
+## 🔌 Native Hermes Agent Integration
 
-ObserveCo includes a **beta plugin for Hermes Agent** that exports real-time telemetry from every agent conversation — no sidecars, no proxies, no manual instrumentation.
+ObserveCo ships a **native Hermes plugin** that exports real-time telemetry from every agent conversation — no sidecars, no proxies, no manual instrumentation.
 
 **What the plugin exports (11 hooks):**
 
@@ -40,7 +40,7 @@ ObserveCo includes a **beta plugin for Hermes Agent** that exports real-time tel
 | `subagent_start` / `subagent_stop` | Child agent spawn + completion |
 | `pre_gateway_dispatch` | Incoming message routing |
 
-**Quick start for Hermes users:**
+**Quick start for Hermes users on macOS:**
 
 ```bash
 # 1. Enable the plugin
@@ -57,7 +57,7 @@ observeco otel listen start --port 4318
 observeco dashboard
 ```
 
-The plugin is currently under review upstream via [PR #52357](https://github.com/NousResearch/hermes-agent/pull/52357). Full integration guide at [`docs/hermes-plugin-integration.md`](docs/hermes-plugin-integration.md).
+The plugin is bundled with Hermes Agent and contributed upstream via [PR #52357](https://github.com/NousResearch/hermes-agent/pull/52357). Full integration guide at [`docs/hermes-plugin-integration.md`](docs/hermes-plugin-integration.md).
 
 ---
 
@@ -73,7 +73,7 @@ This is normal. The tools to fix it don't exist — yet.
 
 ObserveCo runs as a service with health monitoring and auto-recovery.
 
-### Start / Stop / Restart
+### Quick Start
 
 ```bash
 # Start the service
@@ -93,7 +93,7 @@ observeco service restart
 
 | Component | Port | Purpose |
 |-----------|------|---------|
-| OTEL Listener | 4318 | Receives traces from agents |
+| OTEL Listener | 4318 | Receives traces from Hermes agents |
 | Dashboard | 8787 | Web UI for visualization |
 
 ### Health Monitoring
@@ -130,15 +130,15 @@ Check for updates on dashboard load:
 
 ## From the Trenches (Dogfood)
 
-> We run 7 autonomous agents on an M4 Mac Mini — Hermes, Kepler, Hound, Dreamer, Aleph, PA, and an orchestrator. They talk via ACPS signals, trigger on file changes, get scheduled via cron. For months we ran `ps aux | grep python` and hoped for the best.
+> We run 7 autonomous Hermes agents on an M4 Mac Mini — Kepler, Hound, Dreamer, Aleph, PA, and an orchestrator. They talk via ACPS signals, trigger on file changes, get scheduled via cron. For months we ran `ps aux | grep python` and hoped for the best.
 
 > **Then we built ObserveCo.** It caught Hermes' SOUL.md growing 15% week-over-week. It showed Kepler's context carrying 40k tokens of memory it never used. It exposed 3 silent circuit trips in 2 days that nobody saw. These are not edge cases — they're the normal state of any agent fleet older than a week.
 
 ---
 
-## What Ships Now (v0.3.1)
+## What Ships Now (v0.4.0)
 
-18 features. One `pip install`. 60 seconds to first health data.
+18+ features. One `pip install`. 60 seconds to first health data.
 
 ### Fleet Health
 | Feature | What it does |
@@ -172,12 +172,13 @@ Check for updates on dashboard load:
 | **Glossary** | 20+ entries with hint buttons across all tabs |
 | **Confidence Framework** | FP/FN risk badges on every card |
 
-### Pro Features
+### Hermes Observability (v0.4.0 — new)
 | Feature | What it does |
 |---------|-------------|
-| **Pro License** | Generate & revoke admin keys, self-serve billing via Stripe |
-| **Drift Alerts UI** | Configure drift thresholds from the dashboard |
-| **Circuit Breaker Config** | Turn-rate alerting, budget cap, manual kill switch |
+| **Tracing Layer** | Full span tree per session — root → subagent → tool calls. Waterfall view. |
+| **Evaluation Layer** | Quality score, tool efficiency, retry/hallucination flags per turn. Quality trends. |
+| **Behavioral Monitoring** | Anomaly detection (no_tools, high_cost, retry_loops, context_pressure). Context Health Score. |
+| **Unified Agent Data Model** | Single `/api/agent/{id}/profile` endpoint — health, tokens, traces, evals, anomalies. |
 
 ---
 
@@ -201,8 +202,6 @@ observeco dashboard
 
 ---
 
-<!-- Pro removed — all features free for now. See .internal/specs/commercial-scope.md -->
-
 ## The Discovery Gap
 
 Every yellow banner in the dashboard shows two timestamps:
@@ -212,8 +211,6 @@ Every yellow banner in the dashboard shows two timestamps:
 
 That gap is where agents fail silently. ObserveCo makes it visible.
 
-In v0, you see the gap when you open the dashboard. In v0.3 (D+7), push alerts close it — Telegram notifications fire within 3 seconds of detection.
-
 ---
 
 ## Why ObserveCo?
@@ -222,7 +219,7 @@ In v0, you see the gap when you open the dashboard. In v0.3 (D+7), push alerts c
 |---------------|-----------|
 | **Datadog** ($15+/host/mo, cloud-only) | `pip install`, local-first, free, understands tokens + memory debt + circuit breakers |
 | **Grafana + Prometheus** (2-hour setup, no context concept) | 60 seconds to first health data, agent-aware dashboards |
-| **LangSmith** (LangChain-only, $59/mo) | Framework-agnostic, open source, works offline |
+| **LangSmith** (LangChain-only, $59/mo) | Hermes-native, open source, works offline |
 | **Nothing** (failing silently) | You'll know when your agents are sick, bloated, or broken |
 
 ---
@@ -240,7 +237,7 @@ pip install observeco
 - **Storage:** Local SQLite (`~/.observeco/pulse.db`) — zero setup
 - **Web server:** FastAPI + htmx — no build step, ships with CLI
 - **CLI:** Typer — shell completion, rich output
-- **Telemetry:** Opt-in crash/usage reports. Set `OBSERVECO_TELEMETRY=on` to help improve ObserveCo. No data collected by default.
+- **Telemetry:** Optional crash/usage reports to help improve ObserveCo. Opt-out via `OBSERVECO_TELEMETRY=off`. No data collected otherwise.
 
 ---
 
@@ -250,13 +247,11 @@ pip install observeco
 |---------|--------|------|
 | **v0.2** | ✅ Shipped | Token Analytics + Data Infrastructure |
 | **v0.3** | ✅ Shipped | Auto-heal, Push Alerts, Pro Licensing, Fleet Comparison, Hermes Plugin |
-| **v0.3.1** | 🔥 Now | Hermes Agent Observability Plugin — 11 hooks, PR #52357 (in review) |
-| **v0.4** | 🔜 Branch active | **ClawForge OpenClaw plugin** — ContextEngine, intent classifier, stats pipeline |
-| **v0.5** | 📋 Planned | Making the Theatre Real — real risk predictions, context bloat detection, L2 heal |
-| **v0.6** | 📋 Planned | Beachhead — public release readiness, `observeco init`, generic discovery |
-| **v1.0** | 📋 Planned | Per-turn tracking, OTel trace ingestion, trace tree dashboard |
-
-**What's the ClawForge plugin?** A Node.js plugin that hooks into the ContextEngine to load only what's needed per turn. Your agents stop carrying 100k tokens of context they never use. Already built in v0.4 — install via `observeco clawforge plugin install`.
+| **v0.3.1** | ✅ Shipped | Official Hermes Agent Observability Plugin — 11 hooks, bundled upstream |
+| **v0.4.0** | 🔥 Now | **Hermes Beachhead** — Tracing Layer, Evaluation Layer, Behavioral Monitoring, Unified Data Model |
+| **v0.5.0** | 📋 Planned | Intelligence Layer — anomaly detection, Context Health Score, Relapse Prevention |
+| **v1.0** | 📋 Planned | Public release readiness, `observeco init`, generic discovery |
+| **Future** | 📋 Planned | Multi-framework support (OpenClaw, Claude Code, Ollama) — deferred post-v1.0 |
 
 ---
 
@@ -264,12 +259,12 @@ pip install observeco
 
 | Framework | Health | Circuit | Tokens | Memory | Dashboard | Hermes Plugin |
 |-----------|:------:|:-------:|:------:|:------:|:---------:|:-------------:|
-| **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full | ✅ PR in review (11 hooks) |
-| **OpenClaw** | ✅ | ◐ | ◐ | ✅ | ✅ ~85% | ⬜ |
+| **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full | ✅ Native (11 hooks) |
+| **OpenClaw** | ✅ | ◐ | ◐ | ✅ | ✅ ~85% | ⬜ (deferred) |
 | **Ollama** | ✅ | ⬜ | ⬜ | ⬜ | ✅ Basic | ⬜ |
 | **Custom** | ◐ | ◐ | ◐ | ⬜ | ✅ Basic | ⬜ |
 
-✅ = Auto-detect & works · ◐ = Works with config · ⬜ = Coming
+✅ = Auto-detect & works · ◐ = Works with config · ⬜ = Coming (post-v1.0)
 
 ---
 
@@ -279,7 +274,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). First-time contributors welcome — look
 
 ---
 
-Built with ❤️ for the AI agent community. MIT licensed.
+Built with ❤️ for the Hermes agent community. MIT licensed.
 
 ### Glossary
 
