@@ -27,7 +27,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 29
+SCHEMA_VERSION = 30
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -554,6 +554,25 @@ ALTER TABLE token_logs ADD COLUMN tool_calls TEXT DEFAULT '[]';
 ALTER TABLE token_logs ADD COLUMN topic_id TEXT DEFAULT '';
 CREATE INDEX IF NOT EXISTS idx_token_logs_model ON token_logs(model);
 CREATE INDEX IF NOT EXISTS idx_token_logs_topic_id ON token_logs(topic_id);
+"""),
+    (30, """-- Migration 30: trace_spans table for OTel span persistence (T1 Tracing Layer)
+CREATE TABLE IF NOT EXISTS trace_spans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trace_id TEXT NOT NULL,
+    span_id TEXT NOT NULL,
+    parent_span_id TEXT DEFAULT '',
+    agent_name TEXT NOT NULL,
+    span_name TEXT NOT NULL,
+    span_kind TEXT DEFAULT 'INTERNAL',
+    start_time_ns INTEGER NOT NULL,
+    end_time_ns INTEGER NOT NULL DEFAULT 0,
+    status TEXT DEFAULT 'UNSET',
+    attributes TEXT DEFAULT '{}',
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_trace_spans_agent ON trace_spans(agent_name, created_at);
+CREATE INDEX IF NOT EXISTS idx_trace_spans_trace ON trace_spans(trace_id);
+CREATE INDEX IF NOT EXISTS idx_trace_spans_parent ON trace_spans(parent_span_id);
 """),
 ]
 
@@ -2184,6 +2203,72 @@ class Database:
             "SELECT * FROM errors WHERE agent_name=? AND timestamp >= ? ORDER BY timestamp DESC LIMIT ?",
             (agent_name, since, limit),
         )
+        return [dict(r) for r in cur.fetchall()]
+
+    # -- Trace Spans (T1 Tracing Layer) --
+
+    def log_trace_span(self, trace_id: str, span_id: str, parent_span_id: str,
+                       agent_name: str, span_name: str, span_kind: str = "INTERNAL",
+                       start_time_ns: int = 0, end_time_ns: int = 0,
+                       status: str = "UNSET", attributes: dict | None = None) -> None:
+        """Record an OTel span in the trace_spans table."""
+        import json as _json
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO trace_spans (trace_id, span_id, parent_span_id, agent_name, "
+            "span_name, span_kind, start_time_ns, end_time_ns, status, attributes, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (trace_id, span_id, parent_span_id, agent_name, span_name, span_kind,
+             start_time_ns, end_time_ns, status,
+             _json.dumps(attributes or {}), int(time.time())),
+        )
+        conn.commit()
+
+    def get_trace_spans(self, agent_name: str = "", trace_id: str = "", limit: int = 200) -> list[dict]:
+        """Get trace spans, optionally filtered by agent or trace."""
+        conn = self._get_conn()
+        if trace_id:
+            cur = conn.execute(
+                "SELECT * FROM trace_spans WHERE trace_id=? ORDER BY start_time_ns ASC LIMIT ?",
+                (trace_id, limit),
+            )
+        elif agent_name:
+            cur = conn.execute(
+                "SELECT * FROM trace_spans WHERE agent_name=? ORDER BY created_at DESC LIMIT ?",
+                (agent_name, limit),
+            )
+        else:
+            cur = conn.execute(
+                "SELECT * FROM trace_spans ORDER BY created_at DESC LIMIT ?", (limit,)
+            )
+        results = [dict(r) for r in cur.fetchall()]
+        # Parse JSON attributes
+        import json as _json
+        for r in results:
+            try:
+                r["attributes"] = _json.loads(r.get("attributes", "{}"))
+            except (json.JSONDecodeError, TypeError):
+                r["attributes"] = {}
+        return results
+
+    def get_trace_sessions(self, agent_name: str = "", limit: int = 20) -> list[dict]:
+        """Get distinct trace sessions for an agent."""
+        conn = self._get_conn()
+        if agent_name:
+            cur = conn.execute(
+                "SELECT DISTINCT trace_id, MIN(start_time_ns) as first_span, "
+                "MAX(end_time_ns) as last_span, COUNT(*) as span_count "
+                "FROM trace_spans WHERE agent_name=? "
+                "GROUP BY trace_id ORDER BY first_span DESC LIMIT ?",
+                (agent_name, limit),
+            )
+        else:
+            cur = conn.execute(
+                "SELECT trace_id, agent_name, MIN(start_time_ns) as first_span, "
+                "MAX(end_time_ns) as last_span, COUNT(*) as span_count "
+                "FROM trace_spans GROUP BY trace_id, agent_name "
+                "ORDER BY first_span DESC LIMIT ?", (limit,)
+            )
         return [dict(r) for r in cur.fetchall()]
 
     # -- Restart Log (obs-spec-018) --

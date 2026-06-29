@@ -4037,6 +4037,26 @@ async def api_agent_profile(agent_name: str):
         return {"ok": False, "error": str(e)}
 
 
+@app.get("/api/agent/{agent_name}/traces")
+async def api_agent_traces(agent_name: str, trace_id: str = "", limit: int = 200):
+    """Get trace spans for an agent (T1 Tracing Layer)."""
+    try:
+        spans = db.get_trace_spans(agent_name=agent_name, trace_id=trace_id, limit=limit)
+        return {"ok": True, "agent_name": agent_name, "spans": spans, "count": len(spans)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/agent/{agent_name}/sessions")
+async def api_agent_sessions(agent_name: str, limit: int = 20):
+    """Get trace sessions for an agent (T1 Tracing Layer)."""
+    try:
+        sessions = db.get_trace_sessions(agent_name=agent_name, limit=limit)
+        return {"ok": True, "agent_name": agent_name, "sessions": sessions, "count": len(sessions)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @app.post("/api/chisel/compress")
 async def api_chisel_compress(request: Request):
     """Compress an agent's SOUL.md via the dashboard.

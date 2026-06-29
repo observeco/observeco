@@ -112,6 +112,48 @@ async def ingest_traces(request: Request):
                 if len(_seen_spans) > _SPAN_DEDUP_WINDOW:
                     _seen_spans = set()
 
+                # Persist the span as a trace record (T1 Tracing Layer)
+                trace_id = span.get("traceId", "")
+                parent_span_id_val = span.get("parentSpanId", "")
+                start_ns = int(span.get("startTimeUnixNano", 0))
+                end_ns = int(span.get("endTimeUnixNano", 0))
+                status_str = {0: "UNSET", 1: "OK", 2: "ERROR"}.get(
+                    span.get("status", {}).get("code", 0), "UNSET"
+                )
+
+                # Extract span kind from span data
+                span_kind = span.get("kind", "INTERNAL")
+                if isinstance(span_kind, int):
+                    span_kind = {1: "SERVER", 2: "CLIENT", 3: "PRODUCER", 4: "CONSUMER"}.get(span_kind, "INTERNAL")
+
+                # Collect span attributes for JSON storage
+                span_attrs_for_log = {}
+                for attr in span.get("attributes", []):
+                    val = attr.get("value", {})
+                    key = attr.get("key", "")
+                    if "stringValue" in val:
+                        span_attrs_for_log[key] = val["stringValue"]
+                    elif "intValue" in val:
+                        span_attrs_for_log[key] = val["intValue"]
+                    elif "doubleValue" in val:
+                        span_attrs_for_log[key] = val["doubleValue"]
+                    elif "boolValue" in val:
+                        span_attrs_for_log[key] = val["boolValue"]
+
+                if trace_id:
+                    db.log_trace_span(
+                        trace_id=trace_id,
+                        span_id=span_id,
+                        parent_span_id=parent_span_id_val,
+                        agent_name=agent_name,
+                        span_name=span_name,
+                        span_kind=span_kind,
+                        start_time_ns=start_ns,
+                        end_time_ns=end_ns,
+                        status=status_str,
+                        attributes=span_attrs_for_log,
+                    )
+
                 status_code = span.get("status", {}).get("code", "UNSET")
 
                 pulse_status = "alive"
