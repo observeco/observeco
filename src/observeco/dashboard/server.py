@@ -4020,18 +4020,19 @@ async def api_delete_agent(agent_name: str):
 
 @app.get("/api/agent/{agent_name}/profile")
 async def api_agent_profile(agent_name: str):
-    """Unified agent profile endpoint (T4).
+    """Unified agent profile endpoint (§3.T4).
 
-    Returns a composite JSON payload with health, tokens, errors, drift,
-    garden, circuit, config, and summary data — all from a single call.
+    Returns a composite JSON payload aggregating health, tokens, memory,
+    and heal data from all existing data sources. Cached with 5s TTL.
     Replaces the N+1 query pattern where each dashboard tab called a
     separate endpoint.
     """
     from observeco.agent_profile_service import get_agent_profile
     try:
-        payload = get_agent_profile(db, agent_name)
-        # Convert to JSON-safe format
-        return {"ok": True, "agent_name": agent_name, "profile": payload}
+        profile = get_agent_profile(agent_name, db=db, use_cache=True)
+        if "error" in profile:
+            return JSONResponse(status_code=404, content=profile)
+        return profile
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
