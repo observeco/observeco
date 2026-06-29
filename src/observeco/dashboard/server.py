@@ -4057,6 +4057,17 @@ async def api_agent_sessions(agent_name: str, limit: int = 20):
         return {"ok": False, "error": str(e)}
 
 
+@app.get("/api/anomalies")
+async def api_anomalies(lookback_minutes: int = 60):
+    """Get fleet-wide anomaly feed (T3 Behavioral Monitoring)."""
+    try:
+        from observeco.anomaly import detect_anomalies
+        anomalies = detect_anomalies(db=db, lookback_minutes=lookback_minutes)
+        return {"ok": True, "anomalies": anomalies, "count": len(anomalies)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @app.post("/api/chisel/compress")
 async def api_chisel_compress(request: Request):
     """Compress an agent's SOUL.md via the dashboard.
