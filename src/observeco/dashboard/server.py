@@ -4018,6 +4018,24 @@ async def api_delete_agent(agent_name: str):
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
 
 
+@app.get("/api/agent/{agent_name}/profile")
+async def api_agent_profile(agent_name: str):
+    """Unified agent profile endpoint (T4).
+
+    Returns a composite JSON payload with health, tokens, errors, drift,
+    garden, circuit, config, and summary data — all from a single call.
+    Replaces the N+1 query pattern where each dashboard tab called a
+    separate endpoint.
+    """
+    from observeco.agent_profile_service import get_agent_profile
+    try:
+        payload = get_agent_profile(db, agent_name)
+        # Convert to JSON-safe format
+        return {"ok": True, "agent_name": agent_name, "profile": payload}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
 @app.post("/api/chisel/compress")
 async def api_chisel_compress(request: Request):
     """Compress an agent's SOUL.md via the dashboard.
