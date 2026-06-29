@@ -99,7 +99,7 @@
 ||
 || **Dynamic Execution Layer (new 2026-06-07 — closes the OpenClaw/Hermes APM gap)** |
 ||| **37** | **Post-Turn Webhook** (superseded-by #43 — merged into Hermes post-turn hook) — structured JSON event emitted by OpenClaw plugin + Hermes wrapper after every agent turn. Payload: agent, turn_id, timestamp, tokens (input/output), tools_called, tool_errors, latency_ms, context_sources_loaded, context_sources_skipped, model. Observeco watch daemon receives via local HTTP endpoint or file sink. The single highest-value addition — gives Observeco per-turn execution data for our ecosystem users. | **Infrastructure** | 🔴 Spec | ✅ Webhook receiver + SQLite storage + basic timeline | ✅ Anomaly detection on latency/token spikes + cross-agent comparison + cost attribution | ~3d | observeco-master-plan.md §3.41 → superseded by specs/obs-spec-043-hermes-post-turn-hook.md |
-||| **38** | **Hermes Evaluation Trace Export** — structured JSON export of Hermes internal evaluation signals (quality score, tool efficiency, retry flag, hallucination flag) per turn. Reads from Hermes evaluation internals, writes to Observeco `eval_events` table. Gives Observeco *quality signals* — not just "how many tokens" but "was this turn good." | **Infrastructure** | 🔴 Spec | ✅ Eval event ingestion + quality trend per agent | ✅ Quality regression detection + correlation with drift/health + fleet quality comparison | ~2d | observeco-master-plan.md §3.42 |
+|||| **38** | **Hermes Evaluation Trace Export** — structured JSON export of Hermes internal evaluation signals (quality score, tool efficiency, retry flag, hallucination flag) per turn. Reads from Hermes evaluation internals, writes to Observeco `eval_events` table. Gives Observeco *quality signals* — not just "how many tokens" but "was this turn good." | **Infrastructure** | 🔴 Superseded by §3.T2 | ✅ Eval event ingestion + quality trend per agent | ✅ Quality regression detection + correlation with drift/health + fleet quality comparison | ~2d | observeco-master-plan.md §3.T2 |
 ||| **39** | **Tool Efficiency Ranking** — derived from post-turn webhook data. Ranks every tool/skill by: cost per call, error rate, latency impact, success rate. Red/yellow/green. Surfaces "disable this tool" recommendations. Feeds Plugin Firewall (§3.32) with per-tool granularity (§3.32 is per-plugin, this is per-tool-call). | **Intelligence** | 🔴 Spec | ✅ Per-agent tool cost table + top-3 recommendations | ✅ Cross-fleet comparison + auto-disable suggestions + budget threshold alerts | ~1.5d | observeco-master-plan.md §3.43 |
 ||| **40** | **Context Source Utilisation Tracker** — derived from post-turn webhook data (context_sources_loaded vs context_sources_skipped). Tracks which skills/memory sections are actually used per turn vs loaded by default. Surfaces "these 2 skills add 1,400 tokens but are rarely used — remove from defaults." Feeds Context Fire Drill (§3.33) with real utilisation data. | **Intelligence** | 🔴 Spec | ✅ Per-agent utilisation table + lazy-load recommendations | ✅ Cross-fleet comparison + auto-suggest default demotion + trend analysis | ~1.5d | observeco-master-plan.md §3.44 |
 ||| **41** | **Structured Diagnostic Context for LLM Troubleshooting** | **Intelligence** | 🔴 Spec | ✅ Triggered troubleshooting + payload + LLM diagnosis + fix commands | ✅ Cross-agent patterns + fleet learning + export | ~4d | observeco-master-plan.md §3.45 |
@@ -870,7 +870,9 @@ Success metric: Pro user can enable auto-heal in <2 clicks from Fleet view.
 **Depends on:** Nothing — heal logic already exists in `heal/__init__.py`
 **Mockup:** `mockups/auto-heal.html`
 
-### 3.16 OpenClaw Runtime Plugin (🔴 Planned)
+### 3.16 OpenClaw Runtime Plugin (🔴 Deferred — post-v1.0)
+
+> ⚠️ **Deferred.** Hermes is the priority for v0.4.0+. This section is retained for reference when multi-framework support resumes post-v1.0.
 
 **Tagline:** *Load only what your agent needs, when it needs it — 40-60% fewer tokens per turn.*
 
@@ -1458,7 +1460,9 @@ Success metric: Query performance for never-pruned Pro stays under 200ms for any
 
 **Effort:** ~4 days (1 data layer, 2 baseline engine, 1 dashboard)
 
-### 3.19 Communication Pathway Map (✅ Live)
+### 3.19 Communication Pathway Map (✅ Live — Hermes primary)
+
+> ℹ️ This feature also detects OpenClaw agents via launchd plist scanning. OpenClaw support is retained for existing users but not actively developed. Hermes is the priority for v0.4.0+.
 
 **Tagline:** *Where did my message go? Every delivery path in your ecosystem, traced from source to consumer.*
 
@@ -1807,6 +1811,8 @@ Success metric: New user can understand any metric in <15s via glossary.
 
 ### 3.22 Agent Health Detection Engine (🔴 Planned — market-informed)
 
+> ℹ️ This section was written when OpenClaw was co-equal with Hermes. For v0.4.0+, Hermes is the primary target. OpenClaw and multi-framework support deferred to post-v1.0.
+
 **Market research source:** `~/.hermes/intelligence/analysis/market-needs-research.md`
 **Key findings: existing tools (Langfuse, Arize Phoenix, LangSmith) monitor LLM traces. Nobody monitors agent PROCESSES.**
 
@@ -2106,6 +2112,10 @@ Session (root span)
 - OTEL listener on port 4318 — ✅ exists, writes to observeco.db (currently 0 bytes)
 - Hermes post-turn webhook — ✅ built, fire-and-forget daemon thread
 
+> ⚠️ **Risk:** The Hermes observeco plugin was disabled for unknown reasons. Enabling it may cause Hermes gateway instability (crashes, latency spikes, or hook failures). **Rollback:** `hermes plugins disable observability/observeco` + `launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway` — reverts to proxy-based token tracking with no data loss. Test on a non-critical agent first.
+
+> ⏱️ **De-risking step (before T1 build):** Enable the plugin on a non-critical agent (e.g., Dreamer or PA) for 24h and verify stability. If stable, proceed with T1. If unstable, revert and debug before building the waterfall view. This step is included in the v0.4.0 estimate (~1d buffer).
+
 **What needs building:**
 - Wire OTEL listener to write spans to pulse.db (single DB, not two)
 - Enable hermes-otel plugin in config
@@ -2153,18 +2163,21 @@ Session (root span)
 **What's already built:**
 - Hermes post-turn webhook — ✅ built
 - `/api/tokens/log` endpoint — ✅ exists
-- Hermes evaluation internals — ✅ exist (quality score, tool efficiency)
+- Hermes evaluation internals — ❌ **NOT YET BUILT.** The Hermes agent does not currently export `quality_score`, `tool_efficiency`, `retry_flag`, or `hallucination_flag` per turn. These signals must be built into a Hermes plugin or hook before T2 can ingest them. See §3.42 (superseded) for the original spec.
 
 **What needs building:**
+- **Hermes-side eval export mechanism** — new plugin hook or post-turn payload extension that emits quality signals (~2-3d, Hermes codebase)
 - Eval event ingestion endpoint (`POST /api/eval/log`)
 - `eval_events` table in pulse.db
 - Quality trend chart per agent (7d rolling)
 - Quality regression detection (alert when score drops >15% vs 7d baseline)
 
+**Dependency:** T2 is blocked on the Hermes eval export mechanism. The ObserveCo-side ingestion (endpoint + table + dashboard) can be built in parallel, but no data will flow until Hermes emits it.
+
 **Free:** Eval event ingestion + quality trend per agent (24h)
 **Pro:** Quality regression detection + correlation with drift/health + fleet quality comparison
 
-**Effort:** ~2d (1d ingestion + 1d dashboard)
+**Effort:** ~4-5d total (2-3d Hermes eval export + 2d ObserveCo ingestion/dashboard)
 
 ---
 
@@ -2178,13 +2191,13 @@ Session (root span)
 
 **T3a — Anomalies Inbox + Taxonomy:** Fleet-wide issue surfacing. Reads pulse_log, chisel_drift, errors, context_health, config_events, circuit_breakers, plugin_tracking, l2_trending, token_logs, session_checkpoints. Categorises anomalies into taxonomy:
 
-| Type | Detection | Example |
-|------|-----------|---------|
-| `no_tools` | Session ran without tool calls | "Agent ran 5 turns without calling any tools" |
-| `high_cost` | Cost spike vs baseline | "Turn cost 3.2σ above 7d average" |
-| `long_gaps` | Latency between turns | "15min gap between turns — agent may be stuck" |
-| `retry_loops` | Repeated tool failures + retries | "Tool X failed 8 times in 3 turns" |
-| `context_pressure` | Context window approaching limit | "Context at 85% of window — 3 skills at risk of eviction" |
+| Type | Detection | Example | Status |
+|------|-----------|---------|--------|
+| `no_tools` | Session ran without tool calls | "Agent ran 5 turns without calling any tools" | ✅ v0.4.0 |
+| `high_cost` | Cost spike vs baseline | "Turn cost 3.2σ above 7d average" | ✅ v0.4.0 |
+| `long_gaps` | Latency between turns | "15min gap between turns — agent may be stuck" | ✅ v0.4.0 |
+| `retry_loops` | Repeated tool failures + retries | "Tool X failed 8 times in 3 turns" | ✅ v0.4.0 |
+| `context_pressure` | Context window approaching limit | "Context at 85% of window — 3 skills at risk of eviction" | 🔴 Deferred to v0.5.0 — requires model→window_size mapping table (not yet built) |
 
 **T3b — Context Health Score (0–100):** Single number per agent answering "is my agent's brain healthy right now?" Computed from: memory bloat, drift delta, context window utilisation trend, error rate, sources-skipped ratio. Warning <70, alert <50.
 
@@ -2199,6 +2212,8 @@ Session (root span)
 - Post-turn webhook — ✅ built
 - Context Health Score — spec'd as §27
 - Anomalies Inbox — spec'd as §33
+
+> ⚠️ **Data quality precondition:** The anomaly detection engine requires clean data to produce meaningful results. Currently: `errors` = 1,265 rows (all `watch_probe_failed` — noise), `circuit_breakers` = 0 rows (never fired), `token_logs.cost` = $0.00 (not populated). **T3a should not be deployed until v0.3.2 Fix 2 (watch probe) and Fix 5 (circuit_events migration) are complete.** The engine can be built in parallel with those fixes, but the anomaly feed will produce garbage until data is clean.
 
 **What needs building:**
 - Anomaly detection engine (taxonomy classifier)
@@ -2222,6 +2237,8 @@ Session (root span)
 **What it is:** A shared backend query layer (`agent_profile_service`) that feeds Tracing, Evaluation, Behavioral Monitoring, and all existing views. Single `/api/agent/{id}/profile` endpoint returns a composite payload: health, tokens, traces, evals, anomalies, context health, tool efficiency, source utilisation.
 
 **Why this exists:** Currently, each dashboard tab makes separate API calls to different endpoints. The fleet view calls `/api/agents`, the token tab calls `/api/tokens/log`, the health tab calls `/api/pulse`. This means: N+1 queries per page load, inconsistent data (different timestamps), and no unified view of an agent's state.
+
+> ⚠️ **Build order:** T4 should be built **before or in parallel with T1's dashboard views.** All new dashboard code (waterfall, anomaly feed, quality trends) should use the unified endpoint from day one, not be migrated to it later. Building T1's waterfall against the current multi-endpoint architecture means rewriting it when T4 ships.
 
 **What needs building:**
 - `agent_profile_service.py` — composite query layer
@@ -2428,7 +2445,7 @@ ponytail: Process scan uses `psutil` keyword filter. Ceiling: misses agents runn
 | Phase | Features | Cumulative Effort | Notes |
 |-------|----------|-------------------|-------|
 | **Now** | Everything in ✅ Live — 12 features | ✅ Done | Ship current code |
-| **v0.4.0 — Hermes Beachhead** | Tracing Layer (T1), Evaluation Layer (T2), Behavioral Monitoring (T3), Unified Agent Data Model (T4), Wire OTEL listener to pulse.db, Enable hermes-otel plugin | **~10d** | **Current focus.** True agent-specific observability for Hermes on macOS. OpenClaw deferred. |
+|| **v0.4.0 — Hermes Beachhead** | **Phase 1:** Unified Agent Data Model (T4, ~1d) — build before any new dashboard views. **Phase 2:** Wire OTEL listener to pulse.db + Enable hermes-otel plugin (~1d). **Phase 3:** Tracing Layer (T1, ~3d). **Phase 4:** Behavioral Monitoring (T3, ~4d). Evaluation Layer (T2) deferred to v0.5.0 pending Hermes eval export. | **~11d** (includes ~1d buffer for plugin de-risking) | **Current focus.** True agent-specific observability for Hermes on macOS. OpenClaw deferred. T4 first to avoid frontend rework. T2 deferred — Hermes eval export doesn't exist yet. |
 | **v0.5.0 — Intelligence Layer** | Anomaly detection engine, Context Health Score, Relapse Prevention, Tool Efficiency ranking, Context Source Utilisation, Quality regression detection | **~6d** | Builds on T3 data. Makes intelligence claims real. |
 | **Phase 0** (blocks public release) | `hermes_home()` in `dirs.py`, Lazy path constants, Refactor hardcodes → dirs functions, Remove personal artifacts, Fix `require_pro()`, Delete `invocation_counter.py`, Add BYOK to `llm_service` + `chisel/llm_client.py` | **~12h** | **Ship-stoppers.** Without these, the product has Sean's agents, Sean's files, a broken license gate. |
 | **Phase 1** (beachhead readiness) | Dashboard banner, Graceful degradation, Env var consolidation, `observeco init`, `observeco discover` | **~9h** (14h cum.) | Product works on `pip install && observeco dashboard` on any Mac Mini with Hermes. |
@@ -6471,7 +6488,9 @@ CREATE INDEX IF NOT EXISTS idx_turn_events_agent_ts ON turn_events(agent_name, t
 
 ---
 
-### 3.42 Hermes Evaluation Trace Export (🔴 Spec)
+### 3.42 Hermes Evaluation Trace Export (🔴 Superseded by §3.T2)
+
+> ⚠️ **This section is superseded by §3.T2 (Evaluation Layer).** The T2 deep-dive in the Hermes Observability Layer section is the authoritative specification. This section is retained for historical reference only.
 
 **Tagline:** *Not just how many tokens — was this turn any good?*
 

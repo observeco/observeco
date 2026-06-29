@@ -6,7 +6,7 @@
 pip install 'observeco[dashboard]' && observeco dashboard
 ```
 
-> **v0.4.0 — Hermes Beachhead.** True agent-specific observability for Hermes on macOS. Tracing, evaluation, and behavioral monitoring for your local agent fleet.
+> **v0.4.0 — Hermes Beachhead.** True agent-specific observability for Hermes on macOS. Tracing and behavioral monitoring for your local agent fleet. Evaluation layer deferred to v0.5.0.
 
 <p align="center">
   <img src="docs/assets/dashboard-screenshot.png" alt="ObserveCo Dashboard" width="720">
@@ -176,8 +176,8 @@ Check for updates on dashboard load:
 | Feature | What it does |
 |---------|-------------|
 | **Tracing Layer** | Full span tree per session — root → subagent → tool calls. Waterfall view. |
-| **Evaluation Layer** | Quality score, tool efficiency, retry/hallucination flags per turn. Quality trends. |
-| **Behavioral Monitoring** | Anomaly detection (no_tools, high_cost, retry_loops, context_pressure). Context Health Score. |
+| **Evaluation Layer** | Quality score, tool efficiency, retry/hallucination flags per turn. Quality trends. **Deferred to v0.5.0** — Hermes eval export mechanism not yet built. |
+| **Behavioral Monitoring** | Anomaly detection (no_tools, high_cost, retry_loops). Context Health Score. |
 | **Unified Agent Data Model** | Single `/api/agent/{id}/profile` endpoint — health, tokens, traces, evals, anomalies. |
 
 ---
@@ -260,11 +260,11 @@ pip install observeco
 | Framework | Health | Circuit | Tokens | Memory | Dashboard | Hermes Plugin |
 |-----------|:------:|:-------:|:------:|:------:|:---------:|:-------------:|
 | **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full | ✅ Native (11 hooks) |
-| **OpenClaw** | ✅ | ◐ | ◐ | ✅ | ✅ ~85% | ⬜ (deferred) |
+| **OpenClaw** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (deferred) |
 | **Ollama** | ✅ | ⬜ | ⬜ | ⬜ | ✅ Basic | ⬜ |
 | **Custom** | ◐ | ◐ | ◐ | ⬜ | ✅ Basic | ⬜ |
 
-✅ = Auto-detect & works · ◐ = Works with config · ⬜ = Coming (post-v1.0)
+✅ = Auto-detect & works · ◐ = Works with config · ⬜ = Deferred (post-v1.0)
 
 ---
 
