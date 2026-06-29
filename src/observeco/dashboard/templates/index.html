@@ -1336,6 +1336,8 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
     <button class="tab-btn" onclick="switchTab('alerts', this)">🔔 Push Alerts</button>
     <button class="tab-btn" onclick="switchTab('plugin', this)">🔌 Plugin</button>
     <button class="tab-btn" onclick="switchTab('restarts', this)">🔄 Restarts</button>
+    <button class="tab-btn" onclick="switchTab('traces', this)">🔍 Traces</button>
+    <button class="tab-btn" onclick="switchTab('anomalies', this)">⚠️ Anomalies</button>
     <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ Settings</button>
   </div>
 
@@ -1935,6 +1937,33 @@ document.body.addEventListener('htmx:afterRequest', function(evt) {
     </div>
   </div>
 
+  <!-- Traces tab -->
+  <div class="tab-content" id="tabTraces">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔍 Trace Spans<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('trace-spans', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Per-agent span timeline with tree rendering. Every LLM call, tool invocation, and subagent spawn traced from root to leaf.</div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:12px;color:var(--fg-2);margin-right:8px;">Agent:</label>
+        <input id="traceAgentInput" type="text" value="hermes-agent" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--fg);font-size:13px;width:200px;" placeholder="agent name">
+        <button onclick="loadTraces()" style="background:var(--accent);color:var(--accent-on);border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;margin-left:8px;">Load</button>
+      </div>
+      <div id="traceWaterfall" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:200px;">
+        <div style="color:#64748b;font-size:12px;">Click Load to fetch trace spans...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anomalies tab -->
+  <div class="tab-content" id="tabAnomalies">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">⚠️ Anomaly Feed<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('anomaly-feed', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Fleet-wide issue surfacing. Detects dead agents, error bursts, cost spikes, and retry loops.</div>
+      <div id="anomalyFeed" hx-get="/api/anomaly-feed?lookback_minutes=120" hx-trigger="load, every 60s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading anomaly feed...</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Settings tab -->
   <div class="tab-content" id="tabSettings">
     <div class="app" style="padding:0;">
@@ -2365,6 +2394,86 @@ function switchTab(tab, btn) {
     initLlmToggle();
     initTelemetryToggle();
   }
+  if (tab === 'traces') {
+    loadTraces();
+  }
+  if (tab === 'anomalies') {
+    // htmx handles auto-load via hx-trigger
+  }
+}
+
+// ─── Trace Waterfall (T1) ───
+
+function loadTraces() {
+  var agent = document.getElementById('traceAgentInput').value || 'hermes-agent';
+  var container = document.getElementById('traceWaterfall');
+  container.innerHTML = '<div style="color:#64748b;font-size:12px;">Loading traces for ' + agent + '...</div>';
+
+  fetch('/api/agent/' + encodeURIComponent(agent) + '/traces?limit=200')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok || !data.spans || data.spans.length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:20px;text-align:center;">No trace spans found for ' + agent + '.</div>';
+        return;
+      }
+      var html = '<div style="font-size:12px;color:#64748b;margin-bottom:12px;">' + data.count + ' spans</div>';
+      html += '<div style="font-family:var(--font-mono);font-size:12px;">';
+
+      // Group by trace_id
+      var groups = {};
+      data.spans.forEach(function(s) {
+        var tid = s.trace_id || 'unknown';
+        if (!groups[tid]) groups[tid] = [];
+        groups[tid].push(s);
+      });
+
+      Object.keys(groups).forEach(function(tid) {
+        var spans = groups[tid];
+        var rootStart = Math.min.apply(null, spans.map(function(s) { return s.start_time_ns || 0; }));
+        var rootEnd = Math.max.apply(null, spans.map(function(s) { return s.end_time_ns || 0; }));
+        var totalNs = Math.max(rootEnd - rootStart, 1);
+
+        html += '<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:8px;padding:10px;">';
+        html += '<div style="color:var(--fg-2);font-size:11px;margin-bottom:8px;">Trace ' + tid.substring(0, 12) + '… · ' + spans.length + ' spans</div>';
+
+        spans.forEach(function(s) {
+          var depth = 0;
+          var cur = s;
+          var visited = {};
+          while (cur.parent_span_id && !visited[cur.parent_span_id]) {
+            visited[cur.parent_span_id] = true;
+            var parent = spans.find(function(p) { return p.span_id === cur.parent_span_id; });
+            if (!parent) break;
+            depth++;
+            cur = parent;
+          }
+
+          var sStart = s.start_time_ns || 0;
+          var sEnd = s.end_time_ns || 0;
+          var durNs = Math.max(sEnd - sStart, 1);
+          var leftPct = ((sStart - rootStart) / totalNs) * 100;
+          var widthPct = Math.max(durNs / totalNs * 100, 0.5);
+          var durMs = (durNs / 1000000).toFixed(1);
+          var statusColor = s.status === 'OK' ? '#22c55e' : s.status === 'ERROR' ? '#ef4444' : '#64748b';
+
+          html += '<div style="margin-left:' + (depth * 20) + 'px;padding:4px 0;display:flex;align-items:center;gap:8px;">';
+          html += '<span style="color:' + statusColor + ';font-size:10px;">●</span>';
+          html += '<span style="color:var(--fg);flex:0 0 200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + s.span_name + '</span>';
+          html += '<div style="flex:1;height:6px;background:var(--bg);border-radius:3px;position:relative;overflow:hidden;">';
+          html += '<div style="position:absolute;left:' + leftPct.toFixed(1) + '%;width:' + widthPct.toFixed(1) + '%;height:100%;background:' + statusColor + ';border-radius:3px;"></div>';
+          html += '</div>';
+          html += '<span style="color:var(--fg-2);font-size:11px;flex:0 0 50px;text-align:right;">' + durMs + 'ms</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      });
+
+      html += '</div>';
+      container.innerHTML = html;
+    })
+    .catch(function(err) {
+      container.innerHTML = '<div style="color:#ef4444;font-size:13px;">Error loading traces: ' + err.message + '</div>';
+    });
 }
 
 // ─── Data Quality Widget ───

@@ -4068,6 +4068,33 @@ async def api_anomalies(lookback_minutes: int = 60):
         return {"ok": False, "error": str(e)}
 
 
+@app.get("/api/anomaly-feed", response_class=HTMLResponse)
+async def api_anomaly_feed(lookback_minutes: int = 120):
+    """HTML fragment for the anomaly feed tab (T3)."""
+    try:
+        from observeco.anomaly import detect_anomalies
+        anomalies = detect_anomalies(db=db, lookback_minutes=lookback_minutes)
+    except Exception as e:
+        return f'<div style="color:#ef4444;font-size:13px;">Error: {e}</div>'
+
+    if not anomalies:
+        return '<div style="color:#94a3b8;font-size:13px;padding:20px;text-align:center;">✅ No anomalies detected in the last {lookback_minutes} minutes.</div>'
+
+    html = f'<div style="font-size:12px;color:#64748b;margin-bottom:12px;">{len(anomalies)} anomalies in last {lookback_minutes} min</div>'
+    for a in anomalies:
+        severity_color = {"critical": "#ef4444", "warning": "#eab308", "info": "#3b82f6"}.get(a.get("severity", "info"), "#64748b")
+        severity_icon = {"critical": "🔴", "warning": "🟡", "info": "ℹ️"}.get(a.get("severity", "info"), "•")
+        html += f'''<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;border-left:3px solid {severity_color};">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span>{severity_icon}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--fg);">{a.get("type", "unknown")}</span>
+            <span style="font-size:11px;color:var(--fg-2);">{a.get("agent_name", "")}</span>
+          </div>
+          <div style="font-size:12px;color:var(--fg-2);margin-left:24px;">{a.get("description", "")}</div>
+        </div>'''
+    return HTMLResponse(html)
+
+
 @app.post("/api/chisel/compress")
 async def api_chisel_compress(request: Request):
     """Compress an agent's SOUL.md via the dashboard.
