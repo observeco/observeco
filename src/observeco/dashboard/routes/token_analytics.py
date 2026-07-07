@@ -170,11 +170,10 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     total_unattributed = 0
     agents_with_data = set()
 
-    # Bucket by integer-divided epoch so 5m/hour/day all work without midnight assumptions
+    # Buckets derived from actual row timestamps (integer-divided epoch), NOT from
+    # since//bucket_sec — anchoring to `since` drops "today so far" and shows the
+    # wrong calendar day for sub-day/daily windows. Same approach as tracking/token_analytics._bucket_start.
     day_buckets = {}
-    for i in range(n_buckets):
-        bk = (since // bucket_sec + i) * bucket_sec
-        day_buckets[bk] = {"cost": 0, "input": 0, "output": 0, "cache": 0, "est": 0}
 
     for log in all_logs:
         aname = log.get("agent_name", "unknown")
@@ -214,17 +213,19 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         else:
             total_unattributed += log.get("total_tokens", 0) or 0
 
-        # Bucket by integer-divided epoch
+        # Bucket by integer-divided epoch of the row's own timestamp (true calendar alignment)
         bk = (log.get("recorded_at", 0) // bucket_sec) * bucket_sec
-        if bk in day_buckets:
-            day_buckets[bk]["cost"] += log.get("cost", 0) or 0
-            day_buckets[bk]["input"] += log.get("input_tokens", 0) or 0
-            day_buckets[bk]["output"] += log.get("output_tokens", 0) or 0
-            day_buckets[bk]["cache"] += log.get("cache_read_tokens", 0) or 0
-            # ponytail: 'est' = estimated (source != otel) tokens for this bucket, used to
-            # shade estimate-vs-accurate. 'acc' is implied (total - est). Upgrade: track per-bucket acc too.
-            if log.get("source") != "otel":
-                day_buckets[bk]["est"] += (log.get("input_tokens", 0) or 0) + (log.get("output_tokens", 0) or 0)
+        if bk not in day_buckets:
+            day_buckets[bk] = {"cost": 0, "total": 0, "input": 0, "output": 0, "cache": 0, "est": 0}
+        day_buckets[bk]["cost"] += log.get("cost", 0) or 0
+        day_buckets[bk]["total"] += log.get("total_tokens", 0) or 0
+        day_buckets[bk]["input"] += log.get("input_tokens", 0) or 0
+        day_buckets[bk]["output"] += log.get("output_tokens", 0) or 0
+        day_buckets[bk]["cache"] += log.get("cache_read_tokens", 0) or 0
+        # ponytail: 'est' = estimated (source != otel) tokens for this bucket, used to
+        # shade estimate-vs-accurate. 'acc' is implied (total - est). Upgrade: track per-bucket acc too.
+        if log.get("source") != "otel":
+            day_buckets[bk]["est"] += (log.get("input_tokens", 0) or 0) + (log.get("output_tokens", 0) or 0)
 
     # Sort agents by cost descending
     sorted_agents = sorted(agent_data.items(), key=lambda x: -x[1]["cost"])
@@ -241,8 +242,9 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     output_data = [day_buckets[k]["output"] // 1000 for k in sorted_keys]
     cache_data = [day_buckets[k]["cache"] // 1000 for k in sorted_keys]
     est_data = [round(day_buckets[k]["est"] / 1000) for k in sorted_keys]
-    # Total = input + output per bucket (K)
-    total_data = [input_data[i] + output_data[i] for i in range(len(sorted_keys))]
+    # Total = authoritative total_tokens per bucket (K) — not input+output (which misses cache
+    # and collapses to input-only for watch-estimated rows where output=0).
+    total_data = [day_buckets[k]["total"] // 1000 for k in sorted_keys]
 
     # Per-turn timeline (real total_tokens per call, time-ordered)
     timeline = sorted(
@@ -261,6 +263,11 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         turn_tokens = turn_tokens[-500:]
         turn_anom = turn_anom[-500:]
     max_tok = max(turn_tokens) or 1
+    # Data-quality flag: is this window 100% watch-estimated (no otel/sdk/proxy source)?
+    window_has_real = any(
+        (log.get("source") in ("otel", "sdk", "proxy")) for log in all_logs
+    )
+    estimated_only = (len(all_logs) > 0) and not window_has_real
 
     COMP_ORDER = [
         ("identity", "var(--token-identity)", "identity"),
@@ -350,12 +357,13 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     <div class="panel">
         <div class="panel-h"><h2>Token Volume</h2><span class="meta mono">{range_label}</span></div>
         <div class="chart-box"><canvas id="costChart"></canvas></div>
+        {('<div class="dq-note">⚠ This window is 100% estimated from the watch daemon — agents stopped reporting OTEL telemetry ~2d ago. Output &amp; cache-read breakdowns are unavailable until telemetry resumes.</div>') if estimated_only else ''}
         <div class="legend-row">
             <span><i style="background:var(--accent)"></i> Total (K)</span>
             <span><i style="background:var(--meta)"></i> Input (K)</span>
             <span><i style="background:var(--warn)"></i> Output (K)</span>
             <span><i style="background:var(--token-skills)"></i> Cache reads (K)</span>
-            <span><i style="background:var(--chart-est)"></i> Estimated (K)</span>
+            <span><i style="background:#64748b"></i> Estimated (K)</span>
         </div>
     </div>
     <div>
