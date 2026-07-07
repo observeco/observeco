@@ -392,6 +392,42 @@ setInterval(function() {
 // ponytail: chart init MUST run here, not in inline <script> inside swapped HTML.
 // htmx innerHTML swaps do not execute inline scripts. Global fn + afterSwap is the
 // same pattern the drift chart attempts (loadDriftChart). Data arrives via window._tokenChart.
+// ── Token tab: 4-chart grid (Cost / Cache Hit Rate / Output Share / Cache-by-Agent) ──
+// Design: observeco token tab screenshot (v0.3.1 lineage) — 4 separate time-series
+// charts, each with a stat-card header. Cost carries a "Target" benchmark line.
+
+// Minimal inline plugin: draws a horizontal dashed benchmark line at `value` with a label.
+// Avoids the chartjs-plugin-annotation dependency (not bundled). ponytail: if the
+// annotation plugin is later added, replace this with its config — same visual result.
+function _benchmarkPlugin(value, label) {
+  if (value == null || isNaN(value)) return [];
+  return [{
+    id: 'bench_' + label,
+    afterDraw: function(chart) {
+      var yScale = chart.scales.y;
+      if (!yScale) return;
+      var y = yScale.getPixelForValue(value);
+      if (y < yScale.top || y > yScale.bottom) return;
+      var ctx = chart.ctx;
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(chart.chartArea.left, y);
+      ctx.lineTo(chart.chartArea.right, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ef4444';
+      ctx.font = '10px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText(label + ' ' + value, chart.chartArea.right - 4, y - 4);
+      ctx.restore();
+    }
+  }];
+}
+
+// Chart 1: Cost over time + Target benchmark line
 function renderTokenChart() {
   if (typeof Chart === 'undefined') return;
   var data = window._tokenChart;
@@ -399,29 +435,64 @@ function renderTokenChart() {
   var ctx = document.getElementById('costChart');
   if (!ctx) return;
   if (window._tokenChartInstance) window._tokenChartInstance.destroy();
+  var target = (window._cacheChart && window._cacheChart.target) || null;
   window._tokenChartInstance = new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels: data.labels,
-      datasets: [
-        {label: 'Total (K)', data: data.total_data, backgroundColor: '#22c55e', stack: 'v', yAxisID: 'y', borderRadius: 2},
-        {label: 'Input (K)', data: data.input_data, backgroundColor: '#3b82f6', stack: 'v', yAxisID: 'y', borderRadius: 2},
-        {label: 'Output (K)', data: data.output_data, backgroundColor: '#eab308', stack: 'v', yAxisID: 'y', borderRadius: 2},
-        {label: 'Cache reads (K)', data: data.cache_data, backgroundColor: '#8b5cf6', stack: 'v', yAxisID: 'y', borderRadius: 2},
-        {label: 'Estimated (K)', data: data.est_data, backgroundColor: '#64748b', stack: 'v', yAxisID: 'y', borderRadius: 2}
-      ]
-    },
+    data: {labels: data.labels, datasets: [{label: 'Cost', data: data.cost_data, backgroundColor: '#22c55e', borderRadius: 2}]},
     options: {
       responsive: true, maintainAspectRatio: false,
-      interaction: {mode: 'index', intersect: false},
-      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return c.dataset.label + ': ' + (c.parsed.y||0).toLocaleString() + 'K';}}}},
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return 'Cost: $' + (c.parsed.y||0).toFixed(2);}}}},
       scales: {
-        x: {stacked: true, grid: {color: 'rgba(51,65,85,.3)'}, ticks: {color: '#64748b', font: {size: 10}, maxRotation: 0, autoSkip: true, maxTicksLimit: 14}},
-        y: {stacked: true, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 10}, callback: function(v){return v + 'K';}}}
+        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
+        y: {grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return '$' + v;}}}
+      }
+    },
+    plugins: _benchmarkPlugin(target, 'Target')
+  });
+}
+
+// Chart 2: Cache hit rate over time (%)
+function renderCacheRateChart() {
+  if (typeof Chart === 'undefined') return;
+  var data = window._cacheRateChart;
+  if (!data) return;
+  var ctx = document.getElementById('cacheRateChart');
+  if (!ctx) return;
+  if (window._cacheRateInstance) window._cacheRateInstance.destroy();
+  window._cacheRateInstance = new Chart(ctx, {
+    type: 'line',
+    data: {labels: data.labels, datasets: [{label: 'Cache hit %', data: data.data, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,.15)', fill: true, tension: 0.3, pointRadius: 0}]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return 'Hit: ' + (c.parsed.y||0) + '%';}}}},
+      scales: {
+        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
+        y: {min: 0, max: 100, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return v + '%';}}}
       }
     }
   });
-  bindTokenToggles();
+}
+
+// Chart 3: Output share over time (%)
+function renderOutputRateChart() {
+  if (typeof Chart === 'undefined') return;
+  var data = window._outputRateChart;
+  if (!data) return;
+  var ctx = document.getElementById('outputRateChart');
+  if (!ctx) return;
+  if (window._outputRateInstance) window._outputRateInstance.destroy();
+  window._outputRateInstance = new Chart(ctx, {
+    type: 'line',
+    data: {labels: data.labels, datasets: [{label: 'Output %', data: data.data, borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,.15)', fill: true, tension: 0.3, pointRadius: 0}]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return 'Output: ' + (c.parsed.y||0) + '%';}}}},
+      scales: {
+        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
+        y: {min: 0, max: 100, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return v + '%';}}}
+      }
+    }
+  });
 }
 
 // ponytail: toggles are static HTML chips (data-idx = dataset index). They persist
