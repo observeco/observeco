@@ -1,12 +1,12 @@
 # ObserveCo
 
-> ObserveCo tells you if your Hermes agents are working, what they're doing, and where your money goes.
+> ObserveCo tells you if your AI agents are working, what they're doing, where your money goes — and whether they're getting worse.
 
 ```bash
 pip install 'observeco[dashboard]' && observeco dashboard
 ```
 
-> **v0.4.0 — Hermes Beachhead.** True agent-specific observability for Hermes on macOS. Tracing and behavioral monitoring for your local agent fleet. Evaluation layer deferred to v0.5.0.
+> **v0.5.0 — Capability Monitoring Layer.** Passive monitoring (always-on, zero tokens) + active probing (deliberate, user-controlled cost). Config-aware baselines. Open adapter spec. MIT licensed.
 
 <p align="center">
   <img src="docs/assets/dashboard-screenshot.png" alt="ObserveCo Dashboard" width="720">
@@ -65,7 +65,85 @@ The plugin is bundled with Hermes Agent and contributed upstream via [PR #52357]
 
 Every AI agent operator has this story: an agent was silently failing for weeks. Context bloating 15% per week. Memory full of duplicates and contradictions. Nobody noticed until a user complained.
 
-This is normal. The tools to fix it don't exist — yet.
+Worse: **you don't know if your agent is getting worse.** Generic benchmarks (MMLU, τ-bench) don't predict real performance. The only valid benchmark is: "Can my agent do the tasks I actually need it to do?"
+
+This is the gap ObserveCo fills.
+
+---
+
+## Two-Mode Monitoring
+
+Observation without judgment is just logging. ObserveCo adds the judgment layer — two modes, different purposes.
+
+### Mode 1 — Passive Monitoring (always-on, zero extra tokens)
+
+Analyzes live production traffic locally. Coarse but continuous — catches "something changed" without spending anything.
+
+- Task success heuristics
+- Tool-call error rates
+- Loop detection
+- Latency and token consumption
+- Cost tracking
+
+**This is what ObserveCo already does.** The free, always-on layer. Extends the existing observability infrastructure.
+
+### Mode 2 — Active Probing (deliberate, user-controlled cost)
+
+Scheduled benchmark runs of user-defined tasks against your agent. Cost is surfaced, never hidden — the UI shows estimated tokens/$ per probe schedule before enabling.
+
+- **Canary** — regression tripwire. 9 tasks, cheap, fast, frequent. Detects degradation, not capability.
+- **Grid** — capability measurement. Model × harness config × task matrix. Per-task accuracy with confidence intervals, cost, trajectory logs. Read by pairing, never averaged.
+
+**Default schedules are conservative.** 10 tasks × 3 runs/day ≈ 1-2.5M tokens/day. User controls frequency (nightly, weekly, on-demand, on-config-change).
+
+---
+
+## Config-Aware Baselines (The Moat)
+
+Personal agent stacks are file-based (SOUL.md, prompt files, tool manifests, MCP configs). Cloud tools can't see local config changes. ObserveCo can.
+
+- Hash and watch config files
+- On change: snapshot and segment the baseline automatically
+- The killer output: **"Your agent's success rate dropped 18% this week. Your config is unchanged."** — separating provider-side model drift from self-inflicted changes.
+
+---
+
+## Adapter Strategy
+
+Adapters are a permanent maintenance treadmill — every framework changes quarterly.
+
+**Approach:** Ship one adapter we use daily ourselves (Hermes), publish a clean, documented adapter spec, and let the community build the rest. Community adapters are the only sustainable path to "any-agent support" for an OSS project.
+
+---
+
+## Statistical Honesty
+
+3-10 non-deterministic tasks produce noisy signals. Naive thresholds → false drift alarms → lost trust → churn.
+
+- Each checkpoint runs each task N times (user-configurable, default small but >1)
+- Drift alerts fire only after a sequential/statistical test clears, not on a single bad run
+- Alerts always report confidence and sample size
+- **Under-claim rather than over-claim.** Credibility is the moat.
+
+---
+
+## Research-Validated Thesis
+
+ObserveCo's core hypothesis — that harness quality is a separate axis from model capability — is independently validated by [Hugging Face's harness-optimization experiment](https://huggingface.co/spaces/joelniklaus/harness-optimization) (Niklaus, July 2026):
+
+> A frozen DeepSeek-V4-Pro scoring **0%** on Harvey's Legal Agent Benchmark was left untouched while an automated loop rewrote only the **harness** (runtime wrapper). Result: **0% → 5.0%** whole-task success, **63.4% → 80.1%** criterion pass rate — landing between Sonnet 4.6 and Opus 4.6.
+
+Same model, different harnesses: **3.5% to 80.1%** range. This is exactly what ObserveCo's grid runner measures. Key findings that shaped ObserveCo's capability monitoring:
+
+| Finding | ObserveCo Application |
+|---------|----------------------|
+| Code fixes (+16pts) > prompt engineering | Grid tags mechanisms as code vs prompt |
+| Robustness transfers cross-model; prompts don't | Dev/test split prevents overfitting to eval set |
+| Provider failures contaminate scores | Adapter retries transient 5xx/429 errors |
+| Per-trial variance from blowups, not noise | Canary flags catastrophic trials as signal |
+| Blended score: `accuracy + 0.5×all_pass − 0.005×tokens/1M` | Grid report uses configurable blended score |
+
+**Source:** [Niklaus, "Don't Train the Model, Evolve the Harness," Hugging Face, 2026](https://huggingface.co/spaces/joelniklaus/harness-optimization) · [Code](https://github.com/JoelNiklaus/harness-optimization) · [Meta-Harness paper](https://arxiv.org/abs/2603.28052)
 
 ---
 
@@ -122,7 +200,7 @@ Failed components are automatically restarted:
 ### Updates
 
 Check for updates on dashboard load:
-- "Update available: v0.3.0 (you have v0.2.0)"
+- "Update available: v0.5.0 (you have v0.4.0)"
 - Click "Update now" to upgrade
 - Service restarts automatically
 
@@ -134,9 +212,11 @@ Check for updates on dashboard load:
 
 > **Then we built ObserveCo.** It caught Hermes' SOUL.md growing 15% week-over-week. It showed Kepler's context carrying 40k tokens of memory it never used. It exposed 3 silent circuit trips in 2 days that nobody saw. These are not edge cases — they're the normal state of any agent fleet older than a week.
 
+> **Now we run the canary daily.** 9 tasks, 2 minutes, ~$0.002. When the score drops and config is unchanged, we know the provider drifted. When config changes, we know the baseline needs updating. This is the loop.
+
 ---
 
-## What Ships Now (v0.4.0)
+## What Ships Now (v0.5.0)
 
 18+ features. One `pip install`. 60 seconds to first health data.
 
@@ -163,6 +243,15 @@ Check for updates on dashboard load:
 | **Memory Garden** | Find duplicates, contradictions, stale entries in agent memory |
 | **Fleet Comparison** | Side-by-side agent matrix — tokens, composition, drift, errors, circuit status |
 
+### Capability Monitoring (v0.5.0 — new)
+| Feature | What it does |
+|---------|-------------|
+| **Canary** | Regression tripwire — 9 tasks, cheap, fast, frequent. Detects degradation. |
+| **Grid** | Capability measurement — model × harness config × task matrix. Per-task CI, cost, trajectory. |
+| **Config Hashing** | Watch config files (SOUL.md, prompts, tool manifests). Auto-segment baselines on change. |
+| **Drift Detection** | Statistical honesty layer — alerts fire only after sequential/statistical test clears. |
+| **Shareable Drift Charts** | "Config unchanged, quality dropped X%" — viral output for the "did they nerf the model?" discourse. |
+
 ### Dashboard & Alerts
 | Feature | What it does |
 |---------|-------------|
@@ -172,11 +261,11 @@ Check for updates on dashboard load:
 | **Glossary** | 20+ entries with hint buttons across all tabs |
 | **Confidence Framework** | FP/FN risk badges on every card |
 
-### Hermes Observability (v0.4.0 — new)
+### Hermes Observability (v0.4.0)
 | Feature | What it does |
 |---------|-------------|
 | **Tracing Layer** | Full span tree per session — root → subagent → tool calls. Waterfall view. |
-| **Evaluation Layer** | Quality score, tool efficiency, retry/hallucination flags per turn. Quality trends. **Deferred to v0.5.0** — Hermes eval export mechanism not yet built. |
+| **Evaluation Layer** | Quality score, tool efficiency, retry/hallucination flags per turn. Quality trends. |
 | **Behavioral Monitoring** | Anomaly detection (no_tools, high_cost, retry_loops). Context Health Score. |
 | **Unified Agent Data Model** | Single `/api/agent/{id}/profile` endpoint — health, tokens, traces, evals, anomalies. |
 
@@ -195,6 +284,9 @@ echo "Your system prompt" | observeco chisel trim
 
 # Find memory bloat
 observeco clawforge garden
+
+# Run a canary check
+observeco benchmark run --suite canary --agent hermes-main
 
 # Launch the dashboard
 observeco dashboard
@@ -220,7 +312,8 @@ That gap is where agents fail silently. ObserveCo makes it visible.
 | **Datadog** ($15+/host/mo, cloud-only) | `pip install`, local-first, free, understands tokens + memory debt + circuit breakers |
 | **Grafana + Prometheus** (2-hour setup, no context concept) | 60 seconds to first health data, agent-aware dashboards |
 | **LangSmith** (LangChain-only, $59/mo) | Hermes-native, open source, works offline |
-| **Nothing** (failing silently) | You'll know when your agents are sick, bloated, or broken |
+| **Arize / Braintrust** (cloud-only, team-oriented, $50+/mo) | Local-first, individual/small-operator focused, drift monitoring without shipping traces |
+| **Nothing** (failing silently) | You'll know when your agents are sick, bloated, broken, or drifting |
 
 ---
 
@@ -231,6 +324,7 @@ pip install observeco
 ├── pulse        — liveness, circuit breaker, safety guard
 ├── chisel       — token compression, drift, skill audit
 ├── clawforge    — memory garden, context profiler, intent loader
+├── benchmark    — canary + grid, config-aware baselines, drift detection
 └── dashboard    — local web UI (FastAPI + htmx, no npm)
 ```
 
@@ -248,23 +342,26 @@ pip install observeco
 | **v0.2** | ✅ Shipped | Token Analytics + Data Infrastructure |
 | **v0.3** | ✅ Shipped | Auto-heal, Push Alerts, Pro Licensing, Fleet Comparison, Hermes Plugin |
 | **v0.3.1** | ✅ Shipped | Official Hermes Agent Observability Plugin — 11 hooks, bundled upstream |
-| **v0.4.0** | 🔥 Now | **Hermes Beachhead** — Tracing Layer, Evaluation Layer, Behavioral Monitoring, Unified Data Model |
-| **v0.5.0** | 📋 Planned | Intelligence Layer — anomaly detection, Context Health Score, Relapse Prevention |
+| **v0.4.0** | ✅ Shipped | **Hermes Beachhead** — Tracing Layer, Evaluation Layer, Behavioral Monitoring, Unified Data Model |
+| **v0.5.0** | 🔥 Now | **Capability Monitoring Layer** — Canary + Grid, config-aware baselines, drift detection, adapter spec |
+| **v0.6.0** | 📋 Planned | Log-to-suggested-tasks (auto-generation with review/approve), opt-in LLM-as-judge scoring, alert integrations |
 | **v1.0** | 📋 Planned | Public release readiness, `observeco init`, generic discovery |
-| **Future** | 📋 Planned | Multi-framework support (OpenClaw, Claude Code, Ollama) — deferred post-v1.0 |
+| **Future** | 📋 Planned | Fleet features, paid tiers, write-task sandboxing research, comparison engine (only at credible scale) |
 
 ---
 
 ## Supported Frameworks
 
-| Framework | Health | Circuit | Tokens | Memory | Dashboard | Hermes Plugin |
-|-----------|:------:|:-------:|:------:|:------:|:---------:|:-------------:|
-| **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full | ✅ Native (11 hooks) |
-| **OpenClaw** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (deferred) |
-| **Ollama** | ✅ | ⬜ | ⬜ | ⬜ | ✅ Basic | ⬜ |
-| **Custom** | ◐ | ◐ | ◐ | ⬜ | ✅ Basic | ⬜ |
+| Framework | Health | Circuit | Tokens | Memory | Dashboard | Hermes Plugin | Canary | Grid |
+|-----------|:------:|:-------:|:------:|:------:|:---------:|:-------------:|:------:|:----:|
+| **Hermes** | ✅ Auto | ✅ | ✅ | ✅ | ✅ Full | ✅ Native (11 hooks) | ✅ | ✅ |
+| **OpenClaw** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ (deferred) | ⬜ | ⬜ |
+| **Ollama** | ✅ | ⬜ | ⬜ | ⬜ | ✅ Basic | ⬜ | ⬜ | ⬜ |
+| **Custom** | ◐ | ◐ | ◐ | ⬜ | ✅ Basic | ⬜ | ⬜ | ⬜ |
 
 ✅ = Auto-detect & works · ◐ = Works with config · ⬜ = Deferred (post-v1.0)
+
+**Adapter strategy:** Ship one adapter (Hermes), publish a clean adapter spec, let the community build the rest. Community adapters are the only sustainable path to "any-agent support" for an OSS project.
 
 ---
 
@@ -274,7 +371,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). First-time contributors welcome — look
 
 ---
 
-Built with ❤️ for the Hermes agent community. MIT licensed.
+Built with ❤️ for the AI agent community. MIT licensed.
 
 ### Glossary
 
@@ -284,6 +381,8 @@ Hover the "?" icons on any agent card in the dashboard to get instant definition
 - **Errors** — per-agent error badge (24h window)
 - **Brain size** (drift) — 7-day token growth trend
 - **Composition** (token bar) — identity/skills/memory/tools/guidance breakdown
+- **Canary** — regression tripwire. 9 tasks, cheap, fast. Detects degradation.
+- **Grid** — capability measurement. Model × harness config × task matrix. Per-task CI, cost, trajectory.
 
 Each popup includes FAQ. Click the topic header to open the full modal.
 

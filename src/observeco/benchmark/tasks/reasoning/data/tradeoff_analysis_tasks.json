@@ -1,0 +1,20 @@
+[
+  {
+    "approach_a": "REST API with JSON",
+    "approach_b": "GraphQL API",
+    "context": "Mobile app with varying screen sizes and bandwidth constraints. Multiple client teams (iOS, Android, Web).",
+    "expected": "REST: simpler caching (HTTP caching, CDN), better tooling, predictable payloads. Wide adoption means easier hiring. GraphQL: clients request exactly what they need, reducing over-fetching on bandwidth-constrained mobile. Single endpoint simplifies versioning. However, complex queries can harm server performance, caching is harder, and the N+1 problem requires careful resolver design."
+  },
+  {
+    "approach_a": "SQLite (embedded database)",
+    "approach_b": "PostgreSQL (client-server database)",
+    "context": "Single-user desktop application with occasional read-heavy queries.",
+    "expected": "SQLite: zero configuration, no separate server process, ACID compliant, excellent for single-writer workloads. No network overhead. PostgreSQL: richer feature set (full-text search, GIS, concurrent writes), but requires installation and maintenance. Overkill for single-user desktop unless concurrent access is needed."
+  },
+  {
+    "approach_a": "Server-Side Rendering (Next.js)",
+    "approach_b": "Client-Side Rendering (React SPA)",
+    "context": "Content-heavy marketing site with SEO requirements.",
+    "expected": "SSR: better SEO (search engines get fully-rendered HTML), faster first paint, works without JavaScript. CSR: richer interactivity, smoother page transitions, but slower initial load and poor SEO. For a marketing site, SSR wins — content is static, users expect fast loads, and SEO is critical."
+  }
+]

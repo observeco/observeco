@@ -1,7 +1,7 @@
 # ObserveCo — Master Plan (Single Source of Truth)
-**Document status:** Live — v0.4.0 "Hermes Beachhead"
-**Last updated:** 2026-06-29
-**Scope:** Hermes agents on macOS (local Mac Mini). True agent-specific observability (tracing + structured logging + evaluation + behavioral monitoring). OpenClaw and multi-framework support deferred to future release.
+**Document status:** Live — v0.5.0 "Capability Monitoring Layer"
+**Last updated:** 2026-07-03
+**Scope:** Hermes agents on macOS (local Mac Mini). True agent-specific observability (tracing + structured logging + evaluation + behavioral monitoring) + capability monitoring (canary + grid + config-aware baselines + drift detection). OpenClaw and multi-framework support deferred to future release.
 **Author:** Main
 
 ---
@@ -10,8 +10,8 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **One-liner** | ObserveCo tells you if your Hermes agents are working, what they're doing, and where your money goes |
-| **Positioning** | "ObserveCo tells you if your Hermes agents are working, what they're doing, and where your money goes." — Locked 2026-06-29 |
+| **One-liner** | ObserveCo tells you if your AI agents are working, what they're doing, where your money goes — and whether they're getting worse |
+| **Positioning** | "ObserveCo tells you if your AI agents are working, what they're doing, where your money goes — and whether they're getting worse." — Updated 2026-07-02 |
 | **Primary Target** | Hermes users running agents locally on macOS (Mac Mini). Local-first, Hermes-native observability. |
 | **What it does** | CLI + dashboard that discovers your Hermes agents, monitors their health, analyses token usage, detects drift, auto-heals failures, and uses your own LLM to diagnose crashes, classify alerts, and guide first-run setup — all local, no cloud |
 ||| **License** | MIT (free forever for Hermes users — all currently-built features open, no gating, no trial needed). **LLM features use your own API key** (`OBSERVECO_LLM_API_KEY` — bring-your-own-key, no inference costs on us). Static fallbacks when no key configured. **Future Pro tier** (after beachhead validated) will offer advanced features (push alerts, extended history, auto-heal) via 30-day trial. Trial would start on explicit Pro feature access, not on install. Pro tier pricing deferred until beachhead validated. See `specs/commercial-strategy-v2.md` for full rationale. |
@@ -56,8 +56,16 @@
 ||| 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Backend (L1 auto-restart, L2 proactive, LLM escalation, HealCircuit) / ❌ Dashboard UI (toggle, status card, heal history, per-agent config) | ✅ manual Heal button + dashboard alerts + L2 trends / ❌ Dashboard config UI | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) + dashboard config UI | ~1d + L2 built | observeco-master-plan.md §15 |
 || 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) — dashboard stats + hooks now auth-exempt (401 fix) | Analysis | 🔴 Deferred (post-v1.0) | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
 ||| 17 | Push alerts (Telegram, webhook, email) — Discord pending | Alerts | ✅ Backend (Telegram, webhook, email delivery) / 🔴 Discord / ❌ Dashboard UI (subscription management, delivery log, test button) | ✅ Backend delivery (Telegram, webhook, email) / ❌ Dashboard subscription UI | ✅ Auto-heal integration + subscription management + Discord delivery + dashboard UI | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
-|| 18 | Extended history (7d, pruning cron at 3am) | Dashboard | ✅ Live — error tab range selector (24h/7d/30d/90d) + prune cron + L2 baselines | ✅ 7d + L2 baselines (RSS, P95, errors, upstream) | ✅ Never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
+||| 18 | Extended history (7d, pruning cron at 3am) | Dashboard | ✅ Live — error tab range selector (24h/7d/30d/90d) + prune cron + L2 baselines | ✅ 7d + L2 baselines (RSS, P95, errors, upstream) | ✅ Never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
+|||| **50** | **Capability Monitoring Data Model** — 8 new DB tables: canary_tasks, canary_runs, canary_results, canary_baselines, drift_events, config_snapshots, grid_runs, grid_results | **Infrastructure** | 🔴 Spec | ✅ All tables (local SQLite) | ✅ Same | ~1d | obs-spec-050-capability-monitoring-data.md |
+|||| **51** | **Canary Runner** — task execution, scoring (5 assertion types), baseline management, CI via bootstrap resampling, config-aware baselines, daily schedule | **Capability** | 🔴 Spec | ✅ CLI + dashboard + daily cron | ✅ Same | ~2d | obs-spec-051-canary-runner.md |
+|||| **52** | **Drift Detection** — statistical comparison (z-test), configurable thresholds (breach/warning/info), per-task drift breakdown, shareable chart view, triage path | **Capability** | 🔴 Spec | ✅ Dashboard + drift chart + shareable view | ✅ Push alerts on drift breach | ~2d | obs-spec-052-drift-detection.md |
+|||| **53** | **Config Timeline** — auto-detected SOUL.md/config changes, segment badges, drift event linking, agent selector | **Capability** | 🔴 Spec | ✅ Dashboard timeline + agent selector | ✅ Same | ~1.5d | obs-spec-053-config-timeline.md |
+|||| **54** | **Grid Report** — model × config comparison matrix, CI per cell, flags column (loop/unsafe/shortcut), "read by pairing" guidance, CSV export | **Capability** | 🔴 Spec | ✅ Dashboard grid table + export | ✅ Same | ~2d | obs-spec-054-grid-report.md |
+||||| **55** | **Task Definition UI** — YAML editor + form mode, 5 assertion types, template variables, 9 built-in tasks, import/export | **Capability** | 🔴 Spec | ✅ CLI + dashboard editor | ✅ Same | ~1.5d | obs-spec-055-task-definition.md |
+||||| **56** | **Automated Harness Optimization Loop** — Meta-Harness loop (Niklaus/HF 2026): LLM proposer reads canary trajectories, copies current best harness, adds one mechanism; lab evaluates on dev split (3 trials); promotion gate (blended score ≥1pp over incumbent); leakage audit (reject if test split touched); copy-and-adapt compounding. CLI: `observeco harness optimize --agent AGENT --iterations N`. Requires: dev/test split (§50), blended score (§54), provider retry (adapter), blowup detection (canary). | **Capability** | 🔴 Spec (v0.6.0) | ✅ CLI + loop history + promoted mechanisms log | ✅ Same + dashboard visualization of frontier progression | ~5d | obs-spec-056-harness-optimization-loop.md |
 ||| 19 | In-dashboard Glossary & FAQ | Dashboard | ✅ Live — 51 topics with detail + FAQ | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
+|||||| **57** | **Benchmark Methodology Upgrade** — LLM-as-judge assertions, reference outputs, per-task drift fix, temperature control, concrete fixtures (no template variables), dev/test split activation, category/difficulty metadata, Inspect AI alignment. Fixes: weak assertions (keyword containment), unimplemented llm_judge, n=3 bootstrap instability, aggregate vs per-task drift, template variable skipping. 🔗 Blocks obs-spec-056 (harness optimization requires dev/test split and per-task baselines from obs-spec-057). | **Capability** | 🔴 Spec (v0.6.0) | ✅ All | ✅ Same | ~5d | obs-spec-057-benchmark-methodology-upgrade.md |
 || ~~**20**~~ | ~~**Skill Audit**~~ — ~~merged into Brain Analysis~~ | ~~**Analysis**~~ | ~~**✅ Merged**~~ | ~~✅~~ | ~~✅~~ | ~~—~~ | ~~—~~ |
 ||| 21 | Communication Pathway Map (subgraph folding, cron edge metadata, FK constraint fix, daemon heartbeat metadata, sticky header) | Diagnostics | ✅ Live | ✅ Interactive graph with 111 nodes + 80 edges + 77 cron_delivery edges + platform node + dead ends + subgraph folding + detail panel with metadata | ✅ Detail panel + drag + auto-alert | ~3d (built) + 1d (FK fix) | observeco-master-plan.md §3.19 |
 |||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Layers 1-2 / 🔴 P2-P5 (platform connectivity, crash analysis, costs, comm tracing, CI/CD) | ✅ Layers 1-2 only (process health, OTel, cross-framework) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
@@ -150,7 +158,8 @@
 | **76** | **BYOK for LLM features** — add `OBSERVECO_LLM_API_KEY` detection to `llm_service/__init__.py:_detect_llm_providers()`. Add API key presence check to `gate.py:should_call()` — return `False` (static fallback) when no key configured. | **AI** | 🔴 P0 | ✅ BYOK — user provides own API key | ✅ All 7 consumers | ~1h | specs/commercial-strategy-v2.md §P0-12 |
 | **77** | **BYOK for Chisel LLM** — add `OBSERVECO_LLM_API_KEY` detection to `chisel/llm_client.py:get_api_key()`. Parallel LLM path that bypasses `llm_service/gate.py`. | **AI** | 🔴 P0 | ✅ BYOK | ✅ Same | ~30min | specs/commercial-strategy-v2.md §P0-13 |
 || **78** | **Fix `gateway_monitor.py` constants** — replace `HERMES_HOME`/`OPENCLAW_HOME` module-level constants with imports from `dirs.hermes_home()`/`dirs.openclaw_home()`. Change env var name to `OBSERVECO_HERMES_HOME`. | **Infrastructure** | 🔴 P0 | ✅ All | ✅ All | ~15min | specs/commercial-strategy-v2.md §P0-14 |
-|| **79** | **`observeco discover`** — dashboard widget that scans cron jobs, agent configs, and running processes for gaps vs what's tracked. Shows gaps with **Add** buttons — one click registers the agent and starts monitoring. No CLI, no read-only report. | **Dashboard** | 🔴 Spec | ✅ All | ✅ All | ~3h | observeco-master-plan.md §3.64 |
+||| **79** | **`observeco discover`** — dashboard widget that scans cron jobs, agent configs, and running processes for gaps vs what's tracked. Shows gaps with **Add** buttons — one click registers the agent and starts monitoring. No CLI, no read-only report. | **Dashboard** | 🔴 Spec | ✅ All | ✅ All | ~3h | observeco-master-plan.md §3.64 |
+||| **80** | **Conversational Dashboard Copilot** — natural language control of the ObserveCo dashboard via Page Agent. FAB trigger + Cmd+Shift+K, Page Agent built-in panel themed to ObserveCo dark tokens. | **Dashboard** | ✅ Live — FAB + panel | ✅ All (one script tag, no backend changes) | ✅ Same | 1h | observeco-master-plan.md §3.65 |
 |||
 |---|
 |
@@ -2251,6 +2260,54 @@ Session (root span)
 
 **Effort:** ~1d
 
+### 3.65 Conversational Dashboard Copilot (Feature #80)
+
+**Status:** ✅ Live — FAB trigger + Page Agent panel, themed to ObserveCo dark tokens
+
+**Integration:** One `<script>` tag in the dashboard's `<head>`. No backend changes. No new API endpoints. Page Agent reads the existing DOM and executes actions via JavaScript in the page context.
+
+**Tagline:** *Your dashboard, now with a conversational operator. Heal, compare, filter, summarize — all in natural language.*
+
+**What it is:** Page Agent — an in-page JavaScript GUI agent — embedded in the ObserveCo dashboard. Operators can type or speak commands instead of clicking through tabs, tables, and charts. The agent uses the operator's own LLM (Ornith, OpenAI, etc.) — no cloud dependency, no data leaving the machine.
+
+**How it works under the hood:**
+
+```
+Operator: "Heal the degraded agents and show me the new fleet health summary"
+  → Page Agent reads the DOM (fleet cards, status dots, heal buttons)
+  → Identifies degraded agents (red/yellow status dots)
+  → Clicks each heal button, waits for htmx response
+  → Re-reads the updated DOM
+  → Summarizes the new health state to the operator
+```
+
+**Key design decisions:**
+- Uses `?autoInit=false` — Page Agent loads but does NOT auto-show a UI panel. The operator can activate it via `window.PageAgent` in the console, or a future UI affordance.
+- Uses the `custom-ollama/ornith:latest` model — the operator's local Ornith instance. No API key needed, no cloud calls.
+- Page Agent runs in the existing auth context (`__OBSERVECO_TOKEN` is already on the page). All DOM actions go through the same fetch interceptor.
+
+**What it enables that doesn't exist today:**
+
+| Pattern | Before (no copilot) | After (Page Agent) |
+|---------|--------------------|--------------------|
+| Heal + verify | Click Heal tab → click button → wait → check fleet view | "Heal all degraded agents and show me the new health summary" |
+| Cross-agent comparison | Manual: open each agent's modal, read numbers, compare | "Compare Hermes vs OpenClaw token usage over 24 hours" |
+| Config changes | Find the right settings form, fill it in | "Set circuit breaker to 5 failures for all agents" |
+| Error triage | Scroll error timeline, mentally summarize | "Summarize the top 3 errors from the timeline" |
+| Routine monitoring | Keep dashboard open, scan manually | "Pause monitoring on hound and alert me on Telegram if it fails" |
+| Voice commands | Not possible | Voice while coding: "Pause monitoring on agent 'hound' and alert me on Telegram if it fails again" |
+
+**Known limitations (ponytails):**
+- **Canvas charts:** Page Agent can't see `<canvas>`-rendered chart data. If sparklines render in Canvas, the agent sees only the container element. Fix: ensure chart data is also present in the DOM (aria-labels, data attributes, or a hidden data table).
+- **htmx partial swaps:** Agent reads DOM at command time. If a section swaps via htmx after the agent has already read it, the agent may use stale state. Workaround: call `agent.execute()` in an htmx callback after swap.
+- **Multi-page workflows:** Basic Page Agent is single-page. If heal operations redirect, the chrome extension or MCP server is needed to maintain context. For htmx single-page apps this is less of an issue.
+- **Async execution:** Page Agent makes its own LLM calls. The dashboard doesn't wait. Healing "in one sentence" means the operator says it, Page Agent acts, operator reviews — not fully autonomous recovery.
+
+**Free:** Included. One script tag, no backend changes.
+**Pro:** Same (no gating — this is a client-side UI enhancement).
+
+**Effort:** 1h (1 script tag, 1 config line)
+
 ---
 
 ## 6. Not Building (Explicit Scope Boundaries)
@@ -2445,8 +2502,9 @@ ponytail: Process scan uses `psutil` keyword filter. Ceiling: misses agents runn
 | Phase | Features | Cumulative Effort | Notes |
 |-------|----------|-------------------|-------|
 | **Now** | Everything in ✅ Live — 12 features | ✅ Done | Ship current code |
-|| **v0.4.0 — Hermes Beachhead** | **Phase 1:** Unified Agent Data Model (T4, ~1d) — build before any new dashboard views. **Phase 2:** Wire OTEL listener to pulse.db + Enable hermes-otel plugin (~1d). **Phase 3:** Tracing Layer (T1, ~3d). **Phase 4:** Behavioral Monitoring (T3, ~4d). Evaluation Layer (T2) deferred to v0.5.0 pending Hermes eval export. | **~11d** (includes ~1d buffer for plugin de-risking) | **Current focus.** True agent-specific observability for Hermes on macOS. OpenClaw deferred. T4 first to avoid frontend rework. T2 deferred — Hermes eval export doesn't exist yet. |
-| **v0.5.0 — Intelligence Layer** | Anomaly detection engine, Context Health Score, Relapse Prevention, Tool Efficiency ranking, Context Source Utilisation, Quality regression detection | **~6d** | Builds on T3 data. Makes intelligence claims real. |
+|| **v0.4.0 — Hermes Beachhead** | **Phase 1:** Unified Agent Data Model (T4, ~1d). **Phase 2:** Wire OTEL listener to pulse.db + Enable hermes-otel plugin (~1d). **Phase 3:** Tracing Layer (T1, ~3d). **Phase 4:** Behavioral Monitoring (T3, ~4d). Evaluation Layer (T2) deferred to v0.5.0. | **~11d** | ✅ **Shipped.** True agent-specific observability for Hermes on macOS. |
+|| **v0.5.0 — Capability Monitoring Layer** | **Canary** — regression tripwire (9 tasks, lm-eval backend, hang tracking, 60s timeout). **Grid** — capability measurement (τ-bench + SWE-bench, model × harness config × task matrix, Wilson CI, trajectory flags). **Config-aware baselines** — file hashing, auto-segment on change. **Drift detection** — statistical honesty layer, sequential/statistical test before alert. **Adapter strategy** — ship one adapter (Hermes), publish open spec. **Scoring model** — deterministic signals + user assertions (default), opt-in LLM-as-judge (v0.6.0). | **~4d** (built) | **Current focus.** Observation without judgment is just logging. This layer adds the judgment. |
+|| **v0.6.0 — Intelligence Layer** | Log-to-suggested-tasks (auto-generation with review/approve), opt-in LLM-as-judge scoring, alert integrations, Context Health Score, Relapse Prevention, Tool Efficiency ranking | **~6d** | Builds on v0.5.0 data. Makes intelligence claims real. |
 | **Phase 0** (blocks public release) | `hermes_home()` in `dirs.py`, Lazy path constants, Refactor hardcodes → dirs functions, Remove personal artifacts, Fix `require_pro()`, Delete `invocation_counter.py`, Add BYOK to `llm_service` + `chisel/llm_client.py` | **~12h** | **Ship-stoppers.** Without these, the product has Sean's agents, Sean's files, a broken license gate. |
 | **Phase 1** (beachhead readiness) | Dashboard banner, Graceful degradation, Env var consolidation, `observeco init`, `observeco discover` | **~9h** (14h cum.) | Product works on `pip install && observeco dashboard` on any Mac Mini with Hermes. |
 | **Phase G1** (safety) | Self-monitoring budget cap, Manual kill switch, Circuit breaker config, Turn-rate alerting, Tool-count metric, Threat model docs | ~5.5d | Token-rogue guardrails. |
@@ -2465,7 +2523,8 @@ ponytail: Phase 0/1 effort is ~18h (~2.5d) — once these ship, the product is p
 | Shipment | What | Value to User |
 |----------|------|---------------|
 | **v0.4.0 — Hermes Beachhead** | Tracing Layer (T1), Evaluation Layer (T2), Behavioral Monitoring (T3), Unified Agent Data Model (T4), OTEL listener wired to pulse.db, Hermes OTEL plugin enabled | **True agent-specific observability.** See every turn, every tool call, every subagent. Know if your agent is performing well, not just alive. |
-| **v0.5.0 — Intelligence Layer** | Anomaly detection, Context Health Score, Relapse Prevention, Tool Efficiency, Source Utilisation | **Proactive intelligence.** Your agent has 3 problems right now — here they are. |
+| **v0.5.0 — Capability Monitoring Layer** | Canary (regression tripwire), Grid (capability measurement), config-aware baselines, drift detection, adapter spec, deterministic scoring | **Observation without judgment is just logging.** Know if your agent is getting worse — and why. |
+| **v0.6.0 — Intelligence Layer** | Log-to-suggested-tasks, opt-in LLM-as-judge, alert integrations, Context Health Score, Relapse Prevention | **Proactive intelligence.** Your agent has 3 problems right now — here they are. |
 | **Phase 0** (D+0) | Generic Hermes discovery via `hermes_home()`, zero personal artifacts, `require_pro()` fix | **Blocks public release.** Without this, first non-Sean user sees broken product. |
 | **Phase 1** (D+1) | Agent invocation banner, graceful degradation, `observeco init`, env var docs | **First public-ready release.** Any Mac Mini Hermes user gets full ObserveCo. |
 | **Phase G1** (D+2) | G1 guardrails + generic discovery | Safety layer v1. |

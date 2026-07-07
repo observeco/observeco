@@ -1,0 +1,28 @@
+# Jailbreak Resistance Benchmark
+#
+# Evaluates whether the agent resists jailbreak attempts —
+# prompts designed to bypass safety guardrails.
+
+task: jailbreak_resistance
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: ./data/jailbreak_resistance_tasks.json
+description: "Check whether the agent resists jailbreak attempts."
+doc_to_text: |
+  {{prompt}}
+doc_to_target: "{{expected}}"
+output_type: generate_until
+test_split: test
+generation_kwargs:
+  until: []
+  max_gen_toks: 512
+  do_sample: false
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: "1.0"
+  category: safety
+  difficulty: hard

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ObserveCo · Config Timeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc;
+      --accent: #22c55e; --accent-on: #0c1628;
+      --status-healthy: #22c55e; --status-warning: #eab308; --status-critical: #ef4444;
+      --success: #22c55e; --warn: #eab308; --danger: #ef4444; --meta: #3b82f6;
+      --fg-2: #94a3b8; --muted: #64748b;
+      --border: #334155; --border-soft: #273548;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --text-xs: 11px; --text-sm: 12px; --text-base: 14px; --text-lg: 15px; --text-xl: 18px; --text-2xl: 24px;
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
+      --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 9999px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--fg); line-height: 1.5; -webkit-font-smoothing: antialiased; padding: var(--space-6); }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+    .header-left { display: flex; align-items: center; gap: var(--space-3); }
+    .header-title { font-size: var(--text-xl); font-weight: 700; }
+    .header-title span { color: var(--muted); font-weight: 400; }
+    .tier-badge { padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tier-badge.free { background: #166534; color: #86efac; }
+    .container { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6); }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .section-header { padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-size: var(--text-lg); font-weight: 600; }
+    .section-subtitle { font-size: var(--text-sm); color: var(--fg-2); }
+    .section-body { padding: var(--space-5); }
+
+    .agent-selector { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+    .agent-pill { padding: 4px 14px; border-radius: var(--radius-pill); font-size: var(--text-sm); font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--fg-2); font-family: var(--font-body); transition: all 0.15s; }
+    .agent-pill:hover { border-color: var(--muted); color: var(--fg); }
+    .agent-pill.active { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+
+    .timeline { position: relative; padding: var(--space-4) 0; }
+    .timeline-line { position: absolute; left: 120px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+    .timeline-event { display: flex; align-items: flex-start; margin-bottom: var(--space-5); position: relative; }
+    .timeline-event:last-child { margin-bottom: 0; }
+    .timeline-date { width: 100px; flex-shrink: 0; text-align: right; padding-right: var(--space-4); padding-top: 2px; }
+    .timeline-date .date { font-size: var(--text-sm); font-weight: 600; color: var(--fg); }
+    .timeline-date .time { font-size: var(--text-xs); color: var(--muted); }
+    .timeline-dot { position: absolute; left: 116px; top: 6px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid; z-index: 1; }
+    .timeline-dot.green { background: var(--status-healthy); border-color: var(--status-healthy); }
+    .timeline-dot.yellow { background: var(--status-warning); border-color: var(--status-warning); }
+    .timeline-dot.red { background: var(--status-critical); border-color: var(--status-critical); }
+    .timeline-dot.blue { background: var(--meta); border-color: var(--meta); }
+    .timeline-card { margin-left: 40px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); flex: 1; }
+    .timeline-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-1); }
+    .timeline-card-title { font-weight: 600; font-size: var(--text-sm); }
+    .timeline-card-title .change-type { font-weight: 400; color: var(--fg-2); }
+    .timeline-card-desc { font-size: var(--text-xs); color: var(--fg-2); line-height: 1.5; }
+    .timeline-card-desc code { font-family: var(--font-mono); color: var(--fg); background: var(--surface); padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+    .timeline-card .baseline-badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: var(--radius-pill); font-weight: 600; margin-top: var(--space-1); }
+    .baseline-badge.segment-a { background: rgba(34,197,94,0.15); color: var(--status-healthy); }
+    .baseline-badge.segment-b { background: rgba(59,130,246,0.15); color: var(--meta); }
+    .baseline-badge.segment-c { background: rgba(234,179,8,0.15); color: var(--status-warning); }
+
+    .baseline-legend { display: flex; gap: var(--space-4); margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .baseline-legend span { display: flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); color: var(--muted); }
+    .baseline-legend .swatch { width: 10px; height: 10px; border-radius: 2px; }
+    .swatch.seg-a { background: var(--status-healthy); }
+    .swatch.seg-b { background: var(--meta); }
+    .swatch.seg-c { background: var(--status-warning); }
+
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+    .toast { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; font-size: var(--text-sm); color: var(--fg); box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0; transform: translateY(10px); transition: all 0.25s ease; pointer-events: none; max-width: 360px; }
+    .toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+        <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+        <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="header-title">ObserveCo <span>Config Timeline</span></span>
+    </div>
+    <span class="tier-badge free">Free</span>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Configuration Changes</span>
+      <span class="section-subtitle">Auto-detected from SOUL.md + git history</span>
+    </div>
+    <div class="section-body">
+      <div class="agent-selector">
+        <button class="agent-pill active">Main</button>
+        <button class="agent-pill" onclick="showToast('Switching agent...')">Dreamer</button>
+        <button class="agent-pill" onclick="showToast('Switching agent...')">Hound</button>
+        <button class="agent-pill" onclick="showToast('Switching agent...')">PA</button>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-line"></div>
+
+        <div class="timeline-event">
+          <div class="timeline-date"><div class="date">Jul 2</div><div class="time">09:14</div></div>
+          <div class="timeline-dot red"></div>
+          <div class="timeline-card">
+            <div class="timeline-card-header">
+              <div class="timeline-card-title">Drift Detected <span class="change-type">· automatic</span></div>
+              <span style="font-size:var(--text-xs);color:var(--status-critical);font-weight:600;">-3.2%</span>
+            </div>
+            <div class="timeline-card-desc">Config unchanged, quality dropped 3.2%. <span style="color:var(--status-critical);">🔴 Breach</span> on <code>chart-interpretation</code> (-12.3%).</div>
+            <span class="baseline-badge segment-c">Segment C</span>
+          </div>
+        </div>
+
+        <div class="timeline-event">
+          <div class="timeline-date"><div class="date">Jun 28</div><div class="time">14:30</div></div>
+          <div class="timeline-dot yellow"></div>
+          <div class="timeline-card">
+            <div class="timeline-card-header">
+              <div class="timeline-card-title">Prompt Updated <span class="change-type">· SOUL.md</span></div>
+              <span style="font-size:var(--text-xs);color:var(--muted);">git: a3f2c9e</span>
+            </div>
+            <div class="timeline-card-desc">Changed system prompt preamble. Added <code>tool_selection</code> guidelines. No accuracy impact expected.</div>
+            <span class="baseline-badge segment-c">Segment C</span>
+          </div>
+        </div>
+
+        <div class="timeline-event">
+          <div class="timeline-date"><div class="date">Jun 25</div><div class="time">11:05</div></div>
+          <div class="timeline-dot green"></div>
+          <div class="timeline-card">
+            <div class="timeline-card-header">
+              <div class="timeline-card-title">Model Switched <span class="change-type">· config change</span></div>
+              <span style="font-size:var(--text-xs);color:var(--muted);">deepseek-v4-pro → flash</span>
+            </div>
+            <div class="timeline-card-desc">Switched from pro to flash tier. Accuracy dropped 1.2% but cost reduced 85%. New baseline auto-created.</div>
+            <span class="baseline-badge segment-b">Segment B</span>
+          </div>
+        </div>
+
+        <div class="timeline-event">
+          <div class="timeline-date"><div class="date">Jun 22</div><div class="time">09:00</div></div>
+          <div class="timeline-dot blue"></div>
+          <div class="timeline-card">
+            <div class="timeline-card-header">
+              <div class="timeline-card-title">Tool Manifest Updated <span class="change-type">· SOUL.md</span></div>
+              <span style="font-size:var(--text-xs);color:var(--muted);">git: b7e3d1a</span>
+            </div>
+            <div class="timeline-card-desc">Added 3 new tools: <code>web_search</code>, <code>file_read</code>, <code>code_execute</code>. Removed deprecated <code>shell_run</code>.</div>
+            <span class="baseline-badge segment-b">Segment B</span>
+          </div>
+        </div>
+
+        <div class="timeline-event">
+          <div class="timeline-date"><div class="date">Jun 18</div><div class="time">16:00</div></div>
+          <div class="timeline-dot green"></div>
+          <div class="timeline-card">
+            <div class="timeline-card-header">
+              <div class="timeline-card-title">First Baseline <span class="change-type">· automatic</span></div>
+              <span style="font-size:var(--text-xs);color:var(--muted);">82.4% accuracy</span>
+            </div>
+            <div class="timeline-card-desc">Initial canary run completed. 9 tasks, 7 pass, 1 hang, 1 fail. Baseline auto-created for <code>baseline-v3</code> config.</div>
+            <span class="baseline-badge segment-a">Segment A</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="baseline-legend">
+        <span><span class="swatch seg-a"></span> Segment A: deepseek-v4-pro</span>
+        <span><span class="swatch seg-b"></span> Segment B: deepseek-v4-flash (initial)</span>
+        <span><span class="swatch seg-c"></span> Segment C: deepseek-v4-flash (current)</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+function showToast(msg) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2500);
+}
+</script>
+</body>
+</html>

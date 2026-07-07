@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Per-Task Drift Chart — Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; padding: 40px; }
+  h1 { font-size: 14px; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+  h2 { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+  .intro { color: #94a3b8; font-size: 13px; margin-bottom: 32px; line-height: 1.6; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; max-width: 760px; }
+
+  /* Controls */
+  .controls { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .chip { padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1px solid #334155; background: transparent; color: #94a3b8; }
+  .chip.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+  .chip.reasoning { border-color: #3b82f6; }
+  .chip.coding { border-color: #22c55e; }
+  .chip.extraction { border-color: #a855f7; }
+  .chip.tool { border-color: #eab308; }
+
+  /* Chart area */
+  .chart { position: relative; height: 320px; margin-bottom: 16px; border-bottom: 1px solid #1e293b; padding: 20px 0 0; }
+  .y-label { position: absolute; left: 0; font-size: 10px; color: #475569; }
+  .baseline-zone { position: absolute; top: 20px; bottom: 0; background: rgba(34,197,94,0.05); border-left: 2px dashed #22c55e; border-right: 2px dashed #22c55e; }
+  .drift-zone { position: absolute; top: 20px; bottom: 0; background: rgba(239,68,68,0.05); border-left: 2px dashed #ef4444; border-right: 2px dashed #ef4444; }
+
+  /* SVG lines */
+  .chart-svg { width: 100%; height: 280px; }
+  .task-line { fill: none; stroke-width: 2; }
+  .task-line:hover { stroke-width: 3; cursor: pointer; }
+  .task-point { r: 4; cursor: pointer; }
+  .task-point:hover { r: 6; }
+
+  /* Legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #94a3b8; cursor: pointer; }
+  .legend-item:hover { color: #f8fafc; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .legend-item .severity-tag { font-size: 9px; padding: 0 4px; border-radius: 3px; }
+  .severity-tag.breach { background: rgba(239,68,68,0.2); color: #ef4444; }
+  .severity-tag.warning { background: rgba(234,179,8,0.2); color: #eab308; }
+
+  /* Detail panel */
+  .detail-panel { display: none; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-top: 12px; }
+  .detail-panel.visible { display: block; }
+  .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .detail-task { font-size: 14px; font-weight: 600; }
+  .detail-close { cursor: pointer; color: #64748b; font-size: 16px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .detail-stat { text-align: center; }
+  .detail-stat .val { font-size: 20px; font-weight: 700; }
+  .detail-stat .lbl { font-size: 10px; color: #64748b; margin-top: 2px; }
+  .detail-reasoning { font-size: 12px; color: #94a3b8; line-height: 1.6; padding: 8px; background: #1a2332; border-radius: 6px; }
+  .detail-reasoning .label { color: #64748b; font-weight: 600; margin-bottom: 4px; }
+
+  /* Tooltip */
+  .tooltip { display: none; position: absolute; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; font-size: 11px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.4); pointer-events: none; }
+  .tooltip.visible { display: block; }
+  .tooltip .task { font-weight: 600; margin-bottom: 2px; }
+  .tooltip .score { color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<h2>Per-Task Drift Chart</h2>
+<p class="intro">Replaces the single aggregate accuracy line with 9 task-level trend lines. Colored by severity. Click a task to see LLM judge reasoning. <strong>Mockup — static. Chart.js lines would animate in implementation.</strong></p>
+
+<div class="card">
+  <!-- Category filter chips -->
+  <div class="controls">
+    <span class="chip active">All Tasks</span>
+    <span class="chip reasoning">🧮 Reasoning</span>
+    <span class="chip coding">💻 Coding</span>
+    <span class="chip extraction">📄 Extraction</span>
+    <span class="chip tool">🛠 Tool Use</span>
+  </div>
+
+  <!-- Legend + Severity indicators -->
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span> Arithmetic reasoning</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#22c55e;"></span> Code generation <span class="severity-tag breach">BREACH -12%</span></span>
+    <span class="legend-item"><span class="legend-dot" style="background:#a855f7;"></span> Document Q&A</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#eab308;"></span> Tool selection</span>
+  </div>
+
+  <!-- Chart area -->
+  <div style="position:relative;">
+    <svg class="chart-svg" viewBox="0 0 700 260">
+      <!-- Grid lines -->
+      <line x1="0" y1="0" x2="700" y2="0" stroke="#1e293b"/>
+      <line x1="0" y1="52" x2="700" y2="52" stroke="#1e293b"/>
+      <line x1="0" y1="104" x2="700" y2="104" stroke="#1e293b"/>
+      <line x1="0" y1="156" x2="700" y2="156" stroke="#1e293b"/>
+      <line x1="0" y1="208" x2="700" y2="208" stroke="#1e293b"/>
+      <!-- Y axis labels -->
+      <text x="-4" y="8" fill="#475569" font-size="9">100%</text>
+      <text x="-4" y="60" fill="#475569" font-size="9">80%</text>
+      <text x="-4" y="112" fill="#475569" font-size="9">60%</text>
+      <text x="-4" y="164" fill="#475569" font-size="9">40%</text>
+      <text x="-4" y="216" fill="#475569" font-size="9">20%</text>
+
+      <!-- Baseline zone (green tint) — first 7 days -->
+      <rect x="0" y="0" width="350" height="260" fill="rgba(34,197,94,0.04)" rx="4"/>
+      <text x="10" y="250" fill="#22c55e" font-size="9" opacity="0.6">Baseline zone</text>
+
+      <!-- Drift zone (red tint) — last 7 days -->
+      <rect x="350" y="0" width="350" height="260" fill="rgba(239,68,68,0.04)" rx="4"/>
+      <text x="360" y="250" fill="#ef4444" font-size="9" opacity="0.6">Drift zone</text>
+
+      <!-- Baseline separator -->
+      <line x1="350" y1="0" x2="350" y2="260" stroke="#334155" stroke-dasharray="4,4" stroke-width="1"/>
+
+      <!-- Aggregate baseline (dashed) -->
+      <line x1="0" y1="36" x2="700" y2="36" stroke="#64748b" stroke-dasharray="6,3" stroke-width="1"/>
+
+      <!-- Task: Arithmetic reasoning (stable, blue) -->
+      <polyline points="0,36 50,40 100,38 150,35 200,37 250,36 300,38 350,36 400,37 450,38 500,36 550,37 600,38 650,36" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="0" cy="36" r="4" fill="#3b82f6"/>
+      <circle cx="650" cy="36" r="4" fill="#3b82f6"/>
+
+      <!-- Task: Code generation (severe breach, red) -->
+      <polyline points="0,52 50,55 100,50 150,58 200,54 250,56 300,55 350,58 400,68 450,78 500,85 550,95 600,108 650,120" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="0" cy="52" r="4" fill="#ef4444"/>
+      <circle cx="650" cy="120" r="4" fill="#ef4444"/>
+      <!-- Severity annotation -->
+      <rect x="460" y="88" width="80" height="18" rx="4" fill="rgba(239,68,68,0.15)"/>
+      <text x="465" y="101" fill="#ef4444" font-size="9">▼ -12% breach</text>
+
+      <!-- Task: Document Q&A (warning, amber) -->
+      <polyline points="0,40 50,42 100,38 150,41 200,39 250,42 300,40 350,41 400,46 450,52 500,55 550,60 600,65 650,70" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="0" cy="40" r="4" fill="#eab308"/>
+      <circle cx="650" cy="70" r="4" fill="#eab308"/>
+
+      <!-- Task: Tool selection (stable, gold) -->
+      <polyline points="0,36 50,34 100,36 150,35 200,37 250,36 300,35 350,36 400,36 450,35 500,36 550,37 600,35 650,36" fill="none" stroke="#eab308" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+      <circle cx="0" cy="36" r="3" fill="#eab308" opacity="0.5"/>
+      <circle cx="650" cy="36" r="3" fill="#eab308" opacity="0.5"/>
+
+      <!-- X axis date labels -->
+      <text x="0" y="258" fill="#475569" font-size="9">Jun 22</text>
+      <text x="320" y="258" fill="#475569" font-size="9">Jun 29</text>
+      <text x="620" y="258" fill="#475569" font-size="9">Jul 06</text>
+    </svg>
+
+    <!-- Tooltip example -->
+    <div class="tooltip visible" style="left:560px;top:100px;">
+      <div class="task" style="color:#ef4444;">Code generation</div>
+      <div class="score">Baseline: 78% → Current: 54%</div>
+      <div class="score" style="color:#ef4444;">▼ -24pp drift · p=0.003 (breach)</div>
+    </div>
+  </div>
+
+  <!-- Detail panel (shown when clicking a task line) -->
+  <div class="detail-panel visible">
+    <div class="detail-header">
+      <span class="detail-task" style="color:#ef4444;">💻 Code generation</span>
+      <span class="detail-close" onclick="this.closest('.detail-panel').classList.remove('visible')">✕</span>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-stat"><div class="val" style="color:#22c55e;">78%</div><div class="lbl">Baseline</div></div>
+      <div class="detail-stat"><div class="val" style="color:#ef4444;">54%</div><div class="lbl">Current</div></div>
+      <div class="detail-stat"><div class="val" style="color:#ef4444;">-12.3pp</div><div class="lbl">Drift</div></div>
+    </div>
+    <div class="detail-reasoning">
+      <div class="label">🧠 LLM Judge Reasoning</div>
+      Recent runs show the agent generates code with missing imports (score: 0.33) and incorrect function signatures (score: 0.42). Earlier runs resolved dependencies correctly. Likely cause: model swap or skill template change on Jun 30. <a href="#" style="color:#3b82f6;text-decoration:none;">→ View timeline</a>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:32px;padding:16px;background:#1a2332;border-radius:8px;max-width:760px;">
+  <h3 style="font-size:14px;margin-bottom:8px;">Interaction Design</h3>
+  <ul style="color:#94a3b8;font-size:12px;line-height:1.8;list-style:none;">
+    <li>• <strong>Hover</strong> any task line → tooltip shows baseline vs current + drift severity</li>
+    <li>• <strong>Click</strong> any task line → detail panel opens with LLM judge reasoning + timeline link</li>
+    <li>• <strong>Filter chips</strong> → show/hide tasks by category</li>
+    <li>• <strong>Legend click</strong> → toggle individual task visibility</li>
+    <li>• <strong>Severity tags</strong> → tasks with significant drift flagged in legend (BREACH / WARNING)</li>
+  </ul>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+[
+  {
+    "code": "def fibonacci(n):\n    if n <= 1:\n        return 1\n    return fibonacci(n - 1) + fibonacci(n - 2)",
+    "description": "The function returns incorrect values. fibonacci(0) should return 0, and fibonacci(1) should return 1.",
+    "fix": "def fibonacci(n):\n    if n <= 0:\n        return 0\n    if n == 1:\n        return 1\n    return fibonacci(n - 1) + fibonacci(n - 2)"
+  },
+  {
+    "code": "def is_palindrome(s):\n    return s == reversed(s)",
+    "description": "reversed() returns a reversed iterator object, not a string. The comparison always fails.",
+    "fix": "def is_palindrome(s):\n    return s == ''.join(reversed(s))"
+  },
+  {
+    "code": "def average(numbers):\n    total = 0\n    for n in numbers:\n        total += n\n    return total / len(numbers)",
+    "description": "Function crashes with ZeroDivisionError when given an empty list.",
+    "fix": "def average(numbers):\n    if not numbers:\n        return 0\n    total = 0\n    for n in numbers:\n        total += n\n    return total / len(numbers)"
+  }
+]

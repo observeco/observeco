@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Quality Benchmark Card Row — 3 Variants</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; padding: 40px; }
+  h1 { font-size: 14px; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  h2 { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+  .intro { color: #94a3b8; font-size: 13px; margin-bottom: 32px; line-height: 1.6; }
+  .variant-group { margin-bottom: 48px; }
+  .variant-label { font-size: 12px; color: #64748b; margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; max-width: 380px; }
+  .card-header { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #334155; cursor: pointer; }
+  .card-header:hover { background: #1a2332; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+  .dot.warning { background: #eab308; }
+  .card-name { font-size: 14px; font-weight: 600; color: #f8fafc; flex: 1; }
+  .collapsed-tok { font-size: 12px; color: #64748b; margin-right: 8px; }
+  .chev { color: #475569; font-size: 14px; }
+  .card-detail { padding: 4px 0; }
+  .crow { display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid #1a2332; cursor: pointer; gap: 8px; }
+  .crow:hover { background: #1a2332; }
+  .crow:last-child { border-bottom: none; }
+  .row-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; min-width: 80px; }
+  .row-val { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .row-sub { font-size: 11px; color: #64748b; margin-left: auto; }
+  .row-chev { color: #475569; margin-left: 4px; }
+
+  /* Variant A — Compact per-category labels inline */
+  .qb-inline { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .qb-total { font-size: 13px; font-weight: 600; }
+  .qb-cats { display: flex; gap: 4px; flex-wrap: wrap; }
+  .qb-cat { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #1a2332; color: #94a3b8; white-space: nowrap; }
+  .qb-cat .pct { font-weight: 600; }
+  .qb-cat.reasoning { border-left: 2px solid #3b82f6; }
+  .qb-cat.coding { border-left: 2px solid #22c55e; }
+  .qb-cat.extraction { border-left: 2px solid #a855f7; }
+  .qb-cat.tool { border-left: 2px solid #eab308; }
+
+  /* Variant B — Mini bars */
+  .qb-bars { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .qb-bar-row { display: flex; align-items: center; gap: 6px; }
+  .qb-bar-label { font-size: 9px; color: #64748b; width: 60px; text-align: right; text-transform: uppercase; }
+  .qb-bar-track { flex: 1; height: 6px; background: #1a2332; border-radius: 3px; overflow: hidden; }
+  .qb-bar-fill { height: 100%; border-radius: 3px; }
+  .qb-bar-pct { font-size: 9px; color: #94a3b8; width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Variant C — Expandable */
+  .qb-expand-header { display: flex; align-items: center; gap: 8px; flex: 1; cursor: pointer; }
+  .qb-expanded { display: none; padding: 8px 16px 12px; background: #0f172a; border-bottom: 1px solid #1a2332; }
+  .qb-expanded.open { display: block; }
+  .qb-expanded table { width: 100%; font-size: 11px; }
+  .qb-expanded td { padding: 4px 0; color: #94a3b8; }
+  .qb-expanded td:last-child { text-align: right; font-weight: 600; color: #f8fafc; }
+  .qb-expanded .reasoning { color: #64748b; font-size: 10px; font-style: italic; padding-top: 6px; border-top: 1px solid #1e293b; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h2>Quality Benchmark Card Row — Redesign</h2>
+<p class="intro">Three variants showing per-category quality breakdown inline in the agent card, replacing the current <code>QUALITY BENCHMARK | 33% | 3/9 pass</code> row.</p>
+
+<!-- Variant A -->
+<div class="variant-group">
+  <div class="variant-label">Variant A — Compact Category Tags</div>
+  <div class="card">
+    <div class="card-header">
+      <span class="dot warning"></span>
+      <span class="card-name">accelerator</span>
+      <span class="collapsed-tok">1.0K +400%</span>
+      <span class="chev">▸</span>
+    </div>
+    <div class="card-detail">
+      <div class="crow">
+        <span class="row-label">HEALTH</span>
+        <span class="row-sub">23s ago · warning <span class="row-chev">▸</span></span>
+      </div>
+      <div class="crow">
+        <span class="row-label">QUALITY BENCHMARK</span>
+        <div class="qb-inline">
+          <span class="qb-total" style="color:#22c55e">72%</span>
+          <div class="qb-cats">
+            <span class="qb-cat reasoning"><span class="pct">85%</span> reasoning</span>
+            <span class="qb-cat coding"><span class="pct">60%</span> coding</span>
+            <span class="qb-cat extraction"><span class="pct">71%</span> extr.</span>
+          </div>
+        </div>
+        <span class="row-sub"><span class="row-chev">▸</span></span>
+      </div>
+      <div class="crow">
+        <span class="row-label">MEMORY</span>
+        <span style="color:var(--accent,#3b82f6);font-size:13px;font-weight:600;">0/100</span>
+        <span class="row-sub">clean <span class="row-chev">▸</span></span>
+      </div>
+    </div>
+  </div>
+  <p style="color:#64748b;font-size:11px;margin-top:8px;">Tags show only categories with data. + icon with count if >3 categories. Click tag to filter by category in drift chart.</p>
+</div>
+
+<!-- Variant B -->
+<div class="variant-group">
+  <div class="variant-label">Variant B — Mini Bars per Category</div>
+  <div class="card">
+    <div class="card-header">
+      <span class="dot warning"></span>
+      <span class="card-name">accelerator</span>
+      <span class="collapsed-tok">1.0K +400%</span>
+      <span class="chev">▸</span>
+    </div>
+    <div class="card-detail">
+      <div class="crow">
+        <span class="row-label">HEALTH</span>
+        <span class="row-sub">23s ago · warning <span class="row-chev">▸</span></span>
+      </div>
+      <div class="crow" style="flex-wrap:wrap;">
+        <span class="row-label">QUALITY</span>
+        <div class="qb-bars">
+          <div class="qb-bar-row">
+            <span class="qb-bar-label">Reasoning</span>
+            <div class="qb-bar-track"><div class="qb-bar-fill" style="width:85%;background:#3b82f6;"></div></div>
+            <span class="qb-bar-pct">85%</span>
+          </div>
+          <div class="qb-bar-row">
+            <span class="qb-bar-label">Coding</span>
+            <div class="qb-bar-track"><div class="qb-bar-fill" style="width:60%;background:#22c55e;"></div></div>
+            <span class="qb-bar-pct">60%</span>
+          </div>
+          <div class="qb-bar-row">
+            <span class="qb-bar-label">Extraction</span>
+            <div class="qb-bar-track"><div class="qb-bar-fill" style="width:71%;background:#a855f7;"></div></div>
+            <span class="qb-bar-pct">71%</span>
+          </div>
+        </div>
+        <span class="row-sub">72% <span class="row-chev">▸</span></span>
+      </div>
+      <div class="crow">
+        <span class="row-label">MEMORY</span>
+        <span style="color:#3b82f6;font-size:13px;font-weight:600;">0/100</span>
+        <span class="row-sub">clean <span class="row-chev">▸</span></span>
+      </div>
+    </div>
+  </div>
+  <p style="color:#64748b;font-size:11px;margin-top:8px;">Most space but most informative at a glance. Label shorter: "QUALITY" instead of "QUALITY BENCHMARK" to save room. Best for collapsed state — user sees quality trend without clicking.</p>
+</div>
+
+<!-- Variant C -->
+<div class="variant-group">
+  <div class="variant-label">Variant C — Expandable Detail Row</div>
+  <div class="card">
+    <div class="card-header">
+      <span class="dot warning"></span>
+      <span class="card-name">accelerator</span>
+      <span class="collapsed-tok">1.0K +400%</span>
+      <span class="chev">▸</span>
+    </div>
+    <div class="card-detail">
+      <div class="crow">
+        <span class="row-label">HEALTH</span>
+        <span class="row-sub">23s ago · warning <span class="row-chev">▸</span></span>
+      </div>
+      <div class="crow" onclick="this.nextElementSibling.classList.toggle('open')">
+        <span class="row-label">QUALITY BENCHMARK</span>
+        <span class="qb-total" style="color:#22c55e;flex:1;">72%</span>
+        <span class="row-sub">3/9 failed <span class="row-chev">▼</span></span>
+      </div>
+      <div class="qb-expanded">
+        <table>
+          <tr><td>🧮 Reasoning</td><td>2/2 pass</td><td style="color:#22c55e;">100%</td></tr>
+          <tr><td>💻 Coding</td><td>1/3 pass</td><td style="color:#ef4444;">33%</td></tr>
+          <tr><td>📄 Extraction</td><td>2/3 pass</td><td style="color:#eab308;">67%</td></tr>
+          <tr><td>🛠 Tool Use</td><td>1/1 pass</td><td style="color:#22c55e;">100%</td></tr>
+          <tr><td colspan="3" class="reasoning">Worst: Code generation — 'missing imports' (judge: 0.33). Document Q&A — 'did not cite source' (judge: 0.50).</td></tr>
+        </table>
+      </div>
+      <div class="crow">
+        <span class="row-label">MEMORY</span>
+        <span style="color:#3b82f6;font-size:13px;font-weight:600;">0/100</span>
+        <span class="row-sub">clean <span class="row-chev">▸</span></span>
+      </div>
+    </div>
+  </div>
+  <p style="color:#64748b;font-size:11px;margin-top:8px;">Best for power users. Shows aggregate + expand to see per-category + judge reasoning snippet. The ▼ chevron signals expandability. Reasoning text at bottom gives actionable diagnosis.</p>
+</div>
+
+<div class="variant-group" style="margin-top:48px;padding:16px;background:#1a2332;border-radius:8px;max-width:760px;">
+  <h3 style="font-size:14px;margin-bottom:8px;">Recommendation</h3>
+  <p style="color:#94a3b8;font-size:12px;line-height:1.6;">
+  <strong>Variant C (Expandable Detail Row)</strong> — best balance of compactness and depth.<br>
+  The card row stays clean at 72% with a drill‑down indicator (▼). Expanding reveals per‑category scores, pass/fail counts, and a judge reasoning snippet for the worst‑performing task — exactly what you need to diagnose without navigating to another screen.<br><br>
+  <strong>Fallback</strong>: Variant A (Compact Tags) if the expandable row adds too much vertical space to the card. It preserves the one‑row layout while adding category awareness.<br><br>
+  <strong>Variant B</strong> is too tall for a card row — better suited for the agent detail modal's Quality tab.
+  </p>
+</div>
+
+</body>
+</html>

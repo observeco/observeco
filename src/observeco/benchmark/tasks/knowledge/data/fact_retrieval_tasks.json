@@ -1,0 +1,17 @@
+[
+  {
+    "context": "Python was created by Guido van Rossum in 1991. The language was named after Monty Python's Flying Circus, not the snake. Python 3.0 was released in 2008 with breaking changes from Python 2.x.",
+    "question": "Who created Python and in what year?",
+    "expected": "Guido van Rossum created Python in 1991."
+  },
+  {
+    "context": "Singapore has a population of approximately 5.9 million people as of 2024. The country covers 735 square kilometers. English, Mandarin, Malay, and Tamil are the four official languages.",
+    "question": "What is the area of Singapore in square kilometers?",
+    "expected": "Singapore covers 735 square kilometers."
+  },
+  {
+    "context": "Docker was first released in 2013 by Solomon Hykes. Containers using Linux namespaces and cgroups had existed before, but Docker made them accessible to developers with a simple CLI and image format.",
+    "question": "When was Docker first released?",
+    "expected": "Docker was first released in 2013."
+  }
+]

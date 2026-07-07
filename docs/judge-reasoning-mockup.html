@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>LLM Judge Reasoning Display — Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; padding: 40px; }
+  h1 { font-size: 14px; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+  h2 { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+  .intro { color: #94a3b8; font-size: 13px; margin-bottom: 32px; line-height: 1.6; }
+
+  /* Task list (existing dashboard style) */
+  .task-list { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; max-width: 640px; }
+  .task-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #334155; }
+  .task-header h3 { font-size: 13px; font-weight: 600; color: #f8fafc; }
+  .task-count { font-size: 12px; color: #64748b; }
+
+  /* Task item */
+  .task-item { border-bottom: 1px solid #1a2332; }
+  .task-item:last-child { border-bottom: none; }
+  .task-row { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; gap: 12px; }
+  .task-row:hover { background: #1a2332; }
+  .task-info { flex: 1; min-width: 0; }
+  .task-name { font-size: 13px; font-weight: 500; color: #f8fafc; }
+  .task-meta { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .task-score { text-align: right; flex-shrink: 0; }
+  .task-score .val { font-size: 14px; font-weight: 700; }
+  .task-score .lbl { font-size: 10px; color: #64748b; }
+  .task-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.pass { background: #22c55e; }
+  .status-dot.fail { background: #ef4444; }
+  .status-dot.partial { background: #eab308; }
+
+  /* Judge reasoning panel (expandable) */
+  .judge-panel { display: none; padding: 0 16px 16px; }
+  .judge-panel.open { display: block; }
+  .judge-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px; }
+  .judge-card .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .judge-card .header .label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.3px; }
+  .judge-card .header .model { font-size: 10px; color: #475569; }
+
+  /* Assertion list */
+  .assertion { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1e293b; }
+  .assertion:last-child { border-bottom: none; }
+  .assertion-score { width: 44px; height: 44px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+  .assertion-score .num { font-size: 16px; font-weight: 700; line-height: 1; }
+  .assertion-score .type { font-size: 8px; text-transform: uppercase; margin-top: 1px; opacity: 0.8; }
+  .assertion-score.pass { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .assertion-score.fail { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .assertion-score.partial { background: rgba(234,179,8,0.15); color: #eab308; }
+  .assertion-detail { flex: 1; min-width: 0; }
+  .assertion-detail .name { font-size: 12px; font-weight: 500; color: #f8fafc; }
+  .assertion-detail .reasoning { font-size: 11px; color: #94a3b8; line-height: 1.5; margin-top: 3px; }
+  .assertion-detail .reasoning em { color: #eab308; font-style: normal; }
+  .assertion-detail .reasoning strong { color: #22c55e; }
+
+  /* Overall score bar */
+  .overall-bar { display: flex; gap: 2px; margin-bottom: 12px; }
+  .overall-bar .seg { height: 6px; border-radius: 3px; }
+  .overall-bar .pass { background: #22c55e; }
+  .overall-bar .fail { background: #ef4444; }
+  .overall-bar .partial { background: #eab308; }
+
+  /* Weight notice */
+  .weight-notice { font-size: 10px; color: #475569; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<h2>LLM Judge Reasoning Display</h2>
+<p class="intro">When a task fails or scores partially, the user sees why — per-assertion scores with reasoning, weighted overall score, and judge metadata.</p>
+
+<div class="task-list">
+  <div class="task-header">
+    <h3>Tasks (9)</h3>
+    <span class="task-count">5 pass · 2 partial · 2 fail</span>
+  </div>
+
+  <!-- Task: Passes (no reasoning needed) -->
+  <div class="task-item">
+    <div class="task-row">
+      <span class="status-dot pass"></span>
+      <div class="task-info">
+        <div class="task-name">🧮 Arithmetic reasoning</div>
+        <div class="task-meta">reasoning · easy · numeric_range · 3 trials</div>
+      </div>
+      <div class="task-score">
+        <div class="val" style="color:#22c55e;">1.00</div>
+        <div class="lbl">pass</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task: Fails with LLM judge reasoning -->
+  <div class="task-item">
+    <div class="task-row" onclick="this.nextElementSibling.classList.toggle('open')">
+      <span class="status-dot fail"></span>
+      <div class="task-info">
+        <div class="task-name">💻 Code generation</div>
+        <div class="task-meta">coding · hard · llm_judge + regex · 5 trials</div>
+      </div>
+      <div class="task-score">
+        <div class="val" style="color:#ef4444;">0.33</div>
+        <div class="lbl">fail</div>
+      </div>
+      <div class="task-actions">
+        <span style="color:#64748b;font-size:11px;">▼</span>
+      </div>
+    </div>
+    <!-- Judge reasoning panel (expanded) -->
+    <div class="judge-panel open">
+      <div class="judge-card">
+        <div class="header">
+          <span class="label">🧠 LLM Judge Assessment</span>
+          <span class="model">deepseek-v4-pro · 0.008¢ · cached</span>
+        </div>
+
+        <!-- Overall weighted score bar -->
+        <div class="overall-bar">
+          <div class="seg pass" style="flex:0.33"></div>
+          <div class="seg partial" style="flex:0.17"></div>
+          <div class="seg fail" style="flex:0.50"></div>
+        </div>
+
+        <!-- Per-assertion breakdown -->
+        <div class="assertion">
+          <div class="assertion-score partial">
+            <span class="num">0.50</span>
+            <span class="type">regex</span>
+          </div>
+          <div class="assertion-detail">
+            <div class="name">Regex: function signature pattern</div>
+            <div class="reasoning">Output contains <strong>'def '</strong> (matched) but signature uses wrong parameter names. Partial match on structure.  <em>weight 0.5</em></div>
+          </div>
+        </div>
+
+        <div class="assertion">
+          <div class="assertion-score fail">
+            <span class="num">0.25</span>
+            <span class="type">judge</span>
+          </div>
+          <div class="assertion-detail">
+            <div class="name">LLM Judge: functional correctness</div>
+            <div class="reasoning">Generated code references modules that don't exist (<em>imaginary_utils</em>). Would fail at runtime. Import block is incomplete — missing <strong>sqlite3</strong> and <strong>re</strong>. The core logic is present but not executable.  <em>weight 1.0</em></div>
+          </div>
+        </div>
+
+        <div class="assertion">
+          <div class="assertion-score pass">
+            <span class="num">1.00</span>
+            <span class="type">judge</span>
+          </div>
+          <div class="assertion-detail">
+            <div class="name">LLM Judge: follows specification</div>
+            <div class="reasoning">Output follows the requested structure — function name, parameters, docstring, and return type all match the spec. The logic is logically correct even though it won't execute.  <em>weight 1.0</em></div>
+          </div>
+        </div>
+
+        <div class="weight-notice">Weighted score: (0.50×0.5) + (0.25×1.0) + (1.00×1.0) / 2.5 = <strong>0.33</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task: Partial -->
+  <div class="task-item">
+    <div class="task-row" onclick="this.nextElementSibling.classList.toggle('open')">
+      <span class="status-dot partial"></span>
+      <div class="task-info">
+        <div class="task-name">📄 Document Q&A</div>
+        <div class="task-meta">extraction · medium · llm_judge · 5 trials</div>
+      </div>
+      <div class="task-score">
+        <div class="val" style="color:#eab308;">0.65</div>
+        <div class="lbl">partial</div>
+      </div>
+      <div class="task-actions">
+        <span style="color:#64748b;font-size:11px;">▶</span>
+      </div>
+    </div>
+    <div class="judge-panel">
+      <div class="judge-card">
+        <div class="header">
+          <span class="label">🧠 LLM Judge Assessment</span>
+          <span class="model">deepseek-v4-pro · 0.005¢ · cached</span>
+        </div>
+        <div class="assertion">
+          <div class="assertion-score partial">
+            <span class="num">0.65</span>
+            <span class="type">judge</span>
+          </div>
+          <div class="assertion-detail">
+            <div class="name">LLM Judge: answer accuracy</div>
+            <div class="reasoning">Correctly identified the main finding but missed one of two supporting citations. Answer is directionally correct but incomplete for full credit.  <em>weight 1.0</em></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:32px;padding:16px;background:#1a2332;border-radius:8px;max-width:640px;">
+  <h3 style="font-size:14px;margin-bottom:8px;">UX Design Decisions</h3>
+  <ul style="color:#94a3b8;font-size:12px;line-height:1.8;list-style:none;">
+    <li>• <strong>Expand on click</strong> — reasoning hidden by default, expand per-task. Keeps task list scannable.</li>
+    <li>• <strong>Per-assertion breakdown</strong> — shows which part of the task failed (regex vs judge vs semantic). Each assertion has its own score chip (pass/partial/fail).</li>
+    <li>• <strong>Weighted score bar</strong> — visual proportion of pass/partial/fail across all assertions.</li>
+    <li>• <strong>Reasoning text</strong> — plain-English explanation from the LLM judge. <em>Italics</em> for missing elements, <strong>bold</strong> for what was found.</li>
+    <li>• <strong>Judge metadata</strong> — model used, cost, cache status — so users know if the result is fresh or cached.</li>
+    <li>• <strong>Passing tasks</strong> show no reasoning panel — avoid clutter for tasks that work.</li>
+  </ul>
+</div>
+
+</body>
+</html>

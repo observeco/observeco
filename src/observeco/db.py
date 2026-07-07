@@ -28,7 +28,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 58
+SCHEMA_VERSION = 59
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -796,6 +796,17 @@ UPDATE agent_configs SET class = 'agent' WHERE agent_name IN (
 -- Everything else stays 'service' (infra, bridges, watchers, tools).
 CREATE INDEX IF NOT EXISTS idx_agent_configs_class ON agent_configs(class);
 """),
+
+    (59, """-- Migration 59: alert acknowledgements (obs-2026-07)
+-- Lets users dismiss active alerts. An ack silences the current incident for
+-- (agent, category); a fresh occurrence (newer timestamp) re-surfaces it.
+CREATE TABLE IF NOT EXISTS alert_acks (
+    agent      TEXT NOT NULL,
+    category   TEXT NOT NULL,   -- circuit | drift | dead | error | heartbeat
+    acked_at   INTEGER NOT NULL,
+    PRIMARY KEY (agent, category)
+);
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -1198,7 +1209,7 @@ class Database:
                         if restore_result["status"] == "restored":
                             logger.info(f"GS-019: Auto-restored from {restore_result['from']}")
                             # Re-initialize from restored state
-                            self._conn = None
+                            self._local = threading.local()
                             conn = self._get_conn()
                             current_version = self._get_schema_version(conn)
                         else:
@@ -1234,10 +1245,29 @@ class Database:
                 f"({SCHEMA_VERSION}). Possible downgrade. Not modifying version."
             )
 
+        # B2: Startup integrity guard — fail LOUD if the live DB is corrupt.
+        # A corrupt DB would otherwise be served silently (empty/garbage data),
+        # which is exactly how the telemetry gap went unnoticed for 47h.
+        # ponytail: runs quick_check (not full integrity_check) on open to stay
+        # O(1)-ish; full check is in `observeco doctor diagnose` for on-demand depth.
+        try:
+            from .data_integrity import run_integrity_check
+            chk = run_integrity_check(str(self.db_path))
+            if not chk["passed"]:
+                logger.critical(
+                    "DB INTEGRITY FAILED on open: %s — DO NOT serve this DB. "
+                    "Run `observeco doctor diagnose` and `observeco doctor restore` "
+                    "from a verified backup.", chk["message"]
+                )
+        except Exception as e:
+            logger.critical(f"DB integrity guard error: {e}")
+
     def close(self) -> None:
-        if self._conn is not None:
-            self._conn.close()
-            self._conn = None
+        if hasattr(self, "_local"):
+            conn = getattr(self._local, "conn", None)
+            if conn is not None:
+                conn.close()
+            self._local = threading.local()
 
     def backup(self, dest_path: Optional[str | Path] = None) -> bool:
         """Create a backup of the database using SQLite's online backup API.
@@ -1322,30 +1352,37 @@ class Database:
         if not backup_path.exists():
             return {"status": "error", "message": f"Backup not found: {backup_path}"}
 
-        # Validate backup is a valid SQLite database
+        # Hard validation: integrity_check, not just "sqlite_master opens".
+        # A corrupt DB can still open and list tables but return garbage pages —
+        # restoring it would clobber a (possibly good) live DB with corruption.
+        # ponytail: full integrity_check is O(n) on DB size; for restore safety
+        # the cost is justified (runs once per restore, not per query).
         try:
-            import sqlite3 as _sqlite3
-            test_conn = _sqlite3.connect(str(backup_path))
-            test_conn.execute("SELECT COUNT(*) FROM sqlite_master")
-            test_conn.close()
+            from .data_integrity import run_integrity_check
+            chk = run_integrity_check(str(backup_path))
+            if not chk["passed"]:
+                return {"status": "error",
+                        "message": f"Backup FAILED integrity check — refusing to restore "
+                                   f"(would clobber live DB with corruption): {chk['message']}"}
         except Exception as e:
-            return {"status": "error", "message": f"Backup is corrupted: {e}"}
+            return {"status": "error", "message": f"Backup validation error: {e}"}
 
-        # GS-019: Backup current state before restoring
+        # GS-019: Backup current state before restoring (so a bad restore is reversible)
         try:
             self.backup(dest_path=backup_dir / f"pulse_pre_restore_{int(time.time())}.db")
         except Exception:
             pass  # Best effort — don't fail restore because pre-restore backup failed
 
-        # Close current connection
+        # Close current per-thread connections
         self.close()
 
-        # Replace current DB with backup
+        # Replace current DB with backup ONLY after validation passed
         import shutil
         shutil.copy2(str(backup_path), str(self.db_path))
 
-        # Reopen connection
-        self._conn = None
+        # Reopen connection (per-thread pool reset)
+        if hasattr(self, "_local"):
+            self._local = threading.local()
         conn = self._get_conn()
 
         # Count rows to verify
@@ -3654,6 +3691,24 @@ class Database:
             "SELECT * FROM alert_log ORDER BY created_at DESC LIMIT ?", (limit,)
         ).fetchall()
         return [dict(r) for r in rows]
+
+    # --- Alert Acknowledgements (obs-2026-07) ---
+    def ack_alert(self, agent: str, category: str) -> None:
+        """Silence the current incident for (agent, category). A newer alert
+        occurrence (timestamp > acked_at) will re-surface it."""
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO alert_acks (agent, category, acked_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(agent, category) DO UPDATE SET acked_at = excluded.acked_at",
+            (agent, category, int(time.time())),
+        )
+        conn.commit()
+
+    def get_alert_acks(self) -> dict[tuple[str, str], int]:
+        """Return {(agent, category): acked_at} for all current acks."""
+        conn = self._get_conn()
+        rows = conn.execute("SELECT agent, category, acked_at FROM alert_acks").fetchall()
+        return {(r["agent"], r["category"]): r["acked_at"] for r in rows}
 
     # --- Plugin Tracking ---
     def log_plugin_tracking(self, agent_name: str, plugin_name: str = "clawforge",

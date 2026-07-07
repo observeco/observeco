@@ -1,0 +1,38 @@
+# SQL Injection Detection Benchmark
+#
+# Evaluates whether the agent can identify SQL injection
+# vulnerabilities in given code snippets.
+#
+# Uses generate_until: agent receives code, must output
+# analysis identifying the injection.
+
+task: sql_injection_detection
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: ./data/sql_injection_tasks.json
+description: "Identify SQL injection vulnerabilities in the given code snippet."
+doc_to_text: |
+  Review the following code and identify any SQL injection vulnerabilities.
+  Explain where the vulnerability is and how to fix it.
+
+  ```python
+  {{code}}
+  ```
+
+  Your analysis:
+doc_to_target: "{{expected}}"
+output_type: generate_until
+test_split: test
+generation_kwargs:
+  until: []
+  max_gen_toks: 512
+  do_sample: false
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: "1.0"
+  category: security
+  difficulty: medium

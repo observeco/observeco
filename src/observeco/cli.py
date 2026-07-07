@@ -1264,10 +1264,11 @@ def doctor_run(
     auto_fix: bool = typer.Option(False, "--auto-fix", "-y", help="Apply fixes automatically"),
     provider: str = typer.Option("auto", "--provider", "-p", help="LLM provider: auto, openai, anthropic, google, ollama, none"),
     json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+    data_health: bool = typer.Option(False, "--data-health", help="Run data continuity health checks only"),
 ) -> None:
     """Diagnose environment issues and get AI-powered fixes."""
     from observeco.doctor.cli import doctor_run as _run
-    _run(auto_fix=auto_fix, provider=provider, json_output=json_output)
+    _run(auto_fix=auto_fix, provider=provider, json_output=json_output, data_health=data_health)
 
 @doctor_app.command(name="diagnose")
 def doctor_diagnose() -> None:

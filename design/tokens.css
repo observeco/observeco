@@ -1,0 +1,80 @@
+/* design-systems/observeco/tokens.css
+ * Structured token bindings for ObserveCo Design System.
+ * Agent observability dashboard — dark navy canvas, green brand telemetry,
+ * independent status palette, token composition bar palette.
+ *
+ * Copy this entire :root block into your HTML <style> tag.
+ * DO NOT modify any hex values. DO NOT add a light mode.
+ */
+
+:root {
+  /* ── Surface Palette ── */
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #253349;
+  --surface-active: #334155;
+  --border: #334155;
+  --border-soft: #273548;
+
+  /* ── Status Palette (health semantics) ── */
+  --status-healthy: #22c55e;    /* 🟢 Pulse OK, circuit closed */
+  --status-warning: #eab308;    /* 🟡 Degraded, 1-2 missed heartbeats */
+  --status-critical: #ef4444;   /* 🔴 Dead agent, tripped circuit */
+  --status-info: #3b82f6;       /* 🔵 Learning phase, baseline */
+
+  /* ── Token Composition Palette (distinct from status — DO NOT MIX) ── */
+  --token-identity: #6366f1;    /* Indigo — agent identity */
+  --token-skills: #8b5cf6;      /* Violet — skills/tools */
+  --token-memory: #ec4899;      /* Pink — memory/context */
+  --token-tools: #14b8a6;       /* Teal — tool schemas */
+  --token-guidance: #f97316;    /* Orange — guidance/prose */
+
+  /* ── Text Palette ── */
+  --fg: #f8fafc;
+  --fg-2: #94a3b8;
+  --fg-3: #64748b;
+  --accent: #22c55e;
+  --accent-on: #0c1628;
+  --warn: #eab308;
+  --danger: #ef4444;
+  --meta: #3b82f6;
+
+  /* ── Typography ── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --leading-body: 1.5;
+  --leading-tight: 1.06;
+
+  /* ── Spacing (4px baseline grid) ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Shape ── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+
+  /* ── Elevation ── */
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 24px 72px rgba(0, 0, 0, 0.42);
+  --focus-ring: 0 0 0 4px color-mix(in oklab, var(--accent), transparent 70%);
+
+  /* ── Motion ── */
+  --motion-fast: 100ms;
+  --motion-base: 150ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}

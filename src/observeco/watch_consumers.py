@@ -27,6 +27,7 @@ SKILLS_INTERVAL = 604800  # 7 days
 HEARTBEAT_INTERVAL = 30   # 30s
 TOKEN_HISTORY_INTERVAL = 86400  # 24h
 DATA_SOURCE_INTERVAL = 60    # 60s — check data sources are alive
+CONFIG_TIMELINE_INTERVAL = 60  # 60s — check for config changes
 
 # ── Base Consumer ───────────────────────────────────────────────────
 
@@ -394,6 +395,35 @@ class DataSourceWatchdog(BaseConsumer):
                     self._last_alert[source] = now
 
 
+# ── Config Timeline Consumer ────────────────────────────────────────
+
+
+class ConfigTimelineConsumer(BaseConsumer):
+    """Detect SOUL.md, model, and tool config changes every 60 seconds.
+
+    Records changes in config_snapshots table for the timeline dashboard.
+    """
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("name", "config_timeline")
+        kwargs.setdefault("interval", CONFIG_TIMELINE_INTERVAL)
+        super().__init__(**kwargs)
+
+    def _tick(self) -> None:
+        from observeco.capability.timeline import ConfigTimelineDetector
+
+        detector = ConfigTimelineDetector(db=self.db)
+        snapshots = detector.check_all_agents()
+
+        if snapshots:
+            for s in snapshots:
+                logger.info(
+                    "Config timeline: agent=%s type=%s segment=%s",
+                    s["agent_name"], s["change_type"], s["segment"],
+                )
+            publish(None, "config_timeline_update", count=len(snapshots))
+
+
 # ── Consumer Manager ────────────────────────────────────────────────
 
 
@@ -414,6 +444,7 @@ class ConsumerManager:
             PruneConsumer(db=self.db),
             TokenHistoryConsumer(db=self.db),
             DataSourceWatchdog(db=self.db),
+            ConfigTimelineConsumer(db=self.db),
         ]
 
     def start_all(self) -> None:
