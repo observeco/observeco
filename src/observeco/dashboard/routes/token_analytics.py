@@ -321,6 +321,16 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     <span class="pct" style="color:{"var(--accent)" if cr>60 else "var(--warn)" if cr>30 else "var(--fg-3)"}">{cr}%</span>
 </div>"""
 
+    # Per-agent cache hit-rate chart data (obs-spec-020 §5.5): horizontal bars, one
+    # per agent, sorted by rate ascending so the worst offenders sit at the top.
+    # cache_rate definition matches the per-agent table cell (line 295) for consistency.
+    cache_chart_agents = [a for a, _ in sorted_agents]
+    cache_chart_rates = [
+        round(d["cache_read"] / max(d["cache_read"] + d["cache_create"], 1) * 100)
+        for _, d in sorted_agents
+    ]
+
+
     # So What insight
     top_agent = sorted_agents[0][0] if sorted_agents else ""
     top_cost = _fmt_dollar(sorted_agents[0][1]["cost"]) if sorted_agents else "$0"
@@ -406,8 +416,9 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     </div>
 </div>
 
-<div class="section-h"><h2>Cache Efficiency</h2><span class="count">read vs create</span></div>
-<div class="panel">
+<div class="section-h"><h2>Cache Efficiency</h2><span class="count">read vs create · hit rate by agent</span></div>
+<div class="panel" style="margin-bottom:var(--space-6)">
+    <div class="chart-box" style="height:max(180px, calc({len(sorted_agents)} * 26px))"><canvas id="cacheChart"></canvas></div>
     {cache_rows if cache_rows else '<span style="color:var(--fg-3);font-size:var(--text-sm)">No cache data</span>'}
 </div>
 
@@ -430,6 +441,8 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 // is a no-op fallback now (target.id check fails for OOB swaps anyway).
 window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "total_data": total_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data, "est_data": est_data, "range_label": range_label})};
 if (typeof renderTokenChart === 'function') renderTokenChart();
+window._cacheChart = {json.dumps({"agents": cache_chart_agents, "rates": cache_chart_rates})};
+if (typeof renderCacheChart === 'function') renderCacheChart();
 </script>
 </div>"""
 

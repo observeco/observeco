@@ -444,3 +444,35 @@ function bindTokenToggles() {
     };
   });
 }
+
+// Per-agent cache hit-rate horizontal bar chart (obs-spec-020 §5.5).
+// Color by rate: red <5%, yellow 5-20%, green >20%.
+function renderCacheChart() {
+  if (typeof Chart === 'undefined') return;
+  var data = window._cacheChart;
+  if (!data || !data.agents || !data.agents.length) return;
+  var ctx = document.getElementById('cacheChart');
+  if (!ctx) return;
+  if (window._cacheChartInstance) window._cacheChartInstance.destroy();
+  var colors = data.rates.map(function(r){
+    if (r < 5) return '#ef4444';
+    if (r <= 20) return '#eab308';
+    return '#22c55e';
+  });
+  window._cacheChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.agents,
+      datasets: [{label: 'Cache hit rate %', data: data.rates, backgroundColor: colors, borderRadius: 2}]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return 'Hit rate: ' + c.parsed.x + '%';}}}},
+      scales: {
+        x: {min: 0, max: 100, grid: {color: 'rgba(51,65,85,.3)'}, ticks: {color: '#64748b', font: {size: 10}, callback: function(v){return v + '%';}}},
+        y: {grid: {display: false}, ticks: {color: '#94a3b8', font: {size: 11}}}
+      }
+    }
+  });
+}
