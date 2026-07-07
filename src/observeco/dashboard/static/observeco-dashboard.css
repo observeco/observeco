@@ -577,6 +577,23 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .tgl:hover{opacity:.75}
 .tgl.on:hover{opacity:1}
 .tgl i{width:12px;height:3px;border-radius:2px}
+/* verdict card (obs-spec-020 §5.3) */
+.verdict-card{background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:var(--space-4)}
+.verdict-card .vc-head{display:flex;align-items:center;gap:8px;margin-bottom:var(--space-3)}
+.verdict-card .vc-head .mark{font-size:18px;color:var(--accent);font-weight:700}
+.verdict-card .vc-head .lead{font-size:var(--text-xs);letter-spacing:.08em;color:var(--fg-3);font-weight:600}
+.verdict-card .vc-badge{margin-left:auto;font-size:var(--text-xs);font-weight:700;padding:2px 8px;border-radius:999px}
+.verdict-card .vc-badge.good{background:rgba(34,197,94,.15);color:var(--accent)}
+.verdict-card .vc-badge.warn{background:rgba(234,179,8,.15);color:var(--warn)}
+.verdict-card .vc-badge.bad{background:rgba(239,68,68,.15);color:var(--danger)}
+.verdict-card .vc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4)}
+.verdict-card .vc-stat{display:flex;flex-direction:column;gap:2px}
+.verdict-card .vc-num{font-family:var(--font-mono);font-size:22px;font-weight:700;color:var(--fg)}
+.verdict-card .vc-num.good{color:var(--accent)}
+.verdict-card .vc-num.warn{color:var(--warn)}
+.verdict-card .vc-num.bad{color:var(--danger)}
+.verdict-card .vc-lab{font-size:var(--text-xs);color:var(--fg-3)}
+.verdict-card .vc-rec{margin-top:var(--space-3);font-size:var(--text-sm);color:var(--fg-2);border-top:1px solid var(--border);padding-top:var(--space-3)}
 .attr-ring{display:flex;align-items:center;gap:var(--space-4)}
 .attr-num{font-family:var(--font-mono);font-size:40px;font-weight:700;color:var(--accent);line-height:1}
 .attr-bar{height:14px;border-radius:3px;background:var(--bg);overflow:hidden;display:flex;margin:var(--space-3) 0 6px}

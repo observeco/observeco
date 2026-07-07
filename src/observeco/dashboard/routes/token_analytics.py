@@ -331,15 +331,36 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     ]
 
 
-    # So What insight
+    # So What insight — Verdict Card (obs-spec-020 §5.3)
     top_agent = sorted_agents[0][0] if sorted_agents else ""
-    top_cost = _fmt_dollar(sorted_agents[0][1]["cost"]) if sorted_agents else "$0"
-    insight_html = f"""<div class="swc insight" style="margin-bottom:var(--space-4)">
-    <span class="mark">$</span>
-    <div class="body">
-        <span class="lead">SPEND INSIGHT</span>
-        <div class="txt"><b>{_html_escape(top_agent)}</b> is top spender at <span class="num">{top_cost}</span>/{days}d. {attr_pct}% of spend attributed{'.' if attr_pct > 80 else ' — install the telemetry plugin to close the gap.'}</div>
+    top_cost = sorted_agents[0][1]["cost"] if sorted_agents else 0
+    top_spender_pct = round(top_cost / max(total_cost, 1) * 100)
+    turn_count = sum(d["count"] for _, d in sorted_agents)
+    overall_cache_rate = round(total_cache_read / max(total_cache_read + total_cache_create, 1) * 100)
+    # confidence badge = % of cost from accurate (otel/sdk/proxy) sources
+    confidence_pct = attr_pct
+    # one-sentence recommendation
+    if confidence_pct < 50:
+        rec = f"Only {confidence_pct}% of cost is accurately attributed — enable the telemetry plugin to close the gap."
+    elif top_spender_pct > 50:
+        rec = f"{_html_escape(top_agent)} alone is {top_spender_pct}% of spend — review its system-prompt size first."
+    elif overall_cache_rate < 20:
+        rec = f"Fleet cache hit rate is {overall_cache_rate}% — prompt caching is barely engaged; enable cache_control on stable prefixes."
+    else:
+        rec = "Token mix looks healthy — cost is well-distributed and caching is engaged."
+    badge_cls = "good" if confidence_pct > 80 else "warn" if confidence_pct > 50 else "bad"
+    top_cls = "bad" if top_spender_pct > 50 else "warn" if top_spender_pct > 25 else "good"
+    cache_cls = "good" if overall_cache_rate > 20 else "warn" if overall_cache_rate > 5 else "bad"
+    insight_html = f"""<div class="verdict-card" style="margin-bottom:var(--space-4)">
+    <div class="vc-head"><span class="mark">$</span><span class="lead">SPEND VERDICT</span>
+        <span class="vc-badge {badge_cls}">{confidence_pct}% accurate</span></div>
+    <div class="vc-stats">
+        <div class="vc-stat"><span class="vc-num">{_fmt_dollar(total_cost)}</span><span class="vc-lab">total cost · {turn_count} calls</span></div>
+        <div class="vc-stat"><span class="vc-num {top_cls}">{top_spender_pct}%</span><span class="vc-lab">{_html_escape(top_agent)} top spender</span></div>
+        <div class="vc-stat"><span class="vc-num {cache_cls}">{overall_cache_rate}%</span><span class="vc-lab">fleet cache hit</span></div>
+        <div class="vc-stat"><span class="vc-num">{attr_pct}%</span><span class="vc-lab">attributed</span></div>
     </div>
+    <div class="vc-rec">{rec}</div>
 </div>"""
 
     total_tok = _fmt_tok(sum(d["tokens"] for _, d in sorted_agents))
