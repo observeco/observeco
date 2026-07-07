@@ -611,6 +611,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .chart-card .cc-legend .lg-cache::before{background:#8b5cf6}
 .chart-card .cc-legend .lg-est::before{background:#64748b}
 .chart-card .cc-warn{font-size:var(--text-xs);color:var(--danger);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:6px 8px;margin-bottom:var(--space-2)}
+.chart-card .cc-note{font-size:var(--text-xs);color:var(--fg-3);background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;margin-bottom:var(--space-2)}
 .attr-ring{display:flex;align-items:center;gap:var(--space-4)}
 .attr-num{font-family:var(--font-mono);font-size:40px;font-weight:700;color:var(--accent);line-height:1}
 .attr-bar{height:14px;border-radius:3px;background:var(--bg);overflow:hidden;display:flex;margin:var(--space-3) 0 6px}

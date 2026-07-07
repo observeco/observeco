@@ -430,8 +430,8 @@ function _benchmarkPlugin(lines) {
 }
 
 // Chart 1: Stacked token composition over time (Input / Output / Cache reads / Estimated)
-// — the original token tab chart. Legend shown. Buckets where Estimated overlaps real
-// counts get a red border (double-count warning). No benchmark line (that belongs on
+// — the original token tab chart. Legend shown. Estimated is already suppressed server-side
+// in buckets that have real counts (no double-count). No benchmark line (that belongs on
 // the $ Cost/Turn efficiency chart below). y-axis in K tokens.
 function renderTokenChart() {
   if (typeof Chart === 'undefined') return;
@@ -440,8 +440,6 @@ function renderTokenChart() {
   var ctx = document.getElementById('costChart');
   if (!ctx) return;
   if (window._tokenChartInstance) window._tokenChartInstance.destroy();
-  var dc = data.double_count || [];
-  var border = data.est_data.map(function(v, i){ return (v > 0 && dc[i]) ? '#ef4444' : 'rgba(0,0,0,0)'; });
   window._tokenChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -450,13 +448,13 @@ function renderTokenChart() {
         {label: 'Input (K)', data: data.input_data, backgroundColor: '#3b82f6', stack: 'v', borderRadius: 2},
         {label: 'Output (K)', data: data.output_data, backgroundColor: '#eab308', stack: 'v', borderRadius: 2},
         {label: 'Cache reads (K)', data: data.cache_data, backgroundColor: '#8b5cf6', stack: 'v', borderRadius: 2},
-        {label: 'Estimated (K)', data: data.est_data, backgroundColor: '#64748b', stack: 'v', borderRadius: 2, borderColor: border, borderWidth: 2}
+        {label: 'Estimated (K)', data: data.est_data, backgroundColor: '#64748b', stack: 'v', borderRadius: 2}
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: {mode: 'index', intersect: false},
-      plugins: {legend: {display: true, labels: {boxWidth: 10, font: {size: 9}, color: '#94a3b8'}}, tooltip: {callbacks: {label: function(c){var s = c.dataset.label + ': ' + (c.parsed.y||0).toLocaleString() + 'K'; if (c.dataset.label.indexOf('Estimated') === 0 && dc[c.dataIndex]) s += ' ⚠ double-count'; return s;}}}},
+      plugins: {legend: {display: true, labels: {boxWidth: 10, font: {size: 9}, color: '#94a3b8'}}, tooltip: {callbacks: {label: function(c){return c.dataset.label + ': ' + (c.parsed.y||0).toLocaleString() + 'K';}}}},
       scales: {
         x: {stacked: true, grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
         y: {stacked: true, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return v + 'K';}}}

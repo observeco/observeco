@@ -267,6 +267,24 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         else 0 for k in sorted_keys
     ]
     has_double_count = any(double_count)
+    # Real fix for the double-count: where a bucket has real input/output/cache, the
+    # Estimated stack is suppressed (set to 0) so it can't inflate the total on top of
+    # real counts. Estimated is only shown in buckets with NO real breakdown (pure proxy).
+    est_effective = [
+        0 if (day_buckets[k]["input"] > 0 or day_buckets[k]["output"] > 0 or day_buckets[k]["cache"] > 0)
+        else day_buckets[k]["est"]
+        for k in sorted_keys
+    ]
+    suppressed_est = any(
+        day_buckets[k]["est"] > 0 and est_effective[i] == 0
+        for i, k in enumerate(sorted_keys)
+    )
+    # Stacked token total (K) the chart actually shows — uses est_effective so it never
+    # double-counts. Header shows this, matching the visual stack.
+    stacked_total_k = sum(
+        day_buckets[k]["input"] + day_buckets[k]["output"] + day_buckets[k]["cache"] + est_effective[i]
+        for i, k in enumerate(sorted_keys)
+    ) // 1000
     # Target cost line for Chart 1 (Cost): mean daily cost of the window. ponytail: a real
     # budget threshold from billing config is the right source; mean-of-window is a sane
     # default until that exists. Upgrade: read OBSERVECO_TOKEN_BUDGET from config.
@@ -412,11 +430,11 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
 <div class="tok4-grid">
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Token Composition</h2><span class="cc-val mono">{_fmt_tok(total_all)}</span><span class="cc-lab">input · output · cache · est</span></div>
+        <div class="cc-head"><h2>Token Composition</h2><span class="cc-val mono">{_fmt_tok(stacked_total_k * 1000)}</span><span class="cc-lab">input · output · cache · est</span></div>
         <div class="cc-legend">
             <span class="lg lg-input">Input</span><span class="lg lg-output">Output</span><span class="lg lg-cache">Cache reads</span><span class="lg lg-est">Estimated</span>
         </div>
-        {('<div class="cc-warn">⚠ Estimated overlaps real counts in some buckets — grey stacked on top of real totals double-counts those periods. Treat Estimated as a proxy only where real totals are absent.</div>') if has_double_count else ''}
+        {('<div class="cc-note">Estimated is shown only where real component counts are absent; it is suppressed in periods that already have real input/output/cache to avoid double-counting the total.</div>') if suppressed_est else ''}
         <div class="chart-box"><canvas id="costChart"></canvas></div>
     </div>
     <div class="panel chart-card">
@@ -480,7 +498,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 // so setting window._tokenChart then calling renderTokenChart() synchronously is
 // race-free: data is fresh, canvas is in the DOM. The afterSwap listener in app.js
 // is a no-op fallback now (target.id check fails for OOB swaps anyway).
-window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "total_data": total_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data, "est_data": est_data, "double_count": double_count, "range_label": range_label})};
+window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "total_data": total_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data, "est_data": est_effective, "suppressed_est": suppressed_est, "range_label": range_label})};
 if (typeof renderTokenChart === 'function') renderTokenChart();
 window._tptChart = {json.dumps({"labels": labels, "data": tokens_per_turn})};
 if (typeof renderTptChart === 'function') renderTptChart();
