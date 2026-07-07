@@ -198,16 +198,23 @@ def _render_daemon_offline() -> str:
 </div>"""
 
 
-def _render_live(alerts: list[dict]) -> str:
+def _render_live(alerts: list[dict], info_count: int = 0) -> str:
     """Right rail — 'Live Incidents'. Active CRITICAL/WARNING only, compact."""
     active_count = len(alerts)
     if not alerts:
-        return """<div class="panel" id="alertsContainer" hx-swap-oob="true">
+        hint = ""
+        if info_count > 0:
+            hint = (f'<p class="muted" style="font-size:11px;color:var(--fg-2);margin-top:4px;">'
+                    f'{info_count} info-level item{"s" if info_count != 1 else ""} in '
+                    f'<a href="#" onclick="document.querySelector(\'.nav-tab[data-tab=alerts]\')?.click();return false;" '
+                    f'style="color:#a5b4fc;text-decoration:underline;">Alert Center</a></p>')
+        return f"""<div class="panel" id="alertsContainer" hx-swap-oob="true">
     <div class="panel-h"><h3>Live Incidents</h3><span class="pcount mono">0 active</span></div>
     <div class="allclear">
         <div class="ico">✓</div>
         <h4>All clear</h4>
         <p>No active incidents.</p>
+        {hint}
     </div>
 </div>"""
 
@@ -374,7 +381,10 @@ async def alerts_rail():
     alerts = build_alerts(mode="live", acks=acks)
     if alerts is None:  # daemon offline
         return HTMLResponse(_render_daemon_offline())
-    return HTMLResponse(_render_live(alerts))
+    # Count INFO-tier alerts the rail suppresses (shown only in Alert Center)
+    center_alerts = build_alerts(mode="center", acks=acks) or []
+    info_count = sum(1 for a in center_alerts if a["group"] == "INFO")
+    return HTMLResponse(_render_live(alerts, info_count=info_count))
 
 
 @router.get("", response_class=HTMLResponse)
