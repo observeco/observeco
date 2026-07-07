@@ -92,12 +92,29 @@ def empty_html() -> str:
 
 
 @router.get("/tokens", response_class=HTMLResponse)
-async def token_analytics(days: int = 7, agent: str = "__all__"):
+async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0):
     """Token Analytics view — cost time-series, per-agent breakdown, cache efficiency.
-    GET /api/analytics/tokens?days=7&agent=__all__
+    GET /api/analytics/tokens?days=7&agent=__all__  (or &hours=1 for the 1h view)
     """
     now = int(time.time())
-    since = now - (days * 86400)
+
+    # Adaptive time bucketing: days mode (bucket by day) or hours mode (bucket by 5min / hour)
+    # ponytail: 1h view needs sub-day resolution or it collapses to a single useless bar.
+    # <=2h -> 5-min buckets (12 pts); >2h -> hourly buckets. Upgrade: pass bucket size from UI.
+    if hours > 0:
+        if hours <= 2:
+            bucket_sec = 300
+            label_fmt = "%H:%M"
+        else:
+            bucket_sec = 3600
+            label_fmt = "%H:00"
+        n_buckets = max(1, -(-hours * 3600 // bucket_sec))  # ceil division
+    else:
+        bucket_sec = 86400
+        label_fmt = "%m/%d"
+        n_buckets = days
+    since = now - n_buckets * bucket_sec
+    range_label = f"{hours}h" if hours else f"{days}d"
 
     # Get all token logs
     all_logs = []
@@ -153,10 +170,11 @@ async def token_analytics(days: int = 7, agent: str = "__all__"):
     total_unattributed = 0
     agents_with_data = set()
 
+    # Bucket by integer-divided epoch so 5m/hour/day all work without midnight assumptions
     day_buckets = {}
-    for i in range(days):
-        day_key = (datetime.fromtimestamp(since + i * 86400)).strftime("%m/%d")
-        day_buckets[day_key] = {"cost": 0, "input": 0, "output": 0, "cache": 0}
+    for i in range(n_buckets):
+        bk = (since // bucket_sec + i) * bucket_sec
+        day_buckets[bk] = {"cost": 0, "input": 0, "output": 0, "cache": 0, "est": 0}
 
     for log in all_logs:
         aname = log.get("agent_name", "unknown")
@@ -196,14 +214,17 @@ async def token_analytics(days: int = 7, agent: str = "__all__"):
         else:
             total_unattributed += log.get("total_tokens", 0) or 0
 
-        # Day bucket
-        dt = datetime.fromtimestamp(log.get("recorded_at", 0))
-        day_key = dt.strftime("%m/%d")
-        if day_key in day_buckets:
-            day_buckets[day_key]["cost"] += log.get("cost", 0) or 0
-            day_buckets[day_key]["input"] += log.get("input_tokens", 0) or 0
-            day_buckets[day_key]["output"] += log.get("output_tokens", 0) or 0
-            day_buckets[day_key]["cache"] += log.get("cache_read_tokens", 0) or 0
+        # Bucket by integer-divided epoch
+        bk = (log.get("recorded_at", 0) // bucket_sec) * bucket_sec
+        if bk in day_buckets:
+            day_buckets[bk]["cost"] += log.get("cost", 0) or 0
+            day_buckets[bk]["input"] += log.get("input_tokens", 0) or 0
+            day_buckets[bk]["output"] += log.get("output_tokens", 0) or 0
+            day_buckets[bk]["cache"] += log.get("cache_read_tokens", 0) or 0
+            # ponytail: 'est' = estimated (source != otel) tokens for this bucket, used to
+            # shade estimate-vs-accurate. 'acc' is implied (total - est). Upgrade: track per-bucket acc too.
+            if log.get("source") != "otel":
+                day_buckets[bk]["est"] += (log.get("input_tokens", 0) or 0) + (log.get("output_tokens", 0) or 0)
 
     # Sort agents by cost descending
     sorted_agents = sorted(agent_data.items(), key=lambda x: -x[1]["cost"])
@@ -212,12 +233,16 @@ async def token_analytics(days: int = 7, agent: str = "__all__"):
     total_all = total_attributed + total_unattributed
     attr_pct = round(total_attributed / total_all * 100) if total_all else 0
 
-    # Build chart data arrays
-    labels = list(day_buckets.keys())
-    cost_data = [round(day_buckets[k]["cost"], 4) for k in labels]
-    input_data = [day_buckets[k]["input"] // 1000 for k in labels]
-    output_data = [day_buckets[k]["output"] // 1000 for k in labels]
-    cache_data = [day_buckets[k]["cache"] // 1000 for k in labels]
+    # Build chart data arrays (epoch keys, sorted ascending so the timeline reads left→right)
+    sorted_keys = sorted(day_buckets.keys())
+    labels = [datetime.fromtimestamp(k).strftime(label_fmt) for k in sorted_keys]
+    cost_data = [round(day_buckets[k]["cost"], 4) for k in sorted_keys]
+    input_data = [day_buckets[k]["input"] // 1000 for k in sorted_keys]
+    output_data = [day_buckets[k]["output"] // 1000 for k in sorted_keys]
+    cache_data = [day_buckets[k]["cache"] // 1000 for k in sorted_keys]
+    est_data = [round(day_buckets[k]["est"] / 1000) for k in sorted_keys]
+    # Total = input + output per bucket (K)
+    total_data = [input_data[i] + output_data[i] for i in range(len(sorted_keys))]
 
     # Per-turn timeline (real total_tokens per call, time-ordered)
     timeline = sorted(
@@ -307,14 +332,15 @@ async def token_analytics(days: int = 7, agent: str = "__all__"):
 <div class="page-title">
     <h1>Token Analytics</h1>
     <span class="sub">{agent_count} agents · {_fmt_tok(total_all)} calls indexed</span>
-    <select id="agentFilter" class="rbtn" style="margin-left:8px" onchange="window.location='/api/analytics/tokens?days={days}&agent='+this.value">
+    <select id="agentFilter" class="rbtn" style="margin-left:8px" onchange="htmx.ajax('GET', '/api/analytics/tokens?days={days}&hours={hours}&agent='+this.value, {{target:'#analyticsContent', swap:'innerHTML'}})">
         <option value="__all__"{' selected' if agent == '__all__' else ''}>All agents</option>
         {''.join(f'<option value="{_html_escape(a)}"{"" if agent != a else " selected"}>{_html_escape(a)}</option>' for a, _ in sorted_agents)}
     </select>
     <div class="range">
-        <button class="rbtn {'on' if days==1 else ''}" onclick="window.location='/api/analytics/tokens?days=1'">24h</button>
-        <button class="rbtn {'on' if days==7 else ''}" onclick="window.location='/api/analytics/tokens?days=7'">7d</button>
-        <button class="rbtn {'on' if days==30 else ''}" onclick="window.location='/api/analytics/tokens?days=30'">30d</button>
+        <button class="rbtn {'on' if hours==1 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=1', {{target:'#analyticsContent', swap:'innerHTML'}})">1h</button>
+        <button class="rbtn {'on' if days==1 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=1', {{target:'#analyticsContent', swap:'innerHTML'}})">24h</button>
+        <button class="rbtn {'on' if days==7 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=7', {{target:'#analyticsContent', swap:'innerHTML'}})">7d</button>
+        <button class="rbtn {'on' if days==30 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=30', {{target:'#analyticsContent', swap:'innerHTML'}})">30d</button>
     </div>
 </div>
 
@@ -322,13 +348,14 @@ async def token_analytics(days: int = 7, agent: str = "__all__"):
 
 <div class="grid2">
     <div class="panel">
-        <div class="panel-h"><h2>Cost Trend</h2><span class="meta mono">{days}d</span></div>
+        <div class="panel-h"><h2>Token Volume</h2><span class="meta mono">{range_label}</span></div>
         <div class="chart-box"><canvas id="costChart"></canvas></div>
         <div class="legend-row">
-            <span><i style="background:var(--accent)"></i> Total cost</span>
-            <span><i style="background:var(--meta)"></i> Input tokens (K)</span>
-            <span><i style="background:var(--warn)"></i> Output tokens (K)</span>
+            <span><i style="background:var(--accent)"></i> Total (K)</span>
+            <span><i style="background:var(--meta)"></i> Input (K)</span>
+            <span><i style="background:var(--warn)"></i> Output (K)</span>
             <span><i style="background:var(--token-skills)"></i> Cache reads (K)</span>
+            <span><i style="background:var(--chart-est)"></i> Estimated (K)</span>
         </div>
     </div>
     <div>
@@ -390,7 +417,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__"):
 <script>
 // ponytail: data passed via window._tokenChart; chart rendered by renderTokenChart() on htmx:afterSwap.
 // Inline <script> in htmx-swapped HTML does NOT execute — global fn + afterSwap is the fix.
-window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data})};
+window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "total_data": total_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data, "est_data": est_data, "range_label": range_label})};
 </script>
 </div>"""
 
