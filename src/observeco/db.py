@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import sqlite3
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -1076,34 +1077,72 @@ CREATE INDEX IF NOT EXISTS idx_benchmark_results_agent ON benchmark_results(agen
 
 
 class Database:
-    """Thread-safe SQLite database for ObserveCo data."""
+    """Thread-safe SQLite database for ObserveCo data.
+
+    Concurrency model:
+    - One sqlite3.Connection per *thread* (via threading.local) so no single
+      connection object is ever used from two threads at once. sqlite3 connections
+      are not safe for concurrent cross-thread use even with check_same_thread=False.
+    - A single process-wide writer lock serializes writes (execute+commit) so SQLite's
+      single-writer guarantee holds within a process.
+    - Cross-process contention (e.g. the watch daemon is a separate process) is handled
+      by WAL + busy_timeout=5000, and a bounded retry on OperationalError('database is locked').
+    """
+
+    # Process-wide lock shared by ALL Database instances (so two Database() objects in
+    # the same process still serialize their writers). Class-level = one lock per process.
+    _writer_lock = threading.Lock()
 
     def __init__(self, db_path: str | Path = DB_PATH):
         self.db_path = Path(db_path)
-        self._conn: Optional[sqlite3.Connection] = None
+        # ponytail: per-thread connection pool. Lazy-init each thread's connection on
+        # first _get_conn() from that thread. Upgrade path: a bounded pool with max-age.
+        self._local = threading.local()
         self._init_called = False
         # ponytail: _init_db() is deferred to first _get_conn() call so that
         # module-level `db = Database()` doesn't crash on import when Hermes
         # isn't installed or the data dir is unwritable.
         # Upgrade path: make Database a proper lazy singleton.
 
-    def _get_conn(self) -> sqlite3.Connection:
-        if self._conn is None:
-            self.db_path.parent.mkdir(parents=True, exist_ok=True)
-            self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
-            self._conn.row_factory = sqlite3.Row
-            self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute("PRAGMA busy_timeout=5000")
-            self._conn.execute("PRAGMA foreign_keys=ON")
-            # ponytail: _init_db() runs on first connection so schema + migrations
-            # are applied before any query. This is the lazy init that prevents
-            # import-time crashes when Hermes isn't installed.
-            self._init_db()
-        return self._conn
+    def _make_conn(self) -> sqlite3.Connection:
+        """Create and configure a fresh connection for the calling thread."""
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA foreign_keys=ON")
+        # ponytail: _init_db() runs on first connection so schema + migrations
+        # are applied before any query. This is the lazy init that prevents
+        # import-time crashes when Hermes isn't installed.
+        self._init_db(conn)
+        return conn
 
-    def _init_db(self) -> None:
-        conn = self._conn
-        assert conn is not None, "_init_db called before _get_conn set up self._conn"
+    def _get_conn(self) -> sqlite3.Connection:
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = self._make_conn()
+            self._local.conn = conn
+        return conn
+
+    def _write(self, sql: str, params: tuple, retries: int = 5) -> None:
+        """Execute a write (INSERT/UPDATE/DELETE) under the process-wide writer lock
+        with a bounded retry on 'database is locked' (handles cross-process contention
+        that busy_timeout doesn't always absorb during sustained write bursts)."""
+        for attempt in range(retries):
+            try:
+                with self._writer_lock:
+                    conn = self._get_conn()
+                    conn.execute(sql, params)
+                    conn.commit()
+                return
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e) and attempt < retries - 1:
+                    time.sleep(0.05 * (attempt + 1))
+                    continue
+                raise
+
+    def _init_db(self, conn: sqlite3.Connection) -> None:
 
         # GS-019 §Recovery: Check for stranded migration tables
         self._recover_stranded_tables(conn)
@@ -1524,14 +1563,12 @@ class Database:
     def log_pulse(self, agent_name: str, status: str, latency_ms: float = 0,
                   error_message: str = "", agent_framework: str = "hermes",
                   instance_id: str = "", metadata_json: str = "") -> None:
-        conn = self._get_conn()
-        conn.execute(
+        self._write(
             "INSERT INTO pulse_log (agent_name, agent_framework, status, latency_ms, error_message, timestamp, instance_id, metadata) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (agent_name, agent_framework, status, latency_ms, error_message,
              int(time.time()), instance_id or "", metadata_json or ""),
         )
-        conn.commit()
         # Auto-log to errors table on error/dead status with message
         if status in ("error", "dead") and error_message:
             self.log_error(agent_name, f"pulse_{status}", error_message,
@@ -2114,17 +2151,15 @@ class Database:
     # -- Chisel --
 
     def log_trim(self, agent_name: str, identity: int, skills: int, memory: int,
-                 tools: int, guidance: int, total: int, savings: float,
+                 tools: int, guidance: int, total: int, savings: float = 0,
                  mode: str = "stdin") -> None:
-        conn = self._get_conn()
-        conn.execute(
+        self._write(
             "INSERT INTO chisel_trims (agent_name, identity_tokens, skills_tokens, memory_tokens, "
             "tools_tokens, guidance_tokens, total_tokens, savings_ratio, mode, timestamp) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (agent_name, identity, skills, memory, tools, guidance, total, savings,
              mode, int(time.time())),
         )
-        conn.commit()
 
     def get_trims(self, agent_name: Optional[str] = None, limit: int = 10) -> list[dict]:
         conn = self._get_conn()
@@ -2422,13 +2457,11 @@ class Database:
 
     def log_error(self, agent_name: str, error_type: str, message: str,
                   severity: str = "error") -> None:
-        conn = self._get_conn()
-        conn.execute(
+        self._write(
             "INSERT INTO errors (agent_name, error_type, error_message, severity, timestamp) "
             "VALUES (?, ?, ?, ?, ?)",
             (agent_name, error_type, message[:2000], severity, int(time.time())),
         )
-        conn.commit()
 
     def get_errors(self, agent_name: Optional[str] = None, limit: int = 50) -> list[dict]:
         conn = self._get_conn()
@@ -2460,8 +2493,7 @@ class Database:
                        status: str = "UNSET", attributes: dict | None = None) -> None:
         """Record an OTel span in the trace_spans table."""
         import json as _json
-        conn = self._get_conn()
-        conn.execute(
+        self._write(
             "INSERT INTO trace_spans (trace_id, span_id, parent_span_id, agent_name, "
             "span_name, span_kind, start_time_ns, end_time_ns, status, attributes, created_at) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -2469,7 +2501,6 @@ class Database:
              start_time_ns, end_time_ns, status,
              _json.dumps(attributes or {}), int(time.time())),
         )
-        conn.commit()
 
     def get_trace_spans(self, agent_name: str = "", trace_id: str = "", limit: int = 200) -> list[dict]:
         """Get trace spans, optionally filtered by agent or trace."""
@@ -3688,8 +3719,7 @@ class Database:
         if cost == 0 and provider:
             from observeco.tracking.tokens import compute_cost
             cost = compute_cost(total_tokens, provider)
-        conn = self._get_conn()
-        cur = conn.execute(
+        self._write(
             "INSERT INTO token_logs (agent_name, turn_id, total_tokens, identity_tokens, "
             "skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
             "provider, cost, anomaly_score, input_tokens, output_tokens, "
@@ -3703,12 +3733,11 @@ class Database:
              model, latency_ms, tool_calls, topic_id,
              int(time.time()))
         )
-        conn.commit()
 
         # Auto-register new agent in agent_configs (type classified by name pattern)
-        self._ensure_agent_registered(conn, agent_name)
+        self._ensure_agent_registered(self._get_conn(), agent_name)
 
-        return {"id": cur.lastrowid}
+        return {"id": None}
 
     def _ensure_agent_registered(self, conn, agent_name: str) -> None:
         """Upsert agent into agent_configs if not already registered.
