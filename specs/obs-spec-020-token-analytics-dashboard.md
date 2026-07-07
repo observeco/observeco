@@ -165,14 +165,15 @@ Aggregation is computed on-the-fly from `token_logs` via SQL `GROUP BY` with tim
 
 **Location:** Agent detail view → new "Token Analytics" tab
 
-**Components (SHIPPED — matches v0.3.1 token tab design):**
+**Components (SHIPPED — matches v0.3.1 token tab screenshot):**
 
-1. **4-Chart Grid** (Chart.js) — each chart has a stat-card header (value + label):
-   - **Cost** (bar) — X: time, Y: $ cost. Includes a red dashed **Target** benchmark line (default = mean daily cost of the window; configurable via budget config).
-   - **Cache Hit Rate** (line, %) — X: time, Y: 0-100%. Computed per bucket as `cache_read / input_tokens`.
-   - **Output Share** (line, %) — X: time, Y: 0-100%. Computed per bucket as `output_tokens / total_tokens`.
-   - **Cache Hit by Agent** (horizontal bars) — X: 0-100% hit rate per agent, colored red <5% / yellow 5-20% / green >20%.
-   - ponytail: the earlier spec called for one stacked time-series with component toggle + zoom/pan. The shipped design uses 4 focused charts (v0.3.1 screenshot lineage) instead — simpler, matches what users actually saw. Component toggle + zoom/pan deferred.
+1. **5-Chart Grid** (single vertical column, uniform height → all 5 share an aligned time axis). Each chart has a stat-card header (value + label). Benchmark bands drawn via inline Chart.js plugin (no annotation-plugin dependency):
+   - **Cost** (bar) — X: time, Y: $ cost. Red dashed **Target** line (mean daily cost of window; configurable via budget config).
+   - **Tokens / Turn** (line) — X: time, Y: tokens/turn (lower better). Bands: Low 1000 / Mod 10000 / High 50000 / V.High 100000.
+   - **Output / Input ratio** (line) — X: time, Y: output÷input (higher better). Bands: Low 0.5 / Mod 1 / High 5 / V.High 20.
+   - **Cache Hit Rate** (line, %) — X: time, Y: 0-100% (higher better). Bands: Low 5 / Mod 10 / High 50 / V.High 80.
+   - **Cost / Turn** (line, $) — X: time, Y: $/turn (lower better). Bands: Low 0.001 / Mod 0.01 / High 0.1.
+   - ponytail: earlier spec called for one stacked time-series with component toggle + zoom/pan. Shipped design uses 5 focused charts (v0.3.1 lineage). Component toggle + zoom/pan deferred.
 
 2. **Filter Bar**
    - Agent selector (dropdown)
@@ -191,7 +192,7 @@ Aggregation is computed on-the-fly from `token_logs` via SQL `GROUP BY` with tim
    - Columns: Agent, Cost (bold), Tokens, Model, Data (Acc/Est), Cache %
    - Click to open agent modal
 
-5. **Per-Agent Cache Bar Chart** (v2) — see Chart 1.4 above (Cache Hit by Agent). Also rendered as a full-height chart in the Cache Efficiency section below the grid.
+5. **Per-Agent Cache Bar Chart** (v2) — horizontal bars, one per agent, X: 0-100% hit rate, colored red <5% / yellow 5-20% / green >20%. Rendered in the Cache Efficiency section below the grid.
 
 6. **Drill-Down Modal** — deferred (not in shipped build).
 
