@@ -415,9 +415,13 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 </div>
 
 <script>
-// ponytail: data passed via window._tokenChart; chart rendered by renderTokenChart() on htmx:afterSwap.
-// Inline <script> in htmx-swapped HTML does NOT execute — global fn + afterSwap is the fix.
+// ponytail: render is triggered HERE (not via htmx:afterSwap) to avoid the
+// script-vs-afterSwap race. htmx DOES execute inline scripts in swapped content,
+// so setting window._tokenChart then calling renderTokenChart() synchronously is
+// race-free: data is fresh, canvas is in the DOM. The afterSwap listener in app.js
+// is a no-op fallback now (target.id check fails for OOB swaps anyway).
 window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "total_data": total_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data, "est_data": est_data, "range_label": range_label})};
+if (typeof renderTokenChart === 'function') renderTokenChart();
 </script>
 </div>"""
 

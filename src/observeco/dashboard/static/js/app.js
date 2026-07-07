@@ -378,7 +378,7 @@ setInterval(function() {
   // ponytail: innerHTML, NOT outerHTML. outerHTML on first refresh removes the container (id lost), then htmx falls back to BODY as target on second refresh, replacing entire page with verdict HTML — black screen.
   htmx.ajax('GET', '/api/fleet/verdict', {target: '#verdictContainer', swap: 'innerHTML'});
   htmx.ajax('GET', fleetUrl, {target: '#fleetGrid', swap: 'innerHTML'});
-  htmx.ajax('GET', '/api/alerts2', {target: '#alertsContainer', swap: 'innerHTML'});
+  htmx.ajax('GET', '/api/alerts/live', {target: '#alertsContainer', swap: 'innerHTML'});
   setTimeout(function() {
     if (document.querySelector('#fleetGrid')) {
       document.querySelector('#fleetGrid').parentElement.scrollTop = sp;
@@ -426,8 +426,5 @@ function renderTokenChart() {
 // ponytail: Canvas pattern fill is heavier; CSS background-image on the legend swatch is enough
 // to communicate "estimated". The bar itself uses a muted slate; upgrade to a diagonal-hatch
 // canvas pattern if you want the bars themselves visibly hatched.
-document.addEventListener('htmx:afterSwap', function(e) {
-  if (e.detail.target && e.detail.target.id === 'analyticsContent') {
-    renderTokenChart();
-  }
-});
+// Chart rendering is triggered by the inline <script> in the tokens fragment (race-free);
+// no htmx:afterSwap listener needed — the OOB swap target is body, not #analyticsContent.
