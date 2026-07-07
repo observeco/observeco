@@ -594,10 +594,11 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .verdict-card .vc-num.bad{color:var(--danger)}
 .verdict-card .vc-lab{font-size:var(--text-xs);color:var(--fg-3)}
 .verdict-card .vc-rec{margin-top:var(--space-3);font-size:var(--text-sm);color:var(--fg-2);border-top:1px solid var(--border);padding-top:var(--space-3)}
-/* token tab 4-chart grid (v0.3.1 design lineage) */
-.tok4-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-4);margin-bottom:var(--space-6)}
+/* token tab chart grid (v0.3.1 design lineage) — single column, equal height
+   so all 5 charts share the same time-axis length/scale (human-comparable). */
+.tok4-grid{display:grid;grid-template-columns:1fr;gap:var(--space-4);margin-bottom:var(--space-6)}
 .chart-card{padding:var(--space-4)}
-.chart-card .cc-head{display:flex;align-items:baseline;gap:8px;margin-bottom:var(--space-2)}
+.chart-card .chart-box{height:150px !important}
 .chart-card .cc-head h2{font-size:var(--text-sm);font-weight:600;color:var(--fg-2);margin:0}
 .chart-card .cc-val{font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--fg);margin-left:auto}
 .chart-card .cc-lab{font-size:var(--text-xs);color:var(--fg-3)}

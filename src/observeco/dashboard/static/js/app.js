@@ -392,42 +392,44 @@ setInterval(function() {
 // ponytail: chart init MUST run here, not in inline <script> inside swapped HTML.
 // htmx innerHTML swaps do not execute inline scripts. Global fn + afterSwap is the
 // same pattern the drift chart attempts (loadDriftChart). Data arrives via window._tokenChart.
-// ── Token tab: 4-chart grid (Cost / Cache Hit Rate / Output Share / Cache-by-Agent) ──
-// Design: observeco token tab screenshot (v0.3.1 lineage) — 4 separate time-series
-// charts, each with a stat-card header. Cost carries a "Target" benchmark line.
+// ── Token tab: 5-chart grid (Cost + 4 efficiency ratio charts, v0.3.1 design) ──
+// Chart 1: Cost (bar + Target line). Charts 2-5: efficiency ratios over time,
+// each with 4 benchmark bands (Low/Moderate/High/Very High) from the v0.3.1 shot.
 
-// Minimal inline plugin: draws a horizontal dashed benchmark line at `value` with a label.
-// Avoids the chartjs-plugin-annotation dependency (not bundled). ponytail: if the
-// annotation plugin is later added, replace this with its config — same visual result.
-function _benchmarkPlugin(value, label) {
-  if (value == null || isNaN(value)) return [];
-  return [{
-    id: 'bench_' + label,
-    afterDraw: function(chart) {
-      var yScale = chart.scales.y;
-      if (!yScale) return;
-      var y = yScale.getPixelForValue(value);
-      if (y < yScale.top || y > yScale.bottom) return;
-      var ctx = chart.ctx;
-      ctx.save();
-      ctx.beginPath();
-      ctx.setLineDash([5, 4]);
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 1.5;
-      ctx.moveTo(chart.chartArea.left, y);
-      ctx.lineTo(chart.chartArea.right, y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = '#ef4444';
-      ctx.font = '10px monospace';
-      ctx.textAlign = 'right';
-      ctx.fillText(label + ' ' + value, chart.chartArea.right - 4, y - 4);
-      ctx.restore();
-    }
-  }];
+// Minimal inline plugin: draws horizontal dashed benchmark lines. Accepts an array of
+// {value,label,color}. Avoids the chartjs-plugin-annotation dependency (not bundled).
+// ponytail: if the annotation plugin is later added, replace with its config — same result.
+function _benchmarkPlugin(lines) {
+  if (!lines || !lines.length) return [];
+  return lines.filter(function(l){ return l && l.value != null && !isNaN(l.value); }).map(function(l){
+    return {
+      id: 'bench_' + l.label,
+      afterDraw: function(chart) {
+        var yScale = chart.scales.y;
+        if (!yScale) return;
+        var y = yScale.getPixelForValue(l.value);
+        if (y < yScale.top || y > yScale.bottom) return;
+        var ctx = chart.ctx;
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = l.color || '#ef4444';
+        ctx.lineWidth = 1;
+        ctx.moveTo(chart.chartArea.left, y);
+        ctx.lineTo(chart.chartArea.right, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = l.color || '#ef4444';
+        ctx.font = '9px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(l.label, chart.chartArea.left + 3, y - 3);
+        ctx.restore();
+      }
+    };
+  });
 }
 
-// Chart 1: Cost over time + Target benchmark line
+// Chart 1: Cost over time + Target benchmark line (mean daily cost)
 function renderTokenChart() {
   if (typeof Chart === 'undefined') return;
   var data = window._tokenChart;
@@ -447,52 +449,68 @@ function renderTokenChart() {
         y: {grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return '$' + v;}}}
       }
     },
-    plugins: _benchmarkPlugin(target, 'Target')
+    plugins: _benchmarkPlugin(target != null ? [{value: target, label: 'Target', color: '#ef4444'}] : [])
   });
 }
 
-// Chart 2: Cache hit rate over time (%)
+// Shared builder for the 4 efficiency line charts (each with 4 benchmark bands).
+function _renderEffChart(canvasId, globalKey, color, yFmt, benchLines) {
+  if (typeof Chart === 'undefined') return;
+  var data = window[globalKey];
+  if (!data) return;
+  var ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  var instKey = '_' + canvasId + 'Instance';
+  if (window[instKey]) window[instKey].destroy();
+  window[instKey] = new Chart(ctx, {
+    type: 'line',
+    data: {labels: data.labels, datasets: [{label: canvasId, data: data.data, borderColor: color, backgroundColor: color.replace(')', ',.12)').replace('rgb', 'rgba'), fill: true, tension: 0.3, pointRadius: 0}]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return yFmt(c.parsed.y);}}}},
+      scales: {
+        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
+        y: {grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: yFmt}}
+      }
+    },
+    plugins: _benchmarkPlugin(benchLines)
+  });
+}
+
+// Chart 2: Tokens / Turn (lower better) — benchmark 1K/10K/50K/100K
+function renderTptChart() {
+  _renderEffChart('tptChart', '_tptChart', 'rgb(59,130,246)', function(v){return Math.round(v).toLocaleString();}, [
+    {value: 1000, label: 'Low', color: '#22c55e'},
+    {value: 10000, label: 'Mod', color: '#eab308'},
+    {value: 50000, label: 'High', color: '#f97316'},
+    {value: 100000, label: 'V.High', color: '#ef4444'}
+  ]);
+}
+// Chart 3: Output / Input ratio (higher better) — benchmark 0.5/1/5/20
+function renderOirChart() {
+  _renderEffChart('oirChart', '_oirChart', 'rgb(234,179,8)', function(v){return (v||0).toFixed(2);}, [
+    {value: 0.5, label: 'Low', color: '#ef4444'},
+    {value: 1, label: 'Mod', color: '#f97316'},
+    {value: 5, label: 'High', color: '#eab308'},
+    {value: 20, label: 'V.High', color: '#22c55e'}
+  ]);
+}
+// Chart 4: Cache Hit Rate (higher better) — benchmark 5/10/50/80 %
 function renderCacheRateChart() {
-  if (typeof Chart === 'undefined') return;
-  var data = window._cacheRateChart;
-  if (!data) return;
-  var ctx = document.getElementById('cacheRateChart');
-  if (!ctx) return;
-  if (window._cacheRateInstance) window._cacheRateInstance.destroy();
-  window._cacheRateInstance = new Chart(ctx, {
-    type: 'line',
-    data: {labels: data.labels, datasets: [{label: 'Cache hit %', data: data.data, borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,.15)', fill: true, tension: 0.3, pointRadius: 0}]},
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return 'Hit: ' + (c.parsed.y||0) + '%';}}}},
-      scales: {
-        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
-        y: {min: 0, max: 100, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return v + '%';}}}
-      }
-    }
-  });
+  _renderEffChart('cacheRateChart', '_cacheRateChart', 'rgb(139,92,246)', function(v){return (v||0) + '%';}, [
+    {value: 5, label: 'Low', color: '#ef4444'},
+    {value: 10, label: 'Mod', color: '#f97316'},
+    {value: 50, label: 'High', color: '#eab308'},
+    {value: 80, label: 'V.High', color: '#22c55e'}
+  ]);
 }
-
-// Chart 3: Output share over time (%)
-function renderOutputRateChart() {
-  if (typeof Chart === 'undefined') return;
-  var data = window._outputRateChart;
-  if (!data) return;
-  var ctx = document.getElementById('outputRateChart');
-  if (!ctx) return;
-  if (window._outputRateInstance) window._outputRateInstance.destroy();
-  window._outputRateInstance = new Chart(ctx, {
-    type: 'line',
-    data: {labels: data.labels, datasets: [{label: 'Output %', data: data.data, borderColor: '#eab308', backgroundColor: 'rgba(234,179,8,.15)', fill: true, tension: 0.3, pointRadius: 0}]},
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return 'Output: ' + (c.parsed.y||0) + '%';}}}},
-      scales: {
-        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
-        y: {min: 0, max: 100, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return v + '%';}}}
-      }
-    }
-  });
+// Chart 5: Cost / Turn (lower better) — benchmark 0.001/0.01/0.1 $
+function renderCptChart() {
+  _renderEffChart('cptChart', '_cptChart', 'rgb(34,197,94)', function(v){return '$' + (v||0).toFixed(4);}, [
+    {value: 0.001, label: 'Low', color: '#22c55e'},
+    {value: 0.01, label: 'Mod', color: '#eab308'},
+    {value: 0.1, label: 'High', color: '#ef4444'}
+  ]);
 }
 
 // ponytail: toggles are static HTML chips (data-idx = dataset index). They persist

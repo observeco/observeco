@@ -216,13 +216,14 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         # Bucket by integer-divided epoch of the row's own timestamp (true calendar alignment)
         bk = (log.get("recorded_at", 0) // bucket_sec) * bucket_sec
         if bk not in day_buckets:
-            day_buckets[bk] = {"cost": 0, "total": 0, "input": 0, "output": 0, "cache": 0, "cache_create": 0, "est": 0}
+            day_buckets[bk] = {"cost": 0, "total": 0, "input": 0, "output": 0, "cache": 0, "cache_create": 0, "est": 0, "count": 0}
         day_buckets[bk]["cost"] += log.get("cost", 0) or 0
         day_buckets[bk]["total"] += log.get("total_tokens", 0) or 0
         day_buckets[bk]["input"] += log.get("input_tokens", 0) or 0
         day_buckets[bk]["output"] += log.get("output_tokens", 0) or 0
         day_buckets[bk]["cache"] += log.get("cache_read_tokens", 0) or 0
         day_buckets[bk]["cache_create"] += log.get("cache_creation_tokens", 0) or 0
+        day_buckets[bk]["count"] += 1
         # ponytail: 'est' = estimated (source != otel) tokens for this bucket, used to
         # shade estimate-vs-accurate. 'acc' is implied (total - est). Upgrade: track per-bucket acc too.
         if log.get("source") != "otel":
@@ -246,22 +247,19 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     # Total = authoritative total_tokens per bucket (K) — not input+output (which misses cache
     # and collapses to input-only for watch-estimated rows where output=0).
     total_data = [day_buckets[k]["total"] // 1000 for k in sorted_keys]
-    # Cache hit rate per bucket (%) = cache_read / input_tokens (input already includes
-    # cache_read + cache_create + uncached). Bounded [0,100].
+    # ── Efficiency time-series (v0.3.1 design: 4 ratio charts, each with benchmark bands) ──
+    # All divide by max(count,1) so empty buckets → 0 (not divide-by-zero / inf).
+    tokens_per_turn = [round(day_buckets[k]["total"] / max(day_buckets[k]["count"], 1)) for k in sorted_keys]
+    output_input_ratio = [
+        round(day_buckets[k]["output"] / max(day_buckets[k]["input"], 1), 2) for k in sorted_keys
+    ]
     cache_rate_data = [
-        round(day_buckets[k]["cache"] / max(day_buckets[k]["input"], 1) * 100, 1)
-        for k in sorted_keys
+        round(day_buckets[k]["cache"] / max(day_buckets[k]["input"], 1) * 100, 1) for k in sorted_keys
     ]
-    # Output share per bucket (%) = output_tokens / total_tokens * 100 (what fraction of
-    # the window's tokens were model output vs input/cache). Bounded [0,100].
-    output_rate_data = [
-        round(day_buckets[k]["output"] / max(day_buckets[k]["total"], 1) * 100, 1)
-        for k in sorted_keys
-    ]
-    # Target cost line for the Cost chart: default = mean of the window's daily cost,
-    # configurable later via settings. ponytail: a real budget threshold (from
-    # billing config) would be the right source; mean-of-window is a sane default
-    # until that exists. Upgrade: read OBSERVECO_TOKEN_BUDGET from config.
+    cost_per_turn = [round(day_buckets[k]["cost"] / max(day_buckets[k]["count"], 1), 5) for k in sorted_keys]
+    # Target cost line for Chart 1 (Cost): mean daily cost of the window. ponytail: a real
+    # budget threshold from billing config is the right source; mean-of-window is a sane
+    # default until that exists. Upgrade: read OBSERVECO_TOKEN_BUDGET from config.
     target_cost = round(sum(cost_data) / max(len(cost_data), 1), 2)
 
     # Per-turn timeline (real total_tokens per call, time-ordered)
@@ -404,20 +402,24 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
 <div class="tok4-grid">
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Cost</h2><span class="cc-val mono">${_fmt_dollar(total_cost)}</span><span class="cc-lab">total · {range_label}</span></div>
-        <div class="chart-box" style="height:160px"><canvas id="costChart"></canvas></div>
+        <div class="cc-head"><h2>Cost</h2><span class="cc-val mono">${_fmt_dollar(total_cost)}</span><span class="cc-lab">total · {range_label} · Target = mean/day</span></div>
+        <div class="chart-box"><canvas id="costChart"></canvas></div>
     </div>
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Cache Hit Rate</h2><span class="cc-val mono">{overall_cache_rate}%</span><span class="cc-lab">fleet avg</span></div>
-        <div class="chart-box" style="height:160px"><canvas id="cacheRateChart"></canvas></div>
+        <div class="cc-head"><h2>Tokens / Turn</h2><span class="cc-val mono">{_fmt_tok(sum(d['tokens'] for _, d in sorted_agents) // max(turn_count, 1))}</span><span class="cc-lab">lower better</span></div>
+        <div class="chart-box"><canvas id="tptChart"></canvas></div>
     </div>
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Output Share</h2><span class="cc-val mono">{round(total_output / max(total_input + total_output, 1) * 100)}%</span><span class="cc-lab">of tokens</span></div>
-        <div class="chart-box" style="height:160px"><canvas id="outputRateChart"></canvas></div>
+        <div class="cc-head"><h2>Output / Input</h2><span class="cc-val mono">{round(total_output / max(total_input, 1), 2)}</span><span class="cc-lab">ratio · higher better</span></div>
+        <div class="chart-box"><canvas id="oirChart"></canvas></div>
     </div>
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Cache Hit by Agent</h2><span class="cc-val mono">{len(sorted_agents)}</span><span class="cc-lab">agents</span></div>
-        <div class="chart-box" style="height:160px"><canvas id="cacheChart"></canvas></div>
+        <div class="cc-head"><h2>Cache Hit Rate</h2><span class="cc-val mono">{overall_cache_rate}%</span><span class="cc-lab">higher better</span></div>
+        <div class="chart-box"><canvas id="cacheRateChart"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+        <div class="cc-head"><h2>Cost / Turn</h2><span class="cc-val mono">${_fmt_dollar(total_cost / max(turn_count, 1))}</span><span class="cc-lab">lower better</span></div>
+        <div class="chart-box"><canvas id="cptChart"></canvas></div>
     </div>
 </div>
 
@@ -466,10 +468,14 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 // is a no-op fallback now (target.id check fails for OOB swaps anyway).
 window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "total_data": total_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data, "est_data": est_data, "range_label": range_label})};
 if (typeof renderTokenChart === 'function') renderTokenChart();
+window._tptChart = {json.dumps({"labels": labels, "data": tokens_per_turn})};
+if (typeof renderTptChart === 'function') renderTptChart();
+window._oirChart = {json.dumps({"labels": labels, "data": output_input_ratio})};
+if (typeof renderOirChart === 'function') renderOirChart();
 window._cacheRateChart = {json.dumps({"labels": labels, "data": cache_rate_data})};
 if (typeof renderCacheRateChart === 'function') renderCacheRateChart();
-window._outputRateChart = {json.dumps({"labels": labels, "data": output_rate_data})};
-if (typeof renderOutputRateChart === 'function') renderOutputRateChart();
+window._cptChart = {json.dumps({"labels": labels, "data": cost_per_turn})};
+if (typeof renderCptChart === 'function') renderCptChart();
 window._cacheChart = {json.dumps({"agents": cache_chart_agents, "rates": cache_chart_rates, "target": target_cost})};
 if (typeof renderCacheChart === 'function') renderCacheChart();
 </script>
