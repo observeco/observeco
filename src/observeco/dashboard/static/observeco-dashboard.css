@@ -571,6 +571,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .chart-box{position:relative;height:240px}
 .legend-row{display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-3)}
 .legend-row span{display:flex;align-items:center;gap:6px;font-size:var(--text-xs);color:var(--fg-2)}.legend-row i{width:12px;height:3px;border-radius:2px}
+/* token series toggle chips — clickable, reflect chart dataset visibility */
+.tgl{cursor:pointer;user-select:none;opacity:.4;transition:opacity .12s}
+.tgl.on{opacity:1}
+.tgl:hover{opacity:.75}
+.tgl.on:hover{opacity:1}
+.tgl i{width:12px;height:3px;border-radius:2px}
 .attr-ring{display:flex;align-items:center;gap:var(--space-4)}
 .attr-num{font-family:var(--font-mono);font-size:40px;font-weight:700;color:var(--accent);line-height:1}
 .attr-bar{height:14px;border-radius:3px;background:var(--bg);overflow:hidden;display:flex;margin:var(--space-3) 0 6px}

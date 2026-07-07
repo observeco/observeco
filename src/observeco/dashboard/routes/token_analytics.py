@@ -358,12 +358,12 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         <div class="panel-h"><h2>Token Volume</h2><span class="meta mono">{range_label}</span></div>
         <div class="chart-box"><canvas id="costChart"></canvas></div>
         {('<div class="dq-note">⚠ This window is 100% estimated from the watch daemon — agents stopped reporting OTEL telemetry ~2d ago. Output &amp; cache-read breakdowns are unavailable until telemetry resumes.</div>') if estimated_only else ''}
-        <div class="legend-row">
-            <span><i style="background:var(--accent)"></i> Total (K)</span>
-            <span><i style="background:var(--meta)"></i> Input (K)</span>
-            <span><i style="background:var(--warn)"></i> Output (K)</span>
-            <span><i style="background:var(--token-skills)"></i> Cache reads (K)</span>
-            <span><i style="background:#64748b"></i> Estimated (K)</span>
+        <div class="legend-row" id="tokenSeriesToggles">
+            <span class="tgl on" data-idx="0"><i style="background:var(--accent)"></i> Total (K)</span>
+            <span class="tgl on" data-idx="1"><i style="background:var(--meta)"></i> Input (K)</span>
+            <span class="tgl on" data-idx="2"><i style="background:var(--warn)"></i> Output (K)</span>
+            <span class="tgl on" data-idx="3"><i style="background:var(--token-skills)"></i> Cache reads (K)</span>
+            <span class="tgl on" data-idx="4"><i style="background:#64748b"></i> Estimated (K)</span>
         </div>
     </div>
     <div>

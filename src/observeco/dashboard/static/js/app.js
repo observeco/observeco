@@ -421,10 +421,26 @@ function renderTokenChart() {
       }
     }
   });
+  bindTokenToggles();
 }
-// Estimate-vs-accurate: hatch the Estimated dataset bars (shading, not separate axis)
-// ponytail: Canvas pattern fill is heavier; CSS background-image on the legend swatch is enough
-// to communicate "estimated". The bar itself uses a muted slate; upgrade to a diagonal-hatch
-// canvas pattern if you want the bars themselves visibly hatched.
-// Chart rendering is triggered by the inline <script> in the tokens fragment (race-free);
-// no htmx:afterSwap listener needed — the OOB swap target is body, not #analyticsContent.
+
+// ponytail: toggles are static HTML chips (data-idx = dataset index). They persist
+// across range changes because the toggle ROW is outside the OOB-swapped chart canvas,
+// but the chart instance is rebuilt each render — so we re-bind handlers here and
+// apply the current hidden state from the chips' .on class.
+function bindTokenToggles() {
+  var chart = window._tokenChartInstance;
+  if (!chart) return;
+  var chips = document.querySelectorAll('#tokenSeriesToggles .tgl');
+  chips.forEach(function(chip){
+    var idx = parseInt(chip.getAttribute('data-idx'), 10);
+    // reflect current visibility
+    chip.classList.toggle('on', !chart.data.datasets[idx].hidden);
+    chip.onclick = function(){
+      var ds = chart.data.datasets[idx];
+      ds.hidden = !ds.hidden;
+      chip.classList.toggle('on', !ds.hidden);
+      chart.update();
+    };
+  });
+}
