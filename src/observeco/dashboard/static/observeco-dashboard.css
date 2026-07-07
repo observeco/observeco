@@ -599,9 +599,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .tok4-grid{display:grid;grid-template-columns:1fr;gap:var(--space-4);margin-bottom:var(--space-6)}
 .chart-card{padding:var(--space-4)}
 .chart-card .chart-box{height:150px !important}
-.chart-card .cc-head h2{font-size:var(--text-sm);font-weight:600;color:var(--fg-2);margin:0}
+.chart-card .cc-head{display:flex;align-items:baseline;gap:8px;margin-bottom:var(--space-2)}
 .chart-card .cc-val{font-family:var(--font-mono);font-size:20px;font-weight:700;color:var(--fg);margin-left:auto}
 .chart-card .cc-lab{font-size:var(--text-xs);color:var(--fg-3)}
+/* Chart 1 legend (colour-coded) + double-count warning */
+.chart-card .cc-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:var(--space-2)}
+.chart-card .cc-legend .lg{font-size:var(--text-xs);color:var(--fg-2);display:inline-flex;align-items:center;gap:4px}
+.chart-card .cc-legend .lg::before{content:"";width:9px;height:9px;border-radius:2px;display:inline-block}
+.chart-card .cc-legend .lg-input::before{background:#3b82f6}
+.chart-card .cc-legend .lg-output::before{background:#eab308}
+.chart-card .cc-legend .lg-cache::before{background:#8b5cf6}
+.chart-card .cc-legend .lg-est::before{background:#64748b}
+.chart-card .cc-warn{font-size:var(--text-xs);color:var(--danger);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:6px 8px;margin-bottom:var(--space-2)}
 .attr-ring{display:flex;align-items:center;gap:var(--space-4)}
 .attr-num{font-family:var(--font-mono);font-size:40px;font-weight:700;color:var(--accent);line-height:1}
 .attr-bar{height:14px;border-radius:3px;background:var(--bg);overflow:hidden;display:flex;margin:var(--space-3) 0 6px}
