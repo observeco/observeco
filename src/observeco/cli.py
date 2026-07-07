@@ -2050,5 +2050,754 @@ def run_agent(
         raise typer.Exit(code=127)
 
 
+# -- Benchmark subcommand --
+
+benchmark_app = typer.Typer(help="Agent quality benchmarks — lm-eval-harness via Hermes agent adapter")
+app.add_typer(benchmark_app, name="benchmark")
+
+
+@benchmark_app.command(name="create-task")
+def benchmark_create_task(
+    agent: str = typer.Option(..., "--agent", "-a", help="Agent name"),
+    name: str = typer.Option(..., "--name", "-n", help="Task name"),
+    input: str = typer.Option(..., "--input", "-i", help="Task description / input text"),
+    context: str = typer.Option("", "--context", "-c", help="File path or inline context"),
+    expected: str = typer.Option("", "--expected", "-e", help="Expected output description"),
+) -> None:
+    """Create a user-defined benchmark task."""
+    from pathlib import Path
+    from observeco.benchmark import BenchmarkEngine
+
+    ctx_text = context
+    if context and Path(context).exists():
+        ctx_text = Path(context).read_text(encoding="utf-8")
+
+    engine = BenchmarkEngine()
+    result = engine.create_task(agent, name, input, ctx_text, expected)
+    if result.get("ok"):
+        print(f"✅ Task created: {name} (agent={agent}, id={result['task_id']})")
+    else:
+        print(f"❌ Failed: {result.get('error', 'unknown error')}")
+
+
+@benchmark_app.command(name="list")
+def benchmark_list(
+    agent: str = typer.Option(..., "--agent", "-a", help="Agent name"),
+) -> None:
+    """List benchmark tasks for an agent."""
+    from observeco.benchmark import BenchmarkEngine
+
+    engine = BenchmarkEngine()
+    tasks = engine.list_tasks(agent)
+    if not tasks:
+        print(f"No tasks for agent '{agent}'")
+        return
+    print(f"Tasks for {agent}:")
+    for t in tasks:
+        print(f"  [{t['id']}] {t['task_name']}")
+        print(f"       input: {t['input_text'][:60]}...")
+        if t.get("expected_output"):
+            print(f"       expected: {t['expected_output'][:60]}...")
+
+
+@benchmark_app.command(name="delete")
+def benchmark_delete(
+    agent: str = typer.Option(..., "--agent", "-a", help="Agent name"),
+    name: str = typer.Option(..., "--name", "-n", help="Task name"),
+) -> None:
+    """Delete a benchmark task."""
+    from observeco.benchmark import BenchmarkEngine
+
+    engine = BenchmarkEngine()
+    result = engine.delete_task(agent, name)
+    if result.get("ok"):
+        print(f"✅ Deleted: {name}")
+    else:
+        print(f"❌ Failed: {result.get('error', 'unknown error')}")
+
+
+@benchmark_app.command(name="run")
+def benchmark_run(
+    agent: str = typer.Option(..., "--agent", "-a", help="Agent name"),
+    suite: str = typer.Option("", "--suite", "-s",
+        help="Pre-built suite: canary, full"),
+    tasks: str = typer.Option("", "--tasks", "-t",
+        help="Comma-separated task names or YAML file paths"),
+    limit: Optional[int] = typer.Option(None, "--limit", "-n",
+        help="Max samples per task (default: suite-dependent)"),
+    task_path: Optional[str] = typer.Option(None, "--task-path",
+        help="Directory for custom YAML task files"),
+    direct: bool = typer.Option(False, "--direct",
+        help="Call model API directly — bypasses agent harness to establish true model ceiling"),
+    litellm: bool = typer.Option(False, "--litellm",
+        help="Use LiteLLM with real logprobs from local llama-server for MC scoring"),
+) -> None:
+    """Run benchmarks through lm-eval-harness.
+
+    Default: routes through agent harness (hermes chat).
+    Use --direct to call the model API directly.
+    Use --litellm for real logprobs via local llama-server (fixes MC scoring).
+
+    Examples:
+        observeco benchmark run --agent hermes-main --suite canary
+        observeco benchmark run --agent hermes-main --suite canary --litellm
+        observeco benchmark run --agent hermes-main --tasks mmlu --limit 20
+    """
+    from observeco.benchmark import BenchmarkEngine
+
+    engine = BenchmarkEngine()
+    task_list = [t.strip() for t in tasks.split(",") if t.strip()] if tasks else None
+
+    result = engine.run_lm_eval(
+        agent_name=agent,
+        tasks=task_list,
+        suite=suite,
+        limit=limit,
+        task_include_path=task_path,
+        direct=direct,
+        litellm=litellm,
+    )
+
+    if not result.get("ok"):
+        print(f"❌ {result.get('error', 'unknown error')}")
+        return
+
+    print(f"\n📊 Benchmark Results — {agent}")
+    print(f"   Suite: {result['suite_name']}")
+    print(f"   Model: {result['model_used']}")
+    print()
+
+    task_results = result.get("results", {})
+    if not task_results:
+        print("   No task results returned.")
+        return
+
+    for task_name, metrics in task_results.items():
+        # Print primary metric
+        primary = None
+        for key, val in sorted(metrics.items()):
+            if not key.endswith("_stderr") and isinstance(val, (int, float)):
+                primary = (key, val)
+                break
+        if primary:
+            pct = f"{primary[1]:.1%}" if primary[1] <= 1.0 else f"{primary[1]:.2f}"
+            print(f"  {task_name}: {primary[0]}={pct}")
+
+
+@benchmark_app.command(name="results")
+def benchmark_results(
+    agent: str = typer.Option(..., "--agent", "-a", help="Agent name"),
+    limit: int = typer.Option(10, "--limit", "-l", help="Number of recent results"),
+) -> None:
+    """Show recent benchmark results for an agent."""
+    from observeco.benchmark import BenchmarkEngine
+
+    engine = BenchmarkEngine()
+    results = engine.get_results(agent, limit)
+    if not results:
+        print(f"No results for agent '{agent}'")
+        return
+    print(f"Recent results for {agent}:")
+    for r in results:
+        from datetime import datetime
+        ts = datetime.fromtimestamp(r["run_at"]).strftime("%Y-%m-%d %H:%M")
+        icon = "✅" if r["passed"] else "❌"
+        print(f"  {icon} {r['task_name']} — {r['score']:.0%} ({ts}, model={r['model_used']})")
+
+
+@benchmark_app.command(name="compare")
+def benchmark_compare(
+    agent: str = typer.Option(..., "--agent", "-a", help="Agent name"),
+    task: Optional[str] = typer.Option(None, "--task", help="Single task to compare"),
+    threshold: float = typer.Option(0.05, "--threshold", help="Degradation threshold (default 0.05)"),
+) -> None:
+    """Compare latest benchmark results to baseline. Flags degradation."""
+    from observeco.benchmark import BenchmarkEngine
+
+    engine = BenchmarkEngine()
+    result = engine.compare_baseline(
+        agent_name=agent,
+        task_name=task,
+        degradation_threshold=threshold,
+    )
+
+    if not result.get("ok"):
+        print(f"❌ {result.get('error', 'unknown error')}")
+        return
+
+    print(f"\n📊 Baseline Comparison — {agent}")
+    print(f"   Tasks: {result['total_tasks']}")
+    print(f"   Stable: {result['stable']}")
+    print(f"   Degraded: {result['degraded']}")
+    print()
+
+    for c in result["comparisons"]:
+        icon = "🔴" if c["degraded"] else "🟢"
+        if c["baseline_score"] is None:
+            print(f"  ⬜ {c['task_name']}: {c['latest_score']:.1%} (no baseline)")
+        else:
+            delta_str = f"+{c['delta']:.1%}" if c['delta'] >= 0 else f"{c['delta']:.1%}"
+            print(f"  {icon} {c['task_name']}: {c['latest_score']:.1%} (Δ {delta_str}) — {c['reason']}")
+
+
+@benchmark_app.command(name="grid")
+def benchmark_grid(
+    env: str = typer.Option("retail", "--env", "-e", help="τ-bench environment (retail, airline)"),
+    models: str = typer.Option("flash,pro", "--models", "-m", help="Comma-separated model keys"),
+    configs: str = typer.Option("baseline", "--configs", "-c", help="Comma-separated config names"),
+    tasks: str = typer.Option("0-4", "--tasks", "-t", help="Task range (e.g. 0-4) or comma-separated IDs"),
+    trials: int = typer.Option(3, "--trials", "-n", help="Number of trials per cell"),
+    max_steps: int = typer.Option(30, "--max-steps", help="Max steps per task"),
+) -> None:
+    """Run grid evaluation: models × harness configs × tasks."""
+    from observeco.benchmark.grid.runner import GridRunner
+    from observeco.benchmark.grid.configs import ALL_CONFIGS
+    from observeco.benchmark.grid.runner import MODELS as GRID_MODELS
+
+    # Parse models
+    model_keys = [m.strip() for m in models.split(",")]
+    model_dict = {k: GRID_MODELS[k] for k in model_keys if k in GRID_MODELS}
+
+    # Parse configs
+    config_names = [c.strip() for c in configs.split(",")]
+    config_list = [c for c in ALL_CONFIGS if c.name in config_names]
+
+    # Parse task IDs
+    if "-" in tasks:
+        parts = tasks.split("-")
+        task_ids = list(range(int(parts[0]), int(parts[1]) + 1))
+    else:
+        task_ids = [int(t.strip()) for t in tasks.split(",")]
+
+    if not model_dict:
+        print(f"❌ No valid models. Available: {list(GRID_MODELS.keys())}")
+        return
+    if not config_list:
+        print(f"❌ No valid configs. Available: {[c.name for c in ALL_CONFIGS]}")
+        return
+
+    print(f"\n🧪 Grid Evaluation")
+    print(f"   Environment: {env}")
+    print(f"   Models: {list(model_dict.keys())}")
+    print(f"   Configs: {[c.name for c in config_list]}")
+    print(f"   Tasks: {task_ids} ({len(task_ids)} tasks)")
+    print(f"   Trials: {trials}")
+    print()
+
+    runner = GridRunner(
+        models=model_dict,
+        configs=config_list,
+        num_trials=trials,
+    )
+
+    result = runner.run_tau_bench(
+        env_name=env,
+        task_ids=task_ids,
+        max_steps=max_steps,
+    )
+
+    print(f"\n📊 Grid Results — {env}")
+    print(f"   Cells: {len(result.cells)}")
+    print()
+
+    for cell in result.cells:
+        ci = cell.reward_ci
+        print(
+            f"  {cell.model_name:>8} | {cell.config_name:<20} | "
+            f"reward={cell.mean_reward:.3f} "
+            f"[{ci[0]:.3f}, {ci[1]:.3f}] | "
+            f"calls={cell.total_calls} "
+            f"timeouts={cell.total_timeouts} "
+            f"hang={cell.hang_rate:.1%} "
+            f"recover={cell.recovery_rate:.1%}"
+        )
+        for flag in cell.flags:
+            print(f"    ⚠️  {flag}")
+
+    print(f"\nResults saved to ~/.observeco/grid/")
+
+
+# ── Canary Commands ──────────────────────────────────────────────────────────
+
+canary_app = typer.Typer(help="Capability monitoring canary — regression tripwire", no_args_is_help=True)
+app.add_typer(canary_app, name="canary")
+
+
+@canary_app.command(name="run")
+def canary_run(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+    tasks: Optional[str] = typer.Option(None, "--tasks", "-t", help="Comma-separated task IDs (default: all)"),
+    trials: Optional[int] = typer.Option(None, "--trials", "-n", help="Override per-task trial count"),
+    config_label: Optional[str] = typer.Option(None, "--label", "-l", help="Config label for this run"),
+) -> None:
+    """Run the canary suite — execute all tasks and compare against baseline."""
+    from observeco.capability.canary import CanaryRunner
+    from observeco.capability.baseline import BaselineManager
+    from observeco.capability.drift import DriftDetector
+    from observeco.db import Database
+
+    db = Database()
+    # Benchmark is a batch job (spawns 9 subprocesses, runs 3+ min). Use a long
+    # busy_timeout so it waits through any concurrent dashboard writes instead
+    # of failing on the default 5s lock. WAL mode lets the dashboard keep
+    # reading while this writes.
+    db._get_conn().execute("PRAGMA busy_timeout=30000")
+    runner = CanaryRunner(db=db)
+
+    task_ids = None
+    if tasks:
+        task_ids = [t.strip() for t in tasks.split(",")]
+
+    print(f"\n🔬 Canary Run — agent={agent}")
+    report = runner.run(
+        agent_name=agent,
+        task_ids=task_ids,
+        trials=trials,
+        config_label=config_label,
+    )
+
+    if report.total_tasks == 0:
+        print("❌ No tasks found. Create tasks with 'observeco task create'.")
+        return
+
+    # Print report
+    print(f"\n📊 Canary Report — {report.run_id[:8]}")
+    print(f"   Config hash: {report.config_hash}")
+    print(f"   Overall: {report.overall_accuracy:.1%} "
+          f"[{report.ci_lower:.1%}, {report.ci_upper:.1%}] 95% CI")
+    print(f"   Pass: {report.pass_count} | Hang: {report.hang_count} | Fail: {report.fail_count}")
+    print(f"   Cost: ${report.total_cost:.4f} | Tokens: {report.total_tokens}")
+    print()
+
+    for tr in report.per_task:
+        status_icon = "✅" if tr["fails"] == 0 and tr["hangs"] == 0 else "❌"
+        print(f"  {status_icon} {tr['task_name']}")
+        print(f"     Pass: {tr['passes']} | Hang: {tr['hangs']} | Fail: {tr['fails']}")
+        print(f"     Accuracy: {tr['accuracy']:.1%} [{tr['ci_lower']:.1%}, {tr['ci_upper']:.1%}]")
+        print(f"     Cost: ${tr['cost']:.4f}")
+
+    # Check drift
+    baseline_mgr = BaselineManager(db=db)
+    drift_result = baseline_mgr.compare(
+        run_id=report.run_id,
+        agent_name=agent,
+        config_hash=report.config_hash,
+        current_pass=report.pass_count,
+        current_fail=report.fail_count,
+        per_task_results=report.per_task,
+    )
+
+    if drift_result:
+        sev_icon = {"breach": "🔴", "warning": "🟡", "info": "🔵"}.get(drift_result.severity, "⚪")
+        print(f"\n{sev_icon} Drift: {drift_result.drift_pct:+.1f}% (p={drift_result.p_value:.4f}, {drift_result.severity})")
+        if drift_result.breached_tasks:
+            print(f"   Breached tasks: {', '.join(drift_result.breached_tasks)}")
+
+        # Store drift event
+        detector = DriftDetector(db=db)
+        detector.check(
+            run_id=report.run_id,
+            agent_name=agent,
+            config_hash=report.config_hash,
+            config_label=config_label,
+            pass_count=report.pass_count,
+            fail_count=report.fail_count,
+            per_task_results=report.per_task,
+        )
+    else:
+        print("\n⚪ No baseline yet — needs 3+ runs with same config to enable drift detection.")
+
+
+@canary_app.command(name="list")
+def canary_list(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+    limit: int = typer.Option(20, "--limit", "-n", help="Number of runs to show"),
+) -> None:
+    """List recent canary runs with pass rates."""
+    from observeco.db import Database
+    from observeco.capability.canary import CanaryRunner
+
+    runner = CanaryRunner(db=Database())
+    runs = runner.list_runs(agent_name=agent, limit=limit)
+
+    if not runs:
+        print(f"No canary runs for agent '{agent}'. Run 'observeco canary run'.")
+        return
+
+    print(f"\n📋 Canary Runs — {agent} ({len(runs)} runs)")
+    print(f"{'Run ID':<10} {'Date':<20} {'Status':<12} {'Pass':>6} {'Fail':>6} {'Hang':>6} {'Accuracy':>10}")
+    print("-" * 72)
+    for r in runs:
+        total = (r["pass_count"] or 0) + (r["fail_count"] or 0)
+        acc = f"{r['pass_count'] / total:.1%}" if total > 0 else "N/A"
+        print(f"{r['id'][:8]:<10} {r['started_at'][:19]:<20} "
+              f"{r['status']:<12} {r['pass_count'] or 0:>6} {r['fail_count'] or 0:>6} "
+              f"{r['hang_count'] or 0:>6} {acc:>10}")
+
+
+@canary_app.command(name="baseline")
+def canary_baseline(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+    force: bool = typer.Option(False, "--force", "-f", help="Force recompute baseline"),
+) -> None:
+    """Compute or recompute the baseline from recent canary runs."""
+    from observeco.db import Database
+    from observeco.capability.baseline import BaselineManager
+    from observeco.capability.canary import CanaryRunner
+
+    db = Database()
+    runner = CanaryRunner(db=db)
+
+    # Get last run's config hash
+    runs = runner.list_runs(agent_name=agent, limit=1)
+    if not runs:
+        print(f"No canary runs for agent '{agent}'. Run 'observeco canary run' first.")
+        return
+
+    config_hash = runs[0]["config_hash"]
+
+    mgr = BaselineManager(db=db)
+    if force:
+        print(f"🔄 Force-recomputing baseline for {agent} (config: {config_hash[:12]})...")
+    else:
+        print(f"📏 Computing baseline for {agent} (config: {config_hash[:12]})...")
+
+    result = mgr.compute_baseline(
+        agent_name=agent,
+        config_hash=config_hash,
+        min_runs=1 if force else 3,
+    )
+
+    if result:
+        print(f"✅ Baseline created: {result['accuracy']:.1%} "
+              f"[{result['ci_lower']:.1%}, {result['ci_upper']:.1%}] "
+              f"from {result['run_count']} runs")
+    else:
+        print(f"❌ Not enough runs for baseline. Need 3+ completed runs with same config.")
+
+
+# ── Grid Commands ────────────────────────────────────────────────────────────
+
+grid_cap_app = typer.Typer(help="Capability grid — model × config comparison matrix", no_args_is_help=True)
+app.add_typer(grid_cap_app, name="grid")
+
+
+@grid_cap_app.command(name="run")
+def grid_cap_run(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+    models: Optional[str] = typer.Option(None, "--models", "-m",
+                                          help="Comma-separated model specs (default: flash,pro,ornith)"),
+    configs: Optional[str] = typer.Option(None, "--configs", "-c",
+                                           help="Comma-separated config labels (default: baseline-v3,baseline-v2)"),
+    task_ids: Optional[str] = typer.Option(None, "--tasks", "-t",
+                                            help="Comma-separated task IDs (default: all)"),
+    trials: int = typer.Option(3, "--trials", "-n", help="Trials per task per cell"),
+) -> None:
+    """Run full grid: all models × configs × tasks using DirectModelAdapter.
+
+    Calls each model's chat API directly (bypasses agent harness) to measure
+    raw model capability on canary tasks. Results stored in grid_runs/grid_results.
+    """
+    from observeco.capability.grid import CapabilityGridRunner
+
+    # Resolve models
+    model_list = ["custom-ollama/deepseek-v4-flash", "custom-ollama/deepseek-v4-pro", "custom-ollama/ornith:latest"]
+    if models:
+        model_list = [m.strip() for m in models.split(",")]
+
+    # Resolve configs
+    config_list = ["baseline-v3", "baseline-v2"]
+    if configs:
+        config_list = [c.strip() for c in configs.split(",")]
+
+    # Resolve tasks
+    task_id_list = None
+    if task_ids:
+        task_id_list = [t.strip() for t in task_ids.split(",")]
+
+    print(f"\n🧪 Capability Grid")
+    print(f"   Agent: {agent}")
+    print(f"   Models: {model_list}")
+    print(f"   Configs: {config_list}")
+    print(f"   Tasks: {task_id_list or 'all'}")
+    print(f"   Trials: {trials}")
+    print()
+
+    runner = CapabilityGridRunner()
+    result = runner.run(
+        agent_name=agent,
+        models=model_list,
+        configs=config_list,
+        task_ids=task_id_list,
+        trials=trials,
+    )
+
+    if result.get("error"):
+        print(f"❌ {result['error']}")
+        return
+
+    cells = result.get("cells", [])
+    print(f"✅ Grid complete — {len(cells)} cells")
+    print(f"   Run ID: {result['run_id']}")
+    print(f"   Total cost: ${result.get('total_cost', 0):.4f}")
+    print()
+
+    # Print summary table
+    task_names = list(dict.fromkeys(c["task_name"] for c in cells))
+    for task_name in task_names:
+        print(f"  {task_name}")
+        for cell in cells:
+            if cell["task_name"] == task_name:
+                acc = cell["accuracy"] * 100 if cell["accuracy"] is not None else 0
+                ci = f"[{cell['ci_lower']*100:.0f}–{cell['ci_upper']*100:.0f}]" if cell["ci_lower"] is not None else ""
+                cost = f"${cell['cost']:.4f}" if cell.get("cost") else "—"
+                hang = " ⏰" if cell.get("hang") else ""
+                print(f"    {cell['model']:<40} {cell['config']:<15} {acc:.0f}% {ci:<12} {cost}{hang}")
+        print()
+    print(f"   View results: observeco grid list")
+
+
+@grid_cap_app.command(name="list")
+def grid_cap_list(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+    limit: int = typer.Option(10, "--limit", "-n", help="Number of runs to show"),
+) -> None:
+    """List recent grid runs."""
+    from observeco.db import Database
+
+    conn = Database()._get_conn()
+    rows = conn.execute(
+        "SELECT id, agent_name, started_at, completed_at, status, total_cells, total_cost "
+        "FROM grid_runs WHERE agent_name = ? ORDER BY started_at DESC LIMIT ?",
+        (agent, limit),
+    ).fetchall()
+
+    if not rows:
+        print(f"No grid runs for agent '{agent}'. Run 'observeco grid run'.")
+        return
+
+    print(f"\n📊 Grid Runs — {agent} ({len(rows)} runs)")
+    print(f"{'Run ID':<10} {'Started':<20} {'Status':<12} {'Cells':>8} {'Cost':>10}")
+    print("-" * 62)
+    for r in rows:
+        print(f"{r['id'][:8]:<10} {r['started_at'][:19]:<20} "
+              f"{r['status']:<12} {r['total_cells']:>8} ${r['total_cost'] or 0:>9.4f}")
+
+
+@grid_cap_app.command(name="compare")
+def grid_cap_compare(
+    run_id: Optional[str] = typer.Option(None, "--run-id", "-r", help="Grid run ID to display"),
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+    baseline: bool = typer.Option(False, "--baseline", "-b", help="Compare against baseline"),
+) -> None:
+    """Display grid results or compare two runs."""
+    from observeco.db import Database
+
+    conn = Database()._get_conn()
+
+    # Get latest run if not specified
+    if not run_id:
+        row = conn.execute(
+            "SELECT id FROM grid_runs WHERE agent_name = ? AND status = 'completed' "
+            "ORDER BY started_at DESC LIMIT 1",
+            (agent,),
+        ).fetchone()
+        if not row:
+            print(f"No completed grid runs for '{agent}'. Run 'observeco grid run' first.")
+            return
+        run_id = row["id"]
+
+    cells = conn.execute(
+        "SELECT gr.task_id, ct.name as task_name, gr.model, gr.config, "
+        "gr.accuracy, gr.ci_lower, gr.ci_upper, gr.cost, gr.flags, gr.hang "
+        "FROM grid_results gr JOIN canary_tasks ct ON gr.task_id = ct.id "
+        "WHERE gr.grid_run_id = ? ORDER BY ct.id, gr.model, gr.config",
+        (run_id,),
+    ).fetchall()
+
+    if not cells:
+        print(f"No results for grid run {run_id[:8]}")
+        return
+
+    # Organize by task
+    cells_by_task = {}
+    for c in cells:
+        task = c["task_name"]
+        if task not in cells_by_task:
+            cells_by_task[task] = []
+        cells_by_task[task].append(c)
+
+    print(f"\n📊 Grid Report — {run_id[:8]}")
+    print()
+
+    for task_name, task_cells in cells_by_task.items():
+        print(f"📋 {task_name}")
+        print(f"   {'Model':<22} {'Config':<15} {'Accuracy':>10} {'CI':>16} {'Flags':>10}")
+        print(f"   {'-'*22} {'-'*15} {'-'*10} {'-'*16} {'-'*10}")
+        for c in task_cells:
+            flags = json.loads(c["flags"]) if c["flags"] else []
+            flag_str = ",".join(flags) if flags else "—"
+            acc_str = f"{c['accuracy']:.1%}" if c["accuracy"] is not None else "Hang"
+            ci_str = f"[{c['ci_lower']:.1%}, {c['ci_upper']:.1%}]" if c["ci_lower"] is not None else "—"
+            print(f"   {c['model']:<22} {c['config']:<15} {acc_str:>10} {ci_str:>16} {flag_str:>10}")
+        print()
+
+
+# ── Task Commands ────────────────────────────────────────────────────────────
+
+task_app = typer.Typer(help="Canary task management", no_args_is_help=True)
+app.add_typer(task_app, name="task")
+
+
+@task_app.command(name="list")
+def task_list(
+    agent: Optional[str] = typer.Option(None, "--agent", "-a", help="Filter by agent (not used for task list)"),
+) -> None:
+    """List all canary tasks with status indicators."""
+    from observeco.db import Database
+    from observeco.capability.canary import CanaryRunner
+
+    runner = CanaryRunner(db=Database())
+    tasks = runner.list_tasks()
+
+    if not tasks:
+        print("No tasks defined. Create with 'observeco task create'.")
+        return
+
+    print(f"\n📋 Canary Tasks ({len(tasks)})")
+    print(f"{'ID':<32} {'Name':<32} {'Assertions':>5} {'Timeout':>8} {'Trials':>7}")
+    print("-" * 88)
+    for t in tasks:
+        try:
+            assertions = json.loads(t["assertions"]) if isinstance(t["assertions"], str) else t["assertions"]
+            a_count = len(assertions) if isinstance(assertions, list) else 0
+        except Exception:
+            a_count = 0
+        print(f"{t['id']:<32} {t['name']:<32} {a_count:>5} {t['timeout']:>8}s {t['trials']:>7}")
+
+
+@task_app.command(name="create")
+def task_create(
+    yaml_file: Optional[str] = typer.Option(None, "--yaml", "-f", help="Path to task YAML file"),
+) -> None:
+    """Create a new canary task from YAML or interactive prompt."""
+    import json
+
+    from observeco.db import Database
+    from observeco.capability.canary import CanaryRunner
+
+    if yaml_file:
+        import yaml
+        with open(yaml_file) as f:
+            data = yaml.safe_load(f)
+    else:
+        # Interactive mode
+        print("Interactive task creation (Ctrl+C to cancel)")
+        name = input("Task name (slug, e.g., 'chart-interpretation'): ").strip()
+        if not name:
+            print("❌ Task name required")
+            return
+        display_name = input("Display name: ").strip() or name
+        description = input("Description (optional): ").strip()
+        prompt = input("Prompt template: ").strip()
+        if not prompt:
+            print("❌ Prompt required")
+            return
+
+        print("\nAssertion types: exact_match, contains, numeric_range, regex, llm_judge")
+        a_type = input("Assertion type: ").strip()
+
+        assertions = []
+        if a_type == "exact_match":
+            target = input("Expected exact output: ")
+            assertions = [{"type": "exact_match", "target": target}]
+        elif a_type == "contains":
+            keywords_str = input("Keywords (comma-separated): ")
+            keywords = [k.strip() for k in keywords_str.split(",") if k.strip()]
+            assertions = [{"type": "contains", "keywords": keywords}]
+        elif a_type == "numeric_range":
+            lo = float(input("Min value: ") or "0")
+            hi = float(input("Max value: ") or "100")
+            assertions = [{"type": "numeric_range", "min": lo, "max": hi}]
+        elif a_type == "regex":
+            pattern = input("Regex pattern: ")
+            assertions = [{"type": "regex", "pattern": pattern}]
+        elif a_type == "llm_judge":
+            criteria = input("Evaluation criteria: ")
+            assertions = [{"type": "llm_judge", "criteria": criteria}]
+        else:
+            print(f"❌ Unknown assertion type: {a_type}")
+            return
+
+        timeout_str = input("Timeout (seconds, default 60): ").strip()
+        timeout = int(timeout_str) if timeout_str else 60
+
+        trials_str = input("Trials (default 3): ").strip()
+        trials = int(trials_str) if trials_str else 3
+
+        data = {
+            "id": name,
+            "name": display_name,
+            "description": description,
+            "prompt": prompt,
+            "assertions": assertions,
+            "timeout": timeout,
+            "trials": trials,
+        }
+
+    runner = CanaryRunner(db=Database())
+    result = runner.create_task(data)
+    if result["ok"]:
+        print(f"✅ Task created: {result['task_id']}")
+    else:
+        print(f"❌ Failed: {result['error']}")
+
+
+@task_app.command(name="delete")
+def task_delete(
+    task_id: str = typer.Argument(..., help="Task ID to delete"),
+) -> None:
+    """Delete a canary task."""
+    from observeco.db import Database
+    from observeco.capability.canary import CanaryRunner
+
+    runner = CanaryRunner(db=Database())
+    result = runner.delete_task(task_id)
+    if result["ok"]:
+        print(f"✅ Task deleted: {task_id}")
+    else:
+        print(f"❌ Failed: {result['error']}")
+
+
+@task_app.command(name="validate")
+def task_validate(
+    yaml_file: str = typer.Argument(..., help="Path to task YAML file to validate"),
+) -> None:
+    """Validate a task YAML file without saving."""
+    import yaml
+
+    try:
+        with open(yaml_file) as f:
+            data = yaml.safe_load(f)
+
+        # Required fields
+        required = ["name", "prompt", "assertions"]
+        missing = [f for f in required if f not in data]
+        if missing:
+            print(f"❌ Missing required fields: {missing}")
+            return
+
+        # Validate assertion types
+        valid_types = {"exact_match", "contains", "numeric_range", "regex", "llm_judge"}
+        for i, a in enumerate(data.get("assertions", [])):
+            if a.get("type") not in valid_types:
+                print(f"❌ Assertion {i}: unknown type '{a.get('type')}'. Valid: {valid_types}")
+                return
+
+        print(f"✅ YAML valid — task '{data['name']}' with {len(data['assertions'])} assertion(s)")
+    except Exception as exc:
+        print(f"❌ Validation failed: {exc}")
+
+
 if __name__ == "__main__":
     app()

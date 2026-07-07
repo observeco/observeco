@@ -27,7 +27,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 30
+SCHEMA_VERSION = 58
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -574,6 +574,227 @@ CREATE INDEX IF NOT EXISTS idx_trace_spans_agent ON trace_spans(agent_name, crea
 CREATE INDEX IF NOT EXISTS idx_trace_spans_trace ON trace_spans(trace_id);
 CREATE INDEX IF NOT EXISTS idx_trace_spans_parent ON trace_spans(parent_span_id);
 """),
+    (31, """-- Migration 31: benchmark_tasks + benchmark_results for Agent Quality Management
+CREATE TABLE IF NOT EXISTS benchmark_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    input_text TEXT NOT NULL,
+    context_text TEXT DEFAULT '',
+    expected_output TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    UNIQUE(agent_name, task_name)
+);
+CREATE TABLE IF NOT EXISTS benchmark_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    score REAL NOT NULL DEFAULT 0.0,
+    passed INTEGER NOT NULL DEFAULT 0,
+    total INTEGER NOT NULL DEFAULT 1,
+    model_used TEXT DEFAULT '',
+    harness_type TEXT DEFAULT 'hermes',
+    run_at INTEGER NOT NULL,
+    details TEXT DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_benchmark_tasks_agent ON benchmark_tasks(agent_name);
+CREATE INDEX IF NOT EXISTS idx_benchmark_results_agent ON benchmark_results(agent_name, run_at);
+"""),
+    (50, """-- Migration 50: Capability Monitoring Layer — canary, grid, drift, config timeline
+-- Tables: canary_tasks, canary_runs, canary_results, canary_baselines, drift_events, config_snapshots, grid_runs, grid_results
+
+CREATE TABLE IF NOT EXISTS canary_tasks (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    description TEXT,
+    prompt      TEXT NOT NULL,
+    assertions  TEXT NOT NULL,    -- JSON array: [{type, target, min?, max?, tolerance?, keywords?}]
+    timeout     INTEGER NOT NULL DEFAULT 60,
+    model       TEXT,
+    trials      INTEGER NOT NULL DEFAULT 3,
+    built_in    INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS canary_runs (
+    id          TEXT PRIMARY KEY,
+    agent_name  TEXT NOT NULL,
+    config_hash TEXT NOT NULL,     -- sha256 of resolved config (model + prompt + tools)
+    config_label TEXT,
+    started_at  TEXT NOT NULL,
+    completed_at TEXT,
+    status      TEXT NOT NULL DEFAULT 'running',
+    total_tasks INTEGER NOT NULL,
+    pass_count  INTEGER,
+    hang_count  INTEGER,
+    fail_count  INTEGER,
+    total_cost  REAL,
+    total_tokens INTEGER,
+    error       TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_canary_runs_agent ON canary_runs(agent_name, started_at);
+
+CREATE TABLE IF NOT EXISTS canary_results (
+    id          TEXT PRIMARY KEY,
+    run_id      TEXT NOT NULL REFERENCES canary_runs(id),
+    task_id     TEXT NOT NULL REFERENCES canary_tasks(id),
+    status      TEXT NOT NULL,     -- pass | fail | hang
+    accuracy    REAL,              -- 0.0-1.0 or NULL if hang
+    ci_lower    REAL,
+    ci_upper    REAL,
+    cost        REAL,
+    tokens      INTEGER,
+    latency_ms  INTEGER,
+    recovery    TEXT,
+    trajectory  TEXT,              -- JSON: full agent trajectory for debugging
+    error       TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_canary_results_run ON canary_results(run_id);
+
+CREATE TABLE IF NOT EXISTS canary_baselines (
+    id          TEXT PRIMARY KEY,
+    agent_name  TEXT NOT NULL,
+    config_hash TEXT NOT NULL,
+    config_label TEXT,
+    run_count   INTEGER NOT NULL,
+    accuracy    REAL NOT NULL,
+    ci_lower    REAL,
+    ci_upper    REAL,
+    created_at  TEXT NOT NULL,
+    expires_at  TEXT,              -- NULL = active, set when superseded
+    UNIQUE(agent_name, config_hash, expires_at)
+);
+
+CREATE TABLE IF NOT EXISTS drift_events (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL,
+    baseline_id     TEXT REFERENCES canary_baselines(id),
+    run_id          TEXT REFERENCES canary_runs(id),
+    config_hash     TEXT NOT NULL,
+    config_label    TEXT,
+    drift_pct       REAL NOT NULL, -- negative = decline
+    p_value         REAL,
+    ci_lower        REAL,
+    ci_upper        REAL,
+    severity        TEXT NOT NULL, -- breach | warning | info
+    breached_tasks  TEXT,          -- JSON array of task_ids
+    acknowledged    INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_drift_events_agent ON drift_events(agent_name, created_at);
+
+CREATE TABLE IF NOT EXISTS config_snapshots (
+    id          TEXT PRIMARY KEY,
+    agent_name  TEXT NOT NULL,
+    config_hash TEXT NOT NULL,
+    config_label TEXT,
+    change_type TEXT NOT NULL,     -- baseline | model_switch | prompt_update | tool_update | drift
+    description TEXT,
+    git_commit  TEXT,
+    accuracy    REAL,
+    segment     TEXT,              -- "A" | "B" | "C" — for timeline grouping
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_config_snapshots_agent ON config_snapshots(agent_name, created_at);
+
+CREATE TABLE IF NOT EXISTS grid_runs (
+    id          TEXT PRIMARY KEY,
+    agent_name  TEXT NOT NULL,
+    started_at  TEXT NOT NULL,
+    completed_at TEXT,
+    status      TEXT NOT NULL DEFAULT 'running',
+    models      TEXT NOT NULL,     -- JSON array of model names
+    configs     TEXT NOT NULL,     -- JSON array of config labels
+    total_cells INTEGER NOT NULL,
+    total_cost  REAL,
+    error       TEXT
+);
+
+CREATE TABLE IF NOT EXISTS grid_results (
+    id          TEXT PRIMARY KEY,
+    grid_run_id TEXT NOT NULL REFERENCES grid_runs(id),
+    task_id     TEXT NOT NULL REFERENCES canary_tasks(id),
+    model       TEXT NOT NULL,
+    config      TEXT NOT NULL,
+    accuracy    REAL,
+    ci_lower    REAL,
+    ci_upper    REAL,
+    cost        REAL,
+    tokens      INTEGER,
+    flags       TEXT,              -- JSON array: ["loop", "unsafe", "shortcut"]
+    hang        INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(grid_run_id, task_id, model, config)
+);
+"""),
+    (51, """-- Migration 51: Canary dev/test split + provider error status + grid blended score
+-- Inspired by HF harness-optimization (Niklaus 2026): dev/test split prevents overfitting,
+-- provider_error distinguishes infra failures from model failures,
+-- blended_score makes grid report actionable.
+
+ALTER TABLE canary_tasks ADD COLUMN split TEXT NOT NULL DEFAULT 'all';
+
+ALTER TABLE canary_results ADD COLUMN provider_error INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE grid_results ADD COLUMN blended_score REAL;
+"""),
+    (57, """-- Migration 57: Benchmark Methodology Upgrade (obs-spec-057)
+-- Enhanced task schema: category, difficulty, expected_output, few_shot, system_override, temperature
+-- New tables: canary_judge_cache, canary_task_baselines
+
+ALTER TABLE canary_tasks ADD COLUMN category TEXT;
+ALTER TABLE canary_tasks ADD COLUMN difficulty TEXT DEFAULT 'medium';
+ALTER TABLE canary_tasks ADD COLUMN expected_output TEXT;
+ALTER TABLE canary_tasks ADD COLUMN few_shot_examples TEXT;
+ALTER TABLE canary_tasks ADD COLUMN system_override TEXT;
+ALTER TABLE canary_tasks ADD COLUMN temperature REAL DEFAULT 0.0;
+
+CREATE TABLE IF NOT EXISTS canary_judge_cache (
+    cache_key TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL,
+    output_hash TEXT NOT NULL,
+    score REAL NOT NULL,
+    reasoning TEXT,
+    model_used TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (task_id) REFERENCES canary_tasks(id)
+);
+CREATE INDEX IF NOT EXISTS idx_judge_cache_task ON canary_judge_cache(task_id);
+
+CREATE TABLE IF NOT EXISTS canary_task_baselines (
+    id TEXT PRIMARY KEY,
+    agent_name TEXT NOT NULL,
+    config_hash TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    accuracy REAL NOT NULL,
+    ci_lower REAL NOT NULL,
+    ci_upper REAL NOT NULL,
+    run_count INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT,
+    FOREIGN KEY (task_id) REFERENCES canary_tasks(id),
+    UNIQUE(agent_name, config_hash, task_id, expires_at)
+);
+CREATE INDEX IF NOT EXISTS idx_task_baseline_lookup ON canary_task_baselines(agent_name, config_hash, task_id);
+"""),
+    (58, """-- Migration 58: declare agent/service class explicitly (obs-2026-07)
+-- Agent vs service line (Sean's decision): agents have brain + memory and act
+-- autonomously; services are infrastructure/bridges/watchers with no identity.
+-- Previously fleet.py *inferred* class from data presence (trim + garden rows),
+-- which misclassified real agents that hadn't collected memory-garden data yet.
+-- This makes the class a declared property, stable across data-collection gaps.
+ALTER TABLE agent_configs ADD COLUMN class TEXT NOT NULL DEFAULT 'service';
+
+-- Agents: profiles with a substantive custom SOUL identity + memory.
+-- (pragma excluded: default Hermes SOUL + GS-008 only = execution engine/service)
+UPDATE agent_configs SET class = 'agent' WHERE agent_name IN (
+    'accelerator', 'aleph', 'blueprint', 'dreamer', 'forge', 'gladwell',
+    'hound', 'kepler', 'main', 'pa', 'raven', 'skeptical', 'spectrum',
+    'subconscious', 'secondbrain'
+);
+-- Everything else stays 'service' (infra, bridges, watchers, tools).
+CREATE INDEX IF NOT EXISTS idx_agent_configs_class ON agent_configs(class);
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -825,6 +1046,32 @@ INSERT OR IGNORE INTO pathway_node_types (type, icon, shape, color) VALUES
 CREATE INDEX IF NOT EXISTS idx_edges_source ON pathway_edges(source_id);
 CREATE INDEX IF NOT EXISTS idx_edges_target ON pathway_edges(target_id);
 CREATE INDEX IF NOT EXISTS idx_edges_status ON pathway_edges(status);
+
+-- Benchmark tables (Agent Quality Management)
+CREATE TABLE IF NOT EXISTS benchmark_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    input_text TEXT NOT NULL,
+    context_text TEXT DEFAULT '',
+    expected_output TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    UNIQUE(agent_name, task_name)
+);
+CREATE TABLE IF NOT EXISTS benchmark_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    score REAL NOT NULL DEFAULT 0.0,
+    passed INTEGER NOT NULL DEFAULT 0,
+    total INTEGER NOT NULL DEFAULT 1,
+    model_used TEXT DEFAULT '',
+    harness_type TEXT DEFAULT 'hermes',
+    run_at INTEGER NOT NULL,
+    details TEXT DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_benchmark_tasks_agent ON benchmark_tasks(agent_name);
+CREATE INDEX IF NOT EXISTS idx_benchmark_results_agent ON benchmark_results(agent_name, run_at);
 """
 
 
@@ -2367,7 +2614,8 @@ class Database:
         """Return per-agent latest pulse status + whether it's ever been alive."""
         conn = self._get_conn()
         cur = conn.execute("""
-            SELECT p.agent_name, p.status, p.latency_ms, p.timestamp, c.tripped as circuit_tripped,
+            SELECT p.agent_name, p.status, p.latency_ms, p.timestamp, p.agent_framework,
+                   c.tripped as circuit_tripped,
                    (SELECT COUNT(*) FROM pulse_log p2
                     WHERE p2.agent_name = p.agent_name AND p2.status = 'alive' AND p2.id > 0) > 0 AS ever_alive
             FROM pulse_log p
@@ -3750,16 +3998,58 @@ class Database:
             "drift": "chisel_drift",
             "token": "token_logs",
             "l2": "l2_trending",
+            "canary": "canary_runs",
+            "grid": "grid_runs",
+            "drift_event": "drift_events",
         }
         table = table_map.get(data_type)
         if not table:
             return 0
         col = {"pulse_log": "timestamp", "errors": "timestamp",
                "chisel_drift": "timestamp", "token_logs": "recorded_at",
-               "l2_trending": "timestamp"}.get(table, "timestamp")
+               "l2_trending": "timestamp",
+               "canary_runs": "started_at", "canary_results": "created_at",
+               "grid_runs": "started_at", "grid_results": "grid_run_id",
+               "drift_events": "created_at"}.get(table, "timestamp")
+
+        total_deleted = 0
+
+        # FK-ordered deletion: child tables first
+        if table == "canary_runs":
+            # Delete child rows first (FK enforcement blocks direct parent delete)
+            conn.execute(
+                "DELETE FROM canary_results WHERE run_id IN "
+                "(SELECT id FROM canary_runs WHERE started_at < ?)",
+                (cutoff,),
+            )
+            conn.execute(
+                "DELETE FROM drift_events WHERE run_id IN "
+                "(SELECT id FROM canary_runs WHERE started_at < ?)",
+                (cutoff,),
+            )
+        elif table == "grid_runs":
+            conn.execute(
+                "DELETE FROM grid_results WHERE grid_run_id IN "
+                "(SELECT id FROM grid_runs WHERE started_at < ?)",
+                (cutoff,),
+            )
+
         cur = conn.execute(f"DELETE FROM {table} WHERE {col} < ?", (cutoff,))
+        total_deleted += cur.rowcount
+
+        # FK orphan cleanup (belt-and-suspenders)
+        conn.execute(
+            "DELETE FROM canary_results WHERE run_id NOT IN (SELECT id FROM canary_runs)"
+        )
+        conn.execute(
+            "DELETE FROM drift_events WHERE run_id NOT IN (SELECT id FROM canary_runs)"
+        )
+        conn.execute(
+            "DELETE FROM grid_results WHERE grid_run_id NOT IN (SELECT id FROM grid_runs)"
+        )
+
         conn.commit()
-        return cur.rowcount
+        return total_deleted
 
     def set_pruning_schedule(self, enabled: bool, hour: int = 3) -> None:
         conn = self._get_conn()
