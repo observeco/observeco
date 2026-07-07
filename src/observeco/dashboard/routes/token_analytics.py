@@ -402,7 +402,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
 <div class="tok4-grid">
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Cost</h2><span class="cc-val mono">${_fmt_dollar(total_cost)}</span><span class="cc-lab">total · {range_label} · Target = mean/day</span></div>
+        <div class="cc-head"><h2>Token Composition</h2><span class="cc-val mono">{_fmt_tok(total_all)}</span><span class="cc-lab">input · output · cache · est</span></div>
         <div class="chart-box"><canvas id="costChart"></canvas></div>
     </div>
     <div class="panel chart-card">

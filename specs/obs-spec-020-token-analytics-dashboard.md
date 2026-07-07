@@ -168,7 +168,7 @@ Aggregation is computed on-the-fly from `token_logs` via SQL `GROUP BY` with tim
 **Components (SHIPPED — matches v0.3.1 token tab screenshot):**
 
 1. **5-Chart Grid** (single vertical column, uniform height → all 5 share an aligned time axis). Each chart has a stat-card header (value + label). Benchmark bands drawn via inline Chart.js plugin (no annotation-plugin dependency):
-   - **Cost** (bar) — X: time, Y: $ cost. Red dashed **Target** line (mean daily cost of window; configurable via budget config).
+   - **Token Composition** (stacked bar) — X: time, Y: tokens (K). Stacks Input (blue) / Output (yellow) / Cache reads (purple) / Estimated (grey). The original token tab chart — shows token makeup per bucket.
    - **Tokens / Turn** (line) — X: time, Y: tokens/turn (lower better). Bands: Low 1000 / Mod 10000 / High 50000 / V.High 100000.
    - **Output / Input ratio** (line) — X: time, Y: output÷input (higher better). Bands: Low 0.5 / Mod 1 / High 5 / V.High 20.
    - **Cache Hit Rate** (line, %) — X: time, Y: 0-100% (higher better). Bands: Low 5 / Mod 10 / High 50 / V.High 80.

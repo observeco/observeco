@@ -429,7 +429,9 @@ function _benchmarkPlugin(lines) {
   });
 }
 
-// Chart 1: Cost over time + Target benchmark line (mean daily cost)
+// Chart 1: Stacked token composition over time (Input / Output / Cache reads / Estimated)
+// — the original token tab chart. No benchmark line (that belongs on the $ Cost/Turn
+// efficiency chart below). y-axis in K tokens.
 function renderTokenChart() {
   if (typeof Chart === 'undefined') return;
   var data = window._tokenChart;
@@ -437,19 +439,26 @@ function renderTokenChart() {
   var ctx = document.getElementById('costChart');
   if (!ctx) return;
   if (window._tokenChartInstance) window._tokenChartInstance.destroy();
-  var target = (window._cacheChart && window._cacheChart.target) || null;
   window._tokenChartInstance = new Chart(ctx, {
     type: 'bar',
-    data: {labels: data.labels, datasets: [{label: 'Cost', data: data.cost_data, backgroundColor: '#22c55e', borderRadius: 2}]},
+    data: {
+      labels: data.labels,
+      datasets: [
+        {label: 'Input (K)', data: data.input_data, backgroundColor: '#3b82f6', stack: 'v', borderRadius: 2},
+        {label: 'Output (K)', data: data.output_data, backgroundColor: '#eab308', stack: 'v', borderRadius: 2},
+        {label: 'Cache reads (K)', data: data.cache_data, backgroundColor: '#8b5cf6', stack: 'v', borderRadius: 2},
+        {label: 'Estimated (K)', data: data.est_data, backgroundColor: '#64748b', stack: 'v', borderRadius: 2}
+      ]
+    },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return 'Cost: $' + (c.parsed.y||0).toFixed(2);}}}},
+      interaction: {mode: 'index', intersect: false},
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return c.dataset.label + ': ' + (c.parsed.y||0).toLocaleString() + 'K';}}}},
       scales: {
-        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
-        y: {grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return '$' + v;}}}
+        x: {stacked: true, grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
+        y: {stacked: true, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return v + 'K';}}}
       }
-    },
-    plugins: _benchmarkPlugin(target != null ? [{value: target, label: 'Target', color: '#ef4444'}] : [])
+    }
   });
 }
 
