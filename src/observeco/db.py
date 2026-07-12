@@ -1232,6 +1232,24 @@ class Database:
             except sqlite3.OperationalError:
                 pass  # column already exists
 
+        # Idempotent virtual-table migration: FTS5 tables can't be ALTERed, so
+        # if the schema changed we drop+recreate. The standalone prevention_skills_fts
+        # was originally created with external-content mode (no skill_id column);
+        # recreate it with the current shape if the column is missing.
+        # ponytail: DROP IF EXISTS loses the FTS index rows but they're rebuilt on
+        # next write; the content table (prevention_skills) is untouched, so no
+        # skill data is lost — only the search index, which repopulates lazily.
+        try:
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(prevention_skills_fts)")]
+            if "skill_id" not in cols:
+                conn.execute("DROP TABLE IF EXISTS prevention_skills_fts")
+                conn.execute(
+                    "CREATE VIRTUAL TABLE prevention_skills_fts USING fts5("
+                    "skill_id UNINDEXED, pattern_hash, agent_name, "
+                    "error_signature, diagnosis)"
+                )
+        except sqlite3.OperationalError:
+            pass  # table didn't exist yet — _SCHEMA_SQL just created it
         # Check current version
         cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
         row = cur.fetchone()

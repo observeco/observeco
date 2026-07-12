@@ -1797,7 +1797,7 @@ async def capability_page(agent: str = Query("default")):
                 diff = now - tested_dt.replace(tzinfo=timezone.utc) if tested_dt.tzinfo else now.replace(tzinfo=timezone.utc) - tested_dt.replace(tzinfo=timezone.utc)
                 hours = diff.total_seconds() / 3600
                 if hours < 1:
-                    last_tested = "Tested < 1 hour ago"
+                    last_tested = "Tested &lt; 1 hour ago"
                 elif hours < 24:
                     last_tested = f"Tested {int(hours)} hours ago"
                 else:
@@ -1831,7 +1831,7 @@ async def capability_page(agent: str = Query("default")):
             <div class="cap-ov-name">{_html_escape(agent)}</div>
             <div class="cap-ov-last-tested">{last_tested}</div>
             <div class="cap-ov-stats">
-              <div class="cap-ov-stat"><div class="val good">{pass_count}</div><div class="lbl">Passed</div></div>
+              <div class="cap-ov-stat"><div class="val {'good' if pass_count > 0 else 'muted'}">{pass_count}</div><div class="lbl">Passed</div></div>
               <div class="cap-ov-stat"><div class="val bad">{fail_count}</div><div class="lbl">Failed</div></div>
               <div class="cap-ov-stat"><div class="val">{total_tasks}</div><div class="lbl">Total</div></div>
             </div>
@@ -2239,8 +2239,9 @@ async def capability_page(agent: str = Query("default")):
 
     // ── Navigate to Tasks tab ──
     window.navigateToTasksTab = function() {{
-      var tasksBtn = document.querySelector('.tab-btn[data-tab="tasks"]');
-      if (tasksBtn) tasksBtn.click();
+      // Scroll to the Task Breakdown grid section
+      var el = document.getElementById('gridReport') || document.querySelector('.cap-section');
+      if (el) el.scrollIntoView({{behavior:'smooth', block:'start'}});
     }};
 
     // ── Advanced section toggle ──
@@ -2265,7 +2266,11 @@ async def capability_page(agent: str = Query("default")):
       var btn = document.querySelector('.cap-btn-primary') || document.querySelector('button');
       if (btn) {{ btn.textContent = '⏳ Running…'; btn.disabled = true; }}
 
-      fetch('/api/capability/canary/run?agent=' + encodeURIComponent(agent), {{method:'POST'}})
+      // Get auth token from meta tag (injected by server)
+      var _token = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+      var _headers = _token ? {{ 'X-ObserveCo-Token': _token }} : {{}};
+
+      fetch('/api/capability/canary/run?agent=' + encodeURIComponent(agent), {{method:'POST', headers: _headers}})
         .then(function(r) {{ return r.json(); }})
         .then(function(d) {{
           if (d.ok) {{
@@ -2280,7 +2285,7 @@ async def capability_page(agent: str = Query("default")):
             if (untestedEl) untestedEl.style.display = 'none';
 
             var poll = setInterval(function() {{
-              fetch('/api/capability/canary/status?agent=' + encodeURIComponent(agent))
+              fetch('/api/capability/canary/status?agent=' + encodeURIComponent(agent), {{headers: _headers}})
                 .then(function(r) {{ return r.json(); }})
                 .then(function(s) {{
                   if (s.running) {{
@@ -2347,7 +2352,8 @@ async def capability_page(agent: str = Query("default")):
     }}
 
     function runCanaryForAgent(agent) {{
-      fetch('/api/capability/canary/run?agent=' + encodeURIComponent(agent), {{method:'POST'}})
+      var _t = (document.querySelector('meta[name=\"observeco-token\"]') || {{}}).getAttribute('content') || '';
+      fetch('/api/capability/canary/run?agent=' + encodeURIComponent(agent), {{method:'POST', headers: _t ? {{'X-ObserveCo-Token': _t}} : {{}}}})
         .then(function(r) {{ return r.json(); }})
         .then(function(d) {{ if (d.ok) showToast('Benchmark started for ' + agent); }});
     }}

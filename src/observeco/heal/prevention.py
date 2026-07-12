@@ -178,8 +178,15 @@ def apply_prevention(skill: dict, agent_name: str) -> tuple[bool, str]:
     NOT executed (require human approval). Returns (success, message).
     """
     remediation = skill.get("remediation", "")
-    # Extract an action token from the remediation text (first word on a line
-    # like "ACTION: restart" or "restart the agent").
+    low_rem = remediation.lower()
+    # Dangerous remediations must NEVER auto-execute, even if a safe word
+    # also appears (e.g. "pip_install X then restart"). Block first.
+    DANGEROUS = ("pip_install", "pip install", "code_fix", "code fix",
+                 "edit source", "modify code")
+    if any(d in low_rem for d in DANGEROUS):
+        return False, "Skill contains a dangerous remediation (pip_install/code_fix); requires human review"
+
+    # Extract a known-safe action token from the remediation text.
     action = None
     for line in remediation.splitlines():
         low = line.lower()
@@ -197,7 +204,7 @@ def apply_prevention(skill: dict, agent_name: str) -> tuple[bool, str]:
     # Delegate to the heal executor for the safe action
     try:
         from observeco.heal import _execute_action
-        ok, msg = _execute_action(action, {})
+        ok, msg = _execute_action(action, {"agent_name": agent_name})
     except Exception as e:  # pragma: no cover
         return False, f"remediation execution error: {e}"
 
