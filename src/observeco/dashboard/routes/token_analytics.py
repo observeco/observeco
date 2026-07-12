@@ -29,8 +29,9 @@ def _fmt_dollar(c: float) -> str:
     if c >= 1: return f"${c:.2f}"
     return f"${c:.4f}"
 
-def _html_escape(t: str) -> str:
-    return t.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
+def _html_escape(text: str) -> str:
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace('"', "&quot;").replace("'", "&#39;"))
 
 
 def loading_html() -> str:

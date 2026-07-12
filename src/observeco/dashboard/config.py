@@ -7,8 +7,77 @@ Every hardcoded value in server.py and index.html should reference this module.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
+
+# ── Ports ─────────────────────────────────────────────────────────────────────
+# Single source of truth for all ObserveCo service ports.
+# Override via env vars: OBSERVECO_<NAME>_PORT (e.g. OBSERVECO_DASHBOARD_PORT=8899)
+
+@dataclass
+class Ports:
+    """All ObserveCo service ports. Every hardcoded port in the codebase should reference this."""
+    # Core services
+    dashboard: int = int(os.environ.get("OBSERVECO_DASHBOARD_PORT", "9119"))
+    otel: int = int(os.environ.get("OBSERVECO_OTEL_PORT", "4318"))
+    service: int = int(os.environ.get("OBSERVECO_SERVICE_PORT", "8787"))
+    webhook: int = int(os.environ.get("OBSERVECO_WEBHOOK_PORT", "9120"))
+    telemetry: int = int(os.environ.get("OBSERVECO_TELEMETRY_PORT", "9120"))
+    billing: int = int(os.environ.get("OBSERVECO_BILLING_PORT", "9121"))
+    proxy: int = int(os.environ.get("OBSERVECO_PROXY_PORT", "9200"))
+
+    # External service ports (local LLM servers, bridges)
+    ollama: int = int(os.environ.get("OLLAMA_PORT", "11434"))
+    lm_studio: int = int(os.environ.get("LM_STUDIO_PORT", "1234"))
+    vllm: int = int(os.environ.get("VLLM_PORT", "8000"))
+    textgen: int = int(os.environ.get("TEXTGEN_PORT", "5000"))
+    localai: int = int(os.environ.get("LOCALAI_PORT", "8080"))
+
+    # Bridge ports
+    imessage: int = int(os.environ.get("IMESSAGE_PORT", "1234"))
+    whatsapp: int = int(os.environ.get("WHATSAPP_PORT", "8642"))
+
+    # Desktop window
+    desktop: int = int(os.environ.get("OBSERVECO_DESKTOP_PORT", "9119"))
+
+PORTS = Ports()
+
+# ── Watch Intervals ────────────────────────────────────────────────────────────
+# Override via env vars: OBSERVECO_WATCH_<NAME>_SECONDS
+
+@dataclass
+class WatchIntervals:
+    """All watch daemon consumer intervals. Every hardcoded interval in watch_consumers.py should reference this."""
+    drift: int = int(os.environ.get("OBSERVECO_WATCH_DRIFT_SECONDS", "300"))
+    garden: int = int(os.environ.get("OBSERVECO_WATCH_GARDEN_SECONDS", "900"))
+    pathway: int = int(os.environ.get("OBSERVECO_WATCH_PATHWAY_SECONDS", "900"))
+    prune: int = int(os.environ.get("OBSERVECO_WATCH_PRUNE_SECONDS", "86400"))
+    skills: int = int(os.environ.get("OBSERVECO_WATCH_SKILLS_SECONDS", "604800"))
+    heartbeat: int = int(os.environ.get("OBSERVECO_WATCH_HEARTBEAT_SECONDS", "30"))
+    token_history: int = int(os.environ.get("OBSERVECO_WATCH_TOKEN_HISTORY_SECONDS", "86400"))
+    data_source: int = int(os.environ.get("OBSERVECO_WATCH_DATA_SOURCE_SECONDS", "60"))
+    otel_stale: int = int(os.environ.get("OBSERVECO_WATCH_OTEL_STALE_SECONDS", "7200"))
+    config_timeline: int = int(os.environ.get("OBSERVECO_WATCH_CONFIG_TIMELINE_SECONDS", "60"))
+
+WATCH_INTERVALS = WatchIntervals()
+
+
+# ── LLM Service Config ─────────────────────────────────────────────────────────
+# Override via env vars: OBSERVECO_LLM_<NAME> (e.g. OBSERVECO_LLM_ANTHROPIC_MODEL=claude-sonnet-4-20250514)
+
+@dataclass
+class LLMConfig:
+    """Default model names and timeouts for the LLM service. Every hardcoded model in llm_service/__init__.py should reference this."""
+    anthropic_model: str = os.environ.get("OBSERVECO_LLM_ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+    openai_model: str = os.environ.get("OBSERVECO_LLM_OPENAI_MODEL", "gpt-4o")
+    google_model: str = os.environ.get("OBSERVECO_LLM_GOOGLE_MODEL", "gemini-2.0-flash")
+    ollama_model: str = os.environ.get("OBSERVECO_LLM_OLLAMA_MODEL", "llama3.1")
+    max_tokens: int = int(os.environ.get("OBSERVECO_LLM_MAX_TOKENS", "2048"))
+    timeout: int = int(os.environ.get("OBSERVECO_LLM_TIMEOUT", "30"))
+    ollama_timeout: int = int(os.environ.get("OBSERVECO_LLM_OLLAMA_TIMEOUT", "60"))
+
+LLM = LLMConfig()
+
 
 # ── Pricing & Plans ──────────────────────────────────────────────────────────
 

@@ -25,7 +25,8 @@ def _fmt_short_ts(ts: int) -> str:
 
 
 def _html_escape(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace('"', "&quot;").replace("'", "&#39;"))
 
 
 def _severity_for(error_type: str) -> str:
@@ -39,9 +40,25 @@ def _severity_for(error_type: str) -> str:
     return "info"
 
 
+def _header_html(count_label: str = "") -> str:
+    """Column header row — sits directly above .tl-rows so columns align.
+
+    count_label: optional right-aligned caption (e.g. 'last 24h · 57 events').
+    """
+    caption = f'<span class="tl-header-count">{count_label}</span>' if count_label else ""
+    return f"""<div class="tl-header-row">
+  <span class="tl-header-cell">Time</span>
+  <span class="tl-header-cell">Agent</span>
+  <span class="tl-header-cell">Message</span>
+  <span class="tl-header-cell tl-header-track">Timeline</span>
+  <span class="tl-header-cell tl-header-dur">Duration</span>
+  {caption}
+</div>"""
+
+
 def _loading_html() -> str:
     """Return skeleton loading state for the error timeline."""
-    return """<div class="section-h"><h2>Error Timeline</h2><span class="count mono">loading…</span></div>
+    return f"""{_header_html()}
 <div class="tl-rows">
   <div class="skel-line" style="padding:12px 16px"><div class="skel" style="width:48px;height:12px"></div><div class="skel" style="width:80px;height:12px"></div><div class="skel" style="flex:1;height:12px"></div></div>
   <div class="skel-line" style="padding:12px 16px"><div class="skel" style="width:48px;height:12px"></div><div class="skel" style="width:80px;height:12px"></div><div class="skel" style="flex:1;height:12px"></div></div>
@@ -51,13 +68,13 @@ def _loading_html() -> str:
 
 def _empty_html(days: int) -> str:
     """Return empty state for the error timeline."""
-    return f"""<div class="section-h"><h2>Error Timeline</h2><span class="count mono">0 events</span></div>
+    return f"""{_header_html()}
 <div class="tl-rows"><div class="tl-empty">No errors in the selected range.</div></div>"""
 
 
 def _error_html() -> str:
     """Return error state for the error timeline."""
-    return """<div class="section-h"><h2>Error Timeline</h2><span class="count mono">error</span></div>
+    return f"""{_header_html()}
 <div class="tl-rows"><div class="tl-empty" style="color:var(--status-critical)">Failed to load error timeline. The daemon may be offline.</div></div>"""
 
 
@@ -139,8 +156,8 @@ async def error_timeline(days: int = 1, agent: str = "", severity: str = ""):
 </div>"""
 
         event_count = len(rows)
-        return HTMLResponse(f"""<div class="section-h"><h2>Error Timeline</h2><span class="count mono">last {days}d · {event_count} events</span></div>
-<div class="tl-rows" id="timelineBody" hx-swap-oob="true">
+        return HTMLResponse(f"""{_header_html(f"last {days}d · {event_count} events")}
+<div class="tl-rows">
     {rows_html}
 </div>""")
 

@@ -6,11 +6,14 @@ Supports all 4 states: loading → data → empty → error.
 
 from __future__ import annotations
 
+import logging
 import time
 from datetime import datetime
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
+
+logger = logging.getLogger(__name__)
 
 from observeco.db import Database
 
@@ -30,8 +33,9 @@ def _fmt_tok(n: int) -> str:
     if n >= 1000: return f"{n / 1000:.1f}K"
     return str(n)
 
-def _html_escape(t: str) -> str:
-    return t.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
+def _html_escape(text: str) -> str:
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace('"', "&quot;").replace("'", "&#39;"))
 
 
 @router.get("/modal/{agent_name}", response_class=HTMLResponse)
@@ -83,7 +87,8 @@ async def agent_modal(agent_name: str, tab: str = "health"):
     garden = []
     try:
         garden = db.get_recent_garden(agent_name=name, limit=10) if hasattr(db, 'get_recent_garden') else []
-    except: pass
+    except Exception:
+        logger.exception("failed to load garden for %s", name)
 
     # Agent state
     status = "alive"
@@ -278,15 +283,27 @@ async def agent_modal(agent_name: str, tab: str = "health"):
     {f'<div class="pro"><span class="pico">🧠</span><div><h4>Memory Garden Auto-Scan</h4><p>Schedule automatic garden scans to catch memory bloat before it grows.</p></div></div>' if debt < 60 else '<div style="margin-top:var(--space-3)"><div class="swc watch"><span class="mark">⚠</span><div class="body"><span class="lead">ATTENTION</span><div class="txt">Debt score <b>{debt}</b> — run a garden scan to resolve duplicates and contradictions.</div></div></div></div>'}
 </div>"""
 
+    # Efficiency pane — lazy-loaded via htmx (scans Hermes sessions)
+    # ponytail: Hermes sessions have no agent_name field, so this lists recent
+    # sessions globally, not filtered by the modal's agent. Phase 3 adds the filter.
+    efficiency_html = f"""<div class="panel-pane{' show' if tab == 'efficiency' else ''}" data-pane="efficiency"
+        hx-get="/api/efficiency/sessions"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+        <div class="state-msg"><div class="ico">⏳</div><p>Loading sessions…</p></div>
+    </div>"""
+
     # Tab bar
     tokens_tab = f"<span class=\"m-tab{' active' if tab == 'tokens' else ''}\" data-tab=\"tokens\" onclick=\"switchModalTab('{name}','tokens',this)\">Tokens</span>" if is_agent else ""
     memory_tab = f"<span class=\"m-tab{' active' if tab == 'memory' else ''}\" data-tab=\"memory\" onclick=\"switchModalTab('{name}','memory',this)\">Memory</span>" if is_agent else ""
+    efficiency_tab = f"<span class=\"m-tab{' active' if tab == 'efficiency' else ''}\" data-tab=\"efficiency\" onclick=\"switchModalTab('{name}','efficiency',this)\">Efficiency</span>" if is_agent else ""
     tabs_html = f"""
     <span class="m-tab{' active' if tab == 'health' else ''}" data-tab="health" onclick="switchModalTab('{name}','health',this)">Health</span>
     <span class="m-tab{' active' if tab == 'guard' else ''}" data-tab="guard" onclick="switchModalTab('{name}','guard',this)">Guard</span>
     <span class="m-tab{' active' if tab == 'errors' else ''}" data-tab="errors" onclick="switchModalTab('{name}','errors',this)">{'' if errors_24h == 0 else '⚠ '}Errors</span>
     {tokens_tab}
     {memory_tab}
+    {efficiency_tab}
 """
 
     mhead_cls = cls
@@ -310,6 +327,7 @@ async def agent_modal(agent_name: str, tab: str = "health"):
         {errors_html}
         {tokens_html if is_agent else ""}
         {memory_html if is_agent else ""}
+        {efficiency_html if is_agent else ""}
     </div>
 </div>
 </div>

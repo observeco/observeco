@@ -126,7 +126,7 @@
 | 2.11 | `regex` passes when pattern matches output | P0 | Auto | `score([{type:'regex', pattern:'error \\\\d+'}], 'error 404')` → `(True, 1.0, ...)` |
 | 2.12 | `regex` fails when pattern doesn't match | P1 | Auto | `score([{type:'regex', pattern:'error \\\\d+'}], 'success')` → `(False, 0.0, ...)` |
 | 2.13 | `regex` with invalid pattern returns fail with error message | P2 | Auto | `score([{type:'regex', pattern:'[invalid'}], 'x')` → `(False, 0.0, ...)` |
-| 2.14 | `llm_judge` returns fail with "not implemented" message | P2 | Auto | `score([{type:'llm_judge', criteria:'good'}], 'output')` → `(False, 0.0, "llm_judge: not implemented")` |
+| 2.14 | `llm_judge` scores output against criteria using LLM-as-a-Verifier (1-20 scale, K=3) | P2 | Auto | `score([{type:'llm_judge', criteria:'good'}], 'output')` → `(bool, float, "llm_judge: ...")` — requires LLM provider configured |
 | 2.15 | Unknown assertion type returns fail with error message | P2 | Auto | `score([{type:'unknown_type'}], 'output')` → `(False, 0.0, "Unknown assertion type: unknown_type")` |
 | 2.16 | Empty assertions list returns fail | P1 | Auto | `score([], 'output')` → `(False, 0.0, "No assertions defined")` |
 | 2.17 | Multiple assertions: all must pass for overall pass | P1 | Auto | `score([{type:'contains',keywords:['a']},{type:'contains',keywords:['b']}], 'a b')` → `(True, 1.0, ...)` |

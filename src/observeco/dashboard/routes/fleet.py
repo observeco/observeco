@@ -6,11 +6,14 @@ Design: All States (v2) Strong-Fit — verdict bar + agent card grid.
 
 from __future__ import annotations
 
+import logging
 import time
 from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
+
+logger = logging.getLogger(__name__)
 
 from observeco.db import Database
 
@@ -38,7 +41,8 @@ def _fmt_tokens(n: int) -> str:
     return str(n)
 
 def _html_escape(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace('"', "&quot;").replace("'", "&#39;"))
 
 
 # ── Canary row for fleet grid cards ───────────────────────────────────────────
@@ -52,13 +56,13 @@ def _canary_row(agent_name: str, canary_row, canary_running: bool = False) -> st
         return '<span class="row-val" style="color:var(--muted)">no data</span>'
     total = (canary_row["pass_count"] or 0) + (canary_row["fail_count"] or 0)
     acc = (canary_row["pass_count"] / total * 100) if total > 0 else 0
-    color = "var(--accent)" if acc >= 70 else "var(--warn)" if acc >= 40 else "var(--danger)"
+    color = "var(--accent)" if acc >= 80 else "var(--warn)" if acc >= 60 else "var(--danger)"
     hangs = canary_row["hang_count"] or 0
     hang_str = f" · ⚠️{hangs} hang{'s' if hangs != 1 else ''}" if hangs else ""
     return f'<span class="row-val" style="color:{color}">{acc:.0f}%</span>'
 
 
-def _canary_pass_sub(agent_name: str, canary_row, canary_running: bool = False) -> str:
+def _canary_pass_sub(agent_name: str, canary_row, canary_running: bool = False, drift_row=None) -> str:
     """Pass count + Run trigger for the chevron row-sub (obs-spec-057 Variant C)."""
     if canary_running:
         return 'running'
@@ -67,7 +71,13 @@ def _canary_pass_sub(agent_name: str, canary_row, canary_running: bool = False) 
     total = (canary_row["pass_count"] or 0) + (canary_row["fail_count"] or 0)
     hangs = canary_row["hang_count"] or 0
     hang_str = f" · ⚠️{hangs} hang{'s' if hangs != 1 else ''}" if hangs else ""
-    return f'{canary_row["pass_count"]}/{canary_row["total_tasks"]} pass{hang_str}'
+    parts = f'{canary_row["pass_count"]}/{canary_row["total_tasks"]} pass{hang_str}'
+    # Quality drift indicator from drift_events
+    if drift_row:
+        drift_pct = drift_row["drift_pct"]
+        dir_sign = "▼" if drift_pct < 0 else "▲" if drift_pct > 0 else "◆"
+        parts += f' <span style="font-size:10px;color:{"var(--danger)" if abs(drift_pct) > 10 else "var(--warn)" if abs(drift_pct) > 5 else "var(--fg-3)"}">{dir_sign} {abs(drift_pct):.0f}% drift</span>'
+    return parts
 
 
 # ── So What insight generation ────────────────────────────────────────
@@ -513,6 +523,14 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
                 if (datetime.now(timezone.utc) - started).total_seconds() > 300:
                     continue  # stuck, don't show as running
             canary_running.add(row["agent_name"])
+        # Quality drift from drift_events (latest per agent)
+        quality_drift = {}
+        for row in conn.execute(
+            "SELECT agent_name, drift_pct, severity FROM drift_events "
+            "ORDER BY created_at DESC"
+        ).fetchall():
+            if row["agent_name"] not in quality_drift:
+                quality_drift[row["agent_name"]] = row
     except Exception:
         # Error state — daemon down or DB unavailable
         return HTMLResponse(f"""<div class="section-h"><h2>Fleet</h2><span class="count">error</span></div>
@@ -656,7 +674,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
             if token_logs_count and token_logs_count["cnt"] > 0:
                 dq = "acc"  # accurate - OTEL data available
         except Exception:
-            pass  # If check fails, default to estimated
+            logger.warning("token DQ check failed for %s, defaulting to estimated", name)
         dq_dot_cls = "acc" if dq == "acc" else "est"
         dq_title = "Accurate (otel + watch)" if dq == "acc" else "Estimated (watch only)"
 
@@ -717,6 +735,30 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         framework = s.get("agent_framework") or s.get("framework") or "Hermes"
         fw_badge = f'<span class="fw-badge">{framework}</span>'
 
+        # ── Confidence badge (FP/FN risk) ──
+        # lazy import to avoid circular with server.py
+        from observeco.dashboard.server import _compute_confidence
+        conf = _compute_confidence(
+            s.get("status", ""),
+            recent_pulses,
+            agent_errors,
+            circuit_state or {},
+            s.get("timestamp", 0),
+            now,
+        )
+        fp_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fp_risk"], "⚠️")
+        fn_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fn_risk"], "⚠️")
+        fp_label = conf["fp_risk"].capitalize()
+        fn_label = conf["fn_risk"].capitalize()
+        level_label = conf["level"].capitalize()
+        level_emoji = {"high": "🟢", "medium": "🟡", "low": "⚪"}.get(conf["level"], "⚪")
+        conf_badge = f"""<div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: {level_label} — {conf['sources_agree']}">{level_emoji} {level_label}</span>
+            <span title="False positive risk: {fp_label}">{fp_icon} FP {fp_label}</span>
+            <span title="False negative risk: {fn_label}">{fn_icon} FN {fn_label}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">{conf['recommendation']}</div>"""
+
         # Memory debt + cost from garden data
         gardens = db.get_gardens(agent_name=name)
         debt = 0
@@ -748,9 +790,9 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         qb_row = ""
         if is_agent:
             qb_row = f"""<div class="crow tappable" onclick="toggleQbDetail('{_html_escape(name)}'); return false;" tabindex="0" role="button" aria-label="View {name} quality benchmark" data-qb="{_html_escape(name)}">
-                <span class="row-label">Quality BM</span>
+                <span class="row-label">QUALITY BENCHMARK</span>
                 {_canary_row(name, canary_latest.get(name), name in canary_running)}
-                <span class="row-sub">{_canary_pass_sub(name, canary_latest.get(name), name in canary_running)} <span class="row-chev">▼</span></span>
+                <span class="row-sub">{_canary_pass_sub(name, canary_latest.get(name), name in canary_running, quality_drift.get(name))} <span class="row-chev">▼</span></span>
             </div>
             <div class="qb-expanded" id="qb-detail-{_html_escape(name)}">
                 <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
@@ -779,6 +821,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         <div class="collapsed-meta">
             <span class="collapsed-tok">{_fmt_tokens(total_tokens) if has_token_data else '—'}<span class="{drift_dir}"> {drift_str}</span></span>
             <span class="dqdot {dq_dot_cls}" title="{dq_title}"></span>
+            <span class="collapsed-conf" title="Confidence: {level_label} (FP {fp_label} / FN {fn_label})">{level_emoji}{fp_icon}{fn_icon}</span>
             <span class="chev">▸</span>
         </div>
     </div>
@@ -794,6 +837,10 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
                 <span class="row-label">Guard</span>
                 <span class="row-val" style="color:{circuit_color}">{circuit_text}</span>
                 <span class="row-sub">{fw_badge} <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                {conf_badge}
             </div>
             <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}?tab=errors', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} errors">
                 <span class="row-label">Errors</span>

@@ -28,7 +28,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from observeco.db import Database
+from observeco.dashboard.config import PORTS
 from observeco.dirs import get_data_dir
+from observeco.event_bus import publish
+from observeco.tracking.sdk.provider_registry import detect_provider_configs
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +67,30 @@ db = Database()
 # Bounded to avoid unbounded growth; reset when it exceeds the window.
 _seen_spans: set[str] = set()
 _SPAN_DEDUP_WINDOW = 50_000
+
+# Provider → is_local cache: built at startup from agent configs, refreshed on
+# config mtime change. Localhost/loopback base_url → local. User override
+# `local: false` in config → cloud (wins over auto). Default: cloud.
+_provider_is_local: dict[str, int] = {}
+_provider_cache_mtimes: dict[str, float] = {}
+_PROVIDER_CACHE_TTL = 60  # seconds between cache refresh checks
+
+
+def _refresh_provider_cache() -> None:
+    """Rebuild provider→is_local map from agent configs."""
+    global _provider_is_local, _provider_cache_mtimes
+    try:
+        entries = detect_provider_configs()
+        new_map: dict[str, int] = {}
+        for entry in entries:
+            # User override wins: if config has `local: false`, force cloud
+            # even if base_url is localhost. This handles proxy-on-localhost.
+            is_local = 1 if entry.is_local else 0
+            new_map[entry.provider] = is_local
+        _provider_is_local = new_map
+        logger.debug("Provider cache refreshed: %d entries", len(new_map))
+    except Exception:
+        logger.debug("Provider cache refresh failed (non-fatal)", exc_info=True)
 
 
 @app.post("/v1/traces")
@@ -141,18 +168,33 @@ async def ingest_traces(request: Request):
                         span_attrs_for_log[key] = val["boolValue"]
 
                 if trace_id:
-                    db.log_trace_span(
-                        trace_id=trace_id,
-                        span_id=span_id,
-                        parent_span_id=parent_span_id_val,
-                        agent_name=agent_name,
-                        span_name=span_name,
-                        span_kind=span_kind,
-                        start_time_ns=start_ns,
-                        end_time_ns=end_ns,
-                        status=status_str,
-                        attributes=span_attrs_for_log,
-                    )
+                    try:
+                        db.log_trace_span(
+                            trace_id=trace_id,
+                            span_id=span_id,
+                            parent_span_id=parent_span_id_val,
+                            agent_name=agent_name,
+                            span_name=span_name,
+                            span_kind=span_kind,
+                            start_time_ns=start_ns,
+                            end_time_ns=end_ns,
+                            status=status_str,
+                            attributes=span_attrs_for_log,
+                        )
+                    except Exception as span_exc:
+                        # Capture real listener failures (e.g. DB lock) into the errors table
+                        # per v032-data-reality §3.3 ("real errors flowing") + master-plan §543.
+                        # ponytail: log_trace_span already swallows OperationalError internally,
+                        # but other exceptions (schema, serialization) must not be silently lost.
+                        try:
+                            db.log_error(
+                                agent_name=agent_name,
+                                error_type="otel_span_write_failed",
+                                message=f"span={span_name}: {type(span_exc).__name__}: {span_exc}"[:500],
+                                severity="warning",
+                            )
+                        except Exception:
+                            pass
 
                 status_code = span.get("status", {}).get("code", "UNSET")
 
@@ -161,12 +203,15 @@ async def ingest_traces(request: Request):
                 if status_code == 2:  # OTel ERROR
                     pulse_status = "error"
                     error_msg = span.get("status", {}).get("message", "OTel span error")
-                    db.log_error(
-                        agent_name=agent_name,
-                        error_type="otel_span_error",
-                        message=f"{span_name}: {error_msg}",
-                        severity="error",
-                    )
+                    try:
+                        db.log_error(
+                            agent_name=agent_name,
+                            error_type="otel_span_error",
+                            message=f"{span_name}: {error_msg}"[:500],
+                            severity="error",
+                        )
+                    except Exception:
+                        pass
 
                 db.log_pulse(
                     agent_name=agent_name,
@@ -204,6 +249,16 @@ async def ingest_traces(request: Request):
 
                 input_tokens = _safe_int(span_attrs.get("llm.usage.token_count.prompt", 0))
                 output_tokens = _safe_int(span_attrs.get("llm.usage.token_count.completion", 0))
+                # ponytail: known token keys are OpenInference convention. If a span
+                # looks like an LLM call (gen_ai.*/llm.* attrs) but yields zero tokens,
+                # the agent's instrumentation is emitting a different key schema and
+                # silently produces no token_logs. Alert so the gap is visible.
+                # Upgrade: add a key-normalization layer (gen_ai.usage.*, llm.token.count.*)
+                # instead of only alerting.
+                has_llm_attrs = any(
+                    k.startswith("gen_ai.") or k.startswith("llm.")
+                    for k in span_attrs
+                )
                 if input_tokens or output_tokens:
                     # Provider is in span attrs from the Hermes OTEL plugin
                     provider = str(span_attrs.get("gen_ai.system", span_attrs.get("llm.provider", "unknown")))
@@ -220,17 +275,10 @@ async def ingest_traces(request: Request):
                     non_cached_input = max(0, input_tokens - cache_read)
                     true_total = non_cached_input + output_tokens + cache_creation + cache_read
 
-                    # Existing: write to compress_log (uses original prompt+completion sum)
-                    db.log_trim(
-                        agent_name=agent_name,
-                        identity=0,
-                        skills=0,
-                        memory=0,
-                        tools=0,
-                        guidance=0,
-                        total=true_total,
-                        savings=0,
-                    )
+                    # Classify local/cloud: look up provider in cached config map.
+                    # Default to cloud (0) when provider not found.
+                    is_local = _provider_is_local.get(provider, 0)
+                    cost = 0.0 if is_local else 0  # local cost zeroed; auto-compute below for cloud
 
                     db.log_token_turn(
                         agent_name=agent_name,
@@ -243,7 +291,17 @@ async def ingest_traces(request: Request):
                         provider=provider,
                         source="otel",
                         model=model,
+                        is_local=is_local,
+                        session_id=span_attrs.get("hermes.session_id", "") or "",
                     )
+                elif has_llm_attrs:
+                    logger.warning(
+                        f"OTel span from '{agent_name}' has LLM attributes but no "
+                        f"recognized token keys (llm.usage.token_count.*) — token_logs "
+                        f"not written. Span attrs: {list(span_attrs.keys())}"
+                    )
+                    publish(None, "otel_span_no_tokens", agent_name=agent_name,
+                            attrs=list(span_attrs.keys()))
 
                 spans_ingested += 1
 
@@ -288,7 +346,7 @@ def status() -> dict:
     return {"running": alive, "pid": pid, "log_path": str(_get_log_path())}
 
 
-def start(port: int = 4318) -> None:
+def start(port: int = PORTS.otel) -> None:
     """Start the OTel listener as a background daemon process."""
     current = status()
     if current["running"]:
@@ -375,8 +433,9 @@ def stop() -> None:
     print("OTel listener stopped.")
 
 
-def _run_server(port: int = 4318) -> None:
+def _run_server(port: int = PORTS.otel) -> None:
     """Run the FastAPI server (called in daemon child process)."""
+    _refresh_provider_cache()
     try:
         uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
     except Exception:  # noqa: BLE001
@@ -409,7 +468,7 @@ def _daemon_entry(port: int) -> None:
     _run_server(port=port)
 
 
-def run_once(port: int = 4318) -> None:
+def run_once(port: int = PORTS.otel) -> None:
     """Run server in foreground (for testing)."""
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")
 
@@ -424,7 +483,7 @@ def cli_main(args: list[str]) -> None:
         return
 
     cmd = args[0]
-    port = 4318
+    port = PORTS.otel
     if len(args) > 1 and args[1].isdigit():
         port = int(args[1])
 

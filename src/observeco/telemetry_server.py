@@ -1,7 +1,7 @@
 """ObserveCo Telemetry Server — central feedback collector.
 
 Expected env vars (on the server):
-  OBSERVECO_TG_BOT_TOKEN, OBSERVECO_TG_CHAT_ID     # Telegram delivery to Sean
+  OBSERVECO_TG_BOT_TOKEN, OBSERVECO_TG_CHAT_ID     # Telegram delivery to admin
   OBSERVECO_SMTP_HOST, OBSERVECO_SMTP_PORT, ...     # Email fallback
   OBSERVECO_TELEMETRY_PORT=9120                      # default port
 """
@@ -28,7 +28,7 @@ db = Database()
 
 @app.post("/v1/feedback")
 async def collect_feedback(request: Request):
-    """Central feedback collector — accept from anywhere, deliver to Sean."""
+    """Central feedback collector — accept from anywhere, deliver to admin."""
     try:
         body = await request.json()
     except json.JSONDecodeError:
@@ -65,7 +65,7 @@ async def collect_feedback(request: Request):
 
 @app.get("/v1/feedback")
 async def list_feedback(limit: int = 50):
-    """List recent feedback (for Sean to browse)."""
+    """List recent feedback (for admin to browse)."""
     items = db.get_feedback(limit=limit)
     return JSONResponse({"count": len(items), "items": items})
 
@@ -98,7 +98,7 @@ async def collect_telemetry(request: Request):
 
     db.save_telemetry(body)
 
-    # For error events, also create a feedback entry so Sean notices
+    # For error events, also create a feedback entry so admin notices
     if event == "error":
         fb_payload = {
             "type": "crash",

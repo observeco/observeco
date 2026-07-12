@@ -29,12 +29,66 @@ _FALLBACK_KEY_DIR = Path.home() / ".config" / "observeco"
 _FALLBACK_KEY_FILE = _FALLBACK_KEY_DIR / ".encryption.key"
 
 
+def _keyring_get_with_timeout(service: str, key: str) -> str | None:
+    """Read a keyring secret with a hard timeout.
+
+    macOS Keychain (keyring.backends.macOS) calls Security.framework
+    directly and HANGS indefinitely in headless contexts — no GUI security
+    session to authorize the unlock, so the call blocks on mach_msg forever.
+    A bare try/except never fires because it doesn't raise, it deadlocks.
+    Isolate the call in a child process and kill it on timeout so headless
+    hosts fall through to the file/env fallback.
+    ponytail: ceiling = 3s hard kill per call; mount the login keychain or
+    set OBSERVECO_ENCRYPTION_KEY to avoid the keychain path entirely.
+    """
+    import multiprocessing
+
+    def _target(q: "multiprocessing.Queue") -> None:
+        try:
+            import keyring
+            q.put(keyring.get_password(service, key))
+        except Exception:
+            q.put(None)
+
+    q: multiprocessing.Queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=_target, args=(q,), daemon=True)
+    p.start()
+    p.join(timeout=3)
+    if p.is_alive():
+        p.kill()
+        return None
+    try:
+        return q.get_nowait()
+    except Exception:
+        return None
+
+
+def _keyring_set_with_timeout(service: str, key: str, value: str) -> bool:
+    """Set a keyring secret with a hard timeout (mirror of the get guard)."""
+    import multiprocessing
+
+    def _target() -> None:
+        try:
+            import keyring
+            keyring.set_password(service, key, value)
+        except Exception:
+            pass
+
+    p = multiprocessing.Process(target=_target, daemon=True)
+    p.start()
+    p.join(timeout=3)
+    if p.is_alive():
+        p.kill()
+        return False
+    return True
+
+
 def _get_key() -> bytes:
     """Get or generate a Fernet-compatible encryption key.
 
     Precedence:
     1. Environment variable OBSERVECO_ENCRYPTION_KEY
-    2. OS keychain (via keyring)
+    2. OS keychain (via keyring, timeout-guarded for headless)
     3. Fallback file at ~/.config/observeco/.encryption.key
 
     Returns base64-encoded 32-byte key suitable for Fernet.
@@ -49,11 +103,9 @@ def _get_key() -> bytes:
         except Exception:
             logger.warning("OBSERVECO_ENCRYPTION_KEY invalid, ignoring")
 
-    # 2. OS keychain
+    # 2. OS keychain (timeout-guarded — headless boxes would otherwise hang)
     try:
-        import keyring
-
-        stored = keyring.get_password(_KEYCHAIN_SERVICE, _KEYCHAIN_KEY_NAME)
+        stored = _keyring_get_with_timeout(_KEYCHAIN_SERVICE, _KEYCHAIN_KEY_NAME)
         if stored:
             return stored.encode()
     except Exception:
@@ -76,13 +128,11 @@ def _get_key() -> bytes:
 
 def _store_key(key: bytes) -> None:
     """Store an encryption key."""
-    # Try keychain first
+    # Try keychain first (timeout-guarded)
     try:
-        import keyring
-
-        keyring.set_password(_KEYCHAIN_SERVICE, _KEYCHAIN_KEY_NAME, key.decode())
-        logger.info("Encryption key stored in OS keychain")
-        return
+        if _keyring_set_with_timeout(_KEYCHAIN_SERVICE, _KEYCHAIN_KEY_NAME, key.decode()):
+            logger.info("Encryption key stored in OS keychain")
+            return
     except Exception:
         pass
 

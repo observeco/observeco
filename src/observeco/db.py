@@ -28,7 +28,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 59
+SCHEMA_VERSION = 61
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -297,6 +297,7 @@ CREATE TABLE IF NOT EXISTS turn_log (
 );
 CREATE INDEX IF NOT EXISTS idx_compress_log_agent ON compress_log(agent_name);
 CREATE INDEX IF NOT EXISTS idx_skill_usage_agent ON skill_usage(agent_name, skill_name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_skill_usage_uniq ON skill_usage(agent_name, skill_name);
 CREATE INDEX IF NOT EXISTS idx_guidance_fire_agent ON guidance_fire(agent_name);
 CREATE INDEX IF NOT EXISTS idx_turn_log_agent ON turn_log(agent_name);
 CREATE INDEX IF NOT EXISTS idx_turn_log_ts ON turn_log(timestamp);
@@ -329,6 +330,7 @@ CREATE TABLE IF NOT EXISTS heal_config (
     agent_name TEXT PRIMARY KEY,
     auto_heal INTEGER NOT NULL DEFAULT 0,
     auto_heal_l2 INTEGER NOT NULL DEFAULT 0,
+    learn INTEGER NOT NULL DEFAULT 0,
     max_restarts_per_hour INTEGER NOT NULL DEFAULT 3,
     drift_threshold REAL NOT NULL DEFAULT 15.0,
     memory_debt_threshold INTEGER NOT NULL DEFAULT 60,
@@ -779,7 +781,7 @@ CREATE TABLE IF NOT EXISTS canary_task_baselines (
 CREATE INDEX IF NOT EXISTS idx_task_baseline_lookup ON canary_task_baselines(agent_name, config_hash, task_id);
 """),
     (58, """-- Migration 58: declare agent/service class explicitly (obs-2026-07)
--- Agent vs service line (Sean's decision): agents have brain + memory and act
+-- Agent vs service line (design decision): agents have brain + memory and act
 -- autonomously; services are infrastructure/bridges/watchers with no identity.
 -- Previously fleet.py *inferred* class from data presence (trim + garden rows),
 -- which misclassified real agents that hadn't collected memory-garden data yet.
@@ -806,6 +808,37 @@ CREATE TABLE IF NOT EXISTS alert_acks (
     acked_at   INTEGER NOT NULL,
     PRIMARY KEY (agent, category)
 );
+"""),
+
+    (60, """-- Migration 60: local/cloud classification (obs-spec-020 §11.8)
+-- Marks whether a token_logs row came from a local (self-hosted) provider.
+-- Local tokens cost $0; cloud tokens are billed. Classification is done at
+-- write time by the OTEL listener (provider→is_local cache from config) and
+-- the SDK patcher (base_url check). Watch daemon rows default to cloud (0).
+ALTER TABLE token_logs ADD COLUMN is_local INTEGER DEFAULT 0;
+CREATE INDEX IF NOT EXISTS idx_token_is_local ON token_logs(is_local);
+"""),
+
+    (61, """-- Migration 61: history-assisted task generation (obs-spec-060)
+-- source_session: traceability link from a user-defined canary task back to
+--   the original Hermes conversation it was mined from.
+-- canary_task_drafts: pending-review store for LLM-proposed task drafts. User
+--   approves/rejects in the dashboard before a draft becomes an active task.
+ALTER TABLE canary_tasks ADD COLUMN source_session TEXT;
+
+CREATE TABLE IF NOT EXISTS canary_task_drafts (
+    id                      TEXT PRIMARY KEY,
+    name                    TEXT NOT NULL,
+    description             TEXT,
+    prompt                  TEXT NOT NULL,
+    assertions              TEXT NOT NULL,   -- JSON list
+    category                TEXT,
+    difficulty              TEXT DEFAULT 'medium',
+    source_session          TEXT,
+    llm_judge_unavailable   INTEGER DEFAULT 0,
+    created_at              TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_drafts_created ON canary_task_drafts(created_at);
 """),
 ]
 
@@ -867,7 +900,8 @@ CREATE TABLE IF NOT EXISTS chisel_drift (
     week_avg_tokens INTEGER NOT NULL,
     delta_pct REAL NOT NULL,
     breached INTEGER NOT NULL DEFAULT 0,
-    timestamp INTEGER NOT NULL
+    timestamp INTEGER NOT NULL,
+    method TEXT NOT NULL DEFAULT 'rolling'
 );
 
 CREATE TABLE IF NOT EXISTS clawforge_profiles (
@@ -1084,6 +1118,31 @@ CREATE TABLE IF NOT EXISTS benchmark_results (
 );
 CREATE INDEX IF NOT EXISTS idx_benchmark_tasks_agent ON benchmark_tasks(agent_name);
 CREATE INDEX IF NOT EXISTS idx_benchmark_results_agent ON benchmark_results(agent_name, run_at);
+
+-- #81 Incident Skill Auto-Creation (L3 Learning Loop)
+CREATE TABLE IF NOT EXISTS prevention_skills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    pattern_hash TEXT NOT NULL,
+    trigger_conditions TEXT NOT NULL,
+    skill_path TEXT NOT NULL,
+    diagnosis TEXT,
+    remediation TEXT NOT NULL,
+    success_count INTEGER DEFAULT 0,
+    fail_count INTEGER DEFAULT 0,
+    deprecated INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_used_at TEXT,
+    UNIQUE(pattern_hash, agent_name)
+);
+CREATE INDEX IF NOT EXISTS idx_prevention_agent ON prevention_skills(agent_name);
+CREATE VIRTUAL TABLE IF NOT EXISTS prevention_skills_fts USING fts5(
+    skill_id UNINDEXED,
+    pattern_hash,
+    agent_name,
+    error_signature,
+    diagnosis
+);
 """
 
 
@@ -1097,7 +1156,7 @@ class Database:
     - A single process-wide writer lock serializes writes (execute+commit) so SQLite's
       single-writer guarantee holds within a process.
     - Cross-process contention (e.g. the watch daemon is a separate process) is handled
-      by WAL + busy_timeout=5000, and a bounded retry on OperationalError('database is locked').
+      by WAL + busy_timeout=30000, and a bounded retry on OperationalError('database is locked').
     """
 
     # Process-wide lock shared by ALL Database instances (so two Database() objects in
@@ -1121,7 +1180,7 @@ class Database:
         conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA busy_timeout=30000")
         conn.execute("PRAGMA foreign_keys=ON")
         # ponytail: _init_db() runs on first connection so schema + migrations
         # are applied before any query. This is the lazy init that prevents
@@ -1160,6 +1219,18 @@ class Database:
 
         # Run full schema to ensure all tables exist (IF NOT EXISTS makes it idempotent)
         conn.executescript(_SCHEMA_SQL)
+
+        # Idempotent column additions for tables that already exist in prod DBs
+        # (IF NOT EXISTS in _SCHEMA_SQL only creates new tables, not new columns)
+        # ponytail: separate try/except per alter — if one fails (already exists),
+        # the others still run. Safe to call on every startup.
+        for col_sql in (
+            "ALTER TABLE heal_config ADD COLUMN learn INTEGER NOT NULL DEFAULT 0",
+        ):
+            try:
+                conn.execute(col_sql)
+            except sqlite3.OperationalError:
+                pass  # column already exists
 
         # Check current version
         cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
@@ -1606,7 +1677,12 @@ class Database:
             (agent_name, agent_framework, status, latency_ms, error_message,
              int(time.time()), instance_id or "", metadata_json or ""),
         )
-        # Auto-log to errors table on error/dead status with message
+        # Auto-log to errors table ONLY when there's a specific error_message.
+        # The circuit breaker (pulse/check.py:206-209) is the designed noise guard:
+        # it writes a single circuit_tripped error after N consecutive failures,
+        # not on every 30s beat. Per master-plan §3.8: ~16 writes/day/dead-agent,
+        # not 2,880. Logging every pulse_dead here would flood the errors table
+        # and bury real signal (circuit trips, OTEL failures, heal failures).
         if status in ("error", "dead") and error_message:
             self.log_error(agent_name, f"pulse_{status}", error_message,
                            severity="critical" if status == "dead" else "error")
@@ -2138,24 +2214,25 @@ class Database:
         return [dict(r) for r in rows]
 
     def set_heal_config(self, agent_name: str, auto_heal: bool = False,
-                         auto_heal_l2: bool = False,
-                         max_restarts_per_hour: int = 3,
-                         drift_threshold: float = 15.0,
-                         memory_debt_threshold: int = 60) -> None:
+                        auto_heal_l2: bool = False, learn: bool = False,
+                        max_restarts_per_hour: int = 3,
+                        drift_threshold: float = 15.0,
+                        memory_debt_threshold: int = 60) -> None:
         """Set auto-heal config for an agent. Creates or updates."""
         conn = self._get_conn()
         now = int(time.time())
         conn.execute(
-            """INSERT INTO heal_config (agent_name, auto_heal, auto_heal_l2, max_restarts_per_hour,
+            """INSERT INTO heal_config (agent_name, auto_heal, auto_heal_l2, learn, max_restarts_per_hour,
                drift_threshold, memory_debt_threshold, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(agent_name) DO UPDATE SET
                auto_heal=excluded.auto_heal, auto_heal_l2=excluded.auto_heal_l2,
+               learn=excluded.learn,
                max_restarts_per_hour=excluded.max_restarts_per_hour,
                drift_threshold=excluded.drift_threshold,
                memory_debt_threshold=excluded.memory_debt_threshold,
                updated_at=excluded.updated_at""",
-            (agent_name, int(auto_heal), int(auto_heal_l2), max_restarts_per_hour,
+            (agent_name, int(auto_heal), int(auto_heal_l2), int(learn), max_restarts_per_hour,
              drift_threshold, memory_debt_threshold, now, now),
         )
         conn.commit()
@@ -2211,14 +2288,24 @@ class Database:
             )
         return [dict(r) for r in cur.fetchall()]
 
+    def get_trims_since(self, agent_name: str, since: int | float) -> list[dict]:
+        """Get all trim entries for an agent since a timestamp (no row limit)."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "SELECT * FROM chisel_trims WHERE agent_name=? AND timestamp >= ? ORDER BY timestamp ASC",
+            (agent_name, since),
+        )
+        return [dict(r) for r in cur.fetchall()]
+
     def log_drift(self, agent_name: str, component: str, current: int,
-                  week_avg: int, delta_pct: float, breached: bool) -> None:
+                  week_avg: int, delta_pct: float, breached: bool,
+                  method: str = "rolling") -> None:
         conn = self._get_conn()
         conn.execute(
             "INSERT INTO chisel_drift (agent_name, component, current_tokens, week_avg_tokens, "
-            "delta_pct, breached, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "delta_pct, breached, timestamp, method) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (agent_name, component, current, week_avg, delta_pct, int(breached),
-             int(time.time())),
+             int(time.time()), method),
         )
         conn.commit()
 
@@ -2530,14 +2617,17 @@ class Database:
                        status: str = "UNSET", attributes: dict | None = None) -> None:
         """Record an OTel span in the trace_spans table."""
         import json as _json
-        self._write(
-            "INSERT INTO trace_spans (trace_id, span_id, parent_span_id, agent_name, "
-            "span_name, span_kind, start_time_ns, end_time_ns, status, attributes, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (trace_id, span_id, parent_span_id, agent_name, span_name, span_kind,
-             start_time_ns, end_time_ns, status,
-             _json.dumps(attributes or {}), int(time.time())),
-        )
+        try:
+            self._write(
+                "INSERT INTO trace_spans (trace_id, span_id, parent_span_id, agent_name, "
+                "span_name, span_kind, start_time_ns, end_time_ns, status, attributes, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (trace_id, span_id, parent_span_id, agent_name, span_name, span_kind,
+                 start_time_ns, end_time_ns, status,
+                 _json.dumps(attributes or {}), int(time.time())),
+            )
+        except sqlite3.OperationalError as e:
+            logger.warning("Failed to write trace span (non-fatal): %s", e)
 
     def get_trace_spans(self, agent_name: str = "", trace_id: str = "", limit: int = 200) -> list[dict]:
         """Get trace spans, optionally filtered by agent or trace."""
@@ -3769,24 +3859,26 @@ class Database:
                        cache_creation_tokens: int = 0, cache_read_tokens: int = 0,
                        cost_computed: str = "flat", source: str = "unknown",
                        model: str = "", latency_ms: int = 0,
-                       tool_calls: str = "[]", topic_id: str = "") -> dict:
+                       tool_calls: str = "[]", topic_id: str = "",
+                       is_local: int = 0, session_id: str = "") -> dict:
         # Auto-compute cost when provider given but cost not set
-        if cost == 0 and provider:
+        # Skip for local providers (cost is always $0)
+        if cost == 0 and provider and not is_local:
             from observeco.tracking.tokens import compute_cost
             cost = compute_cost(total_tokens, provider)
         self._write(
-            "INSERT INTO token_logs (agent_name, turn_id, total_tokens, identity_tokens, "
+            "INSERT OR IGNORE INTO token_logs (agent_name, turn_id, total_tokens, identity_tokens, "
             "skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
             "provider, cost, anomaly_score, input_tokens, output_tokens, "
             "cache_creation_tokens, cache_read_tokens, cost_computed, source, "
-            "model, latency_ms, tool_calls, topic_id, recorded_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "model, latency_ms, tool_calls, topic_id, recorded_at, is_local, session_id) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (agent_name, turn_id, total_tokens, identity_tokens, skills_tokens,
              memory_tokens, tools_tokens, guidance_tokens, provider, cost,
              anomaly_score, input_tokens, output_tokens,
              cache_creation_tokens, cache_read_tokens, cost_computed, source,
              model, latency_ms, tool_calls, topic_id,
-             int(time.time()))
+             int(time.time()), is_local, session_id)
         )
 
         # Auto-register new agent in agent_configs (type classified by name pattern)

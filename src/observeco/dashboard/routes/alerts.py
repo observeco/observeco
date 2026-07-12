@@ -52,7 +52,8 @@ def _fmt_gap(gap_seconds: int) -> str:
 
 
 def _html_escape(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace('"', "&quot;").replace("'", "&#39;"))
 
 
 def build_alerts(mode: str = "live", acks: dict | None = None) -> list[dict] | None:

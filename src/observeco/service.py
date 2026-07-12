@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import logging
 import subprocess
+
+from observeco.dashboard.config import PORTS
 import sys
 import time
 from dataclasses import dataclass
@@ -336,7 +338,7 @@ class ServiceManager:
 
 # --- CLI Commands ---
 
-def start_service(port: int = 8787, otel_port: int = 4318) -> dict:
+def start_service(port: int = PORTS.service, otel_port: int = PORTS.otel) -> dict:
     """Start the ObserveCo service."""
     manager = ServiceManager()
 

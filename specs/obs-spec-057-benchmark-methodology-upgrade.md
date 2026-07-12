@@ -15,7 +15,7 @@
 The current canary benchmark system (obs-spec-051/055) is functional as a smoke test but cannot support meaningful quality comparisons between agents. A critical evaluation of the implementation revealed:
 
 1. **Assertions are too weak** — 6 of 9 tasks use keyword containment checks that can be passed by echoing prompt content or sounding authoritative without being correct
-2. **LLM-as-judge is unimplemented** — the `llm_judge` assertion type exists in the Scorer but returns "not implemented"
+2. **LLM-as-judge was unimplemented** — the `llm_judge` assertion type existed in the Scorer but returned "not implemented". **Fixed 2026-07-10** — upgraded to LLM-as-a-Verifier (1-20 scale, K=3, logprob-based expected score).
 3. **No reference outputs** — tasks have no `expected_output` field; scoring is purely binary pattern matching
 4. **Trials=3 is insufficient for bootstrap CI** — bootstrap resampling from n=3 produces wide, unstable intervals
 5. **Per-task drift compares against aggregate baseline** — individual task drift is meaningless because it compares a single task's accuracy against the overall baseline, not that task's own historical accuracy
@@ -70,35 +70,110 @@ Without this, all historical task results show "unknown" category — the dashbo
 | `code_executable` | `language` | **Deferred to v0.7.0.** Executing agent-generated code requires a proper sandbox (network isolation, filesystem isolation, resource limits) that subprocess alone cannot provide. Current risk mitigation (restricted env vars + timeout) insufficient — fork bombs, filesystem reads, and memory exhaustion remain exploitable. When implemented, use Docker container or nsjail, not bare subprocess. In v0.6.0, `code_executable` assertion returns "not implemented (deferred to v0.7.0)" with a warning. |
 | `ordering` | `steps` | Check if output contains steps in the specified order |
 | `tool_call_validation` | `expected_tool`, `expected_args` | Verify the agent called the right tool with correct arguments |
-| `llm_judge` | `criteria`, `model` (optional) | LLM evaluates output against criteria on a 0-1 scale. Uses `OBSERVECO_LLM_API_KEY` or falls back to `llm_service`. |
+| `llm_judge` | `criteria`, `threshold` (default 0.5), `repetitions` (default 3) | LLM-as-a-Verifier evaluates output against criteria on a 1-20 scale with K=3 repetition. Uses logprob-based expected score (Tier 2) or discrete fallback (Tier 1). Based on Kwok et al. (arXiv:2607.05391, 2026). |
 
-#### LLM-as-Judge Implementation
+#### LLM-as-Judge Implementation (v2 — 2026-07-10)
+
+**Upgraded to LLM-as-a-Verifier** per Kwok et al. (arXiv:2607.05391, 2026). Replaced the original 0-1 JSON prompt with a 1-20 scale + logprob-based expected score.
 
 ```python
 def _llm_judge(assertion: dict, output: str) -> tuple[bool, float, str]:
-    """LLM-as-judge assertion — evaluates output quality against criteria."""
+    """LLM-as-a-Verifier assertion — evaluates output quality against criteria.
+
+    Uses fine-grained 1-20 scoring with K=3 repeated evaluation.
+    If the provider supports logprobs, computes expected score from the
+    logprob distribution (Tier 2). Otherwise falls back to discrete score
+    parsing (Tier 1).
+    """
     criteria = assertion.get("criteria", "")
     expected = assertion.get("expected", "")
+    threshold = assertion.get("threshold", 0.5)
+    k = int(assertion.get("repetitions", 3))
 
-    system_prompt = "You are evaluating an AI agent's response. Score it on a 0-1 scale. Respond with JSON: {\"score\": 0.0-1.0, \"reasoning\": \"...\"}"
-    user_context = f"Criteria: {criteria}\nExpected output: {expected}\nAgent output: {output[:2000]}"
+    system_prompt = (
+        "You are an expert evaluator. Score the agent's response against the criteria. "
+        "Rate on a 1-20 scale "
+        "(1 = completely wrong, 20 = perfect). "
+        "Respond with ONLY: <score>N</score> where N is an integer 1-20."
+    )
+    user_context = (
+        f"Criteria: {criteria}\n"
+        f"Expected: {expected}\n"
+        f"Agent output: {output[:2000]}\n\n"
+        f"Score (1-20):"
+    )
 
-    from observeco.llm_service import ask
-    result = ask(system_prompt, user_context, consumer="canary_judge", tier=2)
-    if result is None:
-        # Budget exhausted or no API key — fall back to semantic_similarity or contains
-        from sentence_transformers import SentenceTransformer
+    # K repeated evaluations
+    for i in range(k):
+        resp = ask_with_logprobs(system_prompt, user_context,
+                                 consumer="canary_judge", tier=2,
+                                 top_logprobs=20)
+        # Tier 2: logprob-based expected score
+        if resp.logprobs:
+            score = expected_score_from_logprobs(resp.logprobs)
+        # Tier 1 fallback: parse <score>N</score> from text
+        else:
+            score = parse_discrete_score(resp.text)
+        # Average across K calls
         ...
-    # Parse JSON response for {"score": 0.0-1.0, "reasoning": "..."}
-    # Cache by (task_id, sha256(output)) to avoid re-evaluating identical outputs
+
+    return (avg_score >= threshold, avg_score, reasoning)
+```
+
+**Key differences from v1 (0-1 JSON):**
+- **1-20 scale** instead of 0-1 — finer granularity reduces tie rates from ~27% to ~0%
+- **Logprob-based expected score** instead of reading the generated token — computes `E[score] = Σ p(v_g) · φ(v_g)` from the full logprob distribution
+- **K=3 repetition** instead of single call — averages 3 independent evaluations
+- **`<score>N</score>` output format** instead of JSON — enables logprob extraction at a single token position
+- **`repetitions` field** — users can override K per assertion
+
+**Logprob extraction (Tier 2):**
+```python
+def expected_score_from_logprobs(logprobs: list[dict]) -> float | None:
+    """Compute expected score from logprob distribution at the score token position.
+
+    Implements Eq. 3.1 from the paper: R = sum_g p(v_g) * phi(v_g)
+    """
+    for pos in logprobs:
+        top_lps = pos.get("top_logprobs") or []
+        score_probs = []
+        for lp in top_lps:
+            score = token_to_score(lp["token"])  # 1-20
+            if score is not None:
+                prob = math.exp(lp["logprob"])
+                score_probs.append((score, prob))
+        if not score_probs:
+            continue
+        total_prob = sum(p for _, p in score_probs)
+        expected = sum(s * (p / total_prob) for s, p in score_probs)
+        return (expected - 1) / (20 - 1)  # normalize to 0-1
+    return None
+```
+
+**Discrete fallback (Tier 1):**
+```python
+def parse_discrete_score(text: str) -> float | None:
+    """Extract a 1-20 score from model text output.
+    Tries: <score>N</score> tags → Score: N → last integer 1-20 in text.
+    """
+    m = re.search(r"<score>\s*(\d+)\s*</score>", text)
+    if m:
+        val = int(m.group(1))
+        if 1 <= val <= 20:
+            return (val - 1) / 19
     ...
 ```
 
-**Interface verified:** `ask(system_prompt: str, user_context: str, *, consumer: str, max_cost_cents: float = 0.02, cache_ttl_secs: int = 300, tier: int = 1) -> str | None`. Returns `None` when gated/budget-exhausted/no-API-key. Uses `OBSERVECO_LLM_API_KEY` (BYOK).
+**Provider support:**
+- OpenAI-compatible (DeepSeek, OpenRouter, Groq, Together, Mistral, vLLM, LM Studio) → Tier 2
+- Anthropic, Google, Ollama native → Tier 1
+- Falls back to `contains` if no LLM provider configured
 
 **Caching:** Judge results cached by `(task_id, sha256(output))` to avoid re-evaluating identical outputs across trials. Cache stored in `canary_judge_cache` table.
 
-**Cost guard:** Judge calls count against the self-monitoring budget cap (G1.1). If budget exhausted, fall back to `semantic_similarity` or `contains` assertion.
+**Cost guard:** Judge calls count against the self-monitoring budget cap (G1.1). If budget exhausted, fall back to `contains` assertion.
+
+**Interface:** `ask_with_logprobs(system_prompt, user_context, *, consumer, max_cost_cents, cache_ttl_secs, tier, top_logprobs) -> LLMResponse | None`. Returns `LLMResponse(text, logprobs)` or `None` when gated/budget-exhausted/no-API-key. Uses `OBSERVECO_LLM_API_KEY` (BYOK).
 
 #### Scoring Weight
 

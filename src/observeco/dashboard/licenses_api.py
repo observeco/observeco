@@ -13,6 +13,8 @@ import time
 
 from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
+
+from observeco.dashboard.config import PORTS
 from pydantic import BaseModel
 
 from observeco import license as lic
@@ -82,7 +84,7 @@ async def trial_reminder_check():
         if 6 <= days_remaining <= 8 and "trial_reminder_7d" not in trial_sent:
             send_email(state.customer_email, "trial_reminder_7d", {
                 "trial_days_left": str(days_remaining),
-                "subscribe_url": "http://localhost:9121/",
+                "subscribe_url": f"http://localhost:{PORTS.billing}/",
                 "support_email": "support@observeco.dev",
             })
             reminders_sent.append("trial_reminder_7d")
@@ -91,8 +93,8 @@ async def trial_reminder_check():
         elif 2 <= days_remaining <= 4 and "trial_reminder_3d" not in trial_sent:
             send_email(state.customer_email, "trial_reminder_3d", {
                 "trial_days_left": str(days_remaining),
-                "subscribe_url": "http://localhost:9121/",
-                "manage_url": "http://localhost:9121/",
+                "subscribe_url": f"http://localhost:{PORTS.billing}/",
+                "manage_url": f"http://localhost:{PORTS.billing}/",
                 "support_email": "support@observeco.dev",
             })
             reminders_sent.append("trial_reminder_3d")
@@ -100,7 +102,7 @@ async def trial_reminder_check():
 
         elif days_remaining == 1 and "trial_reminder_1d" not in trial_sent:
             send_email(state.customer_email, "trial_reminder_1d", {
-                "subscribe_url": "http://localhost:9121/",
+                "subscribe_url": f"http://localhost:{PORTS.billing}/",
                 "support_email": "support@observeco.dev",
             })
             reminders_sent.append("trial_reminder_1d")
@@ -109,8 +111,8 @@ async def trial_reminder_check():
         elif days_remaining == 0 and "trial_expired" not in trial_sent:
             send_email(state.customer_email, "trial_expired", {
                 "first_name": state.customer_email.split("@")[0].title(),
-                "subscribe_url": "http://localhost:9121/",
-                "manage_url": "http://localhost:9121/",
+                "subscribe_url": f"http://localhost:{PORTS.billing}/",
+                "manage_url": f"http://localhost:{PORTS.billing}/",
                 "support_email": "support@observeco.dev",
             })
             reminders_sent.append("trial_expired")

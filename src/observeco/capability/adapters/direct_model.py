@@ -19,7 +19,36 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
+from observeco.dashboard.config import PORTS
+
 logger = logging.getLogger(__name__)
+
+
+def _load_dotenv() -> None:
+    """Load .env from the observeco project root into os.environ.
+
+    The DirectModelAdapter resolves API keys from env vars (e.g.
+    OLLAMA_CLOUD_API_KEY). In background processes (cron, grid runs) these
+    vars aren't inherited. Loading .env at import time ensures keys are
+    available regardless of how the process was started.
+    """
+    # Walk up from this file to find the project root (where .env lives)
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        env_path = parent / ".env"
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, _, v = line.partition("=")
+                    k = k.strip()
+                    v = v.strip().strip('"').strip("'")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+            break
+
+
+_load_dotenv()
 
 # Provider resolution: (base_url_suffix, env_var_prefix)
 # Each entry maps a provider key to its base URL path and env var name.
@@ -27,8 +56,9 @@ _PROVIDER_MAP: dict[str, tuple[str, str]] = {
     "deepseek": ("https://api.deepseek.com", "DEEPSEEK_API_KEY"),
     "openai": ("https://api.openai.com", "OPENAI_API_KEY"),
     "anthropic": ("https://api.anthropic.com", "ANTHROPIC_API_KEY"),
-    "ollama": ("http://localhost:11434", ""),  # no API key needed
-    "custom-ollama": ("http://localhost:11434", ""),
+    "ollama": (f"http://localhost:{PORTS.ollama}", ""),  # no API key needed
+    "custom-ollama": (f"http://localhost:{PORTS.ollama}", ""),
+    "ollama-cloud": ("https://ollama.com/v1", "OLLAMA_CLOUD_API_KEY"),
     "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY"),
 }
 
@@ -42,20 +72,38 @@ _DEFAULT_MODELS: dict[str, str] = {
 
 
 def _load_hermes_config() -> dict:
-    """Load Hermes config from standard locations."""
+    """Load Hermes config from standard locations.
+
+    Merges main config with any provider overrides found in profile configs.
+    The ollama-cloud provider is a Hermes built-in — its API key lives in
+    backup configs or profile configs, not the main config.yaml providers dict.
+    """
     candidates = [
         Path.home() / ".hermes" / "config.yaml",
         Path.home() / ".hermes" / "profiles" / "main" / "config.yaml",
     ]
+    merged = {}
     for path in candidates:
         if path.exists():
             try:
                 import yaml
                 with open(path) as f:
-                    return yaml.safe_load(f) or {}
+                    cfg = yaml.safe_load(f) or {}
+                # Merge providers dict (profile overrides win)
+                prov = cfg.get("providers", {}) or {}
+                if isinstance(prov, dict):
+                    if not merged.get("providers"):
+                        merged["providers"] = {}
+                    merged["providers"].update(prov)
+                # Merge custom_providers
+                cps = cfg.get("custom_providers", []) or []
+                if cps:
+                    if not merged.get("custom_providers"):
+                        merged["custom_providers"] = []
+                    merged["custom_providers"].extend(cps)
             except Exception:
                 pass
-    return {}
+    return merged
 
 
 def _resolve_provider(model_spec: str) -> tuple[str, str, dict]:
@@ -113,7 +161,7 @@ def _resolve_provider(model_spec: str) -> tuple[str, str, dict]:
 
     # Last resort: assume OpenAI-compatible at localhost
     logger.warning("Unknown provider '%s', assuming OpenAI-compatible at localhost", provider_key)
-    return "http://localhost:11434/v1", model_name, {
+    return f"http://localhost:{PORTS.ollama}/v1", model_name, {
         "Content-Type": "application/json",
     }
 

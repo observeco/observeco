@@ -155,11 +155,34 @@ observeco canary run --agent all --schedule daily
 
 ---
 
-## 5. ponytail: LLM-as-judge assertions
+## 5. LLM-as-a-Verifier assertions
 
-`llm_judge` assertion type uses a separate LLM call to evaluate output quality. This adds cost and latency. Upgrade path: (a) cache judge results by (task_id, output_hash), (b) allow user to configure judge model separately, (c) add confidence score from judge.
+`llm_judge` assertion type uses a separate LLM call to evaluate output quality. Implemented per Kwok et al. "LLM-as-a-Verifier" (arXiv:2607.05391, 2026).
 
-**Note (2026-07-06):** The `llm_judge` assertion is defined in the Scorer but returns "not implemented (deferred to v1.1)". Implementation is now specified in **obs-spec-057-benchmark-methodology-upgrade.md** §2.2. Current assertions (exact_match, contains, numeric_range, regex) are insufficient for meaningful quality evaluation — keyword containment can be passed by echoing prompt content. See obs-spec-057 for the full critical assessment and upgrade plan.
+**Design:**
+- **1-20 scoring scale** (was 0-1) — finer granularity reduces tie rates
+- **K=3 repeated evaluation** (configurable via `repetitions` field) — averages 3 independent calls
+- **Logprob-based expected score** (Tier 2) — computes `E[score] = Σ p(v_g) · φ(v_g)` from top-20 logprobs at the score token position. Zero tie rate.
+- **Discrete fallback** (Tier 1) — parses `<score>N</score>` tags from text if logprobs unavailable
+- **Caching:** Judge results cached by `(task_id, sha256(output))` to avoid re-evaluating identical outputs across trials. Cache stored in `canary_judge_cache` table.
+- **Cost guard:** Judge calls count against the self-monitoring budget cap (G1.1). If budget exhausted, fall back to `contains` assertion.
+
+**Provider support:**
+- OpenAI-compatible providers (DeepSeek, OpenRouter, Groq, Together, Mistral, vLLM, LM Studio) → Tier 2 (logprob-based)
+- Anthropic, Google, Ollama native → Tier 1 (discrete fallback)
+- Falls back to `contains` assertion if no LLM provider configured
+
+**Assertion schema:**
+```json
+{
+  "type": "llm_judge",
+  "criteria": "Response must be factually correct and concise",
+  "threshold": 0.5,
+  "repetitions": 3
+}
+```
+
+**Upgrade path:** (a) add per-task judge model override, (b) add confidence score from judge, (c) add pairwise comparison mode for ranking (PPT tournament from the paper).
 
 ---
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from observeco.capability.baseline import BaselineManager, DriftResult
@@ -282,6 +282,102 @@ class DriftDetector:
             },
             "tasks": tasks,
         }
+
+    def get_per_task_history(self, agent_name: str, days: int = 14) -> dict:
+        """Per-task accuracy time series for the per-task drift chart.
+
+        Returns one time series per task — each with date-accuracy points,
+        baseline, current, delta, and severity.
+        """
+        conn = self.db._get_conn()
+
+        # Detect optional category/difficulty columns (ponytail: not in schema yet;
+        # upgrade: ALTER TABLE canary_tasks ADD COLUMN category/difficulty)
+        task_cols = {row[1] for row in conn.execute("PRAGMA table_info(canary_tasks)")}
+        has_category = "category" in task_cols
+        has_difficulty = "difficulty" in task_cols
+
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+
+        rows = conn.execute(
+            "SELECT cr.task_id, ct.name, cr.accuracy, crr.started_at "
+            "FROM canary_results cr "
+            "JOIN canary_runs crr ON cr.run_id = crr.id "
+            "JOIN canary_tasks ct ON cr.task_id = ct.id "
+            "WHERE crr.agent_name = ? AND crr.status = 'completed' "
+            "AND crr.started_at >= ? "
+            "ORDER BY cr.task_id, crr.started_at ASC",
+            (agent_name, cutoff),
+        ).fetchall()
+
+        if not rows:
+            return {"tasks": []}
+
+        # --- group points by task_id ---
+        task_points: dict[str, list[dict]] = {}
+        task_names: dict[str, str] = {}
+        for row in rows:
+            tid = row["task_id"]
+            if tid not in task_points:
+                task_points[tid] = []
+                task_names[tid] = row["name"]
+            acc = row["accuracy"] if row["accuracy"] is not None else 0.0
+            task_points[tid].append({
+                "date": row["started_at"][:10],
+                "accuracy": round(acc * 100, 1),
+            })
+
+        # --- optional category/difficulty (single lookup) ---
+        task_meta: dict[str, dict] = {tid: {} for tid in task_points}
+        if has_category or has_difficulty:
+            cols = []
+            if has_category:
+                cols.append("category")
+            if has_difficulty:
+                cols.append("difficulty")
+            placeholders = ",".join("?" for _ in task_points)
+            meta_rows = conn.execute(
+                f"SELECT id, {', '.join(cols)} FROM canary_tasks "
+                f"WHERE id IN ({placeholders})",
+                list(task_points.keys()),
+            ).fetchall()
+            for m in meta_rows:
+                if has_category:
+                    task_meta[m["id"]]["category"] = m["category"]
+                if has_difficulty:
+                    task_meta[m["id"]]["difficulty"] = m["difficulty"]
+
+        # --- compute baseline/current/delta/severity per task ---
+        tasks = []
+        for tid, points in task_points.items():
+            accs = [p["accuracy"] for p in points]
+            baseline = round(sum(accs) / len(accs), 1)
+            current = points[-1]["accuracy"]
+            delta = round(current - baseline, 1)
+            abs_delta = abs(delta)
+            if abs_delta >= 5.0:
+                severity = "breach"
+            elif abs_delta >= 3.0:
+                severity = "warning"
+            else:
+                severity = "stable"
+
+            task = {
+                "task_id": tid,
+                "name": task_names[tid],
+                "points": points,
+                "baseline": baseline,
+                "current": current,
+                "delta": delta,
+                "severity": severity,
+            }
+            if has_category:
+                task["category"] = task_meta[tid].get("category")
+            if has_difficulty:
+                task["difficulty"] = task_meta[tid].get("difficulty")
+            tasks.append(task)
+
+        return {"tasks": tasks}
 
     def acknowledge(self, event_id: str) -> dict:
         """Mark a drift event as acknowledged."""

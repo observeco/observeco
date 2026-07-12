@@ -181,10 +181,9 @@ class BaselineManager:
 
         # Two-sample z-test for proportions
         p1 = baseline_accuracy
-        # Use actual task count from baseline runs (obs-spec-057: remove hardcoded * 9)
+        # Use actual total task-trials from baseline runs (obs-spec-057: remove hardcoded * 9)
         base_runs = self._get_baseline_runs(agent_name, config_hash)
-        avg_tasks_per_run = sum(r.get("total_tasks", 0) for r in base_runs) // max(len(base_runs), 1)
-        n1 = baseline.get("run_count", 3) * max(avg_tasks_per_run, 1)
+        n1 = sum(r["total_tasks"] for r in base_runs)
         n2 = current_total
 
         if n1 == 0 or n2 == 0 or p1 == 0:
@@ -259,12 +258,63 @@ class BaselineManager:
             return None
         conn = self.db._get_conn()
         row = conn.execute(
-            "SELECT accuracy FROM canary_task_baselines "
+            "SELECT accuracy, ci_lower, ci_upper, run_count FROM canary_task_baselines "
             "WHERE agent_name = ? AND config_hash = ? AND task_id = ? AND expires_at IS NULL "
             "ORDER BY created_at DESC LIMIT 1",
             (agent_name, config_hash, task_id),
         ).fetchone()
         return dict(row) if row else None
+
+    def get_per_task_baseline(self, agent_name: str, config_hash: str, task_id: str) -> Optional[dict]:
+        """Public API: get per-task baseline."""
+        return self._get_per_task_baseline(agent_name, config_hash, task_id)
+
+    def create_per_task_baseline(
+        self,
+        agent_name: str,
+        config_hash: str,
+        task_id: str,
+        accuracy: float,
+        run_count: int,
+        ci_lower: float = 0.0,
+        ci_upper: float = 0.0,
+    ) -> dict:
+        """Create/update a per-task baseline for a specific task.
+
+        Expires any existing active baseline for this (agent, config, task) before
+        inserting the new one.
+        """
+        conn = self.db._get_conn()
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        # Expire existing active baseline
+        conn.execute(
+            "UPDATE canary_task_baselines SET expires_at = ? "
+            "WHERE agent_name = ? AND config_hash = ? AND task_id = ? AND expires_at IS NULL",
+            (now_iso, agent_name, config_hash, task_id),
+        )
+
+        baseline_id = str(uuid.uuid4())
+        conn.execute(
+            "INSERT INTO canary_task_baselines "
+            "(id, agent_name, config_hash, task_id, accuracy, ci_lower, ci_upper, run_count, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (baseline_id, agent_name, config_hash, task_id,
+             round(accuracy, 4), ci_lower, ci_upper, run_count, now_iso),
+        )
+        conn.commit()
+
+        return {
+            "id": baseline_id,
+            "agent_name": agent_name,
+            "config_hash": config_hash,
+            "task_id": task_id,
+            "accuracy": round(accuracy, 4),
+            "ci_lower": ci_lower,
+            "ci_upper": ci_upper,
+            "run_count": run_count,
+            "created_at": now_iso,
+        }
 
 
 def _norm_cdf(x: float) -> float:

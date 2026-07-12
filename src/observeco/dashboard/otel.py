@@ -87,13 +87,13 @@ async def ingest_traces(request: Request):
                 if input_tokens or output_tokens:
                     db.log_trim(
                         agent_name=agent_name,
-                        identity_tokens=0,
-                        skills_tokens=0,
-                        memory_tokens=0,
-                        tools_tokens=0,
-                        guidance_tokens=0,
-                        total_tokens=input_tokens + output_tokens,
-                        savings_ratio=0,
+                        identity=0,
+                        skills=0,
+                        memory=0,
+                        tools=0,
+                        guidance=0,
+                        total=input_tokens + output_tokens,
+                        savings=0,
                     )
 
                 spans_ingested += 1

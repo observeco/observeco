@@ -16,9 +16,12 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
+from pathlib import Path
 from typing import Optional
 
+from observeco.dashboard.config import PORTS
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
@@ -330,7 +333,7 @@ async def webhook_health():
     }
 
 
-def run_webhook_server(host: str = "0.0.0.0", port: int = 9120):
+def run_webhook_server(host: str = "0.0.0.0", port: int = PORTS.webhook):
     """Run the webhook ingestion server."""
     import uvicorn
     logger.info(f"Starting webhook ingestion server on {host}:{port}")

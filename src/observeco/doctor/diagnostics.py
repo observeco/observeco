@@ -9,6 +9,8 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 
+from observeco.dashboard.config import PORTS
+
 
 @dataclass
 class DiagnosticCheck:
@@ -537,11 +539,11 @@ def _check_llm_providers() -> list[DiagnosticCheck]:
 
     # Check local servers
     local_servers = {
-        "http://localhost:11434/api/tags": "Ollama",
-        "http://localhost:1234/v1/models": "LM Studio",
-        "http://localhost:8000/v1/models": "vLLM",
-        "http://localhost:5000/v1/models": "TextGen",
-        "http://localhost:8080/v1/models": "LocalAI",
+        f"http://localhost:{PORTS.ollama}/api/tags": "Ollama",
+        f"http://localhost:{PORTS.lm_studio}/v1/models": "LM Studio",
+        f"http://localhost:{PORTS.vllm}/v1/models": "vLLM",
+        f"http://localhost:{PORTS.textgen}/v1/models": "TextGen",
+        f"http://localhost:{PORTS.localai}/v1/models": "LocalAI",
     }
 
     for url, name in local_servers.items():

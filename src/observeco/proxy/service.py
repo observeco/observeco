@@ -14,13 +14,14 @@ import sys
 import time
 from typing import Optional
 
+from observeco.dashboard.config import PORTS
 from observeco.dirs import hermes_home
 
 logger = logging.getLogger("observeco.proxy.service")
 
 PROXY_PID_FILE = "proxy.pid"
 PROXY_HOST = "127.0.0.1"
-PROXY_PORT = 9200
+PROXY_PORT = PORTS.proxy
 
 
 def _get_data_dir() -> str:

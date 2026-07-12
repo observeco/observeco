@@ -23,6 +23,7 @@ db = Database()
 def run_drift(agent: Optional[str] = None) -> None:
     """Display drift report for all agents or a specific agent."""
     components = ["identity", "skills", "memory", "tools", "guidance"]
+    FLOOR = 50
 
     if agent:
         trims = db.get_trims(agent_name=agent, limit=50)
@@ -47,19 +48,27 @@ def run_drift(agent: Optional[str] = None) -> None:
 
         now = time.time()
         week_ago = now - 7 * 86400
+        two_weeks_ago = now - 14 * 86400
 
-        # Latest entry = most recent
-        latest = entries[0]
-        # 7-day average from entries in the last week
-        week_entries = [e for e in entries if e["timestamp"] >= week_ago]
-        if not week_entries:
-            week_entries = entries
+        # Use time-based query for accurate 7-day window
+        all_entries = db.get_trims_since(aname, week_ago)
+        if not all_entries or len(all_entries) < 2:
+            all_entries = entries
+
+        latest = all_entries[-1]  # last in ASC order = most recent
+        week_entries = all_entries
+
+        # Old entries for week-over-week
+        old_all = db.get_trims_since(aname, two_weeks_ago)
+        old_entries = [e for e in old_all if e["timestamp"] < week_ago]
 
         table = Table(title=f"Chisel Drift — {aname}", box=box.ROUNDED, header_style="bold magenta")
         table.add_column("Component", style="bold")
         table.add_column("Current", justify="right")
         table.add_column("7d Avg", justify="right")
-        table.add_column("Δ%", justify="right")
+        table.add_column("Δ% (A)", justify="right")
+        table.add_column("WoW% (B)", justify="right")
+        table.add_column("Δ tok (C)", justify="right")
         table.add_column("Breach")
 
         for comp in components:
@@ -67,19 +76,43 @@ def run_drift(agent: Optional[str] = None) -> None:
             week_vals = [e.get(f"{comp}_tokens" if comp != "guidance" else "guidance_tokens", 0)
                         for e in week_entries]
             week_avg = int(sum(week_vals) / max(len(week_vals), 1))
-            delta_pct = ((current - week_avg) / max(week_avg, 1)) * 100
 
-            breached = abs(delta_pct) > DRIFT_THRESHOLD_PCT
+            # Option A: Rolling window with floor
+            delta_pct = ((current - week_avg) / max(week_avg, FLOOR)) * 100
+            delta_tokens = current - week_avg
+            breached = abs(delta_tokens) > 50 and abs(delta_pct) > 10.0
+
+            # Option B: Week-over-week
+            wow_str = "—"
+            if old_entries and len(old_entries) >= 2:
+                old_vals = [e.get(f"{comp}_tokens" if comp != "guidance" else "guidance_tokens", 0)
+                           for e in old_entries]
+                last_avg = int(sum(old_vals) / max(len(old_vals), 1))
+                wow_pct = ((week_avg - last_avg) / max(last_avg, FLOOR)) * 100
+                wow_str = f"{wow_pct:+.1f}%"
+
+            # Option C: Absolute tokens
+            abs_str = f"{delta_tokens:+d}"
+
             delta_str = f"{delta_pct:+.1f}%"
             breach_str = "🔴 BREACH" if breached else "✅ OK"
 
-            db.log_drift(aname, comp, current, week_avg, delta_pct, breached)
+            db.log_drift(aname, comp, current, week_avg, delta_pct, breached, method="rolling")
+            db.log_drift(aname, comp, current, week_avg, float(delta_tokens), abs(delta_tokens) > 50, method="absolute")
+            if old_entries and len(old_entries) >= 2:
+                old_vals = [e.get(f"{comp}_tokens" if comp != "guidance" else "guidance_tokens", 0)
+                           for e in old_entries]
+                last_avg = int(sum(old_vals) / max(len(old_vals), 1))
+                wow_pct = ((week_avg - last_avg) / max(last_avg, FLOOR)) * 100
+                db.log_drift(aname, comp, week_avg, last_avg, wow_pct, abs(week_avg - last_avg) > 50 and abs(wow_pct) > 10.0, method="wow")
 
             table.add_row(
                 comp.capitalize(),
                 str(current),
                 str(week_avg),
                 delta_str,
+                wow_str,
+                abs_str,
                 breach_str,
             )
 

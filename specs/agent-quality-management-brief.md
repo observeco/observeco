@@ -462,10 +462,11 @@ This answers the question no tool answers today: "Is this model right for my age
 3. ✅ **Build curated benchmark ingestion.** Pulled from lm-eval-harness task library. Canary subsets: 15 samples/task.
 4. ✅ **Build grid runner (τ-bench + SWE-bench).** Models × configs × tasks × trials. Wilson CI. Trajectory flagging. Built by Pragma.
 5. 🔴 **Benchmark Methodology Upgrade (obs-spec-057).** LLM-as-judge, reference outputs, per-task drift fix, temperature control, concrete fixtures, dev/test split. **Critical — current assertions are too weak for meaningful quality claims.** ETA v0.6.0.
-6. ❌ **Build GAIA task loader.** Pending Phase 3.
-7. ❌ **Build grid reporter (decision-aid tables).** Per-task CI, cost, trajectory. Pending Phase 4.
-8. ❌ **Wire synergy (canary→grid trigger + RQGM trajectory hardening).** Pending Phase 5.
-9. ❌ **Build config-aware drift monitoring.** Config hashing, baseline versioning, workload clustering. Separate workstream.
-10. ❌ **Design dashboard quality cards.** Benchmark scores, drift flags, comparative views, guidance tooltips.
-11. ❌ **Dogfood on Sean's fleet.** Create user-defined tasks for each agent. Run benchmarks. Monitor drift. Tune thresholds before public launch.
-12. ❌ **Update competitive analysis and README.** Reposition from "agent observability" to "agent quality management."
+6. 🔴 **History-Assisted Task Generation (obs-spec-060).** Mine real agent conversations, LLM proposes task drafts with assertions, user reviews and approves. Two-tier canary: generic (model capability) + user-defined (agent quality on real work). Human-anchored ground truth — LLM proposes, user disposes. ~1d.
+7. ❌ **Build GAIA task loader.** Pending Phase 3.
+8. ❌ **Build grid reporter (decision-aid tables).** Per-task CI, cost, trajectory. Pending Phase 4.
+9. ❌ **Wire synergy (canary→grid trigger + RQGM trajectory hardening).** Pending Phase 5.
+10. ❌ **Build config-aware drift monitoring.** Config hashing, baseline versioning, workload clustering. Separate workstream.
+11. ❌ **Design dashboard quality cards.** Benchmark scores, drift flags, comparative views, guidance tooltips.
+12. ❌ **Dogfood on Sean's fleet.** Create user-defined tasks for each agent. Run benchmarks. Monitor drift. Tune thresholds before public launch.
+13. ❌ **Update competitive analysis and README.** Reposition from "agent observability" to "agent quality management."

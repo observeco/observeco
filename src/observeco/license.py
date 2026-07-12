@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from observeco.dirs import get_data_dir
+from observeco.dashboard.config import PORTS
 
 # ponytail: lazy — evaluated at first call, not import time, so get_data_dir() failure
 # doesn't crash the import.
@@ -710,7 +711,7 @@ def start_trial() -> dict:
             send_email(state.customer_email, "welcome", {
                 "first_name": state.customer_email.split("@")[0].title(),
                 "trial_days_left": "30",
-                "subscribe_url": "http://localhost:9121/",
+                "subscribe_url": f"http://localhost:{PORTS.billing}/",
                 "support_email": "support@observeco.dev",
             })
         except Exception:
@@ -881,7 +882,7 @@ def cancel_trial() -> dict:
             from observeco.emails import send_email
             send_email(email, "cancellation_confirmed", {
                 "first_name": email.split("@")[0].title(),
-                "subscribe_url": "http://localhost:9121/",
+                "subscribe_url": f"http://localhost:{PORTS.billing}/",
                 "support_email": "support@observeco.dev",
             })
         except Exception:

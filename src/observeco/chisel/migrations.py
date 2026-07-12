@@ -65,6 +65,10 @@ MIGRATIONS = [
     "CREATE INDEX IF NOT EXISTS idx_guidance_fire_agent ON guidance_fire(agent_name)",
     "CREATE INDEX IF NOT EXISTS idx_turn_log_agent ON turn_log(agent_name)",
     "CREATE INDEX IF NOT EXISTS idx_turn_log_ts ON turn_log(timestamp)",
+    # 7. Make (agent_name, skill_name) unique so the capture layer can upsert
+    #    per skill. The non-unique idx_skill_usage_agent is superseded.
+    "DROP INDEX IF EXISTS idx_skill_usage_agent",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_skill_usage_uniq ON skill_usage(agent_name, skill_name)",
 ]
 
 

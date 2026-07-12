@@ -12,6 +12,7 @@ import urllib.request
 from typing import Optional
 
 from observeco.dirs import hermes_home
+from observeco.dashboard.config import PORTS
 
 # ── Provider Defaults ──────────────────────────────────────────────────────────
 
@@ -41,13 +42,13 @@ PROVIDER_DEFAULTS = {
         "temperature": 0.05,
     },
     "ollama": {
-        "base_url": "http://localhost:11434/v1",
+        "base_url": f"http://localhost:{PORTS.ollama}/v1",
         "model": "llama3.1",
         "max_tokens": 4096,
         "temperature": 0.1,
     },
     "hermes": {
-        "base_url": "http://localhost:8080",
+        "base_url": f"http://localhost:{PORTS.localai}",
         "model": "default",
         "max_tokens": 4096,
         "temperature": 0.05,
@@ -260,14 +261,14 @@ class OllamaClient(LLMClient):
 
     def __init__(self, config: dict):
         super().__init__("ollama", config)
-        # Ollama uses port 11434, not 11434/v1
-        if "localhost:11434/v1" in self.base_url:
-            self.base_url = "http://localhost:11434"
+        # Ollama uses the port from PORTS.ollama, not PORTS.ollama/v1
+        if f"localhost:{PORTS.ollama}/v1" in self.base_url:
+            self.base_url = f"http://localhost:{PORTS.ollama}"
 
     def is_available(self) -> bool:
         """Check if Ollama is running locally."""
         try:
-            req = urllib.request.Request("http://localhost:11434/api/tags")
+            req = urllib.request.Request(f"http://localhost:{PORTS.ollama}/api/tags")
             with urllib.request.urlopen(req, timeout=3) as resp:
                 return resp.status == 200
         except Exception:

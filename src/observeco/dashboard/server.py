@@ -9,6 +9,7 @@ Spec: specs/unified-dashboard.md
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import secrets
@@ -35,8 +36,13 @@ from observeco.dashboard.routes.alerts import router as alerts_router
 from observeco.dashboard.routes.error_timeline import router as timeline_router
 from observeco.dashboard.routes.detail import router as detail_router
 from observeco.dashboard.routes.token_analytics import router as analytics_router
+from observeco.dashboard.routes.efficiency import router as efficiency_router
 from observeco.dashboard.routes.capability import router as capability_router
 from observeco.db import Database
+from observeco.dashboard.config import PORTS
+
+logger = logging.getLogger(__name__)
+
 from observeco.dirs import get_data_dir
 from observeco.discover.api import router as discover_router
 from observeco.realtime import router as realtime_router
@@ -74,6 +80,7 @@ auth_provider = OAuth2Provider()
 add_billing_endpoints(app)
 app.include_router(otel_router)
 app.include_router(api_router)
+app.include_router(efficiency_router)
 app.include_router(realtime_router)
 app.include_router(licenses_router)
 app.include_router(commercial_router)
@@ -165,7 +172,8 @@ def _fmt_ts(ts: int) -> str:
 
 
 def _html_escape(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace('"', "&quot;").replace("'", "&#39;"))
 
 
 # ---------------------------------------------------------------------------
@@ -183,7 +191,7 @@ async def auth_login(provider: str = ""):
         session = auth_provider._create_local_session("local@local.local", "Local User")
         from fastapi.responses import RedirectResponse
         resp = RedirectResponse(url="/")
-        resp.set_cookie("observeco_token", session.token, httponly=True, secure=True, samesite="lax", max_age=604800)
+        resp.set_cookie("observeco_token", session.token, httponly=True, secure=os.environ.get("OBSERVECO_HTTPS") == "1", samesite="lax", max_age=604800)
         return resp
     url = auth_provider.get_authorization_url(state=secrets.token_urlsafe(16))
     from fastapi.responses import RedirectResponse
@@ -200,7 +208,7 @@ async def auth_callback(code: str = "", state: str = ""):
         return HTMLResponse("<h1>Authentication failed</h1>", status_code=401)
     from fastapi.responses import RedirectResponse
     resp = RedirectResponse(url="/")
-    resp.set_cookie("observeco_token", session.token, httponly=True, secure=True, samesite="lax", max_age=604800)
+    resp.set_cookie("observeco_token", session.token, httponly=True, secure=os.environ.get("OBSERVECO_HTTPS") == "1", samesite="lax", max_age=604800)
     return resp
 
 
@@ -468,7 +476,7 @@ async def api_delay_banner():
                 '</div>'
             )
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     delays = []
     for a in agents:
@@ -978,13 +986,20 @@ def _recommendation_for(status: str, errors: list, circuit: dict,
 
 
 def _confidence_badge(conf: dict) -> str:
-    """Render a small confidence badge for agent cards — level only, no FP/FN."""
+    """Render a small confidence badge for agent cards — level + FP/FN risk + recommendation."""
     emoji = {"high": "🟢", "medium": "🟡", "low": "⚪"}.get(conf["level"], "⚪")
+    fp_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fp_risk"], "⚠️")
+    fn_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fn_risk"], "⚠️")
+    fp_label = conf["fp_risk"].capitalize()
+    fn_label = conf["fn_risk"].capitalize()
     level_label = conf["level"].capitalize()
     return f'''
         <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
-            <span title="Confidence: {level_label} — {conf['sources_agree']}">{emoji} {level_label} Confidence</span>
-        </div>'''
+            <span title="Confidence: {level_label} — {conf['sources_agree']}">{emoji} {level_label}</span>
+            <span title="False positive risk: {fp_label}">{fp_icon} FP {fp_label}</span>
+            <span title="False negative risk: {fn_label}">{fn_icon} FN {fn_label}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">{conf['recommendation']}</div>'''
 
 
 # ── Canary Report Card ─────────────────────────────────────────────
@@ -2285,7 +2300,7 @@ async def api_platforms():
 
     # 3. iMessage (BlueBubbles)
     try:
-        r = _httpx.get("http://127.0.0.1:1234/", timeout=3)
+        r = _httpx.get(f"http://127.0.0.1:{PORTS.imessage}/", timeout=3)
         platforms["imessage"] = {"status": "up"} if r.status_code == 200 else {"status": "error", "http": r.status_code}
     except Exception:
         platforms["imessage"] = {"status": "down"}
@@ -2852,50 +2867,78 @@ async def api_brain(agent: str = "all"):
           <h4 style="font-size:13px;font-weight:600;margin-bottom:6px;color:#f8fafc;">📊 Learning progress</h4>
           <div style="margin:10px 0;">
             <div style="height:8px;background:#1e293b;border-radius:999px;overflow:hidden;margin-bottom:4px;">
-              <div style="width:58%;height:100%;border-radius:999px;background:linear-gradient(90deg,#6366f1,#8b5cf6);"></div>
+              <div id="optProgressBar" style="width:0%;height:100%;border-radius:999px;background:linear-gradient(90deg,#6366f1,#8b5cf6);"></div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;">
-              <span>58% — learned from 116 turns</span>
+              <span id="optProgressLabel">0% — learned from 0 turns</span>
               <span style="color:#6366f1;">Goal: 200 turns</span>
             </div>
           </div>
           <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b;font-size:12px;">
             <span style="color:#94a3b8;">Skills never triggered</span>
-            <span style="color:#f97316;font-family:var(--font-mono);font-weight:600;">3 of 8</span>
+            <span id="optSkillsNever" style="color:#f97316;font-family:var(--font-mono);font-weight:600;">—</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b;font-size:12px;">
             <span style="color:#94a3b8;">Guidance rules stale</span>
-            <span style="color:#eab308;font-family:var(--font-mono);font-weight:600;">2 of 5</span>
+            <span id="optGuidanceStale" style="color:#eab308;font-family:var(--font-mono);font-weight:600;">0</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;">
             <span style="color:#94a3b8;">Memory sections unused</span>
             <span style="color:#64748b;font-family:var(--font-mono);font-weight:600;">—</span>
           </div>
-          <div style="font-size:11px;color:#64748b;margin-top:8px;">At 200 turns, Optimiser will recommend what to prune — projected <strong style="color:#22c55e;">8-12%</strong> additional savings on top of compression.</div>
+          <div style="font-size:11px;color:#64748b;margin-top:8px;">At 200 turns, Optimiser will recommend what to prune based on captured skill/guidance usage — projected savings surface here once real compression data accumulates.</div>
         </div>
         <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px;">
           <h4 style="font-size:13px;font-weight:600;margin-bottom:6px;color:#f8fafc;">📈 Projected savings</h4>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
             <div style="background:#1e293b;border-radius:6px;padding:10px;text-align:center;">
-              <div style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#22c55e;">-22%</div>
+              <div id="optLite" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#22c55e;">—</div>
               <div style="font-size:10px;color:#64748b;">Lite (current)</div>
             </div>
             <div style="background:#1e293b;border-radius:6px;padding:10px;text-align:center;">
-              <div style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#a5b4fc;">-35%</div>
+              <div id="optFull" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#a5b4fc;">—</div>
               <div style="font-size:10px;color:#64748b;">Full (available)</div>
             </div>
           </div>
           <div style="background:linear-gradient(135deg,#1e1b4b,#0f172a);border:1px solid #3730a3;border-radius:8px;padding:12px;text-align:center;">
-            <div style="font-size:22px;font-weight:700;font-family:var(--font-mono);color:#c4b5fd;">-43% to -47%</div>
+            <div id="optProj" style="font-size:22px;font-weight:700;font-family:var(--font-mono);color:#c4b5fd;">—</div>
             <div style="font-size:11px;color:#a5b4fc;">Projected with Optimiser after 200 turns</div>
             <div style="font-size:10px;color:#64748b;margin-top:4px;">Lite compression + Optimiser pruning = deeper savings</div>
           </div>
-          <div style="font-size:11px;color:#64748b;margin-top:8px;">
-            → At 50 turns/day, you'll have enough data in <strong style="color:#e2e8f0;">~2 days</strong>
-          </div>
+          <div id="optEta" style="font-size:11px;color:#64748b;margin-top:8px;">Awaiting turn data…</div>
         </div>
       </div>
     </div>
+
+    <script>
+    // Load live Token Optimiser stats from the capture layer (no static mockup).
+    function loadOptimiser() {{
+      fetch('/api/optimiser/stats', {{headers: window.__OBSERVECO_TOKEN ? {{'X-ObserveCo-Token': window.__OBSERVECO_TOKEN}} : {{}}}})
+        .then(function(r) {{ return r.json(); }})
+        .then(function(d) {{
+          var pct = d.learning_pct || 0;
+          document.getElementById('optProgressBar').style.width = pct + '%';
+          document.getElementById('optProgressLabel').textContent =
+            pct + '% — learned from ' + (d.total_turns || 0) + ' turns';
+          document.getElementById('optSkillsNever').textContent =
+            (d.skills_never_triggered || 0) + (d.skills_total ? ' of ' + d.skills_total : '');
+          document.getElementById('optGuidanceStale').textContent = d.guidance_rules_stale || 0;
+          var s = d.savings || {{}};
+          document.getElementById('optLite').textContent = s.lite != null ? '-' + s.lite + '%' : '—';
+          document.getElementById('optFull').textContent = s.full != null ? '-' + s.full + '%' : '—';
+          document.getElementById('optProj').textContent =
+            (s.optimiser_min != null && s.optimiser_max != null) ? ('-' + s.optimiser_min + '% to -' + s.optimiser_max + '%') : '—';
+          var remaining = Math.max(0, 200 - (d.total_turns || 0));
+          document.getElementById('optEta').textContent = remaining > 0
+            ? '→ ' + remaining + ' more turns needed' + (d.total_turns ? '' : ' (capture layer not yet feeding data)')
+            : '→ Enough data — prune recommendations available';
+        }})
+        .catch(function() {{
+          document.getElementById('optProgressLabel').textContent = 'Optimiser stats unavailable';
+        }});
+    }}
+    loadOptimiser();
+    </script>
 
     <!-- ====== SKILLS COMPRESSION ====== -->
     <div style="background:#131a2b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:16px;">
@@ -2947,10 +2990,18 @@ async def api_brain(agent: str = "all"):
         logs.forEach(function(l) {{
           var pct = l.savings_pct ? ' <span style="color:#22c55e;">(-' + l.savings_pct + '%)</span>' : '';
           var mode = l.mode === 'full' ? '<span style="color:#38bdf8;">Full</span>' : '<span style="color:#86efac;">Lite</span>';
-          var ago = l.ago ? ' <span style="color:#475569;">' + l.ago + '</span>' : '';
+          var ago = '';
+          if (l.timestamp) {{
+            var secs = Math.floor(Date.now()/1000 - l.timestamp);
+            if (secs < 60) ago = secs + 's ago';
+            else if (secs < 3600) ago = Math.floor(secs/60) + 'm ago';
+            else if (secs < 86400) ago = Math.floor(secs/3600) + 'h ago';
+            else ago = Math.floor(secs/86400) + 'd ago';
+          }}
+          var agoHtml = ago ? ' <span style="color:#475569;">' + ago + '</span>' : '';
           html += '<div style="display:flex;justify-content:space-between;padding:6px 10px;background:#0f172a;border-radius:6px;">' +
-            '<span><strong>' + l.agent + '</strong> ' + mode + ago + '</span>' +
-            '<span style="font-family:var(--font-mono);">' + (l.before || 0).toLocaleString() + ' → ' + (l.after || 0).toLocaleString() + ' tok' + pct + '</span>' +
+            '<span><strong>' + (l.agent_name || '?') + '</strong> ' + mode + agoHtml + '</span>' +
+            '<span style="font-family:var(--font-mono);">' + (l.before_tokens || 0).toLocaleString() + ' → ' + (l.after_tokens || 0).toLocaleString() + ' tok' + pct + '</span>' +
             '</div>';
         }});
         html += '</div>';
@@ -2980,6 +3031,7 @@ async def api_brain(agent: str = "all"):
           var d = data.details && data.details[0];
           if (d && d.status === 'ok') {{
             showStatus('skillCompressStatus', '✅ <strong>' + name + '</strong> compressed: ' + d.before_tokens + ' → ' + d.after_tokens + ' tok (-' + d.savings_pct + '%)', 'success');
+            loadCompressLog();
           }} else if (d && d.status === 'skip') {{
             showStatus('skillCompressStatus', '⏭️ <strong>' + name + '</strong> already compressed or no savings.', 'warn');
           }} else {{
@@ -3078,7 +3130,8 @@ async def api_brain(agent: str = "all"):
         .then(function(r) {{ return r.json(); }})
         .then(function(data) {{
           if (data.status === 'ok') {{
-            showStatus('compressStatus', '💾 ' + data.message + (data.backup ? '<br><span style=\"color:#64748b;\">Backup: ' + data.backup + '</span>' : ''), 'success');
+            showStatus('compressStatus', '💾 ' + data.message + (data.backup ? '<br><span style=\\\"color:#64748b;\\\">Backup: ' + data.backup + '</span>' : ''), 'success');
+            loadCompressLog();
           }} else {{
             showStatus('compressStatus', '⚠️ ' + (data.message || 'Compression failed'), 'warn');
           }}
@@ -3287,7 +3340,7 @@ async def api_garden_remove_stale(request: Request):
         if idx < 0 or idx >= len(lines):
             return JSONResponse({"ok": False, "error": f"Line {line} out of range"}, status_code=400)
         removed = lines.pop(idx)
-        path.write_text("\\n".join(lines), encoding="utf-8")
+        path.write_text("\n".join(lines), encoding="utf-8")
         return {"ok": True, "message": f"Removed line {line}: {removed.strip()[:60]}"}
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -3367,7 +3420,7 @@ async def api_budget_planner(rate: float = 0.15):
         if full_row and full_row["avg_pct"] is not None:
             actual_full_pct = float(full_row["avg_pct"])
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     if actual_lite_pct is not None:
         # Real data from actual compression runs
@@ -3511,47 +3564,359 @@ async def api_token_summary_alias(agent: str = "", days: int = 7):
 
 @app.get("/api/drift-summary", response_class=HTMLResponse)
 async def api_drift_summary():
-    """Fleet-wide drift summary across all agents — HTML partial with clickable agent names."""
-    drift = db.get_drift()
-    if not drift:
+    """Fleet-wide drift time-series — per-agent sparklines of the most drifted component.
+
+    Differentiates from Compare tab (current snapshot) by showing trajectory:
+    - 7-day sparkline of the component with the most drift history
+    - Peak drift, current drift, breach count
+    - Color-coded by severity
+    """
+    conn = db._get_conn()
+    now = int(time.time())
+    week_ago = now - 7 * 86400
+
+    # Get all agents with drift data in last 7 days
+    agents_raw = conn.execute(
+        "SELECT DISTINCT agent_name FROM chisel_drift WHERE timestamp > ? ORDER BY agent_name",
+        (week_ago,),
+    ).fetchall()
+    if not agents_raw:
         return HTMLResponse("""<div style="color:#64748b;font-size:12px;padding:20px;text-align:center;">No drift data yet.</div>""")
-    agents = {}
-    for d in drift:
-        name = d["agent_name"]
-        if name not in agents:
-            agents[name] = {"agent_name": name, "components": {}, "breached": 0}
-        agents[name]["components"][d["component"]] = {
-            "current": d["current_tokens"],
-            "week_avg": d["week_avg_tokens"],
-            "delta_pct": round(d["delta_pct"], 1),
-            "breached": bool(d["breached"]),
-        }
-        if d["breached"]:
-            agents[name]["breached"] += 1
-    total_breached = sum(a["breached"] for a in agents.values())
-    deltas = [d["delta_pct"] for d in drift]
-    avg_delta = round(sum(deltas) / len(deltas), 1) if deltas else 0
 
     rows = ""
-    for a in sorted(agents.values(), key=lambda x: x["agent_name"]):
-        name = a["agent_name"]
-        comps = "".join(
-            f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{"#ef4444" if c["breached"] else "#22c55e"};margin-right:4px;" title="{comp}: {c["delta_pct"]:+.1f}%"></span>'
-            for comp, c in sorted(a["components"].items())
-        )
-        rows += f"""<div class="drift-row" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}', {{target:'#modalContainer', swap:'innerHTML'}})" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border-soft);">
-    <span style="font-weight:600;font-size:13px;min-width:140px;">{_html_escape(name)}</span>
-    <span style="font-size:11px;color:#64748b;">{comps}</span>
-    <span style="margin-left:auto;font-family:var(--font-mono);font-size:12px;color:{"#ef4444" if a["breached"] > 0 else "#22c55e"};">{a["breached"]} breached · {sum(abs(c["delta_pct"]) for c in a["components"].values()) / max(len(a["components"]), 1):.1f}% avg drift</span>
+    total_breached = 0
+    total_agents = 0
+
+    for (name,) in agents_raw:
+        # Get all components for this agent
+        comps = conn.execute(
+            "SELECT DISTINCT component FROM chisel_drift WHERE agent_name = ? AND timestamp > ? AND method='rolling'",
+            (name, week_ago),
+        ).fetchall()
+
+        # Find the component with the most drift activity (highest max abs delta)
+        best_comp = None
+        best_max_delta = 0
+        best_series = []
+        best_breaches = 0
+        best_current = 0.0
+
+        for (comp,) in comps:
+            series = conn.execute(
+                "SELECT timestamp, delta_pct, breached FROM chisel_drift "
+                "WHERE agent_name = ? AND component = ? AND timestamp > ? AND method='rolling' "
+                "ORDER BY timestamp ASC",
+                (name, comp, week_ago),
+            ).fetchall()
+            if not series:
+                continue
+            max_abs = max(abs(r["delta_pct"]) for r in series)
+            breaches = sum(1 for r in series if r["breached"])
+            if max_abs > best_max_delta:
+                best_max_delta = max_abs
+                best_comp = comp
+                best_series = series
+                best_breaches = breaches
+                best_current = series[-1]["delta_pct"]
+
+        if not best_comp:
+            continue
+
+        # Fetch Option B (week-over-week) and Option C (absolute) for this agent/component
+        wow_row = conn.execute(
+            "SELECT delta_pct, breached FROM chisel_drift "
+            "WHERE agent_name = ? AND component = ? AND method='wow' "
+            "ORDER BY timestamp DESC LIMIT 1",
+            (name, best_comp),
+        ).fetchone()
+        abs_row = conn.execute(
+            "SELECT delta_pct, breached FROM chisel_drift "
+            "WHERE agent_name = ? AND component = ? AND method='absolute' "
+            "ORDER BY timestamp DESC LIMIT 1",
+            (name, best_comp),
+        ).fetchone()
+
+        wow_str = f"{wow_row['delta_pct']:+.1f}%" if wow_row else "—"
+        wow_color = "#ef4444" if (wow_row and wow_row['breached']) else "#64748b"
+        abs_str = f"{abs_row['delta_pct']:+.0f}" if abs_row else "—"
+        abs_color = "#ef4444" if (abs_row and abs_row['breached']) else "#64748b"
+
+        total_agents += 1
+        if best_breaches > 0:
+            total_breached += 1
+
+        # Build sparkline data points — preserve non-zero values, sample zeros
+        non_zero = [r for r in best_series if abs(r["delta_pct"]) > 0.1]
+        zero = [r for r in best_series if abs(r["delta_pct"]) <= 0.1]
+        sampled = []
+        # Always include non-zero points (capped at 100)
+        if len(non_zero) > 100:
+            nzstep = max(1, len(non_zero) // 100)
+            sampled.extend(non_zero[::nzstep])
+        else:
+            sampled.extend(non_zero)
+        # Sample zeros to keep total under ~120 points
+        zero_budget = max(0, 120 - len(sampled))
+        if zero and zero_budget > 0:
+            zstep = max(1, len(zero) // zero_budget)
+            sampled.extend(zero[::zstep])
+        sampled.sort(key=lambda r: r["timestamp"])
+        spark_data = ",".join(f"{r['delta_pct']:.1f}" for r in sampled)
+        # Pass timestamps alongside for tooltip date labels
+        spark_ts = ",".join(str(r["timestamp"]) for r in sampled)
+        # Time range for axis labels
+        from datetime import datetime
+        first_dt = datetime.fromtimestamp(sampled[0]["timestamp"]).strftime("%b %d")
+        last_dt = datetime.fromtimestamp(sampled[-1]["timestamp"]).strftime("%b %d")
+
+        # Color coding
+        peak = max(abs(r["delta_pct"]) for r in best_series)
+        if peak > 20:
+            severity = "critical"
+            color = "#ef4444"
+        elif peak > 5:
+            severity = "warn"
+            color = "#f59e0b"
+        else:
+            severity = "ok"
+            color = "#22c55e"
+
+        # Current drift direction
+        direction = "▲" if best_current > 1 else "▼" if best_current < -1 else "→"
+        direction_cls = "up" if best_current > 1 else "down" if best_current < -1 else "flat"
+
+        rows += f"""<div class="drift-card" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}', {{target:'#modalContainer', swap:'innerHTML'}})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--fg-3)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;color:var(--fg);">{_html_escape(name)}</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(100,116,139,0.12);color:var(--fg-2);">{best_comp}</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:{color};"><span class="{direction_cls}">{direction}</span> {best_current:+.1f}%</span>
+        <span style="font-size:9px;color:var(--fg-3);">now</span>
+    </div>
+    <div style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 10 10" style="opacity:0.4;"><polyline points="0,7 2,4 4,5 7,1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                7-Day Rolling Trend
+            </span>
+            <span style="font-size:8px;color:var(--fg-3);">{first_dt} → {last_dt}</span>
+        </div>
+        <canvas class="drift-sparkline" data-series="{spark_data}" data-timestamps="{spark_ts}" data-range-start="{first_dt}" data-range-end="{last_dt}" data-color="{color}" data-height="36" width="200" height="32" style="width:100%;height:36px;display:block;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Peak drift % in 7-day rolling average window">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">7d Peak</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:{color};">{peak:.1f}%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Week-over-week change in token consumption">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">WoW Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:{wow_color};">{wow_str}</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Absolute change in token count">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">Abs Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:{abs_color};">{abs_str}</div>
+        </div>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:6px;">
+        <span>{len(best_series)} points</span>
+        {'<span style="color:#ef4444;">⚠ ' + str(best_breaches) + ' breach' + ('es' if best_breaches != 1 else '') + '</span>' if best_breaches > 0 else '<span style="color:#22c55e;">✓ clear</span>'}
+    </div>
 </div>"""
 
     return HTMLResponse(f"""<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
     <div style="padding:12px 16px;font-size:13px;font-weight:600;color:var(--fg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-        <span>Drift Summary · {len(agents)} agents</span>
-        <span style="font-size:11px;color:{"#ef4444" if total_breached > 0 else "#22c55e"};font-weight:400;">{total_breached} breached · {avg_delta:+.1f}% avg delta</span>
+        <span>Drift Timeline · {total_agents} agents</span>
+        <span style="font-size:11px;color:{"#ef4444" if total_breached > 0 else "#22c55e"};font-weight:400;">{total_breached} with breaches · 7-day sparklines</span>
     </div>
     {rows}
-</div>""")
+</div>
+<script>
+(function() {{
+    // Helpers
+    function hexToRgba(hex, a) {{
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+    }}
+    var style = getComputedStyle(document.documentElement);
+    var gridLineColor = style.getPropertyValue('--border-soft').trim() || 'rgba(148,163,184,0.2)';
+    var fg2 = style.getPropertyValue('--fg-2').trim() || '#64748b';
+    var surfaceBg = style.getPropertyValue('--surface').trim() || '#0f172a';
+    var fontMono = style.getPropertyValue('--font-mono').trim() || 'monospace';
+
+    var canvases = document.querySelectorAll('.drift-sparkline');
+    for (var ci = 0; ci < canvases.length; ci++) {{
+        (function(c) {{
+            var raw = c.getAttribute('data-series');
+            if (!raw) return;
+            var series = raw.split(',').map(parseFloat);
+            var tsRaw = c.getAttribute('data-timestamps');
+            var timestamps = tsRaw ? tsRaw.split(',').map(function(s) {{ return parseInt(s) * 1000; }}) : [];
+            var rangeStart = c.getAttribute('data-range-start') || '7d ago';
+            var rangeEnd = c.getAttribute('data-range-end') || 'now';
+            var color = c.getAttribute('data-color') || '#22c55e';
+            if (series.length < 2) return;
+
+            // Destroy previous Chart instance (htmx re-renders)
+            if (c._chart) {{ c._chart.destroy(); c._chart = null; }}
+
+            // Set explicit pixel dimensions — NO responsive mode to prevent auto-resize expansion
+            var _parentW = c.parentElement.clientWidth || c.parentElement.offsetWidth || 300;
+            var _cHeight = parseInt(c.getAttribute('data-height')) || 32;
+            c.setAttribute('width', _parentW);
+            c.setAttribute('height', _cHeight);
+            c.style.width = _parentW + 'px';
+            c.style.height = _cHeight + 'px';
+            c.style.display = 'block';
+
+            var fillTop = hexToRgba(color, 0.18);
+            var labelFont = '9px ' + fontMono;
+
+            // ponytail: constrain y-axis so tiny drifts don't fill the full height.
+            // Symmetric around zero with a minimum ±2% span; expands if real data exceeds.
+            var _maxAbs = Math.max.apply(null, series.map(function(v){{ return Math.abs(v); }})) || 0;
+            var _yBound = Math.max(_maxAbs * 1.25, 2);
+
+            var chart = new Chart(c, {{
+                type: 'line',
+                data: {{
+                    labels: series.map(function(_, i) {{ return i; }}),
+                    datasets: [{{
+                        data: series,
+                        borderColor: color,
+                        backgroundColor: function(ctx) {{
+                            var area = ctx.chart.chartArea;
+                            if (!area) return null;
+                            var grad = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+                            grad.addColorStop(0, fillTop);
+                            grad.addColorStop(1, 'transparent');
+                            return grad;
+                        }},
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: color,
+                        pointHoverBorderColor: surfaceBg,
+                        pointHoverBorderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                    }}]
+                }},
+                options: {{
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    interaction: {{
+                        mode: 'index',
+                        intersect: false,
+                    }},
+                    plugins: {{
+                        legend: {{ display: false }},
+                        tooltip: {{
+                            enabled: false,
+                            external: function(context) {{
+                                // HTML tooltip — renders outside canvas so it's never clipped
+                                var tooltipEl = document.getElementById('chartjs-tooltip');
+                                if (!tooltipEl) {{
+                                    tooltipEl = document.createElement('div');
+                                    tooltipEl.id = 'chartjs-tooltip';
+                                    tooltipEl.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;background:rgba(15,23,42,0.95);border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:6px 10px;font-family:' + fontMono + ';transition:opacity 0.15s;opacity:0;';
+                                    document.body.appendChild(tooltipEl);
+                                }}
+                                var tooltip = context.tooltip;
+                                if (tooltip.opacity === 0) {{
+                                    tooltipEl.style.opacity = '0';
+                                    return;
+                                }}
+                                var data = tooltip.dataPoints[0];
+                                var v = data.raw;
+                                var sign = v >= 0 ? '+' : '';
+                                var dateLabel = '';
+                                if (timestamps.length > data.dataIndex) {{
+                                    var d = new Date(timestamps[data.dataIndex]);
+                                    dateLabel = d.toDateString().slice(4, 10) + ' ';
+                                }}
+                                tooltipEl.innerHTML = '<div style="font-size:10px;color:' + fg2 + ';margin-bottom:2px;">' + dateLabel + '</div><div style="font-size:13px;font-weight:bold;color:' + color + ';">' + sign + v.toFixed(1) + '%</div>';
+                                var rect = c.getBoundingClientRect();
+                                var pos = rect.left + tooltip.caretX;
+                                var top = rect.top + tooltip.caretY;
+                                tooltipEl.style.left = Math.min(pos + 12, window.innerWidth - 160) + 'px';
+                                tooltipEl.style.top = Math.max(top - 50, 10) + 'px';
+                                tooltipEl.style.opacity = '1';
+                            }}
+                        }}
+                    }},
+                    scales: {{
+                        x: {{ display: false }},
+                        y: {{ display: false, min: -_yBound, max: _yBound }}
+                    }},
+                    layout: {{
+                        padding: {{ top: 2, bottom: 4, left: 2, right: 2 }}
+                    }},
+                    elements: {{
+                        line: {{
+                            borderJoinStyle: 'round',
+                            borderCapStyle: 'round',
+                        }}
+                    }}
+                }},
+                plugins: [{{
+                    id: 'sparklineExtras',
+                    afterDraw: function(chart) {{
+                        var ctx = chart.ctx;
+                        var xS = chart.scales.x;
+                        var yS = chart.scales.y;
+                        var left = chart.chartArea.left;
+                        var right = chart.chartArea.right;
+                        var btm = chart.chartArea.bottom;
+
+                        ctx.save();
+
+                        // Dashed zero line
+                        var zy = yS.getPixelForValue(0);
+                        ctx.beginPath();
+                        ctx.strokeStyle = gridLineColor;
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3, 4]);
+                        ctx.moveTo(left, zy);
+                        ctx.lineTo(right, zy);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        // End dot with ring
+                        var lastI = series.length - 1;
+                        var lx = xS.getPixelForValue(lastI);
+                        var ly = yS.getPixelForValue(series[lastI]);
+                        ctx.beginPath();
+                        ctx.fillStyle = color;
+                        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.strokeStyle = surfaceBg;
+                        ctx.lineWidth = 2;
+                        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Time-axis labels
+                        ctx.font = labelFont;
+                        ctx.fillStyle = fg2;
+                        ctx.textBaseline = 'bottom';
+                        ctx.textAlign = 'start';
+                        ctx.fillText(rangeStart, left, btm + 1);
+                        ctx.textAlign = 'end';
+                        ctx.fillText(rangeEnd, right, btm + 1);
+
+                        ctx.restore();
+                    }}
+                }}]
+            }});
+
+            c._chart = chart;
+        }})(canvases[ci]);
+    }}
+}})();
+</script>""")
 
 
 @app.get("/api/communication-map")
@@ -3697,7 +4062,7 @@ async def api_discover_run_html():
 
         db.set_discovery_candidates(candidates)
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     candidates = db.get_discovery_candidates()
 
@@ -3869,7 +4234,7 @@ async def api_skills_audit(agent: str = "all"):
                     "breached": r.get("breached", False),
                 }
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     # 5. Build summary
     # Rough cost: assume 250 sessions/mo × skill_tokens × ~$0.00015 per K tokens (DeepSeek V3)
@@ -3926,7 +4291,7 @@ async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
             if row["mode"] == "full" and row["agent_name"] not in actual_full:
                 actual_full[row["agent_name"]] = row["savings_pct"]
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     result = {}
     for name, t in latest.items():
@@ -4837,7 +5202,7 @@ async def api_chisel_compress_skill(request: Request):
                 details.append({
                     "name": name, "status": "ok",
                     "saved_tokens": saved, "savings_pct": pct,
-                    "before_tokens": manifest.get("original_tokens", 0),
+                    "before_tokens": manifest.get("pre_compress_tokens", manifest.get("original_tokens", 0)),
                     "after_tokens": manifest.get("compressed_tokens", 0),
                     "applied": True,
                 })
@@ -4847,7 +5212,7 @@ async def api_chisel_compress_skill(request: Request):
                         "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, "
                         "savings, savings_pct, file_path, backup_path, triggered_by, timestamp) "
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        ("fleet", mode,
+                        (name, mode,
                          manifest.get("pre_compress_tokens", manifest.get("original_tokens", 0)),
                          manifest.get("compressed_tokens", 0),
                          saved, pct,
@@ -4861,7 +5226,7 @@ async def api_chisel_compress_skill(request: Request):
                 # Log to action_log
                 try:
                     _db.log_action(
-                        agent_name="fleet",
+                        agent_name=name,
                         action_type="skill_compress",
                         action_detail=f"{name} — compressed {manifest.get('pre_compress_tokens', 0):,} → {manifest.get('compressed_tokens', 0):,} tok ({pct:.0f}%)",
                         tokens_saved=saved,
@@ -4947,7 +5312,7 @@ async def api_chisel_revert_skill(request: Request):
                 # Log revert
                 try:
                     _db.log_action(
-                        agent_name="fleet",
+                        agent_name=name,
                         action_type="skill_revert",
                         action_detail=f"{name} — reverted to original ({_count_tokens(original_text):,} tok)",
                         tokens_saved=0,
@@ -5019,22 +5384,27 @@ async def api_optimiser_stats(agent: str = "all"):
     guidance_zero = [dict(g) for g in guidance_rows if g["fire_count"] == 0]
     guidance_active = [dict(g) for g in guidance_rows if g["fire_count"] > 0]
 
-    # Compute actual savings from compress_log averages
+    # Compute actual savings from compress_log — only over rows that achieved
+    # real savings (savings_pct > 0). Zero/negative rows are no-op compressions
+    # (dry-runs, already-compressed files) and would flatten the signal.
+    # ponytail: no hardcoded fallback (was 22/35 +21/+12). If no real compression
+    # has saved tokens, lite/full stay None and the card shows "—" instead of a
+    # fabricated 43-47%. The optimiser projection reflects what compression has
+    # actually delivered (real lite→full range), not a placeholder estimate.
+    # A true per-agent optimiser projection needs real pruning data — out of scope.
     lite_avg = conn.execute(
-        "SELECT ROUND(ABS(AVG(savings_pct)), 0) as avg_pct FROM compress_log WHERE mode='lite' AND savings_pct IS NOT NULL"
+        "SELECT AVG(savings_pct) as avg_pct FROM compress_log WHERE mode='lite' AND savings_pct > 0"
     ).fetchone()
     full_avg = conn.execute(
-        "SELECT ROUND(ABS(AVG(savings_pct)), 0) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
+        "SELECT AVG(savings_pct) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct > 0"
     ).fetchone()
-    lite_savings = int(lite_avg["avg_pct"]) if lite_avg and lite_avg["avg_pct"] is not None else None
-    full_savings = int(full_avg["avg_pct"]) if full_avg and full_avg["avg_pct"] is not None else None
+    lite_savings = round(lite_avg["avg_pct"], 1) if lite_avg and lite_avg["avg_pct"] is not None else None
+    full_savings = round(full_avg["avg_pct"], 1) if full_avg and full_avg["avg_pct"] is not None else None
     opt_min = None
     opt_max = None
     if lite_savings is not None or full_savings is not None:
-        lite_base = lite_savings if lite_savings is not None else 22
-        full_base = full_savings if full_savings is not None else 35
-        opt_min = min(43, lite_base + 21)
-        opt_max = min(47, full_base + 12)
+        opt_min = lite_savings if lite_savings is not None else full_savings
+        opt_max = full_savings if full_savings is not None else lite_savings
 
     return JSONResponse({
         "agent": agent,
@@ -5822,6 +6192,8 @@ async def new_dashboard():
     if not index_path.exists():
         return HTMLResponse("<h1>Dashboard</h1><p>Template not found.</p>")
     html = index_path.read_text(encoding="utf-8")
+    from observeco import __version__
+    html = html.replace("{{VERSION}}", __version__)
     token = getattr(app.state, "dashboard_secret", "")
     if token:
         body_idx = html.find("<body")
@@ -5847,6 +6219,8 @@ async def index():
     if not index_path.exists():
         return HTMLResponse("<h1>Dashboard</h1><p>Template not found.</p>")
     html = index_path.read_text(encoding="utf-8")
+    from observeco import __version__
+    html = html.replace("{{VERSION}}", __version__)
     token = getattr(app.state, "dashboard_secret", "")
     if token:
         # 1. Inject hx-headers on the <body> tag (htmx-native, zero timing dependency)
@@ -5888,7 +6262,7 @@ async def api_partials_nav():
       <span class="nav-tab active clickable" data-tab="fleet">Fleet</span>
       <span class="nav-tab clickable" data-tab="alerts">Alerts</span>
       <span class="nav-tab clickable" data-tab="timeline">Error Timeline</span>
-      <a class="nav-tab clickable" href="/pathway" target="_blank">Pathway Map</a>
+      <span class="nav-tab clickable" data-tab="pathway">Pathway Map</span>
     </div>
     <div class="nav-group">
       <span class="glabel">Analyze</span>
@@ -5983,6 +6357,21 @@ async def pathway_page():
             f'</head>'
         )
         html = html[:head_end] + injection + html[head_end:]
+    return HTMLResponse(html)
+
+
+PATHWAY_TAB_TEMPLATE = TEMPLATES_DIR / "pathway_tab.html"
+
+
+@app.get("/api/pathway/tab", response_class=HTMLResponse)
+async def api_pathway_tab():
+    """Return the pathway map partial for in-dashboard tab (htmx)."""
+    if not PATHWAY_TAB_TEMPLATE.exists():
+        return HTMLResponse("<div style='padding:24px;text-align:center;color:var(--muted);'>Pathway tab template not found.</div>")
+    html = PATHWAY_TAB_TEMPLATE.read_text(encoding="utf-8")
+    token = app.state.dashboard_secret if hasattr(app.state, "dashboard_secret") else ""
+    if token:
+        html = f'<script>window.__OBSERVECO_TOKEN = "{token}";</script>\n' + html
     return HTMLResponse(html)
 
 
@@ -6297,10 +6686,10 @@ def _ensure_watch_running() -> None:
             **kwargs,
         )
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
 
-def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False,
+def serve(host: str = "127.0.0.1", port: int = PORTS.dashboard, static: bool = False,
           no_browser: bool = False, shared: str | None = None,
           show_token: bool = False) -> None:
     """Start the dashboard server.
@@ -6794,7 +7183,7 @@ async def api_heal_config():
         if r.returncode == 0 and r.stdout.strip():
             daemon_running = True
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     if not daemon_running:
         daemon_btn = """
@@ -6818,7 +7207,9 @@ async def api_heal_config():
     # Get all agents and their heal configs
     from observeco import license as lic
     from observeco.db import Database
-    is_pro = lic.require_pro()
+    # ponytail: commercial model is usage-metered, not feature-gated (commercial-scope.md).
+    # Auto-heal (L1+L2) + daemon auto-start apply to ALL users, not just Pro.
+    is_pro = True
     d = Database()
     agents = d.get_agents()
     configs = {c["agent_name"]: c for c in d.get_heal_config()}
@@ -7389,10 +7780,7 @@ async def api_alert_dashboard():
     _home = Path.home()
     _has_telegram_token = (_home / ".observeco" / "telegram_bot_token").exists()
     _has_smtp = (_home / ".observeco" / "smtp.json").exists()
-    _telegram_token_preview = ""
-    if _has_telegram_token:
-        _tok = (_home / ".observeco" / "telegram_bot_token").read_text().strip()
-        _telegram_token_preview = _tok[:12] + "..." if len(_tok) > 15 else _tok
+    _telegram_token_preview = "Configured" if _has_telegram_token else ""
     _smtp_preview = ""
     if _has_smtp:
         try:
@@ -8188,7 +8576,7 @@ async def api_health_l1():
         otel_up = s.connect_ex(("127.0.0.1", 4318)) == 0
         s.close()
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
     db_ok = True
     try:
         from observeco.db import get_engine
@@ -8264,7 +8652,7 @@ async def api_agent_summary(name: str):
         if gr:
             memory_debt = str(round(gr['memory_debt_score']))
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     response = ask(
         PER_AGENT_SUMMARY_PROMPT.format(name=name, status=status, latency_ms=latency,

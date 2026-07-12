@@ -1,4 +1,5 @@
 // ── Toggle QB Detail (Variant C) ──────────────────────────
+function _he(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function toggleQbDetail(agent) {
   var panel = document.getElementById('qb-detail-' + agent);
   if (!panel) return;
@@ -15,12 +16,12 @@ function toggleQbDetail(agent) {
         return;
       }
       var overall_pct = Math.round(data.overall * 100);
-      var overall_color = overall_pct >= 70 ? '#22c55e' : overall_pct >= 40 ? '#eab308' : '#ef4444';
+      var overall_color = overall_pct >= 80 ? '#22c55e' : overall_pct >= 60 ? '#eab308' : '#ef4444';
       var worst = data.categories[data.categories.length - 1];
       var writeup = '';
-      if (overall_pct >= 70) {
+      if (overall_pct >= 80) {
         writeup = _qb_writeup_strong(agent, data);
-      } else if (overall_pct >= 40) {
+      } else if (overall_pct >= 60) {
         writeup = _qb_writeup_moderate(agent, data);
       } else {
         writeup = _qb_writeup_weak(agent, data, worst);
@@ -32,10 +33,17 @@ function toggleQbDetail(agent) {
         var c = data.categories[i];
         var icon = catIcons[c.name] || '📊';
         var pct = Math.round(c.accuracy * 100);
-        var color = pct >= 70 ? '#22c55e' : pct >= 40 ? '#eab308' : '#ef4444';
+        var color = pct >= 80 ? '#22c55e' : pct >= 60 ? '#eab308' : '#ef4444';
         html += '<tr><td>' + icon + ' ' + c.name + '</td><td>' + c.pass + '/' + c.total + ' pass</td><td style="color:' + color + '">' + pct + '%</td></tr>';
       }
-      html += '</table>' +
+      html += '</table>';
+      // Judge reasoning for worst-performing task
+      if (data.worst_task && data.worst_reasoning) {
+        html += '<div style="color:var(--fg-3);font-size:10px;font-style:italic;padding:6px 0 0 0;border-top:1px solid var(--border);margin-top:6px;">' +
+          '<span style="color:var(--fg-2);font-weight:600;">Worst task: ' + _he(data.worst_task) + '</span><br>' +
+          'Judge: ' + _he(data.worst_reasoning) + '</div>';
+      }
+      html +=
         '<div style="text-align:right;margin-top:8px;">' +
           '<button class="btn btn-sm btn-outline" onclick="openQualityBenchmark(\'' + agent + '\')">▶ Run Benchmark</button>' +
         '</div>';
@@ -237,12 +245,19 @@ function switchTab(tab, btn) {
       'health-score': 'tabHealthScore',
       'traces': 'tabTraces',
       'config': 'tabConfig',
-      'billing': 'tabBilling'
+      'billing': 'tabBilling',
+      'pathway': 'tabPathway'
     };
 
     var targetId = tabMap[tab] || 'tabFleet';
     var target = document.getElementById(targetId);
-    if (target) { target.classList.add('active'); if (tab === 'tokens') htmx.ajax('GET', '/api/analytics/tokens', {target: '#analyticsContent', swap: 'innerHTML'}); }
+    if (target) { target.classList.add('active');
+      var _t = new URLSearchParams(location.search).get('token') || '';
+      var _q = _t ? '?token=' + _t : '';
+      if (tab === 'tokens') htmx.ajax('GET', '/api/analytics/tokens' + _q, {target: '#analyticsContent', swap: 'innerHTML'});
+      if (tab === 'drift') htmx.ajax('GET', '/api/drift-summary' + _q, {target: '#driftContainer', swap: 'innerHTML'});
+      if (tab === 'capability') htmx.ajax('GET', '/api/capability/page' + _q, {target: '#capabilityContainer', swap: 'innerHTML'});
+    }
   } catch (e) {
     console.error('switchTab error:', e);
     showTabError();
@@ -463,6 +478,67 @@ function renderTokenChart() {
   });
 }
 
+// ─── Drift chart (fired by hx-on::after-swap on driftChartContainer) ───
+// Data arrives via data-chart / data-baseline / data-events attributes on the canvas.
+function loadDriftChart() {
+  if (typeof Chart === 'undefined') return;
+  var ctx = document.getElementById('driftChart');
+  if (!ctx) return;
+  var chartRaw = ctx.getAttribute('data-chart');
+  if (!chartRaw) return;
+  if (window._driftChartInstance) window._driftChartInstance.destroy();
+  var points, baseline;
+  try { points = JSON.parse(chartRaw); } catch(e) { return; }
+  try { baseline = parseFloat(ctx.getAttribute('data-baseline')); } catch(e) { baseline = null; }
+  if (isNaN(baseline)) baseline = null;
+  var labels = points.map(function(p){ return p.date || p.label || ''; });
+  var values = points.map(function(p){ return p.accuracy != null ? p.accuracy : p.value; });
+  var plugins = [];
+  if (baseline != null) {
+    plugins = _benchmarkPlugin([{value: baseline, label: 'Baseline ' + baseline.toFixed(1) + '%', color: '#22c55e'}]);
+  }
+  // ponytail: constrain y-axis so tiny accuracy wobbles don't fill the full height.
+  // Uses data range with 15% padding and a minimum 10pt span so 55→57% doesn't look huge.
+  var _vMin = Math.min.apply(null, values);
+  var _vMax = Math.max.apply(null, values);
+  var _vRange = _vMax - _vMin;
+  var _minSpan = 10;
+  var _pad = Math.max(_vRange * 0.15, (_minSpan - _vRange) / 2);
+  var _yMin = Math.max(0, Math.round((_vMin - _pad) * 10) / 10);
+  var _yMax = Math.min(100, Math.round((_vMax + _pad) * 10) / 10);
+
+  window._driftChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Accuracy %',
+        data: values,
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#3b82f6',
+      }]
+    },
+    options: {
+      responsive: false, maintainAspectRatio: false,
+      interaction: {mode: 'index', intersect: false},
+      plugins: {
+        legend: {display: false},
+        tooltip: {callbacks: {label: function(c){ return c.parsed.y.toFixed(1) + '%'; }}}
+      },
+      scales: {
+        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 12}},
+        y: {grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){ return v.toFixed(1) + '%'; }}, min: _yMin, max: _yMax}
+      }
+    },
+    plugins: plugins
+  });
+}
+
 // Shared builder for the 4 efficiency line charts (each with 4 benchmark bands).
 function _renderEffChart(canvasId, globalKey, color, yFmt, benchLines) {
   if (typeof Chart === 'undefined') return;
@@ -472,6 +548,13 @@ function _renderEffChart(canvasId, globalKey, color, yFmt, benchLines) {
   if (!ctx) return;
   var instKey = '_' + canvasId + 'Instance';
   if (window[instKey]) window[instKey].destroy();
+  // ponytail: benchmark lines vanish when the y-axis auto-scales below the bench
+  // values (data small/zero → lines pushed off-canvas, clipped by _benchmarkPlugin).
+  // suggestedMin/Max force the axis to always include the outermost bench so the
+  // threshold context is never lost. If real data exceeds suggestedMax, Chart.js
+  // uses the data (no clipping of the line). Upgrade: log-scale axis if data spans
+  // orders of magnitude (tokens/turn can be 100–100k).
+  var maxBench = benchLines.length ? Math.max.apply(null, benchLines.map(function(l){return l.value;})) : undefined;
   window[instKey] = new Chart(ctx, {
     type: 'line',
     data: {labels: data.labels, datasets: [{label: canvasId, data: data.data, borderColor: color, backgroundColor: color.replace(')', ',.12)').replace('rgb', 'rgba'), fill: true, tension: 0.3, pointRadius: 0}]},
@@ -480,7 +563,7 @@ function _renderEffChart(canvasId, globalKey, color, yFmt, benchLines) {
       plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return yFmt(c.parsed.y);}}}},
       scales: {
         x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
-        y: {grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: yFmt}}
+        y: {suggestedMin: 0, suggestedMax: maxBench, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: yFmt}}
       }
     },
     plugins: _benchmarkPlugin(benchLines)

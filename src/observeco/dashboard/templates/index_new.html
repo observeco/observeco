@@ -6,6 +6,8 @@
 <title>ObserveCo · Fleet Dashboard</title>
 <script src="/static/htmx.min.js"></script>
 <script src="/static/chart.umd.min.js"></script>
+<script src="https://unpkg.com/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre@4.0.0/dist/cytoscape-dagre.js"></script>
 <script src="/static/js/app.js?v=6"></script>
 <script src="/static/js/compare.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,10 +22,31 @@
       <polyline points="2,15 7,15 9.5,6 13.5,21 16,15 24,15" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="20" cy="7.5" r="2.4" fill="#22c55e"/>
     </svg>
-    <span class="logo-word"><b>Observe</b>Co</span><span class="ver">0.3.0</span>
+    <span class="logo-word"><b>Observe</b>Co</span><span class="ver">{{VERSION}}</span>
   </div>
   <div class="right" id="daemonStatus"><span class="d"></span> daemon live <span class="kb-hint" style="margin-left:12px;font-size:11px;color:#64748b;">⌨ 1-9 for tabs</span></div>
+  <div class="discover-badge" id="discoverBadge" hx-get="/api/discover/panel" hx-trigger="revealed once, every 5m" hx-target="#discoverPanel" hx-swap="innerHTML" onclick="toggleDiscover()" title="See what you're not monitoring">
+    <span class="dot"></span><span id="discoverCount">…</span> gaps
+  </div>
 </header>
+<div id="discoverPanel" class="discover-panel" style="display:none;"></div>
+<script>
+function toggleDiscover() {
+  var p = document.getElementById('discoverPanel');
+  p.style.display = (p.style.display === 'none') ? 'block' : 'none';
+}
+// Update badge count after panel loads
+document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+  if (evt.detail.xhr && evt.detail.xhr.responseURL && evt.detail.xhr.responseURL.includes('/api/discover/panel')) {
+    var html = evt.detail.xhr.responseText || '';
+    var m = html.match(/(\d+)\s*gap/);
+    var cnt = document.getElementById('discoverCount');
+    var badge = document.getElementById('discoverBadge');
+    if (m) { cnt.textContent = m[1]; badge.className = 'discover-badge has-gaps'; }
+    else { cnt.textContent = '0'; badge.className = 'discover-badge no-gaps'; }
+  }
+});
+</script>
 
 <!-- Domain-grouped nav -->
 <div id="navContainer" hx-get="/api/partials/nav" hx-trigger="revealed once" hx-target="this" hx-swap="outerHTML">
@@ -33,7 +56,7 @@
       <span class="nav-tab active clickable" data-tab="fleet">Fleet</span>
       <span class="nav-tab clickable" data-tab="alerts">Alerts</span>
       <span class="nav-tab clickable" data-tab="timeline">Error Timeline</span>
-      <a class="nav-tab clickable" href="/pathway" target="_blank">Pathway Map</a>
+      <span class="nav-tab clickable" data-tab="pathway">Pathway Map</span>
     </div>
     <div class="nav-group">
       <span class="glabel">Analyze</span>
@@ -147,9 +170,17 @@
   <div class="tab-content" id="tabHeal">
     <div class="app" style="padding:0;">
       <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🛠️ Auto-Heal</h1>
-      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Automatic recovery actions for degraded agents.</div>
-      <div id="healContainer">
-        <div style="color:#64748b;font-size:12px;">Auto-heal module — coming soon.</div>
+      <div style="font-size:13px;color:#64748b;margin-bottom:16px;">Automatic recovery actions for degraded agents.</div>
+      <div style="margin-bottom:16px;">
+        <button onclick="runDiagnose()" style="background:#6366f1;border:none;color:white;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;">🔧 Diagnose All Agents</button>
+        <span id="diagnoseResult" style="font-size:11px;margin-left:8px;color:#64748b;"></span>
+      </div>
+      <div id="healConfigContainer" hx-get="/api/heal-config" hx-trigger="revealed once, every 30s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading auto-heal config…</div>
+      </div>
+      <h2 style="font-size:14px;font-weight:600;color:#e2e8f0;margin:20px 0 8px;">📋 Heal History</h2>
+      <div id="healLogContainer" hx-get="/api/heal-log" hx-trigger="revealed once, every 30s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading heal history…</div>
       </div>
     </div>
   </div>
@@ -161,6 +192,14 @@
       <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Configure and view alert notifications.</div>
       <div id="alertsTabContainer" hx-get="/api/alerts" hx-trigger="revealed once" hx-swap="innerHTML">
         <div style="color:#64748b;font-size:12px;">Loading alerts…</div>
+      </div>
+      <h2 style="font-size:14px;font-weight:600;color:#e2e8f0;margin:20px 0 8px;">🔔 Alert Channels</h2>
+      <div id="alertChannelsContainer" hx-get="/api/alert-dashboard" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading channels…</div>
+      </div>
+      <h2 style="font-size:14px;font-weight:600;color:#e2e8f0;margin:20px 0 8px;">📜 Delivery Log</h2>
+      <div id="alertLogContainer" hx-get="/api/alert-log" hx-trigger="revealed once, every 30s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading delivery log…</div>
       </div>
     </div>
   </div>
@@ -213,8 +252,8 @@
   <div class="tab-content" id="tabCapability">
     <div class="app" style="padding:0;">
       <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🎯 Capability</h1>
-      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Agent capability testing and canary results.</div>
-      <div id="capabilityContainer" hx-get="/api/capability/page" hx-trigger="revealed once" hx-swap="innerHTML">
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Select an agent to view benchmark results, performance trends, and task breakdowns.</div>
+      <div id="capabilityContainer" hx-get="/api/capability/page" hx-trigger="load" hx-swap="innerHTML">
         <div style="color:#64748b;font-size:12px;">Loading capability…</div>
       </div>
     </div>
@@ -235,8 +274,8 @@
   <div class="tab-content" id="tabDrift">
     <div class="app" style="padding:0;">
       <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">📈 Drift Analysis</h1>
-      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Token composition drift across agents over time.</div>
-      <div id="driftContainer" hx-get="/api/drift-summary" hx-trigger="revealed once" hx-swap="innerHTML">
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">7-day drift trajectory per agent — sparklines of the most drifted component. Click any row for details.</div>
+      <div id="driftContainer" hx-get="/api/drift-summary" hx-trigger="load" hx-swap="innerHTML">
         <div style="color:#64748b;font-size:12px;">Loading drift data…</div>
       </div>
     </div>
@@ -278,16 +317,95 @@
     </div>
   </div>
 
+  <!-- Pathway Map tab -->
+  <div class="tab-content" id="tabPathway">
+    <div id="pathwayContainer" hx-get="/api/pathway/tab" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
+      <div style="color:#64748b;font-size:12px;padding:24px;text-align:center;">Loading pathway map…</div>
+    </div>
+  </div>
+
   <!-- Error Timeline (loaded via htmx) -->
   <div class="tab-content" id="tabTimeline">
-    <div class="zone3" id="timelineContainer" hx-get="/api/timeline/errors" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
+    <!-- Range selector per master-plan §18: 24H/7D/30D/90D — top of tab -->
+    <div class="tl-toolbar">
+      <span class="tl-range-label">Range</span>
+      <div class="tl-range" role="group" aria-label="Time range">
+        <button class="tl-range-btn active" data-days="1">24H</button>
+        <button class="tl-range-btn" data-days="7">7D</button>
+        <button class="tl-range-btn" data-days="30">30D</button>
+        <button class="tl-range-btn" data-days="90">90D</button>
+      </div>
+    </div>
+    <div class="zone3" id="timelineContainer" hx-get="/api/timeline/errors?days=1" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
       <div class="section-h"><h2>Error Timeline</h2><span class="count mono">loading…</span></div>
       <div class="tl-rows"><div class="tl-empty">Loading events…</div></div>
     </div>
+    <script>
+      document.querySelectorAll('.tl-range-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          htmx.ajax('GET', '/api/timeline/errors?days=' + btn.dataset.days, {target:'#timelineContainer', swap:'innerHTML'});
+          document.querySelectorAll('.tl-range-btn').forEach(function(b){ b.classList.remove('active'); });
+          btn.classList.add('active');
+        });
+      });
+    </script>
   </div>
 
 </div>
 
 <div id="modalContainer"></div>
+<script src="/static/js/pathway.js?v=3"></script>
+<script>
+// ── Auto-Heal tab handlers (wired to /api/heal-config endpoints) ──
+function toggleHeal(name, l1, l2) {
+  fetch('/api/heal-config/' + encodeURIComponent(name), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({auto_heal: l1, auto_heal_l2: l2})
+  })
+  .then(r => r.json())
+  .then(d => { if (!d.ok) alert('Heal config failed: ' + (d.error || '')); });
+}
+function toggleHealL2(name, checked) {
+  var l1 = document.getElementById('l1_' + name).checked;
+  toggleHeal(name, l1, checked);
+}
+function editHealThresholds(name) {
+  var maxR = parseFloat(document.getElementById('maxR_' + name).textContent) || 3;
+  var driftT = parseFloat(document.getElementById('driftT_' + name).textContent) || 15.0;
+  var debtT = parseFloat(document.getElementById('debtT_' + name).textContent) || 60;
+  var input = prompt('Edit thresholds (max restarts/hr, drift %, memory debt %):', maxR + ', ' + driftT + ', ' + debtT);
+  if (!input) return;
+  var parts = input.split(',').map(function(s){ return parseFloat(s.trim()); });
+  if (parts.length !== 3 || parts.some(isNaN)) { alert('Invalid format. Use: restarts, drift, debt'); return; }
+  fetch('/api/heal-config/' + encodeURIComponent(name) + '/thresholds', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({max_restarts: parts[0], drift_threshold: parts[1], memory_debt: parts[2]})
+  })
+  .then(r => r.json())
+  .then(d => { if (d.ok) { document.getElementById('maxR_' + name).textContent = parts[0]; document.getElementById('driftT_' + name).textContent = parts[1]; document.getElementById('debtT_' + name).textContent = parts[2]; } else { alert('Threshold update failed: ' + (d.error || '')); } });
+}
+function startWatchDaemon() {
+  fetch('/api/heal-config/start-watch', {method: 'POST'})
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        // Refresh the heal config block to clear the daemon warning
+        htmx.ajax('GET', '/api/heal-config', {target: '#healConfigContainer', swap: 'innerHTML'});
+      } else {
+        alert('Failed to start watch daemon: ' + (d.error || ''));
+      }
+    });
+}
+function runDiagnose() {
+  var el = document.getElementById('diagnoseResult');
+  el.textContent = 'Running…';
+  htmx.ajax('GET', '/api/trigger-heal', {
+    target: '#diagnoseResult',
+    swap: 'innerHTML'
+  });
+}
+</script>
 </body>
 </html>

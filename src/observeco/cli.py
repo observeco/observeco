@@ -28,6 +28,85 @@ def main_callback(
         os.environ["OBSERVECO_NO_LLM"] = "true"
     pass
 
+# -- Turn-capture hook handler --
+
+@app.command(name="capture-turn")
+def capture_turn() -> None:
+    """Hermes shell-hook handler: capture a turn/skill event into pulse.db.
+
+    Reads one hook payload (JSON) from stdin and enqueues it for batched
+    write. Designed to be called by Hermes' post_tool_call / on_session_end
+    hooks. Never raises; exits 0 on any failure so the agent turn is never
+    affected. See observeco.turn_capture for the blast-radius contract.
+    """
+    from observeco.turn_capture import run
+    run()
+
+
+@app.command(name="selfcheck")
+def selfcheck(
+    write_alert: bool = typer.Option(True, "--alert/--no-alert", help="On failure, write a row into ObserveCo's alert_log (dashboard Alerts tab)."),
+) -> None:
+    """Run the turn-capture self-check end-to-end and report.
+
+    The check feeds real sample payloads through the live `capture-turn`
+    handler and asserts rows land in pulse.db. It is the watchdog for the
+    silent-failure blast-radius contract: if capture breaks, the handler still
+    exits 0 and the dashboard shows zeros — only this check proves the pipeline
+    actually writes.
+
+    On failure it writes one `self_check_failure` row into alert_log (cooldown:
+    at most one per 24h) so it surfaces in the ObserveCo Alerts tab instead of
+    Telegram. On success it prints PASS and writes nothing.
+    """
+    import subprocess
+    import sys
+    import time as _time
+
+    # abspath(cli.py)=.../src/observeco/cli.py -> dirname x2 = .../src
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../src
+    repo_root = os.path.dirname(here)  # .../projects/observeco
+    test_path = os.path.join(repo_root, "tests", "test_turn_capture.py")
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.path.join(repo_root, "src") + os.pathsep + env.get("PYTHONPATH", "")
+
+    proc = subprocess.run(
+        [sys.executable, test_path], capture_output=True, text=True,
+        cwd=here, timeout=60, env=env,
+    )
+
+    if proc.returncode == 0:
+        typer.echo("PASS: turn_capture self-check OK")
+        raise typer.Exit(0)
+
+    # Failure path.
+    tail = (proc.stdout + proc.stderr).strip().splitlines()[-3:]
+    msg = "turn_capture self-check FAILED: " + " | ".join(tail[-1:]) if tail else "turn_capture self-check FAILED"
+    typer.echo(msg, err=True)
+
+    if write_alert:
+        try:
+            from observeco.db import Database
+            db = Database()
+            # Cooldown: don't re-spam if a failure was already logged <24h ago.
+            recent = db.get_alert_log(limit=20)
+            now = int(_time.time())
+            for r in recent:
+                if r.get("event_type") == "self_check_failure" and now - r.get("created_at", 0) < 86400:
+                    break
+            else:
+                db.log_alert_delivery(
+                    channel="dashboard", target="selfcheck",
+                    event_type="self_check_failure", message=msg[:500],
+                    delivered=0, error=(proc.stderr or "")[:500],
+                )
+            db.close()
+        except Exception:
+            pass  # alert write must never crash the check report
+
+    raise typer.Exit(1)
+
+
 # -- Pulse subcommands --
 
 pulse_app = typer.Typer(help="Agent health monitoring & circuit breakers", no_args_is_help=True)
@@ -590,6 +669,99 @@ def heal_command(
     """Auto-heal agents — detect, diagnose, and fix common failure modes."""
     from observeco.heal import run_heal
     run_heal(auto_heal=auto_heal, agent_name=agent, dry_run=dry_run)
+
+
+# -- Prevention skill subcommand (L3 Learning Loop, #81) --
+
+prevention_app = typer.Typer(help="Incident skill auto-creation — manage learned prevention skills", no_args_is_help=True)
+app.add_typer(prevention_app, name="prevention")
+
+
+@prevention_app.command(name="list")
+def prevention_list(agent: Optional[str] = typer.Option(None, "--agent", "-a", help="Filter by agent")):
+    """List all prevention skills."""
+    from rich.console import Console
+    from rich.table import Table
+    from observeco.heal import prevention as prev
+
+    skills = prev.list_skills(agent)
+    console = Console()
+    if not skills:
+        console.print("[yellow]No prevention skills yet.[/yellow]")
+        console.print("Enable learning with: observeco heal --learn (or set heal_config.learn=1)")
+        return
+    table = Table(title="Prevention Skills")
+    table.add_column("ID", style="cyan")
+    table.add_column("Agent", style="bold")
+    table.add_column("Success", style="green")
+    table.add_column("Fail", style="red")
+    table.add_column("Deprecated", style="yellow")
+    table.add_column("Created", style="dim")
+    for s in skills:
+        table.add_row(
+            str(s["id"]), s["agent_name"], str(s["success_count"]),
+            str(s["fail_count"]), "yes" if s["deprecated"] else "no",
+            str(s["created_at"]),
+        )
+    console.print(table)
+
+
+@prevention_app.command(name="show")
+def prevention_show(skill_id: int = typer.Argument(..., help="Prevention skill ID")):
+    """Show a prevention skill's contents."""
+    from rich.console import Console
+    from observeco.heal import prevention as prev
+
+    skill = prev.get_skill(skill_id)
+    console = Console()
+    if not skill:
+        console.print(f"[red]No skill with ID {skill_id}.[/red]")
+        raise typer.Exit(1)
+    console.print(f"[bold]{skill['agent_name']}[/bold] — {skill['diagnosis']}")
+    console.print(f"[dim]Success: {skill['success_count']}  Fail: {skill['fail_count']}  "
+                  f"Deprecated: {'yes' if skill['deprecated'] else 'no'}[/dim]")
+    console.print("\n[cyan]Remediation:[/cyan]")
+    console.print(skill["remediation"])
+    path = skill.get("skill_path")
+    if path:
+        console.print(f"\n[dim]SKILL.md: {path}[/dim]")
+
+
+@prevention_app.command(name="remove")
+def prevention_remove(skill_id: int = typer.Argument(..., help="Prevention skill ID")):
+    """Delete a prevention skill (file + DB + FTS5 index)."""
+    from rich.console import Console
+    from observeco.heal import prevention as prev
+
+    console = Console()
+    if prev.remove_skill(skill_id):
+        console.print(f"[green]Removed skill {skill_id}.[/green]")
+    else:
+        console.print(f"[red]No skill with ID {skill_id}.[/red]")
+        raise typer.Exit(1)
+
+
+@prevention_app.command(name="enable")
+def prevention_enable(agent: str = typer.Argument(..., help="Agent name")):
+    """Enable L3 learning for an agent (writes prevention skills after heal)."""
+    from observeco.db import Database
+    from rich.console import Console
+
+    db = Database()
+    db.set_heal_config(agent, learn=True)
+    Console().print(f"[green]Learning enabled for {agent}. Prevention skills will be "
+                    f"created after successful heals.[/green]")
+
+
+@prevention_app.command(name="disable")
+def prevention_disable(agent: str = typer.Argument(..., help="Agent name")):
+    """Disable L3 learning for an agent."""
+    from observeco.db import Database
+    from rich.console import Console
+
+    db = Database()
+    db.set_heal_config(agent, learn=False)
+    Console().print(f"[yellow]Learning disabled for {agent}.[/yellow]")
 
 
 # -- SDK auto-instrumentation subcommand --
@@ -2324,6 +2496,46 @@ canary_app = typer.Typer(help="Capability monitoring canary — regression tripw
 app.add_typer(canary_app, name="canary")
 
 
+@canary_app.command(name="suggest-tasks")
+def canary_suggest_tasks(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile to mine sessions for"),
+    limit: int = typer.Option(10, "--limit", "-n", help="Max number of task drafts to propose"),
+    source: str = typer.Option("telegram", "--source", help="Session source filter (telegram/cli/cron/all)"),
+    approve_all: bool = typer.Option(False, "--approve-all", help="Skip review, auto-approve all drafts (not recommended)"),
+) -> None:
+    """Mine agent conversations and propose canary task drafts for review.
+
+    Drafts are saved as pending. Review them in the dashboard
+    (Capability → Task Library → Pending) and approve the ones you want.
+    """
+    from observeco.capability.history_tasks import generate_drafts, save_drafts_as_pending
+    from observeco.capability.canary import CanaryRunner
+    from observeco.db import Database
+
+    print(f"\n🔍 Mining sessions from ~/.hermes/state.db (source={source})...")
+    drafts = generate_drafts(limit=limit)
+    if not drafts:
+        print("   No qualifying sessions found. Use the agent for a few days to build history.")
+        return
+
+    if approve_all:
+        print("⚠️  --approve-all: skipping human review (defeats ground-truth anchor)")
+        db = Database()
+        runner = CanaryRunner(db=db)
+        approved = 0
+        for d in drafts:
+            res = runner.create_task(d)
+            if res.get("ok"):
+                approved += 1
+        print(f"✅ Auto-approved {approved}/{len(drafts)} drafts as active tasks.")
+        return
+
+    saved = save_drafts_as_pending(drafts)
+    print(f"✅ {saved} task drafts saved as pending review.")
+    print(f"   Review in dashboard: Capability → Task Library → Pending")
+    print(f"   Or approve all: observeco canary suggest-tasks --approve-all")
+
+
 @canary_app.command(name="run")
 def canary_run(
     agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
@@ -2338,10 +2550,10 @@ def canary_run(
     from observeco.db import Database
 
     db = Database()
-    # Benchmark is a batch job (spawns 9 subprocesses, runs 3+ min). Use a long
-    # busy_timeout so it waits through any concurrent dashboard writes instead
-    # of failing on the default 5s lock. WAL mode lets the dashboard keep
-    # reading while this writes.
+    # ponytail: _make_conn now sets busy_timeout=30000 (bumped from 5000) so
+    # the schema init in _init_db() doesn't fail on concurrent dashboard
+    # writes. This redundant call is kept as an explicit signal for any future
+    # refactor that changes _make_conn's default.
     db._get_conn().execute("PRAGMA busy_timeout=30000")
     runner = CanaryRunner(db=db)
 
@@ -2593,6 +2805,7 @@ def grid_cap_compare(
 ) -> None:
     """Display grid results or compare two runs."""
     from observeco.db import Database
+    import json
 
     conn = Database()._get_conn()
 
@@ -2705,7 +2918,7 @@ def task_create(
             print("❌ Prompt required")
             return
 
-        print("\nAssertion types: exact_match, contains, numeric_range, regex, llm_judge")
+        print("\nAssertion types: exact_match, contains, numeric_range, regex, llm_judge, json_schema, ordering, tool_call_validation")
         a_type = input("Assertion type: ").strip()
 
         assertions = []
@@ -2726,6 +2939,39 @@ def task_create(
         elif a_type == "llm_judge":
             criteria = input("Evaluation criteria: ")
             assertions = [{"type": "llm_judge", "criteria": criteria}]
+        elif a_type == "json_schema":
+            print("Enter JSON Schema (as JSON dict, then Ctrl+D on empty line):")
+            schema_lines = []
+            try:
+                while True:
+                    line = input()
+                    schema_lines.append(line)
+            except EOFError:
+                pass
+            schema_str = "\n".join(schema_lines)
+            try:
+                import json
+                schema = json.loads(schema_str) if schema_str else {}
+            except json.JSONDecodeError:
+                print("⚠️  Invalid JSON, using empty schema")
+                schema = {}
+            assertions = [{"type": "json_schema", "schema": schema}]
+        elif a_type == "ordering":
+            steps_str = input("Steps in order (comma-separated): ")
+            steps = [s.strip() for s in steps_str.split(",") if s.strip()]
+            assertions = [{"type": "ordering", "steps": steps}]
+        elif a_type == "tool_call_validation":
+            tool = input("Expected tool name: ")
+            args_str = input("Expected args as key=value pairs (comma-separated, optional): ").strip()
+            args = {}
+            if args_str:
+                for pair in args_str.split(","):
+                    if "=" in pair:
+                        k, v = pair.split("=", 1)
+                        args[k.strip()] = v.strip()
+            assertions = [{"type": "tool_call_validation", "expected_tool": tool}]
+            if args:
+                assertions[0]["expected_args"] = args
         else:
             print(f"❌ Unknown assertion type: {a_type}")
             return

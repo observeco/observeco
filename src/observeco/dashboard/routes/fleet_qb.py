@@ -13,7 +13,7 @@ async def qb_categories(agent: str = Query("")):
     conn = db._get_conn()
 
     if not agent:
-        return {"categories": [], "overall": 0, "total": 0, "failed": 0, "worst_reasoning": ""}
+        return {"categories": [], "overall": 0, "total": 0, "failed": 0, "worst_reasoning": "", "worst_task": ""}
 
     run = conn.execute(
         "SELECT id FROM canary_runs WHERE agent_name = ? AND status = 'completed' "
@@ -21,10 +21,11 @@ async def qb_categories(agent: str = Query("")):
         (agent,),
     ).fetchone()
     if not run:
-        return {"categories": [], "overall": 0, "total": 0, "failed": 0, "worst_reasoning": ""}
+        return {"categories": [], "overall": 0, "total": 0, "failed": 0, "worst_reasoning": "", "worst_task": ""}
 
     rows = conn.execute(
-        "SELECT cr.accuracy, cr.status, ct.category, ct.difficulty, ct.name as task_name "
+        "SELECT cr.accuracy, cr.status, ct.category, ct.difficulty, ct.name as task_name, "
+        "cr.error, cr.id as result_id "
         "FROM canary_results cr "
         "JOIN canary_tasks ct ON cr.task_id = ct.id "
         "WHERE cr.run_id = ? AND ct.category IS NOT NULL",
@@ -32,7 +33,7 @@ async def qb_categories(agent: str = Query("")):
     ).fetchall()
 
     if not rows:
-        return {"categories": [], "overall": 0, "total": 0, "failed": 0, "worst_reasoning": ""}
+        return {"categories": [], "overall": 0, "total": 0, "failed": 0, "worst_reasoning": "", "worst_task": ""}
 
     cat_data = {}
     worst = {"task": "", "acc": 1.0, "reasoning": ""}
@@ -51,7 +52,9 @@ async def qb_categories(agent: str = Query("")):
         total_pass += 1 if r["status"] == "pass" else 0
         total_count += 1
         if acc < worst["acc"]:
-            worst = {"task": r["task_name"], "acc": acc, "reasoning": ""}
+            # Use error column (contains assertion failure reasons / LLM judge feedback)
+            reasoning = (r["error"] or "").strip()[:200]
+            worst = {"task": r["task_name"] or "", "acc": acc, "reasoning": reasoning}
 
     categories = sorted(
         [{"name": c, "pass": d["pass"], "total": d["total"], "accuracy": round(d["acc_sum"] / d["total"], 2)}
@@ -59,7 +62,7 @@ async def qb_categories(agent: str = Query("")):
         key=lambda x: x["accuracy"],
         reverse=True,
     )
-    overall = round(total_pass / total_count, 2) if total_count > 0 else 0.0
+    overall = round(sum(d["acc_sum"] for d in cat_data.values()) / total_count, 2) if total_count > 0 else 0.0
     return {
         "categories": categories,
         "overall": overall,

@@ -16,6 +16,7 @@ import signal
 import subprocess
 import sys
 import time
+from pathlib import Path
 from typing import Any, Optional
 
 from observeco.benchmark.engine import BenchmarkTask
@@ -45,14 +46,53 @@ _MAX_RETRIES = 2
 _RETRY_DELAYS = [2, 4]  # seconds, exponential-ish
 
 
+def _load_dotenv() -> None:
+    """Load .env from the project root into os.environ, if it exists.
+
+    ponytail: manual KEY=VALUE parser, not python-dotenv. Handles basic
+    quoting and comments. Upgrade path: use python-dotenv if it becomes
+    a dependency for other reasons.
+    """
+    # Walk up from this file to find the project root (where .env lives)
+    # hermes.py is at src/observeco/benchmark/adapters/ — 5 levels from root
+    env_path = Path(__file__).resolve().parent.parent.parent.parent.parent / ".env"
+    if not env_path.exists():
+        return
+    try:
+        for line in env_path.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+    except OSError:
+        pass
+
+
+# Load .env at module import time so OBSERVECO_CANARY_MODEL is available
+# before any adapter is instantiated.
+_load_dotenv()
+
+
 class HermesBenchmarkAdapter:
     """Runs benchmark tasks through a Hermes agent session."""
 
     def __init__(self, hermes_bin: str = "hermes", timeout: int = 60,
-                 agent_profile: str = ""):
+                 agent_profile: str = "", model: str = ""):
         self.hermes_bin = hermes_bin
         self.timeout = timeout
         self.agent_profile = agent_profile
+        # Model priority chain (first non-empty wins):
+        #   1. Per-task model column (set in run_task)
+        #   2. OBSERVECO_CANARY_MODEL env var (user-level default)
+        #   3. Adapter constructor model param (code-level fallback)
+        #   4. Hermes default (whatever `hermes config get model` returns)
+        self.model = model
 
     def _is_provider_error(self, stderr: str) -> bool:
         """Check if stderr indicates a transient provider error (5xx/429)."""
@@ -73,15 +113,44 @@ class HermesBenchmarkAdapter:
             try:
                 start = time.time()
                 cmd = [self.hermes_bin]
+                # Model priority chain (first non-empty wins):
+                #   1. Per-task model column
+                #   2. OBSERVECO_CANARY_MODEL env var
+                #   3. Adapter constructor model param
+                #   4. Hermes default (no -m flag — inherits whatever is configured)
+                task_model = (
+                    getattr(task, "model", "") or ""
+                    or os.environ.get("OBSERVECO_CANARY_MODEL", "")
+                    or self.model
+                )
+                if task_model:
+                    cmd += ["-m", task_model]
                 if self.agent_profile:
                     cmd += ["-p", self.agent_profile]
-                cmd += ["chat", "-q", prompt, "-Q", "--safe-mode"]
+                cmd += ["chat", "-q", prompt, "-Q"]
+                # Temperature control: hermes chat supports --temperature (0.0-2.0).
+                # Passed through to the model provider via request_overrides.
+                # ponytail: only passes when non-zero; temperature=0.0 is the
+                # deterministic default and is omitted to use the model's contract.
+                temperature = float(getattr(task, "temperature", 0.0) or 0.0)
+                if temperature:
+                    cmd += ["--temperature", f"{temperature:.4f}"]
+                # Sanitize environment: the parent process may be running inside
+                # a Hermes cron/gateway session (HERMES_* vars set). If we don't
+                # strip them, the child `hermes chat` inherits the session context
+                # and fails with exit=1 (nested session conflict). Strip ALL
+                # HERMES_* vars — the child Hermes resolves its own home.
+                child_env = {
+                    k: v for k, v in os.environ.items()
+                    if not k.startswith("HERMES_")
+                }
                 proc = subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
                     preexec_fn=os.setsid,
+                    env=child_env,
                 )
 
                 try:
@@ -112,6 +181,12 @@ class HermesBenchmarkAdapter:
                 # Strip markdown code fences and formatting
                 output = re.sub(r'```\w*\n?', '', output)
                 output = re.sub(r'\*\*|__|\*|_', '', output).strip()
+                # Strip Hermes reasoning box artifacts (┌─ Reasoning ─...┐)
+                # that pollute the scored output in -Q / --safe-mode mode.
+                output = re.sub(r'[┌┐└┘]', '', output)
+                output = re.sub(r'─+', '', output)
+                output = re.sub(r'\bReasoning\s*', '', output)
+                output = re.sub(r'\n\s*\n\s*\n+', '\n\n', output).strip()
 
                 if proc.returncode != 0:
                     error = stderr.strip() or "unknown error"
