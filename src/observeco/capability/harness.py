@@ -200,13 +200,12 @@ class HarnessOptimizer:
         conn = self.db._get_conn()
 
         # 1. Save optimization run record
-        conn.execute(
+        self.db._write(
             "INSERT INTO harness_optimization_runs "
             "(id, agent_name, started_at, status, iterations, budget) "
             "VALUES (?, ?, ?, 'running', ?, ?)",
             (run_id, agent_name, now_iso, iterations, budget),
         )
-        conn.commit()
 
         # 2. Snapshot incumbent harness
         incumbent_snapshot = self._snapshot_harness(agent_name)
@@ -288,14 +287,13 @@ class HarnessOptimizer:
         )
 
         # Update optimization run as completed
-        conn.execute(
+        self.db._write(
             "UPDATE harness_optimization_runs SET status='completed', "
             "completed_at=?, candidate_dev_score=?, candidate_test_score=?, "
             "promoted=?, promotion_reason=? WHERE id=?",
             (datetime.now(timezone.utc).isoformat(), best_dev_score,
              best_test_score, 1 if promoted else 0, promotion_reason, run_id),
         )
-        conn.commit()
 
         # 7. Build unified budget report
         return self._build_report(
@@ -595,8 +593,7 @@ class HarnessOptimizer:
         classification: dict, promoted: bool, reason: str,
     ) -> None:
         """Persist a proposed edit to harness_edits."""
-        conn = self.db._get_conn()
-        conn.execute(
+        self.db._write(
             "INSERT INTO harness_edits "
             "(id, optimization_run_id, iteration, edit_text, old_snippet, "
             "new_snippet, classification, classification_confidence, "
@@ -614,7 +611,6 @@ class HarnessOptimizer:
                 classification.get("reasoning", ""),
             ),
         )
-        conn.commit()
 
     def _save_eval_runs(
         self,
@@ -629,7 +625,6 @@ class HarnessOptimizer:
         rounds: int = 3,
     ) -> None:
         """Persist evaluation results for all methods."""
-        conn = self.db._get_conn()
         methods = [
             ("baseline", baseline.overall_accuracy, baseline.overall_accuracy, 1),
             ("parallel_sampling", parallel.overall_accuracy, parallel.overall_accuracy, k),
@@ -639,7 +634,7 @@ class HarnessOptimizer:
         for method, dev_score, test_score, pass_at_k in methods:
             rollouts = pass_at_k or 1
             for split, score in [("dev", dev_score), ("test", test_score)]:
-                conn.execute(
+                self.db._write(
                     "INSERT INTO harness_eval_runs "
                     "(id, optimization_run_id, method, split, total_rollouts, "
                     "pass_at_1, pass_at_k) "
@@ -654,7 +649,6 @@ class HarnessOptimizer:
                         pass_at_k,
                     ),
                 )
-        conn.commit()
 
 
     # ── Read paths for the dashboard (obs-spec-056 §8 frontend) ──────────────

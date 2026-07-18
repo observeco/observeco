@@ -5,6 +5,8 @@ from typing import Optional
 
 import typer
 
+from observeco.cli_harness import harness_app
+
 app = typer.Typer(
     name="observeco",
     help="Runtime observability for AI agent systems — pulse, circuit breaker, token compression, dashboard",
@@ -461,6 +463,11 @@ watch_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(watch_app)
+
+# Harness optimization loop (obs-spec-056 + obs-spec-061). CLI was implemented in
+# cli_harness.py but never registered here — the dashboard "Run Optimization" button
+# and any `observeco harness optimize` invocation were dead until this wiring.
+app.add_typer(harness_app, name="harness")
 
 
 @watch_app.command(name="start")
