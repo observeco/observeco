@@ -40894,3 +40894,45 @@ INFO:     Started server process [34998]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8900 (Press CTRL+C to quit)
+GS-019: Database version (63) > code version (61). Possible downgrade. Not modifying version.
+INFO:     Started server process [29650]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8899 (Press CTRL+C to quit)
+GS-019: Database version (63) > code version (61). Possible downgrade. Not modifying version.
+INFO:     Started server process [30065]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8899 (Press CTRL+C to quit)
+GS-019: Database version (63) > code version (61). Possible downgrade. Not modifying version.
+[billing] Stripe configured via env vars (pk: pk_live_...)
+ObserveCo Dashboard: http://127.0.0.1:8899
+[license] pro mode
+INFO:     127.0.0.1:51544 - "GET /api/discover/panel HTTP/1.1" 200 OK
+GS-019: Database version (63) > code version (61). Possible downgrade. Not modifying version.
+INFO:     127.0.0.1:51544 - "GET /api/fleet-compare HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [30065]
+GS-019: Database version (63) > code version (61). Possible downgrade. Not modifying version.
+INFO:     Started server process [37122]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8900 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [37122]
+GS-019: Database version (63) > code version (61). Possible downgrade. Not modifying version.
+INFO:     Started server process [37427]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8900 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [37427]
+GS-019: Database version (63) > code version (61). Possible downgrade. Not modifying version.
+Error: Port 8899 is in use by unknown process
+Fix: Use "--port 8900" or stop the other process

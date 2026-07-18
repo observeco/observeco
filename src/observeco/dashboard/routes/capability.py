@@ -1842,7 +1842,7 @@ async def capability_page(agent: str = Query("default")):
           </div>
         </div>
         <div class="cap-overview-card cap-ov-accuracy-card">
-          <div class="cap-ov-big-accuracy {accuracy_class}">{accuracy:.0f}%</div>
+          <div class="cap-ov-big-accuracy {accuracy_class}">{(f'{accuracy:.0f}' if accuracy is not None else '—')}%</div>
           <div class="cap-ov-accuracy-label">{accuracy_label}</div>
         </div>
       </div>"""
