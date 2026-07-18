@@ -84,9 +84,15 @@ async def canary_approve_draft(payload: dict):
     if not res.get("ok"):
         return {"ok": False, "error": res.get("error", "create_task failed")}
     # Persist source_session on the now-active task (create_task hardcodes built_in=0).
-    conn.execute("UPDATE canary_tasks SET source_session = ? WHERE id = ?", (draft["source_session"], draft["id"]))
-    conn.execute("DELETE FROM canary_task_drafts WHERE id = ?", (task_id,))
-    conn.commit()
+    # Use db._write() (retry-on-lock) — the watch daemon writes pulse.db constantly.
+    try:
+        db._write(
+            "UPDATE canary_tasks SET source_session = ? WHERE id = ?",
+            (draft["source_session"], draft["id"]),
+        )
+        db._write("DELETE FROM canary_task_drafts WHERE id = ?", (task_id,))
+    except _sqlite3.OperationalError:
+        logger.warning("canary draft persist failed (db locked): %s", task_id)
     return {"ok": True, "task_id": draft["id"]}
 
 
@@ -96,9 +102,10 @@ async def canary_reject_draft(payload: dict):
     task_id = payload.get("task_id")
     if not task_id:
         return {"ok": False, "error": "task_id required"}
-    conn = db._get_conn()
-    conn.execute("DELETE FROM canary_task_drafts WHERE id = ?", (task_id,))
-    conn.commit()
+    try:
+        db._write("DELETE FROM canary_task_drafts WHERE id = ?", (task_id,))
+    except _sqlite3.OperationalError:
+        logger.warning("canary draft reject failed (db locked): %s", task_id)
     return {"ok": True}
 
 
@@ -232,12 +239,11 @@ async def grid_run_from_dashboard(agent: str = Query("default")):
             logger.exception("Grid run failed for %s", agent)
             # Mark the run terminal so the UI poll stops instead of hanging forever.
             try:
-                conn_err = db._get_conn()
-                conn_err.execute(
-                    "UPDATE grid_runs SET status='failed', completed_at=? WHERE agent_name=? AND status='running'",
+                db._write(
+                    "UPDATE grid_runs SET status='failed', completed_at=? "
+                    "WHERE agent_name=? AND status='running'",
                     (datetime.now(timezone.utc).isoformat(), agent),
                 )
-                conn_err.commit()
             except Exception:
                 logger.exception("Failed to mark grid run failed for %s", agent)
         finally:
@@ -269,14 +275,12 @@ async def canary_run_from_fleet(agent: str = Query("default"), tasks: Optional[s
 
         # Best-effort cleanup: mark runs stuck in 'running' for >30min as 'failed'
         try:
-            conn = db._get_conn()
-            conn.execute("PRAGMA busy_timeout=5000")
-            conn.execute(
+            db._write(
                 "UPDATE canary_runs SET status = 'failed' "
-                "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')"
+                "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')",
+                (),
             )
-            conn.commit()
-        except Exception:
+        except _sqlite3.OperationalError:
             pass  # cleanup is best-effort
 
         # Concurrent run guard: don't spawn a second canary while one is running.
@@ -294,13 +298,12 @@ async def canary_run_from_fleet(agent: str = Query("default"), tasks: Optional[s
                 return {"ok": False, "message": f"Canary already running for {agent}"}
             # Insert placeholder 'running' row synchronously to claim the slot
             import uuid
-            guard_conn.execute(
+            db._write(
                 "INSERT INTO canary_runs (id, agent_name, config_hash, status, started_at, total_tasks) "
                 "VALUES (?, ?, 'pending', 'running', datetime('now'), 0)",
                 (f"placeholder-{uuid.uuid4().hex[:8]}", agent),
             )
-            guard_conn.commit()
-        except Exception:
+        except _sqlite3.OperationalError:
             pass  # fail open: if we can't check, allow the run
 
         # Build CLI invocation: spawn a separate process running the same
@@ -372,15 +375,15 @@ async def canary_status(agent: str = Query("default")):
     """GET /api/capability/canary/status?agent=NAME — check if canary is still running with live progress."""
     try:
         conn = db._get_conn()
-        conn.execute("PRAGMA busy_timeout=5000")
-        # Best-effort cleanup: mark runs stuck in 'running' for >30min as 'failed'
+        # Best-effort cleanup: mark runs stuck in 'running' for >30min as 'failed'.
+        # Use db._write() (retry-on-lock) — the watch daemon writes pulse.db constantly.
         try:
-            conn.execute(
+            db._write(
                 "UPDATE canary_runs SET status = 'failed' "
-                "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')"
+                "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')",
+                (),
             )
-            conn.commit()
-        except Exception:
+        except _sqlite3.OperationalError:
             pass  # cleanup is best-effort
 
         running = conn.execute(
