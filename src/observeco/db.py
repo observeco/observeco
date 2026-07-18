@@ -1220,7 +1220,36 @@ class Database:
                 raise
 
     def _init_db(self, conn: sqlite3.Connection) -> None:
+        # If the base schema is already present (prod DB at current version),
+        # every statement below is an idempotent no-op WRITE that still takes the
+        # WAL write lock — and races with the constantly-writing watch daemon,
+        # causing 'database is locked' 500s on the first connection. Skip the
+        # whole init when the schema already exists. ponytail: sentinel is a core
+        # base-schema table; if it's missing the DB is fresh and we run full init
+        # (below) under a lock-retry. Upgrade path: version-table check instead of
+        # sentinel table.
+        try:
+            conn.execute("SELECT 1 FROM canary_runs LIMIT 1")
+            return
+        except sqlite3.OperationalError:
+            pass  # table missing -> run full init below
 
+        # Retry the one-time init on 'database is locked' so a concurrent watch-daemon
+        # write doesn't turn the first connection into a 500.
+        last_err = None
+        for _attempt in range(20):
+            try:
+                self._init_db_inner(conn)
+                return
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e):
+                    last_err = e
+                    time.sleep(0.1 * (_attempt + 1))
+                    continue
+                raise
+        raise last_err or sqlite3.OperationalError("database is locked (init)")
+
+    def _init_db_inner(self, conn: sqlite3.Connection) -> None:
         # GS-019 §Recovery: Check for stranded migration tables
         self._recover_stranded_tables(conn)
 
