@@ -2347,6 +2347,18 @@ class Database:
             )
         return [dict(r) for r in cur.fetchall()]
 
+    def get_drift_latest_per_agent(self) -> list[dict]:
+        """Latest drift row per agent (one row each). Avoids loading the full
+        chisel_drift table (can be ~1M rows) just to filter to ~39 agents."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "SELECT d.* FROM chisel_drift d "
+            "JOIN (SELECT agent_name, MAX(timestamp) AS mt FROM chisel_drift GROUP BY agent_name) m "
+            "ON d.agent_name = m.agent_name AND d.timestamp = m.mt "
+            "ORDER BY d.agent_name"
+        )
+        return [dict(r) for r in cur.fetchall()]
+
     # -- ClawForge --
 
     def log_profile(self, agent_name: str, memory_size: int, skills: int,

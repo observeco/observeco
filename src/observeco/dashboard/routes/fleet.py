@@ -263,7 +263,7 @@ async def fleet_verdict():
     try:
         summary = db.get_agent_status_summary()
         circuit = db.get_circuit_breakers()
-        drift_all = db.get_drift()
+        drift_all = db.get_drift_latest_per_agent()
         errors_all = db.get_errors(limit=100)
         agents_cfg = db.get_agents()
     except Exception:
@@ -490,7 +490,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         summary = db.get_agent_status_summary()
         agents_cfg = db.get_agents()
         circuit = db.get_circuit_breakers()
-        drift_all = db.get_drift()
+        drift_all = db.get_drift_latest_per_agent()
         errors_all = db.get_errors(limit=100)
         # Canary data for grid cards
         conn = db._get_conn()
