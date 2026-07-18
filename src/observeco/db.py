@@ -2213,15 +2213,13 @@ class Database:
 
     def log_self_monitor(self, consumer: str, input_tokens: int, output_tokens: int) -> None:
         """Record a self-monitoring LLM call for budget tracking (G1.1)."""
-        conn = self._get_conn()
         today = int(time.time()) // 86400
         total = input_tokens + output_tokens
-        conn.execute(
+        self._write(
             "INSERT INTO self_monitor_budget (day, consumer, input_tokens, output_tokens, total_tokens, created_at) "
             "VALUES (?, ?, ?, ?, ?, ?)",
             (today, consumer, input_tokens, output_tokens, total, int(time.time())),
         )
-        conn.commit()
 
     def get_self_monitor_usage(self) -> dict:
         """Return today's self-monitoring usage summary (G1.1)."""
