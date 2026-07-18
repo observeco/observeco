@@ -2319,13 +2319,15 @@ async def capability_page(agent: str = Query("default")):
 
     function runGrid() {{
       var agent = '{agent_escaped}';
-      fetch('/api/capability/grid/run?agent=' + encodeURIComponent(agent), {{method:'POST'}})
+      var _token = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+      var _gh = _token ? {{ 'X-ObserveCo-Token': _token }} : {{}};
+      fetch('/api/capability/grid/run?agent=' + encodeURIComponent(agent), {{method:'POST', headers: _gh}})
         .then(function(r) {{ return r.json(); }})
         .then(function(d) {{
           if (d.ok) {{
             showToast('Comparison started for ' + agent);
             var poll = setInterval(function() {{
-              fetch('/api/capability/grid?agent=' + encodeURIComponent(agent))
+              fetch('/api/capability/grid?agent=' + encodeURIComponent(agent), {{headers: _gh}})
                 .then(function(r) {{ return r.json(); }})
                 .then(function(g) {{
                   if (g.cells && g.cells.length > 0) {{
@@ -2380,9 +2382,12 @@ async def capability_page(agent: str = Query("default")):
     }}
 
     function approveDraft(id) {{
+      var _token = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+      var _ah = {{'Content-Type': 'application/json'}};
+      if (_token) _ah['X-ObserveCo-Token'] = _token;
       fetch('/api/capability/canary/pending-tasks/approve', {{
         method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
+        headers: _ah,
         body: JSON.stringify({{task_id: id}})
       }})
       .then(function(r) {{ return r.json(); }})
@@ -2399,9 +2404,12 @@ async def capability_page(agent: str = Query("default")):
 
     function rejectDraft(id) {{
       if (!confirm('Reject this draft? It will be deleted.')) return;
+      var _token = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+      var _rh = {{'Content-Type': 'application/json'}};
+      if (_token) _rh['X-ObserveCo-Token'] = _token;
       fetch('/api/capability/canary/pending-tasks/reject', {{
         method: 'POST',
-        headers: {{'Content-Type': 'application/json'}},
+        headers: _rh,
         body: JSON.stringify({{task_id: id}})
       }})
       .then(function(r) {{ return r.json(); }})
@@ -2434,7 +2442,9 @@ async def capability_page(agent: str = Query("default")):
       }}
       var body = document.getElementById('sourceSessionBody');
       body.innerHTML = '<div class="spinner"></div> Loading...';
-      fetch('/api/capability/canary/source-session?session_id=' + encodeURIComponent(sessionId))
+      var _stoken = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+      var _sheaders = _stoken ? {{ 'X-ObserveCo-Token': _stoken }} : {{}};
+      fetch('/api/capability/canary/source-session?session_id=' + encodeURIComponent(sessionId), {{headers: _sheaders}})
         .then(function(r) {{ return r.json(); }})
         .then(function(d) {{
           if (!d.ok) {{
@@ -2477,7 +2487,9 @@ async def capability_page(agent: str = Query("default")):
 
     function deleteTask(id) {{
       if (!confirm('Delete this task?')) return;
-      fetch('/api/capability/tasks/' + id, {{method:'DELETE'}})
+      var _dtoken = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+      var _dheaders = _dtoken ? {{ 'X-ObserveCo-Token': _dtoken }} : {{}};
+      fetch('/api/capability/tasks/' + id, {{method:'DELETE', headers: _dheaders}})
         .then(function() {{ htmx.ajax('GET', '/api/capability/tasks/list', {{target: '#taskListContainer', swap: 'innerHTML'}}); }});
     }}
     function duplicateTask(id) {{ showToast('Duplicate coming soon'); }}
@@ -2490,7 +2502,9 @@ async def capability_page(agent: str = Query("default")):
     // ── Overview card: load canary status ──
     (function loadCapOverview() {{
       var agent = '{agent_escaped}';
-      fetch('/api/capability/canary/status?agent=' + encodeURIComponent(agent))
+      var _otoken = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+      var _oheaders = _otoken ? {{ 'X-ObserveCo-Token': _otoken }} : {{}};
+      fetch('/api/capability/canary/status?agent=' + encodeURIComponent(agent), {{headers: _oheaders}})
         .then(function(r) {{ return r.json(); }})
         .then(function(s) {{
           var lastEl = document.getElementById('capOvLastTested');
@@ -2583,7 +2597,9 @@ async def capability_page(agent: str = Query("default")):
 
     async function fetchPerTaskData() {{
       try {{
-        var resp = await fetch('/api/capability/drift/per-task-history?agent=' + encodeURIComponent('{agent_escaped}'));
+        var _token = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+        var _headers = _token ? {{ 'X-ObserveCo-Token': _token }} : {{}};
+        var resp = await fetch('/api/capability/drift/per-task-history?agent=' + encodeURIComponent('{agent_escaped}'), {{headers: _headers}});
         var data = await resp.json();
         _perTaskAllTasks = data.tasks || [];
         if (_perTaskAllTasks.length === 0) {{
@@ -2755,7 +2771,9 @@ async def capability_page(agent: str = Query("default")):
       reasonEl.innerHTML = 'Loading judge reasoning...';
       panel.style.display = 'block';
 
-      fetch('/api/capability/canary/judge-reasoning?task_id=' + encodeURIComponent(taskId))
+      var _jtoken = (document.querySelector('meta[name="observeco-token"]') || {{}}).getAttribute('content') || '';
+      var _jheaders = _jtoken ? {{ 'X-ObserveCo-Token': _jtoken }} : {{}};
+      fetch('/api/capability/canary/judge-reasoning?task_id=' + encodeURIComponent(taskId), {{headers: _jheaders}})
         .then(function(r) {{ return r.json(); }})
         .then(function(data) {{
           var assertions = data.assertions || [];
