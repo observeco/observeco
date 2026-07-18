@@ -1162,6 +1162,9 @@ class Database:
     # Process-wide lock shared by ALL Database instances (so two Database() objects in
     # the same process still serialize their writers). Class-level = one lock per process.
     _writer_lock = threading.Lock()
+    # Serializes the one-time schema init so concurrent first-connections don't each
+    # fire executescript() (which takes a WAL write lock and causes 'database is locked').
+    _schema_lock = threading.Lock()
 
     def __init__(self, db_path: str | Path = DB_PATH):
         self.db_path = Path(db_path)
@@ -1182,10 +1185,14 @@ class Database:
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=30000")
         conn.execute("PRAGMA foreign_keys=ON")
-        # ponytail: _init_db() runs on first connection so schema + migrations
-        # are applied before any query. This is the lazy init that prevents
-        # import-time crashes when Hermes isn't installed.
-        self._init_db(conn)
+        # Schema init runs ONCE per Database instance (not per connection).
+        # executescript() takes a write lock; running it on every concurrent
+        # connection under htmx's parallel requests caused 'database is locked'
+        # storms (500s on heal-config/heal-log/alert-log/discover/panel).
+        with type(self)._schema_lock:
+            if not self._init_called:
+                self._init_db(conn)
+                self._init_called = True
         return conn
 
     def _get_conn(self) -> sqlite3.Connection:
