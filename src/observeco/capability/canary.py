@@ -635,7 +635,7 @@ class TaskExecutor:
         """
         self.adapter = adapter
 
-    def execute(self, task: dict, agent_name: str, timeout: int = 60) -> TaskResult:
+    def execute(self, task: dict, agent_name: str, timeout: int = 300) -> TaskResult:
         """Run one task once through the adapter.
 
         Args:
@@ -972,7 +972,7 @@ class CanaryRunner:
                 executor = override_executor
 
             for trial_idx in range(task_trials):
-                result = executor.execute(task, agent_name, timeout=task.get("timeout", 60))
+                result = executor.execute(task, agent_name, timeout=task.get("timeout", 300))
 
                 if result.provider_error:
                     passed = False

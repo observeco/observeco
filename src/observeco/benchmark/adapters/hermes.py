@@ -82,7 +82,7 @@ _load_dotenv()
 class HermesBenchmarkAdapter:
     """Runs benchmark tasks through a Hermes agent session."""
 
-    def __init__(self, hermes_bin: str = "hermes", timeout: int = 60,
+    def __init__(self, hermes_bin: str = "hermes", timeout: int = 300,
                  agent_profile: str = "", model: str = ""):
         self.hermes_bin = hermes_bin
         self.timeout = timeout

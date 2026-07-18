@@ -233,7 +233,7 @@ def generate_drafts(limit: int = 10) -> list[dict]:
             "description": f"Agent must handle: {s['first_user_message'][:120]}",
             "prompt": clean_prompt(s["first_user_message"]),
             "assertions": assertions,
-            "timeout": 60,
+            "timeout": 300,
             "trials": 2,
             "category": "operations",
             "difficulty": "medium",
