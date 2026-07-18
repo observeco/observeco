@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import queue
 import sqlite3
 import threading
 import time
@@ -1192,6 +1193,40 @@ CREATE VIRTUAL TABLE IF NOT EXISTS prevention_skills_fts USING fts5(
 );
 """
 
+# -- Self-monitor async flush queue ------------------------------------------
+# log_self_monitor is called on every LLM call during canary runs. It must
+# never block the caller on cross-process DB lock contention. The queue
+# accepts writes and a background daemon thread flushes them.
+_self_monitor_queue: "queue.Queue[tuple[str, int, int]]" = queue.Queue(maxsize=1000)
+
+
+def _flush_self_monitor_loop() -> None:
+    """Background daemon: drain _self_monitor_queue and write to DB.
+
+    Runs in a daemon thread so it exits when the process exits. If the DB
+    is locked, the write is silently dropped (self-monitoring is best-effort).
+    """
+    while True:
+        try:
+            consumer, input_tokens, output_tokens = _self_monitor_queue.get()
+        except EOFError:
+            return
+        try:
+            db = Database()
+            today = int(time.time()) // 86400
+            total = input_tokens + output_tokens
+            db._write(
+                "INSERT INTO self_monitor_budget (day, consumer, input_tokens, output_tokens, total_tokens, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (today, consumer, input_tokens, output_tokens, total, int(time.time())),
+            )
+        except Exception:
+            pass  # best-effort
+
+
+_self_monitor_flusher = threading.Thread(target=_flush_self_monitor_loop, daemon=True)
+_self_monitor_flusher.start()
+
 
 class Database:
     """Thread-safe SQLite database for ObserveCo data.
@@ -2218,14 +2253,14 @@ class Database:
         conn.commit()
 
     def log_self_monitor(self, consumer: str, input_tokens: int, output_tokens: int) -> None:
-        """Record a self-monitoring LLM call for budget tracking (G1.1)."""
-        today = int(time.time()) // 86400
-        total = input_tokens + output_tokens
-        self._write(
-            "INSERT INTO self_monitor_budget (day, consumer, input_tokens, output_tokens, total_tokens, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (today, consumer, input_tokens, output_tokens, total, int(time.time())),
-        )
+        """Record a self-monitoring LLM call for budget tracking (G1.1).
+
+        Non-blocking: enqueues the write to a background flush thread so the
+        caller never blocks on cross-process DB lock contention. If the queue
+        is full (1000 entries), the write is silently dropped — self-monitoring
+        is best-effort, not critical.
+        """
+        _self_monitor_queue.put((consumer, input_tokens, output_tokens))
 
     def get_self_monitor_usage(self) -> dict:
         """Return today's self-monitoring usage summary (G1.1)."""
