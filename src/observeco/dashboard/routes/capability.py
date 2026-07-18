@@ -2426,7 +2426,7 @@ async def capability_page(agent: str = Query("default")):
         modal.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:640px;width:90%;max-height:80vh;overflow:auto;padding:20px;">'
           + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
           + '<h3 style="margin:0;font-size:15px;color:var(--fg);">Original Conversation</h3>'
-          + '<button onclick="document.getElementById(\'sourceSessionModal\').remove()" style="background:none;border:none;color:var(--fg-3);font-size:20px;cursor:pointer;">✕</button>'
+          + '<button onclick="closeSourceModal()" style="background:none;border:none;color:var(--fg-3);font-size:20px;cursor:pointer;">✕</button>'
           + '</div>'
           + '<div id="sourceSessionBody"><div class="spinner"></div> Loading...</div>'
           + '</div>';
@@ -2462,6 +2462,11 @@ async def capability_page(agent: str = Query("default")):
           body.innerHTML = html;
         }})
         .catch(function(e) {{ body.innerHTML = '<p style="color:var(--danger);">Error: ' + e.message + '</p>'; }});
+    }}
+
+    function closeSourceModal() {{
+      var m = document.getElementById('sourceSessionModal');
+      if (m) m.remove();
     }}
 
     function _escHtml(s) {{
