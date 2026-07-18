@@ -1178,14 +1178,17 @@ async def drift_chart_partial(agent: str = Query("default")):
     Returns the drift hero section + chart container + summary cards + per-task table.
     The chart JS rendering is done client-side by loadDriftChart().
     """
-    # Cleanup: mark runs stuck in 'running' for >30min as 'failed'
-    conn = db._get_conn()
-    conn.execute("PRAGMA busy_timeout=5000")
-    conn.execute(
-        "UPDATE canary_runs SET status = 'failed' "
-        "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')"
-    )
-    conn.commit()
+    # Cleanup: mark runs stuck in 'running' for >30min as 'failed'.
+    # Use db._write() (retry-on-lock) instead of a raw execute+commit — the watch
+    # daemon writes to the same DB constantly, so a bare UPDATE collides and 500s.
+    try:
+        db._write(
+            "UPDATE canary_runs SET status = 'failed' "
+            "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')",
+            (),
+        )
+    except _sqlite3.OperationalError:
+        pass  # non-critical cleanup; skip if the DB is locked right now
 
     agent = _resolve_agent(agent)
     try:

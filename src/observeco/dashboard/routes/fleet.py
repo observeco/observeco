@@ -7,6 +7,7 @@ Design: All States (v2) Strong-Fit — verdict bar + agent card grid.
 from __future__ import annotations
 
 import logging
+import sqlite3 as _sqlite3
 import time
 from pathlib import Path
 
@@ -494,11 +495,16 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         errors_all = db.get_errors(limit=100)
         # Canary data for grid cards
         conn = db._get_conn()
-        conn.execute(
-            "UPDATE canary_runs SET status = 'failed' "
-            "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')"
-        )
-        conn.commit()
+        # Non-critical cleanup — use db._write() (retry-on-lock) so a collision
+        # with the watch daemon's writes doesn't 500 the whole tab.
+        try:
+            db._write(
+                "UPDATE canary_runs SET status = 'failed' "
+                "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')",
+                (),
+            )
+        except _sqlite3.OperationalError:
+            pass  # skip cleanup if DB locked right now
         canary_latest = {}
         for row in conn.execute(
             "SELECT agent_name, pass_count, fail_count, hang_count, total_tasks, "
