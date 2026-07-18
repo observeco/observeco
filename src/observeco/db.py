@@ -1249,10 +1249,16 @@ class Database:
             self._local.conn = conn
         return conn
 
-    def _write(self, sql: str, params: tuple, retries: int = 5) -> None:
+    def _write(self, sql: str, params: tuple, retries: int = 10) -> None:
         """Execute a write (INSERT/UPDATE/DELETE) under the process-wide writer lock
         with a bounded retry on 'database is locked' (handles cross-process contention
-        that busy_timeout doesn't always absorb during sustained write bursts)."""
+        that busy_timeout doesn't always absorb during sustained write bursts).
+
+        ponytail: retry backoff ramps from 0.5s to 5s over 10 attempts (~27.5s total),
+        matching the busy_timeout=30000 on the connection. If the daemon holds the lock
+        longer than 30s, this still fails — but that's a daemon design issue, not a
+        retry parameter problem.
+        """
         for attempt in range(retries):
             try:
                 with self._writer_lock:
@@ -1262,7 +1268,7 @@ class Database:
                 return
             except sqlite3.OperationalError as e:
                 if "database is locked" in str(e) and attempt < retries - 1:
-                    time.sleep(0.05 * (attempt + 1))
+                    time.sleep(0.5 * (attempt + 1))
                     continue
                 raise
 
