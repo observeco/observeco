@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import secrets
+import sqlite3 as _sqlite3
 import sys
 import time
 import webbrowser
@@ -1015,12 +1016,16 @@ def _canary_card(agent_name: str) -> str:
     db = Database()
     conn = db._get_conn()
 
-    # Cleanup: mark runs stuck in 'running' for >30min as 'failed'
-    conn.execute(
-        "UPDATE canary_runs SET status = 'failed' "
-        "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')"
-    )
-    conn.commit()
+    # Cleanup: mark runs stuck in 'running' for >30min as 'failed'.
+    # Use db._write() (retry-on-lock) — the watch daemon writes pulse.db constantly.
+    try:
+        db._write(
+            "UPDATE canary_runs SET status = 'failed' "
+            "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')",
+            (),
+        )
+    except _sqlite3.OperationalError:
+        pass  # cleanup is best-effort
 
     # Get latest completed run
     run = conn.execute(
@@ -4878,15 +4883,17 @@ async def api_chisel_compress(request: Request):
         # Also log to database
         from observeco.db import Database
         local_db = Database()
-        conn = local_db._get_conn()
-        conn.execute(
-            "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, savings, "
-            "savings_pct, backup_path, triggered_by, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (result["agent"], result["mode"], result["before_tokens"], result["after_tokens"],
-             result["savings"], result["savings_pct"], result.get("backup", ""),
-             "dashboard", int(__import__("time").time())),
-        )
-        conn.commit()
+        # Use db._write() (retry-on-lock) — the watch daemon writes pulse.db constantly.
+        try:
+            local_db._write(
+                "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, savings, "
+                "savings_pct, backup_path, triggered_by, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (result["agent"], result["mode"], result["before_tokens"], result["after_tokens"],
+                 result["savings"], result["savings_pct"], result.get("backup", ""),
+                 "dashboard", int(__import__("time").time())),
+            )
+        except _sqlite3.OperationalError:
+            logger.warning("compress_log insert failed (db locked): %s", result.get("agent"))
         return JSONResponse(result)
     except FileNotFoundError as e:
         return JSONResponse({"status": "error", "message": str(e)}, status_code=404)
@@ -5208,7 +5215,7 @@ async def api_chisel_compress_skill(request: Request):
                 })
                 # Log to compress_log
                 try:
-                    _db._get_conn().execute(
+                    _db._write(
                         "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, "
                         "savings, savings_pct, file_path, backup_path, triggered_by, timestamp) "
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -5218,10 +5225,9 @@ async def api_chisel_compress_skill(request: Request):
                          saved, pct,
                          str(skill_path),
                          str(skill_path.with_suffix(".md.bak")),
-                         "dashboard", int(time.time()))
+                         "dashboard", int(time.time())),
                     )
-                    _db._get_conn().commit()
-                except Exception:
+                except _sqlite3.OperationalError:
                     pass  # fire-and-forget
                 # Log to action_log
                 try:
