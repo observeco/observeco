@@ -26,7 +26,7 @@ def harness_optimize(
         print("WARNING: Running without baselines — gains will not be attributable to harness design vs search budget")
 
     optimizer = HarnessOptimizer()
-    report = optimizer.optimize(agent, iterations=iterations, budget=budget)
+    report = optimizer.optimize(agent, iterations=iterations, budget=budget, no_baselines=no_baselines)
 
     print(f"\n{'='*60}")
     print(f"Harness Optimization Run #{report['run_id'][:8]}")

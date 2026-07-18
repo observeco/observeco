@@ -189,11 +189,17 @@ class HarnessOptimizer:
     # ── Harness optimization loop (obs-spec-056) ────────────────────────────
 
     def optimize(
-        self, agent_name: str, iterations: int = 5, budget: int = 45
+        self, agent_name: str, iterations: int = 5, budget: int = 45,
+        no_baselines: bool = False,
     ) -> dict:
         """Run the harness optimization loop with full evaluation framework.
 
-        Returns a unified budget report dict per obs-spec-061 §2.5.
+        Args:
+            agent_name: Hermes agent profile name.
+            iterations: Number of optimization iterations.
+            budget: Total compute budget (agent rollouts).
+            no_baselines: Skip baseline comparison (not recommended — gains
+                won't be attributable to harness design vs search budget).
         """
         run_id = str(uuid.uuid4())
         now_iso = datetime.now(timezone.utc).isoformat()
@@ -210,14 +216,17 @@ class HarnessOptimizer:
         # 2. Snapshot incumbent harness
         incumbent_snapshot = self._snapshot_harness(agent_name)
 
-        # 3. Evaluate incumbent on dev and test splits
-        logger.info("evaluating incumbent on dev split")
-        incumbent_dev = self.runner.run(agent_name, split="dev")
-        logger.info("evaluating incumbent on test split")
-        incumbent_test = self.runner.run(agent_name, split="test")
+        # 3. Evaluate incumbent on dev and test splits (skip if no_baselines)
+        if not no_baselines:
+            logger.info("evaluating incumbent on dev split")
+            incumbent_dev = self.runner.run(agent_name, split="dev")
+            logger.info("evaluating incumbent on test split")
+            incumbent_test = self.runner.run(agent_name, split="test")
+        else:
+            incumbent_dev = incumbent_test = None
 
-        best_dev_score = incumbent_dev.overall_accuracy
-        best_test_score = incumbent_test.overall_accuracy
+        best_dev_score = incumbent_dev.overall_accuracy if incumbent_dev else 0.0
+        best_test_score = incumbent_test.overall_accuracy if incumbent_test else 0.0
         best_harness = incumbent_snapshot
 
         promoted = False
@@ -264,27 +273,33 @@ class HarnessOptimizer:
             # 4f. Save edit record
             self._save_edit(run_id, i, edit, classification, promoted, reason)
 
-        # 5. Run test-time scaling baselines for comparison
-        # Compute parallel k and sequential rounds from budget.
-        # Standard split: baseline (1/3), parallel (1/3), sequential (1/3).
-        k = max(1, budget // 3)
-        rounds = max(1, budget // 3)
+        # 5. Run test-time scaling baselines for comparison (skip if no_baselines)
+        if not no_baselines:
+            # Compute parallel k and sequential rounds from budget.
+            # Standard split: baseline (1/3), parallel (1/3), sequential (1/3).
+            k = max(1, budget // 3)
+            rounds = max(1, budget // 3)
 
-        logger.info("running baseline (single-shot, dev split)")
-        baseline = self.runner.run(agent_name, split="dev")
+            logger.info("running baseline (single-shot, dev split)")
+            baseline = self.runner.run(agent_name, split="dev")
 
-        logger.info("running parallel sampling (k=%d, dev split)", k)
-        parallel = self.run_parallel_sampling(agent_name, k=k)
+            logger.info("running parallel sampling (k=%d, dev split)", k)
+            parallel = self.run_parallel_sampling(agent_name, k=k)
 
-        logger.info("running sequential refinement (rounds=%d, dev split)", rounds)
-        sequential = self.run_sequential_refinement(agent_name, rounds=rounds)
+            logger.info("running sequential refinement (rounds=%d, dev split)", rounds)
+            sequential = self.run_sequential_refinement(agent_name, rounds=rounds)
+        else:
+            k = 1
+            rounds = 1
+            baseline = parallel = sequential = None
 
         # 6. Save eval runs and finalize
-        self._save_eval_runs(
-            run_id, agent_name, baseline, parallel, sequential,
-            best_dev_score, best_test_score,
-            k, rounds,
-        )
+        if not no_baselines:
+            self._save_eval_runs(
+                run_id, agent_name, baseline, parallel, sequential,
+                best_dev_score, best_test_score,
+                k, rounds,
+            )
 
         # Update optimization run as completed
         self.db._write(
@@ -297,14 +312,14 @@ class HarnessOptimizer:
 
         # 7. Build unified budget report
         return self._build_report(
-            run_id, agent_name, baseline, parallel, sequential,
+            run_id, agent_name, baseline, parallel, sequential,  # type: ignore[arg-type]
             best_dev_score, best_test_score, best_harness, promoted, promotion_reason,
         )
 
     # ── Proposer + edit classification ─────────────────────────────────────
 
     def _propose_edit(
-        self, agent_name: str, current_harness: dict, last_report: CanaryReport
+        self, agent_name: str, current_harness: dict, last_report: CanaryReport | None
     ) -> dict:
         """LLM proposer: analyse failures, propose ONE harness edit.
 
@@ -312,6 +327,9 @@ class HarnessOptimizer:
         unavailable (no API key, --no-llm flag). Upgrade path: allow specifying
         a proposal model independently (e.g. local model for cheap proposals).
         """
+        if last_report is None:
+            logger.info("no baseline report — skipping edit proposal")
+            return {}
         if os.environ.get("OBSERVECO_NO_LLM"):
             logger.warning("OBSERVECO_NO_LLM set — skipping edit proposal")
             return {}
