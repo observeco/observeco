@@ -840,6 +840,53 @@ CREATE TABLE IF NOT EXISTS canary_task_drafts (
 );
 CREATE INDEX IF NOT EXISTS idx_drafts_created ON canary_task_drafts(created_at);
 """),
+
+    (62, """-- Migration 62: Harness Optimization Loop tables (obs-spec-056 + obs-spec-061)
+-- Backend loop (capability/harness.py HarnessOptimizer) writes to these but they
+-- were never created — optimize() crashed on first INSERT. This migration adds them.
+-- Schema matches the actual writer calls in capability/harness.py (NOT the draft
+-- spec's harness_candidates/harness_frontier names, which were never implemented).
+CREATE TABLE IF NOT EXISTS harness_optimization_runs (
+    id                      TEXT PRIMARY KEY,
+    agent_name              TEXT NOT NULL,
+    started_at              TEXT NOT NULL,
+    completed_at            TEXT,
+    status                  TEXT NOT NULL DEFAULT 'running',
+    iterations              INTEGER NOT NULL,
+    budget                  INTEGER,
+    candidate_dev_score     REAL,
+    candidate_test_score    REAL,
+    promoted                INTEGER DEFAULT 0,
+    promotion_reason        TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_harness_runs_agent ON harness_optimization_runs(agent_name, started_at);
+
+CREATE TABLE IF NOT EXISTS harness_edits (
+    id                      TEXT PRIMARY KEY,
+    optimization_run_id     TEXT NOT NULL,
+    iteration               INTEGER NOT NULL,
+    edit_text               TEXT,
+    old_snippet             TEXT,
+    new_snippet             TEXT,
+    classification          TEXT,
+    classification_confidence REAL,
+    classification_reasoning TEXT,
+    FOREIGN KEY (optimization_run_id) REFERENCES harness_optimization_runs(id)
+);
+CREATE INDEX IF NOT EXISTS idx_harness_edits_run ON harness_edits(optimization_run_id);
+
+CREATE TABLE IF NOT EXISTS harness_eval_runs (
+    id                      TEXT PRIMARY KEY,
+    optimization_run_id     TEXT NOT NULL,
+    method                  TEXT NOT NULL,
+    split                   TEXT NOT NULL,
+    total_rollouts          INTEGER NOT NULL,
+    pass_at_1               REAL,
+    pass_at_k               REAL,
+    FOREIGN KEY (optimization_run_id) REFERENCES harness_optimization_runs(id)
+);
+CREATE INDEX IF NOT EXISTS idx_harness_eval_run ON harness_eval_runs(optimization_run_id);
+"""),
 ]
 
 _SCHEMA_SQL = """
