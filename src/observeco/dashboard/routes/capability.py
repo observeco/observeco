@@ -220,6 +220,7 @@ async def grid_run_from_dashboard(agent: str = Query("default")):
 
     def _run():
         global _last_grid_error
+        from datetime import datetime, timezone
         try:
             from observeco.db import Database
             runner = CapabilityGridRunner(db=Database())
@@ -229,6 +230,16 @@ async def grid_run_from_dashboard(agent: str = Query("default")):
             import traceback
             _last_grid_error = traceback.format_exc()
             logger.exception("Grid run failed for %s", agent)
+            # Mark the run terminal so the UI poll stops instead of hanging forever.
+            try:
+                conn_err = db._get_conn()
+                conn_err.execute(
+                    "UPDATE grid_runs SET status='failed', completed_at=? WHERE agent_name=? AND status='running'",
+                    (datetime.now(timezone.utc).isoformat(), agent),
+                )
+                conn_err.commit()
+            except Exception:
+                logger.exception("Failed to mark grid run failed for %s", agent)
         finally:
             _grid_run_lock.release()
 
@@ -464,15 +475,16 @@ async def grid_report(agent: str = Query("default"), run_id: Optional[str] = Que
     """GET /api/capability/grid?agent=NAME&run_id=ID — grid report data."""
     conn = db._get_conn()
 
-    # Resolve latest run if not specified
+    # Resolve latest run if not specified (prefer most recent by recency, any status,
+    # so the UI poll can see 'running'/'failed' and stop instead of hanging)
     if not run_id:
         row = conn.execute(
-            "SELECT id FROM grid_runs WHERE agent_name = ? AND status = 'completed' "
+            "SELECT id, status FROM grid_runs WHERE agent_name = ? "
             "ORDER BY started_at DESC LIMIT 1",
             (agent,),
         ).fetchone()
         if not row:
-            return {"agent": agent, "run_id": None, "cells": [], "models": [], "configs": [], "tasks": []}
+            return {"agent": agent, "run_id": None, "status": None, "error": None, "cells": [], "models": [], "configs": [], "tasks": []}
         run_id = row["id"]
 
     # Get run metadata
@@ -499,7 +511,9 @@ async def grid_report(agent: str = Query("default"), run_id: Optional[str] = Que
     return {
         "agent": agent,
         "run_id": run_id,
-        "date": run["started_at"][:10] if run["started_at"] else "",
+        "status": run["status"] if run and "status" in run.keys() else None,
+        "error": (_last_grid_error if (run and run["status"] == "failed") else None),
+        "date": run["started_at"][:10] if run and run["started_at"] else "",
         "models": models,
         "configs": configs,
         "tasks": task_names,
@@ -2334,8 +2348,12 @@ async def capability_page(agent: str = Query("default")):
                     clearInterval(poll);
                     showToast('Comparison complete — refreshing');
                     htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent(agent), {{target: '#gridTableContainer', swap: 'innerHTML'}});
+                  }} else if (g.status === 'failed') {{
+                    clearInterval(poll);
+                    showToast('Comparison failed: ' + (g.error || 'see server log'));
                   }}
-                }});
+                }})
+                .catch(function(e) {{ clearInterval(poll); showToast('Comparison poll error: ' + e.message); }});
             }}, 10000);
           }}
         }})
