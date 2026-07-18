@@ -6626,6 +6626,9 @@ def _find_free_port(host: str, preferred: int) -> int:
     import socket
     for port in range(preferred, preferred + 100):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            # SO_REUSEADDR lets bind() succeed over a lingering TIME_WAIT socket
+            # left by a just-killed instance, so restart races don't fall back.
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 s.bind((host, port))
                 return port
