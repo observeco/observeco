@@ -484,26 +484,31 @@ class HarnessOptimizer:
         promotion_reason: str,
     ) -> dict:
         """Build unified budget report per obs-spec-061 §2.5."""
-        # Determine verdict
-        harness_beats_parallel = harness_dev > parallel.overall_accuracy
+        # Determine verdict (handle None reports for no-baselines mode)
+        harness_beats_parallel = (
+            harness_dev > (parallel.overall_accuracy if parallel else 0.0)
+        )
         # Difficulty-stratified analysis
-        difficulty = self._difficulty_breakdown(baseline, parallel)
+        difficulty = self._difficulty_breakdown(baseline, parallel) if baseline else {}
+
+        def _score(report: CanaryReport | None) -> float:
+            return report.overall_accuracy if report else 0.0
 
         return {
             "run_id": run_id,
             "agent_name": agent_name,
             "methods": {
                 "baseline": {
-                    "dev": baseline.overall_accuracy,
-                    "test": baseline.overall_accuracy,
+                    "dev": _score(baseline),
+                    "test": _score(baseline),
                 },
                 "parallel_sampling": {
-                    "dev": parallel.overall_accuracy,
-                    "test": parallel.overall_accuracy,
+                    "dev": _score(parallel),
+                    "test": _score(parallel),
                 },
                 "sequential_refinement": {
-                    "dev": sequential.overall_accuracy,
-                    "test": sequential.overall_accuracy,
+                    "dev": _score(sequential),
+                    "test": _score(sequential),
                 },
                 "harness_optimization": {
                     "dev": harness_dev,
