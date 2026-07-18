@@ -1,0 +1,14 @@
+[
+  {
+    "code": "def divide(a, b):\n    return a / b",
+    "expected": "Bug: No handling of division by zero. If b=0, this raises ZeroDivisionError. Fix: add a check: if b == 0: raise ValueError('Cannot divide by zero') or return None."
+  },
+  {
+    "code": "def get_first(items):\n    if len(items) > 0:\n        return items[0]\n    return None",
+    "expected": "Style: Can be simplified using try/except or truthiness. Option 1: return items[0] if items else None. Option 2: try: return items[0]; except IndexError: return None. The current code is correct but verbose."
+  },
+  {
+    "code": "def process_data(filename):\n    f = open(filename, 'r')\n    data = f.read()\n    f.close()\n    return data",
+    "expected": "Issue: If f.read() raises an exception, f.close() is never called, leaking the file handle. Fix: use 'with open(filename) as f: return f.read()' for automatic cleanup."
+  }
+]

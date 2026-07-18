@@ -1,10 +1,8 @@
 # ObserveCo — Master Plan (Single Source of Truth)
-**Document status:** ✅ Live (source of truth — replaces `comprehensive-launch-plan.md`)
-
-| Field | Value |
-|-------|-------|
-| **Last updated** | 2026-06-24 — Token Analytics: verdict card, cache-by-agent chart, breakdown sort by cost + % column, confidence indicator, model field wired in OTEL parser. Updated §3.14 Phase 3 status. |
-| **Author** | Main |
+**Document status:** Live — v0.5.0 "Capability Monitoring Layer"
+| **Last updated:** 2026-07-12 (v8) — #82 Phase 1+2+3 + #83 all built, token metrics live
+**Scope:** Hermes agents on macOS (local Mac Mini). True agent-specific observability (tracing + structured logging + evaluation + behavioral monitoring) + capability monitoring (canary + grid + config-aware baselines + drift detection). OpenClaw and multi-framework support deferred to future release.
+**Author:** Main
 
 ---
 
@@ -12,13 +10,14 @@
 
 | Attribute | Value |
 |-----------|-------|
-| **One-liner** | ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes |
-| **Positioning** | "ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes." — Locked 2026-05-28 |
-| **What it does** | CLI + dashboard that discovers your agents (Hermes, OpenClaw, Claude Code, Ollama, generic processes), monitors their health, analyses token usage, detects drift, auto-heals failures, and uses your own LLM to diagnose crashes, classify alerts, and guide first-run setup — all local, no cloud |
-|| **License** | MIT (free forever for Hermes users — all currently-built features open, no gating, no trial needed). **LLM features use your own API key** (`OBSERVECO_LLM_API_KEY` — bring-your-own-key, no inference costs on us). Static fallbacks when no key configured. **Future Pro tier** (after beachhead validated) will offer advanced features (push alerts, extended history, auto-heal) via 30-day trial. Trial would start on explicit Pro feature access, not on install. Pro tier pricing deferred until beachhead validated. See `specs/commercial-strategy-v2.md` for full rationale. |
-| **Free badge** | `Free forever · MIT license · No cloud · Hermes supported` — always visible in dashboard header and README |
+| **One-liner** | ObserveCo tells you if your AI agents are working, what they're doing, where your money goes — and whether they're getting worse |
+| **Positioning** | "ObserveCo tells you if your AI agents are working, what they're doing, where your money goes — and whether they're getting worse." — Updated 2026-07-02 |
+| **Primary Target** | Hermes users running agents locally on macOS (Mac Mini). Local-first, Hermes-native observability. |
+| **What it does** | CLI + dashboard that discovers your Hermes agents, monitors their health, analyses token usage, detects drift, auto-heals failures, and uses your own LLM to diagnose crashes, classify alerts, and guide first-run setup — all local, no cloud |
+||| **License** | MIT (free forever for Hermes users — all currently-built features open, no gating, no trial needed). **LLM features use your own API key** (`OBSERVECO_LLM_API_KEY` — bring-your-own-key, no inference costs on us). Static fallbacks when no key configured. **Future Pro tier** (after beachhead validated) will offer advanced features (push alerts, extended history, auto-heal) via 30-day trial. Trial would start on explicit Pro feature access, not on install. Pro tier pricing deferred until beachhead validated. See `specs/commercial-strategy-v2.md` for full rationale. |
+| **Free badge** | `Free forever · MIT license · No cloud · Hermes native` — always visible in dashboard header and README |
 | **Supersedes** | ERIS (runtime integrity) + CHISEL (context observability) — merged into single product |
-| **Framework support** | Any framework via `observeco agent add` + health check. Full token/drift for Hermes + OpenClaw |
+| **Framework support** | **Hermes (primary).** OpenClaw and multi-framework support deferred to post-v1.0. |
 | **Storage** | Local SQLite (`~/.observeco/pulse.db`) — all data local, no telemetry |
 | **Install** | `pip install observeco[dashboard] && observeco dashboard` |
 
@@ -41,7 +40,7 @@
 | | 4b | Compression Backend: /api/chisel/compress, `chisel compress` CLI, Lite/Full algorithms, backup/restore | Analysis | ✅ Live | ✅ Lite | ✅ Full | — | — |
 | | 4c | Token Optimiser Data Layer: DB tables (turn_log, skill_usage, guidance_fire, compress_log), /api/optimiser/stats endpoint | Analysis | ✅ Live | ✅ Demo data | ✅ Real data at 200+ turns | — | — |
 | | 4d | Auto-Compression Daemon: `chisel watch start/stop/status`, polling-based skill-compression monitoring | Analysis | ✅ Live | ✅ Daemon runs Lite | ✅ Daemon runs Full | — | — |
-| 5 | 7-day drift trend per component | Analysis | ✅ Live | ✅ | ✅ | — | — |
+|| 5 | 7-day drift trend per component | Analysis | ✅ Live — v2 (2026-07-10) | ✅ | ✅ | — | observeco-master-plan.md §3.5 |
 | 6 | Error history (last 24h) | Dashboard | ✅ Live | ✅ | ✅ | — | — |
 | 7 | Heal tab (manual trigger + /api/trigger-heal diagnosis — broken onclick quoting fixed, duplicate button removed from API response) | Self-Heal | ✅ Live | ✅ | ✅ | — | — |
 | 8 | In-dashboard alerts — severity-coded feed + discovery gaps + cumulative downtime banner + NEW badge | Alerts | ✅ Live | ✅ Discovery gap badges, cumulative downtime banner, NEW/unviewed indicators, push delivery (Telegram, Discord, webhook, email) | ✅ Same (Pro adds auto-heal integration + subscription management + delivery log) | — | — |
@@ -53,28 +52,97 @@
 || **46** | **Fleet Comparison Tab** — side-by-side agent comparison matrix: tokens, composition bars, drift, errors, circuit, last seen | Dashboard | ✅ Live | ✅ Data table (all agents) | ✅ Same | ~1d | observeco-master-plan.md |
 | **PLANNED** | | | | | | | |
 ||| 13 | System prompt compression (`observeco chisel compress`) | Analysis | ✅ Live — CLI + auto-watch daemon + dashboard savings card | ✅ `--mode lite` (guidance compression) + `--dry-run` | ✅ `--mode full` (memory culling + skill dedup + context refactor) + auto-watch daemon + dashboard savings | ~2.5d | observeco-master-plan.md §13 |
-||| 14 | Cloud token tracking — post-turn webhook (Hermes hook → `POST /api/tokens/log`) + provider billing API fallback | Monitoring | ✅ Backend endpoint + ✅ DB migration 29 + ✅ Hermes hook + ✅ Dashboard (recent turns + trend endpoint + verdict card + cache-by-agent chart + confidence indicator + breakdown sorted by cost + % column) / ✅ Model field wired in OTEL parser | ✅ 24h component breakdown per agent + per-provider cost + gap % + cost verdict + per-agent cache rates | ✅ Never-pruned history + anomaly (+3σ) + budget alerts (daily/cost/anomaly) + fleet comparison | ~3d | observeco-master-plan.md §14 |
-|| 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive) | Self-Heal | ✅ Live — dashboard heal config page with per-agent L1/L2 toggles, thresholds, events log, start-watch | ✅ manual Heal button + dashboard alerts + L2 trends | ✅ L1 crash recovery (~5s) + L2 proactive detection (memory bloat/stuck/drift/upstream) + structured diagnosis (7%) | ~1d + L2 built | observeco-master-plan.md §15 |
-| 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) — dashboard stats + hooks now auth-exempt (401 fix) | Analysis | 🔴 Planned (code partial — plugin + dashboard + intent classifier pending) | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
-|| 17 | Push alerts (Telegram, Discord, webhook, email) | Alerts | ✅ Live — dashboard subscription form, test/delete buttons, delivery log | ✅ All channels + delivery log | ✅ Auto-heal integration + subscription management | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
-|| 18 | Extended history (7d, pruning cron at 3am) | Dashboard | ✅ Live — error tab range selector (24h/7d/30d/90d) + prune cron + L2 baselines | ✅ 7d + L2 baselines (RSS, P95, errors, upstream) | ✅ Never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
+||| 14 | Cloud token tracking — post-turn webhook (Hermes hook → `POST /api/tokens/log`) + provider billing API fallback | Monitoring | ✅ Backend endpoint + ✅ DB migration 29 + ✅ Hermes hook + ✅ Dashboard Token Analytics tab: 5-chart grid (Token Composition stacked bar [Input/Output/Cache/Est], Tokens/Turn, Output/Input, Cache Hit Rate, Cost/Turn — each efficiency chart with benchmark bands) + verdict card + cache-by-agent chart + confidence indicator + breakdown sorted by cost + % column + per-turn timeline / ✅ Model field wired in OTEL parser | ✅ 24h component breakdown per agent + per-provider cost + gap % + cost verdict + per-agent cache rates | ✅ Never-pruned history + anomaly (+3σ) + budget alerts (daily/cost/anomaly) + fleet comparison | ~3d | observeco-master-plan.md §14 |
+||| 15 | Auto-heal (watch daemon trigger, auto-restart + L2 proactive + L3 learning loop) | Self-Heal | ✅ Backend (L1 auto-restart, L2 proactive, LLM escalation, HealCircuit) / ❌ Dashboard UI (toggle, status card, heal history, per-agent config) / 🔴 L3 spec (obs-spec-081) | ✅ manual Heal button + dashboard alerts + L2 trends / ❌ Dashboard config UI | ✅ L1 crash recovery (~5s) + L2 proactive + structured diagnosis (7%) + dashboard config UI + L3 prevention skill auto-creation + FTS5 pattern matching | ~1d + L2 built + ~2d L3 spec | observeco-master-plan.md §15 + obs-spec-081 |
+|| 16 | OpenClaw runtime plugin (`@observeco/clawforge-plugin`) — dashboard stats + hooks now auth-exempt (401 fix) | Analysis | 🔴 Deferred (post-v1.0) | ✅ (MIT, free forever) + dashboard stats + demo data | ✅ Intent classifier training + custom demotion rules + fleet comparison + budget alerts | ~7d (backend + dashboard) | observeco-master-plan.md §3.16 |
+||| 17 | Push alerts (Telegram, webhook, email) — Discord pending | Alerts | ✅ Backend (Telegram, webhook, email delivery) / 🔴 Discord / ❌ Dashboard UI (subscription management, delivery log, test button) | ✅ Backend delivery (Telegram, webhook, email) / ❌ Dashboard subscription UI | ✅ Auto-heal integration + subscription management + Discord delivery + dashboard UI | ~3d (engine + CLI + API + dashboard) | observeco-master-plan.md §17 |
+||| 18 | Extended history (7d, pruning cron at 3am) | Dashboard | ✅ Live — error tab range selector (24h/7d/30d/90d) + prune cron + L2 baselines | ✅ 7d + L2 baselines (RSS, P95, errors, upstream) | ✅ Never-pruned + L2 trend baselines (14d/21d/30d/90d) + configurable retention per data type | ~4d | observeco-master-plan.md §18 |
+|||| **50** | **Capability Monitoring Data Model** — 8 new DB tables: canary_tasks, canary_runs, canary_results, canary_baselines, drift_events, config_snapshots, grid_runs, grid_results | **Infrastructure** | 🔴 Spec | ✅ All tables (local SQLite) | ✅ Same | ~1d | obs-spec-050-capability-monitoring-data.md |
+|||| **51** | **Canary Runner** — task execution, scoring (8 assertion types), baseline management, CI via bootstrap resampling, config-aware baselines, daily schedule (3am cron) | **Capability** | ✅ Live — v2 (2026-07-10) | ✅ CLI + dashboard + daily cron | ✅ Same | ~2d | obs-spec-051-canary-runner.md |
+||||| **52** | **Drift Detection** — statistical comparison (z-test), configurable thresholds (breach/warning/info), per-task drift breakdown, shareable chart view, triage path, per-task accuracy time-series chart with category filters | **Capability** | ✅ Live — v2 (2026-07-10) | ✅ Dashboard + drift chart + per-task chart + shareable view | ✅ Push alerts on drift breach | ~2d | obs-spec-052-drift-detection.md + obs-spec-058-per-task-drift-chart.md |
+|||| **53** | **Config Timeline** — auto-detected SOUL.md/config changes, segment badges, drift event linking, agent selector | **Capability** | 🔴 Spec | ✅ Dashboard timeline + agent selector | ✅ Same | ~1.5d | obs-spec-053-config-timeline.md |
+|||| **54** | **Grid Report** — model × config comparison matrix, CI per cell, flags column (loop/unsafe/shortcut), "read by pairing" guidance, CSV export | **Capability** | 🔴 Spec | ✅ Dashboard grid table + export | ✅ Same | ~2d | obs-spec-054-grid-report.md |
+||||| **55** | **Task Definition UI** — YAML editor + form mode, 5 assertion types, template variables, 9 built-in tasks, import/export, model override field, built-in vs custom visual distinction, LLM judge reasoning panel | **Capability** | ✅ Live | ✅ CLI + dashboard editor + judge reasoning panel | ✅ Same | ~1.5d | obs-spec-055-task-definition.md |
+||||| **58** | **Per-Task Drift Chart** — multi-line Chart.js chart with per-task accuracy time series, category filter chips, severity-tagged legend, click-to-toggle task visibility | **Capability** | ✅ Live (2026-07-10) | ✅ Dashboard per-task chart | ✅ Same | ~1d | obs-spec-058-per-task-drift-chart.md |
+||||| **59** | **Quality Benchmark Card Row** — compact canary accuracy row in fleet agent cards with expandable per-category breakdown (Variant C) | **Capability** | ✅ Live (2026-07-10) | ✅ Fleet card row + expandable detail | ✅ Same | ~1d | obs-spec-059-quality-benchmark-card.md |
+||||| **56** | **Automated Harness Optimization Loop** — Meta-Harness loop (Niklaus/HF 2026): LLM proposer reads canary trajectories, copies current best harness, adds one mechanism; lab evaluates on dev split (3 trials); promotion gate (blended score ≥1pp over incumbent); leakage audit (reject if test split touched); copy-and-adapt compounding. CLI: `observeco harness optimize --agent AGENT --iterations N`. Requires: dev/test split (§50), blended score (§54), provider retry (adapter), blowup detection (canary). | **Capability** | 🔴 Spec (v0.6.0) | ✅ CLI + loop history + promoted mechanisms log | ✅ Same + dashboard visualization of frontier progression | ~5d | obs-spec-056-harness-optimization-loop.md |
 ||| 19 | In-dashboard Glossary & FAQ | Dashboard | ✅ Live — 51 topics with detail + FAQ | ✅ | ✅ | ~3h (built) | observeco-master-plan.md §3.20 |
+||||||| **57** | **Benchmark Methodology Upgrade** — LLM-as-a-Verifier assertions (1-20 scale, K=3, logprob-based expected score), reference outputs, per-task drift fix, temperature control, concrete fixtures (no template variables), dev/test split activation, category/difficulty metadata, Inspect AI alignment. Fixes: weak assertions (keyword containment), n=3 bootstrap instability, aggregate vs per-task drift, template variable skipping. 🔗 Blocks obs-spec-056 (harness optimization requires dev/test split and per-task baselines from obs-spec-057). | **Capability** | ✅ Live — v3 (2026-07-11) — all sub-items complete: 8 assertion types (incl. llm_judge/logprob-verifier, json_schema, ordering, tool_call_validation), per-task drift fix, z-test n1 fix, bootstrap n≥5 guard, trials=10, temperature control via Hermes CLI `--temperature` (patch at `patches/hermes-cli-temperature.patch`), daily 3am cron, llm_judge→algorithmic fallback when no API key (extracts logic tokens, not raw keywords — robust to naming variations). `code-generation` task uses llm_judge. **Production-verified 2026-07-11:** end-to-end canary run works (4 tasks, 50% accuracy on free model), 54/54 tests pass. Model selection: dynamic priority chain (per-task > `OBSERVECO_CANARY_MODEL` env var > adapter > Hermes default), `.env` auto-loaded at import time. | ✅ All | ✅ Same | ~5d | obs-spec-057-benchmark-methodology-upgrade.md |
+|||||||| **60** | **History-Assisted Task Generation** — mine real agent conversations from `~/.hermes/state.db`, cluster by topic, LLM proposes canary task drafts with assertions. User reviews/edits/approves via dashboard task editor (human-anchored ground truth). Approved tasks run alongside 10 generic tasks in daily canary via Hermes adapter (with `-p default` — skills, tools, SOUL.md). Two-tier scoring: generic (model capability) + user-defined (agent quality on real work). CLI: `observeco canary suggest-tasks --agent default --limit 10`. Rejects fully-automated approach — LLM proposes, user disposes. | **Capability** | 🔴 Spec → ✅ **Built** (2026-07-12) | ✅ CLI + dashboard pending-review tab (Active/Pending toggle) + source-session modal + two-tier canary score | ✅ Same | ~1d | obs-spec-060-history-assisted-task-generation.md |
 || ~~**20**~~ | ~~**Skill Audit**~~ — ~~merged into Brain Analysis~~ | ~~**Analysis**~~ | ~~**✅ Merged**~~ | ~~✅~~ | ~~✅~~ | ~~—~~ | ~~—~~ |
 ||| 21 | Communication Pathway Map (subgraph folding, cron edge metadata, FK constraint fix, daemon heartbeat metadata, sticky header) | Diagnostics | ✅ Live | ✅ Interactive graph with 111 nodes + 80 edges + 77 cron_delivery edges + platform node + dead ends + subgraph folding + detail panel with metadata | ✅ Detail panel + drag + auto-alert | ~3d (built) + 1d (FK fix) | observeco-master-plan.md §3.19 |
-||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Layers 1-2 / 🔴 P2-P5 (platform connectivity, crash analysis, costs, comm tracing, CI/CD) | ✅ All (detection + health — core infra for everything) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
+|||| 22 | Agent Health Detection Engine (process health + OTel + cross-framework + platform connectivity + crash analysis) | Infrastructure | ✅ Layers 1-2 / 🔴 P2-P5 (platform connectivity, crash analysis, costs, comm tracing, CI/CD) | ✅ Layers 1-2 only (process health, OTel, cross-framework) | ✅ Same (no gating) | ~P0-P6 | observeco-master-plan.md §3.22 |
 |||| **23** | **Skill Artifacts + Cards System** (`observeco chisel artifacts` + `chisel cards`) | **Analysis** | **✅ Live** | ✅ Cached compressed `.md.compressed` per skill, `cards.json` (156 cards), `manifests.json`, CLI `observeco chisel cards` for top-30 rank, `observeco chisel artifacts --refresh` to rebuild. SkillOS `_load_skill_content()` prefers compressed cache over raw. `max_skill_content_bytes` reduced 8192→4096. | ✅ Same for all | ~1d | observeco-master-plan.md §3.23 |
 ||| **24** | **Config Hygiene Audit** (`observeco chisel config`) — scans Hermes config for duplicated prompts, low cache TTL, stale references. **Synergy:** shares token counting, YAML parsing, and savings estimation with `chisel/skill_compress.py`. Same pipeline, different target. | **Analysis** | **✅ Live** | ✅ CLI audit report with line-by-line findings + `--fix` flag + dashboard widget | ✅ Dashboard widget with scheduled auto-fix | ~1d | observeco-master-plan.md §3.24 |
 ||| **25** | **LLM-Powered Intelligence Service** — shared `llm_service` that every module calls for deeper diagnosis, alert enrichment, personalized first-run guidance, and per-agent summaries. Uses `OBSERVECO_LLM_API_KEY` (bring-your-own-key). Static fallbacks when no key configured. | **AI** | **✅ Live — v1** | ✅ BYOK — user provides their own LLM API key. Static fallbacks when no key. | ✅ All 7 consumers (3 deep + 4 shallow) | ~5d (3d built, 2 deferred) | observeco-master-plan.md §3.25 |
 |||| **26** | **Self-serve billing management** — License status card (plan, trial countdown, action buttons), Stripe Customer Portal for paid subs, Cancel Trial with trial hardening (one-time offer), end-of-trial banner, 3 Stripe webhooks (subscription.deleted/updated/invoice.payment_failed) | **Commercial** | **✅ Live** | ✅ Free features always free. LLM uses BYOK (`OBSERVECO_LLM_API_KEY`). Trial = full Pro unlock (future). After trial: Free. | ✅ Pro features | ~4h | §3.28 |
 |||| ~~**42** | **Transparent API Proxy** (`observeco proxy start`) — MITM proxy for **local LLM token tracking only** (ollama, llama.cpp). Routes by API key prefix, captures token usage from responses. Cloud LLM tracking delegated to post-turn webhook (§43).~~ **REMOVED 2026-06-19** — SDK-sidecar (`observeco instrument`) replaces the MITM proxy. Proxy was in the execution path with SSE torn-read risk and no supervisor process. SDK instrumentation is out-of-band, framework-aware, and zero crash risk. See `specs/adr-proxy-attribution.md` for deprecation record. | **REMOVED** | ❌ Deprecated | ❌ | ❌ | ~2d (built, then removed) | specs/adr-proxy-attribution.md (deprecated) |
 |||| **43** | **Post-Turn Webhook (Cloud Token Tracking – Hermes)** — Agent-side fire-and-forget POST after every LLM turn. Payload: agent_name, turn_id, model, provider, total_tokens, component breakdown (identity/skills/memory/tools/guidance), latency_ms, tool_calls, topic_id. Sent to `POST /api/tokens/log` (endpoint exists + extended with model/latency/tool_calls/topic_id). Webhook is **primary** cloud tracking mechanism. Proxy covers local only. | **Monitoring** | ✅ Backend endpoint (`/api/tokens/log`) + ✅ DB migration 29 + ✅ **Hermes hook built** (fire-and-forget daemon thread, 2s timeout, OBSERVECO_URL configurable) / 🔴 Dashboard trend charts | ✅ 24h component breakdown per agent + per-provider cost attribution + per-model breakdown + per-topic model usage | ✅ Never-pruned history + anomaly detection (+3σ) + budget alerts (daily/cost/anomaly) + fleet comparison | ~1d (built) | specs/obs-spec-043-hermes-post-turn-hook.md |
-|||| **44** | **Provider Billing API Fallback** — Query OpenAI/Anthropic/DeepSeek billing endpoints for aggregate token totals. Used to compute **attribution gap**: "92% attributed, 8% unattributed." Catches agents not instrumented with the webhook. | **Monitoring** | 🔴 Planned | ✅ Aggregate cloud spend total + gap % indicator on dashboard | ✅ Same | ~1d | specs/adr-proxy-attribution.md |
+||||| **44** | **Provider Billing API Fallback** — Query OpenAI/Anthropic/DeepSeek billing endpoints for aggregate token totals. Used to compute **attribution gap**: "92% attributed, 8% unattributed." Catches agents not instrumented with the webhook. | **Monitoring** | 🔴 Planned | ✅ Aggregate cloud spend total + gap % indicator on dashboard | ✅ Same | ~1d | specs/adr-proxy-attribution.md |
+||||| **17b** | **Action Buttons in Push Notifications** — Telegram inline keyboards (restart/cooldown/trim), Discord buttons, webhook action URLs. Calls `/api/heal-action/{agent}/{action}`. Requires heal system `_execute_action()` (already built) + push alert infra (already built). | **Alerts** | 🔴 Planned | ❌ Pro | ✅ Same | ~4h | observeco-master-plan.md §3.17b |
+||||| **64** | **Agent Health Report Card** — weekly digest via push alert. Aggregates 7d of: pulse uptime %, auto-heal count, circuit trips, compressions, token cost. One SQL query per metric, one Jinja2 template. All data exists in pulse_log, heal_events, circuit_events, compress_log, token_logs. | **Alerts** | 🔴 Planned | ✅ Weekly digest in dashboard | ✅ Push delivery + trend comparison | ~3h | observeco-master-plan.md §3.64 |
+|||
+||| **Hermes Observability Layer (v0.4.0 — new)** |
+||| | | | | | | | |
+|||| **T1** | **Tracing Layer** — integrate hermes-otel plugin, span hierarchy (root → subagent → tool), waterfall view, replay | **Observability** | 🔴 v0.4.0 | ✅ Per-agent span timeline + waterfall | ✅ Full trace tree + replay + export | ~3d | observeco-master-plan.md §3.T1 |
+|||| **T2** | **Evaluation Layer** — Hermes eval export, basic evals (quality score, tool efficiency, retry flag, hallucination flag), quality trends per agent | **Observability** | 🔴 v0.4.0 | ✅ Eval event ingestion + quality trend per agent | ✅ Quality regression detection + correlation with drift/health + fleet quality comparison | ~2d | observeco-master-plan.md §3.T2 |
+|||| **T3** | **Behavioral Monitoring** — Anomalies Inbox + taxonomy (no_tools, high_cost, long_gaps, retry_loops, context_pressure), Context Health Score, Relapse Prevention, Tool Efficiency, Context Source Utilisation | **Intelligence** | 🔴 v0.4.0 | ✅ Anomaly feed + severity + explanation + Context Health Score | ✅ Push alerts + auto-heal integration + anomaly attribution + resolution tracking | ~4d | observeco-master-plan.md §3.T3 |
+|||| **T4** | **Unified Agent Data Model** — shared backend query layer (`agent_profile_service`) feeding Tracing, Evaluation, Behavioral Monitoring. Single `/api/agent/{id}/profile` endpoint. | **Infrastructure** | 🔴 v0.4.0 | ✅ | ✅ | ~1d | observeco-master-plan.md §3.T4 |
 |||
 || **Quality Standards (ongoing — tracked here, not in feature rows above)** |
 || | | | | | | |
 |||| **S1** | **Product Surface Overfitting Scan** — systematic scan of the product surface for Hermes-centric assumptions: defaults, paths, CLI text, docs examples, marketing copy, error messages, onboarding, API responses, config templates. Applied at 3 lifecycle gates: Gate 1 (spec time), Gate 2 (implementation), Gate 3 (diff — what changed this sprint). Not a feature — a **quality standard**. | **Quality** | **✅ Standard** | ✅ All | ✅ All | — | lifecycle-testing-protocol §Phase 1/3/8, playbook-evolution-meta §Product Surface Overfitting Escape |
 ||
-|| **Context Intelligence Layer (new 2026-06-06)** |
+|||
+
+### 3.26 Security & Code Quality Debt (Deferred Audit Fixes — 2026-07-10)
+
+> **Source:** Full codebase security/quality audit (3 parallel subagents) on 2026-07-10. 25 findings triaged into fixed / deferred / not-applicable. This section tracks the **deferred** items so they are not re-audited from scratch and have recorded reasoning. Billing/licensing code was explicitly excluded from the audit per scope.
+
+**Already fixed in the same audit pass (for context):**
+- `_html_escape` now escapes `'` and `"` (XSS root cause, 6 files + server.py)
+- `server.py:3335` `\\n` → `\n` (MEMORY.md corruption bug)
+- `fleet_qb.py:65` accuracy fix (was reporting binary pass rate as overall accuracy) + `fleet_qb.py:32` `(run["id"])` → `(run["id"],)` (endpoint was 500-crashing on all agents with runs)
+- `server.py` cookie `secure=True` → conditional on `OBSERVECO_HTTPS`
+- `server.py:7770` Telegram token preview → status-only (no credential leak)
+- `oauth2.py:113` `_pending_states` bounded to 1000 entries
+- 9× `except Exception: pass` in server.py + detail.py/fleet.py bare excepts → `logger.exception/warning`
+- Personal references removed: `auth.py` "ref Sean's requirement", `enforcer.py` "Sean override", `telemetry_server.py` 5× "Sean" → "admin", `db.py` "Sean's decision" → "design decision"
+- Location-specific test data: `capability.py` "Singapore rail line...Clementi to Jurong" → generic "metro line...city center to airport"
+- Version mismatch fixed: `__init__.py` 0.2.0 → 0.5.0, template `0.3.0` → `{{VERSION}}` injected from backend at serve time
+- Package manager allowlist: `doctor/cli.py` added `uv pip install`, `pipx install`, `poetry add`, `conda install`
+- **Port centralization (2026-07-10):** All hardcoded ports moved to `dashboard/config.py` `PORTS` dataclass with env-var overrides. 19 files updated.
+- **Watch intervals centralized (2026-07-10):** 11 hardcoded constants in `watch_consumers.py` moved to `dashboard/config.py` `WATCH_INTERVALS` dataclass with env-var overrides (`OBSERVECO_WATCH_<NAME>_SECONDS`).
+- **LLM service config centralized (2026-07-10):** Hardcoded model names (`claude-sonnet-4-20250514`, `gpt-4o`, `gemini-2.0-flash`, `llama3.1`), `max_tokens=2048`, and timeouts (`30`/`60`) moved to `dashboard/config.py` `LLM` dataclass with env-var overrides (`OBSERVECO_LLM_<NAME>`). Ollama URL also uses `PORTS.ollama`.
+
+**Deferred (with reasoning):**
+
+| ID | Finding | Severity | Deferral reason | Blast radius if fixed | Re-audit trigger |
+|----|---------|----------|-----------------|----------------------|------------------|
+| D1 | `observeco run` spawns agent command with no `timeout=` | High | Agent runtime is *meant* to run indefinitely — a timeout would kill legitimate long-running agents. Tradeoff not worth it. If implemented, use a long opt-in timeout (e.g. 3600s) gated behind a flag, not a default. | Low (1 line) | If a hung agent command is observed blocking the CLI |
+| D2 | No rate limiting on any endpoint (`/api/garden/scan`, `/api/skills-audit`, `/api/restart-quality/scan` spawn subprocesses / walk FS) | High | Structural change across all endpoints. Needs a design pass (SlowAPI vs simple in-memory limiter, which endpoints, what limits). DoS risk is localhost-only (low actual exposure). | Medium (new middleware + per-endpoint config) | If dashboard becomes remotely accessible, or if subprocess-spawning endpoints are hit in a loop |
+| D3 | Dashboard token accepted via `?token=` query param (auth.py:128, realtime.py:83/98) | Medium | Breaking change for curl/TestClient users who rely on the query param. Needs deprecation plan (warn + remove after N versions) not silent removal. Header `X-ObserveCo-Token` is already the primary path. | Low (remove 1 fallback) but breaks existing usage | v0.6.0 release (bundle deprecation with version bump) |
+| D4 | Errors return HTTP 200 (htmx can't distinguish success from error programmatically) | Medium | Cross-cutting htmx behavior change. Frontend relies on 200 + error HTML swap. Changing status codes could break swap logic. Better fix: add `HX-Trigger: error` header (non-breaking) + log exceptions. | Medium (all route files + frontend swap handlers) | When monitoring/alerting on dashboard errors is needed |
+| D5 | `token_analytics.py` `include_source` injected raw into onclick | Low | `include_source` is a controlled enum (`"all"`/`"accurate"`), not user input. Original code already escapes agent names in option values via `_html_escape(a)`. Lower risk than audit implied. `_html_escape` fix (above) covers agent names. | Low (5 lines) | If `include_source` becomes user-controlled |
+| D6 | N+1 DB queries in fleet loop (`get_trims`/`get_gardens`/`get_recent_pulses` per agent) | Low | 50 agents = 150+ queries, but fleet is currently <20 agents. Premature optimisation. Batch-fetch when agent count grows. | Medium (data flow refactor) | When agent count exceeds ~20 |
+| D7 | `db.py` `_init_db` mixes `executescript` (auto-commit) with manual commits | Low | Migration transaction semantics are risky to change. Current migrations all succeeded on this machine. | High (migration behavior) | Next schema migration |
+| D8 | Free-text `status` columns (`canary_runs.status`, `event_type`) with no enum/CHECK constraint | Low | Typos create unreachable states but no data loss. Needs migration + CHECK constraints. | High (schema migration) | When a status typo is observed causing a bug |
+| D9 | `db.py` dynamic SQL column names via f-string (filtered through hardcoded sets) | Low | Pattern is fragile but currently safe (sets are hardcoded, not user input). Add validation if the set expands. | Low | If column names become dynamic/user-derived |
+| D10 | Watch daemon silently swallows exceptions on 6+ paths | Low | Same class as D4/D11 — logging improvement, no behavior change. Lower priority than the 9 already fixed in server.py. | Low (logging) | When watch daemon misbehavior is observed |
+| D11 | No input validation on query params (`days`/`hours` negative or huge; `include_source` not whitelisted) | Low | FastAPI `Query(ge=1, le=365)` constraints are trivial but touch many endpoints. `include_source` is already internally validated (line 175). | Zero (add constraints) | v0.6.0 cleanup pass |
+| D12 | Subprocess spawning without PID tracking (server.py:6664/7232) — dashboard restarts accumulate zombie processes | Low | Operational issue, not a code bug per se. Process supervisor (launchd/systemd) is the proper fix, not in-process PID files. | Medium | If zombie accumulation is observed in production |
+| D13 | Heartbeat file TOCTOU race (server.py:448) | Low | `exists()` then `read()` — tiny race window, only fails on concurrent delete (rare). Replace with try/except read. | Zero | If heartbeat read errors are observed |
+| D14 | OAuth2 provider mutable on GET (`/auth/login?provider=xxx` mutates global state) | Low | Provider is validated against `PROVIDERS` dict before use (line 132); unknown providers return None. Low actual risk. | Low | If multi-provider support is added |
+
+**Not applicable (verified during audit):**
+- Migration 11 `DROP TABLE pathway_nodes` — already ran successfully on this machine (`pathway_nodes` exists, `_v11` stale table gone). No data loss.
+- SQL injection — all user-supplied values use parameterized queries (`?` placeholders). Only f-string SQL is column names filtered through hardcoded sets (D9).
+- Hardcoded secrets — all from env vars / generated files / `secrets.token_*()`.
+- Resource leaks in DB connections — per-thread connections via `threading.local()`, intentional design, no pool exhaustion observed.
+
+---
+
+||| **Context Intelligence Layer (new 2026-06-06)** |
 || | | | | | | |
 ||| **27** | **Context Health Score** (0–100) — single number per agent answering "is my agent's brain healthy right now?" Computed from memory bloat, drift delta, context window utilisation trend, error rate, sources-skipped ratio. Warning <70, alert <50. | **Intelligence** | 🔴 Spec | ✅ Dashboard display + trend arrow | ✅ Push alerts on threshold breach + historical regression detection + fleet comparison | ~2d | observeco-master-plan.md §3.30 |
 ||| **28** | **Agent Relapse Prevention** — timeline view correlating SOUL.md edits, plugin installs/removes, config changes with degradation signals (drift spikes, error bursts, context health drops). Answers "what changed and broke things?" | **Intelligence** | 🔴 Spec | ✅ 7d timeline with annotations | ✅ Full history + regression correlation engine + auto-attribution | ~2d | observeco-master-plan.md §3.31 |
@@ -91,7 +159,7 @@
 ||
 || **Dynamic Execution Layer (new 2026-06-07 — closes the OpenClaw/Hermes APM gap)** |
 ||| **37** | **Post-Turn Webhook** (superseded-by #43 — merged into Hermes post-turn hook) — structured JSON event emitted by OpenClaw plugin + Hermes wrapper after every agent turn. Payload: agent, turn_id, timestamp, tokens (input/output), tools_called, tool_errors, latency_ms, context_sources_loaded, context_sources_skipped, model. Observeco watch daemon receives via local HTTP endpoint or file sink. The single highest-value addition — gives Observeco per-turn execution data for our ecosystem users. | **Infrastructure** | 🔴 Spec | ✅ Webhook receiver + SQLite storage + basic timeline | ✅ Anomaly detection on latency/token spikes + cross-agent comparison + cost attribution | ~3d | observeco-master-plan.md §3.41 → superseded by specs/obs-spec-043-hermes-post-turn-hook.md |
-||| **38** | **Hermes Evaluation Trace Export** — structured JSON export of Hermes internal evaluation signals (quality score, tool efficiency, retry flag, hallucination flag) per turn. Reads from Hermes evaluation internals, writes to Observeco `eval_events` table. Gives Observeco *quality signals* — not just "how many tokens" but "was this turn good." | **Infrastructure** | 🔴 Spec | ✅ Eval event ingestion + quality trend per agent | ✅ Quality regression detection + correlation with drift/health + fleet quality comparison | ~2d | observeco-master-plan.md §3.42 |
+|||| **38** | **Hermes Evaluation Trace Export** — structured JSON export of Hermes internal evaluation signals (quality score, tool efficiency, retry flag, hallucination flag) per turn. Reads from Hermes evaluation internals, writes to Observeco `eval_events` table. Gives Observeco *quality signals* — not just "how many tokens" but "was this turn good." | **Infrastructure** | 🔴 Superseded by §3.T2 | ✅ Eval event ingestion + quality trend per agent | ✅ Quality regression detection + correlation with drift/health + fleet quality comparison | ~2d | observeco-master-plan.md §3.T2 |
 ||| **39** | **Tool Efficiency Ranking** — derived from post-turn webhook data. Ranks every tool/skill by: cost per call, error rate, latency impact, success rate. Red/yellow/green. Surfaces "disable this tool" recommendations. Feeds Plugin Firewall (§3.32) with per-tool granularity (§3.32 is per-plugin, this is per-tool-call). | **Intelligence** | 🔴 Spec | ✅ Per-agent tool cost table + top-3 recommendations | ✅ Cross-fleet comparison + auto-disable suggestions + budget threshold alerts | ~1.5d | observeco-master-plan.md §3.43 |
 ||| **40** | **Context Source Utilisation Tracker** — derived from post-turn webhook data (context_sources_loaded vs context_sources_skipped). Tracks which skills/memory sections are actually used per turn vs loaded by default. Surfaces "these 2 skills add 1,400 tokens but are rarely used — remove from defaults." Feeds Context Fire Drill (§3.33) with real utilisation data. | **Intelligence** | 🔴 Spec | ✅ Per-agent utilisation table + lazy-load recommendations | ✅ Cross-fleet comparison + auto-suggest default demotion + trend analysis | ~1.5d | observeco-master-plan.md §3.44 |
 ||| **41** | **Structured Diagnostic Context for LLM Troubleshooting** | **Intelligence** | 🔴 Spec | ✅ Triggered troubleshooting + payload + LLM diagnosis + fix commands | ✅ Cross-agent patterns + fleet learning + export | ~4d | observeco-master-plan.md §3.45 |
@@ -137,16 +205,21 @@
 ||||| **71** | **Generic discovery layer** — `ollama list` scanner → models, `~/.claude/projects/` scanner → Claude Code projects, `psutil` process scanner → running agents, port scanner → running services. Dashboard shows per-framework tag per agent (Hermes / Claude Code / Ollama / Generic). | **Infrastructure** | 🔴 P2 | ✅ All | ✅ All | ~5.5h | specs/commercial-strategy-v2.md §Phase 2 |
 ||||| **72** | **`observeco init`** — runs discovery, writes `~/.observeco/config.yaml` with found agents, paths, and ports. First-run setup for clean installs. | **CLI** | 🔴 P1 | ✅ All | ✅ All | ~2h | specs/commercial-strategy-v2.md §P1-5 |
 ||||| **73** | **Env var namespace consolidation** — `OBSERVECO_HERMES_HOME`, `OBSERVECO_OPENCLAW_HOME`, all config env vars documented in `observeco config --help`. | **Infrastructure** | 🔴 P1 | ✅ All | ✅ All | ~1h | specs/commercial-strategy-v2.md §P1-3/4 |
-| **74** | **Fix `require_pro()`** — replace invocation-cap check with `return load().is_pro`. Removes all gating. Gating infrastructure stays dormant but wired for future Pro features. | **Bugfix** | 🔴 P0 | ✅ All | ✅ All | 5min | specs/commercial-strategy-v2.md §P0-10 |
-| **75** | **Delete `invocation_counter.py`** — dead code enforcing 5/day cap. Banner uses `COUNT(turn_logs)` from DB. | **Cleanup** | 🔴 P0 | ✅ All | ✅ All | 5min | specs/commercial-strategy-v2.md §P0-11 |
-| **76** | **BYOK for LLM features** — add `OBSERVECO_LLM_API_KEY` detection to `llm_service/__init__.py:_detect_llm_providers()`. Add API key presence check to `gate.py:should_call()` — return `False` (static fallback) when no key configured. | **AI** | 🔴 P0 | ✅ BYOK — user provides own API key | ✅ All 7 consumers | ~1h | specs/commercial-strategy-v2.md §P0-12 |
-| **77** | **BYOK for Chisel LLM** — add `OBSERVECO_LLM_API_KEY` detection to `chisel/llm_client.py:get_api_key()`. Parallel LLM path that bypasses `llm_service/gate.py`. | **AI** | 🔴 P0 | ✅ BYOK | ✅ Same | ~30min | specs/commercial-strategy-v2.md §P0-13 |
-|| **78** | **Fix `gateway_monitor.py` constants** — replace `HERMES_HOME`/`OPENCLAW_HOME` module-level constants with imports from `dirs.hermes_home()`/`dirs.openclaw_home()`. Change env var name to `OBSERVECO_HERMES_HOME`. | **Infrastructure** | 🔴 P0 | ✅ All | ✅ All | ~15min | specs/commercial-strategy-v2.md §P0-14 |
-|| **79** | **`observeco discover`** — dashboard widget that scans cron jobs, agent configs, and running processes for gaps vs what's tracked. Shows gaps with **Add** buttons — one click registers the agent and starts monitoring. No CLI, no read-only report. | **Dashboard** | 🔴 Spec | ✅ All | ✅ All | ~3h | observeco-master-plan.md §3.64 |
+| **74** | **Fix `require_pro()`** — should return `load().is_pro`. | **Bugfix** | 🟢 Done (verified 2026-07-12) — `license.py:1018` already `return True` (beachhead stub). No change needed. | — | — | 0 | specs/commercial-strategy-v2.md §P0-10 |
+| **75** | **Delete `invocation_counter.py`** — dead 5/day cap code. | **Cleanup** | 🟢 Done (verified 2026-07-12) — file does not exist in tree; banner uses `COUNT(turn_logs)`. No change needed. | — | — | 0 | specs/commercial-strategy-v2.md §P0-11 |
+| **76** | **BYOK for LLM features** — `OBSERVECO_LLM_API_KEY` detection + `gate.py:should_call()` key check. | **AI** | 🟢 Done (verified 2026-07-12) — `gate.py:95-97` already returns `False` when key absent; `_detect_llm_providers` already detects the key. No change needed. | — | — | 0 | specs/commercial-strategy-v2.md §P0-12 |
+| **77** | **BYOK for Chisel LLM** — `chisel/llm_client.py:get_api_key()` key detection. | **AI** | 🟢 Done (verified 2026-07-12) — `llm_client.py:100` already reads `OBSERVECO_LLM_API_KEY`. No change needed. | — | — | 0 | specs/commercial-strategy-v2.md §P0-13 |
+| **78** | **Fix `gateway_monitor.py` constants** — use `dirs.hermes_home()`/`dirs.openclaw_home()`. | **Infrastructure** | 🟢 Done (verified 2026-07-12) — `gateway_monitor.py:44-52` already imports from `hermes_home()`/`openclaw_home()`. No change needed. | — | — | 0 | specs/commercial-strategy-v2.md §P0-14 |
+| **78b** | **Fix `dashboard/otel.py` `/v1/traces`** — `log_trim()` called with wrong kwarg names (`identity_tokens` etc.) → 500 on any OTEL span. Secondary ingestion path (Hermes uses standalone `:4318` listener). | **Bugfix** | 🟢 Fixed (2026-07-12) — corrected kwargs to `log_trim(identity=, skills=, memory=, tools=, guidance=, total=, savings=)`. Route now non-500. | — | — | ~10min | — |
+||| **79** | **`observeco discover`** — dashboard widget that scans cron jobs, agent configs, and running processes for gaps vs what's tracked. Shows gaps with **Add** buttons — one click registers the agent and starts monitoring. No CLI, no read-only report. | **Dashboard** | 🟢 Built (2026-07-12) — `discover/scanner.py` (cron+config+process scans, 5min cache) + `discover/api.py` (`/api/discover/gaps`, `/panel`, `/add`) + htmx badge+panel in `index_new.html` + CSS. 3/3 tests pass. Verified live: 104 real gaps, Add registers agent. | — (all shipped) | ✅ All | ~3h | observeco-master-plan.md §3.64 |
+|||| **80** | **Conversational Dashboard Copilot** — natural language control of the ObserveCo dashboard via Page Agent. FAB trigger + Cmd+Shift+K, Page Agent built-in panel themed to ObserveCo dark tokens. | **Dashboard** | ✅ Live — FAB + panel | ✅ All (one script tag, no backend changes) | ✅ Same | 1h | observeco-master-plan.md §3.65 |
+|81 | Incident Skill Auto-Creation (L3 Learning Loop) — after successful heal of a novel failure, LLM extracts the failure pattern and writes a prevention SKILL.md. Next occurrence → known fix applied via FTS5 match, skipping LLM diagnosis (zero LLM cost). System gets cheaper as it learns your failure modes. | **Self-Heal + AI** | 🟢 Built (2026-07-12) — MVP: `prevention_skills`+FTS5 schema, `heal/prevention.py` (extract/check/write/apply/deprecate), L3 check-first + learn-after wired into `run_heal` (gated by `heal_config.learn`), CLI `observeco prevention list/show/remove/enable/disable`. Dangerous remediations (pip_install/code_fix) never auto-run. 6/6 tests pass; prod E2E verified. Dashboard UI + cross-fleet = deferred (Pro). | ✅ Same + dashboard UI + cross-fleet sharing + promotion gating | ~2d (est) → ~1d actual (MVP scope) | obs-spec-081-incident-skill-auto-creation.md |
+| **82** | **Session Efficiency Scoring** — 11 context-efficiency metrics (redundant reads, read amplification, retry waste, edit thrash, etc.) per session. Task archetype classification (research/debug/feature/ops/edit). Two-axis scoring: efficiency + effectiveness (did it ship?). One-click optimize memory wrote back to AGENTS.md. Custom rule packs. Per-archetype baselines. Token-based metrics (context-pressure, cache-hit, yield-density) now LIVE via #83 session_id join. | **Analysis** | 🟢 Phase 1+2+3 Built + token metrics live (2026-07-12) — full 11-metric scoring active on :8899, 9/9 tests pass. | — (all shipped) | ~700 lines (7 files) | obs-spec-062-session-efficiency-scoring.md |
+| **83** | **Token-Log Session Attribution** — populate `token_logs.session_id` (empty across 507K rows) so #82's 3 token metrics (context-pressure, cache-hit, yield-density) can join sessions. Hermes `observability/otel` plugin emits `hermes.session_id` per LLM-call span; ObserveCo's `otel_listener.py` now captures it + `log_token_turn()` stores it + `compute_efficiency()` feeds the 3 metrics. No Hermes change, no migration. | **Analysis** | 🟢 Built (2026-07-12) — listener captures `hermes.session_id`, token metrics live on :8899 (verified: injected test span → context-pressure/cache-hit/yield-density all scored from real token_logs join). 9/9 tests pass. | — (all shipped) | ~70 lines (4 files) | obs-spec-083-token-session-attribution.md |
 |||
-|---|
+||---|
 |
-|## 3. Feature Deep Dives
+## 3. Feature Deep Dives
 
 ### 3.1 Fleet View (✅ Type grouping live — flat grid remains until drill-downs built)
 
@@ -517,6 +590,74 @@ At 50 turns/day, enough data is collected in ~2 days.
 **Mockup:** `mockups/brain-analysis.html`
 **Obsoletes:** `mockups/token-breakdown.html`, `mockups/chisel-compress.html` (to be removed when brain-analysis is implemented)
 
+### 3.5 Drift Analysis v2 (✅ Live — 2026-07-10)
+
+**Tagline:** *See which agents are growing — and whether it's a real problem or a math artifact.*
+
+**What it is:** A time-series view of token composition drift per agent, showing trajectory (sparkline), peak drift, current drift, and breach count. Differentiates from the Compare tab (current snapshot) by showing how drift evolved over time.
+
+**Status:** ✅ Live — v2 with Chart.js sparklines, HTML tooltips, real date labels, per-agent most-drifted-component selection.
+
+**Known issues (v2):**
+
+1. **Window bug** — `watch_consumers.py` uses `get_trims(limit=50)` which caps the 7-day window to the last 50 entries. For fast-sampled agents (accelerator, hermes, skeptical: every 30s), 50 entries = 25 minutes. For slow-sampled agents (archive, kanban: every 4-5h), 50 entries = 10+ days. The `week_ago` filter is applied after the cap, so it's ineffective for fast agents. **Fix:** Replace `limit=50` with a proper time-based query (`WHERE timestamp > week_ago`).
+
+2. **Denominator amplification** — `delta_pct = (current - week_avg) / week_avg * 100` produces misleadingly large percentages when `week_avg` is near zero (e.g., hermes identity: 1→344 tokens = +4814% because week_avg=7). **Fix:** Apply a floor of 50 tokens to the denominator.
+
+3. **Rolling window healing artifact** — A permanent one-time change (e.g., subconscious guidance 103→172) shows as a spike that "heals" over 7 days as the old data ages out. The metric returns to 0% while the agent is permanently larger. **Fix:** Add week-over-week comparison (Option B) alongside the rolling window (Option A).
+
+**Normalization strategy (three methods, all displayed):**
+
+**Option A — Rolling window with floor (trajectory):**
+```
+delta_tokens = current - week_avg
+delta_pct    = (current - week_avg) / max(week_avg, 50) * 100
+breach       = abs(delta_tokens) > 50 AND abs(delta_pct) > 10%
+```
+- Measures: "How different is today from the 7-day rolling average?"
+- Best for: detecting sudden changes (restarts, config edits, one-time bloat)
+- Shows: spike → decay as window catches up
+
+**Option B — Week-over-week (sustained growth):**
+```
+this_week_avg  = average of last 7 days of trim data
+last_week_avg  = average of 7-14 days ago
+delta_pct      = (this_week_avg - last_week_avg) / max(last_week_avg, 50) * 100
+breach         = abs(this_week_avg - last_week_avg) > 50 AND abs(delta_pct) > 10%
+```
+- Measures: "Is the agent's brain permanently larger than last week?"
+- Best for: detecting sustained growth (compounding cost problems)
+- Shows: step change → stays flagged until next week
+
+**Option C — Absolute tokens (raw delta, no percentage):**
+```
+delta_tokens = current - week_avg
+breach       = abs(delta_tokens) > 50
+```
+- Measures: "How many more tokens is this agent using today vs its 7-day average?"
+- Best for: honest cost visibility — a 50-token increase costs the same regardless of baseline
+- Shows: raw token growth, no denominator artifacts, no math tricks
+- No percentage at all — the most transparent metric
+
+**Dashboard display:**
+- Drift tab shows Option A sparkline (trajectory) as the primary view
+- Option B shown as secondary stat: "Week-over-week: +X.X%"
+- Option C shown as secondary stat: "Δ tokens: +X"
+- All three use the same time-based query (fix the window bug first)
+- All three use the same 50-token absolute floor for breach detection
+
+**Implementation plan:**
+1. Fix window bug: replace `get_trims(limit=50)` with `get_trims_since(agent, week_ago)` using a time-based query
+2. Add 50-token floor to `delta_pct` computation in both `watch_consumers.py` and `chisel/drift.py`
+3. Add Option B computation: query trims from 7-14 days ago, compute week-over-week delta
+4. Add Option C computation: raw absolute token delta (no percentage)
+5. Store all three in `chisel_drift` table (add `method` column: `rolling` / `wow` / `absolute`)
+6. Update dashboard Drift tab to show all three metrics per agent row
+7. Update `obs-spec-052-drift-detection.md` with the new normalization spec
+
+**Free:** Both Option A and Option B, full Drift tab with sparklines.
+**Pro:** Same (no gating — drift is a core diagnostic).
+
 ### 3.6 Error History (✅ Live)
 
 **Tagline:** *Every error, annotated. Not just a log line — context that tells you whether to worry.*
@@ -774,7 +915,7 @@ Mitigation for gap #3: Instance-specific agent naming — user's responsibility.
 
 - **Phase 1 (✅ exists):** `POST /api/tokens/log` endpoint receives token data. DB tables `turn_log`, `skill_usage`, `guidance_fire`, `compress_log` store it. DB migration 29 adds model, latency_ms, tool_calls, topic_id columns.
 - **Phase 2 (✅ built):** Hermes-side post-turn hook — after every turn, POST token payload to `POST /api/tokens/log`. Fire-and-forget daemon thread, 2s timeout, OBSERVECO_URL configurable. See specs/obs-spec-043-hermes-post-turn-hook.md.
-- **Phase 3 (✅ built):** Dashboard Token Analytics tab with: time-series chart, breakdown table sorted by cost + % column, verdict card (top spender + cache trend + recommendation), per-agent cache bar chart, confidence indicator (source accuracy %). See `specs/obs-spec-020-token-analytics-dashboard.md`.
+- **Phase 3 (✅ built):** Dashboard Token Analytics tab with: 5-chart grid (Chart 1 Token Composition stacked bar [Input/Output/Cache/Est]; Charts 2-5 efficiency ratios Tokens/Turn, Output/Input, Cache Hit Rate, Cost/Turn — each with benchmark bands) + verdict card (top spender + cache trend + recommendation) + per-agent cache bar chart + confidence indicator (source accuracy %). See `specs/obs-spec-020-token-analytics-dashboard.md`.
 - **Phase 4 (🔴 needs build):** Budget thresholds (daily/cost/anomaly sigma) → push alerts via §17 infrastructure.
 - **Phase 5 (🔴 needs build):** Provider billing API integration — query OpenAI/Anthropic/DeepSeek, compare vs webhook aggregates, compute gap %.
 
@@ -858,11 +999,34 @@ Success metric: Pro user can enable auto-heal in <2 clicks from Fleet view.
 
 **Free:** Basic auto-heal (3 retries, 4h cooldown) — triggered manually via Heal button.
 **Pro:** Configurable retries, cooldown, logging + notification — triggered automatically on dead detection.
-**Effort:** ~1 day
+**Effort:** ~1 day (dashboard UI only — backend already built)
 **Depends on:** Nothing — heal logic already exists in `heal/__init__.py`
 **Mockup:** `mockups/auto-heal.html`
 
-### 3.16 OpenClaw Runtime Plugin (🔴 Planned)
+#### L3 — Learning Loop (🔴 Spec — see obs-spec-081)
+
+**The value, in one sentence:** L1/L2 heal the failure. L3 *writes a prevention skill* so the next time the same error appears, the fix is applied without calling the LLM — zero cost, zero latency.
+
+After a successful LLM-assisted heal of a novel failure:
+1. LLM extracts: failure pattern, root cause, fix applied, verification metrics
+2. System writes a prevention SKILL.md to `~/.observeco/prevention/`
+3. Indexed in SQLite FTS5 for fast pattern matching
+
+Next time the same error signature appears:
+1. FTS5 finds the prevention skill → known fix applied directly
+2. Verification step still runs (safety gate — always)
+3. If verification fails → full diagnostic pipeline runs + skill fail_count incremented
+
+**Cost trajectory:** Week 1: ~$0.16/week LLM. Week 12: ~$0.02/week. The system gets cheaper as it learns your infrastructure.
+
+**Spec:** `obs-spec-081-incident-skill-auto-creation.md`
+**Inspiration:** [Hermes Incident Commander](https://github.com/Lethe044/hermes-incident-commander)
+**Effort:** ~2d
+**Free/Pro:** Prevention skill creation + application = BYOK (Free). Dashboard UI + cross-fleet pattern sharing + promotion gating = Pro.
+
+### 3.16 OpenClaw Runtime Plugin (🔴 Deferred — post-v1.0)
+
+> ⚠️ **Deferred.** Hermes is the priority for v0.4.0+. This section is retained for reference when multi-framework support resumes post-v1.0.
 
 **Tagline:** *Load only what your agent needs, when it needs it — 40-60% fewer tokens per turn.*
 
@@ -1450,7 +1614,9 @@ Success metric: Query performance for never-pruned Pro stays under 200ms for any
 
 **Effort:** ~4 days (1 data layer, 2 baseline engine, 1 dashboard)
 
-### 3.19 Communication Pathway Map (✅ Live)
+### 3.19 Communication Pathway Map (✅ Live — Hermes primary)
+
+> ℹ️ This feature also detects OpenClaw agents via launchd plist scanning. OpenClaw support is retained for existing users but not actively developed. Hermes is the priority for v0.4.0+.
 
 **Tagline:** *Where did my message go? Every delivery path in your ecosystem, traced from source to consumer.*
 
@@ -1799,6 +1965,8 @@ Success metric: New user can understand any metric in <15s via glossary.
 
 ### 3.22 Agent Health Detection Engine (🔴 Planned — market-informed)
 
+> ℹ️ This section was written when OpenClaw was co-equal with Hermes. For v0.4.0+, Hermes is the primary target. OpenClaw and multi-framework support deferred to post-v1.0.
+
 **Market research source:** `~/.hermes/intelligence/analysis/market-needs-research.md`
 **Key findings: existing tools (Langfuse, Arize Phoenix, LangSmith) monitor LLM traces. Nobody monitors agent PROCESSES.**
 
@@ -1978,9 +2146,312 @@ Layer 4 — Cross-Framework Dashboard (P0)
 |**Pricing:** TBD — deferred until beachhead validated. Solo $9/mo anticipated. Team tier ($49/mo) delayed.
 |30-day free trial via Stripe. Licensing infra: Supabase (licenses DB) + Vercel (API + admin dashboard). See `specs/stripe-integration.md`.
 
-|**⚠️ Reality check:** Backend for most Pro features is built (heal engine, push delivery, token tracking, compress CLI, LLM service). **Dashboard UIs are the gap** — users activating a Pro key see a comparison grid, not working controls. The 30-day trial unlocks the LLM Intelligence Service (all 7 consumers) immediately. After trial, LLM shuts off, other features remain visible as upsells. Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment (paying users managed offline for now).
-
+||**⚠️ Reality check:** Backend for most Pro features is built (heal engine, push delivery, token tracking, compress CLI, LLM service). **Dashboard UIs are the gap** — users activating a Pro key see a comparison grid, not working controls. The 30-day trial unlocks the LLM Intelligence Service (all 7 consumers) immediately. After trial, LLM shuts off, other features remain visible as upsells. Stripe checkout + webhook + license validation are built but waiting on Vercel/Supabase deployment (paying users managed offline for now).
+|
 |**Current priority:** Beachhead first (Phase 0 / Phase 1). All features free for Hermes users. Pro pricing ships after we prove the product works on someone else's machine. See `specs/commercial-strategy-v2.md`.
+|
+|---
+|
+|### 3.17b Action Buttons in Push Notifications (🔴 Planned)
+|
+|**Tagline:** *From "something is wrong" to "here's the fix" in one tap.*
+|
+|**What it is:** Action buttons embedded in push alert notifications. Telegram inline keyboards (restart/cooldown/trim), Discord buttons, webhook action URLs. Each button calls `/api/heal-action/{agent}/{action}` which invokes the heal system's `_execute_action()`.
+|
+|**How it works:**
+|
+|```
+|Push alert fires → notification includes action buttons
+|→ User taps "Restart" → POST /api/heal-action/kepler/restart
+|→ Heal system runs _execute_action('restart', 'kepler')
+|→ Result sent back as follow-up notification
+|```
+|
+|**Available actions:**
+|- `restart` — restart agent process
+|- `cooldown` — reset circuit breaker cooldown
+|- `trim` — run chisel trim on agent
+|- `garden` — run memory garden cleanup
+|- `ignore` — acknowledge alert, suppress duplicates for 1h
+|
+|**What's already built:**
+|- Heal system `_execute_action()` with restart/cooldown/pip_install/trim/garden_cleanup — ✅ Live
+|- Push alert delivery (Telegram, webhook, email) — ✅ Backend
+|- `/api/trigger-heal` endpoint — ✅ Live
+|
+|**What needs building:**
+|- `/api/heal-action/{agent}/{action}` endpoint — simple wrapper around `_execute_action()`
+|- Telegram inline keyboard payload in push alert format
+|- Discord button payload in embed format
+|- Webhook action URL generation
+|- Follow-up notification on action result
+|
+|**Free:** ❌ Pro only (requires push alert infra)
+|**Pro:** ✅ All actions + follow-up notifications
+|
+|**Effort:** ~4h
+|
+|---
+|
+|### 3.64 Agent Health Report Card (🔴 Planned)
+|
+|**Tagline:** *Your fleet's weekly checkup, delivered to your phone.*
+|
+|**What it is:** A weekly digest push alert that aggregates 7 days of fleet health data. One SQL query per metric, one Jinja2 template. Delivered via existing push alert infra.
+|
+|**Metrics (all from existing tables):**
+|- **Uptime %** — `SELECT AVG(status='alive') FROM pulse_log WHERE recorded_at > ?`
+|- **Auto-heal count** — `SELECT COUNT(*) FROM heal_events WHERE timestamp > ? AND outcome='success'`
+|- **Circuit trips** — `SELECT COUNT(*) FROM circuit_events WHERE timestamp > ?`
+|- **Compressions run** — `SELECT COUNT(*) FROM compress_log WHERE timestamp > ?`
+|- **Token cost** — `SELECT SUM(cost) FROM token_logs WHERE recorded_at > ?`
+|- **Fleet size** — `SELECT COUNT(DISTINCT agent_name) FROM agents`
+|
+|**Format:**
+|```
+|📊 Your Fleet This Week
+|━━━━━━━━━━━━━━━━━━━
+|🟢 Uptime: 99.2%
+|🔄 Auto-heals: 3
+|⛔ Circuit trips: 1
+|✂️ Compressions: 2
+|💰 Spend: $14.23
+|👥 Agents: 6
+|
+|Saved $8.47 vs last week by circuit breakers.
+|```
+|
+**What's already built:**
+- All data tables (pulse_log, heal_events, circuit_events, compress_log, token_logs) — ✅ Live
+- Push alert delivery (Telegram, webhook, email) — ✅ Backend
+- Jinja2 templating — ✅ Live (used by dashboard)
+
+**What needs building:**
+- Weekly cron job (scheduled push alert)
+- 6 SQL queries (one per metric)
+- Jinja2 template for the digest format
+- Trend comparison vs previous week
+
+**Free:** ✅ Weekly digest in dashboard
+**Pro:** ✅ Push delivery + trend comparison
+
+**Effort:** ~3h
+
+---
+
+### 3.T1 Tracing Layer (🔴 v0.4.0 — new)
+
+**Tagline:** *Every agent turn, every tool call, every subagent — traced from root to leaf.*
+
+**What it is:** A full OpenTelemetry-based tracing layer that captures every Hermes agent interaction as a structured span tree. Integrates the `hermes-otel` plugin (or native Hermes observability hooks) to emit spans for: session start/end, API requests, tool calls, subagent spawns, and gateway dispatches. Spans are ingested by the ObserveCo OTEL listener and rendered as a waterfall view.
+
+**Why this exists:** Without tracing, you see token counts and health status but not *what happened* in a turn. Did the agent call 3 tools or 12? Did a subagent fail silently? Tracing answers these questions.
+
+**Span hierarchy:**
+```
+Session (root span)
+├── API Request (LLM call)
+│   ├── Tool Call: search_files
+│   ├── Tool Call: read_file
+│   └── Tool Call: write_file
+├── Subagent Spawn
+│   ├── Subagent API Request
+│   │   └── Tool Call: web_search
+│   └── Subagent Complete
+└── Session End
+```
+
+**What's already built:**
+- Hermes observeco plugin (11 hooks) — ✅ exists, disabled in config
+- OTEL listener on port 4318 — ✅ exists, writes to observeco.db (currently 0 bytes)
+- Hermes post-turn webhook — ✅ built, fire-and-forget daemon thread
+
+> ⚠️ **Risk:** The Hermes observeco plugin was disabled for unknown reasons. Enabling it may cause Hermes gateway instability (crashes, latency spikes, or hook failures). **Rollback:** `hermes plugins disable observability/observeco` + `launchctl kickstart -k gui/$(id -u)/ai.hermes.gateway` — reverts to proxy-based token tracking with no data loss. Test on a non-critical agent first.
+
+> ⏱️ **De-risking step (before T1 build):** Enable the plugin on a non-critical agent (e.g., Dreamer or PA) for 24h and verify stability. If stable, proceed with T1. If unstable, revert and debug before building the waterfall view. This step is included in the v0.4.0 estimate (~1d buffer).
+
+**What needs building:**
+- Wire OTEL listener to write spans to pulse.db (single DB, not two)
+- Enable hermes-otel plugin in config
+- Span ingestion + storage in `trace_spans` table
+- Waterfall view in dashboard (per-agent, per-session)
+- Span replay (reconstruct agent state at any point in a session)
+
+**States:**
+
+| State | Display |
+|-------|---------|
+| No traces yet (plugin disabled) | "Enable the Hermes OTEL plugin to start tracing" |
+| Traces flowing | Per-agent span timeline + waterfall |
+| Span tree available | Expandable tree: root → subagent → tool calls |
+| Replay mode | Step through spans in chronological order |
+
+**Free:** Per-agent span timeline + waterfall view (24h window)
+**Pro:** Full trace tree + replay + export + never-pruned history
+
+**Effort:** ~3d (1d wiring + 1d waterfall UI + 1d replay)
+
+---
+
+### 3.T2 Evaluation Layer (🔴 v0.4.0 — new)
+
+**Tagline:** *Not just how many tokens — was this turn any good?*
+
+**What it is:** Structured export of Hermes internal evaluation signals per turn. Reads quality score, tool efficiency, retry flag, and hallucination flag from Hermes evaluation internals, writes to ObserveCo `eval_events` table. Gives quality signals — not just "how many tokens" but "was this turn good."
+
+**Why this exists:** Token tracking tells you cost. Health monitoring tells you liveness. Neither tells you if the agent is *performing well*. A hallucinating agent that's alive and cheap is worse than a dead one — at least the dead one isn't producing bad output.
+
+**Data per turn:**
+
+| Field | Source | Example |
+|-------|--------|---------|
+| agent_name | Hermes config | `"main"` |
+| turn_id | Hermes session | `"turn_abc123"` |
+| quality_score | Hermes eval | `0.87` (0-1) |
+| tool_efficiency | Derived | `0.65` (useful calls / total calls) |
+| retry_flag | Hermes eval | `false` |
+| hallucination_flag | Hermes eval | `false` |
+| latency_ms | Wall-clock | `3400` |
+| model | Response body | `"deepseek-v4-flash"` |
+
+**What's already built:**
+- Hermes post-turn webhook — ✅ built
+- `/api/tokens/log` endpoint — ✅ exists
+- Hermes evaluation internals — ❌ **NOT YET BUILT.** The Hermes agent does not currently export `quality_score`, `tool_efficiency`, `retry_flag`, or `hallucination_flag` per turn. These signals must be built into a Hermes plugin or hook before T2 can ingest them. See §3.42 (superseded) for the original spec.
+
+**What needs building:**
+- **Hermes-side eval export mechanism** — new plugin hook or post-turn payload extension that emits quality signals (~2-3d, Hermes codebase)
+- Eval event ingestion endpoint (`POST /api/eval/log`)
+- `eval_events` table in pulse.db
+- Quality trend chart per agent (7d rolling)
+- Quality regression detection (alert when score drops >15% vs 7d baseline)
+
+**Dependency:** T2 is blocked on the Hermes eval export mechanism. The ObserveCo-side ingestion (endpoint + table + dashboard) can be built in parallel, but no data will flow until Hermes emits it.
+
+**Free:** Eval event ingestion + quality trend per agent (24h)
+**Pro:** Quality regression detection + correlation with drift/health + fleet quality comparison
+
+**Effort:** ~4-5d total (2-3d Hermes eval export + 2d ObserveCo ingestion/dashboard)
+
+---
+
+### 3.T3 Behavioral Intelligence Layer (🔴 v0.4.0 — new)
+
+**Tagline:** *Your agent has 3 problems right now. Here they are.*
+
+**What it is:** A unified intelligence layer that combines anomaly detection, context health scoring, relapse prevention, tool efficiency ranking, and context source utilisation into a single Behavioral Intelligence view. The activation moment: "your agent has 3 problems right now."
+
+**Components:**
+
+**T3a — Anomalies Inbox + Taxonomy:** Fleet-wide issue surfacing. Reads pulse_log, chisel_drift, errors, context_health, config_events, circuit_breakers, plugin_tracking, l2_trending, token_logs, session_checkpoints. Categorises anomalies into taxonomy:
+
+| Type | Detection | Example | Status |
+|------|-----------|---------|--------|
+| `no_tools` | Session ran without tool calls | "Agent ran 5 turns without calling any tools" | ✅ v0.4.0 |
+| `high_cost` | Cost spike vs baseline | "Turn cost 3.2σ above 7d average" | ✅ v0.4.0 |
+| `long_gaps` | Latency between turns | "15min gap between turns — agent may be stuck" | ✅ v0.4.0 |
+| `retry_loops` | Repeated tool failures + retries | "Tool X failed 8 times in 3 turns" | ✅ v0.4.0 |
+| `context_pressure` | Context window approaching limit | "Context at 85% of window — 3 skills at risk of eviction" | 🔴 Deferred to v0.5.0 — requires model→window_size mapping table (not yet built) |
+
+**T3b — Context Health Score (0–100):** Single number per agent answering "is my agent's brain healthy right now?" Computed from: memory bloat, drift delta, context window utilisation trend, error rate, sources-skipped ratio. Warning <70, alert <50.
+
+**T3c — Agent Relapse Prevention:** Timeline view correlating SOUL.md edits, plugin installs/removes, config changes with degradation signals (drift spikes, error bursts, context health drops). Answers "what changed and broke things?"
+
+**T3d — Tool Efficiency Ranking:** Derived from post-turn webhook data. Ranks every tool/skill by: cost per call, error rate, latency impact, success rate. Red/yellow/green. Surfaces "disable this tool" recommendations.
+
+**T3e — Context Source Utilisation Tracker:** Tracks which skills/memory sections are actually used per turn vs loaded by default. Surfaces "these 2 skills add 1,400 tokens but are rarely used — remove from defaults."
+
+**What's already built:**
+- Most data sources exist (pulse_log, chisel_drift, errors, circuit_breakers, token_logs)
+- Post-turn webhook — ✅ built
+- Context Health Score — spec'd as §27
+- Anomalies Inbox — spec'd as §33
+
+> ⚠️ **Data quality precondition:** The anomaly detection engine requires clean data to produce meaningful results. Currently: `errors` = 1,265 rows (all `watch_probe_failed` — noise), `circuit_breakers` = 0 rows (never fired), `token_logs.cost` = $0.00 (not populated). **T3a should not be deployed until v0.3.2 Fix 2 (watch probe) and Fix 5 (circuit_events migration) are complete.** The engine can be built in parallel with those fixes, but the anomaly feed will produce garbage until data is clean.
+
+**What needs building:**
+- Anomaly detection engine (taxonomy classifier)
+- Context Health Score computation
+- Relapse Prevention timeline
+- Tool Efficiency ranking
+- Context Source Utilisation tracker
+- Unified Behavioral Intelligence dashboard tab
+
+**Free:** Anomaly feed + severity + explanation + Context Health Score (24h)
+**Pro:** Push alerts + auto-heal integration + anomaly attribution + resolution tracking + never-pruned history
+
+**Effort:** ~4d (1d anomaly engine + 1d health score + 1d relapse + 1d dashboard)
+
+---
+
+### 3.T4 Unified Agent Data Model (🔴 v0.4.0 — new)
+
+**Tagline:** *One query, one payload, every view.*
+
+**What it is:** A shared backend query layer (`agent_profile_service`) that feeds Tracing, Evaluation, Behavioral Monitoring, and all existing views. Single `/api/agent/{id}/profile` endpoint returns a composite payload: health, tokens, traces, evals, anomalies, context health, tool efficiency, source utilisation.
+
+**Why this exists:** Currently, each dashboard tab makes separate API calls to different endpoints. The fleet view calls `/api/agents`, the token tab calls `/api/tokens/log`, the health tab calls `/api/pulse`. This means: N+1 queries per page load, inconsistent data (different timestamps), and no unified view of an agent's state.
+
+> ⚠️ **Build order:** T4 should be built **before or in parallel with T1's dashboard views.** All new dashboard code (waterfall, anomaly feed, quality trends) should use the unified endpoint from day one, not be migrated to it later. Building T1's waterfall against the current multi-endpoint architecture means rewriting it when T4 ships.
+
+**What needs building:**
+- `agent_profile_service.py` — composite query layer
+- `/api/agent/{id}/profile` endpoint
+- Migrate existing dashboard tabs to use the unified endpoint
+- Caching layer (5s TTL) to avoid hammering pulse.db
+
+**Free:** Unified endpoint + composite payload
+**Pro:** Same (no gating — this is infrastructure)
+
+**Effort:** ~1d
+
+### 3.65 Conversational Dashboard Copilot (Feature #80)
+
+**Status:** ✅ Live — FAB trigger + Page Agent panel, themed to ObserveCo dark tokens
+
+**Integration:** One `<script>` tag in the dashboard's `<head>`. No backend changes. No new API endpoints. Page Agent reads the existing DOM and executes actions via JavaScript in the page context.
+
+**Tagline:** *Your dashboard, now with a conversational operator. Heal, compare, filter, summarize — all in natural language.*
+
+**What it is:** Page Agent — an in-page JavaScript GUI agent — embedded in the ObserveCo dashboard. Operators can type or speak commands instead of clicking through tabs, tables, and charts. The agent uses the operator's own LLM (Ornith, OpenAI, etc.) — no cloud dependency, no data leaving the machine.
+
+**How it works under the hood:**
+
+```
+Operator: "Heal the degraded agents and show me the new fleet health summary"
+  → Page Agent reads the DOM (fleet cards, status dots, heal buttons)
+  → Identifies degraded agents (red/yellow status dots)
+  → Clicks each heal button, waits for htmx response
+  → Re-reads the updated DOM
+  → Summarizes the new health state to the operator
+```
+
+**Key design decisions:**
+- Uses `?autoInit=false` — Page Agent loads but does NOT auto-show a UI panel. The operator can activate it via `window.PageAgent` in the console, or a future UI affordance.
+- Uses the `custom-ollama/ornith:latest` model — the operator's local Ornith instance. No API key needed, no cloud calls.
+- Page Agent runs in the existing auth context (`__OBSERVECO_TOKEN` is already on the page). All DOM actions go through the same fetch interceptor.
+
+**What it enables that doesn't exist today:**
+
+| Pattern | Before (no copilot) | After (Page Agent) |
+|---------|--------------------|--------------------|
+| Heal + verify | Click Heal tab → click button → wait → check fleet view | "Heal all degraded agents and show me the new health summary" |
+| Cross-agent comparison | Manual: open each agent's modal, read numbers, compare | "Compare Hermes vs OpenClaw token usage over 24 hours" |
+| Config changes | Find the right settings form, fill it in | "Set circuit breaker to 5 failures for all agents" |
+| Error triage | Scroll error timeline, mentally summarize | "Summarize the top 3 errors from the timeline" |
+| Routine monitoring | Keep dashboard open, scan manually | "Pause monitoring on hound and alert me on Telegram if it fails" |
+| Voice commands | Not possible | Voice while coding: "Pause monitoring on agent 'hound' and alert me on Telegram if it fails again" |
+
+**Known limitations (ponytails):**
+- **Canvas charts:** Page Agent can't see `<canvas>`-rendered chart data. If sparklines render in Canvas, the agent sees only the container element. Fix: ensure chart data is also present in the DOM (aria-labels, data attributes, or a hidden data table).
+- **htmx partial swaps:** Agent reads DOM at command time. If a section swaps via htmx after the agent has already read it, the agent may use stale state. Workaround: call `agent.execute()` in an htmx callback after swap.
+- **Multi-page workflows:** Basic Page Agent is single-page. If heal operations redirect, the chrome extension or MCP server is needed to maintain context. For htmx single-page apps this is less of an issue.
+- **Async execution:** Page Agent makes its own LLM calls. The dashboard doesn't wait. Healing "in one sentence" means the operator says it, Page Agent acts, operator reviews — not fully autonomous recovery.
+
+**Free:** Included. One script tag, no backend changes.
+**Pro:** Same (no gating — this is a client-side UI enhancement).
+
+**Effort:** 1h (1 script tag, 1 config line)
 
 ---
 
@@ -1996,6 +2467,8 @@ Layer 4 — Cross-Framework Dashboard (P0)
 | Data integrity / cache poisoning detection (S16) | Application-layer concern. Corrupted data produces normal agent behavior | Hard boundary — see §14.6 |
 | Fully automated spend-rate enforcement | False positive on automated kill = trust destroyed. Kill switch is manual v1, auto-escalation v2+ opt-in only | Layered approach — see §14.5 |
 ||| Inline API proxying / request blocking | **Deprecated.** Former §42 MITM proxy removed 2026-06-19. Replaced by SDK-sidecar (`observeco instrument`) — out-of-band, framework-aware, zero crash risk. Cloud LLM tracking uses post-turn webhook (§43) + provider billing API fallback (§44). | ~~See `specs/adr-proxy-attribution.md`~~ → `specs/adr-proxy-attribution.md` (deprecated — proxy removal record) |
+|| **Compliance-grade audit trail** | Immutable, cryptographically signed audit log of every agent action (SOC 2, HIPAA). Requires append-only storage, hash chain signing, 1-7 year retention. | **Deferred.** Shared by every OSS tool in this space — no competitor under $50K/year offers it. If enterprise users demand it, partner with a compliance-focused logging platform rather than building in-house. |
+|| **Cross-agent signal flow visibility (G3.1)** | Track signal delivery between agents, detect sent-but-never-acknowledged, surface "alive but not producing." Requires agent-side instrumentation across Hermes + OpenClaw ecosystems. | **Deferred.** Already spec'd as G3.1 in master plan §14.3. ~5d effort. Deferred until post-launch — single-machine observability covers 90% of target market. |
 
 ---
 
@@ -2174,17 +2647,19 @@ ponytail: Process scan uses `psutil` keyword filter. Ceiling: misses agents runn
 | Phase | Features | Cumulative Effort | Notes |
 |-------|----------|-------------------|-------|
 | **Now** | Everything in ✅ Live — 12 features | ✅ Done | Ship current code |
-| **Phase 0** (D+0, blocks any public release) | `hermes_home()` + `openclaw_home()` + `is_hermes_active()` in `dirs.py` (2h), Lazy path constants + fix duplicate definitions (1h), Refactor 30+ `~/.hermes` hardcodes → dirs functions (4h), Refactor 10+ `~/.openclaw` hardcodes (1.5h), Remove personal artifacts (1h), Fix `require_pro()` (5min), Delete `invocation_counter.py` (5min), Add `OBSERVECO_LLM_API_KEY` to `llm_service` + `gate.py` (1h), Add BYOK to `chisel/llm_client.py` (30min), Fix `gateway_monitor.py` constants (15min) | **~12h** | **Ship-stoppers.** Without these, the product has Sean's agents, Sean's files, a broken license gate, a 5/day invocation cap, and no BYOK path for LLM features. See Features #64-68 + P0-10 through P0-14. |
-|| **Phase 1** (D+1, beachhead readiness) | Dashboard banner (1h), Graceful degradation (2h), Env var consolidation (1h), `observeco init` (2h), `observeco discover` (3h) | **~9h** (14h cum.) | Product works on `pip install && observeco dashboard` on any Mac Mini with Hermes. `discover` widget shows gaps + one-click fix. See Features #69-73, #79. |
-| **Phase G1** (D+2, blocks Pro launch) | Self-monitoring budget cap (1d), Manual kill switch (2d), Circuit breaker config (0.5d), Turn-rate alerting (1d), Tool-count metric (0.5d), Threat model docs (0.5d) | ~5.5d | **Non-negotiable.** Token-rogue guardrails — see §14.3.G1. |
-| **Phase 2** (D+3) | Extended history (2h), Auto-heal (1d), Skill audit (4h), Generic discovery layer (5.5h) | ~3d | Zero-dependency + generic discovery (ollama, psutil, ports). Dashboard shows Claude Code / Ollama agents alongside Hermes. |
-| **Phase 3** (D+7) | System prompt compression (2d), Push alerts (3d) | ~5d | Compression = pure text extraction |
-| **Phase 4** (D+14) | Per-turn tracking (3d), OpenClaw plugin (5-7d) | ~8-10d | Per-turn needs agent-side hooks |
-| **Phase G2** (Month 2) | Fleet spend alerts (2d), Alert→wait→auto-stop (3d), Lineage tracking (3d), Output consistency (2d), Drift lookback (0.5d) | ~10.5d | See §14.3.G2 |
-| **Phase G3** (Month 3+) | Signal flow visibility (5d), Auto-escalation (3d), Model attribution (1d) | ~9d | See §14.3.G3 |
-| **Phase 5** (Month 3+) | OTel trace ingestion (2d), delegate_task router (2d), Trace tree dashboard (3d), A2A adapter (5d) | ~12d | Multi-agent delegation + observability layer. See §3.53-§3.56 |
+|| **v0.4.0 — Hermes Beachhead** | **Phase 1:** Unified Agent Data Model (T4, ~1d). **Phase 2:** Wire OTEL listener to pulse.db + Enable hermes-otel plugin (~1d). **Phase 3:** Tracing Layer (T1, ~3d). **Phase 4:** Behavioral Monitoring (T3, ~4d). Evaluation Layer (T2) deferred to v0.5.0. | **~11d** | ✅ **Shipped.** True agent-specific observability for Hermes on macOS. |
+|| **v0.5.0 — Capability Monitoring Layer** | **Canary** — regression tripwire (9 tasks, lm-eval backend, hang tracking, 60s timeout). **Grid** — capability measurement (τ-bench + SWE-bench, model × harness config × task matrix, Wilson CI, trajectory flags). **Config-aware baselines** — file hashing, auto-segment on change. **Drift detection** — statistical honesty layer, sequential/statistical test before alert. **Adapter strategy** — ship one adapter (Hermes), publish open spec. **Scoring model** — deterministic signals + user assertions (default), opt-in LLM-as-judge (v0.6.0). | **~4d** (built) | **Current focus.** Observation without judgment is just logging. This layer adds the judgment. |
+|| **v0.6.0 — Intelligence Layer** | Log-to-suggested-tasks (auto-generation with review/approve), opt-in LLM-as-judge scoring, alert integrations, Context Health Score, Relapse Prevention, Tool Efficiency ranking | **~6d** | Builds on v0.5.0 data. Makes intelligence claims real. |
+| **Phase 0** (blocks public release) | `hermes_home()` in `dirs.py`, Lazy path constants, Refactor hardcodes → dirs functions, Remove personal artifacts, Fix `require_pro()`, Delete `invocation_counter.py`, Add BYOK to `llm_service` + `chisel/llm_client.py` | **~12h** | **Ship-stoppers.** Without these, the product has Sean's agents, Sean's files, a broken license gate. |
+| **Phase 1** (beachhead readiness) | Dashboard banner, Graceful degradation, Env var consolidation, `observeco init`, `observeco discover` | **~9h** (14h cum.) | Product works on `pip install && observeco dashboard` on any Mac Mini with Hermes. |
+| **Phase G1** (safety) | Self-monitoring budget cap, Manual kill switch, Circuit breaker config, Turn-rate alerting, Tool-count metric, Threat model docs | ~5.5d | Token-rogue guardrails. |
+| **Phase 2** | Extended history, Auto-heal dashboard UI, Skill audit, Generic discovery layer | ~3d | Zero-dependency + generic discovery. |
+| **Phase 3** | System prompt compression, Push alerts dashboard UI | ~5d | |
+| **Phase G2** (Month 2) | Fleet spend alerts, Alert→wait→auto-stop, Lineage tracking, Output consistency, Drift lookback | ~10.5d | |
+| **Phase G3** (Month 3+) | Signal flow visibility, Auto-escalation, Model attribution | ~9d | |
+| **Future: Multi-framework** | OpenClaw runtime plugin, A2A adapter, Cross-framework dashboard, Claude Code/Ollama generic discovery | ~15d | **Deferred to post-v1.0.** Hermes is the priority. |
 
-**Total planned effort:** ~12h (Phase 0) + ~6h (Phase 1) + ~5.5d (G1) + ~3d (Phase 2) + ~5d (Phase 3) + ~8-10d (Phase 4) + ~10.5d (G2) + ~9d (G3) + ~12d (Phase 5) = **~60-65 days across all features**.
+**Total planned effort:** ~10d (v0.4.0) + ~6d (v0.5.0) + ~12h (Phase 0) + ~9h (Phase 1) + ~5.5d (G1) + ~3d (Phase 2) + ~5d (Phase 3) + ~10.5d (G2) + ~9d (G3) + ~15d (Multi-framework) = **~65-70 days across all features**.
 
 ponytail: Phase 0/1 effort is ~18h (~2.5d) — once these ship, the product is publishable as "ObserveCo for Hermes — free forever, no signup."
 
@@ -2192,15 +2667,17 @@ ponytail: Phase 0/1 effort is ~18h (~2.5d) — once these ship, the product is p
 
 | Shipment | What | Value to User |
 |----------|------|---------------|
+| **v0.4.0 — Hermes Beachhead** | Tracing Layer (T1), Evaluation Layer (T2), Behavioral Monitoring (T3), Unified Agent Data Model (T4), OTEL listener wired to pulse.db, Hermes OTEL plugin enabled | **True agent-specific observability.** See every turn, every tool call, every subagent. Know if your agent is performing well, not just alive. |
+| **v0.5.0 — Capability Monitoring Layer** | Canary (regression tripwire), Grid (capability measurement), config-aware baselines, drift detection, adapter spec, deterministic scoring | **Observation without judgment is just logging.** Know if your agent is getting worse — and why. |
+| **v0.6.0 — Intelligence Layer** | Log-to-suggested-tasks, opt-in LLM-as-judge, alert integrations, Context Health Score, Relapse Prevention | **Proactive intelligence.** Your agent has 3 problems right now — here they are. |
 | **Phase 0** (D+0) | Generic Hermes discovery via `hermes_home()`, zero personal artifacts, `require_pro()` fix | **Blocks public release.** Without this, first non-Sean user sees broken product. |
 | **Phase 1** (D+1) | Agent invocation banner, graceful degradation, `observeco init`, env var docs | **First public-ready release.** Any Mac Mini Hermes user gets full ObserveCo. |
-| **v0.2 (D+3)** | G1 guardrails + generic discovery | Safety layer v1. Generic agents (Claude Code, Ollama) appear in dashboard. |
-| **v0.3 (D+7)** | Extended history + auto-heal + Skill audit | Users see token history, agents auto-recover, skill bloat measured |
-| **v0.4 (D+14)** | Chisel compress + push alerts | Measure AND fix token bloat. Get Telegram alerts when agents break. |
-| **v0.5 (D+21)** | Per-turn tracking + OpenClaw plugin | Per-turn cost visibility. OpenClaw users save 40-60% tokens at runtime. |
-| **Phase G2** (Month 2) | Fleet alerts, auto-stop escalation, lineage tracking, output consistency, drift lookback | Pro-level safety escalation. S4/S7/S14/S12 coverage. |
+| **Phase G1** (D+2) | G1 guardrails + generic discovery | Safety layer v1. |
+| **Phase 2** (D+7) | Extended history + auto-heal + Skill audit | Users see token history, agents auto-recover, skill bloat measured |
+| **Phase 3** (D+14) | System prompt compression, Push alerts | |
+| **Phase G2** (Month 2) | Fleet alerts, auto-stop escalation, lineage tracking, output consistency, drift lookback | Pro-level safety escalation. |
 | **Phase G3** (Month 3+) | Signal flow visibility, sophisticated auto-escalation, per-turn model attribution | Ecosystem-level deadlock detection + escalation policy engine. |
-| **Phase 5** (Month 3+) | OTel trace ingestion + delegate_task protocol + trace tree dashboard + A2A adapter | Multi-agent delegation with full trace visibility.
+| **Future: Multi-framework** (Post-v1.0) | OpenClaw runtime plugin, A2A adapter, Cross-framework dashboard, Generic discovery | Multi-framework support. Deferred until Hermes beachhead is validated. |
 
 ---
 
@@ -3238,7 +3715,7 @@ Add "Brain Analysis" card to dashboard (Pro-only):
 ### 3.25 LLM-Powered Intelligence Service (`llm_service/`)
 
 **Tagline:** *Your own LLM, finding agents, diagnosing crashes, and guiding first-run — before you notice anything wrong.*
-**Status:** ✅ Live — v1 built in 3 days. 3 deep consumers (agent discovery, onboarding wizard, heal escalation) + 4 shallow consumers (per-agent summary, health check suggestion, error translation, CLI --no-llm). 3 deferred (alert enrichment, heal feedback loop, pathway anomaly — have working static fallbacks). **LLM features use your own API key** (`OBSERVECO_LLM_API_KEY` — bring-your-own-key). When no key is configured, all consumers fall back to static responses. No inference costs on ObserveCo. See §1 License for full BYOK rationale.
+**Status:** ✅ Live — v1 built in 3 days. 3 deep consumers (agent discovery, onboarding wizard, heal escalation) + 4 shallow consumers (per-agent summary, health check suggestion, error translation, CLI --no-llm). 2 deferred (alert enrichment, pathway anomaly — have working static fallbacks). 1 promoted to deep (heal feedback loop → **L3 learning loop**, see obs-spec-081 — prevention skill auto-creation after novel incidents). **LLM features use your own API key** (`OBSERVECO_LLM_API_KEY` — bring-your-own-key). When no key is configured, all consumers fall back to static responses. No inference costs on ObserveCo. See §1 License for full BYOK rationale.
 **Effort:** ~5d
 
 **What it is:** Extracted from the working `doctor/llm.py` (391 lines, 11+ providers) into a shared service layer that every ObserveCo module uses. Priority-ordered: deep in 3 mission-critical consumers, shallow in 6 value-add consumers.
@@ -3275,7 +3752,7 @@ These 6 consumers use LLM to enrich existing behaviour. If LLM fails, the featur
 | 4 | **Alert enrichment** (`watch.py` push_alert) | Flat: "🔴 Agent dead: Kepler" — same message every time | LLM classifies: "same crash pattern as last 3 — suppress (no alert)" vs "new failure mode — enrich body with explanation." Duplicate pattern → silence + update internal counter. New pattern → "🔴 New crash pattern in Kepler — config.yaml line 93 stray tab. Auto-heal attempted 3x, circuit open until 07:35." Falls back to flat message if LLM unavailable. | ~0.5d |
 | 5 | **Per-agent dashboard summary** (`dashboard/server.py`) | Raw metrics: "Alive, 42ms latency, 3 errors, 2,400 tokens" | LLM generates: "Running well. 4 restarts today (all auto-healed). Memory debt 68 (3 contradictions). Drift stable at +5%. Costs: ~$0.03/day." Updated hourly, cached 1h TTL. Falls back to raw metrics if LLM unavailable. | ~0.5d |
 | 6 | **Health check suggestion on agent add** (`cli.py` agents_add) | User runs `observeco agents add my-bot --framework custom` — must know to pass `--health-check` | LLM scans open ports and running processes, suggests: "I see port 8080 open with a Node process. Try `observeco agents add my-bot --health-check http://localhost:8080/health`" Falls back to current CLI help text. | ~0.5d |
-| 7 | **Heal feedback loop** (`heal/__init__.py`) | Heal reports "restarted agent — success" with no learning | After heal action completes, LLM evaluates 5 pulse ticks post-restart: "Agent recovered (latency 2000ms→45ms). Diagnosis confirmed: memory leak. Uploading to per-agent failure profile." Cached per agent. | ~0.3d |
+| 7 | **Heal feedback loop** (`heal/__init__.py`) — **PROMOTED to deep: L3 Learning Loop** (see obs-spec-081) | Was: heal reports "restarted agent — success" with no learning. **Now:** after successful heal of a novel failure, LLM extracts failure pattern + writes a prevention SKILL.md to `~/.observeco/prevention/`. Next occurrence → FTS5 match → known fix applied directly, skipping LLM diagnosis ($0.02 saved per known-pattern incident). System gets cheaper as it learns your infrastructure. Shallow fallback: 5-pulse-tick post-restart evaluation (current behaviour, no skill creation). | ~2d (spec — obs-spec-081) |
 | 8 | **Pathway anomaly summary** (`dashboard/server.py`) | Raw edge statuses: "3 edges red, 2 yellow, 22 green" | Weekly LLM summary: "3 edge changes this week — Telegram→Hound degraded (API rate limit). No new agents discovered." Falls back to raw counts. | ~0.3d |
 | 9 | **Error translation from obscure sources** (`heal/` + `watch/`) | Error messages passed through verbatim: "HermesProtocolError: Session mismatch signal opcode == 0x03, expected 0x02" | LLM translates to plain English: "Session mismatch — your Hermes agent and gateway have different session IDs. Restart the gateway to re-sync." Falls back to raw error text. | ~0.3d |
 
@@ -3359,7 +3836,7 @@ The deep calls are the ones that matter most and the ones users will notice fail
    - Alert enrichment: classify in `push_alert()` before delivery
    - Per-agent summary: `/api/agent-summary/{name}` endpoint, 1h cache
    - Health check suggestion: `agents_add` CLI suggests
-   - Heal feedback loop: post-restart evaluation
+   - Heal feedback loop: post-restart evaluation → **L3 Learning Loop** (see obs-spec-081 — prevention skill auto-creation after novel incidents, FTS5 pattern matching, zero-LLM-cost heal on known patterns)
    - Pathway anomaly summary: weekly cached
    - Error translation: pass unknown error format to LLM
    - `--no-llm` flag + config key + opt-out trial skip
@@ -6215,7 +6692,9 @@ CREATE INDEX IF NOT EXISTS idx_turn_events_agent_ts ON turn_events(agent_name, t
 
 ---
 
-### 3.42 Hermes Evaluation Trace Export (🔴 Spec)
+### 3.42 Hermes Evaluation Trace Export (🔴 Superseded by §3.T2)
+
+> ⚠️ **This section is superseded by §3.T2 (Evaluation Layer).** The T2 deep-dive in the Hermes Observability Layer section is the authoritative specification. This section is retained for historical reference only.
 
 **Tagline:** *Not just how many tokens — was this turn any good?*
 
@@ -8936,3 +9415,54 @@ ObserveCo collects token data from multiple sources with vastly different qualit
 **Why not pursuing:** The compression tool works correctly (3 days of persisted data proves it). The durability problem is a file-management issue outside ObserveCo's scope. If compression needs to stick, the fix is to protect the SOUL.md from reversion at the filesystem level (chflags, launchd guard, git-tracked source of truth) — not in ObserveCo.
 
 **Re-evaluation trigger:** If compression reversion happens again after a manual re-apply, or if the reversion mechanism is identified as an ObserveCo process.
+
+## 20. External Patches (Hermes CLI)
+
+ObserveCo depends on one patch to the **Hermes Agent core** (`~/.hermes/hermes-agent/`) that cannot live in the ObserveCo repo:
+
+| Patch | Purpose | Files | Re-apply |
+|-------|---------|-------|----------|
+| `patches/hermes-cli-temperature.patch` | Adds `--temperature` flag to `hermes chat` so canary tasks can control sampling temperature per run | `cli.py`, `hermes_cli/_parser.py`, `hermes_cli/cli_agent_setup_mixin.py`, `hermes_cli/main.py` | `cd ~/.hermes/hermes-agent && git apply /Users/seanfzc/projects/observeco/patches/hermes-cli-temperature.patch` |
+
+**Why a patch, not core PR:** The Hermes core enforces a "narrow waist" rule — new CLI flags are accepted only at the edges. `--temperature` is a legitimate local need (ObserveCo canary control) but isn't upstreamed. The patch is small (4 files, ~90 lines) and isolated; if `git apply` fails after a Hermes update, the 4 edits are manual and anchored on stable method signatures (`HermesCLI.__init__`, `cli_main`, `cmd_chat`, `build_top_level_parser`).
+
+**Verification:** `python -c "from hermes_cli._parser import build_top_level_parser; p,_,c = build_top_level_parser(); print(any('--temperature' in a.option_strings for a in c._actions))"` → `True`
+
+**Known Hermes CLI bugs (2026-07-11):**
+- `--safe-mode` silently strips `-m` model override → Hermes reports `model "" not found`. The adapter does NOT use `--safe-mode` for this reason. Canary tasks are self-contained prompts — they don't need AGENTS.md/memory isolation.
+- `-p <profile>` + `-m <model>` works correctly when `--safe-mode` is NOT used. The adapter passes both flags — the canary tests the agent with its profile (skills, tools, SOUL.md) and the canary model. Verified 2026-07-12.
+
+---
+
+### 3.66 Session Efficiency Scoring (Feature #82)
+
+**Status:** 🔴 Spec → obs-spec-062-session-efficiency-scoring.md
+**Source:** Agent-Blackbox (MIT, Taewoo Park) — 11 context-efficiency metrics adapted for Hermes session data.
+
+**Tagline:** *Every session gets a fuel-economy score from observed data — and one click writes the fix so the next run is cheaper.*
+
+**What it is:** Per-session scoring on two axes:
+- **Efficiency (0–100):** How economically did the agent use its context window? 11 weighted metrics: redundant reads, read amplification, retry waste, edit thrash, context pressure, large injections, yield density, tool overhead, big file reads, exploration waste, cache hit ratio.
+- **Effectiveness (0–100):** Did the task actually land? From edits, commits, test exit codes, errors — separate from efficiency so a wasteful run that shipped reads differently than a clean run that failed.
+
+**Additional intelligence:**
+- **Task archetype classification** — deterministic, no model. Classifies runs as research/debug/feature/ops/edit so the score is fair (a research run isn't penalised for reading widely).
+- **Per-archetype baselines** — "score 40 vs your usual 87 for research (4 runs)" — compared against same-archetype, same-project peers, not global averages.
+- **Accumulative optimize memory** — one click writes a reversible block to `AGENTS.md` that accumulates across runs. Patterns seen repeatedly converge high; one-offs decay. The daemon's efficiency profile persists across sessions.
+- **Custom rule packs** — drop a `rules.json` per project for project-specific guardrails (forbid-read node_modules, require-before-commit tests, etc.).
+
+**What data it uses:** Hermes session JSONL (`~/.hermes/sessions/*.jsonl`) for tool call tracing (reads, edits, retries) + `token_logs` table for token-based metrics (context pressure, yield density, cache hit). **Ponytail (2026-07-12):** token-based metrics are `noop` — `token_logs.session_id` is empty across all 507,567 rows (verified), so no reliable session join exists yet. The 8 structural/behavioral metrics are fully live; the 3 token metrics activate only after `session_id` is populated in `log_token_turn()` (watch-daemon change, out of scope for #82).
+
+**Where it lives:** New 6th tab in the Agent Detail modal ("Efficiency"), not Fleet tab. Session table with archetype chips + expandable efficiency card per session.
+
+**Phases:**
+
+| Phase | What | Files | Lines |
+|-------|------|-------|-------|
+| 1 | 11 metric computation + archetype + effectiveness (from existing data) | `efficiency/metrics.py` + `routes/efficiency.py` | ~350 |
+| 2 | Efficiency tab in detail modal + optimize memory button | `routes/detail.py` + CSS | ~150 |
+| 3 | Custom rule packs + per-archetype baselines | Modify existing baselines | ~100 |
+
+**Effort:** ~500 lines, 6 files.
+**Pro gating:** None — all free. Efficiency scoring is core product value, not upsell.
+

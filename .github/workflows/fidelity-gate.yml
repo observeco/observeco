@@ -20,6 +20,19 @@ jobs:
         run: pip install uv
       - name: Install
         run: uv sync
+      - name: Debug — print environment
+        run: |
+          echo "=== Python version ==="
+          python3 --version
+          echo "=== uv version ==="
+          uv --version
+          echo "=== Installed packages ==="
+          uv run pip list 2>/dev/null || uv run python3 -m pip list
+          echo "=== Package import check ==="
+          uv run python3 -c "from observeco.dashboard.server import app; print('Import OK')" 2>&1 || echo "IMPORT FAILED"
+          echo "=== Working directory ==="
+          pwd
+          ls -la
       - name: Spec fidelity tests
         run: uv run pytest tests/ -k "spec_fidelity" || echo "No spec-fidelity tests yet"
       - name: Import check
@@ -36,6 +49,19 @@ jobs:
         run: pip install uv
       - name: Install
         run: uv sync
+      - name: Debug — print environment
+        run: |
+          echo "=== Python version ==="
+          python3 --version
+          echo "=== uv version ==="
+          uv --version
+          echo "=== Installed packages ==="
+          uv run pip list 2>/dev/null || uv run python3 -m pip list
+          echo "=== Package import check ==="
+          uv run python3 -c "from observeco.dashboard.server import app; print('Import OK')" 2>&1 || echo "IMPORT FAILED"
+          echo "=== Working directory ==="
+          pwd
+          ls -la
       - name: Lifecycle tests
         run: uv run pytest tests/ -k "lifecycle" || echo "No lifecycle tests yet"
       - name: Cross-platform tests
@@ -55,6 +81,19 @@ jobs:
           uv build
           uv pip install dist/*.whl --system
           observeco --version
+      - name: Debug — print environment
+        run: |
+          echo "=== Python version ==="
+          python3 --version
+          echo "=== uv version ==="
+          uv --version
+          echo "=== Installed packages ==="
+          uv run pip list 2>/dev/null || uv run python3 -m pip list
+          echo "=== Package import check ==="
+          uv run python3 -c "from observeco.dashboard.server import app; print('Import OK')" 2>&1 || echo "IMPORT FAILED"
+          echo "=== Working directory ==="
+          pwd
+          ls -la
       - name: First-Run Audit (F1-F9)
         run: uv run python3 specs/scripts/first-run-audit.py
       - name: F2 and F9 CI checks
@@ -72,6 +111,19 @@ jobs:
         run: pip install uv
       - name: Install
         run: uv sync
+      - name: Debug — print environment
+        run: |
+          echo "=== Python version ==="
+          python3 --version
+          echo "=== uv version ==="
+          uv --version
+          echo "=== Installed packages ==="
+          uv run pip list 2>/dev/null || uv run python3 -m pip list
+          echo "=== Package import check ==="
+          uv run python3 -c "from observeco.dashboard.server import app; print('Import OK')" 2>&1 || echo "IMPORT FAILED"
+          echo "=== Working directory ==="
+          pwd
+          ls -la
       - name: Run gate scorer
         run: |
           if [ -f specs/scripts/score-gate.py ]; then

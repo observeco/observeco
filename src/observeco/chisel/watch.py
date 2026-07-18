@@ -25,7 +25,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from observeco.dirs import hermes_home, get_data_dir
+from observeco.dirs import get_data_dir, hermes_home
 
 logger = logging.getLogger(__name__)
 

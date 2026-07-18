@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 
@@ -80,7 +80,7 @@ def _get_version(package: str) -> Optional[str]:
     """Get package version without importing it."""
     try:
         # Try importlib.metadata first (Python 3.8+)
-        from importlib.metadata import version, PackageNotFoundError
+        from importlib.metadata import PackageNotFoundError, version
         try:
             # Map package names to distribution names
             dist_map = {

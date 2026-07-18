@@ -25,6 +25,7 @@ from typing import Optional
 from observeco.llm_service.cache import LLMCache
 from observeco.llm_service.cost_tracker import CostTracker
 from observeco.llm_service.gate import LLMGate, get_self_monitor
+from observeco.dashboard.config import LLM, PORTS
 
 # ---------------------------------------------------------------------------
 # Public API
@@ -100,6 +101,104 @@ def ask(
     # Cache it
     _cache.set(cache_key, response)
     return response
+
+
+@dataclass
+class LLMResponse:
+    """Response from an LLM call, optionally including logprob data."""
+    text: str
+    logprobs: list[dict] | None = None  # [{token: str, logprob: float}, ...] for scored positions
+
+
+def ask_with_logprobs(
+    system_prompt: str,
+    user_context: str,
+    *,
+    consumer: str = "generic",
+    max_cost_cents: float = 0.02,
+    cache_ttl_secs: int = 300,
+    tier: int = 1,
+    top_logprobs: int = 20,
+) -> LLMResponse | None:
+    """LLM call that returns logprobs for the generated tokens.
+
+    Uses the OpenAI-compatible logprobs API. Falls back to ask() (no logprobs)
+    if the provider doesn't support it.
+
+    Args:
+        Same as ask(), plus:
+        top_logprobs: Number of top logprobs to request per token position.
+
+    Returns:
+        LLMResponse with text and optional logprobs, or None if gated/failed.
+    """
+    if not _gate.should_call(consumer=consumer, tier=tier):
+        return None
+
+    # Detect provider
+    provider = get_auto_provider()
+    if not provider:
+        return None
+
+    # Check budget
+    if not _cost.would_accept(consumer, max_cost_cents):
+        return None
+
+    # Look up provider config
+    try:
+        from observeco.db import Database
+        _db = Database()
+        _config = _db.get_provider_config(provider.name)
+        _db.close()
+    except Exception:
+        _config = None
+
+    api_format = _config["api_format"] if _config else provider.name
+    base_url = _config["base_url"] if _config else None
+    model = _config["default_model"] if _config else "default"
+
+    start = time.monotonic()
+
+    # Only OpenAI-compatible providers support logprobs via chat completions
+    if api_format == "openai" and base_url:
+        result = _call_openai_compatible(
+            provider.api_key or "", system_prompt, user_context,
+            base_url=base_url, model=model,
+            logprobs=True, top_logprobs=top_logprobs,
+        )
+    elif api_format == "openai":
+        result = _call_openai(provider.api_key, system_prompt, user_context,
+                              logprobs=True, top_logprobs=top_logprobs)
+    else:
+        # Provider doesn't support logprobs — fall back to plain ask()
+        text = ask(system_prompt, user_context, consumer=consumer,
+                   max_cost_cents=max_cost_cents, cache_ttl_secs=cache_ttl_secs, tier=tier)
+        return LLMResponse(text=text) if text else None
+
+    duration = time.monotonic() - start
+
+    if result is None:
+        return None
+
+    # result is str (no logprobs) or tuple (text, logprobs) — we always pass logprobs=True above
+    if isinstance(result, tuple):
+        text, logprobs = result
+    else:
+        text, logprobs = result, None
+
+    # Track cost
+    input_tokens = _estimate_tokens(system_prompt + user_context)
+    output_tokens = _estimate_tokens(text)
+    _cost.record(
+        consumer=consumer,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        provider=provider.name,
+        duration_sec=duration,
+    )
+    get_self_monitor().record(consumer, input_tokens, output_tokens)
+
+    return LLMResponse(text=text, logprobs=logprobs)
 
 
 def detect_providers() -> list[LLMProvider]:
@@ -238,7 +337,11 @@ def _get_auto_provider(providers: list[LLMProvider]) -> Optional[LLMProvider]:
 
 
 def _call_provider(provider: LLMProvider, system: str, prompt: str) -> str | None:
-    """Route to the correct provider API using DB registry config."""
+    """Route to the correct provider API using DB registry config.
+
+    Only used by ask() — does not pass logprobs. For logprobs, use ask_with_logprobs()
+    which calls _call_openai / _call_openai_compatible directly.
+    """
     # Look up provider config from registry
     try:
         from observeco.db import Database
@@ -278,8 +381,8 @@ def _call_provider(provider: LLMProvider, system: str, prompt: str) -> str | Non
 def _call_anthropic(api_key: str, system: str, prompt: str) -> str:
     import urllib.request
     data = json.dumps({
-        "model": "claude-sonnet-4-20250514",
-        "max_tokens": 2048,
+        "model": LLM.anthropic_model,
+        "max_tokens": LLM.max_tokens,
         "system": system,
         "messages": [{"role": "user", "content": prompt}],
     }).encode()
@@ -292,21 +395,57 @@ def _call_anthropic(api_key: str, system: str, prompt: str) -> str:
             "content-type": "application/json",
         },
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=LLM.timeout) as resp:
         result = json.loads(resp.read())
         return result["content"][0]["text"]
 
 
-def _call_openai(api_key: str, system: str, prompt: str) -> str:
+def _extract_logprobs(api_result: dict) -> list[dict] | None:
+    """Extract logprob data from an OpenAI-compatible chat completion response.
+
+    Returns a list of per-token dicts: [{"token": "8", "logprob": -0.3, "top_logprobs": [{"token": "8", "logprob": -0.3}, ...]}, ...]
+    Returns None if the response doesn't contain logprobs.
+    """
+    try:
+        choice = api_result["choices"][0]
+        lp_data = choice.get("logprobs")
+        if not lp_data:
+            return None
+        # OpenAI format: {"content": [{"token": ..., "logprob": ..., "top_logprobs": [{...}]}]}
+        content = lp_data.get("content") if isinstance(lp_data, dict) else None
+        if not content:
+            return None
+        return [
+            {
+                "token": item.get("token", ""),
+                "logprob": item.get("logprob", 0.0),
+                "top_logprobs": [
+                    {"token": t.get("token", ""), "logprob": t.get("logprob", 0.0)}
+                    for t in (item.get("top_logprobs") or [])
+                ],
+            }
+            for item in content
+        ]
+    except (KeyError, TypeError, IndexError):
+        return None
+
+
+def _call_openai(api_key: str, system: str, prompt: str,
+                 logprobs: bool = False, top_logprobs: int | None = None
+                 ) -> str | tuple[str, list[dict] | None] | None:
     import urllib.request
-    data = json.dumps({
-        "model": "gpt-4o",
+    body: dict = {
+        "model": LLM.openai_model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ],
-        "max_tokens": 2048,
-    }).encode()
+        "max_tokens": LLM.max_tokens,
+    }
+    if logprobs:
+        body["logprobs"] = True
+        body["top_logprobs"] = top_logprobs or 20
+    data = json.dumps(body).encode()
     req = urllib.request.Request(
         "https://api.openai.com/v1/chat/completions",
         data=data,
@@ -315,9 +454,13 @@ def _call_openai(api_key: str, system: str, prompt: str) -> str:
             "Content-Type": "application/json",
         },
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=LLM.timeout) as resp:
         result = json.loads(resp.read())
-        return result["choices"][0]["message"]["content"]
+        text = result["choices"][0]["message"]["content"]
+        if not logprobs:
+            return text
+        lp = _extract_logprobs(result)
+        return (text, lp)
 
 
 def _call_google(api_key: str, system: str, prompt: str) -> str:
@@ -326,11 +469,11 @@ def _call_google(api_key: str, system: str, prompt: str) -> str:
         "contents": [{"parts": [{"text": f"{system}\n\n{prompt}"}]}],
     }).encode()
     req = urllib.request.Request(
-        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}",
+        f"https://generativelanguage.googleapis.com/v1beta/models/{LLM.google_model}:generateContent?key={api_key}",
         data=data,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, timeout=LLM.timeout) as resp:
         result = json.loads(resp.read())
         return result["candidates"][0]["content"]["parts"][0]["text"]
 
@@ -338,7 +481,7 @@ def _call_google(api_key: str, system: str, prompt: str) -> str:
 def _call_ollama(system: str, prompt: str) -> str:
     import urllib.request
     data = json.dumps({
-        "model": "llama3.1",
+        "model": LLM.ollama_model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
@@ -346,29 +489,35 @@ def _call_ollama(system: str, prompt: str) -> str:
         "stream": False,
     }).encode()
     req = urllib.request.Request(
-        "http://localhost:11434/api/chat",
+        f"http://localhost:{PORTS.ollama}/api/chat",
         data=data,
         headers={"Content-Type": "application/json"},
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with urllib.request.urlopen(req, timeout=LLM.ollama_timeout) as resp:
         result = json.loads(resp.read())
         return result["message"]["content"]
 
 
 def _call_openai_compatible(api_key: str, system: str, prompt: str,
-                             base_url: str, model: str) -> str:
+                             base_url: str, model: str,
+                             logprobs: bool = False, top_logprobs: int | None = None
+                             ) -> str | tuple[str, list[dict] | None] | None:
     import urllib.request
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
-    data = json.dumps({
+    body: dict = {
         "model": model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
         ],
         "max_tokens": 2048,
-    }).encode()
+    }
+    if logprobs:
+        body["logprobs"] = True
+        body["top_logprobs"] = top_logprobs or 20
+    data = json.dumps(body).encode()
     req = urllib.request.Request(
         f"{base_url.rstrip('/')}/v1/chat/completions" if "/v1" not in base_url else f"{base_url.rstrip('/')}/chat/completions",
         data=data,
@@ -376,7 +525,11 @@ def _call_openai_compatible(api_key: str, system: str, prompt: str,
     )
     with urllib.request.urlopen(req, timeout=30) as resp:
         result = json.loads(resp.read())
-        return result["choices"][0]["message"]["content"]
+        text = result["choices"][0]["message"]["content"]
+        if not logprobs:
+            return text
+        lp = _extract_logprobs(result)
+        return (text, lp)
 
 
 # Legacy alias — doctor/llm.py will re-import these

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Cost Waste Card</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0d0f;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.card{width:1200px;height:630px;background:#111113;border-radius:24px;padding:48px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tag{position:absolute;top:24px;right:32px;color:#52525b;font-size:13px;font-weight:500;letter-spacing:0.5px;border:1px solid #27272a;border-radius:100px;padding:4px 14px}
+.headline{font-size:32px;font-weight:700;color:#f4f4f5;line-height:1.3;margin-top:16px;max-width:90%}
+.headline em{color:#a1a1aa;font-style:normal}
+.data-grid{display:flex;gap:24px;margin-top:32px;flex:1}
+.stat-card{flex:1;background:#18181b;border-radius:16px;padding:28px;display:flex;flex-direction:column}
+.stat-card .number{font-size:56px;font-weight:800;line-height:1}
+.stat-card .label{font-size:16px;font-weight:600;margin-top:6px}
+.stat-card .sub{font-size:13px;color:#71717a;margin-top:4px}
+.spend .number{color:#ef4444}.spend .label{color:#ef4444}
+.pct .number{color:#f97316}.pct .label{color:#f97316}
+.cache .number{color:#eab308}.cache .label{color:#eab308}
+.bar-chart{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.bar-row{display:flex;align-items:center;gap:12px}
+.bar-label{width:120px;font-size:13px;color:#a1a1aa;text-align:right}
+.bar-track{flex:1;height:28px;background:#18181b;border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;font-size:12px;font-weight:600;color:#fff;min-width:fit-content}
+.bar-fill.red{background:linear-gradient(90deg,#dc2626,#ef4444);width:87.6%}
+.bar-fill.orange{background:linear-gradient(90deg,#ea580c,#f97316);width:2%}
+.bar-fill.grey{background:linear-gradient(90deg,#52525b,#71717a);width:1.5%}
+.bar-fill.grey2{background:linear-gradient(90deg,#52525b,#71717a);width:1%}
+.bar-value{width:80px;font-size:13px;color:#f4f4f5;font-weight:600;text-align:right}
+.footer{display:flex;gap:32px;margin-top:auto;padding-top:20px;border-top:1px solid #27272a}
+.footer-item{display:flex;align-items:center;gap:10px;color:#a1a1aa;font-size:14px}
+.footer-item .icon{font-size:16px}
+.footer-item strong{color:#f4f4f5}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="tag">observeco.ai</div>
+  <div class="headline">One agent burned 87.6% of my token spend. 64% was recomputed from scratch.</div>
+  <div class="data-grid">
+    <div class="stat-card spend">
+      <div class="number">$149</div>
+      <div class="label">Total token spend</div>
+      <div class="sub">All agents, all providers, one week</div>
+    </div>
+    <div class="stat-card pct">
+      <div class="number">87.6%</div>
+      <div class="label">hermes-agent share</div>
+      <div class="sub">$130.58 — single agent</div>
+    </div>
+    <div class="stat-card cache">
+      <div class="number">36%</div>
+      <div class="label">Cache hit rate</div>
+      <div class="sub">64% recomputed from scratch</div>
+    </div>
+  </div>
+  <div class="bar-chart">
+    <div class="bar-row">
+      <span class="bar-label">hermes-agent</span>
+      <div class="bar-track"><div class="bar-fill red">$130.58</div></div>
+      <span class="bar-value">87.6%</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">pa</span>
+      <div class="bar-track"><div class="bar-fill orange"></div></div>
+      <span class="bar-value">$4.32</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">hound</span>
+      <div class="bar-track"><div class="bar-fill grey"></div></div>
+      <span class="bar-value">$3.05</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">dreamer</span>
+      <div class="bar-track"><div class="bar-fill grey2"></div></div>
+      <span class="bar-value">$2.82</span>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="footer-item"><span class="icon">📊</span><strong>141,529 turns</strong> across all agents</div>
+    <div class="footer-item"><span class="icon">⚠️</span><strong>0.3% output/input ratio</strong> — paying for noise</div>
+  </div>
+</div>
+</body>
+</html>

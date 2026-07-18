@@ -9,6 +9,7 @@ from rich.table import Table
 
 from .diagnostics import DiagnosticReport, check_data_health, run_diagnostics
 from .feedback import collect_fix_outcome, is_telemetry_opted_out
+from observeco.dashboard.config import PORTS
 from .llm import (
     LLMFix,
     detect_llm_providers,
@@ -163,7 +164,7 @@ def doctor_providers() -> None:
 
     for p in providers:
         if p.name == "ollama":
-            source = "Local (localhost:11434)"
+            source = f"Local (localhost:{PORTS.ollama})"
         elif p.name == "openai":
             source = "OPENAI_API_KEY"
         elif p.name == "anthropic":
@@ -253,6 +254,12 @@ SAFE_COMMAND_PREFIXES = [
     "pip3 install --upgrade",
     "python -m pip install",
     "python3 -m pip install",
+    "uv pip install",
+    "uv pip install --upgrade",
+    "uv tool install",
+    "pipx install",
+    "poetry add",
+    "conda install",
     "echo",
     "ls",
     "cat",

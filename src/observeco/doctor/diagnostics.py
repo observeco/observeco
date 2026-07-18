@@ -9,6 +9,8 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 
+from observeco.dashboard.config import PORTS
+
 
 @dataclass
 class DiagnosticCheck:
@@ -211,6 +213,65 @@ def check_data_health() -> list[DiagnosticCheck]:
             message=f"User data: {total_rows:,} rows across {len(row_counts)} tables",
             category="data_health"
         ))
+
+        # 5. DB integrity check (fail loud if corrupt)
+        try:
+            from ..data_integrity import run_integrity_check
+            chk = run_integrity_check(str(db.db_path))
+            if chk["passed"]:
+                checks.append(DiagnosticCheck(
+                    name="db_integrity",
+                    status="ok",
+                    message=f"Database integrity verified ({chk['method']})",
+                    category="data_health"
+                ))
+            else:
+                checks.append(DiagnosticCheck(
+                    name="db_integrity",
+                    status="error",
+                    message=f"DB integrity FAILED: {chk['message']}. "
+                            f"Run `observeco doctor restore` from a verified backup.",
+                    auto_fix="observeco doctor restore",
+                    category="data_health"
+                ))
+        except Exception as e:
+            checks.append(DiagnosticCheck(
+                name="db_integrity",
+                status="error",
+                message=f"Cannot run integrity check: {e}",
+                category="data_health"
+            ))
+
+        # 6. Emptiness sanity: schema exists but 0 user rows AND a backup has data
+        #    = classic silent-loss signal (corrupt DB served empty). Flag CRITICAL.
+        try:
+            backup_dir = db.db_path.parent / "backups"
+            has_data_backup = False
+            if backup_dir.exists():
+                for b in sorted(backup_dir.glob("pulse_*.db"), key=lambda p: p.stat().st_mtime, reverse=True):
+                    try:
+                        import sqlite3 as _s
+                        bc = _s.connect(str(b))
+                        rows = bc.execute(
+                            "SELECT (SELECT COUNT(*) FROM token_logs)+"
+                            "(SELECT COUNT(*) FROM pulse_log)").fetchone()[0]
+                        bc.close()
+                        if rows > 0:
+                            has_data_backup = True
+                            break
+                    except Exception:
+                        continue
+            if total_rows == 0 and has_data_backup:
+                checks.append(DiagnosticCheck(
+                    name="db_empty_silent_loss",
+                    status="error",
+                    message="Live DB has 0 user rows but a backup contains data — "
+                            "possible silent data loss. Restore from backup.",
+                    auto_fix="observeco doctor restore",
+                    category="data_health"
+                ))
+        except Exception:
+            pass  # best-effort sanity; don't fail the whole diagnose on this
 
         db.close()
     except Exception as e:
@@ -478,11 +539,11 @@ def _check_llm_providers() -> list[DiagnosticCheck]:
 
     # Check local servers
     local_servers = {
-        "http://localhost:11434/api/tags": "Ollama",
-        "http://localhost:1234/v1/models": "LM Studio",
-        "http://localhost:8000/v1/models": "vLLM",
-        "http://localhost:5000/v1/models": "TextGen",
-        "http://localhost:8080/v1/models": "LocalAI",
+        f"http://localhost:{PORTS.ollama}/api/tags": "Ollama",
+        f"http://localhost:{PORTS.lm_studio}/v1/models": "LM Studio",
+        f"http://localhost:{PORTS.vllm}/v1/models": "vLLM",
+        f"http://localhost:{PORTS.textgen}/v1/models": "TextGen",
+        f"http://localhost:{PORTS.localai}/v1/models": "LocalAI",
     }
 
     for url, name in local_servers.items():

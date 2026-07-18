@@ -24,13 +24,15 @@ import os
 import threading
 import time
 
+from observeco.dashboard.config import PORTS
+
 logger = logging.getLogger(__name__)
 
 # Window dimensions
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 800
 WINDOW_TITLE = "ObserveCo · Fleet Dashboard"
-DASHBOARD_PORT = 9119
+DASHBOARD_PORT = PORTS.desktop
 DASHBOARD_HOST = "127.0.0.1"
 
 
@@ -168,5 +170,7 @@ def _quit(webview_module) -> None:
     try:
         webview_module.destroy_window()
     except Exception:
+        # ponytail: window may already be gone (double-quit, crash). Swallow
+        # but proceed to hard exit. Upgrade: track window state explicitly.
         pass
     os._exit(0)

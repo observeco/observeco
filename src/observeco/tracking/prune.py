@@ -14,7 +14,7 @@ from observeco.db import Database
 
 logger = logging.getLogger(__name__)
 
-DATA_TYPES = ["pulse", "error", "drift", "token", "l2"]
+DATA_TYPES = ["pulse", "error", "drift", "token", "l2", "canary", "grid", "drift_event"]
 
 
 def run_prune(db: Optional[Database] = None) -> dict:

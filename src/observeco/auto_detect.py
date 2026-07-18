@@ -78,8 +78,10 @@ def run_llm_discovery() -> list[dict]:
         if interesting:
             context_parts.append("=== Running processes (filtered) ===")
             context_parts.extend(interesting[:60])  # cap at 60 lines
-    except Exception:
-        pass
+    except Exception as e:
+        # ponytail: process scan is best-effort context. Log so we know it
+        # failed (not just "empty"). Upgrade: surface scan failures in output.
+        print(f"[WARN] auto_detect: process scan failed: {e}")
 
     try:
         lsof = subprocess.run(
@@ -90,15 +92,19 @@ def run_llm_discovery() -> list[dict]:
         listening = [line for line in lines if "LISTEN" in line]
         context_parts.append("=== Listening ports ===")
         context_parts.extend(listening[:30])  # cap at 30 lines
-    except Exception:
-        pass
+    except Exception as e:
+        # ponytail: port scan is best-effort context. Log so we know it
+        # failed (not just "empty"). Upgrade: surface scan failures in output.
+        print(f"[WARN] auto_detect: port scan failed: {e}")
 
     # Check common Hermes paths (using configured home)
     hermes_base = hermes_home()
-    hermes_paths = [
-        str(hermes_base / "config.yaml"),
-        str(hermes_base / "hermes-agent" / "venv" / "bin"),
-    ]
+    hermes_paths = []
+    if hermes_base is not None:
+        hermes_paths = [
+            str(hermes_base / "config.yaml"),
+            str(hermes_base / "hermes-agent" / "venv" / "bin"),
+        ]
     context_parts.append("=== Hermes paths ===")
     for p in hermes_paths:
         if os.path.exists(p):
@@ -115,8 +121,10 @@ def run_llm_discovery() -> list[dict]:
             context_parts.extend(docker_ps.stdout.strip().split("\n")[:30])
     except FileNotFoundError:
         pass  # Docker not installed
-    except Exception:
-        pass
+    except Exception as e:
+        # ponytail: docker ps failed (daemon down, perms). Log so we know it
+        # failed (not just "no containers"). Upgrade: surface in output.
+        print(f"[WARN] auto_detect: docker ps failed: {e}")
 
     user_context = "\n".join(context_parts)
 

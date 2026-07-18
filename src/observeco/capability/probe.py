@@ -164,11 +164,12 @@ def _check_keychain(snap: EnvSnapshot) -> None:
             keyring.delete_password("observeco-probe", "x")
         except Exception:
             pass
-    except Exception:
-        pass
-    # ponytail: broad except on keychain round-trip — a genuinely unexpected
-    # error (e.g. keyring backend crash) is silently swallowed. Upgrade:
-    # log the exception and set snap.keychain_available = False explicitly.
+    except Exception as e:
+        # ponytail: broad except on keychain round-trip — a genuinely unexpected
+        # error (e.g. keyring backend crash) is silently swallowed. Upgrade:
+        # log the exception and set snap.keychain_available = False explicitly.
+        print(f"[WARN] capability/probe: keychain check failed: {e}")
+        snap.keychain_available = False
 
 
 def _check_fda(snap: EnvSnapshot) -> None:

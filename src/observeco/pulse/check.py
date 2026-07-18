@@ -98,10 +98,10 @@ def _find_agent_log(agent_name: str) -> Path | None:
       3. {agent_name}_daemon.log  (e.g. dreamer_daemon.log)
     """
     log_dirs = [
-        hermes_home() / "logs",
-        Path("/var/log"),
-        Path("/tmp"),
+        d / "logs" if d else None
+        for d in [hermes_home(), Path("/var/log"), Path("/tmp")]
     ]
+    log_dirs = [d for d in log_dirs if d is not None]
     # Precise patterns — no fuzzy globs
     patterns = [
         f"{agent_name}_agent.log",
@@ -201,12 +201,23 @@ def run_check(watch: bool = False) -> None:
                         evidence=evidence,
                     )
 
-                # Circuit breaker logic
+                # Circuit breaker logic — trips on ANY dead status, not just "crash".
+                # The breaker is the designed noise guard (master-plan §3.8):
+                # it writes ONE circuit_tripped error after N consecutive failures,
+                # then stays quiet. Without it, dead agents never reach the errors
+                # table because rtype is None for agents with no health_check
+                # (pgrep probe returns dead with empty error_message).
                 if rtype == "crash":
                     cb = db.record_failure(agent.name, error)
                     if cb["tripped"]:
                         db.log_error(agent.name, "circuit_tripped",
                                      f"Circuit breaker tripped after {cb['failures']} failures", "error")
+                elif rtype is None and status == "dead":
+                    # Agent is dead with no restart evidence — still a failure.
+                    cb = db.record_failure(agent.name, error or "Agent unresponsive")
+                    if cb["tripped"]:
+                        db.log_error(agent.name, "circuit_tripped",
+                                     f"Circuit breaker tripped after {cb['failures']} consecutive failures", "error")
                 elif rtype in ("healthy", "toctou"):
                     # Known safe restart: auto-reset breaker so they don't accumulate
                     db.reset_breaker(agent.name)

@@ -11,14 +11,13 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
-from observeco.dirs import hermes_home
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
 from observeco.db import Database
+from observeco.dirs import hermes_home
 
 console = Console()
 db = Database()
@@ -557,7 +556,7 @@ def _log_compress_result(agent_name: str, mode: str, before_tokens: int, after_t
         pass
 
 
-def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = None) -> dict:
+def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = None, dry_run: bool = False) -> dict:
     """Compress an agent's SOUL.md file.
 
     Args:
@@ -689,10 +688,25 @@ def run_compress(agent_name: str, mode: str = "lite", filepath: str | None = Non
 
     # Create backup
     backup_path = soul_path.with_suffix(".md.bak")
-    backup_path.write_text(original_text, encoding="utf-8")
+    if not dry_run:
+        backup_path.write_text(original_text, encoding="utf-8")
 
     # Write compressed version
-    soul_path.write_text(text, encoding="utf-8")
+    if not dry_run:
+        soul_path.write_text(text, encoding="utf-8")
+
+    if dry_run:
+        return {
+            "status": "ok",
+            "agent": agent_name,
+            "mode": mode,
+            "before_tokens": before_tokens,
+            "after_tokens": after_tokens,
+            "savings": savings,
+            "savings_pct": savings_pct,
+            "message": f"{mode.capitalize()} compression preview: {before_tokens} → {after_tokens} tok ({savings_pct:+.1f}%)",
+            "backup": None,
+        }
 
     # Log to database — both chisel_trims (for analysis) and compress_log (for dashboard)
     from observeco.db import Database

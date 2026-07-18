@@ -1,0 +1,28 @@
+{
+  "name": "observeco",
+  "version": "1.0.0",
+  "description": "> ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/observeco/observeco.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/observeco/observeco/issues"
+  },
+  "homepage": "https://github.com/observeco/observeco#readme",
+  "dependencies": {
+    "playwright": "^1.61.1"
+  }
+}

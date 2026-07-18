@@ -40,6 +40,60 @@ _SERVICE_NAME = "observeco-api-tokens"
 _ENCRYPTION_KEY: bytes = b""
 
 
+def _keyring_get_with_timeout(service: str, key: str) -> str | None:
+    """Read a keyring secret with a hard timeout.
+
+    macOS Keychain (keyring.backends.macOS) calls Security.framework
+    directly and HANGS indefinitely in headless contexts — there is no GUI
+    security session to authorize the keychain unlock, so the call blocks on
+    mach_msg forever. A bare try/except never fires because it doesn't raise,
+    it deadlocks. We isolate the call in a child process and kill it on
+    timeout so headless hosts fall through to the machine-id fallback.
+    ponytail: ceiling = 3s hard kill per call; if keyring is genuinely needed
+    on a headless box, mount the login keychain or set OBSERVECO_MACHINE_ID.
+    """
+    import multiprocessing
+
+    def _target(q: "multiprocessing.Queue") -> None:
+        try:
+            import keyring
+            q.put(keyring.get_password(service, key))
+        except Exception:
+            q.put(None)
+
+    q: multiprocessing.Queue = multiprocessing.Queue()
+    p = multiprocessing.Process(target=_target, args=(q,), daemon=True)
+    p.start()
+    p.join(timeout=3)
+    if p.is_alive():
+        p.kill()
+        return None
+    try:
+        return q.get_nowait()
+    except Exception:
+        return None
+
+
+def _keyring_set_with_timeout(service: str, key: str, value: str) -> bool:
+    """Set a keyring secret with a hard timeout (mirror of the get guard)."""
+    import multiprocessing
+
+    def _target() -> None:
+        try:
+            import keyring
+            keyring.set_password(service, key, value)
+        except Exception:
+            pass
+
+    p = multiprocessing.Process(target=_target, daemon=True)
+    p.start()
+    p.join(timeout=3)
+    if p.is_alive():
+        p.kill()
+        return False
+    return True
+
+
 def _get_encryption_key() -> bytes:
     """Get or generate encryption key from OS keychain."""
     global _ENCRYPTION_KEY
@@ -47,15 +101,15 @@ def _get_encryption_key() -> bytes:
         return _ENCRYPTION_KEY
 
     try:
-        import keyring
-        stored = keyring.get_password(_SERVICE_NAME, "_encryption_key")
+        import keyring  # noqa: F401  (ensures backend import side-effects)
+        stored = _keyring_get_with_timeout(_SERVICE_NAME, "_encryption_key")
         if stored:
             _ENCRYPTION_KEY = bytes.fromhex(stored)
             return _ENCRYPTION_KEY
         # Generate new key
         import secrets
         _ENCRYPTION_KEY = secrets.token_bytes(32)
-        keyring.set_password(_SERVICE_NAME, "_encryption_key", _ENCRYPTION_KEY.hex())
+        _keyring_set_with_timeout(_SERVICE_NAME, "_encryption_key", _ENCRYPTION_KEY.hex())
         return _ENCRYPTION_KEY
     except Exception:
         # Fallback: derive from machine-id (not truly secure, but better than plaintext)

@@ -1,0 +1,14 @@
+[
+  {
+    "document": "TypeScript is a strongly typed programming language that builds on JavaScript. Developed and maintained by Microsoft, it adds static type definitions to JavaScript code. TypeScript code is transpiled to JavaScript, so it runs anywhere JavaScript runs. It was first released in 2012 and has grown to become one of the most popular languages for web development. Major frameworks like Angular and Deno are built with TypeScript, and it has extensive community support.",
+    "expected": "TypeScript is a strongly typed superset of JavaScript developed by Microsoft in 2012. It adds static types and compiles to JavaScript, running anywhere JavaScript does. It powers major frameworks like Angular and is widely adopted in web development."
+  },
+  {
+    "document": "The Great Barrier Reef is the world's largest coral reef system, located off the coast of Queensland, Australia. It stretches over 2,300 kilometers and comprises over 2,900 individual reefs and 900 islands. The reef is home to 1,500 species of fish, 400 types of coral, and many endangered species. Climate change, coral bleaching, and pollution pose significant threats to the reef's ecosystem. Conservation efforts include reducing agricultural runoff and marine park protections.",
+    "expected": "The Great Barrier Reef is the world's largest coral reef system spanning 2,300 km off Australia's coast with 2,900 reefs and 900 islands. It hosts 1,500 fish species and 400 coral types. Climate change and pollution threaten it, prompting conservation measures."
+  },
+  {
+    "document": "Docker containers package applications with their dependencies into lightweight, portable units. Unlike virtual machines, containers share the host operating system kernel, making them more efficient. Docker images are built from a Dockerfile, which specifies the base image, dependencies, and runtime configuration. Containers can be orchestrated with tools like Kubernetes, which manages scaling, load balancing, and failover across clusters of machines.",
+    "expected": "Docker containers package applications with dependencies into portable units, sharing the host OS kernel for efficiency. Images are built from Dockerfiles specifying the runtime. For orchestration, Kubernetes manages scaling and failover across machine clusters."
+  }
+]

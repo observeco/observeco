@@ -19,11 +19,12 @@ import re
 import sys
 import time
 import typing
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from .llm_client import get_client, LLMClient, LiteClient
+from .llm_client import get_client
+from observeco.dashboard.config import PORTS
+
 
 # Lazy accessor — call at use site, not import time
 def _skills_dir() -> Path | None:
@@ -94,7 +95,7 @@ def _parse_yaml_frontmatter(frontmatter: str) -> dict:
 
 # ── Config ──────────────────────────────────────────────────────────────────────
 
-_OLLAMA_BASE_URL = os.environ.get("CAVEMAN_OLLAMA_URL", "http://localhost:11434/v1")
+_OLLAMA_BASE_URL = os.environ.get("CAVEMAN_OLLAMA_URL", f"http://localhost:{PORTS.ollama}/v1")
 _OLLAMA_MODEL = os.environ.get("CAVEMAN_MODEL", "hermes3:latest")
 _WORKERS = int(os.environ.get("CAVEMAN_WORKERS", "4"))
 

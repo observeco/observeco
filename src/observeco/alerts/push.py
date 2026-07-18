@@ -176,7 +176,6 @@ def push_alert(event_type: str, message: str,
         db = Database()
 
     # --- Alert enrichment: classify & optionally enrich before delivery ---
-    original_message = message
     try:
         result = _enrich_alert(event_type, message, agent_name, db)
     except Exception as exc:

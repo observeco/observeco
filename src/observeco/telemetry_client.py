@@ -23,6 +23,7 @@ import platform
 import sys
 import threading
 import urllib.request
+from pathlib import Path
 
 from observeco import __version__
 from observeco.dirs import get_data_dir

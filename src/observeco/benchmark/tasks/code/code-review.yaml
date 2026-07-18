@@ -1,0 +1,35 @@
+# Code Review Benchmark
+#
+# Evaluates whether the agent can review code and identify bugs,
+# style issues, and potential improvements.
+
+task: code_review
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: ./data/code_review_tasks.json
+description: "Review the given code and identify issues."
+doc_to_text: |
+  Review the following code. Identify any bugs, style issues,
+  security concerns, or potential improvements.
+
+  ```python
+  {{code}}
+  ```
+
+  Your review:
+doc_to_target: "{{expected}}"
+output_type: generate_until
+test_split: test
+generation_kwargs:
+  until: []
+  max_gen_toks: 512
+  do_sample: false
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: "1.0"
+  category: code
+  difficulty: easy

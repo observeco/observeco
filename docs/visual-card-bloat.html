@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Context Bloat Card</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0d0f;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.card{width:1200px;height:630px;background:#111113;border-radius:24px;padding:48px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tag{position:absolute;top:24px;right:32px;color:#52525b;font-size:13px;font-weight:500;letter-spacing:0.5px;border:1px solid #27272a;border-radius:100px;padding:4px 14px}
+.headline{font-size:32px;font-weight:700;color:#f4f4f5;line-height:1.3;margin-top:16px;max-width:90%}
+.headline em{color:#a1a1aa;font-style:normal}
+.agent-grid{display:flex;gap:20px;margin-top:36px;flex:1}
+.agent-card{flex:1;background:#18181b;border-radius:16px;padding:28px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.agent-card .bar{position:absolute;top:0;left:0;height:4px;border-radius:16px 16px 0 0}
+.agent-card.bloated .bar{background:#ef4444;width:86%}
+.agent-card.ok .bar{background:#22c55e;width:3%}
+.agent-card.ok2 .bar{background:#22c55e;width:2%}
+.agent-card.ok3 .bar{background:#22c55e;width:2%}
+.agent-name{font-size:16px;font-weight:600;color:#a1a1aa;margin-top:8px}
+.agent-number{font-size:48px;font-weight:800;color:#f4f4f5;margin-top:12px;line-height:1}
+.agent-pct{font-size:14px;color:#71717a;margin-top:4px}
+.agent-badge{display:inline-flex;align-items:center;gap:6px;margin-top:auto;padding:6px 12px;border-radius:100px;font-size:13px;font-weight:600;width:fit-content}
+.badge-red{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+.badge-green{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)}
+.footer{display:flex;gap:32px;margin-top:auto;padding-top:20px;border-top:1px solid #27272a}
+.footer-item{display:flex;align-items:center;gap:10px;color:#a1a1aa;font-size:14px}
+.footer-item .icon{font-size:16px}
+.footer-item strong{color:#f4f4f5}
+.footer-item .red{color:#ef4444}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="tag">observeco.ai</div>
+  <div class="headline">One agent had 86% of all context tokens. It was flagged "critically bloated."</div>
+  <div class="agent-grid">
+    <div class="agent-card bloated">
+      <div class="bar"></div>
+      <div class="agent-name">hermes-agent</div>
+      <div class="agent-number">79,826</div>
+      <div class="agent-pct">input tokens · 86% of fleet</div>
+      <div class="agent-badge badge-red">⚠ Critically Bloated</div>
+    </div>
+    <div class="agent-card ok">
+      <div class="bar"></div>
+      <div class="agent-name">pa</div>
+      <div class="agent-number">2,351</div>
+      <div class="agent-pct">input tokens · 3% of fleet</div>
+      <div class="agent-badge badge-green">✓ OK</div>
+    </div>
+    <div class="agent-card ok2">
+      <div class="bar"></div>
+      <div class="agent-name">hound</div>
+      <div class="agent-number">1,695</div>
+      <div class="agent-pct">input tokens · 2% of fleet</div>
+      <div class="agent-badge badge-green">✓ OK</div>
+    </div>
+    <div class="agent-card ok3">
+      <div class="bar"></div>
+      <div class="agent-name">dreamer</div>
+      <div class="agent-number">1,512</div>
+      <div class="agent-pct">input tokens · 2% of fleet</div>
+      <div class="agent-badge badge-green">✓ OK</div>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="footer-item"><span class="icon">📈</span><strong class="red">+709.8%</strong> token growth this week — context expanding 8x in 7 days</div>
+    <div class="footer-item"><span class="icon">🧠</span>Brain Analysis — Memory Garden · Drift Tracking</div>
+  </div>
+</div>
+</body>
+</html>

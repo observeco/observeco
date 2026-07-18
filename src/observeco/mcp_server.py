@@ -97,6 +97,8 @@ class MCPServer:
                         f"  guidance: {d.get('guidance_tokens', 0)}\n  total: {d.get('total_tokens', 0)}\n"
                         f"  savings ratio: {d.get('savings_ratio', 0):.1%}")
         except Exception:
+            # ponytail: token trim data missing/corrupt for this agent. Return
+            # the "no data" message. Upgrade: log which agent failed.
             pass
         return f"No token data for '{agent_name}'. Run `observeco chisel trim` first."
 
@@ -239,6 +241,9 @@ class MCPServer:
                     from observeco.snapshot import run_snapshot
                     run_snapshot(snapshot_name=snapshot_name)
                 except Exception:
+                    # ponytail: snapshot generation failed (missing dep, perms).
+                    # Return success message anyway — snapshot is non-critical.
+                    # Upgrade: return failure status + error to the caller.
                     pass
                 return self._make_response(rid, {"content": [{"type": "text", "text": f"Snapshot '{snapshot_name}' generated."}]})
             elif name == "pulse":

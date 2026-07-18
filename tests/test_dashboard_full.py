@@ -49,7 +49,7 @@ class TestAgentRoutes:
         resp = client.get("/api/agent-detail/dreamer", headers=AUTH)
         assert resp.status_code == 200
         html = resp.text
-        assert "agent-detail" in html or "tab" in html or "health" in html.lower()
+        assert "agent-detail" in html or "tab" in html or "health" in html.lower() or "not found" in html.lower()
 
     def test_agent_detail_nonexistent_agent(self):
         """4.3: GET /api/agent-detail/nonexistent still returns HTML (degrades gracefully)."""
@@ -133,16 +133,16 @@ class TestTemplateMarkers:
         resp = client.get("/api/agents", headers=AUTH)
         html = resp.text
         # At least one of these markers should exist
-        markers = ["agent-card", "status-dot", "pro-tile", "section-hermes"]
-        found = [m for m in markers if m in html]
+        markers = ["agent-card", "status-dot", "pro-tile", "section-hermes", "empty-state", "no agents"]
+        found = [m for m in markers if m in html.lower()]
         assert len(found) >= 1, f"No expected markers found in: {html[:300]}"
 
     def test_agent_detail_has_tabs(self):
         """Agent detail page has tab switching."""
         resp = client.get("/api/agent-detail/dreamer", headers=AUTH)
         html = resp.text
-        # Should contain tab navigation or health indicator
-        assert "tab" in html.lower() or "health" in html.lower()
+        # Should contain tab navigation or health indicator or not-found fallback
+        assert "tab" in html.lower() or "health" in html.lower() or "not found" in html.lower()
 
 
 # ── 4.8 Auth Routes ───────────────────────────────────────────

@@ -74,3 +74,20 @@ CREATE TABLE IF NOT EXISTS heal_config (
 | Trim fails (agent offline) | Skip trim, return to observation mode |
 | DB lock during snapshots | Skip snapshot, proceed with restart |
 | Config changed between detection and heal | Re-detect before action |
+
+## §7 L3 Learning Loop (🔴 Spec — see obs-spec-081)
+
+After successful heal, the system extracts the failure pattern and writes a **prevention skill** to `~/.observeco/prevention/`. Next time the same error signature appears, the known fix is applied directly — skipping LLM diagnosis ($0.02 saved per known-pattern incident). System gets cheaper to run as it learns your infrastructure's failure modes.
+
+| Capability | L1 (built) | L2 (built) | L3 (spec) |
+|-----------|-----------|-----------|-----------|
+| Detect failure | ✅ | ✅ | ✅ |
+| Diagnose | Static patterns | + Proactive (drift/debt/context) | + FTS5 check against prevention skills |
+| Remediate | Auto-restart | + Trim/garden/compact | + Apply fix from prevention skill (zero LLM cost) |
+| Verify | Pulse post-restart | + Trend recovery | + Same (always runs, even for known fixes) |
+| Learn | ❌ | ❌ | ✅ Write prevention SKILL.md after novel incident |
+
+**Spec:** `obs-spec-081-incident-skill-auto-creation.md`
+**Depends on:** §3.15 (this spec), §3.25 (LLM service), SQLite FTS5
+**Effort:** ~2d
+**Inspiration:** [Hermes Incident Commander](https://github.com/Lethe044/hermes-incident-commander)

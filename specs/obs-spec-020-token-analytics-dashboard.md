@@ -1,6 +1,6 @@
 # obs-spec-020: Token Analytics Dashboard
 
-**Status:** v2 Built 2026-06-24 — Added verdict card, cache-by-agent chart, confidence indicator, breakdown sort by cost + % column, model field in OTEL parser
+**Status:** v3 Built 2026-07-07 — Token tab now ships the 4-chart grid (Cost + Target benchmark line, Cache Hit Rate, Output Share, Cache Hit by Agent) matching the v0.3.1 design. Verdict card, cache-by-agent chart, confidence indicator, per-agent breakdown table retained. Component toggle + zoom/pan + drill-down modal deferred.
 **Product:** ObserveCo dashboard
 **Depends on:** obs-spec-014 (per-turn token tracking), token_logs table (exists)
 **Owner:** Pragma (COO)
@@ -165,20 +165,20 @@ Aggregation is computed on-the-fly from `token_logs` via SQL `GROUP BY` with tim
 
 **Location:** Agent detail view → new "Token Analytics" tab
 
-**Components:**
+**Components (SHIPPED — matches v0.3.1 token tab screenshot):**
 
-1. **Time-Series Chart** (Chart.js)
-   - X-axis: time (hourly/daily/weekly)
-   - Y-axis: token count
-   - Multiple lines for component breakdown
-   - Zoom/pan with Chart.js zoom plugin
+1. **5-Chart Grid** (single vertical column, uniform height → all 5 share an aligned time axis). Each chart has a stat-card header (value + label). Benchmark bands drawn via inline Chart.js plugin (no annotation-plugin dependency):
+   - **Token Composition** (stacked bar) — X: time, Y: tokens (K). Stacks Input (blue) / Output (yellow) / Cache reads (purple) / Estimated (grey). The original token tab chart — shows token makeup per bucket. **Estimated is suppressed (set to 0) in any bucket that already has real input/output/cache counts**, so the stacked total never double-counts Estimated on top of real totals. Estimated appears only in buckets with no real breakdown (pure proxy). A neutral note explains this; no benchmark line on this chart.
+   - **Tokens / Turn** (line) — X: time, Y: tokens/turn (lower better). Bands: Low 1000 / Mod 10000 / High 50000 / V.High 100000.
+   - **Output / Input ratio** (line) — X: time, Y: output÷input (higher better). Bands: Low 0.5 / Mod 1 / High 5 / V.High 20. **Note:** Benchmark bands intentionally removed from this chart — O/I ratio has no universal "good" threshold (varies by task type). The other 3 efficiency charts retain their bands.
+   - **Cache Hit Rate** (line, %) — X: time, Y: 0-100% (higher better). Bands: Low 5 / Mod 10 / High 50 / V.High 80.
+   - **Cost / Turn** (line, $) — X: time, Y: $/turn (lower better). Bands: Low 0.001 / Mod 0.01 / High 0.1.
+   - ponytail: earlier spec called for one stacked time-series with component toggle + zoom/pan. Shipped design uses 5 focused charts (v0.3.1 lineage). Component toggle + zoom/pan deferred.
 
 2. **Filter Bar**
    - Agent selector (dropdown)
-   - Provider selector (dropdown)
-   - Time range (preset: last 24h, 7d, 30d, custom)
-   - Granularity (minute/hour/day)
-   - Component toggle (total/identity/skills/memory/tools/guidance)
+   - Time range (preset: 1h, 24h, 7d, 30d)
+   - (Provider selector, granularity, component toggle — deferred, not in shipped build)
 
 3. **Verdict Card** (v2 — replaces summary cards)
    - Total cost + turn count for the period
@@ -189,18 +189,12 @@ Aggregation is computed on-the-fly from `token_logs` via SQL `GROUP BY` with tim
 
 4. **Breakdown Table**
    - Top agents by token usage, sorted by cost descending
-   - Columns: Agent, Cost (bold), % of total (color-coded: >50% red, >25% yellow), Tokens, Avg/turn
-   - Click to filter chart
+   - Columns: Agent, Cost (bold), Tokens, Model, Data (Acc/Est), Cache %
+   - Click to open agent modal
 
-5. **Per-Agent Cache Bar Chart** (v2)
-   - Horizontal bar chart: one bar per agent
-   - X-axis: cache hit rate (0-100%)
-   - Bars colored red if <5%, yellow if 5-20%, green if >20%
-   - Shows which agents have 0% cache at a glance
+5. **Per-Agent Cache Bar Chart** (v2) — horizontal bars, one per agent, X: 0-100% hit rate, colored red <5% / yellow 5-20% / green >20%. Rendered in the Cache Efficiency section below the grid.
 
-6. **Drill-Down Modal**
-   - Click data point → show turn details
-   - Individual turn: timestamp, tokens, components, cost
+6. **Drill-Down Modal** — deferred (not in shipped build).
 
 ### Empty States
 
@@ -853,7 +847,99 @@ The chart shows input/output/cache breakdown instead of the previous identity/sk
 | Total | All tokens | All sources |
 | Input | Prompt tokens | SDK patchers, OTEL |
 | Output | Completion tokens | SDK patchers, OTEL |
-| Cache | Cache read + cache creation tokens | SDK patchers, OTEL |
+|| Cache | Cache read + cache creation tokens | SDK patchers, OTEL |
+
+### §11.8 Local/Cloud Classification
+
+**Status:** v1 Built 2026-07-09
+**Depends on:** Migration 60 (`is_local` column), `provider_registry.detect_provider_configs()`
+
+#### §11.8.1 Problem
+
+Token costs are attributed to all providers equally, but local/self-hosted models (Ollama, LM Studio, llama.cpp on localhost) cost $0. The OTEL listener writes provider names verbatim from span attributes (`custom-ollama`, `xiaomi`, `deepinfra`, `ollama-cloud`) without classifying them as local. Result: local tokens are costed as cloud, inflating the "cloud spend" figure.
+
+**Root cause:** Local detection (`_is_local(base_url)`) exists in the SDK patcher path (`patcher_base.py:131-135`) but is **not applied in the OTEL listener** — which produces ~99% of token_logs rows. The OTEL span carries `gen_ai.system` (provider name) but no base_url, so the listener cannot classify local at write time without a provider→base_url lookup.
+
+#### §11.8.2 Design
+
+**Two-signal classifier, applied at write time in ALL ingest paths:**
+
+| Signal | Source | Role | General? |
+|--------|--------|------|----------|
+| Auto: `base_url` is localhost/loopback | `provider_registry.detect_provider_configs()` → cached `provider → is_local` map | Convenience default (zero-config for most users) | ✅ Scans any agent config (Hermes/OpenClaw) |
+| User override: `local: true/false` per provider in config | Hermes/OpenClaw config `providers.<name>.local` | **Authoritative** — wins over auto-detection | ✅ Any user, any provider, any setup |
+| Default: cloud | Fallback when provider not in cache | Safe — no silent cost-zeroing | ✅ |
+
+**How it works:**
+1. Listener startup: `detect_provider_configs()` scans Hermes/OpenClaw config → builds `provider_name → is_local` map. Auto: localhost/loopback base_url → local. User override `local: false` → cloud (wins over auto).
+2. Cache refreshes on config file mtime change (ponytail: file-watch, not poll).
+3. At write time: `is_local = cache.get(provider, 0)`. If local → `cost=0`, `is_local=1`.
+4. SDK patcher: already does base_url check at request time (it has the real base_url). Keep as-is.
+5. Watch daemon: no base_url available → always `is_local=0` (cloud-estimated). Inherent limitation.
+
+**Edge cases:**
+- Ollama on Tailscale IP (not localhost): auto-detection fails, user sets `local: true` → correct
+- Cloud API proxied through localhost: auto-detection wrongly says local, user sets `local: false` → correct
+- Brand-new user with Ollama on localhost: zero config → auto-detected → correct
+
+#### §11.8.3 Schema
+
+```sql
+-- Migration 60
+ALTER TABLE token_logs ADD COLUMN is_local INTEGER DEFAULT 0;
+CREATE INDEX IF NOT EXISTS idx_token_is_local ON token_logs(is_local);
+```
+
+#### §11.8.4 API Changes
+
+**`GET /api/analytics/tokens`** — new summary fields:
+```json
+{
+  "cloud_cost": 123.45,
+  "local_tokens": 500000,
+  "cloud_tokens": 2000000,
+  "local_pct": 20.0
+}
+```
+
+**`GET /api/tokens/summary`** — new field:
+```json
+{
+  "cloud_cost": 123.45,
+  "local_tokens": 500000
+}
+```
+
+#### §11.8.5 Dashboard UI
+
+- **Verdict card:** "Cloud cost: $X" replaces "Total cost" (local is free)
+- **Token Composition chart:** unchanged (shows all tokens, local+cloud)
+- **Breakdown table:** new "Source" column: "Cloud" / "Local" / "Estimated"
+- **Data quality bar:** unaffected (tier is about accuracy, not location)
+
+#### §11.8.6 Acceptance Criteria
+
+- [ ] Migration 60 adds `is_local` column without data loss
+- [ ] OTEL listener sets `is_local=1` and `cost=0` for providers with localhost base_url
+- [ ] User override `local: false` in config correctly overrides auto-detection
+- [ ] SDK patcher continues to set `is_local=1` for localhost providers (unchanged)
+- [ ] Watch daemon rows always have `is_local=0` (inherent limitation)
+- [ ] Verdict card shows "Cloud cost" (not "Total cost")
+- [ ] Backfill script correctly marks known-local providers and zeroes their cost
+- [ ] Cache refreshes when config file changes (mtime-based)
+
+#### §11.8.7 Implementation
+
+**Files to modify:**
+- `src/observeco/db.py` — Migration 60 (add `is_local` column)
+- `src/observeco/otel_listener.py` — build provider→is_local cache at startup, apply at write time
+- `src/observeco/dashboard/routes/token_analytics.py` — add cloud_cost/local_tokens to summary
+- `src/observeco/dashboard/templates/index_new.html` — verdict card shows "Cloud cost"
+
+**Files to create:**
+- `scripts/backfill-is-local.py` — per-instance backfill (explicit provider list, not shipped as feature)
+
+**No new dependencies.** Reuses existing `provider_registry.detect_provider_configs()` and `_is_local()`.
 
 ## §12 Data Quality Tier System
 

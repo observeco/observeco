@@ -5,7 +5,7 @@
 **Reviewer:** Pragma (Independent)
 
 **Supersedes:** §6 scope boundary "Observer, not proxy" — the proxy now exists.
-**Single source of truth:** Feature rows §42/§43/§44 + scope boundary §6 in `observeco-master-plan.md`. If this ADR conflicts with the master plan, the master plan wins.
+**Single source of truth:** Feature rows §42/§43/§44 + scope boundary §6 in `internal strategic documents`. If this ADR conflicts with the master plan, the master plan wins.
 
 ---
 
@@ -210,8 +210,8 @@ These are not bugs — they're explicit scope limits communicated to users.
 
 ## References
 
-- `observeco-master-plan.md` §42 — Proxy (local LLM only)
-- `observeco-master-plan.md` §43 — Post-turn webhook (cloud primary)
-- `observeco-master-plan.md` §44 — Provider billing API (cloud fallback)
-- `observeco-master-plan.md` §14 — Deep dive: Cloud token tracking
-- `observeco-master-plan.md` §6 — Scope boundary
+- `internal strategic documents` §42 — Proxy (local LLM only)
+- `internal strategic documents` §43 — Post-turn webhook (cloud primary)
+- `internal strategic documents` §44 — Provider billing API (cloud fallback)
+- `internal strategic documents` §14 — Deep dive: Cloud token tracking
+- `internal strategic documents` §6 — Scope boundary

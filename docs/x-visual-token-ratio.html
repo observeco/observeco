@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Token Ratio Visualization</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc; --accent: #22c55e;
+  --critical: #ef4444; --fg-2: #94a3b8; --muted: #64748b; --border: #334155;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body); background: var(--bg); color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+}
+.card {
+  width: 1200px; height: 600px;
+  background: linear-gradient(135deg, #0f172a 0%, #1a2332 50%, #0f172a 100%);
+  border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(rgba(34,197,94,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,197,94,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.card::after {
+  content: '';
+  position: absolute; top: -200px; left: -150px;
+  width: 450px; height: 450px;
+  background: radial-gradient(circle, rgba(239,68,68,0.06) 0%, transparent 60%);
+  border-radius: 50%; pointer-events: none;
+}
+.content { position: relative; z-index: 1; padding: 40px 60px; flex: 1; display: flex; flex-direction: column; }
+
+/* Logo */
+.logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.logo-svg { width: 28px; height: 28px; }
+.logo-text { font-size: 13px; font-weight: 600; color: var(--fg-2); letter-spacing: 0.05em; }
+
+/* Title area */
+.header { margin-bottom: 28px; }
+.header h1 {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.header h1 .highlight-red { color: var(--critical); }
+.header h1 .highlight-green { color: var(--accent); }
+.header p {
+  font-size: 14px; color: var(--fg-2);
+}
+
+/* Two-bar comparison */
+.bars-container {
+  flex: 1; display: flex; align-items: stretch;
+  gap: 40px; padding: 0 0;
+}
+.bar-side {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: flex-end; position: relative;
+}
+.bar-side.left { align-items: flex-start; }
+.bar-side.right { align-items: flex-end; }
+
+.bar-column {
+  width: 100%; display: flex; flex-direction: column;
+}
+.bar-label-top {
+  font-family: var(--font-mono); font-size: 13px;
+  font-weight: 600; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.bar-label-top .num { font-size: 48px; font-weight: 700; }
+.bar-label-top .num.red { color: var(--critical); }
+.bar-label-top .num.green { color: var(--accent); }
+.bar-label-top .text { font-size: 16px; font-weight: 600; font-family: var(--font-body); }
+.bar-label-top .text.red { color: var(--critical); }
+.bar-label-top .text.green { color: var(--accent); }
+
+.bar-track {
+  width: 100%; border-radius: 12px; overflow: hidden;
+  position: relative;
+}
+.bar-track.red {
+  height: 320px; background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+.bar-track.green {
+  height: 320px; background: rgba(34,197,94,0.04);
+  border: 1px solid rgba(34,197,94,0.1);
+  justify-content: flex-end;
+}
+.bar-fill {
+  position: absolute; bottom: 0; border-radius: 12px;
+  transition: width 0.5s;
+}
+.bar-fill.red-fill {
+  width: 100%; height: 99.7%;
+  background: linear-gradient(180deg, #ef4444, #b91c1c);
+  box-shadow: 0 0 30px rgba(239,68,68,0.3);
+}
+.bar-fill.green-fill {
+  width: 100%; height: 0.3%;
+  background: linear-gradient(180deg, #22c55e, #15803d);
+  box-shadow: 0 0 30px rgba(34,197,94,0.3);
+}
+
+/* Donut indicator in center */
+.center-divider {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-width: 80px; gap: 8px;
+}
+.center-donut {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: conic-gradient(
+    #ef4444 0deg 358.92deg,
+    #22c55e 358.92deg 360deg
+  );
+  position: relative; box-shadow: 0 0 40px rgba(239,68,68,0.15);
+}
+.center-donut::after {
+  content: '';
+  position: absolute; top: 12px; left: 12px; right: 12px; bottom: 12px;
+  border-radius: 50%; background: var(--bg);
+}
+.center-label {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--muted); text-align: center;
+  line-height: 1.4;
+}
+.center-label .big { font-size: 16px; font-weight: 700; display: block; }
+
+/* Subtext */
+.footer-text {
+  margin-top: 24px; padding-top: 16px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.footer-text p {
+  font-size: 14px; color: var(--fg-2);
+}
+.footer-text .em {
+  font-family: var(--font-mono); font-weight: 600;
+  color: var(--fg);
+}
+.footer-text .em.red { color: var(--critical); }
+.footer-text .em.green { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="content">
+    <div class="logo-row">
+      <svg class="logo-svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#22c55e"/><stop offset="100%" style="stop-color:#16a34a"/></linearGradient><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4ade80"/><stop offset="100%" style="stop-color:#22c55e"/></linearGradient></defs><circle cx="64" cy="64" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.3"/><polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#g2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/><circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/><circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/><circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/><circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/><circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/></svg>
+      <span class="logo-text">OBSERVECO</span>
+    </div>
+    <div class="header">
+      <h1>Token split: <span class="highlight-red">99.7%</span> overhead vs <span class="highlight-green">0.3%</span> output</h1>
+      <p>Where every 1,000 tokens really go</p>
+    </div>
+    <div class="bars-container">
+      <div class="bar-side left">
+        <div class="bar-column">
+          <div class="bar-label-top">
+            <span class="num red">99.7%</span>
+            <span class="text red">Overhead</span>
+          </div>
+          <div class="bar-track red">
+            <div class="bar-fill red-fill"></div>
+          </div>
+        </div>
+      </div>
+      <div class="center-divider">
+        <div class="center-donut"></div>
+        <div class="center-label">
+          <span class="big">vs</span>
+        </div>
+      </div>
+      <div class="bar-side right">
+        <div class="bar-column" style="align-items:flex-end;">
+          <div class="bar-label-top" style="flex-direction:row-reverse;">
+            <span class="num green">0.3%</span>
+            <span class="text green">Output</span>
+          </div>
+          <div class="bar-track green" style="display:flex; align-items:flex-end; justify-content:flex-end;">
+            <div class="bar-fill green-fill" style="bottom:auto; top:0; height:0.3%; width:100%; background:linear-gradient(180deg, #22c55e, #15803d);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-text">
+      <p>For every <span class="em">1,000 tokens</span> processed, only <span class="em green">3</span> produce output.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

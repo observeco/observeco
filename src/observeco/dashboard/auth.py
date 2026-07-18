@@ -46,8 +46,7 @@ _TOKEN_PATH = get_data_dir() / ".dashboard_secret"
 def load_or_generate_secret() -> str:
     """Load the dashboard secret from file, or generate and persist one.
 
-    Uses cryptographically secure secrets.token_urlsafe(32) (ref Sean's
-    requirement — must be crypto-secure, not random.choice).
+    Uses cryptographically secure secrets.token_urlsafe(32) (must be crypto-secure, not random.choice).
 
     Returns:
         The 43-character URL-safe base64 secret string.

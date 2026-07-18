@@ -19,6 +19,7 @@ from typing import Optional
 
 import psutil
 
+from observeco.dashboard.config import PORTS
 from .dirs import get_data_dir
 
 logger = logging.getLogger(__name__)
@@ -195,9 +196,9 @@ class HealthChecker:
     def _check_ports(self) -> ComponentStatus:
         """Check if required ports are in use by ObserveCo components."""
         ports_in_use = {}
-        # ponytail: checks hardcoded ports (4318 OTel + 9119 dashboard default).
+        # ponytail: checks PORTS.otel (OTel) + PORTS.dashboard (dashboard).
         # If dashboard runs on a non-default port, this check reflects that.
-        for port in [4318, 9119]:
+        for port in [PORTS.otel, PORTS.dashboard]:
             try:
                 import socket
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -333,7 +334,6 @@ class HealthChecker:
 
     def _calculate_overall(self) -> HealthLevel:
         """Calculate overall health from L1 + L2 checks."""
-        all_statuses = list(self.status.level1.values()) + list(self.status.level2.values())
 
         # Any L1 DOWN = CRITICAL
         if any(s == ComponentStatus.DOWN for s in self.status.level1.values()):

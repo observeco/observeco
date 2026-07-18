@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ObserveCo · Canary Report Card</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc;
+      --accent: #22c55e; --accent-on: #0c1628;
+      --status-healthy: #22c55e; --status-warning: #eab308; --status-critical: #ef4444;
+      --success: #22c55e; --warn: #eab308; --danger: #ef4444; --meta: #3b82f6;
+      --fg-2: #94a3b8; --muted: #64748b;
+      --border: #334155; --border-soft: #273548;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --text-xs: 11px; --text-sm: 12px; --text-base: 14px; --text-lg: 15px; --text-xl: 18px; --text-2xl: 24px;
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
+      --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 9999px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--fg); line-height: 1.5; -webkit-font-smoothing: antialiased; padding: var(--space-6); }
+
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+    .header-left { display: flex; align-items: center; gap: var(--space-3); }
+    .header-title { font-size: var(--text-xl); font-weight: 700; }
+    .header-title span { color: var(--muted); font-weight: 400; }
+    .tier-badge { padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tier-badge.free { background: #166534; color: #86efac; }
+
+    .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6); }
+
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .section-header { padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-size: var(--text-lg); font-weight: 600; }
+    .section-subtitle { font-size: var(--text-sm); color: var(--fg-2); }
+    .section-body { padding: var(--space-5); }
+
+    /* ── Variant label ── */
+    .variant-label { display: inline-block; background: var(--meta); color: #fff; font-size: var(--text-xs); font-weight: 600; padding: 2px 8px; border-radius: var(--radius-sm); letter-spacing: 0.05em; margin-bottom: var(--space-3); }
+
+    /* ── Variant A: Compact Fleet Card ── */
+    .canary-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+    .canary-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
+    .canary-card-title { font-weight: 600; font-size: var(--text-base); display: flex; align-items: center; gap: var(--space-2); }
+    .canary-card-title .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.green { background: var(--status-healthy); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+    .status-dot.yellow { background: var(--status-warning); box-shadow: 0 0 6px rgba(234,179,8,0.4); }
+    .status-dot.red { background: var(--status-critical); box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+    .canary-card-meta { font-size: var(--text-xs); color: var(--muted); }
+    .canary-card-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
+    .canary-stat { text-align: center; padding: var(--space-2); background: var(--surface); border-radius: var(--radius-sm); }
+    .canary-stat-num { font-size: var(--text-2xl); font-weight: 700; font-family: var(--font-mono); }
+    .canary-stat-num.green { color: var(--status-healthy); }
+    .canary-stat-num.yellow { color: var(--status-warning); }
+    .canary-stat-num.red { color: var(--status-critical); }
+    .canary-stat-label { font-size: var(--text-xs); color: var(--muted); margin-top: 2px; }
+    .canary-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .canary-card-footer .drift-indicator { font-size: var(--text-sm); display: flex; align-items: center; gap: var(--space-1); }
+    .drift-indicator.up { color: var(--status-healthy); }
+    .drift-indicator.down { color: var(--status-critical); }
+    .canary-card-footer .action-link { font-size: var(--text-sm); color: var(--meta); cursor: pointer; text-decoration: none; }
+    .canary-card-footer .action-link:hover { text-decoration: underline; }
+
+    /* ── Variant B: Expanded Per-Agent View ── */
+    .agent-canary { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+    .agent-canary-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+    .agent-canary-info { display: flex; align-items: center; gap: var(--space-3); }
+    .agent-canary-name { font-weight: 600; font-size: var(--text-lg); }
+    .agent-canary-model { font-size: var(--text-sm); color: var(--muted); font-family: var(--font-mono); }
+    .agent-canary-time { font-size: var(--text-xs); color: var(--muted); }
+    .agent-canary-score { text-align: right; }
+    .agent-canary-score .score-num { font-size: var(--text-2xl); font-weight: 700; font-family: var(--font-mono); }
+    .agent-canary-score .score-num.green { color: var(--status-healthy); }
+    .agent-canary-score .score-num.yellow { color: var(--status-warning); }
+    .agent-canary-score .score-num.red { color: var(--status-critical); }
+    .agent-canary-score .score-label { font-size: var(--text-xs); color: var(--muted); }
+
+    .task-table { width: 100%; border-collapse: collapse; }
+    .task-table th { text-align: left; font-size: var(--text-xs); color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: var(--space-2) var(--space-2); border-bottom: 1px solid var(--border); font-weight: 600; }
+    .task-table td { padding: var(--space-2) var(--space-2); border-bottom: 1px solid var(--border-soft); font-size: var(--text-sm); }
+    .task-table tr:last-child td { border-bottom: none; }
+    .task-table .task-name { font-weight: 500; }
+    .task-table .task-name .task-icon { margin-right: var(--space-1); }
+    .task-status { display: inline-flex; align-items: center; gap: var(--space-1); font-weight: 600; font-size: var(--text-sm); }
+    .task-status.pass { color: var(--status-healthy); }
+    .task-status.fail { color: var(--status-critical); }
+    .task-status.hang { color: var(--status-warning); }
+    .task-ci { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--fg-2); }
+    .task-delta { font-family: var(--font-mono); font-size: var(--text-xs); }
+    .task-delta.up { color: var(--status-healthy); }
+    .task-delta.down { color: var(--status-critical); }
+    .task-delta.neutral { color: var(--muted); }
+    .task-cost { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--muted); }
+    .task-recovery { font-size: var(--text-xs); color: var(--fg-2); }
+
+    .agent-canary-footer { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+    .agent-canary-footer .summary-line { font-size: var(--text-sm); color: var(--fg-2); }
+    .agent-canary-footer .summary-line strong { color: var(--fg); }
+    .btn { display: inline-flex; align-items: center; gap: var(--space-1); padding: 6px 14px; border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 500; cursor: pointer; border: none; font-family: var(--font-body); transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: var(--accent-on); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-outline { background: transparent; color: var(--fg-2); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--muted); color: var(--fg); }
+
+    /* ── Toast ── */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+    .toast { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; font-size: var(--text-sm); color: var(--fg); box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0; transform: translateY(10px); transition: all 0.25s ease; pointer-events: none; max-width: 360px; }
+    .toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+        <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+        <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="header-title">ObserveCo <span>Canary</span></span>
+    </div>
+    <span class="tier-badge free">Free</span>
+  </div>
+
+  <!-- Variant A: Compact Fleet Card -->
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <span class="variant-label">Variant A</span>
+        <span class="section-title">Compact Fleet Card</span>
+      </div>
+      <span class="section-subtitle">Fits in the existing fleet view — one card per agent</span>
+    </div>
+    <div class="section-body">
+      <div class="canary-card">
+        <div class="canary-card-header">
+          <div class="canary-card-title">
+            <span class="status-dot green"></span>
+            Main
+            <span style="font-size:var(--text-xs);color:var(--muted);font-family:var(--font-mono);margin-left:var(--space-1);">deepseek-v4-flash</span>
+          </div>
+          <span class="canary-card-meta">Last run: 2m ago · 9 tasks</span>
+        </div>
+        <div class="canary-card-stats">
+          <div class="canary-stat">
+            <div class="canary-stat-num green">7/9</div>
+            <div class="canary-stat-label">Pass Rate</div>
+          </div>
+          <div class="canary-stat">
+            <div class="canary-stat-num green">88%</div>
+            <div class="canary-stat-label">Accuracy (CI)</div>
+          </div>
+          <div class="canary-stat">
+            <div class="canary-stat-num yellow">1</div>
+            <div class="canary-stat-label">Hangs</div>
+          </div>
+          <div class="canary-stat">
+            <div class="canary-stat-num green">100%</div>
+            <div class="canary-stat-label">Recovery</div>
+          </div>
+        </div>
+        <div class="canary-card-footer">
+          <div class="drift-indicator down">▼ 3.2% vs baseline</div>
+          <a class="action-link" onclick="showToast('Opening per-agent view...')">View details →</a>
+        </div>
+      </div>
+
+      <div style="margin-top:var(--space-3);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+        <div class="canary-card">
+          <div class="canary-card-header">
+            <div class="canary-card-title">
+              <span class="status-dot yellow"></span>
+              Dreamer
+              <span style="font-size:var(--text-xs);color:var(--muted);font-family:var(--font-mono);margin-left:var(--space-1);">deepseek-v4-flash</span>
+            </div>
+            <span class="canary-card-meta">Last run: 5m ago · 9 tasks</span>
+          </div>
+          <div class="canary-card-stats">
+            <div class="canary-stat"><div class="canary-stat-num yellow">5/9</div><div class="canary-stat-label">Pass Rate</div></div>
+            <div class="canary-stat"><div class="canary-stat-num yellow">62%</div><div class="canary-stat-label">Accuracy (CI)</div></div>
+            <div class="canary-stat"><div class="canary-stat-num yellow">2</div><div class="canary-stat-label">Hangs</div></div>
+            <div class="canary-stat"><div class="canary-stat-num green">100%</div><div class="canary-stat-label">Recovery</div></div>
+          </div>
+          <div class="canary-card-footer">
+            <div class="drift-indicator down">▼ 8.1% vs baseline</div>
+            <a class="action-link" onclick="showToast('Opening per-agent view...')">View details →</a>
+          </div>
+        </div>
+        <div class="canary-card">
+          <div class="canary-card-header">
+            <div class="canary-card-title">
+              <span class="status-dot green"></span>
+              Hound
+              <span style="font-size:var(--text-xs);color:var(--muted);font-family:var(--font-mono);margin-left:var(--space-1);">deepseek-v4-pro</span>
+            </div>
+            <span class="canary-card-meta">Last run: 1m ago · 9 tasks</span>
+          </div>
+          <div class="canary-card-stats">
+            <div class="canary-stat"><div class="canary-stat-num green">8/9</div><div class="canary-stat-label">Pass Rate</div></div>
+            <div class="canary-stat"><div class="canary-stat-num green">92%</div><div class="canary-stat-label">Accuracy (CI)</div></div>
+            <div class="canary-stat"><div class="canary-stat-num green">0</div><div class="canary-stat-label">Hangs</div></div>
+            <div class="canary-stat"><div class="canary-stat-num green">100%</div><div class="canary-stat-label">Recovery</div></div>
+          </div>
+          <div class="canary-card-footer">
+            <div class="drift-indicator up">▲ 1.1% vs baseline</div>
+            <a class="action-link" onclick="showToast('Opening per-agent view...')">View details →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Variant B: Expanded Per-Agent View -->
+  <div class="section">
+    <div class="section-header">
+      <div>
+        <span class="variant-label">Variant B</span>
+        <span class="section-title">Expanded Per-Agent View</span>
+      </div>
+      <span class="section-subtitle">Full task breakdown with CI, deltas, and trajectory flags</span>
+    </div>
+    <div class="section-body">
+      <div class="agent-canary">
+        <div class="agent-canary-header">
+          <div class="agent-canary-info">
+            <span class="status-dot green" style="width:10px;height:10px;border-radius:50%;display:inline-block;"></span>
+            <div>
+              <div class="agent-canary-name">Main</div>
+              <div class="agent-canary-model">deepseek-v4-flash · config: baseline-v3</div>
+            </div>
+          </div>
+          <div class="agent-canary-score">
+            <div class="score-num green">78%</div>
+            <div class="score-label">Overall Accuracy</div>
+          </div>
+        </div>
+
+        <table class="task-table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Status</th>
+              <th>Accuracy (CI)</th>
+              <th>Δ vs Baseline</th>
+              <th>Cost</th>
+              <th>Recovery</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="task-name"><span class="task-icon">📋</span> Extract structured data</td>
+              <td><span class="task-status pass">✅ Pass</span></td>
+              <td><span class="task-ci">92% [88–96]</span></td>
+              <td><span class="task-delta up">+1.2%</span></td>
+              <td><span class="task-cost">$0.004</span></td>
+              <td><span class="task-recovery">—</span></td>
+            </tr>
+            <tr>
+              <td class="task-name"><span class="task-icon">🔍</span> Follow multi-step instructions</td>
+              <td><span class="task-status pass">✅ Pass</span></td>
+              <td><span class="task-ci">85% [80–90]</span></td>
+              <td><span class="task-delta down">-2.1%</span></td>
+              <td><span class="task-cost">$0.008</span></td>
+              <td><span class="task-recovery">—</span></td>
+            </tr>
+            <tr>
+              <td class="task-name"><span class="task-icon">🧮</span> Arithmetic reasoning</td>
+              <td><span class="task-status pass">✅ Pass</span></td>
+              <td><span class="task-ci">88% [83–93]</span></td>
+              <td><span class="task-delta neutral">±0.0%</span></td>
+              <td><span class="task-cost">$0.003</span></td>
+              <td><span class="task-recovery">—</span></td>
+            </tr>
+            <tr>
+              <td class="task-name"><span class="task-icon">📝</span> Summarize conversation</td>
+              <td><span class="task-status pass">✅ Pass</span></td>
+              <td><span class="task-ci">76% [70–82]</span></td>
+              <td><span class="task-delta down">-4.5%</span></td>
+              <td><span class="task-cost">$0.012</span></td>
+              <td><span class="task-recovery">—</span></td>
+            </tr>
+            <tr>
+              <td class="task-name"><span class="task-icon">🔗</span> Tool selection</td>
+              <td><span class="task-status pass">✅ Pass</span></td>
+              <td><span class="task-ci">81% [76–86]</span></td>
+              <td><span class="task-delta up">+0.8%</span></td>
+              <td><span class="task-cost">$0.006</span></td>
+              <td><span class="task-recovery">—</span></td>
+            </tr>
+            <tr>
+              <td class="task-name"><span class="task-icon">⏱️</span> Time-bound response</td>
+              <td><span class="task-status hang">⏳ Hang</span></td>
+              <td><span class="task-ci">—</span></td>
+              <td><span class="task-delta neutral">N/A</span></td>
+              <td><span class="task-cost">$0.001</span></td>
+              <td><span class="task-recovery">✅ Auto-recovered</span></td>
+            </tr>
+            <tr>
+              <td class="task-name"><span class="task-icon">📊</span> Chart interpretation</td>
+              <td><span class="task-status fail">❌ Fail</span></td>
+              <td><span class="task-ci">34% [28–40]</span></td>
+              <td><span class="task-delta down">-12.3%</span></td>
+              <td><span class="task-cost">$0.009</span></td>
+              <td><span class="task-recovery">—</span></td>
+            </tr>
+            <tr>
+              <td class="task-name"><span class="task-icon">📄</span> Document Q&A</td>
+              <td><span class="task-status pass">✅ Pass</span></td>
+              <td><span class="task-ci">90% [86–94]</span></td>
+              <td><span class="task-delta up">+2.3%</span></td>
+              <td><span class="task-cost">$0.005</span></td>
+              <td><span class="task-recovery">—</span></td>
+            </tr>
+            <tr>
+              <td class="task-name"><span class="task-icon">⚙️</span> Code generation</td>
+              <td><span class="task-status pass">✅ Pass</span></td>
+              <td><span class="task-ci">72% [65–79]</span></td>
+              <td><span class="task-delta down">-3.1%</span></td>
+              <td><span class="task-cost">$0.015</span></td>
+              <td><span class="task-recovery">—</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="agent-canary-footer">
+          <div class="summary-line">
+            <strong>7/9 pass</strong> · 1 hang (auto-recovered) · 1 fail · <strong style="color:var(--status-critical);">-3.2% drift</strong> vs baseline
+          </div>
+          <div style="display:flex;gap:var(--space-2);">
+            <button class="btn btn-outline" onclick="showToast('Opening grid report...')">Grid Report</button>
+            <button class="btn btn-primary" onclick="showToast('Re-running canary...')">Re-run Canary</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+function showToast(msg) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2500);
+}
+</script>
+
+</body>
+</html>

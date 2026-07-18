@@ -5,13 +5,12 @@ Spec: observeco-master-plan.md §3.64
 """
 
 import json
-import os
 import re
 import time
-from pathlib import Path
 from typing import Any
 
-from observeco.config import hermes_home, write_agent
+from observeco.config import write_agent, AgentConfig, _AGENTS_JSON
+from observeco.dirs import hermes_home
 from observeco.db import Database
 
 # Cache for the GET endpoint (in-memory, 5min TTL)

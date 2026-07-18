@@ -124,6 +124,10 @@ def seed_demo_data(db: Optional[Database] = None) -> int:
                 context_window_pct=win_pct,
             )
             count += 1
+            # ponytail: distinct timestamps across demo log writes. Using a
+            # 1ms sleep is a race-condition workaround; a monotonic counter or
+            # UUID would be correct. Upgrade: db.log_plugin_tracking should
+            # accept an explicit sequence param instead of relying on mtime.
             time.sleep(0.001)  # Ensure distinct timestamps
 
     return count

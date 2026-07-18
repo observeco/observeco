@@ -13,6 +13,8 @@ Usage:
 
 import argparse
 import json
+
+from observeco.dashboard.config import PORTS
 import logging
 import os
 import time
@@ -34,7 +36,7 @@ logger = logging.getLogger("observeco.proxy")
 # Configuration
 # ---------------------------------------------------------------------------
 
-DEFAULT_PORT = 9200
+DEFAULT_PORT = PORTS.proxy
 DEFAULT_UPSTREAM = "https://api.openai.com"
 REQUEST_TIMEOUT = 300  # seconds — LLM calls can be slow
 MAX_RETRIES = 2

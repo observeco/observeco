@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ObserveCo · Task Definition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc;
+      --accent: #22c55e; --accent-on: #0c1628;
+      --status-healthy: #22c55e; --status-warning: #eab308; --status-critical: #ef4444;
+      --success: #22c55e; --warn: #eab308; --danger: #ef4444; --meta: #3b82f6;
+      --fg-2: #94a3b8; --muted: #64748b;
+      --border: #334155; --border-soft: #273548;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --text-xs: 11px; --text-sm: 12px; --text-base: 14px; --text-lg: 15px; --text-xl: 18px; --text-2xl: 24px;
+      --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px;
+      --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 9999px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--fg); line-height: 1.5; -webkit-font-smoothing: antialiased; padding: var(--space-6); }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
+    .header-left { display: flex; align-items: center; gap: var(--space-3); }
+    .header-title { font-size: var(--text-xl); font-weight: 700; }
+    .header-title span { color: var(--muted); font-weight: 400; }
+    .tier-badge { padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tier-badge.free { background: #166534; color: #86efac; }
+    .container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: var(--space-6); }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .section-header { padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-size: var(--text-lg); font-weight: 600; }
+    .section-subtitle { font-size: var(--text-sm); color: var(--fg-2); }
+    .section-body { padding: var(--space-5); }
+
+    .form-group { margin-bottom: var(--space-4); }
+    .form-label { display: block; font-size: var(--text-sm); font-weight: 600; color: var(--fg-2); margin-bottom: var(--space-1); }
+    .form-label .hint { font-weight: 400; color: var(--muted); }
+    .form-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 8px 12px; font-size: var(--text-base); color: var(--fg); font-family: var(--font-body); outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--accent); }
+    .form-textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 8px 12px; font-size: var(--text-sm); color: var(--fg); font-family: var(--font-mono); outline: none; min-height: 120px; resize: vertical; transition: border-color 0.15s; }
+    .form-textarea:focus { border-color: var(--accent); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+    .form-select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 8px 12px; font-size: var(--text-base); color: var(--fg); font-family: var(--font-body); outline: none; cursor: pointer; }
+    .form-select:focus { border-color: var(--accent); }
+
+    .task-list { display: flex; flex-direction: column; gap: var(--space-2); }
+    .task-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); }
+    .task-item-info { display: flex; align-items: center; gap: var(--space-3); }
+    .task-item-name { font-weight: 500; font-size: var(--text-base); }
+    .task-item-meta { font-size: var(--text-xs); color: var(--muted); }
+    .task-item-actions { display: flex; gap: var(--space-2); }
+    .task-item .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .status-dot.green { background: var(--status-healthy); }
+    .status-dot.yellow { background: var(--status-warning); }
+
+    .btn { display: inline-flex; align-items: center; gap: var(--space-1); padding: 8px 16px; border-radius: var(--radius-md); font-size: var(--text-sm); font-weight: 500; cursor: pointer; border: none; font-family: var(--font-body); transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: var(--accent-on); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-outline { background: transparent; color: var(--fg-2); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--muted); color: var(--fg); }
+    .btn-sm { padding: 4px 10px; font-size: var(--text-xs); }
+    .btn-icon { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 4px; font-size: var(--text-base); }
+    .btn-icon:hover { color: var(--fg); }
+
+    .yaml-preview { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); font-family: var(--font-mono); font-size: var(--text-xs); color: var(--fg-2); line-height: 1.6; white-space: pre; overflow-x: auto; }
+
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+    .toast { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; font-size: var(--text-sm); color: var(--fg); box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0; transform: translateY(10px); transition: all 0.25s ease; pointer-events: none; max-width: 360px; }
+    .toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="28" height="28">
+        <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
+        <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="header-title">ObserveCo <span>Tasks</span></span>
+    </div>
+    <span class="tier-badge free">Free</span>
+  </div>
+
+  <!-- Existing Tasks -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Benchmark Tasks</span>
+      <span class="section-subtitle">3 tasks defined · 6 built-in</span>
+    </div>
+    <div class="section-body">
+      <div class="task-list">
+        <div class="task-item">
+          <div class="task-item-info">
+            <span class="status-dot green"></span>
+            <div>
+              <div class="task-item-name">Extract structured data</div>
+              <div class="task-item-meta">exact_match · timeout: 30s · 3 assertions</div>
+            </div>
+          </div>
+          <div class="task-item-actions">
+            <button class="btn btn-sm btn-outline" onclick="showToast('Editing task...')">Edit</button>
+            <button class="btn-icon" onclick="showToast('Task duplicated')" title="Duplicate">⧉</button>
+            <button class="btn-icon" onclick="showToast('Task deleted')" title="Delete">✕</button>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-item-info">
+            <span class="status-dot green"></span>
+            <div>
+              <div class="task-item-name">Follow multi-step instructions</div>
+              <div class="task-item-meta">contains · timeout: 60s · 5 assertions</div>
+            </div>
+          </div>
+          <div class="task-item-actions">
+            <button class="btn btn-sm btn-outline" onclick="showToast('Editing task...')">Edit</button>
+            <button class="btn-icon" onclick="showToast('Task duplicated')" title="Duplicate">⧉</button>
+            <button class="btn-icon" onclick="showToast('Task deleted')" title="Delete">✕</button>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-item-info">
+            <span class="status-dot yellow"></span>
+            <div>
+              <div class="task-item-name">Chart interpretation</div>
+              <div class="task-item-meta">numeric_range · timeout: 45s · 2 assertions</div>
+            </div>
+          </div>
+          <div class="task-item-actions">
+            <button class="btn btn-sm btn-outline" onclick="showToast('Editing task...')">Edit</button>
+            <button class="btn-icon" onclick="showToast('Task duplicated')" title="Duplicate">⧉</button>
+            <button class="btn-icon" onclick="showToast('Task deleted')" title="Delete">✕</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);">
+        <button class="btn btn-primary" onclick="showToast('Opening task editor...')">+ New Task</button>
+        <button class="btn btn-outline" onclick="showToast('Importing YAML...')">Import YAML</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Editor (YAML mode) -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Task Editor</span>
+      <div style="display:flex;gap:var(--space-2);align-items:center;">
+        <span class="section-subtitle">Editing: Chart interpretation</span>
+        <span style="display:flex;gap:2px;background:var(--bg);padding:2px;border-radius:var(--radius-pill);border:1px solid var(--border);">
+          <button class="btn btn-sm btn-outline" onclick="showToast('Form mode')" style="border:none;">Form</button>
+          <button class="btn btn-sm btn-primary" onclick="showToast('YAML mode')">YAML</button>
+        </span>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="yaml-preview">name: chart-interpretation
+description: "Agent reads a bar chart and answers questions about the data"
+prompt: |
+  Given the following chart data, answer the question.
+  Chart: {{ chart_data }}
+  Question: {{ question }}
+assertions:
+  - type: numeric_range
+    target: answer
+    min: 0
+    max: 100
+    tolerance: 5
+  - type: contains
+    target: reasoning
+    keywords: ["increase", "decrease", "unchanged"]
+timeout: 45
+model: deepseek-v4-flash
+trials: 3</div>
+      <div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="showToast('Changes discarded')">Cancel</button>
+        <button class="btn btn-primary" onclick="showToast('Task saved')">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form mode (shown when Form tab is active) -->
+  <div class="section" style="display:none;" id="formMode">
+    <div class="section-header">
+      <span class="section-title">Task Editor (Form)</span>
+      <span class="section-subtitle">Editing: Chart interpretation</span>
+    </div>
+    <div class="section-body">
+      <div class="form-group">
+        <label class="form-label">Task Name</label>
+        <input class="form-input" type="text" value="chart-interpretation">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description <span class="hint">(optional)</span></label>
+        <input class="form-input" type="text" value="Agent reads a bar chart and answers questions about the data">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prompt Template</label>
+        <textarea class="form-textarea">Given the following chart data, answer the question.
+Chart: {{ chart_data }}
+Question: {{ question }}</textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Assertion Type</label>
+          <select class="form-select">
+            <option>exact_match</option>
+            <option selected>numeric_range</option>
+            <option>contains</option>
+            <option>regex</option>
+            <option>llm_judge</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Timeout (seconds)</label>
+          <input class="form-input" type="number" value="45">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Model Override <span class="hint">(optional)</span></label>
+          <select class="form-select">
+            <option>default</option>
+            <option selected>deepseek-v4-flash</option>
+            <option>deepseek-v4-pro</option>
+            <option>gemma4:31b</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Trials</label>
+          <input class="form-input" type="number" value="3">
+        </div>
+      </div>
+      <div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="showToast('Changes discarded')">Cancel</button>
+        <button class="btn btn-primary" onclick="showToast('Task saved')">Save Task</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<script>
+function showToast(msg) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2500);
+}
+</script>
+</body>
+</html>

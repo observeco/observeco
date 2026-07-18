@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from observeco.dashboard.config import PORTS
+
 
 @dataclass
 class CheckResult:
@@ -176,7 +178,7 @@ def run_checks(
     if db_path is None:
         db_path = data_dir / "pulse.db"
     if ports is None:
-        ports = [4318, 8787]
+        ports = [PORTS.otel, PORTS.service]
     if config_path is None:
         config_path = data_dir / "config.yaml"
 
@@ -202,7 +204,7 @@ def run_checks(
 
 if __name__ == "__main__":
     # Self-check: validate the current environment.
-    r = run_checks(ports=[4318, 8787], exit_on_fatal=False)
+    r = run_checks(ports=[PORTS.otel, PORTS.service], exit_on_fatal=False)
     if r.passed:
         print("All startup checks passed.")
     else:

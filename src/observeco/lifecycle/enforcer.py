@@ -16,12 +16,11 @@ Usage:
 
 import json
 import time
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
 from typing import Optional
 
-from observeco.constants import DRIFT_WARN_PCT, DRIFT_CRITICAL_PCT
-
+from observeco.constants import DRIFT_CRITICAL_PCT, DRIFT_WARN_PCT
 
 # ── Constants ──────────────────────────────────────────────────────
 
@@ -172,7 +171,7 @@ class LifecycleEnforcer:
                 "state": target_state,
                 "waived_gates": [g["name"] for g in failed],
                 "waived_at": time.time(),
-                "reason": (evidence or {}).get("waiver_reason", "Sean override"),
+                "reason": (evidence or {}).get("waiver_reason", "admin override"),
             })
         self._save()
         return {"ok": True, "message": f"Advanced to {target_state}", "gates": gates}

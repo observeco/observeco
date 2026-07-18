@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ObserveCo — "So What?" Insight Card Pattern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#0f172a; --surface:#1e293b; --surface-hover:#253349; --surface-active:#334155;
+  --border:#334155; --border-soft:#273548;
+  --status-healthy:#22c55e; --status-warning:#eab308; --status-critical:#ef4444; --status-info:#3b82f6;
+  --token-identity:#6366f1; --token-skills:#8b5cf6; --token-memory:#ec4899; --token-tools:#14b8a6; --token-guidance:#f97316;
+  --fg:#f8fafc; --fg-2:#94a3b8; --fg-3:#64748b;
+  --accent:#22c55e; --accent-on:#0c1628; --warn:#eab308; --danger:#ef4444; --meta:#3b82f6;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --text-xs:11px; --text-sm:12px; --text-base:14px; --text-lg:18px; --text-xl:24px;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px; --space-8:32px;
+  --radius-sm:4px; --radius-md:8px; --radius-lg:12px; --radius-pill:9999px;
+  --ease:cubic-bezier(0.2,0,0,1); --fast:100ms; --base:150ms;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-sans);font-size:var(--text-base);line-height:1.5;-webkit-font-smoothing:antialiased;padding:var(--space-8) 0 var(--space-8)}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit}
+:focus-visible{outline:none;box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--accent);border-radius:var(--radius-sm)}
+.wrap{max-width:920px;margin:0 auto;padding:0 var(--space-6)}
+
+.page-h{margin-bottom:var(--space-6)}
+.page-h .crumb{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--fg-3)}
+.page-h h1{font-size:var(--text-xl);font-weight:700;letter-spacing:-0.02em;margin-top:6px}
+.page-h p{color:var(--fg-2);font-size:var(--text-sm);max-width:640px;margin-top:var(--space-2)}
+
+/* ════ THE PATTERN — the insight card ════ */
+/* anatomy: leading rule (tone color) + mono micro-label + sentence + optional action link.
+   tones: insight(green) / watch(amber) / alert(red) / neutral(slate). subtle tint only. */
+.swc{display:flex;gap:10px;align-items:flex-start;padding:8px 11px;border-radius:var(--radius-sm);
+  border:1px solid var(--border-soft);background:var(--surface);position:relative;font-size:var(--text-sm)}
+.swc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.swc .mark{flex-shrink:0;width:16px;height:16px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;margin-top:1px}
+.swc .body{flex:1;min-width:0}
+.swc .lead{font-family:var(--font-mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:2px}
+.swc .txt{color:var(--fg);line-height:1.45}
+.swc .txt b{font-weight:600}
+.swc .txt .num{font-family:var(--font-mono);font-weight:600}
+.swc .act{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-size:var(--text-xs);font-weight:600;font-family:var(--font-sans)}
+.swc .act:hover{text-decoration:underline}
+/* tones */
+.swc.insight{background:rgba(34,197,94,.06)}.swc.insight::before{background:var(--accent)}
+.swc.insight .mark{background:rgba(34,197,94,.16);color:var(--accent)}.swc.insight .lead{color:var(--accent)}.swc.insight .act{color:var(--accent)}
+.swc.watch{background:rgba(234,179,8,.06)}.swc.watch::before{background:var(--warn)}
+.swc.watch .mark{background:rgba(234,179,8,.16);color:var(--warn)}.swc.watch .lead{color:var(--warn)}.swc.watch .act{color:var(--warn)}
+.swc.alert{background:rgba(239,68,68,.06)}.swc.alert::before{background:var(--danger)}
+.swc.alert .mark{background:rgba(239,68,68,.16);color:var(--danger)}.swc.alert .lead{color:var(--danger)}.swc.alert .act{color:var(--danger)}
+.swc.neutral::before{background:var(--fg-3)}
+.swc.neutral .mark{background:var(--surface-active);color:var(--fg-2)}.swc.neutral .lead{color:var(--fg-3)}.swc.neutral .act{color:var(--meta)}
+
+/* spec strip */
+.spec{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin:var(--space-4) 0 var(--space-8)}
+.spec .tone{padding:var(--space-3);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)}
+.spec .tone h4{font-size:var(--text-xs);font-weight:600;display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.spec .tone .ch{width:10px;height:10px;border-radius:3px}
+.spec .tone p{font-size:11px;color:var(--fg-3);line-height:1.4}
+.ci{background:var(--accent)}.cw{background:var(--warn)}.cr{background:var(--danger)}.cn{background:var(--fg-3)}
+
+.demo-h{font-size:var(--text-sm);font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-2);margin:var(--space-8) 0 var(--space-2);display:flex;align-items:baseline;gap:10px}
+.demo-h .tag{font-family:var(--font-mono);font-size:10px;color:var(--fg-3);font-weight:400;text-transform:none;letter-spacing:0}
+.demo-note{font-size:var(--text-xs);color:var(--fg-3);margin-bottom:var(--space-3)}
+
+/* ── host: agent card ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);width:340px;padding:var(--space-3);box-shadow:inset 4px 0 0 var(--status-warning)}
+.card-head{display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3)}
+.dot{width:8px;height:8px;border-radius:2px;background:var(--status-warning);box-shadow:0 0 0 3px rgba(234,179,8,.13)}
+.card-name{font-family:var(--font-mono);font-weight:600;font-size:15px}
+.fw{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1px 5px}
+.lastseen{margin-left:auto;font-family:var(--font-mono);font-size:var(--text-xs);color:var(--fg-3)}
+.crow{display:flex;align-items:center;gap:var(--space-2);min-height:30px;padding:4px 0}
+.row-label{font-size:var(--text-xs);font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-2);width:72px}
+.row-val{font-family:var(--font-mono);font-size:var(--text-sm)}
+.row-sub{font-size:var(--text-xs);color:var(--fg-3);margin-left:auto}
+.tokbar{display:flex;height:10px;border-radius:2px;overflow:hidden;flex:1;min-width:80px}
+.tokbar i{height:100%}
+.tokbar .identity{background:var(--token-identity)}.tokbar .skills{background:var(--token-skills)}.tokbar .memory{background:var(--token-memory)}.tokbar .tools{background:var(--token-tools)}.tokbar .guidance{background:var(--token-guidance)}
+.tokleg{display:flex;flex-wrap:wrap;gap:5px 11px;margin-top:7px}
+.tokleg span{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--fg-2)}.tokleg i{width:8px;height:8px;border-radius:2px}
+.drift-up{color:var(--status-warning)}
+
+/* ── host: alerts rail ── */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;width:320px}
+.panel-h{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-3);border-bottom:1px solid var(--border)}
+.panel-h h3{font-size:var(--text-sm);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.panel-h .pcount{margin-left:auto;font-family:var(--font-mono);font-size:var(--text-xs);color:var(--fg-3)}
+.alert{display:flex;gap:var(--space-2);padding:var(--space-3);border-left:3px solid var(--status-critical);background:rgba(239,68,68,.05)}
+.alert-agent{font-family:var(--font-mono);font-size:var(--text-sm);font-weight:600}
+.alert-msg{font-size:var(--text-xs);color:var(--fg-2);margin-top:2px}
+.alert-gap{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10px;color:var(--fg-3);margin-top:5px;background:rgba(234,179,8,.06);border:1px solid rgba(234,179,8,.25);border-radius:var(--radius-pill);padding:2px 7px}
+.alert-gap b{color:var(--status-warning)}
+
+/* ── host: drift inline ── */
+.drift-host{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);width:340px;padding:var(--space-3)}
+.drift-row{display:flex;align-items:center;gap:var(--space-3)}
+.drift-comp{display:flex;align-items:center;gap:7px;font-size:var(--text-sm)}
+.drift-comp i{width:9px;height:9px;border-radius:2px;background:var(--token-skills)}
+.drift-big{margin-left:auto;font-family:var(--font-mono);font-size:var(--text-xl);font-weight:700;color:var(--status-warning)}
+.spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:var(--space-2)}
+.spark i{flex:1;border-radius:1px 1px 0 0;background:var(--token-skills);opacity:.55}
+.spark i:last-child{opacity:1}
+@media(max-width:760px){.spec{grid-template-columns:1fr 1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="page-h">
+    <div class="crumb">Strong-Fit (v2) › Design pattern</div>
+    <h1>The "So What?" insight card</h1>
+    <p>One small, inline component that turns a raw number into a decision. It rides <b>directly beside</b> the data it explains — never a separate panel. Subtle tint, a 3px tone rule, a mono micro-label, one sentence, and an optional action. This is the layer that makes ObserveCo an observability <em>product</em>, not a data viewer.</p>
+  </div>
+
+  <div class="spec">
+    <div class="tone"><h4><span class="ch ci"></span>Insight</h4><p>A finding worth acting on, no urgency. Default tone. Green rule.</p></div>
+    <div class="tone"><h4><span class="ch cw"></span>Watch</h4><p>Trending the wrong way. Not broken yet. Amber rule.</p></div>
+    <div class="tone"><h4><span class="ch cr"></span>Alert</h4><p>Actionable now — breach, trip, or down. Red rule.</p></div>
+    <div class="tone"><h4><span class="ch cn"></span>Neutral</h4><p>Context or explanation, no judgment. Slate rule.</p></div>
+  </div>
+
+  <!-- ════ CONTEXT 1 — above token composition bar ════ -->
+  <div class="demo-h">Context 1 <span class="tag">— above the token composition bar on an agent card</span></div>
+  <div class="demo-note">Explains what the 5-segment bar means in dollars and waste, right where the user reads it.</div>
+  <div class="card">
+    <div class="card-head"><span class="dot"></span><span class="card-name">dreamer</span><span class="fw">Hermes</span><span class="lastseen">4m ago</span></div>
+    <div class="swc insight" style="margin-bottom:9px">
+      <span class="mark">✦</span>
+      <div class="body">
+        <span class="lead">Composition · so what</span>
+        <span class="txt"><b class="num">30%</b> of context is <b>skills</b> — but <b class="num">2 of 8</b> never fire. Compressing them recovers <b class="num">~1,800</b> tok/turn.</span>
+        <a href="#" class="act">Preview compression →</a>
+      </div>
+    </div>
+    <div class="crow"><span class="row-label">Compose</span>
+      <div class="tokbar"><i class="identity" style="width:22%"></i><i class="skills" style="width:30%"></i><i class="memory" style="width:26%"></i><i class="tools" style="width:12%"></i><i class="guidance" style="width:10%"></i></div>
+    </div>
+    <div class="tokleg">
+      <span><i style="background:var(--token-identity)"></i>Identity 22%</span>
+      <span><i style="background:var(--token-skills)"></i>Skills 30%</span>
+      <span><i style="background:var(--token-memory)"></i>Memory 26%</span>
+      <span><i style="background:var(--token-tools)"></i>Tools 12%</span>
+      <span><i style="background:var(--token-guidance)"></i>Guidance 10%</span>
+    </div>
+  </div>
+
+  <!-- ════ CONTEXT 2 — below alerts discovery gap ════ -->
+  <div class="demo-h">Context 2 <span class="tag">— below the alerts discovery gap badge</span></div>
+  <div class="demo-note">The gap badge states the fact; the card states the consequence and the fix.</div>
+  <div class="panel">
+    <div class="panel-h"><h3>Alerts</h3><span class="pcount mono">3 active</span></div>
+    <div class="alert">
+      <div class="body" style="flex:1">
+        <div class="alert-agent">raven</div>
+        <div class="alert-msg">Dead — connection refused on port 8204</div>
+        <div class="alert-gap">fired 03:15 · seen 07:00 — <b>3h 45m gap</b></div>
+        <div class="swc alert" style="margin-top:9px">
+          <span class="mark">!</span>
+          <div class="body">
+            <span class="lead">Discovery gap · so what</span>
+            <span class="txt">You found this <b class="num">3h 45m</b> after it died — past the <b class="num">2h</b> critical line. Wire a Telegram alert to cut blind time to seconds.</span>
+            <a href="#" class="act">Set up alerting →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ CONTEXT 3 — beside drift percentage ════ -->
+  <div class="demo-h">Context 3 <span class="tag">— beside the drift percentage on a card</span></div>
+  <div class="demo-note">A +12.4% number is neutral until the card tells you it's the bad kind of growth.</div>
+  <div class="drift-host">
+    <div class="drift-row">
+      <div class="drift-comp"><i></i>Skills drift · 7-day</div>
+      <span class="drift-big">+12.4%</span>
+    </div>
+    <div class="spark"><i style="height:30%"></i><i style="height:34%"></i><i style="height:40%"></i><i style="height:46%"></i><i style="height:58%"></i><i style="height:74%"></i><i style="height:100%"></i></div>
+    <div class="swc watch" style="margin-top:11px">
+      <span class="mark">↗</span>
+      <div class="body">
+        <span class="lead">Drift · so what</span>
+        <span class="txt">Skills grew <b class="num">+12.4%</b> — <b class="num">3</b> rule blocks added Tuesday. At this slope it crosses the context window in <b class="num">~6 weeks</b>.</span>
+        <a href="#" class="act">Open drift detail →</a>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:var(--space-8)"></div>
+</div>
+</body>
+</html>

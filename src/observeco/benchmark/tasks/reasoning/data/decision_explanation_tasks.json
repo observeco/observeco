@@ -1,0 +1,17 @@
+[
+  {
+    "decision": "We chose PostgreSQL over MongoDB for our financial application.",
+    "context": "Financial data with complex relationships, transactions, and strict consistency requirements.",
+    "expected": "PostgreSQL provides ACID transactions, strong consistency guarantees, schema enforcement, and referential integrity — all critical for financial data. MongoDB's eventual consistency and flexible schema would risk data integrity issues in a financial context."
+  },
+  {
+    "decision": "The team chose a monolith over microservices for the MVP.",
+    "context": "Three-person team, pre-product-market-fit, rapid iteration needed.",
+    "expected": "A monolith is faster to build, debug, and deploy for a small team. Microservices add network complexity, deployment overhead, and distributed debugging challenges — costs that aren't justified until the product scales beyond what a single developer can reason about."
+  },
+  {
+    "decision": "We use Redis for caching API responses instead of simply relying on browser cache.",
+    "context": "Multi-client application with mobile, web, and API consumers hitting the same backend.",
+    "expected": "Browser cache only helps one client at a time. Redis provides a shared cache layer that benefits all consumers simultaneously, reduces database load regardless of which client made the request, and allows cache invalidation control from the backend."
+  }
+]

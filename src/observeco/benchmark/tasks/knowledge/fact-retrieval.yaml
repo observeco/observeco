@@ -1,0 +1,35 @@
+# Fact Retrieval Benchmark
+#
+# Evaluates whether the agent can retrieve specific facts
+# from provided context text.
+
+task: fact_retrieval
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: ./data/fact_retrieval_tasks.json
+description: "Retrieve the requested facts from the provided context."
+doc_to_text: |
+  Answer the question using ONLY information from the provided context.
+  If the information is not in the context, say so.
+
+  Context: {{context}}
+
+  Question: {{question}}
+
+  Answer:
+doc_to_target: "{{expected}}"
+output_type: generate_until
+test_split: test
+generation_kwargs:
+  until: []
+  max_gen_toks: 256
+  do_sample: false
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: "1.0"
+  category: knowledge
+  difficulty: easy

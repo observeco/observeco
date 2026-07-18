@@ -6,7 +6,7 @@ We register a callback handler that logs token usage to token_logs.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from observeco.tracking.sdk.patcher_base import BasePatcher
 
@@ -26,7 +26,6 @@ class LangChainCallbackHandler:
     def on_llm_end(self, response: Any, **kwargs: Any) -> None:
         """LLM call ended — extract token usage."""
         try:
-            generations = getattr(response, "generations", [])
             llm_output = getattr(response, "llm_output", None)
 
             if llm_output and isinstance(llm_output, dict):
@@ -75,8 +74,6 @@ class LangChainPatcher(BasePatcher):
     def _patch_client(self, mod: Any) -> None:
         """Register callback handler in LangChain's callback system."""
         try:
-            from langchain_core.callbacks import CallbackManager
-            from langchain_core.callbacks import BaseCallbackHandler
 
             handler = LangChainCallbackHandler(self._log_token_turn)
 

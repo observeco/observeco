@@ -110,6 +110,10 @@ class OAuth2Provider:
         # Generate and store state for CSRF protection
         if not state:
             state = secrets.token_urlsafe(16)
+        # Bound the pending-states dict to prevent memory exhaustion via repeated /auth/login
+        if len(self._pending_states) > 1000:
+            cutoff = time.time() - 600
+            self._pending_states = {s: t for s, t in self._pending_states.items() if t > cutoff}
         self._pending_states[state] = time.time()
 
         import urllib.parse

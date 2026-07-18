@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Before/After Compression</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc; --accent: #22c55e;
+  --critical: #ef4444; --fg-2: #94a3b8; --muted: #64748b; --border: #334155;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body); background: var(--bg); color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+}
+.card {
+  width: 1200px; height: 500px;
+  background: linear-gradient(135deg, #0f172a 0%, #1a2332 50%, #0f172a 100%);
+  border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(rgba(34,197,94,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,197,94,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.content { position: relative; z-index: 1; padding: 32px 60px; flex: 1; display: flex; flex-direction: column; }
+
+.logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.logo-svg { width: 24px; height: 24px; }
+.logo-text { font-size: 12px; font-weight: 600; color: var(--fg-2); letter-spacing: 0.05em; }
+
+.header { margin-bottom: 20px; }
+.header h1 {
+  font-size: 24px; font-weight: 700; letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.header p { font-size: 14px; color: var(--fg-2); }
+
+/* Panels */
+.panels {
+  flex: 1; display: flex; align-items: center;
+  gap: 0; position: relative;
+}
+.panel {
+  flex: 1; border-radius: 16px; padding: 28px 32px;
+  display: flex; flex-direction: column; gap: 16px;
+  min-height: 220px;
+}
+.panel.before {
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.15);
+}
+.panel.after {
+  background: rgba(34,197,94,0.06);
+  border: 1px solid rgba(34,197,94,0.15);
+}
+.panel-label {
+  font-size: 13px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; display: flex; align-items: center; gap: 8px;
+}
+.panel-label .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.panel-label .dot.red { background: var(--critical); }
+.panel-label .dot.green { background: var(--accent); }
+.panel-label .status {
+  font-size: 10px; padding: 2px 8px; border-radius: 9999px;
+  font-weight: 600; text-transform: uppercase;
+}
+.panel-label .status.red { background: rgba(239,68,68,0.15); color: #fca5a5; }
+.panel-label .status.green { background: rgba(34,197,94,0.15); color: #86efac; }
+
+.panel-stats { display: flex; flex-direction: column; gap: 12px; }
+.panel-stat { display: flex; align-items: center; gap: 12px; }
+.panel-stat .icon { font-size: 18px; width: 28px; text-align: center; }
+.panel-stat .info { }
+.panel-stat .num {
+  font-family: var(--font-mono); font-size: 28px; font-weight: 700;
+}
+.panel-stat .num.red { color: var(--critical); }
+.panel-stat .num.green { color: var(--accent); }
+.panel-stat .num.muted { color: var(--fg-2); }
+.panel-stat .desc { font-size: 12px; color: var(--muted); }
+
+/* Arrow in middle */
+.arrow-wrap {
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; width: 64px;
+}
+.arrow {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--fg-2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* Savings row */
+.savings-row {
+  margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 32px; justify-content: center;
+}
+.saving-item {
+  display: flex; align-items: center; gap: 10px;
+}
+.saving-item .num {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+  color: var(--accent);
+}
+.saving-item .label {
+  font-size: 12px; color: var(--muted);
+  line-height: 1.3;
+}
+.saving-item .label strong { color: var(--fg-2); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="content">
+    <div class="logo-row">
+      <svg class="logo-svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#22c55e"/><stop offset="100%" style="stop-color:#16a34a"/></linearGradient><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4ade80"/><stop offset="100%" style="stop-color:#22c55e"/></linearGradient></defs><circle cx="64" cy="64" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.3"/><polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#g2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/><circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/><circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/><circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/><circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/><circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/></svg>
+      <span class="logo-text">OBSERVECO</span>
+    </div>
+    <div class="header">
+      <h1>Before &amp; after — skill compression</h1>
+      <p>Token-aware compression reduces payload without losing capability</p>
+    </div>
+    <div class="panels">
+      <div class="panel before">
+        <div class="panel-label">
+          <span class="dot red"></span> Before
+          <span class="status red">Inefficient</span>
+        </div>
+        <div class="panel-stats">
+          <div class="panel-stat">
+            <span class="icon">📄</span>
+            <div class="info">
+              <span class="num red">252</span>
+              <div class="desc">skill files loaded per turn</div>
+            </div>
+          </div>
+          <div class="panel-stat">
+            <span class="icon">📊</span>
+            <div class="info">
+              <span class="num red">1.26M</span>
+              <div class="desc">total tokens loaded</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="arrow-wrap">
+        <div class="arrow">→</div>
+      </div>
+      <div class="panel after">
+        <div class="panel-label">
+          <span class="dot green"></span> After
+          <span class="status green">Optimized</span>
+        </div>
+        <div class="panel-stats">
+          <div class="panel-stat">
+            <span class="icon">📄</span>
+            <div class="info">
+              <span class="num green">146</span>
+              <div class="desc">skill files loaded per turn</div>
+            </div>
+          </div>
+          <div class="panel-stat">
+            <span class="icon">📊</span>
+            <div class="info">
+              <span class="num green">730K</span>
+              <div class="desc">total tokens loaded</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="savings-row">
+      <div class="saving-item">
+        <span class="num">42%</span>
+        <div class="label">average compression<br><strong>savings</strong></div>
+      </div>
+      <div class="saving-item">
+        <span class="num">$6.20</span>
+        <div class="label">saved per month<br><strong>per agent</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

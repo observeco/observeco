@@ -1,0 +1,27 @@
+<nav class="nav" aria-label="Primary">
+  <div class="nav-group">
+    <span class="glabel">Monitor</span>
+    <span class="nav-tab active" aria-current="page">Fleet</span>
+    <span class="nav-tab clickable" hx-get="/api/alerts" hx-target="#alertsPanel" hx-swap="outerHTML">Alerts</span>
+    <span class="nav-tab clickable" hx-get="/api/timeline/errors" hx-target="#timelineBody" hx-swap="outerHTML">Error Timeline</span>
+    <span class="nav-tab clickable" data-tab="pathway">Pathway Map</span>
+  </div>
+  <div class="nav-group">
+    <span class="glabel">Analyze</span>
+    <span class="nav-tab">Tokens</span>
+    <span class="nav-tab">Brain</span>
+    <span class="nav-tab">Drift</span>
+    <span class="nav-tab">Compare</span>
+  </div>
+  <div class="nav-group">
+    <span class="glabel">Intelligence</span>
+    <span class="nav-tab">Anomalies<span class="soon">soon</span></span>
+    <span class="nav-tab">Health Score<span class="soon">soon</span></span>
+    <span class="nav-tab">Traces<span class="soon">soon</span></span>
+  </div>
+  <div class="nav-group">
+    <span class="glabel">Settings</span>
+    <span class="nav-tab">Config</span>
+    <span class="nav-tab">Billing</span>
+  </div>
+</nav>

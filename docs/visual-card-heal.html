@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — The Fix Card</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0d0f;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.card{width:1200px;height:630px;background:#111113;border-radius:24px;padding:48px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.tag{position:absolute;top:24px;right:32px;color:#52525b;font-size:13px;font-weight:500;letter-spacing:0.5px;border:1px solid #27272a;border-radius:100px;padding:4px 14px}
+.headline{font-size:32px;font-weight:700;color:#f4f4f5;line-height:1.3;margin-top:16px;max-width:85%}
+.headline em{color:#a1a1aa;font-style:normal}
+.feature-grid{display:flex;gap:24px;margin-top:40px;flex:1}
+.feature-card{flex:1;background:#18181b;border-radius:16px;padding:32px;display:flex;flex-direction:column;position:relative}
+.feature-card .icon{font-size:36px;margin-bottom:12px}
+.feature-card .title{font-size:22px;font-weight:700;color:#f4f4f5}
+.feature-card .desc{font-size:14px;color:#a1a1aa;line-height:1.5;margin-top:10px;flex:1}
+.feature-card .status{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:6px 14px;border-radius:100px;font-size:13px;font-weight:600;width:fit-content}
+.status-now{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3)}
+.status-next{background:rgba(59,130,246,0.15);color:#3b82f6;border:1px solid rgba(59,130,246,0.3)}
+.install-box{background:#18181b;border-radius:12px;padding:20px 28px;margin-top:20px;display:flex;align-items:center;gap:16px}
+.install-box code{font-family:'SF Mono','Fira Code',monospace;font-size:18px;color:#22c55e;font-weight:600}
+.install-box .sub{color:#71717a;font-size:13px}
+.install-box .arrow{color:#52525b;font-size:20px}
+.footer{display:flex;gap:32px;margin-top:16px;padding-top:16px;border-top:1px solid #27272a}
+.footer-item{display:flex;align-items:center;gap:10px;color:#a1a1aa;font-size:14px}
+.footer-item strong{color:#f4f4f5}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="tag">observeco.ai</div>
+  <div class="headline">Observation is table stakes. The real game is fixing problems before your users notice.</div>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="icon">⚡</div>
+      <div class="title">Auto-Restart</div>
+      <div class="desc">Detects crashed agents via pulse failures and restarts them automatically. No human needed.</div>
+      <div class="status status-now">✓ v0.3 — Available Now</div>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🔮</div>
+      <div class="title">Brain Analysis</div>
+      <div class="desc">Scans every agent's context for bloat, duplicates, and stale skills. Shows you exactly what to compress.</div>
+      <div class="status status-now">✓ v0.3 — Available Now</div>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📊</div>
+      <div class="title">Token Breakdown</div>
+      <div class="desc">Per-agent, per-provider spend. Cache hit rates. Output/input ratios. See where every cent goes.</div>
+      <div class="status status-now">✓ v0.3 — Available Now</div>
+    </div>
+  </div>
+  <div class="install-box">
+    <code>$ pip install observeco && observeco dashboard</code>
+    <span class="arrow">→</span>
+    <span class="sub">60 seconds. Local-first. No cloud.</span>
+  </div>
+  <div class="footer">
+    <div class="footer-item"><span class="icon">🔗</span><strong>github.com/observeco/observeco</strong></div>
+    <div class="footer-item"><span class="icon">📜</span>MIT · Free · Open source · No signup</div>
+  </div>
+</div>
+</body>
+</html>
