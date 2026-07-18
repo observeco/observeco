@@ -39,6 +39,7 @@ from observeco.dashboard.routes.detail import router as detail_router
 from observeco.dashboard.routes.token_analytics import router as analytics_router
 from observeco.dashboard.routes.efficiency import router as efficiency_router
 from observeco.dashboard.routes.capability import router as capability_router
+from observeco.dashboard.routes.harness_opt import router as harness_opt_router
 from observeco.db import Database
 from observeco.dashboard.config import PORTS
 
@@ -93,6 +94,7 @@ app.include_router(timeline_router)
 app.include_router(detail_router)
 app.include_router(analytics_router)
 app.include_router(capability_router)
+app.include_router(harness_opt_router)
 
 # --- Startup: initialise first_run_at, log license state ---
 # Trial is NOT auto-started here. It starts on explicit Pro feature access
@@ -6276,6 +6278,7 @@ async def api_partials_nav():
       <span class="nav-tab clickable" data-tab="brain">Brain</span>
       <span class="nav-tab clickable" data-tab="drift">Drift</span>
       <span class="nav-tab clickable" data-tab="compare">Compare</span>
+      <span class="nav-tab clickable" data-tab="harness">Harness</span>
     </div>
     <div class="nav-group">
       <span class="glabel">Intelligence</span>

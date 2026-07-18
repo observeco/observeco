@@ -657,6 +657,61 @@ class HarnessOptimizer:
         conn.commit()
 
 
+    # ── Read paths for the dashboard (obs-spec-056 §8 frontend) ──────────────
+    # The optimization loop writes to harness_optimization_runs / harness_edits /
+    # harness_eval_runs (Migration 62). These methods read them back for the UI.
+    # Reads only — no writes, so they're safe under the dashboard's concurrent load.
+
+    def list_runs(self, agent: Optional[str] = None) -> list[dict]:
+        """Return optimization runs, newest first. Each row summarizes the
+        dev/test harness scores and promotion verdict."""
+        conn = self.db._get_conn()
+        sql = (
+            "SELECT id, agent_name, started_at, completed_at, status, iterations, "
+            "budget, candidate_dev_score, candidate_test_score, promoted, promotion_reason "
+            "FROM harness_optimization_runs"
+        )
+        params: tuple = ()
+        if agent:
+            sql += " WHERE agent_name = ?"
+            params = (agent,)
+        sql += " ORDER BY started_at DESC LIMIT 50"
+        rows = conn.execute(sql, params).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_run(self, run_id: str) -> Optional[dict]:
+        """Return full detail for one run: the run row, its proposed edits, and
+        the per-method dev/test eval scores."""
+        conn = self.db._get_conn()
+        run = conn.execute(
+            "SELECT id, agent_name, started_at, completed_at, status, iterations, "
+            "budget, candidate_dev_score, candidate_test_score, promoted, promotion_reason "
+            "FROM harness_optimization_runs WHERE id = ?",
+            (run_id,),
+        ).fetchone()
+        if not run:
+            return None
+        run_d = dict(run)
+        run_d["edits"] = [
+            dict(r)
+            for r in conn.execute(
+                "SELECT id, iteration, edit_text, old_snippet, new_snippet, "
+                "classification, classification_confidence, classification_reasoning "
+                "FROM harness_edits WHERE optimization_run_id = ? ORDER BY iteration",
+                (run_id,),
+            ).fetchall()
+        ]
+        run_d["eval_runs"] = [
+            dict(r)
+            for r in conn.execute(
+                "SELECT method, split, total_rollouts, pass_at_1, pass_at_k "
+                "FROM harness_eval_runs WHERE optimization_run_id = ? ORDER BY method, split",
+                (run_id,),
+            ).fetchall()
+        ]
+        return run_d
+
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def _extract_json(text: str) -> str:
