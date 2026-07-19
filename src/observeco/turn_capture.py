@@ -43,36 +43,11 @@ if not os.path.exists(_PULSE_DB):
     if os.path.exists(alt):
         _PULSE_DB = alt
 
-# Hermes sessions DB — used to resolve session_id → profile_name
-_SESSIONS_DB = os.path.expanduser("~/.hermes/sessions.db")
-
 SKILL_TOOLS = {"skill_view", "skill_manage"}
 
 
 def _now_ms() -> int:
     return int(time.time() * 1000)
-
-
-def _resolve_profile(session_id: str) -> str | None:
-    """Resolve a Hermes session_id to a profile name via sessions.db.
-
-    Returns the profile name or None if resolution fails.
-    """
-    if not os.path.exists(_SESSIONS_DB):
-        return None
-    try:
-        conn = sqlite3.connect(_SESSIONS_DB, timeout=2)
-        conn.execute("PRAGMA busy_timeout=2000")
-        row = conn.execute(
-            "SELECT profile FROM sessions WHERE session_id = ? LIMIT 1",
-            (session_id,),
-        ).fetchone()
-        conn.close()
-        if row and row[0]:
-            return str(row[0])
-    except Exception:
-        pass
-    return None
 
 
 def _extract_skill_name(tool_name: str, ev: dict) -> str | None:
@@ -99,8 +74,11 @@ def _write_event(conn: sqlite3.Connection, ev: dict) -> None:
     ts = _now_ms()
     session_id = ev.get("session_id") or "unknown"
 
-    # Resolve session_id → profile name
-    agent = _resolve_profile(session_id) or session_id
+    # ponytail: agent identity is session_id, not profile name. The hook
+    # payload carries no profile field. Hermes' state.db sessions table
+    # also has no profile column. Upgrade path: add a profile field to
+    # the hook payload in Hermes' invoke_hook() in agent/shell_hooks.py.
+    agent = session_id
 
     if event == "on_session_end":
         conn.execute(
