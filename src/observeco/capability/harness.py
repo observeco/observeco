@@ -21,8 +21,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+from observeco.capability.canary import CanaryReport, CanaryRunner
 from observeco.db import Database
-from observeco.capability.canary import CanaryRunner, CanaryReport
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ class HarnessOptimizer:
         """
         run_id = str(uuid.uuid4())
         now_iso = datetime.now(timezone.utc).isoformat()
-        conn = self.db._get_conn()
+        self.db._get_conn()
 
         # 1. Save optimization run record
         self.db._write(

@@ -16,12 +16,9 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import time
-from pathlib import Path
 from typing import Optional
 
-from observeco.dashboard.config import PORTS
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
@@ -29,6 +26,7 @@ from observeco.adapters.discord import DiscordAdapter
 from observeco.adapters.oef import OEFEvent
 from observeco.adapters.slack import SlackAdapter
 from observeco.adapters.telegram import TelegramAdapter
+from observeco.dashboard.config import PORTS
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)

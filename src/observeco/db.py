@@ -1203,25 +1203,33 @@ _self_monitor_queue: "queue.Queue[tuple[str, int, int]]" = queue.Queue(maxsize=1
 def _flush_self_monitor_loop() -> None:
     """Background daemon: drain _self_monitor_queue and write to DB.
 
-    Runs in a daemon thread so it exits when the process exits. If the DB
-    is locked, the write is silently dropped (self-monitoring is best-effort).
+    Retries indefinitely until the write succeeds. The queue is bounded
+    (maxsize=1000), so if the DB is locked for an extended period, the
+    queue fills and new writes are silently dropped — but every write
+    that made it into the queue will eventually land. Self-monitoring
+    is best-effort: the caller never blocks.
     """
     while True:
         try:
             consumer, input_tokens, output_tokens = _self_monitor_queue.get()
         except EOFError:
             return
-        try:
-            db = Database()
-            today = int(time.time()) // 86400
-            total = input_tokens + output_tokens
-            db._write(
-                "INSERT INTO self_monitor_budget (day, consumer, input_tokens, output_tokens, total_tokens, created_at) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (today, consumer, input_tokens, output_tokens, total, int(time.time())),
-            )
-        except Exception:
-            pass  # best-effort
+        # Retry indefinitely — the queue bounds the backlog, so this
+        # will eventually drain. Sleep 5s between attempts to avoid
+        # hammering a locked DB.
+        while True:
+            try:
+                db = Database()
+                today = int(time.time()) // 86400
+                total = input_tokens + output_tokens
+                db._write(
+                    "INSERT INTO self_monitor_budget (day, consumer, input_tokens, output_tokens, total_tokens, created_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (today, consumer, input_tokens, output_tokens, total, int(time.time())),
+                )
+                break  # success — move to next queue item
+            except Exception:
+                time.sleep(5)
 
 
 _self_monitor_flusher = threading.Thread(target=_flush_self_monitor_loop, daemon=True)

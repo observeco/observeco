@@ -17,8 +17,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from observeco.capability.canary import CanaryRunner, Scorer
 from observeco.capability.adapters.direct_model import DirectModelAdapter
+from observeco.capability.canary import Scorer
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)

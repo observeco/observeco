@@ -15,8 +15,7 @@ from __future__ import annotations
 import time
 from typing import Optional
 
-from observeco.db import Database, DB_PATH
-
+from observeco.db import DB_PATH, Database
 
 # In-memory cache: {agent_name: (timestamp, payload)}
 _profile_cache: dict[str, tuple[float, dict]] = {}

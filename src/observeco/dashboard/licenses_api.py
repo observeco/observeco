@@ -13,11 +13,10 @@ import time
 
 from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-
-from observeco.dashboard.config import PORTS
 from pydantic import BaseModel
 
 from observeco import license as lic
+from observeco.dashboard.config import PORTS
 
 router = APIRouter(prefix="/api/licenses", tags=["licenses"])
 

@@ -60,7 +60,6 @@ def add_gap_endpoint(req: AddGapRequest):
     Returns HTML for htmx (row replaced with 'added' state) or JSON
     for API callers (Accept: application/json).
     """
-    from fastapi import Request
     result = add_gap(req.name, req.framework, health_check=req.health_check)
     if result["status"] == "exists":
         raise HTTPException(status_code=409, detail=result["message"])

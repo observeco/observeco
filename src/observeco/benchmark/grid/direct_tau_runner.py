@@ -15,13 +15,12 @@ import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 from openai import OpenAI
-
 from tau_bench.agents.base import Agent
 from tau_bench.envs.base import Env
-from tau_bench.types import Action, SolveResult, RESPOND_ACTION_NAME
+from tau_bench.types import RESPOND_ACTION_NAME, Action, SolveResult
 
 logger = logging.getLogger(__name__)
 
@@ -215,8 +214,10 @@ def run_direct_tau(
 ) -> DirectCellResult:
     """Run one direct τ-bench cell: one model × N tasks × N trials."""
     from tau_bench.envs import get_env
-    from tau_bench.envs.retail import tools as retail_tools, wiki as retail_wiki
-    from tau_bench.envs.airline import tools as airline_tools, wiki as airline_wiki
+    from tau_bench.envs.airline import tools as airline_tools
+    from tau_bench.envs.airline import wiki as airline_wiki
+    from tau_bench.envs.retail import tools as retail_tools
+    from tau_bench.envs.retail import wiki as retail_wiki
 
     tools_info = (
         retail_tools.ALL_TOOLS if env_name == "retail" else airline_tools.ALL_TOOLS

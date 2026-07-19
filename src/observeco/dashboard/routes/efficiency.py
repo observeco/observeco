@@ -110,8 +110,6 @@ def _list_recent_sessions(limit: int = 20, max_scan: int = 500) -> list[tuple[st
 @router.get("/sessions", response_class=HTMLResponse)
 async def sessions_list():
     """HTML session table for the Efficiency tab (htmx target)."""
-    import glob
-    import os
 
     sessions = _list_recent_sessions()
     if not sessions:
@@ -248,7 +246,6 @@ OPTIMIZE_PROFILE_DIR = get_data_dir() / "efficiency"
 @router.post("/optimize/preview/{session_id}")
 async def optimize_preview(session_id: str):
     """Preview the optimize block that would be written."""
-    import re as _re
 
     turns = _parse_session(session_id)
     if not turns:

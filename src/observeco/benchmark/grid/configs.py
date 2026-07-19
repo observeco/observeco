@@ -9,8 +9,8 @@ Each config varies ONE component at a time, in priority order:
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional
+
+from dataclasses import dataclass
 
 
 @dataclass

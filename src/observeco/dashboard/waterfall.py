@@ -5,7 +5,6 @@ Renders as an HTML fragment suitable for htmx injection into the dashboard.
 
 from __future__ import annotations
 
-import json
 from typing import Optional
 
 from observeco.db import Database
@@ -44,11 +43,11 @@ def render_waterfall(agent_name: str, db: Optional[Database] = None) -> str:
         except (ValueError, OSError):
             ts_display = "unknown"
 
-        html.append(f'<div class="waterfall-session">')
+        html.append('<div class="waterfall-session">')
         html.append(f'<div class="waterfall-session-header">'
                     f'🔍 Trace {trace_id[:12]}… · {len(spans)} spans · {ts_display}'
                     f'</div>')
-        html.append(f'<div class="waterfall-spans">')
+        html.append('<div class="waterfall-spans">')
 
         for span in spans:
             span_start = span.get("start_time_ns", 0)

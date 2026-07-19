@@ -22,10 +22,10 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
+from observeco.dashboard.config import LLM, PORTS
 from observeco.llm_service.cache import LLMCache
 from observeco.llm_service.cost_tracker import CostTracker
 from observeco.llm_service.gate import LLMGate, get_self_monitor
-from observeco.dashboard.config import LLM, PORTS
 
 # ---------------------------------------------------------------------------
 # Public API

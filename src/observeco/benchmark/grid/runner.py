@@ -12,12 +12,11 @@ import json
 import logging
 import math
 import os
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from .configs import HarnessConfig, ALL_CONFIGS
+from .configs import ALL_CONFIGS, HarnessConfig
 from .tau_adapter import HermesTauAgent
 
 logger = logging.getLogger(__name__)
@@ -130,8 +129,10 @@ class GridRunner:
         Iterates: models × configs × tasks × trials
         """
         from tau_bench.envs import get_env
-        from tau_bench.envs.retail import tools as retail_tools, wiki as retail_wiki
-        from tau_bench.envs.airline import tools as airline_tools, wiki as airline_wiki
+        from tau_bench.envs.airline import tools as airline_tools
+        from tau_bench.envs.airline import wiki as airline_wiki
+        from tau_bench.envs.retail import tools as retail_tools
+        from tau_bench.envs.retail import wiki as retail_wiki
 
         tools_info = retail_tools.ALL_TOOLS if env_name == "retail" else airline_tools.ALL_TOOLS
         wiki_text = retail_wiki.WIKI if env_name == "retail" else airline_wiki.WIKI

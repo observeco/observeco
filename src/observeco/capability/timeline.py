@@ -7,10 +7,8 @@ in config_snapshots table for the timeline dashboard.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import subprocess
-import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path

@@ -8,16 +8,13 @@ output parsing.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
 import signal
 import subprocess
-import sys
 import time
 from pathlib import Path
-from typing import Any, Optional
 
 from observeco.benchmark.engine import BenchmarkTask
 
@@ -175,8 +172,8 @@ class HermesBenchmarkAdapter:
 
                 elapsed = time.time() - start
                 output = stdout.strip()
-                clean_lines = [l for l in output.splitlines()
-                               if not l.startswith("Warning:")]
+                clean_lines = [line for line in output.splitlines()
+                                                if not line.startswith("Warning:")]
                 output = "\n".join(clean_lines).strip()
                 # Strip markdown code fences and formatting
                 output = re.sub(r'```\w*\n?', '', output)

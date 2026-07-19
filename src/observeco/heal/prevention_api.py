@@ -5,6 +5,7 @@ POST /api/prevention/remove/{id} — delete a prevention skill (htmx)
 """
 
 from fastapi import APIRouter, HTTPException, Response
+
 from observeco.heal import prevention as prev
 
 router = APIRouter(prefix="/api/prevention", tags=["prevention"])
@@ -26,7 +27,7 @@ def get_panel():
         sid = s["id"]
         agent = s.get("agent_name", "?")
         diag = (s.get("diagnosis", "") or "")[:50]
-        created = s.get("created_at", "")
+        s.get("created_at", "")
         ok = s.get("success_count", 0)
         fail = s.get("fail_count", 0)
         deprecated = " (deprecated)" if s.get("deprecated") else ""

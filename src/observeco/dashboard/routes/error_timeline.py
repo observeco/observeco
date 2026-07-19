@@ -112,7 +112,7 @@ async def error_timeline(days: int = 1, agent: str = "", severity: str = ""):
             # Compute Gantt-like duration: errors cluster within ~10m window
             # For simplicity, assign a pseudo-duration based on severity
             dur_min = 15 if sev == "critical" else 8 if sev == "warning" else 3
-            dur_ms = dur_min * 60 * 1000
+            dur_min * 60 * 1000
 
             rows.append({
                 "time": _fmt_short_ts(ts),
@@ -145,7 +145,6 @@ async def error_timeline(days: int = 1, agent: str = "", severity: str = ""):
             dur_label = f"{r['dur_min']}m"
 
             sev_cls = r["severity"]
-            sev_icon = "🔴" if sev_cls == "critical" else "🟡" if sev_cls == "warning" else "🔵"
 
             rows_html += f"""<div class="tl-row {sev_cls}" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(r['agent'])}', {{target:'#modalContainer', swap:'innerHTML'}})" style="cursor:pointer">
     <span class="tl-time">{r['time']}</span>

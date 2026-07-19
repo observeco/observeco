@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import logging
 import subprocess
-
-from observeco.dashboard.config import PORTS
 import sys
 import time
 from dataclasses import dataclass
@@ -22,6 +20,8 @@ from enum import Enum
 from typing import Optional
 
 import psutil
+
+from observeco.dashboard.config import PORTS
 
 from .dirs import get_data_dir
 

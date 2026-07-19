@@ -1,5 +1,6 @@
 """ObserveCo CLI — runtime observability for AI agent systems."""
 
+import json
 import os
 from typing import Optional
 
@@ -689,6 +690,7 @@ def prevention_list(agent: Optional[str] = typer.Option(None, "--agent", "-a", h
     """List all prevention skills."""
     from rich.console import Console
     from rich.table import Table
+
     from observeco.heal import prevention as prev
 
     skills = prev.list_skills(agent)
@@ -717,6 +719,7 @@ def prevention_list(agent: Optional[str] = typer.Option(None, "--agent", "-a", h
 def prevention_show(skill_id: int = typer.Argument(..., help="Prevention skill ID")):
     """Show a prevention skill's contents."""
     from rich.console import Console
+
     from observeco.heal import prevention as prev
 
     skill = prev.get_skill(skill_id)
@@ -738,6 +741,7 @@ def prevention_show(skill_id: int = typer.Argument(..., help="Prevention skill I
 def prevention_remove(skill_id: int = typer.Argument(..., help="Prevention skill ID")):
     """Delete a prevention skill (file + DB + FTS5 index)."""
     from rich.console import Console
+
     from observeco.heal import prevention as prev
 
     console = Console()
@@ -751,8 +755,9 @@ def prevention_remove(skill_id: int = typer.Argument(..., help="Prevention skill
 @prevention_app.command(name="enable")
 def prevention_enable(agent: str = typer.Argument(..., help="Agent name")):
     """Enable L3 learning for an agent (writes prevention skills after heal)."""
-    from observeco.db import Database
     from rich.console import Console
+
+    from observeco.db import Database
 
     db = Database()
     db.set_heal_config(agent, learn=True)
@@ -763,8 +768,9 @@ def prevention_enable(agent: str = typer.Argument(..., help="Agent name")):
 @prevention_app.command(name="disable")
 def prevention_disable(agent: str = typer.Argument(..., help="Agent name")):
     """Disable L3 learning for an agent."""
-    from observeco.db import Database
     from rich.console import Console
+
+    from observeco.db import Database
 
     db = Database()
     db.set_heal_config(agent, learn=False)
@@ -2246,6 +2252,7 @@ def benchmark_create_task(
 ) -> None:
     """Create a user-defined benchmark task."""
     from pathlib import Path
+
     from observeco.benchmark import BenchmarkEngine
 
     ctx_text = context
@@ -2430,9 +2437,9 @@ def benchmark_grid(
     max_steps: int = typer.Option(30, "--max-steps", help="Max steps per task"),
 ) -> None:
     """Run grid evaluation: models × harness configs × tasks."""
-    from observeco.benchmark.grid.runner import GridRunner
     from observeco.benchmark.grid.configs import ALL_CONFIGS
     from observeco.benchmark.grid.runner import MODELS as GRID_MODELS
+    from observeco.benchmark.grid.runner import GridRunner
 
     # Parse models
     model_keys = [m.strip() for m in models.split(",")]
@@ -2456,7 +2463,7 @@ def benchmark_grid(
         print(f"❌ No valid configs. Available: {[c.name for c in ALL_CONFIGS]}")
         return
 
-    print(f"\n🧪 Grid Evaluation")
+    print("\n🧪 Grid Evaluation")
     print(f"   Environment: {env}")
     print(f"   Models: {list(model_dict.keys())}")
     print(f"   Configs: {[c.name for c in config_list]}")
@@ -2494,7 +2501,7 @@ def benchmark_grid(
         for flag in cell.flags:
             print(f"    ⚠️  {flag}")
 
-    print(f"\nResults saved to ~/.observeco/grid/")
+    print("\nResults saved to ~/.observeco/grid/")
 
 
 # ── Canary Commands ──────────────────────────────────────────────────────────
@@ -2515,8 +2522,8 @@ def canary_suggest_tasks(
     Drafts are saved as pending. Review them in the dashboard
     (Capability → Task Library → Pending) and approve the ones you want.
     """
-    from observeco.capability.history_tasks import generate_drafts, save_drafts_as_pending
     from observeco.capability.canary import CanaryRunner
+    from observeco.capability.history_tasks import generate_drafts, save_drafts_as_pending
     from observeco.db import Database
 
     print(f"\n🔍 Mining sessions from ~/.hermes/state.db (source={source})...")
@@ -2539,8 +2546,8 @@ def canary_suggest_tasks(
 
     saved = save_drafts_as_pending(drafts)
     print(f"✅ {saved} task drafts saved as pending review.")
-    print(f"   Review in dashboard: Capability → Task Library → Pending")
-    print(f"   Or approve all: observeco canary suggest-tasks --approve-all")
+    print("   Review in dashboard: Capability → Task Library → Pending")
+    print("   Or approve all: observeco canary suggest-tasks --approve-all")
 
 
 @canary_app.command(name="run")
@@ -2551,8 +2558,8 @@ def canary_run(
     config_label: Optional[str] = typer.Option(None, "--label", "-l", help="Config label for this run"),
 ) -> None:
     """Run the canary suite — execute all tasks and compare against baseline."""
-    from observeco.capability.canary import CanaryRunner
     from observeco.capability.baseline import BaselineManager
+    from observeco.capability.canary import CanaryRunner
     from observeco.capability.drift import DriftDetector
     from observeco.db import Database
 
@@ -2634,8 +2641,8 @@ def canary_list(
     limit: int = typer.Option(20, "--limit", "-n", help="Number of runs to show"),
 ) -> None:
     """List recent canary runs with pass rates."""
-    from observeco.db import Database
     from observeco.capability.canary import CanaryRunner
+    from observeco.db import Database
 
     runner = CanaryRunner(db=Database())
     runs = runner.list_runs(agent_name=agent, limit=limit)
@@ -2661,9 +2668,9 @@ def canary_baseline(
     force: bool = typer.Option(False, "--force", "-f", help="Force recompute baseline"),
 ) -> None:
     """Compute or recompute the baseline from recent canary runs."""
-    from observeco.db import Database
     from observeco.capability.baseline import BaselineManager
     from observeco.capability.canary import CanaryRunner
+    from observeco.db import Database
 
     db = Database()
     runner = CanaryRunner(db=db)
@@ -2693,7 +2700,7 @@ def canary_baseline(
               f"[{result['ci_lower']:.1%}, {result['ci_upper']:.1%}] "
               f"from {result['run_count']} runs")
     else:
-        print(f"❌ Not enough runs for baseline. Need 3+ completed runs with same config.")
+        print("❌ Not enough runs for baseline. Need 3+ completed runs with same config.")
 
 
 # ── Grid Commands ────────────────────────────────────────────────────────────
@@ -2735,7 +2742,7 @@ def grid_cap_run(
     if task_ids:
         task_id_list = [t.strip() for t in task_ids.split(",")]
 
-    print(f"\n🧪 Capability Grid")
+    print("\n🧪 Capability Grid")
     print(f"   Agent: {agent}")
     print(f"   Models: {model_list}")
     print(f"   Configs: {config_list}")
@@ -2774,7 +2781,7 @@ def grid_cap_run(
                 hang = " ⏰" if cell.get("hang") else ""
                 print(f"    {cell['model']:<40} {cell['config']:<15} {acc:.0f}% {ci:<12} {cost}{hang}")
         print()
-    print(f"   View results: observeco grid list")
+    print("   View results: observeco grid list")
 
 
 @grid_cap_app.command(name="list")
@@ -2811,8 +2818,9 @@ def grid_cap_compare(
     baseline: bool = typer.Option(False, "--baseline", "-b", help="Compare against baseline"),
 ) -> None:
     """Display grid results or compare two runs."""
-    from observeco.db import Database
     import json
+
+    from observeco.db import Database
 
     conn = Database()._get_conn()
 
@@ -2875,8 +2883,8 @@ def task_list(
     agent: Optional[str] = typer.Option(None, "--agent", "-a", help="Filter by agent (not used for task list)"),
 ) -> None:
     """List all canary tasks with status indicators."""
-    from observeco.db import Database
     from observeco.capability.canary import CanaryRunner
+    from observeco.db import Database
 
     runner = CanaryRunner(db=Database())
     tasks = runner.list_tasks()
@@ -2904,8 +2912,8 @@ def task_create(
     """Create a new canary task from YAML or interactive prompt."""
     import json
 
-    from observeco.db import Database
     from observeco.capability.canary import CanaryRunner
+    from observeco.db import Database
 
     if yaml_file:
         import yaml
@@ -3012,8 +3020,8 @@ def task_delete(
     task_id: str = typer.Argument(..., help="Task ID to delete"),
 ) -> None:
     """Delete a canary task."""
-    from observeco.db import Database
     from observeco.capability.canary import CanaryRunner
+    from observeco.db import Database
 
     runner = CanaryRunner(db=Database())
     result = runner.delete_task(task_id)

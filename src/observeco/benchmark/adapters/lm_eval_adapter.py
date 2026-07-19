@@ -211,9 +211,9 @@ class HermesAgentLM(LM):
 
                 # Strip Hermes warning/status lines
                 output = "\n".join(
-                    l for l in output.splitlines()
-                    if not l.startswith("Warning:")
-                    and not l.startswith("session_id:")
+                    line for line in output.splitlines()
+                    if not line.startswith("Warning:")
+                    and not line.startswith("session_id:")
                 ).strip()
 
                 # Strip markdown code fences and formatting

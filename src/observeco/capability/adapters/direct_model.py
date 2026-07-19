@@ -17,7 +17,6 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Optional
 
 from observeco.dashboard.config import PORTS
 
@@ -223,7 +222,7 @@ class DirectModelAdapter:
             with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
             content = data["choices"][0]["message"]["content"] or ""
-            elapsed = time.monotonic() - start
+            time.monotonic() - start
 
             # Estimate tokens (rough: 4 chars ≈ 1 token)
             input_tokens = len(prompt) // 4
@@ -245,7 +244,7 @@ class DirectModelAdapter:
             }
 
         except urllib.error.HTTPError as exc:
-            elapsed = time.monotonic() - start
+            time.monotonic() - start
             status = exc.code
             is_provider = status in (429, 500, 502, 503, 504)
             return {
@@ -260,7 +259,7 @@ class DirectModelAdapter:
             }
 
         except urllib.error.URLError as exc:
-            elapsed = time.monotonic() - start
+            time.monotonic() - start
             return {
                 "output": "",
                 "model_used": self.model_spec,
@@ -273,7 +272,7 @@ class DirectModelAdapter:
             }
 
         except Exception as exc:
-            elapsed = time.monotonic() - start
+            time.monotonic() - start
             return {
                 "output": "",
                 "model_used": self.model_spec,

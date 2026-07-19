@@ -13,8 +13,6 @@ Usage:
 
 import argparse
 import json
-
-from observeco.dashboard.config import PORTS
 import logging
 import os
 import time
@@ -28,6 +26,7 @@ from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
 from starlette.routing import Route
 
+from observeco.dashboard.config import PORTS
 from observeco.dirs import hermes_home
 
 logger = logging.getLogger("observeco.proxy")

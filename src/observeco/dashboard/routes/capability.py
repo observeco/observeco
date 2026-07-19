@@ -8,6 +8,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import sqlite3 as _sqlite3
+import threading
 from typing import Optional
 
 from fastapi import APIRouter, Query
@@ -22,15 +24,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/capability", tags=["capability"])
 db = Database()
 
-import threading
 _grid_run_lock = threading.Lock()
 _canary_run_lock = threading.Lock()
 _last_grid_error: Optional[str] = None
 
 
 # ── History-assisted task generation (obs-spec-060) ──────────────────────────
-
-import sqlite3 as _sqlite3
 
 _HERMES_STATE_DB = os.path.expanduser("~/.hermes/state.db")
 
@@ -219,8 +218,9 @@ async def grid_run_from_dashboard(agent: str = Query("default")):
     err = _validate_agent_param(agent)
     if err:
         return {"ok": False, "message": err}
-    from observeco.capability.grid import CapabilityGridRunner
     import threading
+
+    from observeco.capability.grid import CapabilityGridRunner
 
     if not _grid_run_lock.acquire(blocking=False):
         return {"ok": False, "message": f"Grid already running for {agent}"}
@@ -336,7 +336,6 @@ async def judge_reasoning(task_id: str = Query("")):
     """
     if not task_id:
         return {"assertions": []}
-    import re as _re
     from observeco.capability.canary import CanaryRunner
     runner = CanaryRunner(db=db)
     task = runner.get_task(task_id)
@@ -354,10 +353,9 @@ async def judge_reasoning(task_id: str = Query("")):
         return {"assertions": [], "error": "No LLM judge data available for this task"}
     assertions_list = []
     try:
-        task_assertions = json.loads(task["assertions"]) if isinstance(task["assertions"], str) else task["assertions"]
+        json.loads(task["assertions"]) if isinstance(task["assertions"], str) else task["assertions"]
     except Exception:
         logger.warning("Malformed assertions JSON for task %s", task_id)
-        task_assertions = []
     # Map results back to assertions
     for r in results:
         assertions_list.append({
@@ -386,7 +384,7 @@ async def canary_status(agent: str = Query("default")):
         except _sqlite3.OperationalError:
             pass  # cleanup is best-effort
 
-        running = conn.execute(
+        conn.execute(
             "SELECT COUNT(*) as c FROM canary_runs WHERE agent_name = ? AND status = 'running'",
             (agent,),
         ).fetchone()
@@ -671,7 +669,7 @@ async def task_list_partial():
         ).fetchall()
         agent_names = ", ".join(r["agent_name"] for r in agent_rows) if agent_rows else "—"
 
-        status_dot = "🟢" if last and last["status"] == "pass" else "🟡" if last and last["status"] == "fail" else "⚪"
+        "🟢" if last and last["status"] == "pass" else "🟡" if last and last["status"] == "fail" else "⚪"
         status_dot_class = "green" if last and last["status"] == "pass" else "yellow" if last and last["status"] == "fail" else ""
         last_acc = f"{last['accuracy']*100:.0f}%" if last and last["accuracy"] is not None else "—"
 
@@ -1215,7 +1213,7 @@ async def drift_chart_partial(agent: str = Query("default")):
     tasks = detail.get("tasks", [])
 
     sev = drift.get("severity", "info")
-    sev_color = _sev_color(sev)
+    _sev_color(sev)
     sev_icon_c = _sev_icon(sev)
     drift_pct = drift.get("pct", 0)
     p_val = drift.get("p_value", 1.0)
@@ -1289,11 +1287,10 @@ async def drift_chart_partial(agent: str = Query("default")):
     max_delta = max((abs(t.get("delta", 0)) for t in tasks), default=0)
     for t in tasks:
         t_sev = t.get("severity", "stable")
-        t_color = _sev_color(t_sev) if t_sev != "stable" else "var(--accent)"
+        _sev_color(t_sev) if t_sev != "stable" else "var(--accent)"
         delta = t.get("delta", 0)
         delta_str = f"{delta:+.1f}%" if delta is not None else "—"
         bar_pct = min(abs(delta) / max_delta * 100, 100) if max_delta > 0 and delta else 0
-        bar_color = "var(--danger)" if delta and delta < 0 else "var(--accent)"
 
         task_rows += f"""
         <tr>
@@ -1385,7 +1382,7 @@ def _drift_error_html(agent: str) -> HTMLResponse:
 
 def _drift_empty_html(agent: str) -> HTMLResponse:
     """Empty state when no drift data exists."""
-    return HTMLResponse(content=f"""
+    return HTMLResponse(content="""
     <div class="cap-empty">
       <div class="cap-empty-icon">🔬</div>
       <h2>No Drift Data Yet</h2>
@@ -1476,7 +1473,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     # Body rows
     body_rows = ""
     for task_name in task_names:
-        body_rows += f'<tr style="border-bottom:1px solid var(--border-soft);">'
+        body_rows += '<tr style="border-bottom:1px solid var(--border-soft);">'
         body_rows += f'<td style="padding:8px 12px;font-size:13px;color:var(--fg);">{_html_escape(task_name)}</td>'
         for model in models:
             for _ in configs:
@@ -1671,7 +1668,6 @@ async def timeline_events_partial(agent: str = Query("default")):
         return HTMLResponse(content=_timeline_empty_html())
 
     # Segment colors (always defined)
-    seg_colors = ["#22c55e", "#3b82f6", "#eab308", "#ec4899", "#14b8a6"]
 
     # Segment legend
     seg_legend = ""

@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from observeco.capability.baseline import BaselineManager, DriftResult
+from observeco.capability.baseline import BaselineManager
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)

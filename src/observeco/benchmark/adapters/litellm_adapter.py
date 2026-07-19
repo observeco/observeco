@@ -23,13 +23,9 @@ the model finishes reasoning. We extract logprobs from reasoning tokens.
 from __future__ import annotations
 
 import logging
-import os
 import time
-from typing import Optional
 
-import litellm
 from litellm import completion
-
 from lm_eval.api.instance import Instance
 from lm_eval.api.model import LM
 

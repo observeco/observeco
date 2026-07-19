@@ -22,8 +22,9 @@ import typing
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from .llm_client import get_client
 from observeco.dashboard.config import PORTS
+
+from .llm_client import get_client
 
 
 # Lazy accessor — call at use site, not import time

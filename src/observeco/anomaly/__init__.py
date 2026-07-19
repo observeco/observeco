@@ -16,12 +16,11 @@ description, timestamp, evidence.
 
 from __future__ import annotations
 
-import json
 import math
 import time
 from typing import Optional
 
-from observeco.db import Database, DB_PATH
+from observeco.db import DB_PATH, Database
 
 
 def detect_anomalies(db: Optional[Database] = None, lookback_minutes: int = 60) -> list[dict]:

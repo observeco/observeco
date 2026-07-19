@@ -12,8 +12,8 @@ from pathlib import Path
 from threading import Thread
 from typing import Optional
 
-from observeco.db import Database
 from observeco.dashboard.config import PORTS, WATCH_INTERVALS
+from observeco.db import Database
 from observeco.event_bus import publish
 
 logger = logging.getLogger(__name__)

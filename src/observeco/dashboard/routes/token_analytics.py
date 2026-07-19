@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
@@ -20,13 +20,17 @@ db = Database()
 
 
 def _fmt_tok(n: int) -> str:
-    if n >= 1_000_000: return f"{n/1_000_000:.1f}M"
-    if n >= 1000: return f"{n/1000:.1f}K"
+    if n >= 1_000_000:
+        return f"{n/1_000_000:.1f}M"
+    if n >= 1000:
+        return f"{n/1000:.1f}K"
     return str(n)
 
 def _fmt_dollar(c: float) -> str:
-    if c >= 100: return f"${c:.0f}"
-    if c >= 1: return f"${c:.2f}"
+    if c >= 100:
+        return f"${c:.0f}"
+    if c >= 1:
+        return f"${c:.2f}"
     return f"${c:.4f}"
 
 def _html_escape(text: str) -> str:
@@ -132,7 +136,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         all_logs = [dict(r) for r in cur.fetchall()]
     except Exception:
         # Error state — DB unavailable
-        return HTMLResponse(f"""<div id="analyticsContent" hx-swap-oob="true">
+        return HTMLResponse("""<div id="analyticsContent" hx-swap-oob="true">
     <div class="page-title"><h1>Token Analytics</h1><span class="sub">error</span></div>
     <div class="state-msg err">
         <div class="ico">⚠</div>
@@ -143,11 +147,11 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 </div>""")
 
     agents_cfg = db.get_agents()
-    agent_names = [a["agent_name"] for a in agents_cfg]
+    [a["agent_name"] for a in agents_cfg]
 
     # If no token data, show empty state
     if not all_logs:
-        return HTMLResponse(f"""<div id="analyticsContent" hx-swap-oob="true">
+        return HTMLResponse("""<div id="analyticsContent" hx-swap-oob="true">
     <div class="page-title"><h1>Token Analytics</h1><span class="sub">No data</span></div>
     <div class="state-msg"><div class="ico">📊</div><h3>No token data yet</h3><p>Token data appears after agents make LLM calls with the Hermes telemetry plugin enabled.</p></div>
 </div>""")
@@ -244,7 +248,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     input_data = [day_buckets[k]["input"] // 1000 for k in sorted_keys]
     output_data = [day_buckets[k]["output"] // 1000 for k in sorted_keys]
     cache_data = [day_buckets[k]["cache"] // 1000 for k in sorted_keys]
-    est_data = [round(day_buckets[k]["est"] / 1000) for k in sorted_keys]
+    [round(day_buckets[k]["est"] / 1000) for k in sorted_keys]
     # Total = authoritative total_tokens per bucket (K) — not input+output (which misses cache
     # and collapses to input-only for watch-estimated rows where output=0).
     total_data = [day_buckets[k]["total"] // 1000 for k in sorted_keys]
@@ -267,7 +271,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
               (day_buckets[k]["input"] > 0 or day_buckets[k]["output"] > 0 or day_buckets[k]["cache"] > 0))
         else 0 for k in sorted_keys
     ]
-    has_double_count = any(double_count)
+    any(double_count)
     # Real fix for the double-count: where a bucket has real input/output/cache, the
     # Estimated stack is suppressed (set to 0) so it can't inflate the total on top of
     # real counts. Estimated is only shown in buckets with NO real breakdown (pure proxy).
@@ -312,7 +316,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     window_has_real = any(
         (log.get("source") in ("otel", "sdk", "proxy")) for log in all_logs
     )
-    estimated_only = (len(all_logs) > 0) and not window_has_real
+    (len(all_logs) > 0) and not window_has_real
 
     COMP_ORDER = [
         ("identity", "var(--token-identity)", "identity"),
@@ -408,7 +412,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     <div class="vc-rec">{rec}</div>
 </div>"""
 
-    total_tok = _fmt_tok(sum(d["tokens"] for _, d in sorted_agents))
+    _fmt_tok(sum(d["tokens"] for _, d in sorted_agents))
     agent_count = len(sorted_agents)
 
     html = f"""<div id="analyticsContent" hx-swap-oob="true">

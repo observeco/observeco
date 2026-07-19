@@ -14,7 +14,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Optional
 
 from observeco.db import Database
 
@@ -545,7 +545,7 @@ class Scorer:
             positions.append(pos)
         for i in range(len(positions) - 1):
             if positions[i] >= positions[i + 1]:
-                return (False, 0.0, f"ordering: steps out of order")
+                return (False, 0.0, "ordering: steps out of order")
         return (True, 1.0, "ordering: all steps in correct order")
 
     @staticmethod

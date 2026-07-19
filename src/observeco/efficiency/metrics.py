@@ -17,7 +17,6 @@ import re
 from collections import Counter
 from pathlib import Path
 
-
 # ── Helpers ──────────────────────────────────────────────────────────
 
 def _read_events(turns: list[dict]) -> list[dict]:
@@ -353,7 +352,7 @@ def compute_effectiveness(turns: list[dict]) -> dict:
     """Did the task land? 0-100 heuristic from exit codes + edits + commits."""
     edits = _edit_events(turns)
     bash = _bash_events(turns)
-    commits = [e for e in bash if "commit" in e["command"].lower()]
+    [e for e in bash if "commit" in e["command"].lower()]
     last_test = next((e for e in reversed(bash) if "test" in e["command"].lower()), None)
 
     score = 50  # base

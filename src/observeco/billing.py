@@ -22,8 +22,8 @@ from pathlib import Path
 from fastapi import Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
-from observeco.dirs import get_data_dir
 from observeco.dashboard.config import PORTS
+from observeco.dirs import get_data_dir
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

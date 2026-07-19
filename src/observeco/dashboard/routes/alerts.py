@@ -11,7 +11,6 @@ This kills the prior duplication (server.api_alerts mirrored this logic).
 from __future__ import annotations
 
 import time
-from pathlib import Path
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
@@ -70,7 +69,7 @@ def build_alerts(mode: str = "live", acks: dict | None = None) -> list[dict] | N
         circuit = db.get_circuit_breakers()
         drift = db.get_drift()
         pulses = db.get_recent_pulses(limit=100)
-        errors = db.get_errors(limit=50)
+        db.get_errors(limit=50)
     except Exception:
         return None  # caller renders the daemon-offline state
 
@@ -273,8 +272,8 @@ def _render_center(alerts: list[dict] | None) -> str:
                 f'✅ All clear — no alerts</div>'
                 f'<div data-alerts-viewed="{empty_status}" style="display:none;"></div>')
 
-    now = int(time.time())
-    last_viewed = _get_alerts_last_viewed()
+    int(time.time())
+    _get_alerts_last_viewed()
     total_gap_minutes = sum(a["gap_seconds"] for a in alerts) // 60
     new_count = sum(1 for a in alerts if a.get("is_new"))
     discovery_alert_count = len(alerts)
@@ -292,7 +291,7 @@ def _render_center(alerts: list[dict] | None) -> str:
 
     items = [gap_banner]
     for a in alerts:
-        ts_str = _fmt_ts(a["timestamp"]) if (ts := a["timestamp"]) else ""
+        ts_str = _fmt_ts(a["timestamp"]) if (_ts := a["timestamp"]) else ""
         gap_s = a.get("gap_seconds", 0)
         is_new = a.get("is_new", False)
         gap_label = ""

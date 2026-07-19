@@ -30,8 +30,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from observeco.dirs import get_data_dir
 from observeco.dashboard.config import PORTS
+from observeco.dirs import get_data_dir
 
 # ponytail: lazy — evaluated at first call, not import time, so get_data_dir() failure
 # doesn't crash the import.

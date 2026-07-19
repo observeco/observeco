@@ -29,25 +29,24 @@ from observeco.api import router as api_router
 from observeco.billing import add_billing_endpoints
 from observeco.config import hermes_home
 from observeco.dashboard.commercial_api import router as commercial_router
+from observeco.dashboard.config import PORTS
 from observeco.dashboard.licenses_api import router as licenses_router
 from observeco.dashboard.otel import router as otel_router
+from observeco.dashboard.routes.alerts import router as alerts_router
+from observeco.dashboard.routes.capability import router as capability_router
+from observeco.dashboard.routes.detail import router as detail_router
+from observeco.dashboard.routes.efficiency import router as efficiency_router
+from observeco.dashboard.routes.error_timeline import router as timeline_router
 from observeco.dashboard.routes.fleet import router as fleet_router
 from observeco.dashboard.routes.fleet_qb import router as fleet_qb_router
-from observeco.dashboard.routes.alerts import router as alerts_router
-from observeco.dashboard.routes.error_timeline import router as timeline_router
-from observeco.dashboard.routes.detail import router as detail_router
-from observeco.dashboard.routes.token_analytics import router as analytics_router
-from observeco.dashboard.routes.efficiency import router as efficiency_router
-from observeco.dashboard.routes.capability import router as capability_router
 from observeco.dashboard.routes.harness_opt import router as harness_opt_router
+from observeco.dashboard.routes.token_analytics import router as analytics_router
 from observeco.db import Database
-from observeco.dashboard.config import PORTS
-
-logger = logging.getLogger(__name__)
-
 from observeco.dirs import get_data_dir
 from observeco.discover.api import router as discover_router
 from observeco.realtime import router as realtime_router
+
+logger = logging.getLogger(__name__)
 
 
 # Shared heartbeat path — watch daemon writes this every 30s.
@@ -2630,8 +2629,10 @@ async def api_brain(agent: str = "all"):
 
     # ── HTML rendering ──────────────────────────────────────────────
     def _fmt_tok(n):
-        if n >= 1_000_000: return f"{n/1_000_000:.1f}M"
-        if n >= 1000: return f"{n/1000:.1f}K"
+        if n >= 1_000_000:
+            return f"{n/1_000_000:.1f}M"
+        if n >= 1000:
+            return f"{n/1000:.1f}K"
         return str(n)
 
     def _bar(parts, total, height=10):
@@ -2682,8 +2683,10 @@ async def api_brain(agent: str = "all"):
         savings_html = ""
         if lite or full:
             items = []
-            if lite: items.append(f'<span style="color:#22c55e;">Lite: {_fmt_tok(lite)}</span>')
-            if full: items.append(f'<span style="color:#38bdf8;">Full: {_fmt_tok(full)}</span>')
+            if lite:
+                items.append(f'<span style="color:#22c55e;">Lite: {_fmt_tok(lite)}</span>')
+            if full:
+                items.append(f'<span style="color:#38bdf8;">Full: {_fmt_tok(full)}</span>')
             savings_html = f'<div style="font-size:11px;color:#94a3b8;">{source_label}: {" · ".join(items)}</div>'
 
         comp_labels = {"guidance":"Guidance","memory":"Memory","skills":"Skills","tools":"Tools","identity":"Identity"}
@@ -2714,8 +2717,10 @@ async def api_brain(agent: str = "all"):
         savings_html = ""
         if lite or full:
             items = []
-            if lite: items.append(f'Lite: {_fmt_tok(lite)}')
-            if full: items.append(f'Full: {_fmt_tok(full)}')
+            if lite:
+                items.append(f'Lite: {_fmt_tok(lite)}')
+            if full:
+                items.append(f'Full: {_fmt_tok(full)}')
             savings_html = f'<div style="font-size:11px;color:#64748b;margin-top:4px;">{" · ".join(items)}</div>'
 
         drift_html = ""
@@ -3679,13 +3684,10 @@ async def api_drift_summary():
         # Color coding
         peak = max(abs(r["delta_pct"]) for r in best_series)
         if peak > 20:
-            severity = "critical"
             color = "#ef4444"
         elif peak > 5:
-            severity = "warn"
             color = "#f59e0b"
         else:
-            severity = "ok"
             color = "#22c55e"
 
         # Current drift direction
@@ -4934,9 +4936,7 @@ async def api_token_analytics(days: int = 7):
     GET /api/token-analytics?days=7
     """
     from observeco.dashboard.routes.token_analytics import (
-        empty_html,
         error_html,
-        loading_html,
         token_analytics,
     )
     try:
@@ -7217,7 +7217,6 @@ async def api_heal_config():
         </div>"""
 
     # Get all agents and their heal configs
-    from observeco import license as lic
     from observeco.db import Database
     # ponytail: commercial model is usage-metered, not feature-gated (commercial-scope.md).
     # Auto-heal (L1+L2) + daemon auto-start apply to ALL users, not just Pro.

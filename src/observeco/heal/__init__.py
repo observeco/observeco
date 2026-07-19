@@ -552,7 +552,7 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
             if skill:
                 ok, msg = prev.apply_prevention(skill, name)
                 if ok:
-                    table.add_row(name, f"[cyan]L3 known fix[/cyan]",
+                    table.add_row(name, "[cyan]L3 known fix[/cyan]",
                                  "prevention skill", f"[green]OK {msg}[/green]")
                     results.append({"agent": name, "status": "l3_fixed",
                                     "action": "prevention"})

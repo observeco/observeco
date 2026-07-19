@@ -9,14 +9,13 @@ from __future__ import annotations
 import logging
 import sqlite3 as _sqlite3
 import time
-from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
-logger = logging.getLogger(__name__)
-
 from observeco.db import Database
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/fleet", tags=["fleet"])
 db = Database()
@@ -58,8 +57,7 @@ def _canary_row(agent_name: str, canary_row, canary_running: bool = False) -> st
     total = (canary_row["pass_count"] or 0) + (canary_row["fail_count"] or 0)
     acc = (canary_row["pass_count"] / total * 100) if total > 0 else 0
     color = "var(--accent)" if acc >= 80 else "var(--warn)" if acc >= 60 else "var(--danger)"
-    hangs = canary_row["hang_count"] or 0
-    hang_str = f" · ⚠️{hangs} hang{'s' if hangs != 1 else ''}" if hangs else ""
+    canary_row["hang_count"] or 0
     return f'<span class="row-val" style="color:{color}">{acc:.0f}%</span>'
 
 
@@ -69,7 +67,7 @@ def _canary_pass_sub(agent_name: str, canary_row, canary_running: bool = False, 
         return 'running'
     if not canary_row:
         return f'<button class="qb-run-btn" onclick="event.stopPropagation();openQualityBenchmark(\'{_html_escape(agent_name)}\')">▶ Run</button>'
-    total = (canary_row["pass_count"] or 0) + (canary_row["fail_count"] or 0)
+    (canary_row["pass_count"] or 0) + (canary_row["fail_count"] or 0)
     hangs = canary_row["hang_count"] or 0
     hang_str = f" · ⚠️{hangs} hang{'s' if hangs != 1 else ''}" if hangs else ""
     parts = f'{canary_row["pass_count"]}/{canary_row["total_tasks"]} pass{hang_str}'
@@ -266,10 +264,10 @@ async def fleet_verdict():
         circuit = db.get_circuit_breakers()
         drift_all = db.get_drift_latest_per_agent()
         errors_all = db.get_errors(limit=100)
-        agents_cfg = db.get_agents()
+        db.get_agents()
     except Exception:
         # Error state — daemon down or DB unavailable
-        return HTMLResponse(f"""<div class="verdict warn daemon">
+        return HTMLResponse("""<div class="verdict warn daemon">
     <div class="verdict-icon">⚠</div>
     <div class="verdict-main">
         <div class="verdict-text"><span style="color:var(--status-warning)">Monitoring stopped — daemon offline.</span> <span class="sub">Data may be stale or unavailable.</span></div>
@@ -280,7 +278,7 @@ async def fleet_verdict():
 
     if not summary:
         # Empty state
-        return HTMLResponse(f"""<div class="verdict neutral">
+        return HTMLResponse("""<div class="verdict neutral">
     <div class="verdict-icon">⬡</div>
     <div class="verdict-main">
         <div class="verdict-text"><span class="sub">No agents discovered yet.</span></div>
@@ -485,7 +483,6 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
     """DPA §3: GET /api/fleet/agents — returns agent card grid partial.
     Answers Q1: What did the agent do? / Q2: Why did it do that?"""
     now = int(time.time())
-    per_page = 25
 
     try:
         summary = db.get_agent_status_summary()
@@ -516,7 +513,6 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
                 canary_latest[row["agent_name"]] = row
         # Track agents with running canaries — exclude stuck ones (running >5min with no results)
         canary_running = set()
-        import json
         for row in conn.execute(
             "SELECT cr.id, cr.agent_name, cr.started_at, "
             "(SELECT COUNT(*) FROM canary_results WHERE run_id = cr.id) as result_count "
@@ -539,7 +535,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
                 quality_drift[row["agent_name"]] = row
     except Exception:
         # Error state — daemon down or DB unavailable
-        return HTMLResponse(f"""<div class="section-h"><h2>Fleet</h2><span class="count">error</span></div>
+        return HTMLResponse("""<div class="section-h"><h2>Fleet</h2><span class="count">error</span></div>
 <div class="grid">
     <div class="state-msg err">
         <div class="ico">⚠</div>
@@ -551,7 +547,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
 
     if not summary:
         # Empty state
-        return HTMLResponse(f"""<div class="section-h"><h2>Fleet</h2><span class="count">0 agents</span></div>
+        return HTMLResponse("""<div class="section-h"><h2>Fleet</h2><span class="count">0 agents</span></div>
 <div class="grid">
     <div class="empty-card">
         <div class="ico">⬡</div>
@@ -687,7 +683,6 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         # Error badge
         err_badge = f'<span class="errbadge">{errors_24h}</span>' if errors_24h > 0 else ""
 
-        detect_cls = "down" if cls == "critical" else "warning" if cls == "warning" else "healthy" if cls == "healthy" else "gray"
         dot_cls = cls if cls != "unknown" else "gray"
         card_cls = "open" + (" crit" if cls == "critical" else " warn" if cls == "warning" else "")
         drift_up = max_drift > 0
@@ -726,9 +721,6 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
             hp_bars += f'<div class="p"><div class="bar {ps}" style="height:{h:.0f}px"></div><div class="lat">{lbl}</div></div>'
 
         # Confidence badge
-        conf_cls = "acc" if dq == "acc" else "est"
-        conf_label = "High confidence" if dq == "acc" else "Estimated"
-        conf_note = "otel + watch" if dq == "acc" else "watch-only · estimated breakdown"
 
         # Token bar segments
         comp_labels = ["skills", "memory", "identity", "tools", "guidance"]
@@ -791,7 +783,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         # Group key: agent vs service
         is_agent = name_type.get(name, "service") == "agent"
         group_key = "Agents" if is_agent else "Services"
-        
+
         # Quality BM row only for agents
         qb_row = ""
         if is_agent:
@@ -805,7 +797,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
                     <span class="spinner"></span> Loading per-category breakdown...
                 </div>
             </div>"""
-        
+
         # Brain + Memory rows only for agents
         agent_rows = ""
         if is_agent:

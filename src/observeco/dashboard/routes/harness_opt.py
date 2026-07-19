@@ -16,7 +16,7 @@ import sys
 import threading
 from typing import Optional
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from observeco.db import Database

@@ -12,7 +12,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import timezone
 from typing import Any, Optional
 
 from observeco.db import Database
@@ -181,6 +181,7 @@ class BenchmarkEngine:
         """
         from lm_eval import simple_evaluate
         from lm_eval.tasks import TaskManager
+
         from observeco.benchmark.adapters.lm_eval_adapter import HermesAgentLM
 
         # Resolve task list

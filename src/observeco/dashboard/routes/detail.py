@@ -13,9 +13,9 @@ from datetime import datetime
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
-logger = logging.getLogger(__name__)
-
 from observeco.db import Database
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/fleet", tags=["fleet"])
 db = Database()
@@ -24,13 +24,17 @@ db = Database()
 def _fmt_ts(ts: int) -> str:
     now = int(time.time())
     delta = now - ts
-    if delta < 60: return f"{delta}s ago"
-    elif delta < 3600: return f"{delta // 60}m ago"
-    elif delta < 86400: return f"{delta // 3600}h ago"
+    if delta < 60:
+        return f"{delta}s ago"
+    elif delta < 3600:
+        return f"{delta // 60}m ago"
+    elif delta < 86400:
+        return f"{delta // 3600}h ago"
     return f"{delta // 86400}d ago"
 
 def _fmt_tok(n: int) -> str:
-    if n >= 1000: return f"{n / 1000:.1f}K"
+    if n >= 1000:
+        return f"{n / 1000:.1f}K"
     return str(n)
 
 def _html_escape(text: str) -> str:
@@ -49,7 +53,7 @@ async def agent_modal(agent_name: str, tab: str = "health"):
     try:
         agents = db.get_agents()
     except Exception:
-        return HTMLResponse(f"""<div class="scrim"><div class="modal">
+        return HTMLResponse("""<div class="scrim"><div class="modal">
     <div class="m-head">
         <span class="m-name" style="color:var(--fg-3)">Error</span>
         <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
@@ -101,9 +105,12 @@ async def agent_modal(agent_name: str, tab: str = "health"):
         last_ts = 0
         delta = 999999
 
-    if status == "dead" and delta > 300: cls = "critical"
-    elif status == "error": cls = "warning"
-    elif status != "alive": cls = "unknown"
+    if status == "dead" and delta > 300:
+        cls = "critical"
+    elif status == "error":
+        cls = "warning"
+    elif status != "alive":
+        cls = "unknown"
 
     framework = known[name].get("framework", "Hermes")
     last_seen = _fmt_ts(last_ts) if last_ts else "never"
@@ -113,7 +120,6 @@ async def agent_modal(agent_name: str, tab: str = "health"):
 
     # Build tab HTML
     tabs_html = ""
-    panes_html = ""
 
     # Health tab
     pulse_dots = ""
@@ -123,7 +129,8 @@ async def agent_modal(agent_name: str, tab: str = "health"):
         if p:
             ps = p.get("status","")
             c = "d" if ps == "dead" else "e" if ps == "error" else "a"
-            if c == "d": c = "d"
+            if c == "d":
+                c = "d"
         else:
             c = "n"
         pulse_dots += f'<i class="{c}"></i>'
@@ -223,7 +230,8 @@ async def agent_modal(agent_name: str, tab: str = "health"):
     t_tools = trim.get("tools_tokens",0)
     t_guidance = trim.get("guidance_tokens",0)
     t_total = t_identity + t_skills + t_memory + t_tools + t_guidance
-    if not t_total: t_total = trim.get("total_tokens",0)
+    if not t_total:
+        t_total = trim.get("total_tokens",0)
 
     comps = [
         ("skills", t_skills, "bs"),
@@ -280,7 +288,7 @@ async def agent_modal(agent_name: str, tab: str = "health"):
         <div class="ms {"warn" if stale > 3 else ""}"><div class="n">{stale}</div><div class="l">Stale Entries</div></div>
     </div>
     {''.join(f'<div class="arch"><span class="ix">#1</span><div class="desc">Duplicate: <b>"{_html_escape(str(g.get("duplicates","")).split(",")[0])}"</b></div><span class="btn">View</span></div>') if duplicates > 0 else ''}
-    {f'<div class="pro"><span class="pico">🧠</span><div><h4>Memory Garden Auto-Scan</h4><p>Schedule automatic garden scans to catch memory bloat before it grows.</p></div></div>' if debt < 60 else '<div style="margin-top:var(--space-3)"><div class="swc watch"><span class="mark">⚠</span><div class="body"><span class="lead">ATTENTION</span><div class="txt">Debt score <b>{debt}</b> — run a garden scan to resolve duplicates and contradictions.</div></div></div></div>'}
+    {'<div class="pro"><span class="pico">🧠</span><div><h4>Memory Garden Auto-Scan</h4><p>Schedule automatic garden scans to catch memory bloat before it grows.</p></div></div>' if debt < 60 else '<div style="margin-top:var(--space-3)"><div class="swc watch"><span class="mark">⚠</span><div class="body"><span class="lead">ATTENTION</span><div class="txt">Debt score <b>{debt}</b> — run a garden scan to resolve duplicates and contradictions.</div></div></div></div>'}
 </div>"""
 
     # Efficiency pane — lazy-loaded via htmx (scans Hermes sessions)

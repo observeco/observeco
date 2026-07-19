@@ -7,9 +7,10 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from observeco.dashboard.config import PORTS
+
 from .diagnostics import DiagnosticReport, check_data_health, run_diagnostics
 from .feedback import collect_fix_outcome, is_telemetry_opted_out
-from observeco.dashboard.config import PORTS
 from .llm import (
     LLMFix,
     detect_llm_providers,

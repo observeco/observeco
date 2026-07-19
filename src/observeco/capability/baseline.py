@@ -6,7 +6,6 @@ compares current run against baseline, and manages baseline lifecycle.
 
 from __future__ import annotations
 
-import json
 import logging
 import uuid
 from dataclasses import dataclass, field
@@ -87,7 +86,7 @@ class BaselineManager:
         # Aggregate accuracy across all runs
         total_pass = sum(r["pass_count"] or 0 for r in rows)
         total_fail = sum(r["fail_count"] or 0 for r in rows)
-        total_tasks = sum(r["total_tasks"] or 0 for r in rows)
+        sum(r["total_tasks"] or 0 for r in rows)
 
         if total_pass + total_fail == 0:
             accuracy = 0.0
@@ -196,7 +195,6 @@ class BaselineManager:
         if se == 0:
             return DriftResult(drift_pct=drift_pct, p_value=1.0, severity="info")
 
-        import math
         z_score = abs(p1 - current_accuracy) / se
         # Two-tailed p-value from z-score using approximation
         p_value = 2 * (1 - _norm_cdf(z_score))

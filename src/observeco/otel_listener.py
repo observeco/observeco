@@ -27,8 +27,8 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from observeco.db import Database
 from observeco.dashboard.config import PORTS
+from observeco.db import Database
 from observeco.dirs import get_data_dir
 from observeco.event_bus import publish
 from observeco.tracking.sdk.provider_registry import detect_provider_configs
@@ -278,7 +278,6 @@ async def ingest_traces(request: Request):
                     # Classify local/cloud: look up provider in cached config map.
                     # Default to cloud (0) when provider not found.
                     is_local = _provider_is_local.get(provider, 0)
-                    cost = 0.0 if is_local else 0  # local cost zeroed; auto-compute below for cloud
 
                     db.log_token_turn(
                         agent_name=agent_name,

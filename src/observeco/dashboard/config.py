@@ -7,7 +7,7 @@ Every hardcoded value in server.py and index.html should reference this module.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional
 
 # ── Ports ─────────────────────────────────────────────────────────────────────

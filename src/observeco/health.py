@@ -20,6 +20,7 @@ from typing import Optional
 import psutil
 
 from observeco.dashboard.config import PORTS
+
 from .dirs import get_data_dir
 
 logger = logging.getLogger(__name__)

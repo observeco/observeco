@@ -9,7 +9,6 @@ Upgrade path: concurrent issue processing with worker pool.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
@@ -162,10 +161,10 @@ class HermesSWEAgent:
 
                 # Strip Hermes warning/status lines
                 output = "\n".join(
-                    l
-                    for l in output.splitlines()
-                    if not l.startswith("Warning:")
-                    and not l.startswith("session_id:")
+                    line
+                    for line in output.splitlines()
+                    if not line.startswith("Warning:")
+                    and not line.startswith("session_id:")
                 ).strip()
 
                 if proc.returncode != 0:
@@ -235,12 +234,12 @@ class HermesSWEAgent:
 
         # Try to find lines starting with +/-
         diff_lines = [
-            l for l in response.splitlines()
-            if l.startswith("---") or l.startswith("+++")
-            or l.startswith("@@")
-            or l.startswith("+")
-            or l.startswith("-")
-            or l.startswith(" ")
+            line for line in response.splitlines()
+            if line.startswith("---") or line.startswith("+++")
+            or line.startswith("@@")
+            or line.startswith("+")
+            or line.startswith("-")
+            or line.startswith(" ")
         ]
         if diff_lines:
             return "\n".join(diff_lines)

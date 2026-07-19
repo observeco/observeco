@@ -9,9 +9,9 @@ import re
 import time
 from typing import Any
 
-from observeco.config import write_agent, AgentConfig, _AGENTS_JSON
-from observeco.dirs import hermes_home
+from observeco.config import _AGENTS_JSON, AgentConfig, write_agent
 from observeco.db import Database
+from observeco.dirs import hermes_home
 
 # Cache for the GET endpoint (in-memory, 5min TTL)
 _cache: dict[str, Any] = {"gaps": None, "ts": 0, "ttl": 300}
@@ -261,7 +261,6 @@ def add_gap(name: str, framework: str = "custom", health_check: str = "") -> dic
 
     # Check both stores: pulse.db and agents.json
     tracked = {a["agent_name"].lower() for a in db.get_agents()}
-    from observeco.config import _AGENTS_JSON
     if _AGENTS_JSON.exists():
         import json
         try:
@@ -275,7 +274,6 @@ def add_gap(name: str, framework: str = "custom", health_check: str = "") -> dic
 
     db.register_agent(safe_name, framework, health_check=health_check)
     # Also write to agents.json so pulse check picks it up
-    from observeco.config import AgentConfig
     write_agent(AgentConfig(name=safe_name, framework=framework, health_check=health_check))
     # Bump cache so next scan reflects the change
     _cache["gaps"] = None
