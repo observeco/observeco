@@ -58,7 +58,8 @@ def _canary_row(agent_name: str, canary_row, canary_running: bool = False) -> st
     acc = (canary_row["pass_count"] / total * 100) if total > 0 else 0
     color = "var(--accent)" if acc >= 80 else "var(--warn)" if acc >= 60 else "var(--danger)"
     canary_row["hang_count"] or 0
-    return f'<span class="row-val" style="color:{color}">{acc:.0f}%</span>'
+    cost_str = f' · ${canary_row["total_cost"]:.2f}' if canary_row.get("total_cost") else ""
+    return f'<span class="row-val" style="color:{color}">{acc:.0f}%</span><span class="row-sub-cost">{cost_str}</span>'
 
 
 def _canary_pass_sub(agent_name: str, canary_row, canary_running: bool = False, drift_row=None) -> str:
@@ -71,6 +72,8 @@ def _canary_pass_sub(agent_name: str, canary_row, canary_running: bool = False, 
     hangs = canary_row["hang_count"] or 0
     hang_str = f" · ⚠️{hangs} hang{'s' if hangs != 1 else ''}" if hangs else ""
     parts = f'{canary_row["pass_count"]}/{canary_row["total_tasks"]} pass{hang_str}'
+    cost_str = f' · ${canary_row["total_cost"]:.4f}' if canary_row.get("total_cost") else ""
+    parts += cost_str
     # Quality drift indicator from drift_events
     if drift_row:
         drift_pct = drift_row["drift_pct"]
@@ -399,7 +402,9 @@ def _canary_card(agent_name: str) -> str:
     # Get latest completed run
     run = conn.execute(
         "SELECT id, pass_count, fail_count, hang_count, total_tasks, "
-        "started_at, config_hash FROM canary_runs "
+        "started_at, config_hash, "
+        "COALESCE(total_cost, 0.0) as total_cost, "
+        "COALESCE(total_tokens, 0) as total_tokens FROM canary_runs "
         "WHERE agent_name = ? AND status = 'completed' AND pass_count IS NOT NULL "
         "ORDER BY started_at DESC LIMIT 1",
         (agent_name,),
@@ -464,6 +469,14 @@ def _canary_card(agent_name: str) -> str:
       <div class="canary-stat-num green">{recovery}</div>
       <div class="canary-stat-label">Recovery</div>
     </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num">${run['total_cost']:.4f}</div>
+      <div class="canary-stat-label">Cost</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num">{_fmt_tokens(run['total_tokens'])}</div>
+      <div class="canary-stat-label">Tokens</div>
+    </div>
   </div>
   <div class="canary-card-footer">
     {drift_html}
@@ -505,7 +518,8 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         canary_latest = {}
         for row in conn.execute(
             "SELECT agent_name, pass_count, fail_count, hang_count, total_tasks, "
-            "started_at FROM canary_runs "
+            "started_at, COALESCE(total_cost, 0.0) as total_cost, "
+            "COALESCE(total_tokens, 0) as total_tokens FROM canary_runs "
             "WHERE status = 'completed' AND pass_count IS NOT NULL "
             "ORDER BY started_at DESC"
         ).fetchall():

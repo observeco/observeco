@@ -1094,7 +1094,8 @@ async def per_task_drift_history(agent: str = Query("default"), days: int = Quer
         conn = db._get_conn()
 
         runs = conn.execute(
-            "SELECT id, started_at FROM canary_runs "
+            "SELECT id, started_at, COALESCE(total_cost, 0.0) as total_cost, "
+            "COALESCE(total_tokens, 0) as total_tokens FROM canary_runs "
             "WHERE agent_name = ? AND status = 'completed' "
             "AND started_at >= datetime('now', ? || ' days') "
             "ORDER BY started_at ASC LIMIT 100",
@@ -1163,7 +1164,8 @@ async def per_task_drift_history(agent: str = Query("default"), days: int = Quer
             else:
                 t["severity"] = "stable"
 
-        return {"tasks": list(tasks_map.values())}
+        return {"tasks": list(tasks_map.values()),
+                "run_meta": {r["id"]: {"date": r["started_at"][:10], "cost": r["total_cost"], "tokens": r["total_tokens"]} for r in runs}}
 
     except Exception:
         logger.exception("per_task_drift_history failed for %s", agent)

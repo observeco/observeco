@@ -2,7 +2,7 @@
 
 **Spec ID:** obs-spec-087
 **Title:** Display real cost and token data from canary runs in the dashboard
-**Status:** DRAFT
+**Status:** ✅ IMPLEMENTED (2026-07-19)
 **Owner:** Main
 **Depends on:** obs-spec-086 (canary cost tracking — adapter now returns cost/tokens)
 **Master plan ref:** v0.6.0 "Agent Quality Management"

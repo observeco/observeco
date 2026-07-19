@@ -25,7 +25,7 @@ async def qb_categories(agent: str = Query("")):
 
     rows = conn.execute(
         "SELECT cr.accuracy, cr.status, ct.category, ct.difficulty, ct.name as task_name, "
-        "cr.error, cr.id as result_id "
+        "cr.error, cr.id as result_id, COALESCE(cr.cost, 0.0) as cost, COALESCE(cr.tokens, 0) as tokens "
         "FROM canary_results cr "
         "JOIN canary_tasks ct ON cr.task_id = ct.id "
         "WHERE cr.run_id = ? AND ct.category IS NOT NULL",
@@ -44,9 +44,11 @@ async def qb_categories(agent: str = Query("")):
         cat = r["category"] or "unknown"
         acc = r["accuracy"] if r["accuracy"] is not None else 0.0
         if cat not in cat_data:
-            cat_data[cat] = {"pass": 0, "total": 0, "acc_sum": 0.0}
+            cat_data[cat] = {"pass": 0, "total": 0, "acc_sum": 0.0, "cost": 0.0, "tokens": 0}
         cat_data[cat]["total"] += 1
         cat_data[cat]["acc_sum"] += acc
+        cat_data[cat]["cost"] += r["cost"] or 0.0
+        cat_data[cat]["tokens"] += r["tokens"] or 0
         if r["status"] == "pass":
             cat_data[cat]["pass"] += 1
         total_pass += 1 if r["status"] == "pass" else 0
@@ -57,7 +59,8 @@ async def qb_categories(agent: str = Query("")):
             worst = {"task": r["task_name"] or "", "acc": acc, "reasoning": reasoning}
 
     categories = sorted(
-        [{"name": c, "pass": d["pass"], "total": d["total"], "accuracy": round(d["acc_sum"] / d["total"], 2)}
+        [{"name": c, "pass": d["pass"], "total": d["total"], "accuracy": round(d["acc_sum"] / d["total"], 2),
+          "cost": round(d["cost"], 6), "tokens": d["tokens"]}
          for c, d in cat_data.items()],
         key=lambda x: x["accuracy"],
         reverse=True,
