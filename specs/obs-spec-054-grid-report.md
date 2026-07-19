@@ -2,7 +2,7 @@
 
 **Spec ID:** obs-spec-054
 **Title:** Grid report — model × config comparison matrix
-**Status:** DRAFT
+**Status:** ✅ IMPLEMENTED (verified 2026-07-19 — backend CapabilityGridRunner + API endpoints /api/capability/grid + /grid/run + /grid/table + dashboard table with CSV export all live; 14 grid_runs + 932 grid_results in DB)
 **Owner:** Main
 **Depends on:** obs-spec-050 (data model), obs-spec-051 (canary runner)
 **Master plan ref:** v0.5.0 "Capability Monitoring Layer"

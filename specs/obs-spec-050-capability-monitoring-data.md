@@ -2,7 +2,7 @@
 
 **Spec ID:** obs-spec-050
 **Title:** Capability monitoring data model — canary, grid, drift, config timeline
-**Status:** DRAFT
+**Status:** ✅ IMPLEMENTED (verified 2026-07-19 — all 8 tables exist with live data: canary_tasks=20, canary_runs=163, canary_results=1244, canary_baselines=1, drift_events=1, config_snapshots=3322, grid_runs=14, grid_results=932)
 **Owner:** Main
 **Supersedes:** obs-spec-024 §4 (capability layer data model)
 **Master plan ref:** v0.5.0 "Capability Monitoring Layer"
