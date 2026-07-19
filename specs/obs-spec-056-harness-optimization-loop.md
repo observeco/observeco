@@ -6,7 +6,7 @@
 **Owner:** Main
 **Depends on:** obs-spec-050 (data model, dev/test split), obs-spec-051 (canary runner), obs-spec-054 (grid report, blended score)
 **Master plan ref:** v0.6.0 "Automated Harness Optimization"
-**Inspired by:** Niklaus, "Don't Train the Model, Evolve the Harness," Hugging Face, July 2026. [Source](https://huggingface.co/spaces/joelniklaus/harness-optimization) · [Code](https://github.com/JoelNiklaus/harness-optimization) · [Meta-Harness paper](https://arxiv.org/abs/2603.28052) · **v0.7.0 upgrade:** Huang et al., "MemoHarness: Agent Harnesses That Learn from Experience," arXiv 2607.14159, July 2026. [Paper](https://arxiv.org/abs/2607.14159)
+**Inspired by:** Niklaus, "Don't Train the Model, Evolve the Harness," Hugging Face, July 2026. [Source](https://huggingface.co/spaces/joelniklaus/harness-optimization) · [Code](https://github.com/JoelNiklaus/harness-optimization) · [Meta-Harness paper](https://arxiv.org/abs/2603.28052) · **v0.7.0 upgrade:** Huang et al., "MemoHarness: Agent Harnesses That Learn from Experience," arXiv 2607.14159, July 2026. [Paper](https://arxiv.org/abs/2607.14159) · **v0.7.0 safety layer (MANDATORY):** Wang et al., "Phantom Guardrails: When Self-Improving Agent Harnesses Fix Failures That Never Happened," arXiv 2607.13083, July 2026. [Paper](https://arxiv.org/abs/2607.13083) — blocks proposed edits that cite failures that never occurred. See obs-spec-088.
 
 ---
 
@@ -184,6 +184,7 @@ CREATE TABLE IF NOT EXISTS harness_frontier (
 | 5 | **Read-only tasks only (MVP)** | MUST | Same as canary runner constraint. Write operations detected and flagged. |
 | 6 | **Leakage audit is non-negotiable** | MUST | Any candidate that touches test split is rejected. No exceptions. |
 | 7 | **Copy-and-adapt, not from-scratch** | MUST | Each candidate copies the current frontier and adds one mechanism. Random search without inheritance doesn't compound. |
+| 8 | **Phantom Guardrail check (MUST, v0.7.0)** | MUST | Proposed edits must be rejected if they cite a failure that did not occur in observed episodes. Per Wang et al. "Phantom Guardrails" (arXiv 2607.13083, 2026): LLM proposers hallucinate violations of rules that never fired (15/60 runs when a rule-shaped pattern + open-ended rule set + failure-presupposing instruction coincide). Any guardrail/edit that references a nonexistent failure class must be abstained. The fabrication check is mandatory before any edit enters the accept loop — inside an add-only loop, phantom guardrails re-enter and persist even without the presupposing instruction. |
 
 ---
 
