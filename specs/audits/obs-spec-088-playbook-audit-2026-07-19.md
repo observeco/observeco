@@ -86,14 +86,19 @@
 
 5. **`harness gate test` self-check.** The CLI exposes the Counterfactual Fabrication Lab as a runnable verification — turning the paper's evaluation into a regression test. Strong move for build-verify.
 
+6. **No silent dependencies.** The embedding upgrade path is opt-in with a hard "requires Sean's approval" constraint. Matches the lazy/senior-dev rule: no new dep if avoidable.
+
+7. **Fourth paper integrated post-audit: Evaluation Fairness (arXiv 2607.12227).** Added §2.5 EvaluationFairnessGate (EF-1 matched-budget TTS baseline, EF-2 held-out generalization), wired into the loop diagram, added 2 success metrics, and constraint #8. This closes a gap the first audit pass missed — the spec now has THREE mandatory gates (Phantom Guardrails + Evaluation Fairness + Leakage Audit) before any edit is accepted. The paper's empirical result (evolution rarely beats matched-budget TTS) is explicitly treated as a VALID outcome, not a failure — consistent with the HF plateau framing.
+
 ---
 
-## Confidence Summary
+## Updated Confidence Summary (post-4th-paper integration)
 
 | Classification | Count | Items |
 |---------------|-------|-------|
-| VERIFIED against codebase | 4 | episode-log sources exist (errors/pulse_log/token_logs/canary_results), new tables absent, no embedding dep, apply-edit no-op acknowledged |
+| VERIFIED against codebase | 4 | episode-log sources exist, new tables absent, no embedding dep, apply-edit no-op acknowledged |
 | CONFIDENT (proven divergence risk) | 1 | apply-edit no-op blocks dimension mutation until obs-spec-056 fixed |
-| SPEC-ONLY (by design) | 3 | experience bank, similarity retrieval, PhantomGuardrailGate — all correctly marked 🔴 Not Started |
+| SPEC-ONLY (by design) | 3 | experience bank, similarity retrieval, PhantomGuardrailGate + EvaluationFairnessGate — all correctly marked 🔴 Not Started |
+| **Papers cited** | **4** | Meta-Harness (2603.28052), MemoHarness (2607.14159), Phantom Guardrails (2607.13083), Rethinking Evaluation (2607.12227) |
 
-**Verdict: Spec is ready for build. All claims verified against live DB state. No fabrication of existing infrastructure.**
+**Verdict: Spec is ready for build. All four papers' cautions are operationalized as mandatory gates. No fabrication of existing infrastructure.**

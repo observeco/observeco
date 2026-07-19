@@ -9,6 +9,7 @@
 **Papers:**
 - Huang et al., "MemoHarness: Agent Harnesses That Learn from Experience," arXiv 2607.14159, July 2026. [Paper](https://arxiv.org/abs/2607.14159)
 - Wang et al., "Phantom Guardrails: When Self-Improving Agent Harnesses Fix Failures That Never Happened," arXiv 2607.13083, July 2026. [Paper](https://arxiv.org/abs/2607.13083)
+- Wang et al., "Rethinking the Evaluation of Harness Evolution for Agents," arXiv 2607.12227, July 2026. [Paper](https://arxiv.org/abs/2607.12227) — evaluation-fairness layer (matched-budget TTS baseline + held-out generalization).
 
 ---
 
@@ -106,11 +107,28 @@ class PhantomGuardrailGate:
 ### 2.4 Where it sits in the loop
 
 ```
-propose → classify → [PhantomGuardrailGate.check] → apply(temp) → evaluate → promote
+propose → classify → [PhantomGuardrailGate.check] → apply(temp) → evaluate
                          ↑ reject phantom here, before any temp-profile eval
+                       → [EvaluationFairnessGate.check] → promote
+                            ↑ must beat matched-budget TTS baseline + generalize to held-out
 ```
 
 The gate runs **before** `_apply_edit`. A phantom edit never reaches evaluation, so it never accumulates cost or pollutes the frontier.
+
+---
+
+## 2.5 Evaluation Fairness Gate (Rethinking Evaluation, arXiv 2607.12227)
+
+Wang et al. show that harness evolution is an iterative search that spends feedback + inference budget. Without a matched-budget baseline, reported gains are indistinguishable from *simple test-time scaling* (more samples/retries), not better harness design. They also show evolved harnesses often fail to generalize to held-out tasks.
+
+Two mandatory requirements:
+
+| # | Requirement | Detail |
+|---|-------------|--------|
+| EF-1 | **Matched-budget TTS baseline** | Every candidate is compared against a test-time-scaling baseline (`run_parallel_sampling` / `run_sequential_refinement` in `capability/harness.py`) under equal feedback + inference budget. A candidate is promoted only if `(candidate.dev_score − incumbent.dev_score) > (tts_baseline.dev_score − incumbent.dev_score) + min_delta`. If the TTS baseline already captures the gain, the "improvement" is search, not design — reject with `reason='search-budget-illusion'`. |
+| EF-2 | **Held-out generalization** | Dev gain and held-out test gain are both reported per candidate. A candidate that improves dev but regresses or is flat on held-out tasks is NOT promoted (flagged `outcome='no_generalization'`). The dev/test split (obs-spec-050) supplies the held-out set; the loop must not search on test. |
+
+**Expected outcome:** The paper's empirical result is that evolution rarely beats matched-budget TTS and generalizes poorly. A loop that promotes nothing (because TTS matches or beats every candidate) is a *valid, correct* result — not a failure. Surface "no harness improvement over TTS baseline" as a first-class finding, consistent with the HF plateau observation (obs-spec-056 §6).
 
 ---
 
@@ -218,6 +236,8 @@ observeco harness gate test [--agent AGENT]           # run Counterfactual Fabri
 | Experience grounding | ≥ 50% of proposals reference ≥1 real past experience | `harness_experiences` join on accepted edits |
 | Apply-edit effectiveness | Measurable score gain on live agent after promotion | `harness_control_dims` diff vs baseline canary run (requires §0 fix) |
 | No compounding phantoms | 0 phantom guardrails persist after a revert cycle | Audit `harness_experiences` for orphaned phantom classes |
+| Matched-budget TTS delta | Candidate dev gain over incumbent must exceed TTS baseline gain at equal budget | `candidate.dev_score - tts_baseline.dev_score` logged per iteration |
+| Held-out generalization | Dev gain and held-out test gain both reported; regression on held-out blocks promotion | `dev_score - test_score` delta per candidate |
 
 ---
 
@@ -232,6 +252,7 @@ observeco harness gate test [--agent AGENT]           # run Counterfactual Fabri
 | 5 | **Edit-and-revert, not append-only** | MUST | Loop must support removing phantom guardrails (PG-5). |
 | 6 | **Dev/test split required** | MUST | Inherited from obs-spec-056. |
 | 7 | **Read-only tasks only** | MUST | Inherited from obs-spec-056. |
+| 8 | **Evaluation fairness (matched-budget TTS)** | MUST | Every promoted candidate must beat a test-time-scaling baseline under equal feedback + inference budget (Rethinking Evaluation, arXiv 2607.12227). Gains explained by search alone are not harness improvements. |
 
 ---
 
