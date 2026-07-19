@@ -2,7 +2,7 @@
 
 **Spec ID:** obs-spec-056
 **Title:** Automated harness optimization loop — Meta-Harness inspired
-**Status:** DRAFT
+**Status:** ✅ IMPLEMENTED (verified 2026-07-19 — CLI `harness optimize/history/frontier/baseline` live; capability/harness.py core optimizer + evaluation framework built; dashboard routes in harness_opt.py; 9 optimization runs + 1 edit already in DB. NOTE: implementation diverged from §4 table names — uses harness_optimization_runs + harness_edits + harness_eval_runs, not harness_candidates/harness_frontier. Also subsumes obs-spec-061 evaluation framework.)
 **Owner:** Main
 **Depends on:** obs-spec-050 (data model, dev/test split), obs-spec-051 (canary runner), obs-spec-054 (grid report, blended score)
 **Master plan ref:** v0.6.0 "Automated Harness Optimization"
