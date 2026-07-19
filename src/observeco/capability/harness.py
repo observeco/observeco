@@ -293,6 +293,12 @@ class HarnessOptimizer:
 
                     # Update frontier in DB
                     self._update_frontier(agent_name, run_id, best_dev_score, mechanism_stack)
+
+                    # Deploy edit to live agent profile (closes the apply-edit no-op)
+                    if self._deploy_edit(agent_name, temp_profile):
+                        logger.info("edit deployed to live agent %s", agent_name)
+                    else:
+                        logger.warning("edit promoted but NOT deployed to live agent")
                 else:
                     logger.info("rejected: %s", reason)
 
@@ -824,6 +830,55 @@ class HarnessOptimizer:
                 logger.debug("cleaned up temp profile %s", temp_profile)
             except OSError as e:
                 logger.warning("could not clean up temp profile %s: %s", temp_profile, e)
+
+    def _deploy_edit(self, agent_name: str, temp_profile: str) -> bool:
+        """Copy the promoted edit from temp profile to the live agent profile.
+
+        Backs up the incumbent SOUL.md before overwriting, then copies the
+        temp profile's SOUL.md to the live agent directory. This closes the
+        apply-edit no-op: after promotion, the agent's harness actually changes.
+
+        ponytail: Only deploys SOUL.md. Does not deploy config.yaml or other
+        harness components. Upgrade path: full profile sync with diff-based
+        rollback on failure.
+        """
+        live_dir = os.path.expanduser(f"~/.hermes/profiles/{agent_name}")
+        temp_dir = os.path.expanduser(f"~/.hermes/profiles/{temp_profile}")
+        live_soul = os.path.join(live_dir, "SOUL.md")
+        temp_soul = os.path.join(temp_dir, "SOUL.md")
+
+        if not os.path.isfile(temp_soul):
+            logger.warning("temp profile SOUL.md not found: %s", temp_soul)
+            return False
+        if not os.path.isdir(live_dir):
+            logger.warning("live profile dir not found: %s", live_dir)
+            return False
+
+        # 1. Backup incumbent SOUL.md
+        backup_path = live_soul + ".bak"
+        if os.path.isfile(live_soul):
+            try:
+                shutil.copy2(live_soul, backup_path)
+                logger.info("backed up incumbent SOUL.md to %s", backup_path)
+            except OSError as e:
+                logger.warning("could not backup SOUL.md: %s", e)
+                return False
+
+        # 2. Copy temp SOUL.md to live profile
+        try:
+            shutil.copy2(temp_soul, live_soul)
+            logger.info(
+                "deployed edit to %s (backup at %s)",
+                live_soul, backup_path,
+            )
+            return True
+        except OSError as e:
+            logger.error("failed to deploy edit: %s", e)
+            # Attempt rollback
+            if os.path.isfile(backup_path):
+                shutil.copy2(backup_path, live_soul)
+                logger.info("rolled back SOUL.md from backup")
+            return False
 
     # ── Leakage audit (Gap 6) ─────────────────────────────────────────────
 
