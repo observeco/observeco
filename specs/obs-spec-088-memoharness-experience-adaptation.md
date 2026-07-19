@@ -67,7 +67,8 @@ Wang et al. (arXiv 2607.13083) show that LLM-based harness proposers **hallucina
 | PG-2 | **Fabrication oracle.** Before accepting any edit, verify every cited failure against an observed-episode log. If a cited violation has no matching record (byte-exact or near-match on episode id + assertion id + timestamp), reject the edit as a phantom. | Conditions 1+2 |
 | PG-3 | **Closed rule set by default.** The harness may only *enable* guardrails for failure classes that have at least N≥1 observed occurrences in the episode log. New failure classes require human approval (out-of-loop). | Condition 2 |
 | PG-4 | **Abstain-on-legal.** If the optimizer cannot find a real failure to address, it must emit "no edit" — not a speculative guardrail. Log abstentions. | All |
-| PG-5 | **No add-only loop.** Acceptance is not monotonic. A proposed edit that removes a previously-added guardrail (because the underlying failure was later found to be phantom) MUST be permitted. The loop is edit-and-revert, not append-only. | Compounding risk |
+| PG-5 | **Warrant-aware acceptance, not add-only.** The paper tests three acceptance rules: (a) accept-if-not-worse → phantom enters and stays (absorbing); (b) strict-improvement → phantom rides a strictly-improving batch (qwen3.7-max: 2/12); (c) **warrant-aware acceptance** → phantom is excluded. ObserveCo MUST use warrant-aware acceptance: an edit is accepted only if (1) the suppression proxy improves AND (2) every cited failure is verified against the episode log by the fabrication oracle. Acceptance is not monotonic — removing a previously-added guardrail (because the underlying failure was later found to be phantom) MUST be permitted. The loop is edit-and-revert, not append-only. | Compounding risk |
+| PG-6 | **Proposer-model fabrication risk grading.** The paper shows a per-proposer capability gradient: glm-5.1 fabricated 11/12, deepseek-v4-pro 1/12, deepseek-v4-flash 0/12. Stronger models fabricate less. The proposer model must be logged per iteration. If the fabrication rate exceeds 20% across the last 10 iterations, the spec must warn and suggest switching to a stronger proposer model. The `harness gate test` self-check should report fabrication rate per model. | All |
 
 ### 2.3 `PhantomGuardrailGate` (proposed interface)
 
@@ -119,14 +120,26 @@ The gate runs **before** `_apply_edit`. A phantom edit never reaches evaluation,
 
 ## 2.5 Evaluation Fairness Gate (Rethinking Evaluation, arXiv 2607.12227)
 
-Wang et al. show that harness evolution is an iterative search that spends feedback + inference budget. Without a matched-budget baseline, reported gains are indistinguishable from *simple test-time scaling* (more samples/retries), not better harness design. They also show evolved harnesses often fail to generalize to held-out tasks.
+Wang et al. compare four methods under a unified budget protocol: parallel sampling, sequential refinement, harness evolution, and **harness scaling** (instance-guided harness adaptation — updates harness per-task, not cross-task). Their empirical results on Terminal-Bench 2.1 with Claude Opus 4.6 and GPT-5.4:
 
-Two mandatory requirements:
+| Finding | Data |
+|---------|------|
+| Harness evolution does NOT consistently beat TTS | pass@1: Harness Evolution 73.0 vs Parallel Sampling 84.8 (Claude) |
+| Gains show up in pass@k, not pass@1 | pass@1 barely improves; pass@5 improves — harness doesn't help solve new tasks, just makes more attempts viable |
+| Edits memorize fixes, not strategies | §5.1: "most edits memorize fixes rather than distilling strategies... much of this information is precisely what a competent agent can rediscover through exploration within a single rollout" |
+| Context bloat offsets gains | Growing persistent prompt text from accumulated edits introduces context bloat that can offset remaining gains |
+| No generalization to held-out tasks | Table 3: evolved harness yields +0.6 avg on held-out test set (vs large gains on training tasks) |
+| Harness evolution only valuable when two conditions hold | §5.2: (1) tasks difficult enough that agents leave substantial headroom, (2) performance depends heavily on the harness |
+
+### Mandatory requirements
 
 | # | Requirement | Detail |
 |---|-------------|--------|
-| EF-1 | **Matched-budget TTS baseline** | Every candidate is compared against a test-time-scaling baseline (`run_parallel_sampling` / `run_sequential_refinement` in `capability/harness.py`) under equal feedback + inference budget. A candidate is promoted only if `(candidate.dev_score − incumbent.dev_score) > (tts_baseline.dev_score − incumbent.dev_score) + min_delta`. If the TTS baseline already captures the gain, the "improvement" is search, not design — reject with `reason='search-budget-illusion'`. |
-| EF-2 | **Held-out generalization** | Dev gain and held-out test gain are both reported per candidate. A candidate that improves dev but regresses or is flat on held-out tasks is NOT promoted (flagged `outcome='no_generalization'`). The dev/test split (obs-spec-050) supplies the held-out set; the loop must not search on test. |
+| EF-1 | **Matched-budget TTS baseline (all three variants)** | Every candidate is compared against parallel sampling, sequential refinement, AND harness scaling baselines under equal feedback + inference budget. A candidate is promoted only if `(candidate.dev_score − incumbent.dev_score) > (best_tts.dev_score − incumbent.dev_score) + min_delta`. If any TTS baseline already captures the gain, the "improvement" is search, not design — reject with `reason='search-budget-illusion'`. |
+| EF-2 | **pass@1 improvement, not just pass@k** | The promotion gate must use pass@1, not pass@k. If the candidate improves pass@k but not pass@1, it means the harness doesn't help the agent *solve* new tasks — it just makes more attempts viable. That's search, not design. Reject with `reason='passk-not-pass1'`. |
+| EF-3 | **Held-out generalization** | Dev gain and held-out test gain are both reported per candidate. A candidate that improves dev but regresses or is flat on held-out tasks is NOT promoted (flagged `outcome='no_generalization'`). |
+| EF-4 | **Context bloat budget** | Track cumulative prompt size across iterations. If the frontier harness's prompt exceeds `context_bloat_threshold` (default: 2× initial prompt), flag with `reason='context-bloat'` and do NOT promote further additions without removing equivalent text. The paper shows accumulated edits introduce context bloat that offsets gains. |
+| EF-5 | **Precondition check: headroom + harness-sensitivity** | Before running the loop, verify (1) the agent leaves ≥10% headroom on dev tasks (accuracy < 90%), and (2) canary tasks are harness-sensitive (grid report shows ≥5pp spread across configs). If either condition fails, skip the loop — the paper shows harness evolution yields marginal gains when tasks are too easy or harness-insensitive. |
 
 **Expected outcome:** The paper's empirical result is that evolution rarely beats matched-budget TTS and generalizes poorly. A loop that promotes nothing (because TTS matches or beats every candidate) is a *valid, correct* result — not a failure. Surface "no harness improvement over TTS baseline" as a first-class finding, consistent with the HF plateau observation (obs-spec-056 §6).
 
@@ -140,6 +153,12 @@ Two mandatory requirements:
 |-------|---------|--------|
 | **Per-case** | Diagnoses of individual agent runs: what failed, why, what edit was proposed, did it help | `canary_results`, `harness_optimization_runs`, `harness_edits` |
 | **Global patterns** | Cross-run aggregated patterns: "edits of type X improve agent Y by Z% on task class W" | Derived from the per-case layer on a schedule |
+
+**⚠️ Risk — "memorize fixes, not strategies" (Rethinking §5.1):** Wang et al. found that most harness edits are task-specific rules (prescribed command orderings, verified dataset properties) that a competent agent could rediscover on its own. The experience bank risks encoding exactly this kind of task-specific memorization, which:
+1. Does not generalize to held-out tasks (EF-3 will catch this)
+2. Introduces context bloat that offsets gains (EF-4 will catch this)
+
+**Mitigation:** The experience bank's global-pattern layer must aggregate by *failure class*, not by *task id*. A per-case diagnosis that is task-specific ("ARENA-00013 failed because B2 was repeated") must be abstracted to a failure class ("move-repetition") before it enters the global layer. The classifier (`_classify_edit` in harness.py) already labels edits as "task-specific" vs "generalizable" — only "generalizable" edits may be promoted to the global layer.
 
 ### 3.2 New DB tables
 
@@ -236,8 +255,12 @@ observeco harness gate test [--agent AGENT]           # run Counterfactual Fabri
 | Experience grounding | ≥ 50% of proposals reference ≥1 real past experience | `harness_experiences` join on accepted edits |
 | Apply-edit effectiveness | Measurable score gain on live agent after promotion | `harness_control_dims` diff vs baseline canary run (requires §0 fix) |
 | No compounding phantoms | 0 phantom guardrails persist after a revert cycle | Audit `harness_experiences` for orphaned phantom classes |
-| Matched-budget TTS delta | Candidate dev gain over incumbent must exceed TTS baseline gain at equal budget | `candidate.dev_score - tts_baseline.dev_score` logged per iteration |
+| Matched-budget TTS delta | Candidate dev gain over incumbent must exceed ALL TTS baseline gains (parallel sampling, sequential refinement, harness scaling) at equal budget | `candidate.dev_score - best_tts.dev_score` logged per iteration |
+| pass@1 improvement | Candidate must improve pass@1, not just pass@k | `candidate.pass1 - incumbent.pass1` > 0 |
 | Held-out generalization | Dev gain and held-out test gain both reported; regression on held-out blocks promotion | `dev_score - test_score` delta per candidate |
+| Context bloat | Frontier prompt size stays < 2× initial | Cumulative prompt char count per iteration |
+| Precondition headroom | Agent accuracy < 90% on dev before loop runs | Canary baseline accuracy |
+| Precondition harness-sensitivity | Grid report shows ≥5pp spread across configs | Grid results from obs-spec-054 |
 
 ---
 
@@ -252,7 +275,11 @@ observeco harness gate test [--agent AGENT]           # run Counterfactual Fabri
 | 5 | **Edit-and-revert, not append-only** | MUST | Loop must support removing phantom guardrails (PG-5). |
 | 6 | **Dev/test split required** | MUST | Inherited from obs-spec-056. |
 | 7 | **Read-only tasks only** | MUST | Inherited from obs-spec-056. |
-| 8 | **Evaluation fairness (matched-budget TTS)** | MUST | Every promoted candidate must beat a test-time-scaling baseline under equal feedback + inference budget (Rethinking Evaluation, arXiv 2607.12227). Gains explained by search alone are not harness improvements. |
+| 8 | **Evaluation fairness (matched-budget TTS, all 3 variants)** | MUST | Every promoted candidate must beat parallel sampling, sequential refinement, AND harness scaling baselines under equal feedback + inference budget (Rethinking Evaluation, arXiv 2607.12227). Gains explained by search alone are not harness improvements. |
+| 9 | **pass@1, not pass@k** | MUST | Promotion gate uses pass@1. Candidates that improve only pass@k are search, not design. |
+| 10 | **Context bloat budget** | MUST | Frontier prompt must stay < 2× initial. Accumulated edits that bloat context offset their own gains (Rethinking §5.1). |
+| 11 | **Precondition: headroom + harness-sensitivity** | MUST | Loop skipped if agent accuracy ≥90% on dev (no headroom) or grid report shows <5pp config spread (harness-insensitive). Rethinking §5.2. |
+| 12 | **Experience bank: failure-class aggregation, not task-id** | MUST | Only "generalizable" edits (per `_classify_edit`) enter the global pattern layer. Task-specific diagnoses stay in per-case only. Prevents memorize-fixes-not-strategies failure (Rethinking §5.1). |
 
 ---
 
