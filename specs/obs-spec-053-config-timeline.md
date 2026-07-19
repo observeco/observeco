@@ -2,7 +2,7 @@
 
 **Spec ID:** obs-spec-053
 **Title:** Config timeline — auto-detected configuration changes
-**Status:** DRAFT
+**Status:** ✅ IMPLEMENTED (verified 2026-07-19 — backend detector, watch daemon consumer, API endpoints, and dashboard timeline all live and producing data)
 **Owner:** Main
 **Depends on:** obs-spec-050 (data model)
 **Master plan ref:** v0.5.0 "Capability Monitoring Layer"
