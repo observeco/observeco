@@ -138,7 +138,7 @@ Wang et al. compare four methods under a unified budget protocol: parallel sampl
 | EF-1 | **Matched-budget TTS baseline (all three variants)** | Every candidate is compared against parallel sampling, sequential refinement, AND harness scaling baselines under equal feedback + inference budget. A candidate is promoted only if `(candidate.dev_score − incumbent.dev_score) > (best_tts.dev_score − incumbent.dev_score) + min_delta`. If any TTS baseline already captures the gain, the "improvement" is search, not design — reject with `reason='search-budget-illusion'`. |
 | EF-2 | **pass@1 improvement, not just pass@k** | The promotion gate must use pass@1, not pass@k. If the candidate improves pass@k but not pass@1, it means the harness doesn't help the agent *solve* new tasks — it just makes more attempts viable. That's search, not design. Reject with `reason='passk-not-pass1'`. |
 | EF-3 | **Held-out generalization** | Dev gain and held-out test gain are both reported per candidate. A candidate that improves dev but regresses or is flat on held-out tasks is NOT promoted (flagged `outcome='no_generalization'`). |
-| EF-4 | **Context bloat budget** | Track cumulative prompt size across iterations. If the frontier harness's prompt exceeds `context_bloat_threshold` (default: 2× initial prompt), flag with `reason='context-bloat'` and do NOT promote further additions without removing equivalent text. The paper shows accumulated edits introduce context bloat that offsets gains. |
+| EF-4 | **Context bloat budget** | Track cumulative prompt size across iterations. If the frontier harness's prompt exceeds `context_bloat_threshold` (default: 2× initial prompt, configurable via `--context-bloat-threshold` CLI flag), flag with `reason='context-bloat'` and do NOT promote further additions without removing equivalent text. The paper shows accumulated edits introduce context bloat that offsets gains. |
 | EF-5 | **Precondition check: headroom + harness-sensitivity** | Before running the loop, verify (1) the agent leaves ≥10% headroom on dev tasks (accuracy < 90%), and (2) canary tasks are harness-sensitive (grid report shows ≥5pp spread across configs). If either condition fails, skip the loop — the paper shows harness evolution yields marginal gains when tasks are too easy or harness-insensitive. |
 
 **Expected outcome:** The paper's empirical result is that evolution rarely beats matched-budget TTS and generalizes poorly. A loop that promotes nothing (because TTS matches or beats every candidate) is a *valid, correct* result — not a failure. Surface "no harness improvement over TTS baseline" as a first-class finding, consistent with the HF plateau observation (obs-spec-056 §6).
@@ -192,6 +192,9 @@ CREATE TABLE IF NOT EXISTS harness_control_dims (
     output          TEXT,     -- output formatting / validation policy
     updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- ponytail: No FK on agent_name — SQLite FKs are off by default and
+-- agent_name is not a PK in any parent table. Orphan cleanup is
+-- handled explicitly in the lifecycle (see §5 "Agent profile deleted").
 ```
 
 ### 3.3 Retrieval
@@ -221,7 +224,7 @@ Huang et al. define 6 editable control dimensions. These are **mutable harness p
 ## 4. CLI
 
 ```
-observeco harness optimize [--agent AGENT] [--iterations N] [--with-experience] [--no-phantom-gate]
+observeco harness optimize [--agent AGENT] [--iterations N] [--with-experience] [--no-phantom-gate] [--context-bloat-threshold N]
 observeco harness experience [--agent AGENT]          # show experience bank stats
 observeco harness experience clear [--agent AGENT]    # prune (with confirmation)
 observeco harness gate test [--agent AGENT]           # run Counterfactual Fabrication Lab self-check
@@ -229,6 +232,7 @@ observeco harness gate test [--agent AGENT]           # run Counterfactual Fabri
 
 - `--with-experience` enables experience-bank retrieval for the proposer.
 - `--no-phantom-gate` is a **debug-only** flag that disables PG-2/PG-3. It must refuse to run inside any scheduled/cron context. Default: gate ON.
+- `--context-bloat-threshold` sets the max prompt size multiplier (default: 2.0). The loop stops promoting additions when the frontier harness's prompt exceeds `initial_prompt_size × threshold`.
 
 ---
 
@@ -242,7 +246,7 @@ observeco harness gate test [--agent AGENT]           # run Counterfactual Fabri
 | Apply-edit fails | Temp profile eval runs, result recorded | Skip iteration, log warning (same as v0.6.0) |
 | Phantom detected | Edit rejected at gate, recorded with `outcome='phantom_rejected'` | No temp-profile eval, no cost |
 | Human removes a phantom guardrail later | Edit-and-revert permitted (PG-5) | Loop must support removing, not just adding |
-| Agent profile deleted | Experience bank persists (separate table) | Re-accumulates on next runs; old experiences tagged stale |
+| Agent profile deleted | Experience bank persists (separate table). `harness_control_dims` row cleaned up via `DELETE FROM harness_control_dims WHERE agent_name = ?`. Old experiences tagged stale. | Re-accumulates on next runs; old experiences tagged stale |
 
 ---
 
@@ -290,7 +294,7 @@ observeco harness gate test [--agent AGENT]           # run Counterfactual Fabri
 | `src/observeco/capability/harness.py` | Add `PhantomGuardrailGate`, `EpisodeLog`, `retrieve_similar()`; wire gate into `optimize()` before `_apply_edit`; add experience-bank write on each iteration |
 | `src/observeco/capability/experience.py` | New — experience bank store + retrieval (exact match MVP; embedding upgrade path) |
 | `src/observeco/cli_harness.py` | Add `experience`, `gate test` subcommands; `--with-experience`, `--no-phantom-gate` flags |
-| `src/observeco/db.py` | Migration: `harness_experiences`, `harness_control_dims` tables |
+| `src/observeco/db.py` | Migration 64: `harness_experiences`, `harness_control_dims` tables |
 | `src/observeco/dashboard/routes/harness_opt.py` | Experience bank stats view; phantom-rejection log |
 
 ---
