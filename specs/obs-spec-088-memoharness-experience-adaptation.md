@@ -2,7 +2,7 @@
 
 **Spec ID:** obs-spec-088
 **Title:** MemoHarness experience-based harness adaptation + Phantom Guardrails safety layer
-**Status:** DRAFT (not started — no code exists)
+**Status:** ✅ BUILT (2026-07-19) — PhantomGuardrailGate, EvaluationFairnessGate, EpisodeLog, ExperienceBank, CLI `experience`/`gate`, dashboard buttons all implemented and verified.
 **Owner:** Main
 **Depends on:** obs-spec-056 (v0.6.0 loop, evaluation-only), obs-spec-050 (data model), obs-spec-057 (benchmark methodology, dev/test split)
 **Master plan ref:** v0.7.0 "Automated Harness Optimization" (row #56b)

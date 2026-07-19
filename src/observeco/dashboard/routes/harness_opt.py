@@ -1,19 +1,22 @@
-"""Harness Optimizer dashboard routes (obs-spec-056 §8 frontend).
+"""Harness Optimizer dashboard routes (obs-spec-056 §8 frontend + obs-spec-088).
 
 Read-only viewer of real optimization runs + a run trigger that spawns the
 existing CLI loop (observeco harness optimize) as a detached subprocess.
+Plus obs-spec-088: Phantom Guardrail gate-test button + experience bank view.
 
-Honest framing: the loop proposes + evaluates harness edits but does NOT apply
-them to the live agent (HarnessOptimizer._apply_edit is a no-op — see ponytail in
-capability/harness.py). So this UI shows real evaluation results and proposals
-marked "not yet applied". It does not claim the agent has evolved.
+Note: the loop applies promoted edits to the live agent (apply-edit no-op
+was closed in commit 2e24711). This UI shows real evaluation results,
+phantom-rejection log, and experience-bank stats.
 """
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 import sys
 import threading
+import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Query
@@ -147,6 +150,105 @@ def _html_escape(s) -> str:
 @router.get("/runs", response_class=HTMLResponse)
 async def harness_runs(agent: Optional[str] = Query(None)):
     return HTMLResponse(_runs_html(agent))
+
+
+@router.post("/gate-test", response_class=JSONResponse)
+async def harness_gate_test(agent: str = Query("default")):
+    """Run Counterfactual Fabrication Lab self-check (no LLM, no tokens)."""
+    from observeco.capability.harness import HarnessOptimizer
+    from observeco.db import Database
+
+    try:
+        opt = HarnessOptimizer(db=Database())
+        result = opt.run_gate_test(agent)
+        # Persist result for the GET view
+        db = Database()
+        db._write(
+            "INSERT INTO harness_gate_tests "
+            "(id, agent_name, run_at, proposer_model, total_runs, fabricated_runs, "
+            "fabrication_rate, verdict, detail) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (str(uuid.uuid4()), agent, datetime.now(timezone.utc).isoformat(),
+             "phantom_guardrail_gate", result["total_runs"], result["fabricated_runs"],
+             result["fabrication_rate"], result["verdict"], json.dumps(result["detail"])),
+        )
+        return {"ok": True, "result": result}
+    except Exception as e:
+        logger.exception("Gate test failed for %s", agent)
+        return {"ok": False, "message": str(e)}
+
+
+@router.get("/gate-test", response_class=HTMLResponse)
+async def harness_gate_test_view(agent: Optional[str] = Query(None)):
+    from observeco.capability.harness import HarnessOptimizer
+    from observeco.db import Database
+
+    db = Database()
+    row = db._get_conn().execute(
+        "SELECT * FROM harness_gate_tests WHERE agent_name=? "
+        "ORDER BY run_at DESC LIMIT 1",
+        (agent or "default",),
+    ).fetchone()
+    if not row:
+        return HTMLResponse(
+            '<div style="color:#64748b;font-size:12px;padding:12px;">'
+            'No gate test run yet. Click "🛡️ Gate Test" to verify the Phantom Guardrail gate.</div>'
+        )
+    detail = json.loads(row["detail"]) if row["detail"] else []
+    rows = "".join(
+        f'<div style="font-size:12px;padding:4px 0;border-bottom:1px solid #1e293b;">'
+        f'<span class="badge {"ok" if d["accepted"] == d["expected"] else "fail"}">'
+        f'{"PASS" if d["accepted"] == d["expected"] else "FAIL"}</span> '
+        f'{_html_escape(d["edit"][:50])} → accepted={d["accepted"]}</div>'
+        for d in detail
+    )
+    vcls = "ok" if row["verdict"] == "PASS" else "fail"
+    return HTMLResponse(
+        f'<div class="section-h"><h2>Phantom Guardrail Gate Test</h2>'
+        f'<span class="badge {vcls}">{row["verdict"]}</span></div>'
+        f'<div style="font-size:12px;color:#94a3b8;padding:8px 0;">'
+        f'Total {row["total_runs"]} · Fabricated {row["fabricated_runs"]} · '
+        f'Rate {row["fabrication_rate"]*100:.1f}%</div>'
+        + rows
+    )
+
+
+@router.get("/experience", response_class=HTMLResponse)
+async def harness_experience_view(agent: Optional[str] = Query(None)):
+    from observeco.capability.experience import ExperienceBank
+
+    agent = agent or "default"
+    bank = ExperienceBank()
+    stats = bank.stats(agent)
+    reject_rows = "".join(
+        f'<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #1e293b;color:#94a3b8;">'
+        f'<strong>{_html_escape(r["failure_class"])}</strong> — {_html_escape(r["diagnosis"][:60])}</div>'
+        for r in stats["rejection_log"][:20]
+    )
+    fc_rows = "".join(
+        f'<div style="font-size:11px;padding:2px 0;">{_html_escape(fc)}: {c}</div>'
+        for fc, c in stats["failure_classes"].items()
+    )
+    return HTMLResponse(
+        f'<div class="section-h"><h2>Experience Bank</h2>'
+        f'<span class="count">{stats["total"]}</span></div>'
+        f'<div style="font-size:12px;color:#94a3b8;padding:8px 0;">'
+        f'Global patterns: {stats["global_patterns"]} · Layers: {stats["per_layer"]}</div>'
+        + (f'<div style="margin-top:8px;"><strong style="font-size:12px;">Observed failure classes</strong>{fc_rows}</div>' if fc_rows else '')
+        + (f'<div style="margin-top:12px;"><strong style="font-size:12px;">Phantom rejections</strong>{reject_rows}</div>' if reject_rows else '')
+        + '<div style="margin-top:12px;"><button onclick="if(confirm(\'Clear all experiences for this agent?\')) '
+          'fetch(\'/api/harness/experience/clear?agent=' + agent + '\', {method:\'POST\'}).then(()=>'
+          'htmx.ajax(\'GET\', \'/api/harness/experience?agent=' + agent + '\', {target:\'#harnessExperience\', swap:\'innerHTML\'}))" '
+          'style="background:#475569;border:none;color:white;border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;">Clear</button></div>'
+    )
+
+
+@router.post("/experience/clear", response_class=JSONResponse)
+async def harness_experience_clear(agent: str = Query("default")):
+    from observeco.capability.experience import ExperienceBank
+
+    bank = ExperienceBank()
+    n = bank.clear(agent)
+    return {"ok": True, "cleared": n}
 
 
 @router.get("/runs/{run_id}", response_class=HTMLResponse)

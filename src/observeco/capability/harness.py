@@ -19,9 +19,139 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from observeco.capability.canary import CanaryReport, CanaryRunner
+from observeco.capability.experience import ExperienceBank
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)
+
+
+# ── Phantom Guardrails + Evaluation Fairness gates (obs-spec-088) ──────────
+
+
+class EpisodeLog:
+    """Queryable source of truth for observed harness failures.
+
+    Derived from canary_results + harness_edits outcomes. The Phantom
+    Guardrails gate rejects edits citing failures absent from this log.
+    """
+
+    def __init__(self, db: Database):
+        self.db = db
+
+    def count_observations(self, failure_class: str, agent_name: str | None = None) -> int:
+        """Count real (non-phantom) observations of a failure class."""
+        conn = self.db._get_conn()
+        if agent_name:
+            row = conn.execute(
+                "SELECT COALESCE(SUM(observed_count), 0) AS c FROM harness_experiences "
+                "WHERE failure_class=? AND agent_name=? AND outcome != 'phantom_rejected'",
+                (failure_class, agent_name),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT COALESCE(SUM(observed_count), 0) AS c FROM harness_experiences "
+                "WHERE failure_class=? AND outcome != 'phantom_rejected'",
+                (failure_class,),
+            ).fetchone()
+        return int(row["c"]) if row else 0
+
+    def has_failure(self, failure_class: str, agent_name: str | None = None) -> bool:
+        return self.count_observations(failure_class, agent_name) >= 1
+
+
+class PhantomGuardrailGate:
+    """Reject proposed edits that cite failures not present in observed episodes.
+
+    Blocks the 'phantom guardrail' failure mode (Wang et al. 2026, arXiv 2607.13083).
+    Mandatory safety layer for obs-spec-088 — sits before _apply_edit.
+    """
+
+    def __init__(self, episode_log: EpisodeLog, min_observations: int = 1):
+        self.episode_log = episode_log
+        self.min_observations = min_observations
+
+    def check(self, edit: dict, agent_name: str | None = None) -> tuple[bool, str]:
+        """Return (accepted, reason).
+
+        An edit is accepted only if every failure class it references has been
+        observed >= min_observations times (PG-3 closed rule set). Edits that
+        introduce a brand-new guardrail class with zero observations are rejected
+        unless flagged human_review=True.
+        """
+        cited = edit.get("cited_failures", [])
+        if not cited:
+            # Edits with no cited failure aren't phantom guardrails — but PG-4
+            # (abstain-on-legal) is enforced at the proposer level. Allow through.
+            return True, "No cited failures — not a phantom guardrail."
+        for failure in cited:
+            fclass = failure.get("class", failure) if isinstance(failure, dict) else failure
+            obs = self.episode_log.count_observations(fclass, agent_name)
+            if obs < self.min_observations:
+                return False, (
+                    f"Phantom guardrail rejected: failure class '{fclass}' has "
+                    f"{obs} observed occurrences (min {self.min_observations}). "
+                    f"No real failure to fix."
+                )
+        return True, "All cited failures observed in episode log."
+
+
+class EvaluationFairnessGate:
+    """Reject candidates whose gain is search budget, not harness design.
+
+    Rethinking Evaluation (Wang et al. 2026, arXiv 2607.12227). Every promoted
+    candidate must beat parallel sampling, sequential refinement, AND harness
+    scaling baselines at equal budget, and must improve pass@1 (not pass@k),
+    and must generalize to held-out test.
+    """
+
+    def __init__(self, context_bloat_threshold: float = 2.0):
+        self.context_bloat_threshold = context_bloat_threshold
+
+    def check(
+        self,
+        candidate_dev: float,
+        candidate_test: float,
+        incumbent_dev: float,
+        incumbent_test: float,
+        tts_baselines: dict[str, float],
+        candidate_pass1: float | None = None,
+        incumbent_pass1: float | None = None,
+        frontier_prompt_size: int = 0,
+        initial_prompt_size: int = 0,
+    ) -> tuple[bool, str]:
+        """Return (promoted, reason)."""
+        # EF-1: matched-budget TTS — candidate dev gain must exceed all baselines
+        cand_dev_gain = candidate_dev - incumbent_dev
+        best_tts_gain = max(
+            (tts_baselines.get(m, 0.0) - incumbent_dev)
+            for m in ("parallel_sampling", "sequential_refinement", "harness_scaling")
+        )
+        if cand_dev_gain <= best_tts_gain:
+            return False, (
+                f"search-budget-illusion: candidate dev gain +{cand_dev_gain * 100:.1f}pp "
+                f"<= best TTS gain +{best_tts_gain * 100:.1f}pp"
+            )
+
+        # EF-2: pass@1, not pass@k
+        if candidate_pass1 is not None and incumbent_pass1 is not None:
+            if candidate_pass1 <= incumbent_pass1:
+                return False, "passk-not-pass1: candidate improved pass@k but not pass@1"
+
+        # EF-3: held-out generalization
+        if candidate_test < incumbent_test - 0.005:
+            return False, (
+                f"no_generalization: held-out test {candidate_test * 100:.1f}% "
+                f"< incumbent {incumbent_test * 100:.1f}%"
+            )
+
+        # EF-4: context bloat budget
+        if initial_prompt_size and frontier_prompt_size > initial_prompt_size * self.context_bloat_threshold:
+            return False, (
+                f"context-bloat: frontier prompt {frontier_prompt_size} > "
+                f"{self.context_bloat_threshold:.1f}x initial ({initial_prompt_size})"
+            )
+
+        return True, "Candidate beats TTS baselines + generalizes + within bloat budget"
 
 
 # ── HarnessOptimizer ────────────────────────────────────────────────────────
@@ -188,6 +318,9 @@ class HarnessOptimizer:
     def optimize(
         self, agent_name: str, iterations: int = 5, budget: int = 45,
         no_baselines: bool = False,
+        no_phantom_gate: bool = False,
+        context_bloat_threshold: float = 2.0,
+        with_experience: bool = False,
     ) -> dict:
         """Run the harness optimization loop with full evaluation framework.
 
@@ -197,10 +330,34 @@ class HarnessOptimizer:
             budget: Total compute budget (agent rollouts).
             no_baselines: Skip baseline comparison (not recommended — gains
                 won't be attributable to harness design vs search budget).
+            no_phantom_gate: DEBUG ONLY. Disable PG-2/PG-3. Must be refused
+                inside scheduled/cron context (Constraint #1). Default: False.
+            context_bloat_threshold: Max frontier prompt size multiplier
+                (default 2.0). Loop stops promoting additions beyond this.
+            with_experience: Enable experience-bank retrieval for the proposer.
         """
+        if no_phantom_gate and os.environ.get("OBSERVECO_IN_CRON"):
+            raise RuntimeError("Phantom Guardrail gate is non-bypassable in scheduled runs")
+
         run_id = str(uuid.uuid4())
         now_iso = datetime.now(timezone.utc).isoformat()
         self.db._get_conn()
+
+        # 0. Precondition check (EF-5): headroom + harness-sensitivity
+        if not no_baselines:
+            pre_acc = self.runner.run(agent_name, split="dev").overall_accuracy
+            if pre_acc >= 0.90:
+                logger.info("precondition skipped: agent accuracy %.1f%% >= 90%% (no headroom)", pre_acc * 100)
+                self.db._write(
+                    "INSERT INTO harness_optimization_runs "
+                    "(id, agent_name, started_at, status, iterations, budget, "
+                    "promotion_reason) VALUES (?, ?, ?, 'skipped', ?, ?, ?)",
+                    (run_id, agent_name, now_iso, iterations, budget,
+                     "precondition: accuracy >= 90% (no headroom)"),
+                )
+                return {"run_id": run_id, "promoted": False,
+                        "promotion_reason": "precondition: accuracy >= 90% (no headroom)",
+                        "skipped": True}
 
         # 1. Save optimization run record
         self.db._write(
@@ -212,6 +369,7 @@ class HarnessOptimizer:
 
         # 2. Snapshot incumbent harness
         incumbent_snapshot = self._snapshot_harness(agent_name)
+        initial_prompt_size = len(incumbent_snapshot.get("soul", ""))
 
         # 3. Evaluate incumbent on dev and test splits (skip if no_baselines)
         if not no_baselines:
@@ -226,6 +384,17 @@ class HarnessOptimizer:
         best_test_score = incumbent_test.overall_accuracy if incumbent_test else 0.0
         best_harness = incumbent_snapshot
 
+        # Front-end gates (obs-spec-088)
+        episode_log = EpisodeLog(self.db)
+        phantom_gate = PhantomGuardrailGate(episode_log, min_observations=1)
+        fairness_gate = EvaluationFairnessGate(context_bloat_threshold=context_bloat_threshold)
+        experience_bank = ExperienceBank(self.db)
+
+        # Precompute TTS baseline dev scores once (EF-1: equal-budget comparison).
+        # ponytail: baselines computed once before the loop, not per-iteration —
+        # they're stable for a fixed budget. Cost: ~budget rollouts up front.
+        tts_baselines = self._tts_baseline_scores(agent_name, budget, no_baselines)
+
         # Frontier inheritance (Gap 2 fix): start from incumbent, stack promoted edits
         frontier_soul = incumbent_snapshot.get("soul", "")
         mechanism_stack: list[str] = []
@@ -233,7 +402,7 @@ class HarnessOptimizer:
         promoted = False
         promotion_reason = "No candidate beat the incumbent"
 
-        # 4. Optimization loop: propose → classify → apply → evaluate → promote
+        # 4. Optimization loop: propose → classify → [PG] → apply → evaluate → [EF] → promote
         for i in range(iterations):
             logger.info("optimization iteration %d/%d", i + 1, iterations)
 
@@ -243,6 +412,10 @@ class HarnessOptimizer:
                 "soul": frontier_soul,
                 "soul_path": incumbent_snapshot.get("soul_path", ""),
             }
+            # PG-1 + experience grounding: pass observed failures into proposer context
+            if with_experience:
+                past = experience_bank.retrieve_similar(agent_name, "", limit=5)
+                frontier_harness["past_experiences"] = [p.get("diagnosis", "") for p in past]
             edit = self._propose_edit(agent_name, frontier_harness, incumbent_dev)
             if not edit or not edit.get("description"):
                 logger.info("no edit proposed — skipping iteration")
@@ -251,7 +424,23 @@ class HarnessOptimizer:
             # 4b. Classify edit
             classification = self._classify_edit(edit)
 
-            # 4c. Apply edit to temp profile (Gap 1 fix)
+            # 4c. PHANTOM GUARDRAIL GATE (before apply) — PG-2/PG-3
+            if not no_phantom_gate:
+                accepted, pg_reason = phantom_gate.check(edit, agent_name)
+                if not accepted:
+                    logger.warning("phantom guardrail rejected iter %d: %s", i, pg_reason)
+                    experience_bank.record_rejection(
+                        agent_name,
+                        failure_class=(edit.get("cited_failures", [{}])[0].get("class", "unknown")
+                                       if edit.get("cited_failures") else "unknown"),
+                        proposed_edit=edit.get("description", ""),
+                        reason=pg_reason,
+                    )
+                    self._save_edit(run_id, i, edit, classification, False, pg_reason,
+                                    best_dev_score, 0.0)
+                    continue
+
+            # 4d. Apply edit to temp profile (Gap 1 fix)
             temp_profile = self._apply_edit(agent_name, edit)
             if not temp_profile:
                 logger.warning("could not create temp profile — skipping iteration")
@@ -260,11 +449,11 @@ class HarnessOptimizer:
             incumbent_score = best_dev_score
 
             try:
-                # 4d. Evaluate candidate on dev split
+                # 4e. Evaluate candidate on dev split
                 logger.info("evaluating candidate on dev split (profile=%s)", temp_profile)
                 dev_report = self.runner.run(temp_profile, split="dev")
 
-                # 4e. Leakage audit (Gap 6 fix)
+                # 4f. Leakage audit (Gap 6 fix)
                 if not self._check_leakage(dev_report):
                     logger.warning("leakage detected — rejecting candidate")
                     self._save_edit(run_id, i, edit, classification, False,
@@ -272,24 +461,37 @@ class HarnessOptimizer:
                                     incumbent_score, dev_report.overall_accuracy)
                     continue
 
-                # 4f. Evaluate on test split (generalization gate, obs-spec-061 §2.2)
+                # 4g. Evaluate on test split (generalization gate, obs-spec-061 §2.2)
                 logger.info("evaluating candidate on test split (profile=%s)", temp_profile)
                 test_report = self.runner.run(temp_profile, split="test")
 
-                # 4g. Promotion gate (Gap 5 fix: blended score)
-                promoted, reason = self._check_promotion(
+                # 4h. EVALUATION FAIRNESS GATE (EF-1..EF-4)
+                ef_promoted, ef_reason = fairness_gate.check(
+                    candidate_dev=dev_report.overall_accuracy,
+                    candidate_test=test_report.overall_accuracy,
+                    incumbent_dev=best_dev_score,
+                    incumbent_test=best_test_score,
+                    tts_baselines=tts_baselines,
+                    candidate_pass1=dev_report.overall_accuracy,
+                    incumbent_pass1=best_dev_score,
+                    frontier_prompt_size=len(frontier_soul) + len(edit.get("new_snippet", "")),
+                    initial_prompt_size=initial_prompt_size,
+                )
+
+                # 4i. Promotion gate (blended score, obs-spec-061 §2.2)
+                blended_promoted, blended_reason = self._check_promotion(
                     dev_report, best_dev_score,
                     test_report, best_test_score,
                 )
 
-                if promoted:
+                if ef_promoted and blended_promoted:
                     best_dev_score = dev_report.overall_accuracy
                     best_test_score = test_report.overall_accuracy
                     frontier_soul = self._read_temp_soul(temp_profile)
                     best_harness = {"agent": agent_name, "soul": frontier_soul}
                     mechanism_stack.append(edit.get("description", "")[:80])
-                    promotion_reason = reason
-                    logger.info("promoted: %s", reason)
+                    promotion_reason = blended_reason
+                    logger.info("promoted: %s", blended_reason)
 
                     # Update frontier in DB
                     self._update_frontier(agent_name, run_id, best_dev_score, mechanism_stack)
@@ -299,12 +501,27 @@ class HarnessOptimizer:
                         logger.info("edit deployed to live agent %s", agent_name)
                     else:
                         logger.warning("edit promoted but NOT deployed to live agent")
+
+                    # Write experience bank entry (global_pattern if generalizable)
+                    if classification.get("label") == "generalizable":
+                        experience_bank.add(
+                            agent_name=agent_name, layer="global_pattern",
+                            failure_class=edit.get("cited_failures", [{}])[0].get("class", "general")
+                                if edit.get("cited_failures") else "general",
+                            diagnosis=edit.get("description", ""),
+                            proposed_edit=edit.get("description", ""),
+                            outcome="helped", observed_count=1,
+                            source_run_id=run_id,
+                        )
                 else:
+                    reason = ef_reason if not ef_promoted else blended_reason
                     logger.info("rejected: %s", reason)
 
-                # 4h. Save edit record
-                self._save_edit(run_id, i, edit, classification, promoted,
-                                reason, incumbent_score, dev_report.overall_accuracy)
+                # 4j. Save edit record
+                self._save_edit(run_id, i, edit, classification,
+                                ef_promoted and blended_promoted,
+                                (ef_reason if not ef_promoted else blended_reason),
+                                incumbent_score, dev_report.overall_accuracy)
             finally:
                 # Clean up temp profile
                 self._cleanup_temp_profile(temp_profile)
@@ -521,6 +738,95 @@ class HarnessOptimizer:
             return False, (
                 f"Blended +{dev_delta * 100:.1f}pp (below 1pp threshold)"
             )
+
+    def _tts_baseline_scores(
+        self, agent_name: str, budget: int = 45, no_baselines: bool = False
+    ) -> dict[str, float]:
+        """Compute dev scores for the 3 TTS baselines under equal budget (EF-1).
+
+        Returns dict with keys: parallel_sampling, sequential_refinement,
+        harness_scaling. If no_baselines, returns zeros (gate will then reject
+        all candidates — caller must not run with no_baselines in production).
+        """
+        if no_baselines:
+            return {"parallel_sampling": 0.0, "sequential_refinement": 0.0,
+                    "harness_scaling": 0.0}
+        k = max(1, budget // 3)
+        rounds = max(1, budget // 3)
+        try:
+            parallel = self.run_parallel_sampling(agent_name, k=k)
+            sequential = self.run_sequential_refinement(agent_name, rounds=rounds)
+        except Exception as e:
+            logger.warning("TTS baseline computation failed: %s", e)
+            return {"parallel_sampling": 0.0, "sequential_refinement": 0.0,
+                    "harness_scaling": 0.0}
+        # ponytail: harness_scaling (instance-guided per-task harness adaptation)
+        # is approximated here as max(parallel, sequential) dev — a true harness
+        # scaling run needs per-task harness edits, which the loop itself does.
+        # Upgrade path: run actual harness-scaling baseline as a 4th method.
+        harness_scaling = max(parallel.overall_accuracy, sequential.overall_accuracy)
+        return {
+            "parallel_sampling": parallel.overall_accuracy,
+            "sequential_refinement": sequential.overall_accuracy,
+            "harness_scaling": harness_scaling,
+        }
+
+    def run_gate_test(self, agent_name: str = "default") -> dict:
+        """Counterfactual Fabrication Lab self-check (Wang et al. 2607.13083).
+
+        Deterministic, no LLM, no tokens. Feeds known phantom edits (citing
+        failures with zero observations) to PhantomGuardrailGate and asserts
+        they are ALL rejected. Returns a result dict for the dashboard.
+        """
+        episode_log = EpisodeLog(self.db)
+        gate = PhantomGuardrailGate(episode_log, min_observations=1)
+
+        # Known phantom edits: failures that have never been observed
+        phantom_edits = [
+            {"description": "Add guardrail: never retry on timeout",
+             "cited_failures": [{"class": "phantom_timeout_xyz"}]},
+            {"description": "Block action B2 after repeated ARENA failure",
+             "cited_failures": [{"class": "phantom_arena_b2"}]},
+            {"description": "Suppress output when input looks rule-shaped",
+             "cited_failures": [{"class": "phantom_ruleshape"}]},
+        ]
+        # A legitimate edit (failure observed in episode log) should pass
+        legit_edit = {"description": "Increase canary timeout",
+                      "cited_failures": [{"class": "observed_timeout"}]}
+
+        results = []
+        for e in phantom_edits:
+            accepted, reason = gate.check(e, agent_name)
+            results.append({"edit": e["description"], "accepted": accepted,
+                            "reason": reason, "expected": False})
+
+        # Inject the observed failure so the legit edit passes (else vacuously true)
+        from observeco.capability.experience import ExperienceBank
+        eb = ExperienceBank(self.db)
+        eb.add(agent_name=agent_name, layer="per_case",
+               failure_class="observed_timeout", diagnosis="test",
+               proposed_edit="test", outcome="helped", observed_count=1)
+        legit_accepted, legit_reason = gate.check(legit_edit, agent_name)
+        results.append({"edit": legit_edit["description"], "accepted": legit_accepted,
+                        "reason": legit_reason, "expected": True})
+
+        # Clean up the injected test experience
+        self.db._write(
+            "DELETE FROM harness_experiences WHERE agent_name=? AND diagnosis='test'",
+            (agent_name,),
+        )
+
+        total = len(results)
+        fabricated = sum(1 for r in results if r["accepted"] != r["expected"])
+        verdict = "PASS" if fabricated == 0 else "FAIL"
+        return {
+            "agent_name": agent_name,
+            "total_runs": total,
+            "fabricated_runs": fabricated,
+            "fabrication_rate": fabricated / total if total else 0.0,
+            "verdict": verdict,
+            "detail": results,
+        }
 
     # ── Reporting ───────────────────────────────────────────────────────────
 

@@ -923,6 +923,50 @@ CREATE TABLE IF NOT EXISTS harness_frontier (
     updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 """),
+
+    (64, """-- Migration 64: experience bank + control dims (obs-spec-088)
+CREATE TABLE IF NOT EXISTS harness_experiences (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL,
+    layer           TEXT NOT NULL,
+    source_run_id   TEXT,
+    episode_ref     TEXT,
+    failure_class   TEXT,
+    diagnosis       TEXT,
+    proposed_edit   TEXT,
+    outcome         TEXT,
+    observed_count  INTEGER DEFAULT 0,
+    embedding       BLOB,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_he_agent ON harness_experiences(agent_name, layer);
+CREATE INDEX IF NOT EXISTS idx_he_failure ON harness_experiences(failure_class);
+
+CREATE TABLE IF NOT EXISTS harness_control_dims (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL UNIQUE,
+    context         TEXT,
+    tools           TEXT,
+    orchestration   TEXT,
+    memory          TEXT,
+    decoding        TEXT,
+    output          TEXT,
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS harness_gate_tests (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL,
+    run_at          TEXT NOT NULL,
+    proposer_model  TEXT,
+    total_runs      INTEGER,
+    fabricated_runs INTEGER,
+    fabrication_rate REAL,
+    verdict         TEXT,
+    detail          TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_hgt_agent ON harness_gate_tests(agent_name, run_at);
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -1361,6 +1405,11 @@ class Database:
         # sentinel table.
         try:
             conn.execute("SELECT 1 FROM canary_runs LIMIT 1")
+            # Base schema present — but still apply any PENDING migrations
+            # (e.g. a new migration added after the DB was first created).
+            # The migration loop is idempotent (IF NOT EXISTS / duplicate-col
+            # handled). Skipping it here would leave new tables uncreated.
+            self._run_pending_migrations(conn)
             return
         except sqlite3.OperationalError:
             pass  # table missing -> run full init below
@@ -1422,66 +1471,16 @@ class Database:
         row = cur.fetchone()
         current_version = int(row["value"]) if row else 1
 
-        # Check if any migrations are pending
-        has_pending = any(current_version < tv for tv, _ in MIGRATIONS)
-
         # GS-019 §Principle 2: Backup ONLY before destructive migrations
         # CRITICAL: Do NOT backup on every Database() instantiation — causes backup storms
-        if has_pending and self._has_data(conn):
+        if any(current_version < tv for tv, _ in MIGRATIONS) and self._has_data(conn):
             self.backup()
 
         # GS-019 §Principle 3: Record pre-migration state
         pre_counts = self._snapshot_row_counts(conn)
 
         # Run pending migrations in order
-        for target_version, migration_sql in MIGRATIONS:
-            if current_version < target_version:
-                try:
-                    conn.executescript(migration_sql)
-                    conn.execute(
-                        "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
-                        (str(target_version),),
-                    )
-                    conn.commit()
-                    current_version = target_version
-                except Exception as e:
-                    # SQLite throws 'duplicate column name' if ALTER TABLE ADD COLUMN
-                    # finds the column already exists from the initial schema.
-                    # Treat this specific case as idempotent success — the column exists.
-                    emsg = str(e)
-                    if "duplicate column name" in emsg:
-                        logger.warning(f"Migration {current_version}→{target_version} skipped (column already exists): {e}")
-                        conn.execute(
-                            "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
-                            (str(target_version),),
-                        )
-                        conn.commit()
-                        current_version = target_version
-                    else:
-                        logger.error(f"Migration {current_version}→{target_version} failed: {e}")
-
-                        # GS-019 §Recovery: Auto-restore from backup
-                        restore_result = self._auto_restore_on_failure()
-                        if restore_result["status"] == "restored":
-                            logger.info(f"GS-019: Auto-restored from {restore_result['from']}")
-                            # Re-initialize from restored state
-                            self._local = threading.local()
-                            conn = self._get_conn()
-                            current_version = self._get_schema_version(conn)
-                        else:
-                            logger.error(f"GS-019: Auto-restore failed: {restore_result['message']}")
-
-                        # Set notification flag for dashboard
-                        global _last_migration_failure
-                        _last_migration_failure = {
-                            "failed_at": int(time.time()),
-                            "from_version": current_version,
-                            "to_version": target_version,
-                            "error": str(e),
-                            "restored": restore_result["status"] == "restored",
-                            "restored_from": restore_result.get("from"),
-                        }
-                        break
+        self._run_pending_migrations(conn)
 
         # GS-019 §Principle 3: Verify post-migration state
         post_counts = self._snapshot_row_counts(conn)
@@ -1517,6 +1516,59 @@ class Database:
                 )
         except Exception as e:
             logger.critical(f"DB integrity guard error: {e}")
+
+    def _run_pending_migrations(self, conn: sqlite3.Connection) -> None:
+        """Apply all pending migrations in order (idempotent).
+
+        Called both from _init_db (prod DB, base schema exists) and
+        _init_db_inner (fresh DB). Migration SQL is IF NOT EXISTS / handles
+        duplicate-column idempotently.
+        """
+        cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
+        row = cur.fetchone()
+        current_version = int(row["value"]) if row else 1
+
+        for target_version, migration_sql in MIGRATIONS:
+            if current_version < target_version:
+                try:
+                    conn.executescript(migration_sql)
+                    conn.execute(
+                        "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
+                        (str(target_version),),
+                    )
+                    conn.commit()
+                    current_version = target_version
+                except Exception as e:
+                    emsg = str(e)
+                    if "duplicate column name" in emsg:
+                        logger.warning(f"Migration {current_version}→{target_version} skipped (column already exists): {e}")
+                        conn.execute(
+                            "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
+                            (str(target_version),),
+                        )
+                        conn.commit()
+                        current_version = target_version
+                    else:
+                        logger.error(f"Migration {current_version}→{target_version} failed: {e}")
+                        # GS-019 §Recovery: Auto-restore from backup
+                        restore_result = self._auto_restore_on_failure()
+                        if restore_result["status"] == "restored":
+                            logger.info(f"GS-019: Auto-restored from {restore_result['from']}")
+                            self._local = threading.local()
+                            conn = self._get_conn()
+                            current_version = self._get_schema_version(conn)
+                        else:
+                            logger.error(f"GS-019: Auto-restore failed: {restore_result['message']}")
+                        global _last_migration_failure
+                        _last_migration_failure = {
+                            "failed_at": int(time.time()),
+                            "from_version": current_version,
+                            "to_version": target_version,
+                            "error": str(e),
+                            "restored": restore_result["status"] == "restored",
+                            "restored_from": restore_result.get("from"),
+                        }
+                        break
 
     def close(self) -> None:
         if hasattr(self, "_local"):

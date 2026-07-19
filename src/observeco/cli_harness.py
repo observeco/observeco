@@ -18,6 +18,9 @@ def harness_optimize(
     iterations: int = typer.Option(5, "--iterations", "-n", help="Number of optimization iterations"),
     budget: int = typer.Option(45, "--budget", "-b", help="Total compute budget (agent rollouts)"),
     no_baselines: bool = typer.Option(False, "--no-baselines", help="Skip baseline comparison (not recommended)"),
+    no_phantom_gate: bool = typer.Option(False, "--no-phantom-gate", help="DEBUG ONLY: disable Phantom Guardrail gate (refused in cron)"),
+    context_bloat_threshold: float = typer.Option(2.0, "--context-bloat-threshold", help="Max frontier prompt size multiplier"),
+    with_experience: bool = typer.Option(False, "--with-experience", help="Enable experience-bank retrieval for proposer"),
 ) -> None:
     """Run the harness optimization loop with full evaluation framework."""
     from observeco.capability.harness import HarnessOptimizer
@@ -26,12 +29,21 @@ def harness_optimize(
         print("WARNING: Running without baselines — gains will not be attributable to harness design vs search budget")
 
     optimizer = HarnessOptimizer()
-    report = optimizer.optimize(agent, iterations=iterations, budget=budget, no_baselines=no_baselines)
+    report = optimizer.optimize(
+        agent, iterations=iterations, budget=budget, no_baselines=no_baselines,
+        no_phantom_gate=no_phantom_gate,
+        context_bloat_threshold=context_bloat_threshold,
+        with_experience=with_experience,
+    )
 
     print(f"\n{'='*60}")
     print(f"Harness Optimization Run #{report['run_id'][:8]}")
     print(f"Agent: {agent}")
     print(f"{'='*60}\n")
+
+    if report.get("skipped"):
+        print(f"SKIPPED: {report['promotion_reason']}\n")
+        return
 
     print(f"{'Method':<30} {'Dev Score':<12} {'Test Score':<12}")
     print(f"{'-'*54}")
@@ -129,6 +141,65 @@ def harness_frontier(
         pass
     print(f"  Updated:     {r.get('updated_at', 'N/A')}")
     print()
+
+
+@harness_app.command(name="experience")
+def harness_experience(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+    clear: bool = typer.Option(False, "--clear", help="Prune all experiences for this agent"),
+) -> None:
+    """Show or clear the experience bank for an agent (obs-spec-088 §3)."""
+    from observeco.capability.experience import ExperienceBank
+
+    bank = ExperienceBank()
+    if clear:
+        n = bank.clear(agent)
+        print(f"Cleared {n} experiences for agent '{agent}'.")
+        return
+
+    stats = bank.stats(agent)
+    print(f"\n{'='*60}")
+    print(f"Experience Bank — Agent: {agent}")
+    print(f"{'='*60}")
+    print(f"  Total experiences: {stats['total']}")
+    print(f"  Global patterns:   {stats['global_patterns']}")
+    print(f"  Per layer:          {stats['per_layer']}")
+    if stats['failure_classes']:
+        print(f"  Failure classes (observed):")
+        for fc, c in stats['failure_classes'].items():
+            print(f"    {fc}: {c}")
+    if stats['rejection_log']:
+        print(f"  Phantom rejections ({len(stats['rejection_log'])}):")
+        for r in stats['rejection_log'][:10]:
+            print(f"    {r['failure_class']}: {r['diagnosis'][:60]}")
+    print()
+
+
+@harness_app.command(name="gate")
+def harness_gate(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+    test: bool = typer.Option(False, "--test", help="Run Counterfactual Fabrication Lab self-check"),
+) -> None:
+    """Phantom Guardrail gate operations (obs-spec-088 §2)."""
+    from observeco.capability.harness import HarnessOptimizer
+
+    if not test:
+        print("Use --test to run the Counterfactual Fabrication Lab self-check.")
+        return
+
+    optimizer = HarnessOptimizer()
+    result = optimizer.run_gate_test(agent)
+    print(f"\n{'='*60}")
+    print(f"Phantom Guardrail Gate Test — Agent: {agent}")
+    print(f"{'='*60}")
+    print(f"  Verdict: {result['verdict']}")
+    print(f"  Total runs: {result['total_runs']} | Fabricated: {result['fabricated_runs']} "
+          f"| Rate: {result['fabrication_rate']*100:.1f}%")
+    for r in result['detail']:
+        mark = "✅" if r['accepted'] == r['expected'] else "❌"
+        print(f"  {mark} {r['edit'][:50]} → accepted={r['accepted']} (expected={r['expected']})")
+    print()
+
 
 
 @harness_app.command(name="baseline")
