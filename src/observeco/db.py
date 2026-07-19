@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 63
+SCHEMA_VERSION = 65
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
