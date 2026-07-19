@@ -967,6 +967,10 @@ CREATE TABLE IF NOT EXISTS harness_gate_tests (
 );
 CREATE INDEX IF NOT EXISTS idx_hgt_agent ON harness_gate_tests(agent_name, run_at);
 """),
+    # Migration 65: proposer_model on harness_optimization_runs (PG-6 fabrication grading)
+    (65, """-- Migration 65: track proposer model per optimization run (obs-spec-088 PG-6)
+ALTER TABLE harness_optimization_runs ADD COLUMN proposer_model TEXT;
+"""),
 ]
 
 _SCHEMA_SQL = """

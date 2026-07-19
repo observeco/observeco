@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import shutil
+import sqlite3
 import statistics
 import tempfile
 import uuid
@@ -342,6 +343,7 @@ class HarnessOptimizer:
         run_id = str(uuid.uuid4())
         now_iso = datetime.now(timezone.utc).isoformat()
         self.db._get_conn()
+        proposer_model = self._resolve_proposer_model()
 
         # 0. Precondition check (EF-5): headroom + harness-sensitivity
         if not no_baselines:
@@ -351,20 +353,36 @@ class HarnessOptimizer:
                 self.db._write(
                     "INSERT INTO harness_optimization_runs "
                     "(id, agent_name, started_at, status, iterations, budget, "
-                    "promotion_reason) VALUES (?, ?, ?, 'skipped', ?, ?, ?)",
+                    "proposer_model, promotion_reason) VALUES (?, ?, ?, 'skipped', ?, ?, ?, ?)",
                     (run_id, agent_name, now_iso, iterations, budget,
-                     "precondition: accuracy >= 90% (no headroom)"),
+                     proposer_model, "precondition: accuracy >= 90% (no headroom)"),
                 )
                 return {"run_id": run_id, "promoted": False,
                         "promotion_reason": "precondition: accuracy >= 90% (no headroom)",
                         "skipped": True}
 
+            # EF-5 (2): harness-sensitivity — grid report must show >=5pp spread
+            # across configs. If tasks are harness-insensitive, evolution yields
+            # marginal gains (Rethinking §5.2). Skip if no grid run exists yet.
+            spread = self._grid_config_spread(agent_name)
+            if spread is not None and spread < 0.05:
+                reason = f"precondition: grid config spread {spread*100:.1f}pp < 5pp (harness-insensitive)"
+                logger.info("precondition skipped: %s", reason)
+                self.db._write(
+                    "INSERT INTO harness_optimization_runs "
+                    "(id, agent_name, started_at, status, iterations, budget, "
+                    "proposer_model, promotion_reason) VALUES (?, ?, ?, 'skipped', ?, ?, ?, ?)",
+                    (run_id, agent_name, now_iso, iterations, budget, proposer_model, reason),
+                )
+                return {"run_id": run_id, "promoted": False,
+                        "promotion_reason": reason, "skipped": True}
+
         # 1. Save optimization run record
         self.db._write(
             "INSERT INTO harness_optimization_runs "
-            "(id, agent_name, started_at, status, iterations, budget) "
-            "VALUES (?, ?, ?, 'running', ?, ?)",
-            (run_id, agent_name, now_iso, iterations, budget),
+            "(id, agent_name, started_at, status, iterations, budget, proposer_model) "
+            "VALUES (?, ?, ?, 'running', ?, ?, ?)",
+            (run_id, agent_name, now_iso, iterations, budget, proposer_model),
         )
 
         # 2. Snapshot incumbent harness
@@ -558,10 +576,30 @@ class HarnessOptimizer:
         self.db._write(
             "UPDATE harness_optimization_runs SET status='completed', "
             "completed_at=?, candidate_dev_score=?, candidate_test_score=?, "
-            "promoted=?, promotion_reason=? WHERE id=?",
+            "promoted=?, promotion_reason=?, proposer_model=? WHERE id=?",
             (datetime.now(timezone.utc).isoformat(), best_dev_score,
-             best_test_score, 1 if promoted else 0, promotion_reason, run_id),
+             best_test_score, 1 if promoted else 0, promotion_reason,
+             proposer_model, run_id),
         )
+
+        # PG-6: fabrication-rate grading per proposer model.
+        # If >20% of this model's proposed edits were phantom-rejected over the
+        # last 10 runs, warn and suggest a stronger proposer.
+        fab_rate = self._fabrication_rate_per_model(agent_name, proposer_model)
+        if fab_rate is not None and fab_rate > 0.20:
+            logger.warning(
+                "PG-6 ALERT: proposer '%s' fabrication rate %.0f%% (>20%%) over last "
+                "10 runs. Consider switching to a stronger proposer model "
+                "(e.g. deepseek-v4-pro, which fabricated 1/12 vs glm-5.1 11/12).",
+                proposer_model, fab_rate * 100,
+            )
+            promotion_reason = (
+                f"{promotion_reason} [PG-6 ALERT: proposer '{proposer_model}' "
+                f"fabrication rate {fab_rate*100:.0f}% > 20%]"
+            ) if promotion_reason else (
+                f"[PG-6 ALERT: proposer '{proposer_model}' "
+                f"fabrication rate {fab_rate*100:.0f}% > 20%]"
+            )
 
         # 7. Build unified budget report
         return self._build_report(
@@ -594,10 +632,11 @@ class HarnessOptimizer:
             return {}
 
         system_prompt = (
-            "You are a harness optimization expert. Analyse the canary task results "
-            "and propose ONE specific, minimal edit to the agent's harness "
-            "(system prompt, task instructions, post-processing) that would improve "
-            "performance. Focus on failure patterns — which tasks fail and why.\n\n"
+            "You are a harness optimization expert. Propose ONE specific, minimal "
+            "improvement to the agent's harness (system prompt, task instructions, "
+            "or post-processing) that could improve performance. Do NOT assume "
+            "failures exist — if the harness is already strong, propose a small "
+            "refinement or respond with no change.\n\n"
             "Respond with a JSON object with these fields:\n"
             "- description: a clear description of the proposed edit\n"
             "- mechanism_type: one of 'code', 'prompt', 'mixed', 'config-fix', 'safety'\n"
@@ -738,6 +777,84 @@ class HarnessOptimizer:
             return False, (
                 f"Blended +{dev_delta * 100:.1f}pp (below 1pp threshold)"
             )
+
+    def _resolve_proposer_model(self) -> str:
+        """Resolve the LLM proposer model label (for PG-6 fabrication grading).
+
+        ponytail: asks the LLM service for its auto-selected provider name;
+        the exact model string isn't exposed by ask(), so we record the
+        provider (e.g. 'anthropic', 'openai'). Good enough to grade
+        fabrication rate per proposer identity.
+        """
+        try:
+            from observeco.llm_service import get_auto_provider
+            provider = get_auto_provider()
+            if provider:
+                return provider.name
+        except Exception:
+            pass
+        return os.environ.get("OBSERVECO_LLM_PROVIDER", "unknown")
+
+    def _fabrication_rate_per_model(
+        self, agent_name: str, model: str, window: int = 10
+    ) -> float | None:
+        """PG-6: fraction of proposed edits rejected as phantoms for a model
+        over the last `window` optimization runs. None if <window runs.
+        """
+        conn = self.db._get_conn()
+        runs = conn.execute(
+            "SELECT id FROM harness_optimization_runs "
+            "WHERE agent_name=? AND proposer_model=? AND status='completed' "
+            "ORDER BY started_at DESC LIMIT ?",
+            (agent_name, model, window),
+        ).fetchall()
+        if len(runs) < window:
+            return None
+        run_ids = [r["id"] for r in runs]
+        placeholders = ",".join("?" * len(run_ids))
+        total = conn.execute(
+            f"SELECT COUNT(*) AS n FROM harness_edits "
+            f"WHERE optimization_run_id IN ({placeholders})",
+            run_ids,
+        ).fetchone()["n"]
+        rejected = conn.execute(
+            f"SELECT COUNT(*) AS n FROM harness_edits "
+            f"WHERE optimization_run_id IN ({placeholders}) AND outcome='phantom_rejected'",
+            run_ids,
+        ).fetchone()["n"]
+        if total == 0:
+            return 0.0
+        return rejected / total
+
+    def _grid_config_spread(self, agent_name: str) -> float | None:
+        """Harness-sensitivity precondition (EF-5 §2): spread of accuracy
+        across configs in the latest grid run. Returns None if no grid run
+        exists (caller skips the check rather than blocking on missing data).
+        """
+        conn = self.db._get_conn()
+        row = conn.execute(
+            "SELECT id FROM grid_runs WHERE agent_name=? ORDER BY started_at DESC LIMIT 1",
+            (agent_name,),
+        ).fetchone()
+        if not row:
+            return None
+        run_id = row["id"]
+        try:
+            cells = conn.execute(
+                "SELECT config, accuracy FROM grid_cells WHERE run_id=?", (run_id,)
+            ).fetchall()
+        except sqlite3.OperationalError:
+            return None
+        if not cells:
+            return None
+        # Group by config, take mean accuracy per config, compute max-min spread
+        by_config: dict[str, list[float]] = {}
+        for c in cells:
+            by_config.setdefault(c["config"], []).append(c["accuracy"] or 0.0)
+        means = [sum(v) / len(v) for v in by_config.values() if v]
+        if len(means) < 2:
+            return None
+        return max(means) - min(means)
 
     def _tts_baseline_scores(
         self, agent_name: str, budget: int = 45, no_baselines: bool = False
@@ -1186,7 +1303,75 @@ class HarnessOptimizer:
                 logger.info("rolled back SOUL.md from backup")
             return False
 
-    # ── Leakage audit (Gap 6) ─────────────────────────────────────────────
+    def _revert_last_edit(self, agent_name: str) -> dict:
+        """PG-5 edit-and-revert: remove the most recently deployed guardrail.
+
+        Restores the live agent's SOUL.md from the pre-deploy backup (the
+        backup _deploy_edit takes before each promotion), pops the last entry
+        from harness_frontier's mechanism stack, and marks the corresponding
+        harness_edits row as reverted.
+
+        ponytail: This reverts exactly ONE deployment (the last .bak). If N
+        edits were deployed in sequence, N calls revert them in LIFO order —
+        the .bak is overwritten each deploy, so each revert steps back one edit.
+        This is correct for the single-edit phantom case the spec targets.
+        Upgrade path: a full per-edit backup chain for multi-edit atomic revert.
+        """
+        live_dir = os.path.expanduser(f"~/.hermes/profiles/{agent_name}")
+        live_soul = os.path.join(live_dir, "SOUL.md")
+        backup_path = live_soul + ".bak"
+
+        # Pop last entry from the frontier stack
+        conn = self.db._get_conn()
+        try:
+            row = conn.execute(
+                "SELECT id, mechanism_stack FROM harness_frontier "
+                "WHERE agent_name=? ORDER BY updated_at DESC LIMIT 1",
+                (agent_name,),
+            ).fetchone()
+        except sqlite3.OperationalError:
+            return {"reverted": False, "reason": "no frontier table (no edits deployed yet)"}
+        if not row:
+            return {"reverted": False, "reason": "no frontier to revert"}
+        try:
+            stack = json.loads(row["mechanism_stack"] or "[]")
+        except (json.JSONDecodeError, TypeError):
+            stack = []
+        if not stack:
+            return {"reverted": False, "reason": "frontier stack empty"}
+
+        removed = stack.pop()
+        self.db._write(
+            "UPDATE harness_frontier SET mechanism_stack=?, updated_at=? "
+            "WHERE id=?",
+            (json.dumps(stack), datetime.now(timezone.utc).isoformat(), row["id"]),
+        )
+
+        # Restore live SOUL.md from backup
+        if os.path.isfile(backup_path):
+            try:
+                shutil.copy2(backup_path, live_soul)
+                logger.info("reverted last edit: restored %s from %s", live_soul, backup_path)
+            except OSError as e:
+                logger.error("revert failed restoring SOUL.md: %s", e)
+                return {"reverted": False, "reason": f"restore failed: {e}"}
+        else:
+            logger.warning("no .bak found for %s — frontier stack popped but live SOUL unchanged", agent_name)
+
+        # Mark the most recent promoted edit as reverted
+        try:
+            conn.execute(
+                "UPDATE harness_edits SET promoted=0, promotion_reason='reverted (PG-5)' "
+                "WHERE optimization_run_id IN ("
+                "  SELECT id FROM harness_optimization_runs WHERE agent_name=? "
+                "  ORDER BY started_at DESC LIMIT 1) "
+                "AND promoted=1 ORDER BY iteration DESC LIMIT 1",
+                (agent_name,),
+            )
+        except sqlite3.OperationalError:
+            logger.warning("harness_edits table missing — skip reverted-mark (dev DB)")
+
+        return {"reverted": True, "removed": removed, "remaining_stack": stack}
 
     def _check_leakage(self, report: CanaryReport) -> bool:
         """Reject if any task in the report is from the test split.

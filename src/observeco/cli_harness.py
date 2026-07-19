@@ -175,6 +175,29 @@ def harness_experience(
     print()
 
 
+@harness_app.command(name="revert")
+def harness_revert(
+    agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
+) -> None:
+    """PG-5 edit-and-revert: remove the most recently deployed harness edit.
+
+    Restores the live agent's SOUL.md from the pre-deploy backup and pops the
+    last entry from the frontier stack. Safe to call repeatedly (LIFO).
+    """
+    from observeco.capability.harness import HarnessOptimizer
+
+    optimizer = HarnessOptimizer()
+    result = optimizer._revert_last_edit(agent)
+    if result.get("reverted"):
+        print(f"✅ Reverted last edit for '{agent}'.")
+        print(f"   Removed: {result.get('removed', 'n/a')}")
+        print(f"   Remaining stack ({len(result.get('remaining_stack', []))}):")
+        for i, m in enumerate(result.get("remaining_stack", [])):
+            print(f"     {i+1}. {m}")
+    else:
+        print(f"⚠️  No edit reverted: {result.get('reason', 'unknown')}")
+
+
 @harness_app.command(name="gate")
 def harness_gate(
     agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
