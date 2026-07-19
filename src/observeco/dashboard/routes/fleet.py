@@ -72,7 +72,7 @@ def _canary_pass_sub(agent_name: str, canary_row, canary_running: bool = False, 
     hangs = canary_row["hang_count"] or 0
     hang_str = f" · ⚠️{hangs} hang{'s' if hangs != 1 else ''}" if hangs else ""
     parts = f'{canary_row["pass_count"]}/{canary_row["total_tasks"]} pass{hang_str}'
-    cost_str = f' · ${canary_row["total_cost"]:.4f}' if canary_row.get("total_cost") else ""
+    cost_str = f' · ${canary_row["total_cost"]:.2f}' if canary_row.get("total_cost") else ""
     parts += cost_str
     # Quality drift indicator from drift_events
     if drift_row:

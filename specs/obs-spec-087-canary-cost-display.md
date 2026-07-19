@@ -80,8 +80,8 @@ And in `_canary_pass_sub`, add cost to the pass count text:
 # Current:
 parts = f'{canary_row["pass_count"]}/{canary_row["total_tasks"]} pass{hang_str}'
 
-# New:
-cost_str = f' · ${canary_row["total_cost"]:.4f}' if canary_row.get("total_cost") else ''
+# New (fleet row uses 2 decimal places per §6 constraint):
+cost_str = f' · ${canary_row["total_cost"]:.2f}' if canary_row.get("total_cost") else ''
 parts = f'{canary_row["pass_count"]}/{canary_row["total_tasks"]} pass{hang_str}{cost_str}'
 ```
 
