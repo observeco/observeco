@@ -42,6 +42,30 @@ _PROVIDER_ERROR_RE = re.compile("|".join(_PROVIDER_ERROR_PATTERNS), re.IGNORECAS
 _MAX_RETRIES = 2
 _RETRY_DELAYS = [2, 4]  # seconds, exponential-ish
 
+# Regex to parse token usage from Hermes --verbose stderr output.
+# Format: Usage: CompletionUsage(completion_tokens=27, prompt_tokens=32403, total_tokens=32430, ...)
+# ponytail: Hermes-internal format. If the format changes, parsing fails
+# silently (returns None, cost=0). Upgrade path: use structured JSON output
+# or the Hermes Python API directly.
+_TOKEN_USAGE_RE = re.compile(
+    r"Usage: CompletionUsage\(completion_tokens=(\d+), prompt_tokens=(\d+), total_tokens=(\d+)"
+)
+
+# Per-model pricing in $/1M tokens (input, output). Covers models used
+# by the Hermes adapter chain.
+# ponytail: static table — update when provider pricing changes.
+# Upgrade path: fetch from provider API or Hermes config.yaml provider defs.
+_MODEL_PRICING: dict[str, tuple[float, float]] = {
+    "deepseek-v4-flash": (0.15, 0.60),
+    "deepseek-v4-pro": (2.00, 8.00),
+    "deepseek-chat": (0.15, 0.60),
+    "gpt-4o": (2.50, 10.00),
+    "gpt-4o-mini": (0.15, 0.60),
+    "claude-sonnet-4": (3.00, 15.00),
+    "claude-haiku-3.5": (0.80, 4.00),
+    "claude-opus-4": (15.00, 75.00),
+}
+
 
 def _load_dotenv() -> None:
     """Load .env from the project root into os.environ, if it exists.
@@ -95,6 +119,42 @@ class HermesBenchmarkAdapter:
         """Check if stderr indicates a transient provider error (5xx/429)."""
         return bool(_PROVIDER_ERROR_RE.search(stderr or ""))
 
+    def _parse_token_usage(self, stderr: str) -> dict | None:
+        """Extract token counts from Hermes verbose stderr output.
+
+        Returns {prompt_tokens, completion_tokens, total_tokens} or None
+        if the format doesn't match (silent fallback).
+        """
+        m = _TOKEN_USAGE_RE.search(stderr or "")
+        if not m:
+            return None
+        return {
+            "prompt_tokens": int(m.group(2)),
+            "completion_tokens": int(m.group(1)),
+            "total_tokens": int(m.group(3)),
+        }
+
+    def _estimate_cost(self, tokens: dict, model_used: str) -> float:
+        """Estimate cost from token counts using a pricing table.
+
+        Returns cost in USD. Returns 0.0 for unknown models.
+        """
+        pricing = _MODEL_PRICING.get(model_used)
+        if not pricing:
+            # Try fuzzy match: check if any known model is a substring
+            for known, prices in _MODEL_PRICING.items():
+                if known in model_used or model_used in known:
+                    pricing = prices
+                    break
+        if not pricing:
+            logger.warning("Unknown model %s — cost estimate unavailable", model_used)
+            return 0.0
+        input_price, output_price = pricing
+        return (
+            tokens["prompt_tokens"] * input_price / 1_000_000
+            + tokens["completion_tokens"] * output_price / 1_000_000
+        )
+
     def run_task(self, agent_name: str, task: BenchmarkTask) -> dict:
         """Run a benchmark task through the Hermes agent.
 
@@ -124,7 +184,7 @@ class HermesBenchmarkAdapter:
                     cmd += ["-m", task_model]
                 if self.agent_profile:
                     cmd += ["-p", self.agent_profile]
-                cmd += ["chat", "-q", prompt, "-Q"]
+                cmd += ["chat", "-q", prompt, "-Q", "--verbose"]
                 # Temperature control: hermes chat supports --temperature (0.0-2.0).
                 # Passed through to the model provider via request_overrides.
                 # ponytail: only passes when non-zero; temperature=0.0 is the
@@ -168,6 +228,8 @@ class HermesBenchmarkAdapter:
                         "harness_type": "hermes",
                         "elapsed_seconds": self.timeout,
                         "provider_error": False,
+                        "cost": 0.0,
+                        "tokens": 0,
                     }
 
                 elapsed = time.time() - start
@@ -203,15 +265,22 @@ class HermesBenchmarkAdapter:
                         "harness_type": "hermes",
                         "elapsed_seconds": elapsed,
                         "provider_error": self._is_provider_error(error),
+                        "cost": 0.0,
+                        "tokens": 0,
                     }
 
-                model_used = self._detect_model()
+                model_used = self._detect_model(stderr)
+                # Parse token usage from verbose stderr and estimate cost
+                tokens = self._parse_token_usage(stderr)
+                cost = self._estimate_cost(tokens, model_used) if tokens else 0.0
                 return {
                     "output": output,
                     "model_used": model_used,
                     "harness_type": "hermes",
                     "elapsed_seconds": elapsed,
                     "provider_error": False,
+                    "cost": cost,
+                    "tokens": tokens["total_tokens"] if tokens else 0,
                 }
 
             except FileNotFoundError:
@@ -221,6 +290,8 @@ class HermesBenchmarkAdapter:
                     "harness_type": "hermes",
                     "elapsed_seconds": 0,
                     "provider_error": False,
+                    "cost": 0.0,
+                    "tokens": 0,
                 }
 
         # Exhausted retries
@@ -230,17 +301,34 @@ class HermesBenchmarkAdapter:
             "harness_type": "hermes",
             "elapsed_seconds": 0,
             "provider_error": True,
+            "cost": 0.0,
+            "tokens": 0,
         }
 
-    def _detect_model(self) -> str:
-        """Try to detect the current Hermes model from config."""
+    def _detect_model(self, stderr: str = "") -> str:
+        """Try to detect the current Hermes model from verbose stderr or config.
+
+        Priority:
+        1. Parse model=... from verbose stderr (most accurate — reflects what
+           was actually used in the call)
+        2. Run `hermes config show` and parse the model line
+        3. Return "unknown"
+        """
+        # 1. Parse from verbose stderr: "model=deepseek-v4-flash"
+        m = re.search(r"model=([\w.-]+)", stderr)
+        if m:
+            return m.group(1)
+        # 2. Fallback: run hermes config show
         try:
             result = subprocess.run(
-                [self.hermes_bin, "config", "get", "model"],
+                [self.hermes_bin, "config", "show"],
                 capture_output=True, text=True, timeout=5,
             )
             if result.returncode == 0:
-                return result.stdout.strip()
+                # Look for the model line in the table output
+                m = re.search(r"model[=:]\s*(\S+)", result.stdout, re.IGNORECASE)
+                if m:
+                    return m.group(1)
         except (subprocess.SubprocessError, FileNotFoundError):
             pass
         return "unknown"

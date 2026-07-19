@@ -6,7 +6,7 @@
 **Owner:** Main
 **Depends on:** obs-spec-050 (data model, dev/test split), obs-spec-051 (canary runner), obs-spec-054 (grid report, blended score)
 **Master plan ref:** v0.6.0 "Automated Harness Optimization"
-**Inspired by:** Niklaus, "Don't Train the Model, Evolve the Harness," Hugging Face, July 2026. [Source](https://huggingface.co/spaces/joelniklaus/harness-optimization) · [Code](https://github.com/JoelNiklaus/harness-optimization) · [Meta-Harness paper](https://arxiv.org/abs/2603.28052)
+**Inspired by:** Niklaus, "Don't Train the Model, Evolve the Harness," Hugging Face, July 2026. [Source](https://huggingface.co/spaces/joelniklaus/harness-optimization) · [Code](https://github.com/JoelNiklaus/harness-optimization) · [Meta-Harness paper](https://arxiv.org/abs/2603.28052) · **v0.7.0 upgrade:** Huang et al., "MemoHarness: Agent Harnesses That Learn from Experience," arXiv 2607.14159, July 2026. [Paper](https://arxiv.org/abs/2607.14159)
 
 ---
 

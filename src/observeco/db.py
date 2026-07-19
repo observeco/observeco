@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 61
+SCHEMA_VERSION = 63
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -887,6 +887,41 @@ CREATE TABLE IF NOT EXISTS harness_eval_runs (
     FOREIGN KEY (optimization_run_id) REFERENCES harness_optimization_runs(id)
 );
 CREATE INDEX IF NOT EXISTS idx_harness_eval_run ON harness_eval_runs(optimization_run_id);
+"""),
+
+    (63, """-- Migration 63: harness_candidates + harness_frontier + missing columns (obs-spec-056 gap fix)
+-- Add missing columns to harness_edits
+ALTER TABLE harness_edits ADD COLUMN code_diff TEXT DEFAULT '';
+ALTER TABLE harness_edits ADD COLUMN incumbent_score REAL;
+ALTER TABLE harness_edits ADD COLUMN dev_score REAL;
+ALTER TABLE harness_edits ADD COLUMN promoted INTEGER DEFAULT 0;
+ALTER TABLE harness_edits ADD COLUMN promotion_reason TEXT DEFAULT '';
+
+-- harness_candidates: per-iteration candidate records (spec §4.1)
+CREATE TABLE IF NOT EXISTS harness_candidates (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL,
+    iteration       INTEGER NOT NULL,
+    name            TEXT NOT NULL,
+    mechanism_type  TEXT NOT NULL,
+    description     TEXT,
+    code_diff       TEXT,
+    dev_score       REAL,
+    incumbent_score REAL,
+    promoted        INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_harness_candidates_agent ON harness_candidates(agent_name, iteration);
+
+-- harness_frontier: current best harness per agent (spec §4.2)
+CREATE TABLE IF NOT EXISTS harness_frontier (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL UNIQUE,
+    candidate_id    TEXT NOT NULL REFERENCES harness_candidates(id),
+    score           REAL NOT NULL,
+    mechanism_stack TEXT NOT NULL,
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """),
 ]
 
