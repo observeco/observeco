@@ -2,8 +2,6 @@
 
 import time
 
-import pytest
-
 from observeco.capability.env_snapshot import EnvSnapshot
 
 

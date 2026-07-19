@@ -12,11 +12,10 @@ backend route yet. Adding a path here is a TODO, not a permanent exemption.
 import re
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
 
-from observeco.dashboard.server import app
 from observeco.dashboard.auth import load_or_generate_secret
+from observeco.dashboard.server import app
 
 client = TestClient(app)
 _dash_secret = load_or_generate_secret()
@@ -184,7 +183,7 @@ def test_all_fetch_paths_have_backend_routes():
             missing.append(path)
 
     assert not missing, (
-        f"Frontend calls these paths but no backend route exists:\n"
+        "Frontend calls these paths but no backend route exists:\n"
         + "\n".join(f"  {p}" for p in missing)
         + "\n\nEither add the backend route or add the path to KNOWN_MISSING."
     )
@@ -203,7 +202,7 @@ def test_all_htmx_paths_have_backend_routes():
             missing.append(path)
 
     assert not missing, (
-        f"Frontend htmx attributes reference these paths but no backend route exists:\n"
+        "Frontend htmx attributes reference these paths but no backend route exists:\n"
         + "\n".join(f"  {p}" for p in missing)
         + "\n\nEither add the backend route or add the path to KNOWN_MISSING."
     )

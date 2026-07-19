@@ -4,8 +4,8 @@
 import json
 import statistics
 import subprocess
-import time
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path.home() / ".hermes" / "scripts"))

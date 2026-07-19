@@ -7,20 +7,20 @@ from __future__ import annotations
 
 import json
 import os
-import time
 import tempfile
+import time
 from pathlib import Path
 from unittest.mock import patch
 
 from observeco.self_monitoring import (
-    write_heartbeat,
-    read_heartbeat,
+    DEAD_THRESHOLD,
+    STALE_THRESHOLD,
     check_pid_liveness,
     check_stuck,
     clear_heartbeat,
     get_daemon_health,
-    STALE_THRESHOLD,
-    DEAD_THRESHOLD,
+    read_heartbeat,
+    write_heartbeat,
 )
 
 

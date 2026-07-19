@@ -7,7 +7,8 @@ Spec: obs-spec-023-service-architecture.md §17.3
 from __future__ import annotations
 
 import time
-from observeco.staleness import render_staleness, add_last_updated, get_threshold
+
+from observeco.staleness import add_last_updated, get_threshold, render_staleness
 
 
 def test_green_below_60s():

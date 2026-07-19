@@ -2,13 +2,13 @@
 from observeco.watch_consumers import (
     BaseConsumer,
     ConsumerManager,
+    DataSourceWatchdog,
     DriftConsumer,
     GardenConsumer,
     HealConsumer,
     PathwayConsumer,
     PruneConsumer,
     TokenHistoryConsumer,
-    DataSourceWatchdog,
 )
 
 

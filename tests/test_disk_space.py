@@ -7,15 +7,16 @@ from __future__ import annotations
 
 import os
 import tempfile
+
 from observeco.disk_space import (
-    check_disk_space,
-    can_write,
-    invalidate_cache,
-    _get_wal_size,
-    _build_result,
-    WARN_FREE,
-    STOP_FREE,
     RESUME_FREE,
+    STOP_FREE,
+    WARN_FREE,
+    _build_result,
+    _get_wal_size,
+    can_write,
+    check_disk_space,
+    invalidate_cache,
 )
 
 
@@ -37,7 +38,7 @@ def test_check_disk_space_caches():
 
 def test_invalidate_cache():
     """Invalidate should force re-read."""
-    result1 = check_disk_space("/", force=True)
+    check_disk_space("/", force=True)
     invalidate_cache()
     result2 = check_disk_space("/", force=True)
     assert result2["free_bytes"] > 0

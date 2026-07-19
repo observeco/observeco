@@ -8,13 +8,14 @@ from __future__ import annotations
 import os
 import sqlite3
 import tempfile
+
 from observeco.data_integrity import (
-    run_integrity_check,
-    run_foreign_key_check,
-    verify_backup,
-    initialize_db,
-    get_db_size,
     FULL_CHECK_LIMIT,
+    get_db_size,
+    initialize_db,
+    run_foreign_key_check,
+    run_integrity_check,
+    verify_backup,
 )
 
 

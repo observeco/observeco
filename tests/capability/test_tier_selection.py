@@ -3,12 +3,10 @@
 Covers all four rungs of cost_tracking and all three of tool_call_tracking.
 """
 
-import pytest
 
 from observeco.capability.env_snapshot import EnvSnapshot
 from observeco.features.cost_tracking import select_cost_tracking_tier
 from observeco.features.tool_call_tracking import select_tool_call_tier
-
 
 # ---------------------------------------------------------------------------
 # Helpers

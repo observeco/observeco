@@ -5,8 +5,9 @@ Runs against the real DB (empty is fine — we check structure, not data).
 """
 
 from fastapi.testclient import TestClient
-from observeco.dashboard.server import app
+
 from observeco.dashboard.auth import load_or_generate_secret
+from observeco.dashboard.server import app
 
 client = TestClient(app)
 _dash_secret = load_or_generate_secret()

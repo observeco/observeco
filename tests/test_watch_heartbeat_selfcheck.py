@@ -10,7 +10,6 @@ Does NOT launch real subprocesses — uses mock fixtures.
 
 import json
 import os
-import signal
 import tempfile
 import time
 from pathlib import Path

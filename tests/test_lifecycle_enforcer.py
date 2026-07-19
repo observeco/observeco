@@ -1,9 +1,8 @@
 """Tests for the Lifecycle Enforcement Layer."""
 
-import json
 import time
-from pathlib import Path
-from observeco.lifecycle.enforcer import LifecycleEnforcer, LIFECYCLE_STATES
+
+from observeco.lifecycle.enforcer import LIFECYCLE_STATES, LifecycleEnforcer
 
 
 def _make_enforcer(tmp_path):

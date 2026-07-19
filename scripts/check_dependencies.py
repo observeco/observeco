@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Dependency freshness check — runs pip-audit, outputs only if vulnerabilities found."""
 
+import json
 import subprocess
 import sys
-import json
 from pathlib import Path
 
 sys.path.insert(0, str(Path.home() / ".hermes" / "scripts"))
 from watchdog_flag_writer import write_flag
+
 
 def main():
     try:

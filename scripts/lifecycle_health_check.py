@@ -4,7 +4,6 @@
 Run via cron every 15 min. Outputs only when new flags are created (watchdog pattern).
 """
 
-import json
 import sys
 import time
 from pathlib import Path
@@ -13,8 +12,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from observeco.lifecycle.enforcer import LifecycleEnforcer
 from observeco.db import Database
+from observeco.lifecycle.enforcer import LifecycleEnforcer
 
 
 def get_fleet_health() -> dict:
@@ -87,7 +86,7 @@ def main():
             lines.append(f"{icon} **{flag.agent}**: {flag.trigger}")
             lines.append(f"   {flag.details}")
             lines.append("")
-        lines.append(f"Run `python -m observeco.lifecycle.enforcer flags` to see all active flags.")
+        lines.append("Run `python -m observeco.lifecycle.enforcer flags` to see all active flags.")
         print("\n".join(lines))
     else:
         # No new flags — silent (watchdog pattern)

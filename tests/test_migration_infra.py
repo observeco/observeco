@@ -16,16 +16,12 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from observeco.db import (
     BACKUP_COOLDOWN_HOURS,
     BACKUP_MAX_COUNT,
     SCHEMA_VERSION,
     Database,
-    _SCHEMA_SQL,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -118,14 +114,13 @@ class TestBackupBeforeMigrations:
         if cooldown_file.exists():
             cooldown_file.unlink()
 
-        with patch.object(db, "backup", wraps=db.backup) as mock_backup:
+        with patch.object(db, "backup", wraps=db.backup):
             # Create a fresh Database to trigger _init_db with the tampered version
-            db2 = Database(db_path=tmp_path / "test.db")
+            Database(db_path=tmp_path / "test.db")
             # _init_db already ran — backup should have been called
             # (since version 1 < SCHEMA_VERSION and data exists)
             # We can't mock after construction, so verify backup dir exists
             # as evidence backup was attempted
-            backup_dir = tmp_path / "backups"
             # If backup ran, it created files. If cooldown blocked it, that's fine too.
             # The key assertion: _init_db didn't crash.
 
@@ -148,7 +143,7 @@ class TestBackupBeforeMigrations:
             shutil.rmtree(backup_dir)
 
         # Create fresh DB — no pending migrations → no backup
-        db2 = Database(db_path=tmp_path / "test.db")
+        Database(db_path=tmp_path / "test.db")
         assert not backup_dir.exists() or not list(backup_dir.glob("pulse_*.db"))
 
 
@@ -313,7 +308,6 @@ class TestRowCountVerification:
     def test_verify_no_warning_on_stable(self, tmp_path):
         """No warning when row counts are stable."""
         db = _make_db(tmp_path)
-        conn = db._get_conn()
         pre = {"pulse_log": 100, "compress_log": 50}
         post = {"pulse_log": 100, "compress_log": 50}
 
@@ -329,7 +323,6 @@ class TestRowCountVerification:
     def test_verify_warns_on_big_drop(self, tmp_path, caplog):
         """Warning when row count drops >10%."""
         db = _make_db(tmp_path)
-        conn = db._get_conn()
         pre = {"pulse_log": 100}
         post = {"pulse_log": 80}  # 20% drop
 
@@ -341,7 +334,6 @@ class TestRowCountVerification:
     def test_verify_errors_on_missing_table(self, tmp_path, caplog):
         """Error when table disappears after migration."""
         db = _make_db(tmp_path)
-        conn = db._get_conn()
         pre = {"pulse_log": 100}
         post = {"pulse_log": -1}  # table gone
 
@@ -353,7 +345,6 @@ class TestRowCountVerification:
     def test_verify_skips_empty_pre(self, tmp_path):
         """No warning when pre-count is 0 (table was empty)."""
         db = _make_db(tmp_path)
-        conn = db._get_conn()
         pre = {"pulse_log": 0}
         post = {"pulse_log": 0}
 

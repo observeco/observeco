@@ -5,19 +5,13 @@ Uses mocks to avoid touching real processes, files, or ports.
 
 from __future__ import annotations
 
-import io
-import os
-import tempfile
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from observeco.capability.env_snapshot import EnvSnapshot
 from observeco.capability import probe as probe_module
+from observeco.capability.env_snapshot import EnvSnapshot
 from observeco.capability.probe import (
-    _check_fda,
-    _check_keychain,
-    _check_launchagent,
     _check_store_location,
     _find_ports,
     _find_process,

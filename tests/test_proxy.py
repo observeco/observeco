@@ -14,30 +14,23 @@ Tests cover:
 import json
 import os
 import tempfile
-import time
-import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Import proxy modules
 # ---------------------------------------------------------------------------
-
 from observeco.proxy.server import (
-    ProxyServer,
-    create_app,
-    extract_usage_from_response,
-    _extract_from_json,
-    _extract_from_sse,
-    _extract_usage_from_stream_chunks,
-    detect_provider,
-    log_proxy_usage,
     STRIP_REQUEST_HEADERS,
     STRIP_RESPONSE_HEADERS,
+    ProxyServer,
+    _extract_from_json,
+    _extract_usage_from_stream_chunks,
+    create_app,
+    detect_provider,
+    extract_usage_from_response,
+    log_proxy_usage,
 )
-
 
 # ===========================================================================
 # 1. Token Usage Extraction — JSON Responses
@@ -335,7 +328,6 @@ class TestLogProxyUsage:
             assert row is not None
 
             # Check column values by name
-            cols = [d[0] for d in conn.execute("PRAGMA table_info(token_logs)").fetchall()]
             col_names = [c[1] for c in conn.execute("PRAGMA table_info(token_logs)").fetchall()]
             row_dict = dict(zip(col_names, row))
 
