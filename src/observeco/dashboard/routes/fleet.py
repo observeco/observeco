@@ -491,6 +491,25 @@ async def api_canary_card(agent_name: str):
     return HTMLResponse(_canary_card(agent_name))
 
 
+@router.post("/circuits/{agent_name}/reset", response_class=HTMLResponse)
+async def reset_circuit(agent_name: str):
+    """POST /api/fleet/circuits/{agent}/reset — reset a circuit breaker.
+
+    Sets tripped=0, failure_count=0 so the next genuine failure starts fresh.
+    Returns the guard row fragment for htmx swap.
+    """
+    conn = db._get_conn()
+    conn.execute(
+        "UPDATE circuit_breakers SET tripped = 0, failure_count = 0, cooldown_until = NULL "
+        "WHERE agent_name = ?",
+        (agent_name,),
+    )
+    conn.commit()
+    return HTMLResponse(
+        f'<span style="color:var(--accent);font-size:12px;">Circuit reset for {agent_name}</span>'
+    )
+
+
 @router.get("/agents", response_class=HTMLResponse)
 async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
     """DPA §3: GET /api/fleet/agents — returns agent card grid partial.

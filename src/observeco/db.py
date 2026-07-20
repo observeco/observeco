@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 65
+SCHEMA_VERSION = 66
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -970,6 +970,30 @@ CREATE INDEX IF NOT EXISTS idx_hgt_agent ON harness_gate_tests(agent_name, run_a
     # Migration 65: proposer_model on harness_optimization_runs (PG-6 fabrication grading)
     (65, """-- Migration 65: track proposer model per optimization run (obs-spec-088 PG-6)
 ALTER TABLE harness_optimization_runs ADD COLUMN proposer_model TEXT;
+"""),
+    # Migration 66: inbox_items for Anomalies Inbox (obs-spec-092)
+    (66, """-- Migration 66: inbox_items for cross-detector anomaly inbox (obs-spec-092)
+CREATE TABLE IF NOT EXISTS inbox_items (
+  id            TEXT PRIMARY KEY,
+  agent_name    TEXT,
+  class         TEXT NOT NULL,
+  tone          TEXT NOT NULL,
+  pillar        TEXT,
+  title         TEXT NOT NULL,
+  attribution   TEXT,
+  evidence      TEXT NOT NULL,
+  actions       TEXT NOT NULL,
+  why_source    TEXT NOT NULL,
+  state         TEXT NOT NULL DEFAULT 'open',
+  triage_reason TEXT,
+  first_seen    TEXT NOT NULL,
+  last_seen     TEXT NOT NULL,
+  occurrence    INTEGER NOT NULL DEFAULT 1,
+  folded_count  INTEGER,
+  folded_parent TEXT,
+  snoozed_until TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_inbox_state_tone ON inbox_items(state, tone, last_seen DESC);
 """),
 ]
 

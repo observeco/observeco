@@ -63,8 +63,21 @@ def _detect_agent_dead(db: Database, lookback: int, now: int) -> list[dict]:
 
     Filter: only flag agents that have EVER been seen alive (excludes
     never-running background services that exist in config but aren't active).
+
+    Class-aware (obs-spec-092 §3.4):
+    - profile-class agents → skip (activity-based monitoring, idle != dead)
+    - test-class agents → skip (test entities excluded from monitoring)
     """
     conn = db._get_conn()
+
+    # Get excluded classes
+    excluded = set()
+    for row in conn.execute(
+        "SELECT agent_name FROM agent_configs WHERE class IN ('profile', 'test')"
+    ).fetchall():
+        excluded.add(row["agent_name"])
+    if not excluded:
+        excluded = set()  # ensure iterable
 
     # Find agents that were alive at some point but now dead
     rows = conn.execute(
@@ -82,6 +95,8 @@ def _detect_agent_dead(db: Database, lookback: int, now: int) -> list[dict]:
 
     anomalies = []
     for agent, status, last_ts, cnt in rows:
+        if agent in excluded:
+            continue
         severity = "critical" if cnt >= 10 else "warning"
         anomalies.append({
             "type": "agent_dead",
@@ -178,8 +193,19 @@ def _detect_cost_spikes(db: Database, lookback: int, now: int) -> list[dict]:
 
 
 def _detect_retry_loops(db: Database, lookback: int, now: int) -> list[dict]:
-    """Detect repeated tool failures — same error for same agent >3x in 10min."""
+    """Detect repeated tool failures — same error for same agent >3x in 10min.
+
+    Class-aware: skips profile and test entities.
+    """
     conn = db._get_conn()
+
+    # Excluded classes
+    excluded = set()
+    for row in conn.execute(
+        "SELECT agent_name FROM agent_configs WHERE class IN ('profile', 'test')"
+    ).fetchall():
+        excluded.add(row["agent_name"])
+
     ten_min_ago = now - 600
 
     rows = conn.execute(
@@ -193,6 +219,8 @@ def _detect_retry_loops(db: Database, lookback: int, now: int) -> list[dict]:
 
     anomalies = []
     for agent, error_type, cnt, last_at, first_at in rows:
+        if agent in excluded:
+            continue
         duration = last_at - first_at if last_at and first_at else 0
         anomalies.append({
             "type": "retry_loop",

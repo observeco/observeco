@@ -37,6 +37,7 @@ from observeco.dashboard.routes.capability import router as capability_router
 from observeco.dashboard.routes.detail import router as detail_router
 from observeco.dashboard.routes.efficiency import router as efficiency_router
 from observeco.dashboard.routes.error_timeline import router as timeline_router
+from observeco.dashboard.routes.inbox import router as inbox_router
 from observeco.dashboard.routes.fleet import router as fleet_router
 from observeco.dashboard.routes.fleet_qb import router as fleet_qb_router
 from observeco.dashboard.routes.harness_opt import router as harness_opt_router
@@ -86,6 +87,7 @@ app.include_router(realtime_router)
 app.include_router(licenses_router)
 app.include_router(commercial_router)
 app.include_router(discover_router)
+app.include_router(inbox_router)
 app.include_router(fleet_router)
 app.include_router(fleet_qb_router)
 app.include_router(alerts_router)
