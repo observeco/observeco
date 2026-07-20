@@ -2210,3 +2210,132 @@ body {
 }
 .discover-row .gap-add:hover { background: #16a34a; }
 .discover-row .gap-added { color: #22c55e; font-size: 12px; font-weight: 600; }
+
+/* ══════════════════════════════════════════════════════════════
+ * OBS-SPEC-093: Agent Detail Modal v2 (Four-Pillar Profile)
+ * Design authority: mockups/agent-profile-v4.html
+ * Added: 2026-07-21
+ */
+
+/* ── v4 modal modifier ── */
+.modal.c-profile { border-radius: 12px; }
+
+/* ── 1. Status ── */
+.c-profile .status { padding: 22px 22px 16px; border-bottom: 1px solid var(--border-soft); }
+.c-profile .status-top { display: flex; align-items: center; gap: 10px; }
+.c-profile .status-name { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.c-profile .status-pill {
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  border: 1px solid rgba(34,197,94,.3);
+}
+.c-profile .status-pill.healthy { background: rgba(34,197,94,.12); color: var(--accent); }
+.c-profile .status-pill.warn { background: rgba(234,179,8,.12); color: var(--warn); border-color: rgba(234,179,8,.3); }
+.c-profile .status-pill.crit { background: rgba(239,68,68,.12); color: var(--danger); border-color: rgba(239,68,68,.3); }
+.c-profile .status-close {
+  margin-left: auto; background: none; border: 1px solid var(--border); color: var(--fg-2);
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+.c-profile .status-close:hover { color: var(--fg); border-color: var(--fg-2); }
+.c-profile .status-line { font-size: 16px; font-weight: 600; margin-top: 12px; line-height: 1.45; }
+.c-profile .status-sub { font-size: 12.5px; color: var(--fg-2); margin-top: 5px; }
+
+/* ── 2. Four pillar tiles ── */
+.c-profile .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 16px 22px 6px; }
+.c-profile .tile {
+  background: rgba(15,23,42,.5); border: 1px solid var(--border-soft);
+  border-radius: 8px; padding: 13px 14px; position: relative;
+}
+.c-profile .tile.bad { border-color: rgba(239,68,68,.4); }
+.c-profile .tile.unknown { border-style: dashed; }
+.c-profile .tile .t-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.c-profile .tile .t-val { font-size: 21px; font-weight: 700; margin-top: 4px; }
+.c-profile .tile .t-val.red { color: var(--danger); }
+.c-profile .tile .t-val.green { color: var(--accent); }
+.c-profile .tile .t-val.amber { color: var(--warn); }
+.c-profile .tile .t-sub { font-size: 11.5px; color: var(--fg-2); margin-top: 3px; line-height: 1.4; }
+.c-profile .tile .t-drift {
+  display: inline-block; font-size: 10px; font-weight: 600; margin-top: 6px;
+  color: var(--warn); background: rgba(234,179,8,.1);
+  border-radius: 4px; padding: 1px 6px;
+}
+.c-profile .tile .t-link {
+  position: absolute; top: 10px; right: 11px; font-size: 10px; color: var(--muted);
+  cursor: pointer; text-decoration: none;
+}
+.c-profile .tile .t-link:hover { color: var(--fg-2); }
+
+/* ── 3. Sections / issues ── */
+.c-profile .section { padding: 14px 22px 6px; }
+.c-profile .section-t {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--muted); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 10px;
+}
+.c-profile .section-t::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
+.c-profile .issue {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: rgba(15,23,42,.5); border: 1px solid var(--border-soft);
+  border-radius: 8px; padding: 13px 15px; margin-bottom: 8px;
+}
+.c-profile .issue.crit { border-left: 3px solid var(--danger); }
+.c-profile .issue.watch { border-left: 3px solid var(--warn); }
+.c-profile .issue .i-icon {
+  width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+  font-size: 13px; flex-shrink: 0; margin-top: 1px;
+}
+.c-profile .issue.crit .i-icon { background: rgba(239,68,68,.13); }
+.c-profile .issue.watch .i-icon { background: rgba(234,179,8,.12); }
+.c-profile .issue .i-body { flex: 1; min-width: 0; }
+.c-profile .issue .i-title { font-size: 13.5px; font-weight: 600; line-height: 1.4; }
+.c-profile .issue .i-why { font-size: 12.5px; color: var(--fg-2); margin-top: 3px; line-height: 1.5; }
+.c-profile .issue .i-act { margin-top: 9px; display: flex; gap: 6px; flex-wrap: wrap; }
+.c-profile .btn {
+  font-size: 12px; font-weight: 600; font-family: inherit;
+  padding: 6px 13px; border-radius: 7px; cursor: pointer; transition: all .12s;
+  border: 1px solid rgba(34,197,94,.4); background: rgba(34,197,94,.08); color: var(--accent);
+}
+.c-profile .btn:hover { background: rgba(34,197,94,.16); }
+.c-profile .btn.ghost { border-color: var(--border); background: transparent; color: var(--fg-2); }
+.c-profile .btn.ghost:hover { color: var(--fg); border-color: var(--fg-2); }
+
+/* ── Doing well badges ── */
+.c-profile .well { display: flex; flex-wrap: wrap; gap: 6px; }
+.c-profile .well .w {
+  font-size: 12px; color: var(--fg-2); background: rgba(34,197,94,.06);
+  border: 1px solid rgba(34,197,94,.2); border-radius: 999px;
+  padding: 4px 11px;
+}
+.c-profile .well .w::before { content: "✓ "; color: var(--accent); font-weight: 700; }
+
+/* ── 4. Technical drawer ── */
+.c-profile .tech { margin: 14px 22px 20px; border: 1px solid var(--border-soft); border-radius: 8px; overflow: hidden; }
+.c-profile .tech-h {
+  display: flex; align-items: center; gap: 9px; padding: 12px 15px;
+  cursor: pointer; user-select: none; font-size: 13px; color: var(--fg-2);
+}
+.c-profile .tech-h:hover { background: rgba(15,23,42,.4); color: var(--fg); }
+.c-profile .tech-h .chev { margin-left: auto; color: var(--muted); transition: transform .15s; font-size: 11px; }
+.c-profile .tech.open .tech-h .chev { transform: rotate(90deg); }
+.c-profile .tech-body { display: none; padding: 2px 15px 14px; }
+.c-profile .tech.open .tech-body { display: block; }
+.c-profile .pillar-src {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--meta); margin: 12px 0 4px;
+}
+.c-profile .pillar-src:first-child { margin-top: 4px; }
+.c-profile .tech-row {
+  display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  font-size: 12.5px; padding: 5px 0; border-bottom: 1px solid var(--border-soft);
+}
+.c-profile .tech-row:last-child { border-bottom: none; }
+.c-profile .tech-row .tl-k { color: var(--fg-2); }
+.c-profile .tech-row .tl-v { font-family: monospace; font-size: 11.5px; color: var(--fg); text-align: right; }
+.c-profile .tech-row .tl-v.warn { color: var(--warn); }
+.c-profile .tech-note { font-size: 11.5px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+
+@media (max-width: 640px) {
+  .c-profile .tiles { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+  .c-profile .tiles { grid-template-columns: 1fr; }
+}

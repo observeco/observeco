@@ -1,0 +1,170 @@
+<div class="scrim" id="modalScrim" onclick="if(event.target===this)this.remove()" x-data="{ drawerOpen: false }">
+<div class="modal c-profile">
+
+  <!-- ── 1. STATUS ── -->
+  <div class="status">
+    <div class="status-top">
+      <span class="status-name">{{ profile.meta.agent_name }}</span>
+      {% if profile.severity == "healthy" %}
+      <span class="status-pill healthy">● Running</span>
+      {% elif profile.severity == "warning" %}
+      <span class="status-pill warn">● Needs review</span>
+      {% elif profile.severity == "critical" %}
+      <span class="status-pill crit">● Down</span>
+      {% else %}
+      <span class="status-pill">● {{ profile.severity }}</span>
+      {% endif %}
+      <button class="status-close" onclick="this.closest('.scrim').remove()" aria-label="Close">✕</button>
+    </div>
+    <div class="status-line">
+      {{ profile.status_line | safe }}
+    </div>
+    <div class="status-sub">{{ profile.status_sub }}</div>
+  </div>
+
+  <!-- ── 2. FOUR PILLAR TILES ── -->
+  <div class="tiles" id="profileTiles">
+    {% for pillar in profile.pillars %}
+    {% set state = pillar.state %}
+    {% set is_attn = state == "attention" %}
+    {% set is_unknown = state == "unknown" %}
+    {% set is_unset = state == "unset" %}
+    {% set tile_class = "tile" %}
+    {% if is_attn %}{% set tile_class = tile_class + " bad" %}{% endif %}
+    {% if is_unknown %}{% set tile_class = tile_class + " unknown" %}{% endif %}
+    {% if is_unset %}{% set tile_class = tile_class + " unknown" %}{% endif %}
+    <div class="{{ tile_class }}">
+      <a class="t-link" href="#" onclick="event.preventDefault();document.getElementById('techDrawer').classList.add('open');document.getElementById('techDrawer').scrollIntoView({behavior:'smooth',block:'nearest'});return false">details ›</a>
+      <div class="t-label">{{ pillar.label }}</div>
+      {% set val_cls = "" %}
+      {% if is_attn and pillar.key == "quality" %}{% set val_cls = " red" %}{% endif %}
+      {% if pillar.key == "reliability" and pillar.value in ("Down","Stopped","Degraded") %}{% set val_cls = " red" %}{% endif %}
+      {% if pillar.key == "reliability" and pillar.value == "100%" %}{% set val_cls = " green" %}{% endif %}
+      {% if is_unknown %}{% set val_cls = " amber" %}{% endif %}
+      {% if pillar.key == "memory" and is_unknown %}{% set val_cls = " amber" %}{% endif %}
+      <div class="t-val{{ val_cls }}">{{ pillar.value }}</div>
+      <div class="t-sub">{{ pillar.sub }}</div>
+      {% if pillar.modifier %}
+      <span class="t-drift">{{ pillar.modifier }}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── 3. NEEDS ATTENTION ── -->
+  {% if profile.needs_attention %}
+  <div class="section">
+    <div class="section-t">Needs attention</div>
+    {% for issue in profile.needs_attention %}
+    {% set issue_type = "crit" if loop.first else "watch" %}
+    <div class="issue {{ issue_type }}">
+      <div class="i-icon">{{ issue.icon }}</div>
+      <div class="i-body">
+        <div class="i-title">{{ issue.title }}</div>
+        <div class="i-why">{{ issue.why | safe }}</div>
+        {% if issue.actions %}
+        <div class="i-act">
+          {% for action in issue.actions %}
+          <button class="btn{% if action.get('ghost') %} ghost{% endif %}" onclick="event.preventDefault();this.textContent='✓ '+this.textContent.replace(' →','');setTimeout(()=>{location.hash='#pillar='+this.dataset.pillar||'quality'},200)">{{ action.label }}</button>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── 4. WORTH KNOWING ── -->
+  {% if profile.worth_knowing %}
+  <div class="section">
+    <div class="section-t">Worth knowing — no action needed</div>
+    {% for item in profile.worth_knowing %}
+    <div class="issue watch">
+      <div class="i-icon">{{ item.icon }}</div>
+      <div class="i-body">
+        <div class="i-title">{{ item.title }}</div>
+        <div class="i-why">{{ item.why | safe }}</div>
+        {% if item.actions %}
+        <div class="i-act">
+          {% for action in item.actions %}
+          <button class="btn{% if action.get('ghost') %} ghost{% endif %}">{{ action.label }}</button>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── 5. DOING WELL ── -->
+  {% if profile.doing_well %}
+  <div class="section">
+    <div class="section-t">Doing well</div>
+    <div class="well">
+      {% for badge in profile.doing_well %}
+      <span class="w">{{ badge }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── 6. TECHNICAL DRAWER ── -->
+  <div class="tech" id="techDrawer" :class="drawerOpen ? 'open' : ''" x-cloak>
+    <div class="tech-h" @click="drawerOpen = !drawerOpen">
+      🔧 Technical details <span style="color:var(--muted);font-size:11px">— every number above traces to a row here</span>
+      <span class="chev">▶</span>
+    </div>
+    <div class="tech-body">
+      {% if profile.drawer.quality %}
+      <div class="pillar-src">Quality ← canary_runs</div>
+      {% for row in profile.drawer.quality %}
+      <div class="tech-row"><span class="tl-k">{{ row.label }}</span><span class="tl-v{% if row.warn %} warn{% endif %}">{{ row.value }}</span></div>
+      {% endfor %}
+      {% endif %}
+
+      {% if profile.drawer.reliability %}
+      <div class="pillar-src">Reliability ← pulse_log · guard · errors · l2_trending</div>
+      {% for row in profile.drawer.reliability %}
+      <div class="tech-row"><span class="tl-k">{{ row.label }}</span><span class="tl-v{% if row.warn %} warn{% endif %}">{{ row.value }}</span></div>
+      {% endfor %}
+      {% endif %}
+
+      {% if profile.drawer.usage %}
+      <div class="pillar-src">Usage ← token_logs · chisel_drift</div>
+      {% for row in profile.drawer.usage %}
+      <div class="tech-row"><span class="tl-k">{{ row.label }}</span><span class="tl-v{% if row.warn %} warn{% endif %}">{{ row.value }}</span></div>
+      {% endfor %}
+      {% endif %}
+
+      {% if profile.drawer.memory %}
+      <div class="pillar-src">Memory ← clawforge_garden</div>
+      {% for row in profile.drawer.memory %}
+      <div class="tech-row"><span class="tl-k">{{ row.label }}</span><span class="tl-v{% if row.warn %} warn{% endif %}">{{ row.value }}</span></div>
+      {% endfor %}
+      {% endif %}
+
+      {% if not profile.drawer.quality and not profile.drawer.reliability and not profile.drawer.usage and not profile.drawer.memory %}
+      <div class="tech-note">No technical data available for this agent.</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+(function() {
+  var scrim = document.getElementById('modalScrim');
+  if (scrim) {
+    // Esc closes
+    document.addEventListener('keydown', function escHandler(e) {
+      if (e.key === 'Escape' && document.contains(scrim)) {
+        scrim.remove();
+        document.removeEventListener('keydown', escHandler);
+      }
+    });
+  }
+})();
+</script>

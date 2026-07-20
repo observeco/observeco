@@ -10,13 +10,15 @@ import logging
 import sqlite3 as _sqlite3
 import time
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from pathlib import Path
 
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)
-
+templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
 router = APIRouter(prefix="/api/fleet", tags=["fleet"])
 db = Database()
 
@@ -888,3 +890,48 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
 
     return HTMLResponse(f"""<div class="section-h" id="fleetSectionHeader" hx-swap-oob="true"><h2>Fleet</h2><span class="count">{total_agents} agents</span><span class="hint">{hint}</span><span id="fleetUpdated" style="font-size:12px;color:#64748b;margin-left:8px;">{time.strftime('Updated %H:%M:%S', time.localtime(now))}</span></div>
 {grid_html}""")
+
+
+# ── OBS-SPEC-093: Agent Profile (Four-Pillar Composite) ────────────────
+
+
+@router.get("/agent/{agent_name}/profile", response_class=HTMLResponse)
+async def agent_profile(request: Request, agent_name: str):
+    """GET /api/agent/<name>/profile — four-pillar profile composite endpoint.
+
+    Replaces six per-tab fetches with one response per §3.2.
+    Returns the c-modal-profile.html partial.
+    """
+    from observeco.dashboard.services.agent_profile_service import get_agent_profile
+
+    try:
+        profile = get_agent_profile(agent_name, use_cache=False)
+    except Exception:
+        logger.exception("agent_profile failed for %s", agent_name)
+        return templates.TemplateResponse(request, "partials/c57.html", {"html": """<div class="scrim"><div class="modal">
+    <div class="m-head">
+        <span class="m-name" style="color:var(--fg-3)">Error</span>
+        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
+    </div>
+    <div class="m-body">
+        <div class="state-msg err">
+            <div class="ico">⚠</div>
+            <h3>Agent data unavailable</h3>
+            <p>The profile service encountered an error. Try again later.</p>
+        </div>
+    </div>
+</div></div>"""})
+
+    if "error" in profile:
+        return templates.TemplateResponse(request, "partials/c57.html", {"html": f"""<div class="scrim"><div class="modal">
+    <div class="m-head">
+        <span class="m-name" style="color:var(--fg-3)">Not found</span>
+        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
+    </div>
+    <div class="m-body">
+        <div class="state-msg"><div class="ico">🔍</div><h3>Agent not found</h3>
+        <p>No agent named "{_html_escape(agent_name)}" is registered.</p></div>
+    </div>
+</div></div>"""})
+
+    return templates.TemplateResponse(request, "partials/c-modal-profile.html", {"profile": profile})
