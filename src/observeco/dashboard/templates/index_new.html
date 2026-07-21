@@ -64,6 +64,7 @@ document.body.addEventListener('htmx:afterOnLoad', function(evt) {
       <span class="nav-tab clickable" data-tab="brain">Brain</span>
       <span class="nav-tab clickable" data-tab="drift">Drift</span>
       <span class="nav-tab clickable" data-tab="compare">Compare</span>
+      <span class="nav-tab clickable" data-tab="harness">Harness</span>
     </div>
     <div class="nav-group">
       <span class="glabel">Intelligence</span>
@@ -377,6 +378,28 @@ document.body.addEventListener('htmx:afterOnLoad', function(evt) {
 
 <div id="modalContainer"></div>
 <script src="/static/js/pathway.js?v=3"></script>
+<script>
+// ── HTMX revealed trigger fallback ──────────────────────────
+// HTMX's 'revealed' trigger only re-checks on scroll events (200ms interval).
+// On initial page load, elements above the fold may never fire 'revealed'
+// if no scroll event occurs. This fallback directly triggers HTMX requests
+// for all elements with hx-trigger containing 'revealed' after the page
+// has fully painted.
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    document.querySelectorAll('[hx-trigger*="revealed"]').forEach(function(el) {
+      if (typeof htmx !== 'undefined') {
+        var url = el.getAttribute('hx-get') || el.getAttribute('hx-post') || '';
+        var target = el.getAttribute('hx-target') || 'this';
+        var swap = el.getAttribute('hx-swap') || 'innerHTML';
+        if (url) {
+          htmx.ajax('GET', url, {target: el, swap: swap});
+        }
+      }
+    });
+  }, 500);
+});
+</script>
 <script>
 // ── Auto-Heal tab handlers (wired to /api/heal-config endpoints) ──
 function toggleHeal(name, l1, l2) {

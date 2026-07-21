@@ -6314,7 +6314,7 @@ async def api_partials_nav():
     <div class="nav-group">
       <span class="glabel">Intelligence</span>
       <span class="nav-tab clickable" data-tab="capability">Capability</span>
-      <span class="nav-tab clickable" data-tab="anomalies">Anomalies<span class="soon">soon</span></span>
+      <span class="nav-tab clickable" data-tab="anomalies">Anomalies</span>
       <span class="nav-tab clickable" data-tab="health-score">Health Score<span class="soon">soon</span></span>
       <span class="nav-tab clickable" data-tab="traces">Traces<span class="soon">soon</span></span>
     </div>
