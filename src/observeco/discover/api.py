@@ -77,10 +77,10 @@ def _render_gap_items(gaps: list[dict], limit: int = 0) -> str:
             f'<span class="meta">{reason}</span>'
             f'<button class="btn add" hx-post="/api/discover/add" '
             f'hx-vals=\'{{"name":"{name}","framework":"{fw}","health_check":"{hc}"}}\' '
-            f'hx-target="#gap-{name}" hx-swap="outerHTML" onclick="event.stopPropagation()">+ Add</button>'
+            f'hx-target="#discoverPanel" hx-swap="innerHTML" onclick="event.stopPropagation()">+ Add</button>'
             f'<button class="btn dismiss" hx-post="/api/discover/dismiss" '
             f'hx-vals=\'{{"name":"{name}"}}\' '
-            f'hx-target="#gap-{name}" hx-swap="outerHTML" onclick="event.stopPropagation()">✕</button>'
+            f'hx-target="#discoverPanel" hx-swap="innerHTML" onclick="event.stopPropagation()">✕</button>'
             f'</div>'
         )
     html = "".join(rows)
@@ -125,36 +125,31 @@ def get_gaps_html(all: bool = False):
     return _render_gap_items(never_seen, limit=20)
 
 
-@router.get("/panel", response_class=HTMLResponse)
-def get_panel():
-    """HTML partial for the discover panel (htmx target)."""
+def _render_panel() -> str:
+    """Return discover panel HTML as a plain string (no HTTP wrapper)."""
     gaps = scan_cached()
     if not gaps:
-        return (
-            '<div class="discover-empty">✅ No gaps found — everything is being monitored</div>'
-        )
+        return '<div class="discover-empty">✅ No gaps found — everything is being monitored</div>'
 
     classified = _classify_gaps(gaps)
     total = len(gaps)
     active = classified["never_seen"]
     dismissed_count = classified["dismissed_count"]
 
-    # Build sections — only "Never seen" since we have no history tracking yet
     sections = ""
     if active:
         sections += _render_section(
             "●", "Never seen", len(active),
             _render_gap_items(active, limit=20),
-            "", True  # expanded by default
+            "", True
         )
 
-    # Learning section
     learning_html = _get_learning_html()
 
-    return f"""<div class="discover-panel" id="discoverPanel">
-  <div class="panel-h">
+    add_all_js = "js:{names: Array.from(document.querySelectorAll('#discoverGaps .item')).map(function(it){return it.id.replace('gap-','')})}"
+    return f"""  <div class="panel-h">
     <h3>Discover</h3>
-    <span class="count">{total} gaps{f' · {dismissed_count} dismissed' if dismissed_count else ''}</span>
+    <span class="count"><span id="discoverCount">{total}</span> gaps{f' · {dismissed_count} dismissed' if dismissed_count else ''}</span>
     <span class="close" onclick="document.getElementById('discoverPanel').style.display='none'">✕</span>
   </div>
   <div class="mode-tabs">
@@ -162,16 +157,21 @@ def get_panel():
     <div class="mode-tab" onclick="document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('discoverGaps').style.display='none';document.getElementById('discoverLearning').style.display='block'">Learning <span class="badge green">{len(learning_html['skills'])}</span></div>
   </div>
   <div class="bulk-bar">
-    <button class="bulk-btn primary" hx-post="/api/discover/add-all" hx-vals='{{"names":{_html_escape(str([g['name'] for g in active]))}}}' hx-target="#discoverGaps" hx-swap="innerHTML">+ Add all</button>
-    <button class="bulk-btn" hx-post="/api/discover/dismiss-all" hx-target="#discoverGaps" hx-swap="innerHTML">Dismiss all</button>
+    <button class="bulk-btn primary" hx-post="/api/discover/add-all" hx-vals="{add_all_js}" hx-target="#discoverPanel" hx-swap="innerHTML">+ Add all</button>
+    <button class="bulk-btn" hx-post="/api/discover/dismiss-all" hx-target="#discoverPanel" hx-swap="innerHTML">Dismiss all</button>
   </div>
   <div id="discoverGaps">
     {sections}
   </div>
   <div id="discoverLearning" style="display:none;">
     {learning_html['html']}
-  </div>
-</div>"""
+  </div>"""
+
+
+@router.get("/panel", response_class=HTMLResponse)
+def get_panel():
+    """HTML partial for the discover panel (htmx target)."""
+    return _render_panel()
 
 
 def _get_learning_html() -> dict:
@@ -267,32 +267,24 @@ def get_learning():
     return data["html"]
 
 
-@router.post("/add")
+@router.post("/add", response_class=HTMLResponse)
 def add_gap_endpoint(req: AddGapRequest):
     """Register a gap item as a tracked agent."""
     result = add_gap(req.name, req.framework, health_check=req.health_check)
     if result["status"] == "exists":
         raise HTTPException(status_code=409, detail=result["message"])
-    html = (
-        f'<div class="item" id="gap-{req.name}" style="opacity:0.5;">'
-        f'<span class="name">{req.name}</span>'
-        f'<span class="meta" style="color:#22c55e;">✓ added</span></div>'
-    )
-    return Response(content=html, media_type="text/html")
+    return _render_panel()
 
 
-@router.post("/add-all")
+@router.post("/add-all", response_class=HTMLResponse)
 def add_all_gaps(req: BatchGapRequest):
     """Batch register multiple gaps."""
-    results = []
     for name in req.names:
-        result = add_gap(name)
-        results.append({"name": name, "status": result["status"]})
-    # Return updated gaps view
-    return get_panel()
+        add_gap(name)
+    return _render_panel()
 
 
-@router.post("/dismiss")
+@router.post("/dismiss", response_class=HTMLResponse)
 def dismiss_gap(req: DismissGapRequest):
     """Dismiss a gap (never show again)."""
     try:
@@ -304,15 +296,10 @@ def dismiss_gap(req: DismissGapRequest):
         conn.commit()
     except Exception:
         pass
-    html = (
-        f'<div class="item" id="gap-{req.name}" style="opacity:0.3;">'
-        f'<span class="name" style="text-decoration:line-through;">{req.name}</span>'
-        f'<span class="meta" style="color:#64748b;">dismissed</span></div>'
-    )
-    return Response(content=html, media_type="text/html")
+    return _render_panel()
 
 
-@router.post("/dismiss-all")
+@router.post("/dismiss-all", response_class=HTMLResponse)
 def dismiss_all_gaps():
     """Dismiss all current gaps."""
     gaps = scan_cached()
@@ -326,4 +313,4 @@ def dismiss_all_gaps():
         conn.commit()
     except Exception:
         pass
-    return '<div class="empty-state" style="text-align:center;padding:24px;color:#64748b;font-size:12px;">✅ All gaps dismissed. <button class="bulk-btn" style="margin-top:8px;" onclick="document.getElementById(\'discoverBadge\')?.click()">Undo</button></div>'
+    return _render_panel()

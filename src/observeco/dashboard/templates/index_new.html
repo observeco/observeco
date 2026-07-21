@@ -26,7 +26,7 @@
   </div>
   <div class="right" id="daemonStatus"><span class="d"></span> daemon live <span class="kb-hint" style="margin-left:12px;font-size:11px;color:#64748b;">⌨ 1-9 for tabs</span></div>
   <div class="discover-badge" id="discoverBadge" hx-get="/api/discover/panel" hx-trigger="revealed once, every 5m" hx-target="#discoverPanel" hx-swap="innerHTML" onclick="toggleDiscover()" title="See what you're not monitoring">
-    <span class="dot"></span><span id="discoverCount">…</span> gaps
+    <span class="dot"></span>gaps
   </div>
 </header>
 <div id="discoverPanel" class="discover-panel" style="display:none;"></div>
@@ -35,17 +35,6 @@ function toggleDiscover() {
   var p = document.getElementById('discoverPanel');
   p.style.display = (p.style.display === 'none') ? 'block' : 'none';
 }
-// Update badge count after panel loads
-document.body.addEventListener('htmx:afterOnLoad', function(evt) {
-  if (evt.detail.xhr && evt.detail.xhr.responseURL && evt.detail.xhr.responseURL.includes('/api/discover/panel')) {
-    var html = evt.detail.xhr.responseText || '';
-    var m = html.match(/(\d+)\s*gap/);
-    var cnt = document.getElementById('discoverCount');
-    var badge = document.getElementById('discoverBadge');
-    if (m) { cnt.textContent = m[1]; badge.className = 'discover-badge has-gaps'; }
-    else { cnt.textContent = '0'; badge.className = 'discover-badge no-gaps'; }
-  }
-});
 </script>
 
 <!-- Domain-grouped nav -->
