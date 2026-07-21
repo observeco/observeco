@@ -5,6 +5,12 @@ GET /api/agent/<name>/profile. Each pillar is an independent failure mode.
 
 Design authority: mockups/agent-profile-v4.html (operator layer)
                   mockups/agent-profile-v2.html (technical tab internals)
+
+Raw DB queries delegated to T4 service (src/observeco/agent_profile_service.py)
+for reliability, usage, and memory pillars. Only quality-pillar canary queries
+remain here because T4 does not expose canary data. The drawer reliability
+function keeps one targeted errors query for guard-event filtering (T4 exposes
+only the error count, not raw error rows).
 """
 
 from __future__ import annotations
@@ -21,6 +27,12 @@ logger = logging.getLogger(__name__)
 # In-memory cache: {agent_name: (timestamp, payload)}
 _profile_cache: dict[str, tuple[float, dict]] = {}
 CACHE_TTL = 5.0
+
+# Inner cache: carries T4-aggregated data from _build_profile into the
+# individual assembly/drawer functions WITHOUT changing their signatures.
+# Populated at the start of _build_profile, cleared after assembly.
+_t4_cache: dict[str, dict] = {}
+
 
 # ── Helpers ────────────────────────────────────────────────────────────
 
@@ -52,15 +64,14 @@ def _fmt_human_number(val: float | int) -> str:
 
 
 def _fmt_latency(ms: float) -> str:
-    """Format latency per design: ≥10s → '34.0s', <10s → '340ms'."""
+    """Format latency per design: >=10s -> '34.0s', <10s -> '340ms'."""
     if ms >= 10_000:
         return f"{ms / 1000:.1f}s"
     return f"{int(ms)}ms"
 
 
 def _fmt_drift_pct(pct: float) -> str:
-    """Format drift percentage per language rules: +408% → 'grew 4×'."""
-    # Return the raw pct for rendering; language layer handles the phrasing
+    """Format drift percentage per language rules: +408% -> 'grew 4x'."""
     return f"{pct:+.1f}%"
 
 
@@ -78,10 +89,18 @@ def _days_since(ts: int) -> int:
 
 
 # ── Pillar Assembly ────────────────────────────────────────────────────
+#
+# Each assembly function keeps its original (agent_name, db, now, conn)
+# signature for backward compatibility with callers. DB queries for
+# reliability, usage, and memory are delegated to the T4 service via
+# _t4_cache, populated by _build_profile before assembly runs.
 
 
 def _assemble_quality(agent_name: str, db: Database, now: int, conn) -> dict:
-    """Quality pillar: 'Is the work good?' ← canary_runs."""
+    """Quality pillar: 'Is the work good?' <-- canary_runs.
+
+    Raw query retained here: T4 service does not expose canary data.
+    """
     run = conn.execute(
         "SELECT id, pass_count, fail_count, hang_count, total_tasks, "
         "started_at, total_cost, total_tokens FROM canary_runs "
@@ -124,17 +143,14 @@ def _assemble_quality(agent_name: str, db: Database, now: int, conn) -> dict:
     hung = run["hang_count"] or 0
     tasks = run["total_tasks"] or total
 
-    # State logic
     state = "ok"
     if failed > 0 or hung > 0:
         state = "attention"
     elif passed == 0 and total == 0:
         state = "unknown"
 
-    # Human value
     value = f"{passed} of {tasks}"
 
-    # Sub text per design
     parts = []
     if passed == tasks:
         parts.append("all tasks passed in the last check")
@@ -167,11 +183,12 @@ def _assemble_quality(agent_name: str, db: Database, now: int, conn) -> dict:
 
 
 def _assemble_reliability(agent_name: str, db: Database, now: int, conn) -> dict:
-    """Reliability pillar: 'Is it up?' ← pulse_log, errors, circuit_breakers, l2_trending, Guard."""
-    pulses = db.get_recent_pulses(agent_name=agent_name, limit=48)
-    errors = db.get_errors(agent_name=agent_name, limit=50)
-    circuit_list = db.get_circuit_breakers()
-    circuit = next((c for c in circuit_list if c.get("agent_name") == agent_name), {})
+    """Reliability pillar: 'Is it up?' <-- delegated to T4 health data."""
+    t4 = _t4_cache.get(agent_name, {})
+    t4_health = t4.get("health", {})
+    pulses = t4_health.get("pulse_history_24h", [])
+    errors_24h = t4_health.get("error_count_24h", 0)
+    circuit = t4_health.get("circuit_breaker") or {}
 
     if not pulses:
         return {
@@ -188,10 +205,8 @@ def _assemble_reliability(agent_name: str, db: Database, now: int, conn) -> dict
     last_ts = last_pulse.get("timestamp", 0)
     status = last_pulse.get("status", "")
     delta = now - last_ts if last_ts else 999999
-    errors_24h = len([e for e in errors if e.get("timestamp", 0) > now - 86400])
     tripped = circuit.get("tripped", False)
 
-    # Determine state
     state = "ok"
     value = "100%"
     sub = "health checks passing, all day"
@@ -209,7 +224,6 @@ def _assemble_reliability(agent_name: str, db: Database, now: int, conn) -> dict
         value = "Degraded"
         sub = "recent checks failing"
     else:
-        # Calculate passing %
         alive_count = sum(1 for p in pulses[:24] if p.get("status") == "alive")
         passing_pct = round(alive_count / min(len(pulses), 24) * 100) if pulses else 100
         value = f"{passing_pct}%"
@@ -217,7 +231,7 @@ def _assemble_reliability(agent_name: str, db: Database, now: int, conn) -> dict
             sub = "health checks passing, all day"
         elif passing_pct >= 80:
             sub = f"{passing_pct}% checks passing in last 24h"
-            state = "ok"  # still OK if mostly passing
+            state = "ok"
         else:
             sub = f"only {passing_pct}% checks passing"
             state = "attention"
@@ -242,28 +256,14 @@ def _assemble_reliability(agent_name: str, db: Database, now: int, conn) -> dict
 
 
 def _assemble_usage(agent_name: str, db: Database, now: int, conn) -> dict:
-    """Usage pillar: 'What's it costing?' ← chisel_trims, token_logs, chisel_drift."""
-    trims = db.get_trims(agent_name=agent_name, limit=1)
-    drift = db.get_drift(agent_name=agent_name)
-    token_summary = {}
-    try:
-        token_summary = db.get_token_summary(agent_name=agent_name, since=now - 86400)
-    except Exception:
-        pass
+    """Usage pillar: 'What's it costing?' <-- delegated to T4 tokens data."""
+    t4 = _t4_cache.get(agent_name, {})
+    t4_tokens = t4.get("tokens", {})
+    breakdown = t4_tokens.get("latest_breakdown", {})
+    drift = t4_tokens.get("drift_trends", [])
+    token_summary = t4_tokens.get("token_summary", {})
 
-    # Token breakdown from latest trim
-    trim = trims[0] if trims else {}
-    identity = trim.get("identity_tokens", 0) or 0
-    skills = trim.get("skills_tokens", 0) or 0
-    memory_t = trim.get("memory_tokens", 0) or 0
-    tools = trim.get("tools_tokens", 0) or 0
-    guidance = trim.get("guidance_tokens", 0) or 0
-    total = identity + skills + memory_t + tools + guidance
-
-    if total == 0:
-        total = trim.get("total_tokens", 0) or 0
-
-    if not trims and not token_summary:
+    if not breakdown and not token_summary:
         return {
             "key": "usage",
             "label": "Usage today",
@@ -274,44 +274,41 @@ def _assemble_usage(agent_name: str, db: Database, now: int, conn) -> dict:
             "sources": ["token_logs", "chisel_drift"],
         }
 
+    identity = breakdown.get("identity", 0) or 0
+    skills = breakdown.get("skills", 0) or 0
+    memory_t = breakdown.get("memory", 0) or 0
+    tools = breakdown.get("tools", 0) or 0
+    guidance = breakdown.get("guidance", 0) or 0
+    total = identity + skills + memory_t + tools + guidance
+    if total == 0:
+        total = breakdown.get("total", 0) or 0
+
     # Find guidance drift as modifier
-    guidance_drift = None
-    for d in drift:
-        if d.get("component", "").lower() == "guidance":
-            guidance_drift = d
-            break
+    guidance_drift = next(
+        (d for d in drift if d.get("component", "").lower() == "guidance"),
+        None,
+    )
     if not guidance_drift:
-        # Fallback: find any drift with largest abs delta
-        for d in drift:
-            if d.get("delta_pct", 0) and abs(d["delta_pct"]) > 5:
-                guidance_drift = d
-                break
+        guidance_drift = next(
+            (d for d in drift if d.get("delta_pct") and abs(d["delta_pct"]) > 5),
+            None,
+        )
 
     modifier = None
     if guidance_drift:
         dp = guidance_drift.get("delta_pct", 0)
         if abs(dp) > 10:
             fold = abs(round(dp / 100))
-            if fold >= 4:
-                modifier = f"\u2197 grew {fold}\u00d7 this week"
-            elif fold >= 2:
-                modifier = f"\u2197 grew {fold}\u00d7 this week"
-            else:
-                modifier = f"\u2197 grew {abs(dp):.0f}% this week"
+            mod = f"\u2197 grew {fold}\u00d7 this week" if fold >= 2 else f"\u2197 grew {abs(dp):.0f}% this week"
+            modifier = mod
 
-    # Value
     daily_tokens = token_summary.get("total_tokens", 0) if token_summary else total
     total_cost = token_summary.get("total_cost", 0) if token_summary else 0
-
     if daily_tokens == 0:
         daily_tokens = total
 
-    if daily_tokens > 0:
-        value = _fmt_human_number(daily_tokens)
-    else:
-        value = _fmt_human_number(total) if total else "\u2014"
+    value = _fmt_human_number(daily_tokens) if daily_tokens > 0 else (_fmt_human_number(total) if total else "\u2014")
 
-    # Sub text
     components = {
         "guidance": guidance,
         "identity": identity,
@@ -321,9 +318,7 @@ def _assemble_usage(agent_name: str, db: Database, now: int, conn) -> dict:
     }
     sub = _fmt_token_breakdown(total if total else daily_tokens, components)
 
-    state = "ok"
-    if modifier:
-        state = "attention"
+    state = "attention" if modifier else "ok"
 
     return {
         "key": "usage",
@@ -344,10 +339,12 @@ def _assemble_usage(agent_name: str, db: Database, now: int, conn) -> dict:
 
 
 def _assemble_memory(agent_name: str, db: Database, now: int, conn) -> dict:
-    """Memory pillar: 'Is it forgetting?' ← clawforge_garden."""
-    gardens = db.get_gardens(agent_name=agent_name)
+    """Memory pillar: 'Is it forgetting?' <-- delegated to T4 memory data."""
+    t4 = _t4_cache.get(agent_name, {})
+    t4_memory = t4.get("memory", {})
+    garden = t4_memory.get("garden")
 
-    if not gardens:
+    if not garden:
         return {
             "key": "memory",
             "label": "Memory",
@@ -358,42 +355,32 @@ def _assemble_memory(agent_name: str, db: Database, now: int, conn) -> dict:
             "sources": ["clawforge_garden"],
         }
 
-    g = gardens[0]
-    debt = g.get("memory_debt_score", 0) or 0
-    scan_ts = g.get("timestamp", 0)
-    days_since = _days_since(scan_ts)
+    debt = garden.get("debt_score", 0) or 0
+    scan_ts = garden.get("scanned_at", 0)
+    days = _days_since(scan_ts) if scan_ts else 0
 
-    # Hound precedent: garden 33 days stale shows "33 days", not debt 0
-    # UNKNOWN state: dashed border, health unknown until scan runs
-    if days_since > 7:
+    if days > 7:
         return {
             "key": "memory",
             "label": "Memory",
-            "value": f"{days_since}d",
+            "value": f"{days}d",
             "sub": "since its last cleanup \u2014 health unknown until one runs",
             "state": "unknown",
             "modifier": None,
             "sources": ["clawforge_garden"],
             "_raw": {
                 "debt": debt,
-                "duplicates": g.get("duplicates_found", 0),
-                "contradictions": g.get("contradictions_found", 0),
-                "stale_entries": g.get("stale_entries", 0),
+                "duplicates": garden.get("duplicates", 0),
+                "contradictions": garden.get("contradictions", 0),
+                "stale_entries": garden.get("stale_entries", 0),
                 "last_scan_ts": scan_ts,
-                "auto_scan": g.get("auto_scan", False),
+                "auto_scan": garden.get("auto_scan", False),
             },
         }
 
-    # Recent scan: show debt
-    state = "ok"
-    if debt >= 30:
-        state = "attention"
-
-    color_cls = ""
+    state = "attention" if debt >= 30 else "ok"
     value = f"{debt}/100"
-    sub = "memory debt score"
-    if debt == 0:
-        sub = "clean \u2014 no issues found"
+    sub = "clean \u2014 no issues found" if debt == 0 else "memory debt score"
 
     return {
         "key": "memory",
@@ -405,11 +392,11 @@ def _assemble_memory(agent_name: str, db: Database, now: int, conn) -> dict:
         "sources": ["clawforge_garden"],
         "_raw": {
             "debt": debt,
-            "duplicates": g.get("duplicates_found", 0),
-            "contradictions": g.get("contradictions_found", 0),
-            "stale_entries": g.get("stale_entries", 0),
+            "duplicates": garden.get("duplicates", 0),
+            "contradictions": garden.get("contradictions", 0),
+            "stale_entries": garden.get("stale_entries", 0),
             "last_scan_ts": scan_ts,
-            "auto_scan": g.get("auto_scan", False),
+            "auto_scan": garden.get("auto_scan", False),
         },
     }
 
@@ -434,7 +421,6 @@ def _drawer_quality(agent_name: str, db: Database, conn) -> list[dict]:
     tasks = run["total_tasks"] or total
     acc = round(run["pass_count"] / total * 100) if total > 0 else 0
 
-    # Fleet context: average across all agents (latest completed runs)
     fleet_row = conn.execute(
         "SELECT AVG(CAST(pass_count AS FLOAT) / NULLIF(pass_count + fail_count, 0)) * 100 as avg_acc "
         "FROM canary_runs WHERE status='completed' AND pass_count IS NOT NULL "
@@ -467,27 +453,37 @@ def _drawer_quality(agent_name: str, db: Database, conn) -> list[dict]:
 
 
 def _drawer_reliability(agent_name: str, db: Database, now: int, conn) -> list[dict]:
-    """Drawer rows for Reliability pillar."""
-    pulses = db.get_recent_pulses(agent_name=agent_name, limit=5)
-    errors = db.get_errors(agent_name=agent_name, limit=10)
-    circuit_list = db.get_circuit_breakers()
-    circuit = next((c for c in circuit_list if c.get("agent_name") == agent_name), {})
+    """Drawer rows for Reliability pillar. Delegated to T4 for most data;
+    keeps one targeted errors query for guard-event filtering (T4 exposes
+    only error count, not raw error rows).
+    """
+    t4 = _t4_cache.get(agent_name, {})
+    t4_health = t4.get("health", {})
+    pulses = t4_health.get("pulse_history_24h", [])[:5]
+    circuit = t4_health.get("circuit_breaker") or {}
+
+    # Keep targeted errors query for guard-event detection (T4 provides
+    # only error_count_24h, not raw error rows with error_type/message).
+    try:
+        errors = db.get_errors(agent_name=agent_name, limit=10)
+    except Exception:
+        errors = []
 
     rows = []
     if pulses:
-        lat_str = " \u00b7 ".join(
-            _fmt_latency(p.get("latency_ms", 0)) for p in pulses
-        )
-        cadence = pulses[0].get("cadence", 30) if "cadence" in pulses[0] else 30
+        lat_str = " \u00b7 ".join(_fmt_latency(p.get("latency_ms", 0)) for p in pulses)
+        cadence = 30
         rows.append({
             "label": "Pulse latency (last 5)",
             "value": f"{lat_str} @ {cadence}s cadence",
             "warn": any(p.get("latency_ms", 0) > 20000 for p in pulses),
         })
 
-    # Guard event
-    guard_events = [e for e in errors if "guard" in str(e.get("error_type", "")).lower()
-                    or "watch_probe" in str(e.get("error_message", "")).lower()]
+    guard_events = [
+        e for e in errors
+        if "guard" in str(e.get("error_type", "")).lower()
+        or "watch_probe" in str(e.get("error_message", "")).lower()
+    ]
     if guard_events:
         ge = guard_events[0]
         rows.append({
@@ -496,10 +492,8 @@ def _drawer_reliability(agent_name: str, db: Database, now: int, conn) -> list[d
             "warn": True,
         })
 
-    # Errors 24h
-    errors_24h = len([e for e in errors if e.get("timestamp", 0) > now - 86400])
+    errors_24h = t4_health.get("error_count_24h", 0)
     if errors_24h > 0:
-        first_err = errors[0]
         rows.append({
             "label": "Errors (24h)",
             "value": f"{errors_24h} \u2014 same event, self-recovered" if errors_24h == 1 else f"{errors_24h} events",
@@ -512,7 +506,6 @@ def _drawer_reliability(agent_name: str, db: Database, now: int, conn) -> list[d
             "warn": False,
         })
 
-    # Circuit state
     fail_count = circuit.get("failure_count", 0)
     tripped = circuit.get("tripped", False)
     cb_text = "tripped" if tripped else f"{fail_count}/3" if fail_count > 0 else "closed"
@@ -526,17 +519,20 @@ def _drawer_reliability(agent_name: str, db: Database, now: int, conn) -> list[d
 
 
 def _drawer_usage(agent_name: str, db: Database, now: int, conn) -> list[dict]:
-    """Drawer rows for Usage pillar."""
-    trims = db.get_trims(agent_name=agent_name, limit=1)
-    drift = db.get_drift(agent_name=agent_name)
-    trim = trims[0] if trims else {}
+    """Drawer rows for Usage pillar. Delegated to T4 tokens data."""
+    t4 = _t4_cache.get(agent_name, {})
+    t4_tokens = t4.get("tokens", {})
+    breakdown = t4_tokens.get("latest_breakdown", {})
+    drift = t4_tokens.get("drift_trends", [])
 
-    identity = trim.get("identity_tokens", 0) or 0
-    skills = trim.get("skills_tokens", 0) or 0
-    memory_t = trim.get("memory_tokens", 0) or 0
-    tools = trim.get("tools_tokens", 0) or 0
-    guidance = trim.get("guidance_tokens", 0) or 0
+    identity = breakdown.get("identity", 0) or 0
+    skills = breakdown.get("skills", 0) or 0
+    memory_t = breakdown.get("memory", 0) or 0
+    tools = breakdown.get("tools", 0) or 0
+    guidance = breakdown.get("guidance", 0) or 0
     total = identity + skills + memory_t + tools + guidance
+    if total == 0:
+        total = breakdown.get("total", 0) or 0
 
     rows = []
 
@@ -559,7 +555,6 @@ def _drawer_usage(agent_name: str, db: Database, now: int, conn) -> list[dict]:
             "warn": guidance > total * 0.5,
         })
 
-    # Drift per component (rolling 7d baseline per §3.6 #5)
     drift_vals = [d for d in drift if d.get("delta_pct") is not None]
     for d in drift_vals[:5]:
         dp = d["delta_pct"]
@@ -574,40 +569,45 @@ def _drawer_usage(agent_name: str, db: Database, now: int, conn) -> list[dict]:
 
 
 def _drawer_memory(agent_name: str, db: Database, now: int, conn) -> list[dict]:
-    """Drawer rows for Memory pillar."""
-    gardens = db.get_gardens(agent_name=agent_name)
-    if not gardens:
+    """Drawer rows for Memory pillar. Delegated to T4 memory data."""
+    t4 = _t4_cache.get(agent_name, {})
+    t4_memory = t4.get("memory", {})
+    garden = t4_memory.get("garden")
+
+    if not garden:
         return [{
             "label": "Last scan",
             "value": "Never \u2014 auto-scan off",
             "warn": False,
         }]
 
-    g = gardens[0]
-    scan_ts = g.get("timestamp", 0)
-    days_since = _days_since(scan_ts) if scan_ts else 0
+    scan_ts = garden.get("scanned_at", 0)
+    days = _days_since(scan_ts) if scan_ts else 0
 
     rows = []
-    scan_str = f"{datetime.fromtimestamp(scan_ts).strftime('%b %d')} ({days_since}d ago)" if scan_ts else "Never"
-    auto_scan = g.get("auto_scan", False)
+    scan_str = f"{datetime.fromtimestamp(scan_ts).strftime('%b %d')} ({days}d ago)" if scan_ts else "Never"
+    auto_scan = garden.get("auto_scan", False)
     auto_str = "on" if auto_scan else "off"
     rows.append({
         "label": "Last scan",
         "value": f"{scan_str} \u00b7 auto-scan {auto_str}",
-        "warn": days_since > 7,
+        "warn": days > 7,
     })
 
-    debt = g.get("memory_debt_score", 0) or 0
+    debt = garden.get("debt_score", 0) or 0
     rows.append({
         "label": "Reported debt",
-        "value": f"{debt}/100" + (" \u2014 stale, not verified clean" if days_since > 7 else ""),
+        "value": f"{debt}/100" + (" \u2014 stale, not verified clean" if days > 7 else ""),
         "warn": debt >= 30,
     })
 
-    if g.get("duplicates_found", 0) or g.get("contradictions_found", 0):
+    dups = garden.get("duplicates", 0) or 0
+    cons = garden.get("contradictions", 0) or 0
+    stale = garden.get("stale_entries", 0) or 0
+    if dups or cons:
         rows.append({
             "label": "Issues",
-            "value": f"{g['duplicates_found']} dup \u00b7 {g['contradictions_found']} con \u00b7 {g.get('stale_entries', 0)} stale",
+            "value": f"{dups} dup \u00b7 {cons} con \u00b7 {stale} stale",
             "warn": True,
         })
 
@@ -625,20 +625,17 @@ def _synthesize_status_line(agent_name: str, pillars: list[dict]) -> tuple[str, 
     """
     state_map = {p["key"]: p["state"] for p in pillars}
     values = {p["key"]: p["value"] for p in pillars}
-    labels = {p["key"]: p["label"] for p in pillars}
 
-    # Critical: agent is down (Reliability)
     if state_map.get("reliability") == "attention" and values.get("reliability") in ("Down", "Stopped"):
         line = f"{agent_name} is down \u2014 it needs attention now."
         sub = "Has been unreachable; check the agent process"
         return line, sub, "critical"
 
-    # Needs attention: any pillar at attention, or quality failing
     attention_pillars = [k for k, v in state_map.items() if v == "attention"]
     if attention_pillars:
         parts = []
         if "quality" in attention_pillars and values.get("quality"):
-            parts.append(f"its work quality needs attention")
+            parts.append("its work quality needs attention")
         if "reliability" in attention_pillars and values.get("reliability") not in ("Down", "Stopped"):
             parts.append("its health is degraded")
         if "usage" in attention_pillars:
@@ -653,7 +650,6 @@ def _synthesize_status_line(agent_name: str, pillars: list[dict]) -> tuple[str, 
         sub = "Review the tiles below for details"
         return line, sub, "warning"
 
-    # Unknown: any pillar at unknown
     unknown_pillars = [k for k, v in state_map.items() if v == "unknown"]
     if unknown_pillars:
         if state_map.get("memory") == "unknown" and values.get("memory", "").endswith("d"):
@@ -668,8 +664,6 @@ def _synthesize_status_line(agent_name: str, pillars: list[dict]) -> tuple[str, 
                 line = f"{agent_name} is running, but some data is incomplete."
         return line, sub or "Health unknown in some areas", "warning"
 
-    # Healthy
-    # Check for modifiers (drift chips)
     has_modifier = any(p.get("modifier") for p in pillars)
     if has_modifier:
         line = f"{agent_name} is up and running \u2014 all clear."
@@ -723,7 +717,7 @@ def _generate_needs_attention(pillars: list[dict], agent_name: str) -> list[dict
             issues.append({
                 "icon": "\u26a0\ufe0f",
                 "title": f"{agent_name} is {'down' if p['value'] == 'Down' else 'stopped'}",
-                "why": f"The agent stopped responding. Check the process and restart it.",
+                "why": "The agent stopped responding. Check the process and restart it.",
                 "actions": [
                     {"label": "View health \u2192", "action": "view_health"},
                     {"label": "Restart agent", "action": "restart_agent", "ghost": True},
@@ -761,7 +755,6 @@ def _generate_worth_knowing(pillars: list[dict], agent_name: str) -> list[dict]:
                 ],
             })
 
-        # Slow probe latency as only signal: worth-knowing, not needs-attention (hound precedent)
         if p["key"] == "reliability" and p["state"] == "ok":
             lat_ms = raw.get("latency_ms", 0)
             if lat_ms > 20000:
@@ -772,7 +765,6 @@ def _generate_worth_knowing(pillars: list[dict], agent_name: str) -> list[dict]:
                     "actions": [],
                 })
 
-        # Unset pillars worth noting
         if p["state"] == "unset":
             if p["key"] == "memory":
                 items.append({
@@ -797,7 +789,6 @@ def _generate_doing_well(pillars: list[dict]) -> list[str]:
 
         if p["key"] == "reliability":
             badges.append("Responding normally")
-
             raw = p.get("_raw", {})
             if raw.get("errors_24h", 0) == 0:
                 badges.append("No errors in the last 24h")
@@ -827,36 +818,20 @@ def get_agent_profile(
     use_cache: bool = True,
     cache_ttl: float = CACHE_TTL,
 ) -> dict:
-    """Return a unified four-pillar profile for a single agent.
-
-    Args:
-        agent_name: The agent to query.
-        db: Optional Database instance (creates one if not provided).
-        use_cache: Whether to use the in-memory cache.
-        cache_ttl: Cache TTL in seconds.
-
-    Returns:
-        Dict with keys: status_line, status_sub, severity, pillars,
-        needs_attention, worth_knowing, doing_well, drawer, meta.
-    """
-    # ── Cache check ──
+    """Return a unified four-pillar profile for a single agent."""
     if use_cache and agent_name in _profile_cache:
         ts, payload = _profile_cache[agent_name]
         if time.monotonic() - ts < cache_ttl:
             return payload
 
-    # ── DB setup ──
     close_on_exit = db is None
     if db is None:
         db = Database()
 
     try:
         profile = _build_profile(agent_name, db)
-
-        # Cache the result
         if use_cache:
             _profile_cache[agent_name] = (time.monotonic(), profile)
-
         return profile
     finally:
         if close_on_exit:
@@ -872,7 +847,12 @@ def invalidate_cache(agent_name: Optional[str] = None) -> None:
 
 
 def _build_profile(agent_name: str, db: Database) -> dict:
-    """Assemble the composite four-pillar profile from all data sources."""
+    """Assemble the composite four-pillar profile from all data sources.
+
+    Delegates bulk DB queries for reliability/usage/memory to the T4
+    service, keeping only quality-pillar canary queries and the guard-event
+    errors query in this layer.
+    """
     now = int(time.time())
     conn = db._get_conn()
 
@@ -882,50 +862,58 @@ def _build_profile(agent_name: str, db: Database) -> dict:
     if agent_info is None:
         return {"error": "agent_not_found", "agent_name": agent_name}
 
-    # ── Assemble four pillars ──
-    quality = _assemble_quality(agent_name, db, now, conn)
-    reliability = _assemble_reliability(agent_name, db, now, conn)
-    usage = _assemble_usage(agent_name, db, now, conn)
-    memory = _assemble_memory(agent_name, db, now, conn)
+    # ── Delegate bulk raw-data fetch to T4 service ──
+    from observeco.agent_profile_service import _build_profile as _t4_build
+    t4_data = _t4_build(agent_name, db)
+    if "error" not in t4_data:
+        _t4_cache[agent_name] = t4_data
 
-    pillars = [quality, reliability, usage, memory]
+    try:
+        # ── Assemble four pillars ──
+        quality = _assemble_quality(agent_name, db, now, conn)
+        reliability = _assemble_reliability(agent_name, db, now, conn)
+        usage = _assemble_usage(agent_name, db, now, conn)
+        memory = _assemble_memory(agent_name, db, now, conn)
+        pillars = [quality, reliability, usage, memory]
 
-    # ── Status line ──
-    status_line, status_sub, severity = _synthesize_status_line(agent_name, pillars)
+        # ── Status line ──
+        status_line, status_sub, severity = _synthesize_status_line(agent_name, pillars)
 
-    # ── Sections ──
-    needs_attention = _generate_needs_attention(pillars, agent_name)
-    worth_knowing = _generate_worth_knowing(pillars, agent_name)
-    doing_well = _generate_doing_well(pillars)
+        # ── Sections ──
+        needs_attention = _generate_needs_attention(pillars, agent_name)
+        worth_knowing = _generate_worth_knowing(pillars, agent_name)
+        doing_well = _generate_doing_well(pillars)
 
-    # ── Drawer rows ──
-    drawer = {
-        "quality": _drawer_quality(agent_name, db, conn),
-        "reliability": _drawer_reliability(agent_name, db, now, conn),
-        "usage": _drawer_usage(agent_name, db, now, conn),
-        "memory": _drawer_memory(agent_name, db, now, conn),
-    }
+        # ── Drawer rows ──
+        drawer = {
+            "quality": _drawer_quality(agent_name, db, conn),
+            "reliability": _drawer_reliability(agent_name, db, now, conn),
+            "usage": _drawer_usage(agent_name, db, now, conn),
+            "memory": _drawer_memory(agent_name, db, now, conn),
+        }
 
-    # ── Meta ──
-    raw_fw = (agent_info.get("framework", "") or "")
-    fw_parts = [p.strip().capitalize() for p in raw_fw.split("+")] if raw_fw else []
-    framework = " + ".join(fw_parts) if fw_parts else ""
+        # ── Meta ──
+        raw_fw = (agent_info.get("framework", "") or "")
+        fw_parts = [p.strip().capitalize() for p in raw_fw.split("+")] if raw_fw else []
+        framework = " + ".join(fw_parts) if fw_parts else ""
 
-    meta = {
-        "agent_name": agent_name,
-        "framework": framework,
-        "agent_type": agent_info.get("class", "service"),
-        "profile_generated_at": int(time.time()),
-    }
+        meta = {
+            "agent_name": agent_name,
+            "framework": framework,
+            "agent_type": agent_info.get("class", "service"),
+            "profile_generated_at": int(time.time()),
+        }
 
-    return {
-        "status_line": status_line,
-        "status_sub": status_sub,
-        "severity": severity,
-        "pillars": pillars,
-        "needs_attention": needs_attention,
-        "worth_knowing": worth_knowing,
-        "doing_well": doing_well,
-        "drawer": drawer,
-        "meta": meta,
-    }
+        return {
+            "status_line": status_line,
+            "status_sub": status_sub,
+            "severity": severity,
+            "pillars": pillars,
+            "needs_attention": needs_attention,
+            "worth_knowing": worth_knowing,
+            "doing_well": doing_well,
+            "drawer": drawer,
+            "meta": meta,
+        }
+    finally:
+        _t4_cache.pop(agent_name, None)
