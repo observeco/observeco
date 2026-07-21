@@ -68,7 +68,7 @@ document.body.addEventListener('htmx:afterOnLoad', function(evt) {
     <div class="nav-group">
       <span class="glabel">Intelligence</span>
       <span class="nav-tab clickable" data-tab="capability">Capability</span>
-      <span class="nav-tab clickable" data-tab="anomalies">Anomalies<span class="soon">soon</span></span>
+      <span class="nav-tab clickable" data-tab="anomalies">Anomalies</span>
       <span class="nav-tab clickable" data-tab="health-score">Health Score<span class="soon">soon</span></span>
       <span class="nav-tab clickable" data-tab="traces">Traces<span class="soon">soon</span></span>
     </div>
@@ -237,13 +237,13 @@ document.body.addEventListener('htmx:afterOnLoad', function(evt) {
     </div>
   </div>
 
-  <!-- Anomalies tab -->
+  <!-- Inbox tab -->
   <div class="tab-content" id="tabAnomalies">
     <div class="app" style="padding:0;">
-      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">⚠️ Anomalies</h1>
-      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Unexpected agent behavior patterns across your fleet.</div>
-      <div id="anomaliesContainer" hx-get="/api/anomalies" hx-trigger="revealed once" hx-swap="innerHTML">
-        <div style="color:#64748b;font-size:12px;">Loading anomalies…</div>
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">📬 Inbox</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Cross-detector anomaly inbox — agent dead, circuit events, drift, spend, and garden alerts.</div>
+      <div id="inboxContainer" hx-get="/api/inbox" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading inbox…</div>
       </div>
     </div>
   </div>
