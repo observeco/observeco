@@ -1,4 +1,4 @@
-<div class="scrim" id="modalScrim" onclick="if(event.target===this)this.remove()" x-data="{ drawerOpen: false }">
+<div class="scrim" id="modalScrim" onclick="if(event.target===this)this.remove()">
 <div class="modal c-profile">
 
   <!-- ── 1. STATUS ── -->
@@ -33,8 +33,8 @@
     {% if is_attn %}{% set tile_class = tile_class + " bad" %}{% endif %}
     {% if is_unknown %}{% set tile_class = tile_class + " unknown" %}{% endif %}
     {% if is_unset %}{% set tile_class = tile_class + " unknown" %}{% endif %}
-    <div class="{{ tile_class }}">
-      <a class="t-link" href="#" onclick="event.preventDefault();document.getElementById('techDrawer').classList.add('open');document.getElementById('techDrawer').scrollIntoView({behavior:'smooth',block:'nearest'});return false">drill down ›</a>
+    <div class="{{ tile_class }}" id="tile-{{ pillar.key }}">
+      <a class="t-link" href="#" onclick="event.preventDefault();var d=document.getElementById('techDrawer');d.classList.add('open');var c=d.querySelector('.chev');if(c)c.textContent='▼';var s=document.getElementById('drawer-{{ pillar.key }}');if(s){s.scrollIntoView({behavior:'smooth',block:'start'})}else{d.scrollIntoView({behavior:'smooth',block:'nearest'})};return false">drill down ›</a>
       <div class="t-label">{{ pillar.label }}</div>
       {% set val_cls = "" %}
       {% if is_attn and pillar.key == "quality" %}{% set val_cls = " red" %}{% endif %}
@@ -111,35 +111,35 @@
   {% endif %}
 
   <!-- ── 6. TECHNICAL DRAWER ── -->
-  <div class="tech" id="techDrawer" :class="drawerOpen ? 'open' : ''" x-cloak>
-    <div class="tech-h" @click="drawerOpen = !drawerOpen">
+  <div class="tech" id="techDrawer">
+    <div class="tech-h" onclick="var d=document.getElementById('techDrawer');d.classList.toggle('open');var c=this.querySelector('.chev');c.textContent=c.textContent==='▶'?'▼':'▶'">
       🔧 Technical details <span style="color:var(--muted);font-size:11px">— every number above traces to a row here</span>
       <span class="chev">▶</span>
     </div>
     <div class="tech-body">
       {% if profile.drawer.quality %}
-      <div class="pillar-src">Quality ← canary_runs</div>
+      <div class="pillar-src" id="drawer-quality">Quality ← canary_runs</div>
       {% for row in profile.drawer.quality %}
       <div class="tech-row"><span class="tl-k">{{ row.label }}</span><span class="tl-v{% if row.warn %} warn{% endif %}">{{ row.value }}</span></div>
       {% endfor %}
       {% endif %}
 
       {% if profile.drawer.reliability %}
-      <div class="pillar-src">Reliability ← pulse_log · guard · errors · l2_trending</div>
+      <div class="pillar-src" id="drawer-reliability">Reliability ← pulse_log · guard · errors · l2_trending</div>
       {% for row in profile.drawer.reliability %}
       <div class="tech-row"><span class="tl-k">{{ row.label }}</span><span class="tl-v{% if row.warn %} warn{% endif %}">{{ row.value }}</span></div>
       {% endfor %}
       {% endif %}
 
       {% if profile.drawer.usage %}
-      <div class="pillar-src">Usage ← token_logs · chisel_drift</div>
+      <div class="pillar-src" id="drawer-usage">Usage ← token_logs · chisel_drift</div>
       {% for row in profile.drawer.usage %}
       <div class="tech-row"><span class="tl-k">{{ row.label }}</span><span class="tl-v{% if row.warn %} warn{% endif %}">{{ row.value }}</span></div>
       {% endfor %}
       {% endif %}
 
       {% if profile.drawer.memory %}
-      <div class="pillar-src">Memory ← clawforge_garden</div>
+      <div class="pillar-src" id="drawer-memory">Memory ← clawforge_garden</div>
       {% for row in profile.drawer.memory %}
       <div class="tech-row"><span class="tl-k">{{ row.label }}</span><span class="tl-v{% if row.warn %} warn{% endif %}">{{ row.value }}</span></div>
       {% endfor %}
@@ -157,14 +157,32 @@
 <script>
 (function() {
   var scrim = document.getElementById('modalScrim');
-  if (scrim) {
-    // Esc closes
-    document.addEventListener('keydown', function escHandler(e) {
-      if (e.key === 'Escape' && document.contains(scrim)) {
-        scrim.remove();
-        document.removeEventListener('keydown', escHandler);
+  if (!scrim) return;
+
+  // Esc closes
+  document.addEventListener('keydown', function escHandler(e) {
+    if (e.key === 'Escape' && document.contains(scrim)) {
+      scrim.remove();
+      document.removeEventListener('keydown', escHandler);
+    }
+  });
+
+  // Focus auto-scroll: if a ?focus= param was passed, open the drawer
+  // and scroll to the matching pillar section
+  var focus = '{{ focus }}';
+  if (focus) {
+    var drawer = document.getElementById('techDrawer');
+    if (drawer) {
+      drawer.classList.add('open');
+      var chev = drawer.querySelector('.chev');
+      if (chev) chev.textContent = '▼';
+      var target = document.getElementById('drawer-' + focus);
+      if (target) {
+        setTimeout(function() {
+          target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }, 100);
       }
-    });
+    }
   }
 })();
 </script>

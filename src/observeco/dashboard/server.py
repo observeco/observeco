@@ -4782,12 +4782,15 @@ async def api_delete_agent(agent_name: str):
 
 
 @app.get("/api/agent/{agent_name}/profile")
-async def api_agent_profile(request: Request, agent_name: str):
+async def api_agent_profile(request: Request, agent_name: str, focus: str = ""):
     """Four-pillar agent profile modal (OBS-SPEC-093).
 
     Returns the c-modal-profile.html partial with status line, pillar tiles,
     issue cards, and technical drawer. Replaces the T4 JSON endpoint with
     the dashboard's presentation-layer synthesizer.
+
+    Optional ?focus= param scrolls to a specific pillar section on open:
+      reliability, quality, usage, memory
 
     For raw T4 JSON data, call get_agent_profile() from
     observeco.agent_profile_service directly.
@@ -4824,7 +4827,7 @@ async def api_agent_profile(request: Request, agent_name: str):
     </div>
 </div></div>"""})
 
-    return templates.TemplateResponse(request, "partials/c-modal-profile.html", {"profile": profile})
+    return templates.TemplateResponse(request, "partials/c-modal-profile.html", {"profile": profile, "focus": focus})
 
 
 @app.get("/api/agent/{agent_name}/traces")

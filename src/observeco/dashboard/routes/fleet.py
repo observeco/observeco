@@ -836,12 +836,12 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         # Brain + Memory rows only for agents
         agent_rows = ""
         if is_agent:
-            agent_rows = f"""<div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
+            agent_rows = f"""<div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile?focus=usage', {{target: '#modalContainer', swap: 'innerHTML'}});setTimeout(function(){{var d=document.getElementById('techDrawer');if(d){{d.classList.add('open');var c=d.querySelector('.chev');if(c)c.textContent='▼';var t=document.getElementById('drawer-usage');if(t)t.scrollIntoView({{behavior:'smooth',block:'start'}})}}}},200)" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Brain</span>
                 <span class="row-val">{_fmt_tokens(total_tokens) if has_token_data else '—'}</span>
                 <span class="row-sub">{debt_str} <span class="row-chev">▸</span></span>
             </div>
-            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile?focus=memory', {{target: '#modalContainer', swap: 'innerHTML'}});setTimeout(function(){{var d=document.getElementById('techDrawer');if(d){{d.classList.add('open');var c=d.querySelector('.chev');if(c)c.textContent='▼';var t=document.getElementById('drawer-memory');if(t)t.scrollIntoView({{behavior:'smooth',block:'start'}})}}}},200)" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
                 <span class="row-val" style="color:{'var(--accent)' if debt < 20 else 'var(--warn)' if debt < 50 else 'var(--danger)'}">{mem_val}</span>
                 <span class="row-sub">{mem_sub} <span class="row-chev">▸</span></span>
@@ -861,12 +861,12 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
     <div class="card-detail">
         <div class="rows">
             {qb_row}
-            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile?focus=reliability', {{target: '#modalContainer', swap: 'innerHTML'}});setTimeout(function(){{var d=document.getElementById('techDrawer');if(d){{d.classList.add('open');var c=d.querySelector('.chev');if(c)c.textContent='▼';var t=document.getElementById('drawer-reliability');if(t)t.scrollIntoView({{behavior:'smooth',block:'start'}})}}}},200)" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Health</span>
                 <div class="pulse-mini">{pulse_dots}</div>
                 <span class="row-sub">{_fmt_ts(last_ts) if last_ts > 0 else '—'} · {state_word} <span class="row-chev">▸</span></span>
             </div>
-            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile?focus=reliability', {{target: '#modalContainer', swap: 'innerHTML'}});setTimeout(function(){{var d=document.getElementById('techDrawer');if(d){{d.classList.add('open');var c=d.querySelector('.chev');if(c)c.textContent='▼';var t=document.getElementById('drawer-reliability');if(t)t.scrollIntoView({{behavior:'smooth',block:'start'}})}}}},200)" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Guard</span>
                 <span class="row-val" style="color:{circuit_color}">{circuit_text}</span>
                 <span class="row-sub">{fw_badge} <span class="row-chev">▸</span></span>
@@ -875,7 +875,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
                 <span class="row-label">Confidence</span>
                 {conf_badge}
             </div>
-            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile?focus=reliability', {{target: '#modalContainer', swap: 'innerHTML'}});setTimeout(function(){{var d=document.getElementById('techDrawer');if(d){{d.classList.add('open');var c=d.querySelector('.chev');if(c)c.textContent='▼';var t=document.getElementById('drawer-reliability');if(t)t.scrollIntoView({{behavior:'smooth',block:'start'}})}}}},200)" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Errors</span>
                 <span class="row-val" style="color:{'var(--status-critical)' if errors_24h > 0 else 'var(--fg-2)'}">{errors_24h}</span>
                 <span class="row-sub">{f'{_html_escape(last_err_msg)} · {last_err_ts}' if last_err_msg else 'none 24h'} <span class="row-chev">▸</span></span>
