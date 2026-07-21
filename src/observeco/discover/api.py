@@ -296,6 +296,9 @@ def dismiss_gap(req: DismissGapRequest):
         conn.commit()
     except Exception:
         pass
+    # Bump cache so next scan reflects the dismissal
+    from observeco.discover.scanner import _cache
+    _cache["gaps"] = None
     return _render_panel()
 
 
