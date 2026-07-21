@@ -40,7 +40,7 @@ def get_panel():
         reason = g.get("reason", "Not monitored")
         rows.append(
             f'<div class="discover-row" id="gap-{name}">'
-            f'<span class="gap-name">{name}</span>'
+            f'<span class="gap-name">{name}</span> '
             f'<span class="gap-reason">{reason}</span>'
             f'<button class="gap-add" hx-post="/api/discover/add" '
             f'hx-vals=\'{{"name":"{name}","framework":"{fw}","health_check":"{hc}"}}\' '
