@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 66
+SCHEMA_VERSION = 67
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -994,6 +994,14 @@ CREATE TABLE IF NOT EXISTS inbox_items (
   snoozed_until TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_inbox_state_tone ON inbox_items(state, tone, last_seen DESC);
+"""),
+    # Migration 67: dismissed_gaps for discover panel
+    (67, """-- Migration 67: dismissed_gaps for discover panel dismiss tracking
+CREATE TABLE IF NOT EXISTS dismissed_gaps (
+    gap_name    TEXT PRIMARY KEY,
+    dismissed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    dismiss_count INTEGER DEFAULT 1
+);
 """),
 ]
 

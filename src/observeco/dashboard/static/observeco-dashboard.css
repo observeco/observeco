@@ -2284,6 +2284,8 @@ body {
 
 .discover-panel .empty-state { text-align: center; padding: 24px 16px; color: #64748b; font-size: 12px; }
 .discover-panel .empty-state .ico { font-size: 24px; margin-bottom: 8px; }
+.discover-panel .show-all { text-align: center; padding: 8px; font-size: 12px; color: #3b82f6; cursor: pointer; }
+.discover-panel .show-all:hover { color: #60a5fa; }
 
 /* ══════════════════════════════════════════════════════════════
  * OBS-SPEC-093: Agent Detail Modal v2 (Four-Pillar Profile)
