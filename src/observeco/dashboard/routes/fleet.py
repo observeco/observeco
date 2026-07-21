@@ -333,18 +333,18 @@ async def fleet_verdict():
     verdict = _fleet_verdict(state_counts)
     total = sum(state_counts.values())
 
-    # Build agent list for verdict sentence
+    # Build agent list for verdict sentence — as pills, not inline text
     verdict_detail = ""
     if agent_names_critical:
         parts = []
         for n in agent_names_critical:
-            parts.append(f'<span class="agent dead">{_html_escape(n)}</span> <span class="sub">dead</span>')
-        verdict_detail = ", ".join(parts)
+            parts.append(f'<span class="agent-pill dead">{_html_escape(n)}</span>')
+        verdict_detail = " " + " ".join(parts)
     elif agent_names_warning:
         parts = []
         for n in agent_names_warning:
-            parts.append(f'<span class="agent deg">{_html_escape(n)}</span> <span class="sub">degraded</span>')
-        verdict_detail = ", ".join(parts)
+            parts.append(f'<span class="agent-pill deg">{_html_escape(n)}</span>')
+        verdict_detail = " " + " ".join(parts)
 
     sub2_parts = []
     if tripped_count:
@@ -353,6 +353,30 @@ async def fleet_verdict():
 
     # Data quality chip
     dq_chip = _data_quality_chip(agents_data)
+
+    # Data quality warning banner (prominent when 0%)
+    dq_warning = ""
+    if total > 0:
+        otel_count = sum(1 for a in agents_data if a.get("status") and True)  # placeholder
+        # Recalculate from actual data
+        tier1 = sum(1 for a in agents_data if a.get("circuit_tripped") is not None)
+        pct = 0
+        if total > 0:
+            # Count agents with any source info
+            from observeco.db import Database
+            _db = Database()
+            try:
+                conn = _db._get_conn()
+                row = conn.execute("SELECT COUNT(*) FROM agent_configs WHERE source IS NOT NULL AND source != ''").fetchone()
+                with_source = row[0] if row else 0
+                pct = round(with_source / total * 100)
+            except Exception:
+                pct = 0
+        if pct == 0:
+            dq_warning = f"""<div class="dq-warning">
+    <span class="dq-w-icon">⚠</span>
+    <span class="dq-w-text"><b>No telemetry data</b> — all {total} agents are watch-only. Add OpenTelemetry instrumentation for real-time health data.</span>
+</div>"""
 
     # Discovery gap (compute from circuit_breakers + drift breaches)
     gap_cumulative = 0
@@ -377,6 +401,7 @@ async def fleet_verdict():
             {f'— {verdict_detail}' if verdict_detail else ''}
             <span class="sub"> {verdict['sub']}</span>
         </div>
+        {dq_warning}
         {f'<div class="verdict-sub2">{_html_escape(sub2)}</div>' if sub2 else ''}
     </div>
     <div class="verdict-meta">

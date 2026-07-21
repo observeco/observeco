@@ -88,7 +88,8 @@ def build_alerts(mode: str = "live", acks: dict | None = None) -> list[dict] | N
                 "icon": "🔴",
                 "agent": name,
                 "category": "circuit",
-                "message": f"Circuit breaker tripped ({failures} failures)",
+                "message": f"Circuit breaker tripped",
+                "detail": f"{failures} failures since last reset",
                 "timestamp": ts,
                 "gap_seconds": max(0, gap),
                 "is_new": ts > last_viewed,
@@ -247,6 +248,7 @@ def _render_live(alerts: list[dict], info_count: int = 0) -> str:
             {new_tag}
         </div>
         <div class="alert-msg">{_html_escape(a['message'])}</div>
+        <div class="alert-detail">{_html_escape(a.get('detail', ''))}</div>
         <div class="alert-gap"><b>{gap_fmt} gap</b></div>
         <span class="dismiss-btn" hx-post="/api/alerts/ack/{agent}/{cat}" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
     </div>
