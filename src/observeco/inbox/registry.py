@@ -349,7 +349,7 @@ def run_anomaly_adapter(ctx: AdapterContext) -> list[dict]:
             "tone": tone,
             "pillar": pillar,
             "title": f"{agent} — {description}",
-            "attribution": None,
+            "attribution": f"Anomaly detection flagged {atype} on {agent}: {description[:80]}",
             "evidence": {"metrics": evidence,
                          "source_table": "anomaly_detect", "detector": "anomaly/__init__.py"},
             "actions": [

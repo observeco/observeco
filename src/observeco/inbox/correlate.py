@@ -40,7 +40,7 @@ def correlate(store: InboxStore | None = None,
         db = db or Database()
         store = InboxStore(db)
     else:
-        db = db or Database()
+        db = db or store.db
 
     result = CorrelationResult()
     conn = db._get_conn()
@@ -153,7 +153,7 @@ def correlate(store: InboxStore | None = None,
 def split(parent_id: str, db: Database | None = None) -> int:
     """Restore folded children of a parent back to 'open'. Returns count."""
     store = InboxStore(db or Database())
-    return store.split_children(parent_id) if db else store.split_children(parent_id)
+    return store.split_children(parent_id)
 
 
 def _find_windows(items: list[dict]) -> list[list[dict]]:
