@@ -24,6 +24,7 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from observeco.api import router as api_router
 from observeco.billing import add_billing_endpoints
@@ -152,6 +153,7 @@ async def list_feedback(limit: int = 50):
     return JSONResponse({"count": len(items), "items": items})
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 STATIC_DIR = Path(__file__).parent / "static"
 
 if STATIC_DIR.exists():
@@ -4780,22 +4782,49 @@ async def api_delete_agent(agent_name: str):
 
 
 @app.get("/api/agent/{agent_name}/profile")
-async def api_agent_profile(agent_name: str):
-    """Unified agent profile endpoint (§3.T4).
+async def api_agent_profile(request: Request, agent_name: str):
+    """Four-pillar agent profile modal (OBS-SPEC-093).
 
-    Returns a composite JSON payload aggregating health, tokens, memory,
-    and heal data from all existing data sources. Cached with 5s TTL.
-    Replaces the N+1 query pattern where each dashboard tab called a
-    separate endpoint.
+    Returns the c-modal-profile.html partial with status line, pillar tiles,
+    issue cards, and technical drawer. Replaces the T4 JSON endpoint with
+    the dashboard's presentation-layer synthesizer.
+
+    For raw T4 JSON data, call get_agent_profile() from
+    observeco.agent_profile_service directly.
     """
-    from observeco.agent_profile_service import get_agent_profile
+    from observeco.dashboard.services.agent_profile_service import get_agent_profile
+
     try:
-        profile = get_agent_profile(agent_name, db=db, use_cache=True)
-        if "error" in profile:
-            return JSONResponse(status_code=404, content=profile)
-        return profile
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
+        profile = get_agent_profile(agent_name, use_cache=False)
+    except Exception:
+        logger.exception("agent_profile failed for %s", agent_name)
+        return templates.TemplateResponse(request, "partials/c57.html", {"html": """<div class="scrim"><div class="modal">
+    <div class="m-head">
+        <span class="m-name" style="color:var(--fg-3)">Error</span>
+        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
+    </div>
+    <div class="m-body">
+        <div class="state-msg err">
+            <div class="ico">⚠</div>
+            <h3>Agent data unavailable</h3>
+            <p>The profile service encountered an error.</p>
+        </div>
+    </div>
+</div></div>"""})
+
+    if "error" in profile:
+        return templates.TemplateResponse(request, "partials/c57.html", {"html": f"""<div class="scrim"><div class="modal">
+    <div class="m-head">
+        <span class="m-name" style="color:var(--fg-3)">Not found</span>
+        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
+    </div>
+    <div class="m-body">
+        <div class="state-msg"><div class="ico">🔍</div><h3>Agent not found</h3>
+        <p>No agent named "{_html_escape(agent_name)}" is registered.</p></div>
+    </div>
+</div></div>"""})
+
+    return templates.TemplateResponse(request, "partials/c-modal-profile.html", {"profile": profile})
 
 
 @app.get("/api/agent/{agent_name}/traces")

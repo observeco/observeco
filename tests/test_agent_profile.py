@@ -434,3 +434,94 @@ class TestCountHonesty:
         for pillar_key, rows in drawer.items():
             if rows:
                 assert len(rows) >= 1, f"{pillar_key} has rows but count is 0"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# E2E: Fleet row triggers profile modal with four pillar tiles
+# ═══════════════════════════════════════════════════════════════════
+
+
+class TestModalTrigger:
+    """Agent card rows must call the new profile endpoint, not the legacy
+    per-tab modal. This test:
+      - GETs the fleet grid HTML
+      - Extracts the modal URL from a row's onclick
+      - GETs the modal URL
+      - Asserts text/html + four pillar tiles in the response
+    """
+
+    MODAL_PILLARS = [
+        "t-label\">Quality",
+        "t-label\">Reliability",
+        "t-label\">Usage today",
+        "t-label\">Memory",
+    ]
+
+    _client = None
+    _auth = None
+
+    @classmethod
+    def _get_client(cls):
+        if cls._client is None:
+            from fastapi.testclient import TestClient
+            from observeco.dashboard.auth import init_auth
+            from observeco.dashboard.server import app
+            test_secret = init_auth(app)
+            cls._auth = {"X-ObserveCo-Token": test_secret}
+            cls._client = TestClient(app)
+        return cls._client, cls._auth
+
+    def test_agent_rows_use_profile_endpoint(self):
+        """Agent card rows call /api/agent/{name}/profile, not /api/fleet/modal."""
+        html = self._get_fleet_html()
+        import re
+        profile_urls = re.findall(r"/api/agent/\w+/profile", html)
+        legacy_urls = re.findall(r"/api/fleet/modal/\w+", html)
+        assert len(profile_urls) >= 1, \
+            "No agent row wired to /api/agent/{name}/profile"
+        for url in legacy_urls:
+            assert False, f"Legacy modal URL still present: {url}"
+
+    def test_modal_returns_html_with_four_pillars(self):
+        """GET the profile endpoint from a row and verify HTML + 4 tiles."""
+        html = self._get_fleet_html()
+        import re
+        profile_urls = re.findall(r"/api/agent/([^/]+)/profile", html)
+        if not profile_urls:
+            pytest.skip("No agent with profile endpoint found in fleet HTML")
+            return
+
+        agent_name = profile_urls[0]
+        client, auth = self._get_client()
+        resp = client.get(f"/api/agent/{agent_name}/profile", headers=auth)
+        assert resp.status_code == 200, \
+            f"Profile endpoint returned {resp.status_code} for {agent_name}"
+        ct = resp.headers.get("content-type", "")
+        body = resp.text
+        if "json" in ct:
+            # Might be a JSON error response — check
+            import json as _json
+            try:
+                data = _json.loads(body)
+                if "error" in data:
+                    pytest.skip(f"Agent {agent_name} not found: {data['error']}")
+                    return
+            except Exception:
+                pass
+        assert "text/html" in ct, \
+            f"Expected HTML content type, got {ct!r} (body preview: {body[:200]})"
+
+        body = resp.text
+        for pillar in self.MODAL_PILLARS:
+            assert pillar in body, \
+                f"Missing pillar tile {pillar!r} in profile response"
+
+        assert "drill down" in body or "drill down ›" in body, \
+            "Profile response missing tile drill-down links"
+
+    def _get_fleet_html(self) -> str:
+        client, auth = self._get_client()
+        resp = client.get("/api/fleet/agents", headers=auth)
+        assert resp.status_code == 200, \
+            f"Fleet agents returned {resp.status_code}"
+        return resp.text

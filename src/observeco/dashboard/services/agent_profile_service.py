@@ -715,7 +715,7 @@ def _generate_needs_attention(pillars: list[dict], agent_name: str) -> list[dict
 
         if p["key"] == "reliability" and p["value"] in ("Down", "Stopped"):
             issues.append({
-                "icon": "\u26a0\ufe0f",
+                "icon": "\u26a0\ufe0f" if p["value"] == "Down" else "\U0001f527",
                 "title": f"{agent_name} is {'down' if p['value'] == 'Down' else 'stopped'}",
                 "why": "The agent stopped responding. Check the process and restart it.",
                 "actions": [

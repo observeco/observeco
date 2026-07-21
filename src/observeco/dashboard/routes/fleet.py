@@ -10,15 +10,13 @@ import logging
 import sqlite3 as _sqlite3
 import time
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from pathlib import Path
 
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)
-templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
+
 router = APIRouter(prefix="/api/fleet", tags=["fleet"])
 db = Database()
 
@@ -59,8 +57,9 @@ def _canary_row(agent_name: str, canary_row, canary_running: bool = False) -> st
     total = (canary_row["pass_count"] or 0) + (canary_row["fail_count"] or 0)
     acc = (canary_row["pass_count"] / total * 100) if total > 0 else 0
     color = "var(--accent)" if acc >= 80 else "var(--warn)" if acc >= 60 else "var(--danger)"
-    canary_row["hang_count"] or 0
-    cost_str = f' · ${canary_row["total_cost"]:.2f}' if canary_row.get("total_cost") else ""
+    canary_has_hang = (canary_row["hang_count"] or 0) > 0
+    canary_dict = dict(canary_row) if hasattr(canary_row, "keys") else canary_row
+    cost_str = f' · ${canary_dict["total_cost"]:.2f}' if canary_dict.get("total_cost") else ""
     return f'<span class="row-val" style="color:{color}">{acc:.0f}%</span><span class="row-sub-cost">{cost_str}</span>'
 
 
@@ -74,7 +73,8 @@ def _canary_pass_sub(agent_name: str, canary_row, canary_running: bool = False, 
     hangs = canary_row["hang_count"] or 0
     hang_str = f" · ⚠️{hangs} hang{'s' if hangs != 1 else ''}" if hangs else ""
     parts = f'{canary_row["pass_count"]}/{canary_row["total_tasks"]} pass{hang_str}'
-    cost_str = f' · ${canary_row["total_cost"]:.2f}' if canary_row.get("total_cost") else ""
+    canary_r = dict(canary_row) if hasattr(canary_row, "keys") else canary_row
+    cost_str = f' · ${canary_r["total_cost"]:.2f}' if canary_r.get("total_cost") else ""
     parts += cost_str
     # Quality drift indicator from drift_events
     if drift_row:
@@ -836,12 +836,12 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         # Brain + Memory rows only for agents
         agent_rows = ""
         if is_agent:
-            agent_rows = f"""<div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}?tab=tokens', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} brain">
+            agent_rows = f"""<div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Brain</span>
                 <span class="row-val">{_fmt_tokens(total_tokens) if has_token_data else '—'}</span>
                 <span class="row-sub">{debt_str} <span class="row-chev">▸</span></span>
             </div>
-            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}?tab=memory', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} memory">
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
                 <span class="row-val" style="color:{'var(--accent)' if debt < 20 else 'var(--warn)' if debt < 50 else 'var(--danger)'}">{mem_val}</span>
                 <span class="row-sub">{mem_sub} <span class="row-chev">▸</span></span>
@@ -861,12 +861,12 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
     <div class="card-detail">
         <div class="rows">
             {qb_row}
-            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}?tab=health', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} health">
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Health</span>
                 <div class="pulse-mini">{pulse_dots}</div>
                 <span class="row-sub">{_fmt_ts(last_ts) if last_ts > 0 else '—'} · {state_word} <span class="row-chev">▸</span></span>
             </div>
-            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}?tab=guard', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} guard">
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Guard</span>
                 <span class="row-val" style="color:{circuit_color}">{circuit_text}</span>
                 <span class="row-sub">{fw_badge} <span class="row-chev">▸</span></span>
@@ -875,7 +875,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
                 <span class="row-label">Confidence</span>
                 {conf_badge}
             </div>
-            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}?tab=errors', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} errors">
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/agent/{_html_escape(name)}/profile', {{target: '#modalContainer', swap: 'innerHTML'}})" tabindex="0" role="button" aria-label="View {name} profile">
                 <span class="row-label">Errors</span>
                 <span class="row-val" style="color:{'var(--status-critical)' if errors_24h > 0 else 'var(--fg-2)'}">{errors_24h}</span>
                 <span class="row-sub">{f'{_html_escape(last_err_msg)} · {last_err_ts}' if last_err_msg else 'none 24h'} <span class="row-chev">▸</span></span>
@@ -909,48 +909,3 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
 
     return HTMLResponse(f"""<div class="section-h" id="fleetSectionHeader" hx-swap-oob="true"><h2>Fleet</h2><span class="count">{total_agents} agents</span><span class="hint">{hint}</span><span id="fleetUpdated" style="font-size:12px;color:#64748b;margin-left:8px;">{time.strftime('Updated %H:%M:%S', time.localtime(now))}</span></div>
 {grid_html}""")
-
-
-# ── OBS-SPEC-093: Agent Profile (Four-Pillar Composite) ────────────────
-
-
-@router.get("/agent/{agent_name}/profile", response_class=HTMLResponse)
-async def agent_profile(request: Request, agent_name: str):
-    """GET /api/agent/<name>/profile — four-pillar profile composite endpoint.
-
-    Replaces six per-tab fetches with one response per §3.2.
-    Returns the c-modal-profile.html partial.
-    """
-    from observeco.dashboard.services.agent_profile_service import get_agent_profile
-
-    try:
-        profile = get_agent_profile(agent_name, use_cache=False)
-    except Exception:
-        logger.exception("agent_profile failed for %s", agent_name)
-        return templates.TemplateResponse(request, "partials/c57.html", {"html": """<div class="scrim"><div class="modal">
-    <div class="m-head">
-        <span class="m-name" style="color:var(--fg-3)">Error</span>
-        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
-    </div>
-    <div class="m-body">
-        <div class="state-msg err">
-            <div class="ico">⚠</div>
-            <h3>Agent data unavailable</h3>
-            <p>The profile service encountered an error. Try again later.</p>
-        </div>
-    </div>
-</div></div>"""})
-
-    if "error" in profile:
-        return templates.TemplateResponse(request, "partials/c57.html", {"html": f"""<div class="scrim"><div class="modal">
-    <div class="m-head">
-        <span class="m-name" style="color:var(--fg-3)">Not found</span>
-        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
-    </div>
-    <div class="m-body">
-        <div class="state-msg"><div class="ico">🔍</div><h3>Agent not found</h3>
-        <p>No agent named "{_html_escape(agent_name)}" is registered.</p></div>
-    </div>
-</div></div>"""})
-
-    return templates.TemplateResponse(request, "partials/c-modal-profile.html", {"profile": profile})

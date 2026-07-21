@@ -34,7 +34,7 @@
     {% if is_unknown %}{% set tile_class = tile_class + " unknown" %}{% endif %}
     {% if is_unset %}{% set tile_class = tile_class + " unknown" %}{% endif %}
     <div class="{{ tile_class }}">
-      <a class="t-link" href="#" onclick="event.preventDefault();document.getElementById('techDrawer').classList.add('open');document.getElementById('techDrawer').scrollIntoView({behavior:'smooth',block:'nearest'});return false">details ›</a>
+      <a class="t-link" href="#" onclick="event.preventDefault();document.getElementById('techDrawer').classList.add('open');document.getElementById('techDrawer').scrollIntoView({behavior:'smooth',block:'nearest'});return false">drill down ›</a>
       <div class="t-label">{{ pillar.label }}</div>
       {% set val_cls = "" %}
       {% if is_attn and pillar.key == "quality" %}{% set val_cls = " red" %}{% endif %}

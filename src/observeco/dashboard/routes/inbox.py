@@ -131,15 +131,22 @@ def _render_item(item: dict) -> str:
         act_link = f'<a class="act {act_kind}" href="{act_href}">{act_label}</a>'
         actions_html += act_link + "\n            "
 
-    # Evidence grid — render some metric keys
+    # Evidence grid — render some metric keys, format epoch values
+    now_ts = int(time.time())
     ev_rows = ""
     for k, v in list(metrics.items())[:4]:
         ev_val_class = ""
         if isinstance(v, (int, float)):
-            if v > 100:
+            # Format epoch timestamps (recent large ints) as relative time
+            if 1700000000 < v < now_ts + 86400 and v > 100000:
+                from observeco.dashboard.services.agent_profile_service import _fmt_relative
+                v = _fmt_relative(int(v))
+            elif v > 100:
                 ev_val_class = "bad"
             elif v > 20:
                 ev_val_class = "warn"
+            if isinstance(v, float):
+                v = f"{v:.1f}"
         ev_rows += f"""<div class="ev"><div class="ev-l">{k.replace('_', ' ')}</div><div class="ev-v {ev_val_class}">{v}</div></div>\n"""
 
     # Folded count badge
@@ -201,13 +208,13 @@ async def get_inbox(request: Request, filter: str = "all"):
         tone_groups[tone_filter] = items
     else:
         for tone_name in ["alert", "watch", "insight"]:
-            items = store.list_items(tone=tone_name, limit=50)
+            items = store.list_items(tone=tone_name, limit=200)
             if items:
                 tone_groups[tone_name] = items
         # Also: triaged items go into the drawer
 
     # Get triaged items for the drawer
-    triaged_items = store.list_items(state="triaged", limit=50)
+    triaged_items = store.list_items(state="triaged", limit=200)
 
     # Build HTML
     feed_html_parts = []
