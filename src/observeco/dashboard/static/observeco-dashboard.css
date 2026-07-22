@@ -2254,7 +2254,7 @@ body {
 .discover-panel .items { padding: 0 16px 8px; }
 .discover-panel .item { display: flex; align-items: center; padding: 8px 8px; border-bottom: 1px solid #1a2332; gap: 8px; }
 .discover-panel .item:last-child { border-bottom: none; }
-.discover-panel .item .name { font-size: 13px; font-weight: 500; color: #f8fafc; }
+.discover-panel .item .name { font-size: 13px; font-weight: 500; color: #f8fafc; margin-right: 8px; }
 .discover-panel .item .meta { font-size: 11px; color: #64748b; margin-left: auto; }
 .discover-panel .item .btn { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; flex-shrink: 0; }
 .discover-panel .item .btn:hover { border-color: #22c55e; color: #22c55e; }
