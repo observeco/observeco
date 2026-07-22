@@ -153,8 +153,8 @@ def _render_panel() -> str:
     <span class="close" onclick="document.getElementById('discoverPanel').style.display='none'">✕</span>
   </div>
   <div class="mode-tabs">
-    <div class="mode-tab active" onclick="document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('discoverGaps').style.display='block';document.getElementById('discoverLearning').style.display='none'">Gaps <span class="badge all">{len(active)}</span></div>
-    <div class="mode-tab" onclick="document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('discoverGaps').style.display='none';document.getElementById('discoverLearning').style.display='block'">Learning <span class="badge green">{len(learning_html['skills'])}</span></div>
+    <div class="mode-tab active" onclick="event.stopPropagation();document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('discoverGaps').style.display='block';document.getElementById('discoverLearning').style.display='none'">Gaps <span class="badge all">{len(active)}</span></div>
+    <div class="mode-tab" onclick="event.stopPropagation();document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('discoverGaps').style.display='none';document.getElementById('discoverLearning').style.display='block'">Learning <span class="badge green">{len(learning_html['skills'])}</span></div>
   </div>
   <div class="bulk-bar">
     <button class="bulk-btn primary" hx-post="/api/discover/add-all" hx-vals="{add_all_js}" hx-target="#discoverPanel" hx-swap="innerHTML">+ Add all</button>
