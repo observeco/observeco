@@ -141,7 +141,7 @@ def _render_panel() -> str:
         sections += _render_section(
             "●", "Never seen", len(active),
             _render_gap_items(active, limit=20),
-            "", True
+            "", False  # collapsed by default
         )
 
     learning_html = _get_learning_html()

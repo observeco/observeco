@@ -2210,8 +2210,8 @@ body {
 
 /* ── Discover panel v2 (QB card row design system) ── */
 .discover-panel {
-  position: absolute; left: 0; right: 0; top: 92px; z-index: 40;
-  width: 100%; max-height: 50vh; overflow-y: auto;
+  position: absolute; right: 0; top: 92px; z-index: 40;
+  width: 480px; max-height: 60vh; overflow-y: auto;
   background: #1e293b; border: 1px solid var(--border); border-radius: 0 0 12px 12px;
   box-shadow: 0 12px 40px rgba(0,0,0,.5);
 }
