@@ -149,7 +149,7 @@ def _render_panel() -> str:
     add_all_js = "js:{names: Array.from(document.querySelectorAll('#discoverGaps .item')).map(function(it){return it.id.replace('gap-','')})}"
     return f"""  <div class="panel-h">
     <h3>Discover</h3>
-    <span class="count"><span id="discoverCount">{total}</span> gaps{f' · {dismissed_count} dismissed' if dismissed_count else ''}</span>
+    <span class="count"><span id="panelCount">{total}</span> gaps{f' · {dismissed_count} dismissed' if dismissed_count else ''}</span>
     <span class="close" onclick="document.getElementById('discoverPanel').style.display='none'">✕</span>
   </div>
   <div class="mode-tabs">
