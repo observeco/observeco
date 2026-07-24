@@ -25,28 +25,19 @@
     <span class="logo-word"><b>Observe</b>Co</span><span class="ver">{{VERSION}}</span>
   </div>
   <div class="right" id="daemonStatus"><span class="d"></span> daemon live <span class="kb-hint" style="margin-left:12px;font-size:11px;color:#64748b;">⌨ 1-9 for tabs</span></div>
-  <div class="discover-badge" id="discoverBadge" hx-get="/api/discover/panel" hx-trigger="revealed once, every 5m" hx-target="#discoverPanel" hx-swap="innerHTML" onclick="toggleDiscover()" title="See what you're not monitoring">
+  <div class="discover-badge" id="discoverBadge" onclick="switchTab('coverage', this)" title="See what you're not monitoring">
     <span class="dot"></span><span id="discoverCount">…</span> gaps
   </div>
 </header>
-<div id="discoverPanel" class="discover-panel" style="display:none;"></div>
 <script>
-function toggleDiscover() {
-  var p = document.getElementById('discoverPanel');
-  p.style.display = (p.style.display === 'none') ? 'block' : 'none';
-  syncBadgeCount();
+function refreshBadgeCount() {
+  var t = new URLSearchParams(location.search).get('token') || '';
+  fetch('/api/discover/count' + (t ? '?token=' + t : '')).then(function(r){ return r.json(); }).then(function(d){
+    document.getElementById('discoverCount').textContent = d.count;
+  }).catch(function(){});
 }
-function syncBadgeCount() {
-  var cnt = document.getElementById('discoverCount');
-  var pc = document.querySelector('#discoverPanel #panelCount');
-  if (pc) cnt.textContent = pc.textContent;
-}
-// Sync badge count after panel loads
-document.body.addEventListener('htmx:afterOnLoad', function(evt) {
-  if (evt.detail.xhr && evt.detail.xhr.responseURL && evt.detail.xhr.responseURL.includes('/api/discover/panel')) {
-    syncBadgeCount();
-  }
-});
+refreshBadgeCount();
+setInterval(refreshBadgeCount, 300000);
 </script>
 
 <!-- Domain-grouped nav -->
@@ -55,6 +46,7 @@ document.body.addEventListener('htmx:afterOnLoad', function(evt) {
     <div class="nav-group">
       <span class="glabel">Monitor</span>
       <span class="nav-tab active clickable" data-tab="fleet">Fleet</span>
+      <span class="nav-tab clickable" data-tab="coverage">Coverage</span>
       <span class="nav-tab clickable" data-tab="alerts">Alerts</span>
       <span class="nav-tab clickable" data-tab="timeline">Error Timeline</span>
       <span class="nav-tab clickable" data-tab="pathway">Pathway Map</span>
@@ -136,6 +128,13 @@ document.body.addEventListener('htmx:afterOnLoad', function(evt) {
           </div>
         </div>
       </aside>
+    </div>
+  </div>
+
+  <!-- Coverage tab (obs-spec-082) -->
+  <div class="tab-content" id="tabCoverage">
+    <div id="coverageContainer" hx-get="/api/discover/coverage" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
+      <div class="loading" style="padding:24px;text-align:center;color:#64748b;font-size:12px;">Loading coverage...</div>
     </div>
   </div>
 

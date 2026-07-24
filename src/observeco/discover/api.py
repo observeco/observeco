@@ -1,13 +1,15 @@
 """Discover API — ecosystem gap scanning endpoints.
 
-GET  /api/discover/gaps      — list gaps (cached 5min)
-POST /api/discover/add       — register a gap as a tracked agent
-POST /api/discover/add-all   — batch register gaps
-POST /api/discover/dismiss   — dismiss a gap (never show again)
+GET  /api/discover/coverage   — HTML for Coverage tab (obs-spec-082)
+POST /api/discover/add        — register a gap as a tracked agent
+POST /api/discover/add-all    — batch register gaps
+POST /api/discover/dismiss    — dismiss a gap (never show again)
 POST /api/discover/dismiss-all — dismiss all gaps
-GET  /api/discover/panel     — HTML partial for discover panel (htmx target)
-GET  /api/discover/learning  — HTML partial for L3 learning loop stats
+GET  /api/discover/count      — lightweight JSON badge count
+GET  /api/discover/learning   — HTML partial for L3 learning loop stats
 """
+
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import HTMLResponse
@@ -54,124 +56,102 @@ def _classify_gaps(gaps: list[dict]) -> dict:
     dismissed = _get_dismissed()
     active = [g for g in gaps if g["name"].lower() not in dismissed]
     return {
-        "newly_stopped": [],
-        "changed_behavior": [],
         "never_seen": active,
         "dismissed_count": len(gaps) - len(active),
     }
 
 
-def _render_gap_items(gaps: list[dict], limit: int = 0) -> str:
-    """Render a list of gap items as HTML rows. If limit > 0, truncate and add 'show all'."""
+def _render_gap_table(gaps: list[dict], limit: int = 20) -> str:
+    """Render gap items as table rows for the Coverage tab."""
     show_all = limit > 0 and len(gaps) > limit
     items = gaps[:limit] if show_all else gaps
     rows = []
     for g in items:
         name = _html_escape(g["name"])
-        reason = _html_escape(g.get("reason", "Not monitored"))
         fw = _html_escape(g.get("suggested_framework", "custom"))
         hc = _html_escape(g.get("health_check", ""))
         rows.append(
-            f'<div class="item" id="gap-{name}" onclick="htmx.ajax(\'GET\', \'/api/agent/{name}/profile\', {{target:\'#modalContainer\', swap:\'innerHTML\'}})" style="cursor:pointer">'
-            f'<span class="name">{name}</span>'
-            f'<span class="meta">{reason}</span>'
+            f'<div class="gap-row" data-name="{name}">'
+            f'<span class="gap-name">{name}</span>'
+            f'<span class="gap-framework">{fw}</span>'
+            f'<span class="gap-status">\u25cf</span>'
+            f'<span class="gap-actions">'
             f'<button class="btn add" hx-post="/api/discover/add" '
             f'hx-vals=\'{{"name":"{name}","framework":"{fw}","health_check":"{hc}"}}\' '
-            f'hx-target="#discoverPanel" hx-swap="innerHTML" onclick="event.stopPropagation()">+ Add</button>'
+            f'hx-target="#coverageContainer" hx-swap="innerHTML">+ Add</button>'
             f'<button class="btn dismiss" hx-post="/api/discover/dismiss" '
             f'hx-vals=\'{{"name":"{name}"}}\' '
-            f'hx-target="#discoverPanel" hx-swap="innerHTML" onclick="event.stopPropagation()">✕</button>'
+            f'hx-target="#coverageContainer" hx-swap="innerHTML">\u2715</button>'
+            f'</span>'
             f'</div>'
         )
     html = "".join(rows)
     if show_all:
         remaining = len(gaps) - limit
-        html += f'<div class="show-all" onclick="this.previousElementSibling.previousElementSibling?this.previousElementSibling.insertAdjacentHTML(\'beforebegin\',\'<div>loading…</div>\'):null;htmx.ajax(\'GET\',\'/api/discover/gaps-html?all=true\',{{target:this.parentElement,swap:\'innerHTML\'}});this.remove()" style="text-align:center;padding:8px;font-size:12px;color:#3b82f6;cursor:pointer">Show all {remaining} more ▾</div>'
+        html += (
+            f'<div class="show-all" style="text-align:center;padding:8px;font-size:12px;color:#3b82f6;cursor:pointer" '
+            f'onclick="this.remove();htmx.ajax(\'GET\',\'/api/discover/coverage?all=1\','
+            f'{{target:\'#coverageContainer\',swap:\'innerHTML\'}})\">Show all {remaining} more &#9662;</div>'
+        )
     return html
 
 
-def _render_section(icon: str, label: str, count: int, items_html: str, count_cls: str = "", expanded: bool = True) -> str:
-    """Render a collapsible section."""
-    return f"""<div class="section">
-    <div class="section-h" onclick="var n=this.nextElementSibling;if(n&&n.classList.contains('items')){{var d=n.style.display;n.style.display=d==='none'?'block':'none';this.querySelector('.chev').classList.toggle('open')}}">
-      <span class="icon">{icon}</span>
-      <span class="label">{label}</span>
-      <span class="count-badge {count_cls}">{count}</span>
-      <span class="action" onclick="event.stopPropagation();var items=this.closest('.section').querySelectorAll('.item');items.forEach(function(it){{var btn=it.querySelector('.btn.add');if(btn)btn.click()}})">Add all</span>
-      <span class="chev{' open' if expanded else ''}">▶</span>
-    </div>
-    <div class="items" style="display:{'block' if expanded else 'none'}">
-      {items_html}
+def _render_coverage(all_gaps: bool = False) -> str:
+    """Return full Coverage tab HTML as a plain string."""
+    gaps = scan_cached()
+
+    if not gaps:
+        return """<div class="coverage-header">
+    <h2>Coverage</h2>
+    <span class="coverage-meta">0 untracked · 0 dismissed</span>
+  </div>
+  <div class="coverage-table">
+    <div class="coverage-empty" style="padding:32px;text-align:center;color:#64748b;">
+      <span style="font-size:24px;">&#9989;</span>
+      <p style="margin:8px 0 0;font-size:13px;">Everything running is tracked</p>
     </div>
   </div>"""
-
-
-# ── Endpoints ──────────────────────────────────────────────────────
-
-@router.get("/gaps")
-def get_gaps():
-    """Return ecosystem gaps (what's running but not tracked)."""
-    return {"gaps": scan_cached()}
-
-
-@router.get("/gaps-html", response_class=HTMLResponse)
-def get_gaps_html(all: bool = False):
-    """Return just the gap items HTML (for lazy loading 'show all')."""
-    gaps = scan_cached()
-    classified = _classify_gaps(gaps)
-    never_seen = classified["never_seen"]
-    if all:
-        return _render_gap_items(never_seen, limit=0)
-    return _render_gap_items(never_seen, limit=20)
-
-
-def _render_panel() -> str:
-    """Return discover panel HTML as a plain string (no HTTP wrapper)."""
-    gaps = scan_cached()
-    if not gaps:
-        return '<div class="discover-empty">✅ No gaps found — everything is being monitored</div>'
 
     classified = _classify_gaps(gaps)
     total = len(gaps)
     active = classified["never_seen"]
     dismissed_count = classified["dismissed_count"]
 
-    sections = ""
-    if active:
-        sections += _render_section(
-            "●", "Never seen", len(active),
-            _render_gap_items(active, limit=20),
-            "", False  # collapsed by default
-        )
+    limit = 0 if all_gaps else 20
+    table_html = _render_gap_table(active, limit=limit)
 
-    learning_html = _get_learning_html()
+    learning_data = _get_learning_html()
+    now_str = datetime.now().strftime("%H:%M")
 
-    add_all_js = "js:{names: Array.from(document.querySelectorAll('#discoverGaps .item')).map(function(it){return it.id.replace('gap-','')})}"
-    return f"""  <div class="panel-h">
-    <h3>Discover</h3>
-    <span class="count"><span id="panelCount">{total}</span> gaps{f' · {dismissed_count} dismissed' if dismissed_count else ''}</span>
-    <span class="close" onclick="document.getElementById('discoverPanel').style.display='none'">✕</span>
+    add_all_js = (
+        "js:{names: Array.from(document.querySelectorAll('#coverageTable .gap-row'))"
+        ".map(function(r){return r.dataset.name})}"
+    )
+
+    return f"""<div class="coverage-header">
+    <h2>Coverage</h2>
+    <span class="coverage-meta">{len(active)} untracked &middot; {dismissed_count} dismissed &middot; Updated {now_str}</span>
   </div>
-  <div class="mode-tabs">
-    <div class="mode-tab active" onclick="event.stopPropagation();document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('discoverGaps').style.display='block';document.getElementById('discoverLearning').style.display='none'">Gaps <span class="badge all">{len(active)}</span></div>
-    <div class="mode-tab" onclick="event.stopPropagation();document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.getElementById('discoverGaps').style.display='none';document.getElementById('discoverLearning').style.display='block'">Learning <span class="badge green">{len(learning_html['skills'])}</span></div>
+  <div class="coverage-toolbar">
+    <input type="text" placeholder="Search gaps..." class="coverage-search" id="coverageSearch">
+    <div class="coverage-filters">
+      <button class="filter-btn active">All</button>
+      <button class="filter-btn">Dismissed</button>
+    </div>
   </div>
-  <div class="bulk-bar">
-    <button class="bulk-btn primary" hx-post="/api/discover/add-all" hx-vals="{add_all_js}" hx-target="#discoverPanel" hx-swap="innerHTML">+ Add all</button>
-    <button class="bulk-btn" hx-post="/api/discover/dismiss-all" hx-target="#discoverPanel" hx-swap="innerHTML">Dismiss all</button>
+  <div class="coverage-bulk">
+    <button class="bulk-btn primary" hx-post="/api/discover/add-all"
+      hx-vals=\"{add_all_js}\"
+      hx-target="#coverageContainer" hx-swap="innerHTML">+ Add all</button>
+    <button class="bulk-btn" hx-post="/api/discover/dismiss-all"
+      hx-target="#coverageContainer" hx-swap="innerHTML">Dismiss all</button>
   </div>
-  <div id="discoverGaps">
-    {sections}
+  <div id="coverageTable" class="coverage-table">
+    {table_html}
   </div>
-  <div id="discoverLearning" style="display:none;">
-    {learning_html['html']}
+  <div class="coverage-learning">
+    {learning_data['html']}
   </div>"""
-
-
-@router.get("/panel", response_class=HTMLResponse)
-def get_panel():
-    """HTML partial for the discover panel (htmx target)."""
-    return _render_panel()
 
 
 def _get_learning_html() -> dict:
@@ -260,6 +240,22 @@ def _get_learning_html() -> dict:
         return {"html": "", "skills": []}
 
 
+# ── Endpoints ──────────────────────────────────────────────────────
+
+@router.get("/count")
+def get_count():
+    """Return gap count as JSON for badge refresh."""
+    gaps = scan_cached()
+    classified = _classify_gaps(gaps)
+    return {"count": len(classified["never_seen"])}
+
+
+@router.get("/coverage", response_class=HTMLResponse)
+def get_coverage(all: bool = False):
+    """HTML for the Coverage tab (full page content)."""
+    return _render_coverage(all_gaps=all)
+
+
 @router.get("/learning", response_class=HTMLResponse)
 def get_learning():
     """HTML partial for L3 learning loop stats (htmx target)."""
@@ -273,7 +269,7 @@ def add_gap_endpoint(req: AddGapRequest):
     result = add_gap(req.name, req.framework, health_check=req.health_check)
     if result["status"] == "exists":
         raise HTTPException(status_code=409, detail=result["message"])
-    return _render_panel()
+    return _render_coverage()
 
 
 @router.post("/add-all", response_class=HTMLResponse)
@@ -281,7 +277,7 @@ def add_all_gaps(req: BatchGapRequest):
     """Batch register multiple gaps."""
     for name in req.names:
         add_gap(name)
-    return _render_panel()
+    return _render_coverage()
 
 
 @router.post("/dismiss", response_class=HTMLResponse)
@@ -296,10 +292,9 @@ def dismiss_gap(req: DismissGapRequest):
         conn.commit()
     except Exception:
         pass
-    # Bump cache so next scan reflects the dismissal
     from observeco.discover.scanner import _cache
     _cache["gaps"] = None
-    return _render_panel()
+    return _render_coverage()
 
 
 @router.post("/dismiss-all", response_class=HTMLResponse)
@@ -316,4 +311,4 @@ def dismiss_all_gaps():
         conn.commit()
     except Exception:
         pass
-    return _render_panel()
+    return _render_coverage()

@@ -106,6 +106,7 @@ class DashboardAuthMiddleware(BaseHTTPMiddleware):
             "/api/billing/cancel",         # Stripe redirect
             "/api/billing/webhook",        # Stripe webhook
             "/api/phase",                  # Phase banner — loaded before auth on page init
+            "/api/discover/count",         # Badge count — public read, no sensitive data
         }
         # ponytail: all other /api/ routes now require auth. If a new public route is needed,
         # add it here explicitly. Remove routes by migration to internal auth flow.
