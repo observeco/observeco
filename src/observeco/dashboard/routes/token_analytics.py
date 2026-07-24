@@ -173,12 +173,23 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     total_cache_create = 0
     total_attributed = 0
     total_unattributed = 0
+    otel_input = 0
+    otel_output = 0
     agents_with_data = set()
 
     # Buckets derived from actual row timestamps (integer-divided epoch), NOT from
     # since//bucket_sec — anchoring to `since` drops "today so far" and shows the
     # wrong calendar day for sub-day/daily windows. Same approach as tracking/token_analytics._bucket_start.
     day_buckets = {}
+
+    # Pre-initialize all time buckets so the chart shows the full window
+    # regardless of whether every bucket has data.
+    first_bucket = (since // bucket_sec) * bucket_sec
+    last_bucket = (now // bucket_sec) * bucket_sec
+    bk = first_bucket
+    while bk <= last_bucket:
+        day_buckets[bk] = {"cost": 0, "total": 0, "input": 0, "output": 0, "cache": 0, "cache_create": 0, "est": 0, "count": 0}
+        bk += bucket_sec
 
     for log in all_logs:
         aname = log.get("agent_name", "unknown")
@@ -215,6 +226,8 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
         if log.get("source") == "otel":
             total_attributed += log.get("total_tokens", 0) or 0
+            otel_input += log.get("input_tokens", 0) or 0
+            otel_output += log.get("output_tokens", 0) or 0
         else:
             total_unattributed += log.get("total_tokens", 0) or 0
 
@@ -259,7 +272,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         round(day_buckets[k]["output"] / max(day_buckets[k]["input"], 1), 2) for k in sorted_keys
     ]
     cache_rate_data = [
-        round(day_buckets[k]["cache"] / max(day_buckets[k]["input"], 1) * 100, 1) for k in sorted_keys
+        round(day_buckets[k]["cache"] / max(day_buckets[k]["cache"] + day_buckets[k]["cache_create"], 1) * 100, 1) for k in sorted_keys
     ]
     cost_per_turn = [round(day_buckets[k]["cost"] / max(day_buckets[k]["count"], 1), 5) for k in sorted_keys]
     # Double-count flag: Estimated is a proxy for total when real totals are missing.
@@ -385,7 +398,15 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     top_cost = sorted_agents[0][1]["cost"] if sorted_agents else 0
     top_spender_pct = round(top_cost / max(total_cost, 1) * 100)
     turn_count = sum(d["count"] for _, d in sorted_agents)
-    overall_cache_rate = round(total_cache_read / max(total_cache_read + total_cache_create, 1) * 100)
+    # Fleet cache rate: only agents with actual cache data contribute.
+    # Watch-estimated rows have zero cache fields, so including them
+    # inflates the rate to 100% by default. Compute from agents that
+    # have at least one cache_read or cache_create token.
+    agents_with_cache = [d for _, d in sorted_agents if d["cache_read"] + d["cache_create"] > 0]
+    cache_eligible_read = sum(d["cache_read"] for d in agents_with_cache)
+    cache_eligible_create = sum(d["cache_create"] for d in agents_with_cache)
+    overall_cache_rate = round(cache_eligible_read / max(cache_eligible_read + cache_eligible_create, 1) * 100)
+    cache_coverage = f"{len(agents_with_cache)}/{len(sorted_agents)} agents"
     # confidence badge = % of cost from accurate (otel/sdk/proxy) sources
     confidence_pct = attr_pct
     # one-sentence recommendation
@@ -418,14 +439,14 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     html = f"""<div id="analyticsContent" hx-swap-oob="true">
 <div class="page-title">
     <h1>Token Analytics</h1>
-    <span class="sub">{agent_count} agents · {_fmt_tok(total_all)} calls indexed</span>
+    <span class="sub">{agent_count} agents · {_fmt_tok(total_all)} tokens · {turn_count:,} calls</span>
     <select id="agentFilter" class="rbtn" style="margin-left:8px" onchange="htmx.ajax('GET', '/api/analytics/tokens?days={days}&hours={hours}&agent='+this.value, {{target:'#analyticsContent', swap:'innerHTML'}})">
         <option value="__all__"{' selected' if agent == '__all__' else ''}>All agents</option>
         {''.join(f'<option value="{_html_escape(a)}"{"" if agent != a else " selected"}>{_html_escape(a)}</option>' for a, _ in sorted_agents)}
     </select>
     <div class="range">
         <button class="rbtn {'on' if hours==1 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=1', {{target:'#analyticsContent', swap:'innerHTML'}})">1h</button>
-        <button class="rbtn {'on' if days==1 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=1', {{target:'#analyticsContent', swap:'innerHTML'}})">24h</button>
+        <button class="rbtn {'on' if hours==24 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=24', {{target:'#analyticsContent', swap:'innerHTML'}})">24h</button>
         <button class="rbtn {'on' if days==7 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=7', {{target:'#analyticsContent', swap:'innerHTML'}})">7d</button>
         <button class="rbtn {'on' if days==30 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=30', {{target:'#analyticsContent', swap:'innerHTML'}})">30d</button>
     </div>
@@ -447,11 +468,11 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         <div class="chart-box"><canvas id="tptChart"></canvas></div>
     </div>
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Output / Input</h2><span class="cc-val mono">{round(total_output / max(total_input, 1), 2)}</span><span class="cc-lab">ratio · higher better</span></div>
+        <div class="cc-head"><h2>Output / Input</h2><span class="cc-val mono">{round(otel_output / max(otel_input, 1), 2)}</span><span class="cc-lab">otel-tracked only · fleet {round(total_output / max(total_input, 1), 2)}</span></div>
         <div class="chart-box"><canvas id="oirChart"></canvas></div>
     </div>
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Cache Hit Rate</h2><span class="cc-val mono">{overall_cache_rate}%</span><span class="cc-lab">higher better</span></div>
+        <div class="cc-head"><h2>Cache Hit Rate</h2><span class="cc-val mono">{overall_cache_rate}%</span><span class="cc-lab">{cache_coverage} · higher better</span></div>
         <div class="chart-box"><canvas id="cacheRateChart"></canvas></div>
     </div>
     <div class="panel chart-card">
