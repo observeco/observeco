@@ -96,6 +96,89 @@ def empty_html() -> str:
 </div>"""
 
 
+def _query_agents(conn, since: int, agent: str) -> list[dict]:
+    """Per-agent aggregates via SQL GROUP BY (returns <50 rows)."""
+    cur = conn.execute("""
+        SELECT
+            agent_name,
+            COALESCE(SUM(cost), 0) as cost,
+            COALESCE(SUM(total_tokens), 0) as tokens,
+            COALESCE(SUM(input_tokens), 0) as input,
+            COALESCE(SUM(output_tokens), 0) as output,
+            COALESCE(SUM(cache_creation_tokens), 0) as cache_create,
+            COALESCE(SUM(cache_read_tokens), 0) as cache_read,
+            COALESCE(SUM(identity_tokens), 0) as identity,
+            COALESCE(SUM(skills_tokens), 0) as skills,
+            COALESCE(SUM(memory_tokens), 0) as memory,
+            COALESCE(SUM(tools_tokens), 0) as tools,
+            COALESCE(SUM(guidance_tokens), 0) as guidance,
+            COUNT(*) as count,
+            MAX(CASE WHEN source IN ('otel','sdk','proxy') THEN 1 ELSE 0 END) as has_accurate,
+            MIN(CASE WHEN model IS NOT NULL AND model != '' THEN model END) as model
+        FROM token_logs WHERE recorded_at >= ?
+        GROUP BY agent_name
+        ORDER BY SUM(cost) DESC
+    """, (since,))
+    rows = [dict(r) for r in cur.fetchall()]
+    if agent != "__all__":
+        rows = [r for r in rows if r["agent_name"] == agent]
+    return rows
+
+
+def _query_buckets(conn, since: int, bucket_sec: int, agent: str) -> list[dict]:
+    """Time-bucket aggregates via SQL GROUP BY (returns <1000 rows)."""
+    cur = conn.execute(f"""
+        SELECT
+            (recorded_at / ?) * ? as bucket_start,
+            COALESCE(SUM(cost), 0) as cost,
+            COALESCE(SUM(total_tokens), 0) as total,
+            COALESCE(SUM(input_tokens), 0) as input,
+            COALESCE(SUM(output_tokens), 0) as output,
+            COALESCE(SUM(cache_read_tokens), 0) as cache,
+            COALESCE(SUM(cache_creation_tokens), 0) as cache_create,
+            COALESCE(SUM(CASE WHEN source NOT IN ('otel','sdk','proxy') THEN input_tokens + output_tokens ELSE 0 END), 0) as est,
+            COUNT(*) as count
+        FROM token_logs WHERE recorded_at >= ?
+        GROUP BY bucket_start
+        ORDER BY bucket_start
+    """, (bucket_sec, bucket_sec, since))
+    rows = [dict(r) for r in cur.fetchall()]
+    if agent != "__all__":
+        rows = [r for r in rows if r["agent_name"] == agent] if "agent_name" in rows[0] else rows
+    return rows
+
+
+def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
+    """Last 500 calls for the per-turn timeline bars."""
+    sql = """
+        SELECT recorded_at, total_tokens, source
+        FROM token_logs WHERE recorded_at >= ?
+        ORDER BY recorded_at DESC
+        LIMIT 500
+    """
+    cur = conn.execute(sql, (since,))
+    rows = [dict(r) for r in cur.fetchall()]
+    if agent != "__all__":
+        rows = [r for r in rows if r["agent_name"] == agent] if rows else rows
+    timeline = [
+        (r["recorded_at"], r["total_tokens"] or 0, r["source"] not in ("otel", "sdk", "proxy"))
+        for r in reversed(rows)
+    ]
+    return timeline
+
+
+def _query_attribution(conn, since: int, agent: str) -> tuple[int, int]:
+    """Attribution totals (attributed vs unattributed tokens)."""
+    cur = conn.execute("""
+        SELECT
+            COALESCE(SUM(CASE WHEN source IN ('otel','sdk','proxy') THEN total_tokens ELSE 0 END), 0) as attributed,
+            COALESCE(SUM(CASE WHEN source NOT IN ('otel','sdk','proxy') THEN total_tokens ELSE 0 END), 0) as unattributed
+        FROM token_logs WHERE recorded_at >= ?
+    """, (since,))
+    r = cur.fetchone()
+    return (r["attributed"], r["unattributed"])
+
+
 @router.get("/tokens", response_class=HTMLResponse)
 async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0):
     """Token Analytics view — cost time-series, per-agent breakdown, cache efficiency.
@@ -103,9 +186,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     """
     now = int(time.time())
 
-    # Adaptive time bucketing: days mode (bucket by day) or hours mode (bucket by 5min / hour)
-    # ponytail: 1h view needs sub-day resolution or it collapses to a single useless bar.
-    # <=2h -> 5-min buckets (12 pts); >2h -> hourly buckets. Upgrade: pass bucket size from UI.
+    # Adaptive time bucketing
     if hours > 0:
         if hours <= 2:
             bucket_sec = 300
@@ -113,7 +194,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         else:
             bucket_sec = 3600
             label_fmt = "%H:00"
-        n_buckets = max(1, -(-hours * 3600 // bucket_sec))  # ceil division
+        n_buckets = max(1, -(-hours * 3600 // bucket_sec))
     else:
         bucket_sec = 86400
         label_fmt = "%m/%d"
@@ -121,150 +202,92 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     since = now - n_buckets * bucket_sec
     range_label = f"{hours}h" if hours else f"{days}d"
 
-    # Get all token logs
-    all_logs = []
+    # ── SQL aggregation (3 queries instead of materializing all rows) ──
     try:
         conn = db._get_conn()
-        cur = conn.execute(
-            "SELECT agent_name, total_tokens, input_tokens, output_tokens, "
-            "cache_creation_tokens, cache_read_tokens, model, provider, "
-            "cost, identity_tokens, skills_tokens, memory_tokens, "
-            "tools_tokens, guidance_tokens, source, recorded_at, anomaly_score "
-            "FROM token_logs WHERE recorded_at >= ? ORDER BY recorded_at",
-            (since,)
-        )
-        all_logs = [dict(r) for r in cur.fetchall()]
+
+        # Query 1: Per-agent aggregates
+        agent_rows = _query_agents(conn, since, agent)
+        if not agent_rows:
+            return HTMLResponse(empty_html())
+
+        agent_data = {}
+        total_cost = total_input = total_output = 0
+        total_cache_read = total_cache_create = total_tokens = 0
+
+        for r in agent_rows:
+            aname = r["agent_name"]
+            d = {
+                "cost": r["cost"],
+                "tokens": r["tokens"],
+                "input": r["input"],
+                "output": r["output"],
+                "cache_read": r["cache_read"],
+                "cache_create": r["cache_create"],
+                "model": r["model"] or "",
+                "provider": "",
+                "source": "otel" if r["has_accurate"] else "watch",
+                "count": r["count"],
+                "identity": r["identity"],
+                "skills": r["skills"],
+                "memory": r["memory"],
+                "tools": r["tools"],
+                "guidance": r["guidance"],
+            }
+            agent_data[aname] = d
+            total_cost += d["cost"]
+            total_input += d["input"]
+            total_output += d["output"]
+            total_cache_read += d["cache_read"]
+            total_cache_create += d["cache_create"]
+            total_tokens += d["tokens"]
+
+        # Query 2: Per-bucket time-series (pre-initialized for gaps)
+        buckets_raw = _query_buckets(conn, since, bucket_sec, agent)
+
+        first_bucket = (since // bucket_sec) * bucket_sec
+        last_bucket = (now // bucket_sec) * bucket_sec
+        day_buckets = {}
+        bk = first_bucket
+        while bk <= last_bucket:
+            day_buckets[bk] = {"cost": 0, "total": 0, "input": 0, "output": 0, "cache": 0, "cache_create": 0, "est": 0, "count": 0}
+            bk += bucket_sec
+        for r in buckets_raw:
+            bk = r["bucket_start"]
+            day_buckets[bk] = {
+                "cost": r["cost"],
+                "total": r["total"],
+                "input": r["input"],
+                "output": r["output"],
+                "cache": r["cache"],
+                "cache_create": r["cache_create"],
+                "est": r["est"],
+                "count": r["count"],
+            }
+
+        # Attribution stats
+        total_attributed, total_unattributed = _query_attribution(conn, since, agent)
+        total_all = total_attributed + total_unattributed
+        attr_pct = round(total_attributed / total_all * 100) if total_all else 0
+
+        # Query 3: Timeline (last 500 calls)
+        timeline = _query_timeline(conn, since, agent)
+
     except Exception:
-        # Error state — DB unavailable
-        return HTMLResponse("""<div id="analyticsContent" hx-swap-oob="true">
-    <div class="page-title"><h1>Token Analytics</h1><span class="sub">error</span></div>
-    <div class="state-msg err">
-        <div class="ico">⚠</div>
-        <h3>Token data unavailable</h3>
-        <p>The database is not responding. Token analytics require the watch daemon to be running.</p>
-        <span class="cmd">observeco start</span>
-    </div>
-</div>""")
+        return HTMLResponse(error_html())
 
     agents_cfg = db.get_agents()
-
-    # If no token data, show empty state
-    if not all_logs:
-        return HTMLResponse("""<div id="analyticsContent" hx-swap-oob="true">
-    <div class="page-title"><h1>Token Analytics</h1><span class="sub">No data</span></div>
-    <div class="state-msg"><div class="ico">📊</div><h3>No token data yet</h3><p>Token data appears after agents make LLM calls with the Hermes telemetry plugin enabled.</p></div>
-</div>""")
-
-    # Apply agent filter (v0.2.0 dropdown)
-    filtered_logs = [
-        log for log in all_logs
-        if agent == "__all__" or log.get("agent_name") == agent
-    ]
-    if filtered_logs:
-        all_logs = filtered_logs
-
-    # Per-agent aggregation
-    agent_data = {}
-    total_cost = 0
-    total_input = 0
-    total_output = 0
-    total_cache_read = 0
-    total_cache_create = 0
-    total_attributed = 0
-    total_unattributed = 0
-    agents_with_data = set()
-
-    # Buckets derived from actual row timestamps (integer-divided epoch), NOT from
-    # since//bucket_sec — anchoring to `since` drops "today so far" and shows the
-    # wrong calendar day for sub-day/daily windows. Same approach as tracking/token_analytics._bucket_start.
-    day_buckets = {}
-
-    # Pre-initialize all time buckets so the chart shows the full window
-    # regardless of whether every bucket has data.
-    first_bucket = (since // bucket_sec) * bucket_sec
-    last_bucket = (now // bucket_sec) * bucket_sec
-    bk = first_bucket
-    while bk <= last_bucket:
-        day_buckets[bk] = {"cost": 0, "total": 0, "input": 0, "output": 0, "cache": 0, "cache_create": 0, "est": 0, "count": 0}
-        bk += bucket_sec
-
-    for log in all_logs:
-        aname = log.get("agent_name", "unknown")
-        if aname not in agent_data:
-            agent_data[aname] = {
-                "cost": 0, "tokens": 0, "input": 0, "output": 0,
-                "cache_read": 0, "cache_create": 0, "model": "",
-                "provider": "", "source": log.get("source", "unknown"),
-                "count": 0,
-                "identity": 0, "skills": 0, "memory": 0, "tools": 0, "guidance": 0,
-            }
-        d = agent_data[aname]
-        d["cost"] += log.get("cost", 0) or 0
-        d["tokens"] += log.get("total_tokens", 0) or 0
-        d["input"] += log.get("input_tokens", 0) or 0
-        d["output"] += log.get("output_tokens", 0) or 0
-        d["cache_read"] += log.get("cache_read_tokens", 0) or 0
-        d["cache_create"] += log.get("cache_creation_tokens", 0) or 0
-        d["identity"] += log.get("identity_tokens", 0) or 0
-        d["skills"] += log.get("skills_tokens", 0) or 0
-        d["memory"] += log.get("memory_tokens", 0) or 0
-        d["tools"] += log.get("tools_tokens", 0) or 0
-        d["guidance"] += log.get("guidance_tokens", 0) or 0
-        d["model"] = log.get("model", d["model"]) or d["model"]
-        d["provider"] = log.get("provider", d["provider"]) or d["provider"]
-        d["count"] += 1
-        # Track if agent has ANY accurate source (not just the last log's source)
-        if log.get("source") in ("otel", "sdk", "proxy"):
-            d["source"] = "otel"  # mark as accurate
-        agents_with_data.add(aname)
-
-        total_cost += log.get("cost", 0) or 0
-        total_input += log.get("input_tokens", 0) or 0
-        total_output += log.get("output_tokens", 0) or 0
-        total_cache_read += log.get("cache_read_tokens", 0) or 0
-        total_cache_create += log.get("cache_creation_tokens", 0) or 0
-
-        if log.get("source") in ("otel", "sdk", "proxy"):
-            total_attributed += log.get("total_tokens", 0) or 0
-        else:
-            total_unattributed += log.get("total_tokens", 0) or 0
-
-        # Bucket by integer-divided epoch of the row's own timestamp (true calendar alignment)
-        bk = (log.get("recorded_at", 0) // bucket_sec) * bucket_sec
-        if bk not in day_buckets:
-            day_buckets[bk] = {"cost": 0, "total": 0, "input": 0, "output": 0, "cache": 0, "cache_create": 0, "est": 0, "count": 0}
-        day_buckets[bk]["cost"] += log.get("cost", 0) or 0
-        day_buckets[bk]["total"] += log.get("total_tokens", 0) or 0
-        day_buckets[bk]["input"] += log.get("input_tokens", 0) or 0
-        day_buckets[bk]["output"] += log.get("output_tokens", 0) or 0
-        day_buckets[bk]["cache"] += log.get("cache_read_tokens", 0) or 0
-        day_buckets[bk]["cache_create"] += log.get("cache_creation_tokens", 0) or 0
-        day_buckets[bk]["count"] += 1
-        # 'est' = estimated (non-attributed source) tokens for this bucket.
-        # Matches attribution logic: otel/sdk/proxy = accurate, everything else = estimated.
-        if log.get("source") not in ("otel", "sdk", "proxy"):
-            day_buckets[bk]["est"] += (log.get("input_tokens", 0) or 0) + (log.get("output_tokens", 0) or 0)
-
-    # Sort agents by cost descending
     sorted_agents = sorted(agent_data.items(), key=lambda x: -x[1]["cost"])
 
-    # Attribution gap
-    total_all = total_attributed + total_unattributed
-    attr_pct = round(total_attributed / total_all * 100) if total_all else 0
-
-    # Build chart data arrays (epoch keys, sorted ascending so the timeline reads left→right)
+    # Build chart data arrays
     sorted_keys = sorted(day_buckets.keys())
     labels = [datetime.fromtimestamp(k).strftime(label_fmt) for k in sorted_keys]
     cost_data = [round(day_buckets[k]["cost"], 4) for k in sorted_keys]
     input_data = [day_buckets[k]["input"] // 1000 for k in sorted_keys]
     output_data = [day_buckets[k]["output"] // 1000 for k in sorted_keys]
     cache_data = [day_buckets[k]["cache"] // 1000 for k in sorted_keys]
-    [round(day_buckets[k]["est"] / 1000) for k in sorted_keys]
-    # Total = authoritative total_tokens per bucket (K) — not input+output (which misses cache
-    # and collapses to input-only for watch-estimated rows where output=0).
     total_data = [day_buckets[k]["total"] // 1000 for k in sorted_keys]
-    # ── Efficiency time-series (v0.3.1 design: 4 ratio charts, each with benchmark bands) ──
-    # Empty buckets (count=0) produce None so line charts skip them instead of showing 0.0.
+
     def _eff(val_fn, k):
         return val_fn(k) if day_buckets[k]["count"] > 0 else None
 
@@ -272,9 +295,6 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     output_input_ratio = [_eff(lambda k: round(day_buckets[k]["output"] / max(day_buckets[k]["input"], 1), 2), k) for k in sorted_keys]
     cache_rate_data = [_eff(lambda k: round(day_buckets[k]["cache"] / max(day_buckets[k]["cache"] + day_buckets[k]["cache_create"], 1) * 100, 1), k) for k in sorted_keys]
     cost_per_turn = [_eff(lambda k: round(day_buckets[k]["cost"] / day_buckets[k]["count"], 5), k) for k in sorted_keys]
-    # Real fix for the double-count: where a bucket has real input/output/cache, the
-    # Estimated stack is suppressed (set to 0) so it can't inflate the total on top of
-    # real counts. Estimated is only shown in buckets with NO real breakdown (pure proxy).
     est_effective = [
         0 if (day_buckets[k]["input"] > 0 or day_buckets[k]["output"] > 0 or day_buckets[k]["cache"] > 0)
         else day_buckets[k]["est"]
@@ -284,39 +304,23 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         day_buckets[k]["est"] > 0 and est_effective[i] == 0
         for i, k in enumerate(sorted_keys)
     )
-    # Stacked token total (K) the chart actually shows — uses est_effective so it never
-    # double-counts. Header shows this, matching the visual stack.
     stacked_total_k = sum(
         day_buckets[k]["input"] + day_buckets[k]["output"] + day_buckets[k]["cache"] + est_effective[i]
         for i, k in enumerate(sorted_keys)
     ) // 1000
-    # Target cost line for Chart 1 (Cost): mean daily cost of the window. ponytail: a real
-    # budget threshold from billing config is the right source; mean-of-window is a sane
-    # default until that exists. Upgrade: read OBSERVECO_TOKEN_BUDGET from config.
     target_cost = round(sum(cost_data) / max(len(cost_data), 1), 2)
 
-    # Per-turn timeline (real total_tokens per call, time-ordered)
-    # Anomaly = estimated source (not otel/sdk/proxy), shown as red columns.
-    timeline = sorted(
-        [(log.get("recorded_at", 0), log.get("total_tokens", 0) or 0,
-          log.get("source", "") not in ("otel", "sdk", "proxy"))
-         for log in all_logs],
-        key=lambda x: x[0],
-    )
+    # Timeline
     turn_ts = [t for t, _, _ in timeline]
     turn_tokens = [n for _, n, _ in timeline]
-    turn_anom = [bool(a) for _, _, a in timeline]
-    # ponytail: 106K+ calls would OOM the browser with one <div> per call.
-    # Cap displayed timeline to last 500; full count still shown in the header.
-    # Upgrade path: bucket/aggregate if per-call resolution needed at scale.
+    turn_anom = [a for _, _, a in timeline]
     if len(turn_tokens) > 500:
         turn_ts = turn_ts[-500:]
         turn_tokens = turn_tokens[-500:]
         turn_anom = turn_anom[-500:]
     max_tok = max(turn_tokens) or 1
-    # No dead variable — quality check was removed; otel/sdk/proxy detection
-    # is handled per-agent via the source field in agent_data.
 
+    # Component composition
     COMP_ORDER = [
         ("identity", "var(--token-identity)", "identity"),
         ("skills", "var(--token-skills)", "skills"),
@@ -336,6 +340,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     <div class="comp-stack"><i class="ci" style="width:{pct}%;background:{color}"></i></div>
     <span class="mono" style="color:var(--fg-2);min-width:56px;text-align:right">{tok}</span>
 </div>"""
+
     agent_rows = ""
     for aname, d in sorted_agents:
         dq_cls = "acc" if d["source"] == "otel" else "est"
@@ -359,33 +364,24 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     </td>
 </tr>"""
 
-    # Per-agent cache hit-rate chart data (obs-spec-020 §5.5): horizontal bars, one
-    # per agent, sorted by rate ascending so the worst offenders sit at the top.
-    # cache_rate definition matches the per-agent table cell (line 295) for consistency.
+    # Cache chart data
     cache_chart_agents = [a for a, _ in sorted_agents]
     cache_chart_rates = [
         round(d["cache_read"] / max(d["cache_read"] + d["cache_create"], 1) * 100)
         for _, d in sorted_agents
     ]
 
-
-    # So What insight — Verdict Card (obs-spec-020 §5.3)
+    # So What insight
     top_agent = sorted_agents[0][0] if sorted_agents else ""
     top_cost = sorted_agents[0][1]["cost"] if sorted_agents else 0
     top_spender_pct = round(top_cost / max(total_cost, 1) * 100)
     turn_count = sum(d["count"] for _, d in sorted_agents)
-    # Fleet cache rate: only agents with actual cache data contribute.
-    # Watch-estimated rows have zero cache fields, so including them
-    # inflates the rate to 100% by default. Compute from agents that
-    # have at least one cache_read or cache_create token.
     agents_with_cache = [d for _, d in sorted_agents if d["cache_read"] + d["cache_create"] > 0]
     cache_eligible_read = sum(d["cache_read"] for d in agents_with_cache)
     cache_eligible_create = sum(d["cache_create"] for d in agents_with_cache)
     overall_cache_rate = round(cache_eligible_read / max(cache_eligible_read + cache_eligible_create, 1) * 100)
     cache_coverage = f"{len(agents_with_cache)}/{len(sorted_agents)} agents"
-    # confidence badge = % of cost from accurate (otel/sdk/proxy) sources
     confidence_pct = attr_pct
-    # one-sentence recommendation
     if confidence_pct < 50:
         rec = f"Only {confidence_pct}% of cost is accurately attributed — enable the telemetry plugin to close the gap."
     elif top_spender_pct > 50:
@@ -494,11 +490,6 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 </div>
 
 <script>
-// ponytail: render is triggered HERE (not via htmx:afterSwap) to avoid the
-// script-vs-afterSwap race. htmx DOES execute inline scripts in swapped content,
-// so setting window._tokenChart then calling renderTokenChart() synchronously is
-// race-free: data is fresh, canvas is in the DOM. The afterSwap listener in app.js
-// is a no-op fallback now (target.id check fails for OOB swaps anyway).
 window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "total_data": total_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data, "est_data": est_effective, "suppressed_est": suppressed_est, "range_label": range_label})};
 if (typeof renderTokenChart === 'function') renderTokenChart();
 window._tptChart = {json.dumps({"labels": labels, "data": tokens_per_turn})};
