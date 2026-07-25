@@ -408,12 +408,14 @@ setInterval(function() {
 }, 30000);
 
 // ─── Token Analytics chart (fired after htmx swap) ───
-// Loading state for slow token analytics queries
+// Loading cursor for token analytics (instant feedback, no content wipe)
 document.addEventListener('htmx:beforeRequest', function(e) {
   if (e.detail.target && e.detail.target.id === 'analyticsContent') {
-    var el = document.getElementById('analyticsContent');
-    if (el) el.innerHTML = '<div class="tok-loading">⟳ Loading…</div>';
+    document.body.style.cursor = 'wait';
   }
+});
+document.addEventListener('htmx:afterSwap', function(e) {
+  document.body.style.cursor = '';
 });
 // ponytail: chart init MUST run here, not in inline <script> inside swapped HTML.
 // htmx innerHTML swaps do not execute inline scripts. Global fn + afterSwap is the
