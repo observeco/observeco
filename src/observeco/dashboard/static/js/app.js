@@ -411,11 +411,11 @@ setInterval(function() {
 // Loading cursor for token analytics (instant feedback, no content wipe)
 document.addEventListener('htmx:beforeRequest', function(e) {
   if (e.detail.target && e.detail.target.id === 'analyticsContent') {
-    document.body.style.cursor = 'wait';
+    document.body.classList.add('tok-loading');
   }
 });
 document.addEventListener('htmx:afterSwap', function(e) {
-  document.body.style.cursor = '';
+  document.body.classList.remove('tok-loading');
 });
 // ponytail: chart init MUST run here, not in inline <script> inside swapped HTML.
 // htmx innerHTML swaps do not execute inline scripts. Global fn + afterSwap is the

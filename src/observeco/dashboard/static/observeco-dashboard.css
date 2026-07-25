@@ -749,6 +749,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .est-hatch{background-image:repeating-linear-gradient(45deg,#64748b,#64748b 3px,transparent 3px,transparent 6px)}
 /* Data-quality banner when a window is 100% watch-estimated */
 .dq-note{font-size:11px;color:#fbbf24;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:6px;padding:6px 10px;margin-bottom:8px;line-height:1.4}
+/* Force cursor:wait on all elements during token analytics loading */
+body.tok-loading, body.tok-loading * { cursor: wait !important; }
 .cache-row .ag{font-family:var(--font-mono);font-size:var(--text-sm);font-weight:600}
 .cache-track{height:16px;border-radius:3px;overflow:hidden;display:flex;background:var(--bg)}
 .cache-track i{height:100%}.cache-track .read{background:var(--accent)}.cache-track .create{background:var(--surface-active)}
