@@ -739,6 +739,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .cache-row{display:grid;grid-template-columns:72px 1fr 46px;gap:10px;align-items:center;margin-bottom:9px}
 /* ponytail: rbtn + timeline were missing from CSS (only existed in v0.2.0 mockup). Range buttons rendered unstyled. */
 .rbtn{background:var(--surface);border:1px solid var(--border);color:var(--fg-2);font-family:inherit;font-size:var(--text-sm);font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;outline:none}
+.loading-spinner.htmx-request{display:inline-block!important;animation:spin 1s linear infinite;color:var(--accent);font-size:16px;margin-left:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
 .rbtn:hover{border-color:var(--accent)}
 .rbtn.on{background:var(--accent-on);border-color:var(--accent);color:var(--accent)}
 .timeline-bar{display:flex;gap:2px;height:120px;align-items:flex-end;margin:4px 0}

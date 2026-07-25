@@ -296,8 +296,10 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     target_cost = round(sum(cost_data) / max(len(cost_data), 1), 2)
 
     # Per-turn timeline (real total_tokens per call, time-ordered)
+    # Anomaly = estimated source (not otel/sdk/proxy), shown as red columns.
     timeline = sorted(
-        [(log.get("recorded_at", 0), log.get("total_tokens", 0) or 0, log.get("anomaly_score", 0) or 0)
+        [(log.get("recorded_at", 0), log.get("total_tokens", 0) or 0,
+          log.get("source", "") not in ("otel", "sdk", "proxy"))
          for log in all_logs],
         key=lambda x: x[0],
     )
@@ -357,16 +359,6 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     </td>
 </tr>"""
 
-    # Cache per agent
-    cache_rows = ""
-    for aname, d in sorted_agents[:6]:
-        cr = round(d["cache_read"] / max(d["cache_read"] + d["cache_create"], 1) * 100)
-        cache_rows += f"""<div class="cache-row">
-    <span class="ag">{_html_escape(aname)}</span>
-    <div class="cache-track"><i class="read" style="width:{cr}%"></i><i class="create" style="width:{100-cr}%"></i></div>
-    <span class="pct" style="color:{"var(--accent)" if cr>60 else "var(--warn)" if cr>30 else "var(--fg-3)"}">{cr}%</span>
-</div>"""
-
     # Per-agent cache hit-rate chart data (obs-spec-020 §5.5): horizontal bars, one
     # per agent, sorted by rate ascending so the worst offenders sit at the top.
     # cache_rate definition matches the per-agent table cell (line 295) for consistency.
@@ -421,19 +413,20 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
     html = f"""<div id="analyticsContent" hx-swap-oob="true">
 <div class="page-title">
-    <h1>Token Analytics</h1>
-    <span class="sub">{agent_count} agents · {_fmt_tok(total_all)} tokens · {turn_count:,} calls</span>
-    <select id="agentFilter" class="rbtn" style="margin-left:8px" onchange="htmx.ajax('GET', '/api/analytics/tokens?days={days}&hours={hours}&agent='+this.value, {{target:'#analyticsContent', swap:'innerHTML'}})">
-        <option value="__all__"{' selected' if agent == '__all__' else ''}>All agents</option>
-        {''.join(f'<option value="{_html_escape(a)}"{"" if agent != a else " selected"}>{_html_escape(a)}</option>' for a, _ in sorted_agents)}
-    </select>
-    <div class="range">
-        <button class="rbtn {'on' if hours==1 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=1', {{target:'#analyticsContent', swap:'innerHTML'}})">1h</button>
-        <button class="rbtn {'on' if hours==24 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=24', {{target:'#analyticsContent', swap:'innerHTML'}})">24h</button>
-        <button class="rbtn {'on' if days==7 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=7', {{target:'#analyticsContent', swap:'innerHTML'}})">7d</button>
-        <button class="rbtn {'on' if days==30 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=30', {{target:'#analyticsContent', swap:'innerHTML'}})">30d</button>
+        <h1>Token Analytics</h1>
+        <span class="sub">{agent_count} agents · {_fmt_tok(total_all)} tokens · {turn_count:,} calls</span>
+        <select id="agentFilter" class="rbtn" style="margin-left:8px" onchange="htmx.ajax('GET', '/api/analytics/tokens?days={days}&hours={hours}&agent='+this.value, {{target:'#analyticsContent', swap:'innerHTML', indicator:'#analyticsLoading'}})">
+            <option value="__all__"{' selected' if agent == '__all__' else ''}>All agents</option>
+            {''.join(f'<option value="{_html_escape(a)}"{" selected" if agent == a else ""}>{_html_escape(a)}</option>' for a, _ in sorted_agents)}
+        </select>
+        <div class="range">
+            <button class="rbtn {'on' if hours==1 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=1', {{target:'#analyticsContent', swap:'innerHTML', indicator:'#analyticsLoading'}})">1h</button>
+            <button class="rbtn {'on' if hours==24 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=24', {{target:'#analyticsContent', swap:'innerHTML', indicator:'#analyticsLoading'}})">24h</button>
+            <button class="rbtn {'on' if days==7 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=7', {{target:'#analyticsContent', swap:'innerHTML', indicator:'#analyticsLoading'}})">7d</button>
+            <button class="rbtn {'on' if days==30 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=30', {{target:'#analyticsContent', swap:'innerHTML', indicator:'#analyticsLoading'}})">30d</button>
+        </div>
+        <span id="analyticsLoading" class="loading-spinner" style="display:none">⟳</span>
     </div>
-</div>
 
 {insight_html}
 
@@ -487,7 +480,6 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 <div class="section-h"><h2>Cache Efficiency</h2><span class="count">read vs create · hit rate by agent</span></div>
 <div class="panel" style="margin-bottom:var(--space-6)">
     <div class="chart-box" style="height:max(180px, calc({len(sorted_agents)} * 26px))"><canvas id="cacheChart"></canvas></div>
-    {cache_rows if cache_rows else '<span style="color:var(--fg-3);font-size:var(--text-sm)">No cache data</span>'}
 </div>
 
 <div class="section-h"><h2>Per-Turn Timeline</h2><span class="count">{len(turn_tokens)} calls{'' if len(turn_tokens) <= 500 else ' · showing last 500'}</span></div>
