@@ -739,8 +739,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .cache-row{display:grid;grid-template-columns:72px 1fr 46px;gap:10px;align-items:center;margin-bottom:9px}
 /* ponytail: rbtn + timeline were missing from CSS (only existed in v0.2.0 mockup). Range buttons rendered unstyled. */
 .rbtn{background:var(--surface);border:1px solid var(--border);color:var(--fg-2);font-family:inherit;font-size:var(--text-sm);font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;outline:none}
-.loading-spinner.htmx-request{display:inline-block!important;animation:spin 1s linear infinite;color:var(--accent);font-size:16px;margin-left:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
 .rbtn:hover{border-color:var(--accent)}
 .rbtn.on{background:var(--accent-on);border-color:var(--accent);color:var(--accent)}
 .timeline-bar{display:flex;gap:2px;height:120px;align-items:flex-end;margin:4px 0}
@@ -751,8 +749,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .est-hatch{background-image:repeating-linear-gradient(45deg,#64748b,#64748b 3px,transparent 3px,transparent 6px)}
 /* Data-quality banner when a window is 100% watch-estimated */
 .dq-note{font-size:11px;color:#fbbf24;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:6px;padding:6px 10px;margin-bottom:8px;line-height:1.4}
-.tok-loading{text-align:center;padding:80px 20px;font-size:15px;color:var(--accent);animation:pulse 1.5s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 .cache-row .ag{font-family:var(--font-mono);font-size:var(--text-sm);font-weight:600}
 .cache-track{height:16px;border-radius:3px;overflow:hidden;display:flex;background:var(--bg)}
 .cache-track i{height:100%}.cache-track .read{background:var(--accent)}.cache-track .create{background:var(--surface-active)}
