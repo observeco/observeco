@@ -408,6 +408,13 @@ setInterval(function() {
 }, 30000);
 
 // ─── Token Analytics chart (fired after htmx swap) ───
+// Loading state for slow token analytics queries
+document.addEventListener('htmx:beforeRequest', function(e) {
+  if (e.detail.target && e.detail.target.id === 'analyticsContent') {
+    var el = document.getElementById('analyticsContent');
+    if (el) el.innerHTML = '<div class="tok-loading">⟳ Loading…</div>';
+  }
+});
 // ponytail: chart init MUST run here, not in inline <script> inside swapped HTML.
 // htmx innerHTML swaps do not execute inline scripts. Global fn + afterSwap is the
 // same pattern the drift chart attempts (loadDriftChart). Data arrives via window._tokenChart.

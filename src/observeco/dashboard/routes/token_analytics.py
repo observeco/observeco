@@ -127,6 +127,10 @@ def _query_agents(conn, since: int, agent: str) -> list[dict]:
 
 def _query_buckets(conn, since: int, bucket_sec: int, agent: str) -> list[dict]:
     """Time-bucket aggregates via SQL GROUP BY (returns <1000 rows)."""
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (bucket_sec, bucket_sec, since)
+    if agent != "__all__":
+        params = params + (agent,)
     cur = conn.execute(f"""
         SELECT
             (recorded_at / ?) * ? as bucket_start,
@@ -138,28 +142,26 @@ def _query_buckets(conn, since: int, bucket_sec: int, agent: str) -> list[dict]:
             COALESCE(SUM(cache_creation_tokens), 0) as cache_create,
             COALESCE(SUM(CASE WHEN source NOT IN ('otel','sdk','proxy') THEN input_tokens + output_tokens ELSE 0 END), 0) as est,
             COUNT(*) as count
-        FROM token_logs WHERE recorded_at >= ?
+        FROM token_logs WHERE recorded_at >= ? {agent_clause}
         GROUP BY bucket_start
         ORDER BY bucket_start
-    """, (bucket_sec, bucket_sec, since))
-    rows = [dict(r) for r in cur.fetchall()]
-    if agent != "__all__":
-        rows = [r for r in rows if r["agent_name"] == agent] if "agent_name" in rows[0] else rows
-    return rows
+    """, params)
+    return [dict(r) for r in cur.fetchall()]
 
 
 def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     """Last 500 calls for the per-turn timeline bars."""
-    sql = """
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
         SELECT recorded_at, total_tokens, source
-        FROM token_logs WHERE recorded_at >= ?
+        FROM token_logs WHERE recorded_at >= ? {agent_clause}
         ORDER BY recorded_at DESC
         LIMIT 500
-    """
-    cur = conn.execute(sql, (since,))
-    rows = [dict(r) for r in cur.fetchall()]
-    if agent != "__all__":
-        rows = [r for r in rows if r["agent_name"] == agent] if rows else rows
+    """, params)
+    rows = cur.fetchall()
     timeline = [
         (r["recorded_at"], r["total_tokens"] or 0, r["source"] not in ("otel", "sdk", "proxy"))
         for r in reversed(rows)
@@ -169,12 +171,16 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
 
 def _query_attribution(conn, since: int, agent: str) -> tuple[int, int]:
     """Attribution totals (attributed vs unattributed tokens)."""
-    cur = conn.execute("""
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
         SELECT
             COALESCE(SUM(CASE WHEN source IN ('otel','sdk','proxy') THEN total_tokens ELSE 0 END), 0) as attributed,
             COALESCE(SUM(CASE WHEN source NOT IN ('otel','sdk','proxy') THEN total_tokens ELSE 0 END), 0) as unattributed
-        FROM token_logs WHERE recorded_at >= ?
-    """, (since,))
+        FROM token_logs WHERE recorded_at >= ? {agent_clause}
+    """, params)
     r = cur.fetchone()
     return (r["attributed"], r["unattributed"])
 
