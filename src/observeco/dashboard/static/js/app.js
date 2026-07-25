@@ -234,6 +234,7 @@ function switchTab(tab, btn) {
 
     var tabMap = {
       'fleet': 'tabFleet',
+      'coverage': 'tabCoverage',
       'alerts': 'tabAlerts',
       'timeline': 'tabTimeline',
       'tokens': 'tabTokens',
@@ -255,6 +256,7 @@ function switchTab(tab, btn) {
     if (target) { target.classList.add('active');
       var _t = new URLSearchParams(location.search).get('token') || '';
       var _q = _t ? '?token=' + _t : '';
+      if (tab === 'coverage') htmx.ajax('GET', '/api/discover/coverage' + _q, {target: '#coverageContainer', swap: 'innerHTML'});
       if (tab === 'tokens') htmx.ajax('GET', '/api/analytics/tokens' + _q, {target: '#analyticsContent', swap: 'innerHTML'});
       if (tab === 'drift') htmx.ajax('GET', '/api/drift-summary' + _q, {target: '#driftContainer', swap: 'innerHTML'});
       if (tab === 'capability') htmx.ajax('GET', '/api/capability/page' + _q, {target: '#capabilityContainer', swap: 'innerHTML'});
@@ -473,7 +475,7 @@ function renderTokenChart() {
       interaction: {mode: 'index', intersect: false},
       plugins: {legend: {display: true, labels: {boxWidth: 10, font: {size: 9}, color: '#94a3b8'}}, tooltip: {callbacks: {label: function(c){return c.dataset.label + ': ' + (c.parsed.y||0).toLocaleString() + 'K';}}}},
       scales: {
-        x: {stacked: true, grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
+        x: {stacked: true, grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 24}},
         y: {stacked: true, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: function(v){return v + 'K';}}}
       }
     }
@@ -564,7 +566,7 @@ function _renderEffChart(canvasId, globalKey, color, yFmt, benchLines) {
       responsive: true, maintainAspectRatio: false,
       plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c){return yFmt(c.parsed.y);}}}},
       scales: {
-        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10}},
+        x: {grid: {display: false}, ticks: {color: '#64748b', font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 24}},
         y: {suggestedMin: 0, suggestedMax: maxBench, grid: {color: 'rgba(51,65,85,.2)'}, ticks: {color: '#94a3b8', font: {size: 9}, callback: yFmt}}
       }
     },

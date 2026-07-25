@@ -6302,6 +6302,7 @@ async def api_partials_nav():
     <div class="nav-group">
       <span class="glabel">Monitor</span>
       <span class="nav-tab active clickable" data-tab="fleet">Fleet</span>
+      <span class="nav-tab clickable" data-tab="coverage">Coverage</span>
       <span class="nav-tab clickable" data-tab="alerts">Alerts</span>
       <span class="nav-tab clickable" data-tab="timeline">Error Timeline</span>
       <span class="nav-tab clickable" data-tab="pathway">Pathway Map</span>

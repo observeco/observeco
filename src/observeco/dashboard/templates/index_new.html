@@ -38,10 +38,17 @@ function refreshBadgeCount() {
 }
 refreshBadgeCount();
 setInterval(refreshBadgeCount, 300000);
+
+function applyCoverageFilter(filter, btn) {
+  document.querySelectorAll('.coverage-filters .filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  var q = document.getElementById('coverageSearch').value;
+  htmx.ajax('GET', '/api/discover/coverage?filter=' + filter + '&q=' + encodeURIComponent(q), {target: '#coverageContainer', swap: 'innerHTML'});
+}
 </script>
 
 <!-- Domain-grouped nav -->
-<div id="navContainer" hx-get="/api/partials/nav" hx-trigger="revealed once" hx-target="this" hx-swap="outerHTML">
+<div id="navContainer">
   <nav class="nav" aria-label="Primary">
     <div class="nav-group">
       <span class="glabel">Monitor</span>
@@ -133,7 +140,7 @@ setInterval(refreshBadgeCount, 300000);
 
   <!-- Coverage tab (obs-spec-082) -->
   <div class="tab-content" id="tabCoverage">
-    <div id="coverageContainer" hx-get="/api/discover/coverage" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
+    <div id="coverageContainer">
       <div class="loading" style="padding:24px;text-align:center;color:#64748b;font-size:12px;">Loading coverage...</div>
     </div>
   </div>

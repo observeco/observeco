@@ -147,7 +147,6 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 </div>""")
 
     agents_cfg = db.get_agents()
-    [a["agent_name"] for a in agents_cfg]
 
     # If no token data, show empty state
     if not all_logs:
@@ -173,8 +172,6 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     total_cache_create = 0
     total_attributed = 0
     total_unattributed = 0
-    otel_input = 0
-    otel_output = 0
     agents_with_data = set()
 
     # Buckets derived from actual row timestamps (integer-divided epoch), NOT from
@@ -216,6 +213,9 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         d["model"] = log.get("model", d["model"]) or d["model"]
         d["provider"] = log.get("provider", d["provider"]) or d["provider"]
         d["count"] += 1
+        # Track if agent has ANY accurate source (not just the last log's source)
+        if log.get("source") in ("otel", "sdk", "proxy"):
+            d["source"] = "otel"  # mark as accurate
         agents_with_data.add(aname)
 
         total_cost += log.get("cost", 0) or 0
@@ -224,10 +224,8 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         total_cache_read += log.get("cache_read_tokens", 0) or 0
         total_cache_create += log.get("cache_creation_tokens", 0) or 0
 
-        if log.get("source") == "otel":
+        if log.get("source") in ("otel", "sdk", "proxy"):
             total_attributed += log.get("total_tokens", 0) or 0
-            otel_input += log.get("input_tokens", 0) or 0
-            otel_output += log.get("output_tokens", 0) or 0
         else:
             total_unattributed += log.get("total_tokens", 0) or 0
 
@@ -242,9 +240,9 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         day_buckets[bk]["cache"] += log.get("cache_read_tokens", 0) or 0
         day_buckets[bk]["cache_create"] += log.get("cache_creation_tokens", 0) or 0
         day_buckets[bk]["count"] += 1
-        # ponytail: 'est' = estimated (source != otel) tokens for this bucket, used to
-        # shade estimate-vs-accurate. 'acc' is implied (total - est). Upgrade: track per-bucket acc too.
-        if log.get("source") != "otel":
+        # 'est' = estimated (non-attributed source) tokens for this bucket.
+        # Matches attribution logic: otel/sdk/proxy = accurate, everything else = estimated.
+        if log.get("source") not in ("otel", "sdk", "proxy"):
             day_buckets[bk]["est"] += (log.get("input_tokens", 0) or 0) + (log.get("output_tokens", 0) or 0)
 
     # Sort agents by cost descending
@@ -266,25 +264,14 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     # and collapses to input-only for watch-estimated rows where output=0).
     total_data = [day_buckets[k]["total"] // 1000 for k in sorted_keys]
     # ── Efficiency time-series (v0.3.1 design: 4 ratio charts, each with benchmark bands) ──
-    # All divide by max(count,1) so empty buckets → 0 (not divide-by-zero / inf).
-    tokens_per_turn = [round(day_buckets[k]["total"] / max(day_buckets[k]["count"], 1)) for k in sorted_keys]
-    output_input_ratio = [
-        round(day_buckets[k]["output"] / max(day_buckets[k]["input"], 1), 2) for k in sorted_keys
-    ]
-    cache_rate_data = [
-        round(day_buckets[k]["cache"] / max(day_buckets[k]["cache"] + day_buckets[k]["cache_create"], 1) * 100, 1) for k in sorted_keys
-    ]
-    cost_per_turn = [round(day_buckets[k]["cost"] / max(day_buckets[k]["count"], 1), 5) for k in sorted_keys]
-    # Double-count flag: Estimated is a proxy for total when real totals are missing.
-    # When a bucket ALSO has real input/output/cache, Estimated + real overlap →
-    # total_data already counts real tokens; stacking Estimated on top double-counts.
-    # Mark buckets where est > 0 AND real input|output|cache > 0 (overlap case).
-    double_count = [
-        1 if (day_buckets[k]["est"] > 0 and
-              (day_buckets[k]["input"] > 0 or day_buckets[k]["output"] > 0 or day_buckets[k]["cache"] > 0))
-        else 0 for k in sorted_keys
-    ]
-    any(double_count)
+    # Empty buckets (count=0) produce None so line charts skip them instead of showing 0.0.
+    def _eff(val_fn, k):
+        return val_fn(k) if day_buckets[k]["count"] > 0 else None
+
+    tokens_per_turn = [_eff(lambda k: round(day_buckets[k]["total"] / day_buckets[k]["count"]), k) for k in sorted_keys]
+    output_input_ratio = [_eff(lambda k: round(day_buckets[k]["output"] / max(day_buckets[k]["input"], 1), 2), k) for k in sorted_keys]
+    cache_rate_data = [_eff(lambda k: round(day_buckets[k]["cache"] / max(day_buckets[k]["cache"] + day_buckets[k]["cache_create"], 1) * 100, 1), k) for k in sorted_keys]
+    cost_per_turn = [_eff(lambda k: round(day_buckets[k]["cost"] / day_buckets[k]["count"], 5), k) for k in sorted_keys]
     # Real fix for the double-count: where a bucket has real input/output/cache, the
     # Estimated stack is suppressed (set to 0) so it can't inflate the total on top of
     # real counts. Estimated is only shown in buckets with NO real breakdown (pure proxy).
@@ -325,11 +312,8 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         turn_tokens = turn_tokens[-500:]
         turn_anom = turn_anom[-500:]
     max_tok = max(turn_tokens) or 1
-    # Data-quality flag: is this window 100% watch-estimated (no otel/sdk/proxy source)?
-    window_has_real = any(
-        (log.get("source") in ("otel", "sdk", "proxy")) for log in all_logs
-    )
-    (len(all_logs) > 0) and not window_has_real
+    # No dead variable — quality check was removed; otel/sdk/proxy detection
+    # is handled per-agent via the source field in agent_data.
 
     COMP_ORDER = [
         ("identity", "var(--token-identity)", "identity"),
@@ -433,7 +417,6 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     <div class="vc-rec">{rec}</div>
 </div>"""
 
-    _fmt_tok(sum(d["tokens"] for _, d in sorted_agents))
     agent_count = len(sorted_agents)
 
     html = f"""<div id="analyticsContent" hx-swap-oob="true">
@@ -468,7 +451,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         <div class="chart-box"><canvas id="tptChart"></canvas></div>
     </div>
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Output / Input</h2><span class="cc-val mono">{round(otel_output / max(otel_input, 1), 2)}</span><span class="cc-lab">otel-tracked only · fleet {round(total_output / max(total_input, 1), 2)}</span></div>
+        <div class="cc-head"><h2>Output / Input</h2><span class="cc-val mono">{round(total_output / max(total_input, 1), 2)}</span><span class="cc-lab">ratio &#183; higher better</span></div>
         <div class="chart-box"><canvas id="oirChart"></canvas></div>
     </div>
     <div class="panel chart-card">

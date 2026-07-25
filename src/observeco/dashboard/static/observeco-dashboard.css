@@ -2290,6 +2290,8 @@ body {
 .gap-row .gap-actions .btn.add:hover { background: #16a34a; }
 .gap-row .gap-actions .btn.dismiss { border-color: transparent; color: #475569; }
 .gap-row .gap-actions .btn.dismiss:hover { color: #ef4444; }
+.gap-row .gap-actions .btn.undo { border-color: #3b82f6; color: #60a5fa; background: rgba(59,130,246,.1); }
+.gap-row .gap-actions .btn.undo:hover { background: rgba(59,130,246,.2); }
 
 .coverage-learning {
   border: 1px solid var(--border); border-radius: 8px; padding: 4px 0;
