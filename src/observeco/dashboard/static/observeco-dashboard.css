@@ -2332,7 +2332,7 @@ body {
  */
 
 /* ── v4 modal modifier ── */
-.modal.c-profile { border-radius: 12px; max-height: 88vh; overflow-y: auto; }
+.modal.c-profile { border-radius: 12px; max-height: 88vh; overflow-y: auto !important; overflow-x: hidden; }
 /* Always show scrollbar thumb in profile modal (macOS hides by default) */
 .modal.c-profile::-webkit-scrollbar { width: 6px; }
 .modal.c-profile::-webkit-scrollbar-track { background: transparent; }
