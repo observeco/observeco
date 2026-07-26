@@ -113,8 +113,7 @@ def _query_agents(conn, since: int, agent: str) -> list[dict]:
             COALESCE(SUM(tools_tokens), 0) as tools,
             COALESCE(SUM(guidance_tokens), 0) as guidance,
             COUNT(*) as count,
-            MAX(CASE WHEN source IN ('otel','sdk','proxy') THEN 1 ELSE 0 END) as has_accurate,
-            MIN(CASE WHEN model IS NOT NULL AND model != '' THEN model END) as model
+            MAX(CASE WHEN source IN ('otel','sdk','proxy') THEN 1 ELSE 0 END) as has_accurate
         FROM token_logs WHERE recorded_at >= ?
         GROUP BY agent_name
         ORDER BY SUM(cost) DESC
@@ -122,7 +121,33 @@ def _query_agents(conn, since: int, agent: str) -> list[dict]:
     rows = [dict(r) for r in cur.fetchall()]
     if agent != "__all__":
         rows = [r for r in rows if r["agent_name"] == agent]
+    # Patch model: most common model per agent (MIN() gives alphabetically first — wrong)
+    latest = _query_most_common_model(conn, since, agent)
+    for r in rows:
+        r["model"] = latest.get(r["agent_name"], "")
     return rows
+
+
+def _query_most_common_model(conn, since: int, agent: str) -> dict[str, str]:
+    """Most frequently used model per agent (replaces MIN(model) which is wrong)."""
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
+        SELECT agent_name, model, COUNT(*) as cnt
+        FROM token_logs
+        WHERE recorded_at >= ? AND model IS NOT NULL AND model != '' {agent_clause}
+        GROUP BY agent_name, model
+        ORDER BY agent_name, cnt DESC
+    """, params)
+    result = {}
+    seen = set()
+    for r in cur.fetchall():
+        if r["agent_name"] not in seen:
+            seen.add(r["agent_name"])
+            result[r["agent_name"]] = r["model"]
+    return result
 
 
 def _query_buckets(conn, since: int, bucket_sec: int, agent: str) -> list[dict]:
@@ -150,21 +175,32 @@ def _query_buckets(conn, since: int, bucket_sec: int, agent: str) -> list[dict]:
 
 
 def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
-    """Last 500 calls for the per-turn timeline bars."""
+    """Last 500 calls for the per-turn timeline bars.
+    Anomaly = token count spike (>3x median) — marks real outliers, not data quality.
+    """
     agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
     params = (since,)
     if agent != "__all__":
         params = params + (agent,)
     cur = conn.execute(f"""
-        SELECT recorded_at, total_tokens, source
+        SELECT recorded_at, total_tokens
         FROM token_logs WHERE recorded_at >= ? {agent_clause}
         ORDER BY recorded_at DESC
         LIMIT 500
     """, params)
-    rows = cur.fetchall()
+    rows = list(reversed(cur.fetchall()))
+
+    if not rows:
+        return []
+
+    # Statistical anomaly: token count > 3x the median
+    token_vals = sorted([r["total_tokens"] or 0 for r in rows])
+    median = token_vals[len(token_vals) // 2]
+    threshold = median * 3
+
     timeline = [
-        (r["recorded_at"], r["total_tokens"] or 0, r["source"] not in ("otel", "sdk", "proxy"))
-        for r in reversed(rows)
+        (r["recorded_at"], r["total_tokens"] or 0, (r["total_tokens"] or 0) > threshold)
+        for r in rows
     ]
     return timeline
 
