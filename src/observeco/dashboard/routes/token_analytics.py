@@ -176,27 +176,51 @@ def _query_buckets(conn, since: int, bucket_sec: int, agent: str) -> list[dict]:
 
 def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     """Last 500 calls for the per-turn timeline bars.
-    Anomaly = token count spike (>3x median) — marks real outliers, not data quality.
+    Samples across the full time range (not just the most recent 500 calls)
+    so the timeline reflects the entire selected period.
+    Anomaly = token count spike (>2x median) — marks real outliers.
     """
     agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
     params = (since,)
     if agent != "__all__":
         params = params + (agent,)
+
+    # First, get total count in range to decide if we need to sample
     cur = conn.execute(f"""
-        SELECT recorded_at, total_tokens
-        FROM token_logs WHERE recorded_at >= ? {agent_clause}
-        ORDER BY recorded_at DESC
-        LIMIT 500
+        SELECT COUNT(*) as cnt FROM token_logs WHERE recorded_at >= ? {agent_clause}
     """, params)
-    rows = list(reversed(cur.fetchall()))
+    total = cur.fetchone()["cnt"]
+
+    if total <= 500:
+        # Small dataset — just return everything
+        cur = conn.execute(f"""
+            SELECT recorded_at, total_tokens
+            FROM token_logs WHERE recorded_at >= ? {agent_clause}
+            ORDER BY recorded_at ASC
+        """, params)
+        rows = [dict(r) for r in cur.fetchall()]
+    else:
+        # Large dataset — sample evenly across the full time range
+        # Use a subquery with row_number to get evenly-spaced samples
+        cur = conn.execute(f"""
+            SELECT recorded_at, total_tokens FROM (
+                SELECT recorded_at, total_tokens,
+                    ROW_NUMBER() OVER (ORDER BY recorded_at) as rn,
+                    COUNT(*) OVER () as cnt
+                FROM token_logs WHERE recorded_at >= ? {agent_clause}
+            ) WHERE rn % MAX(1, cnt / 500) = 0
+            ORDER BY recorded_at ASC
+            LIMIT 500
+        """, params)
+        rows = [dict(r) for r in cur.fetchall()]
 
     if not rows:
         return []
 
-    # Statistical anomaly: token count > 3x the median
+    # Statistical anomaly: token count > 2x the median
     token_vals = sorted([r["total_tokens"] or 0 for r in rows])
     median = token_vals[len(token_vals) // 2]
-    threshold = median * 3
+    threshold = median * 2
 
     timeline = [
         (r["recorded_at"], r["total_tokens"] or 0, (r["total_tokens"] or 0) > threshold)
