@@ -416,10 +416,16 @@ document.addEventListener('htmx:beforeRequest', function(e) {
   }
 });
 document.addEventListener('htmx:afterSwap', function(e) {
-  document.body.classList.remove('tok-loading');
+  // Only remove cursor:wait when the ANALYTICS swap completes,
+  // not when auto-refresh swaps for fleet/alerts happen mid-flight
+  if (e.detail.target && e.detail.target.id === 'analyticsContent') {
+    document.body.classList.remove('tok-loading');
+  }
 });
 document.addEventListener('htmx:responseError', function(e) {
-  document.body.classList.remove('tok-loading');
+  if (e.detail.target && e.detail.target.id === 'analyticsContent') {
+    document.body.classList.remove('tok-loading');
+  }
 });
 // Fallback: also add cursor:wait on range button clicks directly,
 // in case htmx:beforeRequest doesn't fire (e.g. 401 auth redirect)
