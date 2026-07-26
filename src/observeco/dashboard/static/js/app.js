@@ -409,6 +409,7 @@ setInterval(function() {
 
 // ─── Token Analytics chart (fired after htmx swap) ───
 // Loading cursor for token analytics (instant feedback, no content wipe)
+// Works for both htmx-managed requests AND htmx.ajax() calls from range buttons.
 document.addEventListener('htmx:beforeRequest', function(e) {
   if (e.detail.target && e.detail.target.id === 'analyticsContent') {
     document.body.classList.add('tok-loading');
@@ -416,6 +417,15 @@ document.addEventListener('htmx:beforeRequest', function(e) {
 });
 document.addEventListener('htmx:afterSwap', function(e) {
   document.body.classList.remove('tok-loading');
+});
+document.addEventListener('htmx:responseError', function(e) {
+  document.body.classList.remove('tok-loading');
+});
+// Fallback: also add cursor:wait on range button clicks directly,
+// in case htmx:beforeRequest doesn't fire (e.g. 401 auth redirect)
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.range .rbtn');
+  if (btn) document.body.classList.add('tok-loading');
 });
 // ponytail: chart init MUST run here, not in inline <script> inside swapped HTML.
 // htmx innerHTML swaps do not execute inline scripts. Global fn + afterSwap is the

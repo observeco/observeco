@@ -477,15 +477,15 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 <div class="page-title">
         <h1>Token Analytics</h1>
         <span class="sub">{agent_count} agents · {_fmt_tok(total_all)} tokens · {turn_count:,} calls</span>
-        <select id="agentFilter" class="rbtn" style="margin-left:8px" onchange="htmx.ajax('GET', '/api/analytics/tokens?days={days}&hours={hours}&agent='+this.value, {{target:'#analyticsContent', swap:'innerHTML'}})">
+        <select id="agentFilter" class="rbtn" style="margin-left:8px" onchange="var _t=new URLSearchParams(location.search).get('token')||''; htmx.ajax('GET', '/api/analytics/tokens?days={days}&hours={hours}&agent='+this.value+(_t?'&token='+_t:''), {{target:'#analyticsContent', swap:'innerHTML'}})">
             <option value="__all__"{' selected' if agent == '__all__' else ''}>All agents</option>
             {''.join(f'<option value="{_html_escape(a)}"{" selected" if agent == a else ""}>{_html_escape(a)}</option>' for a, _ in sorted_agents)}
         </select>
         <div class="range">
-            <button class="rbtn {'on' if hours==1 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=1', {{target:'#analyticsContent', swap:'innerHTML'}})">1h</button>
-            <button class="rbtn {'on' if hours==24 and days==7 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=24', {{target:'#analyticsContent', swap:'innerHTML'}})">24h</button>
-            <button class="rbtn {'on' if days==7 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=7', {{target:'#analyticsContent', swap:'innerHTML'}})">7d</button>
-            <button class="rbtn {'on' if days==30 and hours==0 else ''}" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=30', {{target:'#analyticsContent', swap:'innerHTML'}})">30d</button>
+            <button class="rbtn {'on' if hours==1 and days==7 else ''}" onclick="var _t=new URLSearchParams(location.search).get('token')||''; htmx.ajax('GET', '/api/analytics/tokens?hours=1'+(_t?'&token='+_t:''), {{target:'#analyticsContent', swap:'innerHTML'}})">1h</button>
+            <button class="rbtn {'on' if hours==24 and days==7 else ''}" onclick="var _t=new URLSearchParams(location.search).get('token')||''; htmx.ajax('GET', '/api/analytics/tokens?hours=24'+(_t?'&token='+_t:''), {{target:'#analyticsContent', swap:'innerHTML'}})">24h</button>
+            <button class="rbtn {'on' if days==7 and hours==0 else ''}" onclick="var _t=new URLSearchParams(location.search).get('token')||''; htmx.ajax('GET', '/api/analytics/tokens?days=7'+(_t?'&token='+_t:''), {{target:'#analyticsContent', swap:'innerHTML'}})">7d</button>
+            <button class="rbtn {'on' if days==30 and hours==0 else ''}" onclick="var _t=new URLSearchParams(location.search).get('token')||''; htmx.ajax('GET', '/api/analytics/tokens?days=30'+(_t?'&token='+_t:''), {{target:'#analyticsContent', swap:'innerHTML'}})">30d</button>
         </div>
     </div>
 
