@@ -2332,7 +2332,12 @@ body {
  */
 
 /* ── v4 modal modifier ── */
-.modal.c-profile { border-radius: 12px; }
+.modal.c-profile { border-radius: 12px; max-height: 88vh; overflow-y: auto; }
+/* Always show scrollbar thumb in profile modal (macOS hides by default) */
+.modal.c-profile::-webkit-scrollbar { width: 6px; }
+.modal.c-profile::-webkit-scrollbar-track { background: transparent; }
+.modal.c-profile::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+.modal.c-profile::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
 /* ── 1. Status ── */
 .c-profile .status { padding: 22px 22px 16px; border-bottom: 1px solid var(--border-soft); }
