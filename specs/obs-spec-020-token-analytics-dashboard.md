@@ -1,6 +1,6 @@
 # obs-spec-020: Token Analytics Dashboard
 
-**Status:** v3 Built 2026-07-07 — Token tab now ships the 4-chart grid (Cost + Target benchmark line, Cache Hit Rate, Output Share, Cache Hit by Agent) matching the v0.3.1 design. Verdict card, cache-by-agent chart, confidence indicator, per-agent breakdown table retained. Component toggle + zoom/pan + drill-down modal deferred.
+**Status:** v4 Built 2026-07-26 — Per-turn timeline now samples across full time range (ROW_NUMBER modulo sampling), anomaly detection uses 2x median token spike (not 3x), model shows most common per agent (not alphabetically first). Cursor:wait on all elements during loads. SQL aggregation (1,158× fewer rows). Agent filter bug fixed. Est double-count fixed. 3 frontend accuracy bugs fixed.
 **Product:** ObserveCo dashboard
 **Depends on:** obs-spec-014 (per-turn token tracking), token_logs table (exists)
 **Owner:** Pragma (COO)
