@@ -1,0 +1,6 @@
+name: anomaly
+version: "0.1.0"
+description: "Scans Hermes session data for 4 anomaly types: no_tools, high_cost, long_gaps, retry_loops. Zero external deps. Reads from ~/.hermes/state.db."
+author: ObserveCo
+hooks:
+  - on_session_end
