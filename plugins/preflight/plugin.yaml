@@ -1,0 +1,6 @@
+name: preflight
+version: "0.1.0"
+description: "Scores agent context quality against 7 criteria from arxiv 2607.14275. Regex-only pass, zero external deps. Cite: Bousetouane (ProofAgent.ai)."
+author: ObserveCo
+hooks:
+  - on_session_start
