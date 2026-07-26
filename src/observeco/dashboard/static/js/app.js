@@ -430,10 +430,15 @@ document.addEventListener('htmx:responseError', function(e) {
     document.body.classList.remove('tok-loading');
   }
 });
-// Fallback: also add cursor:wait on range button and agent card clicks directly,
+// Fallback: also add cursor:wait on range button, agent card, and filter clicks directly,
 // in case htmx:beforeRequest doesn't fire (e.g. 401 auth redirect)
 document.addEventListener('click', function(e) {
-  if (e.target.closest('.range .rbtn') || e.target.closest('.agent') || e.target.closest('.filter-chip')) {
+  if (e.target.closest('.range .rbtn') ||
+      e.target.closest('.agent') ||
+      e.target.closest('.filter-chip') ||
+      e.target.closest('.crow.tappable') ||
+      e.target.closest('.tl-row') ||
+      e.target.closest('tr[onclick]')) {
     document.body.classList.add('tok-loading');
   }
 });
