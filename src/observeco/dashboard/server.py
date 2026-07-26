@@ -2865,6 +2865,16 @@ async def api_brain(agent: str = "all"):
       </div>
     </div>
 
+    <!-- ====== CHISEL SUGGESTIONS (v0.2) ====== -->
+    <div style="background:#131a2b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:16px;">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">🔍 Chisel Suggestions
+        <span style="font-size:11px;color:#64748b;font-weight:400;">v0.2 — trim history + cut log</span>
+      </h3>
+      <div id="chiselSuggestions" hx-get="/api/brain/suggestions" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading chisel data…</div>
+      </div>
+    </div>
+
     <!-- ====== TOKEN OPTIMISER ====== -->
     <div style="background:#131a2b;border:1px solid #3730a3;border-radius:12px;padding:20px;margin-top:16px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -3569,6 +3579,104 @@ async def api_compress_feed():
     <span style="margin-left:auto;color:#475569;font-size:11px;">{ago}</span>
 </div>""")
     return HTMLResponse("".join(items))
+
+
+# ── Chisel v0.2: Suggestions endpoint ──────────────────────────────────────
+
+@app.get("/api/brain/suggestions", response_class=HTMLResponse)
+async def api_brain_suggestions(agent: str = "main"):
+    """Chisel v0.2 suggest data — duplicate rules, stale refs, unused skills.
+
+    Reads from ~/.hermes/state/chisel.db (plugin's own DB, separate from pulse.db).
+    Returns HTML partial for the Brain tab.
+    """
+    chisel_db_path = Path.home() / ".hermes" / "state" / "chisel.db"
+    if not chisel_db_path.exists():
+        return HTMLResponse(
+            '<div style="color:#64748b;font-size:12px;padding:12px;">'
+            "Chisel plugin not active. No chisel.db found."
+            "</div>"
+        )
+
+    import sqlite3 as _sql2
+    conn = _sql2.connect(str(chisel_db_path))
+    conn.row_factory = _sql2.Row
+
+    cuts = [dict(r) for r in conn.execute(
+        "SELECT id, agent_name, file_path, cut_type, tokens_before, tokens_after, "
+        "tokens_saved, verified, verified_at, timestamp FROM cut_log "
+        "ORDER BY timestamp DESC LIMIT 10"
+    ).fetchall()]
+
+    trims = [dict(r) for r in conn.execute(
+        "SELECT agent_name, total_tokens, identity_tokens, skills_tokens, "
+        "memory_tokens, tools_tokens, guidance_tokens, timestamp FROM trim_log "
+        "ORDER BY timestamp DESC LIMIT 20"
+    ).fetchall()]
+
+    conn.close()
+
+    if not cuts and not trims:
+        return HTMLResponse(
+            '<div style="color:#64748b;font-size:12px;padding:12px;">'
+            "No chisel data yet. Run <code>hermes chisel trim</code> "
+            "and <code>hermes chisel suggest</code> to collect data."
+            "</div>"
+        )
+
+    parts = []
+
+    # Trim summary
+    if trims:
+        parts.append('<div style="margin-bottom:16px;">')
+        parts.append('<h4 style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:8px;">📋 Recent Trims</h4>')
+        parts.append('<div style="display:grid;gap:6px;">')
+        for t in trims[:5]:
+            agent_name = t["agent_name"]
+            total = t["total_tokens"]
+            parts.append(
+                f'<div style="display:flex;justify-content:space-between;align-items:center;'
+                f'background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 12px;">'
+                f'<span style="font-size:12px;color:#e2e8f0;">{agent_name}</span>'
+                f'<span style="font-size:12px;font-weight:600;color:#94a3b8;">{total:,} tok</span>'
+                f'</div>'
+            )
+        parts.append('</div></div>')
+
+    # Cut log
+    if cuts:
+        parts.append('<div style="margin-bottom:16px;">')
+        parts.append('<h4 style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:8px;">✂️ Cut History</h4>')
+        parts.append('<div style="display:grid;gap:6px;">')
+        for c in cuts:
+            verified_badge = "✅" if c["verified"] == 1 else "⚠️" if c["verified"] == -1 else "⏳"
+            saved = c["tokens_saved"]
+            saved_color = "#22c55e" if saved > 0 else "#64748b"
+            parts.append(
+                f'<div style="display:flex;justify-content:space-between;align-items:center;'
+                f'background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 12px;">'
+                f'<span style="font-size:12px;color:#e2e8f0;">{c["agent_name"]} <span style="color:#64748b;">·</span> {verified_badge}</span>'
+                f'<span style="font-size:12px;color:{saved_color};">{c["tokens_before"]:,} → {c["tokens_after"]:,} tok</span>'
+                f'</div>'
+            )
+        parts.append('</div></div>')
+
+    # Summary stats
+    total_saved = sum(c["tokens_saved"] for c in cuts if c["tokens_saved"] > 0)
+    verified_count = sum(1 for c in cuts if c["verified"] == 1)
+    regression_count = sum(1 for c in cuts if c["verified"] == -1)
+
+    parts.append('<div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-top:8px;">')
+    parts.append('<span style="font-size:11px;color:#64748b;">Total saved: </span>')
+    parts.append(f'<span style="font-size:12px;font-weight:600;color:#22c55e;">{total_saved:,} tok</span>')
+    parts.append('<span style="font-size:11px;color:#64748b;margin-left:12px;">Verified: </span>')
+    parts.append(f'<span style="font-size:12px;font-weight:600;color:#86efac;">{verified_count}</span>')
+    if regression_count:
+        parts.append('<span style="font-size:11px;color:#64748b;margin-left:12px;">Regressions: </span>')
+        parts.append(f'<span style="font-size:12px;font-weight:600;color:#fca5a5;">{regression_count}</span>')
+    parts.append('</div>')
+
+    return HTMLResponse("".join(parts))
 
 
 @app.get("/api/token-summary")
