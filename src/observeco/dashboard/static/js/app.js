@@ -394,11 +394,14 @@ setInterval(function() {
     if (q && activeFilter) fleetUrl += '&';
     if (activeFilter) fleetUrl += 'status_filter=' + activeFilter;
   }
+  // Suppress cursor:wait during auto-refresh (background refresh, not user-initiated)
+  window._autoRefresh = true;
   // ponytail: innerHTML, NOT outerHTML. outerHTML on first refresh removes the container (id lost), then htmx falls back to BODY as target on second refresh, replacing entire page with verdict HTML — black screen.
   htmx.ajax('GET', '/api/fleet/verdict', {target: '#verdictContainer', swap: 'innerHTML'});
   htmx.ajax('GET', fleetUrl, {target: '#fleetGrid', swap: 'innerHTML'});
   htmx.ajax('GET', '/api/alerts/live', {target: '#alertsContainer', swap: 'innerHTML'});
   setTimeout(function() {
+    window._autoRefresh = false;
     if (document.querySelector('#fleetGrid')) {
       document.querySelector('#fleetGrid').parentElement.scrollTop = sp;
     }
@@ -408,30 +411,31 @@ setInterval(function() {
 }, 30000);
 
 // ─── Token Analytics chart (fired after htmx swap) ───
-// Loading cursor for token analytics (instant feedback, no content wipe)
-// Works for both htmx-managed requests AND htmx.ajax() calls from range buttons.
+// Loading cursor: wait on user-initiated htmx requests, not auto-refresh.
+// Auto-refresh (30s interval) sets a flag so we don't flash the cursor.
+var _LOADING_TARGETS = new Set(['analyticsContent', 'fleetGrid', 'modalContainer', 'verdictContainer', 'alertsContainer', 'coverageContainer', 'driftContainer', 'capabilityContainer']);
+window._autoRefresh = false;
 document.addEventListener('htmx:beforeRequest', function(e) {
-  if (e.detail.target && e.detail.target.id === 'analyticsContent') {
+  if (e.detail.target && _LOADING_TARGETS.has(e.detail.target.id) && !window._autoRefresh) {
     document.body.classList.add('tok-loading');
   }
 });
 document.addEventListener('htmx:afterSwap', function(e) {
-  // Only remove cursor:wait when the ANALYTICS swap completes,
-  // not when auto-refresh swaps for fleet/alerts happen mid-flight
-  if (e.detail.target && e.detail.target.id === 'analyticsContent') {
+  if (e.detail.target && _LOADING_TARGETS.has(e.detail.target.id) && !window._autoRefresh) {
     document.body.classList.remove('tok-loading');
   }
 });
 document.addEventListener('htmx:responseError', function(e) {
-  if (e.detail.target && e.detail.target.id === 'analyticsContent') {
+  if (e.detail.target && _LOADING_TARGETS.has(e.detail.target.id) && !window._autoRefresh) {
     document.body.classList.remove('tok-loading');
   }
 });
-// Fallback: also add cursor:wait on range button clicks directly,
+// Fallback: also add cursor:wait on range button and agent card clicks directly,
 // in case htmx:beforeRequest doesn't fire (e.g. 401 auth redirect)
 document.addEventListener('click', function(e) {
-  var btn = e.target.closest('.range .rbtn');
-  if (btn) document.body.classList.add('tok-loading');
+  if (e.target.closest('.range .rbtn') || e.target.closest('.agent') || e.target.closest('.filter-chip')) {
+    document.body.classList.add('tok-loading');
+  }
 });
 // ponytail: chart init MUST run here, not in inline <script> inside swapped HTML.
 // htmx innerHTML swaps do not execute inline scripts. Global fn + afterSwap is the
