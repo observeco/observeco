@@ -1,0 +1,14 @@
+[
+  {
+    "code": "def get_user(username):\n    query = \"SELECT * FROM users WHERE name = '\" + username + \"'\"\n    cursor.execute(query)\n    return cursor.fetchone()",
+    "expected": "SQL injection vulnerability: username is concatenated directly into the query string. Attackers can inject SQL like ' OR '1'='1' --. Fix: use parameterized queries: cursor.execute('SELECT * FROM users WHERE name = ?', (username,))"
+  },
+  {
+    "code": "def search_products(term):\n    query = f\"SELECT * FROM products WHERE name LIKE '%{term}%'\"\n    cursor.execute(query)\n    return cursor.fetchall()",
+    "expected": "SQL injection vulnerability: term is interpolated into the query via f-string. The LIKE pattern with wildcards is particularly dangerous. Fix: use parameterized query: cursor.execute('SELECT * FROM products WHERE name LIKE ?', (f'%{term}%',))"
+  },
+  {
+    "code": "def delete_user(user_id):\n    cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))\n    return True",
+    "expected": "No SQL injection vulnerability. The query uses parameterized execution with ? placeholder and tuple argument. This is safe."
+  }
+]

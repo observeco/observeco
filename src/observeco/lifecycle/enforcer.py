@@ -171,7 +171,7 @@ class LifecycleEnforcer:
                 "state": target_state,
                 "waived_gates": [g["name"] for g in failed],
                 "waived_at": time.time(),
-                "reason": (evidence or {}).get("waiver_reason", "Sean override"),
+                "reason": (evidence or {}).get("waiver_reason", "admin override"),
             })
         self._save()
         return {"ok": True, "message": f"Advanced to {target_state}", "gates": gates}

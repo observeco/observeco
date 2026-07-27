@@ -1,0 +1,14 @@
+[
+  {
+    "code": "function renderComment(text) {\n    document.getElementById('comments').innerHTML += '<p>' + text + '</p>';\n}",
+    "expected": "XSS vulnerability: user-supplied text is inserted directly into innerHTML. Attackers can inject <script>alert('XSS')</script>. Fix: use textContent instead: element.textContent = text; or sanitize with DOMPurify before innerHTML."
+  },
+  {
+    "code": "function handleSearch(query) {\n    const safe = DOMPurify.sanitize(query);\n    document.getElementById('results').innerHTML = '<span>' + safe + '</span>';\n}",
+    "expected": "No XSS vulnerability. The user input is sanitized through DOMPurify before being inserted into the DOM. This is the correct approach."
+  },
+  {
+    "code": "function showProfile(name) {\n    const div = document.createElement('div');\n    div.textContent = 'Welcome, ' + name;\n    document.body.appendChild(div);\n}",
+    "expected": "No XSS vulnerability. textContent is used instead of innerHTML, which automatically escapes HTML. This is safe."
+  }
+]

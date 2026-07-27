@@ -46,8 +46,7 @@ _TOKEN_PATH = get_data_dir() / ".dashboard_secret"
 def load_or_generate_secret() -> str:
     """Load the dashboard secret from file, or generate and persist one.
 
-    Uses cryptographically secure secrets.token_urlsafe(32) (ref Sean's
-    requirement — must be crypto-secure, not random.choice).
+    Uses cryptographically secure secrets.token_urlsafe(32) (must be crypto-secure, not random.choice).
 
     Returns:
         The 43-character URL-safe base64 secret string.
@@ -107,6 +106,7 @@ class DashboardAuthMiddleware(BaseHTTPMiddleware):
             "/api/billing/cancel",         # Stripe redirect
             "/api/billing/webhook",        # Stripe webhook
             "/api/phase",                  # Phase banner — loaded before auth on page init
+            "/api/discover/count",         # Badge count — public read, no sensitive data
         }
         # ponytail: all other /api/ routes now require auth. If a new public route is needed,
         # add it here explicitly. Remove routes by migration to internal auth flow.

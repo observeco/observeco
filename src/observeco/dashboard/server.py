@@ -9,9 +9,11 @@ Spec: specs/unified-dashboard.md
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import secrets
+import sqlite3 as _sqlite3
 import sys
 import time
 import webbrowser
@@ -22,17 +24,31 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from observeco.api import router as api_router
 from observeco.billing import add_billing_endpoints
 from observeco.config import hermes_home
 from observeco.dashboard.commercial_api import router as commercial_router
+from observeco.dashboard.config import PORTS
 from observeco.dashboard.licenses_api import router as licenses_router
 from observeco.dashboard.otel import router as otel_router
+from observeco.dashboard.routes.alerts import router as alerts_router
+from observeco.dashboard.routes.capability import router as capability_router
+from observeco.dashboard.routes.detail import router as detail_router
+from observeco.dashboard.routes.efficiency import router as efficiency_router
+from observeco.dashboard.routes.error_timeline import router as timeline_router
+from observeco.dashboard.routes.fleet import router as fleet_router
+from observeco.dashboard.routes.fleet_qb import router as fleet_qb_router
+from observeco.dashboard.routes.harness_opt import router as harness_opt_router
+from observeco.dashboard.routes.inbox import router as inbox_router
+from observeco.dashboard.routes.token_analytics import router as analytics_router
 from observeco.db import Database
 from observeco.dirs import get_data_dir
 from observeco.discover.api import router as discover_router
 from observeco.realtime import router as realtime_router
+
+logger = logging.getLogger(__name__)
 
 
 # Shared heartbeat path — watch daemon writes this every 30s.
@@ -67,10 +83,20 @@ auth_provider = OAuth2Provider()
 add_billing_endpoints(app)
 app.include_router(otel_router)
 app.include_router(api_router)
+app.include_router(efficiency_router)
 app.include_router(realtime_router)
 app.include_router(licenses_router)
 app.include_router(commercial_router)
 app.include_router(discover_router)
+app.include_router(inbox_router)
+app.include_router(fleet_router)
+app.include_router(fleet_qb_router)
+app.include_router(alerts_router)
+app.include_router(timeline_router)
+app.include_router(detail_router)
+app.include_router(analytics_router)
+app.include_router(capability_router)
+app.include_router(harness_opt_router)
 
 # --- Startup: initialise first_run_at, log license state ---
 # Trial is NOT auto-started here. It starts on explicit Pro feature access
@@ -127,6 +153,7 @@ async def list_feedback(limit: int = 50):
     return JSONResponse({"count": len(items), "items": items})
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 STATIC_DIR = Path(__file__).parent / "static"
 
 if STATIC_DIR.exists():
@@ -151,7 +178,8 @@ def _fmt_ts(ts: int) -> str:
 
 
 def _html_escape(text: str) -> str:
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace('"', "&quot;").replace("'", "&#39;"))
 
 
 # ---------------------------------------------------------------------------
@@ -169,7 +197,7 @@ async def auth_login(provider: str = ""):
         session = auth_provider._create_local_session("local@local.local", "Local User")
         from fastapi.responses import RedirectResponse
         resp = RedirectResponse(url="/")
-        resp.set_cookie("observeco_token", session.token, httponly=True, secure=True, samesite="lax", max_age=604800)
+        resp.set_cookie("observeco_token", session.token, httponly=True, secure=os.environ.get("OBSERVECO_HTTPS") == "1", samesite="lax", max_age=604800)
         return resp
     url = auth_provider.get_authorization_url(state=secrets.token_urlsafe(16))
     from fastapi.responses import RedirectResponse
@@ -186,7 +214,7 @@ async def auth_callback(code: str = "", state: str = ""):
         return HTMLResponse("<h1>Authentication failed</h1>", status_code=401)
     from fastapi.responses import RedirectResponse
     resp = RedirectResponse(url="/")
-    resp.set_cookie("observeco_token", session.token, httponly=True, secure=True, samesite="lax", max_age=604800)
+    resp.set_cookie("observeco_token", session.token, httponly=True, secure=os.environ.get("OBSERVECO_HTTPS") == "1", samesite="lax", max_age=604800)
     return resp
 
 
@@ -454,7 +482,7 @@ async def api_delay_banner():
                 '</div>'
             )
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     delays = []
     for a in agents:
@@ -600,252 +628,6 @@ PRO_FEATURES = [
     },
 ]
 
-
-_ALERTS_VIEW_PATH = get_data_dir() / ".alerts_last_viewed"
-
-def _get_alerts_last_viewed() -> int:
-    try:
-        return int(_ALERTS_VIEW_PATH.read_text().strip())
-    except (FileNotFoundError, ValueError, OSError):
-        return int(time.time())
-
-def _set_alerts_last_viewed() -> None:
-    try:
-        _ALERTS_VIEW_PATH.parent.mkdir(parents=True, exist_ok=True)
-        _ALERTS_VIEW_PATH.write_text(str(int(time.time())))
-    except Exception:
-        pass
-
-
-@app.get("/api/alerts", response_class=HTMLResponse)
-async def api_alerts():
-    """Generate alerts panel content per §6.4 — right rail, severity-coded,
-    with discovery gap badges and cumulative delay summary.
-    """
-    db.get_errors(limit=50)
-    circuit = db.get_circuit_breakers()
-    drift = db.get_drift()
-    now = int(time.time())
-    last_viewed = _get_alerts_last_viewed()
-
-    alerts: list[dict] = []
-
-    # 🔴 Critical: tripped circuit breakers
-    for cb in circuit:
-        if cb.get("tripped"):
-            name = cb["agent_name"]
-            failures = cb.get("failure_count", 0)
-            ts = cb.get("cooldown_until") or (now - 300)
-            gap_s = now - ts
-            alerts.append({
-                "severity": "critical",
-                "severity_label": "CRITICAL",
-                "icon": "🔴",
-                "agent": name,
-                "message": f"Circuit breaker tripped ({failures} failures)",
-                "timestamp": ts,
-                "gap_seconds": gap_s,
-                "is_new": ts > last_viewed,
-                "severity_color": "#ef4444",
-                "severity_bg": "#450a0a",
-            })
-
-    # 🟡 Warning: drift > 10%
-    drift_breaches = [d for d in drift if d.get("breached")]
-    for d in drift_breaches[:5]:
-        agent = d["agent_name"]
-        comp = d.get("component", "system prompt")
-        pct = d.get("delta_pct", 0)
-        ts = d.get("timestamp", now - 600)
-        gap_s = now - ts
-        alerts.append({
-            "severity": "warning",
-            "severity_label": "WARNING",
-            "icon": "🟡",
-            "agent": agent,
-            "message": f"Drift {pct:+.1f}% in {comp}",
-            "timestamp": ts,
-            "gap_seconds": gap_s,
-            "is_new": ts > last_viewed,
-            "severity_color": "#eab308",
-            "severity_bg": "#422006",
-        })
-
-    # 🔴 Critical / 🟡 Warning: pulse-based agent status
-    pulses = db.get_recent_pulses(limit=100)
-    seen_agents = set()
-    for p in pulses:
-        aname = p["agent_name"]
-        if aname in seen_agents:
-            continue
-        seen_agents.add(aname)
-        status = p.get("status", "")
-        ts = p.get("timestamp", now - 300)
-        gap_s = now - ts
-        if status == "dead":
-            alerts.append({
-                "severity": "critical",
-                "severity_label": "CRITICAL",
-                "icon": "🔴",
-                "agent": aname,
-                "message": "Agent is dead — no recent heartbeat",
-                "timestamp": ts,
-                "gap_seconds": gap_s,
-                "is_new": ts > last_viewed,
-                "severity_color": "#ef4444",
-                "severity_bg": "#450a0a",
-            })
-        elif status == "error":
-            err_msg = p.get("error_message", "") or "Error state detected"
-            alerts.append({
-                "severity": "warning",
-                "severity_label": "WARNING",
-                "icon": "🟡",
-                "agent": aname,
-                "message": f"Error: {err_msg[:80]}",
-                "timestamp": ts,
-                "gap_seconds": gap_s,
-                "is_new": ts > last_viewed,
-                "severity_color": "#eab308",
-                "severity_bg": "#422006",
-            })
-
-    # 🔵 Info: heartbeat anomalies
-    from collections import Counter
-    pulse_counts = Counter(p["agent_name"] for p in pulses)
-    for agent in sorted(pulse_counts):
-        if pulse_counts[agent] < 3:  # less than 3 pulses = possible anomaly
-            agent_pulses = [p for p in pulses if p["agent_name"] == agent]
-            if agent_pulses:
-                last_ts = agent_pulses[0].get("timestamp", 0)
-                if now - last_ts > 3600:
-                    alerts.append({
-                        "severity": "info",
-                        "severity_label": "INFO",
-                        "icon": "🔵",
-                        "agent": agent,
-                        "message": f"Heartbeat anomaly — only {pulse_counts[agent]} pulses recorded",
-                        "timestamp": last_ts,
-                        "gap_seconds": now - last_ts,
-                        "is_new": last_ts > last_viewed,
-                        "severity_color": "#3b82f6",
-                        "severity_bg": "#172554",
-                    })
-
-    # Sort: critical first, then warning, then info
-    severity_order = {"critical": 0, "warning": 1, "info": 2}
-    alerts.sort(key=lambda a: (severity_order.get(a["severity"], 99), -a["timestamp"]))
-
-    if not alerts:
-        empty_status = "" if _ALERTS_VIEW_PATH.exists() else 'first-load'
-        _set_alerts_last_viewed()
-        return HTMLResponse(f'<div class="empty-state" style="color:#6b7280;font-size:13px;text-align:center;padding:24px 20px;">✅ All clear — no alerts</div><div data-alerts-viewed="{empty_status}" style="display:none;"></div>')
-
-    # Compute cumulative undiscovered downtime
-    total_gap_minutes = sum(a["gap_seconds"] for a in alerts) // 60
-    new_count = sum(1 for a in alerts if a.get("is_new"))
-    discovery_alert_count = len(alerts)
-
-    # Build cumulative gap banner
-    gap_banner = f"""<div class="gap-banner" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
-    <div style="font-size:20px;font-weight:700;color:#f97316;">{total_gap_minutes}m</div>
-    <div style="font-size:11px;color:var(--fg-2);line-height:1.5;">
-        Total <strong style="color:#e2e8f0;">undiscovered downtime</strong> across {discovery_alert_count} alert(s) in the last 24h
-        {f' — <span style="color:#ef4444;font-weight:600;">{new_count} new since your last view</span>' if new_count else ''}
-    </div>
-</div>"""
-
-    items = [gap_banner]
-    for a in alerts[:10]:
-        ts_str = _fmt_ts(a["timestamp"])
-        # Discovery gap badge
-        gap_s = a.get("gap_seconds", 0)
-        is_new = a.get("is_new", False)
-        gap_label = ""
-        if gap_s > 300:  # Only show gap if >5 min
-            gap_m = gap_s // 60
-            gap_h = gap_m // 60
-            if gap_h > 0:
-                gap_label = f"🕐 Happened {_fmt_ts(a['timestamp'])} · <strong style='color:#fca5a5;'>{gap_h}h {gap_m % 60}m gap</strong>"
-            else:
-                gap_label = f"🕐 Happened {_fmt_ts(a['timestamp'])} · <strong style='color:#fca5a5;'>{gap_m}m gap</strong>"
-        new_badge = '<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span>' if is_new else ""
-
-        items.append(f"""<div class="alert-row severity-{a['severity']}" style="border-left:3px solid {a['severity_color']};background:{a['severity_bg']};">
-    <div class="heal-entry-header">
-        <span><strong style="color:{a['severity_color']}">{a['severity_label']}{new_badge}</strong></span>
-        <span class="heal-time">{ts_str}</span>
-    </div>
-    <div class="text-secondary" class="u-mt-2">
-        <span style="color:#38bdf8;font-weight:600;">{_html_escape(a['agent'])}</span>
-        <span> — {_html_escape(a['message'])}</span>
-    </div>
-    {f'<div class="discovery-gap" style="font-size:10px;color:#94a3b8;margin-top:2px;">{gap_label}</div>' if gap_label else ''}
-    <div class="alerts-action-bar" style="margin-top:4px;">
-        <span class="heal-time" style="font-size:10px;color:#64748b;">
-            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
-        </span>
-    </div>
-</div>""")
-
-    # Add Pro locked tiles below alerts
-    pro_tiles_html = _pro_locked_tiles()
-    items.append(pro_tiles_html)
-
-    # Record that user has now seen these alerts
-    _set_alerts_last_viewed()
-
-    html = "\n".join(items)
-    return HTMLResponse(html)
-
-
-def _pro_locked_tiles() -> str:
-    """Generate Pro locked tile grid per §7.1 — returns empty string if Pro active."""
-    from observeco import license as lic
-    if lic.require_pro():
-        return ""
-
-    tiles = []
-    for feat in PRO_FEATURES:
-        # Compute preview data from real state
-        errors = db.get_errors(limit=50)
-        circuit = db.get_circuit_breakers()
-        drift = db.get_drift()
-        agents = db.get_agents()
-
-        alert_count = len(errors)
-        drift_breaches = len([d for d in drift if d.get("breached")])
-        circuit_trips = sum(1 for c in circuit if c.get("tripped"))
-
-        # Build alert list for preview
-        alert_list = "; ".join([f"{e.get('error_type','error')} at {_fmt_ts(e['timestamp'])}" for e in errors[:3]]) or "no recent alerts"
-
-        days_available = max(0, 90 - 7)  # 90-day Pro minus 7-day free window
-        preview = feat["preview_template"].format(
-            alert_count=alert_count,
-            alert_list=alert_list,
-            drift_count=drift_breaches,
-            circuit_count=circuit_trips,
-            agent_count=len(agents),
-            days_available=days_available,
-        )
-
-        tiles.append(f"""<div class="pro-tile" id="pro-tile-{feat['id']}"
-     onclick="showProPreview('{feat['id']}')">
-    <div class="pro-tile-header">
-        <span class="pro-tile-name">
-            {feat['icon']} {feat['name']}
-        </span>
-        <span class="pro-tile-price">
-            {feat['price']}
-        </span>
-    </div>
-    <div class="pro-tile-desc">
-        {feat['description'][:80]}…
-    </div>
-    <div class="u-hidden" id="preview-data-{feat['id']}">{_html_escape(preview)}</div>
-</div>""")
-    return '<div class="pro-tiles-section" class="u-mt-16"><div class="pro-tile-section-label">🔒 Pro Features</div>' + "\n".join(tiles) + "</div>"
 
 
 @app.get("/api/pro-preview/{feature_id}", response_class=HTMLResponse)
@@ -1210,13 +992,120 @@ def _recommendation_for(status: str, errors: list, circuit: dict,
 
 
 def _confidence_badge(conf: dict) -> str:
-    """Render a small confidence badge for agent cards — level only, no FP/FN."""
+    """Render a small confidence badge for agent cards — level + FP/FN risk + recommendation."""
     emoji = {"high": "🟢", "medium": "🟡", "low": "⚪"}.get(conf["level"], "⚪")
+    fp_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fp_risk"], "⚠️")
+    fn_icon = {"low": "✅", "moderate": "⚠️", "high": "❌"}.get(conf["fn_risk"], "⚠️")
+    fp_label = conf["fp_risk"].capitalize()
+    fn_label = conf["fn_risk"].capitalize()
     level_label = conf["level"].capitalize()
     return f'''
         <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
-            <span title="Confidence: {level_label} — {conf['sources_agree']}">{emoji} {level_label} Confidence</span>
-        </div>'''
+            <span title="Confidence: {level_label} — {conf['sources_agree']}">{emoji} {level_label}</span>
+            <span title="False positive risk: {fp_label}">{fp_icon} FP {fp_label}</span>
+            <span title="False negative risk: {fn_label}">{fn_icon} FN {fn_label}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">{conf['recommendation']}</div>'''
+
+
+# ── Canary Report Card ─────────────────────────────────────────────
+
+
+def _canary_card(agent_name: str) -> str:
+    """Render a canary report card (Variant A) for an agent.
+
+    Shows pass rate, accuracy, hangs, recovery, and drift vs baseline.
+    Empty state when no canary runs exist.
+    """
+    from observeco.db import Database
+    db = Database()
+    conn = db._get_conn()
+
+    # Cleanup: mark runs stuck in 'running' for >30min as 'failed'.
+    # Use db._write() (retry-on-lock) — the watch daemon writes pulse.db constantly.
+    try:
+        db._write(
+            "UPDATE canary_runs SET status = 'failed' "
+            "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')",
+            (),
+        )
+    except _sqlite3.OperationalError:
+        pass  # cleanup is best-effort
+
+    # Get latest completed run
+    run = conn.execute(
+        "SELECT id, pass_count, fail_count, hang_count, total_tasks, "
+        "started_at, config_hash FROM canary_runs "
+        "WHERE agent_name = ? AND status = 'completed' AND pass_count IS NOT NULL "
+        "ORDER BY started_at DESC LIMIT 1",
+        (agent_name,),
+    ).fetchone()
+
+    if not run:
+        return f"""<div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('{agent_name}')">Run Canary</button></div>
+</div>"""
+
+    total = (run["pass_count"] or 0) + (run["fail_count"] or 0)
+    pass_rate = f"{run['pass_count']}/{run['total_tasks']}" if run["total_tasks"] else "0/0"
+    accuracy = f"{run['pass_count'] / total:.0%}" if total > 0 else "0%"
+    hangs = run["hang_count"] or 0
+    recovery = "100%" if hangs == 0 else "0%"
+
+    # Color coding
+    acc_pct = run["pass_count"] / total if total > 0 else 0
+    acc_color = "green" if acc_pct >= 0.7 else "yellow" if acc_pct >= 0.4 else "red"
+    hang_color = "green" if hangs == 0 else "yellow" if hangs <= 2 else "red"
+
+    # Drift vs baseline
+    baseline = conn.execute(
+        "SELECT accuracy FROM canary_baselines "
+        "WHERE agent_name = ? AND expires_at IS NULL ORDER BY created_at DESC LIMIT 1",
+        (agent_name,),
+    ).fetchone()
+
+    drift_html = ""
+    if baseline and total > 0:
+        baseline_acc = baseline["accuracy"]
+        current_acc = run["pass_count"] / total
+        drift_pct = (current_acc - baseline_acc) * 100
+        drift_dir = "up" if drift_pct >= 0 else "down"
+        drift_icon = "▲" if drift_pct >= 0 else "▼"
+        drift_html = f'<div class="drift-indicator {drift_dir}">{drift_icon} {abs(drift_pct):.1f}% vs baseline</div>'
+    else:
+        drift_html = '<div style="color:var(--muted);font-size:10px;">No baseline</div>'
+
+    return f"""<div class="canary-card">
+  <div class="canary-card-header">
+    <div class="canary-card-title">
+      <span class="status-dot {acc_color}"></span>
+      Canary
+      <span class="canary-card-meta">Last run: {run['started_at'][:10]}</span>
+    </div>
+  </div>
+  <div class="canary-card-stats">
+    <div class="canary-stat">
+      <div class="canary-stat-num {acc_color}">{pass_rate}</div>
+      <div class="canary-stat-label">Pass Rate</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num {acc_color}">{accuracy}</div>
+      <div class="canary-stat-label">Accuracy</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num {hang_color}">{hangs}</div>
+      <div class="canary-stat-label">Hangs</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">{recovery}</div>
+      <div class="canary-stat-label">Recovery</div>
+    </div>
+  </div>
+  <div class="canary-card-footer">
+    {drift_html}
+    <span class="action-link" onclick="switchTab('capability', document.querySelector('.tab-btn:nth-child(11)'))">View details →</span>
+  </div>
+</div>"""
 
 
 def _confidence_header(conf: dict) -> str:
@@ -2354,7 +2243,7 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
         ts = d["last_seen"]
         last_seen = _fmt_ts(ts) if ts else "-"
 
-        rows.append(f"""<tr>
+        rows.append(f"""<tr onclick="htmx.ajax('GET', '/api/fleet/modal/{name}', {{target:'#modalContainer', swap:'innerHTML'}})" style="cursor:pointer">
     <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status {status}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>{name}</td>
     <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">{d["framework"]}</td>
     <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">{tok_label}</td>
@@ -2421,7 +2310,7 @@ async def api_platforms():
 
     # 3. iMessage (BlueBubbles)
     try:
-        r = _httpx.get("http://127.0.0.1:1234/", timeout=3)
+        r = _httpx.get(f"http://127.0.0.1:{PORTS.imessage}/", timeout=3)
         platforms["imessage"] = {"status": "up"} if r.status_code == 200 else {"status": "error", "http": r.status_code}
     except Exception:
         platforms["imessage"] = {"status": "down"}
@@ -2742,7 +2631,566 @@ async def api_brain(agent: str = "all"):
         }
         result["fleet"] = fleet
 
-    return JSONResponse(result)
+    # ── HTML rendering ──────────────────────────────────────────────
+    def _fmt_tok(n):
+        if n >= 1_000_000:
+            return f"{n/1_000_000:.1f}M"
+        if n >= 1000:
+            return f"{n/1000:.1f}K"
+        return str(n)
+
+    def _bar(parts, total, height=10):
+        """CSS-only stacked bar from component dict."""
+        if total <= 0:
+            return f'<div style="height:{height}px;background:#1e293b;border-radius:4px;"></div>'
+        colors = {"guidance":"#6366f1","memory":"#22c55e","skills":"#f59e0b","tools":"#06b6d4","identity":"#ec4899"}
+        segs = []
+        for k, v in parts.items():
+            pct = max(v / total * 100, 0.5)
+            segs.append(f'<div style="width:{pct:.1f}%;background:{colors.get(k,"#64748b")};height:100%;"></div>')
+        return f'<div style="display:flex;height:{height}px;border-radius:4px;overflow:hidden;gap:1px;">{"".join(segs)}</div>'
+
+    def _sparkline(points, color="#6366f1", h=24, w=80):
+        """Tiny CSS sparkline from 7-point array."""
+        if not points or max(points) == 0:
+            return '<span style="color:#64748b;font-size:11px;">no data</span>'
+        mx = max(points) or 1
+        bars = []
+        for p in points:
+            bh = max(int(p / mx * h), 1)
+            bars.append(f'<div style="width:3px;height:{bh}px;background:{color};border-radius:1px;"></div>')
+        return f'<div style="display:flex;align-items:flex-end;gap:2px;height:{h}px;">{"".join(bars)}</div>'
+
+    if not result:
+        html = """
+        <div style="padding:32px;text-align:center;color:#64748b;">
+          <div style="font-size:32px;margin-bottom:12px;">🧠</div>
+          <div style="font-size:15px;font-weight:600;color:#94a3b8;margin-bottom:6px;">No brain data yet</div>
+          <div style="font-size:13px;max-width:420px;margin:0 auto;">
+            Brain analysis appears once agents run their first trim.
+            Run <code style="background:#1e293b;padding:2px 6px;border-radius:4px;font-size:12px;">observeco chisel trim</code> on any agent to start collecting data.
+          </div>
+        </div>"""
+        return HTMLResponse(html)
+
+    cards = []
+    # Fleet summary card first
+    if "fleet" in result:
+        f = result.pop("fleet")
+        comp = f.get("components", {})
+        total = f.get("raw_tokens", 0)
+        lite = f.get("lite_tokens")
+        full = f.get("full_tokens")
+        src = f.get("savings_source", "potential")
+        source_label = "measured" if src == "actual" else "estimated"
+
+        savings_html = ""
+        if lite or full:
+            items = []
+            if lite:
+                items.append(f'<span style="color:#22c55e;">Lite: {_fmt_tok(lite)}</span>')
+            if full:
+                items.append(f'<span style="color:#38bdf8;">Full: {_fmt_tok(full)}</span>')
+            savings_html = f'<div style="font-size:11px;color:#94a3b8;">{source_label}: {" · ".join(items)}</div>'
+
+        comp_labels = {"guidance":"Guidance","memory":"Memory","skills":"Skills","tools":"Tools","identity":"Identity"}
+        comp_detail = " · ".join(f'{comp_labels.get(k,k)}: {_fmt_tok(v)}' for k,v in comp.items() if v > 0) if comp else "No component data"
+
+        cards.append(f"""
+        <div style="background:#131a2b;border:1px solid #334155;border-radius:8px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span style="font-size:13px;font-weight:700;color:#f8fafc;">Fleet Total</span>
+            <span style="font-size:11px;color:#94a3b8;background:#1e293b;padding:2px 8px;border-radius:10px;">{f['framework']}</span>
+          </div>
+          <div style="font-size:20px;font-weight:700;color:#f8fafc;margin-bottom:4px;">{_fmt_tok(total)} tokens</div>
+          {_bar(comp, total)}
+          <div style="font-size:11px;color:#64748b;margin-top:6px;">{comp_detail}</div>
+          {savings_html}
+        </div>""")
+
+    # Per-agent cards
+    for name, data in sorted(result.items()):
+        comp = data.get("components", {})
+        total = data.get("raw_tokens", 0)
+        fw = data.get("framework", "")
+        lite = data.get("lite_tokens")
+        full = data.get("full_tokens")
+        drift = data.get("drift", [])
+        timeline = data.get("turn_timeline", [])
+
+        savings_html = ""
+        if lite or full:
+            items = []
+            if lite:
+                items.append(f'Lite: {_fmt_tok(lite)}')
+            if full:
+                items.append(f'Full: {_fmt_tok(full)}')
+            savings_html = f'<div style="font-size:11px;color:#64748b;margin-top:4px;">{" · ".join(items)}</div>'
+
+        drift_html = ""
+        if drift:
+            d_items = []
+            for d in drift[:4]:
+                arrow = "↑" if d["direction"]=="up" else "↓" if d["direction"]=="down" else "→"
+                clr = "#ef4444" if d["direction"]=="up" else "#22c55e" if d["direction"]=="down" else "#64748b"
+                d_items.append(f'<span style="font-size:11px;color:{clr};">{d["component"]} {arrow} {d["pct"]}</span>')
+            drift_html = f'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">{"".join(d_items)}</div>'
+
+        spark = _sparkline(timeline, color="#6366f1")
+
+        comp_detail = " · ".join(f'{k}: {_fmt_tok(v)}' for k,v in comp.items() if v > 0) if comp else "No component data"
+
+        cards.append(f"""
+        <div style="background:#131a2b;border:1px solid #1e293b;border-radius:8px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div>
+              <span style="font-size:13px;font-weight:600;color:#f8fafc;">{name}</span>
+              <span style="font-size:11px;color:#64748b;margin-left:6px;">{fw}</span>
+            </div>
+            <div>{spark}</div>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:#f8fafc;margin-bottom:4px;">{_fmt_tok(total)} tokens</div>
+          {_bar(comp, total)}
+          <div style="font-size:11px;color:#64748b;margin-top:6px;">{comp_detail}</div>
+          {savings_html}
+          {drift_html}
+        </div>""")
+
+    html = f"""
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;">
+      {"".join(cards)}
+    </div>
+    <div style="margin-top:16px;padding:10px 14px;background:#131a2b;border:1px solid #1e293b;border-radius:8px;font-size:11px;color:#64748b;">
+      <span style="font-weight:600;color:#94a3b8;">Legend:</span>
+      <span style="color:#6366f1;">●</span> Guidance
+      <span style="color:#22c55e;margin-left:8px;">●</span> Memory
+      <span style="color:#f59e0b;margin-left:8px;">●</span> Skills
+      <span style="color:#06b6d4;margin-left:8px;">●</span> Tools
+      <span style="color:#ec4899;margin-left:8px;">●</span> Identity
+    </div>
+
+    <script>window._brainData = {json.dumps(result)};</script>
+
+    <!-- Agent selector for compression -->
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:#94a3b8;display:block;margin-bottom:4px;">Select Agent</label>
+      <select id="brainAgentSelect" style="width:100%;padding:8px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:13px;font-family:inherit;">
+        <option value="all">All Agents</option>
+        {''.join(f'<option value="{n}">{n}</option>' for n in result if n != 'fleet')}
+      </select>
+    </div>
+
+    <!-- ====== COMPRESSION SECTION ====== -->
+    <div style="background:#131a2b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:16px;">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">Compression
+        <span style="font-size:11px;color:#64748b;font-weight:400;">see the diff, then apply</span>
+      </h3>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;background:#0f172a;border-radius:8px;padding:4px;">
+        <button class="toggle-btn active" onclick="switchCompressTab('manual', this)" id="manualToggle" style="flex:1;padding:10px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#64748b;font-family:inherit;">🛠️ Manual: Preview &amp; Apply</button>
+        <button class="toggle-btn" onclick="switchCompressTab('auto', this)" id="autoToggle" style="flex:1;padding:10px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:#64748b;font-family:inherit;">🤖 Automatic: Watch Daemon</button>
+      </div>
+
+      <!-- Manual tab -->
+      <div id="manualTab">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="mode-btn active" onclick="switchMode('lite', this)" id="liteBtn" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #334155;background:#1e293b;color:#86efac;font-family:inherit;">Lite (Free)</button>
+          <button class="mode-btn" onclick="switchMode('full', this)" id="fullBtn" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-family:inherit;">Full (Pro)</button>
+          <span style="font-size:11px;color:#64748b;margin-left:auto;align-self:center;">
+            Lite: compress guidance blocks · Full: +memory +skills
+          </span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Before compression</div>
+            <div style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#94a3b8;" id="beforeTokens">0 tok</div>
+            <div id="diffPreviewOld" style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.7;">
+              Select an agent and run Preview to see the diff.
+            </div>
+          </div>
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:14px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">After <span id="afterModeName">Lite</span> compression</div>
+            <div style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#22c55e;" id="afterTokens">0 tok <span style="font-size:12px;color:#64748b;font-weight:400;">—</span></div>
+            <div id="diffPreviewNew" style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.7;">
+              &nbsp;
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;color:#f8fafc;">Step 1: Preview</div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:8px;">See what changes before applying. No file is modified.</div>
+            <button class="primary-btn green" onclick="runCompressPreview()" style="background:#16a34a;border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">▶️ Run Preview</button>
+          </div>
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;color:#f8fafc;">Step 2: Apply</div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:8px;">Write compressed version to agent's SOUL.md. Backup created automatically.</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="primary-btn" onclick="applyCompression()" style="background:#3b82f6;border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">💾 Apply to File</button>
+              <button class="secondary-btn" onclick="copyCompressDiff()" style="border:1px solid #334155;background:transparent;color:#94a3b8;padding:8px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">📋 Copy Diff</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="compressStatus" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:12px;line-height:1.6;"></div>
+      </div>
+
+      <!-- Auto tab -->
+      <div id="autoTab" style="display:none;">
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px;text-align:center;">
+          <div style="font-size:28px;margin-bottom:8px;">🤖</div>
+          <h4 style="font-size:14px;font-weight:600;margin-bottom:4px;color:#f8fafc;">Auto-Compression</h4>
+          <p style="font-size:12px;color:#64748b;">Every time your SOUL.md is edited, the watch daemon detects the change and runs compression automatically. Zero manual steps.</p>
+          <div style="margin-top:10px;display:flex;justify-content:center;gap:16px;font-size:11px;color:#64748b;">
+            <span>⚡ Detects file changes</span>
+            <span>💾 Auto-backup before compress</span>
+            <span>📊 Logs savings to dashboard</span>
+          </div>
+          <div style="margin-top:12px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:left;font-family:var(--font-mono);font-size:11px;line-height:1.8;">
+            <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified — auto-compressing...</span><br>
+            <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ 4,200 → 3,276 tok (-22%)</span><br>
+            <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
+            <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 → 2,470 tok (-35%)</span><br>
+            <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
+            <span style="color:#38bdf8;">📊 Cumulative fleet savings this week: 47,812 tokens saved</span>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
+            <button onclick="startWatchDaemon()" style="background:#16a34a;border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">▶️ Start Daemon</button>
+            <button onclick="stopWatchDaemon()" style="border:1px solid #ef4444;background:transparent;color:#fca5a5;padding:8px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">⏹ Stop</button>
+          </div>
+          <div id="daemonStatus" style="margin-top:8px;font-size:12px;color:#64748b;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== CHISEL SUGGESTIONS (v0.2) ====== -->
+    <div style="background:#131a2b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:16px;">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">🔍 Chisel Suggestions
+        <span style="font-size:11px;color:#64748b;font-weight:400;">v0.2 — trim history + cut log</span>
+      </h3>
+      <div id="chiselSuggestions" hx-get="/api/brain/suggestions" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading chisel data…</div>
+      </div>
+    </div>
+
+    <!-- ====== TOKEN OPTIMISER ====== -->
+    <div style="background:#131a2b;border:1px solid #3730a3;border-radius:12px;padding:20px;margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">🧠 Token Optimiser
+            <span style="font-size:11px;color:#64748b;font-weight:400;">learns from 200+ turns</span>
+          </h3>
+          <p style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.6;">
+            Beyond simple compression. The Optimiser analyses every turn your agents take — which skills are used, which rules trigger, which memory gets referenced — then surgically removes what's unused and restructures what remains.
+          </p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px;">
+          <h4 style="font-size:13px;font-weight:600;margin-bottom:6px;color:#f8fafc;">📊 Learning progress</h4>
+          <div style="margin:10px 0;">
+            <div style="height:8px;background:#1e293b;border-radius:999px;overflow:hidden;margin-bottom:4px;">
+              <div id="optProgressBar" style="width:0%;height:100%;border-radius:999px;background:linear-gradient(90deg,#6366f1,#8b5cf6);"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;">
+              <span id="optProgressLabel">0% — learned from 0 turns</span>
+              <span style="color:#6366f1;">Goal: 200 turns</span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b;font-size:12px;">
+            <span style="color:#94a3b8;">Skills never triggered</span>
+            <span id="optSkillsNever" style="color:#f97316;font-family:var(--font-mono);font-weight:600;">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b;font-size:12px;">
+            <span style="color:#94a3b8;">Guidance rules stale</span>
+            <span id="optGuidanceStale" style="color:#eab308;font-family:var(--font-mono);font-weight:600;">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;">
+            <span style="color:#94a3b8;">Memory sections unused</span>
+            <span style="color:#64748b;font-family:var(--font-mono);font-weight:600;">—</span>
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:8px;">At 200 turns, Optimiser will recommend what to prune based on captured skill/guidance usage — projected savings surface here once real compression data accumulates.</div>
+        </div>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px;">
+          <h4 style="font-size:13px;font-weight:600;margin-bottom:6px;color:#f8fafc;">📈 Projected savings</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <div style="background:#1e293b;border-radius:6px;padding:10px;text-align:center;">
+              <div id="optLite" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#22c55e;">—</div>
+              <div style="font-size:10px;color:#64748b;">Lite (current)</div>
+            </div>
+            <div style="background:#1e293b;border-radius:6px;padding:10px;text-align:center;">
+              <div id="optFull" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#a5b4fc;">—</div>
+              <div style="font-size:10px;color:#64748b;">Full (available)</div>
+            </div>
+          </div>
+          <div style="background:linear-gradient(135deg,#1e1b4b,#0f172a);border:1px solid #3730a3;border-radius:8px;padding:12px;text-align:center;">
+            <div id="optProj" style="font-size:22px;font-weight:700;font-family:var(--font-mono);color:#c4b5fd;">—</div>
+            <div style="font-size:11px;color:#a5b4fc;">Projected with Optimiser after 200 turns</div>
+            <div style="font-size:10px;color:#64748b;margin-top:4px;">Lite compression + Optimiser pruning = deeper savings</div>
+          </div>
+          <div id="optEta" style="font-size:11px;color:#64748b;margin-top:8px;">Awaiting turn data…</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // Load live Token Optimiser stats from the capture layer (no static mockup).
+    function loadOptimiser() {{
+      fetch('/api/optimiser/stats', {{headers: window.__OBSERVECO_TOKEN ? {{'X-ObserveCo-Token': window.__OBSERVECO_TOKEN}} : {{}}}})
+        .then(function(r) {{ return r.json(); }})
+        .then(function(d) {{
+          var pct = d.learning_pct || 0;
+          document.getElementById('optProgressBar').style.width = pct + '%';
+          document.getElementById('optProgressLabel').textContent =
+            pct + '% — learned from ' + (d.total_turns || 0) + ' turns';
+          document.getElementById('optSkillsNever').textContent =
+            (d.skills_never_triggered || 0) + (d.skills_total ? ' of ' + d.skills_total : '');
+          document.getElementById('optGuidanceStale').textContent = d.guidance_rules_stale || 0;
+          var s = d.savings || {{}};
+          document.getElementById('optLite').textContent = s.lite != null ? '-' + s.lite + '%' : '—';
+          document.getElementById('optFull').textContent = s.full != null ? '-' + s.full + '%' : '—';
+          document.getElementById('optProj').textContent =
+            (s.optimiser_min != null && s.optimiser_max != null) ? ('-' + s.optimiser_min + '% to -' + s.optimiser_max + '%') : '—';
+          var remaining = Math.max(0, 200 - (d.total_turns || 0));
+          document.getElementById('optEta').textContent = remaining > 0
+            ? '→ ' + remaining + ' more turns needed' + (d.total_turns ? '' : ' (capture layer not yet feeding data)')
+            : '→ Enough data — prune recommendations available';
+        }})
+        .catch(function() {{
+          document.getElementById('optProgressLabel').textContent = 'Optimiser stats unavailable';
+        }});
+    }}
+    loadOptimiser();
+    </script>
+
+    <!-- ====== SKILLS COMPRESSION ====== -->
+    <div style="background:#131a2b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:16px;">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">📜 Skills Compression
+        <span style="font-size:11px;color:#64748b;font-weight:400;">compress individual skill files</span>
+      </h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <select id="skillSelect" style="flex:1;padding:8px 12px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:13px;font-family:inherit;">
+          <option value="">— Select a skill —</option>
+        </select>
+        <button onclick="runSkillCompress()" style="background:#16a34a;border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">▶️ Compress</button>
+      </div>
+      <div id="skillCompressStatus" style="display:none;padding:10px;border-radius:8px;font-size:12px;line-height:1.6;"></div>
+    </div>
+
+    <!-- ====== COMPRESS LOG ====== -->
+    <div style="background:#131a2b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:16px;">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">📋 Compression History
+        <span style="font-size:11px;color:#64748b;font-weight:400;">recent compress operations</span>
+      </h3>
+      <div id="compressLogContainer" style="font-size:12px;color:#64748b;">Loading...</div>
+    </div>
+
+    <script>
+    var compressMode = 'lite';
+    // Load skills list on page load
+    fetch('/api/skills-audit', {{headers: window.__OBSERVECO_TOKEN ? {{'X-ObserveCo-Token': window.__OBSERVECO_TOKEN}} : {{}}}}).then(function(r) {{ return r.json(); }}).then(function(data) {{
+      var sel = document.getElementById('skillSelect');
+      if (!sel) return;
+      (data.skills || []).forEach(function(s) {{
+        var opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = s.name + ' (' + (s.tokens || 0).toLocaleString() + ' tok' + (s.compressed ? ', compressed' : '') + ')';
+        sel.appendChild(opt);
+      }});
+    }}).catch(function() {{ /* skills endpoint not available */ }});
+    // Load compress log
+    function loadCompressLog() {{
+      var el = document.getElementById('compressLogContainer');
+      if (!el) return;
+      fetch('/api/compress-log', {{headers: window.__OBSERVECO_TOKEN ? {{'X-ObserveCo-Token': window.__OBSERVECO_TOKEN}} : {{}}}}).then(function(r) {{ return r.json(); }}).then(function(data) {{
+        var logs = data || [];
+        if (!Array.isArray(logs)) logs = [];
+        if (logs.length === 0) {{
+          el.innerHTML = '<div style="color:#64748b;text-align:center;padding:12px;">No compression history yet.</div>';
+          return;
+        }}
+        var html = '<div style="display:flex;flex-direction:column;gap:4px;">';
+        logs.forEach(function(l) {{
+          var pct = l.savings_pct ? ' <span style="color:#22c55e;">(-' + l.savings_pct + '%)</span>' : '';
+          var mode = l.mode === 'full' ? '<span style="color:#38bdf8;">Full</span>' : '<span style="color:#86efac;">Lite</span>';
+          var ago = '';
+          if (l.timestamp) {{
+            var secs = Math.floor(Date.now()/1000 - l.timestamp);
+            if (secs < 60) ago = secs + 's ago';
+            else if (secs < 3600) ago = Math.floor(secs/60) + 'm ago';
+            else if (secs < 86400) ago = Math.floor(secs/3600) + 'h ago';
+            else ago = Math.floor(secs/86400) + 'd ago';
+          }}
+          var agoHtml = ago ? ' <span style="color:#475569;">' + ago + '</span>' : '';
+          html += '<div style="display:flex;justify-content:space-between;padding:6px 10px;background:#0f172a;border-radius:6px;">' +
+            '<span><strong>' + (l.agent_name || '?') + '</strong> ' + mode + agoHtml + '</span>' +
+            '<span style="font-family:var(--font-mono);">' + (l.before_tokens || 0).toLocaleString() + ' → ' + (l.after_tokens || 0).toLocaleString() + ' tok' + pct + '</span>' +
+            '</div>';
+        }});
+        html += '</div>';
+        el.innerHTML = html;
+      }}).catch(function() {{
+        el.innerHTML = '<div style="color:#64748b;text-align:center;padding:12px;">Compress log not available.</div>';
+      }});
+    }}
+    loadCompressLog();
+    function runSkillCompress() {{
+      var sel = document.getElementById('skillSelect');
+      var name = sel ? sel.value : '';
+      if (!name) {{ showStatus('skillCompressStatus', 'Select a skill first.', 'warn'); return; }}
+      var el = document.getElementById('skillCompressStatus');
+      el.style.display = 'block'; el.style.background = '#1e293b'; el.style.border = '1px solid #334155'; el.style.color = '#94a3b8';
+      el.innerHTML = '⏳ Compressing <strong>' + name + '</strong>...';
+      var tok = window.__OBSERVECO_TOKEN || '';
+      var hdrs = {{'Content-Type': 'application/json'}};
+      if (tok) hdrs['X-ObserveCo-Token'] = tok;
+      fetch('/api/chisel/compress-skill', {{
+        method: 'POST',
+        headers: hdrs,
+        body: JSON.stringify({{skills: [name], mode: 'lite'}}),
+      }})
+        .then(function(r) {{ return r.json(); }})
+        .then(function(data) {{
+          var d = data.details && data.details[0];
+          if (d && d.status === 'ok') {{
+            showStatus('skillCompressStatus', '✅ <strong>' + name + '</strong> compressed: ' + d.before_tokens + ' → ' + d.after_tokens + ' tok (-' + d.savings_pct + '%)', 'success');
+            loadCompressLog();
+          }} else if (d && d.status === 'skip') {{
+            showStatus('skillCompressStatus', '⏭️ <strong>' + name + '</strong> already compressed or no savings.', 'warn');
+          }} else {{
+            showStatus('skillCompressStatus', '⚠️ ' + ((d && d.message) || 'Compression failed'), 'warn');
+          }}
+        }})
+        .catch(function() {{
+          showStatus('skillCompressStatus', '💡 Skills compression endpoint not available.', 'warn');
+        }});
+    }}
+    function startWatchDaemon() {{
+      var el = document.getElementById('daemonStatus');
+      el.innerHTML = '⏳ Starting daemon...';
+      var tok = window.__OBSERVECO_TOKEN || '';
+      var hdrs = {{}};
+      if (tok) hdrs['X-ObserveCo-Token'] = tok;
+      fetch('/api/watch-daemon/start', {{method: 'POST', headers: hdrs}})
+        .then(function(r) {{ return r.json(); }})
+        .then(function(d) {{
+          el.innerHTML = d.status === 'ok' ? '✅ Daemon started (PID ' + d.pid + ')' : '⚠️ ' + (d.message || 'Failed');
+        }})
+        .catch(function() {{ el.innerHTML = '⚠️ Daemon endpoint not available'; }});
+    }}
+    function stopWatchDaemon() {{
+      var el = document.getElementById('daemonStatus');
+      el.innerHTML = '⏳ Stopping daemon...';
+      var tok = window.__OBSERVECO_TOKEN || '';
+      var hdrs = {{}};
+      if (tok) hdrs['X-ObserveCo-Token'] = tok;
+      fetch('/api/watch-daemon/stop', {{method: 'POST', headers: hdrs}})
+        .then(function(r) {{ return r.json(); }})
+        .then(function(d) {{
+          el.innerHTML = d.status === 'ok' ? '⏹ Daemon stopped' : '⚠️ ' + (d.message || 'Failed');
+        }})
+        .catch(function() {{ el.innerHTML = '⚠️ Daemon endpoint not available'; }});
+    }}
+    function switchCompressTab(tab, btn) {{
+      document.querySelectorAll('.toggle-btn').forEach(function(b) {{ b.style.background = 'transparent'; b.style.color = '#64748b'; }});
+      btn.style.background = '#1e293b'; btn.style.color = '#e2e8f0';
+      document.getElementById('manualTab').style.display = tab === 'manual' ? '' : 'none';
+      document.getElementById('autoTab').style.display = tab === 'auto' ? '' : 'none';
+    }}
+    function switchMode(mode, btn) {{
+      compressMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(function(b) {{ b.style.color = '#94a3b8'; b.style.borderColor = '#334155'; }});
+      btn.style.color = '#86efac'; btn.style.borderColor = '#22c55e';
+      document.getElementById('afterModeName').textContent = mode === 'lite' ? 'Lite' : 'Full';
+      document.getElementById('compressStatus').style.display = 'none';
+    }}
+    function runCompressPreview() {{
+          var sel = document.getElementById('brainAgentSelect');
+          var agentName = sel ? sel.value : 'all';
+          if (agentName === 'all') {{ showStatus('compressStatus', 'Select a single agent for compression preview.', 'warn'); return; }}
+          var tok = window.__OBSERVECO_TOKEN || '';
+          var hdrs = {{'Content-Type': 'application/json'}};
+          if (tok) hdrs['X-ObserveCo-Token'] = tok;
+          fetch('/api/chisel/compress', {{
+            method: 'POST',
+            headers: hdrs,
+            body: JSON.stringify({{agent: agentName, mode: compressMode, preview: true}}),
+          }})
+            .then(function(r) {{ return r.json(); }})
+            .then(function(data) {{
+              if (data.status !== 'ok') {{
+                showStatus('compressStatus', '⚠️ ' + (data.message || 'Preview failed'), 'warn');
+                return;
+              }}
+              var rawTk = data.before_tokens || 0;
+              var afterTk = data.after_tokens || 0;
+              var saved = data.savings || 0;
+              var pct = data.savings_pct || 0;
+              document.getElementById('beforeTokens').innerHTML = rawTk.toLocaleString() + ' tok';
+              document.getElementById('afterTokens').innerHTML = afterTk.toLocaleString() + ' tok <span style=\"font-size:12px;color:#64748b;font-weight:400;\">' + (pct > 0 ? '-' + pct + '%' : 'no change') + '</span>';
+                            document.getElementById('diffPreviewOld').innerHTML = '<div style=\"color:#64748b;font-size:11px;padding:8px;\">' + rawTk.toLocaleString() + ' tokens before</div>';
+                            document.getElementById('diffPreviewNew').innerHTML = '<div style=\"color:#64748b;font-size:11px;padding:8px;\">' + afterTk.toLocaleString() + ' tokens after' + (saved > 0 ? ' (<span style=\"color:#22c55e;\">-' + saved.toLocaleString() + '</span>)' : '') + '</div>';
+              showStatus('compressStatus', '✅ Preview complete — ' + (saved > 0 ? saved.toLocaleString() + ' tokens could be saved' : 'No savings with this mode on this agent') + '.', saved > 0 ? 'success' : 'warn');
+            }})
+            .catch(function() {{
+              showStatus('compressStatus', '💡 Preview endpoint not available.', 'warn');
+            }});
+        }}
+    function applyCompression() {{
+      var sel = document.getElementById('brainAgentSelect');
+      var agentName = sel ? sel.value : 'all';
+      if (agentName === 'all') {{ showStatus('compressStatus', 'Select a single agent to apply compression.', 'warn'); return; }}
+      var a = window._brainData && window._brainData[agentName];
+      if (!a) {{ showStatus('compressStatus', 'No data for this agent.', 'warn'); return; }}
+      var tok = window.__OBSERVECO_TOKEN || '';
+      var hdrs = {{'Content-Type': 'application/json'}};
+      if (tok) hdrs['X-ObserveCo-Token'] = tok;
+      fetch('/api/chisel/compress', {{
+        method: 'POST',
+        headers: hdrs,
+        body: JSON.stringify({{agent: agentName, mode: compressMode}}),
+      }})
+        .then(function(r) {{ return r.json(); }})
+        .then(function(data) {{
+          if (data.status === 'ok') {{
+            showStatus('compressStatus', '💾 ' + data.message + (data.backup ? '<br><span style=\\\"color:#64748b;\\\">Backup: ' + data.backup + '</span>' : ''), 'success');
+            loadCompressLog();
+          }} else {{
+            showStatus('compressStatus', '⚠️ ' + (data.message || 'Compression failed'), 'warn');
+          }}
+        }})
+        .catch(function() {{
+          showStatus('compressStatus', '💡 Compression endpoint not available yet.', 'warn');
+        }});
+    }}
+    function copyCompressDiff() {{
+      var oldText = document.getElementById('diffPreviewOld').textContent.trim();
+      var newText = document.getElementById('diffPreviewNew').textContent.trim();
+      if (!oldText || oldText === 'Select an agent and run Preview to see the diff.') {{
+        showStatus('compressStatus', 'Run Preview first to generate a diff to copy.', 'warn');
+        return;
+      }}
+      var diff = '--- Before\\n+++ After\\n' + oldText + '\\n' + newText;
+      navigator.clipboard.writeText(diff).then(function() {{
+        showStatus('compressStatus', '📋 Diff report copied to clipboard.', 'success');
+      }}).catch(function() {{
+        showStatus('compressStatus', '📋 ' + diff, 'success');
+      }});
+    }}
+    function showStatus(elId, msg, type) {{
+      var el = document.getElementById(elId);
+      if (!el) return;
+      el.style.display = 'block';
+      if (type === 'success') {{ el.style.background = '#0a2a1a'; el.style.border = '1px solid #166534'; el.style.color = '#86efac'; }}
+      else if (type === 'warn') {{ el.style.background = '#451a03'; el.style.border = '1px solid #78350f'; el.style.color = '#fcd34d'; }}
+      else {{ el.style.background = '#1e293b'; el.style.border = '1px solid #334155'; el.style.color = '#94a3b8'; }}
+      el.innerHTML = msg;
+    }}
+    </script>"""
+    return HTMLResponse(html)
 
 
 # ---------------------------------------------------------------------------
@@ -2918,7 +3366,7 @@ async def api_garden_remove_stale(request: Request):
         if idx < 0 or idx >= len(lines):
             return JSONResponse({"ok": False, "error": f"Line {line} out of range"}, status_code=400)
         removed = lines.pop(idx)
-        path.write_text("\\n".join(lines), encoding="utf-8")
+        path.write_text("\n".join(lines), encoding="utf-8")
         return {"ok": True, "message": f"Removed line {line}: {removed.strip()[:60]}"}
     except Exception as e:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
@@ -2998,7 +3446,7 @@ async def api_budget_planner(rate: float = 0.15):
         if full_row and full_row["avg_pct"] is not None:
             actual_full_pct = float(full_row["avg_pct"])
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     if actual_lite_pct is not None:
         # Real data from actual compression runs
@@ -3133,6 +3581,104 @@ async def api_compress_feed():
     return HTMLResponse("".join(items))
 
 
+# ── Chisel v0.2: Suggestions endpoint ──────────────────────────────────────
+
+@app.get("/api/brain/suggestions", response_class=HTMLResponse)
+async def api_brain_suggestions(agent: str = "main"):
+    """Chisel v0.2 suggest data — duplicate rules, stale refs, unused skills.
+
+    Reads from ~/.hermes/state/chisel.db (plugin's own DB, separate from pulse.db).
+    Returns HTML partial for the Brain tab.
+    """
+    chisel_db_path = Path.home() / ".hermes" / "state" / "chisel.db"
+    if not chisel_db_path.exists():
+        return HTMLResponse(
+            '<div style="color:#64748b;font-size:12px;padding:12px;">'
+            "Chisel plugin not active. No chisel.db found."
+            "</div>"
+        )
+
+    import sqlite3 as _sql2
+    conn = _sql2.connect(str(chisel_db_path))
+    conn.row_factory = _sql2.Row
+
+    cuts = [dict(r) for r in conn.execute(
+        "SELECT id, agent_name, file_path, cut_type, tokens_before, tokens_after, "
+        "tokens_saved, verified, verified_at, timestamp FROM cut_log "
+        "ORDER BY timestamp DESC LIMIT 10"
+    ).fetchall()]
+
+    trims = [dict(r) for r in conn.execute(
+        "SELECT agent_name, total_tokens, identity_tokens, skills_tokens, "
+        "memory_tokens, tools_tokens, guidance_tokens, timestamp FROM trim_log "
+        "ORDER BY timestamp DESC LIMIT 20"
+    ).fetchall()]
+
+    conn.close()
+
+    if not cuts and not trims:
+        return HTMLResponse(
+            '<div style="color:#64748b;font-size:12px;padding:12px;">'
+            "No chisel data yet. Run <code>hermes chisel trim</code> "
+            "and <code>hermes chisel suggest</code> to collect data."
+            "</div>"
+        )
+
+    parts = []
+
+    # Trim summary
+    if trims:
+        parts.append('<div style="margin-bottom:16px;">')
+        parts.append('<h4 style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:8px;">📋 Recent Trims</h4>')
+        parts.append('<div style="display:grid;gap:6px;">')
+        for t in trims[:5]:
+            agent_name = t["agent_name"]
+            total = t["total_tokens"]
+            parts.append(
+                f'<div style="display:flex;justify-content:space-between;align-items:center;'
+                f'background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 12px;">'
+                f'<span style="font-size:12px;color:#e2e8f0;">{agent_name}</span>'
+                f'<span style="font-size:12px;font-weight:600;color:#94a3b8;">{total:,} tok</span>'
+                f'</div>'
+            )
+        parts.append('</div></div>')
+
+    # Cut log
+    if cuts:
+        parts.append('<div style="margin-bottom:16px;">')
+        parts.append('<h4 style="font-size:13px;font-weight:600;color:#f8fafc;margin-bottom:8px;">✂️ Cut History</h4>')
+        parts.append('<div style="display:grid;gap:6px;">')
+        for c in cuts:
+            verified_badge = "✅" if c["verified"] == 1 else "⚠️" if c["verified"] == -1 else "⏳"
+            saved = c["tokens_saved"]
+            saved_color = "#22c55e" if saved > 0 else "#64748b"
+            parts.append(
+                f'<div style="display:flex;justify-content:space-between;align-items:center;'
+                f'background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:8px 12px;">'
+                f'<span style="font-size:12px;color:#e2e8f0;">{c["agent_name"]} <span style="color:#64748b;">·</span> {verified_badge}</span>'
+                f'<span style="font-size:12px;color:{saved_color};">{c["tokens_before"]:,} → {c["tokens_after"]:,} tok</span>'
+                f'</div>'
+            )
+        parts.append('</div></div>')
+
+    # Summary stats
+    total_saved = sum(c["tokens_saved"] for c in cuts if c["tokens_saved"] > 0)
+    verified_count = sum(1 for c in cuts if c["verified"] == 1)
+    regression_count = sum(1 for c in cuts if c["verified"] == -1)
+
+    parts.append('<div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;margin-top:8px;">')
+    parts.append('<span style="font-size:11px;color:#64748b;">Total saved: </span>')
+    parts.append(f'<span style="font-size:12px;font-weight:600;color:#22c55e;">{total_saved:,} tok</span>')
+    parts.append('<span style="font-size:11px;color:#64748b;margin-left:12px;">Verified: </span>')
+    parts.append(f'<span style="font-size:12px;font-weight:600;color:#86efac;">{verified_count}</span>')
+    if regression_count:
+        parts.append('<span style="font-size:11px;color:#64748b;margin-left:12px;">Regressions: </span>')
+        parts.append(f'<span style="font-size:12px;font-weight:600;color:#fca5a5;">{regression_count}</span>')
+    parts.append('</div>')
+
+    return HTMLResponse("".join(parts))
+
+
 @app.get("/api/token-summary")
 async def api_token_summary_alias(agent: str = "", days: int = 7):
     """Alias for /api/tokens/summary — static HTML export compatibility."""
@@ -3140,34 +3686,358 @@ async def api_token_summary_alias(agent: str = "", days: int = 7):
     return JSONResponse(get_token_summary(agent, days))
 
 
-@app.get("/api/drift-summary")
+@app.get("/api/drift-summary", response_class=HTMLResponse)
 async def api_drift_summary():
-    """Fleet-wide drift summary across all agents."""
-    drift = db.get_drift()
-    if not drift:
-        return JSONResponse({"agents": [], "total_breached": 0, "avg_delta_pct": 0})
-    agents = {}
-    for d in drift:
-        name = d["agent_name"]
-        if name not in agents:
-            agents[name] = {"agent_name": name, "components": {}, "breached": 0}
-        agents[name]["components"][d["component"]] = {
-            "current": d["current_tokens"],
-            "week_avg": d["week_avg_tokens"],
-            "delta_pct": round(d["delta_pct"], 1),
-            "breached": bool(d["breached"]),
-        }
-        if d["breached"]:
-            agents[name]["breached"] += 1
-    total_breached = sum(a["breached"] for a in agents.values())
-    deltas = [d["delta_pct"] for d in drift]
-    avg_delta = round(sum(deltas) / len(deltas), 1) if deltas else 0
-    return JSONResponse({
-        "agents": sorted(agents.values(), key=lambda x: x["agent_name"]),
-        "total_agents": len(agents),
-        "total_breached": total_breached,
-        "avg_delta_pct": avg_delta,
-    })
+    """Fleet-wide drift time-series — per-agent sparklines of the most drifted component.
+
+    Differentiates from Compare tab (current snapshot) by showing trajectory:
+    - 7-day sparkline of the component with the most drift history
+    - Peak drift, current drift, breach count
+    - Color-coded by severity
+    """
+    conn = db._get_conn()
+    now = int(time.time())
+    week_ago = now - 7 * 86400
+
+    # Get all agents with drift data in last 7 days
+    agents_raw = conn.execute(
+        "SELECT DISTINCT agent_name FROM chisel_drift WHERE timestamp > ? ORDER BY agent_name",
+        (week_ago,),
+    ).fetchall()
+    if not agents_raw:
+        return HTMLResponse("""<div style="color:#64748b;font-size:12px;padding:20px;text-align:center;">No drift data yet.</div>""")
+
+    rows = ""
+    total_breached = 0
+    total_agents = 0
+
+    for (name,) in agents_raw:
+        # Get all components for this agent
+        comps = conn.execute(
+            "SELECT DISTINCT component FROM chisel_drift WHERE agent_name = ? AND timestamp > ? AND method='rolling'",
+            (name, week_ago),
+        ).fetchall()
+
+        # Find the component with the most drift activity (highest max abs delta)
+        best_comp = None
+        best_max_delta = 0
+        best_series = []
+        best_breaches = 0
+        best_current = 0.0
+
+        for (comp,) in comps:
+            series = conn.execute(
+                "SELECT timestamp, delta_pct, breached FROM chisel_drift "
+                "WHERE agent_name = ? AND component = ? AND timestamp > ? AND method='rolling' "
+                "ORDER BY timestamp ASC",
+                (name, comp, week_ago),
+            ).fetchall()
+            if not series:
+                continue
+            max_abs = max(abs(r["delta_pct"]) for r in series)
+            breaches = sum(1 for r in series if r["breached"])
+            if max_abs > best_max_delta:
+                best_max_delta = max_abs
+                best_comp = comp
+                best_series = series
+                best_breaches = breaches
+                best_current = series[-1]["delta_pct"]
+
+        if not best_comp:
+            continue
+
+        # Fetch Option B (week-over-week) and Option C (absolute) for this agent/component
+        wow_row = conn.execute(
+            "SELECT delta_pct, breached FROM chisel_drift "
+            "WHERE agent_name = ? AND component = ? AND method='wow' "
+            "ORDER BY timestamp DESC LIMIT 1",
+            (name, best_comp),
+        ).fetchone()
+        abs_row = conn.execute(
+            "SELECT delta_pct, breached FROM chisel_drift "
+            "WHERE agent_name = ? AND component = ? AND method='absolute' "
+            "ORDER BY timestamp DESC LIMIT 1",
+            (name, best_comp),
+        ).fetchone()
+
+        wow_str = f"{wow_row['delta_pct']:+.1f}%" if wow_row else "—"
+        wow_color = "#ef4444" if (wow_row and wow_row['breached']) else "#64748b"
+        abs_str = f"{abs_row['delta_pct']:+.0f}" if abs_row else "—"
+        abs_color = "#ef4444" if (abs_row and abs_row['breached']) else "#64748b"
+
+        total_agents += 1
+        if best_breaches > 0:
+            total_breached += 1
+
+        # Build sparkline data points — preserve non-zero values, sample zeros
+        non_zero = [r for r in best_series if abs(r["delta_pct"]) > 0.1]
+        zero = [r for r in best_series if abs(r["delta_pct"]) <= 0.1]
+        sampled = []
+        # Always include non-zero points (capped at 100)
+        if len(non_zero) > 100:
+            nzstep = max(1, len(non_zero) // 100)
+            sampled.extend(non_zero[::nzstep])
+        else:
+            sampled.extend(non_zero)
+        # Sample zeros to keep total under ~120 points
+        zero_budget = max(0, 120 - len(sampled))
+        if zero and zero_budget > 0:
+            zstep = max(1, len(zero) // zero_budget)
+            sampled.extend(zero[::zstep])
+        sampled.sort(key=lambda r: r["timestamp"])
+        spark_data = ",".join(f"{r['delta_pct']:.1f}" for r in sampled)
+        # Pass timestamps alongside for tooltip date labels
+        spark_ts = ",".join(str(r["timestamp"]) for r in sampled)
+        # Time range for axis labels
+        from datetime import datetime
+        first_dt = datetime.fromtimestamp(sampled[0]["timestamp"]).strftime("%b %d")
+        last_dt = datetime.fromtimestamp(sampled[-1]["timestamp"]).strftime("%b %d")
+
+        # Color coding
+        peak = max(abs(r["delta_pct"]) for r in best_series)
+        if peak > 20:
+            color = "#ef4444"
+        elif peak > 5:
+            color = "#f59e0b"
+        else:
+            color = "#22c55e"
+
+        # Current drift direction
+        direction = "▲" if best_current > 1 else "▼" if best_current < -1 else "→"
+        direction_cls = "up" if best_current > 1 else "down" if best_current < -1 else "flat"
+
+        rows += f"""<div class="drift-card" onclick="htmx.ajax('GET', '/api/fleet/modal/{_html_escape(name)}', {{target:'#modalContainer', swap:'innerHTML'}})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--fg-3)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;color:var(--fg);">{_html_escape(name)}</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(100,116,139,0.12);color:var(--fg-2);">{best_comp}</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:{color};"><span class="{direction_cls}">{direction}</span> {best_current:+.1f}%</span>
+        <span style="font-size:9px;color:var(--fg-3);">now</span>
+    </div>
+    <div style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 10 10" style="opacity:0.4;"><polyline points="0,7 2,4 4,5 7,1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                7-Day Rolling Trend
+            </span>
+            <span style="font-size:8px;color:var(--fg-3);">{first_dt} → {last_dt}</span>
+        </div>
+        <canvas class="drift-sparkline" data-series="{spark_data}" data-timestamps="{spark_ts}" data-range-start="{first_dt}" data-range-end="{last_dt}" data-color="{color}" data-height="36" width="200" height="32" style="width:100%;height:36px;display:block;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Peak drift % in 7-day rolling average window">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">7d Peak</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:{color};">{peak:.1f}%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Week-over-week change in token consumption">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">WoW Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:{wow_color};">{wow_str}</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Absolute change in token count">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">Abs Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:{abs_color};">{abs_str}</div>
+        </div>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:6px;">
+        <span>{len(best_series)} points</span>
+        {'<span style="color:#ef4444;">⚠ ' + str(best_breaches) + ' breach' + ('es' if best_breaches != 1 else '') + '</span>' if best_breaches > 0 else '<span style="color:#22c55e;">✓ clear</span>'}
+    </div>
+</div>"""
+
+    return HTMLResponse(f"""<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+    <div style="padding:12px 16px;font-size:13px;font-weight:600;color:var(--fg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <span>Drift Timeline · {total_agents} agents</span>
+        <span style="font-size:11px;color:{"#ef4444" if total_breached > 0 else "#22c55e"};font-weight:400;">{total_breached} with breaches · 7-day sparklines</span>
+    </div>
+    {rows}
+</div>
+<script>
+(function() {{
+    // Helpers
+    function hexToRgba(hex, a) {{
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+    }}
+    var style = getComputedStyle(document.documentElement);
+    var gridLineColor = style.getPropertyValue('--border-soft').trim() || 'rgba(148,163,184,0.2)';
+    var fg2 = style.getPropertyValue('--fg-2').trim() || '#64748b';
+    var surfaceBg = style.getPropertyValue('--surface').trim() || '#0f172a';
+    var fontMono = style.getPropertyValue('--font-mono').trim() || 'monospace';
+
+    var canvases = document.querySelectorAll('.drift-sparkline');
+    for (var ci = 0; ci < canvases.length; ci++) {{
+        (function(c) {{
+            var raw = c.getAttribute('data-series');
+            if (!raw) return;
+            var series = raw.split(',').map(parseFloat);
+            var tsRaw = c.getAttribute('data-timestamps');
+            var timestamps = tsRaw ? tsRaw.split(',').map(function(s) {{ return parseInt(s) * 1000; }}) : [];
+            var rangeStart = c.getAttribute('data-range-start') || '7d ago';
+            var rangeEnd = c.getAttribute('data-range-end') || 'now';
+            var color = c.getAttribute('data-color') || '#22c55e';
+            if (series.length < 2) return;
+
+            // Destroy previous Chart instance (htmx re-renders)
+            if (c._chart) {{ c._chart.destroy(); c._chart = null; }}
+
+            // Set explicit pixel dimensions — NO responsive mode to prevent auto-resize expansion
+            var _parentW = c.parentElement.clientWidth || c.parentElement.offsetWidth || 300;
+            var _cHeight = parseInt(c.getAttribute('data-height')) || 32;
+            c.setAttribute('width', _parentW);
+            c.setAttribute('height', _cHeight);
+            c.style.width = _parentW + 'px';
+            c.style.height = _cHeight + 'px';
+            c.style.display = 'block';
+
+            var fillTop = hexToRgba(color, 0.18);
+            var labelFont = '9px ' + fontMono;
+
+            // ponytail: constrain y-axis so tiny drifts don't fill the full height.
+            // Symmetric around zero with a minimum ±2% span; expands if real data exceeds.
+            var _maxAbs = Math.max.apply(null, series.map(function(v){{ return Math.abs(v); }})) || 0;
+            var _yBound = Math.max(_maxAbs * 1.25, 2);
+
+            var chart = new Chart(c, {{
+                type: 'line',
+                data: {{
+                    labels: series.map(function(_, i) {{ return i; }}),
+                    datasets: [{{
+                        data: series,
+                        borderColor: color,
+                        backgroundColor: function(ctx) {{
+                            var area = ctx.chart.chartArea;
+                            if (!area) return null;
+                            var grad = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+                            grad.addColorStop(0, fillTop);
+                            grad.addColorStop(1, 'transparent');
+                            return grad;
+                        }},
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: color,
+                        pointHoverBorderColor: surfaceBg,
+                        pointHoverBorderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                    }}]
+                }},
+                options: {{
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    interaction: {{
+                        mode: 'index',
+                        intersect: false,
+                    }},
+                    plugins: {{
+                        legend: {{ display: false }},
+                        tooltip: {{
+                            enabled: false,
+                            external: function(context) {{
+                                // HTML tooltip — renders outside canvas so it's never clipped
+                                var tooltipEl = document.getElementById('chartjs-tooltip');
+                                if (!tooltipEl) {{
+                                    tooltipEl = document.createElement('div');
+                                    tooltipEl.id = 'chartjs-tooltip';
+                                    tooltipEl.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;background:rgba(15,23,42,0.95);border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:6px 10px;font-family:' + fontMono + ';transition:opacity 0.15s;opacity:0;';
+                                    document.body.appendChild(tooltipEl);
+                                }}
+                                var tooltip = context.tooltip;
+                                if (tooltip.opacity === 0) {{
+                                    tooltipEl.style.opacity = '0';
+                                    return;
+                                }}
+                                var data = tooltip.dataPoints[0];
+                                var v = data.raw;
+                                var sign = v >= 0 ? '+' : '';
+                                var dateLabel = '';
+                                if (timestamps.length > data.dataIndex) {{
+                                    var d = new Date(timestamps[data.dataIndex]);
+                                    dateLabel = d.toDateString().slice(4, 10) + ' ';
+                                }}
+                                tooltipEl.innerHTML = '<div style="font-size:10px;color:' + fg2 + ';margin-bottom:2px;">' + dateLabel + '</div><div style="font-size:13px;font-weight:bold;color:' + color + ';">' + sign + v.toFixed(1) + '%</div>';
+                                var rect = c.getBoundingClientRect();
+                                var pos = rect.left + tooltip.caretX;
+                                var top = rect.top + tooltip.caretY;
+                                tooltipEl.style.left = Math.min(pos + 12, window.innerWidth - 160) + 'px';
+                                tooltipEl.style.top = Math.max(top - 50, 10) + 'px';
+                                tooltipEl.style.opacity = '1';
+                            }}
+                        }}
+                    }},
+                    scales: {{
+                        x: {{ display: false }},
+                        y: {{ display: false, min: -_yBound, max: _yBound }}
+                    }},
+                    layout: {{
+                        padding: {{ top: 2, bottom: 4, left: 2, right: 2 }}
+                    }},
+                    elements: {{
+                        line: {{
+                            borderJoinStyle: 'round',
+                            borderCapStyle: 'round',
+                        }}
+                    }}
+                }},
+                plugins: [{{
+                    id: 'sparklineExtras',
+                    afterDraw: function(chart) {{
+                        var ctx = chart.ctx;
+                        var xS = chart.scales.x;
+                        var yS = chart.scales.y;
+                        var left = chart.chartArea.left;
+                        var right = chart.chartArea.right;
+                        var btm = chart.chartArea.bottom;
+
+                        ctx.save();
+
+                        // Dashed zero line
+                        var zy = yS.getPixelForValue(0);
+                        ctx.beginPath();
+                        ctx.strokeStyle = gridLineColor;
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3, 4]);
+                        ctx.moveTo(left, zy);
+                        ctx.lineTo(right, zy);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        // End dot with ring
+                        var lastI = series.length - 1;
+                        var lx = xS.getPixelForValue(lastI);
+                        var ly = yS.getPixelForValue(series[lastI]);
+                        ctx.beginPath();
+                        ctx.fillStyle = color;
+                        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.strokeStyle = surfaceBg;
+                        ctx.lineWidth = 2;
+                        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Time-axis labels
+                        ctx.font = labelFont;
+                        ctx.fillStyle = fg2;
+                        ctx.textBaseline = 'bottom';
+                        ctx.textAlign = 'start';
+                        ctx.fillText(rangeStart, left, btm + 1);
+                        ctx.textAlign = 'end';
+                        ctx.fillText(rangeEnd, right, btm + 1);
+
+                        ctx.restore();
+                    }}
+                }}]
+            }});
+
+            c._chart = chart;
+        }})(canvases[ci]);
+    }}
+}})();
+</script>""")
 
 
 @app.get("/api/communication-map")
@@ -3313,7 +4183,7 @@ async def api_discover_run_html():
 
         db.set_discovery_candidates(candidates)
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     candidates = db.get_discovery_candidates()
 
@@ -3485,7 +4355,7 @@ async def api_skills_audit(agent: str = "all"):
                     "breached": r.get("breached", False),
                 }
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     # 5. Build summary
     # Rough cost: assume 250 sessions/mo × skill_tokens × ~$0.00015 per K tokens (DeepSeek V3)
@@ -3542,7 +4412,7 @@ async def api_chisel_preview(agent: str = "all", mode: str = "lite"):
             if row["mode"] == "full" and row["agent_name"] not in actual_full:
                 actual_full[row["agent_name"]] = row["savings_pct"]
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     result = {}
     for name, t in latest.items():
@@ -3887,6 +4757,7 @@ async def api_agents(
         <span class="value" style="color:{err_color};">{err_label}</span>
         <span class="click-hint">See details</span><span class="arrow">›</span>
       </div>
+      {_canary_card(name)}
     </div>""")
 
         if cards_html:
@@ -4018,17 +4889,126 @@ async def api_delete_agent(agent_name: str):
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
 
 
+@app.get("/api/agent/{agent_name}/profile")
+async def api_agent_profile(request: Request, agent_name: str, focus: str = ""):
+    """Four-pillar agent profile modal (OBS-SPEC-093).
+
+    Returns the c-modal-profile.html partial with status line, pillar tiles,
+    issue cards, and technical drawer. Replaces the T4 JSON endpoint with
+    the dashboard's presentation-layer synthesizer.
+
+    Optional ?focus= param scrolls to a specific pillar section on open:
+      reliability, quality, usage, memory
+
+    For raw T4 JSON data, call get_agent_profile() from
+    observeco.agent_profile_service directly.
+    """
+    from observeco.dashboard.services.agent_profile_service import get_agent_profile
+
+    try:
+        profile = get_agent_profile(agent_name, use_cache=False)
+    except Exception:
+        logger.exception("agent_profile failed for %s", agent_name)
+        return templates.TemplateResponse(request, "partials/c57.html", {"html": """<div class="scrim"><div class="modal">
+    <div class="m-head">
+        <span class="m-name" style="color:var(--fg-3)">Error</span>
+        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
+    </div>
+    <div class="m-body">
+        <div class="state-msg err">
+            <div class="ico">⚠</div>
+            <h3>Agent data unavailable</h3>
+            <p>The profile service encountered an error.</p>
+        </div>
+    </div>
+</div></div>"""})
+
+    if "error" in profile:
+        return templates.TemplateResponse(request, "partials/c57.html", {"html": f"""<div class="scrim"><div class="modal">
+    <div class="m-head">
+        <span class="m-name" style="color:var(--fg-3)">Not found</span>
+        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
+    </div>
+    <div class="m-body">
+        <div class="state-msg"><div class="ico">🔍</div><h3>Agent not found</h3>
+        <p>No agent named "{_html_escape(agent_name)}" is registered.</p></div>
+    </div>
+</div></div>"""})
+
+    return templates.TemplateResponse(request, "partials/c-modal-profile.html", {"profile": profile, "focus": focus})
+
+
+@app.get("/api/agent/{agent_name}/traces")
+async def api_agent_traces(agent_name: str, trace_id: str = "", limit: int = 200):
+    """Get trace spans for an agent (T1 Tracing Layer)."""
+    try:
+        spans = db.get_trace_spans(agent_name=agent_name, trace_id=trace_id, limit=limit)
+        return {"ok": True, "agent_name": agent_name, "spans": spans, "count": len(spans)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/agent/{agent_name}/sessions")
+async def api_agent_sessions(agent_name: str, limit: int = 20):
+    """Get trace sessions for an agent (T1 Tracing Layer)."""
+    try:
+        sessions = db.get_trace_sessions(agent_name=agent_name, limit=limit)
+        return {"ok": True, "agent_name": agent_name, "sessions": sessions, "count": len(sessions)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/anomalies")
+async def api_anomalies(lookback_minutes: int = 60):
+    """Get fleet-wide anomaly feed (T3 Behavioral Monitoring)."""
+    try:
+        from observeco.anomaly import detect_anomalies
+        anomalies = detect_anomalies(db=db, lookback_minutes=lookback_minutes)
+        return {"ok": True, "anomalies": anomalies, "count": len(anomalies)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.get("/api/anomaly-feed", response_class=HTMLResponse)
+async def api_anomaly_feed(lookback_minutes: int = 120):
+    """HTML fragment for the anomaly feed tab (T3)."""
+    try:
+        from observeco.anomaly import detect_anomalies
+        anomalies = detect_anomalies(db=db, lookback_minutes=lookback_minutes)
+    except Exception as e:
+        return f'<div style="color:#ef4444;font-size:13px;">Error: {e}</div>'
+
+    if not anomalies:
+        return '<div style="color:#94a3b8;font-size:13px;padding:20px;text-align:center;">✅ No anomalies detected in the last {lookback_minutes} minutes.</div>'
+
+    html = f'<div style="font-size:12px;color:#64748b;margin-bottom:12px;">{len(anomalies)} anomalies in last {lookback_minutes} min</div>'
+    for a in anomalies:
+        severity_color = {"critical": "#ef4444", "warning": "#eab308", "info": "#3b82f6"}.get(a.get("severity", "info"), "#64748b")
+        severity_icon = {"critical": "🔴", "warning": "🟡", "info": "ℹ️"}.get(a.get("severity", "info"), "•")
+        html += f'''<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;border-left:3px solid {severity_color};">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span>{severity_icon}</span>
+            <span style="font-size:13px;font-weight:600;color:var(--fg);">{a.get("type", "unknown")}</span>
+            <span style="font-size:11px;color:var(--fg-2);">{a.get("agent_name", "")}</span>
+          </div>
+          <div style="font-size:12px;color:var(--fg-2);margin-left:24px;">{a.get("description", "")}</div>
+        </div>'''
+    return HTMLResponse(html)
+
+
 @app.post("/api/chisel/compress")
 async def api_chisel_compress(request: Request):
     """Compress an agent's SOUL.md via the dashboard.
 
-    Accepts JSON: {"agent": "name", "mode": "lite"|"full"}
+    Accepts JSON: {"agent": "name", "mode": "lite"|"full", "preview": true|false}
+    preview=true: dry-run, no files modified.
     Returns: {"status": "ok", "message": "...", "backup": "...", "before_tokens": N, "after_tokens": N, "savings": N, "savings_pct": N}
     """
     try:
         body = await request.json()
         agent_name = body.get("agent", "").strip()
         mode = body.get("mode", "lite").strip().lower()
+        preview = body.get("preview", False)
         if not agent_name:
             return JSONResponse({"status": "error", "message": "Agent name required"}, status_code=400)
         if mode not in ("lite", "full"):
@@ -4041,19 +5021,25 @@ async def api_chisel_compress(request: Request):
                 return JSONResponse({"status": "error", "message": "Full compression requires Pro — start a free trial"}, status_code=402)
 
         from observeco.chisel.trim import run_compress
-        result = run_compress(agent_name=agent_name, mode=mode)
+        result = run_compress(agent_name=agent_name, mode=mode, dry_run=preview)
+
+        if preview:
+            return JSONResponse(result)
+
         # Also log to database
         from observeco.db import Database
         local_db = Database()
-        conn = local_db._get_conn()
-        conn.execute(
-            "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, savings, "
-            "savings_pct, backup_path, triggered_by, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (result["agent"], result["mode"], result["before_tokens"], result["after_tokens"],
-             result["savings"], result["savings_pct"], result.get("backup", ""),
-             "dashboard", int(__import__("time").time())),
-        )
-        conn.commit()
+        # Use db._write() (retry-on-lock) — the watch daemon writes pulse.db constantly.
+        try:
+            local_db._write(
+                "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, savings, "
+                "savings_pct, backup_path, triggered_by, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (result["agent"], result["mode"], result["before_tokens"], result["after_tokens"],
+                 result["savings"], result["savings_pct"], result.get("backup", ""),
+                 "dashboard", int(__import__("time").time())),
+            )
+        except _sqlite3.OperationalError:
+            logger.warning("compress_log insert failed (db locked): %s", result.get("agent"))
         return JSONResponse(result)
     except FileNotFoundError as e:
         return JSONResponse({"status": "error", "message": str(e)}, status_code=404)
@@ -4083,6 +5069,22 @@ async def api_token_history(days: int = 90, agent: str = ""):
     } for d in data]
     summary = compute_summary(data)
     return {"has_real_data": True, "snapshots": snapshots, "summary": summary}
+
+
+@app.get("/api/token-analytics", response_class=HTMLResponse)
+async def api_token_analytics(days: int = 7):
+    """Token Analytics page — v2 Strong-Fit HTML with Chart.js cost trend, attribution gap,
+    per-agent cost table, composition bars, and cache efficiency bars.
+    GET /api/token-analytics?days=7
+    """
+    from observeco.dashboard.routes.token_analytics import (
+        error_html,
+        token_analytics,
+    )
+    try:
+        return await token_analytics(days)
+    except Exception:
+        return HTMLResponse(error_html())
 
 
 @app.get("/api/tokens/chart")
@@ -4333,7 +5335,11 @@ async def api_chisel_compress_skill(request: Request):
         _db = Database()
         for name in skill_names:
             # Skills live in nested dirs: category/skill-name/SKILL.md
-            skill_paths = list(sd.rglob(f"{name}/SKILL.md"))
+            # cards.json names may differ from directory names (e.g. "Hermes Cron Debugging" vs "hermes-cron-debugging")
+            slug = name.lower().replace(" ", "-").replace("_", "-")
+            skill_paths = list(sd.rglob(f"{slug}/SKILL.md"))
+            if not skill_paths:
+                skill_paths = list(sd.glob(f"*/{slug}/SKILL.md"))
             if not skill_paths:
                 details.append({"name": name, "status": "error", "message": "SKILL.md not found"})
                 continue
@@ -4347,31 +5353,30 @@ async def api_chisel_compress_skill(request: Request):
                 details.append({
                     "name": name, "status": "ok",
                     "saved_tokens": saved, "savings_pct": pct,
-                    "before_tokens": manifest.get("original_tokens", 0),
+                    "before_tokens": manifest.get("pre_compress_tokens", manifest.get("original_tokens", 0)),
                     "after_tokens": manifest.get("compressed_tokens", 0),
                     "applied": True,
                 })
                 # Log to compress_log
                 try:
-                    _db._get_conn().execute(
+                    _db._write(
                         "INSERT INTO compress_log (agent_name, mode, before_tokens, after_tokens, "
                         "savings, savings_pct, file_path, backup_path, triggered_by, timestamp) "
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        ("fleet", mode,
+                        (name, mode,
                          manifest.get("pre_compress_tokens", manifest.get("original_tokens", 0)),
                          manifest.get("compressed_tokens", 0),
                          saved, pct,
                          str(skill_path),
                          str(skill_path.with_suffix(".md.bak")),
-                         "dashboard", int(time.time()))
+                         "dashboard", int(time.time())),
                     )
-                    _db._get_conn().commit()
-                except Exception:
+                except _sqlite3.OperationalError:
                     pass  # fire-and-forget
                 # Log to action_log
                 try:
                     _db.log_action(
-                        agent_name="fleet",
+                        agent_name=name,
                         action_type="skill_compress",
                         action_detail=f"{name} — compressed {manifest.get('pre_compress_tokens', 0):,} → {manifest.get('compressed_tokens', 0):,} tok ({pct:.0f}%)",
                         tokens_saved=saved,
@@ -4457,7 +5462,7 @@ async def api_chisel_revert_skill(request: Request):
                 # Log revert
                 try:
                     _db.log_action(
-                        agent_name="fleet",
+                        agent_name=name,
                         action_type="skill_revert",
                         action_detail=f"{name} — reverted to original ({_count_tokens(original_text):,} tok)",
                         tokens_saved=0,
@@ -4529,22 +5534,27 @@ async def api_optimiser_stats(agent: str = "all"):
     guidance_zero = [dict(g) for g in guidance_rows if g["fire_count"] == 0]
     guidance_active = [dict(g) for g in guidance_rows if g["fire_count"] > 0]
 
-    # Compute actual savings from compress_log averages
+    # Compute actual savings from compress_log — only over rows that achieved
+    # real savings (savings_pct > 0). Zero/negative rows are no-op compressions
+    # (dry-runs, already-compressed files) and would flatten the signal.
+    # ponytail: no hardcoded fallback (was 22/35 +21/+12). If no real compression
+    # has saved tokens, lite/full stay None and the card shows "—" instead of a
+    # fabricated 43-47%. The optimiser projection reflects what compression has
+    # actually delivered (real lite→full range), not a placeholder estimate.
+    # A true per-agent optimiser projection needs real pruning data — out of scope.
     lite_avg = conn.execute(
-        "SELECT ROUND(ABS(AVG(savings_pct)), 0) as avg_pct FROM compress_log WHERE mode='lite' AND savings_pct IS NOT NULL"
+        "SELECT AVG(savings_pct) as avg_pct FROM compress_log WHERE mode='lite' AND savings_pct > 0"
     ).fetchone()
     full_avg = conn.execute(
-        "SELECT ROUND(ABS(AVG(savings_pct)), 0) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct IS NOT NULL"
+        "SELECT AVG(savings_pct) as avg_pct FROM compress_log WHERE mode='full' AND savings_pct > 0"
     ).fetchone()
-    lite_savings = int(lite_avg["avg_pct"]) if lite_avg and lite_avg["avg_pct"] is not None else None
-    full_savings = int(full_avg["avg_pct"]) if full_avg and full_avg["avg_pct"] is not None else None
+    lite_savings = round(lite_avg["avg_pct"], 1) if lite_avg and lite_avg["avg_pct"] is not None else None
+    full_savings = round(full_avg["avg_pct"], 1) if full_avg and full_avg["avg_pct"] is not None else None
     opt_min = None
     opt_max = None
     if lite_savings is not None or full_savings is not None:
-        lite_base = lite_savings if lite_savings is not None else 22
-        full_base = full_savings if full_savings is not None else 35
-        opt_min = min(43, lite_base + 21)
-        opt_max = min(47, full_base + 12)
+        opt_min = lite_savings if lite_savings is not None else full_savings
+        opt_max = full_savings if full_savings is not None else lite_savings
 
     return JSONResponse({
         "agent": agent,
@@ -5325,16 +6335,42 @@ async def api_glossary(topic: str):
 # §§§ — Main Page
 # ---------------------------------------------------------------------------
 
-@app.get("/", response_class=HTMLResponse)
-async def index():
-    index_path = TEMPLATES_DIR / "index.html"
+@app.get("/new", response_class=HTMLResponse)
+async def new_dashboard():
+    """Serve the new Strong-Fit dashboard design (index_new.html)."""
+    index_path = TEMPLATES_DIR / "index_new.html"
     if not index_path.exists():
         return HTMLResponse("<h1>Dashboard</h1><p>Template not found.</p>")
     html = index_path.read_text(encoding="utf-8")
-    # Inject dashboard token into htmx via hx-headers attribute on <body> tag.
-    # hx-headers is parsed by htmx at DOM processing time — zero JS timing dependency,
-    # no event handler race, no setTimeout poll needed.
-    # Also inject cache-busting meta and __OBSERVECO_TOKEN for fetch interceptor.
+    from observeco import __version__
+    html = html.replace("{{VERSION}}", __version__)
+    token = getattr(app.state, "dashboard_secret", "")
+    if token:
+        body_idx = html.find("<body")
+        if body_idx >= 0:
+            body_close = html.index(">", body_idx)
+            hx_attr = f' hx-headers=\'{{"X-ObserveCo-Token":"{token}"}}\''
+            html = html[:body_close] + hx_attr + html[body_close:]
+        if "</head>" in html:
+            head_end = html.rindex("</head>")
+            injection = (
+                f'<meta name="observeco-token" content="{token}">\n'
+                f'<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">\n'
+                f'<meta http-equiv="Pragma" content="no-cache">\n'
+                f'<meta http-equiv="Expires" content="0">\n'
+                f'<script>window.__OBSERVECO_TOKEN = "{token}";</script>\n'
+            )
+            html = html[:head_end] + injection + html[head_end:]
+    return HTMLResponse(html)
+
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    index_path = TEMPLATES_DIR / "index_new.html"
+    if not index_path.exists():
+        return HTMLResponse("<h1>Dashboard</h1><p>Template not found.</p>")
+    html = index_path.read_text(encoding="utf-8")
+    from observeco import __version__
+    html = html.replace("{{VERSION}}", __version__)
     token = getattr(app.state, "dashboard_secret", "")
     if token:
         # 1. Inject hx-headers on the <body> tag (htmx-native, zero timing dependency)
@@ -5360,6 +6396,46 @@ async def index():
             )
             html = html[:head_end] + injection + html[head_end + len("</head>"):]
     return HTMLResponse(html)
+
+
+# ---------------------------------------------------------------------------
+# § v2 — Domain-grouped nav partial
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/partials/nav", response_class=HTMLResponse)
+async def api_partials_nav():
+    """Return domain-grouped nav HTML partial (v2 Strong-Fit design)."""
+    return HTMLResponse("""<nav class="nav" aria-label="Primary">
+    <div class="nav-group">
+      <span class="glabel">Monitor</span>
+      <span class="nav-tab active clickable" data-tab="fleet">Fleet</span>
+      <span class="nav-tab clickable" data-tab="coverage">Coverage</span>
+      <span class="nav-tab clickable" data-tab="alerts">Alerts</span>
+      <span class="nav-tab clickable" data-tab="timeline">Error Timeline</span>
+      <span class="nav-tab clickable" data-tab="pathway">Pathway Map</span>
+    </div>
+    <div class="nav-group">
+      <span class="glabel">Analyze</span>
+      <span class="nav-tab clickable" data-tab="tokens">Tokens</span>
+      <span class="nav-tab clickable" data-tab="brain">Brain</span>
+      <span class="nav-tab clickable" data-tab="drift">Drift</span>
+      <span class="nav-tab clickable" data-tab="compare">Compare</span>
+      <span class="nav-tab clickable" data-tab="harness">Harness</span>
+    </div>
+    <div class="nav-group">
+      <span class="glabel">Intelligence</span>
+      <span class="nav-tab clickable" data-tab="capability">Capability</span>
+      <span class="nav-tab clickable" data-tab="anomalies">Anomalies</span>
+      <span class="nav-tab clickable" data-tab="health-score">Health Score<span class="soon">soon</span></span>
+      <span class="nav-tab clickable" data-tab="traces">Traces<span class="soon">soon</span></span>
+    </div>
+    <div class="nav-group">
+      <span class="glabel">Settings</span>
+      <span class="nav-tab clickable" data-tab="config">Config</span>
+      <span class="nav-tab clickable" data-tab="billing">Billing</span>
+    </div>
+  </nav>""")
 
 
 # ---------------------------------------------------------------------------
@@ -5424,7 +6500,31 @@ async def pathway_page():
     """Serve the Cytoscape.js pathway map page."""
     if not PATHWAY_TEMPLATE.exists():
         return HTMLResponse("<h1>Pathway Map</h1><p>Template not found.</p>")
-    return HTMLResponse(PATHWAY_TEMPLATE.read_text(encoding="utf-8"))
+    html = PATHWAY_TEMPLATE.read_text(encoding="utf-8")
+    token = app.state.dashboard_secret if hasattr(app.state, "dashboard_secret") else ""
+    if token and "</head>" in html:
+        head_end = html.rindex("</head>")
+        injection = (
+            f'<script>window.__OBSERVECO_TOKEN = "{token}";</script>\n'
+            f'</head>'
+        )
+        html = html[:head_end] + injection + html[head_end:]
+    return HTMLResponse(html)
+
+
+PATHWAY_TAB_TEMPLATE = TEMPLATES_DIR / "pathway_tab.html"
+
+
+@app.get("/api/pathway/tab", response_class=HTMLResponse)
+async def api_pathway_tab():
+    """Return the pathway map partial for in-dashboard tab (htmx)."""
+    if not PATHWAY_TAB_TEMPLATE.exists():
+        return HTMLResponse("<div style='padding:24px;text-align:center;color:var(--muted);'>Pathway tab template not found.</div>")
+    html = PATHWAY_TAB_TEMPLATE.read_text(encoding="utf-8")
+    token = app.state.dashboard_secret if hasattr(app.state, "dashboard_secret") else ""
+    if token:
+        html = f'<script>window.__OBSERVECO_TOKEN = "{token}";</script>\n' + html
+    return HTMLResponse(html)
 
 
 # ── Telemetry opt-in endpoint (Layer F / F9) ────────────────────
@@ -5678,6 +6778,9 @@ def _find_free_port(host: str, preferred: int) -> int:
     import socket
     for port in range(preferred, preferred + 100):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            # SO_REUSEADDR lets bind() succeed over a lingering TIME_WAIT socket
+            # left by a just-killed instance, so restart races don't fall back.
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
                 s.bind((host, port))
                 return port
@@ -5738,10 +6841,10 @@ def _ensure_watch_running() -> None:
             **kwargs,
         )
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
 
-def serve(host: str = "127.0.0.1", port: int = 9119, static: bool = False,
+def serve(host: str = "127.0.0.1", port: int = PORTS.dashboard, static: bool = False,
           no_browser: bool = False, shared: str | None = None,
           show_token: bool = False) -> None:
     """Start the dashboard server.
@@ -6235,7 +7338,7 @@ async def api_heal_config():
         if r.returncode == 0 and r.stdout.strip():
             daemon_running = True
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     if not daemon_running:
         daemon_btn = """
@@ -6257,9 +7360,10 @@ async def api_heal_config():
         </div>"""
 
     # Get all agents and their heal configs
-    from observeco import license as lic
     from observeco.db import Database
-    is_pro = lic.require_pro()
+    # ponytail: commercial model is usage-metered, not feature-gated (commercial-scope.md).
+    # Auto-heal (L1+L2) + daemon auto-start apply to ALL users, not just Pro.
+    is_pro = True
     d = Database()
     agents = d.get_agents()
     configs = {c["agent_name"]: c for c in d.get_heal_config()}
@@ -6830,10 +7934,7 @@ async def api_alert_dashboard():
     _home = Path.home()
     _has_telegram_token = (_home / ".observeco" / "telegram_bot_token").exists()
     _has_smtp = (_home / ".observeco" / "smtp.json").exists()
-    _telegram_token_preview = ""
-    if _has_telegram_token:
-        _tok = (_home / ".observeco" / "telegram_bot_token").read_text().strip()
-        _telegram_token_preview = _tok[:12] + "..." if len(_tok) > 15 else _tok
+    _telegram_token_preview = "Configured" if _has_telegram_token else ""
     _smtp_preview = ""
     if _has_smtp:
         try:
@@ -7629,7 +8730,7 @@ async def api_health_l1():
         otel_up = s.connect_ex(("127.0.0.1", 4318)) == 0
         s.close()
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
     db_ok = True
     try:
         from observeco.db import get_engine
@@ -7705,7 +8806,7 @@ async def api_agent_summary(name: str):
         if gr:
             memory_debt = str(round(gr['memory_debt_score']))
     except Exception:
-        pass
+        logger.exception("swallowed exception in server.py")
 
     response = ask(
         PER_AGENT_SUMMARY_PROMPT.format(name=name, status=status, latency_ms=latency,

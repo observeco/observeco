@@ -1,0 +1,37 @@
+# Bug Fix Benchmark
+#
+# Evaluates whether the agent can fix a bug given the faulty code
+# and a description of the expected behavior.
+
+task: bug_fix
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: ./data/bug_fix_tasks.json
+description: "Fix the bug in the given code."
+doc_to_text: |
+  The following code has a bug. Fix it so that it produces
+  the expected behavior.
+
+  ```python
+  {{code}}
+  ```
+
+  Bug description: {{description}}
+
+  Fixed code:
+doc_to_target: "{{fix}}"
+output_type: generate_until
+test_split: test
+generation_kwargs:
+  until: []
+  max_gen_toks: 512
+  do_sample: false
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: "1.0"
+  category: code
+  difficulty: medium

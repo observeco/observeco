@@ -22,6 +22,7 @@ from pathlib import Path
 from fastapi import Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
+from observeco.dashboard.config import PORTS
 from observeco.dirs import get_data_dir
 
 logger = logging.getLogger(__name__)
@@ -310,7 +311,7 @@ success_url: str = None,
             metadata["customer_name"] = name
 
         effective_trial = config.trial_days if trial_days is None else trial_days
-        live_success = (success_url or "http://localhost:9121/api/billing/success") + \
+        live_success = (success_url or f"http://localhost:{PORTS.billing}/api/billing/success") + \
                        "?session_id={CHECKOUT_SESSION_ID}"
         sub_data = {"metadata": {"plan": plan}}
         if effective_trial > 0:
@@ -319,7 +320,7 @@ success_url: str = None,
             line_items=[{"price": price_id, "quantity": 1}],
             mode="subscription",
             success_url=live_success,
-            cancel_url=cancel_url or "http://localhost:9121/api/billing/cancel",
+            cancel_url=cancel_url or f"http://localhost:{PORTS.billing}/api/billing/cancel",
             metadata=metadata,
             subscription_data=sub_data,
         )
@@ -426,7 +427,7 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
                             send_email(cust_email, "welcome", {
                                 "first_name": cust_email.split("@")[0].title(),
                                 "trial_days_left": "N/A",
-                                "subscribe_url": "http://localhost:9121/",
+                                "subscribe_url": f"http://localhost:{PORTS.billing}/",
                                 "support_email": "support@observeco.com",
                             })
                         except Exception:
@@ -462,7 +463,7 @@ def handle_webhook(payload: bytes, sig_header: str = "") -> dict:
                             from observeco.emails import send_email
                             send_email(cust_email, "cancellation_confirmed", {
                                 "first_name": cust_email.split("@")[0].title(),
-                                "subscribe_url": "http://localhost:9121/",
+                                "subscribe_url": f"http://localhost:{PORTS.billing}/",
                                 "support_email": "support@observeco.com",
                             })
                         except Exception:
@@ -749,7 +750,7 @@ def add_billing_endpoints(app) -> None:
 
             session = stripe_lib.billing_portal.Session.create(
                 customer=customer_id,
-                return_url=data.get("return_url", "http://localhost:9121/"),
+                return_url=data.get("return_url", f"http://localhost:{PORTS.billing}/"),
             )
             return {"url": session.url, "mode": "live"}
         except ImportError:

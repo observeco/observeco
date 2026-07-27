@@ -26,6 +26,7 @@ from observeco.adapters.discord import DiscordAdapter
 from observeco.adapters.oef import OEFEvent
 from observeco.adapters.slack import SlackAdapter
 from observeco.adapters.telegram import TelegramAdapter
+from observeco.dashboard.config import PORTS
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)
@@ -330,7 +331,7 @@ async def webhook_health():
     }
 
 
-def run_webhook_server(host: str = "0.0.0.0", port: int = 9120):
+def run_webhook_server(host: str = "0.0.0.0", port: int = PORTS.webhook):
     """Run the webhook ingestion server."""
     import uvicorn
     logger.info(f"Starting webhook ingestion server on {host}:{port}")

@@ -233,3 +233,31 @@ def get_daily_trends(agent_name: str = "", days: int = 14) -> list[dict]:
         current += datetime.timedelta(days=1)
 
     return result
+
+
+def get_session_tokens(session_id: str) -> list[dict]:
+    """Return token_log rows for a Hermes session (joined via session_id).
+
+    Used by #82 efficiency scoring to feed the 3 token-derived metrics
+    (context-pressure, cache-hit, yield-density). Returns list of dicts with
+    input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens.
+    Rows without a session_id (watch trim snapshots) are excluded.
+    """
+    if not session_id:
+        return []
+    db = Database()
+    conn = db._get_conn()
+    rows = conn.execute(
+        "SELECT input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens "
+        "FROM token_logs WHERE session_id = ? ORDER BY recorded_at",
+        (session_id,),
+    ).fetchall()
+    return [
+        {
+            "input_tokens": r[0] or 0,
+            "output_tokens": r[1] or 0,
+            "cache_read_tokens": r[2] or 0,
+            "cache_creation_tokens": r[3] or 0,
+        }
+        for r in rows
+    ]

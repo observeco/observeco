@@ -1,0 +1,18 @@
+{
+  "rules": [
+    {
+      "id": "no-vendor",
+      "type": "forbid-read",
+      "pattern": "node_modules|/dist/|\\.min\\.(js|css)$",
+      "severity": "warn",
+      "message": "Don't read vendored/generated code — it's huge and unowned."
+    },
+    {
+      "id": "test-before-commit",
+      "type": "require-before-commit",
+      "pattern": "npm (run )?(test|build)|pytest|go test",
+      "severity": "warn",
+      "message": "Run tests before committing."
+    }
+  ]
+}

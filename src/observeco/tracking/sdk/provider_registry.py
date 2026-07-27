@@ -18,8 +18,9 @@ class ProviderEntry:
     provider: str       # openai, anthropic, etc.
     base_url: str       # current base URL
     config_path: str    # path to config file
-    is_local: bool      # True if localhost/ollama
+    is_local: bool      # True if localhost/ollama (auto-detected or user-overridden)
     needs_proxy: bool   # True if should be routed through proxy
+    local_override: bool | None = None  # user-set `local:` field; wins over auto-detection
 
 
 @dataclass
@@ -150,6 +151,10 @@ def _extract_providers_hermes(config: dict, path: str) -> list[ProviderEntry]:
             base_url = prov_config.get("base_url", "")
             if base_url:
                 is_local = _is_local(base_url)
+                # User override: `local: false` in config wins over auto-detection
+                local_override = prov_config.get("local")
+                if local_override is not None:
+                    is_local = bool(local_override)
                 entries.append(ProviderEntry(
                     tool="hermes",
                     provider=prov_name,
@@ -157,6 +162,7 @@ def _extract_providers_hermes(config: dict, path: str) -> list[ProviderEntry]:
                     config_path=path,
                     is_local=is_local,
                     needs_proxy=not is_local,
+                    local_override=local_override,
                 ))
 
     return entries
@@ -172,6 +178,9 @@ def _extract_providers_openclaw(config: dict, path: str) -> list[ProviderEntry]:
             base_url = prov_config.get("base_url", "")
             if base_url:
                 is_local = _is_local(base_url)
+                local_override = prov_config.get("local")
+                if local_override is not None:
+                    is_local = bool(local_override)
                 entries.append(ProviderEntry(
                     tool="openclaw",
                     provider=prov_name,
@@ -179,6 +188,7 @@ def _extract_providers_openclaw(config: dict, path: str) -> list[ProviderEntry]:
                     config_path=path,
                     is_local=is_local,
                     needs_proxy=not is_local,
+                    local_override=local_override,
                 ))
 
     return entries

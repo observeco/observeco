@@ -310,6 +310,17 @@ def _run_loop(interval: int = PULSE_INTERVAL) -> None:
                             instance_id=instance_id,
                             metadata_json=metadata_json,
                         )
+                        # Circuit breaker: trip after N consecutive dead pulses.
+                        # The breaker is the designed noise guard (master-plan §3.8):
+                        # ONE circuit_tripped error, then silence until reset.
+                        if status_val == "dead":
+                            cb = db.record_failure(agent.name, error or "Agent unresponsive")
+                            if cb.get("tripped"):
+                                db.log_error(agent.name, "circuit_tripped",
+                                             f"Circuit breaker tripped after {cb['failures']} consecutive failures",
+                                             severity="critical")
+                        elif status_val == "alive":
+                            db.reset_breaker(agent.name)
                         # Auto-trim SOUL.md for all alive agents
                         trim_result = None
                         if status_val == "alive" and getattr(agent, "config_path", None):

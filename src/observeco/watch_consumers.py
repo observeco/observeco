@@ -12,21 +12,25 @@ from pathlib import Path
 from threading import Thread
 from typing import Optional
 
+from observeco.dashboard.config import PORTS, WATCH_INTERVALS
 from observeco.db import Database
 from observeco.event_bus import publish
 
 logger = logging.getLogger(__name__)
 
-# ── Interval constants ─────────────────────────────────────────────
+# ── Interval constants ─────────────────────────────────────────────────────────
+# All values from dashboard/config.py WATCH_INTERVALS — override via env vars.
 
-DRIFT_INTERVAL = 300      # 5 min
-GARDEN_INTERVAL = 900     # 15 min
-PATHWAY_INTERVAL = 900    # 15 min
-PRUNE_INTERVAL = 86400    # 24h
-SKILLS_INTERVAL = 604800  # 7 days
-HEARTBEAT_INTERVAL = 30   # 30s
-TOKEN_HISTORY_INTERVAL = 86400  # 24h
-DATA_SOURCE_INTERVAL = 60    # 60s — check data sources are alive
+DRIFT_INTERVAL = WATCH_INTERVALS.drift      # 5 min
+GARDEN_INTERVAL = WATCH_INTERVALS.garden     # 15 min
+PATHWAY_INTERVAL = WATCH_INTERVALS.pathway    # 15 min
+PRUNE_INTERVAL = WATCH_INTERVALS.prune       # 24h
+SKILLS_INTERVAL = WATCH_INTERVALS.skills     # 7 days
+HEARTBEAT_INTERVAL = WATCH_INTERVALS.heartbeat   # 30s
+TOKEN_HISTORY_INTERVAL = WATCH_INTERVALS.token_history  # 24h
+DATA_SOURCE_INTERVAL = WATCH_INTERVALS.data_source    # 60s
+OTEL_STALE_THRESHOLD = WATCH_INTERVALS.otel_stale    # 2h
+CONFIG_TIMELINE_INTERVAL = WATCH_INTERVALS.config_timeline  # 60s
 
 # ── Base Consumer ───────────────────────────────────────────────────
 
@@ -83,7 +87,13 @@ class BaseConsumer:
 
 
 class DriftConsumer(BaseConsumer):
-    """Compute and log 7-day token drift every 5 minutes."""
+    """Compute and log 7-day token drift every 5 minutes.
+
+    Three methods computed per component:
+    - Option A (rolling): current vs 7-day rolling avg, with 50-token floor
+    - Option B (wow): this week avg vs last week avg, with 50-token floor
+    - Option C (absolute): raw token delta, no percentage
+    """
 
     def __init__(self, **kwargs):
         kwargs.setdefault("name", "drift")
@@ -101,24 +111,47 @@ class DriftConsumer(BaseConsumer):
 
         now = time.time()
         week_ago = now - 7 * 86400
+        two_weeks_ago = now - 14 * 86400
+        FLOOR = 50  # prevent denominator amplification
 
         for agent_cfg in agents:
             name = agent_cfg.name
-            trims = self.db.get_trims(agent_name=name, limit=50)
+            # Fix window bug: use time-based query, no row limit
+            trims = self.db.get_trims_since(name, week_ago)
             if not trims or len(trims) < 2:
                 continue
 
-            latest = trims[0]
-            week_entries = [t for t in trims if t.get("timestamp", 0) >= week_ago]
+            latest = trims[-1]  # last in ASC order = most recent
 
             for comp in self._components:
                 current = latest.get(f"{comp}_tokens", 0) or 0
-                comp_vals = [t.get(f"{comp}_tokens", 0) or 0 for t in week_entries]
+                comp_vals = [t.get(f"{comp}_tokens", 0) or 0 for t in trims]
                 week_avg = int(sum(comp_vals) / max(len(comp_vals), 1))
-                delta_pct = ((current - week_avg) / max(week_avg, 1)) * 100
-                breached = int(abs(delta_pct) > 10.0)
 
-                self.db.log_drift(name, comp, current, week_avg, delta_pct, bool(breached))
+                # ── Option A: Rolling window with floor ──
+                delta_pct = ((current - week_avg) / max(week_avg, FLOOR)) * 100
+                delta_tokens = current - week_avg
+                breached = int(abs(delta_tokens) > 50 and abs(delta_pct) > 10.0)
+                self.db.log_drift(name, comp, current, week_avg, delta_pct, bool(breached), method="rolling")
+
+                # ── Option C: Absolute tokens (no percentage) ──
+                breached_abs = int(abs(delta_tokens) > 50)
+                self.db.log_drift(name, comp, current, week_avg, float(delta_tokens), bool(breached_abs), method="absolute")
+
+            # ── Option B: Week-over-week (one per agent, not per component) ──
+            # Needs trims from 7-14 days ago
+            old_trims = self.db.get_trims_since(name, two_weeks_ago)
+            old_trims = [t for t in old_trims if t.get("timestamp", 0) < week_ago]
+            if old_trims and len(old_trims) >= 2:
+                for comp in self._components:
+                    this_vals = [t.get(f"{comp}_tokens", 0) or 0 for t in trims]
+                    old_vals = [t.get(f"{comp}_tokens", 0) or 0 for t in old_trims]
+                    this_avg = int(sum(this_vals) / max(len(this_vals), 1))
+                    last_avg = int(sum(old_vals) / max(len(old_vals), 1))
+                    delta_pct = ((this_avg - last_avg) / max(last_avg, FLOOR)) * 100
+                    delta_tokens = this_avg - last_avg
+                    breached = int(abs(delta_tokens) > 50 and abs(delta_pct) > 10.0)
+                    self.db.log_drift(name, comp, this_avg, last_avg, delta_pct, bool(breached), method="wow")
 
         publish(None, "drift_result", agents=len(agents))
 
@@ -311,8 +344,8 @@ class DataSourceWatchdog(BaseConsumer):
     """Monitor data sources and auto-restart dead ones.
 
     Checks every 60s:
-    - OTel listener (port 4318) — restarts if down
-    - Proxy server (port 9200) — restarts if down
+    - OTel listener (port {PORTS.otel}) — restarts if down
+    - Proxy server (port {PORTS.proxy}) — restarts if down
     - token_logs data freshness by source — logs warning if stale
 
     ponytail: Only checks OTel and proxy. Does not check SDK patchers
@@ -332,34 +365,71 @@ class DataSourceWatchdog(BaseConsumer):
         self._check_data_freshness()
 
     def _check_otel_listener(self) -> None:
-        """Check OTel listener on port 4318, restart if dead."""
+        """Check OTel listener on port {PORTS.otel}, restart if dead OR not flowing data.
+
+        Port liveness alone is insufficient: a listener with the port open but
+        zero inbound spans silently loses all real token telemetry while the
+        'watch' proxy keeps feeding input-only estimates, masking the gap.
+        So we also check that the 'otel' source has recent data; if it's stale
+        beyond OTEL_STALE_THRESHOLD, we treat the pipeline as failed.
+        """
         import socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(2)
+        port_up = False
         try:
-            result = sock.connect_ex(('localhost', 4318))
+            result = sock.connect_ex(('localhost', PORTS.otel))
             sock.close()
-            if result == 0:
-                return  # All good
+            port_up = (result == 0)
         except Exception:
             sock.close()
 
-        # OTel is down — try to restart
-        logger.warning("OTel listener is down — attempting restart")
+        # Data-flow check: is the otel source actually receiving spans?
+        last_otel = 0
         try:
-            import subprocess
-            import sys
+            row = self.db._get_conn().execute(
+                "SELECT MAX(recorded_at) FROM token_logs WHERE source='otel'"
+            ).fetchone()
+            last_otel = row[0] or 0
+        except Exception:
+            pass
+        stale = (time.time() - last_otel) > OTEL_STALE_THRESHOLD
+
+        if port_up and not stale:
+            return  # Healthy: port up AND recent otel data
+
+        if port_up and stale:
+            # Port is up but no data flowing — the watchdog's blind spot.
+            age_h = round((time.time() - last_otel) / 3600, 1)
+            logger.error(
+                f"OTel listener port is up but no spans received for {age_h}h "
+                f"— real token telemetry is stale. Attempting restart."
+            )
+            publish(None, "data_source_failed", source="otel_listener",
+                    reason="stale", age_hours=age_h)
+            self._restart_otel_listener()
+            return
+
+        # Port is down — original behaviour.
+        logger.warning("OTel listener is down — attempting restart")
+        self._restart_otel_listener()
+
+    def _restart_otel_listener(self) -> None:
+        """Best-effort restart of the OTel listener subprocess."""
+        import socket
+        import subprocess
+        import sys
+        try:
             proc = subprocess.Popen(
-                [sys.executable, "-m", "observeco", "otel", "listen", "start", "--port", "4318"],
+                [sys.executable, "-m", "observeco", "otel", "listen", "start", "--port", str(PORTS.otel)],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             )
             proc.wait(timeout=5)
-            # Verify it came up
             time.sleep(2)
             sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock2.settimeout(2)
             try:
-                r = sock2.connect_ex(('localhost', 4318))
+                r = sock2.connect_ex(('localhost', PORTS.otel))
                 sock2.close()
                 if r == 0:
                     logger.info("OTel listener auto-restarted successfully")
@@ -394,6 +464,35 @@ class DataSourceWatchdog(BaseConsumer):
                     self._last_alert[source] = now
 
 
+# ── Config Timeline Consumer ────────────────────────────────────────
+
+
+class ConfigTimelineConsumer(BaseConsumer):
+    """Detect SOUL.md, model, and tool config changes every 60 seconds.
+
+    Records changes in config_snapshots table for the timeline dashboard.
+    """
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("name", "config_timeline")
+        kwargs.setdefault("interval", CONFIG_TIMELINE_INTERVAL)
+        super().__init__(**kwargs)
+
+    def _tick(self) -> None:
+        from observeco.capability.timeline import ConfigTimelineDetector
+
+        detector = ConfigTimelineDetector(db=self.db)
+        snapshots = detector.check_all_agents()
+
+        if snapshots:
+            for s in snapshots:
+                logger.info(
+                    "Config timeline: agent=%s type=%s segment=%s",
+                    s["agent_name"], s["change_type"], s["segment"],
+                )
+            publish(None, "config_timeline_update", count=len(snapshots))
+
+
 # ── Consumer Manager ────────────────────────────────────────────────
 
 
@@ -414,6 +513,7 @@ class ConsumerManager:
             PruneConsumer(db=self.db),
             TokenHistoryConsumer(db=self.db),
             DataSourceWatchdog(db=self.db),
+            ConfigTimelineConsumer(db=self.db),
         ]
 
     def start_all(self) -> None:

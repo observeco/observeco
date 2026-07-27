@@ -1,0 +1,32 @@
+# Summarization Benchmark
+#
+# Evaluates whether the agent can accurately summarize
+# a given document, capturing key points.
+
+task: summarization
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: ./data/summarization_tasks.json
+description: "Summarize the given document, capturing all key points."
+doc_to_text: |
+  Summarize the following document in 2-3 sentences, capturing all key points:
+
+  {{document}}
+
+  Summary:
+doc_to_target: "{{expected}}"
+output_type: generate_until
+test_split: test
+generation_kwargs:
+  until: []
+  max_gen_toks: 256
+  do_sample: false
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: "1.0"
+  category: knowledge
+  difficulty: easy

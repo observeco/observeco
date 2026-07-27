@@ -1,0 +1,14 @@
+[
+  {
+    "code": "result = []\nfor item in items:\n    if item > 0:\n        result.append(item * 2)\nreturn result",
+    "expected": "return [item * 2 for item in items if item > 0]"
+  },
+  {
+    "code": "if x == True:\n    return 'yes'\nelse:\n    return 'no'",
+    "expected": "return 'yes' if x else 'no'"
+  },
+  {
+    "code": "def get_name(d):\n    if 'name' in d:\n        return d['name']\n    else:\n        return 'unknown'",
+    "expected": "def get_name(d):\n    return d.get('name', 'unknown')"
+  }
+]

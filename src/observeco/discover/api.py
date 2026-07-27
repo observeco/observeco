@@ -1,33 +1,386 @@
 """Discover API — ecosystem gap scanning endpoints.
 
-GET  /api/discover/gaps  — list gaps (cached 5min)
-POST /api/discover/add   — register a gap as a tracked agent
+GET  /api/discover/coverage   — HTML for Coverage tab (obs-spec-082)
+POST /api/discover/add        — register a gap as a tracked agent
+POST /api/discover/add-all    — batch register gaps
+POST /api/discover/dismiss    — dismiss a gap (never show again)
+POST /api/discover/dismiss-all — dismiss all gaps
+GET  /api/discover/count      — lightweight JSON badge count
+GET  /api/discover/learning   — HTML partial for L3 learning loop stats
 """
 
+from datetime import datetime
+
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+from observeco.db import Database
 from observeco.discover.scanner import add_gap, scan_cached
 
 router = APIRouter(prefix="/api/discover", tags=["discover"])
+db = Database()
 
+# ── Pydantic models ────────────────────────────────────────────────
 
 class AddGapRequest(BaseModel):
     name: str
     framework: str = "custom"
     health_check: str = ""
 
+class DismissGapRequest(BaseModel):
+    name: str
 
-@router.get("/gaps")
-def get_gaps():
-    """Return ecosystem gaps (what's running but not tracked)."""
-    return {"gaps": scan_cached()}
+# ── Helpers ────────────────────────────────────────────────────────
+
+def _html_escape(text: str) -> str:
+    return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+               .replace('"', "&quot;").replace("'", "&#39;"))
 
 
-@router.post("/add")
+def _get_dismissed() -> set[str]:
+    """Get set of dismissed gap names from DB."""
+    try:
+        conn = db._get_conn()
+        rows = conn.execute("SELECT gap_name FROM dismissed_gaps").fetchall()
+        return {r[0].lower() for r in rows}
+    except Exception:
+        return set()
+
+
+def _classify_gaps(gaps: list[dict]) -> dict:
+    """Classify gaps into groups, filtering dismissed ones."""
+    dismissed = _get_dismissed()
+    active = [g for g in gaps if g["name"].lower() not in dismissed]
+    return {
+        "never_seen": active,
+        "dismissed_count": len(gaps) - len(active),
+    }
+
+
+def _render_gap_table(gaps: list[dict], limit: int = 20) -> str:
+    """Render gap items as table rows for the Coverage tab."""
+    show_all = limit > 0 and len(gaps) > limit
+    items = gaps[:limit] if show_all else gaps
+    rows = []
+    for g in items:
+        name = _html_escape(g["name"])
+        fw = _html_escape(g.get("suggested_framework", "custom"))
+        hc = _html_escape(g.get("health_check", ""))
+        rows.append(
+            f'<div class="gap-row" data-name="{name}" data-framework="{fw}" data-health="{hc}">'
+            f'<span class="gap-name">{name}</span>'
+            f'<span class="gap-framework">{fw}</span>'
+            f'<span class="gap-status">{chr(9679)}</span>'
+            f'<span class="gap-actions">'
+            f'<button class="btn add" hx-post="/api/discover/add" '
+            f'hx-vals=\'js:{{name: this.closest(".gap-row").dataset.name, framework: this.closest(".gap-row").dataset.framework, health_check: this.closest(".gap-row").dataset.health_check}}\' '
+            f'hx-target="#coverageContainer" hx-swap="innerHTML">+ Add</button>'
+            f'<button class="btn dismiss" hx-post="/api/discover/dismiss" '
+            f'hx-vals=\'js:{{name: this.closest(".gap-row").dataset.name}}\' '
+            f'hx-target="#coverageContainer" hx-swap="innerHTML">{chr(10005)}</button>'
+            f'</span>'
+            f'</div>'
+        )
+    html = "".join(rows)
+    if show_all:
+        remaining = len(gaps) - limit
+        onclick = (
+            "var q=document.getElementById('coverageSearch')?.value||'';"
+            "var f=(document.querySelector('.coverage-filters .filter-btn.active')||{}).getAttribute('data-filter')||'all';"
+            "this.remove();htmx.ajax('GET','/api/discover/coverage?all=1&q='+encodeURIComponent(q)+'&filter='+f,"
+            "{target:'#coverageContainer',swap:'innerHTML'})"
+        )
+        html += (
+            f'<div class="show-all" style="text-align:center;padding:8px;font-size:12px;color:#3b82f6;cursor:pointer" '
+            f'onclick="{onclick}">{chr(9662)} Show all {remaining} more</div>'
+        )
+    return html
+
+
+def _render_dismissed_table(gaps: list[dict]) -> str:
+    """Render dismissed gap items as table rows with undo buttons."""
+    if not gaps:
+        return '<div class="coverage-empty" style="padding:24px;text-align:center;color:#64748b;font-size:13px;">No dismissed gaps.</div>'
+    rows = []
+    for g in gaps:
+        name = _html_escape(g["name"])
+        fw = _html_escape(g.get("suggested_framework", "custom"))
+        rows.append(
+            f'<div class="gap-row" data-name="{name}">'
+            f'<span class="gap-name">{name}</span>'
+            f'<span class="gap-framework">{fw}</span>'
+            f'<span class="gap-status" style="color:#64748b;">{chr(9679)}</span>'
+            f'<span class="gap-actions">'
+            f'<button class="btn undo" hx-post="/api/discover/undo-dismiss" '
+            f'hx-vals=\'js:{{name: this.closest(".gap-row").dataset.name}}\' '
+            f'hx-target="#coverageContainer" hx-swap="innerHTML">{chr(8634)} Undo</button>'
+            f'</span>'
+            f'</div>'
+        )
+    return "".join(rows)
+
+
+def _render_coverage(q: str = "", filter: str = "all", limit: int = 20) -> str:
+    """Return full Coverage tab HTML as a plain string.
+
+    Args:
+        q: Search query — filter gap names by substring (case-insensitive).
+        filter: "all" (default, untracked gaps) or "dismissed" (show dismissed).
+        limit: Max table rows (0 = unlimited).
+    """
+    gaps = scan_cached()
+
+    if not gaps:
+        return """<div class="coverage-header">
+    <h2>Coverage</h2>
+    <span class="coverage-meta">0 untracked &middot; 0 dismissed</span>
+  </div>
+  <div class="coverage-table">
+    <div class="coverage-empty" style="padding:32px;text-align:center;color:#64748b;">
+      <span style="font-size:24px;">&#9989;</span>
+      <p style="margin:8px 0 0;font-size:13px;">Everything running is tracked</p>
+    </div>
+  </div>"""
+
+    dismissed_names = _get_dismissed()
+
+    # Determine which gaps to show based on filter
+    if filter == "dismissed":
+        display_gaps = [g for g in gaps if g["name"].lower() in dismissed_names]
+        untracked_count = len([g for g in gaps if g["name"].lower() not in dismissed_names])
+        dismissed_count = len(display_gaps)
+    else:
+        display_gaps = [g for g in gaps if g["name"].lower() not in dismissed_names]
+        untracked_count = len(display_gaps)
+        dismissed_count = len(gaps) - untracked_count
+
+    # Apply search filter
+    if q:
+        q_lower = q.lower()
+        display_gaps = [g for g in display_gaps if q_lower in g["name"].lower()]
+
+    # Render table
+    if filter == "dismissed":
+        table_html = _render_dismissed_table(display_gaps)
+    else:
+        table_html = _render_gap_table(display_gaps, limit=limit)
+
+    learning_data = _get_learning_html()
+    now_str = datetime.now().strftime("%H:%M")
+
+    return f"""<div class="coverage-header">
+    <h2>Coverage</h2>
+    <span class="coverage-meta">{untracked_count} untracked &middot; {dismissed_count} dismissed &middot; Updated {now_str}</span>
+  </div>
+  <div class="coverage-toolbar">
+    <input type="text" placeholder="Search gaps..." class="coverage-search" id="coverageSearch"
+      name="q"
+      hx-get="/api/discover/coverage"
+      hx-vals='js:{{q: document.getElementById("coverageSearch").value, filter: (document.querySelector(".coverage-filters .filter-btn.active")||{{}}).getAttribute("data-filter")||"all"}}'
+      hx-trigger="keyup changed delay:300ms"
+      hx-target="#coverageContainer" hx-swap="innerHTML">
+    <div class="coverage-filters">
+      <button class="filter-btn active" data-filter="all" onclick="applyCoverageFilter('all', this)">All</button>
+      <button class="filter-btn" data-filter="dismissed" onclick="applyCoverageFilter('dismissed', this)">Dismissed</button>
+    </div>
+  </div>
+  <div class="coverage-bulk">
+    <button class="bulk-btn primary" hx-post="/api/discover/add-all"
+      hx-target="#coverageContainer" hx-swap="innerHTML">+ Add all</button>
+    <button class="bulk-btn" hx-post="/api/discover/dismiss-all"
+      hx-target="#coverageContainer" hx-swap="innerHTML">Dismiss all</button>
+  </div>
+  <div id="coverageTable" class="coverage-table">
+    {table_html}
+  </div>
+  <div class="coverage-learning">
+    {learning_data['html']}
+  </div>"""
+
+
+def _get_learning_html() -> dict:
+    """Get L3 learning loop data from prevention_skills table."""
+    try:
+        conn = db._get_conn()
+        skills = conn.execute(
+            "SELECT agent_name, pattern_hash, success_count, fail_count, deprecated, "
+            "COALESCE(created_at, '') as created_at, COALESCE(last_used_at, '') as last_used_at "
+            "FROM prevention_skills ORDER BY created_at DESC"
+        ).fetchall()
+
+        total_skills = len(skills)
+        total_applied = sum(s[2] + s[3] for s in skills)
+        total_deprecated = sum(1 for s in skills if s[4])
+        total_success = sum(s[2] for s in skills)
+        cost_saved = total_success * 0.02
+
+        skill_rows = []
+        for s in skills:
+            agent = _html_escape(s[0])
+            success = s[2]
+            fail = s[3]
+            dep = s[4]
+            trigger = conn.execute(
+                "SELECT error_signature FROM prevention_skills_fts WHERE agent_name = ? LIMIT 1",
+                (s[0],)
+            ).fetchone()
+            pattern = _html_escape(trigger[0][:60]) if trigger else "—"
+            tag = "deprecated" if dep else "active"
+            tag_cls = "deprecated" if dep else "active"
+
+            skill_rows.append(
+                f'<div class="learn-skill">'
+                f'<span class="name">{agent}</span>'
+                f'<span class="pattern">{pattern}</span>'
+                f'<span class="stats"><span class="ok">✓ {success}</span> · <span class="fail">✗ {fail}</span></span>'
+                f'<span class="tag {tag_cls}">{tag}</span>'
+                f'</div>'
+            )
+
+        if skill_rows:
+            skills_html = "".join(skill_rows)
+        else:
+            skills_html = (
+                '<div class="empty-state">'
+                '<p style="color:#64748b;font-size:12px;">No prevention skills yet. '
+                'The L3 learning loop creates skills automatically after healing novel failures. '
+                'Enable with <code style="color:#22c55e;">observeco heal --learn</code>.</p>'
+                '</div>'
+            )
+
+        html = f"""<div class="section" style="border-top:2px solid #22c55e;">
+    <div class="section-h">
+      <span class="icon" style="color:#22c55e;">●</span>
+      <span class="label" style="color:#22c55e;">Learning</span>
+      <span class="count-badge green">{total_skills} skills</span>
+      <span class="chev open">▶</span>
+    </div>
+    <div class="learn-stat">
+      <div class="stat-card">
+        <div class="num green">{total_skills}</div>
+        <div class="lbl">Skills created</div>
+      </div>
+      <div class="stat-card">
+        <div class="num yellow">{total_applied}</div>
+        <div class="lbl">Times applied</div>
+      </div>
+      <div class="stat-card">
+        <div class="num green">${cost_saved:.2f}</div>
+        <div class="lbl">LLM cost saved</div>
+      </div>
+      <div class="stat-card">
+        <div class="num red">{total_deprecated}</div>
+        <div class="lbl">Deprecated</div>
+      </div>
+    </div>
+    <div class="items">
+      {skills_html}
+    </div>
+  </div>"""
+
+        return {"html": html, "skills": skills}
+
+    except Exception:
+        return {"html": "", "skills": []}
+
+
+# ── Endpoints ──────────────────────────────────────────────────────
+
+@router.get("/count")
+def get_count():
+    """Return gap count as JSON for badge refresh."""
+    gaps = scan_cached()
+    classified = _classify_gaps(gaps)
+    return {"count": len(classified["never_seen"])}
+
+
+@router.get("/coverage", response_class=HTMLResponse)
+def get_coverage(all: bool = False, q: str = "", filter: str = "all"):
+    """HTML for the Coverage tab (full page content, obs-spec-082).
+
+    Query params:
+        all: If true, show all gaps (no 20-row limit).
+        q: Search query — filter by name substring.
+        filter: "all" (default) or "dismissed".
+    """
+    limit = 0 if all else 20
+    return _render_coverage(q=q, filter=filter, limit=limit)
+
+
+@router.post("/undo-dismiss", response_class=HTMLResponse)
+def undo_dismiss_gap(req: DismissGapRequest):
+    """Remove a gap from dismissed_gaps (re-show it)."""
+    try:
+        conn = db._get_conn()
+        conn.execute("DELETE FROM dismissed_gaps WHERE gap_name = ?", (req.name.lower(),))
+        conn.commit()
+    except Exception:
+        pass
+    # Bump cache so next scan reflects the change
+    from observeco.discover.scanner import _cache
+    _cache["gaps"] = None
+    return _render_coverage(filter="dismissed")
+
+
+@router.get("/learning", response_class=HTMLResponse)
+def get_learning():
+    """HTML partial for L3 learning loop stats (htmx target)."""
+    data = _get_learning_html()
+    return data["html"]
+
+
+@router.post("/add", response_class=HTMLResponse)
 def add_gap_endpoint(req: AddGapRequest):
     """Register a gap item as a tracked agent."""
     result = add_gap(req.name, req.framework, health_check=req.health_check)
     if result["status"] == "exists":
         raise HTTPException(status_code=409, detail=result["message"])
-    return result
+    return _render_coverage()
+
+
+@router.post("/add-all", response_class=HTMLResponse)
+def add_all_gaps():
+    """Batch register all untracked gaps (server discovers them from scan)."""
+    gaps = scan_cached()
+    dismissed = _get_dismissed()
+    untracked = [g for g in gaps if g["name"].lower() not in dismissed]
+    for g in untracked:
+        add_gap(g["name"],
+                framework=g.get("suggested_framework", "custom"),
+                health_check=g.get("health_check", ""))
+    return _render_coverage()
+
+
+@router.post("/dismiss", response_class=HTMLResponse)
+def dismiss_gap(req: DismissGapRequest):
+    """Dismiss a gap (never show again)."""
+    try:
+        conn = db._get_conn()
+        conn.execute(
+            "INSERT OR REPLACE INTO dismissed_gaps (gap_name, dismissed_at) VALUES (?, datetime('now'))",
+            (req.name.lower(),)
+        )
+        conn.commit()
+    except Exception:
+        pass
+    from observeco.discover.scanner import _cache
+    _cache["gaps"] = None
+    return _render_coverage()
+
+
+@router.post("/dismiss-all", response_class=HTMLResponse)
+def dismiss_all_gaps():
+    """Dismiss all current gaps."""
+    gaps = scan_cached()
+    try:
+        conn = db._get_conn()
+        for g in gaps:
+            conn.execute(
+                "INSERT OR REPLACE INTO dismissed_gaps (gap_name, dismissed_at) VALUES (?, datetime('now'))",
+                (g["name"].lower(),)
+            )
+        conn.commit()
+    except Exception:
+        pass
+    return _render_coverage()

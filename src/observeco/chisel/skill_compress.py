@@ -22,6 +22,8 @@ import typing
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from observeco.dashboard.config import PORTS
+
 from .llm_client import get_client
 
 
@@ -94,7 +96,7 @@ def _parse_yaml_frontmatter(frontmatter: str) -> dict:
 
 # ── Config ──────────────────────────────────────────────────────────────────────
 
-_OLLAMA_BASE_URL = os.environ.get("CAVEMAN_OLLAMA_URL", "http://localhost:11434/v1")
+_OLLAMA_BASE_URL = os.environ.get("CAVEMAN_OLLAMA_URL", f"http://localhost:{PORTS.ollama}/v1")
 _OLLAMA_MODEL = os.environ.get("CAVEMAN_MODEL", "hermes3:latest")
 _WORKERS = int(os.environ.get("CAVEMAN_WORKERS", "4"))
 

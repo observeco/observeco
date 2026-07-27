@@ -1,6 +1,20 @@
-"""Capability layer — probe-first environment discovery for ObserveCo."""
+"""Capability Monitoring Layer — canary runner, scoring, baselines, drift detection.
 
-from observeco.capability.env_snapshot import EnvSnapshot
-from observeco.capability.probe import probe_environment
+observeco v0.5.0 — "Observation without judgment is just logging."
+"""
 
-__all__ = ["EnvSnapshot", "probe_environment"]
+from observeco.capability.baseline import BaselineManager
+from observeco.capability.canary import CanaryRunner, Scorer, TaskExecutor
+from observeco.capability.drift import DriftDetector
+from observeco.capability.grid import CapabilityGridRunner, compute_blended_score, load_grid_config
+
+__all__ = [
+    "CanaryRunner",
+    "Scorer",
+    "TaskExecutor",
+    "BaselineManager",
+    "DriftDetector",
+    "CapabilityGridRunner",
+    "compute_blended_score",
+    "load_grid_config",
+]

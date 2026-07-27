@@ -26,6 +26,7 @@ from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
 from starlette.routing import Route
 
+from observeco.dashboard.config import PORTS
 from observeco.dirs import hermes_home
 
 logger = logging.getLogger("observeco.proxy")
@@ -34,7 +35,7 @@ logger = logging.getLogger("observeco.proxy")
 # Configuration
 # ---------------------------------------------------------------------------
 
-DEFAULT_PORT = 9200
+DEFAULT_PORT = PORTS.proxy
 DEFAULT_UPSTREAM = "https://api.openai.com"
 REQUEST_TIMEOUT = 300  # seconds — LLM calls can be slow
 MAX_RETRIES = 2

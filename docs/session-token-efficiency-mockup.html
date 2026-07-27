@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Session Token Efficiency (Improved Mockup)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a;           --surface: #1e293b;      --fg: #f8fafc;
+  --accent: #22c55e;       --status-healthy: #22c55e;
+  --status-warning: #eab308;  --status-critical: #ef4444;
+  --meta: #3b82f6;         --fg-2: #94a3b8;         --muted: #64748b;
+  --border: #334155;       --border-soft: #273548;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius-md: 8px;        --radius-lg: 12px;        --radius-pill: 9999px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.header-logo {
+  width: 28px;
+  height: 28px;
+}
+
+.header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-left: 8px;
+}
+
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 12px;
+  color: var(--fg-2);
+  font-weight: 500;
+}
+
+.filter-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.filter-select:hover {
+  border-color: var(--fg-2);
+}
+
+.filter-select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider {
+  width: 120px;
+  accent-color: var(--accent);
+}
+
+.slider-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-2);
+  min-width: 24px;
+}
+
+.toggle-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--fg-2);
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toggle-btn.active {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.toggle-btn:hover {
+  border-color: var(--fg-2);
+}
+
+/* Trend Chart Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-container {
+  position: relative;
+  height: 220px;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--fg-2);
+  cursor: pointer;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* Insights Panel */
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.insight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: var(--radius-md);
+  border-left: 3px solid transparent;
+}
+
+.insight-item.regression {
+  border-left-color: var(--status-critical);
+}
+
+.insight-item.improvement {
+  border-left-color: var(--status-healthy);
+}
+
+.insight-item.threshold {
+  border-left-color: var(--meta);
+}
+
+.insight-item.low-sample {
+  border-left-color: var(--status-warning);
+}
+
+.insight-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.insight-content {
+  flex: 1;
+}
+
+.insight-message {
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.insight-delta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.insight-delta.negative { color: var(--status-critical); }
+.insight-delta.positive { color: var(--status-healthy); }
+
+.insight-dismiss {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+}
+
+.insight-dismiss:hover {
+  color: var(--fg-2);
+}
+
+/* Matrix Table */
+.matrix-container {
+  overflow-x: auto;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.matrix-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.matrix-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.matrix-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cell-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell-score {
+  font-weight: 600;
+}
+
+.cell-score.good { color: var(--status-healthy); }
+.cell-score.warn { color: var(--status-warning); }
+.cell-score.bad { color: var(--status-critical); }
+
+.cell-n {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.cell-empty {
+  color: var(--border);
+  text-align: center;
+}
+
+/* Histogram (existing style, preserved) */
+.histogram-container {
+  position: relative;
+  height: 160px;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.histogram-caption {
+  font-size: 11px;
+  color: var(--fg-2);
+  font-family: var(--font-mono);
+  margin-top: 8px;
+}
+
+/* Placeholder badge */
+.placeholder-badge {
+  display: inline-block;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid var(--status-warning);
+  color: var(--status-warning);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    justify-content: space-between;
+  }
+  
+  .chart-container {
+    height: 180px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <svg class="header-logo" viewBox="0 0 128 128">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#22c55e"/><stop offset="100%" style="stop-color:#16a34a"/>
+      </linearGradient>
+      <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#4ade80"/><stop offset="100%" style="stop-color:#22c55e"/>
+      </linearGradient>
+    </defs>
+    <circle cx="64" cy="64" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.3"/>
+    <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64"
+      fill="none" stroke="url(#g2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/>
+    <circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+    <circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/>
+    <circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/>
+    <circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/>
+    <circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/>
+  </svg>
+  <span class="header-title">Session Token Efficiency</span>
+  <span class="header-subtitle">fleet-wide · unattributed</span>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <div class="filter-group">
+    <label class="filter-label" for="viewSelect">View</label>
+    <select id="viewSelect" class="filter-select">
+      <option value="matrix">Matrix</option>
+      <option value="model">By Model</option>
+      <option value="archetype">By Archetype</option>
+    </select>
+  </div>
+  
+  <div class="filter-group">
+    <label class="filter-label" for="periodSelect">Period</label>
+    <select id="periodSelect" class="filter-select">
+      <option value="7d">Last 7d</option>
+      <option value="30d" selected>Last 30d</option>
+      <option value="90d">Last 90d</option>
+      <option value="all">All time</option>
+      <option value="custom">Custom range…</option>
+    </select>
+  </div>
+  
+  <div class="filter-group">
+    <label class="filter-label">Min sessions</label>
+    <div class="slider-container">
+      <input type="range" id="minNSlider" class="slider" min="1" max="20" value="5">
+      <span id="sliderValue" class="slider-value">5</span>
+    </div>
+  </div>
+  
+  <button id="alertsToggle" class="toggle-btn active">
+    <span>⚠️</span>
+    <span>Alerts</span>
+  </button>
+  
+  <span class="placeholder-badge">MOCKUP — Data is placeholder</span>
+</div>
+
+<!-- Trend Chart -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      📈 Trend: Mean Efficiency Over Time
+    </div>
+  </div>
+  
+  <div class="chart-container">
+    <canvas id="trendChart"></canvas>
+  </div>
+  
+  <div class="chart-legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #22c55e;"></div>
+      <span>deepseek-v4-flash</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #3b82f6;"></div>
+      <span>qwen3.5:latest</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #eab308;"></div>
+      <span>tencent/hy3:free</span>
+    </div>
+  </div>
+</div>
+
+<!-- Insights Panel -->
+<div class="card" id="insightsCard">
+  <div class="card-header">
+    <div class="card-title">
+      🏆 Insights
+    </div>
+  </div>
+  
+  <div class="insights-list">
+    <div class="insight-item improvement">
+      <span class="insight-icon">📈</span>
+      <div class="insight-content">
+        <div class="insight-message">
+          <strong>deepseek-v4-flash</strong> improved by 
+          <span class="insight-delta positive">+12 pts</span> vs prior period
+        </div>
+      </div>
+    </div>
+    
+    <div class="insight-item regression">
+      <span class="insight-icon">⚠️</span>
+      <div class="insight-content">
+        <div class="insight-message">
+          <strong>debug archetype</strong> regressed by 
+          <span class="insight-delta negative">−8 pts</span> — review recent sessions
+        </div>
+      </div>
+      <button class="insight-dismiss" title="Dismiss for 7 days">×</button>
+    </div>
+    
+    <div class="insight-item threshold">
+      <span class="insight-icon">🏆</span>
+      <div class="insight-content">
+        <div class="insight-message">
+          <strong>qwen3.5:latest</strong> crossed 80+ efficiency threshold this week
+        </div>
+      </div>
+    </div>
+    
+    <div class="insight-item low-sample">
+      <span class="insight-icon">⚠️</span>
+      <div class="insight-content">
+        <div class="insight-message">
+          <strong>deepseek-ai/DeepSeek-V4-Flash · research</strong> has low sample (n=1) — statistically thin
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Matrix Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      Model × Archetype Matrix
+    </div>
+  </div>
+  
+  <div class="matrix-container">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>debug</th>
+          <th>research</th>
+          <th>feature</th>
+          <th>ops</th>
+          <th>edit</th>
+          <th>unknown</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color: var(--fg); font-family: var(--font-mono);">deepseek-v4-flash</td>
+          <td>
+            <div class="cell-value">
+              <span class="cell-score good">78</span>
+              <span class="cell-n">(n=8)</span>
+            </div>
+          </td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td>
+            <div class="cell-value">
+              <span class="cell-score warn">65</span>
+              <span class="cell-n">(n=7)</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="color: var(--fg); font-family: var(--font-mono);">qwen3.5:latest</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+        </tr>
+        <tr>
+          <td style="color: var(--fg); font-family: var(--font-mono);">tencent/hy3:free</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td>
+            <div class="cell-value">
+              <span class="cell-score warn">58</span>
+              <span class="cell-n">(n=3)</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="color: var(--fg); font-family: var(--font-mono);">deepseek-ai/DeepSeek-V4-Flash</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td class="cell-empty">—</td>
+          <td>
+            <div class="cell-value">
+              <span class="cell-score bad">42</span>
+              <span class="cell-n">(n=1)</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Histogram (existing behavior, preserved) -->
+  <div class="histogram-container">
+    <canvas id="histChart"></canvas>
+    <div class="histogram-caption" id="histCaption">
+      Select a cell with n≥5 to view distribution
+    </div>
+  </div>
+</div>
+
+<script>
+// Design tokens for charts
+const colors = {
+  bg: '#0f172a',
+  surface: '#1e293b',
+  fg: '#f8fafc',
+  fg2: '#94a3b8',
+  muted: '#64748b',
+  border: '#334155',
+  accent: '#22c55e',
+  warning: '#eab308',
+  critical: '#ef4444',
+  meta: '#3b82f6'
+};
+
+// Placeholder trend data (MOCKUP)
+const trendData = {
+  labels: ['Jun 15', 'Jun 16', 'Jun 17', 'Jun 18', 'Jun 19', 'Jun 20', 'Jun 21'],
+  datasets: [
+    {
+      label: 'deepseek-v4-flash',
+      data: [68, 70, 69, 72, 74, 76, 78],
+      borderColor: colors.accent,
+      backgroundColor: 'rgba(34, 197, 94, 0.1)',
+      tension: 0.3,
+      fill: true
+    },
+    {
+      label: 'qwen3.5:latest',
+      data: [62, 64, 65, 67, 69, 71, 73],
+      borderColor: colors.meta,
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      tension: 0.3,
+      fill: true
+    },
+    {
+      label: 'tencent/hy3:free',
+      data: [55, 56, 54, 57, 58, 57, 58],
+      borderColor: colors.warning,
+      backgroundColor: 'rgba(234, 179, 8, 0.1)',
+      tension: 0.3,
+      fill: true
+    }
+  ]
+};
+
+// Trend chart
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+const trendChart = new Chart(trendCtx, {
+  type: 'line',
+  data: trendData,
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: colors.surface,
+        titleColor: colors.fg,
+        bodyColor: colors.fg2,
+        borderColor: colors.border,
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: colors.border },
+        ticks: { color: colors.fg2, font: { size: 11 } }
+      },
+      y: {
+        min: 0,
+        max: 100,
+        grid: { color: colors.border },
+        ticks: { color: colors.fg2, font: { size: 11 } }
+      }
+    }
+  }
+});
+
+// Histogram chart (placeholder - would populate on cell click)
+const histCtx = document.getElementById('histChart').getContext('2d');
+const histChart = new Chart(histCtx, {
+  type: 'bar',
+  data: {
+    labels: ['0-20', '20-40', '40-60', '60-80', '80-100'],
+    datasets: [{
+      label: 'sessions',
+      data: [0, 0, 0, 0, 0],
+      backgroundColor: [
+        'rgba(239, 68, 68, 0.6)',
+        'rgba(234, 179, 8, 0.6)',
+        'rgba(148, 163, 184, 0.6)',
+        'rgba(59, 130, 246, 0.6)',
+        'rgba(34, 197, 94, 0.6)'
+      ],
+      borderColor: [
+        colors.critical,
+        colors.warning,
+        colors.muted,
+        colors.meta,
+        colors.accent
+      ],
+      borderWidth: 1,
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: colors.fg2, font: { size: 10 } } },
+      y: { min: 0, grid: { color: colors.border }, ticks: { color: colors.fg2, font: { size: 9 } } }
+    }
+  }
+});
+
+// Slider value display
+const slider = document.getElementById('minNSlider');
+const sliderValue = document.getElementById('sliderValue');
+slider.addEventListener('input', () => {
+  sliderValue.textContent = slider.value;
+});
+
+// Alerts toggle
+const alertsToggle = document.getElementById('alertsToggle');
+const insightsCard = document.getElementById('insightsCard');
+alertsToggle.addEventListener('click', () => {
+  alertsToggle.classList.toggle('active');
+  insightsCard.style.display = alertsToggle.classList.contains('active') ? 'block' : 'none';
+});
+
+// Insight dismiss buttons
+document.querySelectorAll('.insight-dismiss').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.target.closest('.insight-item').style.opacity = '0.5';
+    e.target.disabled = true;
+  });
+});
+
+// Matrix cell click (placeholder interaction)
+document.querySelectorAll('.matrix-table tbody td').forEach(cell => {
+  if (!cell.classList.contains('cell-empty')) {
+    cell.style.cursor = 'pointer';
+    cell.addEventListener('click', () => {
+      // In real implementation, this would update the histogram
+      const score = cell.querySelector('.cell-score')?.textContent;
+      const n = cell.querySelector('.cell-n')?.textContent;
+      if (score && n) {
+        document.getElementById('histCaption').textContent = 
+          `Selected: ${score} ${n} — histogram would render here (n≥5 required)`;
+      }
+    });
+  }
+});
+</script>
+
+</body>
+</html>

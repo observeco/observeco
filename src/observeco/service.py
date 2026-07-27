@@ -21,6 +21,8 @@ from typing import Optional
 
 import psutil
 
+from observeco.dashboard.config import PORTS
+
 from .dirs import get_data_dir
 
 logger = logging.getLogger(__name__)
@@ -336,7 +338,7 @@ class ServiceManager:
 
 # --- CLI Commands ---
 
-def start_service(port: int = 8787, otel_port: int = 4318) -> dict:
+def start_service(port: int = PORTS.service, otel_port: int = PORTS.otel) -> dict:
     """Start the ObserveCo service."""
     manager = ServiceManager()
 

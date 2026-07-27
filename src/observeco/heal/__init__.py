@@ -302,6 +302,56 @@ def _post_heal_evaluation(agent_name: str, action_taken: str, db: Database) -> N
         pass  # fire-and-forget; LLM feedback is non-critical
 
 
+def _maybe_learn_skill(agent_name: str, diagnosis: dict, db: Database) -> None:
+    """L3 learn-after: after a successful heal, write a prevention skill.
+
+    Opt-in via config flag `auto_heal.learn` (default off). Uses the LLM to
+    extract diagnosis + remediation from the heal context, then persists a
+    prevention SKILL.md. If the LLM is unavailable (no key / budget), heal
+    still works — no skill is created (graceful degradation).
+    """
+    try:
+        learn_enabled = db.get_heal_config(agent_name).get("learn") if hasattr(db, "get_heal_config") else False
+    except Exception:
+        learn_enabled = False
+    if not learn_enabled:
+        return
+    try:
+        from observeco.heal import prevention as prev
+        from observeco.llm_service import ask
+
+        recent_errors = db.get_errors(agent_name, limit=5)
+        error_text = "\n".join(e.get("message", "") for e in recent_errors)
+        sig = prev.extract_error_signature(error_text, agent_name, {"status": "error"})
+
+        system = (
+            "You are an SRE extracting a reusable failure-prevention playbook. "
+            "Given an agent failure, output TWO sections separated by '---':\n"
+            "1. DIAGNOSIS: one paragraph root cause.\n"
+            "2. REMEDIATION: the exact safe fix (restart / trim / cooldown / "
+            "garden_cleanup). Never suggest pip_install or code_fix."
+        )
+        user_ctx = (
+            f"Agent: {agent_name}\n"
+            f"Detected diagnosis: {diagnosis.get('diagnosis', '')}\n"
+            f"Action taken: {diagnosis.get('action', '')}\n"
+            f"Recent errors:\n{error_text[:1500]}"
+        )
+        out = ask(system, user_ctx, consumer="heal_learn", max_cost_cents=0.02, tier=2)
+        if not out:
+            return  # LLM unavailable → no skill, heal already succeeded
+        parts = out.split("---", 1)
+        llm_diagnosis = parts[0].replace("DIAGNOSIS:", "", 1).strip()
+        remediation = parts[1].replace("REMEDIATION:", "", 1).strip() if len(parts) > 1 else out
+        prev.write_prevention_skill(
+            agent_name, sig, llm_diagnosis, remediation,
+            trigger_conditions={"error_signature": sig[:200]},
+        )
+        console.print(f"  [dim]L3: prevention skill written for {agent_name}[/dim]")
+    except Exception:
+        pass  # never break heal on learning failure
+
+
 def _translate_error(error_msg: str) -> str | None:
     """Translate an obscure error message to plain English via LLM.
 
@@ -486,6 +536,29 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
     results = []
     for agent in agents:
         name = agent.name
+
+        # ── L3 check-first: known failure pattern? ──────────────────────
+        # If a prevention skill matches this agent's recent errors, apply the
+        # known fix directly (zero LLM cost) and skip the diagnosis pipeline.
+        from observeco.heal import prevention as prev
+        recent_errors = db.get_errors(name, limit=5)
+        if recent_errors:
+            sig = prev.extract_error_signature(
+                " | ".join(e.get("message", "") for e in recent_errors),
+                name,
+                {"status": "error"},
+            )
+            skill = prev.check_prevention(name, sig)
+            if skill:
+                ok, msg = prev.apply_prevention(skill, name)
+                if ok:
+                    table.add_row(name, "[cyan]L3 known fix[/cyan]",
+                                 "prevention skill", f"[green]OK {msg}[/green]")
+                    results.append({"agent": name, "status": "l3_fixed",
+                                    "action": "prevention"})
+                    continue
+                # Known fix failed verification → fall through to normal heal
+
         diagnosis = _diagnose_agent(name, db)
         if diagnosis is None:
             table.add_row(name, "[green]Healthy[/green]", "-", "[green]No issues detected[/green]")
@@ -542,6 +615,8 @@ def run_heal(auto_heal: bool = False, agent_name: Optional[str] = None, dry_run:
                 results.append({"agent": name, "status": "fixed", "action": diagnosis['action']})
                 # Post-heal feedback: wait for recovery, then LLM evaluates
                 _post_heal_evaluation(name, diagnosis['action'], db)
+                # ── L3 learn-after: create prevention skill if enabled ──
+                _maybe_learn_skill(name, diagnosis, db)
             else:
                 record["failures"] += 1
                 if record["failures"] >= MAX_HEAL_RETRIES:

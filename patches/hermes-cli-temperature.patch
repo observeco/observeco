@@ -1,0 +1,109 @@
+# Hermes CLI --temperature patch
+# =================================
+# Adds --temperature flag to `hermes chat` so ObserveCo's canary benchmark can
+# control sampling temperature per task.
+#
+# Files touched (all in ~/.hermes/hermes-agent/):
+#   - cli.py                          (HermesCLI.__init__ + cli_main signature)
+#   - hermes_cli/_parser.py           (chat subparser --temperature arg)
+#   - hermes_cli/cli_agent_setup_mixin.py (_init_agent merges into request_overrides)
+#   - hermes_cli/main.py              (cmd_chat passes temperature to cli_main)
+#
+# Re-apply after a Hermes update:
+#   cd ~/.hermes/hermes-agent
+#   git apply /Users/seanfzc/projects/observeco/patches/hermes-cli-temperature.patch
+#
+# If the patch fails (context shifted), re-do the 4 edits manually — they are
+# small and isolated (see the diff below for exact anchors).
+# =================================
+
+diff --git a/cli.py b/cli.py
+index 069b3c616..983423b71 100644
+--- a/cli.py
++++ b/cli.py
+@@ -3694,6 +3694,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin):
+         checkpoints: bool = False,
+         pass_session_id: bool = False,
+         ignore_rules: bool = False,
++        temperature: float | None = None,
+     ):
+         """
+         Initialize the Hermes CLI.
+@@ -3901,6 +3902,12 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin):
+         # pass skip_context_files=True and skip_memory=True to AIAgent so
+         # AGENTS.md/SOUL.md/.cursorrules and persistent memory are not loaded.
+         self.ignore_rules = ignore_rules or os.environ.get("HERMES_IGNORE_RULES") == "1"
++
++        # --temperature: when set, override the model's sampling temperature
++        # for this run via request_overrides (merged into the API call kwargs
++        # by the chat_completions transport). ponytail: temperature is a
++        # per-agent-run setting, not per-turn — re-init clears it.
++        self.temperature = temperature
+         
+         # Ephemeral system prompt: env var takes precedence, then config
+         self.system_prompt = (
+@@ -15778,6 +15785,7 @@ def main(
+     pass_session_id: bool = False,
+     ignore_user_config: bool = False,
+     ignore_rules: bool = False,
++    temperature: float | None = None,
+ ):
+     """
+     Hermes Agent CLI - Interactive AI Assistant
+@@ -15913,6 +15921,7 @@ def main(
+         checkpoints=checkpoints,
+         pass_session_id=pass_session_id,
+         ignore_rules=ignore_rules,
++        temperature=temperature,
+     )
+ 
+     if parsed_skills:
+diff --git a/hermes_cli/_parser.py b/hermes_cli/_parser.py
+index b2be73871..33bcd5b95 100644
+--- a/hermes_cli/_parser.py
++++ b/hermes_cli/_parser.py
+@@ -392,6 +392,13 @@ def build_top_level_parser():
+         default=argparse.SUPPRESS,
+         help="Troubleshooting mode: disable ALL customizations — user config, AGENTS.md/memory injection, plugins, and MCP servers (implies --ignore-user-config and --ignore-rules). Use to isolate whether a problem comes from your setup or from Hermes itself.",
+     )
++    chat_parser.add_argument(
++        "--temperature",
++        type=float,
++        default=None,
++        metavar="T",
++        help="Sampling temperature for this run (0.0-2.0). Passed through to the model provider. Defaults to the model's built-in contract.",
++    )
+     chat_parser.add_argument(
+         "--source",
+         default=None,
+diff --git a/hermes_cli/cli_agent_setup_mixin.py b/hermes_cli/cli_agent_setup_mixin.py
+index a71d88356..44e6f9a68 100644
+--- a/hermes_cli/cli_agent_setup_mixin.py
++++ b/hermes_cli/cli_agent_setup_mixin.py
+@@ -339,6 +339,14 @@ class CLIAgentSetupMixin:
+                 "args": list(self.acp_args or []),
+                 "credential_pool": getattr(self, "_credential_pool", None),
+             }
++            # Merge --temperature into request_overrides (if any) so the
++            # chat_completions transport applies it to the API call. CLI flag
++            # wins over any temperature already present in request_overrides.
++            if getattr(self, "temperature", None) is not None:
++                _ro = dict(request_overrides or {})
++                _ro["temperature"] = self.temperature
++                request_overrides = _ro
++
+             effective_model = model_override or self.model
+             self.agent = AIAgent(
+                 model=effective_model,
+diff --git a/hermes_cli/main.py b/hermes_cli/main.py
+index f450a7666..969537ded 100644
+--- a/hermes_cli/main.py
++++ b/hermes_cli/main.py
+@@ -2386,6 +2386,7 @@ def cmd_chat(args):
+         "checkpoints": getattr(args, "checkpoints", False),
+         "pass_session_id": getattr(args, "pass_session_id", False),
+         "max_turns": getattr(args, "max_turns", None),
++        "temperature": getattr(args, "temperature", None),
+         "ignore_rules": getattr(args, "ignore_rules", False) or getattr(args, "safe_mode", False),
+         "ignore_user_config": getattr(args, "ignore_user_config", False) or getattr(args, "safe_mode", False),
+         "compact": getattr(args, "compact", False),

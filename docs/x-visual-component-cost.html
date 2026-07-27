@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Component Cost Breakdown</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f172a; --surface: #1e293b; --fg: #f8fafc; --accent: #22c55e;
+  --fg-2: #94a3b8; --muted: #64748b; --border: #334155;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --c-identity: #6366f1;
+  --c-skills: #8b5cf6;
+  --c-memory: #ec4899;
+  --c-tools: #14b8a6;
+  --c-guidance: #f97316;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body); background: var(--bg); color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+}
+.card {
+  width: 1200px; height: 600px;
+  background: linear-gradient(135deg, #0f172a 0%, #1a2332 50%, #0f172a 100%);
+  border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(rgba(139,92,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139,92,246,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+.card::after {
+  content: '';
+  position: absolute; top: -180px; right: -120px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 60%);
+  border-radius: 50%; pointer-events: none;
+}
+.content { position: relative; z-index: 1; padding: 40px 60px; flex: 1; display: flex; flex-direction: column; }
+
+.logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.logo-svg { width: 28px; height: 28px; }
+.logo-text { font-size: 13px; font-weight: 600; color: var(--fg-2); letter-spacing: 0.05em; }
+
+.header { margin-bottom: 32px; }
+.header h1 {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.header p { font-size: 14px; color: var(--fg-2); }
+
+/* Stacked bar */
+.bar-section { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+.stacked-bar {
+  width: 100%; height: 72px; border-radius: 16px;
+  overflow: hidden; display: flex;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+  margin-bottom: 24px;
+}
+.segment {
+  height: 100%; display: flex; align-items: center;
+  justify-content: center; position: relative;
+  transition: all 0.3s;
+  min-width: 0;
+}
+.segment:hover { filter: brightness(1.2); }
+.segment .seg-label {
+  font-family: var(--font-mono); font-size: 12px;
+  font-weight: 600; color: rgba(255,255,255,0.9);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  white-space: nowrap;
+}
+.segment .seg-pct {
+  font-family: var(--font-mono); font-size: 11px;
+  font-weight: 500; color: rgba(255,255,255,0.7);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.seg-identity { background: var(--c-identity); width: 5%; }
+.seg-skills { background: var(--c-skills); width: 72%; }
+.seg-memory { background: var(--c-memory); width: 12%; }
+.seg-tools { background: var(--c-tools); width: 8%; }
+.seg-guidance { background: var(--c-guidance); width: 3%; }
+
+/* Legend */
+.legend {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  justify-content: center; margin-bottom: 20px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 9999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.legend-swatch {
+  width: 10px; height: 10px; border-radius: 4px;
+  flex-shrink: 0;
+}
+.legend-label {
+  font-size: 12px; color: var(--fg-2); font-weight: 500;
+}
+.legend-pct {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--muted); font-weight: 500;
+}
+
+/* Detail cards */
+.detail-row {
+  display: flex; gap: 16px; margin-top: auto;
+}
+.detail-card {
+  flex: 1; padding: 14px 18px; border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.detail-card .label {
+  font-size: 11px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 4px;
+}
+.detail-card .value {
+  font-family: var(--font-mono); font-size: 18px; font-weight: 700;
+}
+.detail-card .desc {
+  font-size: 11px; color: var(--fg-2); margin-top: 2px;
+}
+.detail-card .indicator {
+  display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; margin-right: 4px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="content">
+    <div class="logo-row">
+      <svg class="logo-svg" viewBox="0 0 128 128"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#22c55e"/><stop offset="100%" style="stop-color:#16a34a"/></linearGradient><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#4ade80"/><stop offset="100%" style="stop-color:#22c55e"/></linearGradient></defs><circle cx="64" cy="64" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.3"/><polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="url(#g2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="40" r="4" fill="#22c55e" opacity="0.8"/><circle cx="46" cy="36" r="4" fill="#16a34a" opacity="0.8"/><circle cx="58" cy="44" r="4" fill="#15803d" opacity="0.8"/><circle cx="70" cy="44" r="4" fill="#22c55e" opacity="0.8"/><circle cx="82" cy="36" r="4" fill="#16a34a" opacity="0.8"/><circle cx="94" cy="40" r="4" fill="#15803d" opacity="0.8"/></svg>
+      <span class="logo-text">OBSERVECO</span>
+    </div>
+    <div class="header">
+      <h1>Where your tokens actually go — component breakdown</h1>
+      <p>Skills consume 3 out of every 4 tokens loaded</p>
+    </div>
+    <div class="bar-section">
+      <div class="stacked-bar">
+        <div class="segment seg-identity">
+          <span class="seg-label">Identity</span>
+          <span class="seg-pct">5%</span>
+        </div>
+        <div class="segment seg-skills">
+          <span class="seg-label">Skills</span>
+          <span class="seg-pct">72%</span>
+        </div>
+        <div class="segment seg-memory">
+          <span class="seg-label">Memory</span>
+          <span class="seg-pct">12%</span>
+        </div>
+        <div class="segment seg-tools">
+          <span class="seg-label">Tools</span>
+          <span class="seg-pct">8%</span>
+        </div>
+        <div class="segment seg-guidance">
+          <span class="seg-label">Guidance</span>
+          <span class="seg-pct">3%</span>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:var(--c-identity)"></span>
+          <span class="legend-label">Identity</span>
+          <span class="legend-pct">~5%</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:var(--c-skills)"></span>
+          <span class="legend-label">Skills</span>
+          <span class="legend-pct">~72%</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:var(--c-memory)"></span>
+          <span class="legend-label">Memory</span>
+          <span class="legend-pct">~12%</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:var(--c-tools)"></span>
+          <span class="legend-label">Tools</span>
+          <span class="legend-pct">~8%</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:var(--c-guidance)"></span>
+          <span class="legend-label">Guidance</span>
+          <span class="legend-pct">~3%</span>
+        </div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-card">
+          <div class="label"><span class="indicator" style="background:var(--c-identity)"></span>Identity</div>
+          <div class="value" style="color:var(--c-identity);">~5%</div>
+          <div class="desc">System prompt, persona, guardrails</div>
+        </div>
+        <div class="detail-card">
+          <div class="label"><span class="indicator" style="background:var(--c-skills)"></span>Skills</div>
+          <div class="value" style="color:var(--c-skills);">~72%</div>
+          <div class="desc">Instructions, tools, &amp; knowledge files</div>
+        </div>
+        <div class="detail-card">
+          <div class="label"><span class="indicator" style="background:var(--c-memory)"></span>Memory</div>
+          <div class="value" style="color:var(--c-memory);">~12%</div>
+          <div class="desc">Conversation history, stored context</div>
+        </div>
+        <div class="detail-card">
+          <div class="label"><span class="indicator" style="background:var(--c-tools)"></span>Tools</div>
+          <div class="value" style="color:var(--c-tools);">~8%</div>
+          <div class="desc">Function definitions, schemas</div>
+        </div>
+        <div class="detail-card">
+          <div class="label"><span class="indicator" style="background:var(--c-guidance)"></span>Guidance</div>
+          <div class="value" style="color:var(--c-guidance);">~3%</div>
+          <div class="desc">Multi-step plans, reasoning traces</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
