@@ -182,6 +182,13 @@ class HermesBenchmarkAdapter:
                 )
                 if task_model:
                     cmd += ["-m", task_model]
+                    # If model name has a provider prefix (e.g. tencent/hy3:free),
+                    # pass it as --provider so Hermes routes to the right backend.
+                    # ponytail: assumes first segment before / is a valid provider name.
+                    # Upgrade path: use a model→provider mapping table.
+                    if "/" in task_model:
+                        provider = task_model.split("/", 1)[0]
+                        cmd += ["--provider", provider]
                 if self.agent_profile:
                     cmd += ["-p", self.agent_profile]
                 cmd += ["chat", "-q", prompt, "-Q", "--verbose"]

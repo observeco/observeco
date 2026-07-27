@@ -687,7 +687,6 @@ def _generate_needs_attention(pillars: list[dict], agent_name: str) -> list[dict
 
         if p["key"] == "quality":
             passed = raw.get("passed", 0)
-            failed = raw.get("failed", 0)
             tasks = raw.get("total_tasks", 0)
             issues.append({
                 "icon": "\U0001f4c9",

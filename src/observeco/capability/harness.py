@@ -14,7 +14,6 @@ import os
 import shutil
 import sqlite3
 import statistics
-import tempfile
 import uuid
 from datetime import datetime, timezone
 from typing import Optional

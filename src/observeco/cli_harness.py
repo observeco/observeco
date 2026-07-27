@@ -106,8 +106,9 @@ def harness_frontier(
     agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
 ) -> None:
     """Show the current best harness (frontier) for an agent."""
-    from observeco.db import Database
     import json
+
+    from observeco.db import Database
 
     db = Database()
     conn = db._get_conn()
@@ -165,7 +166,7 @@ def harness_experience(
     print(f"  Global patterns:   {stats['global_patterns']}")
     print(f"  Per layer:          {stats['per_layer']}")
     if stats['failure_classes']:
-        print(f"  Failure classes (observed):")
+        print("  Failure classes (observed):")
         for fc, c in stats['failure_classes'].items():
             print(f"    {fc}: {c}")
     if stats['rejection_log']:

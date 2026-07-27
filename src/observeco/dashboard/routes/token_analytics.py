@@ -342,7 +342,6 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     except Exception:
         return HTMLResponse(error_html())
 
-    agents_cfg = db.get_agents()
     sorted_agents = sorted(agent_data.items(), key=lambda x: -x[1]["cost"])
 
     # Build chart data arrays

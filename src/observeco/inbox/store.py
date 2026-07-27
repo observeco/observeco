@@ -8,8 +8,8 @@ Schema per obs-spec-092 §3.1:
 from __future__ import annotations
 
 import json
-import time
 import logging
+import time
 from typing import Optional
 
 from observeco.db import Database

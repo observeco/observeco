@@ -8,15 +8,15 @@ from __future__ import annotations
 import json
 import logging
 import time
+from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from pathlib import Path
 
 from observeco.db import Database
+from observeco.inbox.correlate import split
 from observeco.inbox.store import InboxStore
-from observeco.inbox.correlate import correlate, split
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,6 @@ def _render_item(item: dict) -> str:
     item_id = item["id"]
     cls = item["class"]
     tone = item["tone"]
-    agent = item.get("agent_name") or ""
     title = item.get("title", "")
     attribution = item.get("attribution", "")
     evidence_raw = item.get("evidence", "{}")
@@ -105,8 +104,6 @@ def _render_item(item: dict) -> str:
         actions = []
 
     metrics = evidence.get("metrics", {})
-    source_table = evidence.get("source_table", "")
-
     # Tone class
     tone_cls = {"alert": "crit", "watch": "watch", "insight": "insight"}.get(tone, "insight")
     mark_icon = {"alert": "!", "watch": "↗", "insight": "i"}.get(tone, "i")
@@ -183,7 +180,6 @@ async def get_inbox(request: Request, filter: str = "all"):
     total = sum(v for k, v in counts.items() if k != "none")
 
     # Build items by tone group
-    tone_map = {"alert": "Needs action", "watch": "Watch", "insight": "Insight"}
     tone_groups = {}
 
     # Filters
@@ -220,7 +216,6 @@ async def get_inbox(request: Request, filter: str = "all"):
     feed_html_parts = []
 
     # Verdict bar
-    v_icon = "red" if counts.get("alert", 0) > 0 else "yellow" if counts.get("watch", 0) > 0 else "green"
     feed_html_parts.append(f"""<div class="verdict" role="status">
     <span class="v-icon" style="background:var(--status-{'critical' if counts['alert'] > 0 else 'warning' if counts['watch'] > 0 else 'healthy'});box-shadow:0 0 8px rgba({239 if counts['alert'] > 0 else 234 if counts['watch'] > 0 else 34},68,68,.5)"></span>
     <span class="v-text">{verdict}</span>
@@ -266,7 +261,7 @@ async def get_inbox(request: Request, filter: str = "all"):
         feed_html_parts.append("""</div></div>""")
 
     # Footer
-    feed_html_parts.append(f"""<div class="footer">
+    feed_html_parts.append("""<div class="footer">
     <b>Inbox</b> reads across 9 source tables · items deduplicated and classified before surfacing.<br>
     <b>Source tables:</b> l2_trending, chisel_drift, canary_runs, circuit_breakers, anomaly/, token_logs, clawforge_garden
   </div>""")
@@ -316,17 +311,16 @@ async def restore_item(request: Request, item_id: str):
 @router.post("/{parent_id}/split")
 async def split_item(request: Request, parent_id: str):
     """POST /api/inbox/{parent}/split — split a correlated parent into individual items."""
-    n = split(parent_id)
+    split(parent_id)
     return await get_inbox(request)
 
 
 @router.post("/refresh")
 async def refresh_inbox(request: Request):
     """POST /api/inbox/refresh — run all adapters + correlation, re-render."""
-    from observeco.inbox.registry import build_and_store
     from observeco.inbox.correlate import correlate as run_correlate
+    from observeco.inbox.registry import build_and_store
 
-    ctx = store  # Reuse InboxStore's db
     count = build_and_store()
     result = run_correlate(store)
     logger.info("Inbox refresh: %d new items, %d correlated (%d folded)",
@@ -390,8 +384,8 @@ async def apply_cleanup(request: Request):
             results["reset_stale_circuits"] = f"reset {len(stale)} circuits"
 
     # Rebuild inbox after cleanup
-    from observeco.inbox.registry import build_and_store
     from observeco.inbox.correlate import correlate as run_correlate
+    from observeco.inbox.registry import build_and_store
     build_and_store()
     run_correlate()
 

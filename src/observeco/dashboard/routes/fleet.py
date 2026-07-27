@@ -57,7 +57,6 @@ def _canary_row(agent_name: str, canary_row, canary_running: bool = False) -> st
     total = (canary_row["pass_count"] or 0) + (canary_row["fail_count"] or 0)
     acc = (canary_row["pass_count"] / total * 100) if total > 0 else 0
     color = "var(--accent)" if acc >= 80 else "var(--warn)" if acc >= 60 else "var(--danger)"
-    canary_has_hang = (canary_row["hang_count"] or 0) > 0
     canary_dict = dict(canary_row) if hasattr(canary_row, "keys") else canary_row
     cost_str = f' · ${canary_dict["total_cost"]:.2f}' if canary_dict.get("total_cost") else ""
     return f'<span class="row-val" style="color:{color}">{acc:.0f}%</span><span class="row-sub-cost">{cost_str}</span>'
@@ -357,9 +356,7 @@ async def fleet_verdict():
     # Data quality warning banner (prominent when 0%)
     dq_warning = ""
     if total > 0:
-        otel_count = sum(1 for a in agents_data if a.get("status") and True)  # placeholder
         # Recalculate from actual data
-        tier1 = sum(1 for a in agents_data if a.get("circuit_tripped") is not None)
         pct = 0
         if total > 0:
             # Count agents with any source info

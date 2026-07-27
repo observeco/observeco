@@ -14,7 +14,7 @@ import logging
 from collections import defaultdict
 
 from observeco.db import Database
-from observeco.inbox.store import InboxStore, _now_iso, _make_id, fmt_why_source
+from observeco.inbox.store import InboxStore, _make_id, fmt_why_source
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +73,7 @@ def correlate(store: InboxStore | None = None,
                 continue
 
             n = len(unique_agents)
-            signature = f"{n} agents {cls} in ±10m window"
-
             # Create parent item
-            now_iso = _now_iso()
             parent_id = _make_id(cls, None, f"correlated::{cls}::{group[0]['first_seen']}")
 
             parent = {
@@ -96,7 +93,7 @@ def correlate(store: InboxStore | None = None,
                 "actions": json.dumps([
                     {"label": "View the window →", "kind": "primary", "href": f"/api/inbox?correlation={parent_id}"},
                     {"label": f"Split into {n} items", "kind": "neutral", "href": f"/api/inbox/{parent_id}/split"},
-                    {"label": "Ack as one", "kind": "neutral", "href": f"#"},
+                    {"label": "Ack as one", "kind": "neutral", "href": "#"},
                 ]),
                 "why_source": fmt_why_source(
                     " & ".join(i.get("agent_name") or "fleet" for i in group[:3]),

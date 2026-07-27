@@ -179,7 +179,6 @@ async def harness_gate_test(agent: str = Query("default")):
 
 @router.get("/gate-test", response_class=HTMLResponse)
 async def harness_gate_test_view(agent: Optional[str] = Query(None)):
-    from observeco.capability.harness import HarnessOptimizer
     from observeco.db import Database
 
     db = Database()

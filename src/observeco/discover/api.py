@@ -15,8 +15,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from observeco.discover.scanner import add_gap, scan_cached
 from observeco.db import Database
+from observeco.discover.scanner import add_gap, scan_cached
 
 router = APIRouter(prefix="/api/discover", tags=["discover"])
 db = Database()

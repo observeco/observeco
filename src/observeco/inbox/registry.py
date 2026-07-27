@@ -8,13 +8,11 @@ Obs-Spec ref: obs-spec-092 §3.2
 
 from __future__ import annotations
 
-import json
 import logging
 import time
-from typing import Optional
 
 from observeco.db import Database
-from observeco.inbox.store import InboxStore, _now_iso, _make_id, fmt_why_source
+from observeco.inbox.store import InboxStore, _now_iso, fmt_why_source
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +152,7 @@ def run_drift_adapter(ctx: AdapterContext) -> list[dict]:
         pillar = PILLAR_MEMORY if "memory" in component.lower() else PILLAR_USAGE
 
         title = f"{agent} — {component} grew {delta:+.1f}% in 7 days ({breach_count} breaches)."
-        attribution = f"drift_events shows sustained climb — accumulation pattern."
+        attribution = "drift_events shows sustained climb — accumulation pattern."
         actions = [
             {"label": "Open drift detail →", "href": f"/api/drift/{agent}", "kind": "primary"},
         ]
@@ -225,7 +223,7 @@ def run_canary_adapter(ctx: AdapterContext) -> list[dict]:
         tone = TONE_ALERT
         pillar = PILLAR_QUALITY
         title = f"{agent} — canary went {latest['pass_count']}/{latest_total} on {latest['started_at'][:10]} run."
-        attribution = f"Two consecutive all-fail runs" if two_all_fail else \
+        attribution = "Two consecutive all-fail runs" if two_all_fail else \
             f"Step change: {prev_rate:.0%} → {latest_rate:.0%} pass rate."
 
         actions = [
@@ -398,7 +396,7 @@ def run_spend_adapter(ctx: AdapterContext) -> list[dict]:
                 "tone": TONE_INSIGHT,
                 "pillar": PILLAR_USAGE,
                 "title": f"{r['agent_name']} is {pct:.0f}% of ${total:.0f} fleet spend ({r['calls']:,} calls).",
-                "attribution": f"One agent's system prompt drives your entire token bill.",
+                "attribution": "One agent's system prompt drives your entire token bill.",
                 "evidence": {"metrics": {"spend_pct": round(pct, 1),
                                          "total_spend": round(total, 2),
                                          "agent_spend": round(r["spend"], 2),

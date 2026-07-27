@@ -88,7 +88,7 @@ def build_alerts(mode: str = "live", acks: dict | None = None) -> list[dict] | N
                 "icon": "🔴",
                 "agent": name,
                 "category": "circuit",
-                "message": f"Circuit breaker tripped",
+                "message": "Circuit breaker tripped",
                 "detail": f"{failures} failures since last reset",
                 "timestamp": ts,
                 "gap_seconds": max(0, gap),
