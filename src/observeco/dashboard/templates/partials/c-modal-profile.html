@@ -65,7 +65,24 @@
         {% if issue.actions %}
         <div class="i-act">
           {% for action in issue.actions %}
-          <button class="btn{% if action.get('ghost') %} ghost{% endif %}" onclick="event.preventDefault();this.textContent='✓ '+this.textContent.replace(' →','');setTimeout(()=>{location.hash='#pillar='+this.dataset.pillar||'quality'},200)">{{ action.label }}</button>
+          {% set act = action.action %}
+          <button class="btn{% if action.get('ghost') %} ghost{% endif %}" 
+            {% if act == 'view_benchmark' %}
+            onclick="event.preventDefault();var d=document.getElementById('techDrawer');d.classList.add('open');var c=d.querySelector('.chev');if(c)c.textContent='▼';var s=document.getElementById('drawer-quality');if(s){s.scrollIntoView({behavior:'smooth',block:'start'})}else{d.scrollIntoView({behavior:'smooth',block:'nearest'})}"
+            {% elif act == 'shrink_guidance' %}
+            onclick="event.preventDefault();var btn=this;btn.disabled=true;btn.textContent='Compressing…';fetch('/api/chisel/compress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({agent:'{{ profile.meta.agent_name }}',mode:'lite',preview:false})}).then(function(r){return r.json()}).then(function(d){btn.textContent='✓ Saved '+d.savings_pct+'%';setTimeout(function(){btn.textContent='Shrink instructions →'},3000)}).catch(function(){btn.textContent='Error — try again';btn.disabled=false})"
+            {% elif act == 'run_benchmark' %}
+            onclick="event.preventDefault();var btn=this;btn.textContent='Running…';fetch('/api/agent/{{ profile.meta.agent_name }}/benchmark/run',{method:'POST'}).then(function(r){if(r.ok){btn.textContent='✓ Started'}else{btn.textContent='Error — try again'}}).catch(function(){btn.textContent='Error — try again'})"
+            {% elif act == 'view_health' %}
+            onclick="event.preventDefault();var d=document.getElementById('techDrawer');d.classList.add('open');var c=d.querySelector('.chev');if(c)c.textContent='▼';var s=document.getElementById('drawer-reliability');if(s){s.scrollIntoView({behavior:'smooth',block:'start'})}else{d.scrollIntoView({behavior:'smooth',block:'nearest'})}"
+            {% elif act == 'restart_agent' %}
+            onclick="event.preventDefault();var btn=this;btn.textContent='Restarting…';fetch('/api/agent/{{ profile.meta.agent_name }}/restart',{method:'POST'}).then(function(r){if(r.ok){btn.textContent='✓ Restarting';setTimeout(function(){btn.closest('.scrim').remove()},1500)}else{btn.textContent='Error — try again'}}).catch(function(){btn.textContent='Error — try again'})"
+            {% elif act == 'dismiss' %}
+            onclick="event.preventDefault();this.textContent='✓ Dismissed';this.disabled=true"
+            {% else %}
+            onclick="event.preventDefault();this.textContent='✓ Done';setTimeout(function(){location.hash='#pillar='+(this.dataset.pillar||'quality')}.bind(this),200)"
+            {% endif %}
+          >{{ action.label }}</button>
           {% endfor %}
         </div>
         {% endif %}
