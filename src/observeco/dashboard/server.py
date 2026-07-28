@@ -2870,7 +2870,7 @@ async def api_brain(agent: str = "all"):
       <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">📈 Growth Watch
         <span style="font-size:11px;color:#64748b;font-weight:400;">agents with the fastest-growing prompts this week</span>
       </h3>
-      <div id="growthWatchContainer" hx-get="/api/brain/growth-watch" hx-trigger="revealed once" hx-swap="innerHTML">
+      <div id="growthWatchContainer" hx-get="/api/brain/growth-watch" hx-trigger="load" hx-swap="innerHTML">
         <div style="color:#64748b;font-size:12px;padding:12px;">Loading growth data…</div>
       </div>
     </div>
@@ -2880,7 +2880,7 @@ async def api_brain(agent: str = "all"):
       <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">📋 Skill Usage Report
         <span style="font-size:11px;color:#64748b;font-weight:400;">which skills are actually being triggered</span>
       </h3>
-      <div id="skillUsageContainer" hx-get="/api/brain/skill-usage" hx-trigger="revealed once" hx-swap="innerHTML">
+      <div id="skillUsageContainer" hx-get="/api/brain/skill-usage" hx-trigger="load" hx-swap="innerHTML">
         <div style="color:#64748b;font-size:12px;padding:12px;">Loading skill usage data…</div>
       </div>
     </div>
