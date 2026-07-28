@@ -3043,6 +3043,17 @@ async def api_brain(agent: str = "all"):
         }})
         .catch(function() {{ el.innerHTML = '⚠️ Daemon endpoint not available'; }});
     }}
+    function navigateToCompress(agent) {{
+      var nt = document.querySelector('.nav-tab.clickable[data-tab~=brain]');
+      if (!nt) return;
+      switchTab('brain', nt);
+      setTimeout(function() {{
+        var sel = document.getElementById('brainAgentSelect');
+        if (sel) {{ sel.value = agent; sel.dispatchEvent(new Event('change')); }}
+        var comp = document.querySelector('[id^=manualTab]') || document.getElementById('manualToggle');
+        if (comp) comp.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+      }}, 500);
+    }}
     function switchCompressTab(tab, btn) {{
       document.querySelectorAll('.toggle-btn').forEach(function(b) {{ b.style.background = 'transparent'; b.style.color = '#64748b'; }});
       btn.style.background = '#1e293b'; btn.style.color = '#e2e8f0';
@@ -3638,10 +3649,13 @@ async def api_brain_growth_watch():
     week_ago = int(__import__("time").time()) - 86400 * 7
 
     rows = conn.execute(
-        "SELECT agent_name, component, current_tokens, week_avg_tokens, "
-        "delta_pct, breached, timestamp FROM chisel_drift "
+        "SELECT agent_name, component, MAX(current_tokens) as current_tokens, "
+        "MAX(week_avg_tokens) as week_avg_tokens, "
+        "MAX(ABS(delta_pct)) * CASE WHEN MAX(delta_pct) >= 0 THEN 1 ELSE -1 END as delta_pct, "
+        "MAX(breached) as breached FROM chisel_drift "
         "WHERE timestamp > ? AND method='rolling' AND delta_pct != 0 "
-        "ORDER BY ABS(delta_pct) DESC LIMIT 20",
+        "GROUP BY agent_name, component "
+        "ORDER BY ABS(MAX(delta_pct)) DESC LIMIT 20",
         (week_ago,),
     ).fetchall()
 
@@ -3656,12 +3670,16 @@ async def api_brain_growth_watch():
         color = "#ef4444" if pct > 15 else "#f97316" if pct > 5 else "#22c55e"
         breach_badge = ' <span style="color:#ef4444;font-size:10px;">⚠️ breached</span>' if d["breached"] else ""
         items.append(
-            f'<div style="display:flex;justify-content:space-between;align-items:center;'
-            f'padding:8px 0;border-bottom:1px solid #1e293b;">'
+            f'<div class="gw-row" data-agent="{d["agent_name"]}" style="display:flex;justify-content:space-between;align-items:center;'
+            f'padding:8px 0;border-bottom:1px solid #1e293b;cursor:pointer;" '
+            f'onclick="navigateToCompress(this.dataset.agent)">'
             f'<div><span style="font-size:12px;color:#e2e8f0;font-weight:600;">{d["agent_name"]}</span>'
             f'<span style="font-size:11px;color:#64748b;margin-left:6px;">{d["component"]}</span>{breach_badge}</div>'
-            f'<div><span style="font-size:12px;font-weight:600;color:{color};">{direction} {abs(pct):.1f}%</span>'
-            f'<span style="font-size:10px;color:#64748b;margin-left:6px;">{d["current_tokens"]:,} tok</span></div>'
+            f'<div style="display:flex;align-items:center;gap:8px;">'
+            f'<span style="font-size:12px;font-weight:600;color:{color};">{direction} {abs(pct):.1f}%</span>'
+            f'<span style="font-size:10px;color:#64748b;">{d["current_tokens"]:,} tok</span>'
+            f'<span style="color:#3b82f6;font-size:11px;font-weight:500;">Compress →</span>'
+            f'</div>'
             f'</div>'
         )
 
@@ -3681,21 +3699,20 @@ async def api_brain_skill_usage():
 
     rows = conn.execute(
         "SELECT agent_name, skill_name, triggered, turn_count, last_triggered "
-        "FROM skill_usage ORDER BY turn_count DESC LIMIT 30"
+        "FROM skill_usage WHERE triggered = 0 "
+        "ORDER BY turn_count DESC LIMIT 30"
     ).fetchall()
 
     if not rows:
-        return HTMLResponse('<div style="color:#64748b;font-size:12px;padding:12px;">No skill usage data yet.</div>')
+        return HTMLResponse('<div style="color:#64748b;font-size:12px;padding:12px;">All skills are being triggered — nothing to prune.</div>')
 
     items = []
     for r in rows:
         d = dict(r)
-        status = "✅" if d["triggered"] else "❌"
-        status_color = "#22c55e" if d["triggered"] else "#ef4444"
         items.append(
             f'<div style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:7px 0;border-bottom:1px solid #1e293b;font-size:12px;">'
-            f'<div><span style="color:{status_color};">{status}</span>'
+            f'<div><span style="color:#ef4444;">❌</span>'
             f'<span style="color:#e2e8f0;margin-left:6px;">{d["skill_name"]}</span>'
             f'<span style="color:#64748b;margin-left:4px;font-size:11px;">· {d["agent_name"]}</span></div>'
             f'<div><span style="color:#94a3b8;font-family:var(--font-mono);">{d["turn_count"]} turns</span></div>'
@@ -3703,7 +3720,7 @@ async def api_brain_skill_usage():
         )
 
     return HTMLResponse(
-        '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">Top 30 skills by turn count — ❌ = never triggered</div>'
+        '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">Skills never triggered — prune candidates</div>'
         + "".join(items)
     )
 
