@@ -3678,6 +3678,97 @@ async def api_brain_suggestions(agent: str = "main"):
     return HTMLResponse("".join(parts))
 
 
+# ── Growth Watch: agents with fastest-growing prompts ──────────────────────
+
+@app.get("/api/brain/growth-watch", response_class=HTMLResponse)
+async def api_brain_growth_watch():
+    """Show agents with fastest token drift this week, from chisel_drift."""
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+    week_ago = int(__import__("time").time()) - 86400 * 7
+
+    rows = conn.execute(
+        "SELECT agent_name, component, MAX(current_tokens) as current_tokens, "
+        "MAX(week_avg_tokens) as week_avg_tokens, "
+        "MAX(ABS(delta_pct)) * CASE WHEN MAX(delta_pct) >= 0 THEN 1 ELSE -1 END as delta_pct, "
+        "MAX(breached) as breached FROM chisel_drift "
+        "WHERE timestamp > ? AND method='rolling' AND delta_pct != 0 "
+        "GROUP BY agent_name, component "
+        "ORDER BY ABS(MAX(delta_pct)) DESC LIMIT 20",
+        (week_ago,),
+    ).fetchall()
+
+    if not rows:
+        return HTMLResponse('<div style="color:#64748b;font-size:12px;padding:12px;">No significant growth detected this week.</div>')
+
+    items = []
+    for r in rows:
+        d = dict(r)
+        pct = d["delta_pct"]
+        direction = "↑" if pct > 0 else "↓"
+        color = "#ef4444" if pct > 15 else "#f97316" if pct > 5 else "#22c55e"
+        breach_badge = ' <span style="color:#ef4444;font-size:10px;">⚠️ breached</span>' if d["breached"] else ""
+        items.append(
+            f'<div class="gw-row" data-agent="{d["agent_name"]}" style="display:flex;justify-content:space-between;align-items:center;'
+            f'padding:8px 0;border-bottom:1px solid #1e293b;cursor:pointer;" '
+            f'onclick="navigateToCompress(this.dataset.agent)">'
+            f'<div><span style="font-size:12px;color:#e2e8f0;font-weight:600;">{d["agent_name"]}</span>'
+            f'<span style="font-size:11px;color:#64748b;margin-left:6px;">{d["component"]}</span>{breach_badge}</div>'
+            f'<div style="display:flex;align-items:center;gap:8px;">'
+            f'<span style="font-size:12px;font-weight:600;color:{color};">{direction} {abs(pct):.1f}%</span>'
+            f'<span style="font-size:10px;color:#64748b;">{d["current_tokens"]:,} tok</span>'
+            f'<span style="color:#3b82f6;font-size:11px;font-weight:500;">Compress →</span>'
+            f'</div>'
+            f'</div>'
+        )
+
+    return HTMLResponse(
+        '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">Top 20 agents by component growth (7-day rolling)</div>'
+        + "".join(items)
+    )
+
+
+# ── Skill Usage Report: which skills are actually triggered ────────────────
+
+@app.get("/api/brain/skill-usage", response_class=HTMLResponse)
+async def api_brain_skill_usage():
+    """Show per-agent skill usage — triggered count, never-triggered skills."""
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+
+    rows = conn.execute(
+        "SELECT skill_name, SUM(turn_count) as total_turns, MAX(last_triggered) as last_used "
+        "FROM skill_usage GROUP BY skill_name "
+        "HAVING total_turns <= 2 "
+        "ORDER BY last_used ASC LIMIT 30"
+    ).fetchall()
+
+    if not rows:
+        return HTMLResponse('<div style="color:#64748b;font-size:12px;padding:12px;">All skills have been used 3+ times — nothing to prune.</div>')
+
+    import time as _time
+    now_ms = int(_time.time() * 1000)
+    items = []
+    for r in rows:
+        d = dict(r)
+        days_ago = int((now_ms - d["last_used"]) / 86400000) if d["last_used"] else -1
+        age_str = f'{days_ago}d ago' if days_ago >= 0 else 'never'
+        items.append(
+            f'<div style="display:flex;justify-content:space-between;align-items:center;'
+            f'padding:7px 0;border-bottom:1px solid #1e293b;font-size:12px;">'
+            f'<div><span style="color:#ef4444;">❌</span>'
+            f'<span style="color:#e2e8f0;margin-left:6px;">{d["skill_name"]}</span></div>'
+            f'<div><span style="color:#94a3b8;font-family:var(--font-mono);">{d["total_turns"]} turn' + ('s' if d["total_turns"] != 1 else '') + '</span>'
+            f'<span style="color:#64748b;margin-left:6px;font-size:11px;">{age_str}</span></div>'
+            f'</div>'
+        )
+
+    return HTMLResponse(
+        '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">Skills with ≤2 total uses across all sessions — prune candidates (oldest first)</div>'
+        + "".join(items)
+    )
+
+
 @app.get("/api/token-summary")
 async def api_token_summary_alias(agent: str = "", days: int = 7):
     """Alias for /api/tokens/summary — static HTML export compatibility."""
