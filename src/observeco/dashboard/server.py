@@ -3698,9 +3698,10 @@ async def api_brain_skill_usage():
     conn.row_factory = __import__("sqlite3").Row
 
     rows = conn.execute(
-        "SELECT agent_name, skill_name, turn_count, last_triggered "
-        "FROM skill_usage WHERE turn_count <= 2 "
-        "ORDER BY last_triggered ASC LIMIT 30"
+        "SELECT skill_name, SUM(turn_count) as total_turns, MAX(last_triggered) as last_used "
+        "FROM skill_usage GROUP BY skill_name "
+        "HAVING total_turns <= 2 "
+        "ORDER BY last_used ASC LIMIT 30"
     ).fetchall()
 
     if not rows:
@@ -3711,21 +3712,20 @@ async def api_brain_skill_usage():
     items = []
     for r in rows:
         d = dict(r)
-        days_ago = int((now_ms - d["last_triggered"]) / 86400000) if d["last_triggered"] else -1
+        days_ago = int((now_ms - d["last_used"]) / 86400000) if d["last_used"] else -1
         age_str = f'{days_ago}d ago' if days_ago >= 0 else 'never'
         items.append(
             f'<div style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:7px 0;border-bottom:1px solid #1e293b;font-size:12px;">'
             f'<div><span style="color:#ef4444;">❌</span>'
-            f'<span style="color:#e2e8f0;margin-left:6px;">{d["skill_name"]}</span>'
-            f'<span style="color:#64748b;margin-left:4px;font-size:11px;">· {d["agent_name"]}</span></div>'
-            f'<div><span style="color:#94a3b8;font-family:var(--font-mono);">{d["turn_count"]} turn' + ('s' if d["turn_count"] != 1 else '') + '</span>'
+            f'<span style="color:#e2e8f0;margin-left:6px;">{d["skill_name"]}</span></div>'
+            f'<div><span style="color:#94a3b8;font-family:var(--font-mono);">{d["total_turns"]} turn' + ('s' if d["total_turns"] != 1 else '') + '</span>'
             f'<span style="color:#64748b;margin-left:6px;font-size:11px;">{age_str}</span></div>'
             f'</div>'
         )
 
     return HTMLResponse(
-        '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">Skills with ≤2 uses — prune candidates (oldest first)</div>'
+        '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">Skills with ≤2 total uses across all sessions — prune candidates (oldest first)</div>'
         + "".join(items)
     )
 
