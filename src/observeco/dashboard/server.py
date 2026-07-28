@@ -2151,7 +2151,7 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
     summary = db.get_agent_status_summary()
     agents = db.get_agents()
     trims_all = db.get_trims(limit=30)
-    drift_latest = db.get_drift_latest_per_agent()
+    drift_all = db.get_drift()
     circuit = db.get_circuit_breakers()
     all_errors = db.get_errors(limit=100)
 
@@ -2164,27 +2164,28 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
         if t["agent_name"] not in latest_trims:
             latest_trims[t["agent_name"]] = t
 
-    drift_by_agent = {d["agent_name"]: d for d in drift_latest}
+    drift_latest = {}
+    for d in drift_all:
+        if d["agent_name"] not in drift_latest:
+            drift_latest[d["agent_name"]] = d
+
     breakers = {b["agent_name"]: b for b in circuit}
-    errors_by_agent: dict[str, list] = {}
-    for e in all_errors:
-        errors_by_agent.setdefault(e["agent_name"], []).append(e)
 
     now = int(time.time())
 
     # Build agent data dicts
     agent_data = {}
-    all_names = set(summary.keys()) | set(agent_cfg.keys()) | set(latest_trims.keys()) | set(drift_by_agent.keys())
+    all_names = set(summary.keys()) | set(agent_cfg.keys()) | set(latest_trims.keys()) | set(drift_latest.keys())
 
     for name in all_names:
         s = summary.get(name, {})
         fw = agent_cfg.get(name, {}).get("framework", "") or ""
         trim = latest_trims.get(name, {})
         tok_total = trim.get("total_tokens", 0)
-        dr = drift_by_agent.get(name, {})
+        dr = drift_latest.get(name, {})
         drift_pct = dr.get("delta_pct", 0)
         drift_breached = dr.get("breached", False)
-        recent_errors = [e for e in errors_by_agent.get(name, []) if now - e.get("timestamp", 0) < 86400]
+        recent_errors = [e for e in all_errors if e.get("agent_name") == name and now - e.get("timestamp", 0) < 86400]
         err_count = len(recent_errors)
         cb = breakers.get(name, {})
         ts = s.get("timestamp", 0)
@@ -2864,74 +2865,23 @@ async def api_brain(agent: str = "all"):
       </div>
     </div>
 
-    <!-- ====== CHISEL SUGGESTIONS (v0.2) ====== -->
+    <!-- ====== GROWTH WATCH (replaces Chisel Suggestions) ====== -->
     <div style="background:#131a2b;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:16px;">
-      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">🔍 Chisel Suggestions
-        <span style="font-size:11px;color:#64748b;font-weight:400;">v0.2 — trim history + cut log</span>
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">📈 Growth Watch
+        <span style="font-size:11px;color:#64748b;font-weight:400;">agents with the fastest-growing prompts this week</span>
       </h3>
-      <div id="chiselSuggestions" hx-get="/api/brain/suggestions" hx-trigger="revealed once" hx-swap="innerHTML">
-        <div style="color:#64748b;font-size:12px;padding:12px;">Loading chisel data…</div>
+      <div id="growthWatchContainer" hx-get="/api/brain/growth-watch" hx-trigger="load" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading growth data…</div>
       </div>
     </div>
 
-    <!-- ====== TOKEN OPTIMISER ====== -->
+    <!-- ====== SKILL USAGE REPORT (replaces Token Optimiser) ====== -->
     <div style="background:#131a2b;border:1px solid #3730a3;border-radius:12px;padding:20px;margin-top:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-          <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">🧠 Token Optimiser
-            <span style="font-size:11px;color:#64748b;font-weight:400;">learns from 200+ turns</span>
-          </h3>
-          <p style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.6;">
-            Beyond simple compression. The Optimiser analyses every turn your agents take — which skills are used, which rules trigger, which memory gets referenced — then surgically removes what's unused and restructures what remains.
-          </p>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px;">
-          <h4 style="font-size:13px;font-weight:600;margin-bottom:6px;color:#f8fafc;">📊 Learning progress</h4>
-          <div style="margin:10px 0;">
-            <div style="height:8px;background:#1e293b;border-radius:999px;overflow:hidden;margin-bottom:4px;">
-              <div id="optProgressBar" style="width:0%;height:100%;border-radius:999px;background:linear-gradient(90deg,#6366f1,#8b5cf6);"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:#475569;">
-              <span id="optProgressLabel">0% — learned from 0 turns</span>
-              <span style="color:#6366f1;">Goal: 200 turns</span>
-            </div>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b;font-size:12px;">
-            <span style="color:#94a3b8;">Skills never triggered</span>
-            <span id="optSkillsNever" style="color:#f97316;font-family:var(--font-mono);font-weight:600;">—</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b;font-size:12px;">
-            <span style="color:#94a3b8;">Guidance rules stale</span>
-            <span id="optGuidanceStale" style="color:#eab308;font-family:var(--font-mono);font-weight:600;">0</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;">
-            <span style="color:#94a3b8;">Memory sections unused</span>
-            <span style="color:#64748b;font-family:var(--font-mono);font-weight:600;">—</span>
-          </div>
-          <div style="font-size:11px;color:#64748b;margin-top:8px;">At 200 turns, Optimiser will recommend what to prune based on captured skill/guidance usage — projected savings surface here once real compression data accumulates.</div>
-        </div>
-        <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:16px;">
-          <h4 style="font-size:13px;font-weight:600;margin-bottom:6px;color:#f8fafc;">📈 Projected savings</h4>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-            <div style="background:#1e293b;border-radius:6px;padding:10px;text-align:center;">
-              <div id="optLite" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#22c55e;">—</div>
-              <div style="font-size:10px;color:#64748b;">Lite (current)</div>
-            </div>
-            <div style="background:#1e293b;border-radius:6px;padding:10px;text-align:center;">
-              <div id="optFull" style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:#a5b4fc;">—</div>
-              <div style="font-size:10px;color:#64748b;">Full (available)</div>
-            </div>
-          </div>
-          <div style="background:linear-gradient(135deg,#1e1b4b,#0f172a);border:1px solid #3730a3;border-radius:8px;padding:12px;text-align:center;">
-            <div id="optProj" style="font-size:22px;font-weight:700;font-family:var(--font-mono);color:#c4b5fd;">—</div>
-            <div style="font-size:11px;color:#a5b4fc;">Projected with Optimiser after 200 turns</div>
-            <div style="font-size:10px;color:#64748b;margin-top:4px;">Lite compression + Optimiser pruning = deeper savings</div>
-          </div>
-          <div id="optEta" style="font-size:11px;color:#64748b;margin-top:8px;">Awaiting turn data…</div>
-        </div>
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#f8fafc;">📋 Skill Usage Report
+        <span style="font-size:11px;color:#64748b;font-weight:400;">which skills are actually being triggered</span>
+      </h3>
+      <div id="skillUsageContainer" hx-get="/api/brain/skill-usage" hx-trigger="load" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading skill usage data…</div>
       </div>
     </div>
 
@@ -3092,6 +3042,17 @@ async def api_brain(agent: str = "all"):
           el.innerHTML = d.status === 'ok' ? '⏹ Daemon stopped' : '⚠️ ' + (d.message || 'Failed');
         }})
         .catch(function() {{ el.innerHTML = '⚠️ Daemon endpoint not available'; }});
+    }}
+    function navigateToCompress(agent) {{
+      var nt = document.querySelector('.nav-tab.clickable[data-tab~=brain]');
+      if (!nt) return;
+      switchTab('brain', nt);
+      setTimeout(function() {{
+        var sel = document.getElementById('brainAgentSelect');
+        if (sel) {{ sel.value = agent; sel.dispatchEvent(new Event('change')); }}
+        var comp = document.querySelector('[id^=manualTab]') || document.getElementById('manualToggle');
+        if (comp) comp.scrollIntoView({{behavior: 'smooth', block: 'start'}});
+      }}, 500);
     }}
     function switchCompressTab(tab, btn) {{
       document.querySelectorAll('.toggle-btn').forEach(function(b) {{ b.style.background = 'transparent'; b.style.color = '#64748b'; }});
@@ -3682,7 +3643,7 @@ async def api_brain_suggestions(agent: str = "main"):
 
 @app.get("/api/brain/growth-watch", response_class=HTMLResponse)
 async def api_brain_growth_watch():
-    """Show agents with fastest token drift this week, from chisel_drift."""
+    """Show agents with highest token drift this week, from chisel_drift."""
     conn = db._get_conn()
     conn.row_factory = __import__("sqlite3").Row
     week_ago = int(__import__("time").time()) - 86400 * 7
@@ -3737,10 +3698,9 @@ async def api_brain_skill_usage():
     conn.row_factory = __import__("sqlite3").Row
 
     rows = conn.execute(
-        "SELECT skill_name, SUM(turn_count) as total_turns, MAX(last_triggered) as last_used "
-        "FROM skill_usage GROUP BY skill_name "
-        "HAVING total_turns <= 2 "
-        "ORDER BY last_used ASC LIMIT 30"
+        "SELECT agent_name, skill_name, turn_count, last_triggered "
+        "FROM skill_usage WHERE turn_count <= 2 "
+        "ORDER BY last_triggered ASC LIMIT 30"
     ).fetchall()
 
     if not rows:
@@ -3751,20 +3711,21 @@ async def api_brain_skill_usage():
     items = []
     for r in rows:
         d = dict(r)
-        days_ago = int((now_ms - d["last_used"]) / 86400000) if d["last_used"] else -1
+        days_ago = int((now_ms - d["last_triggered"]) / 86400000) if d["last_triggered"] else -1
         age_str = f'{days_ago}d ago' if days_ago >= 0 else 'never'
         items.append(
             f'<div style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:7px 0;border-bottom:1px solid #1e293b;font-size:12px;">'
             f'<div><span style="color:#ef4444;">❌</span>'
-            f'<span style="color:#e2e8f0;margin-left:6px;">{d["skill_name"]}</span></div>'
-            f'<div><span style="color:#94a3b8;font-family:var(--font-mono);">{d["total_turns"]} turn' + ('s' if d["total_turns"] != 1 else '') + '</span>'
+            f'<span style="color:#e2e8f0;margin-left:6px;">{d["skill_name"]}</span>'
+            f'<span style="color:#64748b;margin-left:4px;font-size:11px;">· {d["agent_name"]}</span></div>'
+            f'<div><span style="color:#94a3b8;font-family:var(--font-mono);">{d["turn_count"]} turn' + ('s' if d["turn_count"] != 1 else '') + '</span>'
             f'<span style="color:#64748b;margin-left:6px;font-size:11px;">{age_str}</span></div>'
             f'</div>'
         )
 
     return HTMLResponse(
-        '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">Skills with ≤2 total uses across all sessions — prune candidates (oldest first)</div>'
+        '<div style="font-size:11px;color:#64748b;margin-bottom:8px;">Skills with ≤2 uses — prune candidates (oldest first)</div>'
         + "".join(items)
     )
 
