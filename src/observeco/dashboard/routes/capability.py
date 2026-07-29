@@ -308,14 +308,12 @@ async def canary_run_from_fleet(agent: str = Query("default"), tasks: Optional[s
 
         # Build CLI invocation: spawn a separate process running the same
         # interpreter that launched the dashboard (robust against venv/PATH).
-        cmd = [sys.executable, "-m", "observeco.cli", "canary", "run", "--agent", agent, "--trials", "1"]
+        # Uses --direct to bypass the agent harness — DirectModelAdapter calls
+        # the model API directly (faster, no profile loading, avoids broken
+        # profile providers like xiaomi).
+        cmd = [sys.executable, "-m", "observeco.cli", "canary", "run", "--agent", agent, "--trials", "1", "--direct"]
         if tasks:
             cmd += ["--tasks", tasks]
-
-        # Inject env var so HermesBenchmarkAdapter uses ollama-cloud/deepseek-v4-flash
-        # instead of the profile's default provider (e.g. accelerator → xiaomi, broken key)
-        child_env = {k: v for k, v in os.environ.items()}
-        child_env["OBSERVECO_CANARY_MODEL"] = "ollama-cloud/deepseek-v4-flash"
 
         # start_new_session=True detaches from the server's process group so the
         # benchmark keeps running even if the dashboard restarts. stdout/stderr
@@ -325,7 +323,6 @@ async def canary_run_from_fleet(agent: str = Query("default"), tasks: Optional[s
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             start_new_session=True,
-            env=child_env,
         )
         _canary_run_lock.release()
         return {"ok": True, "message": f"Canary started for {agent}"}
