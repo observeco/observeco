@@ -145,18 +145,33 @@ class DriftDetector:
         ).fetchall()
 
         # Get recent canary run accuracies for time series
+        # Exclude runs where ALL results were provider errors (those show as 0%
+        # but aren't real model failures — they mask the true accuracy trend)
         run_rows = conn.execute(
-            "SELECT id, started_at, pass_count, fail_count, hang_count, total_tasks "
-            "FROM canary_runs WHERE agent_name = ? AND status = 'completed' "
-            "ORDER BY started_at DESC LIMIT ?",
-            (agent_name, days * 2),  # approx 2 runs/day
+            "SELECT r.id, r.started_at, r.pass_count, r.fail_count, r.hang_count, "
+            "r.total_tasks, "
+            "(SELECT SUM(CASE WHEN cr.status = 'provider_error' THEN 1 ELSE 0 END) "
+            " FROM canary_results cr WHERE cr.run_id = r.id) as provider_errors "
+            "FROM canary_runs r "
+            "WHERE r.agent_name = ? AND r.status = 'completed' "
+            "ORDER BY r.started_at DESC LIMIT ?",
+            (agent_name, days * 2),
         ).fetchall()
 
         # Build time series
         points = []
         for r in reversed(run_rows):
-            total = (r["pass_count"] or 0) + (r["fail_count"] or 0)
-            acc = r["pass_count"] / total if total > 0 else 0.0
+            # Skip runs where all results were provider errors
+            provider_errs = r["provider_errors"] or 0
+            pass_count = r["pass_count"] or 0
+            fail_count = r["fail_count"] or 0
+            total = pass_count + fail_count
+            # If all failures were provider errors, don't show this as 0%
+            if total > 0 and pass_count == 0 and provider_errs >= fail_count:
+                continue
+            if total == 0 and provider_errs > 0:
+                continue
+            acc = pass_count / total if total > 0 else 0.0
             points.append({
                 "date": r["started_at"][:10],
                 "accuracy": round(acc * 100, 1),
