@@ -145,8 +145,19 @@ class DriftDetector:
         ).fetchall()
 
         # Get recent canary run accuracies for time series
-        # Exclude runs where ALL results were provider errors (those show as 0%
-        # but aren't real model failures — they mask the true accuracy trend)
+        # Only include runs with the same config_hash as the latest run.
+        # Different configs use different models/prompts — comparing their
+        # accuracy is meaningless and produces misleading chart dips.
+        latest = conn.execute(
+            "SELECT config_hash FROM canary_runs WHERE agent_name = ? AND status = 'completed' "
+            "AND config_hash IS NOT NULL AND config_hash != '' "
+            "ORDER BY started_at DESC LIMIT 1",
+            (agent_name,),
+        ).fetchone()
+        current_hash = latest["config_hash"] if latest else None
+        if not current_hash:
+            return {"agent": agent_name, "points": [], "baseline": None, "drift_events": []}
+
         run_rows = conn.execute(
             "SELECT r.id, r.started_at, r.pass_count, r.fail_count, r.hang_count, "
             "r.total_tasks, "
@@ -154,8 +165,9 @@ class DriftDetector:
             " FROM canary_results cr WHERE cr.run_id = r.id) as provider_errors "
             "FROM canary_runs r "
             "WHERE r.agent_name = ? AND r.status = 'completed' "
+            "AND r.config_hash = ? "
             "ORDER BY r.started_at DESC LIMIT ?",
-            (agent_name, days * 2),
+            (agent_name, current_hash, days * 2),
         ).fetchall()
 
         # Build time series
