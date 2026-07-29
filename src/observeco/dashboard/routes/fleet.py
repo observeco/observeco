@@ -617,13 +617,20 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
             pass  # skip cleanup if DB locked right now
         canary_latest = {}
         for row in conn.execute(
-            "SELECT agent_name, pass_count, fail_count, hang_count, total_tasks, "
-            "started_at, COALESCE(total_cost, 0.0) as total_cost, "
-            "COALESCE(total_tokens, 0) as total_tokens FROM canary_runs "
-            "WHERE status = 'completed' AND pass_count IS NOT NULL "
-            "ORDER BY started_at DESC"
+            "SELECT r.agent_name, r.pass_count, r.fail_count, r.hang_count, r.total_tasks, "
+            "r.started_at, COALESCE(r.total_cost, 0.0) as total_cost, "
+            "COALESCE(r.total_tokens, 0) as total_tokens, "
+            "(SELECT SUM(CASE WHEN cr.status = 'provider_error' THEN 1 ELSE 0 END) "
+            " FROM canary_results cr WHERE cr.run_id = r.id) as provider_errors "
+            "FROM canary_runs r "
+            "WHERE r.status = 'completed' AND r.pass_count IS NOT NULL "
+            "ORDER BY r.started_at DESC"
         ).fetchall():
             if row["agent_name"] not in canary_latest:
+                # Skip runs where all failures were provider errors
+                prov = row["provider_errors"] or 0
+                if row["pass_count"] == 0 and row["fail_count"] > 0 and prov >= row["fail_count"]:
+                    continue
                 canary_latest[row["agent_name"]] = row
         # Track agents with running canaries — exclude stuck ones (running >5min with no results)
         canary_running = set()
