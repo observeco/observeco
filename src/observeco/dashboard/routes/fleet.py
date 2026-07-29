@@ -55,6 +55,8 @@ def _canary_row(agent_name: str, canary_row, canary_running: bool = False) -> st
     if not canary_row:
         return '<span class="row-val" style="color:var(--muted)">no data</span>'
     total = (canary_row["pass_count"] or 0) + (canary_row["fail_count"] or 0)
+    # If all results are provider errors, show that instead of 0%
+    provider_errs = (dict(canary_row).get("provider_error_count") if hasattr(canary_row, "keys") else canary_row.get("provider_error_count", 0)) or 0
     acc = (canary_row["pass_count"] / total * 100) if total > 0 else 0
     color = "var(--accent)" if acc >= 80 else "var(--warn)" if acc >= 60 else "var(--danger)"
     canary_dict = dict(canary_row) if hasattr(canary_row, "keys") else canary_row
