@@ -643,6 +643,9 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
             if row["result_count"] == 0 and row["started_at"]:
                 from datetime import datetime, timezone
                 started = datetime.fromisoformat(row["started_at"])
+                # Handle both tz-aware and tz-naive datetimes
+                if started.tzinfo is None:
+                    started = started.replace(tzinfo=timezone.utc)
                 if (datetime.now(timezone.utc) - started).total_seconds() > 300:
                     continue  # stuck, don't show as running
             canary_running.add(row["agent_name"])
@@ -654,7 +657,8 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         ).fetchall():
             if row["agent_name"] not in quality_drift:
                 quality_drift[row["agent_name"]] = row
-    except Exception:
+    except Exception as _fleet_err:
+        logger.exception("fleet_agents failed: %s", _fleet_err)
         # Error state — daemon down or DB unavailable
         return HTMLResponse("""<div class="section-h"><h2>Fleet</h2><span class="count">error</span></div>
 <div class="grid">
