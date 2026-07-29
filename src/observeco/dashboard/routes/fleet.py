@@ -273,6 +273,13 @@ async def fleet_verdict():
         drift_all = db.get_drift_latest_per_agent()
         errors_all = db.get_errors(limit=100)
         db.get_agents()
+
+        # Pre-index for O(1) lookups
+        circuit_by_agent = {c["agent_name"]: c for c in circuit}
+        drift_by_agent = {d["agent_name"]: d for d in drift_all}
+        errors_by_agent: dict[str, list] = {}
+        for e in errors_all:
+            errors_by_agent.setdefault(e["agent_name"], []).append(e)
     except Exception:
         # Error state — daemon down or DB unavailable
         return HTMLResponse("""<div class="verdict warn daemon">
@@ -307,13 +314,14 @@ async def fleet_verdict():
     for name, s in summary.items():
         status = s.get("status", "")
         last_ts = s.get("timestamp", 0)
-        circuit_state = next((c for c in circuit if c.get("agent_name") == name), None)
-        agent_drift = [d for d in drift_all if d.get("agent_name") == name]
-        agent_errors = [e for e in errors_all if e.get("agent_name") == name]
+        circuit_state = circuit_by_agent.get(name)
+        agent_drift = drift_by_agent.get(name)
+        agent_drift_list = [agent_drift] if agent_drift else []
+        agent_errors = errors_by_agent.get(name, [])
 
         cls = _classify_agent(
             {"status": status, "timestamp": last_ts},
-            agent_drift,
+            agent_drift_list,
             circuit_state or {},
             agent_errors,
             now,
@@ -550,6 +558,51 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         circuit = db.get_circuit_breakers()
         drift_all = db.get_drift_latest_per_agent()
         errors_all = db.get_errors(limit=100)
+
+        # ── Pre-index everything by agent_name (N+1 → O(1)) ──
+        # Batch trims: one query instead of 41
+        all_trims = db.get_trims(limit=500)
+        trims_by_agent: dict[str, dict] = {}
+        for t in all_trims:
+            if t["agent_name"] not in trims_by_agent:
+                trims_by_agent[t["agent_name"]] = dict(t)
+
+        # Batch gardens: one query instead of 41
+        all_gardens = db.get_gardens()
+        gardens_by_agent: dict[str, list] = {}
+        for g in all_gardens:
+            gardens_by_agent.setdefault(g["agent_name"], []).append(g)
+
+        # Pre-index drift by agent_name
+        drift_by_agent = {d["agent_name"]: d for d in drift_all}
+
+        # Pre-index circuit breakers by agent_name
+        circuit_by_agent = {c["agent_name"]: c for c in circuit}
+
+        # Pre-index errors by agent_name
+        errors_by_agent: dict[str, list] = {}
+        for e in errors_all:
+            errors_by_agent.setdefault(e["agent_name"], []).append(e)
+
+        # Batch recent pulses: one query instead of 41
+        all_pulses = db.get_recent_pulses(limit=200)
+        pulses_by_agent: dict[str, list] = {}
+        for p in all_pulses:
+            pulses_by_agent.setdefault(p["agent_name"], []).append(p)
+
+        # Batch token_logs freshness check
+        has_otel: dict[str, bool] = {}
+        conn_main = db._get_conn()
+        now_ts = int(time.time())
+        try:
+            for row in conn_main.execute(
+                "SELECT DISTINCT agent_name FROM token_logs WHERE recorded_at > ?",
+                (now_ts - 86400,),
+            ).fetchall():
+                has_otel[row["agent_name"]] = True
+        except Exception:
+            pass  # table may not exist — default to estimate
+
         # Canary data for grid cards
         conn = db._get_conn()
         # Non-critical cleanup — use db._write() (retry-on-lock) so a collision
@@ -633,10 +686,9 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
     cfg_class = {a["agent_name"]: a.get("class", "service") for a in agents_cfg}
     name_type = {}
     for name, s in summary.items():
-        trims = db.get_trims(agent_name=name, limit=1)
-        trim = trims[0] if trims else {}
+        trim = trims_by_agent.get(name, {})
         has_brain = any(trim.get(k, 0) for k in ("identity_tokens", "skills_tokens", "memory_tokens", "tools_tokens", "guidance_tokens"))
-        gardens = db.get_gardens(agent_name=name)
+        gardens = gardens_by_agent.get(name, [])
         has_memory = bool(gardens)
         # Declared class wins; fall back to inference only if undeclared (null).
         declared = cfg_class.get(name, "service")
@@ -652,7 +704,15 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
     type_order = {"agent": 0, "service": 1}
     sorted_names = sorted(summary.keys(), key=lambda n: (type_order.get(name_type.get(n, "service"), 9), n.lower()))
 
-    for name in sorted_names:
+    # ── Paginate: 20 agents per page ──
+    PAGE_SIZE = 20
+    total_agents = len(sorted_names)
+    total_pages = max(1, (total_agents + PAGE_SIZE - 1) // PAGE_SIZE)
+    page = max(1, min(page, total_pages))  # clamp to valid range
+    start = (page - 1) * PAGE_SIZE
+    page_names = sorted_names[start:start + PAGE_SIZE]
+
+    for name in page_names:
         s = summary[name]
         # Apply name search filter (case-insensitive)
         if q and q.strip() and q.strip().lower() not in name.lower():
@@ -660,13 +720,14 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
 
         status = s.get("status", "")
         last_ts = s.get("timestamp", 0)
-        circuit_state = next((c for c in circuit if c.get("agent_name") == name), None)
-        agent_drift = [d for d in drift_all if d.get("agent_name") == name]
-        agent_errors = [e for e in errors_all if e.get("agent_name") == name]
+        circuit_state = circuit_by_agent.get(name)
+        agent_drift = drift_by_agent.get(name)
+        agent_drift_list = [agent_drift] if agent_drift else []
+        agent_errors = errors_by_agent.get(name, [])
 
         cls = _classify_agent(
             {"status": status, "timestamp": last_ts},
-            agent_drift,
+            agent_drift_list,
             circuit_state or {},
             agent_errors,
             now,
@@ -680,8 +741,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
                 continue
 
         # Get latest trim for token breakdown
-        trims = db.get_trims(agent_name=name, limit=1)
-        trim = trims[0] if trims else {}
+        trim = trims_by_agent.get(name, {})
 
         # Error count in last 24h
         errors_24h = len([e for e in agent_errors if e.get("timestamp", 0) > now - 86400])
@@ -728,20 +788,10 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         ]
 
         # Drift
-        max_drift = max((d.get("delta_pct", 0) for d in agent_drift), default=0)
+        max_drift = abs(agent_drift.get("delta_pct", 0)) if agent_drift else 0
 
         # Data quality — check if OTEL data exists in token_logs
-        dq = "est"  # default estimated
-        # Check if there's any OTEL token_logs data for this agent (more accurate than watch-only trim data)
-        try:
-            token_logs_count = conn.execute(
-                "SELECT COUNT(*) as cnt FROM token_logs WHERE agent_name = ? AND recorded_at > ?",
-                (name, now - 86400)  # Check last 24h
-            ).fetchone()
-            if token_logs_count and token_logs_count["cnt"] > 0:
-                dq = "acc"  # accurate - OTEL data available
-        except Exception:
-            logger.warning("token DQ check failed for %s, defaulting to estimated", name)
+        dq = "acc" if has_otel.get(name) else "est"
         dq_dot_cls = "acc" if dq == "acc" else "est"
         dq_title = "Accurate (otel + watch)" if dq == "acc" else "Estimated (watch only)"
 
@@ -756,8 +806,8 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
 
         # Pulse mini (6 dots)
         pulse_dots = ""
-        recent_pulses = db.get_recent_pulses(agent_name=name, limit=6)
-        for p in recent_pulses[:6]:
+        recent_pulses = pulses_by_agent.get(name, [])[:6]
+        for p in recent_pulses:
             ps = p.get("status", "alive")
             pc = "a" if ps == "alive" else "e" if ps == "error" else "d"
             pulse_dots += f'<i class="{pc}"></i>'
@@ -823,7 +873,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         <div style="font-size:11px;color:#64748b;margin-top:2px;">{conf['recommendation']}</div>"""
 
         # Memory debt + cost from garden data
-        gardens = db.get_gardens(agent_name=name)
+        gardens = gardens_by_agent.get(name, [])
         debt = 0
         dups_found = 0
         contra_found = 0
@@ -912,11 +962,11 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
             </div>
             {agent_rows}
         </div>
-        {_so_what_insights(name, cls, agent_drift, trims, agent_errors, total_tokens)}
+        {_so_what_insights(name, cls, [agent_drift] if agent_drift else [], [trim] if trim else [], agent_errors, total_tokens)}
     </div>
 </article>""")
 
-    total_agents = len(summary)
+    total_agents = len(sorted_names)
 
     # Build grouped grid: section headers only when >1 group
     # ponytail: groups sorted alphabetically by key. If custom sort order needed later,
@@ -937,5 +987,40 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
     # Build hint for collapsed/expanded state
     hint = "▸ click a card to expand"
 
+    # Pagination bar
+    pagination = ""
+    if total_pages > 1:
+        page_label = f'<span style="color:#64748b;font-size:11px;">page {page}/{total_pages}</span>'
+        p_parts = []
+        for p in range(1, total_pages + 1):
+            active = 'active' if p == page else ''
+            p_parts.append(
+                f'<button class="paginate-btn {active}" data-page="{p}" '
+                f'onclick="htmx.ajax(\'GET\', \'/api/fleet/agents?page={p}\', '
+                f'{{target:\'#fleetGrid\', swap:\'innerHTML\'}});return false;">{p}</button>'
+            )
+        pagination = (
+            f'<div class="pagination-bar" style="display:flex;justify-content:center;gap:4px;'
+            f'padding:12px 0;align-items:center;">'
+            f'{page_label}'
+        )
+        # Prev button
+        if page > 1:
+            pagination += (
+                f'<button class="paginate-btn" data-page="{page - 1}" '
+                f'onclick="htmx.ajax(\'GET\', \'/api/fleet/agents?page={page - 1}\', '
+                f'{{target:\'#fleetGrid\', swap:\'innerHTML\'}});return false;">◀ Prev</button>'
+            )
+        pagination += "".join(p_parts)
+        # Next button
+        if page < total_pages:
+            pagination += (
+                f'<button class="paginate-btn" data-page="{page + 1}" '
+                f'onclick="htmx.ajax(\'GET\', \'/api/fleet/agents?page={page + 1}\', '
+                f'{{target:\'#fleetGrid\', swap:\'innerHTML\'}});return false;">Next ▶</button>'
+            )
+        pagination += '</div>'
+
     return HTMLResponse(f"""<div class="section-h" id="fleetSectionHeader" hx-swap-oob="true"><h2>Fleet</h2><span class="count">{total_agents} agents</span><span class="hint">{hint}</span><span id="fleetUpdated" style="font-size:12px;color:#64748b;margin-left:8px;">{time.strftime('Updated %H:%M:%S', time.localtime(now))}</span></div>
-{grid_html}""")
+{grid_html}
+{pagination}""")

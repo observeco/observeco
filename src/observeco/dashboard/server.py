@@ -2151,7 +2151,7 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
     summary = db.get_agent_status_summary()
     agents = db.get_agents()
     trims_all = db.get_trims(limit=30)
-    drift_all = db.get_drift()
+    drift_latest = db.get_drift_latest_per_agent()
     circuit = db.get_circuit_breakers()
     all_errors = db.get_errors(limit=100)
 
@@ -2164,28 +2164,27 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
         if t["agent_name"] not in latest_trims:
             latest_trims[t["agent_name"]] = t
 
-    drift_latest = {}
-    for d in drift_all:
-        if d["agent_name"] not in drift_latest:
-            drift_latest[d["agent_name"]] = d
-
+    drift_by_agent = {d["agent_name"]: d for d in drift_latest}
     breakers = {b["agent_name"]: b for b in circuit}
+    errors_by_agent: dict[str, list] = {}
+    for e in all_errors:
+        errors_by_agent.setdefault(e["agent_name"], []).append(e)
 
     now = int(time.time())
 
     # Build agent data dicts
     agent_data = {}
-    all_names = set(summary.keys()) | set(agent_cfg.keys()) | set(latest_trims.keys()) | set(drift_latest.keys())
+    all_names = set(summary.keys()) | set(agent_cfg.keys()) | set(latest_trims.keys()) | set(drift_by_agent.keys())
 
     for name in all_names:
         s = summary.get(name, {})
         fw = agent_cfg.get(name, {}).get("framework", "") or ""
         trim = latest_trims.get(name, {})
         tok_total = trim.get("total_tokens", 0)
-        dr = drift_latest.get(name, {})
+        dr = drift_by_agent.get(name, {})
         drift_pct = dr.get("delta_pct", 0)
         drift_breached = dr.get("breached", False)
-        recent_errors = [e for e in all_errors if e.get("agent_name") == name and now - e.get("timestamp", 0) < 86400]
+        recent_errors = [e for e in errors_by_agent.get(name, []) if now - e.get("timestamp", 0) < 86400]
         err_count = len(recent_errors)
         cb = breakers.get(name, {})
         ts = s.get("timestamp", 0)

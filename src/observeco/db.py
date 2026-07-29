@@ -2328,12 +2328,16 @@ class Database:
 
     def get_circuit_breakers(self) -> list[dict]:
         conn = self._get_conn()
-        # Get all distinct agent names from the event log
+        # Per-agent LIMIT 100 queries using index (0.003s vs 2s for full 1.6M scan).
+        # With the index, each query is O(log N) and returns ~93 rows on average.
+        try:
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_circuit_events_agent_ts ON circuit_events(agent_name, created_at, id)")
+        except Exception:
+            pass
         agents = conn.execute(
             "SELECT DISTINCT agent_name FROM circuit_events ORDER BY agent_name"
         ).fetchall()
         if not agents:
-            # Fallback to old table for backward compat during migration
             old = conn.execute("SELECT * FROM circuit_breakers ORDER BY agent_name").fetchall()
             if old:
                 return [dict(r) for r in old]
@@ -2342,10 +2346,11 @@ class Database:
         results = []
         for (agent_name,) in agents:
             events = conn.execute(
-                "SELECT * FROM circuit_events WHERE agent_name=? ORDER BY created_at ASC, id ASC",
+                "SELECT * FROM circuit_events WHERE agent_name=? ORDER BY created_at DESC LIMIT 100",
                 (agent_name,)
             ).fetchall()
-            state = self._rebuild_state([dict(e) for e in events])
+            # Rebuild in chronological order for correct state machine
+            state = self._rebuild_state([dict(r) for r in reversed(events)])
             results.append(state)
         return results
 
