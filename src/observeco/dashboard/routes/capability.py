@@ -226,11 +226,11 @@ async def grid_run_from_dashboard(agent: str = Query("default")):
         import subprocess
         import sys
 
-        # Clean up stale runs first
+        # Clean up stale runs (Hermes adapter is slower — allow 60 min)
         try:
             db._write(
                 "UPDATE grid_runs SET status='failed' WHERE agent_name=? AND status='running'"
-                " AND started_at < datetime('now', '-30 minutes')",
+                " AND started_at < datetime('now', '-60 minutes')",
                 (agent,),
             )
         except Exception:
@@ -1465,20 +1465,29 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     task_names = list(dict.fromkeys(c["task_name"] for c in cells))
 
     # Build header
+    cols_per_model = len(configs) * 3  # Acc/Flags/Cost per config
     header_html = "<tr>"
     header_html += '<th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;">Task</th>'
     for model in models:
-        header_html += f'<th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--fg-2);" colspan="3">{_html_escape(model)}</th>'
+        header_html += f'<th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--fg-2);" colspan="{cols_per_model}">{_html_escape(model)}</th>'
     header_html += "</tr>"
 
-    # Sub-header: Acc (CI) | Flags | Cost per model
+    # Sub-header: config labels per model + Acc/Flags/Cost per config
     sub_header = "<tr>"
     sub_header += '<th style="padding:4px 12px;"></th>'
     for model in models:
-        sub_header += '<th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--muted);font-weight:400;">Acc (CI)</th>'
-        sub_header += '<th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--muted);font-weight:400;">Flags</th>'
-        sub_header += '<th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--muted);font-weight:400;">Cost</th>'
+        for config_label in configs:
+            sub_header += f'<th style="padding:4px 4px;text-align:center;font-size:10px;color:var(--muted);font-weight:400;" colspan="3">{_html_escape(config_label)}</th>'
     sub_header += "</tr>"
+    # Per-column sub-header: Acc (CI) | Flags | Cost
+    col_sub = "<tr>"
+    col_sub += '<th style="padding:2px 12px;"></th>'
+    for model in models:
+        for config_label in configs:
+            col_sub += '<th style="padding:2px 4px;text-align:center;font-size:10px;color:var(--muted);font-weight:400;">Acc (CI)</th>'
+            col_sub += '<th style="padding:2px 4px;text-align:center;font-size:10px;color:var(--muted);font-weight:400;">Flags</th>'
+            col_sub += '<th style="padding:2px 4px;text-align:center;font-size:10px;color:var(--muted);font-weight:400;">Cost</th>'
+    col_sub += "</tr>"
 
     # Body rows
     body_rows = ""
@@ -1552,7 +1561,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     </div>
     <div style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px;">
       <table class="data-table" style="width:100%;min-width:800px;">
-        <thead>{header_html}{sub_header}</thead>
+        <thead>{header_html}{sub_header}{col_sub}</thead>
         <tbody>{body_rows}</tbody>
       </table>
     </div>
@@ -1576,7 +1585,7 @@ def _grid_running_html(agent: str, started_at: str) -> str:
       <p style="color:var(--fg-3);">
         Started at {started_at[:19] if started_at else 'unknown'} · 2 models × 2 configs × 20 tasks
       </p>
-      <p>Grid comparison can take 5–10 minutes. This page refreshes automatically.</p>
+      <p>Grid comparison tests each model through the full agent harness (SOUL.md + skills + tools). This can take 10–30 minutes. This page refreshes automatically.</p>
       <div style="margin-top:8px;">
         <span class="spinner"></span>
         <span style="color:var(--accent);font-weight:600;font-size:13px;">Running — results will appear here when ready</span>
