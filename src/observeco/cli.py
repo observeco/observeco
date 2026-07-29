@@ -2732,7 +2732,7 @@ def grid_cap_run(
     from observeco.capability.grid import CapabilityGridRunner
 
     # Resolve models
-    model_list = ["custom-ollama/deepseek-v4-flash", "custom-ollama/deepseek-v4-pro", "custom-ollama/ornith:latest"]
+    model_list = ["ollama-cloud/deepseek-v4-flash", "ollama-cloud/deepseek-v4-pro"]
     if models:
         model_list = [m.strip() for m in models.split(",")]
 

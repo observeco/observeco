@@ -212,46 +212,45 @@ def _validate_agent_param(agent: str) -> Optional[str]:
 async def grid_run_from_dashboard(agent: str = Query("default")):
     """POST /api/capability/grid/run?agent=NAME — run full grid from dashboard.
 
-    Uses CapabilityGridRunner to run canary tasks across model × config combinations.
-    Runs synchronously (grid is typically small: 3 models × 2 configs × 9 tasks × 3 trials).
+    Spawns a subprocess so the grid run survives server restarts and avoids
+    SQLite writer contention in the web server's process. Runs can take 5-10
+    minutes. The grid table will show 'running' status and poll for results.
     """
     err = _validate_agent_param(agent)
     if err:
         return {"ok": False, "message": err}
-    import threading
-
-    from observeco.capability.grid import CapabilityGridRunner
 
     if not _grid_run_lock.acquire(blocking=False):
         return {"ok": False, "message": f"Grid already running for {agent}"}
+    try:
+        import subprocess
+        import sys
 
-    def _run():
-        global _last_grid_error
-        from datetime import datetime, timezone
+        # Clean up stale runs first
         try:
-            from observeco.db import Database
-            runner = CapabilityGridRunner(db=Database())
-            result = runner.run(agent_name=agent, trials=1)
-            logger.info("Grid run complete for %s: %d cells", agent, len(result.get("cells", [])))
+            db._write(
+                "UPDATE grid_runs SET status='failed' WHERE agent_name=? AND status='running'"
+                " AND started_at < datetime('now', '-30 minutes')",
+                (agent,),
+            )
         except Exception:
-            import traceback
-            _last_grid_error = traceback.format_exc()
-            logger.exception("Grid run failed for %s", agent)
-            # Mark the run terminal so the UI poll stops instead of hanging forever.
-            try:
-                db._write(
-                    "UPDATE grid_runs SET status='failed', completed_at=? "
-                    "WHERE agent_name=? AND status='running'",
-                    (datetime.now(timezone.utc).isoformat(), agent),
-                )
-            except Exception:
-                logger.exception("Failed to mark grid run failed for %s", agent)
-        finally:
-            _grid_run_lock.release()
+            pass
 
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
-    return {"ok": True, "message": f"Grid started for {agent}"}
+        # Spawn subprocess
+        cmd = [sys.executable, "-m", "observeco.cli", "grid", "run",
+               "--agent", agent, "--trials", "1"]
+        subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        return {"ok": True, "message": f"Grid started for {agent} — this can take up to 10 minutes, results will appear automatically"}
+    except Exception:
+        logger.exception("Failed to start grid for %s", agent)
+        return {"ok": False, "message": "Failed to start grid"}
+    finally:
+        _grid_run_lock.release()
 
 
 @router.post("/canary/run", response_class=JSONResponse)
@@ -1417,6 +1416,17 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     conn = db._get_conn()
 
     if not run_id:
+        # Check for a running run first (show progress indicator)
+        running_row = conn.execute(
+            "SELECT id, started_at FROM grid_runs WHERE agent_name = ? AND status = 'running' "
+            "ORDER BY started_at DESC LIMIT 1",
+            (agent,),
+        ).fetchone()
+        if running_row:
+            return HTMLResponse(
+                content=_grid_running_html(agent, running_row["started_at"] or "")
+            )
+        # Fall back to latest completed run
         row = conn.execute(
             "SELECT id FROM grid_runs WHERE agent_name = ? AND status = 'completed' "
             "ORDER BY started_at DESC LIMIT 1",
@@ -1504,7 +1514,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
                             flag_html = '<span class="flag-badge flag-unsafe">⚠️</span>'
                         elif any("shortcut" in str(f).lower() for f in flags):
                             flag_html = '<span class="flag-badge flag-shortcut">🔵</span>'
-                        cost_str = f"${cell['cost']:.4f}" if cell.get("cost") else "—"
+                        cost_str = f"${cell['cost']:.4f}" if cell["cost"] else "—"
                         body_rows += f'<td style="padding:8px 4px;text-align:center;"><span class="cell-score {score_cls}">{pct:.0f}%</span><span class="cell-ci">{ci_str}</span></td>'
                         body_rows += f'<td class="cell-flags">{flag_html}</td>'
                         body_rows += f'<td class="cell-cost">{cost_str}</td>'
@@ -1554,6 +1564,25 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
       <button onclick="runGrid()" style="background:var(--accent);color:var(--accent-on);border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">Run Full Grid</button>
     </div>
     """)
+
+
+def _grid_running_html(agent: str, started_at: str) -> str:
+    """Show a running indicator with polling for an in-progress grid run."""
+    return f"""
+    <div class="cap-empty" hx-get="/api/capability/grid/table?agent={_html_escape(agent)}"
+         hx-trigger="every 10s" hx-swap="outerHTML">
+      <div class="cap-empty-icon" style="font-size:32px;">⏳</div>
+      <h2>Grid Run In Progress</h2>
+      <p style="color:var(--fg-3);">
+        Started at {started_at[:19] if started_at else 'unknown'} · 2 models × 2 configs × 20 tasks
+      </p>
+      <p>Grid comparison can take 5–10 minutes. This page refreshes automatically.</p>
+      <div style="margin-top:8px;">
+        <span class="spinner"></span>
+        <span style="color:var(--accent);font-weight:600;font-size:13px;">Running — results will appear here when ready</span>
+      </div>
+    </div>
+    """
 
 
 def _grid_empty_html() -> str:
@@ -1696,7 +1725,7 @@ async def timeline_events_partial(agent: str = Query("default")):
             seg_class = ["seg-a", "seg-b", "seg-c", "seg-d", "seg-e"][min(ord(e["segment"]) - ord("A"), 4)]
             seg_badge = f'<span class="baseline-badge {seg_class}">Segment {e["segment"]}</span>'
 
-        acc_str = f' · {e["accuracy"]*100:.0f}%' if e.get("accuracy") else ""
+        acc_str = f' · {e["accuracy"]*100:.0f}%' if e["accuracy"] else ""
         git_str = f' · <code>{e["git_commit"][:7]}</code>' if e.get("git_commit") else ""
 
         # Drift events get an "Investigate →" link (obs-spec-053 §4.4)
