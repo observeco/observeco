@@ -373,21 +373,9 @@ async def canary_status(agent: str = Query("default")):
     """GET /api/capability/canary/status?agent=NAME — check if canary is still running with live progress."""
     try:
         conn = db._get_conn()
-        # Best-effort cleanup: mark runs stuck in 'running' for >30min as 'failed'.
-        # Use db._write() (retry-on-lock) — the watch daemon writes pulse.db constantly.
-        try:
-            db._write(
-                "UPDATE canary_runs SET status = 'failed' "
-                "WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')",
-                (),
-            )
-        except _sqlite3.OperationalError:
-            pass  # cleanup is best-effort
-
-        conn.execute(
-            "SELECT COUNT(*) as c FROM canary_runs WHERE agent_name = ? AND status = 'running'",
-            (agent,),
-        ).fetchone()
+        # Skip the db._write() cleanup — it takes the write lock and blocks
+        # when the watch daemon is writing. The watch daemon already cleans
+        # up stale runs. This endpoint is read-only.
         latest = conn.execute(
             "SELECT id, pass_count, fail_count, hang_count, total_tasks, status, started_at "
             "FROM canary_runs WHERE agent_name = ? ORDER BY started_at DESC LIMIT 1",
@@ -424,6 +412,7 @@ async def canary_status(agent: str = Query("default")):
             "SUM(CASE WHEN status = 'pass' THEN 1 ELSE 0 END) as pass_count, "
             "SUM(CASE WHEN status = 'fail' THEN 1 ELSE 0 END) as fail_count, "
             "SUM(CASE WHEN status = 'hang' THEN 1 ELSE 0 END) as hang_count, "
+            "SUM(CASE WHEN status = 'provider_error' THEN 1 ELSE 0 END) as provider_error_count, "
             "COUNT(*) as total "
             "FROM canary_results WHERE run_id = ?",
             (latest["id"],),
@@ -436,6 +425,7 @@ async def canary_status(agent: str = Query("default")):
             "pass_count": live["pass_count"] or 0 if live else 0,
             "fail_count": live["fail_count"] or 0 if live else 0,
             "hang_count": live["hang_count"] or 0 if live else 0,
+            "provider_error_count": live["provider_error_count"] or 0 if live else 0,
             "total_tasks": latest["total_tasks"],
         }
     except Exception:
@@ -669,8 +659,12 @@ async def task_list_partial():
         ).fetchall()
         agent_names = ", ".join(r["agent_name"] for r in agent_rows) if agent_rows else "—"
 
-        "🟢" if last and last["status"] == "pass" else "🟡" if last and last["status"] == "fail" else "⚪"
-        status_dot_class = "green" if last and last["status"] == "pass" else "yellow" if last and last["status"] == "fail" else ""
+        status_dot_class = ("green" if last and last["status"] == "pass"
+                           else "yellow" if last and last["status"] == "fail"
+                           else "red" if last and last["status"] == "provider_error"
+                           else "gray" if last and last["status"] == "hang"
+                           else "")
+        status_label = (last["status"] if last else "none")
         last_acc = f"{last['accuracy']*100:.0f}%" if last and last["accuracy"] is not None else "—"
 
         try:
@@ -724,6 +718,7 @@ async def task_list_partial():
             </div>
             <div class="task-item-actions">
               <span style="font-size:12px;color:var(--fg-2);font-weight:600;">{last_acc}</span>
+              <span style="font-size:10px;color:var(--muted);margin-left:4px;">{status_label}</span>
               <button onclick="editTask('{t['id']}')" class="btn btn-sm btn-outline">Edit</button>
               <button onclick="duplicateTask('{t['id']}')" class="btn-icon" title="Duplicate">⧉</button>
               <button onclick="deleteTask('{t['id']}')" class="btn-icon" title="Delete">✕</button>
