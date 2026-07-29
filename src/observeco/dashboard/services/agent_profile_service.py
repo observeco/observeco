@@ -103,8 +103,14 @@ def _assemble_quality(agent_name: str, db: Database, now: int, conn) -> dict:
     """
     run = conn.execute(
         "SELECT id, pass_count, fail_count, hang_count, total_tasks, "
-        "started_at, total_cost, total_tokens FROM canary_runs "
+        "started_at, total_cost, total_tokens, "
+        "(SELECT SUM(CASE WHEN cr.status = 'provider_error' THEN 1 ELSE 0 END) "
+        " FROM canary_results cr WHERE cr.run_id = r.id) as provider_errors "
+        "FROM canary_runs r "
         "WHERE agent_name=? AND status='completed' AND pass_count IS NOT NULL "
+        "AND NOT (pass_count = 0 AND fail_count > 0 AND "
+        "  (SELECT SUM(CASE WHEN cr.status = 'provider_error' THEN 1 ELSE 0 END) "
+        "   FROM canary_results cr WHERE cr.run_id = r.id) >= fail_count) "
         "ORDER BY started_at DESC LIMIT 1",
         (agent_name,),
     ).fetchone()
