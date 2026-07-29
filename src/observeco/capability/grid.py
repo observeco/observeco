@@ -29,11 +29,10 @@ DEFAULT_GRID_CONFIG = {
     "cost_lambda": 0.005,
 }
 
-# Default models for grid runs
+# Default models for grid runs — ollama-cloud provider (bypasses broken local profiles)
 DEFAULT_MODELS = [
-    "custom-ollama/deepseek-v4-flash",
-    "custom-ollama/deepseek-v4-pro",
-    "custom-ollama/ornith:latest",
+    "ollama-cloud/deepseek-v4-flash",
+    "ollama-cloud/deepseek-v4-pro",
 ]
 
 # Default config labels
