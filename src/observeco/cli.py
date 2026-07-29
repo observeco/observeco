@@ -2556,6 +2556,8 @@ def canary_run(
     tasks: Optional[str] = typer.Option(None, "--tasks", "-t", help="Comma-separated task IDs (default: all)"),
     trials: Optional[int] = typer.Option(None, "--trials", "-n", help="Override per-task trial count"),
     config_label: Optional[str] = typer.Option(None, "--label", "-l", help="Config label for this run"),
+    direct: bool = typer.Option(False, "--direct",
+        help="Call model API directly — bypasses agent harness (faster, no profile loading)"),
 ) -> None:
     """Run the canary suite — execute all tasks and compare against baseline."""
     from observeco.capability.baseline import BaselineManager
@@ -2564,12 +2566,14 @@ def canary_run(
     from observeco.db import Database
 
     db = Database()
-    # ponytail: _make_conn now sets busy_timeout=30000 (bumped from 5000) so
-    # the schema init in _init_db() doesn't fail on concurrent dashboard
-    # writes. This redundant call is kept as an explicit signal for any future
-    # refactor that changes _make_conn's default.
     db._get_conn().execute("PRAGMA busy_timeout=30000")
-    runner = CanaryRunner(db=db)
+
+    if direct:
+        from observeco.capability.adapters.direct_model import DirectModelAdapter
+        adapter = DirectModelAdapter("ollama-cloud/deepseek-v4-flash", timeout=120)
+        runner = CanaryRunner(db=db, adapter=adapter)
+    else:
+        runner = CanaryRunner(db=db)
 
     task_ids = None
     if tasks:

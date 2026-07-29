@@ -308,7 +308,10 @@ async def canary_run_from_fleet(agent: str = Query("default"), tasks: Optional[s
 
         # Build CLI invocation: spawn a separate process running the same
         # interpreter that launched the dashboard (robust against venv/PATH).
-        cmd = [sys.executable, "-m", "observeco.cli", "canary", "run", "--agent", agent, "--trials", "1"]
+        # Uses --direct to bypass the agent harness — DirectModelAdapter calls
+        # the model API directly (faster, no profile loading, avoids broken
+        # profile providers like xiaomi).
+        cmd = [sys.executable, "-m", "observeco.cli", "canary", "run", "--agent", agent, "--trials", "1", "--direct"]
         if tasks:
             cmd += ["--tasks", tasks]
 
