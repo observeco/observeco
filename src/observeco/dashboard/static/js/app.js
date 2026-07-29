@@ -382,18 +382,21 @@ function _showGlossaryPopup(html, event) {
 // Upgrade: fetch from /api/glossary endpoint when more than ~10 terms.
 
 // ─── Auto-refresh every 30s ───
+// Skip if a previous refresh cycle is still in-flight (prevents request pileup)
+var _refreshPending = 0;
+var _fleetPage = 1;
 setInterval(function() {
+  if (_refreshPending > 0) return;
+  _refreshPending = 3;
   var sp = document.querySelector('#fleetGrid') ? document.querySelector('#fleetGrid').parentElement.scrollTop : 0;
-  // Preserve filter and search state during auto-refresh
+  // Preserve filter, search state, and page during auto-refresh
   var q = document.getElementById('agentSearch') ? document.getElementById('agentSearch').value : '';
   var activeFilter = document.querySelector('.filter-chip.active') ? document.querySelector('.filter-chip.active').getAttribute('data-filter') || '' : '';
-  var fleetUrl = '/api/fleet/agents';
-  if (q || activeFilter) {
-    fleetUrl += '?';
-    if (q) fleetUrl += 'q=' + encodeURIComponent(q);
-    if (q && activeFilter) fleetUrl += '&';
-    if (activeFilter) fleetUrl += 'status_filter=' + activeFilter;
-  }
+  var params = [];
+  if (q) params.push('q=' + encodeURIComponent(q));
+  if (activeFilter) params.push('status_filter=' + activeFilter);
+  if (_fleetPage > 1) params.push('page=' + _fleetPage);
+  var fleetUrl = '/api/fleet/agents' + (params.length ? '?' + params.join('&') : '');
   // Suppress cursor:wait during auto-refresh (background refresh, not user-initiated)
   window._autoRefresh = true;
   // ponytail: innerHTML, NOT outerHTML. outerHTML on first refresh removes the container (id lost), then htmx falls back to BODY as target on second refresh, replacing entire page with verdict HTML — black screen.
@@ -409,6 +412,20 @@ setInterval(function() {
   var updatedEl = document.getElementById('fleetUpdated');
   if (updatedEl) updatedEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
 }, 30000);
+// Decrement counter when each of the 3 refresh requests completes
+// Only clear when the counter hits 0 (all 3 finished)
+document.addEventListener('htmx:afterOnLoad', function afterRefresh() {
+  if (_refreshPending > 0) _refreshPending--;
+});
+
+// Track page changes from pagination buttons
+document.addEventListener('click', function(ev) {
+  var btn = ev.target.closest('.paginate-btn');
+  if (btn) {
+    var p = parseInt(btn.getAttribute('data-page'));
+    if (!isNaN(p)) _fleetPage = p;
+  }
+});
 
 // ─── Token Analytics chart (fired after htmx swap) ───
 // Loading cursor: wait on user-initiated htmx requests, not auto-refresh.
