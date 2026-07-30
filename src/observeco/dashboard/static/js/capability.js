@@ -99,7 +99,20 @@
   // ── Grid comparison runner ──
   window.runGrid = function() {
     var agent = _getCapAgent();
-    fetch('/api/capability/grid/run?agent=' + encodeURIComponent(agent), {method:'POST'})
+    var modelsSelect = document.getElementById('gridModels');
+    var selectedModels = [];
+    if (modelsSelect) {
+      for (var i = 0; i < modelsSelect.options.length; i++) {
+        if (modelsSelect.options[i].selected) {
+          selectedModels.push(modelsSelect.options[i].value);
+        }
+      }
+    }
+    var url = '/api/capability/grid/run?agent=' + encodeURIComponent(agent);
+    if (selectedModels.length > 0) {
+      url += '&models=' + encodeURIComponent(selectedModels.join(','));
+    }
+    fetch(url, {method:'POST'})
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.ok) {

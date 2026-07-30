@@ -17,8 +17,9 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from observeco.capability.adapters.direct_model import DirectModelAdapter
+from observeco.capability.adapters.profile_aware import ProfileAwareAdapter
 from observeco.capability.canary import Scorer
+from observeco.capability.model_config import get_default_grid_models, load_available_models
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)
@@ -29,11 +30,9 @@ DEFAULT_GRID_CONFIG = {
     "cost_lambda": 0.005,
 }
 
-# Default models for grid runs — ollama-cloud provider (bypasses broken local profiles)
-DEFAULT_MODELS = [
-    "ollama-cloud/deepseek-v4-flash",
-    "ollama-cloud/deepseek-v4-pro",
-]
+# Default models for grid runs — loaded from hermes config
+# Falls back to ollama-cloud deepseek models if config can't be read
+DEFAULT_MODELS = None  # Will be loaded lazily from config
 
 # Default config labels
 DEFAULT_CONFIGS = ["baseline-v3", "baseline-v2"]
@@ -103,7 +102,7 @@ class CapabilityGridRunner:
         Returns:
             Grid report dict with cells, models, configs, tasks.
         """
-        models = models or DEFAULT_MODELS
+        models = models or get_default_grid_models()
         configs = configs or DEFAULT_CONFIGS
 
         # Load tasks
@@ -157,10 +156,13 @@ class CapabilityGridRunner:
                     agent_name, model_spec, config_label, len(tasks),
                 )
 
-                # Use DirectModelAdapter — the agent harness (Hermes chat subprocess)
-                # has unreliable streaming to ollama-cloud proxy. The grid compares
-                # raw model capability, so DirectModelAdapter is the right tool.
-                adapter = DirectModelAdapter(model_spec=model_spec, timeout=timeout)
+                # Use ProfileAwareAdapter — loads agent SOUL.md as system prompt,
+                # calls API directly (bypasses broken hermes CLI routing via 9router).
+                adapter = ProfileAwareAdapter(
+                    model_spec=model_spec,
+                    timeout=timeout,
+                    agent_profile=agent_name,
+                )
 
                 for task in tasks:
                     task_trials = trials if trials else task.get("trials", 3)
