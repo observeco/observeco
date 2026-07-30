@@ -34,8 +34,17 @@ DEFAULT_GRID_CONFIG = {
 # Falls back to ollama-cloud deepseek models if config can't be read
 DEFAULT_MODELS = None  # Will be loaded lazily from config
 
-# Default config labels
-DEFAULT_CONFIGS = ["baseline-v3", "baseline-v2"]
+# Default config labels — agent profiles to test
+# Each config is an agent profile name that the Hermes adapter passes as -p.
+DEFAULT_CONFIGS = None  # Will be loaded from profiles dir
+
+
+def _resolve_configs(configs: Optional[list[str]] = None) -> list[str]:
+    """Resolve config labels — uses agent profiles if none specified."""
+    if configs:
+        return configs
+    from observeco.capability.model_config import get_default_grid_profiles
+    return get_default_grid_profiles()
 
 
 def load_grid_config() -> dict:
@@ -89,12 +98,12 @@ class CapabilityGridRunner:
         trials: int = 3,
         timeout: int = 60,
     ) -> dict:
-        """Run the full grid: models × configs × tasks.
+        """Run the full grid: models × profiles × tasks.
 
         Args:
             agent_name: Agent name (for labeling, not used for routing).
             models: Model specs like ['ollama-cloud/deepseek-v4-flash', ...].
-            configs: Config labels like ['baseline-v3', 'baseline-v2'].
+            configs: Agent profiles to test (e.g., ['main', 'accelerator']).
             task_ids: Specific task IDs to run (None = all).
             trials: Trials per task per cell.
             timeout: Per-task timeout in seconds.
@@ -103,7 +112,7 @@ class CapabilityGridRunner:
             Grid report dict with cells, models, configs, tasks.
         """
         models = models or get_default_grid_models()
-        configs = configs or DEFAULT_CONFIGS
+        configs = _resolve_configs(configs)
 
         # Load tasks
         conn = self.db._get_conn()
@@ -152,15 +161,15 @@ class CapabilityGridRunner:
         for model_spec in models:
             for config_label in configs:
                 logger.info(
-                    "Grid cell: agent=%s model=%s config=%s tasks=%d",
-                    agent_name, model_spec, config_label, len(tasks),
+                    "Grid cell: model=%s profile=%s tasks=%d",
+                    model_spec, config_label, len(tasks),
                 )
 
                 # Use HermesBenchmarkAdapter — tests the full agent (SOUL.md +
-                # skills + tools + streaming) with each model. The env var
-                # override in the adapter forces direct API calls to ollama.com.
+                # skills + tools + streaming) with each model and profile.
+                # config_label is now an agent profile name (e.g., 'main').
                 adapter = HermesBenchmarkAdapter(
-                    agent_profile=agent_name,
+                    agent_profile=config_label,
                     model=model_spec,
                     timeout=timeout,
                 )

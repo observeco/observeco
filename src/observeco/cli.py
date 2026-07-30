@@ -2717,9 +2717,9 @@ app.add_typer(grid_cap_app, name="grid")
 def grid_cap_run(
     agent: str = typer.Option("default", "--agent", "-a", help="Hermes agent profile name"),
     models: Optional[str] = typer.Option(None, "--models", "-m",
-                                          help="Comma-separated model specs (default: flash,pro,ornith)"),
+                                          help="Comma-separated model specs (default: from hermes config)"),
     configs: Optional[str] = typer.Option(None, "--configs", "-c",
-                                           help="Comma-separated config labels (default: baseline-v3,baseline-v2)"),
+                                           help="Comma-separated agent profiles (default: main,accelerator,hound)"),
     task_ids: Optional[str] = typer.Option(None, "--tasks", "-t",
                                             help="Comma-separated task IDs (default: all)"),
     trials: int = typer.Option(3, "--trials", "-n", help="Trials per task per cell"),
@@ -2740,10 +2740,13 @@ def grid_cap_run(
         model_list = get_default_grid_models()
         print(f"   Models from config: {model_list}")
 
-    # Resolve configs
-    config_list = ["baseline-v3", "baseline-v2"]
+    # Resolve configs — agent profiles
+    from observeco.capability.model_config import get_default_grid_profiles
     if configs:
         config_list = [c.strip() for c in configs.split(",")]
+    else:
+        config_list = get_default_grid_profiles()
+        print(f"   Profiles from config: {config_list}")
 
     # Resolve tasks
     task_id_list = None
@@ -2753,7 +2756,7 @@ def grid_cap_run(
     print("\n🧪 Capability Grid")
     print(f"   Agent: {agent}")
     print(f"   Models: {model_list}")
-    print(f"   Configs: {config_list}")
+    print(f"   Profiles: {config_list}")
     print(f"   Tasks: {task_id_list or 'all'}")
     print(f"   Trials: {trials}")
     print()

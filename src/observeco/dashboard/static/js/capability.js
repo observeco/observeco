@@ -99,8 +99,8 @@
   // ── Grid comparison runner ──
   window.runGrid = function() {
     var agent = _getCapAgent();
-    var modelsSelect = document.getElementById('gridModels');
     var selectedModels = [];
+    var modelsSelect = document.getElementById('gridModels');
     if (modelsSelect) {
       for (var i = 0; i < modelsSelect.options.length; i++) {
         if (modelsSelect.options[i].selected) {
@@ -108,9 +108,21 @@
         }
       }
     }
+    var selectedProfiles = [];
+    var profilesSelect = document.getElementById('gridProfiles');
+    if (profilesSelect) {
+      for (var j = 0; j < profilesSelect.options.length; j++) {
+        if (profilesSelect.options[j].selected) {
+          selectedProfiles.push(profilesSelect.options[j].value);
+        }
+      }
+    }
     var url = '/api/capability/grid/run?agent=' + encodeURIComponent(agent);
     if (selectedModels.length > 0) {
       url += '&models=' + encodeURIComponent(selectedModels.join(','));
+    }
+    if (selectedProfiles.length > 0) {
+      url += '&configs=' + encodeURIComponent(selectedProfiles.join(','));
     }
     fetch(url, {method:'POST'})
       .then(function(r) { return r.json(); })

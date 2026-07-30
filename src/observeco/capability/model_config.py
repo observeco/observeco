@@ -116,3 +116,35 @@ def get_default_grid_models() -> list[str]:
         return ollama_cloud_models[:2]  # Return first 2 models for grid
 
     return _get_default_models()
+
+
+def load_available_profiles() -> list[str]:
+    """Load available agent profiles from ~/.hermes/profiles/.
+
+    Returns:
+        List of profile names (directories under profiles/).
+    """
+    profiles_dir = Path.home() / '.hermes' / 'profiles'
+    if not profiles_dir.exists() or not profiles_dir.is_dir():
+        logger.warning("No hermes profiles directory found at %s", profiles_dir)
+        return ["main", "accelerator"]
+
+    profiles = []
+    for entry in profiles_dir.iterdir():
+        if entry.is_dir() and not entry.name.startswith('.'):
+            if (entry / 'SOUL.md').exists():
+                profiles.append(entry.name)
+
+    if not profiles:
+        logger.warning("No valid profiles found, using defaults")
+        return ["main", "accelerator"]
+
+    return sorted(profiles)
+
+
+def get_default_grid_profiles() -> list[str]:
+    """Get the default agent profiles for a grid run."""
+    profiles = load_available_profiles()
+    priority = [p for p in ['main', 'accelerator', 'hound'] if p in profiles]
+    rest = [p for p in profiles if p not in priority]
+    return (priority + rest)[:3]
