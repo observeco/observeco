@@ -16,6 +16,46 @@ logger = logging.getLogger(__name__)
 # Cache for loaded models
 _model_cache: Optional[list[str]] = None
 
+# Cache for API-fetched models
+_api_model_cache: dict[str, list[str]] = {}
+
+
+def _fetch_models_from_api(provider_name: str, base_url: str) -> list[str]:
+    """Fetch available models from the provider's /v1/models endpoint.
+
+    Caches results per provider to avoid repeated API calls.
+    """
+    if provider_name in _api_model_cache:
+        return _api_model_cache[provider_name]
+
+    try:
+        # Get API key from env or hermes config
+        import yaml
+        api_key = ""
+        config_path = Path.home() / '.hermes' / 'config.yaml'
+        if config_path.exists():
+            cfg = yaml.safe_load(open(config_path))
+            provider_cfg = (cfg.get('providers', {}) or {}).get(provider_name, {})
+            api_key = provider_cfg.get('api_key', '') or ''
+
+        if not api_key:
+            return []
+
+        url = f"{base_url.rstrip('/')}/models"
+        import urllib.request
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {api_key}"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            import json
+            data = json.loads(resp.read())
+            models = [m['id'] for m in data.get('data', [])]
+
+        _api_model_cache[provider_name] = models
+        logger.info("Fetched %d models from %s API", len(models), provider_name)
+        return models
+    except Exception as e:
+        logger.warning("Failed to fetch models from %s: %s", provider_name, e)
+        return []
+
 
 def load_available_models(provider_filter: Optional[str] = None) -> list[str]:
     """Load available models from hermes config.
@@ -56,9 +96,16 @@ def load_available_models(provider_filter: Optional[str] = None) -> list[str]:
             provider_models = provider_cfg.get('models', {})
             default_model = provider_cfg.get('default_model', '')
 
-            # If no explicit models listed, use default model
-            if not provider_models and default_model:
-                models.append(f"{provider_name}/{default_model}")
+            # If no explicit models listed, try fetching from API
+            if not provider_models:
+                api_models = _fetch_models_from_api(provider_name, base_url)
+                if api_models:
+                    for model_name in api_models:
+                        models.append(f"{provider_name}/{model_name}")
+                    continue
+                # Fallback to default model
+                if default_model:
+                    models.append(f"{provider_name}/{default_model}")
             else:
                 # Add all listed models
                 for model_name in provider_models.keys():
@@ -106,16 +153,8 @@ def get_provider_models(provider_name: str) -> list[str]:
 
 
 def get_default_grid_models() -> list[str]:
-    """Get the default models for a grid run.
-
-    Returns models from ollama-cloud provider (the primary cloud provider).
-    Falls back to hardcoded defaults if config can't be read.
-    """
-    ollama_cloud_models = get_provider_models('ollama-cloud')
-    if ollama_cloud_models:
-        return ollama_cloud_models[:2]  # Return first 2 models for grid
-
-    return _get_default_models()
+    """Get models for grid comparison — cloud providers only."""
+    return load_available_models(provider_filter='ollama-cloud')
 
 
 def load_available_profiles() -> list[str]:
