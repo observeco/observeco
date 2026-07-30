@@ -226,11 +226,11 @@ async def grid_run_from_dashboard(agent: str = Query("default")):
         import subprocess
         import sys
 
-        # Clean up stale runs (Hermes adapter is slower — allow 60 min)
+        # Clean up stale runs first
         try:
             db._write(
                 "UPDATE grid_runs SET status='failed' WHERE agent_name=? AND status='running'"
-                " AND started_at < datetime('now', '-60 minutes')",
+                " AND started_at < datetime('now', '-30 minutes')",
                 (agent,),
             )
         except Exception:
@@ -1585,7 +1585,7 @@ def _grid_running_html(agent: str, started_at: str) -> str:
       <p style="color:var(--fg-3);">
         Started at {started_at[:19] if started_at else 'unknown'} · 2 models × 2 configs × 20 tasks
       </p>
-      <p>Grid comparison tests each model through the full agent harness (SOUL.md + skills + tools). This can take 10–30 minutes. This page refreshes automatically.</p>
+      <p>Grid comparison runs each model through DirectModelAdapter for fast, reliable results. Takes 5–10 minutes. This page refreshes automatically.</p>
       <div style="margin-top:8px;">
         <span class="spinner"></span>
         <span style="color:var(--accent);font-weight:600;font-size:13px;">Running — results will appear here when ready</span>

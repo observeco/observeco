@@ -93,7 +93,7 @@ class CapabilityGridRunner:
         """Run the full grid: models × configs × tasks.
 
         Args:
-            agent_name: Agent profile name (used for routing through the harness).
+            agent_name: Agent name (for labeling, not used for routing).
             models: Model specs like ['ollama-cloud/deepseek-v4-flash', ...].
             configs: Config labels like ['baseline-v3', 'baseline-v2'].
             task_ids: Specific task IDs to run (None = all).
@@ -147,9 +147,6 @@ class CapabilityGridRunner:
         )
         conn.commit()
 
-        # Use HermesBenchmarkAdapter to test the full agent (model + harness)
-        from observeco.benchmark.adapters.hermes import HermesBenchmarkAdapter
-
         cells = []
         total_cost = 0.0
 
@@ -160,12 +157,10 @@ class CapabilityGridRunner:
                     agent_name, model_spec, config_label, len(tasks),
                 )
 
-                # Create Hermes adapter for this model+agent combination
-                adapter = HermesBenchmarkAdapter(
-                    agent_profile=agent_name,
-                    model=model_spec,
-                    timeout=timeout,
-                )
+                # Use DirectModelAdapter — the agent harness (Hermes chat subprocess)
+                # has unreliable streaming to ollama-cloud proxy. The grid compares
+                # raw model capability, so DirectModelAdapter is the right tool.
+                adapter = DirectModelAdapter(model_spec=model_spec, timeout=timeout)
 
                 for task in tasks:
                     task_trials = trials if trials else task.get("trials", 3)
@@ -185,8 +180,6 @@ class CapabilityGridRunner:
                             "input_text": task.get("prompt", ""),
                             "context_text": "",
                             "expected_output": "",
-                            "model": model_spec,
-                            "temperature": 0.0,
                         })()
 
                         result = adapter.run_task(agent_name, task_obj)
