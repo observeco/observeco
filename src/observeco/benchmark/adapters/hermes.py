@@ -208,6 +208,12 @@ class HermesBenchmarkAdapter:
                     k: v for k, v in os.environ.items()
                     if not k.startswith("HERMES_")
                 }
+                # Force direct API URL — the hermes agent hardcodes
+                # ollama-cloud → http://127.0.0.1:20128/v1 (9router proxy) which
+                # is broken. Override with the config's direct HTTPS URL so the
+                # agent calls ollama.com directly instead of through the dead proxy.
+                child_env["OLLAMA_CLOUD_BASE_URL"] = "https://ollama.com/v1"
+                child_env["OLLAMA_BASE_URL"] = "https://ollama.com/v1"
                 proc = subprocess.Popen(
                     cmd,
                     stdout=subprocess.PIPE,
@@ -242,7 +248,14 @@ class HermesBenchmarkAdapter:
                 elapsed = time.time() - start
                 output = stdout.strip()
                 clean_lines = [line for line in output.splitlines()
-                                                if not line.startswith("Warning:")]
+                                                if not line.startswith("Warning:")
+                                                and not line.startswith("\u26a0")
+                                                and not line.startswith("\U0001f916")
+                                                and "AI Agent initialized" not in line
+                                                and "\u26a1Some tools may not work" not in line
+                                                and "Enabled toolset" not in line
+                                                and "Loaded " not in line
+                                                and "Final tool selection" not in line]
                 output = "\n".join(clean_lines).strip()
                 # Strip markdown code fences and formatting
                 output = re.sub(r'```\w*\n?', '', output)
