@@ -153,8 +153,12 @@ def get_provider_models(provider_name: str) -> list[str]:
 
 
 def get_default_grid_models() -> list[str]:
-    """Get models for grid comparison — cloud providers only."""
-    return load_available_models(provider_filter='ollama-cloud')
+    """Get default models for a grid run — just the most relevant few."""
+    models = load_available_models(provider_filter='ollama-cloud')
+    # Pre-select deepseek models + glm-5.2 as defaults
+    priority = ['deepseek-v4-flash', 'deepseek-v4-pro', 'glm-5.2']
+    defaults = [f'ollama-cloud/{m}' for m in priority if f'ollama-cloud/{m}' in models]
+    return defaults or models[:2]
 
 
 def load_available_profiles() -> list[str]:

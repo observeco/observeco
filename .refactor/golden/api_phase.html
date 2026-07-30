@@ -1,0 +1,12 @@
+<div class="phase-done" id="phase-done">
+    <div class="phase-done-inner">
+        <span class="phase-done-icon">✅</span>
+        <span class="phase-done-text">All agents monitored — system stabilised</span>
+    </div>
+</div>
+<script>
+setTimeout(function() {
+    var el = document.getElementById('phase-done');
+    if (el) { el.style.opacity = '0'; setTimeout(function() { if (el) el.style.display = 'none'; }, 1000); }
+}, 8000);
+</script>

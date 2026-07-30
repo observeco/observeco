@@ -1,0 +1,6 @@
+name: chisel
+version: "0.1.0"
+description: "Decomposes system prompts into 5 functional components (identity/skills/memory/tools/guidance), estimates per-component token costs, and tracks drift over time. Zero external deps."
+author: ObserveCo
+hooks:
+  - on_session_start

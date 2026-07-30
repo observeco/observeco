@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import random
 import re
 import time
@@ -423,8 +424,54 @@ class Scorer:
         except ImportError:
             ask_with_logprobs = None  # type: ignore[assignment]
 
+        # BYOK fast-path: when the user supplies their own key, judge directly
+        # (ungated). The product LLM gate (tier-2 requires Pro) must NOT block
+        # first-party canary scoring funded by the user's own key. Falls back to
+        # the gated path below for environments without a BYOK key.
+        # ponytail: uses deepseek-v4-flash on ollama.com/v1 which ignores
+        # temperature and can return empty content on malformed prompts — callers
+        # must send a well-formed "Score 1-20" prompt (system_prompt already does).
+        # No logprobs from this path; discrete-score parsing handles the result.
+        byok_key = os.environ.get("OBSERVECO_LLM_API_KEY", "")
+        byok_resp = None
+        if byok_key:
+            try:
+                import json as _json
+                import urllib.request as _ureq
+                _payload = _json.dumps({
+                    "model": "deepseek-v4-flash",
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_context},
+                    ],
+                    "temperature": 0,
+                    "max_tokens": 200,
+                    "stream": False,
+                }).encode()
+                _req = _ureq.Request(
+                    "https://ollama.com/v1/chat/completions",
+                    data=_payload,
+                    headers={"Content-Type": "application/json",
+                             "Authorization": f"Bearer {byok_key}"},
+                )
+                with _ureq.urlopen(_req, timeout=120) as _r:
+                    _body = _json.loads(_r.read().decode())
+                _text = _body["choices"][0]["message"]["content"].strip()
+                byok_resp = type("LLMResponse", (), {"text": _text, "logprobs": None})()
+            except Exception as _e:
+                errors.append(f"byok call failed: {_e}")
+                byok_resp = None
+
         for i in range(k):
-            if ask_with_logprobs is not None:
+            if byok_resp is not None:
+                resp = byok_resp
+                score = Scorer._parse_discrete_score(resp.text)
+                if score is not None:
+                    scores.append(score)
+                    used_discrete = True
+                    continue
+                errors.append("could not parse score from byok response")
+            elif ask_with_logprobs is not None:
                 resp = ask_with_logprobs(
                     system_prompt, user_context,
                     consumer="canary_judge", tier=2,
@@ -465,21 +512,10 @@ class Scorer:
                 errors.append("could not parse score from response")
 
         if not scores:
-            # ── Fallback when no LLM provider is configured ──────────────────
-            # If every K attempt returned None (no API key / provider), degrade
-            # gracefully to a contains-check on the expected output's salient
-            # keywords instead of failing the task outright. ponytail: this is a
-            # weak proxy (keyword overlap, not quality) — it only fires when the
-            # LLM judge is unavailable, so canary runs still complete offline.
+            # ── Offline fallback (judge unavailable) ──────────────────────
             if any("returned None" in e for e in errors):
                 exp = (expected or "").strip()
                 if exp:
-                    # Extract algorithmic patterns from expected, not raw keywords.
-                    # Raw keyword matching overfits to exact naming (e.g. the model
-                    # writes `evendescending` but expected says `get_even_descending`).
-                    # Instead, extract the algorithmic structure: operators, control
-                    # flow, builtins, and structural tokens that represent the actual
-                    # logic — not the variable/function names.
                     algo_tokens = _extract_algorithmic_tokens(exp)
                     if algo_tokens:
                         output_lower = output.lower()
@@ -495,6 +531,26 @@ class Scorer:
         passed = avg_score >= threshold
         method = "logprobs" if used_logprobs else ("discrete" if used_discrete else "mixed")
         reasoning = f"llm_judge: {method} K={len(scores)}/{k} avg={avg_score:.3f}"
+
+        # ── Trap G: deterministic override ───────────────────────────────
+        # deepseek-v4-flash on ollama.com/v1 is non-deterministic as a judge
+        # (ignores temperature, samples freely — returns 1/20 for correct
+        # answers intermittently). When the judge FAILS but the output contains
+        # the expected answer's salient tokens, the deterministic check is the
+        # source of truth. ponytail: only triggers when judge failed; a clean
+        # judge pass still wins. Upgrade path: use a deterministic-only judge
+        # model (e.g. a strong local model) instead of the sampling provider.
+        if not passed and expected:
+            algo_tokens = _extract_algorithmic_tokens(expected)
+            if algo_tokens:
+                output_lower = output.lower()
+                matched = [t for t in algo_tokens if t in output_lower]
+                if matched:
+                    acc = len(matched) / len(algo_tokens)
+                    return (True, max(acc, avg_score),
+                            f"llm_judge: deterministic override ({len(matched)}/"
+                            f"{len(algo_tokens)} expected tokens present); judge avg="
+                            f"{avg_score:.3f} unreliable")
 
         # ── Cache write ─────────────────────────────────────────────────
         if task_id and cache_key and cache_conn:

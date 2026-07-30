@@ -1,0 +1,31 @@
+# Phase 1 progress log
+
+## c08 — api_anomaly_feed (server.py) — DONE
+## c09 — api_l2_trends (server.py) — DONE
+## c10 — api_token_recent (server.py) — DONE
+## c11 — api_glossary (server.py) — DONE
+## c12 — api_history (server.py) — DONE
+## c14 — harness_experience_view (routes/harness_opt.py) — DONE
+## c15 — api_agent_errors_range (server.py) — DONE
+
+## c01 — api_pathway_tab (server.py) — SKIPPED (degenerate: reads static HTML + injects token, no f-string markup)
+## c03 — pathway_page (server.py) — SKIPPED (same pattern as c01)
+
+## c02 — api_agent_kill_log (server.py) — DONE 2026-07-20
+- Template: templates/partials/agent_kill_log.html
+- Route: early return for empty, enriched entries with success_icon/signal_txt/error_html
+- Fix: model changed limit from 10→50 and docstring — restored original values
+- verify: PASS (0 REVIEW)
+- Cost: 2,723 tokens (~$0.0005)
+
+## c04 — api_pathway_scan (server.py) — DONE 2026-07-20
+- Template: templates/partials/pathway_scan.html (2-line template: summary_html|safe + red_html|safe)
+- Route: pre-built HTML strings passed as context
+- verify: SKIPPED (manual-verify — side effect endpoint)
+- Cost: 1,010 tokens (~$0.0002)
+
+## c05 — api_l2_scan (server.py) — DONE 2026-07-20
+- Template: templates/partials/l2_scan.html
+- Route: processed_results enriched dicts, early return for empty
+- verify: SKIPPED (manual-verify — side effect endpoint)
+- Cost: 3,571 tokens (~$0.0007)

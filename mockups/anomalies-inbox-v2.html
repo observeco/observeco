@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Anomalies Inbox (P0.0 + P0.1 mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── ObserveCo design tokens (canonical — SOUL.md) ─────────────── */
+:root {
+  --bg: #0f172a;        --surface: #1e293b;   --surface-2: #243349;
+  --fg: #f8fafc;        --fg-2: #94a3b8;      --muted: #64748b;
+  --accent: #22c55e;    --status-healthy: #22c55e;
+  --status-warning: #eab308; --status-critical: #ef4444;
+  --meta: #3b82f6;
+  --border: #334155;    --border-soft: #273548;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius-md: 8px;     --radius-lg: 12px;    --radius-pill: 9999px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); }
+body {
+  font-family: var(--font-body); color: var(--fg);
+  background: var(--bg); font-size: 14px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+::selection { background: rgba(34,197,94,.25); }
+
+.wrap { max-width: 880px; margin: 0 auto; padding: 24px 20px 80px; }
+
+/* ── Header ─────────────────────────────────────────────────── */
+.topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.topbar .logo { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+.topbar .logo svg { flex-shrink: 0; }
+.crumb { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+.crumb b { color: var(--fg-2); font-weight: 500; }
+
+h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.sub { color: var(--fg-2); font-size: 13px; margin-top: 4px; }
+
+/* ── Verdict sentence — the inbox's one-line read ───────────── */
+.verdict {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px 18px; margin: 18px 0 20px;
+}
+.verdict .v-icon { width: 10px; height: 10px; border-radius: 50%; background: var(--status-critical); box-shadow: 0 0 8px rgba(239,68,68,.5); flex-shrink: 0; }
+.verdict .v-text { font-size: 15px; font-weight: 600; }
+.verdict .v-text b { color: var(--status-critical); }
+.verdict .v-chips { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.vchip {
+  font-family: var(--font-mono); font-size: 11px; color: var(--fg-2);
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  padding: 3px 10px; white-space: nowrap;
+}
+.vchip b { color: var(--fg); font-weight: 600; }
+.vchip.warn b { color: var(--status-warning); }
+.vchip.crit b { color: var(--status-critical); }
+.vchip.good b { color: var(--accent); }
+
+/* ── Filter chips ───────────────────────────────────────────── */
+.filters { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+.fchip {
+  font-family: var(--font-mono); font-size: 11px; padding: 5px 12px;
+  background: transparent; color: var(--fg-2); border: 1px solid var(--border);
+  border-radius: var(--radius-pill); cursor: pointer; transition: all .12s;
+}
+.fchip:hover { border-color: var(--fg-2); color: var(--fg); }
+.fchip.active { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 600; }
+.fchip .n { opacity: .7; margin-left: 4px; }
+.filters .kb-hint { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+kbd { font-family: var(--font-mono); font-size: 10px; background: var(--surface-2); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--fg-2); }
+
+/* ── P0.0 Signal cleanup card ───────────────────────────────── */
+.cleanup {
+  background: linear-gradient(180deg, rgba(59,130,246,.05), transparent 60%);
+  border: 1px solid var(--meta); border-opacity: .35;
+  border: 1px solid rgba(59,130,246,.35);
+  border-radius: var(--radius-lg); margin-bottom: 24px; overflow: hidden;
+}
+.cleanup-h {
+  display: flex; align-items: center; gap: 10px; padding: 13px 18px;
+  border-bottom: 1px solid var(--border-soft); cursor: pointer; user-select: none;
+}
+.cleanup-h:hover { background: rgba(59,130,246,.04); }
+.cleanup-h .mark {
+  width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center;
+  background: rgba(59,130,246,.15); color: var(--meta); font-size: 12px; font-weight: 700;
+  font-family: var(--font-mono); flex-shrink: 0;
+}
+.cleanup-h .t { font-weight: 600; font-size: 14px; }
+.cleanup-h .t .tag { font-family: var(--font-mono); font-size: 10px; color: var(--meta); border: 1px solid rgba(59,130,246,.4); border-radius: 4px; padding: 1px 6px; margin-left: 8px; vertical-align: 1px; }
+.cleanup-h .effect { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+.cleanup-h .effect b { color: var(--accent); }
+.cleanup-h .chev { color: var(--muted); transition: transform .15s; font-size: 12px; }
+.cleanup.open .cleanup-h .chev { transform: rotate(90deg); }
+.cleanup-body { display: none; padding: 6px 18px 16px; }
+.cleanup.open .cleanup-body { display: block; }
+.cleanup-intro { font-size: 12.5px; color: var(--fg-2); padding: 10px 0 12px; max-width: 640px; }
+.fix {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px; border: 1px solid var(--border-soft); border-radius: var(--radius-md);
+  margin-bottom: 8px; background: rgba(15,23,42,.4);
+}
+.fix:hover { border-color: var(--border); }
+.fix input[type="checkbox"] { margin-top: 3px; accent-color: var(--meta); width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+.fix .fx-body { flex: 1; min-width: 0; }
+.fix .fx-title { font-size: 13px; font-weight: 600; }
+.fix .fx-title .mono { font-family: var(--font-mono); font-size: 12px; color: var(--meta); }
+.fix .fx-why { font-size: 12px; color: var(--fg-2); margin-top: 3px; }
+.fix .fx-why code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+.fix .fx-fix { font-size: 12px; margin-top: 6px; color: var(--accent); }
+.cleanup-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.btn {
+  font-family: var(--font-body); font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--surface); color: var(--fg);
+  border-radius: var(--radius-md); padding: 7px 14px; cursor: pointer; transition: all .12s;
+}
+.btn:hover { border-color: var(--fg-2); }
+.btn.primary { background: var(--meta); border-color: var(--meta); color: #fff; }
+.btn.primary:hover { filter: brightness(1.15); }
+.btn:disabled { opacity: .4; cursor: default; }
+.cleanup-note { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-left: auto; }
+
+/* ── Feed ───────────────────────────────────────────────────── */
+.feed-h {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  margin: 22px 0 10px; display: flex; align-items: center; gap: 10px;
+}
+.feed-h::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
+.feed-h .cnt { color: var(--fg-2); }
+
+/* Feed item — so-what card, 3px tone rule via ::before (ObserveCo swc pattern) */
+.item {
+  position: relative; background: var(--surface); border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md); margin-bottom: 8px; overflow: hidden;
+  transition: border-color .12s;
+}
+.item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+.item.crit::before { background: var(--status-critical); }
+.item.watch::before { background: var(--status-warning); }
+.item.insight::before { background: var(--accent); }
+.item:hover { border-color: var(--border); }
+.item.focused { border-color: var(--fg-2); outline: 1px solid var(--fg-2); }
+.item.acked { opacity: .45; }
+.item.acked:hover { opacity: .7; }
+
+.item-row {
+  display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px 13px 18px;
+  cursor: pointer; user-select: none;
+}
+.item .mark {
+  width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+}
+.item.crit .mark { background: rgba(239,68,68,.15); color: var(--status-critical); }
+.item.watch .mark { background: rgba(234,179,8,.12); color: var(--status-warning); }
+.item.insight .mark { background: rgba(34,197,94,.12); color: var(--accent); }
+
+.item .body { flex: 1; min-width: 0; }
+.item .lead {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; display: block;
+}
+.item.crit .lead { color: var(--status-critical); }
+.item.watch .lead { color: var(--status-warning); }
+.item.insight .lead { color: var(--accent); }
+.item .txt { font-size: 13.5px; line-height: 1.45; }
+.item .txt b { font-weight: 600; }
+.item .txt .mono, .num { font-family: var(--font-mono); font-size: 12.5px; }
+.item .attr { font-size: 12px; color: var(--fg-2); margin-top: 4px; }
+.item .attr::before { content: "→ "; color: var(--muted); }
+
+.item .acts { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+.act {
+  font-size: 11.5px; font-weight: 600; color: var(--accent); text-decoration: none;
+  padding: 4px 10px; border: 1px solid rgba(34,197,94,.35); border-radius: 6px;
+  background: rgba(34,197,94,.06); cursor: pointer; font-family: var(--font-body);
+  transition: all .12s; white-space: nowrap;
+}
+.act:hover { background: rgba(34,197,94,.14); }
+.act.neutral { color: var(--fg-2); border-color: var(--border); background: transparent; }
+.act.neutral:hover { color: var(--fg); border-color: var(--fg-2); }
+.act.warn { color: var(--status-warning); border-color: rgba(234,179,8,.35); background: rgba(234,179,8,.05); }
+.act.warn:hover { background: rgba(234,179,8,.12); }
+
+.item .when {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--muted);
+  flex-shrink: 0; text-align: right; margin-top: 2px; white-space: nowrap;
+}
+
+/* Evidence drawer */
+.item .evidence { display: none; border-top: 1px solid var(--border-soft); padding: 12px 16px 14px 18px; background: rgba(15,23,42,.5); }
+.item.expanded .evidence { display: block; }
+.ev-grid { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 10px; }
+.ev { min-width: 120px; }
+.ev .ev-l { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.ev .ev-v { font-family: var(--font-mono); font-size: 14px; font-weight: 600; margin-top: 2px; }
+.ev .ev-v.bad { color: var(--status-critical); }
+.ev .ev-v.warn { color: var(--status-warning); }
+.why {
+  font-size: 12px; color: var(--fg-2); border-left: 2px solid var(--border);
+  padding: 6px 12px; margin-top: 6px; line-height: 1.5;
+}
+.why b { color: var(--fg); font-weight: 600; }
+.why .src { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); display: block; margin-top: 4px; }
+
+/* ── Auto-triaged drawer ────────────────────────────────────── */
+.drawer { border: 1px solid var(--border-soft); border-radius: var(--radius-md); margin-top: 24px; overflow: hidden; }
+.drawer-h {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  cursor: pointer; user-select: none; color: var(--fg-2); font-size: 13px;
+}
+.drawer-h:hover { background: rgba(30,41,59,.5); color: var(--fg); }
+.drawer-h .n {
+  font-family: var(--font-mono); font-size: 11px; background: var(--surface-2);
+  border-radius: var(--radius-pill); padding: 2px 9px; color: var(--fg-2);
+}
+.drawer-h .chev { margin-left: auto; color: var(--muted); transition: transform .15s; font-size: 12px; }
+.drawer.open .drawer-h .chev { transform: rotate(90deg); }
+.drawer-body { display: none; padding: 4px 16px 14px; }
+.drawer.open .drawer-body { display: block; }
+.noise {
+  display: flex; gap: 10px; align-items: baseline; font-size: 12.5px;
+  padding: 7px 0; border-bottom: 1px solid var(--border-soft); color: var(--fg-2);
+}
+.noise:last-child { border-bottom: none; }
+.noise .nm { font-family: var(--font-mono); font-size: 12px; color: var(--fg); min-width: 130px; }
+.noise .rs { flex: 1; }
+.noise .rs i { color: var(--muted); font-style: normal; }
+.noise .undo { font-size: 11px; color: var(--meta); cursor: pointer; text-decoration: none; }
+.noise .undo:hover { text-decoration: underline; }
+
+/* ── Spec notes (review annotations) ────────────────────────── */
+.notes-toggle {
+  position: fixed; bottom: 18px; right: 18px; z-index: 50;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  background: var(--surface-2); color: var(--fg); border: 1px solid var(--border);
+  border-radius: var(--radius-pill); padding: 8px 16px; cursor: pointer;
+}
+.notes-toggle:hover { border-color: var(--fg-2); }
+.snote { display: none; }
+body.show-notes .snote {
+  display: block; font-family: var(--font-mono); font-size: 10.5px; color: var(--meta);
+  background: rgba(59,130,246,.07); border: 1px dashed rgba(59,130,246,.4);
+  border-radius: 6px; padding: 6px 10px; margin: 8px 0 0;
+  line-height: 1.5;
+}
+body.show-notes .snote b { color: #93c5fd; }
+
+.footer { margin-top: 36px; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--border-soft); padding-top: 14px; }
+.footer b { color: var(--fg-2); font-weight: 500; }
+
+@media (max-width: 640px) {
+  .verdict .v-chips { margin-left: 0; }
+  .item .when { display: none; }
+  .filters .kb-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ── Header ── -->
+  <div class="crumb">ObserveCo › Monitor › <b>Anomalies Inbox</b> · P0.0 + P0.1 design mockup · v2</div>
+  <div class="topbar">
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <polyline points="2,15 7,15 9.5,6 13.5,21 16,15 24,15" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="7.5" r="2.4" fill="#22c55e"/>
+      </svg>
+      <span>Anomalies Inbox</span>
+    </div>
+  </div>
+  <div class="sub">Every signal from every detector — deduplicated, attributed, and triaged before it reaches you.</div>
+
+  <!-- ── Verdict sentence (DPA §2-B: a sentence, never a count) ── -->
+  <div class="verdict" role="status">
+    <span class="v-icon" aria-hidden="true"></span>
+    <span class="v-text"><b>2 issues need action</b> — 4 worth watching, 13 auto-triaged as noise</span>
+    <div class="v-chips">
+      <span class="vchip crit"><b>2</b> action</span>
+      <span class="vchip warn"><b>4</b> watch</span>
+      <span class="vchip"><b>3</b> insight</span>
+      <span class="vchip good"><b>13</b> filtered</span>
+    </div>
+  </div>
+  <div class="snote"><b>Spec note — verdict:</b> one sentence per DPA §2-B, computed AFTER signal cleanup (P0.0). Today's live rail says "29 CRITICAL" for the same data; this inbox says 2. The difference is classification, not data.</div>
+
+  <!-- ── Filters ── -->
+  <div class="filters" role="group" aria-label="Filter inbox">
+    <button class="fchip active" data-f="all">All<span class="n">9</span></button>
+    <button class="fchip" data-f="crit">Needs action<span class="n">2</span></button>
+    <button class="fchip" data-f="watch">Watch<span class="n">4</span></button>
+    <button class="fchip" data-f="insight">Insight<span class="n">3</span></button>
+    <button class="fchip" data-f="acked">Acked<span class="n" id="ackCount">0</span></button>
+    <span class="kb-hint"><kbd>j</kbd>/<kbd>k</kbd> move · <kbd>x</kbd> ack · <kbd>e</kbd> expand</span>
+  </div>
+
+  <!-- ═══ P0.0 — SIGNAL CLEANUP ═══ -->
+  <div class="cleanup open" id="cleanupCard">
+    <div class="cleanup-h" onclick="document.getElementById('cleanupCard').classList.toggle('open')">
+      <span class="mark">✓</span>
+      <span class="t">Signal cleanup available <span class="tag">P0.0</span></span>
+      <span class="effect">applies → <b>29 critical alerts become 2</b></span>
+      <span class="chev">▶</span>
+    </div>
+    <div class="cleanup-body">
+      <div class="cleanup-intro">
+        Three classification fixes, detected from your live fleet. These aren't new alerts — they're why your current alert rail shows 29 "critical" incidents. Apply once; every surface (rail, inbox, verdict bar) inherits the fix.
+      </div>
+
+      <label class="fix">
+        <input type="checkbox" checked>
+        <div class="fx-body">
+          <div class="fx-title">Reclassify <span class="mono">kanban · workspace · spectrum</span> — idle profiles, not dead agents</div>
+          <div class="fx-why">Flagged critical for "dead in 111 / 108 / 27 pulse checks." But these are <b>Hermes profiles</b> — they only run when chatted with. Probing them like daemons manufactures false criticals. (DPA §2-A: UNKNOWN ≠ CRITICAL.)</div>
+          <div class="fx-fix">Fix: switch to activity-based monitoring — "idle" state, no pulse failures, no criticals.</div>
+        </div>
+      </label>
+
+      <label class="fix">
+        <input type="checkbox" checked>
+        <div class="fx-body">
+          <div class="fx-title">Exclude <span class="mono">test-config-agent · my_new_agent</span> — test entities</div>
+          <div class="fx-why">Discovered from config scan, never a real workload. One of them has <code>9,930</code> accumulated circuit failures feeding the alert rail.</div>
+          <div class="fx-fix">Fix: exclude from monitoring + alerts (persisted in agents.json, like fleet × delete).</div>
+        </div>
+      </label>
+
+      <label class="fix">
+        <input type="checkbox" checked>
+        <div class="fx-body">
+          <div class="fx-title">Reset <span class="mono">8 stale circuits</span> — 1,996 to 23,300 failures each, &gt;7 days old</div>
+          <div class="fx-why"><span class="mono">blueprint (23,300) · benchmark (17,364) · secondbrain (9,817) · archive · subconscious · forge · gladwell · hawkeye</span>. Circuits tripped long ago, never reset, still counted as active incidents.</div>
+          <div class="fx-fix">Fix: reset circuit + re-baseline. Next genuine failure starts a fresh count and a fresh alert.</div>
+        </div>
+      </label>
+
+      <div class="cleanup-actions">
+        <button class="btn primary" onclick="applyCleanup(this)">Apply 3 fixes</button>
+        <button class="btn" onclick="this.closest('.cleanup').classList.remove('open')">Review later</button>
+        <span class="cleanup-note">writes to agents.json + circuit_breakers · reversible</span>
+      </div>
+      <div class="snote"><b>Spec note — P0.0:</b> this card is the signal-integrity pass made visible. It appears when misclassification is detected, not as a settings page. Every fix names its blast radius and is reversible. Implementation: agent-class-aware pulse semantics + bulk exclude + circuit reset — all endpoints already exist except class-aware probing.</div>
+    </div>
+  </div>
+
+  <!-- ═══ NEEDS ACTION ═══ -->
+  <div class="feed-h">Needs action <span class="cnt">2</span></div>
+
+  <!-- 1 — dreamer stuck (l2_trending, real: "No activity for 834s (14m)" critical) -->
+  <div class="item crit expanded" data-sev="crit" data-id="dreamer-stuck">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">!</span>
+      <div class="body">
+        <span class="lead">Stuck · L2 proactive</span>
+        <div class="txt"><b class="mono">dreamer</b> — no activity for <b class="num">14m</b>. Process is alive but unresponsive: this is the window to intervene <b>before</b> the circuit trips.</div>
+        <div class="attr">L2 trending flagged it critical at 834s of silence against a 30s pulse cadence — caught while still recoverable, not after failure.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open agent →</a>
+          <a class="act warn" href="#" onclick="return demoAct(event,this)">Restart dreamer</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack</a>
+          <a class="act neutral" href="#" onclick="return demoAct(event,this)">Snooze 1h</a>
+        </div>
+      </div>
+      <span class="when">now</span>
+    </div>
+    <div class="evidence">
+      <div class="ev-grid">
+        <div class="ev"><div class="ev-l">Silence</div><div class="ev-v bad">834s</div></div>
+        <div class="ev"><div class="ev-l">Pulse cadence</div><div class="ev-v">30s</div></div>
+        <div class="ev"><div class="ev-l">Severity rule</div><div class="ev-v warn">stuck &gt; 10m → crit</div></div>
+        <div class="ev"><div class="ev-l">Circuit</div><div class="ev-v">not tripped</div></div>
+      </div>
+      <div class="why"><b>Why am I seeing this?</b> l2_trending recorded <code>stuck · critical</code> for dreamer at 21:20. L2 watches for degradation <i>before</i> errors appear — a stuck agent hasn't failed yet, so no other surface would tell you.
+      <span class="src">source: l2_trending · detector: heal/l2.py run_l2_scan()</span></div>
+    </div>
+  </div>
+
+  <!-- 2 — default canary 0/10 (real: canary_runs 2026-07-19T03:52 + 04:06, 0 pass / 10 fail) -->
+  <div class="item crit" data-sev="crit" data-id="canary-regress">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">!</span>
+      <div class="body">
+        <span class="lead">Quality regression · canary</span>
+        <div class="txt"><b class="mono">default</b> — canary went <b class="num">0/10</b> trials on the Jul 19 04:06 run. Previous runs scored 47/60 (Jul 18) and 17/30 — a hard floor, not a slope.</div>
+        <div class="attr">two consecutive all-fail runs (03:52, 04:06) — a step change, not noise. Something in the harness or model route broke between Jul 18 and Jul 19.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">View judge reasoning →</a>
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open canary detail →</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack</a>
+        </div>
+      </div>
+      <span class="when">Jul 19</span>
+    </div>
+    <div class="evidence">
+      <div class="ev-grid">
+        <div class="ev"><div class="ev-l">Jul 18 20:40</div><div class="ev-v">47/60</div></div>
+        <div class="ev"><div class="ev-l">Jul 18 22:14</div><div class="ev-v">17/30</div></div>
+        <div class="ev"><div class="ev-l">Jul 19 03:52</div><div class="ev-v bad">0/10</div></div>
+        <div class="ev"><div class="ev-l">Jul 19 04:06</div><div class="ev-v bad">0/10</div></div>
+      </div>
+      <div class="why"><b>Why am I seeing this?</b> canary_runs recorded two consecutive runs with pass_count=0, fail_count=10. Canary is the regression tripwire — an all-fail step change is exactly what it's for. Judge reasoning is cached per result if you want the failure modes.
+      <span class="src">source: canary_runs, canary_results, canary_judge_cache · detector: capability/canary.py</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ WATCH ═══ -->
+  <div class="feed-h">Watch <span class="cnt">4</span></div>
+
+  <!-- 3 — accelerator memory drift (real: +731.6%, 181 breaches) -->
+  <div class="item watch" data-sev="watch" data-id="accel-drift">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">↗</span>
+      <div class="body">
+        <span class="lead">Drift breach · memory</span>
+        <div class="txt"><b class="mono">accelerator</b> — memory component grew <b class="num">+731.6%</b> over 7 days (<span class="num">181</span> breach events). At this slope it forces context truncation; skills are usually the cheaper target.</div>
+        <div class="attr">drift_events shows a sustained climb, not a single edit — accumulation pattern, consistent with MEMORY.md appends without gardening.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Preview compression →</a>
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open drift detail →</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack</a>
+        </div>
+      </div>
+      <span class="when">7d trend</span>
+    </div>
+    <div class="evidence">
+      <div class="ev-grid">
+        <div class="ev"><div class="ev-l">7d drift</div><div class="ev-v bad">+731.6%</div></div>
+        <div class="ev"><div class="ev-l">Breaches</div><div class="ev-v warn">181</div></div>
+        <div class="ev"><div class="ev-l">7d peak</div><div class="ev-v">+1262%</div></div>
+        <div class="ev"><div class="ev-l">WoW Δ</div><div class="ev-v">+150%</div></div>
+      </div>
+      <div class="why"><b>Why am I seeing this?</b> chisel_drift crossed the 10% breach threshold 181 times in 7 days for accelerator's memory component. Note: garden scans are stale (see insight below) — compression preview is estimated from chisel_trims, not fresh garden data.
+      <span class="src">source: chisel_drift, drift_events · detector: chisel/drift.py (7-day rolling)</span></div>
+    </div>
+  </div>
+
+  <!-- 4 — fleet-wide circuit event (real: 10 agents, identical "19 circuit_tripped in 579s") -->
+  <div class="item watch" data-sev="watch" data-id="fleet-circuits">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">↗</span>
+      <div class="body">
+        <span class="lead">Fleet-wide event · deduplicated</span>
+        <div class="txt"><b class="num">10 agents</b> circuit-tripped in the <b>same 10-minute window</b> with an identical signature (<span class="num">19</span> trips each). Likely <b>one upstream cause</b> — not 10 separate incidents.</div>
+        <div class="attr">the raw detector emits 10 rows; the inbox folds correlated events into one. Fixing the shared upstream resolves all 10.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">View the window →</a>
+          <a class="act neutral" href="#" onclick="return demoAct(event,this)">Split into 10 items</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack as one</a>
+        </div>
+      </div>
+      <span class="when">21:1x</span>
+    </div>
+    <div class="evidence">
+      <div class="ev-grid">
+        <div class="ev"><div class="ev-l">Agents</div><div class="ev-v warn">10</div></div>
+        <div class="ev"><div class="ev-l">Signature</div><div class="ev-v">19 trips / 579s</div></div>
+        <div class="ev"><div class="ev-l">Spread</div><div class="ev-v">&lt; 2s apart</div></div>
+      </div>
+      <div class="why"><b>Why am I seeing this?</b> archive, benchmark, blueprint, forge, gladwell, hawkeye, kanban, my_new_agent, secondbrain, subconscious — all recorded 19 circuit_tripped errors within the same 579s window. Identical count + identical window = shared cause (probe infrastructure or upstream), so it gets one inbox slot, not ten.
+      <span class="src">source: errors · detector: anomaly/ (retry_loop) + inbox correlation pass</span></div>
+    </div>
+    <div class="snote"><b>Spec note — correlation:</b> this item is the difference between an anomaly <i>feed</i> (what /api/anomalies returns today: 10 flat rows) and an anomaly <i>inbox</i> (P0.1). Correlation rule: same type + same window (±10m) + ≥3 agents → fold with count + shared-cause hypothesis.</div>
+  </div>
+
+  <!-- 5 — hermes-agent upstream failures (real: l2 "4 upstream failures in recent errors") -->
+  <div class="item watch" data-sev="watch" data-id="hermes-upstream">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">↗</span>
+      <div class="body">
+        <span class="lead">Upstream failures · L2</span>
+        <div class="txt"><b class="mono">hermes-agent</b> — <b class="num">4</b> upstream failures in recent errors. Also your top spender (84% of fleet cost) — failures here retry at full price.</div>
+        <div class="attr">L2 correlates error text across pulses; "upstream" = the provider/gateway, not your agent's logic.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open errors →</a>
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open token analytics →</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack</a>
+        </div>
+      </div>
+      <span class="when">today</span>
+    </div>
+    <div class="evidence">
+      <div class="why"><b>Why am I seeing this?</b> l2_trending recorded <code>upstream_fail · warning</code> — 4 upstream-classified errors in the recent window. Paired with spend context from token_logs because retries multiply cost.
+      <span class="src">source: l2_trending, errors, token_logs · detector: heal/l2.py</span></div>
+    </div>
+  </div>
+
+  <!-- 6 — hound guidance drift (real: +21.4%, 181 breaches) -->
+  <div class="item watch" data-sev="watch" data-id="hound-drift">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">↗</span>
+      <div class="body">
+        <span class="lead">Drift breach · guidance</span>
+        <div class="txt"><b class="mono">hound</b> — guidance component up <b class="num">+21.4%</b> in 7 days. Guidance fires every turn; growth here taxes every single interaction.</div>
+        <div class="attr">drift tab shows 181 breaches with a Jul-20 peak of +25% — still climbing.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open drift detail →</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack</a>
+        </div>
+      </div>
+      <span class="when">7d trend</span>
+    </div>
+    <div class="evidence">
+      <div class="why"><b>Why am I seeing this?</b> chisel_drift 7-day delta for hound/guidance is +21.4% — past the 20% "critical" class boundary on its peak day. Guidance is the always-loaded component, so its token cost multiplies by turn count.
+      <span class="src">source: chisel_drift · detector: chisel/drift.py</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ INSIGHT ═══ -->
+  <div class="feed-h">Insight <span class="cnt">3</span></div>
+
+  <!-- 7 — data quality 0% OTEL (real: verdict chip "0 otel · 39 watch-only") -->
+  <div class="item insight" data-sev="insight" data-id="dq-otel">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">i</span>
+      <div class="body">
+        <span class="lead">Data quality · fleet-wide</span>
+        <div class="txt"><b class="num">0%</b> OTEL coverage — all <b class="num">39</b> agents are watch-only. Every token number on this dashboard is currently an <b>estimate</b> (±80%), including cost.</div>
+        <div class="attr">installing the Hermes telemetry plugin moves agents to the accurate tier (±5%) — the single highest-leverage data fix available.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Install telemetry plugin →</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack</a>
+        </div>
+      </div>
+      <span class="when">ongoing</span>
+    </div>
+    <div class="evidence">
+      <div class="why"><b>Why am I seeing this?</b> the verdict bar's data-quality chip (DPA §2-D) computes Tier-1 coverage = 0/39 agents. Watch-daemon estimates decompose SOUL.md heuristically; OTEL spans record what actually happened per call.
+      <span class="src">source: token_logs.source distribution · DPA §2-D tiering</span></div>
+    </div>
+  </div>
+
+  <!-- 8 — spend concentration (real: "$163 total · hermes-agent 84%") -->
+  <div class="item insight" data-sev="insight" data-id="spend">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">i</span>
+      <div class="body">
+        <span class="lead">Cost attribution</span>
+        <div class="txt"><b class="mono">hermes-agent</b> is <b class="num">84%</b> of the <b class="num">$163</b> fleet spend (150K calls). One agent's system prompt is effectively your entire token bill.</div>
+        <div class="attr">the token tab's own verdict already says "review its system-prompt size first" — the inbox makes sure you see it without visiting that tab.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open token analytics →</a>
+          <a class="act" href="#" onclick="return demoAct(event,this)">Preview compression →</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack</a>
+        </div>
+      </div>
+      <span class="when">7d</span>
+    </div>
+    <div class="evidence">
+      <div class="why"><b>Why am I seeing this?</b> token_logs rollup: $163 total, 149,963 calls, hermes-agent 84% of spend, 91% of spend attributed (9% gap). Caveat: 0% OTEL means these are estimated costs.
+      <span class="src">source: token_logs, token_pricing · Q4: where is the money going?</span></div>
+    </div>
+  </div>
+
+  <!-- 9 — garden stale (real: last scans 2026-06-17/06-30) -->
+  <div class="item insight" data-sev="insight" data-id="garden-stale">
+    <div class="item-row" onclick="toggleExpand(this.parentNode)">
+      <span class="mark">i</span>
+      <div class="body">
+        <span class="lead">Stale subsystem · memory garden</span>
+        <div class="txt">Memory garden hasn't scanned in <b class="num">33 days</b> (last: Jun 17). Debt scores, contradictions, and compression advice are all running on month-old data.</div>
+        <div class="attr">this is why accelerator's +731% memory drift has no garden detail behind it — the scanner, not the agent, is what's broken.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Run garden scan →</a>
+          <a class="act neutral" href="#" onclick="return ack(event,this)">Ack</a>
+        </div>
+      </div>
+      <span class="when">since Jun 17</span>
+    </div>
+    <div class="evidence">
+      <div class="why"><b>Why am I seeing this?</b> latest clawforge_garden row per agent is 2026-06-17 (Jun-30 for gladwell/spectrum) with debt scores all 0.0 — a scanner that finds nothing for 33 days is usually a scanner that isn't running.
+      <span class="src">source: clawforge_garden freshness · detector: inbox staleness check (new, P0.1)</span></div>
+    </div>
+    <div class="snote"><b>Spec note — meta-monitoring:</b> the inbox watches the detectors, not just the agents. Rule: any data source older than its cadence × 3 becomes an insight item. This catches silent subsystem death — the class of problem no per-agent detector can see.</div>
+  </div>
+
+  <!-- ═══ AUTO-TRIAGED DRAWER ═══ -->
+  <div class="drawer" id="noiseDrawer">
+    <div class="drawer-h" onclick="document.getElementById('noiseDrawer').classList.toggle('open')">
+      <span class="n">13</span> auto-triaged as noise — transparent, reversible, never silent
+      <span class="chev">▶</span>
+    </div>
+    <div class="drawer-body">
+      <div class="noise"><span class="nm">kanban</span><span class="rs">"dead in 111 pulse checks" → <i>idle Hermes profile, not a daemon. Covered by cleanup fix 1.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">workspace</span><span class="rs">"dead in 108 pulse checks" → <i>idle Hermes profile. Covered by cleanup fix 1.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">spectrum</span><span class="rs">"dead in 27 pulse checks" → <i>idle Hermes profile. Covered by cleanup fix 1.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">test-config-agent</span><span class="rs">circuit tripped (9,930 failures) → <i>test entity. Covered by cleanup fix 2.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">my_new_agent</span><span class="rs">circuit tripped → <i>test entity. Covered by cleanup fix 2.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">blueprint</span><span class="rs">circuit tripped (23,300 failures, &gt;7d) → <i>stale circuit. Covered by cleanup fix 3.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">benchmark</span><span class="rs">circuit tripped (17,364 failures, &gt;7d) → <i>stale circuit. Fix 3.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">secondbrain</span><span class="rs">circuit tripped (9,817 failures, &gt;7d) → <i>stale circuit. Fix 3.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">subconscious</span><span class="rs">circuit tripped (1,996 failures, &gt;7d) → <i>stale circuit. Fix 3.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">archive</span><span class="rs">circuit tripped (1,997 failures, &gt;7d) → <i>stale circuit. Fix 3.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">forge</span><span class="rs">circuit tripped (&gt;7d) → <i>stale circuit. Fix 3.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">gladwell</span><span class="rs">circuit tripped (&gt;7d) → <i>stale circuit. Fix 3.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+      <div class="noise"><span class="nm">hawkeye</span><span class="rs">circuit tripped (&gt;7d) → <i>stale circuit. Fix 3.</i></span><a class="undo" href="#" onclick="return demoAct(event,this)">restore</a></div>
+    </div>
+  </div>
+  <div class="snote"><b>Spec note — the drawer is the trust mechanism:</b> auto-triage without visibility trains users to distrust the filter. Every suppressed item is listed with its reason and a one-click restore. Nothing is ever silently dropped.</div>
+
+  <div class="footer">
+    <b>Data:</b> live snapshot — pulse.db (641MB) via dashboard :8897, 2026-07-20 ~21:45. Every item above is a real signal from your fleet; none are invented.<br>
+    <b>Mockup scope:</b> P0.0 (signal cleanup card, auto-triage drawer) + P0.1 (verdict sentence, deduplicated feed, evidence + "why am I seeing this", action links).<br>
+    <b>Not in scope:</b> SLI/SLO badges (P2.1), escalation chains (P2.2), push delivery of inbox items (P1.2 dependency).
+  </div>
+</div>
+
+<button class="notes-toggle" onclick="document.body.classList.toggle('show-notes')">Spec notes</button>
+
+<script>
+// ── Expand / collapse evidence ────────────────────────────────
+function toggleExpand(item) { item.classList.toggle('expanded'); }
+
+// ── Ack: dim + persist + update ack filter count ─────────────
+function ack(ev, el) {
+  ev.preventDefault(); ev.stopPropagation();
+  const item = el.closest('.item');
+  item.classList.toggle('acked');
+  const acked = JSON.parse(localStorage.getItem('inboxAcks') || '[]');
+  const id = item.dataset.id;
+  const i = acked.indexOf(id);
+  if (i >= 0) acked.splice(i, 1); else acked.push(id);
+  localStorage.setItem('inboxAcks', JSON.stringify(acked));
+  el.textContent = item.classList.contains('acked') ? 'Unack' : 'Ack';
+  document.getElementById('ackCount').textContent = acked.length;
+  return false;
+}
+
+// ── Demo action links: visual feedback only (mockup) ─────────
+function demoAct(ev, el) {
+  ev.preventDefault(); ev.stopPropagation();
+  const orig = el.textContent;
+  el.textContent = '→ ' + orig.replace(' →','');
+  setTimeout(() => { el.textContent = orig; }, 700);
+  return false;
+}
+
+// ── P0.0 cleanup apply ────────────────────────────────────────
+function applyCleanup(btn) {
+  const fixes = btn.closest('.cleanup-body').querySelectorAll('.fix input[type="checkbox"]:checked').length;
+  btn.textContent = '✓ ' + fixes + ' fixes applied';
+  btn.disabled = true;
+  setTimeout(() => {
+    document.getElementById('cleanupCard').style.opacity = '.45';
+  }, 600);
+}
+
+// ── Filter chips ──────────────────────────────────────────────
+document.querySelectorAll('.fchip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.fchip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    const f = chip.dataset.f;
+    document.querySelectorAll('.item').forEach(item => {
+      let show = (f === 'all') || (item.dataset.sev === f) || (f === 'acked' && item.classList.contains('acked'));
+      if (f === 'acked') show = item.classList.contains('acked');
+      else if (f !== 'all' && item.classList.contains('acked')) show = false;
+      item.style.display = show ? '' : 'none';
+    });
+  });
+});
+
+// ── Keyboard nav: j/k move, x ack, e expand ──────────────────
+let focusIdx = -1;
+const visibleItems = () => [...document.querySelectorAll('.item')].filter(i => i.style.display !== 'none');
+document.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, textarea, button.fchip')) return;
+  const items = visibleItems();
+  if (!items.length) return;
+  if (e.key === 'j' || e.key === 'k') {
+    focusIdx = e.key === 'j' ? Math.min(focusIdx + 1, items.length - 1) : Math.max(focusIdx - 1, 0);
+    items.forEach(i => i.classList.remove('focused'));
+    items[focusIdx].classList.add('focused');
+    items[focusIdx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  } else if (e.key === 'e' && focusIdx >= 0) {
+    items[focusIdx].classList.toggle('expanded');
+  } else if (e.key === 'x' && focusIdx >= 0) {
+    const btn = items[focusIdx].querySelector('.act.neutral');
+    if (btn) btn.click();
+  }
+});
+
+// ── Restore acked state ───────────────────────────────────────
+(function() {
+  const acked = JSON.parse(localStorage.getItem('inboxAcks') || '[]');
+  acked.forEach(id => {
+    const item = document.querySelector(`.item[data-id="${id}"]`);
+    if (item) {
+      item.classList.add('acked');
+      const btn = item.querySelector('.act.neutral');
+      if (btn && btn.textContent.trim() === 'Ack') btn.textContent = 'Unack';
+    }
+  });
+  document.getElementById('ackCount').textContent = acked.length;
+})();
+</script>
+</body>
+</html>

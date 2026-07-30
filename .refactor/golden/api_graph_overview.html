@@ -1,0 +1,31 @@
+<div class="graph-overview">
+    <div class="graph-stats-grid">
+        <div class="graph-stat-card">
+            <span class="graph-stat-num symbols">565</span>
+            <span class="graph-stat-label">Symbols</span>
+        </div>
+        <div class="graph-stat-card">
+            <span class="graph-stat-num relations">284</span>
+            <span class="graph-stat-label">Relations</span>
+        </div>
+        <div class="graph-stat-card">
+            <span class="graph-stat-num files">25</span>
+            <span class="graph-stat-label">Files Indexed</span>
+        </div>
+    </div>
+    <div class="graph-search-row">
+        <input id="graph-search-input" placeholder="Search symbols..." class="graph-search-input"
+               onkeyup="if(event.key==='Enter') searchGraph()" />
+        <button onclick="searchGraph()" class="graph-search-btn">Search</button>
+    </div>
+    <div id="graph-results" class="graph-results"></div>
+    <script>
+        function searchGraph() {
+            var q = document.getElementById('graph-search-input').value.trim();
+            if (!q) return;
+            fetch('/api/graph/search?q=' + encodeURIComponent(q))
+                .then(r => r.text())
+                .then(html => document.getElementById('graph-results').innerHTML = html);
+        }
+    </script>
+</div>

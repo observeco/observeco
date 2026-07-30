@@ -1,0 +1,298 @@
+<div class="panel" id="alertsContainer" hx-swap-oob="true">
+    <div class="gap-banner">
+        <span class="big mono">2m</span>
+        <span class="lbl"><b>worst active gap</b><br>29 incidents · forge</span>
+    </div>
+    <div class="panel-h"><h3>Live Incidents</h3><span class="pcount mono">29 active</span></div>
+    <div class="agroup-h"><span class="sw crit"></span>CRITICAL · 24</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/archive', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">archive</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (582 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/archive/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/blueprint', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">blueprint</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (21885 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/blueprint/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/forge', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">forge</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (490 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/forge/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">gladwell</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (21883 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/gladwell/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/hawkeye', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">hawkeye</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (21883 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/hawkeye/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/kanban', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">kanban</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (470 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/kanban/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/my_new_agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">my_new_agent</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (14496 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/my_new_agent/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">secondbrain</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (8402 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/secondbrain/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">spectrum</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (9355 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/spectrum/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">subconscious</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (581 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/subconscious/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/test-config-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">test-config-agent</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (8515 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/test-config-agent/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/benchmark', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">benchmark</span>
+            <span class="new">New</span>
+        </div>
+        <div class="alert-msg">Circuit breaker tripped (15949 failures)</div>
+        <div class="alert-gap"><b>0s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/benchmark/circuit" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/my_new_agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">my_new_agent</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/my_new_agent/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/test-config-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">test-config-agent</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/test-config-agent/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">subconscious</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/subconscious/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">spectrum</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/spectrum/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">secondbrain</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/secondbrain/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/kanban', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">kanban</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/kanban/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/hawkeye', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">hawkeye</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/hawkeye/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">gladwell</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/gladwell/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/blueprint', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">blueprint</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/blueprint/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/forge', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">forge</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/forge/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/archive', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">archive</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>22s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/archive/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert critical" onclick="htmx.ajax('GET', '/api/fleet/modal/benchmark', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">benchmark</span>
+            
+        </div>
+        <div class="alert-msg">Agent is dead — no recent heartbeat</div>
+        <div class="alert-gap"><b>23s gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/benchmark/dead" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="agroup-h"><span class="sw warn"></span>WARNING · 5</div><div class="alert warning" onclick="htmx.ajax('GET', '/api/fleet/modal/forge', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">forge</span>
+            
+        </div>
+        <div class="alert-msg">Drift +46.0% in guidance</div>
+        <div class="alert-gap"><b>2m gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/forge/drift" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert warning" onclick="htmx.ajax('GET', '/api/fleet/modal/main', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">main</span>
+            
+        </div>
+        <div class="alert-msg">Drift +710.0% in skills</div>
+        <div class="alert-gap"><b>2m gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/main/drift" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert warning" onclick="htmx.ajax('GET', '/api/fleet/modal/main', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">main</span>
+            
+        </div>
+        <div class="alert-msg">Drift +355.0% in skills</div>
+        <div class="alert-gap"><b>2m gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/main/drift" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert warning" onclick="htmx.ajax('GET', '/api/fleet/modal/main', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">main</span>
+            
+        </div>
+        <div class="alert-msg">Drift +1244.0% in memory</div>
+        <div class="alert-gap"><b>2m gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/main/drift" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div><div class="alert warning" onclick="htmx.ajax('GET', '/api/fleet/modal/main', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <div class="alert-body">
+        <div class="alert-top">
+            <span class="alert-agent">main</span>
+            
+        </div>
+        <div class="alert-msg">Drift +622.0% in memory</div>
+        <div class="alert-gap"><b>2m gap</b></div>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/main/drift" hx-target="closest .alert" hx-swap="outerHTML" hx-on-click="event.stopPropagation()" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;float:right;" title="Acknowledge &amp; dismiss">✕</span>
+    </div>
+</div>
+</div>

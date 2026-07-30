@@ -1,0 +1,715 @@
+[
+ {
+  "chunk": "c01",
+  "endpoint": "/api/pathway/tab",
+  "query": "",
+  "url": "/api/pathway/tab",
+  "status": 200,
+  "bytes": 6512,
+  "sha256": "e65e5d46ab819591",
+  "file": "api_pathway_tab.html"
+ },
+ {
+  "chunk": "c02",
+  "endpoint": "/api/agents/accelerator/kill-log",
+  "query": "",
+  "url": "/api/agents/accelerator/kill-log",
+  "status": 200,
+  "bytes": 88,
+  "sha256": "d349f0533657195b",
+  "file": "api_agents_accelerator_kill-log.html"
+ },
+ {
+  "chunk": "c03",
+  "endpoint": "/pathway",
+  "query": "",
+  "url": "/pathway",
+  "status": 200,
+  "bytes": 69963,
+  "sha256": "8da840e7f27f954d",
+  "file": "pathway.html"
+ },
+ {
+  "chunk": "c04",
+  "endpoint": "/api/pathway-scan",
+  "skipped": "manual-verify"
+ },
+ {
+  "chunk": "c05",
+  "endpoint": "/api/l2-scan",
+  "skipped": "manual-verify"
+ },
+ {
+  "chunk": "c06",
+  "endpoint": "/api/graph/search",
+  "query": "",
+  "url": "/api/graph/search",
+  "status": 200,
+  "bytes": 58,
+  "sha256": "9ee6a6adbfa8b825",
+  "file": "api_graph_search.html"
+ },
+ {
+  "chunk": "c07",
+  "endpoint": "/api/instances",
+  "query": "",
+  "url": "/api/instances",
+  "status": 200,
+  "bytes": 0,
+  "sha256": "e3b0c44298fc1c14",
+  "file": "api_instances.html",
+  "no_golden": true
+ },
+ {
+  "chunk": "c08",
+  "endpoint": "/api/anomaly-feed",
+  "query": "",
+  "url": "/api/anomaly-feed",
+  "status": 200,
+  "bytes": 6735,
+  "sha256": "9fe08d44b8f28b63",
+  "file": "api_anomaly-feed.html"
+ },
+ {
+  "chunk": "c09",
+  "endpoint": "/api/l2-trends",
+  "query": "",
+  "url": "/api/l2-trends",
+  "status": 200,
+  "bytes": 5826,
+  "sha256": "0592274b01f12b0a",
+  "file": "api_l2-trends.html"
+ },
+ {
+  "chunk": "c10",
+  "endpoint": "/api/tokens/recent",
+  "query": "",
+  "url": "/api/tokens/recent",
+  "status": 200,
+  "bytes": 4418,
+  "sha256": "571fa2ba8cd38cbb",
+  "file": "api_tokens_recent.html"
+ },
+ {
+  "chunk": "c11",
+  "endpoint": "/api/glossary/auto-heal",
+  "query": "",
+  "url": "/api/glossary/auto-heal",
+  "status": 200,
+  "bytes": 2239,
+  "sha256": "6eb18bc36eecbc57",
+  "file": "api_glossary_auto-heal.html"
+ },
+ {
+  "chunk": "c12",
+  "endpoint": "/api/history",
+  "query": "",
+  "url": "/api/history",
+  "status": 200,
+  "bytes": 1402,
+  "sha256": "96e280e70d6286d4",
+  "file": "api_history.html"
+ },
+ {
+  "chunk": "c13",
+  "endpoint": "/new",
+  "query": "",
+  "url": "/new",
+  "status": 200,
+  "bytes": 27390,
+  "sha256": "efe01292670233ac",
+  "file": "new.html"
+ },
+ {
+  "chunk": "c14",
+  "endpoint": "/api/harness/experience",
+  "query": "",
+  "url": "/api/harness/experience",
+  "status": 200,
+  "bytes": 601,
+  "sha256": "30dd12fca8790976",
+  "file": "api_harness_experience.html"
+ },
+ {
+  "chunk": "c15",
+  "endpoint": "/api/agent/accelerator/errors",
+  "query": "",
+  "url": "/api/agent/accelerator/errors",
+  "status": 200,
+  "bytes": 107,
+  "sha256": "c8cd4f7b926049c8",
+  "file": "api_agent_accelerator_errors.html"
+ },
+ {
+  "chunk": "c16",
+  "endpoint": "/api/l2/baselines",
+  "query": "",
+  "url": "/api/l2/baselines",
+  "status": 200,
+  "bytes": 10017,
+  "sha256": "d80d2ba9ea50e1e9",
+  "file": "api_l2_baselines.html"
+ },
+ {
+  "chunk": "c17",
+  "endpoint": "/api/fleet-summary",
+  "query": "",
+  "url": "/api/fleet-summary",
+  "status": 200,
+  "bytes": 874,
+  "sha256": "b1caf24bf125ccf7",
+  "file": "api_fleet-summary.html"
+ },
+ {
+  "chunk": "c18",
+  "endpoint": "/api/graph/symbol",
+  "query": "",
+  "url": "/api/graph/symbol",
+  "status": 200,
+  "bytes": 0,
+  "sha256": "e3b0c44298fc1c14",
+  "file": "api_graph_symbol.html",
+  "no_golden": true
+ },
+ {
+  "chunk": "c19",
+  "endpoint": "/",
+  "query": "",
+  "url": "/",
+  "status": 200,
+  "bytes": 27487,
+  "sha256": "73a07c292df5d503",
+  "file": "root.html"
+ },
+ {
+  "chunk": "c20",
+  "endpoint": "/api/harness/gate-test",
+  "query": "",
+  "url": "/api/harness/gate-test",
+  "status": 200,
+  "bytes": 147,
+  "sha256": "0c17d892c30405e8",
+  "file": "api_harness_gate-test.html"
+ },
+ {
+  "chunk": "c21",
+  "endpoint": "/api/plugin-hooks",
+  "query": "",
+  "url": "/api/plugin-hooks",
+  "status": 200,
+  "bytes": 2626,
+  "sha256": "004c059637146ba4",
+  "file": "api_plugin-hooks.html"
+ },
+ {
+  "chunk": "c22",
+  "endpoint": "/api/graph/overview",
+  "query": "",
+  "url": "/api/graph/overview",
+  "status": 200,
+  "bytes": 1320,
+  "sha256": "0901f86228215e0c",
+  "file": "api_graph_overview.html"
+ },
+ {
+  "chunk": "c23",
+  "endpoint": "/api/harness/runs",
+  "query": "",
+  "url": "/api/harness/runs",
+  "status": 200,
+  "bytes": 3368,
+  "sha256": "f13f3121dbda1ece",
+  "file": "api_harness_runs.html"
+ },
+ {
+  "chunk": "c24",
+  "endpoint": "/api/restart-quality/accelerator",
+  "query": "",
+  "url": "/api/restart-quality/accelerator",
+  "status": 200,
+  "bytes": 64,
+  "sha256": "db25e4b33f0d7b38",
+  "file": "api_restart-quality_accelerator.html"
+ },
+ {
+  "chunk": "c25",
+  "endpoint": "/api/glossary",
+  "query": "",
+  "url": "/api/glossary",
+  "status": 200,
+  "bytes": 3886,
+  "sha256": "8f147e2dcd4a5138",
+  "file": "api_glossary.html"
+ },
+ {
+  "chunk": "c26",
+  "endpoint": "/api/compress-feed",
+  "query": "",
+  "url": "/api/compress-feed",
+  "status": 200,
+  "bytes": 5140,
+  "sha256": "070397b881d087ce",
+  "file": "api_compress-feed.html"
+ },
+ {
+  "chunk": "c27",
+  "endpoint": "/api/alert-log",
+  "query": "",
+  "url": "/api/alert-log",
+  "status": 200,
+  "bytes": 10316,
+  "sha256": "4ce02e925dec2de1",
+  "file": "api_alert-log.html"
+ },
+ {
+  "chunk": "c28",
+  "endpoint": "/api/agent-summary/accelerator",
+  "query": "",
+  "url": "/api/agent-summary/accelerator",
+  "status": 200,
+  "bytes": 91,
+  "sha256": "00df3f7d2e5b0809",
+  "file": "api_agent-summary_accelerator.html"
+ },
+ {
+  "chunk": "c29",
+  "endpoint": "/api/alerts-subs",
+  "query": "",
+  "url": "/api/alerts-subs",
+  "status": 200,
+  "bytes": 799,
+  "sha256": "f9ad8d3b351eabe5",
+  "file": "api_alerts-subs.html"
+ },
+ {
+  "chunk": "c30",
+  "endpoint": "/api/onboarding-guide",
+  "query": "",
+  "url": "/api/onboarding-guide",
+  "status": 200,
+  "bytes": 85,
+  "sha256": "6019506a61f3786b",
+  "file": "api_onboarding-guide.html"
+ },
+ {
+  "chunk": "c31",
+  "endpoint": "/api/harness/runs/{run_id}",
+  "skipped": "no-fixture"
+ },
+ {
+  "chunk": "c32",
+  "endpoint": "/api/pro-preview/auto-heal",
+  "query": "",
+  "url": "/api/pro-preview/auto-heal",
+  "status": 200,
+  "bytes": 26,
+  "sha256": "eef48fa30a365b86",
+  "file": "api_pro-preview_auto-heal.html"
+ },
+ {
+  "chunk": "c33",
+  "endpoint": "/api/alerts/live",
+  "query": "",
+  "url": "/api/alerts/live",
+  "status": 200,
+  "bytes": 22392,
+  "sha256": "2956c251153f04c9",
+  "file": "api_alerts_live.html"
+ },
+ {
+  "chunk": "c34",
+  "endpoint": "/api/alerts",
+  "query": "",
+  "url": "/api/alerts",
+  "status": 200,
+  "bytes": 35097,
+  "sha256": "0e1eab15253d06db",
+  "file": "api_alerts.html"
+ },
+ {
+  "chunk": "c35",
+  "endpoint": "/api/capability/pending-tasks/html",
+  "query": "",
+  "url": "/api/capability/pending-tasks/html",
+  "status": 200,
+  "bytes": 345,
+  "sha256": "cf2c412da3941307",
+  "file": "api_capability_pending-tasks_html.html"
+ },
+ {
+  "chunk": "c36",
+  "endpoint": "/api/error-state",
+  "query": "",
+  "url": "/api/error-state",
+  "status": 200,
+  "bytes": 0,
+  "sha256": "e3b0c44298fc1c14",
+  "file": "api_error-state.html",
+  "no_golden": true
+ },
+ {
+  "chunk": "c37",
+  "endpoint": "/api/errors",
+  "query": "",
+  "url": "/api/errors",
+  "status": 200,
+  "bytes": 32371,
+  "sha256": "1ce9a4d981436ca1",
+  "file": "api_errors.html"
+ },
+ {
+  "chunk": "c38",
+  "endpoint": "/api/platforms",
+  "query": "",
+  "url": "/api/platforms",
+  "status": 200,
+  "bytes": 5922,
+  "sha256": "acf4831845251444",
+  "file": "api_platforms.html"
+ },
+ {
+  "chunk": "c39",
+  "endpoint": "/api/delay-banner",
+  "query": "",
+  "url": "/api/delay-banner",
+  "status": 200,
+  "bytes": 258,
+  "sha256": "d3da95953648cfda",
+  "file": "api_delay-banner.html"
+ },
+ {
+  "chunk": "c40",
+  "endpoint": "/api/risk",
+  "query": "",
+  "url": "/api/risk",
+  "status": 200,
+  "bytes": 83,
+  "sha256": "b7d139b9315e6dc8",
+  "file": "api_risk.html"
+ },
+ {
+  "chunk": "c41",
+  "endpoint": "/api/heal-log",
+  "query": "",
+  "url": "/api/heal-log",
+  "status": 200,
+  "bytes": 4117,
+  "sha256": "7e3b8e1dace1a2ee",
+  "file": "api_heal-log.html"
+ },
+ {
+  "chunk": "c42",
+  "endpoint": "/api/timeline/errors",
+  "query": "",
+  "url": "/api/timeline/errors",
+  "status": 200,
+  "bytes": 99663,
+  "sha256": "a3edf0f52151be6f",
+  "file": "api_timeline_errors.html"
+ },
+ {
+  "chunk": "c43",
+  "endpoint": "/api/fleet/canary-card/accelerator",
+  "query": "",
+  "url": "/api/fleet/canary-card/accelerator",
+  "status": 200,
+  "bytes": 1380,
+  "sha256": "720d453934bc03bf",
+  "file": "api_fleet_canary-card_accelerator.html"
+ },
+ {
+  "chunk": "c44",
+  "endpoint": "/api/phase",
+  "query": "",
+  "url": "/api/phase",
+  "status": 200,
+  "bytes": 444,
+  "sha256": "ba67c7b8fb9e9069",
+  "file": "api_phase.html"
+ },
+ {
+  "chunk": "c45",
+  "endpoint": "/api/trigger-heal",
+  "skipped": "manual-verify"
+ },
+ {
+  "chunk": "c46",
+  "endpoint": "/api/capability/tasks/list",
+  "query": "",
+  "url": "/api/capability/tasks/list",
+  "status": 200,
+  "bytes": 42575,
+  "sha256": "ba628f196881b0b7",
+  "file": "api_capability_tasks_list.html"
+ },
+ {
+  "chunk": "c47",
+  "endpoint": "/api/capability/timeline/events",
+  "query": "?agent=default",
+  "url": "/api/capability/timeline/events?agent=default",
+  "status": 200,
+  "bytes": 19422,
+  "sha256": "5a47123507a08bd9",
+  "file": "api_capability_timeline_events__agent-default.html"
+ },
+ {
+  "chunk": "c48",
+  "endpoint": "/api/efficiency/sessions",
+  "query": "",
+  "url": "/api/efficiency/sessions",
+  "status": 200,
+  "bytes": 40635,
+  "sha256": "ef78f76deead8986",
+  "file": "api_efficiency_sessions.html"
+ },
+ {
+  "chunk": "c49",
+  "endpoint": "/api/capability/tasks/arithmetic-reasoning/editor",
+  "query": "",
+  "url": "/api/capability/tasks/arithmetic-reasoning/editor",
+  "status": 200,
+  "bytes": 8348,
+  "sha256": "91c147726a0292c9",
+  "file": "api_capability_tasks_arithmetic-reasoning_editor.html"
+ },
+ {
+  "chunk": "c50",
+  "endpoint": "/api/fleet/verdict",
+  "query": "",
+  "url": "/api/fleet/verdict",
+  "status": 200,
+  "bytes": 1018,
+  "sha256": "6b3d52465f37a040",
+  "file": "api_fleet_verdict.html"
+ },
+ {
+  "chunk": "c51",
+  "endpoint": "/api/restart-quality",
+  "query": "",
+  "url": "/api/restart-quality",
+  "status": 200,
+  "bytes": 1043,
+  "sha256": "8a211544535f7297",
+  "file": "api_restart-quality.html"
+ },
+ {
+  "chunk": "c52",
+  "endpoint": "/api/fleet-compare",
+  "query": "",
+  "url": "/api/fleet-compare",
+  "status": 200,
+  "bytes": 58536,
+  "sha256": "59e2e8c2193c74b1",
+  "file": "api_fleet-compare.html"
+ },
+ {
+  "chunk": "c53",
+  "endpoint": "/api/capability/grid/table",
+  "query": "?agent=default",
+  "url": "/api/capability/grid/table?agent=default",
+  "status": 200,
+  "bytes": 286,
+  "sha256": "ae743f6573ddd550",
+  "file": "api_capability_grid_table__agent-default.html"
+ },
+ {
+  "chunk": "c54",
+  "endpoint": "/api/budget-planner",
+  "query": "",
+  "url": "/api/budget-planner",
+  "status": 200,
+  "bytes": 3474,
+  "sha256": "7b965f4834df641d",
+  "file": "api_budget-planner.html"
+ },
+ {
+  "chunk": "c55",
+  "endpoint": "/api/heal-config",
+  "query": "",
+  "url": "/api/heal-config",
+  "status": 200,
+  "bytes": 133784,
+  "sha256": "258e999f82b0c819",
+  "file": "api_heal-config.html"
+ },
+ {
+  "chunk": "c56",
+  "endpoint": "/api/capability/drift/chart",
+  "query": "?agent=default",
+  "url": "/api/capability/drift/chart?agent=default",
+  "status": 200,
+  "bytes": 346,
+  "sha256": "cf61c1fd6017a817",
+  "file": "api_capability_drift_chart__agent-default.html"
+ },
+ {
+  "chunk": "c57",
+  "endpoint": "/api/fleet/modal/accelerator",
+  "query": "",
+  "url": "/api/fleet/modal/accelerator",
+  "status": 200,
+  "bytes": 10620,
+  "sha256": "c8eecf2f4f83044b",
+  "file": "api_fleet_modal_accelerator.html"
+ },
+ {
+  "chunk": "c58",
+  "endpoint": "/api/alert-dashboard",
+  "query": "",
+  "url": "/api/alert-dashboard",
+  "status": 200,
+  "bytes": 20727,
+  "sha256": "9a3656eb2b9cea5e",
+  "file": "api_alert-dashboard.html"
+ },
+ {
+  "chunk": "c59",
+  "endpoint": "/api/drift-summary",
+  "query": "",
+  "url": "/api/drift-summary",
+  "status": 200,
+  "bytes": 41087,
+  "sha256": "f8fad2a42a62d25e",
+  "file": "api_drift-summary.html"
+ },
+ {
+  "chunk": "c60",
+  "endpoint": "/api/fleet/agents",
+  "query": "",
+  "url": "/api/fleet/agents",
+  "status": 200,
+  "bytes": 147468,
+  "sha256": "d599dc022dea93be",
+  "file": "api_fleet_agents.html"
+ },
+ {
+  "chunk": "c60",
+  "endpoint": "/api/fleet/agents",
+  "query": "?sort=status",
+  "url": "/api/fleet/agents?sort=status",
+  "status": 200,
+  "bytes": 147468,
+  "sha256": "37ad7a548e24005a",
+  "file": "api_fleet_agents__sort-status.html"
+ },
+ {
+  "chunk": "c60",
+  "endpoint": "/api/fleet/agents",
+  "query": "?sort=name",
+  "url": "/api/fleet/agents?sort=name",
+  "status": 200,
+  "bytes": 147468,
+  "sha256": "bbd863c97f3b060f",
+  "file": "api_fleet_agents__sort-name.html"
+ },
+ {
+  "chunk": "c60",
+  "endpoint": "/api/fleet/agents",
+  "query": "?sort=cost",
+  "url": "/api/fleet/agents?sort=cost",
+  "status": 200,
+  "bytes": 147468,
+  "sha256": "0fb8fece9ce7956c",
+  "file": "api_fleet_agents__sort-cost.html"
+ },
+ {
+  "chunk": "c60",
+  "endpoint": "/api/fleet/agents",
+  "query": "?sort=drift",
+  "url": "/api/fleet/agents?sort=drift",
+  "status": 200,
+  "bytes": 147468,
+  "sha256": "62d5c646e7525c17",
+  "file": "api_fleet_agents__sort-drift.html"
+ },
+ {
+  "chunk": "c60",
+  "endpoint": "/api/fleet/agents",
+  "query": "?sort=tokens",
+  "url": "/api/fleet/agents?sort=tokens",
+  "status": 200,
+  "bytes": 147468,
+  "sha256": "b350eb9dca5d76bf",
+  "file": "api_fleet_agents__sort-tokens.html"
+ },
+ {
+  "chunk": "c61",
+  "endpoint": "/api/analytics/tokens",
+  "query": "",
+  "url": "/api/analytics/tokens",
+  "status": 200,
+  "bytes": 71401,
+  "sha256": "5321003de0f9e619",
+  "file": "api_analytics_tokens.html"
+ },
+ {
+  "chunk": "c61",
+  "endpoint": "/api/analytics/tokens",
+  "query": "?days=1",
+  "url": "/api/analytics/tokens?days=1",
+  "status": 200,
+  "bytes": 66105,
+  "sha256": "c89a09ef50dacf14",
+  "file": "api_analytics_tokens__days-1.html"
+ },
+ {
+  "chunk": "c61",
+  "endpoint": "/api/analytics/tokens",
+  "query": "?days=30",
+  "url": "/api/analytics/tokens?days=30",
+  "status": 200,
+  "bytes": 84884,
+  "sha256": "92933c51293c68c7",
+  "file": "api_analytics_tokens__days-30.html"
+ },
+ {
+  "chunk": "c61",
+  "endpoint": "/api/analytics/tokens",
+  "query": "?hours=1",
+  "url": "/api/analytics/tokens?hours=1",
+  "status": 200,
+  "bytes": 67198,
+  "sha256": "ad577492795c7941",
+  "file": "api_analytics_tokens__hours-1.html"
+ },
+ {
+  "chunk": "c62",
+  "endpoint": "/api/agents",
+  "query": "",
+  "url": "/api/agents",
+  "status": 200,
+  "bytes": 75350,
+  "sha256": "337fc934f2d7aca9",
+  "file": "api_agents.html"
+ },
+ {
+  "chunk": "c63",
+  "endpoint": "/api/fleet/state",
+  "query": "",
+  "url": "/api/fleet/state",
+  "status": 200,
+  "bytes": 148538,
+  "sha256": "64a5667c21bf7ae9",
+  "file": "api_fleet_state.html"
+ },
+ {
+  "chunk": "c64",
+  "endpoint": "/api/agent-detail/accelerator",
+  "query": "?tab=health",
+  "url": "/api/agent-detail/accelerator?tab=health",
+  "status": 200,
+  "bytes": 3866,
+  "sha256": "1e60faa89c01238d",
+  "file": "api_agent-detail_accelerator__tab-health.html"
+ },
+ {
+  "chunk": "c65",
+  "endpoint": "/api/capability/page",
+  "query": "?agent=default",
+  "url": "/api/capability/page?agent=default",
+  "status": 200,
+  "bytes": 50232,
+  "sha256": "8e2232df96de56d0",
+  "file": "api_capability_page__agent-default.html"
+ }
+]

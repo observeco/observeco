@@ -1,0 +1,13 @@
+<div class="restart-empty" style="padding:24px;text-align:center;">
+  <div style="font-size:32px;margin-bottom:12px;">🔌</div>
+  <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">No restart data yet</div>
+  <div style="font-size:12px;color:var(--fg-2);margin-bottom:16px;">Most agents restart cleanly. If not, this tab shows you exactly what went wrong — TOCTOU race or real crash.</div>
+  <button onclick="triggerRestartScan()" style="background:var(--accent);color:#e2e8f0;border:none;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;">
+    🔄 Run Pulse Scan
+  </button>
+  <div id="restartScanStatus" style="font-size:11px;color:var(--muted);margin-top:8px;"></div>
+  <div style="font-size:11px;color:var(--muted);margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+    Restart data is also collected automatically when the Watch Daemon is running.<br>
+    Three restart types: 🟢 healthy KeepAlive · 🟡 TOCTOU race · 🔴 real crash
+  </div>
+</div>

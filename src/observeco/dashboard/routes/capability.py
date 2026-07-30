@@ -1415,6 +1415,18 @@ def _drift_insufficient_html(agent: str, run_count: int) -> HTMLResponse:
     """)
 
 
+def _get_all_models() -> list[str]:
+    """Get all available models for the grid UI."""
+    from observeco.capability.model_config import load_available_models
+    return load_available_models(provider_filter='ollama-cloud')
+
+
+def _get_default_models_set() -> set[str]:
+    """Get the default pre-selected models."""
+    from observeco.capability.model_config import get_default_grid_models
+    return set(get_default_grid_models())
+
+
 # ── Grid report HTML partial ─────────────────────────────────────────────────
 
 @router.get("/grid/table", response_class=HTMLResponse)
@@ -1551,7 +1563,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
       <div style="display:flex;align-items:center;gap:6px;">
         <label>Models</label>
         <select class="grid-select" id="gridModels" multiple style="min-width:200px;">
-          {''.join(f'<option value="{_html_escape(m)}" selected>{_html_escape(m.split("/")[-1])}</option>' for m in models)}
+          {''.join(f'<option value="{_html_escape(m)}" {"selected" if m in _get_default_models_set() else ""}>{_html_escape(m.split("/")[-1])}</option>' for m in _get_all_models())}
         </select>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
@@ -1608,13 +1620,14 @@ def _grid_running_html(agent: str, started_at: str) -> str:
 
 
 def _grid_empty_html(agent: str = "main") -> str:
-    """Show empty state with model and profile selectors from config."""
-    from observeco.capability.model_config import get_default_grid_models, get_default_grid_profiles
-    models = get_default_grid_models()
+    """Show empty state with all models but only defaults pre-selected."""
+    from observeco.capability.model_config import load_available_models, get_default_grid_models, get_default_grid_profiles
+    all_models = load_available_models(provider_filter='ollama-cloud')
+    default_models = set(get_default_grid_models())
     profiles = get_default_grid_profiles()
     model_options = ''.join(
-        f'<option value="{m}" selected>{m.split("/")[-1]}</option>'
-        for m in models
+        f'<option value="{m}" {"selected" if m in default_models else ""}>{m.split("/")[-1]}</option>'
+        for m in all_models
     )
     profile_options = ''.join(
         f'<option value="{p}" selected>{p}</option>'

@@ -1,0 +1,1188 @@
+<div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="chevron">▼</span>
+      <span class="section-name">Agents</span>
+      <span class="section-count">13 / 13</span>
+    </div>
+    <div class="section-body">
+      <div class="agent-card" data-agent="accelerator">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('accelerator')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('accelerator')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">accelerator</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">10s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('accelerator','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 5 checks recorded. Continue monitoring.</div>
+      <div class="metric-row" onclick="loadTab('accelerator','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">✅ Guard OK</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('accelerator','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-bar"><span class="seg" style="width:72.9%;background:#f97316;" title="Guidance: 2,678"></span><span class="seg" style="width:17.2%;background:#ec4899;" title="Memory: 632"></span><span class="seg" style="width:9.8%;background:#8b5cf6;" title="Skills: 361"></span><span class="seg" style="width:0.0%;background:#6366f1;" title="Identity: 1"></span><span class="seg" style="width:0.0%;background:#14b8a6;" title="Tools: 1"></span></div><div class="token-count">3,673 total</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('accelerator','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('accelerator','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-card-header">
+    <div class="canary-card-title">
+      <span class="status-dot red"></span>
+      Canary
+      <span class="canary-card-meta">Last run: 2026-07-15</span>
+    </div>
+  </div>
+  <div class="canary-card-stats">
+    <div class="canary-stat">
+      <div class="canary-stat-num red">0/12</div>
+      <div class="canary-stat-label">Pass Rate</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num red">0%</div>
+      <div class="canary-stat-label">Accuracy</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">0</div>
+      <div class="canary-stat-label">Hangs</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">100%</div>
+      <div class="canary-stat-label">Recovery</div>
+    </div>
+  </div>
+  <div class="canary-card-footer">
+    <div style="color:var(--muted);font-size:10px;">No baseline</div>
+    <span class="action-link" onclick="switchTab('capability', document.querySelector('.tab-btn:nth-child(11)'))">View details →</span>
+  </div>
+</div>
+    </div>
+<div class="agent-card" data-agent="aleph">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('aleph')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('aleph')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">aleph</div>
+          <div class="agent-meta">Agent · Hermes + Launchd</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('aleph','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 5 checks recorded. Continue monitoring.</div>
+      <div class="metric-row" onclick="loadTab('aleph','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">✅ Guard OK</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('aleph','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-bar"><span class="seg" style="width:92.3%;background:#f97316;" title="Guidance: 589"></span><span class="seg" style="width:7.5%;background:#6366f1;" title="Identity: 48"></span><span class="seg" style="width:0.2%;background:#8b5cf6;" title="Skills: 1"></span><span class="seg" style="width:0.2%;background:#ec4899;" title="Memory: 1"></span><span class="seg" style="width:0.2%;background:#14b8a6;" title="Tools: 1"></span></div><div class="token-count">638 total</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('aleph','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('aleph','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-card-header">
+    <div class="canary-card-title">
+      <span class="status-dot red"></span>
+      Canary
+      <span class="canary-card-meta">Last run: 2026-07-07</span>
+    </div>
+  </div>
+  <div class="canary-card-stats">
+    <div class="canary-stat">
+      <div class="canary-stat-num red">1/9</div>
+      <div class="canary-stat-label">Pass Rate</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num red">11%</div>
+      <div class="canary-stat-label">Accuracy</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">0</div>
+      <div class="canary-stat-label">Hangs</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">100%</div>
+      <div class="canary-stat-label">Recovery</div>
+    </div>
+  </div>
+  <div class="canary-card-footer">
+    <div style="color:var(--muted);font-size:10px;">No baseline</div>
+    <span class="action-link" onclick="switchTab('capability', document.querySelector('.tab-btn:nth-child(11)'))">View details →</span>
+  </div>
+</div>
+    </div>
+<div class="agent-card" data-agent="archive">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('archive')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('archive')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status dead" title="Down"></span>
+        <div class="agent-info">
+          <div class="agent-name">archive</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('archive','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--danger);font-weight:600;">● Down</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 50 errors are from failed reach attempts. Restart to stop the noise.</div>
+      <div class="metric-row" onclick="loadTab('archive','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--warn);font-weight:600;">⚠️ Agent is down</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('archive','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-count" style="color:#475569;">No brain data</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('archive','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('archive','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--warn);">⚠️ 50 in last 24h</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('archive')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="benchmark">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('benchmark')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('benchmark')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status not_running" title="Not running"></span>
+        <div class="agent-info">
+          <div class="agent-name">benchmark</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('benchmark','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Not running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — mixed signals">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Guard stopped after 3 failures. Wait ~4h for cooldown, or restart the agent manually.</div>
+      <div class="metric-row" onclick="loadTab('benchmark','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Agent not started</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('benchmark','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-count" style="color:#475569;">No brain data</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('benchmark','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('benchmark','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--warn);">⚠️ 50 in last 24h</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('benchmark')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="blueprint">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('blueprint')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('blueprint')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status not_running" title="Not running"></span>
+        <div class="agent-info">
+          <div class="agent-name">blueprint</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('blueprint','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Not running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — mixed signals">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Guard stopped after 3 failures. Wait ~4h for cooldown, or restart the agent manually.</div>
+      <div class="metric-row" onclick="loadTab('blueprint','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Agent not started</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('blueprint','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-count" style="color:#475569;">No brain data</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('blueprint','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">📈 Learning...</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('blueprint','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--warn);">⚠️ 50 in last 24h</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('blueprint')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="dreamer">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('dreamer')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('dreamer')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">dreamer</div>
+          <div class="agent-meta">Agent · Hermes + Launchd</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('dreamer','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 5 checks recorded. Continue monitoring.</div>
+      <div class="metric-row" onclick="loadTab('dreamer','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">✅ Guard OK</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('dreamer','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-bar"><span class="seg" style="width:91.2%;background:#f97316;" title="Guidance: 1,464"></span><span class="seg" style="width:8.8%;background:#6366f1;" title="Identity: 141"></span><span class="seg" style="width:0.1%;background:#8b5cf6;" title="Skills: 1"></span><span class="seg" style="width:0.1%;background:#ec4899;" title="Memory: 1"></span><span class="seg" style="width:0.1%;background:#14b8a6;" title="Tools: 1"></span></div><div class="token-count">1,606 total</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('dreamer','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('dreamer','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('dreamer')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="forge">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('forge')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('forge')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status dead" title="Down"></span>
+        <div class="agent-info">
+          <div class="agent-name">forge</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('forge','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--danger);font-weight:600;">● Down</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 50 errors are from failed reach attempts. Restart to stop the noise.</div>
+      <div class="metric-row" onclick="loadTab('forge','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--warn);font-weight:600;">⚠️ Agent is down</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('forge','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-count" style="color:#475569;">No brain data</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('forge','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('forge','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--warn);">⚠️ 50 in last 24h</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('forge')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="gladwell">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('gladwell')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('gladwell')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status not_running" title="Not running"></span>
+        <div class="agent-info">
+          <div class="agent-name">gladwell</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('gladwell','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Not running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — mixed signals">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Guard stopped after 3 failures. Wait ~4h for cooldown, or restart the agent manually.</div>
+      <div class="metric-row" onclick="loadTab('gladwell','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Agent not started</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('gladwell','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-count" style="color:#475569;">No brain data</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('gladwell','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('gladwell','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--warn);">⚠️ 50 in last 24h</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-card-header">
+    <div class="canary-card-title">
+      <span class="status-dot red"></span>
+      Canary
+      <span class="canary-card-meta">Last run: 2026-07-06</span>
+    </div>
+  </div>
+  <div class="canary-card-stats">
+    <div class="canary-stat">
+      <div class="canary-stat-num red">3/9</div>
+      <div class="canary-stat-label">Pass Rate</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num red">33%</div>
+      <div class="canary-stat-label">Accuracy</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">0</div>
+      <div class="canary-stat-label">Hangs</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">100%</div>
+      <div class="canary-stat-label">Recovery</div>
+    </div>
+  </div>
+  <div class="canary-card-footer">
+    <div style="color:var(--muted);font-size:10px;">No baseline</div>
+    <span class="action-link" onclick="switchTab('capability', document.querySelector('.tab-btn:nth-child(11)'))">View details →</span>
+  </div>
+</div>
+    </div>
+<div class="agent-card" data-agent="hawkeye">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('hawkeye')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('hawkeye')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status not_running" title="Not running"></span>
+        <div class="agent-info">
+          <div class="agent-name">hawkeye</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('hawkeye','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Not running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — mixed signals">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Guard stopped after 3 failures. Wait ~4h for cooldown, or restart the agent manually.</div>
+      <div class="metric-row" onclick="loadTab('hawkeye','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Agent not started</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('hawkeye','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-count" style="color:#475569;">No brain data</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('hawkeye','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('hawkeye','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--warn);">⚠️ 50 in last 24h</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('hawkeye')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="hound">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('hound')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('hound')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">hound</div>
+          <div class="agent-meta">Agent · Openclaw + Hermes + Launchd</div>
+        </div>
+        <div class="agent-last-seen">11s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('hound','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 5 checks recorded. Continue monitoring.</div>
+      <div class="metric-row" onclick="loadTab('hound','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">✅ Guard OK</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('hound','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-bar"><span class="seg" style="width:94.0%;background:#f97316;" title="Guidance: 2,041"></span><span class="seg" style="width:6.0%;background:#6366f1;" title="Identity: 130"></span><span class="seg" style="width:0.0%;background:#8b5cf6;" title="Skills: 1"></span><span class="seg" style="width:0.0%;background:#ec4899;" title="Memory: 1"></span><span class="seg" style="width:0.0%;background:#14b8a6;" title="Tools: 1"></span></div><div class="token-count">2,172 total</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('hound','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('hound','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-card-header">
+    <div class="canary-card-title">
+      <span class="status-dot red"></span>
+      Canary
+      <span class="canary-card-meta">Last run: 2026-07-06</span>
+    </div>
+  </div>
+  <div class="canary-card-stats">
+    <div class="canary-stat">
+      <div class="canary-stat-num red">1/3</div>
+      <div class="canary-stat-label">Pass Rate</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num red">33%</div>
+      <div class="canary-stat-label">Accuracy</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">0</div>
+      <div class="canary-stat-label">Hangs</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">100%</div>
+      <div class="canary-stat-label">Recovery</div>
+    </div>
+  </div>
+  <div class="canary-card-footer">
+    <div style="color:var(--muted);font-size:10px;">No baseline</div>
+    <span class="action-link" onclick="switchTab('capability', document.querySelector('.tab-btn:nth-child(11)'))">View details →</span>
+  </div>
+</div>
+    </div>
+<div class="agent-card" data-agent="kanban">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('kanban')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('kanban')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status dead" title="Down"></span>
+        <div class="agent-info">
+          <div class="agent-name">kanban</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('kanban','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--danger);font-weight:600;">● Down</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 50 errors are from failed reach attempts. Restart to stop the noise.</div>
+      <div class="metric-row" onclick="loadTab('kanban','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--warn);font-weight:600;">⚠️ Agent is down</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('kanban','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-count" style="color:#475569;">No brain data</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('kanban','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('kanban','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--warn);">⚠️ 50 in last 24h</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('kanban')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="kepler">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('kepler')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('kepler')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">kepler</div>
+          <div class="agent-meta">Agent · Openclaw + Hermes</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('kepler','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 5 checks recorded. Continue monitoring.</div>
+      <div class="metric-row" onclick="loadTab('kepler','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">✅ Guard OK</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('kepler','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-bar"><span class="seg" style="width:88.2%;background:#f97316;" title="Guidance: 912"></span><span class="seg" style="width:11.7%;background:#6366f1;" title="Identity: 121"></span><span class="seg" style="width:0.1%;background:#8b5cf6;" title="Skills: 1"></span><span class="seg" style="width:0.1%;background:#ec4899;" title="Memory: 1"></span><span class="seg" style="width:0.1%;background:#14b8a6;" title="Tools: 1"></span></div><div class="token-count">1,034 total</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('kepler','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('kepler','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-card-header">
+    <div class="canary-card-title">
+      <span class="status-dot red"></span>
+      Canary
+      <span class="canary-card-meta">Last run: 2026-07-07</span>
+    </div>
+  </div>
+  <div class="canary-card-stats">
+    <div class="canary-stat">
+      <div class="canary-stat-num red">1/9</div>
+      <div class="canary-stat-label">Pass Rate</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num red">11%</div>
+      <div class="canary-stat-label">Accuracy</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">0</div>
+      <div class="canary-stat-label">Hangs</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">100%</div>
+      <div class="canary-stat-label">Recovery</div>
+    </div>
+  </div>
+  <div class="canary-card-footer">
+    <div style="color:var(--muted);font-size:10px;">No baseline</div>
+    <span class="action-link" onclick="switchTab('capability', document.querySelector('.tab-btn:nth-child(11)'))">View details →</span>
+  </div>
+</div>
+    </div>
+<div class="agent-card" data-agent="main">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('main')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('main')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">main</div>
+          <div class="agent-meta">Agent · Hermes</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('main','health','agent')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+        <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 5 checks recorded. Continue monitoring.</div>
+      <div class="metric-row" onclick="loadTab('main','guard','agent')">
+        <span class="label">Guard<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('circuit', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">✅ Guard OK</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('main','tokens','agent')">
+        <span class="label">Tokens<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('tokens', event)">?</span></span>
+        <span class="value"><div class="token-bar"><span class="seg" style="width:72.9%;background:#f97316;" title="Guidance: 2,678"></span><span class="seg" style="width:17.2%;background:#ec4899;" title="Memory: 632"></span><span class="seg" style="width:9.8%;background:#8b5cf6;" title="Skills: 361"></span><span class="seg" style="width:0.0%;background:#6366f1;" title="Identity: 1"></span><span class="seg" style="width:0.0%;background:#14b8a6;" title="Tools: 1"></span></div><div class="token-count">3,673 total</div></span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('main','drift','agent')">
+        <span class="label">Drift<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('drift', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">➡️ 0.0% this week</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="metric-row" onclick="loadTab('main','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-card-header">
+    <div class="canary-card-title">
+      <span class="status-dot yellow"></span>
+      Canary
+      <span class="canary-card-meta">Last run: 2026-07-18</span>
+    </div>
+  </div>
+  <div class="canary-card-stats">
+    <div class="canary-stat">
+      <div class="canary-stat-num yellow">78/20</div>
+      <div class="canary-stat-label">Pass Rate</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num yellow">68%</div>
+      <div class="canary-stat-label">Accuracy</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">0</div>
+      <div class="canary-stat-label">Hangs</div>
+    </div>
+    <div class="canary-stat">
+      <div class="canary-stat-num green">100%</div>
+      <div class="canary-stat-label">Recovery</div>
+    </div>
+  </div>
+  <div class="canary-card-footer">
+    <div class="drift-indicator up">▲ 26.2% vs baseline</div>
+    <span class="action-link" onclick="switchTab('capability', document.querySelector('.tab-btn:nth-child(11)'))">View details →</span>
+  </div>
+</div>
+    </div>
+    </div>
+  </div>
+<div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="chevron">▼</span>
+      <span class="section-name">Services</span>
+      <span class="section-count">11 / 11</span>
+    </div>
+    <div class="section-body">
+      <div class="agent-card" data-agent="calendar-bridge-auth">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('calendar-bridge-auth')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('calendar-bridge-auth')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">calendar-bridge-auth</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('calendar-bridge-auth','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('calendar-bridge-auth','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('calendar-bridge-auth')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="dashboard">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('dashboard')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('dashboard')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">dashboard</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">last pulse 1d ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('dashboard','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running (stale)</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('dashboard','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('dashboard')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="gateway">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('gateway')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('gateway')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">gateway</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('gateway','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('gateway','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('gateway')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="herald">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('herald')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('herald')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">herald</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('herald','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('herald','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('herald')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="hound-acps-watcher">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('hound-acps-watcher')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('hound-acps-watcher')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">hound-acps-watcher</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('hound-acps-watcher','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('hound-acps-watcher','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('hound-acps-watcher')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="hound-watcher">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('hound-watcher')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('hound-watcher')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">hound-watcher</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('hound-watcher','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('hound-watcher','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('hound-watcher')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="imessage-watcher">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('imessage-watcher')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('imessage-watcher')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">imessage-watcher</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('imessage-watcher','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('imessage-watcher','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('imessage-watcher')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="kepler-acps-watcher">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('kepler-acps-watcher')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('kepler-acps-watcher')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">kepler-acps-watcher</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('kepler-acps-watcher','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('kepler-acps-watcher','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('kepler-acps-watcher')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="memory-cache">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('memory-cache')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('memory-cache')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">memory-cache</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('memory-cache','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('memory-cache','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('memory-cache')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="memory-cache-watcher">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('memory-cache-watcher')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('memory-cache-watcher')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">memory-cache-watcher</div>
+          <div class="agent-meta">Service · Launchd</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('memory-cache-watcher','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('memory-cache-watcher','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('memory-cache-watcher')">Run Canary</button></div>
+</div>
+    </div>
+<div class="agent-card" data-agent="my_new_agent">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('my_new_agent')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('my_new_agent')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status not_running" title="Not running"></span>
+        <div class="agent-info">
+          <div class="agent-name">my_new_agent</div>
+          <div class="agent-meta">Service · Custom</div>
+        </div>
+        <div class="agent-last-seen">12s ago</div>
+      </div>
+      <div style="margin-bottom:6px;"><span class="gap-badge">🔍 No tokens</span> <span class="sep-pipe">|</span> <span class="gap-badge">🔍 No drift</span></div>
+      <div class="metric-row" onclick="loadTab('my_new_agent','health','service')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--muted);font-weight:600;">○ Not running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('my_new_agent','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--warn);">⚠️ 50 in last 24h</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('my_new_agent')">Run Canary</button></div>
+</div>
+    </div>
+    </div>
+  </div>
+<div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+      <span class="chevron">▼</span>
+      <span class="section-name">Workflows</span>
+      <span class="section-count">1 / 1</span>
+    </div>
+    <div class="section-body">
+      <div class="agent-card" data-agent="hermes-agent">
+      <button class="agent-toggle" onclick="event.stopPropagation();toggleHide('hermes-agent')" title="Hide agent"></button>
+      <button class="agent-delete" onclick="event.stopPropagation();deleteAgent('hermes-agent')" title="Remove agent">✕</button>
+      <div class="card-top">
+        <span class="agent-status alive" title="Running"></span>
+        <div class="agent-info">
+          <div class="agent-name">hermes-agent</div>
+          <div class="agent-meta">Workflow · Auto-registered</div>
+        </div>
+        <div class="agent-last-seen">1m ago</div>
+      </div>
+      
+      <div class="metric-row" onclick="loadTab('hermes-agent','health','workflow')">
+        <span class="label">Health<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('status-dot', event)">?</span></span>
+        <span class="value" style="color:var(--accent);font-weight:600;">● Running</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      
+      
+      
+      
+      <div class="metric-row" onclick="loadTab('hermes-agent','errors')">
+        <span class="label">Errors<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('error-badge', event)">?</span></span>
+        <span class="value" style="color:var(--muted);">- No errors</span>
+        <span class="click-hint">See details</span><span class="arrow">›</span>
+      </div>
+      <div class="canary-card">
+  <div class="canary-empty">🔬 No canary baseline yet <button onclick="runCanaryFor('hermes-agent')">Run Canary</button></div>
+</div>
+    </div>
+    </div>
+  </div>
+
+<div class="pagination-bar" id="paginationBar" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 0;font-size:12px;color:#94a3b8;">
+    <button hx-get="/api/agents?page=1&per_page=25" hx-target="#fleetContainer" hx-swap="innerHTML" style="opacity:0.4;pointer-events:none;" class="page-btn">⏮</button>
+    <button hx-get="/api/agents?page=1&per_page=25" hx-target="#fleetContainer" hx-swap="innerHTML" style="opacity:0.4;pointer-events:none;" class="page-btn">◀</button>
+    <span style="color:#e2e8f0;">1 / 2</span>
+    <button hx-get="/api/agents?page=2&per_page=25" hx-target="#fleetContainer" hx-swap="innerHTML"  class="page-btn">▶</button>
+    <button hx-get="/api/agents?page=2&per_page=25" hx-target="#fleetContainer" hx-swap="innerHTML"  class="page-btn">⏭</button>
+    <span style="margin-left:8px;">Showing 1–25 of 39</span>
+</div>

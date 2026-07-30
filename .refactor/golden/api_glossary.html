@@ -1,0 +1,87 @@
+
+<div class="glossary-panel">
+    <div class="glossary-panel-header">
+        <div class="glossary-panel-title">📖 Glossary &amp; FAQ</div>
+        <span onclick="toggleGlossarySection()" class="glossary-panel-toggle" id="glossary-toggle-label">▼ Show</span>
+    </div>
+    <div id="glossary-body" class="u-hidden">
+
+<div class="glossary-item">
+    <div class="glossary-q" onclick="toggleGlossary(0)">
+        <span>What is a pulse?</span>
+        <span class="glossary-icon" id="glossary-icon-0">▼</span>
+    </div>
+    <div class="glossary-answer" id="glossary-answer-0">
+        A heartbeat check — `observeco pulse check` sends a health request to each agent and records alive/dead/error status. Green = healthy, yellow = degraded, red = unreachable.
+    </div>
+</div>
+
+<div class="glossary-item">
+    <div class="glossary-q" onclick="toggleGlossary(1)">
+        <span>What is a circuit breaker?</span>
+        <span class="glossary-icon" id="glossary-icon-1">▼</span>
+    </div>
+    <div class="glossary-answer" id="glossary-answer-1">
+        When an agent fails N times in a row (default 3), the circuit trips — further checks are blocked until a cooldown expires or you manually reset. Prevents cascading failures.
+    </div>
+</div>
+
+<div class="glossary-item">
+    <div class="glossary-q" onclick="toggleGlossary(2)">
+        <span>What is drift?</span>
+        <span class="glossary-icon" id="glossary-icon-2">▼</span>
+    </div>
+    <div class="glossary-answer" id="glossary-answer-2">
+        Token composition change over time. If an agent's system prompt grows +15% in a week, that's drift. Tracked per component (identity, skills, memory, tools, guidance).
+    </div>
+</div>
+
+<div class="glossary-item">
+    <div class="glossary-q" onclick="toggleGlossary(3)">
+        <span>What is context compression?</span>
+        <span class="glossary-icon" id="glossary-icon-3">▼</span>
+    </div>
+    <div class="glossary-answer" id="glossary-answer-3">
+        ObserveCo's system prompt compression. Decomposes the prompt by component, measures tokens per section, and saves 15-30% per session via intelligent trimming. Run `observeco context trim` to see breakdown.
+    </div>
+</div>
+
+<div class="glossary-item">
+    <div class="glossary-q" onclick="toggleGlossary(4)">
+        <span>What is memory gardening?</span>
+        <span class="glossary-icon" id="glossary-icon-4">▼</span>
+    </div>
+    <div class="glossary-answer" id="glossary-answer-4">
+        Memory hygiene automation: scans agent memory for duplicates, contradictions, and stale entries. Assigns a health score (A-F). Run `observeco memory garden` to audit any agent.
+    </div>
+</div>
+
+<div class="glossary-item">
+    <div class="glossary-q" onclick="toggleGlossary(5)">
+        <span>What do the gauge colors mean?</span>
+        <span class="glossary-icon" id="glossary-icon-5">▼</span>
+    </div>
+    <div class="glossary-answer" id="glossary-answer-5">
+        🟢 Green = healthy. 🟡 Yellow = warning (1-2 missed heartbeats, drift >10%). 🔴 Red = critical (dead agent, tripped circuit). 🟠 Orange = token growth. 🔵 Blue = info/baseline.
+    </div>
+</div>
+    </div>
+</div>
+<script>
+function toggleGlossary(i) {
+    var answer = document.getElementById('glossary-answer-' + i);
+    var icon = document.getElementById('glossary-icon-' + i);
+    if (!answer || !icon) return;
+    var open = answer.style.display !== 'none';
+    answer.style.display = open ? 'none' : 'block';
+    icon.textContent = open ? '▶' : '▼';
+}
+function toggleGlossarySection() {
+    var body = document.getElementById('glossary-body');
+    var label = document.getElementById('glossary-toggle-label');
+    if (!body || !label) return;
+    var open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    label.textContent = open ? '▼ Show' : '▲ Hide';
+}
+</script>

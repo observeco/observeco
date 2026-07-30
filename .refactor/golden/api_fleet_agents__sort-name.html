@@ -1,0 +1,2067 @@
+<div class="section-h" id="fleetSectionHeader" hx-swap-oob="true"><h2>Fleet</h2><span class="count">39 agents</span><span class="hint">▸ click a card to expand</span><span id="fleetUpdated" style="font-size:12px;color:#64748b;margin-left:8px;">Updated 08:10:59</span></div>
+<div class="agg-strip" hx-swap-oob="true" id="fleetAggStrip">
+  <div class="agg-stat"><div class="agg-num">39</div><div class="agg-lbl">agents</div></div>
+  <div class="agg-stat"><div class="agg-num">0</div><div class="agg-lbl">critical</div></div>
+  <div class="agg-stat warn"><div class="agg-num">4</div><div class="agg-lbl">warning</div></div>
+  <div class="agg-stat"><div class="agg-num">53.0K</div><div class="agg-lbl">tokens/agent</div></div>
+  <div class="agg-stat warn"><div class="agg-num">1652%</div><div class="agg-lbl">worst drift</div></div>
+  
+</div>
+<div class="section-h"><h2>Agents</h2><span class="count mono">15</span></div><article class="card open warn">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle accelerator details">
+        <span class="dot warning"></span>
+        <span class="card-name">accelerator</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">3.7K<span class="up"> + 1652%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('accelerator'); return false;" tabindex="0" role="button" aria-label="View accelerator quality benchmark" data-qb="accelerator">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--danger)">0%</span><span class="row-sub-cost"></span>
+                <span class="row-sub">0/12 pass <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-accelerator">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/accelerator?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View accelerator health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">13s ago · warning <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/accelerator?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View accelerator guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/accelerator?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View accelerator errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/accelerator?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View accelerator brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">3.7K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/accelerator?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View accelerator memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">0/100</span>
+                <span class="row-sub">clean <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">DEGRADING</span>
+        <div class="txt"><b>skills</b> grew <span class="num">+710.0%</span> this week. Consider compression.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle aleph details">
+        <span class="dot healthy"></span>
+        <span class="card-name">aleph</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">640<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('aleph'); return false;" tabindex="0" role="button" aria-label="View aleph quality benchmark" data-qb="aleph">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--danger)">11%</span><span class="row-sub-cost"></span>
+                <span class="row-sub">1/9 pass <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-aleph">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/aleph?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View aleph health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">13s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/aleph?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View aleph guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes + launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/aleph?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View aleph errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/aleph?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View aleph brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">640</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/aleph?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View aleph memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">0/100</span>
+                <span class="row-sub">clean <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle blueprint details">
+        <span class="dot gray"></span>
+        <span class="card-name">blueprint</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('blueprint'); return false;" tabindex="0" role="button" aria-label="View blueprint quality benchmark" data-qb="blueprint">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--muted)">no data</span>
+                <span class="row-sub"><button class="qb-run-btn" onclick="event.stopPropagation();openQualityBenchmark('blueprint')">▶ Run</button> <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-blueprint">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/blueprint?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View blueprint health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/blueprint?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View blueprint guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/blueprint?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View blueprint errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 21886 cons · 13s ago <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/blueprint?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View blueprint brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">—</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/blueprint?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View blueprint memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">—</span>
+                <span class="row-sub">no scan <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 21886 consecutive fa.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle dreamer details">
+        <span class="dot healthy"></span>
+        <span class="card-name">dreamer</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">1.6K<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('dreamer'); return false;" tabindex="0" role="button" aria-label="View dreamer quality benchmark" data-qb="dreamer">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--muted)">no data</span>
+                <span class="row-sub"><button class="qb-run-btn" onclick="event.stopPropagation();openQualityBenchmark('dreamer')">▶ Run</button> <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-dreamer">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/dreamer?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View dreamer health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">13s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/dreamer?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View dreamer guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes + launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/dreamer?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View dreamer errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/dreamer?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View dreamer brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">1.6K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/dreamer?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View dreamer memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">—</span>
+                <span class="row-sub">no scan <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle forge details">
+        <span class="dot gray"></span>
+        <span class="card-name">forge</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">899<span class="up"> + 46%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('forge'); return false;" tabindex="0" role="button" aria-label="View forge quality benchmark" data-qb="forge">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--muted)">no data</span>
+                <span class="row-sub"><button class="qb-run-btn" onclick="event.stopPropagation();openQualityBenchmark('forge')">▶ Run</button> <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-forge">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/forge?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View forge health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/forge?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View forge guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/forge?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View forge errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 491 consec · 13s ago <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/forge?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View forge brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">899</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/forge?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View forge memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">—</span>
+                <span class="row-sub">no scan <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">DEGRADING</span>
+        <div class="txt"><b>guidance</b> grew <span class="num">+46.0%</span> this week. Consider compression.</div>
+    </div>
+</div>
+<div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 491 consecutive fail.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle gladwell details">
+        <span class="dot gray"></span>
+        <span class="card-name">gladwell</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">3.9K<span class="up"> + 2%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('gladwell'); return false;" tabindex="0" role="button" aria-label="View gladwell quality benchmark" data-qb="gladwell">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--danger)">33%</span><span class="row-sub-cost"></span>
+                <span class="row-sub">3/9 pass <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-gladwell">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View gladwell health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View gladwell guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View gladwell errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 21884 cons · 13s ago <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View gladwell brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">3.9K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View gladwell memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">0/100</span>
+                <span class="row-sub">clean <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 21884 consecutive fa.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open warn">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle hound details">
+        <span class="dot warning"></span>
+        <span class="card-name">hound</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">2.2K<span class="up"> + 402%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('hound'); return false;" tabindex="0" role="button" aria-label="View hound quality benchmark" data-qb="hound">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--danger)">33%</span><span class="row-sub-cost"></span>
+                <span class="row-sub">1/3 pass <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-hound">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">13s ago · warning <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">openclaw + hermes + launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">2.2K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">0/100</span>
+                <span class="row-sub">clean <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">DEGRADING</span>
+        <div class="txt"><b>guidance</b> grew <span class="num">+24.5%</span> this week. Consider compression.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle kepler details">
+        <span class="dot healthy"></span>
+        <span class="card-name">kepler</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">1.0K<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('kepler'); return false;" tabindex="0" role="button" aria-label="View kepler quality benchmark" data-qb="kepler">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--danger)">11%</span><span class="row-sub-cost"></span>
+                <span class="row-sub">1/9 pass <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-kepler">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kepler?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kepler health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">13s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kepler?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kepler guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">openclaw + hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kepler?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kepler errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kepler?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kepler brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">1.0K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kepler?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kepler memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">0/100</span>
+                <span class="row-sub">clean <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        
+    </div>
+</article><article class="card open warn">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle main details">
+        <span class="dot warning"></span>
+        <span class="card-name">main</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">3.7K<span class="up"> + 1652%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('main'); return false;" tabindex="0" role="button" aria-label="View main quality benchmark" data-qb="main">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--warn)">68%</span><span class="row-sub-cost"></span>
+                <span class="row-sub">78/20 pass <span style="font-size:10px;color:var(--warn)">▼ 8% drift</span> <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-main">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/main?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View main health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · warning <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/main?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View main guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/main?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View main errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/main?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View main brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">3.7K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/main?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View main memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">0/100</span>
+                <span class="row-sub">clean <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">DEGRADING</span>
+        <div class="txt"><b>skills</b> grew <span class="num">+710.0%</span> this week. Consider compression.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle pa details">
+        <span class="dot healthy"></span>
+        <span class="card-name">pa</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">2.4K<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('pa'); return false;" tabindex="0" role="button" aria-label="View pa quality benchmark" data-qb="pa">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--danger)">33%</span><span class="row-sub-cost"></span>
+                <span class="row-sub">3/9 pass <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-pa">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pa?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pa health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">13s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pa?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pa guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes + launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pa?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pa errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pa?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pa brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">2.4K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pa?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pa memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">—</span>
+                <span class="row-sub">no scan <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle raven details">
+        <span class="dot healthy"></span>
+        <span class="card-name">raven</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">1.4K<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('raven'); return false;" tabindex="0" role="button" aria-label="View raven quality benchmark" data-qb="raven">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--muted)">no data</span>
+                <span class="row-sub"><button class="qb-run-btn" onclick="event.stopPropagation();openQualityBenchmark('raven')">▶ Run</button> <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-raven">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/raven?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View raven health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/raven?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View raven guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes + launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/raven?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View raven errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/raven?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View raven brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">1.4K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/raven?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View raven memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">—</span>
+                <span class="row-sub">no scan <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle secondbrain details">
+        <span class="dot gray"></span>
+        <span class="card-name">secondbrain</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">191<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('secondbrain'); return false;" tabindex="0" role="button" aria-label="View secondbrain quality benchmark" data-qb="secondbrain">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--muted)">no data</span>
+                <span class="row-sub"><button class="qb-run-btn" onclick="event.stopPropagation();openQualityBenchmark('secondbrain')">▶ Run</button> <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-secondbrain">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View secondbrain health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View secondbrain guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View secondbrain errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 8403 conse · 12s ago <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View secondbrain brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">191</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View secondbrain memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">—</span>
+                <span class="row-sub">no scan <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 8403 consecutive fai.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle skeptical details">
+        <span class="dot healthy"></span>
+        <span class="card-name">skeptical</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">255<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('skeptical'); return false;" tabindex="0" role="button" aria-label="View skeptical quality benchmark" data-qb="skeptical">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--muted)">no data</span>
+                <span class="row-sub"><button class="qb-run-btn" onclick="event.stopPropagation();openQualityBenchmark('skeptical')">▶ Run</button> <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-skeptical">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/skeptical?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View skeptical health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/skeptical?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View skeptical guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/skeptical?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View skeptical errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/skeptical?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View skeptical brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">255</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/skeptical?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View skeptical memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">—</span>
+                <span class="row-sub">no scan <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle spectrum details">
+        <span class="dot gray"></span>
+        <span class="card-name">spectrum</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">3.8K<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('spectrum'); return false;" tabindex="0" role="button" aria-label="View spectrum quality benchmark" data-qb="spectrum">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--danger)">33%</span><span class="row-sub-cost"></span>
+                <span class="row-sub">1/3 pass <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-spectrum">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View spectrum health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">12s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View spectrum guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View spectrum errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 9356 conse · 12s ago <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View spectrum brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">3.8K</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View spectrum memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">0/100</span>
+                <span class="row-sub">clean <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 9356 consecutive fai.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle subconscious details">
+        <span class="dot gray"></span>
+        <span class="card-name">subconscious</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">176<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            <div class="crow tappable" onclick="toggleQbDetail('subconscious'); return false;" tabindex="0" role="button" aria-label="View subconscious quality benchmark" data-qb="subconscious">
+                <span class="row-label">QUALITY BENCHMARK</span>
+                <span class="row-val" style="color:var(--muted)">no data</span>
+                <span class="row-sub"><button class="qb-run-btn" onclick="event.stopPropagation();openQualityBenchmark('subconscious')">▶ Run</button> <span class="row-chev">▼</span></span>
+            </div>
+            <div class="qb-expanded" id="qb-detail-subconscious">
+                <div style="text-align:center;color:var(--fg-3);font-size:11px;padding:8px;">
+                    <span class="spinner"></span> Loading per-category breakdown...
+                </div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View subconscious health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">12s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View subconscious guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View subconscious errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 582 consec · 12s ago <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious?tab=tokens', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View subconscious brain">
+                <span class="row-label">Brain</span>
+                <span class="row-val">176</span>
+                <span class="row-sub">debt — <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious?tab=memory', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View subconscious memory">
+                <span class="row-label">Memory<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('memory-garden', event)" style="font-size:10px;cursor:pointer;background:#334155;border-radius:3px;padding:0 5px;color:#94a3b8;font-weight:400;margin-left:3px;">?</span></span>
+                <span class="row-val" style="color:var(--accent)">—</span>
+                <span class="row-sub">no scan <span class="row-chev">▸</span></span>
+            </div>
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 582 consecutive fail.</div>
+    </div>
+</div>
+    </div>
+</article>
+<div class="section-h"><h2>Services</h2><span class="count mono">24</span></div><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle archive details">
+        <span class="dot gray"></span>
+        <span class="card-name">archive</span>
+        <span class="errbadge">7</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">201<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/archive?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View archive health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/archive?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View archive guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 7 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/archive?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View archive errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">7</span>
+                <span class="row-sub">Circuit breaker tripped after 583 consec · 13s ago <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">7</span> errors in last 24h. Circuit breaker tripped after 583 consecutive fail.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle benchmark details">
+        <span class="dot gray"></span>
+        <span class="card-name">benchmark</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">19<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/benchmark?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View benchmark health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/benchmark?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View benchmark guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/benchmark?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View benchmark errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 15950 cons · 13s ago <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 15950 consecutive fa.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle calendar-bridge-auth details">
+        <span class="dot healthy"></span>
+        <span class="card-name">calendar-bridge-auth</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/calendar-bridge-auth?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View calendar-bridge-auth health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/calendar-bridge-auth?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View calendar-bridge-auth guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/calendar-bridge-auth?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View calendar-bridge-auth errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle dashboard details">
+        <span class="dot gray"></span>
+        <span class="card-name">dashboard</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN High)">🟢✅❌</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/dashboard?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View dashboard health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">1d ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/dashboard?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View dashboard guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: High">❌ FN High</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Last check was hours ago. Agent could have died since. Run <code>observeco pulse check</code>.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/dashboard?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View dashboard errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle gateway details">
+        <span class="dot healthy"></span>
+        <span class="card-name">gateway</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/gateway?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View gateway health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/gateway?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View gateway guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/gateway?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View gateway errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle hawkeye details">
+        <span class="dot gray"></span>
+        <span class="card-name">hawkeye</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">132<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hawkeye?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hawkeye health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hawkeye?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hawkeye guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hawkeye?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hawkeye errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 21884 cons · 13s ago <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 21884 consecutive fa.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle herald details">
+        <span class="dot healthy"></span>
+        <span class="card-name">herald</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/herald?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View herald health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/herald?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View herald guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/herald?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View herald errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle hermes-agent details">
+        <span class="dot healthy"></span>
+        <span class="card-name">hermes-agent</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">24.5K<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hermes-agent?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hermes-agent health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">38s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hermes-agent?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hermes-agent guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes-otel-plugin</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hermes-agent?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hermes-agent errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle hound-acps-watcher details">
+        <span class="dot healthy"></span>
+        <span class="card-name">hound-acps-watcher</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound-acps-watcher?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound-acps-watcher health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound-acps-watcher?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound-acps-watcher guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound-acps-watcher?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound-acps-watcher errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle hound-watcher details">
+        <span class="dot healthy"></span>
+        <span class="card-name">hound-watcher</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound-watcher?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound-watcher health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound-watcher?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound-watcher guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/hound-watcher?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View hound-watcher errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle imessage-watcher details">
+        <span class="dot healthy"></span>
+        <span class="card-name">imessage-watcher</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/imessage-watcher?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View imessage-watcher health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/imessage-watcher?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View imessage-watcher guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/imessage-watcher?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View imessage-watcher errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle kanban details">
+        <span class="dot gray"></span>
+        <span class="card-name">kanban</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">187<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kanban?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kanban health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kanban?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kanban guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kanban?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kanban errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 471 consec · 13s ago <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 471 consecutive fail.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle kepler-acps-watcher details">
+        <span class="dot healthy"></span>
+        <span class="card-name">kepler-acps-watcher</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kepler-acps-watcher?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kepler-acps-watcher health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kepler-acps-watcher?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kepler-acps-watcher guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/kepler-acps-watcher?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View kepler-acps-watcher errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle memory-cache details">
+        <span class="dot healthy"></span>
+        <span class="card-name">memory-cache</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/memory-cache?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View memory-cache health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/memory-cache?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View memory-cache guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/memory-cache?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View memory-cache errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle memory-cache-watcher details">
+        <span class="dot healthy"></span>
+        <span class="card-name">memory-cache-watcher</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/memory-cache-watcher?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View memory-cache-watcher health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/memory-cache-watcher?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View memory-cache-watcher guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/memory-cache-watcher?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View memory-cache-watcher errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle my_new_agent details">
+        <span class="dot gray"></span>
+        <span class="card-name">my_new_agent</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/my_new_agent?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View my_new_agent health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">12s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/my_new_agent?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View my_new_agent guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">custom</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/my_new_agent?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View my_new_agent errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 14497 cons · 12s ago <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 14497 consecutive fa.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle offload-cleanup details">
+        <span class="dot healthy"></span>
+        <span class="card-name">offload-cleanup</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/offload-cleanup?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View offload-cleanup health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/offload-cleanup?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View offload-cleanup guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/offload-cleanup?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View offload-cleanup errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle persona-generator details">
+        <span class="dot healthy"></span>
+        <span class="card-name">persona-generator</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/persona-generator?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View persona-generator health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/persona-generator?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View persona-generator guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/persona-generator?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View persona-generator errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open warn">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle pragma details">
+        <span class="dot warning"></span>
+        <span class="card-name">pragma</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">1.1K<span class="up"> + 315%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pragma?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pragma health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">13s ago · warning <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pragma?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pragma guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">hermes</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pragma?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pragma errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">DEGRADING</span>
+        <div class="txt"><b>guidance</b> grew <span class="num">+38.1%</span> this week. Consider compression.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle pragma-acps-watcher details">
+        <span class="dot healthy"></span>
+        <span class="card-name">pragma-acps-watcher</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pragma-acps-watcher?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pragma-acps-watcher health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pragma-acps-watcher?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pragma-acps-watcher guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/pragma-acps-watcher?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View pragma-acps-watcher errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle raven-acps-watcher details">
+        <span class="dot healthy"></span>
+        <span class="card-name">raven-acps-watcher</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/raven-acps-watcher?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View raven-acps-watcher health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">12s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/raven-acps-watcher?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View raven-acps-watcher guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">launchd</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/raven-acps-watcher?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View raven-acps-watcher errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle test-agent-ci details">
+        <span class="dot healthy"></span>
+        <span class="card-name">test-agent-ci</span>
+        
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">103<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: High (FP Low / FN Low)">🟢✅✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/test-agent-ci?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View test-agent-ci health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+                <span class="row-sub">13s ago · running <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/test-agent-ci?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View test-agent-ci guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--fg-2)">closed</span>
+                <span class="row-sub"><span class="fw-badge">custom</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: High — pulse + errors + circuit all agree">🟢 High</span>
+            <span title="False positive risk: Low">✅ FP Low</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ No issues yet — but only 6 checks recorded. Continue monitoring.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/test-agent-ci?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View test-agent-ci errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--fg-2)">0</span>
+                <span class="row-sub">none 24h <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle test-config-agent details">
+        <span class="dot gray"></span>
+        <span class="card-name">test-config-agent</span>
+        <span class="errbadge">8</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">—<span class=""> 0%</span></span>
+            <span class="dqdot est" title="Estimated (watch only)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/test-config-agent?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View test-config-agent health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">12s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/test-config-agent?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View test-config-agent guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-critical)">tripped</span>
+                <span class="row-sub"><span class="fw-badge">cli</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 8 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/test-config-agent?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View test-config-agent errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">8</span>
+                <span class="row-sub">Circuit breaker tripped after 8516 conse · 12s ago <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">8</span> errors in last 24h. Circuit breaker tripped after 8516 consecutive fai.</div>
+    </div>
+</div>
+    </div>
+</article><article class="card open">
+    <div class="card-collapsed" data-toggle role="button" tabindex="0" aria-label="Toggle workspace details">
+        <span class="dot gray"></span>
+        <span class="card-name">workspace</span>
+        <span class="errbadge">5</span>
+        <div class="collapsed-meta">
+            <span class="collapsed-tok">916<span class=""> 0%</span></span>
+            <span class="dqdot acc" title="Accurate (otel + watch)"></span>
+            <span class="collapsed-conf" title="Confidence: Medium (FP High / FN Low)">🟡❌✅</span>
+            <span class="chev">▸</span>
+        </div>
+    </div>
+    <div class="card-detail">
+        <div class="rows">
+            
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/workspace?tab=health', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View workspace health">
+                <span class="row-label">Health</span>
+                <div class="pulse-mini"><i class="d"></i><i class="a"></i><i class="d"></i><i class="d"></i><i class="d"></i><i class="d"></i></div>
+                <span class="row-sub">13s ago · unknown <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/workspace?tab=guard', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View workspace guard">
+                <span class="row-label">Guard</span>
+                <span class="row-val" style="color:var(--status-warning)">1/3 fails</span>
+                <span class="row-sub"><span class="fw-badge">openclaw</span> <span class="row-chev">▸</span></span>
+            </div>
+            <div class="crow" style="cursor:default;">
+                <span class="row-label">Confidence</span>
+                <div class="conf-badge" style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;">
+            <span title="Confidence: Medium — pulse + errors + circuit all agree">🟡 Medium</span>
+            <span title="False positive risk: High">❌ FP High</span>
+            <span title="False negative risk: Low">✅ FN Low</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">➤ Agent is down — all 5 errors are from failed reach attempts. Restart to stop the noise.</div>
+            </div>
+            <div class="crow tappable" onclick="htmx.ajax('GET', '/api/fleet/modal/workspace?tab=errors', {target: '#modalContainer', swap: 'innerHTML'})" tabindex="0" role="button" aria-label="View workspace errors">
+                <span class="row-label">Errors</span>
+                <span class="row-val" style="color:var(--status-critical)">5</span>
+                <span class="row-sub">Circuit breaker tripped after 8 consecut · 1m ago <span class="row-chev">▸</span></span>
+            </div>
+            
+        </div>
+        <div class="swc alert">
+    <span class="mark">!</span>
+    <div class="body">
+        <span class="lead">ERRORS</span>
+        <div class="txt"><span class="num">5</span> errors in last 24h. Circuit breaker tripped after 8 consecutive failur.</div>
+    </div>
+</div>
+    </div>
+</article>

@@ -1,0 +1,1558 @@
+
+    <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Per-Agent Configuration</div>
+        
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">accelerator</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 Idle · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('accelerator')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_accelerator" style="display:none;">3</span>
+            <span id="driftT_accelerator" style="display:none;">15.0</span>
+            <span id="debtT_accelerator" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_accelerator"  onchange="toggleHeal('accelerator', this.checked, document.getElementById('l2_accelerator').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_accelerator">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_accelerator"  onchange="toggleHealL2('accelerator', this.checked)" style="opacity:0.4;pointer-events:none;accent-color:#6366f1;" disabled>
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_accelerator" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">aleph</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 Active · 1 events · <span style="font-size:10px;color:#64748b;">Last: heal_feedback → evaluated</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('aleph')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_aleph" style="display:none;">3</span>
+            <span id="driftT_aleph" style="display:none;">15.0</span>
+            <span id="debtT_aleph" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_aleph" checked onchange="toggleHeal('aleph', this.checked, document.getElementById('l2_aleph').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_aleph">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_aleph"  onchange="toggleHealL2('aleph', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_aleph" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">archive</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('archive')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_archive" style="display:none;">3</span>
+            <span id="driftT_archive" style="display:none;">15.0</span>
+            <span id="debtT_archive" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_archive" checked onchange="toggleHeal('archive', this.checked, document.getElementById('l2_archive').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_archive">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_archive" checked onchange="toggleHealL2('archive', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_archive" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">benchmark</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('benchmark')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_benchmark" style="display:none;">3</span>
+            <span id="driftT_benchmark" style="display:none;">15.0</span>
+            <span id="debtT_benchmark" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_benchmark" checked onchange="toggleHeal('benchmark', this.checked, document.getElementById('l2_benchmark').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_benchmark">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_benchmark" checked onchange="toggleHealL2('benchmark', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_benchmark" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">blueprint</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('blueprint')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_blueprint" style="display:none;">3</span>
+            <span id="driftT_blueprint" style="display:none;">15.0</span>
+            <span id="debtT_blueprint" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_blueprint" checked onchange="toggleHeal('blueprint', this.checked, document.getElementById('l2_blueprint').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_blueprint">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_blueprint" checked onchange="toggleHealL2('blueprint', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_blueprint" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">calendar-bridge-auth</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('calendar-bridge-auth')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_calendar-bridge-auth" style="display:none;">3</span>
+            <span id="driftT_calendar-bridge-auth" style="display:none;">15.0</span>
+            <span id="debtT_calendar-bridge-auth" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_calendar-bridge-auth" checked onchange="toggleHeal('calendar-bridge-auth', this.checked, document.getElementById('l2_calendar-bridge-auth').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_calendar-bridge-auth">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_calendar-bridge-auth" checked onchange="toggleHealL2('calendar-bridge-auth', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_calendar-bridge-auth" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">dashboard</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('dashboard')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_dashboard" style="display:none;">3</span>
+            <span id="driftT_dashboard" style="display:none;">15.0</span>
+            <span id="debtT_dashboard" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_dashboard" checked onchange="toggleHeal('dashboard', this.checked, document.getElementById('l2_dashboard').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_dashboard">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_dashboard" checked onchange="toggleHealL2('dashboard', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_dashboard" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">dreamer</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('dreamer')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_dreamer" style="display:none;">3</span>
+            <span id="driftT_dreamer" style="display:none;">15.0</span>
+            <span id="debtT_dreamer" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_dreamer" checked onchange="toggleHeal('dreamer', this.checked, document.getElementById('l2_dreamer').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_dreamer">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_dreamer" checked onchange="toggleHealL2('dreamer', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_dreamer" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">forge</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('forge')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_forge" style="display:none;">3</span>
+            <span id="driftT_forge" style="display:none;">15.0</span>
+            <span id="debtT_forge" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_forge" checked onchange="toggleHeal('forge', this.checked, document.getElementById('l2_forge').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_forge">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_forge" checked onchange="toggleHealL2('forge', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_forge" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">gateway</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('gateway')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_gateway" style="display:none;">3</span>
+            <span id="driftT_gateway" style="display:none;">15.0</span>
+            <span id="debtT_gateway" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_gateway" checked onchange="toggleHeal('gateway', this.checked, document.getElementById('l2_gateway').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_gateway">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_gateway" checked onchange="toggleHealL2('gateway', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_gateway" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">gladwell</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('gladwell')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_gladwell" style="display:none;">3</span>
+            <span id="driftT_gladwell" style="display:none;">15.0</span>
+            <span id="debtT_gladwell" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_gladwell" checked onchange="toggleHeal('gladwell', this.checked, document.getElementById('l2_gladwell').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_gladwell">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_gladwell" checked onchange="toggleHealL2('gladwell', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_gladwell" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">hawkeye</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('hawkeye')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_hawkeye" style="display:none;">3</span>
+            <span id="driftT_hawkeye" style="display:none;">15.0</span>
+            <span id="debtT_hawkeye" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_hawkeye" checked onchange="toggleHeal('hawkeye', this.checked, document.getElementById('l2_hawkeye').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_hawkeye">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_hawkeye" checked onchange="toggleHealL2('hawkeye', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_hawkeye" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">herald</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('herald')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_herald" style="display:none;">3</span>
+            <span id="driftT_herald" style="display:none;">15.0</span>
+            <span id="debtT_herald" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_herald" checked onchange="toggleHeal('herald', this.checked, document.getElementById('l2_herald').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_herald">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_herald" checked onchange="toggleHealL2('herald', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_herald" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">hermes-agent</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('hermes-agent')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_hermes-agent" style="display:none;">3</span>
+            <span id="driftT_hermes-agent" style="display:none;">15.0</span>
+            <span id="debtT_hermes-agent" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_hermes-agent" checked onchange="toggleHeal('hermes-agent', this.checked, document.getElementById('l2_hermes-agent').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_hermes-agent">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_hermes-agent" checked onchange="toggleHealL2('hermes-agent', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_hermes-agent" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">hound</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('hound')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_hound" style="display:none;">3</span>
+            <span id="driftT_hound" style="display:none;">15.0</span>
+            <span id="debtT_hound" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_hound" checked onchange="toggleHeal('hound', this.checked, document.getElementById('l2_hound').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_hound">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_hound" checked onchange="toggleHealL2('hound', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_hound" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">hound-acps-watcher</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('hound-acps-watcher')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_hound-acps-watcher" style="display:none;">3</span>
+            <span id="driftT_hound-acps-watcher" style="display:none;">15.0</span>
+            <span id="debtT_hound-acps-watcher" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_hound-acps-watcher" checked onchange="toggleHeal('hound-acps-watcher', this.checked, document.getElementById('l2_hound-acps-watcher').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_hound-acps-watcher">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_hound-acps-watcher" checked onchange="toggleHealL2('hound-acps-watcher', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_hound-acps-watcher" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">hound-watcher</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('hound-watcher')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_hound-watcher" style="display:none;">3</span>
+            <span id="driftT_hound-watcher" style="display:none;">15.0</span>
+            <span id="debtT_hound-watcher" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_hound-watcher" checked onchange="toggleHeal('hound-watcher', this.checked, document.getElementById('l2_hound-watcher').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_hound-watcher">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_hound-watcher" checked onchange="toggleHealL2('hound-watcher', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_hound-watcher" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">imessage-watcher</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('imessage-watcher')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_imessage-watcher" style="display:none;">3</span>
+            <span id="driftT_imessage-watcher" style="display:none;">15.0</span>
+            <span id="debtT_imessage-watcher" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_imessage-watcher" checked onchange="toggleHeal('imessage-watcher', this.checked, document.getElementById('l2_imessage-watcher').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_imessage-watcher">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_imessage-watcher" checked onchange="toggleHealL2('imessage-watcher', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_imessage-watcher" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">kanban</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('kanban')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_kanban" style="display:none;">3</span>
+            <span id="driftT_kanban" style="display:none;">15.0</span>
+            <span id="debtT_kanban" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_kanban" checked onchange="toggleHeal('kanban', this.checked, document.getElementById('l2_kanban').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_kanban">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_kanban" checked onchange="toggleHealL2('kanban', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_kanban" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">kepler</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('kepler')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_kepler" style="display:none;">3</span>
+            <span id="driftT_kepler" style="display:none;">15.0</span>
+            <span id="debtT_kepler" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_kepler" checked onchange="toggleHeal('kepler', this.checked, document.getElementById('l2_kepler').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_kepler">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_kepler" checked onchange="toggleHealL2('kepler', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_kepler" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">kepler-acps-watcher</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('kepler-acps-watcher')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_kepler-acps-watcher" style="display:none;">3</span>
+            <span id="driftT_kepler-acps-watcher" style="display:none;">15.0</span>
+            <span id="debtT_kepler-acps-watcher" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_kepler-acps-watcher" checked onchange="toggleHeal('kepler-acps-watcher', this.checked, document.getElementById('l2_kepler-acps-watcher').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_kepler-acps-watcher">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_kepler-acps-watcher" checked onchange="toggleHealL2('kepler-acps-watcher', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_kepler-acps-watcher" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">main</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('main')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_main" style="display:none;">3</span>
+            <span id="driftT_main" style="display:none;">15.0</span>
+            <span id="debtT_main" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_main" checked onchange="toggleHeal('main', this.checked, document.getElementById('l2_main').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_main">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_main" checked onchange="toggleHealL2('main', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_main" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">memory-cache</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('memory-cache')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_memory-cache" style="display:none;">3</span>
+            <span id="driftT_memory-cache" style="display:none;">15.0</span>
+            <span id="debtT_memory-cache" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_memory-cache" checked onchange="toggleHeal('memory-cache', this.checked, document.getElementById('l2_memory-cache').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_memory-cache">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_memory-cache" checked onchange="toggleHealL2('memory-cache', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_memory-cache" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">memory-cache-watcher</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('memory-cache-watcher')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_memory-cache-watcher" style="display:none;">3</span>
+            <span id="driftT_memory-cache-watcher" style="display:none;">15.0</span>
+            <span id="debtT_memory-cache-watcher" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_memory-cache-watcher" checked onchange="toggleHeal('memory-cache-watcher', this.checked, document.getElementById('l2_memory-cache-watcher').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_memory-cache-watcher">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_memory-cache-watcher" checked onchange="toggleHealL2('memory-cache-watcher', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_memory-cache-watcher" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">my_new_agent</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('my_new_agent')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_my_new_agent" style="display:none;">3</span>
+            <span id="driftT_my_new_agent" style="display:none;">15.0</span>
+            <span id="debtT_my_new_agent" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_my_new_agent" checked onchange="toggleHeal('my_new_agent', this.checked, document.getElementById('l2_my_new_agent').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_my_new_agent">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_my_new_agent" checked onchange="toggleHealL2('my_new_agent', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_my_new_agent" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">offload-cleanup</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('offload-cleanup')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_offload-cleanup" style="display:none;">3</span>
+            <span id="driftT_offload-cleanup" style="display:none;">15.0</span>
+            <span id="debtT_offload-cleanup" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_offload-cleanup" checked onchange="toggleHeal('offload-cleanup', this.checked, document.getElementById('l2_offload-cleanup').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_offload-cleanup">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_offload-cleanup" checked onchange="toggleHealL2('offload-cleanup', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_offload-cleanup" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">pa</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('pa')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_pa" style="display:none;">3</span>
+            <span id="driftT_pa" style="display:none;">15.0</span>
+            <span id="debtT_pa" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_pa" checked onchange="toggleHeal('pa', this.checked, document.getElementById('l2_pa').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_pa">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_pa" checked onchange="toggleHealL2('pa', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_pa" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">persona-generator</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('persona-generator')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_persona-generator" style="display:none;">3</span>
+            <span id="driftT_persona-generator" style="display:none;">15.0</span>
+            <span id="debtT_persona-generator" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_persona-generator" checked onchange="toggleHeal('persona-generator', this.checked, document.getElementById('l2_persona-generator').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_persona-generator">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_persona-generator" checked onchange="toggleHealL2('persona-generator', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_persona-generator" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">pragma</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('pragma')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_pragma" style="display:none;">3</span>
+            <span id="driftT_pragma" style="display:none;">15.0</span>
+            <span id="debtT_pragma" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_pragma" checked onchange="toggleHeal('pragma', this.checked, document.getElementById('l2_pragma').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_pragma">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_pragma" checked onchange="toggleHealL2('pragma', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_pragma" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">pragma-acps-watcher</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('pragma-acps-watcher')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_pragma-acps-watcher" style="display:none;">3</span>
+            <span id="driftT_pragma-acps-watcher" style="display:none;">15.0</span>
+            <span id="debtT_pragma-acps-watcher" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_pragma-acps-watcher" checked onchange="toggleHeal('pragma-acps-watcher', this.checked, document.getElementById('l2_pragma-acps-watcher').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_pragma-acps-watcher">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_pragma-acps-watcher" checked onchange="toggleHealL2('pragma-acps-watcher', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_pragma-acps-watcher" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">raven</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('raven')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_raven" style="display:none;">3</span>
+            <span id="driftT_raven" style="display:none;">15.0</span>
+            <span id="debtT_raven" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_raven" checked onchange="toggleHeal('raven', this.checked, document.getElementById('l2_raven').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_raven">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_raven" checked onchange="toggleHealL2('raven', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_raven" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">raven-acps-watcher</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('raven-acps-watcher')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_raven-acps-watcher" style="display:none;">3</span>
+            <span id="driftT_raven-acps-watcher" style="display:none;">15.0</span>
+            <span id="debtT_raven-acps-watcher" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_raven-acps-watcher" checked onchange="toggleHeal('raven-acps-watcher', this.checked, document.getElementById('l2_raven-acps-watcher').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_raven-acps-watcher">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_raven-acps-watcher" checked onchange="toggleHealL2('raven-acps-watcher', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_raven-acps-watcher" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">secondbrain</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('secondbrain')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_secondbrain" style="display:none;">3</span>
+            <span id="driftT_secondbrain" style="display:none;">15.0</span>
+            <span id="debtT_secondbrain" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_secondbrain" checked onchange="toggleHeal('secondbrain', this.checked, document.getElementById('l2_secondbrain').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_secondbrain">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_secondbrain" checked onchange="toggleHealL2('secondbrain', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_secondbrain" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">skeptical</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('skeptical')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_skeptical" style="display:none;">3</span>
+            <span id="driftT_skeptical" style="display:none;">15.0</span>
+            <span id="debtT_skeptical" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_skeptical" checked onchange="toggleHeal('skeptical', this.checked, document.getElementById('l2_skeptical').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_skeptical">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_skeptical" checked onchange="toggleHealL2('skeptical', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_skeptical" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">spectrum</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('spectrum')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_spectrum" style="display:none;">3</span>
+            <span id="driftT_spectrum" style="display:none;">15.0</span>
+            <span id="debtT_spectrum" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_spectrum" checked onchange="toggleHeal('spectrum', this.checked, document.getElementById('l2_spectrum').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_spectrum">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_spectrum" checked onchange="toggleHealL2('spectrum', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_spectrum" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">subconscious</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('subconscious')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_subconscious" style="display:none;">3</span>
+            <span id="driftT_subconscious" style="display:none;">15.0</span>
+            <span id="debtT_subconscious" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_subconscious" checked onchange="toggleHeal('subconscious', this.checked, document.getElementById('l2_subconscious').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_subconscious">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_subconscious" checked onchange="toggleHealL2('subconscious', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_subconscious" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">test-agent-ci</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('test-agent-ci')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_test-agent-ci" style="display:none;">3</span>
+            <span id="driftT_test-agent-ci" style="display:none;">15.0</span>
+            <span id="debtT_test-agent-ci" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_test-agent-ci" checked onchange="toggleHeal('test-agent-ci', this.checked, document.getElementById('l2_test-agent-ci').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_test-agent-ci">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_test-agent-ci" checked onchange="toggleHealL2('test-agent-ci', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_test-agent-ci" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">test-config-agent</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('test-config-agent')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_test-config-agent" style="display:none;">3</span>
+            <span id="driftT_test-config-agent" style="display:none;">15.0</span>
+            <span id="debtT_test-config-agent" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_test-config-agent" checked onchange="toggleHeal('test-config-agent', this.checked, document.getElementById('l2_test-config-agent').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_test-config-agent">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_test-config-agent" checked onchange="toggleHealL2('test-config-agent', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_test-config-agent" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:var(--fg);">workspace</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;" class="heal-status-label">🟢 L1 + L2 Active · 0 events · </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Restarts: 3/hr</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Drift: 15.0%</span>
+                    <span style="background:#1e293b;color:#94a3b8;border-radius:4px;padding:2px 8px;font-size:10px;">Debt: 60</span>
+                    <button onclick="editHealThresholds('workspace')" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 10px;font-size:10px;cursor:pointer;color:#94a3b8;margin-left:2px;">Thresholds</button>
+                </div>
+            </div>
+            <!-- hidden threshold values for JS -->
+            <span id="maxR_workspace" style="display:none;">3</span>
+            <span id="driftT_workspace" style="display:none;">15.0</span>
+            <span id="debtT_workspace" style="display:none;">60</span>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+                <!-- L1: Primary toggle -->
+                <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#e2e8f0;cursor:pointer;">
+                    <input type="checkbox" id="l1_workspace" checked onchange="toggleHeal('workspace', this.checked, document.getElementById('l2_workspace').checked)" style="accent-color:#6366f1;margin-top:2px;">
+                    <div>
+                        <strong>Auto-Restart</strong>
+                        <div style="font-size:10px;color:#475569;margin-top:2px;">Restarts your agent automatically when it crashes</div>
+                    </div>
+                </label>
+                <!-- L2: Nested sub-option, indented under L1 -->
+                <div style="margin-left:22px;margin-top:8px;padding-left:12px;border-left:2px solid #334155;" class="l2-container" id="l2_container_workspace">
+                    <label style="display:flex;align-items:flex-start;gap:6px;font-size:11px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="l2_workspace" checked onchange="toggleHealL2('workspace', this.checked)" style="accent-color:#6366f1;" >
+                        <div>
+                            <strong style="color:#e2e8f0;">Proactive Maintenance</strong>
+                            <div style="font-size:10px;color:#475569;margin-top:2px;">Fixes memory bloat, config drift, and token growth before failure</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div id="healResult_workspace" style="margin-top:4px;font-size:11px;"></div>
+        </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--fg);">📋 Heal Events Log</div>
+        <table class="data-table" style="width:100%;border-collapse:collapse;">
+            <tr><th style="padding:6px 8px;font-size:10px;text-align:left;color:#64748b;">Agent</th>
+                <th style="padding:6px 8px;font-size:10px;text-align:left;color:#64748b;">Type</th>
+                <th style="padding:6px 8px;font-size:10px;text-align:left;color:#64748b;">Status</th>
+                <th style="padding:6px 8px;font-size:10px;text-align:left;color:#64748b;">When</th></tr>
+            <tr><td style="padding:6px 8px;font-size:11px;">aleph</td>
+                <td style="padding:6px 8px;font-size:11px;">heal_feedback</td>
+                <td style="padding:6px 8px;font-size:11px;">⏳ evaluated</td>
+                <td style="padding:6px 8px;font-size:11px;color:#64748b;">33h ago</td></tr><tr><td style="padding:6px 8px;font-size:11px;">l3-prod-test</td>
+                <td style="padding:6px 8px;font-size:11px;">heal_feedback</td>
+                <td style="padding:6px 8px;font-size:11px;">⏳ evaluated</td>
+                <td style="padding:6px 8px;font-size:11px;color:#64748b;">170h ago</td></tr><tr><td style="padding:6px 8px;font-size:11px;">l3-prod-test</td>
+                <td style="padding:6px 8px;font-size:11px;">heal_feedback</td>
+                <td style="padding:6px 8px;font-size:11px;">⏳ evaluated</td>
+                <td style="padding:6px 8px;font-size:11px;color:#64748b;">170h ago</td></tr><tr><td style="padding:6px 8px;font-size:11px;">l3-live-2</td>
+                <td style="padding:6px 8px;font-size:11px;">heal_feedback</td>
+                <td style="padding:6px 8px;font-size:11px;">⏳ evaluated</td>
+                <td style="padding:6px 8px;font-size:11px;color:#64748b;">177h ago</td></tr><tr><td style="padding:6px 8px;font-size:11px;">l3-test-agent</td>
+                <td style="padding:6px 8px;font-size:11px;">heal_feedback</td>
+                <td style="padding:6px 8px;font-size:11px;">⏳ evaluated</td>
+                <td style="padding:6px 8px;font-size:11px;color:#64748b;">178h ago</td></tr><tr><td style="padding:6px 8px;font-size:11px;">l3-test-agent</td>
+                <td style="padding:6px 8px;font-size:11px;">heal_feedback</td>
+                <td style="padding:6px 8px;font-size:11px;">⏳ evaluated</td>
+                <td style="padding:6px 8px;font-size:11px;color:#64748b;">178h ago</td></tr><tr><td style="padding:6px 8px;font-size:11px;">test_agent</td>
+                <td style="padding:6px 8px;font-size:11px;">l1_restart</td>
+                <td style="padding:6px 8px;font-size:11px;">✅ success</td>
+                <td style="padding:6px 8px;font-size:11px;color:#64748b;">974h ago</td></tr>
+        </table>
+    </div>
+    

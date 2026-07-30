@@ -1,0 +1,26 @@
+<div style="padding:4px;">
+    <div class="glossary-header">
+        <span class="glossary-header-icon">🛠️</span>
+        <span class="glossary-header-title">Auto-Heal</span>
+    </div>
+    <div class="glossary-one-liner">Auto-detects dead agents and restarts them — optional L2 layer fixes drift, memory bloat, and config issues proactively.</div>
+    <div class="glossary-detail">
+    <strong>Two layers — both optional:</strong><br><br>
+    <strong>L1 — Reactive (Auto-Restart):</strong> When pulse detects an agent is dead (process crashed, port closed), auto-heal restarts it. Max restarts per 4h prevents infinite loops. Default: 3.<br><br>
+    <strong>L2 — Proactive (Drift + Memory):</strong> Checks for token composition changes (drift > threshold), memory debt accumulation, and config bloat. Triggers cleanup before it becomes a problem.<br><br>
+    <strong>Per-agent configuration:</strong> Enable L1, L2, or both per agent. Thresholds control how aggressive each layer is — see Heal Thresholds glossary.<br><br>
+    <strong>Requires:</strong> <code>observeco watch</code> daemon running in background.
+</div>
+    <div class="glossary-faq"><div class="glossary-faq-title">FAQ</div><details class="faq-details">
+    <summary class="faq-summary">❓ Can I heal manually without the daemon?</summary>
+    <div class="faq-answer">Yes. The 'Heal' button in Fleet View works independently. Auto-heal is just the automated version — it runs the same heal logic when the daemon detects a failure.</div>
+</details>
+<details class="faq-details">
+    <summary class="faq-summary">❓ What happens if L1 and L2 both fire at once?</summary>
+    <div class="faq-answer">L1 (restart) runs first. After the agent is back up, L2 runs its proactive checks. They don't conflict — restart happens, then cleanup happens after.</div>
+</details>
+<details class="faq-details">
+    <summary class="faq-summary">❓ Does auto-heal work for every agent type?</summary>
+    <div class="faq-answer">It works for any agent registered in the fleet (Hermes profiles, OpenClaw workspaces, custom). The heal logic checks process liveness and attempts restart — it doesn't need to know what kind of agent it is.</div>
+</details></div>
+</div>

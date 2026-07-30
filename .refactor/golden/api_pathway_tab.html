@@ -1,0 +1,89 @@
+<script>window.__OBSERVECO_TOKEN = "FxrXunlGzEHN6mtX550m6okEgSjfe5xnI84YOIDLLFk";</script>
+<div class="app" style="padding:0;">
+  <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🗺️ Communication Pathway Map</h1>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Trace message delivery paths across your agent ecosystem.</div>
+
+  <!-- Summary bar -->
+  <div class="pw-summary-bar" id="summary-bar">
+    <div class="pw-summary-stat">
+      <span class="pw-summary-num green" id="total-nodes">-</span> Nodes
+    </div>
+    <div class="pw-summary-stat">
+      <span class="pw-summary-num green" id="total-green">-</span> 🟢 Complete
+    </div>
+    <div class="pw-summary-stat">
+      <span class="pw-summary-num amber" id="total-yellow">-</span> 🟡 Concerns
+    </div>
+    <div class="pw-summary-stat">
+      <span class="pw-summary-num red" id="total-red">-</span> 🔴 Dead Ends
+    </div>
+    <span id="summary-timestamp" style="margin-left:auto;font-size:11px;color:var(--muted);">—</span>
+  </div>
+
+  <div class="pane-layout" style="display:flex;gap:10px;align-items:flex-start;">
+    <!-- Tree sidebar -->
+    <div class="pw-tree-sidebar" id="tree-sidebar">
+      <div class="pw-tree-header">
+        📋 Node Tree
+        <span id="tree-count" style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:auto;">0 nodes</span>
+      </div>
+      <div class="pw-tree-body" id="tree-body"></div>
+    </div>
+
+    <!-- Graph area -->
+    <div class="left-rail" style="flex:1;min-width:0;">
+      <div class="graph-card" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;">
+        <div class="pw-graph-toolbar" id="filter-toolbar">
+          <span class="pw-toolbar-label">View:</span>
+          <button class="pw-chip active" data-filter="all" onclick="setFilter('all', this)">🌐 Full Graph</button>
+          <button class="pw-chip pw-chip-green" data-filter="green" onclick="setFilter('green', this)">✅ Complete</button>
+          <button class="pw-chip pw-chip-yellow" data-filter="yellow" onclick="setFilter('yellow', this)">⚠️ Concerns</button>
+          <button class="pw-chip pw-chip-red" data-filter="red" onclick="setFilter('red', this)">❌ Dead Ends</button>
+          <span class="pw-toolbar-divider"></span>
+          <span class="pw-toolbar-label">Type:</span>
+          <button class="pw-chip active" data-type="all" id="type-all-btn" onclick="setTypeFilter('all', this)">🧠 All</button>
+          <button class="pw-chip" data-type="agent" id="type-agent-btn" onclick="setTypeFilter('agent', this)">Agent</button>
+          <button class="pw-chip" data-type="cron" id="type-cron-btn" onclick="setTypeFilter('cron', this)">Cron</button>
+          <button class="pw-chip" data-type="platform" id="type-platform-btn" onclick="setTypeFilter('platform', this)">Platform</button>
+          <span class="pw-toolbar-spacer"></span>
+          <span class="layout-badge" id="layout-badge" style="font-size:11px;color:var(--muted);font-weight:500;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">⚡ dagre</span>
+          <button class="btn" onclick="resetLayout()" style="background:var(--surface);border:1px solid var(--border);color:var(--sec);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;">🗂️ Re-layout</button>
+          <button class="btn btn-active" onclick="toggleParticles()" id="particle-btn" style="background:var(--surface);border:1px solid var(--accent);color:var(--accent);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;">💫 Particles ON</button>
+          <button class="btn btn-primary" onclick="refreshData()" style="background:var(--accent);border:1px solid var(--accent);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;">📦 Data Reload</button>
+          <span style="font-size:11px;color:var(--muted);margin-left:4px;">Scroll to zoom · Drag to pan</span>
+        </div>
+        <div class="pw-filter-status" id="filter-status-bar">
+          Showing <span class="num" id="filter-showing">0</span> of <span class="total" id="filter-total">0</span> nodes and <span class="num" id="filter-edges-visible">0</span> of <span class="total" id="filter-edges-total">0</span> edges
+          <span id="filter-active-label" style="margin-left:8px;padding:2px 6px;border-radius:4px;font-weight:600;"></span>
+        </div>
+        <div id="cy" style="width:100%;height:480px;background:var(--bg);cursor:grab;position:relative;">
+          <div class="loading" style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">Loading pathway map…</div>
+        </div>
+        <!-- Legend -->
+        <div class="pw-legend">
+          <span class="pw-legend-item"><span class="pw-legend-line" style="background:var(--accent);"></span> Complete</span>
+          <span class="pw-legend-item"><span class="pw-legend-line" style="background:var(--warn);"></span> Concern</span>
+          <span class="pw-legend-item"><span class="pw-legend-line" style="background:var(--danger);"></span> Dead End</span>
+          <span class="pw-legend-item"><span class="pw-legend-dot" style="background:#6366f1;"></span> Agent</span>
+          <span class="pw-legend-item"><span class="pw-legend-dot" style="background:var(--warn);"></span> Cron</span>
+          <span class="pw-legend-item"><span class="pw-legend-dot" style="background:#06b6d4;"></span> Platform</span>
+          <span class="pw-legend-item"><span class="pw-legend-dot" style="background:#14b8a6;"></span> Consumer</span>
+          <span class="pw-legend-item"><span class="pw-legend-dot" style="background:var(--meta);"></span> Router</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail panel -->
+    <div class="right-rail" style="width:320px;flex-shrink:0;display:flex;flex-direction:column;max-height:calc(100vh - 100px);">
+      <div class="pw-detail-panel" id="detail-panel">
+        <div class="pw-detail-header">
+          <span style="font-size:16px;">🔍</span>
+          <span class="pw-detail-title">Details</span>
+        </div>
+        <div class="detail-body" id="detail-body" style="padding:12px 14px;min-height:120px;overflow-y:auto;flex:1;">
+          <div class="detail-empty" style="color:var(--muted);font-size:12px;text-align:center;padding:30px 10px;">Click a node or edge to see details</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

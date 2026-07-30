@@ -1,0 +1,433 @@
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+                <th onclick="sortCompare('name')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Agent <span id="sortIndicator_name" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('framework')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Framework <span id="sortIndicator_framework" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('tokens')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Tokens <span id="sortIndicator_tokens" class="sort-indicator"></span></th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Composition</th>
+                <th onclick="sortCompare('drift')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Drift <span id="sortIndicator_drift" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('errors')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Errors <span id="sortIndicator_errors" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('circuit')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Circuit <span id="sortIndicator_circuit" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('last')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Last <span id="sortIndicator_last" class="sort-indicator"></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr onclick="htmx.ajax('GET', '/api/fleet/modal/accelerator', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>accelerator</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">3,673</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:0%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 1tok (0%)"></span><span style="display:inline-block;width:10%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 361tok (10%)"></span><span style="display:inline-block;width:17%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 632tok (17%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:73%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 2678tok (73%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/aleph', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>aleph</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes + launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">638</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:8%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 48tok (8%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:92%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 589tok (92%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/archive', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>archive</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">7 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/benchmark', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>benchmark</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/blueprint', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>blueprint</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/calendar-bridge-auth', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>calendar-bridge-auth</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/dashboard', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>dashboard</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">1d ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/dreamer', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>dreamer</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes + launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">1,606</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:9%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 141tok (9%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:91%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 1464tok (91%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/forge', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>forge</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/gateway', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>gateway</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>gladwell</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hawkeye', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>hawkeye</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/herald', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>herald</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hermes', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status unknown" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>hermes</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">-</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hermes-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>hermes-agent</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Auto-registered</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">33s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hermes_helper', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status unknown" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>hermes_helper</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">-</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hound', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>hound</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Openclaw + hermes + launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">2,172</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:6%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 130tok (6%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:94%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 2041tok (94%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hound-acps-watcher', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>hound-acps-watcher</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hound-watcher', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>hound-watcher</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/imessage-watcher', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>imessage-watcher</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/kanban', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>kanban</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/kepler', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>kepler</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Openclaw + hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">1,034</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:12%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 121tok (12%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:88%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 912tok (88%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/kepler-acps-watcher', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>kepler-acps-watcher</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/l3-test-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status unknown" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>l3-test-agent</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">-</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/llama_server', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status unknown" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>llama_server</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">-</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/main', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>main</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">3,673</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:0%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 1tok (0%)"></span><span style="display:inline-block;width:10%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 361tok (10%)"></span><span style="display:inline-block;width:17%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 632tok (17%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:73%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 2678tok (73%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/memory-cache', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>memory-cache</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/memory-cache-watcher', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>memory-cache-watcher</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/my_new_agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>my_new_agent</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Custom</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/offload-cleanup', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>offload-cleanup</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/ollama', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status unknown" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>ollama</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">-</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/pa', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>pa</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes + launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">2,419</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:13%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 311tok (13%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:87%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 2108tok (87%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/persona-generator', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>persona-generator</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/pragma', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>pragma</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">1,141</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:0%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:100%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 1141tok (100%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/pragma-acps-watcher', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>pragma-acps-watcher</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/raven', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>raven</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes + launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">1,364</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:2%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 24tok (2%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:98%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 1340tok (98%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/raven-acps-watcher', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>raven-acps-watcher</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Launchd</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>secondbrain</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/skeptical', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>skeptical</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">253</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:34%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 85tok (34%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:66%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 167tok (66%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>spectrum</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/stdin', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status unknown" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>stdin</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">-</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>subconscious</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Hermes</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/test-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status unknown" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>test-agent</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">-</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/test-agent-ci', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status alive" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>test-agent-ci</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Custom</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">99</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:1%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 1tok (1%)"></span><span style="display:inline-block;width:1%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (1%)"></span><span style="display:inline-block;width:1%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (1%)"></span><span style="display:inline-block;width:1%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (1%)"></span><span style="display:inline-block;width:100%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 99tok (100%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">0</td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/test-config-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>test-config-agent</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Cli</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">-</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="color:#64748b;font-size:10px;">no data</span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">8 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">🔴 Tripped</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">7s ago</td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/workspace', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status dead" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>workspace</td>
+    <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">Openclaw</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">914</td>
+    <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;"><span style="display:inline-block;width:20%;height:6px;background:#6366f1;border-radius:2px;margin-right:1px;" title="identity: 184tok (20%)"></span><span style="display:inline-block;width:0%;height:6px;background:#8b5cf6;border-radius:2px;margin-right:1px;" title="skills: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#ec4899;border-radius:2px;margin-right:1px;" title="memory: 1tok (0%)"></span><span style="display:inline-block;width:0%;height:6px;background:#14b8a6;border-radius:2px;margin-right:1px;" title="tools: 1tok (0%)"></span><span style="display:inline-block;width:80%;height:6px;background:#f97316;border-radius:2px;margin-right:1px;" title="guidance: 729tok (80%)"></span></div></td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:#64748b;">-</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">5 <span style="color:var(--danger);font-size:10px;">⚠</span></td>
+    <td style="padding:10px 12px;font-size:11px;">✅ OK</td>
+    <td style="padding:10px 12px;font-size:11px;color:#64748b;">8s ago</td>
+</tr>
+        </tbody>
+    </table>
+</div>

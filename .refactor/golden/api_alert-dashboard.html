@@ -1,0 +1,289 @@
+
+    <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Active Channels</div>
+        
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:16px;">📧</span>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--fg);">email</div>
+                        <div style="font-size:10px;color:#64748b;">1571keplerj@gmail.com</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10px;">🟢 16 deliveries</span>
+                    <button onclick="testAlertChannel(13)" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:#94a3b8;">Test</button>
+                    <button onclick="removeAlertChannel(13)" style="background:none;border:1px solid #7f1d1d;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:#ef4444;">✕</button>
+                </div>
+            </div>
+            <div id="testResult_13" style="font-size:10px;margin-top:4px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:16px;">📱</span>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--fg);">telegram</div>
+                        <div style="font-size:10px;color:#64748b;">458083937</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10px;">🟢 17 deliveries</span>
+                    <button onclick="testAlertChannel(10)" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:#94a3b8;">Test</button>
+                    <button onclick="removeAlertChannel(10)" style="background:none;border:1px solid #7f1d1d;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:#ef4444;">✕</button>
+                </div>
+            </div>
+            <div id="testResult_10" style="font-size:10px;margin-top:4px;"></div>
+        </div>
+        <div class="heal-agent-row" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:16px;">🎮</span>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--fg);">discord</div>
+                        <div style="font-size:10px;color:#64748b;">https://discord.com/api/webhoo...</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:10px;">🟢 17 deliveries</span>
+                    <button onclick="testAlertChannel(8)" style="background:none;border:1px solid #334155;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:#94a3b8;">Test</button>
+                    <button onclick="removeAlertChannel(8)" style="background:none;border:1px solid #7f1d1d;border-radius:4px;padding:3px 8px;font-size:10px;cursor:pointer;color:#ef4444;">✕</button>
+                </div>
+            </div>
+            <div id="testResult_8" style="font-size:10px;margin-top:4px;"></div>
+        </div>
+    </div>
+    <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">Add Channel</div>
+        
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">🔗</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px;font-weight:600;color:var(--fg);">Webhook URL</div>
+                    <div style="font-size:10px;color:#64748b;">webhook</div>
+                </div>
+                <button onclick="showAddChannel('webhook')" style="background:#6366f1;border:none;border-radius:4px;padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;color:white;">+ Add</button>
+            </div>
+        </div>
+    </div>
+    <!-- Provider Settings -->
+    <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px;">⚙️ Provider Settings</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">📱</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px;font-weight:600;color:var(--fg);">Telegram Bot Token</div>
+                    <div style="font-size:10px;color:#64748b;">Not configured — needed for Telegram alerts</div>
+                </div>
+                <button onclick="showTelegramTokenConfig()" style="background:#6366f1;border:none;border-radius:4px;padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;color:white;">Set Token</button>
+            </div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:16px;">📧</span>
+                <div style="flex:1;">
+                    <div style="font-size:12px;font-weight:600;color:var(--fg);">SMTP Relay</div>
+                    <div style="font-size:10px;color:#64748b;">Not configured — needed for email alerts</div>
+                </div>
+                <button onclick="showSmtpConfig()" style="background:#6366f1;border:none;border-radius:4px;padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;color:white;">Set SMTP</button>
+            </div>
+        </div>
+    </div>
+    <!-- Add channel modal (hidden until triggered) -->
+    <div class="modal-overlay" id="addChannelModal" style="display:none;" onclick="if(event.target===this)closeAddChannel()">
+        <div class="modal" style="max-width:420px;" onmousedown="event.stopPropagation()">
+            <div class="modal-body">
+                <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;" id="addChannelTitle">Add Channel</div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Enter the target URL, chat ID, or email address.</div>
+                <input id="addChannelTarget" type="text" placeholder="https://discord.com/api/webhooks/..." style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:8px;font-family:inherit;">
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button onclick="closeAddChannel()" class="modal-close" style="font-size:12px;padding:8px 18px;width:auto;">Cancel</button>
+                    <button onclick="confirmAddChannel()" class="heal-trigger-btn" style="font-size:12px;padding:8px 18px;">Test & Save</button>
+                </div>
+                <div id="addChannelResult" style="margin-top:8px;font-size:12px;"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Telegram Bot Token modal -->
+    <div class="modal-overlay" id="telegramTokenModal" style="display:none;" onclick="if(event.target===this)closeTelegramToken()">
+        <div class="modal" style="max-width:420px;" onmousedown="event.stopPropagation()">
+            <div class="modal-body">
+                <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">🤖 Telegram Bot Token</div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Paste your bot token from <a href="https://t.me/BotFather" target="_blank" style="color:#6366f1;">@BotFather</a>. It will be tested before saving.</div>
+                <input id="telegramTokenInput" type="password" placeholder="123456:ABCdefGHIjklMNOpqrsTUVwxyz" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:8px;font-family:var(--font-mono);">
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button onclick="closeTelegramToken()" class="modal-close" style="font-size:12px;padding:8px 18px;width:auto;">Cancel</button>
+                    <button onclick="saveTelegramToken()" class="heal-trigger-btn" style="font-size:12px;padding:8px 18px;">Save & Verify</button>
+                </div>
+                <div id="telegramTokenResult" style="margin-top:8px;font-size:12px;"></div>
+            </div>
+        </div>
+    </div>
+    <!-- SMTP Config modal -->
+    <div class="modal-overlay" id="smtpConfigModal" style="display:none;" onclick="if(event.target===this)closeSmtpConfig()">
+        <div class="modal" style="max-width:440px;" onmousedown="event.stopPropagation()">
+            <div class="modal-body">
+                <div style="font-size:15px;font-weight:600;color:var(--fg);margin-bottom:8px;">📧 SMTP Relay</div>
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">Configure an SMTP server for email alert delivery.</div>
+                <input id="smtpHost" type="text" placeholder="smtp.gmail.com" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:6px;font-family:inherit;">
+                <div style="display:flex;gap:6px;margin-bottom:6px;">
+                    <input id="smtpPort" type="number" placeholder="587" value="587" style="flex:0 0 80px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;font-family:inherit;">
+                    <select id="smtpSecurity" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;">
+                        <option value="starttls">STARTTLS (587)</option>
+                        <option value="ssl">SSL/TLS (465)</option>
+                        <option value="none">No encryption</option>
+                    </select>
+                </div>
+                <input id="smtpUser" type="text" placeholder="you@gmail.com" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:6px;font-family:inherit;">
+                <input id="smtpPassword" type="password" placeholder="App password or SMTP password" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:6px;font-family:inherit;">
+                <input id="smtpFrom" type="text" placeholder="From: alerts@example.com" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:13px;margin-bottom:8px;font-family:inherit;">
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button onclick="closeSmtpConfig()" class="modal-close" style="font-size:12px;padding:8px 18px;width:auto;">Cancel</button>
+                    <button onclick="saveSmtpConfig()" class="heal-trigger-btn" style="font-size:12px;padding:8px 18px;">Save & Test</button>
+                </div>
+                <div id="smtpConfigResult" style="margin-top:8px;font-size:12px;"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+    var _pendingChannel = '';
+    function showAddChannel(channel) {
+        _pendingChannel = channel;
+        document.getElementById('addChannelTitle').textContent = '+ Add ' + channel;
+        document.getElementById('addChannelTarget').placeholder = {
+            'telegram': 'Chat ID (e.g. 123456789)',
+            'discord': 'Webhook URL (https://discord.com/api/webhooks/...)',
+            'webhook': 'Webhook URL (https://hooks.example.com/alerts)',
+            'email': 'Email address (you@example.com)'
+        }[channel] || 'Target value';
+        document.getElementById('addChannelTarget').value = '';
+        document.getElementById('addChannelResult').innerHTML = '';
+        document.getElementById('addChannelModal').style.display = 'flex';
+    }
+    function closeAddChannel() {
+        document.getElementById('addChannelModal').style.display = 'none';
+    }
+    function confirmAddChannel() {
+        var target = document.getElementById('addChannelTarget').value.trim();
+        if (!target) { document.getElementById('addChannelResult').innerHTML = '<span style="color:#ef4444;">❌ Target required</span>'; return; }
+        document.getElementById('addChannelResult').innerHTML = '<span style="color:#64748b;">Testing...</span>';
+        fetch('/api/alert-subscribe', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({channel: _pendingChannel, target: target, event_types: 'all'})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                document.getElementById('addChannelResult').innerHTML = '<span style="color:#22c55e;">✅ Saved! Sending test alert...</span>';
+                fetch('/api/alert-test/' + data.subscription.id, {method: 'POST'})
+                    .then(r => r.json())
+                    .then(t => {
+                        if (t.ok) {
+                            document.getElementById('addChannelResult').innerHTML = '<span style="color:#22c55e;">✅ Channel added and test alert sent!</span>';
+                        } else {
+                            document.getElementById('addChannelResult').innerHTML = '<span style="color:#fde68a;">⚠️ Saved but test failed: ' + (t.error || '') + '</span>';
+                        }
+                        setTimeout(() => { closeAddChannel(); htmx.ajax('GET', '/api/alert-dashboard', {target: '#alertPanel', swap: 'innerHTML'}) }, 1500);
+                    })
+                    .catch(() => { setTimeout(() => { closeAddChannel(); htmx.ajax('GET', '/api/alert-dashboard', {target: '#alertPanel', swap: 'innerHTML'}) }, 1500); });
+            } else {
+                document.getElementById('addChannelResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+            }
+        })
+        .catch(e => {
+            document.getElementById('addChannelResult').innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>';
+        });
+    }
+    function testAlertChannel(subId) {
+        var el = document.getElementById('testResult_' + subId);
+        el.innerHTML = '<span style="color:#64748b;">Sending test...</span>';
+        fetch('/api/alert-test/' + subId, {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                el.innerHTML = data.ok ? '<span style="color:#22c55e;">✅ Test alert sent</span>' : '<span style="color:#ef4444;">❌ ' + (data.error || '') + '</span>';
+                setTimeout(() => { el.innerHTML = ''; }, 3000);
+            })
+            .catch(e => { el.innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>'; });
+    }
+    function removeAlertChannel(subId) {
+        if (!confirm('Remove this alert channel?')) return;
+        fetch('/api/alert-subscribe/' + subId, {method: 'DELETE'})
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'ok') htmx.ajax('GET', '/api/alert-dashboard', {target: '#alertPanel', swap: 'innerHTML'});
+            })
+            .catch(() => {});
+    }
+
+    // ─── Provider Config ───
+    function showTelegramTokenConfig() {
+        document.getElementById('telegramTokenInput').value = '';
+        document.getElementById('telegramTokenResult').innerHTML = '';
+        document.getElementById('telegramTokenModal').style.display = 'flex';
+    }
+    function closeTelegramToken() {
+        document.getElementById('telegramTokenModal').style.display = 'none';
+    }
+    function saveTelegramToken() {
+        var token = document.getElementById('telegramTokenInput').value.trim();
+        if (!token) { document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#ef4444;">❌ Token required</span>'; return; }
+        document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#64748b;">Saving and testing...</span>';
+        fetch('/api/provider-config/telegram', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({token: token})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#22c55e;">✅ Token saved and verified!</span>';
+                setTimeout(() => { closeTelegramToken(); htmx.ajax('GET', '/api/alert-dashboard', {target: '#alertPanel', swap: 'innerHTML'}); }, 1500);
+            } else {
+                document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+            }
+        })
+        .catch(e => { document.getElementById('telegramTokenResult').innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>'; });
+    }
+    function showSmtpConfig() {
+        document.getElementById('smtpHost').value = '';
+        document.getElementById('smtpPort').value = '587';
+        document.getElementById('smtpUser').value = '';
+        document.getElementById('smtpPassword').value = '';
+        document.getElementById('smtpFrom').value = '';
+        document.getElementById('smtpConfigResult').innerHTML = '';
+        document.getElementById('smtpConfigModal').style.display = 'flex';
+    }
+    function closeSmtpConfig() {
+        document.getElementById('smtpConfigModal').style.display = 'none';
+    }
+    function saveSmtpConfig() {
+        var host = document.getElementById('smtpHost').value.trim();
+        var port = document.getElementById('smtpPort').value.trim() || '587';
+        var security = document.getElementById('smtpSecurity').value;
+        var user = document.getElementById('smtpUser').value.trim();
+        var password = document.getElementById('smtpPassword').value.trim();
+        var from = document.getElementById('smtpFrom').value.trim();
+        if (!host) { document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#ef4444;">❌ SMTP host required</span>'; return; }
+        document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#64748b;">Saving and testing...</span>';
+        fetch('/api/provider-config/smtp', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({host: host, port: parseInt(port), security: security, user: user, password: password, from: from})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#22c55e;">✅ SMTP saved and verified!</span>';
+                setTimeout(() => { closeSmtpConfig(); htmx.ajax('GET', '/api/alert-dashboard', {target: '#alertPanel', swap: 'innerHTML'}); }, 1500);
+            } else {
+                document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#ef4444;">❌ ' + (data.error || 'Failed') + '</span>';
+            }
+        })
+        .catch(e => { document.getElementById('smtpConfigResult').innerHTML = '<span style="color:#ef4444;">❌ ' + e.message + '</span>'; });
+    }
+    </script>
+    

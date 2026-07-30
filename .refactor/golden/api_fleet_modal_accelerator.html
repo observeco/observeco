@@ -1,0 +1,108 @@
+<div class="scrim" id="modalScrim" onclick="if(event.target===this)this.remove()">
+<div class="modal">
+    <div class="m-head healthy">
+        <span class="m-dot healthy"></span>
+        <span class="m-name">accelerator</span>
+        <span class="m-badge healthy">HEALTHY</span>
+        <span class="m-fw">hermes</span>
+        <span class="m-sub">9s ago</span>
+        <span class="m-close" onclick="this.closest('.scrim').remove()">✕</span>
+    </div>
+    <div class="m-tabs" id="modalTabs">
+    <span class="m-tab active" data-tab="health" onclick="switchModalTab('accelerator','health',this)">Health</span>
+    <span class="m-tab" data-tab="guard" onclick="switchModalTab('accelerator','guard',this)">Guard</span>
+    <span class="m-tab" data-tab="errors" onclick="switchModalTab('accelerator','errors',this)">Errors</span>
+    <span class="m-tab" data-tab="tokens" onclick="switchModalTab('accelerator','tokens',this)">Tokens</span>
+    <span class="m-tab" data-tab="memory" onclick="switchModalTab('accelerator','memory',this)">Memory</span>
+    <span class="m-tab" data-tab="efficiency" onclick="switchModalTab('accelerator','efficiency',this)">Efficiency</span>
+</div>
+    <div class="m-body" id="modalBody">
+        <div class="panel-pane show" data-pane="health">
+    <div class="swc insight" style="margin-bottom:var(--space-4)">
+        <span class="mark">i</span>
+        <div class="body">
+            <span class="lead">HEALTH STATUS</span>
+            <div class="txt">Agent is <b>healthy</b>. Last pulse <b>9s ago</b>. Alive — 9s ago ago.</div>
+        </div>
+    </div>
+    <div class="sec-h">48-Pulse Timeline <span class="hint">last 24h · 30s cadence</span></div>
+    <div class="pulse48"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></div>
+    <div class="pulse-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>now</span></div>
+    <div class="sec-h" style="margin-top:var(--space-4)">Latency (ms) per beat</div>
+    <div class="latline"><i style="height:7px" class=""></i><i style="height:44px" class=""></i><i style="height:12px" class=""></i><i style="height:25px" class=""></i><i style="height:13px" class=""></i><i style="height:37px" class=""></i><i style="height:11px" class=""></i><i style="height:11px" class=""></i><i style="height:7px" class=""></i><i style="height:11px" class=""></i><i style="height:9px" class=""></i><i style="height:15px" class=""></i><i style="height:14px" class=""></i><i style="height:18px" class=""></i><i style="height:15px" class=""></i><i style="height:13px" class=""></i><i style="height:15px" class=""></i><i style="height:9px" class=""></i><i style="height:15px" class=""></i><i style="height:7px" class=""></i><i style="height:11px" class=""></i><i style="height:8px" class=""></i><i style="height:13px" class=""></i><i style="height:10px" class=""></i></div>
+    <div class="sec-h">Latest Check</div>
+    <table class="tbl">
+        <tr><th class="mono">Time</th><th class="mono">Result</th><th class="mono r">Latency</th></tr>
+        <tr><td>08:10</td><td><span style="color:green">alive</span></td><td class="mono r">24575.94871520996ms</td></tr><tr><td>08:10</td><td><span style="color:green">alive</span></td><td class="mono r">137023.92578125ms</td></tr><tr><td>08:09</td><td><span style="color:green">alive</span></td><td class="mono r">39119.00520324707ms</td></tr><tr><td>08:09</td><td><span style="color:green">alive</span></td><td class="mono r">79660.89248657227ms</td></tr><tr><td>08:08</td><td><span style="color:green">alive</span></td><td class="mono r">42402.98271179199ms</td></tr>
+    </table>
+</div>
+        <div class="panel-pane" data-pane="guard">
+    <div class="swc insight">
+        <span class="mark">✓</span>
+        <div class="body">
+            <span class="lead">OK</span>
+            <div class="txt">Guard is <b style="color:var(--accent)">OK</b>. Monitoring normally.</div>
+        </div>
+    </div>
+    <div class="sec-h">Failure Timeline</div>
+    <div class="ftl"><div class="ev trip"><span class="t">10:50</span><div class="m">🔴 <b>pulse_dead</b> — no matching process</div></div><div class="ev trip"><span class="t">16:39</span><div class="m">🔴 <b>pulse_dead</b> — no matching process</div></div><div class="ev trip"><span class="t">23:18</span><div class="m">🔴 <b>pulse_dead</b> — no matching process</div></div><div class="ev trip"><span class="t">23:18</span><div class="m">🔴 <b>pulse_dead</b> — no matching process</div></div><div class="ev trip"><span class="t">11:10</span><div class="m">🔴 <b>pulse_dead</b> — no matching process</div></div></div>
+    <div class="sec-h">What the Guard Does</div>
+    <div class="card2"><div class="kv"><span class="k">Failures before stop</span><span class="v">3</span></div><div class="kv"><span class="k">Cooldown period</span><span class="v">~4 hours</span></div><div class="kv"><span class="k">Auto-retry</span><span class="v">Yes</span></div></div>
+</div>
+        <div class="panel-pane" data-pane="errors">
+    <div class="swc insight">
+        <span class="mark">i</span>
+        <div class="body">
+            <span class="lead">CLEAN</span>
+            <div class="txt">No errors in last 24h — clean.</div>
+        </div>
+    </div>
+    <div class="sec-h">Recent Errors <span class="hint">last 24h · 0 events</span></div>
+    <table class="tbl"><tr><th class="mono">Time</th><th class="mono">Severity</th><th>Message</th></tr><tr><td class="mono">10:50</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr><tr><td class="mono">16:39</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr><tr><td class="mono">23:18</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr><tr><td class="mono">23:18</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr><tr><td class="mono">11:10</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr><tr><td class="mono">11:09</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr><tr><td class="mono">11:09</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr><tr><td class="mono">11:09</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr><tr><td class="mono">11:09</td><td><span style="color:var(--status-critical)">Critical</span></td><td>no matching process</td></tr></table>
+</div>
+        <div class="panel-pane" data-pane="tokens">
+    <div class="swc insight">
+        <span class="mark">i</span>
+        <div class="body">
+            <span class="lead">OK</span>
+            <div class="txt">Total: <span class="num">3.7K</span> tokens. Within normal range.</div>
+        </div>
+    </div>
+    <div class="sec-h">Component Breakdown <span class="hint">3.7K total</span></div>
+    <div class="compbar"><div class="cb"><span class="lab">guidance</span><div class="track"><i class="bg" style="width:73%"></i></div><span class="val">2.7K (73%)</span></div><div class="cb"><span class="lab">memory</span><div class="track"><i class="bm" style="width:17%"></i></div><span class="val">632 (17%)</span></div><div class="cb"><span class="lab">skills</span><div class="track"><i class="bs" style="width:10%"></i></div><span class="val">361 (10%)</span></div><div class="cb"><span class="lab">identity</span><div class="track"><i class="bi" style="width:0%"></i></div><span class="val">1 (0%)</span></div><div class="cb"><span class="lab">tools</span><div class="track"><i class="bt" style="width:0%"></i></div><span class="val">1 (0%)</span></div></div>
+    <div class="sec-h">Drift <span class="hint">7-day · +1676.0%</span></div>
+    <div class="card2">
+        <div class="kv"><span class="k">guidance</span><span class="v" style="color:var(--fg)">+2.5%</span></div> <div class="kv"><span class="k">tools</span><span class="v" style="color:var(--fg)">+0.0%</span></div> <div class="kv"><span class="k">memory</span><span class="v" style="color:var(--fg)">+18.0%</span></div> <div class="kv"><span class="k">skills</span><span class="v" style="color:var(--fg)">+10.0%</span></div> <div class="kv"><span class="k">identity</span><span class="v" style="color:var(--fg)">+0.0%</span></div>
+    </div>
+</div>
+        <div class="panel-pane" data-pane="memory">
+    <div class="debt-head">
+        <div class="debt-score" style="color:var(--accent)">0</div>
+        <div class="debt-of">/ 100</div>
+    </div>
+    <div class="mstat">
+        <div class="ms "><div class="n">0</div><div class="l">Duplicates</div></div>
+        <div class="ms "><div class="n">0</div><div class="l">Contradictions</div></div>
+        <div class="ms "><div class="n">0</div><div class="l">Stale Entries</div></div>
+    </div>
+    
+    <div class="pro"><span class="pico">🧠</span><div><h4>Memory Garden Auto-Scan</h4><p>Schedule automatic garden scans to catch memory bloat before it grows.</p></div></div>
+</div>
+        <div class="panel-pane" data-pane="efficiency"
+        hx-get="/api/efficiency/sessions"
+        hx-trigger="load"
+        hx-swap="innerHTML">
+        <div class="state-msg"><div class="ico">⏳</div><p>Loading sessions…</p></div>
+    </div>
+    </div>
+</div>
+</div>
+<script>
+function switchModalTab(name, tab, btn) {
+    document.querySelectorAll('#modalTabs .m-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#modalBody .panel-pane').forEach(p => p.classList.remove('show'));
+    var pane = document.querySelector('#modalBody .panel-pane[data-pane="'+tab+'"]');
+    if (pane) pane.classList.add('show');
+}
+</script>

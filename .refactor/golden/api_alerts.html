@@ -1,0 +1,500 @@
+<div class="gap-banner" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:20px;font-weight:700;color:#f97316;">17m</div>
+    <div style="font-size:11px;color:var(--fg-2);line-height:1.5;">
+        Total <strong style="color:#e2e8f0;">undiscovered downtime</strong> across 29 alert(s) in the last 24h
+         — <span style="color:#ef4444;font-weight:600;">12 new since your last view</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">archive</span>
+        <span> — Circuit breaker tripped (582 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/archive/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">blueprint</span>
+        <span> — Circuit breaker tripped (21885 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/blueprint/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">forge</span>
+        <span> — Circuit breaker tripped (490 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/forge/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">gladwell</span>
+        <span> — Circuit breaker tripped (21883 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/gladwell/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">hawkeye</span>
+        <span> — Circuit breaker tripped (21883 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/hawkeye/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">kanban</span>
+        <span> — Circuit breaker tripped (470 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/kanban/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">my_new_agent</span>
+        <span> — Circuit breaker tripped (14496 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/my_new_agent/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">secondbrain</span>
+        <span> — Circuit breaker tripped (8402 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/secondbrain/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">spectrum</span>
+        <span> — Circuit breaker tripped (9355 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/spectrum/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">subconscious</span>
+        <span> — Circuit breaker tripped (581 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/subconscious/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">test-config-agent</span>
+        <span> — Circuit breaker tripped (8515 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/test-config-agent/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL<span style="background:#7f1d1d;color:#fca5a5;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;">NEW</span></strong></span>
+        <span class="heal-time">Jul 20 08:15</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">benchmark</span>
+        <span> — Circuit breaker tripped (15949 failures)</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/benchmark/circuit" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">my_new_agent</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/my_new_agent/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">test-config-agent</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/test-config-agent/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">subconscious</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/subconscious/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">spectrum</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/spectrum/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">secondbrain</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/secondbrain/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">kanban</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/kanban/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">hawkeye</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/hawkeye/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">gladwell</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/gladwell/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">blueprint</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/blueprint/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">forge</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/forge/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">archive</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/archive/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-critical" style="border-left:3px solid #ef4444;background:#450a0a;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#ef4444">CRITICAL</strong></span>
+        <span class="heal-time">Jul 20 08:10</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">benchmark</span>
+        <span> — Agent is dead — no recent heartbeat</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/benchmark/dead" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-warning" style="border-left:3px solid #eab308;background:#422006;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#eab308">WARNING</strong></span>
+        <span class="heal-time">Jul 20 08:08</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">forge</span>
+        <span> — Drift +46.0% in guidance</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/forge/drift" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-warning" style="border-left:3px solid #eab308;background:#422006;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#eab308">WARNING</strong></span>
+        <span class="heal-time">Jul 20 08:08</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">main</span>
+        <span> — Drift +710.0% in skills</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/main/drift" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-warning" style="border-left:3px solid #eab308;background:#422006;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#eab308">WARNING</strong></span>
+        <span class="heal-time">Jul 20 08:08</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">main</span>
+        <span> — Drift +355.0% in skills</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/main/drift" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-warning" style="border-left:3px solid #eab308;background:#422006;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#eab308">WARNING</strong></span>
+        <span class="heal-time">Jul 20 08:08</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">main</span>
+        <span> — Drift +1244.0% in memory</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/main/drift" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>
+<div class="alert-row severity-warning" style="border-left:3px solid #eab308;background:#422006;">
+    <div class="heal-entry-header">
+        <span><strong style="color:#eab308">WARNING</strong></span>
+        <span class="heal-time">Jul 20 08:08</span>
+    </div>
+    <div class="text-secondary" class="u-mt-2">
+        <span style="color:#38bdf8;font-weight:600;">main</span>
+        <span> — Drift +622.0% in memory</span>
+    </div>
+    
+    <div class="alerts-action-bar" style="margin-top:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="heal-time" style="font-size:10px;color:#64748b;">
+            🔇 Dashboard only · <span onclick="showProPreview('alert-relay')" style="cursor:pointer;color:#a5b4fc;text-decoration:underline;">Enable push alerts (Pro)</span>
+        </span>
+        <span class="dismiss-btn" hx-post="/api/alerts/ack/main/drift" hx-target="closest .alert-row" hx-swap="outerHTML" style="cursor:pointer;color:#64748b;font-size:11px;padding:2px 6px;border-radius:4px;" title="Acknowledge &amp; dismiss">✕ dismiss</span>
+    </div>
+</div>

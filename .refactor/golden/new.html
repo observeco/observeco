@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo · Fleet Dashboard</title>
+<script src="/static/htmx.min.js"></script>
+<script src="/static/chart.umd.min.js"></script>
+<script src="/static/vendor/cytoscape@3.30.4_dist_cytoscape.min.js"></script>
+<script src="/static/vendor/cytoscape-dagre@4.0.0_dist_cytoscape-dagre.js"></script>
+<script src="/static/js/app.js?v=6"></script>
+<script src="/static/js/compare.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/observeco-dashboard.css?v=6">
+<meta name="observeco-token" content="FxrXunlGzEHN6mtX550m6okEgSjfe5xnI84YOIDLLFk">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>window.__OBSERVECO_TOKEN = "FxrXunlGzEHN6mtX550m6okEgSjfe5xnI84YOIDLLFk";</script>
+</head>
+<body hx-headers='{"X-ObserveCo-Token":"FxrXunlGzEHN6mtX550m6okEgSjfe5xnI84YOIDLLFk"}'>
+<header class="topbar">
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+      <polyline points="2,15 7,15 9.5,6 13.5,21 16,15 24,15" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="20" cy="7.5" r="2.4" fill="#22c55e"/>
+    </svg>
+    <span class="logo-word"><b>Observe</b>Co</span><span class="ver">0.5.0</span>
+  </div>
+  <div class="right" id="daemonStatus"><span class="d"></span> daemon live <span class="kb-hint" style="margin-left:12px;font-size:11px;color:#64748b;">⌨ 1-9 for tabs</span></div>
+  <div class="discover-badge" id="discoverBadge" hx-get="/api/discover/panel" hx-trigger="revealed once, every 5m" hx-target="#discoverPanel" hx-swap="innerHTML" onclick="toggleDiscover()" title="See what you're not monitoring">
+    <span class="dot"></span><span id="discoverCount">…</span> gaps
+  </div>
+</header>
+<div id="discoverPanel" class="discover-panel" style="display:none;"></div>
+<script>
+function toggleDiscover() {
+  var p = document.getElementById('discoverPanel');
+  p.style.display = (p.style.display === 'none') ? 'block' : 'none';
+}
+// Update badge count after panel loads
+document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+  if (evt.detail.xhr && evt.detail.xhr.responseURL && evt.detail.xhr.responseURL.includes('/api/discover/panel')) {
+    var html = evt.detail.xhr.responseText || '';
+    var m = html.match(/(\d+)\s*gap/);
+    var cnt = document.getElementById('discoverCount');
+    var badge = document.getElementById('discoverBadge');
+    if (m) { cnt.textContent = m[1]; badge.className = 'discover-badge has-gaps'; }
+    else { cnt.textContent = '0'; badge.className = 'discover-badge no-gaps'; }
+  }
+});
+</script>
+
+<!-- Domain-grouped nav -->
+<div id="navContainer" hx-get="/api/partials/nav" hx-trigger="revealed once" hx-target="this" hx-swap="outerHTML">
+  <nav class="nav" aria-label="Primary">
+    <div class="nav-group">
+      <span class="glabel">Monitor</span>
+      <span class="nav-tab active clickable" data-tab="fleet">Fleet</span>
+      <span class="nav-tab clickable" data-tab="alerts">Alerts</span>
+      <span class="nav-tab clickable" data-tab="timeline">Error Timeline</span>
+      <span class="nav-tab clickable" data-tab="pathway">Pathway Map</span>
+    </div>
+    <div class="nav-group">
+      <span class="glabel">Analyze</span>
+      <span class="nav-tab clickable" data-tab="tokens">Tokens</span>
+      <span class="nav-tab clickable" data-tab="brain">Brain</span>
+      <span class="nav-tab clickable" data-tab="drift">Drift</span>
+      <span class="nav-tab clickable" data-tab="compare">Compare</span>
+    </div>
+    <div class="nav-group">
+      <span class="glabel">Intelligence</span>
+      <span class="nav-tab clickable" data-tab="capability">Capability</span>
+      <span class="nav-tab clickable" data-tab="anomalies">Anomalies<span class="soon">soon</span></span>
+      <span class="nav-tab clickable" data-tab="health-score">Health Score<span class="soon">soon</span></span>
+      <span class="nav-tab clickable" data-tab="traces">Traces<span class="soon">soon</span></span>
+    </div>
+    <div class="nav-group">
+      <span class="glabel">Settings</span>
+      <span class="nav-tab clickable" data-tab="config">Config</span>
+      <span class="nav-tab clickable" data-tab="billing">Billing</span>
+    </div>
+  </nav>
+</div>
+
+<!-- Verdict bar — loaded via htmx -->
+<div id="verdictContainer" hx-get="/api/fleet/verdict" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
+  <div class="verdict info">
+    <div class="verdict-icon">◷</div>
+    <div class="verdict-main">
+      <div class="verdict-text"><span class="sub">Loading fleet health…</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab content area — wraps all existing tab-content divs -->
+<div id="tabContentArea">
+
+  <!-- Fleet tab -->
+  <div class="tab-content active" id="tabFleet">
+    <div id="searchBar" class="search-bar" style="display:flex;margin-bottom:8px;align-items:center;gap:8px;">
+      <input type="text" id="agentSearch" placeholder="Search agents by name or framework..."
+             hx-get="/api/fleet/state" hx-vals='js:{q: document.getElementById("agentSearch").value, status_filter: document.querySelector(".filter-chip.active")?.getAttribute("data-filter") || "", sort: document.getElementById("fleetSort")?.value || "status"}' hx-trigger="keyup changed delay:300ms" hx-target="#fleetGrid" hx-swap="innerHTML"
+             name="q"
+             class="search-input">
+      <select id="fleetSort" class="sort-select" title="Sort agents"
+              hx-get="/api/fleet/state" hx-vals='js:{q: document.getElementById("agentSearch").value, status_filter: document.querySelector(".filter-chip.active")?.getAttribute("data-filter") || "", sort: document.getElementById("fleetSort").value}' hx-trigger="change" hx-target="#fleetGrid" hx-swap="innerHTML">
+        <option value="status">Sort: Status</option>
+        <option value="name">Sort: Name</option>
+        <option value="tokens">Sort: Tokens</option>
+        <option value="drift">Sort: Drift</option>
+        <option value="cost">Sort: Cost</option>
+      </select>
+      <div class="filter-chips" style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="filter-chip active" data-filter="" onclick="applyFilter(this,'')">All</button>
+        <button class="filter-chip" data-filter="alive" onclick="applyFilter(this,'alive')">● Running</button>
+        <button class="filter-chip" data-filter="error" onclick="applyFilter(this,'error')">● Warning</button>
+        <button class="filter-chip" data-filter="dead" onclick="applyFilter(this,'dead')">● Down</button>
+        <button class="filter-chip" data-filter="unknown" onclick="applyFilter(this,'unknown')">○ Unknown</button>
+      </div>
+    </div>
+    <div class="zone2">
+      <div>
+        <div class="section-h" id="fleetSectionHeader"><h2>Fleet</h2><span class="count">loading…</span><span id="fleetUpdated" class="fleet-updated"></span></div>
+        <div id="fleetAggStrip" class="agg-strip"></div>
+        <div id="fleetGrid" class="grid"
+             hx-get="/api/fleet/state"
+             hx-trigger="revealed once, every 30s"
+             hx-target="this"
+             hx-swap="innerHTML">
+          <div class="skel-card" style="padding:var(--space-3);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">
+            <div class="skel" style="width:80px;height:14px"></div>
+          </div>
+          <div class="skel-card" style="padding:var(--space-3);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)">
+            <div class="skel" style="width:90px;height:14px"></div>
+          </div>
+        </div>
+      </div>
+      <aside class="rail" id="alertsContainer" hx-get="/api/alerts/live" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
+        <div class="panel">
+          <div class="panel-h"><h3>Alerts</h3><span class="pcount mono">…</span></div>
+          <div style="padding:8px 0">
+            <div class="skel-line"><div class="skel" style="width:3px;height:36px"></div><div style="flex:1"><div class="skel" style="width:60%;height:12px;margin-bottom:6px"></div><div class="skel" style="width:90%;height:10px"></div></div></div>
+            <div class="skel-line"><div class="skel" style="width:3px;height:36px"></div><div style="flex:1"><div class="skel" style="width:50%;height:12px;margin-bottom:6px"></div><div class="skel" style="width:80%;height:10px"></div></div></div>
+            <div style="text-align:center;font-size:12px;color:var(--fg-3);padding:8px">Loading alerts…</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Compare tab -->
+  <div class="tab-content" id="tabCompare">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">📊 Fleet Comparison<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('fleet-compare', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Side-by-side token, drift, and error profiles across all agents.</div>
+      <div id="comparePanel" hx-get="/api/fleet-compare" hx-trigger="revealed once, every 30s" hx-swap="innerHTML" hx-on::after-swap="updateCompareIndicators()">
+        <div style="color:#64748b;font-size:12px;">Loading comparison data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Brain Analysis tab -->
+  <div class="tab-content" id="tabBrain">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🧠 Brain Analysis<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('brain-analysis', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Understand what feeds your agents and where to save.</div>
+      <div id="brainContainer" hx-get="/api/brain" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading brain data…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Token Analytics tab -->
+  <div class="tab-content" id="tabTokens">
+    <div id="analyticsContent" hx-get="/api/analytics/tokens" hx-trigger="revealed" hx-target="this" hx-swap="innerHTML">
+      <div style="color:#64748b;font-size:12px;padding:24px;text-align:center;">Loading token analytics…</div>
+    </div>
+  </div>
+
+  <!-- Auto-Heal tab -->
+  <div class="tab-content" id="tabHeal">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🛠️ Auto-Heal</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:16px;">Automatic recovery actions for degraded agents.</div>
+      <div style="margin-bottom:16px;">
+        <button onclick="runDiagnose()" style="background:#6366f1;border:none;color:white;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;">🔧 Diagnose All Agents</button>
+        <span id="diagnoseResult" style="font-size:11px;margin-left:8px;color:#64748b;"></span>
+      </div>
+      <div id="healConfigContainer" hx-get="/api/heal-config" hx-trigger="revealed once, every 30s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading auto-heal config…</div>
+      </div>
+      <h2 style="font-size:14px;font-weight:600;color:#e2e8f0;margin:20px 0 8px;">📋 Heal History</h2>
+      <div id="healLogContainer" hx-get="/api/heal-log" hx-trigger="revealed once, every 30s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading heal history…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts tab -->
+  <div class="tab-content" id="tabAlerts">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔔 Push Alerts</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Configure and view alert notifications.</div>
+      <div id="alertsTabContainer" hx-get="/api/alerts" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading alerts…</div>
+      </div>
+      <h2 style="font-size:14px;font-weight:600;color:#e2e8f0;margin:20px 0 8px;">🔔 Alert Channels</h2>
+      <div id="alertChannelsContainer" hx-get="/api/alert-dashboard" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading channels…</div>
+      </div>
+      <h2 style="font-size:14px;font-weight:600;color:#e2e8f0;margin:20px 0 8px;">📜 Delivery Log</h2>
+      <div id="alertLogContainer" hx-get="/api/alert-log" hx-trigger="revealed once, every 30s" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading delivery log…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plugin tab -->
+  <div class="tab-content" id="tabPlugin">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔌 Plugin</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Manage ObserveCo plugins and integrations.</div>
+      <div id="pluginContainer">
+        <div style="color:#64748b;font-size:12px;">Plugin management — coming soon.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Restarts tab -->
+  <div class="tab-content" id="tabRestarts">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔄 Restarts</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Agent restart history and quality metrics.</div>
+      <div id="restartsContainer" hx-get="/api/restart-quality" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading restart data…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Traces tab -->
+  <div class="tab-content" id="tabTraces">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔍 Traces</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Distributed tracing across agent handoff chains.</div>
+      <div id="tracesContainer">
+        <div style="color:#64748b;font-size:12px;">Distributed tracing — coming soon.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anomalies tab -->
+  <div class="tab-content" id="tabAnomalies">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">⚠️ Anomalies</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Unexpected agent behavior patterns across your fleet.</div>
+      <div id="anomaliesContainer" hx-get="/api/anomalies" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading anomalies…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Capability tab -->
+  <div class="tab-content" id="tabCapability">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🎯 Capability</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Select an agent to view benchmark results, performance trends, and task breakdowns.</div>
+      <div id="capabilityContainer" hx-get="/api/capability/page" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading capability…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings tab -->
+  <div class="tab-content" id="tabSettings">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">⚙️ Settings</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Dashboard and agent configuration.</div>
+      <div id="settingsContainer">
+        <div style="color:#64748b;font-size:12px;">Settings — coming soon.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drift tab (new) -->
+  <div class="tab-content" id="tabDrift">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">📈 Drift Analysis</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">7-day drift trajectory per agent — sparklines of the most drifted component. Click any row for details.</div>
+      <div id="driftContainer" hx-get="/api/drift-summary" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;">Loading drift data…</div>
+      </div>
+      <div id="driftChartContainer" hx-get="/api/capability/drift/chart" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading drift chart…</div>
+      </div>
+      <div id="configTimelineContainer" hx-get="/api/capability/timeline/events" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading config timeline…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health Score tab (new, placeholder) -->
+  <div class="tab-content" id="tabHealthScore">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🏥 Health Score</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Single 0–100 score showing how healthy each agent's brain is.</div>
+      <div class="pro-tile" style="opacity:0.5;padding:48px;text-align:center;">
+        <span class="pico" style="font-size:32px;">🧠</span>
+        <h3>Coming Soon</h3>
+        <p>Health Score will be available in v1.0</p>
+        <span class="soon-tag">Soon → v1.0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config tab (new) -->
+  <div class="tab-content" id="tabConfig">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">⚙️ Config</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Dashboard configuration and preferences.</div>
+      <div id="configContainer">
+        <div style="color:#64748b;font-size:12px;">Configuration — coming soon.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Billing tab (new) -->
+  <div class="tab-content" id="tabBilling">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">💳 Billing</h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;">Usage, plans, and billing information.</div>
+      <div id="billingContainer">
+        <div style="color:#64748b;font-size:12px;">Billing — coming soon.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Harness Optimizer tab (obs-spec-056 §8 frontend) -->
+  <div class="tab-content" id="tabHarness">
+    <div class="app" style="padding:0;">
+      <h1 style="font-size:20px;font-weight:600;margin-bottom:4px;">🔧 Harness Optimizer<span class="glossary-hint" onclick="event.stopPropagation();showGlossary('harness-optimizer', event)" style="font-size:11px;cursor:pointer;background:#334155;border-radius:4px;padding:1px 6px;color:#94a3b8;font-weight:400;margin-left:6px;">?</span></h1>
+      <div style="font-size:13px;color:#64748b;margin-bottom:16px;">Proposes + evaluates harness edits against held-out dev/test. Promoted edits are applied to the live agent (with backup). Phantom Guardrail + Evaluation Fairness gates prevent hallucinated failures and search-budget illusions.</div>
+      <div style="margin-bottom:16px;">
+        <button onclick="startHarnessRun()" style="background:#6366f1;border:none;color:white;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;">🚀 Run Optimization</button>
+        <button onclick="runGateTest()" style="background:#475569;border:none;color:white;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;margin-left:8px;">🛡️ Gate Test</button>
+        <span id="harnessRunResult" style="font-size:11px;margin-left:8px;color:#64748b;"></span>
+      </div>
+      <div id="harnessGateTest" hx-get="/api/harness/gate-test" hx-trigger="revealed once" hx-swap="innerHTML" style="margin-bottom:16px;">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading gate test…</div>
+      </div>
+      <div id="harnessExperience" hx-get="/api/harness/experience" hx-trigger="revealed once" hx-swap="innerHTML" style="margin-bottom:16px;">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading experience bank…</div>
+      </div>
+      <div id="harnessPanel" hx-get="/api/harness/runs" hx-trigger="revealed once" hx-swap="innerHTML">
+        <div style="color:#64748b;font-size:12px;padding:12px;">Loading harness runs…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pathway Map tab -->
+  <div class="tab-content" id="tabPathway">
+    <div id="pathwayContainer" hx-get="/api/pathway/tab" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
+      <div style="color:#64748b;font-size:12px;padding:24px;text-align:center;">Loading pathway map…</div>
+    </div>
+  </div>
+
+  <!-- Error Timeline (loaded via htmx) -->
+  <div class="tab-content" id="tabTimeline">
+    <!-- Range selector per master-plan §18: 24H/7D/30D/90D — top of tab -->
+    <div class="tl-toolbar">
+      <span class="tl-range-label">Range</span>
+      <div class="tl-range" role="group" aria-label="Time range">
+        <button class="tl-range-btn active" data-days="1">24H</button>
+        <button class="tl-range-btn" data-days="7">7D</button>
+        <button class="tl-range-btn" data-days="30">30D</button>
+        <button class="tl-range-btn" data-days="90">90D</button>
+      </div>
+    </div>
+    <div class="zone3" id="timelineContainer" hx-get="/api/timeline/errors?days=1" hx-trigger="revealed once" hx-target="this" hx-swap="innerHTML">
+      <div class="section-h"><h2>Error Timeline</h2><span class="count mono">loading…</span></div>
+      <div class="tl-rows"><div class="tl-empty">Loading events…</div></div>
+    </div>
+    <script>
+      document.querySelectorAll('.tl-range-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          htmx.ajax('GET', '/api/timeline/errors?days=' + btn.dataset.days, {target:'#timelineContainer', swap:'innerHTML'});
+          document.querySelectorAll('.tl-range-btn').forEach(function(b){ b.classList.remove('active'); });
+          btn.classList.add('active');
+        });
+      });
+    </script>
+  </div>
+
+</div>
+
+<div id="modalContainer"></div>
+<script src="/static/js/pathway.js?v=3"></script>
+<script>
+// ── Auto-Heal tab handlers (wired to /api/heal-config endpoints) ──
+function toggleHeal(name, l1, l2) {
+  fetch('/api/heal-config/' + encodeURIComponent(name), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({auto_heal: l1, auto_heal_l2: l2})
+  })
+  .then(r => r.json())
+  .then(d => { if (!d.ok) alert('Heal config failed: ' + (d.error || '')); });
+}
+function toggleHealL2(name, checked) {
+  var l1 = document.getElementById('l1_' + name).checked;
+  toggleHeal(name, l1, checked);
+}
+function editHealThresholds(name) {
+  var maxR = parseFloat(document.getElementById('maxR_' + name).textContent) || 3;
+  var driftT = parseFloat(document.getElementById('driftT_' + name).textContent) || 15.0;
+  var debtT = parseFloat(document.getElementById('debtT_' + name).textContent) || 60;
+  var input = prompt('Edit thresholds (max restarts/hr, drift %, memory debt %):', maxR + ', ' + driftT + ', ' + debtT);
+  if (!input) return;
+  var parts = input.split(',').map(function(s){ return parseFloat(s.trim()); });
+  if (parts.length !== 3 || parts.some(isNaN)) { alert('Invalid format. Use: restarts, drift, debt'); return; }
+  fetch('/api/heal-config/' + encodeURIComponent(name) + '/thresholds', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({max_restarts: parts[0], drift_threshold: parts[1], memory_debt: parts[2]})
+  })
+  .then(r => r.json())
+  .then(d => { if (d.ok) { document.getElementById('maxR_' + name).textContent = parts[0]; document.getElementById('driftT_' + name).textContent = parts[1]; document.getElementById('debtT_' + name).textContent = parts[2]; } else { alert('Threshold update failed: ' + (d.error || '')); } });
+}
+function startWatchDaemon() {
+  fetch('/api/heal-config/start-watch', {method: 'POST'})
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        // Refresh the heal config block to clear the daemon warning
+        htmx.ajax('GET', '/api/heal-config', {target: '#healConfigContainer', swap: 'innerHTML'});
+      } else {
+        alert('Failed to start watch daemon: ' + (d.error || ''));
+      }
+    });
+}
+function startHarnessRun() {
+  var agent = (new URLSearchParams(location.search).get('agent')) || 'default';
+  var iterations = 5;
+  // Cost-confirm: the loop spawns an LLM proposer (~$0.50/iter, BYOK) + canary
+  // eval on dev/test. Never spend silently.
+  var ok = confirm(
+    'Run harness optimization for "' + agent + '"?\n\n' +
+    iterations + ' iterations × LLM proposer (~$0.50/iter) + canary eval on dev/test.\n' +
+    'Estimated cost: ~$' + (iterations * 0.5).toFixed(2) + ' (BYOK).\\n\\n' +
+    'Note: promoted edits ARE applied to the live agent (with backup).'
+  );
+  if (!ok) return;
+  var el = document.getElementById('harnessRunResult');
+  el.textContent = 'Starting…';
+  fetch('/api/harness/run?agent=' + encodeURIComponent(agent) + '&iterations=' + iterations, {method: 'POST'})
+    .then(r => r.json())
+    .then(d => {
+      el.textContent = d.ok ? d.message : ('Failed: ' + (d.message || ''));
+      if (d.ok) setTimeout(function(){ htmx.ajax('GET', '/api/harness/runs', {target:'#harnessPanel', swap:'innerHTML'}); }, 1500);
+    })
+    .catch(function(e){ el.textContent = 'Error: ' + e; });
+}
+function runGateTest() {
+  var el = document.getElementById('harnessGateTest');
+  el.innerHTML = '<div style="color:#64748b;font-size:12px;padding:12px;">Running gate test…</div>';
+  fetch('/api/harness/gate-test?agent=default', {method: 'POST'})
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        htmx.ajax('GET', '/api/harness/gate-test', {target:'#harnessGateTest', swap:'innerHTML'});
+      } else {
+        el.innerHTML = '<div style="color:#ef4444;font-size:12px;padding:12px;">Gate test failed: ' + (d.message || '') + '</div>';
+      }
+    })
+    .catch(function(e){ el.innerHTML = '<div style="color:#ef4444;font-size:12px;padding:12px;">Error: ' + e + '</div>'; });
+}
+function runDiagnose() {
+  var el = document.getElementById('diagnoseResult');
+  el.textContent = 'Running…';
+  htmx.ajax('GET', '/api/trigger-heal', {
+    target: '#diagnoseResult',
+    swap: 'innerHTML'
+  });
+}
+</script>
+</body>
+</html>

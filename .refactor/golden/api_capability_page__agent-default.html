@@ -1,0 +1,950 @@
+    <style>
+      /* ── Capability Page Redesign ── */
+      .cap-agent-bar {
+        display: flex; align-items: center; gap: 12px; padding: 0 0 16px 0;
+        border-bottom: 1px solid var(--border-soft); margin-bottom: 4px;
+      }
+      .cap-agent-bar label {
+        font-size: 12px; font-weight: 600; color: var(--fg-2);
+        text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
+      }
+      .cap-agent-select {
+        padding: 6px 32px 6px 12px; border-radius: 8px; font-size: 13px;
+        background: var(--surface); color: var(--fg); border: 1px solid var(--border);
+        font-family: inherit; cursor: pointer; appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 10px center;
+        min-width: 200px; max-width: 300px;
+      }
+      .cap-agent-select:hover { border-color: var(--muted); }
+      .cap-agent-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(34,197,94,0.15); }
+      .cap-agent-select optgroup { font-weight: 700; color: var(--fg); background: var(--surface); }
+      .cap-agent-select option { font-weight: 400; padding: 6px 0; }
+
+      /* ── Overview Card ── */
+      .cap-overview {
+        display: grid; grid-template-columns: 1fr 2fr;
+        gap: 16px; margin-bottom: 8px;
+      }
+      .cap-overview-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 12px; padding: 20px;
+      }
+      .cap-overview-card.agent-info {
+        display: flex; flex-direction: column; justify-content: space-between;
+      }
+      .cap-ov-name {
+        font-size: 16px; font-weight: 700; color: var(--fg); margin-bottom: 4px;
+      }
+      .cap-ov-last-tested {
+        font-size: 12px; color: var(--fg-3); margin-bottom: 12px;
+      }
+      .cap-ov-stats {
+        display: flex; gap: 20px; margin-bottom: 16px;
+      }
+      .cap-ov-stat {
+        text-align: center;
+      }
+      .cap-ov-stat .val {
+        font-size: 22px; font-weight: 700; font-family: var(--font-mono);
+      }
+      .cap-ov-stat .lbl {
+        font-size: 10px; color: var(--fg-3); text-transform: uppercase;
+        letter-spacing: 0.04em; margin-top: 2px;
+      }
+      .cap-ov-stat .val.green { color: var(--accent); }
+      .cap-ov-stat .val.red { color: var(--danger); }
+      .cap-ov-stat .val.muted { color: var(--muted); }
+      .cap-ov-actions {
+        display: flex; gap: 8px; flex-wrap: wrap;
+      }
+      .cap-ov-accuracy-card {
+        display: flex; align-items: center; justify-content: center;
+        flex-direction: column; gap: 8px;
+      }
+      .cap-ov-big-accuracy {
+        font-size: 48px; font-weight: 700; font-family: var(--font-mono);
+        line-height: 1;
+      }
+      .cap-ov-big-accuracy.green { color: var(--accent); }
+      .cap-ov-big-accuracy.amber { color: var(--warn); }
+      .cap-ov-big-accuracy.red { color: var(--danger); }
+      .cap-ov-big-accuracy.muted { color: var(--muted); }
+      .cap-ov-accuracy-label {
+        font-size: 12px; color: var(--fg-3); text-align: center;
+      }
+      .cap-ov-accuracy-label strong { color: var(--fg-2); }
+
+      /* ── Empty State (not tested) ── */
+      .cap-untested {
+        background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+        padding: 48px 32px; text-align: center;
+      }
+      .cap-untested-icon { font-size: 48px; margin-bottom: 16px; }
+      .cap-untested h3 { font-size: 18px; font-weight: 600; color: var(--fg); margin-bottom: 8px; }
+      .cap-untested p {
+        font-size: 13px; color: var(--fg-2); max-width: 480px; margin: 0 auto 20px;
+        line-height: 1.6;
+      }
+      .cap-untested .help-text {
+        font-size: 12px; color: var(--fg-3); margin-top: 12px;
+      }
+      .cap-tooltip {
+        display: inline-block; cursor: help; border-bottom: 1px dotted var(--fg-3);
+        color: var(--fg-3); font-size: 12px;
+      }
+
+      /* ── Section Headers ── */
+      .cap-section {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 12px; overflow: hidden; margin-bottom: 8px;
+      }
+      .cap-section-h {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 20px; border-bottom: 1px solid var(--border-soft);
+      }
+      .cap-section-h h3 {
+        font-size: 14px; font-weight: 600; color: var(--fg); margin: 0;
+        display: flex; align-items: center; gap: 8px;
+      }
+      .cap-section-h h3 .badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-size: 11px; padding: 2px 8px; border-radius: 99px;
+        font-weight: 500; background: rgba(34,197,94,0.12); color: var(--accent);
+      }
+      .cap-section-body {
+        padding: 16px 20px;
+      }
+
+      /* ── Summary strip ── */
+      .cap-summary-strip {
+        display: flex; align-items: center; gap: 12px;
+        padding: 0 20px 12px 20px; font-size: 13px; color: var(--fg-2);
+      }
+      .cap-summary-strip .ok { color: var(--accent); }
+      .cap-summary-strip .warn { color: var(--warn); }
+      .cap-summary-strip .bad { color: var(--danger); }
+
+      /* ── Buttons ── */
+      .cap-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 8px 16px; border-radius: 8px; font-size: 13px;
+        font-weight: 500; cursor: pointer; border: 1px solid var(--border);
+        background: var(--bg); color: var(--fg-2); font-family: inherit;
+        transition: all 0.15s;
+      }
+      .cap-btn:hover { border-color: var(--muted); color: var(--fg); }
+      .cap-btn-primary {
+        background: var(--accent); color: var(--accent-on); border-color: var(--accent);
+      }
+      .cap-btn-primary:hover { opacity: 0.9; color: var(--accent-on); }
+      .cap-btn-sm { padding: 5px 12px; font-size: 12px; }
+
+      /* ── Task table (simplified) ── */
+      .cap-task-table {
+        width: 100%; border-collapse: collapse;
+      }
+      .cap-task-table th {
+        text-align: left; font-size: 10px; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.05em;
+        padding: 8px 12px; border-bottom: 1px solid var(--border);
+        font-weight: 600;
+      }
+      .cap-task-table td {
+        padding: 10px 12px; border-bottom: 1px solid var(--border-soft);
+        font-size: 13px; color: var(--fg);
+      }
+      .cap-task-table tr:last-child td { border-bottom: none; }
+      .cap-task-trend { font-family: var(--font-mono); font-weight: 600; font-size: 12px; }
+      .cap-task-trend.up { color: var(--accent); }
+      .cap-task-trend.down { color: var(--danger); }
+      .cap-task-trend.flat { color: var(--muted); }
+      .cap-task-status {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 11px; padding: 2px 8px; border-radius: 99px;
+        font-weight: 500;
+      }
+      .cap-task-status.pass { background: rgba(34,197,94,0.12); color: var(--accent); }
+      .cap-task-status.fail { background: rgba(239,68,68,0.12); color: var(--danger); }
+      .cap-task-status.warn { background: rgba(234,179,8,0.12); color: var(--warn); }
+
+      /* ── Advanced (collapsible) ── */
+      .cap-advanced-toggle {
+        display: flex; align-items: center; gap: 8px;
+        padding: 12px 20px; cursor: pointer; font-size: 13px;
+        color: var(--fg-3); user-select: none;
+        border: 1px solid var(--border-soft); border-radius: 12px;
+        background: var(--surface); margin-bottom: 8px;
+        transition: color 0.15s;
+      }
+      .cap-advanced-toggle:hover { color: var(--fg-2); }
+      .cap-advanced-toggle .arrow {
+        transition: transform 0.2s; font-size: 10px;
+      }
+      .cap-advanced-toggle.open .arrow { transform: rotate(90deg); }
+      .cap-advanced-body {
+        display: none; flex-direction: column; gap: 8px;
+        margin-bottom: 16px;
+      }
+      .cap-advanced-body.open { display: flex; }
+
+      /* ── Performance summary card inline ── */
+      .cap-perf-summary {
+        display: flex; align-items: center; gap: 16px;
+        padding: 0 20px 8px 20px; flex-wrap: wrap;
+      }
+    </style>
+
+    <div class="section" style="display:flex;flex-direction:column;gap:8px;">
+
+      <!-- Agent Selector -->
+      <div class="cap-agent-bar">
+        <label>Agent</label>
+        <form hx-get="/api/capability/page" hx-trigger="change from:#capAgentSelect" hx-target="#capabilityContainer" hx-swap="innerHTML" style="margin:0;">
+          <select class="cap-agent-select" name="agent" id="capAgentSelect">
+            <optgroup label="── Tested Agents ──"><option value="accelerator">accelerator</option><option value="aleph">aleph</option><option value="default">default</option><option value="forge" selected>forge</option><option value="gladwell">gladwell</option><option value="hound">hound</option><option value="kepler">kepler</option><option value="main">main</option><option value="pa">pa</option><option value="pragma">pragma</option><option value="raven">raven</option><option value="secondbrain">secondbrain</option><option value="skeptical">skeptical</option><option value="spectrum">spectrum</option><option value="subconscious">subconscious</option><option value="workspace">workspace</option></optgroup><optgroup label="── Untested ──"><option value="archive">archive</option><option value="benchmark">benchmark</option><option value="blueprint">blueprint</option><option value="calendar-bridge-auth">calendar-bridge-auth</option><option value="dashboard">dashboard</option><option value="dreamer">dreamer</option><option value="gateway">gateway</option><option value="gateway-monitor">gateway-monitor</option><option value="hawkeye">hawkeye</option><option value="herald">herald</option><option value="hermes">hermes</option><option value="hermes_helper">hermes_helper</option><option value="hermes_helper_(renderer)">hermes_helper_(renderer)</option><option value="hound-acps-watcher">hound-acps-watcher</option><option value="hound-watcher">hound-watcher</option><option value="imessage-watcher">imessage-watcher</option><option value="kanban">kanban</option><option value="kepler-acps-watcher">kepler-acps-watcher</option><option value="l3-live-2">l3-live-2</option><option value="l3-prod-test">l3-prod-test</option><option value="l3-test-agent">l3-test-agent</option><option value="llama_server">llama_server</option><option value="memory-cache">memory-cache</option><option value="memory-cache-watcher">memory-cache-watcher</option><option value="my_new_agent">my_new_agent</option><option value="offload-cleanup">offload-cleanup</option><option value="ollama">ollama</option><option value="persona-generator">persona-generator</option><option value="pragma-acps-watcher">pragma-acps-watcher</option><option value="raven-acps-watcher">raven-acps-watcher</option><option value="telemetry">telemetry</option><option value="test-agent-ci">test-agent-ci</option><option value="test-auto-agent">test-auto-agent</option><option value="test-config-agent">test-config-agent</option><option value="test-write-agent">test-write-agent</option></optgroup>
+          </select>
+        </form>
+        <span style="font-size:11px;color:var(--fg-3);">
+          16 tested · 35 untested
+        </span>
+      </div>
+
+      <!-- ──── Assertion Types Info Banner ──── -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--fg-2);display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">🧪</span>
+        <span>
+          <strong>8 assertion types</strong> available:
+          <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">exact_match</code>
+          <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">contains</code>
+          <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">numeric_range</code>
+          <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">regex</code>
+          <code style="background:var(--bg);padding:1px 5px;border-radius:3px;color:var(--accent);">llm_judge</code>
+          <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">json_schema</code>
+          <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">ordering</code>
+          <code style="background:var(--bg);padding:1px 5px;border-radius:3px;">tool_call_validation</code>
+          <span style="color:var(--muted);margin-left:4px;">
+            · <strong>llm_judge</strong> uses LLM-as-a-Verifier (1-20 scale, K=3, logprob-based expected score) per Kwok et al. 2026
+          </span>
+        </span>
+      </div>
+
+      <!-- ──── Section 1: Agent Overview Card ──── -->
+            <div class="cap-overview" id="capOverviewCard">
+        <div class="cap-overview-card agent-info">
+          <div>
+            <div class="cap-ov-name">forge</div>
+            <div class="cap-ov-last-tested">Tested 1 days ago</div>
+            <div class="cap-ov-stats">
+              <div class="cap-ov-stat"><div class="val muted">0</div><div class="lbl">Passed</div></div>
+              <div class="cap-ov-stat"><div class="val bad">0</div><div class="lbl">Failed</div></div>
+              <div class="cap-ov-stat"><div class="val">20</div><div class="lbl">Total</div></div>
+            </div>
+          </div>
+          <div class="cap-ov-actions">
+            <button onclick="runCanary()" class="cap-btn cap-btn-primary">▶ Run Benchmark</button>
+            <button onclick="navigateToTasksTab()" class="cap-btn cap-btn-sm">📋 View Tasks</button>
+          </div>
+        </div>
+        <div class="cap-overview-card cap-ov-accuracy-card">
+          <div class="cap-ov-big-accuracy muted">—%</div>
+          <div class="cap-ov-accuracy-label">No benchmark data yet</div>
+        </div>
+      </div>
+
+      <!-- ──── Empty State: Untested Agent ──── -->
+      <div class="cap-untested" id="capUntested" style="display:none;">
+        <div class="cap-untested-icon">🧪</div>
+        <h3>This agent hasn't been tested yet</h3>
+        <p>
+          A benchmark test runs 9 evaluation tasks to measure this agent's capabilities
+          across reasoning, coding, extraction, tool use, and instruction following.
+          It takes about <strong>2–3 minutes</strong> and costs roughly
+          <strong>$0.05</strong> in API calls.
+        </p>
+        <button onclick="runCanary()" class="cap-btn cap-btn-primary" style="font-size:15px;padding:12px 28px;">
+          🚀 Run First Benchmark
+        </button>
+        <div class="help-text">
+          <span class="cap-tooltip" title="A benchmark (canary) runs a fixed set of tasks against your agent and scores the results. After 3+ runs with the same config, drift detection activates automatically to alert you of performance changes.">
+            💡 What is a benchmark?
+          </span>
+        </div>
+      </div>
+
+      <!-- ──── Section 2: Performance Trend ──── -->
+      <div class="cap-section" id="perfTrendSection" style="">
+        <div class="cap-section-h">
+          <h3>📈 Performance Over Time <span class="badge" id="perfTrendBadge" style="display:none;"></span></h3>
+          <button onclick="runCanary()" class="cap-btn cap-btn-sm">🔄 Re-run Benchmark</button>
+        </div>
+        <div class="cap-perf-summary" id="perfTrendSummary" style="display:none;">
+          <!-- Populated by JS -->
+        </div>
+        <div id="driftChartContainer" hx-get="/api/capability/drift/chart?agent=forge" hx-trigger="load" hx-swap="innerHTML" hx-on::after-swap="setTimeout(loadDriftChart, 100)">
+          <div class="skel" style="width:100%;height:140px;border-radius:8px;margin:16px 20px;max-width:calc(100% - 40px);"></div>
+        </div>
+        <div class="cap-section-body" id="driftChartBody" style="display:none;">
+          <!-- The drift chart partial renders into driftChartContainer; this is the post-chart content -->
+        </div>
+      </div>
+
+      <!-- ──── Section 3: Task Breakdown ──── -->
+      <div class="cap-section" id="taskBreakdownSection">
+        <div class="cap-section-h">
+          <h3>📋 Task Breakdown</h3>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button onclick="filterPerTaskDrift('all')" class="cap-btn cap-btn-sm per-task-chip" data-cat="all" style="background:var(--meta);color:#fff;border-color:var(--meta);">All</button>
+            <button onclick="filterPerTaskDrift('reasoning')" class="cap-btn cap-btn-sm per-task-chip" data-cat="reasoning" style="background:transparent;color:var(--fg-2);border-color:var(--border);">🧮 Reasoning</button>
+            <button onclick="filterPerTaskDrift('coding')" class="cap-btn cap-btn-sm per-task-chip" data-cat="coding" style="background:transparent;color:var(--fg-2);border-color:var(--border);">💻 Coding</button>
+            <button onclick="filterPerTaskDrift('extraction')" class="cap-btn cap-btn-sm per-task-chip" data-cat="extraction" style="background:transparent;color:var(--fg-2);border-color:var(--border);">📄 Extraction</button>
+            <button onclick="filterPerTaskDrift('tool_use')" class="cap-btn cap-btn-sm per-task-chip" data-cat="tool_use" style="background:transparent;color:var(--fg-2);border-color:var(--border);">🛠 Tool Use</button>
+            <button onclick="filterPerTaskDrift('instruction_following')" class="cap-btn cap-btn-sm per-task-chip" data-cat="instruction_following" style="background:transparent;color:var(--fg-2);border-color:var(--border);">📋 Instructions</button>
+          </div>
+        </div>
+        <div class="cap-section-body" id="taskBreakdownBody">
+          <div id="perTaskLegend" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px;"></div>
+          <div style="background:var(--bg);border:1px solid var(--border-soft);border-radius:8px;padding:16px;">
+            <div class="chart-wrapper"><canvas id="perTaskDriftChart"></canvas></div>
+          </div>
+          <div id="perTaskDetail" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span id="perTaskDetailName" style="font-size:14px;font-weight:600;"></span>
+              <span onclick="closePerTaskDetail()" style="cursor:pointer;color:var(--muted);font-size:16px;">✕</span>
+            </div>
+            <div id="perTaskDetailGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;"></div>
+            <div style="font-size:12px;color:var(--fg-2);line-height:1.6;padding:8px;background:rgba(15,23,42,.5);border-radius:6px;">
+              <div style="color:var(--muted);font-weight:600;margin-bottom:4px;">🧠 LLM Judge Reasoning</div>
+              <div id="perTaskDetailReasoningText" style="color:var(--muted);">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ──── Section 4: What Changed ──── -->
+      <div class="cap-section">
+        <div class="cap-section-h">
+          <h3>🕐 What Changed</h3>
+        </div>
+        <div class="cap-section-body">
+          <div id="timelineContainer" hx-get="/api/capability/timeline/events?agent=forge" hx-trigger="load" hx-swap="innerHTML">
+            <div class="skel" style="width:100%;height:60px;border-radius:8px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ──── Section 5: Advanced (collapsed) ──── -->
+      <div class="cap-advanced-toggle" onclick="toggleAdvanced()">
+        <span class="arrow">▶</span> Advanced
+        <span style="font-size:11px;color:var(--fg-3);">Grid Comparison, Task Editor</span>
+      </div>
+      <div class="cap-advanced-body" id="capAdvancedBody">
+        <!-- Grid -->
+        <div class="cap-section">
+          <div class="cap-section-h">
+            <h3>📊 Model × Config Comparison</h3>
+            <button onclick="runGrid()" class="cap-btn cap-btn-sm">🔄 Run Comparison</button>
+          </div>
+          <div class="cap-section-body">
+            <div id="gridTableContainer" hx-get="/api/capability/grid/table?agent=forge" hx-trigger="load" hx-swap="innerHTML">
+              <div class="skel" style="width:100%;height:100px;border-radius:8px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="cap-section">
+          <div class="cap-section-h">
+            <h3>📋 Task Library</h3>
+            <div style="display:flex;gap:4px;">
+              <button onclick="showTaskTab('active')" id="taskTabActive" class="cap-btn cap-btn-sm cap-btn-active">Active</button>
+              <button onclick="showTaskTab('pending')" id="taskTabPending" class="cap-btn cap-btn-sm">⏳ Pending</button>
+            </div>
+          </div>
+          <div class="cap-section-body">
+            <div id="taskListContainer" hx-get="/api/capability/tasks/list" hx-trigger="load" hx-swap="innerHTML">
+              <div class="skel" style="width:100%;height:60px;border-radius:8px;"></div>
+            </div>
+            <div id="pendingListContainer" style="display:none;" hx-get="/api/capability/pending-tasks/html" hx-trigger="load" hx-swap="innerHTML">
+              <div class="skel" style="width:100%;height:60px;border-radius:8px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+    // ── Agent switcher ──
+    function switchCapabilityAgent(agent) {
+      htmx.ajax('GET', '/api/capability/page?agent=' + encodeURIComponent(agent), {target: '#capabilityContainer', swap: 'innerHTML'});
+    }
+
+    // ── Navigate to Tasks tab ──
+    window.navigateToTasksTab = function() {
+      // Scroll to the Task Breakdown grid section
+      var el = document.getElementById('gridReport') || document.querySelector('.cap-section');
+      if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    };
+
+    // ── Advanced section toggle ──
+    window.toggleAdvanced = function() {
+      var body = document.getElementById('capAdvancedBody');
+      var toggle = document.querySelector('.cap-advanced-toggle');
+      if (!body || !toggle) return;
+      var open = body.classList.toggle('open');
+      toggle.classList.toggle('open', open);
+      if (open) {
+        // Lazy-load advanced content if not already loaded
+        var gridEl = document.getElementById('gridTableContainer');
+        if (gridEl && gridEl.querySelector('.cap-empty') && gridEl.querySelector('.cap-empty').textContent.includes('No Grid Runs')) {
+          htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent('forge'), {target: '#gridTableContainer', swap: 'innerHTML'});
+        }
+      }
+    };
+
+    // ── Canary runner (renamed to "benchmark" in UI, backend stays "canary") ──
+    function runCanary() {
+      var agent = 'forge';
+      var btn = document.querySelector('.cap-btn-primary') || document.querySelector('button');
+      if (btn) { btn.textContent = '⏳ Running…'; btn.disabled = true; }
+
+      // Get auth token from meta tag (injected by server)
+      var _token = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      var _headers = _token ? { 'X-ObserveCo-Token': _token } : {};
+
+      fetch('/api/capability/canary/run?agent=' + encodeURIComponent(agent), {method:'POST', headers: _headers})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            showToast('Benchmark started for ' + agent + ' — this takes ~2–3 min');
+            // Show running state in overview
+            var accEl = document.getElementById('capOvBigAcc');
+            if (accEl) { accEl.textContent = '...'; accEl.className = 'cap-ov-big-accuracy muted'; }
+            var lastEl = document.getElementById('capOvLastTested');
+            if (lastEl) lastEl.textContent = '⏳ Benchmark running…';
+            // Hide untested banner
+            var untestedEl = document.getElementById('capUntested');
+            if (untestedEl) untestedEl.style.display = 'none';
+
+            var poll = setInterval(function() {
+              fetch('/api/capability/canary/status?agent=' + encodeURIComponent(agent), {headers: _headers})
+                .then(function(r) { return r.json(); })
+                .then(function(s) {
+                  if (s.running) {
+                    // Live progress update
+                    if (accEl && s.total_tasks) {
+                      var done = (s.pass_count||0) + (s.fail_count||0) + (s.hang_count||0);
+                      accEl.textContent = done + '/' + s.total_tasks;
+                    }
+                  } else if (!s.running && s.completed) {
+                    clearInterval(poll);
+                    showToast('Benchmark complete — refreshing');
+                    // Full page refresh to show results
+                    htmx.ajax('GET', '/api/capability/page?agent=' + encodeURIComponent(agent), {target: '#capabilityContainer', swap: 'innerHTML'});
+                  } else if (!s.running && !s.completed) {
+                    clearInterval(poll);
+                    if (btn) { btn.textContent = '▶ Run Benchmark'; btn.disabled = false; }
+                    showToast('No test data available — try running a benchmark');
+                  }
+                });
+            }, 5000);
+          } else {
+            if (btn) { btn.textContent = '▶ Run Benchmark'; btn.disabled = false; }
+            showToast('Benchmark failed to start: ' + (d.error || 'unknown'));
+          }
+        })
+        .catch(function(e) {
+          if (btn) { btn.textContent = '▶ Run Benchmark'; btn.disabled = false; }
+          showToast('Benchmark failed: ' + e.message);
+        });
+    }
+
+    function runGrid() {
+      var agent = 'forge';
+      var _token = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      var _gh = _token ? { 'X-ObserveCo-Token': _token } : {};
+      fetch('/api/capability/grid/run?agent=' + encodeURIComponent(agent), {method:'POST', headers: _gh})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok) {
+            showToast('Comparison started for ' + agent);
+            var poll = setInterval(function() {
+              fetch('/api/capability/grid?agent=' + encodeURIComponent(agent), {headers: _gh})
+                .then(function(r) { return r.json(); })
+                .then(function(g) {
+                  if (g.cells && g.cells.length > 0) {
+                    clearInterval(poll);
+                    showToast('Comparison complete — refreshing');
+                    htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent(agent), {target: '#gridTableContainer', swap: 'innerHTML'});
+                  } else if (g.status === 'failed') {
+                    clearInterval(poll);
+                    showToast('Comparison failed: ' + (g.error || 'see server log'));
+                  }
+                })
+                .catch(function(e) { clearInterval(poll); showToast('Comparison poll error: ' + e.message); });
+            }, 10000);
+          }
+        })
+        .catch(function(e) { showToast('Comparison failed: ' + e.message); });
+    }
+
+    function showToast(msg) {
+      var existing = document.getElementById('capToast');
+      if (existing) existing.remove();
+      var t = document.createElement('div');
+      t.id = 'capToast';
+      t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 16px;color:#f8fafc;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(function() { t.remove(); }, 5000);
+    }
+
+    function runCanaryForAgent(agent) {
+      var _t = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      fetch('/api/capability/canary/run?agent=' + encodeURIComponent(agent), {method:'POST', headers: _t ? {'X-ObserveCo-Token': _t} : {}})
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d.ok) showToast('Benchmark started for ' + agent); });
+    }
+
+    function showNewTaskForm() { showToast('Task editor coming soon'); }
+    function editTask(id) { showToast('Task editor coming soon'); }
+    function showTaskTab(tab) {
+      var activeBtn = document.getElementById('taskTabActive');
+      var pendingBtn = document.getElementById('taskTabPending');
+      var activeEl = document.getElementById('taskListContainer');
+      var pendingEl = document.getElementById('pendingListContainer');
+      if (tab === 'pending') {
+        activeEl.style.display = 'none';
+        pendingEl.style.display = 'block';
+        activeBtn.classList.remove('cap-btn-active');
+        pendingBtn.classList.add('cap-btn-active');
+        htmx.ajax('GET', '/api/capability/pending-tasks/html', {target: '#pendingListContainer', swap: 'innerHTML'});
+      } else {
+        activeEl.style.display = 'block';
+        pendingEl.style.display = 'none';
+        pendingBtn.classList.remove('cap-btn-active');
+        activeBtn.classList.add('cap-btn-active');
+      }
+    }
+
+    function approveDraft(id) {
+      var _token = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      var _ah = {'Content-Type': 'application/json'};
+      if (_token) _ah['X-ObserveCo-Token'] = _token;
+      fetch('/api/capability/canary/pending-tasks/approve', {
+        method: 'POST',
+        headers: _ah,
+        body: JSON.stringify({task_id: id})
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) {
+          showToast('✓ Approved — now active in canary');
+          htmx.ajax('GET', '/api/capability/pending-tasks/html', {target: '#pendingListContainer', swap: 'innerHTML'});
+        } else {
+          showToast('Approve failed: ' + (d.error || 'unknown'));
+        }
+      })
+      .catch(function(e) { showToast('Approve failed: ' + e.message); });
+    }
+
+    function rejectDraft(id) {
+      if (!confirm('Reject this draft? It will be deleted.')) return;
+      var _token = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      var _rh = {'Content-Type': 'application/json'};
+      if (_token) _rh['X-ObserveCo-Token'] = _token;
+      fetch('/api/capability/canary/pending-tasks/reject', {
+        method: 'POST',
+        headers: _rh,
+        body: JSON.stringify({task_id: id})
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) {
+          showToast('Draft rejected');
+          htmx.ajax('GET', '/api/capability/pending-tasks/html', {target: '#pendingListContainer', swap: 'innerHTML'});
+        } else {
+          showToast('Reject failed: ' + (d.error || 'unknown'));
+        }
+      })
+      .catch(function(e) { showToast('Reject failed: ' + e.message); });
+    }
+
+    function viewSourceSession(sessionId) {
+      if (!sessionId) { showToast('No source session linked'); return; }
+      var modal = document.getElementById('sourceSessionModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'sourceSessionModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;display:flex;align-items:center;justify-content:center;';
+        modal.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:640px;width:90%;max-height:80vh;overflow:auto;padding:20px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'
+          + '<h3 style="margin:0;font-size:15px;color:var(--fg);">Original Conversation</h3>'
+          + '<button onclick="closeSourceModal()" style="background:none;border:none;color:var(--fg-3);font-size:20px;cursor:pointer;">✕</button>'
+          + '</div>'
+          + '<div id="sourceSessionBody"><div class="spinner"></div> Loading...</div>'
+          + '</div>';
+        document.body.appendChild(modal);
+      }
+      var body = document.getElementById('sourceSessionBody');
+      body.innerHTML = '<div class="spinner"></div> Loading...';
+      var _stoken = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      var _sheaders = _stoken ? { 'X-ObserveCo-Token': _stoken } : {};
+      fetch('/api/capability/canary/source-session?session_id=' + encodeURIComponent(sessionId), {headers: _sheaders})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.ok) {
+            body.innerHTML = '<p style="color:var(--danger);">' + (d.error || 'Failed to load') + '</p>';
+            return;
+          }
+          if (d.deleted) {
+            body.innerHTML = '<p style="color:var(--warn);">Original conversation no longer available (session deleted).</p>';
+            return;
+          }
+          if (!d.messages || d.messages.length === 0) {
+            body.innerHTML = '<p style="color:var(--fg-3);">No messages found for this session.</p>';
+            return;
+          }
+          var html = '';
+          for (var i = 0; i < d.messages.length; i++) {
+            var m = d.messages[i];
+            var roleColor = m.role === 'user' ? 'var(--accent)' : 'var(--success)';
+            var roleLabel = m.role === 'user' ? '👤 User' : '🤖 Agent';
+            html += '<div style="margin-bottom:10px;padding:8px 12px;border-left:3px solid ' + roleColor + ';background:var(--bg);border-radius:6px;">'
+              + '<div style="font-size:11px;color:' + roleColor + ';font-weight:600;margin-bottom:4px;">' + roleLabel + '</div>'
+              + '<div style="font-size:13px;color:var(--fg);white-space:pre-wrap;word-break:break-word;">' + _escHtml(m.content) + '</div>'
+              + '</div>';
+          }
+          body.innerHTML = html;
+        })
+        .catch(function(e) { body.innerHTML = '<p style="color:var(--danger);">Error: ' + e.message + '</p>'; });
+    }
+
+    function closeSourceModal() {
+      var m = document.getElementById('sourceSessionModal');
+      if (m) m.remove();
+    }
+
+    function _escHtml(s) {
+      var d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    function deleteTask(id) {
+      if (!confirm('Delete this task?')) return;
+      var _dtoken = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      var _dheaders = _dtoken ? { 'X-ObserveCo-Token': _dtoken } : {};
+      fetch('/api/capability/tasks/' + id, {method:'DELETE', headers: _dheaders})
+        .then(function() { htmx.ajax('GET', '/api/capability/tasks/list', {target: '#taskListContainer', swap: 'innerHTML'}); });
+    }
+    function duplicateTask(id) { showToast('Duplicate coming soon'); }
+    function switchEditorMode(id, mode) {}
+    function saveYamlTask(id) { showToast('Save coming soon'); }
+    function saveFormTask(id) { showToast('Save coming soon'); }
+    function closeEditor(id) {}
+    function shareDriftView() { showToast('Share coming soon'); }
+
+    // ── Overview card: load canary status ──
+    (function loadCapOverview() {
+      var agent = 'forge';
+      var _otoken = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      var _oheaders = _otoken ? { 'X-ObserveCo-Token': _otoken } : {};
+      fetch('/api/capability/canary/status?agent=' + encodeURIComponent(agent), {headers: _oheaders})
+        .then(function(r) { return r.json(); })
+        .then(function(s) {
+          var lastEl = document.getElementById('capOvLastTested');
+          var statsEl = document.getElementById('capOvStats');
+          var accEl = document.getElementById('capOvBigAcc');
+          var accLabel = document.getElementById('capOvAccLabel');
+          var untestedEl = document.getElementById('capUntested');
+          var overviewCard = document.getElementById('capOverviewCard');
+          var perfSection = document.getElementById('perfTrendSection');
+
+          if (!s.completed && !s.running) {
+            // No test data — show untested state
+            if (overviewCard) overviewCard.style.display = 'none';
+            if (untestedEl) untestedEl.style.display = 'block';
+            if (perfSection) perfSection.style.display = 'none';
+            if (lastEl) lastEl.textContent = 'Not tested yet';
+            if (accEl) { accEl.textContent = '—%'; accEl.className = 'cap-ov-big-accuracy muted'; }
+            if (accLabel) accLabel.innerHTML = '<strong>No benchmark data yet</strong><br>Run a test to establish a baseline';
+          } else if (s.running) {
+            if (overviewCard) overviewCard.style.display = 'grid';
+            if (untestedEl) untestedEl.style.display = 'none';
+            if (lastEl) lastEl.textContent = '⏳ Benchmark running…';
+            if (accEl) { accEl.textContent = '...'; accEl.className = 'cap-ov-big-accuracy muted'; }
+          } else {
+            if (overviewCard) overviewCard.style.display = 'grid';
+            if (untestedEl) untestedEl.style.display = 'none';
+            var pass = s.pass_count || 0;
+            var fail = s.fail_count || 0;
+            var hang = s.hang_count || 0;
+            var total = s.total_tasks || (pass + fail + hang);
+            var accuracy = total > 0 ? Math.round((pass / total) * 100) : 0;
+
+            // Accuracy color
+            var accClass = accuracy >= 80 ? 'green' : accuracy >= 60 ? 'amber' : 'red';
+            if (accEl) {
+              accEl.textContent = accuracy + '%';
+              accEl.className = 'cap-ov-big-accuracy ' + accClass;
+            }
+            if (accLabel) {
+              var desc = accuracy >= 80 ? 'Good performance' : accuracy >= 60 ? 'Needs attention' : 'Significant issues';
+              accLabel.innerHTML = '<strong>' + desc + '</strong><br>' + pass + '/' + total + ' tasks passed';
+            }
+
+            // Last tested time
+            if (lastEl && s.run_id) {
+              lastEl.textContent = 'Last test results available — hover chart for details';
+            }
+
+            // Stats
+            if (statsEl) {
+              statsEl.innerHTML =
+                '<div class="cap-ov-stat"><div class="val green">' + pass + '</div><div class="lbl">Passed</div></div>' +
+                '<div class="cap-ov-stat"><div class="val ' + (fail > 0 ? 'red' : 'muted') + '">' + fail + '</div><div class="lbl">Failed</div></div>' +
+                '<div class="cap-ov-stat"><div class="val muted">' + total + '</div><div class="lbl">Total</div></div>';
+            }
+
+            // Show performance trend section
+            if (perfSection) perfSection.style.display = 'block';
+          }
+        })
+        .catch(function() {
+          var lastEl = document.getElementById('capOvLastTested');
+          if (lastEl) lastEl.textContent = '⚠ Could not load status';
+        });
+    })();
+
+    // ── Per-task drift chart ──────────────────────────────────────────
+    var _perTaskChart = null;
+    var _perTaskAllTasks = [];
+    var _perTaskActiveCat = 'all';
+
+    var _perTaskCatColors = {
+      reasoning: '#3b82f6',
+      coding: '#22c55e',
+      extraction: '#a855f7',
+      tool_use: '#eab308',
+      instruction_following: '#14b8a6'
+    };
+
+    function _perTaskColor(task) {
+      if (task.severity === 'breach') return '#ef4444';
+      if (task.severity === 'warning') return '#eab308';
+      return _perTaskCatColors[task.category] || '#64748b';
+    }
+
+    // Auto-fetch per-task data on load
+    (function() {
+      fetchPerTaskData();
+    })();
+
+    async function fetchPerTaskData() {
+      try {
+        var _token = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+        var _headers = _token ? { 'X-ObserveCo-Token': _token } : {};
+        var resp = await fetch('/api/capability/drift/per-task-history?agent=' + encodeURIComponent('forge'), {headers: _headers});
+        var data = await resp.json();
+        _perTaskAllTasks = data.tasks || [];
+        if (_perTaskAllTasks.length === 0) {
+          var body = document.getElementById('taskBreakdownBody');
+          if (body) body.innerHTML = '<div style="text-align:center;padding:32px;color:var(--fg-3);font-size:13px;">📋 Run a benchmark to see per-task breakdown</div>';
+        } else {
+          renderPerTaskDriftChart();
+        }
+      } catch(e) { console.error('per-task drift fetch failed', e); }
+    }
+
+    function renderPerTaskDriftChart() {
+      if (typeof Chart === 'undefined') return;
+      var ctx = document.getElementById('perTaskDriftChart');
+      if (!ctx) return;
+
+      var filtered = _perTaskAllTasks;
+      if (_perTaskActiveCat !== 'all') {
+        filtered = _perTaskAllTasks.filter(function(t) { return t.category === _perTaskActiveCat; });
+      }
+
+      if (filtered.length === 0) {
+        var legendEl = document.getElementById('perTaskLegend');
+        if (legendEl) legendEl.innerHTML = '<span style="font-size:12px;color:var(--muted);">No tasks in this category yet. Run a benchmark to populate.</span>';
+        return;
+      }
+
+      var dateSet = {};
+      filtered.forEach(function(t) {
+        t.points.forEach(function(p) { dateSet[p.date] = true; });
+      });
+      var labels = Object.keys(dateSet).sort();
+
+      var datasets = filtered.map(function(t) {
+        var accMap = {};
+        t.points.forEach(function(p) { accMap[p.date] = p.accuracy; });
+        var data = labels.map(function(d) { return accMap[d] !== undefined ? accMap[d] : null; });
+        var color = _perTaskColor(t);
+        return {
+          label: t.name,
+          data: data,
+          borderColor: color,
+          backgroundColor: color,
+          borderWidth: t.severity === 'stable' ? 1.5 : 2.5,
+          pointRadius: t.severity === 'stable' ? 2 : 4,
+          pointHoverRadius: 6,
+          pointBackgroundColor: color,
+          fill: false,
+          tension: 0.3,
+          spanGaps: false,
+          taskId: t.task_id,
+          taskName: t.name,
+          baseline: t.baseline,
+          current: t.current,
+          delta: t.delta,
+          severity: t.severity,
+          category: t.category
+        };
+      });
+
+      if (_perTaskChart) { _perTaskChart.destroy(); _perTaskChart = null; }
+
+      _perTaskChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'nearest', intersect: true },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(30,41,59,.95)',
+              titleColor: '#f8fafc',
+              bodyColor: '#94a3b8',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                title: function(ctx) {
+                  return ctx[0].dataset.taskName || ctx[0].dataset.label || '';
+                },
+                label: function(ctx) {
+                  var ds = ctx.dataset;
+                  var lines = [];
+                  lines.push('Accuracy: ' + (ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) + '%' : 'N/A'));
+                  lines.push('Baseline: ' + (ds.baseline != null ? ds.baseline.toFixed(1) + '%' : '—'));
+                  lines.push('Current:  ' + (ds.current != null ? ds.current.toFixed(1) + '%' : '—'));
+                  var dsgn = ds.delta >= 0 ? '+' : '';
+                  lines.push('Change: ' + dsgn + (ds.delta != null ? ds.delta.toFixed(1) + 'pp' : '—') + ' · ' + (ds.severity || 'stable'));
+                  return lines;
+                }
+              }
+            }
+          },
+          onClick: function(e, elements) {
+            if (elements.length > 0) {
+              var ds = _perTaskChart.data.datasets[elements[0].datasetIndex];
+              showPerTaskDetail(ds.taskId, ds.taskName, ds.baseline, ds.current, ds.delta, ds.severity);
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 14 }
+            },
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(51,65,85,.2)' },
+              ticks: { color: '#94a3b8', font: { size: 9 }, callback: function(v) { return v + '%'; } }
+            }
+          }
+        }
+      });
+
+      renderPerTaskLegend(filtered);
+    }
+
+    function renderPerTaskLegend(tasks) {
+      var el = document.getElementById('perTaskLegend');
+      if (!el) return;
+      var h = '';
+      tasks.forEach(function(t, i) {
+        var c = _perTaskColor(t);
+        var tag = '';
+        if (t.severity === 'breach') {
+          tag = ' <span style="font-size:9px;padding:0 4px;border-radius:3px;background:rgba(239,68,68,.2);color:#ef4444;">BREACH</span>';
+        } else if (t.severity === 'warning') {
+          tag = ' <span style="font-size:9px;padding:0 4px;border-radius:3px;background:rgba(234,179,8,.2);color:#eab308;">WARNING</span>';
+        }
+        h += '<span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--fg-2);cursor:pointer;padding:2px 0;" onclick="(function(){var m=_perTaskChart.getDatasetMeta(' + i + ');m.hidden=!m.hidden;_perTaskChart.update();})()">' +
+          '<span style="width:8px;height:8px;border-radius:50%;background:' + c + ';display:inline-block;flex-shrink:0;"></span>' +
+          t.name + tag + '</span>';
+      });
+      el.innerHTML = h;
+    }
+
+    // Keep togglePerTaskDrift for backward compat (not used in new UI, but referenced by htmx partials)
+    window.togglePerTaskDrift = function() {};
+
+    window.filterPerTaskDrift = function(cat) {
+      _perTaskActiveCat = cat;
+      document.querySelectorAll('.per-task-chip').forEach(function(c) {
+        var active = c.dataset.cat === cat;
+        c.style.background = active ? 'var(--meta)' : 'transparent';
+        c.style.color = active ? '#fff' : 'var(--fg-2)';
+        c.style.borderColor = active ? 'var(--meta)' : 'var(--border)';
+      });
+      renderPerTaskDriftChart();
+    };
+
+    window.showPerTaskDetail = function(taskId, name, baseline, current, delta, severity) {
+      var panel = document.getElementById('perTaskDetail');
+      var nameEl = document.getElementById('perTaskDetailName');
+      var gridEl = document.getElementById('perTaskDetailGrid');
+      var reasonEl = document.getElementById('perTaskDetailReasoningText');
+      if (!panel || !nameEl || !gridEl || !reasonEl) return;
+
+      var deltaColor = delta < 0 ? '#ef4444' : delta > 0 ? 'var(--accent)' : 'var(--muted)';
+      var dsgn = delta >= 0 ? '+' : '';
+
+      nameEl.textContent = name;
+      nameEl.style.color = severity === 'breach' ? '#ef4444' : severity === 'warning' ? '#eab308' : 'var(--fg)';
+      gridEl.innerHTML =
+        '<div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:var(--accent);">' + (baseline != null ? baseline.toFixed(1) + '%' : '—') + '</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">Baseline</div></div>' +
+        '<div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:' + (delta < 0 ? '#ef4444' : 'var(--accent)') + ';">' + (current != null ? current.toFixed(1) + '%' : '—') + '</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">Current</div></div>' +
+        '<div style="text-align:center;"><div style="font-size:20px;font-weight:700;color:' + deltaColor + ';">' + dsgn + (delta != null ? delta.toFixed(1) + 'pp' : '—') + '</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">Change</div></div>';
+      reasonEl.innerHTML = 'Loading judge reasoning...';
+      panel.style.display = 'block';
+
+      var _jtoken = (document.querySelector('meta[name="observeco-token"]') || {}).getAttribute('content') || '';
+      var _jheaders = _jtoken ? { 'X-ObserveCo-Token': _jtoken } : {};
+      fetch('/api/capability/canary/judge-reasoning?task_id=' + encodeURIComponent(taskId), {headers: _jheaders})
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var assertions = data.assertions || [];
+          if (assertions.length === 0) {
+            reasonEl.innerHTML = '<span style="color:var(--muted);">No LLM judge reasoning available for this task.</span>';
+            return;
+          }
+          var h = '';
+          assertions.forEach(function(a) {
+            var sc = a.status === 'pass' ? 'var(--accent)' : a.status === 'fail' ? 'var(--danger)' : 'var(--muted)';
+            h += '<div style="margin-bottom:8px;"><span style="color:' + sc + ';font-weight:600;">' + (a.status || '?').toUpperCase() + '</span> ' +
+              '<span style="color:var(--fg-2);">Score: ' + (a.score != null ? (a.score * 100).toFixed(0) + '%' : '—') + '</span></div>' +
+              '<div style="color:var(--muted);margin-bottom:12px;">' + (a.reasoning || 'No reasoning provided.') + '</div>';
+          });
+          reasonEl.innerHTML = h || '<span style="color:var(--muted);">No judge data available.</span>';
+        })
+        .catch(function() {
+          reasonEl.innerHTML = '<span style="color:var(--muted);">Failed to load judge reasoning.</span>';
+        });
+    };
+
+    window.closePerTaskDetail = function() {
+      var panel = document.getElementById('perTaskDetail');
+      if (panel) panel.style.display = 'none';
+    };
+    </script>
+    

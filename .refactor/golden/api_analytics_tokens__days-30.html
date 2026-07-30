@@ -1,0 +1,561 @@
+<div id="analyticsContent" hx-swap-oob="true">
+<div class="page-title">
+    <h1>Token Analytics</h1>
+    <span class="sub">34 agents · 5457.5M calls indexed</span>
+    <select id="agentFilter" class="rbtn" style="margin-left:8px" onchange="htmx.ajax('GET', '/api/analytics/tokens?days=30&hours=0&agent='+this.value, {target:'#analyticsContent', swap:'innerHTML'})">
+        <option value="__all__" selected>All agents</option>
+        <option value="hermes-agent">hermes-agent</option><option value="pa">pa</option><option value="hound">hound</option><option value="dreamer">dreamer</option><option value="raven">raven</option><option value="kepler">kepler</option><option value="main">main</option><option value="accelerator">accelerator</option><option value="pragma">pragma</option><option value="aleph">aleph</option><option value="skeptical">skeptical</option><option value="test-agent-ci">test-agent-ci</option><option value="ollama">ollama</option><option value="llama_server">llama_server</option><option value="hermes_helper">hermes_helper</option><option value="hermes">hermes</option><option value="workspace">workspace</option><option value="gladwell">gladwell</option><option value="spectrum">spectrum</option><option value="forge">forge</option><option value="kanban">kanban</option><option value="hermes-test">hermes-test</option><option value="probe-agent2">probe-agent2</option><option value="probe-good">probe-good</option><option value="archive">archive</option><option value="subconscious">subconscious</option><option value="secondbrain">secondbrain</option><option value="test-agent">test-agent</option><option value="benchmark">benchmark</option><option value="otel-agent">otel-agent</option><option value="hawkeye">hawkeye</option><option value="l3-test-agent">l3-test-agent</option><option value="l3-live-2">l3-live-2</option><option value="l3-prod-test">l3-prod-test</option>
+    </select>
+    <div class="range">
+        <button class="rbtn " onclick="htmx.ajax('GET', '/api/analytics/tokens?hours=1', {target:'#analyticsContent', swap:'innerHTML'})">1h</button>
+        <button class="rbtn " onclick="htmx.ajax('GET', '/api/analytics/tokens?days=1', {target:'#analyticsContent', swap:'innerHTML'})">24h</button>
+        <button class="rbtn " onclick="htmx.ajax('GET', '/api/analytics/tokens?days=7', {target:'#analyticsContent', swap:'innerHTML'})">7d</button>
+        <button class="rbtn on" onclick="htmx.ajax('GET', '/api/analytics/tokens?days=30', {target:'#analyticsContent', swap:'innerHTML'})">30d</button>
+    </div>
+</div>
+
+<div class="verdict-card" style="margin-bottom:var(--space-4)">
+    <div class="vc-head"><span class="mark">$</span><span class="lead">SPEND VERDICT</span>
+        <span class="vc-badge good">90% accurate</span></div>
+    <div class="vc-stats">
+        <div class="vc-stat"><span class="vc-num">$604</span><span class="vc-lab">total cost · 599540 calls</span></div>
+        <div class="vc-stat"><span class="vc-num bad">87%</span><span class="vc-lab">hermes-agent top spender</span></div>
+        <div class="vc-stat"><span class="vc-num good">100%</span><span class="vc-lab">fleet cache hit</span></div>
+        <div class="vc-stat"><span class="vc-num">90%</span><span class="vc-lab">attributed</span></div>
+    </div>
+    <div class="vc-rec">hermes-agent alone is 87% of spend — review its system-prompt size first.</div>
+</div>
+
+<div class="tok4-grid">
+    <div class="panel chart-card">
+        <div class="cc-head"><h2>Token Composition</h2><span class="cc-val mono">5459.7M</span><span class="cc-lab">input · output · cache · est</span></div>
+        <div class="cc-legend">
+            <span class="lg lg-input">Input</span><span class="lg lg-output">Output</span><span class="lg lg-cache">Cache reads</span><span class="lg lg-est">Estimated</span>
+        </div>
+        <div class="cc-note">Estimated is shown only where real component counts are absent; it is suppressed in periods that already have real input/output/cache to avoid double-counting the total.</div>
+        <div class="chart-box"><canvas id="costChart"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+        <div class="cc-head"><h2>Tokens / Turn</h2><span class="cc-val mono">9.1K</span><span class="cc-lab">lower better</span></div>
+        <div class="chart-box"><canvas id="tptChart"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+        <div class="cc-head"><h2>Output / Input</h2><span class="cc-val mono">0.0</span><span class="cc-lab">ratio · higher better</span></div>
+        <div class="chart-box"><canvas id="oirChart"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+        <div class="cc-head"><h2>Cache Hit Rate</h2><span class="cc-val mono">100%</span><span class="cc-lab">higher better</span></div>
+        <div class="chart-box"><canvas id="cacheRateChart"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+        <div class="cc-head"><h2>Cost / Turn</h2><span class="cc-val mono">$$0.0010</span><span class="cc-lab">lower better</span></div>
+        <div class="chart-box"><canvas id="cptChart"></canvas></div>
+    </div>
+</div>
+
+<div class="section-h"><h2>Per-Agent Spend</h2><span class="count">34 agents</span></div>
+<div class="tblwrap">
+    <table class="tbl">
+        <tr><th>Agent</th><th class="r">Cost</th><th class="r">Tokens</th><th>Model</th><th>Data</th><th class="r">Cache</th></tr>
+        <tr onclick="htmx.ajax('GET', '/api/fleet/modal/hermes-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">hermes-agent</span></td>
+    <td class="mono r">$524</td>
+    <td class="mono r">4920.8M</td>
+    <td class="mono">kimi-k3</td>
+    <td><span class="dq acc">Acc</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--accent)">100%</span>
+            <div class="cache-mini"><i class="read" style="width:100%"></i><i class="create" style="width:0%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/pa', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">pa</span></td>
+    <td class="mono r">$15.80<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">105.3M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hound', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">hound</span></td>
+    <td class="mono r">$11.50<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">76.7M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/dreamer', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">dreamer</span></td>
+    <td class="mono r">$10.44<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">69.6M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/raven', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">raven</span></td>
+    <td class="mono r">$8.85<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">59.0M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/kepler', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">kepler</span></td>
+    <td class="mono r">$6.68<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">44.5M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/main', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">main</span></td>
+    <td class="mono r">$5.68<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">37.9M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/accelerator', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">accelerator</span></td>
+    <td class="mono r">$5.39<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">35.9M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/pragma', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">pragma</span></td>
+    <td class="mono r">$4.71<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">31.4M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/aleph', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">aleph</span></td>
+    <td class="mono r">$4.07<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">27.1M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/skeptical', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">skeptical</span></td>
+    <td class="mono r">$1.43<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">9.5M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/test-agent-ci', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">test-agent-ci</span></td>
+    <td class="mono r">$1.20<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">8.0M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/ollama', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">ollama</span></td>
+    <td class="mono r">$1.13<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">7.5M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/llama_server', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">llama_server</span></td>
+    <td class="mono r">$1.11<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">7.4M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hermes_helper', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">hermes_helper</span></td>
+    <td class="mono r">$1.03<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">6.9M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hermes', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">hermes</span></td>
+    <td class="mono r">$1.03<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">6.9M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/workspace', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">workspace</span></td>
+    <td class="mono r">$0.3454<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">2.3M</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/gladwell', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">gladwell</span></td>
+    <td class="mono r">$0.0385<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">256.7K</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/spectrum', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">spectrum</span></td>
+    <td class="mono r">$0.0296<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">197.6K</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/forge', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">forge</span></td>
+    <td class="mono r">$0.0202<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">134.6K</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/kanban', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">kanban</span></td>
+    <td class="mono r">$0.0053<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">35.6K</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hermes-test', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">hermes-test</span></td>
+    <td class="mono r">$0.0045</td>
+    <td class="mono r">1.8K</td>
+    <td class="mono">gpt-4o</td>
+    <td><span class="dq acc">Acc</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--accent)">100%</span>
+            <div class="cache-mini"><i class="read" style="width:100%"></i><i class="create" style="width:0%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/probe-agent2', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">probe-agent2</span></td>
+    <td class="mono r">$0.0031</td>
+    <td class="mono r">1.2K</td>
+    <td class="mono">gpt-4</td>
+    <td><span class="dq acc">Acc</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/probe-good', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">probe-good</span></td>
+    <td class="mono r">$0.0030</td>
+    <td class="mono r">1.2K</td>
+    <td class="mono">—</td>
+    <td><span class="dq acc">Acc</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/archive', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">archive</span></td>
+    <td class="mono r">$0.0019<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">12.4K</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/subconscious', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">subconscious</span></td>
+    <td class="mono r">$0.0010<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">6.6K</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/secondbrain', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">secondbrain</span></td>
+    <td class="mono r">$0.0007<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">4.8K</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/test-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">test-agent</span></td>
+    <td class="mono r">$0.0001</td>
+    <td class="mono r">700</td>
+    <td class="mono">deepseek-v4-flash</td>
+    <td><span class="dq acc">Acc</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/benchmark', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">benchmark</span></td>
+    <td class="mono r">$0.0001<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">465</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/otel-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">otel-agent</span></td>
+    <td class="mono r">$0.0000</td>
+    <td class="mono r">150</td>
+    <td class="mono">—</td>
+    <td><span class="dq acc">Acc</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/hawkeye', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">hawkeye</span></td>
+    <td class="mono r">$0.0000<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">128</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/l3-test-agent', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">l3-test-agent</span></td>
+    <td class="mono r">$0.0000<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">74</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/l3-live-2', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">l3-live-2</span></td>
+    <td class="mono r">$0.0000<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">20</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr><tr onclick="htmx.ajax('GET', '/api/fleet/modal/l3-prod-test', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer">
+    <td><span class="ag">l3-prod-test</span></td>
+    <td class="mono r">$0.0000<span style="font-size:9px;color:var(--fg-3);margin-left:2px" title="Estimated from token counts × pricing table">est.</span></td>
+    <td class="mono r">12</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Est</span></td>
+    <td class="r">
+        <div class="cache-cell">
+            <span class="mono" style="color:var(--fg-3)">0%</span>
+            <div class="cache-mini"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+        </div>
+    </td>
+</tr>
+    </table>
+</div>
+
+<div class="section-h"><h2>Component Composition</h2><span class="count">per agent average</span></div>
+<div class="panel" style="margin-bottom:var(--space-6)">
+    <div class="comp-row">
+    <span class="ag">identity</span>
+    <div class="comp-stack"><i class="ci" style="width:8%;background:var(--token-identity)"></i></div>
+    <span class="mono" style="color:var(--fg-2);min-width:56px;text-align:right">38.2M</span>
+</div><div class="comp-row">
+    <span class="ag">skills</span>
+    <div class="comp-stack"><i class="ci" style="width:0%;background:var(--token-skills)"></i></div>
+    <span class="mono" style="color:var(--fg-2);min-width:56px;text-align:right">767.9K</span>
+</div><div class="comp-row">
+    <span class="ag">memory</span>
+    <div class="comp-stack"><i class="ci" style="width:0%;background:var(--token-memory)"></i></div>
+    <span class="mono" style="color:var(--fg-2);min-width:56px;text-align:right">831.9K</span>
+</div><div class="comp-row">
+    <span class="ag">tools</span>
+    <div class="comp-stack"><i class="ci" style="width:0%;background:var(--token-tools)"></i></div>
+    <span class="mono" style="color:var(--fg-2);min-width:56px;text-align:right">561.8K</span>
+</div><div class="comp-row">
+    <span class="ag">guidance</span>
+    <div class="comp-stack"><i class="ci" style="width:100%;background:var(--token-guidance)"></i></div>
+    <span class="mono" style="color:var(--fg-2);min-width:56px;text-align:right">497.9M</span>
+</div>
+    <div class="tokleg">
+        <span><i class="ci"></i> identity</span>
+        <span><i class="cs"></i> skills</span>
+        <span><i class="cm"></i> memory</span>
+        <span><i class="ct"></i> tools</span>
+        <span><i class="cg"></i> guidance</span>
+    </div>
+</div>
+
+<div class="section-h"><h2>Cache Efficiency</h2><span class="count">read vs create · hit rate by agent</span></div>
+<div class="panel" style="margin-bottom:var(--space-6)">
+    <div class="chart-box" style="height:max(180px, calc(34 * 26px))"><canvas id="cacheChart"></canvas></div>
+    <div class="cache-row">
+    <span class="ag">hermes-agent</span>
+    <div class="cache-track"><i class="read" style="width:100%"></i><i class="create" style="width:0%"></i></div>
+    <span class="pct" style="color:var(--accent)">100%</span>
+</div><div class="cache-row">
+    <span class="ag">pa</span>
+    <div class="cache-track"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+    <span class="pct" style="color:var(--fg-3)">0%</span>
+</div><div class="cache-row">
+    <span class="ag">hound</span>
+    <div class="cache-track"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+    <span class="pct" style="color:var(--fg-3)">0%</span>
+</div><div class="cache-row">
+    <span class="ag">dreamer</span>
+    <div class="cache-track"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+    <span class="pct" style="color:var(--fg-3)">0%</span>
+</div><div class="cache-row">
+    <span class="ag">raven</span>
+    <div class="cache-track"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+    <span class="pct" style="color:var(--fg-3)">0%</span>
+</div><div class="cache-row">
+    <span class="ag">kepler</span>
+    <div class="cache-track"><i class="read" style="width:0%"></i><i class="create" style="width:100%"></i></div>
+    <span class="pct" style="color:var(--fg-3)">0%</span>
+</div>
+</div>
+
+<div class="section-h"><h2>Per-Turn Timeline</h2><span class="count">500 calls</span></div>
+<div class="panel" style="margin-bottom:var(--space-6)">
+    <p style="font-size:12px;color:var(--fg-3);margin-bottom:10px;">Each column = one LLM call. Height = total tokens. <span style="color:var(--danger)">Red columns</span> = anomaly flagged.</p>
+    <div class="timeline-bar">
+        <div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 41.406224906048244%)" title="77.3K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 59.15962697673422%)" title="110.5K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.4892986006274157%)" title="914 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 99.51712545102195%)" title="185.9K tok"></div><div class="timeline-col" style="height:max(4px, 100.0%)" title="186.8K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.4892986006274157%)" title="914 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 6.147817428452125%)" title="11.5K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 6.238824826818274%)" title="11.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.4892986006274157%)" title="914 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 10.150001606012912%)" title="19.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 40.70064989989186%)" title="76.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 41.4560113063309%)" title="77.4K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.4892986006274157%)" title="914 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 41.674429062409665%)" title="77.8K tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div><div class="timeline-col" style="height:max(4px, 1.1627533485369224%)" title="2.2K tok"></div><div class="timeline-col" style="height:max(4px, 0.5535391171211683%)" title="1.0K tok"></div><div class="timeline-col" style="height:max(4px, 0.3415454126917847%)" title="638 tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.8597522457413891%)" title="1.6K tok"></div><div class="timeline-col" style="height:max(4px, 1.9662951423462776%)" title="3.7K tok"></div><div class="timeline-col" style="height:max(4px, 0.6108202443280977%)" title="1.1K tok"></div><div class="timeline-col" style="height:max(4px, 1.294981744986563%)" title="2.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.7302005374789879%)" title="1.4K tok"></div><div class="timeline-col" style="height:max(4px, 0.052998426107345904%)" title="99 tok"></div><div class="timeline-col" style="height:max(4px, 0.13544042227432843%)" title="253 tok"></div>
+    </div>
+</div>
+
+<script>
+// ponytail: render is triggered HERE (not via htmx:afterSwap) to avoid the
+// script-vs-afterSwap race. htmx DOES execute inline scripts in swapped content,
+// so setting window._tokenChart then calling renderTokenChart() synchronously is
+// race-free: data is fresh, canvas is in the DOM. The afterSwap listener in app.js
+// is a no-op fallback now (target.id check fails for OOB swaps anyway).
+window._tokenChart = {"labels": ["06/21", "06/22", "06/23", "06/24", "06/25", "06/26", "06/27", "06/28", "06/29", "06/30", "07/01", "07/02", "07/03", "07/04", "07/05", "07/06", "07/07", "07/08", "07/09", "07/10", "07/11", "07/12", "07/13", "07/14", "07/15", "07/16", "07/17", "07/18", "07/19", "07/20"], "cost_data": [1.7043, 26.6925, 39.8658, 8.5193, 19.0128, 15.8461, 18.2993, 4.643, 28.8076, 13.8787, 22.2696, 11.8808, 28.0232, 64.0251, 35.8886, 2.9644, 3.8253, 5.0904, 22.34, 41.1214, 38.7611, 6.7, 13.8506, 13.5102, 17.7874, 41.5028, 17.8981, 22.8189, 16.5141, 0.0982], "total_data": [11362, 178088, 324023, 126888, 137964, 112554, 163094, 44001, 264541, 100145, 205421, 84053, 239326, 453877, 276766, 19762, 25473, 33897, 157543, 317154, 298457, 271711, 161462, 243944, 175517, 276656, 119280, 350565, 283292, 654], "input_data": [11393, 177661, 318507, 103298, 137383, 112042, 150510, 15456, 154005, 96708, 147632, 83642, 193299, 439133, 14124, 19833, 25564, 34018, 155483, 281850, 236736, 28609, 91161, 98192, 109375, 251602, 79831, 220236, 181339, 484], "output_data": [0, 464, 955, 433, 597, 518, 749, 95, 631, 571, 1212, 430, 741, 1491, 535, 0, 0, 0, 612, 836, 875, 861, 658, 844, 530, 850, 400, 1326, 1224, 4], "cache_data": [0, 0, 4614, 23188, 0, 0, 11894, 28495, 109983, 2889, 56652, 0, 45291, 13300, 262150, 0, 0, 0, 1570, 34600, 60951, 242608, 69812, 144978, 65681, 24271, 39108, 129139, 100733, 166], "est_data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "suppressed_est": true, "range_label": "30d"};
+if (typeof renderTokenChart === 'function') renderTokenChart();
+window._tptChart = {"labels": ["06/21", "06/22", "06/23", "06/24", "06/25", "06/26", "06/27", "06/28", "06/29", "06/30", "07/01", "07/02", "07/03", "07/04", "07/05", "07/06", "07/07", "07/08", "07/09", "07/10", "07/11", "07/12", "07/13", "07/14", "07/15", "07/16", "07/17", "07/18", "07/19", "07/20"], "data": [947, 11232, 14176, 9791, 20153, 35937, 7629, 2809, 9556, 11038, 7340, 11304, 62066, 23968, 17616, 891, 892, 891, 3993, 7348, 8590, 11284, 6116, 8959, 6639, 10551, 5399, 23111, 67838, 2740]};
+if (typeof renderTptChart === 'function') renderTptChart();
+window._oirChart = {"labels": ["06/21", "06/22", "06/23", "06/24", "06/25", "06/26", "06/27", "06/28", "06/29", "06/30", "07/01", "07/02", "07/03", "07/04", "07/05", "07/06", "07/07", "07/08", "07/09", "07/10", "07/11", "07/12", "07/13", "07/14", "07/15", "07/16", "07/17", "07/18", "07/19", "07/20"], "data": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.01, 0.01, 0.01, 0.0, 0.0, 0.04, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.01, 0.01, 0.0, 0.0, 0.01, 0.01, 0.01, 0.01]};
+if (typeof renderOirChart === 'function') renderOirChart();
+window._cacheRateChart = {"labels": ["06/21", "06/22", "06/23", "06/24", "06/25", "06/26", "06/27", "06/28", "06/29", "06/30", "07/01", "07/02", "07/03", "07/04", "07/05", "07/06", "07/07", "07/08", "07/09", "07/10", "07/11", "07/12", "07/13", "07/14", "07/15", "07/16", "07/17", "07/18", "07/19", "07/20"], "data": [0.0, 0.0, 1.4, 22.4, 0.0, 0.0, 7.9, 184.4, 71.4, 3.0, 38.4, 0.0, 23.4, 3.0, 1856.1, 0.0, 0.0, 0.0, 1.0, 12.3, 25.7, 848.0, 76.6, 147.6, 60.1, 9.6, 49.0, 58.6, 55.5, 34.3]};
+if (typeof renderCacheRateChart === 'function') renderCacheRateChart();
+window._cptChart = {"labels": ["06/21", "06/22", "06/23", "06/24", "06/25", "06/26", "06/27", "06/28", "06/29", "06/30", "07/01", "07/02", "07/03", "07/04", "07/05", "07/06", "07/07", "07/08", "07/09", "07/10", "07/11", "07/12", "07/13", "07/14", "07/15", "07/16", "07/17", "07/18", "07/19", "07/20"], "data": [0.00014, 0.00168, 0.00174, 0.00066, 0.00278, 0.00506, 0.00086, 0.0003, 0.00104, 0.00153, 0.0008, 0.0016, 0.00727, 0.00338, 0.00228, 0.00013, 0.00013, 0.00013, 0.00057, 0.00095, 0.00112, 0.00028, 0.00052, 0.0005, 0.00067, 0.00158, 0.00081, 0.0015, 0.00395, 0.00041]};
+if (typeof renderCptChart === 'function') renderCptChart();
+window._cacheChart = {"agents": ["hermes-agent", "pa", "hound", "dreamer", "raven", "kepler", "main", "accelerator", "pragma", "aleph", "skeptical", "test-agent-ci", "ollama", "llama_server", "hermes_helper", "hermes", "workspace", "gladwell", "spectrum", "forge", "kanban", "hermes-test", "probe-agent2", "probe-good", "archive", "subconscious", "secondbrain", "test-agent", "benchmark", "otel-agent", "hawkeye", "l3-test-agent", "l3-live-2", "l3-prod-test"], "rates": [100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "target": 20.14};
+if (typeof renderCacheChart === 'function') renderCacheChart();
+</script>
+</div>

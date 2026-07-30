@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Agent Detail Modal v2 (P0.2 mockup) · hound</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── ObserveCo design tokens (canonical — SOUL.md) ─────────────── */
+:root {
+  --bg: #0f172a;        --surface: #1e293b;   --surface-2: #243349;
+  --fg: #f8fafc;        --fg-2: #94a3b8;      --muted: #64748b;
+  --accent: #22c55e;    --status-healthy: #22c55e;
+  --status-warning: #eab308; --status-critical: #ef4444;
+  --meta: #3b82f6;      --purple: #a855f7;
+  --border: #334155;    --border-soft: #273548;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius-md: 8px;     --radius-lg: 12px;    --radius-pill: 9999px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); }
+body {
+  font-family: var(--font-body); color: var(--fg); background: var(--bg);
+  font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+::selection { background: rgba(34,197,94,.25); }
+
+/* Modal frame — production renders this in an overlay; mockup centers it */
+.frame { max-width: 780px; margin: 32px auto 80px; padding: 0 20px; }
+.crumb { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.crumb b { color: var(--fg-2); font-weight: 500; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,.5);
+}
+
+/* ── Header: identity + verdict sentence (DPA §2-B) ───────────── */
+.m-head { padding: 18px 20px 14px; border-bottom: 1px solid var(--border-soft); }
+.m-id { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.m-name { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.badge {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: var(--radius-pill); letter-spacing: .04em;
+}
+.badge.healthy { background: rgba(34,197,94,.12); color: var(--accent); border: 1px solid rgba(34,197,94,.3); }
+.badge.stack { background: var(--surface-2); color: var(--fg-2); border: 1px solid var(--border); }
+.m-close {
+  margin-left: auto; background: none; border: 1px solid var(--border); color: var(--fg-2);
+  width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+.m-close:hover { color: var(--fg); border-color: var(--fg-2); }
+.m-verdict { display: flex; gap: 10px; margin-top: 12px; align-items: flex-start; }
+.m-verdict .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--status-warning); box-shadow: 0 0 8px rgba(234,179,8,.5); margin-top: 6px; flex-shrink: 0; }
+.m-verdict .vt { font-size: 13.5px; line-height: 1.5; }
+.m-verdict .vt b { font-weight: 600; }
+.m-verdict .vt .num { font-family: var(--font-mono); font-size: 12.5px; }
+.m-meta { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-top: 8px; }
+
+/* ── So-what strip: cross-signal synthesis above the tabs ─────── */
+.sw-strip { padding: 14px 20px 6px; display: grid; gap: 8px; }
+.swc {
+  position: relative; background: rgba(15,23,42,.5); border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md); padding: 11px 14px 11px 17px;
+}
+.swc::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
+.swc.watch::before { background: var(--status-warning); }
+.swc.insight::before { background: var(--accent); }
+.swc .lead {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 3px; display: block;
+}
+.swc.watch .lead { color: var(--status-warning); }
+.swc.insight .lead { color: var(--accent); }
+.swc .txt { font-size: 13px; line-height: 1.45; }
+.swc .txt b { font-weight: 600; }
+.num { font-family: var(--font-mono); font-size: 12.5px; }
+.swc .acts { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.act {
+  font-size: 11.5px; font-weight: 600; color: var(--accent); text-decoration: none;
+  padding: 3px 9px; border: 1px solid rgba(34,197,94,.35); border-radius: 6px;
+  background: rgba(34,197,94,.06); cursor: pointer; font-family: var(--font-body);
+  transition: all .12s; white-space: nowrap;
+}
+.act:hover { background: rgba(34,197,94,.14); }
+.act.neutral { color: var(--fg-2); border-color: var(--border); background: transparent; }
+.act.neutral:hover { color: var(--fg); border-color: var(--fg-2); }
+.act.warn { color: var(--status-warning); border-color: rgba(234,179,8,.35); background: rgba(234,179,8,.05); }
+
+/* ── Tabs ─────────────────────────────────────────────────────── */
+.m-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-soft); padding: 8px 20px 0; }
+.m-tab {
+  padding: 9px 14px; font-size: 12.5px; font-weight: 500; color: var(--muted);
+  cursor: pointer; border: none; background: none;
+  border-bottom: 2px solid transparent; transition: all .12s; font-family: var(--font-body);
+}
+.m-tab:hover { color: var(--fg-2); }
+.m-tab.active { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+.m-tab .t-chip {
+  font-family: var(--font-mono); font-size: 9px; padding: 1px 5px; border-radius: 4px;
+  margin-left: 5px; vertical-align: 1px;
+}
+.m-tab .t-chip.warn { background: rgba(234,179,8,.15); color: var(--status-warning); }
+
+/* ── Panes ────────────────────────────────────────────────────── */
+.m-body { padding: 16px 20px 20px; min-height: 320px; }
+.pane { display: none; }
+.pane.show { display: block; }
+
+.p-verdict {
+  display: flex; gap: 9px; align-items: flex-start;
+  font-size: 13px; line-height: 1.5; margin-bottom: 14px;
+  padding: 10px 14px; background: rgba(15,23,42,.5);
+  border: 1px solid var(--border-soft); border-radius: var(--radius-md);
+}
+.p-verdict .pi {
+  width: 20px; height: 20px; border-radius: 5px; display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+.p-verdict.ok .pi { background: rgba(34,197,94,.12); color: var(--accent); }
+.p-verdict.attn .pi { background: rgba(234,179,8,.12); color: var(--status-warning); }
+.p-verdict .pt b { font-weight: 600; }
+
+.section-t {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+  margin: 16px 0 8px; display: flex; align-items: center; gap: 10px;
+}
+.section-t::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
+.section-t:first-of-type { margin-top: 0; }
+
+/* Pulse timeline (CSS bars) */
+.tl { display: flex; align-items: flex-end; gap: 3px; height: 56px; padding: 8px 0 4px; }
+.tl .beat { flex: 1; border-radius: 2px 2px 0 0; min-height: 3px; position: relative; }
+.tl .beat.ok { background: rgba(34,197,94,.55); }
+.tl .beat.hot { background: rgba(234,179,8,.75); }
+.tl .beat:hover { outline: 1px solid var(--fg-2); }
+.tl-axis { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); }
+
+/* Data table */
+table.dt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.dt th {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--muted); text-align: left; padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.dt td { padding: 7px 10px; border-bottom: 1px solid var(--border-soft); color: var(--fg-2); }
+.dt td.mono { font-family: var(--font-mono); font-size: 12px; color: var(--fg); }
+.dt td .sev { font-family: var(--font-mono); font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 4px; background: rgba(239,68,68,.12); color: var(--status-critical); }
+.dt tr:last-child td { border-bottom: none; }
+.dt .hot { color: var(--status-warning); font-weight: 600; }
+
+/* Component bars (tokens) */
+.comp-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; font-size: 12.5px; }
+.comp-row .cl { width: 76px; color: var(--fg-2); font-family: var(--font-mono); font-size: 11.5px; flex-shrink: 0; }
+.comp-row .cb { flex: 1; height: 8px; background: var(--border-soft); border-radius: var(--radius-pill); overflow: hidden; }
+.comp-row .cf { height: 100%; border-radius: var(--radius-pill); }
+.comp-row .cv { width: 110px; text-align: right; font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2); flex-shrink: 0; }
+.comp-row .cd { width: 88px; text-align: right; font-family: var(--font-mono); font-size: 11px; flex-shrink: 0; }
+.cd.up { color: var(--status-warning); }
+.cd.flat { color: var(--muted); }
+
+/* KV grid (guard config etc.) */
+.kv { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kv .k {
+  background: rgba(15,23,42,.5); border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md); padding: 9px 12px;
+}
+.kv .kl { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.kv .kvl { font-family: var(--font-mono); font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+/* Garden zero-state */
+.garden-zero {
+  display: flex; gap: 12px; align-items: center;
+  border: 1px dashed var(--border); border-radius: var(--radius-md); padding: 14px 16px;
+}
+.garden-zero .gz-t { font-size: 13px; }
+.garden-zero .gz-s { font-size: 12px; color: var(--fg-2); margin-top: 2px; }
+
+/* Cross-surface conflict callout */
+.conflict {
+  border: 1px solid rgba(168,85,247,.4); background: rgba(168,85,247,.06);
+  border-radius: var(--radius-md); padding: 10px 14px; margin-top: 12px;
+  font-size: 12.5px; line-height: 1.5;
+}
+.conflict .cf-t { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--purple); text-transform: uppercase; letter-spacing: .07em; display: block; margin-bottom: 3px; }
+.conflict code { font-family: var(--font-mono); font-size: 11.5px; background: rgba(15,23,42,.6); padding: 1px 5px; border-radius: 4px; }
+
+.p-acts { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+
+/* Spec notes */
+.notes-toggle {
+  position: fixed; bottom: 18px; right: 18px; z-index: 50;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  background: var(--surface-2); color: var(--fg); border: 1px solid var(--border);
+  border-radius: var(--radius-pill); padding: 8px 16px; cursor: pointer;
+}
+.notes-toggle:hover { border-color: var(--fg-2); }
+.snote { display: none; }
+body.show-notes .snote {
+  display: block; font-family: var(--font-mono); font-size: 10.5px; color: var(--meta);
+  background: rgba(59,130,246,.07); border: 1px dashed rgba(59,130,246,.4);
+  border-radius: 6px; padding: 6px 10px; margin-top: 8px; line-height: 1.5;
+}
+body.show-notes .snote b { color: #93c5fd; }
+
+.footer { max-width: 780px; margin: 18px auto 0; padding: 14px 20px 0; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--border-soft); }
+.footer b { color: var(--fg-2); font-weight: 500; }
+
+@media (max-width: 640px) {
+  .kv { grid-template-columns: 1fr 1fr; }
+  .comp-row .cd { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="frame">
+  <div class="crumb">ObserveCo › Fleet › <b>hound</b> · Agent Detail Modal v2 · P0.2 design mockup</div>
+
+  <div class="modal" role="dialog" aria-label="Agent detail: hound">
+    <!-- ── Header ── -->
+    <div class="m-head">
+      <div class="m-id">
+        <span class="m-name">hound</span>
+        <span class="badge healthy">● HEALTHY</span>
+        <span class="badge stack">openclaw</span>
+        <span class="badge stack">hermes</span>
+        <span class="badge stack">launchd</span>
+        <button class="m-close" aria-label="Close">✕</button>
+      </div>
+      <div class="m-verdict">
+        <span class="dot" aria-hidden="true"></span>
+        <span class="vt"><b>Healthy — but two things are forming.</b> Probe latency (<span class="num">27–41s</span>) now exceeds the <span class="num">30s</span> cadence, and guidance grew <span class="num">+408%</span> in 7d. Neither is urgent; both have a fix.</span>
+      </div>
+      <div class="m-meta">last pulse 7s ago · 48-pulse window · data: live 2026-07-20 22:29</div>
+      <div class="snote"><b>Spec note — verdict sentence:</b> the live modal says "Agent is healthy. Last pulse 7s ago. Alive — 7s ago ago." Three fixes demonstrated here: (1) the "ago ago" duplication is gone; (2) the verdict synthesizes across tabs — latency trend lives in Health, drift in Tokens, but the *sentence* reads both; (3) tone = amber dot, because healthy-with-forming-issues ≠ green.</div>
+    </div>
+
+    <!-- ── So-what strip ── -->
+    <div class="sw-strip">
+      <div class="swc watch">
+        <span class="lead">Watch · probe latency</span>
+        <div class="txt">Pulse beats take <b class="num">27–41s</b> against a <b class="num">30s</b> cadence — the probe is slower than its interval. The <span class="num">22:07</span> guard failure (<i>database is locked</i>) is the same root cause: <b>SQLite contention</b>, not an agent problem.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">View contention window →</a>
+          <a class="act warn" href="#" onclick="return demoAct(event,this)">Move pulse.db to WAL mode →</a>
+        </div>
+      </div>
+      <div class="swc watch">
+        <span class="lead">Watch · guidance drift</span>
+        <div class="txt">Guidance is <b class="num">94%</b> of hound's token composition and grew <b class="num">+408%</b> in 7 days. Growth in the always-loaded component taxes every single turn.</div>
+        <div class="acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open drift detail →</a>
+          <a class="act" href="#" onclick="return demoAct(event,this)">Preview compression →</a>
+        </div>
+      </div>
+      <div class="snote"><b>Spec note — the strip is the point:</b> the live modal has 6 tabs of raw data and zero synthesis. Both cards above are computable from data the modal already loads (pulse table + token breakdown + guard timeline). No new backend required for v1 of this strip — it is a read-side join.</div>
+    </div>
+
+    <!-- ── Tabs ── -->
+    <div class="m-tabs" id="modalTabs" role="tablist">
+      <button class="m-tab active" data-tab="health" role="tab">Health<span class="t-chip warn">slow</span></button>
+      <button class="m-tab" data-tab="guard" role="tab">Guard</button>
+      <button class="m-tab" data-tab="errors" role="tab">Errors</button>
+      <button class="m-tab" data-tab="tokens" role="tab">Tokens<span class="t-chip warn">+408%</span></button>
+      <button class="m-tab" data-tab="memory" role="tab">Memory</button>
+      <button class="m-tab" data-tab="efficiency" role="tab">Efficiency</button>
+    </div>
+
+    <div class="m-body" id="modalBody">
+
+      <!-- ═══ HEALTH ═══ -->
+      <div class="pane show" data-pane="health">
+        <div class="p-verdict attn">
+          <span class="pi">!</span>
+          <span class="pt"><b>Alive and responding — slowly.</b> Every recent beat returned alive, but latencies of <span class="num">27.7–41.0s</span> on a <span class="num">30s</span> cadence mean checks now overlap. This is a probe-path problem, not an agent-health problem.</span>
+        </div>
+
+        <div class="section-t">Pulse timeline · last 24h · 30s cadence</div>
+        <div class="tl" role="img" aria-label="48-pulse timeline: all beats alive, recent beats slow">
+          <!-- production renders 48 beats; mockup shows the verified recent window -->
+          <div class="beat ok" style="height:30%"></div><div class="beat ok" style="height:28%"></div><div class="beat ok" style="height:32%"></div><div class="beat ok" style="height:26%"></div><div class="beat ok" style="height:30%"></div><div class="beat ok" style="height:29%"></div><div class="beat ok" style="height:31%"></div><div class="beat ok" style="height:27%"></div><div class="beat ok" style="height:30%"></div><div class="beat ok" style="height:28%"></div><div class="beat ok" style="height:32%"></div><div class="beat ok" style="height:30%"></div><div class="beat ok" style="height:29%"></div><div class="beat ok" style="height:31%"></div><div class="beat ok" style="height:27%"></div><div class="beat ok" style="height:30%"></div><div class="beat hot" style="height:68%" title="22:27 · 35.4s"></div><div class="beat hot" style="height:100%" title="22:27 · 41.0s"></div><div class="beat hot" style="height:82%" title="22:28 · 33.6s"></div><div class="beat hot" style="height:64%" title="22:29 · 27.7s"></div><div class="beat hot" style="height:79%" title="22:29 · 34.0s"></div>
+        </div>
+        <div class="tl-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>now</span></div>
+        <div class="snote"><b>Mockup note:</b> only the 5 rightmost bars are verified live values (27.7 / 41.0 / 33.6 / 35.4 / 34.0s — table below). Earlier bars are schematic height. Production renders all 48 from pulse_log.</div>
+
+        <div class="section-t">Latest checks</div>
+        <table class="dt">
+          <thead><tr><th>Time</th><th>Result</th><th>Latency</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">22:29</td><td>alive</td><td class="mono hot">34.0s</td></tr>
+            <tr><td class="mono">22:29</td><td>alive</td><td class="mono hot">27.7s</td></tr>
+            <tr><td class="mono">22:28</td><td>alive</td><td class="mono hot">33.6s</td></tr>
+            <tr><td class="mono">22:27</td><td>alive</td><td class="mono hot">35.4s</td></tr>
+            <tr><td class="mono">22:27</td><td>alive</td><td class="mono hot">41.0s</td></tr>
+          </tbody>
+        </table>
+        <div class="snote"><b>Fix — number formatting:</b> the live modal renders <code>33982.75375366211ms</code>. Rule: ≥10s → one decimal in seconds (<code>34.0s</code>); &lt;10s → integer ms (<code>340ms</code>). Latency &gt; cadence gets the amber <code>.hot</code> treatment.</div>
+        <div class="p-acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open full pulse history →</a>
+          <a class="act neutral" href="#" onclick="return demoAct(event,this)">Restart hound</a>
+        </div>
+      </div>
+
+      <!-- ═══ GUARD ═══ -->
+      <div class="pane" data-pane="guard">
+        <div class="p-verdict ok">
+          <span class="pi">✓</span>
+          <span class="pt"><b>Guard is OK — one failure today, self-recovered.</b> The <span class="num">22:07</span> <i>watch_probe_failed</i> was SQLite lock contention (see Health), not a hound crash. No stop was triggered.</span>
+        </div>
+        <div class="section-t">Failure timeline</div>
+        <table class="dt">
+          <thead><tr><th>Time</th><th>Event</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">22:07</td><td><span class="sev">PROBE FAIL</span></td><td>watch_probe_failed — database is locked</td></tr>
+          </tbody>
+        </table>
+        <div class="section-t">What the guard does</div>
+        <div class="kv">
+          <div class="k"><div class="kl">Failures before stop</div><div class="kvl">3</div></div>
+          <div class="k"><div class="kl">Cooldown period</div><div class="kvl">~4h</div></div>
+          <div class="k"><div class="kl">Auto-retry</div><div class="kvl">yes</div></div>
+        </div>
+        <div class="p-acts">
+          <a class="act neutral" href="#" onclick="return demoAct(event,this)">Guard settings →</a>
+        </div>
+      </div>
+
+      <!-- ═══ ERRORS ═══ -->
+      <div class="pane" data-pane="errors">
+        <div class="p-verdict attn">
+          <span class="pi">1</span>
+          <span class="pt"><b>1 error in the last 24h.</b> <i>database is locked</i> at <span class="num">22:07</span> — matches the guard timeline and the slow-probe pattern. One root cause, three surfaces.</span>
+        </div>
+        <table class="dt">
+          <thead><tr><th>Time</th><th>Severity</th><th>Message</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">22:07</td><td><span class="sev">ERROR</span></td><td>database is locked</td></tr>
+          </tbody>
+        </table>
+        <div class="snote"><b>Fix — the contradiction:</b> the live Errors tab says "No errors in last 24h — clean · 0 events" while rendering this exact row beneath the claim. The count and the table disagree. v2 rule: the verdict line is <i>computed from the same query</i> as the table — they can never diverge.</div>
+        <div class="p-acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">View contention window →</a>
+        </div>
+      </div>
+
+      <!-- ═══ TOKENS ═══ -->
+      <div class="pane" data-pane="tokens">
+        <div class="p-verdict attn">
+          <span class="pi">↗</span>
+          <span class="pt"><b>2.2K tokens — small total, lopsided shape.</b> Guidance is <span class="num">94%</span> of composition and the only component growing. Trimming guidance pays ~16× more than trimming everything else combined.</span>
+        </div>
+        <div class="section-t">Component breakdown · 7-day drift</div>
+        <div class="comp-row"><span class="cl">guidance</span><div class="cb"><div class="cf" style="width:94%;background:var(--status-warning)"></div></div><span class="cv">2.0K (94%)</span><span class="cd up">+408.0%</span></div>
+        <div class="comp-row"><span class="cl">identity</span><div class="cb"><div class="cf" style="width:6%;background:var(--meta)"></div></div><span class="cv">130 (6%)</span><span class="cd flat">+0.0%</span></div>
+        <div class="comp-row"><span class="cl">skills</span><div class="cb"><div class="cf" style="width:1%;background:var(--accent)"></div></div><span class="cv">1 (0%)</span><span class="cd flat">+0.0%</span></div>
+        <div class="comp-row"><span class="cl">memory</span><div class="cb"><div class="cf" style="width:1%;background:var(--accent)"></div></div><span class="cv">1 (0%)</span><span class="cd flat">+0.0%</span></div>
+        <div class="comp-row"><span class="cl">tools</span><div class="cb"><div class="cf" style="width:1%;background:var(--accent)"></div></div><span class="cv">1 (0%)</span><span class="cd flat">+3.2%</span></div>
+
+        <div class="conflict">
+          <span class="cf-t">⚠ Cross-surface conflict — reconcile before ship</span>
+          This tab reports guidance drift <code>+408.0%</code>; the fleet drift summary reports hound guidance <code>+21.4%</code> for the same 7-day window. Different baselines (first-seen vs rolling). One agent must have one drift number — v2 picks the rolling baseline and labels it.
+        </div>
+        <div class="p-acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Open token analytics →</a>
+          <a class="act" href="#" onclick="return demoAct(event,this)">Preview compression →</a>
+        </div>
+      </div>
+
+      <!-- ═══ MEMORY ═══ -->
+      <div class="pane" data-pane="memory">
+        <div class="p-verdict attn">
+          <span class="pi">?</span>
+          <span class="pt"><b>Garden reports 0/100 — but it hasn't scanned in 33 days.</b> Zero debt is what a scanner that isn't running always says. The number below is stale, not clean.</span>
+        </div>
+        <div class="kv">
+          <div class="k"><div class="kl">Debt score (stale)</div><div class="kvl">0<span style="color:var(--muted);font-size:11px">/100</span></div></div>
+          <div class="k"><div class="kl">Last scan</div><div class="kvl" style="color:var(--status-warning)">Jun 17</div></div>
+          <div class="k"><div class="kl">Auto-scan</div><div class="kvl" style="color:var(--status-critical)">off</div></div>
+        </div>
+        <div class="section-t">Memory garden</div>
+        <div class="garden-zero">
+          <span style="font-size:18px">🧠</span>
+          <div>
+            <div class="gz-t"><b>Auto-scan is not scheduled.</b></div>
+            <div class="gz-s">Duplicates, contradictions, and stale entries can't be detected until the scanner runs. This is the same gap the fleet inbox flags (stale source, 33d).</div>
+          </div>
+        </div>
+        <div class="p-acts">
+          <a class="act" href="#" onclick="return demoAct(event,this)">Run garden scan now →</a>
+          <a class="act neutral" href="#" onclick="return demoAct(event,this)">Schedule auto-scan →</a>
+        </div>
+      </div>
+
+      <!-- ═══ EFFICIENCY ═══ -->
+      <div class="pane" data-pane="efficiency">
+        <div class="p-verdict ok">
+          <span class="pi">i</span>
+          <span class="pt"><b>Sessions load on demand.</b> This pane lazy-loads per-session efficiency — same pattern as the live modal (<i>Loading sessions…</i>), kept intentionally light in v2.</span>
+        </div>
+        <div class="garden-zero">
+          <span style="font-size:18px">⏳</span>
+          <div>
+            <div class="gz-t"><b>Session efficiency loads here</b> (lazy, on tab open).</div>
+            <div class="gz-s">v2 keeps the existing lazy pattern — no eager fetch, no modal-open penalty. Spec decision: this pane is the one place lazy loading is correct, because the data is large and rarely the reason the modal was opened.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <b>Data:</b> live modal response for hound, 2026-07-20 22:29 (dashboard :8897). Latencies, guard event, error row, token composition, drift figures, garden state — all real.<br>
+    <b>Defects fixed vs live modal:</b> "7s ago ago" duplication · raw float latency (<code>33982.75375366211ms</code>) · Errors tab "0 events — clean" contradicting its own row · "healthy" verdict hiding 27–41s probe latency · garden zero presented as clean despite 33-day staleness.<br>
+    <b>Open question flagged:</b> guidance drift <code>+408%</code> (modal) vs <code>+21.4%</code> (fleet summary) — baseline reconciliation required before v2 ships.
+  </div>
+</div>
+
+<button class="notes-toggle" onclick="document.body.classList.toggle('show-notes')">Spec notes</button>
+
+<script>
+// Tabs — mirrors the live modal's switchModalTab contract
+document.getElementById('modalTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.m-tab'); if (!btn) return;
+  document.querySelectorAll('#modalTabs .m-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#modalBody .pane').forEach(p =>
+    p.classList.toggle('show', p.dataset.pane === btn.dataset.tab));
+});
+
+// Esc closes (modal contract)
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelector('.m-close').focus(); });
+document.querySelector('.m-close').addEventListener('click', () => demoAct(new Event('click'), document.querySelector('.m-close')));
+
+// Demo action links: visual feedback only (mockup)
+function demoAct(ev, el) {
+  ev.preventDefault(); ev.stopPropagation();
+  const orig = el.textContent;
+  el.textContent = '✓ ' + orig.replace(' →','');
+  setTimeout(() => { el.textContent = orig; }, 700);
+  return false;
+}
+</script>
+</body>
+</html>

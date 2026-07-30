@@ -1,0 +1,410 @@
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+    <div style="padding:12px 16px;font-size:13px;font-weight:600;color:var(--fg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <span>Drift Timeline · 6 agents</span>
+        <span style="font-size:11px;color:#ef4444;font-weight:400;">6 with breaches · 7-day sparklines</span>
+    </div>
+    <div class="drift-card" onclick="htmx.ajax('GET', '/api/fleet/modal/accelerator', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--fg-3)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;color:var(--fg);">accelerator</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(100,116,139,0.12);color:var(--fg-2);">memory</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:#ef4444;"><span class="up">▲</span> +1244.0%</span>
+        <span style="font-size:9px;color:var(--fg-3);">now</span>
+    </div>
+    <div style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 10 10" style="opacity:0.4;"><polyline points="0,7 2,4 4,5 7,1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                7-Day Rolling Trend
+            </span>
+            <span style="font-size:8px;color:var(--fg-3);">Jul 13 → Jul 20</span>
+        </div>
+        <canvas class="drift-sparkline" data-series="0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1262.0,1262.0,1260.0,1260.0,1258.0,1258.0,1258.0,1256.0,1256.0,1254.0,1254.0,1252.0,1252.0,1252.0,1250.0,1250.0,1248.0,1248.0,1246.0,1246.0,1246.0,1244.0,1244.0" data-timestamps="1783901697,1783906207,1783910716,1783915223,1783919730,1783924239,1783928747,1783933253,1783937761,1783942270,1783946781,1783951290,1783955799,1783960308,1783964817,1783969324,1783973832,1783978342,1783982851,1783987359,1783991869,1783996376,1784000885,1784005393,1784009902,1784014410,1784018919,1784023427,1784027936,1784032445,1784036953,1784041462,1784045969,1784050476,1784054986,1784059492,1784064001,1784068510,1784073018,1784077526,1784082038,1784086547,1784091057,1784095564,1784100072,1784104580,1784109088,1784113598,1784118107,1784122615,1784127121,1784131632,1784136142,1784140651,1784145161,1784149670,1784154177,1784158685,1784163192,1784167699,1784172207,1784176715,1784181222,1784185731,1784190239,1784194747,1784199254,1784203762,1784208270,1784214421,1784218931,1784223440,1784227948,1784232456,1784236965,1784241472,1784245980,1784250488,1784254995,1784259504,1784264013,1784268520,1784273028,1784279207,1784283714,1784288223,1784292731,1784298763,1784303271,1784307778,1784312289,1784316798,1784321308,1784337866,1784340568,1784345656,1784351384,1784355892,1784360399,1784364905,1784370829,1784375337,1784383968,1784499485,1784499785,1784500086,1784500387,1784500688,1784500988,1784501288,1784501589,1784501889,1784502189,1784502490,1784502791,1784503091,1784503391,1784503692,1784503992,1784504292,1784504594,1784504895,1784505195,1784505495,1784505796,1784506096" data-range-start="Jul 13" data-range-end="Jul 20" data-color="#ef4444" data-height="36" width="200" height="32" style="width:100%;height:36px;display:block;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Peak drift % in 7-day rolling average window">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">7d Peak</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">1262.0%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Week-over-week change in token consumption">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">WoW Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#64748b;">+18.0%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Absolute change in token count">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">Abs Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">+622</div>
+        </div>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:6px;">
+        <span>1560 points</span>
+        <span style="color:#ef4444;">⚠ 23 breaches</span>
+    </div>
+</div><div class="drift-card" onclick="htmx.ajax('GET', '/api/fleet/modal/forge', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--fg-3)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;color:var(--fg);">forge</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(100,116,139,0.12);color:var(--fg-2);">guidance</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:#ef4444;"><span class="up">▲</span> +2.4%</span>
+        <span style="font-size:9px;color:var(--fg-3);">now</span>
+    </div>
+    <div style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 10 10" style="opacity:0.4;"><polyline points="0,7 2,4 4,5 7,1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                7-Day Rolling Trend
+            </span>
+            <span style="font-size:8px;color:var(--fg-3);">Jul 13 → Jul 20</span>
+        </div>
+        <canvas class="drift-sparkline" data-series="0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,47.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,34.2,32.4,32.4,32.4,32.4,32.4,32.4,32.4,32.4,32.4,32.4,32.4,32.4,32.4,32.1,32.1,31.0,31.0,31.0,31.0,31.0,28.6,26.3,26.3,26.3,2.4,2.4" data-timestamps="1783901698,1783908913,1783916125,1783923337,1783930550,1783937762,1783944977,1783952191,1783959406,1783966620,1783973832,1783981048,1783988261,1783995475,1784002688,1784009902,1784017115,1784024329,1784031544,1784033948,1784037254,1784040560,1784043865,1784047170,1784050477,1784053784,1784057088,1784060394,1784063700,1784067007,1784070313,1784073619,1784076924,1784080233,1784083541,1784086849,1784090155,1784093461,1784096765,1784100072,1784103378,1784106685,1784109990,1784113297,1784116604,1784119911,1784123217,1784126521,1784129828,1784133135,1784136443,1784139749,1784143056,1784146363,1784149670,1784152974,1784156280,1784159587,1784162892,1784166197,1784169503,1784172808,1784176114,1784179419,1784182725,1784186032,1784189338,1784192643,1784195949,1784199254,1784202561,1784205866,1784209171,1784214121,1784217428,1784220735,1784224041,1784227347,1784230653,1784233959,1784237265,1784240571,1784243876,1784247182,1784250488,1784253793,1784257099,1784260405,1784263713,1784267018,1784270323,1784273630,1784278606,1784281912,1784285217,1784288524,1784291830,1784295137,1784299964,1784303271,1784306576,1784309883,1784313192,1784316498,1784319805,1784335171,1784338467,1784340466,1784342107,1784348979,1784352287,1784355592,1784358897,1784362202,1784366095,1784370229,1784373534,1784376839,1784384269,1784500988,1784504293" data-range-start="Jul 13" data-range-end="Jul 20" data-color="#ef4444" data-height="36" width="200" height="32" style="width:100%;height:36px;display:block;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Peak drift % in 7-day rolling average window">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">7d Peak</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">47.2%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Week-over-week change in token consumption">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">WoW Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">+46.0%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Absolute change in token count">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">Abs Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#64748b;">+18</div>
+        </div>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:6px;">
+        <span>1558 points</span>
+        <span style="color:#ef4444;">⚠ 1094 breaches</span>
+    </div>
+</div><div class="drift-card" onclick="htmx.ajax('GET', '/api/fleet/modal/hound', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--fg-3)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;color:var(--fg);">hound</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(100,116,139,0.12);color:var(--fg-2);">guidance</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:#ef4444;"><span class="up">▲</span> +24.5%</span>
+        <span style="font-size:9px;color:var(--fg-3);">now</span>
+    </div>
+    <div style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 10 10" style="opacity:0.4;"><polyline points="0,7 2,4 4,5 7,1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                7-Day Rolling Trend
+            </span>
+            <span style="font-size:8px;color:var(--fg-3);">Jul 13 → Jul 20</span>
+        </div>
+        <canvas class="drift-sparkline" data-series="0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,25.0,25.0,25.0,24.9,24.9,24.9,24.9,24.8,24.8,24.8,24.8,24.8,24.8,24.8,24.7,24.7,24.7,24.7,24.6,24.6,24.6,24.5,24.5" data-timestamps="1783901697,1783906207,1783910716,1783915223,1783919730,1783924239,1783928747,1783933253,1783937761,1783942270,1783946781,1783951290,1783955799,1783960308,1783964817,1783969324,1783973832,1783978342,1783982850,1783987359,1783991869,1783996376,1784000884,1784005392,1784009902,1784014410,1784018919,1784023427,1784027936,1784032445,1784036953,1784041461,1784045969,1784050476,1784054986,1784059492,1784064001,1784068510,1784073018,1784077526,1784082037,1784086547,1784091057,1784095563,1784100072,1784104579,1784109087,1784113597,1784118107,1784122615,1784127121,1784131631,1784136142,1784140651,1784145161,1784149670,1784154177,1784158685,1784163192,1784167699,1784172207,1784176715,1784181222,1784185731,1784190239,1784194746,1784199254,1784203762,1784208270,1784214421,1784218931,1784223439,1784227948,1784232456,1784236965,1784241472,1784245980,1784250488,1784254995,1784259504,1784264013,1784268520,1784273028,1784279207,1784283714,1784288223,1784292731,1784298762,1784303271,1784307778,1784312289,1784316798,1784321308,1784337565,1784340497,1784343600,1784351084,1784355591,1784360098,1784364604,1784370528,1784375037,1784383668,1784499485,1784499785,1784500086,1784500387,1784500687,1784500988,1784501288,1784501588,1784501889,1784502189,1784502490,1784502791,1784503091,1784503391,1784503692,1784503992,1784504292,1784504593,1784504894,1784505195,1784505495,1784505796,1784506096" data-range-start="Jul 13" data-range-end="Jul 20" data-color="#ef4444" data-height="36" width="200" height="32" style="width:100%;height:36px;display:block;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Peak drift % in 7-day rolling average window">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">7d Peak</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">25.0%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Week-over-week change in token consumption">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">WoW Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#64748b;">+0.4%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Absolute change in token count">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">Abs Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">+402</div>
+        </div>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:6px;">
+        <span>1561 points</span>
+        <span style="color:#ef4444;">⚠ 23 breaches</span>
+    </div>
+</div><div class="drift-card" onclick="htmx.ajax('GET', '/api/fleet/modal/main', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--fg-3)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;color:var(--fg);">main</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(100,116,139,0.12);color:var(--fg-2);">memory</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:#ef4444;"><span class="up">▲</span> +1244.0%</span>
+        <span style="font-size:9px;color:var(--fg-3);">now</span>
+    </div>
+    <div style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 10 10" style="opacity:0.4;"><polyline points="0,7 2,4 4,5 7,1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                7-Day Rolling Trend
+            </span>
+            <span style="font-size:8px;color:var(--fg-3);">Jul 13 → Jul 20</span>
+        </div>
+        <canvas class="drift-sparkline" data-series="0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1262.0,1262.0,1260.0,1260.0,1258.0,1258.0,1258.0,1256.0,1256.0,1254.0,1254.0,1252.0,1252.0,1252.0,1250.0,1250.0,1248.0,1248.0,1246.0,1246.0,1246.0,1244.0,1244.0" data-timestamps="1783901698,1783906208,1783910716,1783915224,1783919730,1783924239,1783928748,1783933253,1783937762,1783942271,1783946781,1783951291,1783955799,1783960309,1783964817,1783969324,1783973832,1783978342,1783982851,1783987359,1783991869,1783996376,1784000885,1784005393,1784009902,1784014410,1784018919,1784023428,1784027936,1784032446,1784036953,1784041462,1784045970,1784050477,1784054986,1784059492,1784064002,1784068510,1784073018,1784077526,1784082038,1784086548,1784091058,1784095564,1784100072,1784104580,1784109088,1784113598,1784118108,1784122615,1784127122,1784131632,1784136142,1784140652,1784145161,1784149670,1784154177,1784158685,1784163192,1784167699,1784172207,1784176715,1784181223,1784185731,1784190239,1784194747,1784199254,1784203763,1784208270,1784214421,1784218931,1784223440,1784227949,1784232457,1784236965,1784241472,1784245980,1784250488,1784254995,1784259505,1784264013,1784268520,1784273029,1784279207,1784283715,1784288224,1784292732,1784298763,1784303271,1784307779,1784312290,1784316799,1784321308,1784337866,1784340569,1784345656,1784351385,1784355893,1784360400,1784364905,1784370829,1784375337,1784383968,1784499486,1784499786,1784500086,1784500387,1784500688,1784500988,1784501288,1784501589,1784501889,1784502190,1784502490,1784502791,1784503092,1784503392,1784503692,1784503993,1784504293,1784504594,1784504895,1784505195,1784505496,1784505796,1784506097" data-range-start="Jul 13" data-range-end="Jul 20" data-color="#ef4444" data-height="36" width="200" height="32" style="width:100%;height:36px;display:block;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Peak drift % in 7-day rolling average window">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">7d Peak</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">1262.0%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Week-over-week change in token consumption">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">WoW Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#64748b;">+18.0%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Absolute change in token count">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">Abs Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">+622</div>
+        </div>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:6px;">
+        <span>1560 points</span>
+        <span style="color:#ef4444;">⚠ 23 breaches</span>
+    </div>
+</div><div class="drift-card" onclick="htmx.ajax('GET', '/api/fleet/modal/pragma', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--fg-3)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;color:var(--fg);">pragma</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(100,116,139,0.12);color:var(--fg-2);">guidance</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:#ef4444;"><span class="up">▲</span> +38.1%</span>
+        <span style="font-size:9px;color:var(--fg-3);">now</span>
+    </div>
+    <div style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 10 10" style="opacity:0.4;"><polyline points="0,7 2,4 4,5 7,1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                7-Day Rolling Trend
+            </span>
+            <span style="font-size:8px;color:var(--fg-3);">Jul 13 → Jul 20</span>
+        </div>
+        <canvas class="drift-sparkline" data-series="0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,38.8,38.8,38.8,38.8,38.6,38.6,38.6,38.6,38.6,38.5,38.5,38.5,38.5,38.5,38.3,38.3,38.3,38.3,38.1,38.1,38.1,38.1,38.1" data-timestamps="1783901698,1783906208,1783910716,1783915224,1783919730,1783924239,1783928748,1783933253,1783937762,1783942271,1783946782,1783951291,1783955799,1783960309,1783964817,1783969324,1783973832,1783978342,1783982851,1783987360,1783991869,1783996377,1784000885,1784005393,1784009902,1784014410,1784018919,1784023428,1784027936,1784032446,1784036954,1784041462,1784045970,1784050477,1784054986,1784059492,1784064002,1784068510,1784073019,1784077527,1784082038,1784086548,1784091058,1784095564,1784100072,1784104580,1784109088,1784113598,1784118108,1784122616,1784127122,1784131632,1784136142,1784140652,1784145161,1784149671,1784154178,1784158685,1784163192,1784167699,1784172208,1784176715,1784181223,1784185731,1784190239,1784194747,1784199254,1784203763,1784208271,1784214421,1784218932,1784223440,1784227949,1784232457,1784236965,1784241472,1784245981,1784250488,1784254995,1784259505,1784264013,1784268520,1784273029,1784279208,1784283715,1784288224,1784292732,1784298763,1784303272,1784307779,1784312290,1784316799,1784321308,1784337867,1784340569,1784345656,1784351385,1784355893,1784360400,1784364905,1784370829,1784375338,1784383969,1784499486,1784499786,1784500086,1784500387,1784500688,1784500988,1784501289,1784501589,1784501890,1784502190,1784502490,1784502791,1784503092,1784503392,1784503693,1784503993,1784504293,1784504594,1784504895,1784505195,1784505496,1784505796,1784506097" data-range-start="Jul 13" data-range-end="Jul 20" data-color="#ef4444" data-height="36" width="200" height="32" style="width:100%;height:36px;display:block;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Peak drift % in 7-day rolling average window">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">7d Peak</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">38.8%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Week-over-week change in token consumption">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">WoW Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#64748b;">+0.5%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Absolute change in token count">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">Abs Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">+315</div>
+        </div>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:6px;">
+        <span>1560 points</span>
+        <span style="color:#ef4444;">⚠ 23 breaches</span>
+    </div>
+</div><div class="drift-card" onclick="htmx.ajax('GET', '/api/fleet/modal/test-agent-ci', {target:'#modalContainer', swap:'innerHTML'})" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--fg-3)'" onmouseleave="this.style.borderColor='var(--border)'">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-weight:600;font-size:13px;color:var(--fg);">test-agent-ci</span>
+        <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(100,116,139,0.12);color:var(--fg-2);">guidance</span>
+        <span style="flex:1;"></span>
+        <span style="font-family:var(--font-mono);font-size:13px;font-weight:600;color:#ef4444;"><span class="flat">→</span> +0.0%</span>
+        <span style="font-size:9px;color:var(--fg-3);">now</span>
+    </div>
+    <div style="margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+            <span style="font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 10 10" style="opacity:0.4;"><polyline points="0,7 2,4 4,5 7,1.5" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                7-Day Rolling Trend
+            </span>
+            <span style="font-size:8px;color:var(--fg-3);">Jul 18 → Jul 20</span>
+        </div>
+        <canvas class="drift-sparkline" data-series="0.0,0.0,0.0,-66.1,-66.0,-65.9,-65.9,-65.7,-65.6,-65.6,-65.5,-65.4,-65.4,-65.3,-65.1,-65.1,-65.0,-64.9,-64.9,-64.8,-64.6,-64.6,-64.5,-64.4,-64.4,-64.3,-64.1,-64.1,-64.0,-63.9,-63.9,-63.7,-63.6,-63.6,-63.5,-63.3,-63.2,-63.2,-63.1,-62.9,-62.9,-62.8,-62.6,-62.6,-62.5,-62.4,-62.4,-62.2,-62.1,-61.9,-61.9,-61.8,-61.6,-61.6,-61.5,-61.3,-61.3,-61.2,-61.0,-61.0,-60.9,-60.7,-60.7,-60.6,-60.4,-60.4,-60.2,-60.2,-60.1,-60.1,-59.9,-59.9,-59.8,-59.8,-59.6,-59.6,-59.4,-59.4,-59.3,-59.3,-59.1,-59.1,-58.9,-58.9,-58.8,-58.8,-58.6,-58.6,-58.4,-58.4,-58.2,-58.2,-58.1,-58.1,-58.1,-57.9,-57.9,-57.7,-57.7,-57.5,-57.5,-57.3,-57.1,-57.0,-57.0,-56.8,-56.6,-56.6,-56.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0" data-timestamps="1784346110,1784346110,1784348080,1784348377,1784348678,1784348979,1784349280,1784349580,1784349881,1784350182,1784350483,1784350784,1784351085,1784351385,1784351685,1784351987,1784352287,1784352587,1784352887,1784353188,1784353488,1784353789,1784354089,1784354390,1784354691,1784354991,1784355292,1784355592,1784355893,1784356193,1784356494,1784356795,1784357095,1784357395,1784357696,1784357996,1784358297,1784358597,1784358897,1784359197,1784359498,1784359799,1784360099,1784360400,1784360700,1784361000,1784361300,1784361601,1784361902,1784362203,1784362503,1784362803,1784363104,1784363404,1784363704,1784364005,1784364305,1784364605,1784364906,1784365795,1784366095,1784366396,1784366697,1784366998,1784367298,1784367976,1784368728,1784369027,1784369327,1784369629,1784369929,1784370229,1784370529,1784370829,1784371130,1784371431,1784371732,1784372032,1784372333,1784372633,1784372933,1784373234,1784373534,1784373835,1784374136,1784374437,1784374738,1784375038,1784375338,1784375639,1784375939,1784376239,1784376539,1784376840,1784377140,1784377440,1784377741,1784378042,1784378342,1784378642,1784378942,1784383372,1784383668,1784383969,1784384269,1784384570,1784384870,1784385171,1784386309,1784499187,1784499486,1784499786,1784500086,1784500387,1784500688,1784500989,1784501289,1784501589,1784501890,1784502190,1784502491,1784502792,1784503092,1784503392,1784503693,1784503993,1784504293,1784504594,1784504895,1784505196,1784505496,1784505796,1784506097" data-range-start="Jul 18" data-range-end="Jul 20" data-color="#ef4444" data-height="36" width="200" height="32" style="width:100%;height:36px;display:block;"></canvas>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Peak drift % in 7-day rolling average window">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">7d Peak</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">66.1%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Week-over-week change in token consumption">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">WoW Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#ef4444;">-66.2%</div>
+        </div>
+        <div style="background:rgba(100,116,139,0.06);border-radius:5px;padding:5px 6px;text-align:center;" title="Absolute change in token count">
+            <div style="font-size:8px;color:var(--fg-3);margin-bottom:1px;letter-spacing:0.3px;">Abs Δ</div>
+            <div style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:#64748b;">+0</div>
+        </div>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:var(--fg-3);display:flex;align-items:center;gap:6px;">
+        <span>133 points</span>
+        <span style="color:#ef4444;">⚠ 106 breaches</span>
+    </div>
+</div>
+</div>
+<script>
+(function() {
+    // Helpers
+    function hexToRgba(hex, a) {
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+    }
+    var style = getComputedStyle(document.documentElement);
+    var gridLineColor = style.getPropertyValue('--border-soft').trim() || 'rgba(148,163,184,0.2)';
+    var fg2 = style.getPropertyValue('--fg-2').trim() || '#64748b';
+    var surfaceBg = style.getPropertyValue('--surface').trim() || '#0f172a';
+    var fontMono = style.getPropertyValue('--font-mono').trim() || 'monospace';
+
+    var canvases = document.querySelectorAll('.drift-sparkline');
+    for (var ci = 0; ci < canvases.length; ci++) {
+        (function(c) {
+            var raw = c.getAttribute('data-series');
+            if (!raw) return;
+            var series = raw.split(',').map(parseFloat);
+            var tsRaw = c.getAttribute('data-timestamps');
+            var timestamps = tsRaw ? tsRaw.split(',').map(function(s) { return parseInt(s) * 1000; }) : [];
+            var rangeStart = c.getAttribute('data-range-start') || '7d ago';
+            var rangeEnd = c.getAttribute('data-range-end') || 'now';
+            var color = c.getAttribute('data-color') || '#22c55e';
+            if (series.length < 2) return;
+
+            // Destroy previous Chart instance (htmx re-renders)
+            if (c._chart) { c._chart.destroy(); c._chart = null; }
+
+            // Set explicit pixel dimensions — NO responsive mode to prevent auto-resize expansion
+            var _parentW = c.parentElement.clientWidth || c.parentElement.offsetWidth || 300;
+            var _cHeight = parseInt(c.getAttribute('data-height')) || 32;
+            c.setAttribute('width', _parentW);
+            c.setAttribute('height', _cHeight);
+            c.style.width = _parentW + 'px';
+            c.style.height = _cHeight + 'px';
+            c.style.display = 'block';
+
+            var fillTop = hexToRgba(color, 0.18);
+            var labelFont = '9px ' + fontMono;
+
+            // ponytail: constrain y-axis so tiny drifts don't fill the full height.
+            // Symmetric around zero with a minimum ±2% span; expands if real data exceeds.
+            var _maxAbs = Math.max.apply(null, series.map(function(v){ return Math.abs(v); })) || 0;
+            var _yBound = Math.max(_maxAbs * 1.25, 2);
+
+            var chart = new Chart(c, {
+                type: 'line',
+                data: {
+                    labels: series.map(function(_, i) { return i; }),
+                    datasets: [{
+                        data: series,
+                        borderColor: color,
+                        backgroundColor: function(ctx) {
+                            var area = ctx.chart.chartArea;
+                            if (!area) return null;
+                            var grad = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+                            grad.addColorStop(0, fillTop);
+                            grad.addColorStop(1, 'transparent');
+                            return grad;
+                        },
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        pointHoverBackgroundColor: color,
+                        pointHoverBorderColor: surfaceBg,
+                        pointHoverBorderWidth: 2,
+                        tension: 0.35,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: false,
+                            external: function(context) {
+                                // HTML tooltip — renders outside canvas so it's never clipped
+                                var tooltipEl = document.getElementById('chartjs-tooltip');
+                                if (!tooltipEl) {
+                                    tooltipEl = document.createElement('div');
+                                    tooltipEl.id = 'chartjs-tooltip';
+                                    tooltipEl.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;background:rgba(15,23,42,0.95);border:1px solid rgba(148,163,184,0.2);border-radius:6px;padding:6px 10px;font-family:' + fontMono + ';transition:opacity 0.15s;opacity:0;';
+                                    document.body.appendChild(tooltipEl);
+                                }
+                                var tooltip = context.tooltip;
+                                if (tooltip.opacity === 0) {
+                                    tooltipEl.style.opacity = '0';
+                                    return;
+                                }
+                                var data = tooltip.dataPoints[0];
+                                var v = data.raw;
+                                var sign = v >= 0 ? '+' : '';
+                                var dateLabel = '';
+                                if (timestamps.length > data.dataIndex) {
+                                    var d = new Date(timestamps[data.dataIndex]);
+                                    dateLabel = d.toDateString().slice(4, 10) + ' ';
+                                }
+                                tooltipEl.innerHTML = '<div style="font-size:10px;color:' + fg2 + ';margin-bottom:2px;">' + dateLabel + '</div><div style="font-size:13px;font-weight:bold;color:' + color + ';">' + sign + v.toFixed(1) + '%</div>';
+                                var rect = c.getBoundingClientRect();
+                                var pos = rect.left + tooltip.caretX;
+                                var top = rect.top + tooltip.caretY;
+                                tooltipEl.style.left = Math.min(pos + 12, window.innerWidth - 160) + 'px';
+                                tooltipEl.style.top = Math.max(top - 50, 10) + 'px';
+                                tooltipEl.style.opacity = '1';
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false, min: -_yBound, max: _yBound }
+                    },
+                    layout: {
+                        padding: { top: 2, bottom: 4, left: 2, right: 2 }
+                    },
+                    elements: {
+                        line: {
+                            borderJoinStyle: 'round',
+                            borderCapStyle: 'round',
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'sparklineExtras',
+                    afterDraw: function(chart) {
+                        var ctx = chart.ctx;
+                        var xS = chart.scales.x;
+                        var yS = chart.scales.y;
+                        var left = chart.chartArea.left;
+                        var right = chart.chartArea.right;
+                        var btm = chart.chartArea.bottom;
+
+                        ctx.save();
+
+                        // Dashed zero line
+                        var zy = yS.getPixelForValue(0);
+                        ctx.beginPath();
+                        ctx.strokeStyle = gridLineColor;
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3, 4]);
+                        ctx.moveTo(left, zy);
+                        ctx.lineTo(right, zy);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        // End dot with ring
+                        var lastI = series.length - 1;
+                        var lx = xS.getPixelForValue(lastI);
+                        var ly = yS.getPixelForValue(series[lastI]);
+                        ctx.beginPath();
+                        ctx.fillStyle = color;
+                        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.strokeStyle = surfaceBg;
+                        ctx.lineWidth = 2;
+                        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+                        ctx.stroke();
+
+                        // Time-axis labels
+                        ctx.font = labelFont;
+                        ctx.fillStyle = fg2;
+                        ctx.textBaseline = 'bottom';
+                        ctx.textAlign = 'start';
+                        ctx.fillText(rangeStart, left, btm + 1);
+                        ctx.textAlign = 'end';
+                        ctx.fillText(rangeEnd, right, btm + 1);
+
+                        ctx.restore();
+                    }
+                }]
+            });
+
+            c._chart = chart;
+        })(canvases[ci]);
+    }
+})();
+</script>

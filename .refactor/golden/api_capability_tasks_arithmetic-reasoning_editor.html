@@ -1,0 +1,97 @@
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-size:14px;font-weight:600;color:var(--fg);">✏️ Arithmetic reasoning</div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="switchEditorMode('arithmetic-reasoning', 'yaml')" id="yamlBtn_arithmetic-reasoning" class="editor-mode-btn active" style="background:var(--accent-on);border:1px solid rgba(34,197,94,0.3);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--accent);cursor:pointer;">YAML</button>
+          <button onclick="switchEditorMode('arithmetic-reasoning', 'form')" id="formBtn_arithmetic-reasoning" class="editor-mode-btn" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--fg-2);cursor:pointer;">Form</button>
+        </div>
+      </div>
+
+      <!-- YAML mode -->
+      <div id="yamlEditor_arithmetic-reasoning" class="editor-pane">
+        <textarea id="yamlText_arithmetic-reasoning" rows="14" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;color:var(--fg);font-family:var(--font-mono);resize:vertical;white-space:pre;overflow-x:auto;"># Arithmetic reasoning
+# Agent solves a multi-step arithmetic word problem
+name: arithmetic-reasoning
+description: &quot;Agent solves a multi-step arithmetic word problem&quot;
+prompt: |
+  Solve: If a train leaves Station A at 60 mph and another train leaves Station B (which is 300 miles away) at 40 mph heading toward each other, how many hours until they meet?
+assertions:
+  - type: llm_judge
+    criteria: The response must correctly solve the train problem: two trains 300 miles apart heading toward each other at 60 mph and 40 mph. The combined speed is 100 mph, so time = distance/speed = 300/100 = 3 hours. The answer should be 3 hours.
+    expected: 3 hours
+    threshold: 0.5
+    repetitions: 3
+timeout: 180
+trials: 10</textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+          <button onclick="closeEditor('arithmetic-reasoning')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;color:var(--fg-2);cursor:pointer;">Cancel</button>
+          <button onclick="saveYamlTask('arithmetic-reasoning')" style="background:var(--accent);color:var(--accent-on);border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">Save</button>
+        </div>
+      </div>
+
+      <!-- Form mode -->
+      <div id="formEditor_arithmetic-reasoning" class="editor-pane" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div>
+            <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Task ID</label>
+            <input id="formId_arithmetic-reasoning" value="arithmetic-reasoning" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Display Name</label>
+            <input id="formName_arithmetic-reasoning" value="Arithmetic reasoning" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:inherit;">
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Description</label>
+          <input id="formDesc_arithmetic-reasoning" value="Agent solves a multi-step arithmetic word problem" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:inherit;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Prompt Template</label>
+          <textarea id="formPrompt_arithmetic-reasoning" rows="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:var(--font-mono);resize:vertical;">Solve: If a train leaves Station A at 60 mph and another train leaves Station B (which is 300 miles away) at 40 mph heading toward each other, how many hours until they meet?</textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div>
+            <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Assertion Type</label>
+            <select id="formAType_arithmetic-reasoning" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:inherit;">
+              <option value="exact_match" >Exact Match</option>
+              <option value="contains" >Contains Keywords</option>
+              <option value="numeric_range" >Numeric Range</option>
+              <option value="regex" >Regex</option>
+              <option value="llm_judge" selected>LLM-as-a-Verifier (1-20, K=3, logprob)</option>
+              <option value="json_schema" >JSON Schema</option>
+              <option value="ordering" >Ordering</option>
+              <option value="tool_call_validation" >Tool Call Validation</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Target / Keywords</label>
+            <input id="formATarget_arithmetic-reasoning" value="" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:inherit;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div>
+            <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Timeout (s)</label>
+            <input id="formTimeout_arithmetic-reasoning" type="number" value="180" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Trials</label>
+            <input id="formTrials_arithmetic-reasoning" type="number" value="10" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:inherit;">
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:var(--fg-2);display:block;margin-bottom:4px;">Model Override <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+          <select id="formModel_arithmetic-reasoning" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--fg);font-family:inherit;">
+            <option value="">Default (agent model)</option>
+            <option value="deepseek-v4-flash" >DeepSeek V4 Flash</option>
+            <option value="deepseek-v4-pro" >DeepSeek V4 Pro</option>
+            <option value="ornith:latest" >Ornith 9B</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button onclick="closeEditor('arithmetic-reasoning')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;color:var(--fg-2);cursor:pointer;">Cancel</button>
+          <button onclick="saveFormTask('arithmetic-reasoning')" style="background:var(--accent);color:var(--accent-on);border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">Save</button>
+        </div>
+      </div>
+    </div>
+    
