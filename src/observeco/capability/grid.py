@@ -17,7 +17,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from observeco.capability.adapters.profile_aware import ProfileAwareAdapter
+from observeco.benchmark.adapters.hermes import HermesBenchmarkAdapter
 from observeco.capability.canary import Scorer
 from observeco.capability.model_config import get_default_grid_models, load_available_models
 from observeco.db import Database
@@ -156,12 +156,13 @@ class CapabilityGridRunner:
                     model_spec, config_label, len(tasks),
                 )
 
-                # Use ProfileAwareAdapter — loads agent SOUL.md as system prompt,
-                # calls API directly (bypasses broken hermes CLI routing via 9router).
-                adapter = ProfileAwareAdapter(
-                    model_spec=model_spec,
-                    timeout=timeout,
+                # Use HermesBenchmarkAdapter — tests the full agent (SOUL.md +
+                # skills + tools + streaming) with each model. The env var
+                # override in the adapter forces direct API calls to ollama.com.
+                adapter = HermesBenchmarkAdapter(
                     agent_profile=agent_name,
+                    model=model_spec,
+                    timeout=timeout,
                 )
 
                 for task in tasks:
@@ -182,6 +183,8 @@ class CapabilityGridRunner:
                             "input_text": task.get("prompt", ""),
                             "context_text": "",
                             "expected_output": "",
+                            "model": model_spec,
+                            "temperature": 0.0,
                         })()
 
                         result = adapter.run_task(agent_name, task_obj)
