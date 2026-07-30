@@ -212,6 +212,7 @@ def _validate_agent_param(agent: str) -> Optional[str]:
 async def grid_run_from_dashboard(
     agent: str = Query("default"),
     models: Optional[str] = Query(None, description="Comma-separated model specs"),
+    configs: Optional[str] = Query(None, description="Comma-separated agent profiles"),
 ):
     """POST /api/capability/grid/run?agent=NAME&models=model1,model2 — run full grid from dashboard.
 
@@ -244,6 +245,8 @@ async def grid_run_from_dashboard(
                "--agent", agent, "--trials", "1"]
         if models:
             cmd += ["--models", models]
+        if configs:
+            cmd += ["--configs", configs]
         subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
@@ -1543,10 +1546,9 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
         </select>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
-        <label>Config</label>
-        <select class="grid-select">
-          <option>All configs</option>
-          {''.join(f'<option>{_html_escape(c)}</option>' for c in configs)}
+        <label>Profile</label>
+        <select class="grid-select" id="gridProfiles" multiple style="min-width:200px;">
+          {''.join(f'<option value="{_html_escape(c)}" selected>{_html_escape(c)}</option>' for c in configs)}
         </select>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
@@ -1585,7 +1587,7 @@ def _grid_running_html(agent: str, started_at: str) -> str:
       <div class="cap-empty-icon" style="font-size:32px;">⏳</div>
       <h2>Grid Run In Progress</h2>
       <p style="color:var(--fg-3);">
-        Started at {started_at[:19] if started_at else 'unknown'} · 2 models × 2 configs × 20 tasks
+        Started at {started_at[:19] if started_at else 'unknown'} · models × profiles × tasks
       </p>
       <p>Grid comparison tests each model through the full agent harness (SOUL.md + skills + tools). Takes 10–30 minutes. This page refreshes automatically.</p>
       <div style="margin-top:8px;">
@@ -1597,25 +1599,39 @@ def _grid_running_html(agent: str, started_at: str) -> str:
 
 
 def _grid_empty_html(agent: str = "main") -> str:
-    """Show empty state with model selector from config."""
-    from observeco.capability.model_config import get_default_grid_models
+    """Show empty state with model and profile selectors from config."""
+    from observeco.capability.model_config import get_default_grid_models, get_default_grid_profiles
     models = get_default_grid_models()
+    profiles = get_default_grid_profiles()
     model_options = ''.join(
         f'<option value="{m}" selected>{m.split("/")[-1]}</option>'
         for m in models
+    )
+    profile_options = ''.join(
+        f'<option value="{p}" selected>{p}</option>'
+        for p in profiles
     )
     return f"""
     <div class="cap-empty">
       <div class="cap-empty-icon">📊</div>
       <h2>No Grid Runs Yet</h2>
       <p>
-        Run a grid to compare models and configs side by side.
+        Compare model performance across different agent profiles.
+        Each model runs through the full agent harness (SOUL.md + skills + tools).
       </p>
-      <div style="margin:16px 0;">
-        <label style="font-size:13px;color:var(--fg-2);">Models to compare:</label>
-        <select id="gridModels" multiple style="min-width:200px;margin-top:4px;">
-          {model_options}
-        </select>
+      <div style="margin:16px 0; display:flex; gap:24px; justify-content:center; flex-wrap:wrap;">
+        <div>
+          <label style="font-size:13px;color:var(--fg-2);">Models:</label>
+          <select id="gridModels" multiple style="min-width:200px;">
+            {model_options}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:13px;color:var(--fg-2);">Agent Profiles:</label>
+          <select id="gridProfiles" multiple style="min-width:200px;">
+            {profile_options}
+          </select>
+        </div>
       </div>
       <button onclick="runGrid()" class="btn btn-primary">Run Full Grid</button>
     </div>
