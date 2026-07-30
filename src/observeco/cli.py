@@ -2724,17 +2724,21 @@ def grid_cap_run(
                                             help="Comma-separated task IDs (default: all)"),
     trials: int = typer.Option(3, "--trials", "-n", help="Trials per task per cell"),
 ) -> None:
-    """Run full grid: all models × configs × tasks using DirectModelAdapter.
+    """Run full grid: all models × configs × tasks using ProfileAwareAdapter.
 
-    Calls each model's chat API directly (bypasses agent harness) to measure
-    raw model capability on canary tasks. Results stored in grid_runs/grid_results.
+    Tests agent performance (SOUL.md context + model) on canary tasks.
+    Models loaded from hermes config or specified explicitly.
+    Results stored in grid_runs/grid_results.
     """
     from observeco.capability.grid import CapabilityGridRunner
+    from observeco.capability.model_config import get_default_grid_models, load_available_models
 
-    # Resolve models
-    model_list = ["ollama-cloud/deepseek-v4-flash", "ollama-cloud/deepseek-v4-pro"]
+    # Resolve models — from config or explicit
     if models:
         model_list = [m.strip() for m in models.split(",")]
+    else:
+        model_list = get_default_grid_models()
+        print(f"   Models from config: {model_list}")
 
     # Resolve configs
     config_list = ["baseline-v3", "baseline-v2"]

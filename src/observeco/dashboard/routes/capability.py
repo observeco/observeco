@@ -209,8 +209,11 @@ def _validate_agent_param(agent: str) -> Optional[str]:
     return None
 
 @router.post("/grid/run", response_class=JSONResponse)
-async def grid_run_from_dashboard(agent: str = Query("default")):
-    """POST /api/capability/grid/run?agent=NAME — run full grid from dashboard.
+async def grid_run_from_dashboard(
+    agent: str = Query("default"),
+    models: Optional[str] = Query(None, description="Comma-separated model specs"),
+):
+    """POST /api/capability/grid/run?agent=NAME&models=model1,model2 — run full grid from dashboard.
 
     Spawns a subprocess so the grid run survives server restarts and avoids
     SQLite writer contention in the web server's process. Runs can take 5-10
@@ -239,6 +242,8 @@ async def grid_run_from_dashboard(agent: str = Query("default")):
         # Spawn subprocess
         cmd = [sys.executable, "-m", "observeco.cli", "grid", "run",
                "--agent", agent, "--trials", "1"]
+        if models:
+            cmd += ["--models", models]
         subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
@@ -1433,7 +1438,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
             (agent,),
         ).fetchone()
         if not row:
-            return HTMLResponse(content=_grid_empty_html())
+            return HTMLResponse(content=_grid_empty_html(agent))
         run_id = row["id"]
 
     assert run_id is not None  # guaranteed by early return above
@@ -1441,7 +1446,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
         "SELECT * FROM grid_runs WHERE id = ?", (run_id,)
     ).fetchone()
     if not run:
-        return HTMLResponse(content=_grid_empty_html())
+        return HTMLResponse(content=_grid_empty_html(agent))
 
     models = json.loads(run["models"]) if isinstance(run["models"], str) else run["models"]
     configs = json.loads(run["configs"]) if isinstance(run["configs"], str) else run["configs"]
@@ -1455,7 +1460,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     ).fetchall()
 
     if not cells:
-        return HTMLResponse(content=_grid_empty_html())
+        return HTMLResponse(content=_grid_empty_html(agent))
 
     # Build cell lookup: (task_name, model, config) -> cell
     cell_map = {}
@@ -1527,8 +1532,14 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     <div class="grid-controls">
       <div style="display:flex;align-items:center;gap:6px;">
         <label>Agent</label>
-        <select class="grid-select">
+        <select class="grid-select" id="gridAgent">
           <option>{_html_escape(agent)}</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label>Models</label>
+        <select class="grid-select" id="gridModels" multiple style="min-width:200px;">
+          {''.join(f'<option value="{_html_escape(m)}" selected>{_html_escape(m.split("/")[-1])}</option>' for m in models)}
         </select>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
@@ -1576,7 +1587,7 @@ def _grid_running_html(agent: str, started_at: str) -> str:
       <p style="color:var(--fg-3);">
         Started at {started_at[:19] if started_at else 'unknown'} · 2 models × 2 configs × 20 tasks
       </p>
-      <p>Grid comparison can take 5–10 minutes. This page refreshes automatically.</p>
+      <p>Grid comparison tests each model with the agent's SOUL.md context injected. Takes 5–10 minutes. This page refreshes automatically.</p>
       <div style="margin-top:8px;">
         <span class="spinner"></span>
         <span style="color:var(--accent);font-weight:600;font-size:13px;">Running — results will appear here when ready</span>
@@ -1585,14 +1596,27 @@ def _grid_running_html(agent: str, started_at: str) -> str:
     """
 
 
-def _grid_empty_html() -> str:
-    return """
+def _grid_empty_html(agent: str = "main") -> str:
+    """Show empty state with model selector from config."""
+    from observeco.capability.model_config import get_default_grid_models
+    models = get_default_grid_models()
+    model_options = ''.join(
+        f'<option value="{m}" selected>{m.split("/")[-1]}</option>'
+        for m in models
+    )
+    return f"""
     <div class="cap-empty">
       <div class="cap-empty-icon">📊</div>
       <h2>No Grid Runs Yet</h2>
       <p>
         Run a grid to compare models and configs side by side.
       </p>
+      <div style="margin:16px 0;">
+        <label style="font-size:13px;color:var(--fg-2);">Models to compare:</label>
+        <select id="gridModels" multiple style="min-width:200px;margin-top:4px;">
+          {model_options}
+        </select>
+      </div>
       <button onclick="runGrid()" class="btn btn-primary">Run Full Grid</button>
     </div>
     """
