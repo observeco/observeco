@@ -423,8 +423,61 @@ class Scorer:
         except ImportError:
             ask_with_logprobs = None  # type: ignore[assignment]
 
+        # BYOK fast-path: when the user supplies their own key, judge directly
+        # (ungated). The product LLM gate (tier-2 requires Pro) must NOT block
+        # first-party canary scoring funded by the user's own key. Falls back to
+        # the gated path below for environments without a BYOK key.
+        # ponytail: uses deepseek-v4-flash on ollama.com/v1 which ignores
+        # temperature and can return empty content on malformed prompts — callers
+        # must send a well-formed "Score 1-20" prompt (system_prompt already does).
+        # No logprobs from this path; discrete-score parsing handles the result.
+        byok_key = os.environ.get("OBSERVECO_LLM_API_KEY", "")
+
         for i in range(k):
-            if ask_with_logprobs is not None:
+            if byok_key:
+                # BYOK fast-path: make a FRESH call per repetition (ollama.com
+                # deepseek models return empty content on complex scoring prompts;
+                # glm-5.2 reliably returns <score>N</score>). Retry once on
+                # empty/unparseable output before giving up.
+                try:
+                    import json as _json
+                    import urllib.request as _ureq
+                    _payload = _json.dumps({
+                        "model": "glm-5.2",
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_context},
+                        ],
+                        "temperature": 0,
+                        "max_tokens": 200,
+                        "stream": False,
+                    }).encode()
+                    _req = _ureq.Request(
+                        "https://ollama.com/v1/chat/completions",
+                        data=_payload,
+                        headers={"Content-Type": "application/json",
+                                 "Authorization": f"Bearer {byok_key}"},
+                    )
+                    _text = ""
+                    for _attempt in range(3):
+                        with _ureq.urlopen(_req, timeout=120) as _r:
+                            _body = _json.loads(_r.read().decode())
+                        _text = (_body["choices"][0]["message"]["content"] or "").strip()
+                        if _text:
+                            break
+                    if _text:
+                        score = Scorer._parse_discrete_score(_text)
+                        if score is not None:
+                            scores.append(score)
+                            used_discrete = True
+                            continue
+                        errors.append(f"could not parse score from byok response: {_text[:60]}")
+                    else:
+                        errors.append("byok returned empty content after retries")
+                except Exception as _e:
+                    errors.append(f"byok call failed: {_e}")
+                    byok_resp = None
+            elif ask_with_logprobs is not None:
                 resp = ask_with_logprobs(
                     system_prompt, user_context,
                     consumer="canary_judge", tier=2,
