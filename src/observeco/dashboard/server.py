@@ -3638,9 +3638,12 @@ async def api_brain_growth_watch():
     week_ago = int(__import__("time").time()) - 86400 * 7
 
     rows = conn.execute(
-        "SELECT agent_name, component, current_tokens, week_avg_tokens, "
-        "delta_pct, breached, timestamp FROM chisel_drift "
+        "SELECT agent_name, component, MAX(current_tokens) as current_tokens, "
+        "MAX(week_avg_tokens) as week_avg_tokens, "
+        "MAX(ABS(delta_pct)) * CASE WHEN MAX(delta_pct) >= 0 THEN 1 ELSE -1 END as delta_pct, "
+        "MAX(breached) as breached FROM chisel_drift "
         "WHERE timestamp > ? AND method='rolling' AND delta_pct != 0 "
+        "GROUP BY agent_name, component "
         "ORDER BY ABS(delta_pct) DESC LIMIT 20",
         (week_ago,),
     ).fetchall()
@@ -3656,7 +3659,7 @@ async def api_brain_growth_watch():
         color = "#ef4444" if pct > 15 else "#f97316" if pct > 5 else "#22c55e"
         breach_badge = ' <span style="color:#ef4444;font-size:10px;">⚠️ breached</span>' if d["breached"] else ""
         items.append(
-            f'<div style="display:flex;justify-content:space-between;align-items:center;'
+            f'<div class="gw-row" data-agent="{d["agent_name"]}" style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:8px 0;border-bottom:1px solid #1e293b;">'
             f'<div><span style="font-size:12px;color:#e2e8f0;font-weight:600;">{d["agent_name"]}</span>'
             f'<span style="font-size:11px;color:#64748b;margin-left:6px;">{d["component"]}</span>{breach_badge}</div>'
