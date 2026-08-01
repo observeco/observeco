@@ -119,7 +119,7 @@ class CapabilityGridRunner:
         else:
             rows = conn.execute(
                 "SELECT id, name, prompt, assertions, timeout, model, trials "
-                "FROM canary_tasks ORDER BY id"
+                "FROM canary_tasks WHERE built_in = 1 ORDER BY id"
             ).fetchall()
 
         if not rows:
