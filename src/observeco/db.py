@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import queue
 import sqlite3
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -27,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 29
+SCHEMA_VERSION = 67
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -296,6 +298,7 @@ CREATE TABLE IF NOT EXISTS turn_log (
 );
 CREATE INDEX IF NOT EXISTS idx_compress_log_agent ON compress_log(agent_name);
 CREATE INDEX IF NOT EXISTS idx_skill_usage_agent ON skill_usage(agent_name, skill_name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_skill_usage_uniq ON skill_usage(agent_name, skill_name);
 CREATE INDEX IF NOT EXISTS idx_guidance_fire_agent ON guidance_fire(agent_name);
 CREATE INDEX IF NOT EXISTS idx_turn_log_agent ON turn_log(agent_name);
 CREATE INDEX IF NOT EXISTS idx_turn_log_ts ON turn_log(timestamp);
@@ -328,6 +331,7 @@ CREATE TABLE IF NOT EXISTS heal_config (
     agent_name TEXT PRIMARY KEY,
     auto_heal INTEGER NOT NULL DEFAULT 0,
     auto_heal_l2 INTEGER NOT NULL DEFAULT 0,
+    learn INTEGER NOT NULL DEFAULT 0,
     max_restarts_per_hour INTEGER NOT NULL DEFAULT 3,
     drift_threshold REAL NOT NULL DEFAULT 15.0,
     memory_debt_threshold INTEGER NOT NULL DEFAULT 60,
@@ -555,6 +559,450 @@ ALTER TABLE token_logs ADD COLUMN topic_id TEXT DEFAULT '';
 CREATE INDEX IF NOT EXISTS idx_token_logs_model ON token_logs(model);
 CREATE INDEX IF NOT EXISTS idx_token_logs_topic_id ON token_logs(topic_id);
 """),
+    (30, """-- Migration 30: trace_spans table for OTel span persistence (T1 Tracing Layer)
+CREATE TABLE IF NOT EXISTS trace_spans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trace_id TEXT NOT NULL,
+    span_id TEXT NOT NULL,
+    parent_span_id TEXT DEFAULT '',
+    agent_name TEXT NOT NULL,
+    span_name TEXT NOT NULL,
+    span_kind TEXT DEFAULT 'INTERNAL',
+    start_time_ns INTEGER NOT NULL,
+    end_time_ns INTEGER NOT NULL DEFAULT 0,
+    status TEXT DEFAULT 'UNSET',
+    attributes TEXT DEFAULT '{}',
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_trace_spans_agent ON trace_spans(agent_name, created_at);
+CREATE INDEX IF NOT EXISTS idx_trace_spans_trace ON trace_spans(trace_id);
+CREATE INDEX IF NOT EXISTS idx_trace_spans_parent ON trace_spans(parent_span_id);
+"""),
+    (31, """-- Migration 31: benchmark_tasks + benchmark_results for Agent Quality Management
+CREATE TABLE IF NOT EXISTS benchmark_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    input_text TEXT NOT NULL,
+    context_text TEXT DEFAULT '',
+    expected_output TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    UNIQUE(agent_name, task_name)
+);
+CREATE TABLE IF NOT EXISTS benchmark_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    score REAL NOT NULL DEFAULT 0.0,
+    passed INTEGER NOT NULL DEFAULT 0,
+    total INTEGER NOT NULL DEFAULT 1,
+    model_used TEXT DEFAULT '',
+    harness_type TEXT DEFAULT 'hermes',
+    run_at INTEGER NOT NULL,
+    details TEXT DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_benchmark_tasks_agent ON benchmark_tasks(agent_name);
+CREATE INDEX IF NOT EXISTS idx_benchmark_results_agent ON benchmark_results(agent_name, run_at);
+"""),
+    (50, """-- Migration 50: Capability Monitoring Layer — canary, grid, drift, config timeline
+-- Tables: canary_tasks, canary_runs, canary_results, canary_baselines, drift_events, config_snapshots, grid_runs, grid_results
+
+CREATE TABLE IF NOT EXISTS canary_tasks (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    description TEXT,
+    prompt      TEXT NOT NULL,
+    assertions  TEXT NOT NULL,    -- JSON array: [{type, target, min?, max?, tolerance?, keywords?}]
+    timeout     INTEGER NOT NULL DEFAULT 60,
+    model       TEXT,
+    trials      INTEGER NOT NULL DEFAULT 3,
+    built_in    INTEGER NOT NULL DEFAULT 0,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS canary_runs (
+    id          TEXT PRIMARY KEY,
+    agent_name  TEXT NOT NULL,
+    config_hash TEXT NOT NULL,     -- sha256 of resolved config (model + prompt + tools)
+    config_label TEXT,
+    started_at  TEXT NOT NULL,
+    completed_at TEXT,
+    status      TEXT NOT NULL DEFAULT 'running',
+    total_tasks INTEGER NOT NULL,
+    pass_count  INTEGER,
+    hang_count  INTEGER,
+    fail_count  INTEGER,
+    total_cost  REAL,
+    total_tokens INTEGER,
+    error       TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_canary_runs_agent ON canary_runs(agent_name, started_at);
+
+CREATE TABLE IF NOT EXISTS canary_results (
+    id          TEXT PRIMARY KEY,
+    run_id      TEXT NOT NULL REFERENCES canary_runs(id),
+    task_id     TEXT NOT NULL REFERENCES canary_tasks(id),
+    status      TEXT NOT NULL,     -- pass | fail | hang
+    accuracy    REAL,              -- 0.0-1.0 or NULL if hang
+    ci_lower    REAL,
+    ci_upper    REAL,
+    cost        REAL,
+    tokens      INTEGER,
+    latency_ms  INTEGER,
+    recovery    TEXT,
+    trajectory  TEXT,              -- JSON: full agent trajectory for debugging
+    error       TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_canary_results_run ON canary_results(run_id);
+
+CREATE TABLE IF NOT EXISTS canary_baselines (
+    id          TEXT PRIMARY KEY,
+    agent_name  TEXT NOT NULL,
+    config_hash TEXT NOT NULL,
+    config_label TEXT,
+    run_count   INTEGER NOT NULL,
+    accuracy    REAL NOT NULL,
+    ci_lower    REAL,
+    ci_upper    REAL,
+    created_at  TEXT NOT NULL,
+    expires_at  TEXT,              -- NULL = active, set when superseded
+    UNIQUE(agent_name, config_hash, expires_at)
+);
+
+CREATE TABLE IF NOT EXISTS drift_events (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL,
+    baseline_id     TEXT REFERENCES canary_baselines(id),
+    run_id          TEXT REFERENCES canary_runs(id),
+    config_hash     TEXT NOT NULL,
+    config_label    TEXT,
+    drift_pct       REAL NOT NULL, -- negative = decline
+    p_value         REAL,
+    ci_lower        REAL,
+    ci_upper        REAL,
+    severity        TEXT NOT NULL, -- breach | warning | info
+    breached_tasks  TEXT,          -- JSON array of task_ids
+    acknowledged    INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_drift_events_agent ON drift_events(agent_name, created_at);
+
+CREATE TABLE IF NOT EXISTS config_snapshots (
+    id          TEXT PRIMARY KEY,
+    agent_name  TEXT NOT NULL,
+    config_hash TEXT NOT NULL,
+    config_label TEXT,
+    change_type TEXT NOT NULL,     -- baseline | model_switch | prompt_update | tool_update | drift
+    description TEXT,
+    git_commit  TEXT,
+    accuracy    REAL,
+    segment     TEXT,              -- "A" | "B" | "C" — for timeline grouping
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_config_snapshots_agent ON config_snapshots(agent_name, created_at);
+
+CREATE TABLE IF NOT EXISTS grid_runs (
+    id          TEXT PRIMARY KEY,
+    agent_name  TEXT NOT NULL,
+    started_at  TEXT NOT NULL,
+    completed_at TEXT,
+    status      TEXT NOT NULL DEFAULT 'running',
+    models      TEXT NOT NULL,     -- JSON array of model names
+    configs     TEXT NOT NULL,     -- JSON array of config labels
+    total_cells INTEGER NOT NULL,
+    total_cost  REAL,
+    error       TEXT
+);
+
+CREATE TABLE IF NOT EXISTS grid_results (
+    id          TEXT PRIMARY KEY,
+    grid_run_id TEXT NOT NULL REFERENCES grid_runs(id),
+    task_id     TEXT NOT NULL REFERENCES canary_tasks(id),
+    model       TEXT NOT NULL,
+    config      TEXT NOT NULL,
+    accuracy    REAL,
+    ci_lower    REAL,
+    ci_upper    REAL,
+    cost        REAL,
+    tokens      INTEGER,
+    flags       TEXT,              -- JSON array: ["loop", "unsafe", "shortcut"]
+    hang        INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(grid_run_id, task_id, model, config)
+);
+"""),
+    (51, """-- Migration 51: Canary dev/test split + provider error status + grid blended score
+-- Inspired by HF harness-optimization (Niklaus 2026): dev/test split prevents overfitting,
+-- provider_error distinguishes infra failures from model failures,
+-- blended_score makes grid report actionable.
+
+ALTER TABLE canary_tasks ADD COLUMN split TEXT NOT NULL DEFAULT 'all';
+
+ALTER TABLE canary_results ADD COLUMN provider_error INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE grid_results ADD COLUMN blended_score REAL;
+"""),
+    (57, """-- Migration 57: Benchmark Methodology Upgrade (obs-spec-057)
+-- Enhanced task schema: category, difficulty, expected_output, few_shot, system_override, temperature
+-- New tables: canary_judge_cache, canary_task_baselines
+
+ALTER TABLE canary_tasks ADD COLUMN category TEXT;
+ALTER TABLE canary_tasks ADD COLUMN difficulty TEXT DEFAULT 'medium';
+ALTER TABLE canary_tasks ADD COLUMN expected_output TEXT;
+ALTER TABLE canary_tasks ADD COLUMN few_shot_examples TEXT;
+ALTER TABLE canary_tasks ADD COLUMN system_override TEXT;
+ALTER TABLE canary_tasks ADD COLUMN temperature REAL DEFAULT 0.0;
+
+CREATE TABLE IF NOT EXISTS canary_judge_cache (
+    cache_key TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL,
+    output_hash TEXT NOT NULL,
+    score REAL NOT NULL,
+    reasoning TEXT,
+    model_used TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (task_id) REFERENCES canary_tasks(id)
+);
+CREATE INDEX IF NOT EXISTS idx_judge_cache_task ON canary_judge_cache(task_id);
+
+CREATE TABLE IF NOT EXISTS canary_task_baselines (
+    id TEXT PRIMARY KEY,
+    agent_name TEXT NOT NULL,
+    config_hash TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    accuracy REAL NOT NULL,
+    ci_lower REAL NOT NULL,
+    ci_upper REAL NOT NULL,
+    run_count INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT,
+    FOREIGN KEY (task_id) REFERENCES canary_tasks(id),
+    UNIQUE(agent_name, config_hash, task_id, expires_at)
+);
+CREATE INDEX IF NOT EXISTS idx_task_baseline_lookup ON canary_task_baselines(agent_name, config_hash, task_id);
+"""),
+    (58, """-- Migration 58: declare agent/service class explicitly (obs-2026-07)
+-- Agent vs service line (design decision): agents have brain + memory and act
+-- autonomously; services are infrastructure/bridges/watchers with no identity.
+-- Previously fleet.py *inferred* class from data presence (trim + garden rows),
+-- which misclassified real agents that hadn't collected memory-garden data yet.
+-- This makes the class a declared property, stable across data-collection gaps.
+ALTER TABLE agent_configs ADD COLUMN class TEXT NOT NULL DEFAULT 'service';
+
+-- Agents: profiles with a substantive custom SOUL identity + memory.
+-- (pragma excluded: default Hermes SOUL + GS-008 only = execution engine/service)
+UPDATE agent_configs SET class = 'agent' WHERE agent_name IN (
+    'accelerator', 'aleph', 'blueprint', 'dreamer', 'forge', 'gladwell',
+    'hound', 'kepler', 'main', 'pa', 'raven', 'skeptical', 'spectrum',
+    'subconscious', 'secondbrain'
+);
+-- Everything else stays 'service' (infra, bridges, watchers, tools).
+CREATE INDEX IF NOT EXISTS idx_agent_configs_class ON agent_configs(class);
+"""),
+
+    (59, """-- Migration 59: alert acknowledgements (obs-2026-07)
+-- Lets users dismiss active alerts. An ack silences the current incident for
+-- (agent, category); a fresh occurrence (newer timestamp) re-surfaces it.
+CREATE TABLE IF NOT EXISTS alert_acks (
+    agent      TEXT NOT NULL,
+    category   TEXT NOT NULL,   -- circuit | drift | dead | error | heartbeat
+    acked_at   INTEGER NOT NULL,
+    PRIMARY KEY (agent, category)
+);
+"""),
+
+    (60, """-- Migration 60: local/cloud classification (obs-spec-020 §11.8)
+-- Marks whether a token_logs row came from a local (self-hosted) provider.
+-- Local tokens cost $0; cloud tokens are billed. Classification is done at
+-- write time by the OTEL listener (provider→is_local cache from config) and
+-- the SDK patcher (base_url check). Watch daemon rows default to cloud (0).
+ALTER TABLE token_logs ADD COLUMN is_local INTEGER DEFAULT 0;
+CREATE INDEX IF NOT EXISTS idx_token_is_local ON token_logs(is_local);
+"""),
+
+    (61, """-- Migration 61: history-assisted task generation (obs-spec-060)
+-- source_session: traceability link from a user-defined canary task back to
+--   the original Hermes conversation it was mined from.
+-- canary_task_drafts: pending-review store for LLM-proposed task drafts. User
+--   approves/rejects in the dashboard before a draft becomes an active task.
+ALTER TABLE canary_tasks ADD COLUMN source_session TEXT;
+
+CREATE TABLE IF NOT EXISTS canary_task_drafts (
+    id                      TEXT PRIMARY KEY,
+    name                    TEXT NOT NULL,
+    description             TEXT,
+    prompt                  TEXT NOT NULL,
+    assertions              TEXT NOT NULL,   -- JSON list
+    category                TEXT,
+    difficulty              TEXT DEFAULT 'medium',
+    source_session          TEXT,
+    llm_judge_unavailable   INTEGER DEFAULT 0,
+    created_at              TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_drafts_created ON canary_task_drafts(created_at);
+"""),
+
+    (62, """-- Migration 62: Harness Optimization Loop tables (obs-spec-056 + obs-spec-061)
+-- Backend loop (capability/harness.py HarnessOptimizer) writes to these but they
+-- were never created — optimize() crashed on first INSERT. This migration adds them.
+-- Schema matches the actual writer calls in capability/harness.py (NOT the draft
+-- spec's harness_candidates/harness_frontier names, which were never implemented).
+CREATE TABLE IF NOT EXISTS harness_optimization_runs (
+    id                      TEXT PRIMARY KEY,
+    agent_name              TEXT NOT NULL,
+    started_at              TEXT NOT NULL,
+    completed_at            TEXT,
+    status                  TEXT NOT NULL DEFAULT 'running',
+    iterations              INTEGER NOT NULL,
+    budget                  INTEGER,
+    candidate_dev_score     REAL,
+    candidate_test_score    REAL,
+    promoted                INTEGER DEFAULT 0,
+    promotion_reason        TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_harness_runs_agent ON harness_optimization_runs(agent_name, started_at);
+
+CREATE TABLE IF NOT EXISTS harness_edits (
+    id                      TEXT PRIMARY KEY,
+    optimization_run_id     TEXT NOT NULL,
+    iteration               INTEGER NOT NULL,
+    edit_text               TEXT,
+    old_snippet             TEXT,
+    new_snippet             TEXT,
+    classification          TEXT,
+    classification_confidence REAL,
+    classification_reasoning TEXT,
+    FOREIGN KEY (optimization_run_id) REFERENCES harness_optimization_runs(id)
+);
+CREATE INDEX IF NOT EXISTS idx_harness_edits_run ON harness_edits(optimization_run_id);
+
+CREATE TABLE IF NOT EXISTS harness_eval_runs (
+    id                      TEXT PRIMARY KEY,
+    optimization_run_id     TEXT NOT NULL,
+    method                  TEXT NOT NULL,
+    split                   TEXT NOT NULL,
+    total_rollouts          INTEGER NOT NULL,
+    pass_at_1               REAL,
+    pass_at_k               REAL,
+    FOREIGN KEY (optimization_run_id) REFERENCES harness_optimization_runs(id)
+);
+CREATE INDEX IF NOT EXISTS idx_harness_eval_run ON harness_eval_runs(optimization_run_id);
+"""),
+
+    (63, """-- Migration 63: harness_candidates + harness_frontier + missing columns (obs-spec-056 gap fix)
+-- Add missing columns to harness_edits
+ALTER TABLE harness_edits ADD COLUMN code_diff TEXT DEFAULT '';
+ALTER TABLE harness_edits ADD COLUMN incumbent_score REAL;
+ALTER TABLE harness_edits ADD COLUMN dev_score REAL;
+ALTER TABLE harness_edits ADD COLUMN promoted INTEGER DEFAULT 0;
+ALTER TABLE harness_edits ADD COLUMN promotion_reason TEXT DEFAULT '';
+
+-- harness_candidates: per-iteration candidate records (spec §4.1)
+CREATE TABLE IF NOT EXISTS harness_candidates (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL,
+    iteration       INTEGER NOT NULL,
+    name            TEXT NOT NULL,
+    mechanism_type  TEXT NOT NULL,
+    description     TEXT,
+    code_diff       TEXT,
+    dev_score       REAL,
+    incumbent_score REAL,
+    promoted        INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_harness_candidates_agent ON harness_candidates(agent_name, iteration);
+
+-- harness_frontier: current best harness per agent (spec §4.2)
+CREATE TABLE IF NOT EXISTS harness_frontier (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL UNIQUE,
+    candidate_id    TEXT NOT NULL REFERENCES harness_candidates(id),
+    score           REAL NOT NULL,
+    mechanism_stack TEXT NOT NULL,
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+"""),
+
+    (64, """-- Migration 64: experience bank + control dims (obs-spec-088)
+CREATE TABLE IF NOT EXISTS harness_experiences (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL,
+    layer           TEXT NOT NULL,
+    source_run_id   TEXT,
+    episode_ref     TEXT,
+    failure_class   TEXT,
+    diagnosis       TEXT,
+    proposed_edit   TEXT,
+    outcome         TEXT,
+    observed_count  INTEGER DEFAULT 0,
+    embedding       BLOB,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_he_agent ON harness_experiences(agent_name, layer);
+CREATE INDEX IF NOT EXISTS idx_he_failure ON harness_experiences(failure_class);
+
+CREATE TABLE IF NOT EXISTS harness_control_dims (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL UNIQUE,
+    context         TEXT,
+    tools           TEXT,
+    orchestration   TEXT,
+    memory          TEXT,
+    decoding        TEXT,
+    output          TEXT,
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS harness_gate_tests (
+    id              TEXT PRIMARY KEY,
+    agent_name      TEXT NOT NULL,
+    run_at          TEXT NOT NULL,
+    proposer_model  TEXT,
+    total_runs      INTEGER,
+    fabricated_runs INTEGER,
+    fabrication_rate REAL,
+    verdict         TEXT,
+    detail          TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_hgt_agent ON harness_gate_tests(agent_name, run_at);
+"""),
+    # Migration 65: proposer_model on harness_optimization_runs (PG-6 fabrication grading)
+    (65, """-- Migration 65: track proposer model per optimization run (obs-spec-088 PG-6)
+ALTER TABLE harness_optimization_runs ADD COLUMN proposer_model TEXT;
+"""),
+    # Migration 66: inbox_items for Anomalies Inbox (obs-spec-092)
+    (66, """-- Migration 66: inbox_items for cross-detector anomaly inbox (obs-spec-092)
+CREATE TABLE IF NOT EXISTS inbox_items (
+  id            TEXT PRIMARY KEY,
+  agent_name    TEXT,
+  class         TEXT NOT NULL,
+  tone          TEXT NOT NULL,
+  pillar        TEXT,
+  title         TEXT NOT NULL,
+  attribution   TEXT,
+  evidence      TEXT NOT NULL,
+  actions       TEXT NOT NULL,
+  why_source    TEXT NOT NULL,
+  state         TEXT NOT NULL DEFAULT 'open',
+  triage_reason TEXT,
+  first_seen    TEXT NOT NULL,
+  last_seen     TEXT NOT NULL,
+  occurrence    INTEGER NOT NULL DEFAULT 1,
+  folded_count  INTEGER,
+  folded_parent TEXT,
+  snoozed_until TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_inbox_state_tone ON inbox_items(state, tone, last_seen DESC);
+"""),
+    # Migration 67: dismissed_gaps for discover panel
+    (67, """-- Migration 67: dismissed_gaps for discover panel dismiss tracking
+CREATE TABLE IF NOT EXISTS dismissed_gaps (
+    gap_name    TEXT PRIMARY KEY,
+    dismissed_at TEXT NOT NULL DEFAULT (datetime('now')),
+    dismiss_count INTEGER DEFAULT 1
+);
+"""),
 ]
 
 _SCHEMA_SQL = """
@@ -615,7 +1063,8 @@ CREATE TABLE IF NOT EXISTS chisel_drift (
     week_avg_tokens INTEGER NOT NULL,
     delta_pct REAL NOT NULL,
     breached INTEGER NOT NULL DEFAULT 0,
-    timestamp INTEGER NOT NULL
+    timestamp INTEGER NOT NULL,
+    method TEXT NOT NULL DEFAULT 'rolling'
 );
 
 CREATE TABLE IF NOT EXISTS clawforge_profiles (
@@ -806,110 +1255,268 @@ INSERT OR IGNORE INTO pathway_node_types (type, icon, shape, color) VALUES
 CREATE INDEX IF NOT EXISTS idx_edges_source ON pathway_edges(source_id);
 CREATE INDEX IF NOT EXISTS idx_edges_target ON pathway_edges(target_id);
 CREATE INDEX IF NOT EXISTS idx_edges_status ON pathway_edges(status);
+
+-- Benchmark tables (Agent Quality Management)
+CREATE TABLE IF NOT EXISTS benchmark_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    input_text TEXT NOT NULL,
+    context_text TEXT DEFAULT '',
+    expected_output TEXT DEFAULT '',
+    created_at INTEGER NOT NULL,
+    UNIQUE(agent_name, task_name)
+);
+CREATE TABLE IF NOT EXISTS benchmark_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    task_name TEXT NOT NULL,
+    score REAL NOT NULL DEFAULT 0.0,
+    passed INTEGER NOT NULL DEFAULT 0,
+    total INTEGER NOT NULL DEFAULT 1,
+    model_used TEXT DEFAULT '',
+    harness_type TEXT DEFAULT 'hermes',
+    run_at INTEGER NOT NULL,
+    details TEXT DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS idx_benchmark_tasks_agent ON benchmark_tasks(agent_name);
+CREATE INDEX IF NOT EXISTS idx_benchmark_results_agent ON benchmark_results(agent_name, run_at);
+
+-- #81 Incident Skill Auto-Creation (L3 Learning Loop)
+CREATE TABLE IF NOT EXISTS prevention_skills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_name TEXT NOT NULL,
+    pattern_hash TEXT NOT NULL,
+    trigger_conditions TEXT NOT NULL,
+    skill_path TEXT NOT NULL,
+    diagnosis TEXT,
+    remediation TEXT NOT NULL,
+    success_count INTEGER DEFAULT 0,
+    fail_count INTEGER DEFAULT 0,
+    deprecated INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_used_at TEXT,
+    UNIQUE(pattern_hash, agent_name)
+);
+CREATE INDEX IF NOT EXISTS idx_prevention_agent ON prevention_skills(agent_name);
+CREATE VIRTUAL TABLE IF NOT EXISTS prevention_skills_fts USING fts5(
+    skill_id UNINDEXED,
+    pattern_hash,
+    agent_name,
+    error_signature,
+    diagnosis
+);
 """
+
+# -- Self-monitor async flush queue ------------------------------------------
+# log_self_monitor is called on every LLM call during canary runs. It must
+# never block the caller on cross-process DB lock contention. The queue
+# accepts writes and a background daemon thread flushes them.
+_self_monitor_queue: "queue.Queue[tuple[str, int, int]]" = queue.Queue(maxsize=1000)
+
+
+def _flush_self_monitor_loop() -> None:
+    """Background daemon: drain _self_monitor_queue and write to DB.
+
+    Retries indefinitely until the write succeeds. The queue is bounded
+    (maxsize=1000), so if the DB is locked for an extended period, the
+    queue fills and new writes are silently dropped — but every write
+    that made it into the queue will eventually land. Self-monitoring
+    is best-effort: the caller never blocks.
+    """
+    while True:
+        try:
+            consumer, input_tokens, output_tokens = _self_monitor_queue.get()
+        except EOFError:
+            return
+        # Retry indefinitely — the queue bounds the backlog, so this
+        # will eventually drain. Sleep 5s between attempts to avoid
+        # hammering a locked DB.
+        while True:
+            try:
+                db = Database()
+                today = int(time.time()) // 86400
+                total = input_tokens + output_tokens
+                db._write(
+                    "INSERT INTO self_monitor_budget (day, consumer, input_tokens, output_tokens, total_tokens, created_at) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    (today, consumer, input_tokens, output_tokens, total, int(time.time())),
+                )
+                break  # success — move to next queue item
+            except Exception:
+                time.sleep(5)
+
+
+_self_monitor_flusher = threading.Thread(target=_flush_self_monitor_loop, daemon=True)
+_self_monitor_flusher.start()
 
 
 class Database:
-    """Thread-safe SQLite database for ObserveCo data."""
+    """Thread-safe SQLite database for ObserveCo data.
+
+    Concurrency model:
+    - One sqlite3.Connection per *thread* (via threading.local) so no single
+      connection object is ever used from two threads at once. sqlite3 connections
+      are not safe for concurrent cross-thread use even with check_same_thread=False.
+    - A single process-wide writer lock serializes writes (execute+commit) so SQLite's
+      single-writer guarantee holds within a process.
+    - Cross-process contention (e.g. the watch daemon is a separate process) is handled
+      by WAL + busy_timeout=30000, and a bounded retry on OperationalError('database is locked').
+    """
+
+    # Process-wide lock shared by ALL Database instances (so two Database() objects in
+    # the same process still serialize their writers). Class-level = one lock per process.
+    _writer_lock = threading.Lock()
+    # Serializes the one-time schema init so concurrent first-connections don't each
+    # fire executescript() (which takes a WAL write lock and causes 'database is locked').
+    _schema_lock = threading.Lock()
 
     def __init__(self, db_path: str | Path = DB_PATH):
         self.db_path = Path(db_path)
-        self._conn: Optional[sqlite3.Connection] = None
+        # ponytail: per-thread connection pool. Lazy-init each thread's connection on
+        # first _get_conn() from that thread. Upgrade path: a bounded pool with max-age.
+        self._local = threading.local()
         self._init_called = False
         # ponytail: _init_db() is deferred to first _get_conn() call so that
         # module-level `db = Database()` doesn't crash on import when Hermes
         # isn't installed or the data dir is unwritable.
         # Upgrade path: make Database a proper lazy singleton.
 
+    def _make_conn(self) -> sqlite3.Connection:
+        """Create and configure a fresh connection for the calling thread."""
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=30000")
+        conn.execute("PRAGMA foreign_keys=ON")
+        # Schema init runs ONCE per Database instance (not per connection).
+        # executescript() takes a write lock; running it on every concurrent
+        # connection under htmx's parallel requests caused 'database is locked'
+        # storms (500s on heal-config/heal-log/alert-log/discover/panel).
+        with type(self)._schema_lock:
+            if not self._init_called:
+                self._init_db(conn)
+                self._init_called = True
+        return conn
+
     def _get_conn(self) -> sqlite3.Connection:
-        if self._conn is None:
-            self.db_path.parent.mkdir(parents=True, exist_ok=True)
-            self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
-            self._conn.row_factory = sqlite3.Row
-            self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute("PRAGMA busy_timeout=5000")
-            self._conn.execute("PRAGMA foreign_keys=ON")
-            # ponytail: _init_db() runs on first connection so schema + migrations
-            # are applied before any query. This is the lazy init that prevents
-            # import-time crashes when Hermes isn't installed.
-            self._init_db()
-        return self._conn
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = self._make_conn()
+            self._local.conn = conn
+        return conn
 
-    def _init_db(self) -> None:
-        conn = self._conn
-        assert conn is not None, "_init_db called before _get_conn set up self._conn"
+    def _write(self, sql: str, params: tuple, retries: int = 10) -> None:
+        """Execute a write (INSERT/UPDATE/DELETE) under the process-wide writer lock
+        with a bounded retry on 'database is locked' (handles cross-process contention
+        that busy_timeout doesn't always absorb during sustained write bursts).
 
+        ponytail: retry backoff ramps from 0.5s to 5s over 10 attempts (~27.5s total),
+        matching the busy_timeout=30000 on the connection. If the daemon holds the lock
+        longer than 30s, this still fails — but that's a daemon design issue, not a
+        retry parameter problem.
+        """
+        for attempt in range(retries):
+            try:
+                with self._writer_lock:
+                    conn = self._get_conn()
+                    conn.execute(sql, params)
+                    conn.commit()
+                return
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e) and attempt < retries - 1:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                raise
+
+    def _init_db(self, conn: sqlite3.Connection) -> None:
+        # If the base schema is already present (prod DB at current version),
+        # every statement below is an idempotent no-op WRITE that still takes the
+        # WAL write lock — and races with the constantly-writing watch daemon,
+        # causing 'database is locked' 500s on the first connection. Skip the
+        # whole init when the schema already exists. ponytail: sentinel is a core
+        # base-schema table; if it's missing the DB is fresh and we run full init
+        # (below) under a lock-retry. Upgrade path: version-table check instead of
+        # sentinel table.
+        try:
+            conn.execute("SELECT 1 FROM canary_runs LIMIT 1")
+            # Base schema present — but still apply any PENDING migrations
+            # (e.g. a new migration added after the DB was first created).
+            # The migration loop is idempotent (IF NOT EXISTS / duplicate-col
+            # handled). Skipping it here would leave new tables uncreated.
+            self._run_pending_migrations(conn)
+            return
+        except sqlite3.OperationalError:
+            pass  # table missing -> run full init below
+
+        # Retry the one-time init on 'database is locked' so a concurrent watch-daemon
+        # write doesn't turn the first connection into a 500.
+        last_err = None
+        for _attempt in range(20):
+            try:
+                self._init_db_inner(conn)
+                return
+            except sqlite3.OperationalError as e:
+                if "database is locked" in str(e):
+                    last_err = e
+                    time.sleep(0.1 * (_attempt + 1))
+                    continue
+                raise
+        raise last_err or sqlite3.OperationalError("database is locked (init)")
+
+    def _init_db_inner(self, conn: sqlite3.Connection) -> None:
         # GS-019 §Recovery: Check for stranded migration tables
         self._recover_stranded_tables(conn)
 
         # Run full schema to ensure all tables exist (IF NOT EXISTS makes it idempotent)
         conn.executescript(_SCHEMA_SQL)
 
+        # Idempotent column additions for tables that already exist in prod DBs
+        # (IF NOT EXISTS in _SCHEMA_SQL only creates new tables, not new columns)
+        # ponytail: separate try/except per alter — if one fails (already exists),
+        # the others still run. Safe to call on every startup.
+        for col_sql in (
+            "ALTER TABLE heal_config ADD COLUMN learn INTEGER NOT NULL DEFAULT 0",
+        ):
+            try:
+                conn.execute(col_sql)
+            except sqlite3.OperationalError:
+                pass  # column already exists
+
+        # Idempotent virtual-table migration: FTS5 tables can't be ALTERed, so
+        # if the schema changed we drop+recreate. The standalone prevention_skills_fts
+        # was originally created with external-content mode (no skill_id column);
+        # recreate it with the current shape if the column is missing.
+        # ponytail: DROP IF EXISTS loses the FTS index rows but they're rebuilt on
+        # next write; the content table (prevention_skills) is untouched, so no
+        # skill data is lost — only the search index, which repopulates lazily.
+        try:
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(prevention_skills_fts)")]
+            if "skill_id" not in cols:
+                conn.execute("DROP TABLE IF EXISTS prevention_skills_fts")
+                conn.execute(
+                    "CREATE VIRTUAL TABLE prevention_skills_fts USING fts5("
+                    "skill_id UNINDEXED, pattern_hash, agent_name, "
+                    "error_signature, diagnosis)"
+                )
+        except sqlite3.OperationalError:
+            pass  # table didn't exist yet — _SCHEMA_SQL just created it
         # Check current version
         cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
         row = cur.fetchone()
         current_version = int(row["value"]) if row else 1
 
-        # Check if any migrations are pending
-        has_pending = any(current_version < tv for tv, _ in MIGRATIONS)
-
         # GS-019 §Principle 2: Backup ONLY before destructive migrations
         # CRITICAL: Do NOT backup on every Database() instantiation — causes backup storms
-        if has_pending and self._has_data(conn):
+        if any(current_version < tv for tv, _ in MIGRATIONS) and self._has_data(conn):
             self.backup()
 
         # GS-019 §Principle 3: Record pre-migration state
         pre_counts = self._snapshot_row_counts(conn)
 
         # Run pending migrations in order
-        for target_version, migration_sql in MIGRATIONS:
-            if current_version < target_version:
-                try:
-                    conn.executescript(migration_sql)
-                    conn.execute(
-                        "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
-                        (str(target_version),),
-                    )
-                    conn.commit()
-                    current_version = target_version
-                except Exception as e:
-                    # SQLite throws 'duplicate column name' if ALTER TABLE ADD COLUMN
-                    # finds the column already exists from the initial schema.
-                    # Treat this specific case as idempotent success — the column exists.
-                    emsg = str(e)
-                    if "duplicate column name" in emsg:
-                        logger.warning(f"Migration {current_version}→{target_version} skipped (column already exists): {e}")
-                        conn.execute(
-                            "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
-                            (str(target_version),),
-                        )
-                        conn.commit()
-                        current_version = target_version
-                    else:
-                        logger.error(f"Migration {current_version}→{target_version} failed: {e}")
-
-                        # GS-019 §Recovery: Auto-restore from backup
-                        restore_result = self._auto_restore_on_failure()
-                        if restore_result["status"] == "restored":
-                            logger.info(f"GS-019: Auto-restored from {restore_result['from']}")
-                            # Re-initialize from restored state
-                            self._conn = None
-                            conn = self._get_conn()
-                            current_version = self._get_schema_version(conn)
-                        else:
-                            logger.error(f"GS-019: Auto-restore failed: {restore_result['message']}")
-
-                        # Set notification flag for dashboard
-                        global _last_migration_failure
-                        _last_migration_failure = {
-                            "failed_at": int(time.time()),
-                            "from_version": current_version,
-                            "to_version": target_version,
-                            "error": str(e),
-                            "restored": restore_result["status"] == "restored",
-                            "restored_from": restore_result.get("from"),
-                        }
-                        break
+        self._run_pending_migrations(conn)
 
         # GS-019 §Principle 3: Verify post-migration state
         post_counts = self._snapshot_row_counts(conn)
@@ -929,10 +1536,82 @@ class Database:
                 f"({SCHEMA_VERSION}). Possible downgrade. Not modifying version."
             )
 
+        # B2: Startup integrity guard — fail LOUD if the live DB is corrupt.
+        # A corrupt DB would otherwise be served silently (empty/garbage data),
+        # which is exactly how the telemetry gap went unnoticed for 47h.
+        # ponytail: runs quick_check (not full integrity_check) on open to stay
+        # O(1)-ish; full check is in `observeco doctor diagnose` for on-demand depth.
+        try:
+            from .data_integrity import run_integrity_check
+            chk = run_integrity_check(str(self.db_path))
+            if not chk["passed"]:
+                logger.critical(
+                    "DB INTEGRITY FAILED on open: %s — DO NOT serve this DB. "
+                    "Run `observeco doctor diagnose` and `observeco doctor restore` "
+                    "from a verified backup.", chk["message"]
+                )
+        except Exception as e:
+            logger.critical(f"DB integrity guard error: {e}")
+
+    def _run_pending_migrations(self, conn: sqlite3.Connection) -> None:
+        """Apply all pending migrations in order (idempotent).
+
+        Called both from _init_db (prod DB, base schema exists) and
+        _init_db_inner (fresh DB). Migration SQL is IF NOT EXISTS / handles
+        duplicate-column idempotently.
+        """
+        cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
+        row = cur.fetchone()
+        current_version = int(row["value"]) if row else 1
+
+        for target_version, migration_sql in MIGRATIONS:
+            if current_version < target_version:
+                try:
+                    conn.executescript(migration_sql)
+                    conn.execute(
+                        "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
+                        (str(target_version),),
+                    )
+                    conn.commit()
+                    current_version = target_version
+                except Exception as e:
+                    emsg = str(e)
+                    if "duplicate column name" in emsg:
+                        logger.warning(f"Migration {current_version}→{target_version} skipped (column already exists): {e}")
+                        conn.execute(
+                            "INSERT OR REPLACE INTO _meta (key, value) VALUES ('schema_version', ?)",
+                            (str(target_version),),
+                        )
+                        conn.commit()
+                        current_version = target_version
+                    else:
+                        logger.error(f"Migration {current_version}→{target_version} failed: {e}")
+                        # GS-019 §Recovery: Auto-restore from backup
+                        restore_result = self._auto_restore_on_failure()
+                        if restore_result["status"] == "restored":
+                            logger.info(f"GS-019: Auto-restored from {restore_result['from']}")
+                            self._local = threading.local()
+                            conn = self._get_conn()
+                            current_version = self._get_schema_version(conn)
+                        else:
+                            logger.error(f"GS-019: Auto-restore failed: {restore_result['message']}")
+                        global _last_migration_failure
+                        _last_migration_failure = {
+                            "failed_at": int(time.time()),
+                            "from_version": current_version,
+                            "to_version": target_version,
+                            "error": str(e),
+                            "restored": restore_result["status"] == "restored",
+                            "restored_from": restore_result.get("from"),
+                        }
+                        break
+
     def close(self) -> None:
-        if self._conn is not None:
-            self._conn.close()
-            self._conn = None
+        if hasattr(self, "_local"):
+            conn = getattr(self._local, "conn", None)
+            if conn is not None:
+                conn.close()
+            self._local = threading.local()
 
     def backup(self, dest_path: Optional[str | Path] = None) -> bool:
         """Create a backup of the database using SQLite's online backup API.
@@ -1017,30 +1696,37 @@ class Database:
         if not backup_path.exists():
             return {"status": "error", "message": f"Backup not found: {backup_path}"}
 
-        # Validate backup is a valid SQLite database
+        # Hard validation: integrity_check, not just "sqlite_master opens".
+        # A corrupt DB can still open and list tables but return garbage pages —
+        # restoring it would clobber a (possibly good) live DB with corruption.
+        # ponytail: full integrity_check is O(n) on DB size; for restore safety
+        # the cost is justified (runs once per restore, not per query).
         try:
-            import sqlite3 as _sqlite3
-            test_conn = _sqlite3.connect(str(backup_path))
-            test_conn.execute("SELECT COUNT(*) FROM sqlite_master")
-            test_conn.close()
+            from .data_integrity import run_integrity_check
+            chk = run_integrity_check(str(backup_path))
+            if not chk["passed"]:
+                return {"status": "error",
+                        "message": f"Backup FAILED integrity check — refusing to restore "
+                                   f"(would clobber live DB with corruption): {chk['message']}"}
         except Exception as e:
-            return {"status": "error", "message": f"Backup is corrupted: {e}"}
+            return {"status": "error", "message": f"Backup validation error: {e}"}
 
-        # GS-019: Backup current state before restoring
+        # GS-019: Backup current state before restoring (so a bad restore is reversible)
         try:
             self.backup(dest_path=backup_dir / f"pulse_pre_restore_{int(time.time())}.db")
         except Exception:
             pass  # Best effort — don't fail restore because pre-restore backup failed
 
-        # Close current connection
+        # Close current per-thread connections
         self.close()
 
-        # Replace current DB with backup
+        # Replace current DB with backup ONLY after validation passed
         import shutil
         shutil.copy2(str(backup_path), str(self.db_path))
 
-        # Reopen connection
-        self._conn = None
+        # Reopen connection (per-thread pool reset)
+        if hasattr(self, "_local"):
+            self._local = threading.local()
         conn = self._get_conn()
 
         # Count rows to verify
@@ -1258,15 +1944,18 @@ class Database:
     def log_pulse(self, agent_name: str, status: str, latency_ms: float = 0,
                   error_message: str = "", agent_framework: str = "hermes",
                   instance_id: str = "", metadata_json: str = "") -> None:
-        conn = self._get_conn()
-        conn.execute(
+        self._write(
             "INSERT INTO pulse_log (agent_name, agent_framework, status, latency_ms, error_message, timestamp, instance_id, metadata) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (agent_name, agent_framework, status, latency_ms, error_message,
              int(time.time()), instance_id or "", metadata_json or ""),
         )
-        conn.commit()
-        # Auto-log to errors table on error/dead status with message
+        # Auto-log to errors table ONLY when there's a specific error_message.
+        # The circuit breaker (pulse/check.py:206-209) is the designed noise guard:
+        # it writes a single circuit_tripped error after N consecutive failures,
+        # not on every 30s beat. Per master-plan §3.8: ~16 writes/day/dead-agent,
+        # not 2,880. Logging every pulse_dead here would flood the errors table
+        # and bury real signal (circuit trips, OTEL failures, heal failures).
         if status in ("error", "dead") and error_message:
             self.log_error(agent_name, f"pulse_{status}", error_message,
                            severity="critical" if status == "dead" else "error")
@@ -1639,12 +2328,16 @@ class Database:
 
     def get_circuit_breakers(self) -> list[dict]:
         conn = self._get_conn()
-        # Get all distinct agent names from the event log
+        # Per-agent LIMIT 100 queries using index (0.003s vs 2s for full 1.6M scan).
+        # With the index, each query is O(log N) and returns ~93 rows on average.
+        try:
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_circuit_events_agent_ts ON circuit_events(agent_name, created_at, id)")
+        except Exception:
+            pass
         agents = conn.execute(
             "SELECT DISTINCT agent_name FROM circuit_events ORDER BY agent_name"
         ).fetchall()
         if not agents:
-            # Fallback to old table for backward compat during migration
             old = conn.execute("SELECT * FROM circuit_breakers ORDER BY agent_name").fetchall()
             if old:
                 return [dict(r) for r in old]
@@ -1653,10 +2346,11 @@ class Database:
         results = []
         for (agent_name,) in agents:
             events = conn.execute(
-                "SELECT * FROM circuit_events WHERE agent_name=? ORDER BY created_at ASC, id ASC",
+                "SELECT * FROM circuit_events WHERE agent_name=? ORDER BY created_at DESC LIMIT 100",
                 (agent_name,)
             ).fetchall()
-            state = self._rebuild_state([dict(e) for e in events])
+            # Rebuild in chronological order for correct state machine
+            state = self._rebuild_state([dict(r) for r in reversed(events)])
             results.append(state)
         return results
 
@@ -1695,16 +2389,14 @@ class Database:
         conn.commit()
 
     def log_self_monitor(self, consumer: str, input_tokens: int, output_tokens: int) -> None:
-        """Record a self-monitoring LLM call for budget tracking (G1.1)."""
-        conn = self._get_conn()
-        today = int(time.time()) // 86400
-        total = input_tokens + output_tokens
-        conn.execute(
-            "INSERT INTO self_monitor_budget (day, consumer, input_tokens, output_tokens, total_tokens, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (today, consumer, input_tokens, output_tokens, total, int(time.time())),
-        )
-        conn.commit()
+        """Record a self-monitoring LLM call for budget tracking (G1.1).
+
+        Non-blocking: enqueues the write to a background flush thread so the
+        caller never blocks on cross-process DB lock contention. If the queue
+        is full (1000 entries), the write is silently dropped — self-monitoring
+        is best-effort, not critical.
+        """
+        _self_monitor_queue.put((consumer, input_tokens, output_tokens))
 
     def get_self_monitor_usage(self) -> dict:
         """Return today's self-monitoring usage summary (G1.1)."""
@@ -1798,24 +2490,25 @@ class Database:
         return [dict(r) for r in rows]
 
     def set_heal_config(self, agent_name: str, auto_heal: bool = False,
-                         auto_heal_l2: bool = False,
-                         max_restarts_per_hour: int = 3,
-                         drift_threshold: float = 15.0,
-                         memory_debt_threshold: int = 60) -> None:
+                        auto_heal_l2: bool = False, learn: bool = False,
+                        max_restarts_per_hour: int = 3,
+                        drift_threshold: float = 15.0,
+                        memory_debt_threshold: int = 60) -> None:
         """Set auto-heal config for an agent. Creates or updates."""
         conn = self._get_conn()
         now = int(time.time())
         conn.execute(
-            """INSERT INTO heal_config (agent_name, auto_heal, auto_heal_l2, max_restarts_per_hour,
+            """INSERT INTO heal_config (agent_name, auto_heal, auto_heal_l2, learn, max_restarts_per_hour,
                drift_threshold, memory_debt_threshold, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(agent_name) DO UPDATE SET
                auto_heal=excluded.auto_heal, auto_heal_l2=excluded.auto_heal_l2,
+               learn=excluded.learn,
                max_restarts_per_hour=excluded.max_restarts_per_hour,
                drift_threshold=excluded.drift_threshold,
                memory_debt_threshold=excluded.memory_debt_threshold,
                updated_at=excluded.updated_at""",
-            (agent_name, int(auto_heal), int(auto_heal_l2), max_restarts_per_hour,
+            (agent_name, int(auto_heal), int(auto_heal_l2), int(learn), max_restarts_per_hour,
              drift_threshold, memory_debt_threshold, now, now),
         )
         conn.commit()
@@ -1848,17 +2541,15 @@ class Database:
     # -- Chisel --
 
     def log_trim(self, agent_name: str, identity: int, skills: int, memory: int,
-                 tools: int, guidance: int, total: int, savings: float,
+                 tools: int, guidance: int, total: int, savings: float = 0,
                  mode: str = "stdin") -> None:
-        conn = self._get_conn()
-        conn.execute(
+        self._write(
             "INSERT INTO chisel_trims (agent_name, identity_tokens, skills_tokens, memory_tokens, "
             "tools_tokens, guidance_tokens, total_tokens, savings_ratio, mode, timestamp) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (agent_name, identity, skills, memory, tools, guidance, total, savings,
              mode, int(time.time())),
         )
-        conn.commit()
 
     def get_trims(self, agent_name: Optional[str] = None, limit: int = 10) -> list[dict]:
         conn = self._get_conn()
@@ -1873,14 +2564,24 @@ class Database:
             )
         return [dict(r) for r in cur.fetchall()]
 
+    def get_trims_since(self, agent_name: str, since: int | float) -> list[dict]:
+        """Get all trim entries for an agent since a timestamp (no row limit)."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "SELECT * FROM chisel_trims WHERE agent_name=? AND timestamp >= ? ORDER BY timestamp ASC",
+            (agent_name, since),
+        )
+        return [dict(r) for r in cur.fetchall()]
+
     def log_drift(self, agent_name: str, component: str, current: int,
-                  week_avg: int, delta_pct: float, breached: bool) -> None:
+                  week_avg: int, delta_pct: float, breached: bool,
+                  method: str = "rolling") -> None:
         conn = self._get_conn()
         conn.execute(
             "INSERT INTO chisel_drift (agent_name, component, current_tokens, week_avg_tokens, "
-            "delta_pct, breached, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "delta_pct, breached, timestamp, method) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (agent_name, component, current, week_avg, delta_pct, int(breached),
-             int(time.time())),
+             int(time.time()), method),
         )
         conn.commit()
 
@@ -1895,6 +2596,18 @@ class Database:
             cur = conn.execute(
                 "SELECT * FROM chisel_drift ORDER BY timestamp DESC"
             )
+        return [dict(r) for r in cur.fetchall()]
+
+    def get_drift_latest_per_agent(self) -> list[dict]:
+        """Latest drift row per agent (one row each). Avoids loading the full
+        chisel_drift table (can be ~1M rows) just to filter to ~39 agents."""
+        conn = self._get_conn()
+        cur = conn.execute(
+            "SELECT d.* FROM chisel_drift d "
+            "JOIN (SELECT agent_name, MAX(timestamp) AS mt FROM chisel_drift GROUP BY agent_name) m "
+            "ON d.agent_name = m.agent_name AND d.timestamp = m.mt "
+            "ORDER BY d.agent_name"
+        )
         return [dict(r) for r in cur.fetchall()]
 
     # -- ClawForge --
@@ -2156,13 +2869,11 @@ class Database:
 
     def log_error(self, agent_name: str, error_type: str, message: str,
                   severity: str = "error") -> None:
-        conn = self._get_conn()
-        conn.execute(
+        self._write(
             "INSERT INTO errors (agent_name, error_type, error_message, severity, timestamp) "
             "VALUES (?, ?, ?, ?, ?)",
             (agent_name, error_type, message[:2000], severity, int(time.time())),
         )
-        conn.commit()
 
     def get_errors(self, agent_name: Optional[str] = None, limit: int = 50) -> list[dict]:
         conn = self._get_conn()
@@ -2184,6 +2895,73 @@ class Database:
             "SELECT * FROM errors WHERE agent_name=? AND timestamp >= ? ORDER BY timestamp DESC LIMIT ?",
             (agent_name, since, limit),
         )
+        return [dict(r) for r in cur.fetchall()]
+
+    # -- Trace Spans (T1 Tracing Layer) --
+
+    def log_trace_span(self, trace_id: str, span_id: str, parent_span_id: str,
+                       agent_name: str, span_name: str, span_kind: str = "INTERNAL",
+                       start_time_ns: int = 0, end_time_ns: int = 0,
+                       status: str = "UNSET", attributes: dict | None = None) -> None:
+        """Record an OTel span in the trace_spans table."""
+        import json as _json
+        try:
+            self._write(
+                "INSERT INTO trace_spans (trace_id, span_id, parent_span_id, agent_name, "
+                "span_name, span_kind, start_time_ns, end_time_ns, status, attributes, created_at) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (trace_id, span_id, parent_span_id, agent_name, span_name, span_kind,
+                 start_time_ns, end_time_ns, status,
+                 _json.dumps(attributes or {}), int(time.time())),
+            )
+        except sqlite3.OperationalError as e:
+            logger.warning("Failed to write trace span (non-fatal): %s", e)
+
+    def get_trace_spans(self, agent_name: str = "", trace_id: str = "", limit: int = 200) -> list[dict]:
+        """Get trace spans, optionally filtered by agent or trace."""
+        conn = self._get_conn()
+        if trace_id:
+            cur = conn.execute(
+                "SELECT * FROM trace_spans WHERE trace_id=? ORDER BY start_time_ns ASC LIMIT ?",
+                (trace_id, limit),
+            )
+        elif agent_name:
+            cur = conn.execute(
+                "SELECT * FROM trace_spans WHERE agent_name=? ORDER BY created_at DESC LIMIT ?",
+                (agent_name, limit),
+            )
+        else:
+            cur = conn.execute(
+                "SELECT * FROM trace_spans ORDER BY created_at DESC LIMIT ?", (limit,)
+            )
+        results = [dict(r) for r in cur.fetchall()]
+        # Parse JSON attributes
+        import json as _json
+        for r in results:
+            try:
+                r["attributes"] = _json.loads(r.get("attributes", "{}"))
+            except (json.JSONDecodeError, TypeError):
+                r["attributes"] = {}
+        return results
+
+    def get_trace_sessions(self, agent_name: str = "", limit: int = 20) -> list[dict]:
+        """Get distinct trace sessions for an agent."""
+        conn = self._get_conn()
+        if agent_name:
+            cur = conn.execute(
+                "SELECT DISTINCT trace_id, MIN(start_time_ns) as first_span, "
+                "MAX(end_time_ns) as last_span, COUNT(*) as span_count "
+                "FROM trace_spans WHERE agent_name=? "
+                "GROUP BY trace_id ORDER BY first_span DESC LIMIT ?",
+                (agent_name, limit),
+            )
+        else:
+            cur = conn.execute(
+                "SELECT trace_id, agent_name, MIN(start_time_ns) as first_span, "
+                "MAX(end_time_ns) as last_span, COUNT(*) as span_count "
+                "FROM trace_spans GROUP BY trace_id, agent_name "
+                "ORDER BY first_span DESC LIMIT ?", (limit,)
+            )
         return [dict(r) for r in cur.fetchall()]
 
     # -- Restart Log (obs-spec-018) --
@@ -2282,7 +3060,8 @@ class Database:
         """Return per-agent latest pulse status + whether it's ever been alive."""
         conn = self._get_conn()
         cur = conn.execute("""
-            SELECT p.agent_name, p.status, p.latency_ms, p.timestamp, c.tripped as circuit_tripped,
+            SELECT p.agent_name, p.status, p.latency_ms, p.timestamp, p.agent_framework,
+                   c.tripped as circuit_tripped,
                    (SELECT COUNT(*) FROM pulse_log p2
                     WHERE p2.agent_name = p.agent_name AND p2.status = 'alive' AND p2.id > 0) > 0 AS ever_alive
             FROM pulse_log p
@@ -3291,6 +4070,24 @@ class Database:
         ).fetchall()
         return [dict(r) for r in rows]
 
+    # --- Alert Acknowledgements (obs-2026-07) ---
+    def ack_alert(self, agent: str, category: str) -> None:
+        """Silence the current incident for (agent, category). A newer alert
+        occurrence (timestamp > acked_at) will re-surface it."""
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT INTO alert_acks (agent, category, acked_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(agent, category) DO UPDATE SET acked_at = excluded.acked_at",
+            (agent, category, int(time.time())),
+        )
+        conn.commit()
+
+    def get_alert_acks(self) -> dict[tuple[str, str], int]:
+        """Return {(agent, category): acked_at} for all current acks."""
+        conn = self._get_conn()
+        rows = conn.execute("SELECT agent, category, acked_at FROM alert_acks").fetchall()
+        return {(r["agent"], r["category"]): r["acked_at"] for r in rows}
+
     # --- Plugin Tracking ---
     def log_plugin_tracking(self, agent_name: str, plugin_name: str = "clawforge",
                             hook_point: str = "ingest", intent_class: str = "",
@@ -3350,32 +4147,34 @@ class Database:
                        cache_creation_tokens: int = 0, cache_read_tokens: int = 0,
                        cost_computed: str = "flat", source: str = "unknown",
                        model: str = "", latency_ms: int = 0,
-                       tool_calls: str = "[]", topic_id: str = "") -> dict:
+                       tool_calls: str = "[]", topic_id: str = "",
+                       is_local: int = 0, session_id: str = "",
+                       recorded_at: int | None = None) -> dict:
         # Auto-compute cost when provider given but cost not set
-        if cost == 0 and provider:
+        # Skip for local providers (cost is always $0)
+        if cost == 0 and provider and not is_local:
             from observeco.tracking.tokens import compute_cost
             cost = compute_cost(total_tokens, provider)
-        conn = self._get_conn()
-        cur = conn.execute(
-            "INSERT INTO token_logs (agent_name, turn_id, total_tokens, identity_tokens, "
+        self._write(
+            "INSERT OR IGNORE INTO token_logs (agent_name, turn_id, total_tokens, identity_tokens, "
             "skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
             "provider, cost, anomaly_score, input_tokens, output_tokens, "
             "cache_creation_tokens, cache_read_tokens, cost_computed, source, "
-            "model, latency_ms, tool_calls, topic_id, recorded_at) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "model, latency_ms, tool_calls, topic_id, recorded_at, is_local, session_id) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (agent_name, turn_id, total_tokens, identity_tokens, skills_tokens,
              memory_tokens, tools_tokens, guidance_tokens, provider, cost,
              anomaly_score, input_tokens, output_tokens,
              cache_creation_tokens, cache_read_tokens, cost_computed, source,
              model, latency_ms, tool_calls, topic_id,
-             int(time.time()))
+             recorded_at if recorded_at is not None else int(time.time()),
+             is_local, session_id)
         )
-        conn.commit()
 
         # Auto-register new agent in agent_configs (type classified by name pattern)
-        self._ensure_agent_registered(conn, agent_name)
+        self._ensure_agent_registered(self._get_conn(), agent_name)
 
-        return {"id": cur.lastrowid}
+        return {"id": None}
 
     def _ensure_agent_registered(self, conn, agent_name: str) -> None:
         """Upsert agent into agent_configs if not already registered.
@@ -3665,16 +4464,58 @@ class Database:
             "drift": "chisel_drift",
             "token": "token_logs",
             "l2": "l2_trending",
+            "canary": "canary_runs",
+            "grid": "grid_runs",
+            "drift_event": "drift_events",
         }
         table = table_map.get(data_type)
         if not table:
             return 0
         col = {"pulse_log": "timestamp", "errors": "timestamp",
                "chisel_drift": "timestamp", "token_logs": "recorded_at",
-               "l2_trending": "timestamp"}.get(table, "timestamp")
+               "l2_trending": "timestamp",
+               "canary_runs": "started_at", "canary_results": "created_at",
+               "grid_runs": "started_at", "grid_results": "grid_run_id",
+               "drift_events": "created_at"}.get(table, "timestamp")
+
+        total_deleted = 0
+
+        # FK-ordered deletion: child tables first
+        if table == "canary_runs":
+            # Delete child rows first (FK enforcement blocks direct parent delete)
+            conn.execute(
+                "DELETE FROM canary_results WHERE run_id IN "
+                "(SELECT id FROM canary_runs WHERE started_at < ?)",
+                (cutoff,),
+            )
+            conn.execute(
+                "DELETE FROM drift_events WHERE run_id IN "
+                "(SELECT id FROM canary_runs WHERE started_at < ?)",
+                (cutoff,),
+            )
+        elif table == "grid_runs":
+            conn.execute(
+                "DELETE FROM grid_results WHERE grid_run_id IN "
+                "(SELECT id FROM grid_runs WHERE started_at < ?)",
+                (cutoff,),
+            )
+
         cur = conn.execute(f"DELETE FROM {table} WHERE {col} < ?", (cutoff,))
+        total_deleted += cur.rowcount
+
+        # FK orphan cleanup (belt-and-suspenders)
+        conn.execute(
+            "DELETE FROM canary_results WHERE run_id NOT IN (SELECT id FROM canary_runs)"
+        )
+        conn.execute(
+            "DELETE FROM drift_events WHERE run_id NOT IN (SELECT id FROM canary_runs)"
+        )
+        conn.execute(
+            "DELETE FROM grid_results WHERE grid_run_id NOT IN (SELECT id FROM grid_runs)"
+        )
+
         conn.commit()
-        return cur.rowcount
+        return total_deleted
 
     def set_pruning_schedule(self, enabled: bool, hour: int = 3) -> None:
         conn = self._get_conn()
