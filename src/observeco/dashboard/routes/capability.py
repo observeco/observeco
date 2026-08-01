@@ -1591,9 +1591,9 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
       </table>
     </div>
     <div class="grid-footer">
-      <div class="summary">
-        <strong>{len(task_names)} tasks</strong> × <strong>{len(models)} models</strong> = {len(task_names) * len(models)} data points<br>
-        <strong>Read by pairing:</strong> {_html_escape(summary)}
+      <div class="summary" style="display:flex;flex-direction:column;gap:6px;">
+        <strong>{len(task_names)} tasks</strong> × <strong>{len(models)} models</strong> = {len(task_names) * len(models)} data points
+        <div style="font-size:12px;line-height:1.6;color:var(--fg-2);">{summary}</div>
       </div>
       <button onclick="runGrid()" style="background:var(--accent);color:var(--accent-on);border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">Run Full Grid</button>
     </div>
@@ -1674,27 +1674,140 @@ def _grid_error_html() -> str:
 
 
 def _generate_grid_summary(cells: list, models: list, configs: list) -> str:
-    """Generate a human-readable summary of grid results."""
+    """Generate an actionable summary of grid results.
+
+    The grid exists to answer one question (Working Backwards): for a fixed
+    agent profile, does the choice of model change agentic quality — and is
+    the difference worth the cost? This summary therefore reports:
+
+    1. Model ranking aggregated across profiles (accuracy + cost/value)
+    2. Profile spread (does the harness identity matter at all?)
+    3. Task-level divergence — where models disagree most (the agentic signal)
+    4. Plain-language takeaway
+    """
     if not cells:
         return "No data to compare."
 
-    # Find best model×config by accuracy
-    best = max(cells, key=lambda c: c["accuracy"] if c["accuracy"] is not None else 0)
-    best_model = best["model"]
-    best_config = best["config"]
-    best_acc = best["accuracy"] * 100 if best["accuracy"] else 0
+    def _mname(m: str) -> str:
+        return m.split("/")[-1]
 
-    # Find cheapest
-    cheapest = min(cells, key=lambda c: c["cost"] if c["cost"] else 999)
-    cheap_model = cheapest["model"]
-    cheap_config = cheapest["config"]
-    cheap_cost = cheapest["cost"] or 0
+    # 1. Aggregate per model across all profiles
+    model_stats: dict[str, dict] = {}
+    for c in cells:
+        acc = c["accuracy"] or 0
+        cost = c["cost"] or 0
+        s = model_stats.setdefault(c["model"], {"acc": [], "pass": 0, "total": 0, "cost": []})
+        s["acc"].append(acc)
+        s["cost"].append(cost)
+        if acc > 0:
+            s["pass"] += 1
+        s["total"] += 1
+    model_rank = sorted(
+        model_stats.items(),
+        key=lambda kv: (sum(kv[1]["acc"]) / kv[1]["total"]),
+        reverse=True,
+    )
 
-    # Compare best vs cheapest
-    if best_model == cheap_model and best_config == cheap_config:
-        return f"{best_model} × {best_config} leads on both accuracy ({best_acc:.0f}%) and cost (${cheap_cost:.4f})."
+    # 2. Aggregate per profile across all models
+    profile_stats: dict[str, list] = {}
+    for c in cells:
+        profile_stats.setdefault(c["config"], []).append(c["accuracy"] or 0)
+    profile_avgs = {p: sum(a) / len(a) for p, a in profile_stats.items()}
+    profile_spread = max(profile_avgs.values()) - min(profile_avgs.values())
 
-    return f"{best_model} × {best_config} wins on raw accuracy ({best_acc:.0f}%). {cheap_model} × {cheap_config} is cheapest at ${cheap_cost:.4f}. Model and harness interact — read grid by pairing, not isolated components."
+    # 3. Task-level model divergence (agentic signal): per task, the range
+    # between best-model avg and worst-model avg across profiles.
+    task_rows: dict[str, dict] = {}
+    for c in cells:
+        t = task_rows.setdefault(c["task_name"], {})
+        per_model = t.setdefault("per_model", {})
+        per_model.setdefault(c["model"], []).append(c["accuracy"] or 0)
+    divergences = []
+    for task, data in task_rows.items():
+        avgs = {m: sum(v) / len(v) for m, v in data["per_model"].items()}
+        spread = max(avgs.values()) - min(avgs.values())
+        if spread > 0.15:  # meaningful divergence (>15 pts)
+            divergences.append((task, spread, avgs))
+    divergences.sort(key=lambda x: x[1], reverse=True)
+
+    lines: list[str] = []
+    lines.append(f"<strong>Model ranking (agentic quality, all profiles):</strong>")
+    for i, (m, s) in enumerate(model_rank, 1):
+        avg = sum(s["acc"]) / s["total"]
+        cost = sum(s["cost"]) / s["total"]
+        badge = " 🏆" if i == 1 else ""
+        lines.append(
+            f"&nbsp;&nbsp;{i}. {_html_escape(_mname(m))} — "
+            f"<strong>{avg*100:.1f}%</strong> avg ({s['pass']}/{s['total']} tasks pass), "
+            f"${cost:.4f}/cell{badge}"
+        )
+
+    # Cost per accuracy point (value ranking) — only models WITH cost data.
+    # A model with all-zero cost (missing pricing table entry or token parse
+    # failure) would otherwise rank as "free" and corrupt the takeaway.
+    costed_models = [
+        kv for kv in model_rank
+        if sum(kv[1]["cost"]) / kv[1]["total"] > 0
+    ]
+    if costed_models:
+        value_rank = sorted(
+            costed_models,
+            key=lambda kv: (sum(kv[1]["cost"]) / kv[1]["total"]) / max(sum(kv[1]["acc"]) / kv[1]["total"], 0.01),
+        )
+        best_value = value_rank[0][0]
+        best_value_cost = sum(value_rank[0][1]["cost"]) / value_rank[0][1]["total"]
+        best_value_acc = sum(value_rank[0][1]["acc"]) / value_rank[0][1]["total"]
+        lines.append(
+            f"<strong>Best value:</strong> {_html_escape(_mname(best_value))} — "
+            f"${best_value_cost:.4f}/cell for {best_value_acc*100:.1f}% accuracy "
+            f"(${best_value_cost / max(best_value_acc, 0.01):.3f} per accuracy point)."
+        )
+        missing_cost = [m for m, s in model_rank if sum(s["cost"]) / s["total"] <= 0]
+        if missing_cost:
+            lines.append(
+                f"<span style=\"color:var(--warn);\">⚠️ Cost data missing for: "
+                f"{', '.join(_html_escape(_mname(m)) for m in missing_cost)} — "
+                f"excluded from value ranking.</span>"
+            )
+    else:
+        lines.append("<span style=\"color:var(--warn);\">⚠️ No cost data recorded for any model — value ranking unavailable.</span>")
+
+    # Profile spread
+    if profile_spread < 0.05:
+        lines.append(
+            f"<strong>Profile spread:</strong> {profile_spread*100:.1f} pts across "
+            f"{len(profile_avgs)} profiles — profiles behave nearly identically on these tasks. "
+            f"Model choice matters more than agent identity here."
+        )
+    else:
+        best_p = max(profile_avgs, key=profile_avgs.get)
+        lines.append(
+            f"<strong>Profile spread:</strong> {profile_spread*100:.1f} pts — "
+            f"{_html_escape(best_p)} leads ({profile_avgs[best_p]*100:.1f}%). "
+            f"Agent identity shifts results on these tasks."
+        )
+
+    # Task divergence
+    if divergences:
+        top = divergences[0]
+        worst_model = min(top[2], key=top[2].get)
+        best_model = max(top[2], key=top[2].get)
+        lines.append(
+            f"<strong>Biggest model disagreement:</strong> "
+            f"<em>{_html_escape(top[0][:60])}</em> — {_html_escape(_mname(best_model))} "
+            f"{top[2][best_model]*100:.0f}% vs {_html_escape(_mname(worst_model))} "
+            f"{top[2][worst_model]*100:.0f}% ({top[1]*100:.0f} pt gap). "
+            f"This is where model choice changes agentic outcome."
+        )
+        if len(divergences) > 1:
+            others = ", ".join(
+                f"{_html_escape(t[:30])} ({_html_escape(_mname(max(a, key=lambda k: a[k])))} {max(a.values())*100:.0f}% vs "
+                f"{_html_escape(_mname(min(a, key=lambda k: a[k])))} {min(a.values())*100:.0f}%)"
+                for t, _, a in divergences[1:4]
+            )
+            lines.append(f"&nbsp;&nbsp;also diverges: {others}")
+
+    return "<br>".join(lines)
 
 
 # ── Timeline HTML partial ────────────────────────────────────────────────────

@@ -59,6 +59,7 @@ _MODEL_PRICING: dict[str, tuple[float, float]] = {
     "deepseek-v4-flash": (0.15, 0.60),
     "deepseek-v4-pro": (2.00, 8.00),
     "deepseek-chat": (0.15, 0.60),
+    "glm-5.2": (0.60, 2.40),  # estimate: Zhipu GLM family, mid-tier (similar to deepseek-v4-pro band)
     "gpt-4o": (2.50, 10.00),
     "gpt-4o-mini": (0.15, 0.60),
     "claude-sonnet-4": (3.00, 15.00),
