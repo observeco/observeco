@@ -230,6 +230,13 @@ class CapabilityGridRunner:
                          round(cell_cost, 6), cell_tokens,
                          json.dumps(flags), hangs),
                     )
+                    # Commit per cell — a grid run holds the connection open for
+                    # the whole run (each cell is a slow LLM call). Without this,
+                    # the single write transaction stays open for minutes and
+                    # every other DB writer (dashboard pages, fleet telemetry)
+                    # blocks on busy_timeout then 500s. Per-cell commit keeps the
+                    # write lock held for milliseconds.
+                    conn.commit()
 
                     cells.append({
                         "task_id": task["id"],
