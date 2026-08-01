@@ -1506,7 +1506,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
                             flag_html = '<span class="flag-badge flag-unsafe">⚠️</span>'
                         elif any("shortcut" in str(f).lower() for f in flags):
                             flag_html = '<span class="flag-badge flag-shortcut">🔵</span>'
-                        cost_str = f"${cell['cost']:.4f}" if cell.get("cost") else "—"
+                        cost_str = f"${cell['cost']:.4f}" if cell["cost"] else "—"
                         body_rows += f'<td style="padding:8px 4px;text-align:center;"><span class="cell-score {score_cls}">{pct:.0f}%</span><span class="cell-ci">{ci_str}</span></td>'
                         body_rows += f'<td class="cell-flags">{flag_html}</td>'
                         body_rows += f'<td class="cell-cost">{cost_str}</td>'
