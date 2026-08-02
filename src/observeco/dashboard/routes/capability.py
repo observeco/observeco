@@ -1743,14 +1743,8 @@ def _grid_empty_html(agent: str = "main") -> str:
     all_models = [m for info in providers.values() for m in info["models"]]
     default_models = set(get_default_grid_models())
     profiles = get_default_grid_profiles()
-    model_options = ''.join(
-        f'<option value="{m}" {"selected" if m in default_models else ""}>{m.split("/")[-1]} <span class="muted">· {m.split("/")[0]}</span></option>'
-        for m in all_models
-    )
-    profile_options = ''.join(
-        f'<option value="{p}" {"selected" if p in profiles[:3] else ""}>{p}</option>'
-        for p in profiles
-    )
+    model_checkboxes = _render_model_checkboxes(all_models, default_models)
+    profile_checkboxes = _render_profile_checkboxes(profiles, set(profiles[:3]))
     return f"""
     <div class="cap-empty">
       <div class="cap-empty-icon">📊</div>
@@ -1759,18 +1753,18 @@ def _grid_empty_html(agent: str = "main") -> str:
         Compare model performance across different agent profiles.
         Each model runs through the full agent harness (SOUL.md + skills + tools).
       </p>
-      <div style="margin:16px 0; display:flex; gap:24px; justify-content:center; flex-wrap:wrap;">
-        <div>
-          <label style="font-size:13px;color:var(--fg-2);">Models (all cloud providers):</label>
-          <select id="gridModels" multiple style="min-width:220px;">
-            {model_options}
-          </select>
+      <div style="margin:16px 0; display:flex; gap:24px; justify-content:center; flex-wrap:wrap; align-items:flex-start;">
+        <div style="text-align:left;">
+          <label style="font-size:13px;color:var(--fg-2);display:block;margin-bottom:6px;">Models (all cloud providers): <span style="color:var(--accent);" id="gridModelCount">0 selected</span></label>
+          <div id="gridModels" class="grid-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;min-width:220px;">
+            {model_checkboxes}
+          </div>
         </div>
-        <div>
-          <label style="font-size:13px;color:var(--fg-2);">Agent Profiles:</label>
-          <select id="gridProfiles" multiple style="min-width:180px;">
-            {profile_options}
-          </select>
+        <div style="text-align:left;">
+          <label style="font-size:13px;color:var(--fg-2);display:block;margin-bottom:6px;">Agent Profiles: <span style="color:var(--accent);" id="gridProfileCount">0 selected</span></label>
+          <div id="gridProfiles" class="grid-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;min-width:160px;">
+            {profile_checkboxes}
+          </div>
         </div>
       </div>
       <button onclick="runGrid()" class="btn btn-primary">Run Full Grid</button>
