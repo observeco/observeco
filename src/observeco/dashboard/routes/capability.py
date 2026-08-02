@@ -1792,6 +1792,10 @@ def _generate_grid_summary(cells: list, models: list, configs: list) -> str:
     if not cells:
         return "No data to compare."
 
+    # Normalize rows to dicts — the DB returns sqlite3.Row which lacks .get(),
+    # but the summary uses .get() extensively. Convert once up front.
+    cells = [dict(c) for c in cells]
+
     def _mname(m: str) -> str:
         return m.split("/")[-1]
 
