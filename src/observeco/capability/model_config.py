@@ -186,13 +186,21 @@ def list_runnable_cloud_providers() -> dict[str, dict]:
                 continue
             provider_models = p.get('models', {}) or {}
             default_model = p.get('default_model', '')
-            model_specs = [f"{name}/{m}" for m in provider_models]
-            if default_model and f"{name}/{default_model}" not in model_specs:
+            # Only keep chat-eligible models — filter out TTS/ASR/embedding/voice
+            # variants that can't handle chat completions (would 0-out every grid cell).
+            def _is_chat_model(mid: str) -> bool:
+                low = mid.lower()
+                return not any(
+                    token in low for token in
+                    ("tts", "asr", "voiceclone", "voicedesign", "voice-clone", "embed", "stt")
+                )
+            model_specs = [f"{name}/{m}" for m in provider_models if _is_chat_model(m)]
+            if default_model and _is_chat_model(default_model) and f"{name}/{default_model}" not in model_specs:
                 model_specs.append(f"{name}/{default_model}")
             if not model_specs:
                 # No explicit list; try fetching from the provider API.
                 api_models = _fetch_models_from_api(name, base_url)
-                model_specs = [f"{name}/{m}" for m in api_models]
+                model_specs = [f"{name}/{m}" for m in api_models if _is_chat_model(m)]
             result[name] = {
                 "default_model": f"{name}/{default_model}" if default_model else (model_specs[0] if model_specs else ""),
                 "models": model_specs,

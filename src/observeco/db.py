@@ -1445,7 +1445,17 @@ class Database:
             # (e.g. a new migration added after the DB was first created).
             # The migration loop is idempotent (IF NOT EXISTS / duplicate-col
             # handled). Skipping it here would leave new tables uncreated.
+            self._recover_stranded_tables(conn)
             self._run_pending_migrations(conn)
+            # GS-019 §Downgrade: Log warning if DB version > code version
+            cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
+            row = cur.fetchone()
+            current_version = int(row["value"]) if row else 1
+            if current_version > SCHEMA_VERSION:
+                logger.warning(
+                    f"GS-019: Database version ({current_version}) > code version "
+                    f"({SCHEMA_VERSION}). Possible downgrade. Not modifying version."
+                )
             return
         except sqlite3.OperationalError:
             pass  # table missing -> run full init below
