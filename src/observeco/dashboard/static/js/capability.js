@@ -209,11 +209,53 @@
     if (judge) {
       url += '&judge=' + encodeURIComponent(judge);
     }
+
+    // ── Immediate hourglass transition ──
+    // Replace the grid area with a "starting…" spinner the instant Run is
+    // clicked so there is zero dead time while the POST + subprocess boot
+    // happens. The running view (progress bar) replaces it as soon as the
+    // subprocess has created the run row.
+    var container = document.getElementById('gridTableContainer');
+    if (container) {
+      container.innerHTML =
+        '<div class="cap-empty" style="border:1px solid var(--border);">' +
+          '<div class="cap-empty-icon" style="font-size:32px;"><span class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;"></span></div>' +
+          '<h2>Starting comparison…</h2>' +
+          '<p style="color:var(--fg-3);font-size:12px;">Spinning up the grid runner — this takes a few seconds.</p>' +
+        '</div>';
+    }
+
     return fetch(url, {method:'POST', headers:_authHeaders()})
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.ok) {
           showToast('Comparison started for ' + agent);
+          // Fetch the running view aggressively (1s retry). The server returns
+          // the progress-bar view as soon as the run row exists; until then the
+          // spinner stays. Once the running view is in place its own
+          // hx-trigger="every 10s" takes over for live cell updates.
+          (function fetchRunningView(attempts) {
+            fetch('/api/capability/grid/table?agent=' + encodeURIComponent(agent), {headers:_authHeaders()})
+              .then(function(r) { return r.text(); })
+              .then(function(html) {
+                var el = document.getElementById('gridTableContainer');
+                if (!el) return;
+                if (html.indexOf('grid-running') !== -1 || html.indexOf('Grid Run In Progress') !== -1) {
+                  el.innerHTML = html;
+                  return; // running view live — its own polling continues
+                }
+                if (attempts < 20) {
+                  setTimeout(function() { fetchRunningView(attempts + 1); }, 1000);
+                } else {
+                  el.innerHTML = html; // give up — show whatever the server reports
+                }
+              })
+              .catch(function() {
+                if (attempts < 20) setTimeout(function() { fetchRunningView(attempts + 1); }, 1000);
+              });
+          })(0);
+
+          // Keep the original completion poll — after cells finish, refresh once.
           var poll = setInterval(function() {
             fetch('/api/capability/grid?agent=' + encodeURIComponent(agent), {headers:_authHeaders()})
               .then(function(r) { return r.json(); })
@@ -225,9 +267,15 @@
                 }
               });
           }, 10000);
+        } else {
+          // Start failed — restore the table view instead of leaving the spinner.
+          htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent(agent), {target: '#gridTableContainer', swap: 'innerHTML'});
         }
       })
-      .catch(function(e) { showToast('Comparison failed: ' + e.message); });
+      .catch(function(e) {
+        showToast('Comparison failed: ' + e.message);
+        htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent(agent), {target: '#gridTableContainer', swap: 'innerHTML'});
+      });
   };
 
   // ── Live selection counts ──
