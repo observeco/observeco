@@ -1171,6 +1171,27 @@ body {
 .modal-body::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
 .modal-body::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
+/* ─── Grid run confirmation modal ─── */
+.grid-confirm-chip {
+  display: inline-block;
+  background: var(--surface-2, #0f172a);
+  border: 1px solid var(--border, #1e293b);
+  color: var(--fg, #e2e8f0);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.grid-confirm-warn {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
 /* Data table in modal */
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {

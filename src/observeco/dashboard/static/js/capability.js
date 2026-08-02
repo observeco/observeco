@@ -109,6 +109,10 @@
     for (var j = 0; j < profileCbs.length; j++) {
       selectedProfiles.push(profileCbs[j].value);
     }
+    if (selectedModels.length === 0 || selectedProfiles.length === 0) {
+      showToast('Select at least one model and one profile');
+      return;
+    }
     // Estimate cell count before running — prevents accidental mega-runs.
     // Ask the /grid/options endpoint for the active task count, then confirm.
     fetch('/api/capability/grid/options', {headers:_authHeaders()})
@@ -116,37 +120,106 @@
       .then(function(opts){
         var taskCount = opts.task_count || 0;
         var est = taskCount * selectedModels.length * selectedProfiles.length;
-        var msg = 'Run ' + selectedModels.length + ' model(s) × ' + selectedProfiles.length +
-                  ' profile(s) on ' + taskCount + ' tasks = ' + est + ' cells?';
-        if (est > 200) {
-          msg += '\n\n⚠️ This is a LARGE run (~' + Math.round(est * 0.15) + ' min). Consider reducing models/profiles.';
+        var mins = Math.round(est * 0.15);
+        var large = est > 200;
+        showGridConfirm({
+          models: selectedModels,
+          profiles: selectedProfiles,
+          taskCount: taskCount,
+          cells: est,
+          mins: mins,
+          large: large,
+          onRun: function() { startGridRun(agent, selectedModels, selectedProfiles); }
+        });
+      })
+      .catch(function(e) { showToast('Could not estimate run: ' + e.message); });
+  };
+
+  // ── Themed grid-run confirmation modal ──
+  function showGridConfirm(opts) {
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.id = 'gridConfirmModal';
+
+    var modelChips = opts.models.map(function(m) {
+      return '<span class="grid-confirm-chip">' + esc(m) + '</span>';
+    }).join('');
+    var profileChips = opts.profiles.map(function(p) {
+      return '<span class="grid-confirm-chip">' + esc(p) + '</span>';
+    }).join('');
+
+    var warnHtml = '';
+    if (opts.large) {
+      warnHtml = '<div class="grid-confirm-warn">⚠️ Large run — about ' + opts.mins +
+                 ' min. Consider trimming models or profiles.</div>';
+    }
+
+    overlay.innerHTML =
+      '<div class="modal" style="max-width:560px;">' +
+        '<div class="modal-header">' +
+          '<div>' +
+            '<h3>Run Grid Comparison</h3>' +
+            '<div class="sub">' + opts.models.length + ' model(s) × ' + opts.profiles.length +
+            ' profile(s) × ' + opts.taskCount + ' task(s)</div>' +
+          '</div>' +
+          '<button class="modal-close" id="gridConfirmClose">✕</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div style="font-size:13px;color:var(--fg);margin-bottom:12px;">' +
+            'This will run <strong style="color:var(--accent);">' + opts.cells + ' cells</strong> through the full agent harness. ' +
+            (opts.mins > 0 ? 'Estimated time: <strong>' + opts.mins + ' min</strong>.' : '') +
+          '</div>' +
+          warnHtml +
+          '<div style="font-size:11px;color:var(--muted);font-weight:600;margin:12px 0 4px;text-transform:uppercase;">Models</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">' + modelChips + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);font-weight:600;margin:12px 0 4px;text-transform:uppercase;">Profiles</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + profileChips + '</div>' +
+        '</div>' +
+        '<div class="modal-header" style="border-top:1px solid var(--border);border-bottom:none;justify-content:flex-end;gap:8px;">' +
+          '<button class="btn" id="gridConfirmCancel" style="padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;">Cancel</button>' +
+          '<button class="btn btn-primary" id="gridConfirmRun" style="padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Run ' + opts.cells + ' cells</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    function close() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
+    overlay.querySelector('#gridConfirmClose').onclick = close;
+    overlay.querySelector('#gridConfirmCancel').onclick = close;
+    overlay.querySelector('#gridConfirmRun').onclick = function() {
+      close();
+      opts.onRun();
+    };
+    // Click on scrim (outside modal) closes
+    overlay.onclick = function(e) { if (e.target === overlay) close(); };
+  }
+
+  // ── Actually start the grid run ──
+  function startGridRun(agent, selectedModels, selectedProfiles) {
+    var url = '/api/capability/grid/run?agent=' + encodeURIComponent(agent);
+    if (selectedModels.length > 0) {
+      url += '&models=' + encodeURIComponent(selectedModels.join(','));
+    }
+    if (selectedProfiles.length > 0) {
+      url += '&configs=' + encodeURIComponent(selectedProfiles.join(','));
+    }
+    return fetch(url, {method:'POST', headers:_authHeaders()})
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.ok) {
+          showToast('Comparison started for ' + agent);
+          var poll = setInterval(function() {
+            fetch('/api/capability/grid?agent=' + encodeURIComponent(agent), {headers:_authHeaders()})
+              .then(function(r) { return r.json(); })
+              .then(function(g) {
+                if (g.cells && g.cells.length > 0) {
+                  clearInterval(poll);
+                  showToast('Comparison complete — refreshing');
+                  htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent(agent), {target: '#gridTableContainer', swap: 'innerHTML'});
+                }
+              });
+          }, 10000);
         }
-        if (!confirm(msg)) return;
-        var url = '/api/capability/grid/run?agent=' + encodeURIComponent(agent);
-        if (selectedModels.length > 0) {
-          url += '&models=' + encodeURIComponent(selectedModels.join(','));
-        }
-        if (selectedProfiles.length > 0) {
-          url += '&configs=' + encodeURIComponent(selectedProfiles.join(','));
-        }
-        return fetch(url, {method:'POST', headers:_authHeaders()})
-          .then(function(r) { return r.json(); })
-          .then(function(d) {
-            if (d.ok) {
-              showToast('Comparison started for ' + agent);
-              var poll = setInterval(function() {
-                fetch('/api/capability/grid?agent=' + encodeURIComponent(agent), {headers:_authHeaders()})
-                  .then(function(r) { return r.json(); })
-                  .then(function(g) {
-                    if (g.cells && g.cells.length > 0) {
-                      clearInterval(poll);
-                      showToast('Comparison complete — refreshing');
-                      htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent(agent), {target: '#gridTableContainer', swap: 'innerHTML'});
-                    }
-                  });
-              }, 10000);
-            }
-          });
       })
       .catch(function(e) { showToast('Comparison failed: ' + e.message); });
   };
