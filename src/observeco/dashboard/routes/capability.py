@@ -165,10 +165,22 @@ def _infer_category(name: str) -> str:
 
 
 def _resolve_agent(agent: str) -> str:
-    """Resolve agent name, falling back to first available if 'default' has no data."""
+    """Resolve agent name, falling back to first available if 'default' has no data.
+
+    Only remaps 'default' when it has NO grid data of its own. If 'default'
+    has a running or completed grid run, keep it as-is so the table shows
+    that run (otherwise a just-started run for 'default' becomes invisible
+    and the table falls back to a stale completed run from another agent).
+    """
     if agent != "default":
         return agent
     conn = db._get_conn()
+    # If the literal agent has any grid data, don't remap it.
+    has_grid = conn.execute(
+        "SELECT 1 FROM grid_runs WHERE agent_name = 'default' LIMIT 1"
+    ).fetchone()
+    if has_grid:
+        return agent
     row = conn.execute(
         "SELECT agent_name FROM config_snapshots GROUP BY agent_name ORDER BY COUNT(*) DESC LIMIT 1"
     ).fetchone()
