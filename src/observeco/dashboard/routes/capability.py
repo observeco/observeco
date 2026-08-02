@@ -1415,79 +1415,6 @@ def _drift_insufficient_html(agent: str, run_count: int) -> HTMLResponse:
     """)
 
 
-def _get_all_models() -> list[str]:
-    """Get all available models for the grid UI — all runnable cloud providers."""
-    from observeco.capability.model_config import list_runnable_cloud_providers
-    providers = list_runnable_cloud_providers()
-    models = []
-    for info in providers.values():
-        models.extend(info["models"])
-    return models
-
-
-def _get_default_models_set() -> set[str]:
-    """Get the default pre-selected models."""
-    from observeco.capability.model_config import get_default_grid_models
-    return set(get_default_grid_models())
-
-
-def _get_all_profiles() -> list[str]:
-    """Get all agent profiles for the grid UI — not capped."""
-    from observeco.capability.model_config import get_default_grid_profiles
-    return get_default_grid_profiles()
-
-
-def _get_default_profile_set() -> set[str]:
-    """Get the default pre-selected profiles (first 3, the primary agents)."""
-    from observeco.capability.model_config import get_default_grid_profiles
-    profiles = get_default_grid_profiles()
-    return set(profiles[:3])
-
-
-def _render_model_checkboxes(all_models: list[str], default_set: set[str]) -> str:
-    """Render checkbox list for models, grouped by provider."""
-    from observeco.capability.model_config import list_runnable_cloud_providers
-    providers = list_runnable_cloud_providers()
-    groups = []
-    for pname, info in providers.items():
-        pm = [m for m in info["models"]]
-        if not pm:
-            continue
-        items = ""
-        for spec in pm:
-            checked = "checked" if spec in default_set else ""
-            name = spec.split("/")[-1]
-            items += (
-                f'<label class="grid-check" style="display:flex;align-items:center;gap:6px;'
-                f'padding:3px 4px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--fg);">'
-                f'<input type="checkbox" class="grid-model-cb" value="{_html_escape(spec)}" {checked} '
-                f'onchange="updateGridCounts()">{_html_escape(name)}</label>'
-            )
-        groups.append(
-            f'<div style="margin-bottom:4px;">'
-            f'<div style="font-size:10px;color:var(--muted);font-weight:600;padding:2px 4px;">{_html_escape(pname).upper()}</div>'
-            f'{items}'
-            f'</div>'
-        )
-    return "".join(groups) if groups else '<div style="color:var(--muted);font-size:12px;padding:4px;">No cloud models configured</div>'
-
-
-def _render_profile_checkboxes(all_profiles: list[str], default_set: set[str]) -> str:
-    """Render checkbox list for agent profiles."""
-    if not all_profiles:
-        return '<div style="color:var(--muted);font-size:12px;padding:4px;">No profiles found</div>'
-    items = ""
-    for p in all_profiles:
-        checked = "checked" if p in default_set else ""
-        items += (
-            f'<label class="grid-check" style="display:flex;align-items:center;gap:6px;'
-            f'padding:3px 4px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--fg);">'
-            f'<input type="checkbox" class="grid-profile-cb" value="{_html_escape(p)}" {checked} '
-            f'onchange="updateGridCounts()">{_html_escape(p)}</label>'
-        )
-    return items
-
-
 @router.get("/grid/options", response_class=JSONResponse)
 async def grid_options():
     """GET /api/capability/grid/options — available models (grouped by provider),
@@ -1665,8 +1592,6 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
 
     # Summary text
     summary = _generate_grid_summary(cells, models, configs)
-    model_checkboxes = _render_model_checkboxes(_get_all_models(), _get_default_models_set())
-    profile_checkboxes = _render_profile_checkboxes(_get_all_profiles(), _get_default_profile_set())
     return HTMLResponse(content=f"""
     <div class="grid-controls" style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:6px;">
@@ -1681,7 +1606,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
           <span style="font-size:11px;color:var(--accent);" id="gridModelCount">0 selected</span>
         </div>
         <div id="gridModels" class="grid-checkbox-list" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;">
-          {model_checkboxes}
+          <div style="color:var(--muted);font-size:12px;padding:4px;">Loading models…</div>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px;">
@@ -1690,7 +1615,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
           <span style="font-size:11px;color:var(--accent);" id="gridProfileCount">0 selected</span>
         </div>
         <div id="gridProfiles" class="grid-checkbox-list" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;">
-          {profile_checkboxes}
+          <div style="color:var(--muted);font-size:12px;padding:4px;">Loading profiles…</div>
         </div>
       </div>
       <span style="flex:1;"></span>
@@ -1733,18 +1658,7 @@ def _grid_running_html(agent: str, started_at: str) -> str:
 
 
 def _grid_empty_html(agent: str = "main") -> str:
-    """Show empty state with all runnable cloud models but only defaults pre-selected."""
-    from observeco.capability.model_config import (
-        get_default_grid_models,
-        get_default_grid_profiles,
-        list_runnable_cloud_providers,
-    )
-    providers = list_runnable_cloud_providers()
-    all_models = [m for info in providers.values() for m in info["models"]]
-    default_models = set(get_default_grid_models())
-    profiles = get_default_grid_profiles()
-    model_checkboxes = _render_model_checkboxes(all_models, default_models)
-    profile_checkboxes = _render_profile_checkboxes(profiles, set(profiles[:3]))
+    """Show empty state with dynamically-loaded models and profiles."""
     return f"""
     <div class="cap-empty">
       <div class="cap-empty-icon">📊</div>
@@ -1757,13 +1671,13 @@ def _grid_empty_html(agent: str = "main") -> str:
         <div style="text-align:left;">
           <label style="font-size:13px;color:var(--fg-2);display:block;margin-bottom:6px;">Models (all cloud providers): <span style="color:var(--accent);" id="gridModelCount">0 selected</span></label>
           <div id="gridModels" class="grid-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;min-width:220px;">
-            {model_checkboxes}
+            <div style="color:var(--muted);font-size:12px;padding:4px;">Loading models…</div>
           </div>
         </div>
         <div style="text-align:left;">
           <label style="font-size:13px;color:var(--fg-2);display:block;margin-bottom:6px;">Agent Profiles: <span style="color:var(--accent);" id="gridProfileCount">0 selected</span></label>
           <div id="gridProfiles" class="grid-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;min-width:160px;">
-            {profile_checkboxes}
+            <div style="color:var(--muted);font-size:12px;padding:4px;">Loading profiles…</div>
           </div>
         </div>
       </div>

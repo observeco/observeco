@@ -160,12 +160,70 @@
     var pc = document.getElementById('gridProfileCount');
     if (pc) pc.textContent = p + ' selected';
   };
-  // Initialize counts on load
-  document.addEventListener('DOMContentLoaded', function() { updateGridCounts(); });
-  // Also refresh after htmx swaps the grid table in
+
+  // ── Dynamic grid options loader ──
+  // Populates the model/profile checkbox lists client-side from /grid/options
+  // so model availability is always current (new providers/models in hermes
+  // config appear without a server re-render).
+  window.loadGridOptions = function() {
+    var mList = document.getElementById('gridModels');
+    var pList = document.getElementById('gridProfiles');
+    if (!mList || !pList) return;
+    fetch('/api/capability/grid/options', {headers:_authHeaders()})
+      .then(function(r){ return r.json(); })
+      .then(function(opts){
+        var defaults = opts.default_models || [];
+        var defaultSet = {};
+        defaults.forEach(function(d){ defaultSet[d] = true; });
+
+        // Models grouped by provider
+        var mHtml = '';
+        (opts.model_groups || []).forEach(function(g){
+          if (!g.models || !g.models.length) return;
+          mHtml += '<div style="margin-bottom:4px;">';
+          mHtml += '<div style="font-size:10px;color:var(--muted);font-weight:600;padding:2px 4px;">' +
+                   (g.provider || '').toUpperCase() + '</div>';
+          g.models.forEach(function(m){
+            var checked = defaultSet[m.spec] ? 'checked' : '';
+            mHtml += '<label class="grid-check" style="display:flex;align-items:center;gap:6px;' +
+                     'padding:3px 4px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--fg);">' +
+                     '<input type="checkbox" class="grid-model-cb" value="' + esc(m.spec) + '" ' + checked +
+                     ' onchange="updateGridCounts()">' + esc(m.name) + '</label>';
+          });
+          mHtml += '</div>';
+        });
+        mList.innerHTML = mHtml || '<div style="color:var(--muted);font-size:12px;padding:4px;">No cloud models configured</div>';
+
+        // Profiles
+        var pHtml = '';
+        (opts.profiles || []).forEach(function(p){
+          var checked = defaultSet[p] || opts.profiles.indexOf(p) < 3 ? 'checked' : '';
+          pHtml += '<label class="grid-check" style="display:flex;align-items:center;gap:6px;' +
+                   'padding:3px 4px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--fg);">' +
+                   '<input type="checkbox" class="grid-profile-cb" value="' + esc(p) + '" ' + checked +
+                   ' onchange="updateGridCounts()">' + esc(p) + '</label>';
+        });
+        pList.innerHTML = pHtml || '<div style="color:var(--muted);font-size:12px;padding:4px;">No profiles found</div>';
+
+        updateGridCounts();
+      })
+      .catch(function(){
+        mList.innerHTML = '<div style="color:var(--danger);font-size:12px;padding:4px;">Failed to load models</div>';
+        pList.innerHTML = '<div style="color:var(--danger);font-size:12px;padding:4px;">Failed to load profiles</div>';
+      });
+  };
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // Initialize on load + after grid table swaps
+  document.addEventListener('DOMContentLoaded', function() { loadGridOptions(); });
   document.body.addEventListener('htmx:afterSwap', function(e) {
     if (e.detail.target && e.detail.target.id && e.detail.target.id.indexOf('grid') !== -1) {
-      updateGridCounts();
+      loadGridOptions();
     }
   });
 
