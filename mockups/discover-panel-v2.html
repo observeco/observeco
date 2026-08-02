@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Discover Panel v2 — Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f172a; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; padding: 40px; }
+  h1 { font-size: 14px; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  h2 { font-size: 16px; font-weight: 600; margin-bottom: 24px; }
+  .intro { color: #94a3b8; font-size: 13px; margin-bottom: 32px; line-height: 1.6; }
+
+  /* ── Panel ── */
+  .panel { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; max-width: 600px; }
+
+  /* ── Header ── */
+  .panel-h { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #334155; }
+  .panel-h h3 { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .panel-h .count { font-size: 12px; color: #64748b; margin-left: auto; }
+  .panel-h .close { color: #475569; cursor: pointer; font-size: 16px; margin-left: 8px; }
+
+  /* ── Mode tabs ── */
+  .mode-tabs { display: flex; border-bottom: 1px solid #334155; }
+  .mode-tab { padding: 10px 16px; font-size: 13px; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; }
+  .mode-tab.active { color: #f8fafc; border-bottom-color: #22c55e; }
+  .mode-tab .badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+  .mode-tab .badge.new { background: rgba(34,197,94,.15); color: #22c55e; }
+  .mode-tab .badge.all { background: #1a2332; color: #64748b; }
+  .mode-tab .badge.green { background: rgba(34,197,94,.15); color: #22c55e; }
+
+  /* ── Bulk bar ── */
+  .bulk-bar { display: flex; gap: 8px; padding: 8px 16px; border-bottom: 1px solid #1a2332; }
+  .bulk-btn { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 6px; border: 1px solid #334155; background: #1a2332; color: #94a3b8; cursor: pointer; }
+  .bulk-btn:hover { border-color: #22c55e; color: #22c55e; }
+  .bulk-btn.primary { background: #22c55e; color: #04140a; border-color: #22c55e; }
+  .bulk-btn.primary:hover { background: #16a34a; }
+
+  /* ── Section ── */
+  .section { border-bottom: 1px solid #1a2332; }
+  .section:last-child { border-bottom: none; }
+  .section-h { display: flex; align-items: center; padding: 10px 16px; cursor: pointer; gap: 8px; }
+  .section-h:hover { background: #1a2332; }
+  .section-h .icon { font-size: 10px; }
+  .section-h .label { font-size: 13px; font-weight: 600; color: #f8fafc; }
+  .section-h .count-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #1a2332; color: #64748b; }
+  .section-h .count-badge.red { background: rgba(239,68,68,.15); color: #ef4444; }
+  .section-h .count-badge.yellow { background: rgba(234,179,8,.15); color: #eab308; }
+  .section-h .count-badge.green { background: rgba(34,197,94,.15); color: #22c55e; }
+  .section-h .chev { margin-left: auto; color: #475569; font-size: 12px; }
+  .section-h .action { font-size: 11px; color: #3b82f6; cursor: pointer; }
+
+  /* ── Items ── */
+  .items { padding: 0 16px 8px; }
+  .item { display: flex; align-items: center; padding: 8px 8px; border-bottom: 1px solid #1a2332; gap: 8px; cursor: pointer; }
+  .item:hover { background: #1a2332; }
+  .item:last-child { border-bottom: none; }
+  .item .name { font-size: 13px; font-weight: 500; color: #f8fafc; }
+  .item .meta { font-size: 11px; color: #64748b; margin-left: auto; }
+  .item .btn { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; border: 1px solid #334155; background: transparent; color: #94a3b8; cursor: pointer; flex-shrink: 0; }
+  .item .btn:hover { border-color: #22c55e; color: #22c55e; }
+  .item .btn.add { background: #22c55e; color: #04140a; border-color: #22c55e; }
+  .item .btn.add:hover { background: #16a34a; }
+  .item .btn.dismiss { border-color: transparent; color: #475569; }
+  .item .btn.dismiss:hover { color: #ef4444; }
+
+  /* ── Learning stats ── */
+  .learn-stat { display: flex; gap: 8px; padding: 8px 16px 12px; }
+  .stat-card { flex: 1; background: #1a2332; border: 1px solid #334155; border-radius: 8px; padding: 10px; text-align: center; }
+  .stat-card .num { font-size: 18px; font-weight: 700; }
+  .stat-card .num.green { color: #22c55e; }
+  .stat-card .num.yellow { color: #eab308; }
+  .stat-card .num.red { color: #ef4444; }
+  .stat-card .lbl { font-size: 9px; color: #64748b; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+
+  /* ── Learning skills ── */
+  .learn-skill { display: flex; align-items: center; padding: 8px 8px; border-bottom: 1px solid #1a2332; gap: 8px; }
+  .learn-skill:last-child { border-bottom: none; }
+  .learn-skill .name { font-size: 13px; font-weight: 500; color: #f8fafc; }
+  .learn-skill .pattern { font-size: 10px; color: #64748b; }
+  .learn-skill .stats { font-size: 11px; color: #64748b; margin-left: auto; }
+  .learn-skill .stats .ok { color: #22c55e; }
+  .learn-skill .stats .fail { color: #ef4444; }
+  .learn-skill .tag { font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .learn-skill .tag.active { background: rgba(34,197,94,.15); color: #22c55e; }
+  .learn-skill .tag.deprecated { background: rgba(239,68,68,.15); color: #ef4444; }
+</style>
+</head>
+<body>
+
+<h1>Discover Panel v2</h1>
+<h2>Hierarchical gaps + Learning loop</h2>
+<p class="intro">Combined design matching the QB card row visual system.</p>
+
+<div class="panel">
+
+  <!-- Header -->
+  <div class="panel-h">
+    <h3>Discover</h3>
+    <span class="count">119 gaps · 3 learned</span>
+    <span class="close">✕</span>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <div class="mode-tab active">What's new <span class="badge new">3</span></div>
+    <div class="mode-tab">Everything <span class="badge all">119</span></div>
+    <div class="mode-tab">Learning <span class="badge green">3</span></div>
+  </div>
+
+  <!-- Bulk actions -->
+  <div class="bulk-bar">
+    <button class="bulk-btn primary">+ Add all new</button>
+    <button class="bulk-btn">Dismiss all seen</button>
+  </div>
+
+  <!-- Newly stopped -->
+  <div class="section">
+    <div class="section-h">
+      <span class="icon">🔴</span>
+      <span class="label">Newly stopped</span>
+      <span class="count-badge red">2</span>
+      <span class="action">Add all</span>
+      <span class="chev">▶</span>
+    </div>
+    <div class="items">
+      <div class="item">
+        <span class="name">hound-watcher</span>
+        <span class="meta">was running · stopped 2h ago</span>
+        <button class="btn add">+ Add</button>
+        <button class="btn dismiss">✕</button>
+      </div>
+      <div class="item">
+        <span class="name">kepler-acps-watcher</span>
+        <span class="meta">was running · stopped 4h ago</span>
+        <button class="btn add">+ Add</button>
+        <button class="btn dismiss">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Changed behavior -->
+  <div class="section">
+    <div class="section-h">
+      <span class="icon">🟡</span>
+      <span class="label">Changed behavior</span>
+      <span class="count-badge yellow">1</span>
+      <span class="action">Add all</span>
+      <span class="chev">▶</span>
+    </div>
+    <div class="items">
+      <div class="item">
+        <span class="name">Dreamer — Morning Drift</span>
+        <span class="meta">schedule changed · last ran 3d ago</span>
+        <button class="btn add">+ Add</button>
+        <button class="btn dismiss">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Never seen -->
+  <div class="section">
+    <div class="section-h">
+      <span class="icon">⚪</span>
+      <span class="label">Never seen</span>
+      <span class="count-badge">114</span>
+      <span class="action">Add all</span>
+      <span class="chev">▶</span>
+    </div>
+  </div>
+
+  <!-- Learning -->
+  <div class="section" style="border-top: 2px solid #22c55e;">
+    <div class="section-h">
+      <span class="icon">●</span>
+      <span class="label" style="color:#22c55e;">Learning</span>
+      <span class="count-badge green">3 skills</span>
+      <span class="action">View all</span>
+      <span class="chev">▶</span>
+    </div>
+
+    <div class="learn-stat">
+      <div class="stat-card">
+        <div class="num green">3</div>
+        <div class="lbl">Skills created</div>
+      </div>
+      <div class="stat-card">
+        <div class="num yellow">12</div>
+        <div class="lbl">Times applied</div>
+      </div>
+      <div class="stat-card">
+        <div class="num green">$0.24</div>
+        <div class="lbl">LLM cost saved</div>
+      </div>
+      <div class="stat-card">
+        <div class="num red">1</div>
+        <div class="lbl">Deprecated</div>
+      </div>
+    </div>
+
+    <div class="items">
+      <div class="learn-skill">
+        <span class="name">Kepler OOM restart</span>
+        <span class="pattern">memory leak · heap &gt; 85%</span>
+        <span class="stats"><span class="ok">✓ 8</span> · <span class="fail">✗ 1</span></span>
+        <span class="tag active">active</span>
+      </div>
+      <div class="learn-skill">
+        <span class="name">Hound circuit trip</span>
+        <span class="pattern">failure_count &gt; 500</span>
+        <span class="stats"><span class="ok">✓ 4</span> · <span class="fail">✗ 0</span></span>
+        <span class="tag active">active</span>
+      </div>
+      <div class="learn-skill">
+        <span class="name">Dreamer drift recovery</span>
+        <span class="pattern">drift &gt; 15% · delta_pct</span>
+        <span class="stats"><span class="ok">✓ 0</span> · <span class="fail">✗ 2</span></span>
+        <span class="tag deprecated">deprecated</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
