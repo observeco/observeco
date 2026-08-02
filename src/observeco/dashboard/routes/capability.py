@@ -1491,13 +1491,13 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     if not run_id:
         # Check for a running run first (show progress indicator)
         running_row = conn.execute(
-            "SELECT id, started_at FROM grid_runs WHERE agent_name = ? AND status = 'running' "
+            "SELECT id, started_at, models, configs, total_cells FROM grid_runs WHERE agent_name = ? AND status = 'running' "
             "ORDER BY started_at DESC LIMIT 1",
             (agent,),
         ).fetchone()
         if running_row:
             return HTMLResponse(
-                content=_grid_running_html(agent, running_row["started_at"] or "")
+                content=_grid_running_html(agent, running_row)
             )
         # Fall back to latest completed run
         row = conn.execute(
@@ -1650,21 +1650,76 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     """)
 
 
-def _grid_running_html(agent: str, started_at: str) -> str:
-    """Show a running indicator with polling for an in-progress grid run."""
+def _grid_running_html(agent: str, run_row) -> str:
+    """Show a prominent in-progress view with live cell progress.
+
+    The table is REPLACED by this view while a run is active — old completed
+    results are never shown during a run, so a user can't mistake stale data
+    for the new run's output.
+    """
+    import datetime as _dt
+
+    run_id = run_row["id"]
+    started_at = run_row["started_at"] or ""
+    try:
+        models = json.loads(run_row["models"]) if isinstance(run_row["models"], str) else (run_row["models"] or [])
+    except Exception:
+        models = []
+    try:
+        configs = json.loads(run_row["configs"]) if isinstance(run_row["configs"], str) else (run_row["configs"] or [])
+    except Exception:
+        configs = []
+    total_cells = run_row["total_cells"] or 0
+
+    conn = db._get_conn()
+    done_cells = conn.execute(
+        "SELECT COUNT(*) AS c FROM grid_results WHERE grid_run_id = ?",
+        (run_id,),
+    ).fetchone()["c"] or 0
+
+    pct = int(done_cells * 100 / total_cells) if total_cells else 0
+    elapsed = ""
+    try:
+        start = _dt.datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        mins = max(0, int((_dt.datetime.now(_dt.timezone.utc) - start).total_seconds() // 60))
+        if mins > 0:
+            elapsed = f" · {mins} min elapsed"
+    except Exception:
+        pass
+
+    model_badge = ", ".join(m.split("/")[-1] for m in models) if models else "—"
+    profile_badge = ", ".join(configs) if configs else "—"
+
     return f"""
-    <div class="cap-empty" hx-get="/api/capability/grid/table?agent={_html_escape(agent)}"
-         hx-trigger="every 10s" hx-swap="outerHTML">
-      <div class="cap-empty-icon" style="font-size:32px;">⏳</div>
-      <h2>Grid Run In Progress</h2>
-      <p style="color:var(--fg-3);">
-        Started at {started_at[:19] if started_at else 'unknown'} · models × profiles × tasks
-      </p>
-      <p>Grid comparison tests each model through the full agent harness (SOUL.md + skills + tools). Takes 10–30 minutes. This page refreshes automatically.</p>
-      <div style="margin-top:8px;">
-        <span class="spinner"></span>
-        <span style="color:var(--accent);font-weight:600;font-size:13px;">Running — results will appear here when ready</span>
+    <div class="cap-empty grid-running" hx-get="/api/capability/grid/table?agent={_html_escape(agent)}"
+         hx-trigger="every 10s" hx-swap="outerHTML"
+         style="border:1px solid rgba(34,197,94,0.4);background:linear-gradient(180deg,rgba(34,197,94,0.06),transparent);">
+      <div class="cap-empty-icon" style="font-size:32px;">⚙️</div>
+      <h2 style="display:flex;align-items:center;gap:8px;justify-content:center;">
+        <span class="spinner" style="width:14px;height:14px;"></span>
+        Grid Run In Progress
+      </h2>
+      <div style="max-width:520px;margin:10px auto 0;text-align:left;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--fg-3);margin-bottom:4px;">
+          <span>{done_cells} / {total_cells} cells complete</span>
+          <span style="color:var(--accent);font-weight:600;">{pct}%{elapsed}</span>
+        </div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:{pct}%;background:var(--accent);border-radius:4px;transition:width .5s;"></div>
+        </div>
       </div>
+      <p style="color:var(--fg-3);font-size:12px;margin-top:12px;">
+        Started at {started_at[:19] if started_at else 'unknown'}
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0;">
+        <span class="grid-confirm-chip">models: {_html_escape(model_badge)}</span>
+        <span class="grid-confirm-chip">profiles: {_html_escape(profile_badge)}</span>
+        <span class="grid-confirm-chip">tasks: {total_cells // max(len(models),1) // max(len(configs),1) if total_cells and models and configs else '—'}</span>
+      </div>
+      <p style="font-size:12px;color:var(--fg-3);margin-top:8px;">
+        Each model runs through the full agent harness (SOUL.md + skills + tools).
+        This view refreshes automatically — <strong style="color:var(--accent);">old results are hidden until this run finishes</strong>.
+      </p>
     </div>
     """
 
