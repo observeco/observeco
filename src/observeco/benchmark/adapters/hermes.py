@@ -268,6 +268,33 @@ class HermesBenchmarkAdapter:
                 output = re.sub(r'\bReasoning\s*', '', output)
                 output = re.sub(r'\n\s*\n\s*\n+', '\n\n', output).strip()
 
+                # Generic fairness guard: if the agent exited 0 but produced
+                # empty (or whitespace-only) content, the provider likely
+                # returned an empty completion — common with reasoning models
+                # (e.g. mimo-v2.5) that exhaust their output budget on hidden
+                # reasoning and emit nothing. Treat it as retryable, exactly
+                # like a 5xx/429, for EVERY model/provider — never score an
+                # empty response as a legitimate 0.
+                if not output and proc.returncode == 0:
+                    if attempt < _MAX_RETRIES:
+                        logger.info(
+                            "Empty response (attempt %d/%d), retrying in %ds",
+                            attempt + 1, _MAX_RETRIES + 1, _RETRY_DELAYS[attempt],
+                        )
+                        last_error = "empty response from provider"
+                        time.sleep(_RETRY_DELAYS[attempt])
+                        continue
+                    logger.warning("Hermes returned empty output after %d attempts", _MAX_RETRIES + 1)
+                    return {
+                        "output": "",
+                        "model_used": "unknown",
+                        "harness_type": "hermes",
+                        "elapsed_seconds": elapsed,
+                        "provider_error": True,
+                        "cost": 0.0,
+                        "tokens": 0,
+                    }
+
                 if proc.returncode != 0:
                     error = stderr.strip() or "unknown error"
                     # Check if this is a transient provider error worth retrying
