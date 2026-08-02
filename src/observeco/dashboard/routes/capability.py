@@ -1623,36 +1623,28 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     summary = _generate_grid_summary(cells, models, configs)
 
     return HTMLResponse(content=f"""
-    <div class="grid-controls">
+    <div class="grid-controls" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:6px;">
-        <label>Agent</label>
-        <select class="grid-select" id="gridAgent">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;">AGENT</label>
+        <select class="grid-select" id="gridAgent" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;">
           <option>{_html_escape(agent)}</option>
         </select>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <label>Models</label>
-        <select class="grid-select" id="gridModels" multiple style="min-width:200px;">
-          {''.join(f'<option value="{_html_escape(m)}" {"selected" if m in _get_default_models_set() else ""}>{_html_escape(m.split("/")[-1])}</option>' for m in _get_all_models())}
+      <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:220px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;">MODELS</label>
+        <select class="grid-select" id="gridModels" multiple style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;min-height:32px;">
+          {''.join(f'<option value="{_html_escape(m)}" {"selected" if m in _get_default_models_set() else ""}>{_html_escape(m.split("/")[-1])} <span class="muted">· {_html_escape(m.split("/")[0])}</span></option>' for m in _get_all_models())}
         </select>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <label>Profile</label>
-        <select class="grid-select" id="gridProfiles" multiple style="min-width:200px;">
-          {''.join(f'<option value="{_html_escape(c)}" selected>{_html_escape(c)}</option>' for c in configs)}
-        </select>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <label>Show</label>
-        <select class="grid-select">
-          <option>All tasks</option>
-          <option>Passing only</option>
-          <option>Failing only</option>
+      <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;">PROFILES</label>
+        <select class="grid-select" id="gridProfiles" multiple style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;min-height:32px;">
+          {''.join(f'<option value="{_html_escape(c)}" {"selected" if c in _get_default_profile_set() else ""}>{_html_escape(c)}</option>' for c in _get_all_profiles())}
         </select>
       </div>
       <span style="flex:1;"></span>
-      <button onclick="runGrid()" class="grid-select" style="background:var(--accent-on);border:1px solid rgba(34,197,94,0.3);color:var(--accent);cursor:pointer;">▶ Run Full Grid</button>
-      <button onclick="exportGridCSV('{run_id}')" class="grid-select" style="cursor:pointer;">⬇ Export CSV</button>
+      <button onclick="runGrid()" class="btn btn-primary" style="padding:8px 16px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;">▶ Run Grid</button>
+      <button onclick="exportGridCSV('{run_id}')" class="btn" style="padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;">⬇ Export</button>
     </div>
     <div style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px;">
       <table class="data-table" style="width:100%;min-width:800px;">
@@ -1690,17 +1682,22 @@ def _grid_running_html(agent: str, started_at: str) -> str:
 
 
 def _grid_empty_html(agent: str = "main") -> str:
-    """Show empty state with all models but only defaults pre-selected."""
-    from observeco.capability.model_config import load_available_models, get_default_grid_models, get_default_grid_profiles
-    all_models = load_available_models(provider_filter='ollama-cloud')
+    """Show empty state with all runnable cloud models but only defaults pre-selected."""
+    from observeco.capability.model_config import (
+        get_default_grid_models,
+        get_default_grid_profiles,
+        list_runnable_cloud_providers,
+    )
+    providers = list_runnable_cloud_providers()
+    all_models = [m for info in providers.values() for m in info["models"]]
     default_models = set(get_default_grid_models())
     profiles = get_default_grid_profiles()
     model_options = ''.join(
-        f'<option value="{m}" {"selected" if m in default_models else ""}>{m.split("/")[-1]}</option>'
+        f'<option value="{m}" {"selected" if m in default_models else ""}>{m.split("/")[-1]} <span class="muted">· {m.split("/")[0]}</span></option>'
         for m in all_models
     )
     profile_options = ''.join(
-        f'<option value="{p}" selected>{p}</option>'
+        f'<option value="{p}" {"selected" if p in profiles[:3] else ""}>{p}</option>'
         for p in profiles
     )
     return f"""
@@ -1713,14 +1710,14 @@ def _grid_empty_html(agent: str = "main") -> str:
       </p>
       <div style="margin:16px 0; display:flex; gap:24px; justify-content:center; flex-wrap:wrap;">
         <div>
-          <label style="font-size:13px;color:var(--fg-2);">Models:</label>
-          <select id="gridModels" multiple style="min-width:200px;">
+          <label style="font-size:13px;color:var(--fg-2);">Models (all cloud providers):</label>
+          <select id="gridModels" multiple style="min-width:220px;">
             {model_options}
           </select>
         </div>
         <div>
           <label style="font-size:13px;color:var(--fg-2);">Agent Profiles:</label>
-          <select id="gridProfiles" multiple style="min-width:200px;">
+          <select id="gridProfiles" multiple style="min-width:180px;">
             {profile_options}
           </select>
         </div>
