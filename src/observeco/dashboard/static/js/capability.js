@@ -100,22 +100,14 @@
   window.runGrid = function() {
     var agent = _getCapAgent();
     var selectedModels = [];
-    var modelsSelect = document.getElementById('gridModels');
-    if (modelsSelect) {
-      for (var i = 0; i < modelsSelect.options.length; i++) {
-        if (modelsSelect.options[i].selected) {
-          selectedModels.push(modelsSelect.options[i].value);
-        }
-      }
+    var modelCbs = document.querySelectorAll('#gridModels .grid-model-cb:checked');
+    for (var i = 0; i < modelCbs.length; i++) {
+      selectedModels.push(modelCbs[i].value);
     }
     var selectedProfiles = [];
-    var profilesSelect = document.getElementById('gridProfiles');
-    if (profilesSelect) {
-      for (var j = 0; j < profilesSelect.options.length; j++) {
-        if (profilesSelect.options[j].selected) {
-          selectedProfiles.push(profilesSelect.options[j].value);
-        }
-      }
+    var profileCbs = document.querySelectorAll('#gridProfiles .grid-profile-cb:checked');
+    for (var j = 0; j < profileCbs.length; j++) {
+      selectedProfiles.push(profileCbs[j].value);
     }
     // Estimate cell count before running — prevents accidental mega-runs.
     // Ask the /grid/options endpoint for the active task count, then confirm.
@@ -158,6 +150,24 @@
       })
       .catch(function(e) { showToast('Comparison failed: ' + e.message); });
   };
+
+  // ── Live selection counts ──
+  window.updateGridCounts = function() {
+    var m = document.querySelectorAll('#gridModels .grid-model-cb:checked').length;
+    var mc = document.getElementById('gridModelCount');
+    if (mc) mc.textContent = m + ' selected';
+    var p = document.querySelectorAll('#gridProfiles .grid-profile-cb:checked').length;
+    var pc = document.getElementById('gridProfileCount');
+    if (pc) pc.textContent = p + ' selected';
+  };
+  // Initialize counts on load
+  document.addEventListener('DOMContentLoaded', function() { updateGridCounts(); });
+  // Also refresh after htmx swaps the grid table in
+  document.body.addEventListener('htmx:afterSwap', function(e) {
+    if (e.detail.target && e.detail.target.id && e.detail.target.id.indexOf('grid') !== -1) {
+      updateGridCounts();
+    }
+  });
 
   // ── Toast ──
   window.showToast = function(msg) {

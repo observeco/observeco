@@ -1444,6 +1444,50 @@ def _get_default_profile_set() -> set[str]:
     return set(profiles[:3])
 
 
+def _render_model_checkboxes(all_models: list[str], default_set: set[str]) -> str:
+    """Render checkbox list for models, grouped by provider."""
+    from observeco.capability.model_config import list_runnable_cloud_providers
+    providers = list_runnable_cloud_providers()
+    groups = []
+    for pname, info in providers.items():
+        pm = [m for m in info["models"]]
+        if not pm:
+            continue
+        items = ""
+        for spec in pm:
+            checked = "checked" if spec in default_set else ""
+            name = spec.split("/")[-1]
+            items += (
+                f'<label class="grid-check" style="display:flex;align-items:center;gap:6px;'
+                f'padding:3px 4px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--fg);">'
+                f'<input type="checkbox" class="grid-model-cb" value="{_html_escape(spec)}" {checked} '
+                f'onchange="updateGridCounts()">{_html_escape(name)}</label>'
+            )
+        groups.append(
+            f'<div style="margin-bottom:4px;">'
+            f'<div style="font-size:10px;color:var(--muted);font-weight:600;padding:2px 4px;">{_html_escape(pname).upper()}</div>'
+            f'{items}'
+            f'</div>'
+        )
+    return "".join(groups) if groups else '<div style="color:var(--muted);font-size:12px;padding:4px;">No cloud models configured</div>'
+
+
+def _render_profile_checkboxes(all_profiles: list[str], default_set: set[str]) -> str:
+    """Render checkbox list for agent profiles."""
+    if not all_profiles:
+        return '<div style="color:var(--muted);font-size:12px;padding:4px;">No profiles found</div>'
+    items = ""
+    for p in all_profiles:
+        checked = "checked" if p in default_set else ""
+        items += (
+            f'<label class="grid-check" style="display:flex;align-items:center;gap:6px;'
+            f'padding:3px 4px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--fg);">'
+            f'<input type="checkbox" class="grid-profile-cb" value="{_html_escape(p)}" {checked} '
+            f'onchange="updateGridCounts()">{_html_escape(p)}</label>'
+        )
+    return items
+
+
 @router.get("/grid/options", response_class=JSONResponse)
 async def grid_options():
     """GET /api/capability/grid/options — available models (grouped by provider),
@@ -1621,26 +1665,33 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
 
     # Summary text
     summary = _generate_grid_summary(cells, models, configs)
-
+    model_checkboxes = _render_model_checkboxes(_get_all_models(), _get_default_models_set())
+    profile_checkboxes = _render_profile_checkboxes(_get_all_profiles(), _get_default_profile_set())
     return HTMLResponse(content=f"""
-    <div class="grid-controls" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
+    <div class="grid-controls" style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:6px;">
         <label style="font-size:11px;color:var(--muted);font-weight:600;">AGENT</label>
         <select class="grid-select" id="gridAgent" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;">
           <option>{_html_escape(agent)}</option>
         </select>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:220px;">
-        <label style="font-size:11px;color:var(--muted);font-weight:600;">MODELS</label>
-        <select class="grid-select" id="gridModels" multiple style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;min-height:32px;">
-          {''.join(f'<option value="{_html_escape(m)}" {"selected" if m in _get_default_models_set() else ""}>{_html_escape(m.split("/")[-1])} <span class="muted">· {_html_escape(m.split("/")[0])}</span></option>' for m in _get_all_models())}
-        </select>
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:240px;">
+        <div style="display:flex;align-items:center;gap:6px;justify-content:space-between;">
+          <label style="font-size:11px;color:var(--muted);font-weight:600;">MODELS</label>
+          <span style="font-size:11px;color:var(--accent);" id="gridModelCount">0 selected</span>
+        </div>
+        <div id="gridModels" class="grid-checkbox-list" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;">
+          {model_checkboxes}
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px;">
-        <label style="font-size:11px;color:var(--muted);font-weight:600;">PROFILES</label>
-        <select class="grid-select" id="gridProfiles" multiple style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;min-height:32px;">
-          {''.join(f'<option value="{_html_escape(c)}" {"selected" if c in _get_default_profile_set() else ""}>{_html_escape(c)}</option>' for c in _get_all_profiles())}
-        </select>
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px;">
+        <div style="display:flex;align-items:center;gap:6px;justify-content:space-between;">
+          <label style="font-size:11px;color:var(--muted);font-weight:600;">PROFILES</label>
+          <span style="font-size:11px;color:var(--accent);" id="gridProfileCount">0 selected</span>
+        </div>
+        <div id="gridProfiles" class="grid-checkbox-list" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;">
+          {profile_checkboxes}
+        </div>
       </div>
       <span style="flex:1;"></span>
       <button onclick="runGrid()" class="btn btn-primary" style="padding:8px 16px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;">▶ Run Grid</button>
