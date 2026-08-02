@@ -225,6 +225,7 @@ async def grid_run_from_dashboard(
     agent: str = Query("default"),
     models: Optional[str] = Query(None, description="Comma-separated model specs"),
     configs: Optional[str] = Query(None, description="Comma-separated agent profiles"),
+    judge: Optional[str] = Query(None, description="Judge model spec (provider/model)"),
 ):
     """POST /api/capability/grid/run?agent=NAME&models=model1,model2 — run full grid from dashboard.
 
@@ -1462,6 +1463,14 @@ async def grid_options():
 
     profiles = get_default_grid_profiles()
 
+    # Judge options — cloud chat models usable as the LLM judge. Defaults to
+    # glm-5.2 (ollama-cloud) which is the most reliable scorer.
+    judge_options = []
+    for pname, info in providers.items():
+        for spec in info["models"]:
+            judge_options.append({"spec": spec, "provider": pname})
+    judge_options.sort(key=lambda j: (j["spec"] != "ollama-cloud/glm-5.2", j["provider"], j["spec"]))
+
     task_count = 0
     try:
         db = _DB()
@@ -1476,6 +1485,8 @@ async def grid_options():
         "model_groups": model_groups,
         "profiles": profiles,
         "default_models": list(default_models),
+        "judge_options": judge_options,
+        "default_judge": "ollama-cloud/glm-5.2",
         "task_count": task_count,
     }
 
@@ -1784,6 +1795,101 @@ def _generate_grid_summary(cells: list, models: list, configs: list) -> str:
     def _mname(m: str) -> str:
         return m.split("/")[-1]
 
+    # ── 0. Measurement validity — are these results trustworthy? ──
+    # A cell is "measured" only if it produced a real scorable response.
+    # Measurement failures (provider_error / judge_failure / hang) must NEVER
+    # be ranked as quality 0s. Handles both NULL accuracy (new runs) and
+    # legacy 0.0-with-flag rows (old runs) — a flag is authoritative.
+    total_cells = len(cells)
+
+    def _is_measurement_failure(c) -> bool:
+        if c.get("accuracy") is None:
+            return True
+        raw_flags = c.get("flags") or []
+        # flags may be a JSON string (DB) or an already-parsed list.
+        if isinstance(raw_flags, str):
+            try:
+                raw_flags = json.loads(raw_flags)
+            except Exception:
+                raw_flags = []
+        flag_strs = [str(f) for f in raw_flags]
+        if any("provider_error" in f for f in flag_strs):
+            return True
+        if any("judge_failure" in f for f in flag_strs):
+            return True
+        if c.get("hang"):
+            return True
+        return False
+
+    measured = [c for c in cells if not _is_measurement_failure(c)]
+    unmeasured = total_cells - len(measured)
+
+    def _flags_list(c) -> list:
+        raw = c.get("flags") or []
+        if isinstance(raw, str):
+            try:
+                return json.loads(raw)
+            except Exception:
+                return []
+        return list(raw)
+
+    provider_err = sum(1 for c in cells if any("provider_error" in str(f) for f in _flags_list(c)))
+    judge_fail = sum(1 for c in cells if any("judge_failure" in str(f) for f in _flags_list(c)))
+    timeout = sum(1 for c in cells if c.get("hang"))
+
+    validity_pct = len(measured) / total_cells * 100 if total_cells else 0
+
+    dubious: list[str] = []
+    if provider_err:
+        dubious.append(f"{provider_err} cell(s) failed at the provider (API error — model never answered)")
+    if judge_fail:
+        dubious.append(f"{judge_fail} cell(s) failed at the judge (LLM judge could not score — results may be fallback matches, not real quality)")
+    if timeout:
+        dubious.append(f"{timeout} cell(s) timed out")
+    if unmeasured:
+        dubious.append(f"{unmeasured} cell(s) produced no scorable response")
+
+    # Model-level measurement validity — a model whose cells mostly failed
+    # cannot be compared fairly.
+    model_unmeasured: dict[str, int] = {}
+    model_total: dict[str, int] = {}
+    for c in cells:
+        m = c["model"]
+        model_total[m] = model_total.get(m, 0) + 1
+        if _is_measurement_failure(c):
+            model_unmeasured[m] = model_unmeasured.get(m, 0) + 1
+
+    bad_models = [
+        m for m, tot in model_total.items()
+        if tot > 0 and model_unmeasured.get(m, 0) / tot >= 0.5
+    ]
+
+    lines: list[str] = []
+
+    if dubious or bad_models:
+        warn_items = list(dubious)
+        if bad_models:
+            warn_items.append(
+                f"{', '.join(_html_escape(_mname(m)) for m in bad_models)} had ≥50% failed cells — "
+                f"excluded from ranking"
+            )
+        lines.append(
+            f"<div style=\"background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);"
+            f"border-radius:8px;padding:10px 12px;margin-bottom:10px;\">"
+            f"<strong style=\"color:#f87171;\">⚠️ Dubious run — {validity_pct:.0f}% of cells measured</strong><br>"
+            f"<span style=\"color:var(--fg-2);font-size:12px;\">{' · '.join(warn_items)}.</span>"
+            f"<br><span style=\"color:var(--fg-3);font-size:12px;\">"
+            f"The rankings below are NOT reliable — fix the measurement failures before trusting them.</span>"
+            f"</div>"
+        )
+        # Only rank models with enough measured cells — never rank a model
+        # whose data is mostly measurement failure, and drop the failed cells
+        # from remaining models too (a failure is not a quality 0).
+        cells = [
+            c for c in cells
+            if not _is_measurement_failure(c) and c["model"] not in bad_models
+        ]
+
     # 1. Aggregate per model across all profiles
     model_stats: dict[str, dict] = {}
     for c in cells:
@@ -1823,7 +1929,6 @@ def _generate_grid_summary(cells: list, models: list, configs: list) -> str:
             divergences.append((task, spread, avgs))
     divergences.sort(key=lambda x: x[1], reverse=True)
 
-    lines: list[str] = []
     lines.append(f"<strong>Model ranking (agentic quality, all profiles):</strong>")
     for i, (m, s) in enumerate(model_rank, 1):
         avg = sum(s["acc"]) / s["total"]

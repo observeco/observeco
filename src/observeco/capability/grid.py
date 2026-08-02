@@ -199,13 +199,25 @@ class CapabilityGridRunner:
                         result = adapter.run_task(agent_name, task_obj)
 
                         if result.get("provider_error"):
+                            # Measurement failure — NOT a quality 0. Store as
+                            # NULL accuracy so the summary/table treat it as
+                            # 'not measured', never as a real 0.
                             flags.append(f"provider_error: trial={trial_idx}")
-                            task_accuracies.append(0.0)
+                            task_accuracies.append(None)
                         elif result.get("timed_out") or result.get("error"):
                             hangs += 1
-                            task_accuracies.append(0.0)
+                            task_accuracies.append(None)
                         else:
-                            passed, accuracy, _ = Scorer.score(assertions, result.get("output", ""))
+                            passed, accuracy, reasoning = Scorer.score(assertions, result.get("output", ""))
+                            # A judge failure (LLM judge couldn't run) is also a
+                            # measurement failure — flag it so the summary can
+                            # detect dubious runs, but still record the score
+                            # attempt (it may be a fallback score).
+                            if "llm_judge" in reasoning and (
+                                "failed" in reasoning.lower() or "unavailable" in reasoning.lower()
+                                or "no valid scores" in reasoning.lower()
+                            ):
+                                flags.append("judge_failure")
                             task_accuracies.append(accuracy)
 
                         if result.get("cost"):
@@ -213,9 +225,11 @@ class CapabilityGridRunner:
                         if result.get("tokens"):
                             task_tokens.append(result["tokens"])
 
-                    # Aggregate
-                    mean_accuracy = sum(task_accuracies) / len(task_accuracies) if task_accuracies else 0.0
-                    ci_lower, ci_upper = Scorer.bootstrap_ci(task_accuracies)
+                    # Aggregate — None entries are measurement failures, not 0s.
+                    # mean_accuracy is None when every trial failed to measure.
+                    real = [a for a in task_accuracies if a is not None]
+                    mean_accuracy = sum(real) / len(real) if real else None
+                    ci_lower, ci_upper = Scorer.bootstrap_ci(real) if real else (None, None)
                     cell_cost = sum(task_costs)
                     cell_tokens = sum(task_tokens)
 
@@ -226,7 +240,8 @@ class CapabilityGridRunner:
                         "accuracy, ci_lower, ci_upper, cost, tokens, flags, hang) "
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (cell_id, run_id, task["id"], model_spec, config_label,
-                         round(mean_accuracy, 4), ci_lower, ci_upper,
+                         round(mean_accuracy, 4) if mean_accuracy is not None else None,
+                         ci_lower, ci_upper,
                          round(cell_cost, 6), cell_tokens,
                          json.dumps(flags), hangs),
                     )
@@ -243,7 +258,7 @@ class CapabilityGridRunner:
                         "task_name": task.get("name", task["id"]),
                         "model": model_spec,
                         "config": config_label,
-                        "accuracy": round(mean_accuracy, 4),
+                        "accuracy": round(mean_accuracy, 4) if mean_accuracy is not None else None,
                         "ci_lower": ci_lower,
                         "ci_upper": ci_upper,
                         "cost": round(cell_cost, 6),
