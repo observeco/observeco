@@ -117,30 +117,44 @@
         }
       }
     }
-    var url = '/api/capability/grid/run?agent=' + encodeURIComponent(agent);
-    if (selectedModels.length > 0) {
-      url += '&models=' + encodeURIComponent(selectedModels.join(','));
-    }
-    if (selectedProfiles.length > 0) {
-      url += '&configs=' + encodeURIComponent(selectedProfiles.join(','));
-    }
-    fetch(url, {method:'POST'})
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        if (d.ok) {
-          showToast('Comparison started for ' + agent);
-          var poll = setInterval(function() {
-            fetch('/api/capability/grid?agent=' + encodeURIComponent(agent))
-              .then(function(r) { return r.json(); })
-              .then(function(g) {
-                if (g.cells && g.cells.length > 0) {
-                  clearInterval(poll);
-                  showToast('Comparison complete — refreshing');
-                  htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent(agent), {target: '#gridTableContainer', swap: 'innerHTML'});
-                }
-              });
-          }, 10000);
+    // Estimate cell count before running — prevents accidental mega-runs.
+    // Ask the /grid/options endpoint for the active task count, then confirm.
+    fetch('/api/capability/grid/options', {headers:_authHeaders()})
+      .then(function(r){ return r.json(); })
+      .then(function(opts){
+        var taskCount = opts.task_count || 0;
+        var est = taskCount * selectedModels.length * selectedProfiles.length;
+        var msg = 'Run ' + selectedModels.length + ' model(s) × ' + selectedProfiles.length +
+                  ' profile(s) on ' + taskCount + ' tasks = ' + est + ' cells?';
+        if (est > 200) {
+          msg += '\n\n⚠️ This is a LARGE run (~' + Math.round(est * 0.15) + ' min). Consider reducing models/profiles.';
         }
+        if (!confirm(msg)) return;
+        var url = '/api/capability/grid/run?agent=' + encodeURIComponent(agent);
+        if (selectedModels.length > 0) {
+          url += '&models=' + encodeURIComponent(selectedModels.join(','));
+        }
+        if (selectedProfiles.length > 0) {
+          url += '&configs=' + encodeURIComponent(selectedProfiles.join(','));
+        }
+        return fetch(url, {method:'POST', headers:_authHeaders()})
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d.ok) {
+              showToast('Comparison started for ' + agent);
+              var poll = setInterval(function() {
+                fetch('/api/capability/grid?agent=' + encodeURIComponent(agent), {headers:_authHeaders()})
+                  .then(function(r) { return r.json(); })
+                  .then(function(g) {
+                    if (g.cells && g.cells.length > 0) {
+                      clearInterval(poll);
+                      showToast('Comparison complete — refreshing');
+                      htmx.ajax('GET', '/api/capability/grid/table?agent=' + encodeURIComponent(agent), {target: '#gridTableContainer', swap: 'innerHTML'});
+                    }
+                  });
+              }, 10000);
+            }
+          });
       })
       .catch(function(e) { showToast('Comparison failed: ' + e.message); });
   };
