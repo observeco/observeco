@@ -2479,6 +2479,12 @@ async def capability_page(agent: str = Query("default")):
 
     <script src="/static/js/capability.js"></script>
     <script>
+    // ── Populate model/profile checkboxes dynamically from /grid/options ──
+    // capability.js registers DOMContentLoaded + htmx:afterSwap listeners, but
+    // this fragment is injected by htmx AFTER DOMContentLoaded has fired, so
+    // those listeners never run for this load. Call the loader explicitly.
+    if (window.loadGridOptions) window.loadGridOptions();
+
     // ── Agent switcher ──
     function switchCapabilityAgent(agent) {{
       htmx.ajax('GET', '/api/capability/page?agent=' + encodeURIComponent(agent), {{target: '#capabilityContainer', swap: 'innerHTML'}});
