@@ -163,7 +163,9 @@ def list_runnable_cloud_providers() -> dict[str, dict]:
             }
         }
     Only providers that are actually runnable (reachable base_url + key)
-    are included. Local and dead-gateway providers are excluded.
+    are included. Reads the endpoint from either the `base_url` or `api`
+    config key (some providers use `api`). Providers with no configured
+    models are skipped unless a default_model is present.
     """
     config_path = Path.home() / '.hermes' / 'config.yaml'
     result: dict[str, dict] = {}
@@ -175,10 +177,8 @@ def list_runnable_cloud_providers() -> dict[str, dict]:
             cfg = yaml.safe_load(f) or {}
         providers = cfg.get('providers', {})
         for name, p in providers.items():
-            if name in ('9router', 'ollama', 'ollama-local', 'custom-ollama', 'zhipuai'):
-                continue
             p = p or {}
-            base_url = p.get('base_url', '')
+            base_url = p.get('base_url', '') or p.get('api', '')
             if not base_url:
                 continue
             api_key = p.get('api_key', '') or os.environ.get(f'{name.upper()}_API_KEY', '')
