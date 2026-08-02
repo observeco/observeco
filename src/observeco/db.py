@@ -4158,7 +4158,8 @@ class Database:
                        cost_computed: str = "flat", source: str = "unknown",
                        model: str = "", latency_ms: int = 0,
                        tool_calls: str = "[]", topic_id: str = "",
-                       is_local: int = 0, session_id: str = "") -> dict:
+                       is_local: int = 0, session_id: str = "",
+                       recorded_at: int | None = None) -> dict:
         # Auto-compute cost when provider given but cost not set
         # Skip for local providers (cost is always $0)
         if cost == 0 and provider and not is_local:
@@ -4176,7 +4177,8 @@ class Database:
              anomaly_score, input_tokens, output_tokens,
              cache_creation_tokens, cache_read_tokens, cost_computed, source,
              model, latency_ms, tool_calls, topic_id,
-             int(time.time()), is_local, session_id)
+             recorded_at if recorded_at is not None else int(time.time()),
+             is_local, session_id)
         )
 
         # Auto-register new agent in agent_configs (type classified by name pattern)
