@@ -98,25 +98,107 @@
 
   // ── Grid comparison runner ──
   window.runGrid = function() {
-    var agent = _getCapAgent();
+    var judgeSel = document.getElementById('gridJudge');
+    var agentSel = document.getElementById('gridAgent');
+    var agent = (agentSel && agentSel.value) ? agentSel.value : _getCapAgent();
     var selectedModels = [];
-    var modelsSelect = document.getElementById('gridModels');
-    if (modelsSelect) {
-      for (var i = 0; i < modelsSelect.options.length; i++) {
-        if (modelsSelect.options[i].selected) {
-          selectedModels.push(modelsSelect.options[i].value);
-        }
-      }
+    var modelCbs = document.querySelectorAll('#gridModels .grid-model-cb:checked');
+    for (var i = 0; i < modelCbs.length; i++) {
+      selectedModels.push(modelCbs[i].value);
     }
     var selectedProfiles = [];
-    var profilesSelect = document.getElementById('gridProfiles');
-    if (profilesSelect) {
-      for (var j = 0; j < profilesSelect.options.length; j++) {
-        if (profilesSelect.options[j].selected) {
-          selectedProfiles.push(profilesSelect.options[j].value);
-        }
-      }
+    var profileCbs = document.querySelectorAll('#gridProfiles .grid-profile-cb:checked');
+    for (var j = 0; j < profileCbs.length; j++) {
+      selectedProfiles.push(profileCbs[j].value);
     }
+    if (selectedModels.length === 0 || selectedProfiles.length === 0) {
+      showToast('Select at least one model and one profile');
+      return;
+    }
+    // Estimate cell count before running — prevents accidental mega-runs.
+    // Ask the /grid/options endpoint for the active task count, then confirm.
+    fetch('/api/capability/grid/options', {headers:_authHeaders()})
+      .then(function(r){ return r.json(); })
+      .then(function(opts){
+        var taskCount = opts.task_count || 0;
+        var est = taskCount * selectedModels.length * selectedProfiles.length;
+        var mins = Math.round(est * 0.15);
+        var large = est > 200;
+        showGridConfirm({
+          models: selectedModels,
+          profiles: selectedProfiles,
+          judge: judgeSel ? judgeSel.value : '',
+          taskCount: taskCount,
+          cells: est,
+          mins: mins,
+          large: large,
+          onRun: function() { startGridRun(agent, selectedModels, selectedProfiles, judgeSel ? judgeSel.value : ''); }
+        });
+      })
+      .catch(function(e) { showToast('Could not estimate run: ' + e.message); });
+  };
+
+  // ── Themed grid-run confirmation modal ──
+  function showGridConfirm(opts) {
+    var overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.id = 'gridConfirmModal';
+
+    var modelChips = opts.models.map(function(m) {
+      return '<span class="grid-confirm-chip">' + esc(m) + '</span>';
+    }).join('');
+    var profileChips = opts.profiles.map(function(p) {
+      return '<span class="grid-confirm-chip">' + esc(p) + '</span>';
+    }).join('');
+
+    var warnHtml = '';
+    if (opts.large) {
+      warnHtml = '<div class="grid-confirm-warn">⚠️ Large run — about ' + opts.mins +
+                 ' min. Consider trimming models or profiles.</div>';
+    }
+
+    overlay.innerHTML =
+      '<div class="modal" style="max-width:560px;">' +
+        '<div class="modal-header">' +
+          '<div>' +
+            '<h3>Run Grid Comparison</h3>' +
+            '<div class="sub">' + opts.models.length + ' model(s) × ' + opts.profiles.length +
+            ' profile(s) × ' + opts.taskCount + ' task(s)</div>' +
+          '</div>' +
+          '<button class="modal-close" id="gridConfirmClose">✕</button>' +
+        '</div>' +
+        '<div class="modal-body">' +
+          '<div style="font-size:13px;color:var(--fg);margin-bottom:12px;">' +
+            'This will run <strong style="color:var(--accent);">' + opts.cells + ' cells</strong> through the full agent harness. ' +
+            (opts.mins > 0 ? 'Estimated time: <strong>' + opts.mins + ' min</strong>.' : '') +
+          '</div>' +
+          warnHtml +
+          '<div style="font-size:11px;color:var(--muted);font-weight:600;margin:12px 0 4px;text-transform:uppercase;">Models</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">' + modelChips + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);font-weight:600;margin:12px 0 4px;text-transform:uppercase;">Profiles</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + profileChips + '</div>' +
+        '</div>' +
+        '<div class="modal-header" style="border-top:1px solid var(--border);border-bottom:none;justify-content:flex-end;gap:8px;">' +
+          '<button class="btn" id="gridConfirmCancel" style="padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;">Cancel</button>' +
+          '<button class="btn btn-primary" id="gridConfirmRun" style="padding:8px 16px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Run ' + opts.cells + ' cells</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    function close() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
+    overlay.querySelector('#gridConfirmClose').onclick = close;
+    overlay.querySelector('#gridConfirmCancel').onclick = close;
+    overlay.querySelector('#gridConfirmRun').onclick = function() {
+      close();
+      opts.onRun();
+    };
+    // Click on scrim (outside modal) closes
+    overlay.onclick = function(e) { if (e.target === overlay) close(); };
+  }
+
+  // ── Actually start the grid run ──
+  function startGridRun(agent, selectedModels, selectedProfiles, judge) {
     var url = '/api/capability/grid/run?agent=' + encodeURIComponent(agent);
     if (selectedModels.length > 0) {
       url += '&models=' + encodeURIComponent(selectedModels.join(','));
@@ -124,13 +206,16 @@
     if (selectedProfiles.length > 0) {
       url += '&configs=' + encodeURIComponent(selectedProfiles.join(','));
     }
-    fetch(url, {method:'POST'})
+    if (judge) {
+      url += '&judge=' + encodeURIComponent(judge);
+    }
+    return fetch(url, {method:'POST', headers:_authHeaders()})
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d.ok) {
           showToast('Comparison started for ' + agent);
           var poll = setInterval(function() {
-            fetch('/api/capability/grid?agent=' + encodeURIComponent(agent))
+            fetch('/api/capability/grid?agent=' + encodeURIComponent(agent), {headers:_authHeaders()})
               .then(function(r) { return r.json(); })
               .then(function(g) {
                 if (g.cells && g.cells.length > 0) {
@@ -144,6 +229,128 @@
       })
       .catch(function(e) { showToast('Comparison failed: ' + e.message); });
   };
+
+  // ── Live selection counts ──
+  window.updateGridCounts = function() {
+    var m = document.querySelectorAll('#gridModels .grid-model-cb:checked').length;
+    var mc = document.getElementById('gridModelCount');
+    if (mc) mc.textContent = m + ' selected';
+    var p = document.querySelectorAll('#gridProfiles .grid-profile-cb:checked').length;
+    var pc = document.getElementById('gridProfileCount');
+    if (pc) pc.textContent = p + ' selected';
+  };
+
+  // ── Dynamic grid options loader ──
+  // Populates the model/profile checkbox lists client-side from /grid/options
+  // so model availability is always current (new providers/models in hermes
+  // config appear without a server re-render).
+  window.loadGridOptions = function() {
+    var mList = document.getElementById('gridModels');
+    var pList = document.getElementById('gridProfiles');
+    if (!mList || !pList) return;
+    fetch('/api/capability/grid/options', {headers:_authHeaders()})
+      .then(function(r){ return r.json(); })
+      .then(function(opts){
+        var defaults = opts.default_models || [];
+        var defaultSet = {};
+        defaults.forEach(function(d){ defaultSet[d] = true; });
+
+        // Models grouped by provider
+        var mHtml = '';
+        (opts.model_groups || []).forEach(function(g){
+          if (!g.models || !g.models.length) return;
+          mHtml += '<div style="margin-bottom:4px;">';
+          mHtml += '<div style="font-size:10px;color:var(--muted);font-weight:600;padding:2px 4px;">' +
+                   (g.provider || '').toUpperCase() + '</div>';
+          g.models.forEach(function(m){
+            var checked = defaultSet[m.spec] ? 'checked' : '';
+            mHtml += '<label class="grid-check" style="display:flex;align-items:center;gap:6px;' +
+                     'padding:3px 4px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--fg);">' +
+                     '<input type="checkbox" class="grid-model-cb" value="' + esc(m.spec) + '" ' + checked +
+                     ' onchange="updateGridCounts()">' + esc(m.name) + '</label>';
+          });
+          mHtml += '</div>';
+        });
+        mList.innerHTML = mHtml || '<div style="color:var(--muted);font-size:12px;padding:4px;">No cloud models configured</div>';
+
+        // Profiles
+        var pHtml = '';
+        (opts.profiles || []).forEach(function(p){
+          var checked = defaultSet[p] || opts.profiles.indexOf(p) < 3 ? 'checked' : '';
+          pHtml += '<label class="grid-check" style="display:flex;align-items:center;gap:6px;' +
+                   'padding:3px 4px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--fg);">' +
+                   '<input type="checkbox" class="grid-profile-cb" value="' + esc(p) + '" ' + checked +
+                   ' onchange="updateGridCounts()">' + esc(p) + '</label>';
+        });
+        pList.innerHTML = pHtml || '<div style="color:var(--muted);font-size:12px;padding:4px;">No profiles found</div>';
+
+        // Judge select
+        var judgeSel = document.getElementById('gridJudge');
+        if (judgeSel) {
+          var curJudge = judgeSel.value || opts.default_judge || 'ollama-cloud/glm-5.2';
+          var jHtml = '';
+          (opts.judge_options || []).forEach(function(j){
+            var sel = (j.spec === curJudge) ? 'selected' : '';
+            jHtml += '<option value="' + esc(j.spec) + '" ' + sel + '>' + esc(j.spec) + '</option>';
+          });
+          if (jHtml) judgeSel.innerHTML = jHtml;
+        }
+
+        // Agent select (all agents with grid data, keep current selection)
+        var agentSel = document.getElementById('gridAgent');
+        if (agentSel) {
+          var curAgent = agentSel.value || 'main';
+          var aHtml = '';
+          (opts.agent_options || []).forEach(function(a){
+            var sel = (a === curAgent) ? 'selected' : '';
+            aHtml += '<option value="' + esc(a) + '" ' + sel + '>' + esc(a) + '</option>';
+          });
+          if (aHtml) agentSel.innerHTML = aHtml;
+        }
+
+        // Run history selector
+        var runSel = document.getElementById('gridRunSelect');
+        if (runSel) {
+          var rHtml = '<option value="">Current</option>';
+          (opts.run_history || []).forEach(function(r){
+            var label = r.started_at + ' · ' + r.agent + ' · ' + r.status + ' · ' + r.cells + ' cells' +
+                        (r.judge ? ' · judge=' + r.judge : '');
+            rHtml += '<option value="' + esc(r.id) + '">' + esc(label) + '</option>';
+          });
+          runSel.innerHTML = rHtml;
+        }
+
+        updateGridCounts();
+      })
+      .catch(function(){
+        mList.innerHTML = '<div style="color:var(--danger);font-size:12px;padding:4px;">Failed to load models</div>';
+        pList.innerHTML = '<div style="color:var(--danger);font-size:12px;padding:4px;">Failed to load profiles</div>';
+      });
+  };
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // ── Load a specific historical run (run selector) ──
+  window.loadGridRun = function(runId) {
+    var agent = _getCapAgent();
+    var t = new URLSearchParams(location.search).get('token') || '';
+    var url = '/api/capability/grid/table?agent=' + encodeURIComponent(agent) +
+              (runId ? '&run_id=' + encodeURIComponent(runId) : '');
+    if (t) url += '&token=' + t;
+    htmx.ajax('GET', url, {target: '#gridTableContainer', swap: 'innerHTML'});
+  };
+
+  // Initialize on load + after grid table swaps
+  document.addEventListener('DOMContentLoaded', function() { loadGridOptions(); });
+  document.body.addEventListener('htmx:afterSwap', function(e) {
+    if (e.detail.target && e.detail.target.id && e.detail.target.id.indexOf('grid') !== -1) {
+      loadGridOptions();
+    }
+  });
 
   // ── Toast ──
   window.showToast = function(msg) {

@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 67
+SCHEMA_VERSION = 68
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -712,6 +712,7 @@ CREATE TABLE IF NOT EXISTS grid_runs (
     configs     TEXT NOT NULL,     -- JSON array of config labels
     total_cells INTEGER NOT NULL,
     total_cost  REAL,
+    judge       TEXT,              -- judge model spec used for llm_judge scoring
     error       TEXT
 );
 
@@ -1002,6 +1003,10 @@ CREATE TABLE IF NOT EXISTS dismissed_gaps (
     dismissed_at TEXT NOT NULL DEFAULT (datetime('now')),
     dismiss_count INTEGER DEFAULT 1
 );
+"""),
+    # Migration 68: judge column on grid_runs — which LLM judge produced a run
+    (68, """-- Migration 68: record which LLM judge scored each grid run
+ALTER TABLE grid_runs ADD COLUMN judge TEXT;
 """),
 ]
 
@@ -1445,7 +1450,17 @@ class Database:
             # (e.g. a new migration added after the DB was first created).
             # The migration loop is idempotent (IF NOT EXISTS / duplicate-col
             # handled). Skipping it here would leave new tables uncreated.
+            self._recover_stranded_tables(conn)
             self._run_pending_migrations(conn)
+            # GS-019 §Downgrade: Log warning if DB version > code version
+            cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
+            row = cur.fetchone()
+            current_version = int(row["value"]) if row else 1
+            if current_version > SCHEMA_VERSION:
+                logger.warning(
+                    f"GS-019: Database version ({current_version}) > code version "
+                    f"({SCHEMA_VERSION}). Possible downgrade. Not modifying version."
+                )
             return
         except sqlite3.OperationalError:
             pass  # table missing -> run full init below
@@ -4148,7 +4163,8 @@ class Database:
                        cost_computed: str = "flat", source: str = "unknown",
                        model: str = "", latency_ms: int = 0,
                        tool_calls: str = "[]", topic_id: str = "",
-                       is_local: int = 0, session_id: str = "") -> dict:
+                       is_local: int = 0, session_id: str = "",
+                       recorded_at: int | None = None) -> dict:
         # Auto-compute cost when provider given but cost not set
         # Skip for local providers (cost is always $0)
         if cost == 0 and provider and not is_local:
@@ -4166,7 +4182,8 @@ class Database:
              anomaly_score, input_tokens, output_tokens,
              cache_creation_tokens, cache_read_tokens, cost_computed, source,
              model, latency_ms, tool_calls, topic_id,
-             int(time.time()), is_local, session_id)
+             recorded_at if recorded_at is not None else int(time.time()),
+             is_local, session_id)
         )
 
         # Auto-register new agent in agent_configs (type classified by name pattern)

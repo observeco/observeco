@@ -332,6 +332,124 @@ class Scorer:
         return None
 
     @staticmethod
+    def _byok_judge_chain(system_prompt: str, user_context: str, byok_key: str) -> float | None:
+        """Call the LLM judge through a chain of providers until one scores.
+
+        Generic: reads providers from ~/.hermes/config.yaml. ollama-cloud is
+        tried first (glm-5.2 is the most reliable scorer there), then every
+        other configured provider with an API key. Returns the parsed 1-20
+        score from the first provider that answers, or None if all fail
+        (rate-limited, empty, or unparseable).
+
+        This makes the judge resilient to a single provider's rate limit —
+        a 429 on ollama.com must not zero out every llm_judge task.
+        """
+        import json as _json
+        import urllib.request as _ureq
+        from pathlib import Path as _Path
+
+        # Build provider list: cloud providers with base_url + api key that are
+        # reachable (skip localhost proxies — they route through the broken
+        # 9router). ollama-cloud is preferred first (glm-5.2 is the most
+        # reliable scorer there), then any other cloud provider.
+        providers: list[dict] = []
+        try:
+            import yaml as _yaml
+            cfg_path = _Path.home() / ".hermes" / "config.yaml"
+            if cfg_path.exists():
+                cfg = _yaml.safe_load(cfg_path.read_text()) or {}
+                p_cfg = cfg.get("providers", {})
+                names = sorted(p_cfg.keys(), key=lambda n: (n != "ollama-cloud", n))
+                for name in names:
+                    p = p_cfg.get(name) or {}
+                    base = p.get("base_url", "") or p.get("api", "")
+                    key = p.get("api_key", "") or ""
+                    if not base or not key:
+                        continue
+                    # Skip localhost / dead-gateway endpoints — they can't
+                    # reach a real judge model.
+                    if "localhost" in base or "127.0.0.1" in base or "11434" in base:
+                        continue
+                    # Prefer a default model; otherwise any chat-eligible model.
+                    model = p.get("default_model", "") or next(iter(p.get("models", {})), "")
+                    if not model:
+                        # Provider with a key but no model list — use a known
+                        # sensible chat model for the provider (deepseek's API
+                        # serves deepseek-v4-flash; xiaomi serves mimo-v2.5).
+                        model = {"deepseek": "deepseek-v4-flash",
+                                 "xiaomi": "mimo-v2.5",
+                                 "token-plan": "mimo-v2.5",
+                                 "ollama-cloud": "deepseek-v4-flash"}.get(name, "")
+                    if not model:
+                        continue
+                    providers.append({"name": name, "base": base.rstrip("/"), "key": key, "model": model})
+        except Exception:
+            pass
+
+        # Always include the BYOK key on ollama.com as a last-resort endpoint
+        # with the most reliable scorer (glm-5.2).
+        providers.append({
+            "name": "ollama-cloud",
+            "base": "https://ollama.com/v1",
+            "key": byok_key,
+            "model": "glm-5.2",
+        })
+
+        # User-selected judge (OBSERVECO_JUDGE_MODEL=provider/model) gets top
+        # priority — the grid run's Judge dropdown sets this. Parse it and
+        # push the matching provider/model to the front of the chain.
+        selected = os.environ.get("OBSERVECO_JUDGE_MODEL", "").strip()
+        if selected and "/" in selected:
+            sel_provider, _, sel_model = selected.partition("/")
+            for prov in providers:
+                if prov["name"] == sel_provider:
+                    prov["model"] = sel_model
+                    providers.remove(prov)
+                    providers.insert(0, prov)
+                    break
+
+        # Prefer deepseek as an early fallback — it has a healthy independent
+        # key and reliably returns <score>N</score>. Move it right after
+        # ollama-cloud in priority.
+        providers.sort(key=lambda pr: (pr["name"] != "ollama-cloud", pr["name"] != "deepseek"))
+
+        for prov in providers:
+            try:
+                _payload = _json.dumps({
+                    "model": prov["model"],
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_context},
+                    ],
+                    "temperature": 0,
+                    "max_tokens": 200,
+                    "stream": False,
+                }).encode()
+                _req = _ureq.Request(
+                    f"{prov['base']}/chat/completions",
+                    data=_payload,
+                    headers={"Content-Type": "application/json",
+                             "Authorization": f"Bearer {prov['key']}"},
+                )
+                for _attempt in range(2):
+                    try:
+                        with _ureq.urlopen(_req, timeout=90) as _r:
+                            _body = _json.loads(_r.read().decode())
+                        _text = (_body["choices"][0]["message"]["content"] or "").strip()
+                        if _text:
+                            score = Scorer._parse_discrete_score(_text)
+                            if score is not None:
+                                return score
+                        break  # answered but unparseable — try next provider
+                    except Exception as _e:
+                        if _attempt == 0:
+                            continue  # one retry per provider
+                        break
+            except Exception:
+                continue
+        return None
+
+    @staticmethod
     def _parse_discrete_score(text: str) -> float | None:
         """Extract a 1-20 score from model text output (fallback when no logprobs).
 
@@ -436,48 +554,18 @@ class Scorer:
 
         for i in range(k):
             if byok_key:
-                # BYOK fast-path: make a FRESH call per repetition (ollama.com
-                # deepseek models return empty content on complex scoring prompts;
-                # glm-5.2 reliably returns <score>N</score>). Retry once on
-                # empty/unparseable output before giving up.
-                try:
-                    import json as _json
-                    import urllib.request as _ureq
-                    _payload = _json.dumps({
-                        "model": "glm-5.2",
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": user_context},
-                        ],
-                        "temperature": 0,
-                        "max_tokens": 200,
-                        "stream": False,
-                    }).encode()
-                    _req = _ureq.Request(
-                        "https://ollama.com/v1/chat/completions",
-                        data=_payload,
-                        headers={"Content-Type": "application/json",
-                                 "Authorization": f"Bearer {byok_key}"},
-                    )
-                    _text = ""
-                    for _attempt in range(3):
-                        with _ureq.urlopen(_req, timeout=120) as _r:
-                            _body = _json.loads(_r.read().decode())
-                        _text = (_body["choices"][0]["message"]["content"] or "").strip()
-                        if _text:
-                            break
-                    if _text:
-                        score = Scorer._parse_discrete_score(_text)
-                        if score is not None:
-                            scores.append(score)
-                            used_discrete = True
-                            continue
-                        errors.append(f"could not parse score from byok response: {_text[:60]}")
-                    else:
-                        errors.append("byok returned empty content after retries")
-                except Exception as _e:
-                    errors.append(f"byok call failed: {_e}")
-                    byok_resp = None
+                # BYOK fast-path with a provider CHAIN — the judge must not
+                # depend on a single endpoint. ollama.com (glm-5.2) is primary
+                # but gets rate-limited (429) under load; fail over to any
+                # other configured provider that answers <score>N</score>.
+                # Generic: reads providers from hermes config, no hardcoded
+                # per-provider special cases.
+                score = Scorer._byok_judge_chain(system_prompt, user_context, byok_key)
+                if score is not None:
+                    scores.append(score)
+                    used_discrete = True
+                    continue
+                errors.append("byok judge chain failed on all providers")
             elif ask_with_logprobs is not None:
                 resp = ask_with_logprobs(
                     system_prompt, user_context,

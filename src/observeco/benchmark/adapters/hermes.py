@@ -59,6 +59,7 @@ _MODEL_PRICING: dict[str, tuple[float, float]] = {
     "deepseek-v4-flash": (0.15, 0.60),
     "deepseek-v4-pro": (2.00, 8.00),
     "deepseek-chat": (0.15, 0.60),
+    "glm-5.2": (0.60, 2.40),  # estimate: Zhipu GLM family, mid-tier (similar to deepseek-v4-pro band)
     "gpt-4o": (2.50, 10.00),
     "gpt-4o-mini": (0.15, 0.60),
     "claude-sonnet-4": (3.00, 15.00),
@@ -266,6 +267,33 @@ class HermesBenchmarkAdapter:
                 output = re.sub(r'─+', '', output)
                 output = re.sub(r'\bReasoning\s*', '', output)
                 output = re.sub(r'\n\s*\n\s*\n+', '\n\n', output).strip()
+
+                # Generic fairness guard: if the agent exited 0 but produced
+                # empty (or whitespace-only) content, the provider likely
+                # returned an empty completion — common with reasoning models
+                # (e.g. mimo-v2.5) that exhaust their output budget on hidden
+                # reasoning and emit nothing. Treat it as retryable, exactly
+                # like a 5xx/429, for EVERY model/provider — never score an
+                # empty response as a legitimate 0.
+                if not output and proc.returncode == 0:
+                    if attempt < _MAX_RETRIES:
+                        logger.info(
+                            "Empty response (attempt %d/%d), retrying in %ds",
+                            attempt + 1, _MAX_RETRIES + 1, _RETRY_DELAYS[attempt],
+                        )
+                        last_error = "empty response from provider"
+                        time.sleep(_RETRY_DELAYS[attempt])
+                        continue
+                    logger.warning("Hermes returned empty output after %d attempts", _MAX_RETRIES + 1)
+                    return {
+                        "output": "",
+                        "model_used": "unknown",
+                        "harness_type": "hermes",
+                        "elapsed_seconds": elapsed,
+                        "provider_error": True,
+                        "cost": 0.0,
+                        "tokens": 0,
+                    }
 
                 if proc.returncode != 0:
                     error = stderr.strip() or "unknown error"

@@ -203,6 +203,51 @@ def clean_prompt(text: str) -> str:
     return out
 
 
+def build_self_contained_prompt(session: dict, max_words: int = 600) -> str:
+    """Build a self-contained prompt from a session's message history.
+
+    The bare first-user-message is NOT enough — history tasks fail in grid runs
+    because a fresh agent session has none of the conversation context. This
+    pulls the last N user/assistant messages (most recent context) and embeds
+    it so the prompt carries the situation: what the agent was asked, what was
+    discovered, what the current state is.
+    """
+    conn = _connect_state_db(HERMES_STATE_DB)
+    try:
+        sid = session.get("session_id", "")
+        if not sid:
+            return clean_prompt(session.get("first_user_message", ""))
+        rows = conn.execute(
+            "SELECT role, content FROM messages WHERE session_id = ? "
+            "AND role IN ('user','assistant') AND content IS NOT NULL "
+            "AND length(content) > 20 ORDER BY timestamp ASC",
+            (sid,),
+        ).fetchall()
+    except sqlite3.Error:
+        rows = []
+    finally:
+        conn.close()
+
+    if not rows:
+        return clean_prompt(session.get("first_user_message", ""))
+
+    # Keep the last ~8 messages for context (most recent state), then the
+    # original request becomes the "final ask" framed as a standalone task.
+    context_msgs = rows[-8:]
+    parts = ["CONTEXT FROM PRIOR CONVERSATION:"]
+    for role, content in context_msgs:
+        label = "USER" if role == "user" else "AGENT"
+        parts.append(f"{label}: {content[:600]}")
+    parts.append("")
+    parts.append("TASK (produce the requested result):")
+    parts.append(clean_prompt(session.get("first_user_message", "")))
+    out = "\n".join(parts).strip()
+    words = out.split()
+    if len(words) > max_words:
+        out = " ".join(words[:max_words])
+    return out
+
+
 def generate_drafts(limit: int = 10) -> list[dict]:
     """Mine → cluster → propose assertions → build draft dicts."""
     sessions = mine_sessions(limit=limit)
@@ -231,12 +276,125 @@ def generate_drafts(limit: int = 10) -> list[dict]:
             "id": task_id,
             "name": s["title"][:60],
             "description": f"Agent must handle: {s['first_user_message'][:120]}",
-            "prompt": clean_prompt(s["first_user_message"]),
+            "prompt": build_self_contained_prompt(s),
             "assertions": assertions,
             "timeout": 300,
             "trials": 2,
-            "category": "operations",
-            "difficulty": "medium",
+            "category": _detect_category(s["title"], s["first_user_message"]),
+            "difficulty": _detect_difficulty(s.get("message_count", 0)),
+            "source_session": s["session_id"],
+            "built_in": 0,
+            "llm_judge_unavailable": unavailable,
+        })
+    return drafts
+
+
+_CATEGORY_KEYWORDS = {
+    "bug": ["bug", "error", "crash", "fail", "broken", "exception", "traceback", "500"],
+    "feature": ["add", "implement", "build", "create", "new", "feature", "support"],
+    "refactor": ["refactor", "clean", "restructure", "simplify", "rename", "extract"],
+    "performance": ["slow", "performance", "optimize", "latency", "n+1", "timeout", "fast"],
+    "data": ["data", "database", "query", "sql", "migration", "schema", "table"],
+    "infrastructure": ["deploy", "server", "docker", "kubernetes", "ci", "pipeline", "infra"],
+    "security": ["security", "auth", "token", "permission", "vulnerability", "exploit"],
+    "design": ["design", "ux", "ui", "mockup", "layout", "wireframe", "css"],
+}
+
+
+def _detect_category(title: str, message: str = "") -> str:
+    """Classify a session into an existing or new category."""
+    text = f"{title} {message}".lower()
+    best = None
+    best_score = 0
+    for cat, kws in _CATEGORY_KEYWORDS.items():
+        score = sum(1 for kw in kws if kw in text)
+        if score > best_score:
+            best = cat
+            best_score = score
+    return best or "operations"
+
+
+def _detect_difficulty(message_count: int) -> str:
+    """Map message count to difficulty: larger sessions are more complex."""
+    if message_count >= 30:
+        return "hard"
+    if message_count >= 12:
+        return "medium"
+    return "easy"
+
+
+def refresh_candidates(db=None, limit: int = 10) -> list[dict]:
+    """Find sessions that should become NEW canary tasks.
+
+    Selection criteria (user-defined):
+    (1) NEW category — session classified into a category not yet covered
+        by existing canary tasks.
+    (2) EXISTING category but MORE COMPLEX — session in a covered category
+        with a higher message count than the existing task's difficulty
+        (e.g. existing 'medium' bug task, new 40-message bug session = 'hard').
+
+    Returns list of draft dicts ready for save_drafts_as_pending.
+    """
+    from observeco.db import Database
+
+    database = db or Database()
+    conn = database._get_conn()
+
+    # Existing categories from approved canary tasks (built_in=0 user-defined).
+    existing = conn.execute(
+        "SELECT category, COUNT(*) as c, MAX(CASE difficulty WHEN 'hard' THEN 2 "
+        "WHEN 'medium' THEN 1 ELSE 0 END) as max_diff "
+        "FROM canary_tasks WHERE built_in = 0 GROUP BY category"
+    ).fetchall()
+    conn.close()
+
+    covered_categories = {r["category"] for r in existing}
+    max_difficulty = {r["category"]: r["max_diff"] for r in existing}
+
+    sessions = mine_sessions(limit=limit)
+    if not sessions:
+        return []
+    clustered = cluster_sessions(sessions, limit=limit)
+
+    drafts = []
+    seen_ids: set[str] = set()
+    date = datetime.now().strftime("%Y%m%d")
+    for s in clustered:
+        cat = _detect_category(s["title"], s.get("first_user_message", ""))
+        diff = _detect_difficulty(s.get("message_count", 0))
+        diff_score = {"hard": 2, "medium": 1, "easy": 0}[diff]
+
+        qualifies = False
+        reason = ""
+        if cat not in covered_categories:
+            qualifies = True
+            reason = f"new category: {cat}"
+        elif diff_score > max_difficulty.get(cat, 0):
+            qualifies = True
+            reason = f"existing category {cat} but more complex: {diff} > {['', 'easy', 'medium'][max_difficulty.get(cat, 0)]}"
+
+        if not qualifies:
+            continue
+
+        assertions, unavailable = propose_assertions(s)
+        slug = re.sub(r"[^a-z0-9]+", "-", s["title"].lower())[:30].strip("-")
+        task_id = f"history-{slug}-{date}"
+        n = 1
+        while task_id in seen_ids:
+            task_id = f"history-{slug}-{date}-{n}"
+            n += 1
+        seen_ids.add(task_id)
+
+        drafts.append({
+            "id": task_id,
+            "name": s["title"][:60],
+            "description": f"[{reason}] Agent must handle: {s['first_user_message'][:120]}",
+            "prompt": build_self_contained_prompt(s),
+            "assertions": assertions,
+            "timeout": 300,
+            "trials": 2,
+            "category": cat,
+            "difficulty": diff,
             "source_session": s["session_id"],
             "built_in": 0,
             "llm_judge_unavailable": unavailable,
@@ -245,7 +403,6 @@ def generate_drafts(limit: int = 10) -> list[dict]:
 
 
 def save_drafts_as_pending(drafts: list[dict], db=None) -> int:
-    """Insert drafts into canary_task_drafts. Returns count inserted."""
     from observeco.db import Database
 
     database = db or Database()

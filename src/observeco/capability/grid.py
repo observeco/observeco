@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -126,7 +127,7 @@ class CapabilityGridRunner:
         else:
             rows = conn.execute(
                 "SELECT id, name, prompt, assertions, timeout, model, trials "
-                "FROM canary_tasks ORDER BY id"
+                "FROM canary_tasks WHERE built_in = 1 ORDER BY id"
             ).fetchall()
 
         if not rows:
@@ -142,16 +143,19 @@ class CapabilityGridRunner:
 
         tasks = [dict(r) for r in rows]
 
-        # Create grid run record
+        # Create grid run record — records the judge used (OBSERVECO_JUDGE_MODEL
+        # env, set by CLI --judge) so each run is auditable: which LLM judge
+        # produced these scores.
         run_id = str(uuid.uuid4())
         now_iso = datetime.now(timezone.utc).isoformat()
         total_cells = len(tasks) * len(models) * len(configs)
+        judge = os.environ.get("OBSERVECO_JUDGE_MODEL", "").strip() or None
 
         conn.execute(
-            "INSERT INTO grid_runs (id, agent_name, started_at, status, models, configs, total_cells) "
-            "VALUES (?, ?, ?, 'running', ?, ?, ?)",
+            "INSERT INTO grid_runs (id, agent_name, started_at, status, models, configs, total_cells, judge) "
+            "VALUES (?, ?, ?, 'running', ?, ?, ?, ?)",
             (run_id, agent_name, now_iso,
-             json.dumps(models), json.dumps(configs), total_cells),
+             json.dumps(models), json.dumps(configs), total_cells, judge),
         )
         conn.commit()
 
@@ -199,13 +203,25 @@ class CapabilityGridRunner:
                         result = adapter.run_task(agent_name, task_obj)
 
                         if result.get("provider_error"):
+                            # Measurement failure — NOT a quality 0. Store as
+                            # NULL accuracy so the summary/table treat it as
+                            # 'not measured', never as a real 0.
                             flags.append(f"provider_error: trial={trial_idx}")
-                            task_accuracies.append(0.0)
+                            task_accuracies.append(None)
                         elif result.get("timed_out") or result.get("error"):
                             hangs += 1
-                            task_accuracies.append(0.0)
+                            task_accuracies.append(None)
                         else:
-                            passed, accuracy, _ = Scorer.score(assertions, result.get("output", ""))
+                            passed, accuracy, reasoning = Scorer.score(assertions, result.get("output", ""))
+                            # A judge failure (LLM judge couldn't run) is also a
+                            # measurement failure — flag it so the summary can
+                            # detect dubious runs, but still record the score
+                            # attempt (it may be a fallback score).
+                            if "llm_judge" in reasoning and (
+                                "failed" in reasoning.lower() or "unavailable" in reasoning.lower()
+                                or "no valid scores" in reasoning.lower()
+                            ):
+                                flags.append("judge_failure")
                             task_accuracies.append(accuracy)
 
                         if result.get("cost"):
@@ -213,9 +229,11 @@ class CapabilityGridRunner:
                         if result.get("tokens"):
                             task_tokens.append(result["tokens"])
 
-                    # Aggregate
-                    mean_accuracy = sum(task_accuracies) / len(task_accuracies) if task_accuracies else 0.0
-                    ci_lower, ci_upper = Scorer.bootstrap_ci(task_accuracies)
+                    # Aggregate — None entries are measurement failures, not 0s.
+                    # mean_accuracy is None when every trial failed to measure.
+                    real = [a for a in task_accuracies if a is not None]
+                    mean_accuracy = sum(real) / len(real) if real else None
+                    ci_lower, ci_upper = Scorer.bootstrap_ci(real) if real else (None, None)
                     cell_cost = sum(task_costs)
                     cell_tokens = sum(task_tokens)
 
@@ -226,17 +244,25 @@ class CapabilityGridRunner:
                         "accuracy, ci_lower, ci_upper, cost, tokens, flags, hang) "
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (cell_id, run_id, task["id"], model_spec, config_label,
-                         round(mean_accuracy, 4), ci_lower, ci_upper,
+                         round(mean_accuracy, 4) if mean_accuracy is not None else None,
+                         ci_lower, ci_upper,
                          round(cell_cost, 6), cell_tokens,
                          json.dumps(flags), hangs),
                     )
+                    # Commit per cell — a grid run holds the connection open for
+                    # the whole run (each cell is a slow LLM call). Without this,
+                    # the single write transaction stays open for minutes and
+                    # every other DB writer (dashboard pages, fleet telemetry)
+                    # blocks on busy_timeout then 500s. Per-cell commit keeps the
+                    # write lock held for milliseconds.
+                    conn.commit()
 
                     cells.append({
                         "task_id": task["id"],
                         "task_name": task.get("name", task["id"]),
                         "model": model_spec,
                         "config": config_label,
-                        "accuracy": round(mean_accuracy, 4),
+                        "accuracy": round(mean_accuracy, 4) if mean_accuracy is not None else None,
                         "ci_lower": ci_lower,
                         "ci_upper": ci_upper,
                         "cost": round(cell_cost, 6),

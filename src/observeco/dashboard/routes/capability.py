@@ -165,10 +165,22 @@ def _infer_category(name: str) -> str:
 
 
 def _resolve_agent(agent: str) -> str:
-    """Resolve agent name, falling back to first available if 'default' has no data."""
+    """Resolve agent name, falling back to first available if 'default' has no data.
+
+    Only remaps 'default' when it has NO grid data of its own. If 'default'
+    has a running or completed grid run, keep it as-is so the table shows
+    that run (otherwise a just-started run for 'default' becomes invisible
+    and the table falls back to a stale completed run from another agent).
+    """
     if agent != "default":
         return agent
     conn = db._get_conn()
+    # If the literal agent has any grid data, don't remap it.
+    has_grid = conn.execute(
+        "SELECT 1 FROM grid_runs WHERE agent_name = 'default' LIMIT 1"
+    ).fetchone()
+    if has_grid:
+        return agent
     row = conn.execute(
         "SELECT agent_name FROM config_snapshots GROUP BY agent_name ORDER BY COUNT(*) DESC LIMIT 1"
     ).fetchone()
@@ -213,6 +225,7 @@ async def grid_run_from_dashboard(
     agent: str = Query("default"),
     models: Optional[str] = Query(None, description="Comma-separated model specs"),
     configs: Optional[str] = Query(None, description="Comma-separated agent profiles"),
+    judge: Optional[str] = Query(None, description="Judge model spec (provider/model)"),
 ):
     """POST /api/capability/grid/run?agent=NAME&models=model1,model2 — run full grid from dashboard.
 
@@ -247,6 +260,8 @@ async def grid_run_from_dashboard(
             cmd += ["--models", models]
         if configs:
             cmd += ["--configs", configs]
+        if judge:
+            cmd += ["--judge", judge]
         subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
@@ -1415,16 +1430,102 @@ def _drift_insufficient_html(agent: str, run_count: int) -> HTMLResponse:
     """)
 
 
-def _get_all_models() -> list[str]:
-    """Get all available models for the grid UI."""
-    from observeco.capability.model_config import load_available_models
-    return load_available_models(provider_filter='ollama-cloud')
+@router.get("/grid/options", response_class=JSONResponse)
+async def grid_options():
+    """GET /api/capability/grid/options — available models (grouped by provider),
+    profiles, and task count for building the grid controls.
 
+    Generic: reads from hermes config, not hardcoded. The UI uses this to
+    render provider-grouped model selectors, profile checkboxes, and a
+    live cell-count estimate before a run.
+    """
+    from observeco.capability.model_config import (
+        get_default_grid_models,
+        get_default_grid_profiles,
+        list_runnable_cloud_providers,
+    )
+    from observeco.db import Database as _DB
 
-def _get_default_models_set() -> set[str]:
-    """Get the default pre-selected models."""
-    from observeco.capability.model_config import get_default_grid_models
-    return set(get_default_grid_models())
+    providers = list_runnable_cloud_providers()
+    default_models = set(get_default_grid_models())
+    model_groups = []
+    for pname, info in providers.items():
+        model_groups.append({
+            "provider": pname,
+            "default_model": info["default_model"],
+            "models": [
+                {
+                    "spec": m,
+                    "name": m.split("/")[-1],
+                    "is_default": m in default_models,
+                }
+                for m in info["models"]
+            ],
+        })
+
+    profiles = get_default_grid_profiles()
+
+    # Judge options — cloud chat models usable as the LLM judge. Defaults to
+    # glm-5.2 (ollama-cloud) which is the most reliable scorer.
+    judge_options = []
+    for pname, info in providers.items():
+        for spec in info["models"]:
+            judge_options.append({"spec": spec, "provider": pname})
+    judge_options.sort(key=lambda j: (j["spec"] != "ollama-cloud/glm-5.2", j["provider"], j["spec"]))
+
+    # Agent options — all agents that have grid data (for the agent switcher).
+    agent_options = []
+    try:
+        db = _DB()
+        conn = db._get_conn()
+        rows = conn.execute(
+            "SELECT DISTINCT agent_name FROM grid_runs ORDER BY agent_name"
+        ).fetchall()
+        agent_options = [r["agent_name"] for r in rows]
+    except Exception:
+        pass
+
+    # Historical runs — completed/running runs per agent for the run selector.
+    run_history = []
+    try:
+        db = _DB()
+        conn = db._get_conn()
+        rows = conn.execute(
+            "SELECT id, agent_name, status, total_cells, started_at, completed_at, judge "
+            "FROM grid_runs ORDER BY started_at DESC LIMIT 20"
+        ).fetchall()
+        for r in rows:
+            run_history.append({
+                "id": r["id"],
+                "agent": r["agent_name"],
+                "status": r["status"],
+                "cells": r["total_cells"],
+                "judge": r["judge"] or "",
+                "started_at": (r["started_at"] or "")[:19],
+            })
+    except Exception:
+        pass
+
+    task_count = 0
+    try:
+        db = _DB()
+        conn = db._get_conn()
+        task_count = conn.execute(
+            "SELECT COUNT(*) as c FROM canary_tasks WHERE built_in = 1"
+        ).fetchone()["c"]
+    except Exception:
+        task_count = 0
+
+    return {
+        "model_groups": model_groups,
+        "profiles": profiles,
+        "default_models": list(default_models),
+        "judge_options": judge_options,
+        "default_judge": "ollama-cloud/glm-5.2",
+        "agent_options": agent_options,
+        "run_history": run_history,
+        "task_count": task_count,
+    }
 
 
 # ── Grid report HTML partial ─────────────────────────────────────────────────
@@ -1438,13 +1539,13 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     if not run_id:
         # Check for a running run first (show progress indicator)
         running_row = conn.execute(
-            "SELECT id, started_at FROM grid_runs WHERE agent_name = ? AND status = 'running' "
+            "SELECT id, started_at, models, configs, total_cells FROM grid_runs WHERE agent_name = ? AND status = 'running' "
             "ORDER BY started_at DESC LIMIT 1",
             (agent,),
         ).fetchone()
         if running_row:
             return HTMLResponse(
-                content=_grid_running_html(agent, running_row["started_at"] or "")
+                content=_grid_running_html(agent, running_row)
             )
         # Fall back to latest completed run
         row = conn.execute(
@@ -1551,38 +1652,47 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
 
     # Summary text
     summary = _generate_grid_summary(cells, models, configs)
-
     return HTMLResponse(content=f"""
-    <div class="grid-controls">
+    <div class="grid-controls" style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:6px;">
-        <label>Agent</label>
-        <select class="grid-select" id="gridAgent">
-          <option>{_html_escape(agent)}</option>
+        <label style="font-size:11px;color:var(--muted);font-weight:600;">AGENT</label>
+        <select class="grid-select" id="gridAgent" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;">
+          <option value="{_html_escape(agent)}">{_html_escape(agent)}</option>
         </select>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <label>Models</label>
-        <select class="grid-select" id="gridModels" multiple style="min-width:200px;">
-          {''.join(f'<option value="{_html_escape(m)}" {"selected" if m in _get_default_models_set() else ""}>{_html_escape(m.split("/")[-1])}</option>' for m in _get_all_models())}
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:240px;">
+        <div style="display:flex;align-items:center;gap:6px;justify-content:space-between;">
+          <label style="font-size:11px;color:var(--muted);font-weight:600;">MODELS</label>
+          <span style="font-size:11px;color:var(--accent);" id="gridModelCount">0 selected</span>
+        </div>
+        <div id="gridModels" class="grid-checkbox-list" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;">
+          <div style="color:var(--muted);font-size:12px;padding:4px;">Loading models…</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px;">
+        <div style="display:flex;align-items:center;gap:6px;justify-content:space-between;">
+          <label style="font-size:11px;color:var(--muted);font-weight:600;">PROFILES</label>
+          <span style="font-size:11px;color:var(--accent);" id="gridProfileCount">0 selected</span>
+        </div>
+        <div id="gridProfiles" class="grid-checkbox-list" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;">
+          <div style="color:var(--muted);font-size:12px;padding:4px;">Loading profiles…</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;">JUDGE</label>
+        <select id="gridJudge" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;min-width:180px;">
+          <option value="ollama-cloud/glm-5.2">ollama-cloud/glm-5.2</option>
         </select>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <label>Profile</label>
-        <select class="grid-select" id="gridProfiles" multiple style="min-width:200px;">
-          {''.join(f'<option value="{_html_escape(c)}" selected>{_html_escape(c)}</option>' for c in configs)}
-        </select>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <label>Show</label>
-        <select class="grid-select">
-          <option>All tasks</option>
-          <option>Passing only</option>
-          <option>Failing only</option>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;">RUN</label>
+        <select id="gridRunSelect" onchange="loadGridRun(this.value)" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;min-width:170px;">
+          <option value="">Current</option>
         </select>
       </div>
       <span style="flex:1;"></span>
-      <button onclick="runGrid()" class="grid-select" style="background:var(--accent-on);border:1px solid rgba(34,197,94,0.3);color:var(--accent);cursor:pointer;">▶ Run Full Grid</button>
-      <button onclick="exportGridCSV('{run_id}')" class="grid-select" style="cursor:pointer;">⬇ Export CSV</button>
+      <button onclick="runGrid()" class="btn btn-primary" style="padding:8px 16px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;">▶ Run Grid</button>
+      <button onclick="exportGridCSV('{run_id}')" class="btn" style="padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;">⬇ Export</button>
     </div>
     <div style="overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px;">
       <table class="data-table" style="width:100%;min-width:800px;">
@@ -1591,48 +1701,115 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
       </table>
     </div>
     <div class="grid-footer">
-      <div class="summary">
-        <strong>{len(task_names)} tasks</strong> × <strong>{len(models)} models</strong> = {len(task_names) * len(models)} data points<br>
-        <strong>Read by pairing:</strong> {_html_escape(summary)}
+      <div class="summary" style="display:flex;flex-direction:column;gap:6px;">
+        <strong>{len(task_names)} tasks</strong> × <strong>{len(models)} models</strong> = {len(task_names) * len(models)} data points
+        {_judge_footer_html(run)}
+        <div style="font-size:12px;line-height:1.6;color:var(--fg-2);">{summary}</div>
       </div>
       <button onclick="runGrid()" style="background:var(--accent);color:var(--accent-on);border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">Run Full Grid</button>
     </div>
     """)
 
 
-def _grid_running_html(agent: str, started_at: str) -> str:
-    """Show a running indicator with polling for an in-progress grid run."""
+def _judge_footer_html(run) -> str:
+    """Render the judge line in the grid footer, or '' when not available.
+
+    `run` is a sqlite3.Row (supports [] and .keys(), NOT .get()) or a dict.
+    Older runs / pre-migration DBs may lack the `judge` column entirely.
+    """
+    if not run:
+        return ""
+    try:
+        keys = run.keys()
+    except AttributeError:
+        keys = []
+    if "judge" not in keys:
+        return ""
+    judge = run["judge"]
+    if not judge:
+        return ""
+    return (
+        '<div style="font-size:11px;color:var(--muted);">Judge: '
+        f"<code>{_html_escape(str(judge))}</code></div>"
+    )
+
+
+def _grid_running_html(agent: str, run_row) -> str:
+    """Show a prominent in-progress view with live cell progress.
+
+    The table is REPLACED by this view while a run is active — old completed
+    results are never shown during a run, so a user can't mistake stale data
+    for the new run's output.
+    """
+    import datetime as _dt
+
+    run_id = run_row["id"]
+    started_at = run_row["started_at"] or ""
+    try:
+        models = json.loads(run_row["models"]) if isinstance(run_row["models"], str) else (run_row["models"] or [])
+    except Exception:
+        models = []
+    try:
+        configs = json.loads(run_row["configs"]) if isinstance(run_row["configs"], str) else (run_row["configs"] or [])
+    except Exception:
+        configs = []
+    total_cells = run_row["total_cells"] or 0
+
+    conn = db._get_conn()
+    done_cells = conn.execute(
+        "SELECT COUNT(*) AS c FROM grid_results WHERE grid_run_id = ?",
+        (run_id,),
+    ).fetchone()["c"] or 0
+
+    pct = int(done_cells * 100 / total_cells) if total_cells else 0
+    elapsed = ""
+    try:
+        start = _dt.datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        mins = max(0, int((_dt.datetime.now(_dt.timezone.utc) - start).total_seconds() // 60))
+        if mins > 0:
+            elapsed = f" · {mins} min elapsed"
+    except Exception:
+        pass
+
+    model_badge = ", ".join(m.split("/")[-1] for m in models) if models else "—"
+    profile_badge = ", ".join(configs) if configs else "—"
+
     return f"""
-    <div class="cap-empty" hx-get="/api/capability/grid/table?agent={_html_escape(agent)}"
-         hx-trigger="every 10s" hx-swap="outerHTML">
-      <div class="cap-empty-icon" style="font-size:32px;">⏳</div>
-      <h2>Grid Run In Progress</h2>
-      <p style="color:var(--fg-3);">
-        Started at {started_at[:19] if started_at else 'unknown'} · models × profiles × tasks
-      </p>
-      <p>Grid comparison tests each model through the full agent harness (SOUL.md + skills + tools). Takes 10–30 minutes. This page refreshes automatically.</p>
-      <div style="margin-top:8px;">
-        <span class="spinner"></span>
-        <span style="color:var(--accent);font-weight:600;font-size:13px;">Running — results will appear here when ready</span>
+    <div class="cap-empty grid-running" hx-get="/api/capability/grid/table?agent={_html_escape(agent)}"
+         hx-trigger="every 10s" hx-swap="outerHTML"
+         style="border:1px solid rgba(34,197,94,0.4);background:linear-gradient(180deg,rgba(34,197,94,0.06),transparent);">
+      <div class="cap-empty-icon" style="font-size:32px;">⚙️</div>
+      <h2 style="display:flex;align-items:center;gap:8px;justify-content:center;">
+        <span class="spinner" style="width:14px;height:14px;"></span>
+        Grid Run In Progress
+      </h2>
+      <div style="max-width:520px;margin:10px auto 0;text-align:left;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--fg-3);margin-bottom:4px;">
+          <span>{done_cells} / {total_cells} cells complete</span>
+          <span style="color:var(--accent);font-weight:600;">{pct}%{elapsed}</span>
+        </div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:{pct}%;background:var(--accent);border-radius:4px;transition:width .5s;"></div>
+        </div>
       </div>
+      <p style="color:var(--fg-3);font-size:12px;margin-top:12px;">
+        Started at {started_at[:19] if started_at else 'unknown'}
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0;">
+        <span class="grid-confirm-chip">models: {_html_escape(model_badge)}</span>
+        <span class="grid-confirm-chip">profiles: {_html_escape(profile_badge)}</span>
+        <span class="grid-confirm-chip">tasks: {total_cells // max(len(models),1) // max(len(configs),1) if total_cells and models and configs else '—'}</span>
+      </div>
+      <p style="font-size:12px;color:var(--fg-3);margin-top:8px;">
+        Each model runs through the full agent harness (SOUL.md + skills + tools).
+        This view refreshes automatically — <strong style="color:var(--accent);">old results are hidden until this run finishes</strong>.
+      </p>
     </div>
     """
 
 
 def _grid_empty_html(agent: str = "main") -> str:
-    """Show empty state with all models but only defaults pre-selected."""
-    from observeco.capability.model_config import load_available_models, get_default_grid_models, get_default_grid_profiles
-    all_models = load_available_models(provider_filter='ollama-cloud')
-    default_models = set(get_default_grid_models())
-    profiles = get_default_grid_profiles()
-    model_options = ''.join(
-        f'<option value="{m}" {"selected" if m in default_models else ""}>{m.split("/")[-1]}</option>'
-        for m in all_models
-    )
-    profile_options = ''.join(
-        f'<option value="{p}" selected>{p}</option>'
-        for p in profiles
-    )
+    """Show empty state with dynamically-loaded models and profiles."""
     return f"""
     <div class="cap-empty">
       <div class="cap-empty-icon">📊</div>
@@ -1641,18 +1818,18 @@ def _grid_empty_html(agent: str = "main") -> str:
         Compare model performance across different agent profiles.
         Each model runs through the full agent harness (SOUL.md + skills + tools).
       </p>
-      <div style="margin:16px 0; display:flex; gap:24px; justify-content:center; flex-wrap:wrap;">
-        <div>
-          <label style="font-size:13px;color:var(--fg-2);">Models:</label>
-          <select id="gridModels" multiple style="min-width:200px;">
-            {model_options}
-          </select>
+      <div style="margin:16px 0; display:flex; gap:24px; justify-content:center; flex-wrap:wrap; align-items:flex-start;">
+        <div style="text-align:left;">
+          <label style="font-size:13px;color:var(--fg-2);display:block;margin-bottom:6px;">Models (all cloud providers): <span style="color:var(--accent);" id="gridModelCount">0 selected</span></label>
+          <div id="gridModels" class="grid-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;min-width:220px;">
+            <div style="color:var(--muted);font-size:12px;padding:4px;">Loading models…</div>
+          </div>
         </div>
-        <div>
-          <label style="font-size:13px;color:var(--fg-2);">Agent Profiles:</label>
-          <select id="gridProfiles" multiple style="min-width:200px;">
-            {profile_options}
-          </select>
+        <div style="text-align:left;">
+          <label style="font-size:13px;color:var(--fg-2);display:block;margin-bottom:6px;">Agent Profiles: <span style="color:var(--accent);" id="gridProfileCount">0 selected</span></label>
+          <div id="gridProfiles" class="grid-checkbox-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;min-width:160px;">
+            <div style="color:var(--muted);font-size:12px;padding:4px;">Loading profiles…</div>
+          </div>
         </div>
       </div>
       <button onclick="runGrid()" class="btn btn-primary">Run Full Grid</button>
@@ -1674,27 +1851,238 @@ def _grid_error_html() -> str:
 
 
 def _generate_grid_summary(cells: list, models: list, configs: list) -> str:
-    """Generate a human-readable summary of grid results."""
+    """Generate an actionable summary of grid results.
+
+    The grid exists to answer one question (Working Backwards): for a fixed
+    agent profile, does the choice of model change agentic quality — and is
+    the difference worth the cost? This summary therefore reports:
+
+    1. Model ranking aggregated across profiles (accuracy + cost/value)
+    2. Profile spread (does the harness identity matter at all?)
+    3. Task-level divergence — where models disagree most (the agentic signal)
+    4. Plain-language takeaway
+    """
     if not cells:
         return "No data to compare."
 
-    # Find best model×config by accuracy
-    best = max(cells, key=lambda c: c["accuracy"] if c["accuracy"] is not None else 0)
-    best_model = best["model"]
-    best_config = best["config"]
-    best_acc = best["accuracy"] * 100 if best["accuracy"] else 0
+    # Normalize rows to dicts — the DB returns sqlite3.Row which lacks .get(),
+    # but the summary uses .get() extensively. Convert once up front.
+    cells = [dict(c) for c in cells]
 
-    # Find cheapest
-    cheapest = min(cells, key=lambda c: c["cost"] if c["cost"] else 999)
-    cheap_model = cheapest["model"]
-    cheap_config = cheapest["config"]
-    cheap_cost = cheapest["cost"] or 0
+    def _mname(m: str) -> str:
+        return m.split("/")[-1]
 
-    # Compare best vs cheapest
-    if best_model == cheap_model and best_config == cheap_config:
-        return f"{best_model} × {best_config} leads on both accuracy ({best_acc:.0f}%) and cost (${cheap_cost:.4f})."
+    # ── 0. Measurement validity — are these results trustworthy? ──
+    # A cell is "measured" only if it produced a real scorable response.
+    # Measurement failures (provider_error / judge_failure / hang) must NEVER
+    # be ranked as quality 0s. Handles both NULL accuracy (new runs) and
+    # legacy 0.0-with-flag rows (old runs) — a flag is authoritative.
+    total_cells = len(cells)
 
-    return f"{best_model} × {best_config} wins on raw accuracy ({best_acc:.0f}%). {cheap_model} × {cheap_config} is cheapest at ${cheap_cost:.4f}. Model and harness interact — read grid by pairing, not isolated components."
+    def _is_measurement_failure(c) -> bool:
+        if c.get("accuracy") is None:
+            return True
+        raw_flags = c.get("flags") or []
+        # flags may be a JSON string (DB) or an already-parsed list.
+        if isinstance(raw_flags, str):
+            try:
+                raw_flags = json.loads(raw_flags)
+            except Exception:
+                raw_flags = []
+        flag_strs = [str(f) for f in raw_flags]
+        if any("provider_error" in f for f in flag_strs):
+            return True
+        if any("judge_failure" in f for f in flag_strs):
+            return True
+        if c.get("hang"):
+            return True
+        return False
+
+    measured = [c for c in cells if not _is_measurement_failure(c)]
+    unmeasured = total_cells - len(measured)
+
+    def _flags_list(c) -> list:
+        raw = c.get("flags") or []
+        if isinstance(raw, str):
+            try:
+                return json.loads(raw)
+            except Exception:
+                return []
+        return list(raw)
+
+    provider_err = sum(1 for c in cells if any("provider_error" in str(f) for f in _flags_list(c)))
+    judge_fail = sum(1 for c in cells if any("judge_failure" in str(f) for f in _flags_list(c)))
+    timeout = sum(1 for c in cells if c.get("hang"))
+
+    validity_pct = len(measured) / total_cells * 100 if total_cells else 0
+
+    dubious: list[str] = []
+    if provider_err:
+        dubious.append(f"{provider_err} cell(s) failed at the provider (API error — model never answered)")
+    if judge_fail:
+        dubious.append(f"{judge_fail} cell(s) failed at the judge (LLM judge could not score — results may be fallback matches, not real quality)")
+    if timeout:
+        dubious.append(f"{timeout} cell(s) timed out")
+    if unmeasured:
+        dubious.append(f"{unmeasured} cell(s) produced no scorable response")
+
+    # Model-level measurement validity — a model whose cells mostly failed
+    # cannot be compared fairly.
+    model_unmeasured: dict[str, int] = {}
+    model_total: dict[str, int] = {}
+    for c in cells:
+        m = c["model"]
+        model_total[m] = model_total.get(m, 0) + 1
+        if _is_measurement_failure(c):
+            model_unmeasured[m] = model_unmeasured.get(m, 0) + 1
+
+    bad_models = [
+        m for m, tot in model_total.items()
+        if tot > 0 and model_unmeasured.get(m, 0) / tot >= 0.5
+    ]
+
+    lines: list[str] = []
+
+    if dubious or bad_models:
+        warn_items = list(dubious)
+        if bad_models:
+            warn_items.append(
+                f"{', '.join(_html_escape(_mname(m)) for m in bad_models)} had ≥50% failed cells — "
+                f"excluded from ranking"
+            )
+        lines.append(
+            f"<div style=\"background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);"
+            f"border-radius:8px;padding:10px 12px;margin-bottom:10px;\">"
+            f"<strong style=\"color:#f87171;\">⚠️ Dubious run — {validity_pct:.0f}% of cells measured</strong><br>"
+            f"<span style=\"color:var(--fg-2);font-size:12px;\">{' · '.join(warn_items)}.</span>"
+            f"<br><span style=\"color:var(--fg-3);font-size:12px;\">"
+            f"The rankings below are NOT reliable — fix the measurement failures before trusting them.</span>"
+            f"</div>"
+        )
+        # Only rank models with enough measured cells — never rank a model
+        # whose data is mostly measurement failure, and drop the failed cells
+        # from remaining models too (a failure is not a quality 0).
+        cells = [
+            c for c in cells
+            if not _is_measurement_failure(c) and c["model"] not in bad_models
+        ]
+
+    # 1. Aggregate per model across all profiles
+    model_stats: dict[str, dict] = {}
+    for c in cells:
+        acc = c["accuracy"] or 0
+        cost = c["cost"] or 0
+        s = model_stats.setdefault(c["model"], {"acc": [], "pass": 0, "total": 0, "cost": []})
+        s["acc"].append(acc)
+        s["cost"].append(cost)
+        if acc > 0:
+            s["pass"] += 1
+        s["total"] += 1
+    model_rank = sorted(
+        model_stats.items(),
+        key=lambda kv: (sum(kv[1]["acc"]) / kv[1]["total"]),
+        reverse=True,
+    )
+
+    # 2. Aggregate per profile across all models
+    profile_stats: dict[str, list] = {}
+    for c in cells:
+        profile_stats.setdefault(c["config"], []).append(c["accuracy"] or 0)
+    profile_avgs = {p: sum(a) / len(a) for p, a in profile_stats.items()}
+    profile_spread = max(profile_avgs.values()) - min(profile_avgs.values())
+
+    # 3. Task-level model divergence (agentic signal): per task, the range
+    # between best-model avg and worst-model avg across profiles.
+    task_rows: dict[str, dict] = {}
+    for c in cells:
+        t = task_rows.setdefault(c["task_name"], {})
+        per_model = t.setdefault("per_model", {})
+        per_model.setdefault(c["model"], []).append(c["accuracy"] or 0)
+    divergences = []
+    for task, data in task_rows.items():
+        avgs = {m: sum(v) / len(v) for m, v in data["per_model"].items()}
+        spread = max(avgs.values()) - min(avgs.values())
+        if spread > 0.15:  # meaningful divergence (>15 pts)
+            divergences.append((task, spread, avgs))
+    divergences.sort(key=lambda x: x[1], reverse=True)
+
+    lines.append(f"<strong>Model ranking (agentic quality, all profiles):</strong>")
+    for i, (m, s) in enumerate(model_rank, 1):
+        avg = sum(s["acc"]) / s["total"]
+        cost = sum(s["cost"]) / s["total"]
+        badge = " 🏆" if i == 1 else ""
+        lines.append(
+            f"&nbsp;&nbsp;{i}. {_html_escape(_mname(m))} — "
+            f"<strong>{avg*100:.1f}%</strong> avg ({s['pass']}/{s['total']} tasks pass), "
+            f"${cost:.4f}/cell{badge}"
+        )
+
+    # Cost per accuracy point (value ranking) — only models WITH cost data.
+    # A model with all-zero cost (missing pricing table entry or token parse
+    # failure) would otherwise rank as "free" and corrupt the takeaway.
+    costed_models = [
+        kv for kv in model_rank
+        if sum(kv[1]["cost"]) / kv[1]["total"] > 0
+    ]
+    if costed_models:
+        value_rank = sorted(
+            costed_models,
+            key=lambda kv: (sum(kv[1]["cost"]) / kv[1]["total"]) / max(sum(kv[1]["acc"]) / kv[1]["total"], 0.01),
+        )
+        best_value = value_rank[0][0]
+        best_value_cost = sum(value_rank[0][1]["cost"]) / value_rank[0][1]["total"]
+        best_value_acc = sum(value_rank[0][1]["acc"]) / value_rank[0][1]["total"]
+        lines.append(
+            f"<strong>Best value:</strong> {_html_escape(_mname(best_value))} — "
+            f"${best_value_cost:.4f}/cell for {best_value_acc*100:.1f}% accuracy "
+            f"(${best_value_cost / max(best_value_acc, 0.01):.3f} per accuracy point)."
+        )
+        missing_cost = [m for m, s in model_rank if sum(s["cost"]) / s["total"] <= 0]
+        if missing_cost:
+            lines.append(
+                f"<span style=\"color:var(--warn);\">⚠️ Cost data missing for: "
+                f"{', '.join(_html_escape(_mname(m)) for m in missing_cost)} — "
+                f"excluded from value ranking.</span>"
+            )
+    else:
+        lines.append("<span style=\"color:var(--warn);\">⚠️ No cost data recorded for any model — value ranking unavailable.</span>")
+
+    # Profile spread
+    if profile_spread < 0.05:
+        lines.append(
+            f"<strong>Profile spread:</strong> {profile_spread*100:.1f} pts across "
+            f"{len(profile_avgs)} profiles — profiles behave nearly identically on these tasks. "
+            f"Model choice matters more than agent identity here."
+        )
+    else:
+        best_p = max(profile_avgs, key=profile_avgs.get)
+        lines.append(
+            f"<strong>Profile spread:</strong> {profile_spread*100:.1f} pts — "
+            f"{_html_escape(best_p)} leads ({profile_avgs[best_p]*100:.1f}%). "
+            f"Agent identity shifts results on these tasks."
+        )
+
+    # Task divergence
+    if divergences:
+        top = divergences[0]
+        worst_model = min(top[2], key=top[2].get)
+        best_model = max(top[2], key=top[2].get)
+        lines.append(
+            f"<strong>Biggest model disagreement:</strong> "
+            f"<em>{_html_escape(top[0][:60])}</em> — {_html_escape(_mname(best_model))} "
+            f"{top[2][best_model]*100:.0f}% vs {_html_escape(_mname(worst_model))} "
+            f"{top[2][worst_model]*100:.0f}% ({top[1]*100:.0f} pt gap). "
+            f"This is where model choice changes agentic outcome."
+        )
+        if len(divergences) > 1:
+            others = ", ".join(
+                f"{_html_escape(t[:30])} ({_html_escape(_mname(max(a, key=lambda k: a[k])))} {max(a.values())*100:.0f}% vs "
+                f"{_html_escape(_mname(min(a, key=lambda k: a[k])))} {min(a.values())*100:.0f}%)"
+                for t, _, a in divergences[1:4]
+            )
+            lines.append(f"&nbsp;&nbsp;also diverges: {others}")
+
+    return "<br>".join(lines)
 
 
 # ── Timeline HTML partial ────────────────────────────────────────────────────
@@ -2338,7 +2726,14 @@ async def capability_page(agent: str = Query("default")):
 
     </div>
 
+    <script src="/static/js/capability.js"></script>
     <script>
+    // ── Populate model/profile checkboxes dynamically from /grid/options ──
+    // capability.js registers DOMContentLoaded + htmx:afterSwap listeners, but
+    // this fragment is injected by htmx AFTER DOMContentLoaded has fired, so
+    // those listeners never run for this load. Call the loader explicitly.
+    if (window.loadGridOptions) window.loadGridOptions();
+
     // ── Agent switcher ──
     function switchCapabilityAgent(agent) {{
       htmx.ajax('GET', '/api/capability/page?agent=' + encodeURIComponent(agent), {{target: '#capabilityContainer', swap: 'innerHTML'}});

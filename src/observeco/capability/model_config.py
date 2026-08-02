@@ -152,13 +152,113 @@ def get_provider_models(provider_name: str) -> list[str]:
     return load_available_models(provider_filter=provider_name)
 
 
+def list_runnable_cloud_providers() -> dict[str, dict]:
+    """Return cloud providers that have a base_url + API key, with their models.
+
+    Generic discovery for the grid UI. Returns:
+        {
+            "provider_name": {
+                "default_model": str,
+                "models": ["provider/model", ...],
+            }
+        }
+    Only providers that are actually runnable (reachable base_url + key)
+    are included. Reads the endpoint from either the `base_url` or `api`
+    config key (some providers use `api`). Providers with no configured
+    models are skipped unless a default_model is present.
+    """
+    config_path = Path.home() / '.hermes' / 'config.yaml'
+    result: dict[str, dict] = {}
+    if not config_path.exists():
+        return result
+    try:
+        import yaml
+        with open(config_path) as f:
+            cfg = yaml.safe_load(f) or {}
+        providers = cfg.get('providers', {})
+        for name, p in providers.items():
+            p = p or {}
+            base_url = p.get('base_url', '') or p.get('api', '')
+            if not base_url:
+                continue
+            api_key = p.get('api_key', '') or os.environ.get(f'{name.upper()}_API_KEY', '')
+            if not api_key:
+                continue
+            provider_models = p.get('models', {}) or {}
+            default_model = p.get('default_model', '')
+            # Only keep chat-eligible models — filter out TTS/ASR/embedding/voice
+            # variants that can't handle chat completions (would 0-out every grid cell).
+            def _is_chat_model(mid: str) -> bool:
+                low = mid.lower()
+                return not any(
+                    token in low for token in
+                    ("tts", "asr", "voiceclone", "voicedesign", "voice-clone", "embed", "stt")
+                )
+            model_specs = [f"{name}/{m}" for m in provider_models if _is_chat_model(m)]
+            # If the provider lists no explicit models, fetch the full set from
+            # its API (e.g. ollama-cloud exposes ~19 models via /models). This
+            # must NOT short-circuit on default_model alone — that would hide
+            # every model but the default.
+            if not provider_models:
+                api_models = _fetch_models_from_api(name, base_url)
+                api_specs = [f"{name}/{m}" for m in api_models if _is_chat_model(m)]
+                if api_specs:
+                    model_specs = api_specs
+            if default_model and _is_chat_model(default_model) and f"{name}/{default_model}" not in model_specs:
+                model_specs.append(f"{name}/{default_model}")
+            if not model_specs:
+                # No explicit list and API fetch failed — nothing runnable.
+                continue
+            result[name] = {
+                "default_model": f"{name}/{default_model}" if default_model else (model_specs[0] if model_specs else ""),
+                "models": model_specs,
+            }
+    except Exception as e:
+        logger.warning("Failed to enumerate cloud providers: %s", e)
+    return result
+
+
 def get_default_grid_models() -> list[str]:
-    """Get default models for a grid run — just the most relevant few."""
-    models = load_available_models(provider_filter='ollama-cloud')
-    # Pre-select deepseek models + glm-5.2 as defaults
-    priority = ['deepseek-v4-flash', 'deepseek-v4-pro', 'glm-5.2']
-    defaults = [f'ollama-cloud/{m}' for m in priority if f'ollama-cloud/{m}' in models]
-    return defaults or models[:2]
+    """Get default models for a grid run — all cloud providers, not hardcoded.
+
+    Returns one default model per cloud provider that has a reachable
+    base_url and an API key configured. Falls back to a couple of known
+    defaults if nothing resolvable is found. No hardcoded model names
+    beyond a last-resort fallback.
+    """
+    config_path = Path.home() / '.hermes' / 'config.yaml'
+    models: list[str] = []
+    if config_path.exists():
+        try:
+            import yaml
+            with open(config_path) as f:
+                cfg = yaml.safe_load(f) or {}
+            providers = cfg.get('providers', {})
+            for name, p in providers.items():
+                if name in ('9router', 'ollama', 'ollama-local', 'custom-ollama', 'zhipuai'):
+                    continue  # skip local / dead-gateway providers
+                base_url = (p or {}).get('base_url', '')
+                if not base_url:
+                    continue
+                # A cloud provider needs an API key to be runnable.
+                api_key = (p or {}).get('api_key', '') or os.environ.get(f'{name.upper()}_API_KEY', '')
+                if not api_key:
+                    continue
+                provider_models = (p or {}).get('models', {})
+                default_model = (p or {}).get('default_model', '')
+                # Pick one representative model per provider so a fresh grid
+                # doesn't explode into hundreds of cells.
+                if provider_models:
+                    rep = next(iter(provider_models))
+                    models.append(f"{name}/{rep}")
+                elif default_model:
+                    models.append(f"{name}/{default_model}")
+        except Exception:
+            pass
+    if not models:
+        # Last-resort fallback — keep 2 cheap defaults rather than none.
+        models = ["ollama-cloud/deepseek-v4-flash", "ollama-cloud/deepseek-v4-pro"]
+    return models
 
 
 def load_available_profiles() -> list[str]:
@@ -186,8 +286,18 @@ def load_available_profiles() -> list[str]:
 
 
 def get_default_grid_profiles() -> list[str]:
-    """Get the default agent profiles for a grid run."""
+    """Get the default agent profiles for a grid run.
+
+    Generic: returns ALL profiles that have a SOUL.md, in a stable order.
+    No hardcoded profile list and no 3-profile cap — a user's fleet of
+    agents is whatever exists in ~/.hermes/profiles/. The UI decides how
+    many are pre-selected, not this function.
+    """
     profiles = load_available_profiles()
-    priority = [p for p in ['main', 'accelerator', 'hound'] if p in profiles]
-    rest = [p for p in profiles if p not in priority]
-    return (priority + rest)[:3]
+    # Stable, deterministic order: put the "primary" agents first if present,
+    # then the rest alphabetically. Never drops profiles arbitrarily.
+    if not profiles:
+        return ["main", "accelerator"]
+    primary = [p for p in ("main", "accelerator", "hound") if p in profiles]
+    rest = [p for p in profiles if p not in primary]
+    return primary + sorted(rest)
