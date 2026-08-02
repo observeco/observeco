@@ -2477,6 +2477,7 @@ async def capability_page(agent: str = Query("default")):
 
     </div>
 
+    <script src="/static/js/capability.js"></script>
     <script>
     // ── Agent switcher ──
     function switchCapabilityAgent(agent) {{
