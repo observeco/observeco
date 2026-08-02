@@ -98,7 +98,9 @@
 
   // ── Grid comparison runner ──
   window.runGrid = function() {
-    var agent = _getCapAgent();
+    var judgeSel = document.getElementById('gridJudge');
+    var agentSel = document.getElementById('gridAgent');
+    var agent = (agentSel && agentSel.value) ? agentSel.value : _getCapAgent();
     var selectedModels = [];
     var modelCbs = document.querySelectorAll('#gridModels .grid-model-cb:checked');
     for (var i = 0; i < modelCbs.length; i++) {
@@ -125,11 +127,12 @@
         showGridConfirm({
           models: selectedModels,
           profiles: selectedProfiles,
+          judge: judgeSel ? judgeSel.value : '',
           taskCount: taskCount,
           cells: est,
           mins: mins,
           large: large,
-          onRun: function() { startGridRun(agent, selectedModels, selectedProfiles); }
+          onRun: function() { startGridRun(agent, selectedModels, selectedProfiles, judgeSel ? judgeSel.value : ''); }
         });
       })
       .catch(function(e) { showToast('Could not estimate run: ' + e.message); });
@@ -195,13 +198,16 @@
   }
 
   // ── Actually start the grid run ──
-  function startGridRun(agent, selectedModels, selectedProfiles) {
+  function startGridRun(agent, selectedModels, selectedProfiles, judge) {
     var url = '/api/capability/grid/run?agent=' + encodeURIComponent(agent);
     if (selectedModels.length > 0) {
       url += '&models=' + encodeURIComponent(selectedModels.join(','));
     }
     if (selectedProfiles.length > 0) {
       url += '&configs=' + encodeURIComponent(selectedProfiles.join(','));
+    }
+    if (judge) {
+      url += '&judge=' + encodeURIComponent(judge);
     }
     return fetch(url, {method:'POST', headers:_authHeaders()})
       .then(function(r) { return r.json(); })
@@ -278,6 +284,41 @@
         });
         pList.innerHTML = pHtml || '<div style="color:var(--muted);font-size:12px;padding:4px;">No profiles found</div>';
 
+        // Judge select
+        var judgeSel = document.getElementById('gridJudge');
+        if (judgeSel) {
+          var curJudge = judgeSel.value || opts.default_judge || 'ollama-cloud/glm-5.2';
+          var jHtml = '';
+          (opts.judge_options || []).forEach(function(j){
+            var sel = (j.spec === curJudge) ? 'selected' : '';
+            jHtml += '<option value="' + esc(j.spec) + '" ' + sel + '>' + esc(j.spec) + '</option>';
+          });
+          if (jHtml) judgeSel.innerHTML = jHtml;
+        }
+
+        // Agent select (all agents with grid data, keep current selection)
+        var agentSel = document.getElementById('gridAgent');
+        if (agentSel) {
+          var curAgent = agentSel.value || 'main';
+          var aHtml = '';
+          (opts.agent_options || []).forEach(function(a){
+            var sel = (a === curAgent) ? 'selected' : '';
+            aHtml += '<option value="' + esc(a) + '" ' + sel + '>' + esc(a) + '</option>';
+          });
+          if (aHtml) agentSel.innerHTML = aHtml;
+        }
+
+        // Run history selector
+        var runSel = document.getElementById('gridRunSelect');
+        if (runSel) {
+          var rHtml = '<option value="">Current</option>';
+          (opts.run_history || []).forEach(function(r){
+            var label = r.started_at + ' · ' + r.agent + ' · ' + r.status + ' · ' + r.cells + ' cells';
+            rHtml += '<option value="' + esc(r.id) + '">' + esc(label) + '</option>';
+          });
+          runSel.innerHTML = rHtml;
+        }
+
         updateGridCounts();
       })
       .catch(function(){
@@ -291,6 +332,16 @@
     d.textContent = s;
     return d.innerHTML;
   }
+
+  // ── Load a specific historical run (run selector) ──
+  window.loadGridRun = function(runId) {
+    var agent = _getCapAgent();
+    var t = new URLSearchParams(location.search).get('token') || '';
+    var url = '/api/capability/grid/table?agent=' + encodeURIComponent(agent) +
+              (runId ? '&run_id=' + encodeURIComponent(runId) : '');
+    if (t) url += '&token=' + t;
+    htmx.ajax('GET', url, {target: '#gridTableContainer', swap: 'innerHTML'});
+  };
 
   // Initialize on load + after grid table swaps
   document.addEventListener('DOMContentLoaded', function() { loadGridOptions(); });

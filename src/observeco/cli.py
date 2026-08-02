@@ -2723,6 +2723,8 @@ def grid_cap_run(
     task_ids: Optional[str] = typer.Option(None, "--tasks", "-t",
                                             help="Comma-separated task IDs (default: all)"),
     trials: int = typer.Option(3, "--trials", "-n", help="Trials per task per cell"),
+    judge: Optional[str] = typer.Option(None, "--judge", "-j",
+                                         help="Judge model spec (provider/model) for llm_judge scoring"),
 ) -> None:
     """Run full grid: all models × configs × tasks using ProfileAwareAdapter.
 
@@ -2753,12 +2755,17 @@ def grid_cap_run(
     if task_ids:
         task_id_list = [t.strip() for t in task_ids.split(",")]
 
-    print("\n🧪 Capability Grid")
+    print("🧪 Capability Grid")
     print(f"   Agent: {agent}")
     print(f"   Models: {model_list}")
     print(f"   Profiles: {config_list}")
     print(f"   Tasks: {task_id_list or 'all'}")
     print(f"   Trials: {trials}")
+    if judge:
+        # Pass the selected judge to the scorer via env — the Scorer's BYOK
+        # judge chain reads this to prefer the chosen model/provider.
+        os.environ["OBSERVECO_JUDGE_MODEL"] = judge
+        print(f"   Judge: {judge}")
     print()
 
     runner = CapabilityGridRunner()

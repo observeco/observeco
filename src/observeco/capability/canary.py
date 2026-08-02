@@ -395,6 +395,19 @@ class Scorer:
             "model": "glm-5.2",
         })
 
+        # User-selected judge (OBSERVECO_JUDGE_MODEL=provider/model) gets top
+        # priority — the grid run's Judge dropdown sets this. Parse it and
+        # push the matching provider/model to the front of the chain.
+        selected = os.environ.get("OBSERVECO_JUDGE_MODEL", "").strip()
+        if selected and "/" in selected:
+            sel_provider, _, sel_model = selected.partition("/")
+            for prov in providers:
+                if prov["name"] == sel_provider:
+                    prov["model"] = sel_model
+                    providers.remove(prov)
+                    providers.insert(0, prov)
+                    break
+
         # Prefer deepseek as an early fallback — it has a healthy independent
         # key and reliably returns <score>N</score>. Move it right after
         # ollama-cloud in priority.

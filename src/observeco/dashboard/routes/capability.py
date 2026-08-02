@@ -260,6 +260,8 @@ async def grid_run_from_dashboard(
             cmd += ["--models", models]
         if configs:
             cmd += ["--configs", configs]
+        if judge:
+            cmd += ["--judge", judge]
         subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
@@ -1471,6 +1473,38 @@ async def grid_options():
             judge_options.append({"spec": spec, "provider": pname})
     judge_options.sort(key=lambda j: (j["spec"] != "ollama-cloud/glm-5.2", j["provider"], j["spec"]))
 
+    # Agent options — all agents that have grid data (for the agent switcher).
+    agent_options = []
+    try:
+        db = _DB()
+        conn = db._get_conn()
+        rows = conn.execute(
+            "SELECT DISTINCT agent_name FROM grid_runs ORDER BY agent_name"
+        ).fetchall()
+        agent_options = [r["agent_name"] for r in rows]
+    except Exception:
+        pass
+
+    # Historical runs — completed/running runs per agent for the run selector.
+    run_history = []
+    try:
+        db = _DB()
+        conn = db._get_conn()
+        rows = conn.execute(
+            "SELECT id, agent_name, status, total_cells, started_at, completed_at "
+            "FROM grid_runs ORDER BY started_at DESC LIMIT 20"
+        ).fetchall()
+        for r in rows:
+            run_history.append({
+                "id": r["id"],
+                "agent": r["agent_name"],
+                "status": r["status"],
+                "cells": r["total_cells"],
+                "started_at": (r["started_at"] or "")[:19],
+            })
+    except Exception:
+        pass
+
     task_count = 0
     try:
         db = _DB()
@@ -1487,6 +1521,8 @@ async def grid_options():
         "default_models": list(default_models),
         "judge_options": judge_options,
         "default_judge": "ollama-cloud/glm-5.2",
+        "agent_options": agent_options,
+        "run_history": run_history,
         "task_count": task_count,
     }
 
@@ -1620,7 +1656,7 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
       <div style="display:flex;align-items:center;gap:6px;">
         <label style="font-size:11px;color:var(--muted);font-weight:600;">AGENT</label>
         <select class="grid-select" id="gridAgent" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;">
-          <option>{_html_escape(agent)}</option>
+          <option value="{_html_escape(agent)}">{_html_escape(agent)}</option>
         </select>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:240px;">
@@ -1640,6 +1676,18 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
         <div id="gridProfiles" class="grid-checkbox-list" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;">
           <div style="color:var(--muted);font-size:12px;padding:4px;">Loading profiles…</div>
         </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;">JUDGE</label>
+        <select id="gridJudge" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;min-width:180px;">
+          <option value="ollama-cloud/glm-5.2">ollama-cloud/glm-5.2</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;">RUN</label>
+        <select id="gridRunSelect" onchange="loadGridRun(this.value)" style="padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg);font-size:12px;min-width:170px;">
+          <option value="">Current</option>
+        </select>
       </div>
       <span style="flex:1;"></span>
       <button onclick="runGrid()" class="btn btn-primary" style="padding:8px 16px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;">▶ Run Grid</button>
