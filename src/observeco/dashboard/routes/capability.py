@@ -2685,12 +2685,12 @@ async def capability_page(agent: str = Query("default")):
         </div>
       </div>
 
-      <!-- ──── Section 5: Advanced (collapsed) ──── -->
-      <div class="cap-advanced-toggle" onclick="toggleAdvanced()">
+      <!-- ──── Section 5: Advanced (open by default — grid controls must be visible) ──── -->
+      <div class="cap-advanced-toggle open" onclick="toggleAdvanced()">
         <span class="arrow">▶</span> Advanced
         <span style="font-size:11px;color:var(--fg-3);">Grid Comparison, Task Editor</span>
       </div>
-      <div class="cap-advanced-body" id="capAdvancedBody">
+      <div class="cap-advanced-body open" id="capAdvancedBody">
         <!-- Grid -->
         <div class="cap-section">
           <div class="cap-section-h">
