@@ -195,12 +195,20 @@ def list_runnable_cloud_providers() -> dict[str, dict]:
                     ("tts", "asr", "voiceclone", "voicedesign", "voice-clone", "embed", "stt")
                 )
             model_specs = [f"{name}/{m}" for m in provider_models if _is_chat_model(m)]
+            # If the provider lists no explicit models, fetch the full set from
+            # its API (e.g. ollama-cloud exposes ~19 models via /models). This
+            # must NOT short-circuit on default_model alone — that would hide
+            # every model but the default.
+            if not provider_models:
+                api_models = _fetch_models_from_api(name, base_url)
+                api_specs = [f"{name}/{m}" for m in api_models if _is_chat_model(m)]
+                if api_specs:
+                    model_specs = api_specs
             if default_model and _is_chat_model(default_model) and f"{name}/{default_model}" not in model_specs:
                 model_specs.append(f"{name}/{default_model}")
             if not model_specs:
-                # No explicit list; try fetching from the provider API.
-                api_models = _fetch_models_from_api(name, base_url)
-                model_specs = [f"{name}/{m}" for m in api_models if _is_chat_model(m)]
+                # No explicit list and API fetch failed — nothing runnable.
+                continue
             result[name] = {
                 "default_model": f"{name}/{default_model}" if default_model else (model_specs[0] if model_specs else ""),
                 "models": model_specs,
