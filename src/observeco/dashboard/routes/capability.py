@@ -1491,7 +1491,7 @@ async def grid_options():
         db = _DB()
         conn = db._get_conn()
         rows = conn.execute(
-            "SELECT id, agent_name, status, total_cells, started_at, completed_at "
+            "SELECT id, agent_name, status, total_cells, started_at, completed_at, judge "
             "FROM grid_runs ORDER BY started_at DESC LIMIT 20"
         ).fetchall()
         for r in rows:
@@ -1500,6 +1500,7 @@ async def grid_options():
                 "agent": r["agent_name"],
                 "status": r["status"],
                 "cells": r["total_cells"],
+                "judge": r["judge"] or "",
                 "started_at": (r["started_at"] or "")[:19],
             })
     except Exception:
@@ -1702,11 +1703,35 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     <div class="grid-footer">
       <div class="summary" style="display:flex;flex-direction:column;gap:6px;">
         <strong>{len(task_names)} tasks</strong> × <strong>{len(models)} models</strong> = {len(task_names) * len(models)} data points
+        {_judge_footer_html(run)}
         <div style="font-size:12px;line-height:1.6;color:var(--fg-2);">{summary}</div>
       </div>
       <button onclick="runGrid()" style="background:var(--accent);color:var(--accent-on);border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;">Run Full Grid</button>
     </div>
     """)
+
+
+def _judge_footer_html(run) -> str:
+    """Render the judge line in the grid footer, or '' when not available.
+
+    `run` is a sqlite3.Row (supports [] and .keys(), NOT .get()) or a dict.
+    Older runs / pre-migration DBs may lack the `judge` column entirely.
+    """
+    if not run:
+        return ""
+    try:
+        keys = run.keys()
+    except AttributeError:
+        keys = []
+    if "judge" not in keys:
+        return ""
+    judge = run["judge"]
+    if not judge:
+        return ""
+    return (
+        '<div style="font-size:11px;color:var(--muted);">Judge: '
+        f"<code>{_html_escape(str(judge))}</code></div>"
+    )
 
 
 def _grid_running_html(agent: str, run_row) -> str:

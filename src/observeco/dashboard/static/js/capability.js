@@ -313,7 +313,8 @@
         if (runSel) {
           var rHtml = '<option value="">Current</option>';
           (opts.run_history || []).forEach(function(r){
-            var label = r.started_at + ' · ' + r.agent + ' · ' + r.status + ' · ' + r.cells + ' cells';
+            var label = r.started_at + ' · ' + r.agent + ' · ' + r.status + ' · ' + r.cells + ' cells' +
+                        (r.judge ? ' · judge=' + r.judge : '');
             rHtml += '<option value="' + esc(r.id) + '">' + esc(label) + '</option>';
           });
           runSel.innerHTML = rHtml;

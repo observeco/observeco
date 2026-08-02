@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -142,16 +143,19 @@ class CapabilityGridRunner:
 
         tasks = [dict(r) for r in rows]
 
-        # Create grid run record
+        # Create grid run record — records the judge used (OBSERVECO_JUDGE_MODEL
+        # env, set by CLI --judge) so each run is auditable: which LLM judge
+        # produced these scores.
         run_id = str(uuid.uuid4())
         now_iso = datetime.now(timezone.utc).isoformat()
         total_cells = len(tasks) * len(models) * len(configs)
+        judge = os.environ.get("OBSERVECO_JUDGE_MODEL", "").strip() or None
 
         conn.execute(
-            "INSERT INTO grid_runs (id, agent_name, started_at, status, models, configs, total_cells) "
-            "VALUES (?, ?, ?, 'running', ?, ?, ?)",
+            "INSERT INTO grid_runs (id, agent_name, started_at, status, models, configs, total_cells, judge) "
+            "VALUES (?, ?, ?, 'running', ?, ?, ?, ?)",
             (run_id, agent_name, now_iso,
-             json.dumps(models), json.dumps(configs), total_cells),
+             json.dumps(models), json.dumps(configs), total_cells, judge),
         )
         conn.commit()
 

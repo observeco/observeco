@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 67
+SCHEMA_VERSION = 68
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -712,6 +712,7 @@ CREATE TABLE IF NOT EXISTS grid_runs (
     configs     TEXT NOT NULL,     -- JSON array of config labels
     total_cells INTEGER NOT NULL,
     total_cost  REAL,
+    judge       TEXT,              -- judge model spec used for llm_judge scoring
     error       TEXT
 );
 
@@ -1002,6 +1003,10 @@ CREATE TABLE IF NOT EXISTS dismissed_gaps (
     dismissed_at TEXT NOT NULL DEFAULT (datetime('now')),
     dismiss_count INTEGER DEFAULT 1
 );
+"""),
+    # Migration 68: judge column on grid_runs — which LLM judge produced a run
+    (68, """-- Migration 68: record which LLM judge scored each grid run
+ALTER TABLE grid_runs ADD COLUMN judge TEXT;
 """),
 ]
 
