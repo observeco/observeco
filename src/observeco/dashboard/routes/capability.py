@@ -1416,15 +1416,85 @@ def _drift_insufficient_html(agent: str, run_count: int) -> HTMLResponse:
 
 
 def _get_all_models() -> list[str]:
-    """Get all available models for the grid UI."""
-    from observeco.capability.model_config import load_available_models
-    return load_available_models(provider_filter='ollama-cloud')
+    """Get all available models for the grid UI — all runnable cloud providers."""
+    from observeco.capability.model_config import list_runnable_cloud_providers
+    providers = list_runnable_cloud_providers()
+    models = []
+    for info in providers.values():
+        models.extend(info["models"])
+    return models
 
 
 def _get_default_models_set() -> set[str]:
     """Get the default pre-selected models."""
     from observeco.capability.model_config import get_default_grid_models
     return set(get_default_grid_models())
+
+
+def _get_all_profiles() -> list[str]:
+    """Get all agent profiles for the grid UI — not capped."""
+    from observeco.capability.model_config import get_default_grid_profiles
+    return get_default_grid_profiles()
+
+
+def _get_default_profile_set() -> set[str]:
+    """Get the default pre-selected profiles (first 3, the primary agents)."""
+    from observeco.capability.model_config import get_default_grid_profiles
+    profiles = get_default_grid_profiles()
+    return set(profiles[:3])
+
+
+@router.get("/grid/options", response_class=JSONResponse)
+async def grid_options():
+    """GET /api/capability/grid/options — available models (grouped by provider),
+    profiles, and task count for building the grid controls.
+
+    Generic: reads from hermes config, not hardcoded. The UI uses this to
+    render provider-grouped model selectors, profile checkboxes, and a
+    live cell-count estimate before a run.
+    """
+    from observeco.capability.model_config import (
+        get_default_grid_models,
+        get_default_grid_profiles,
+        list_runnable_cloud_providers,
+    )
+    from observeco.db import Database as _DB
+
+    providers = list_runnable_cloud_providers()
+    default_models = set(get_default_grid_models())
+    model_groups = []
+    for pname, info in providers.items():
+        model_groups.append({
+            "provider": pname,
+            "default_model": info["default_model"],
+            "models": [
+                {
+                    "spec": m,
+                    "name": m.split("/")[-1],
+                    "is_default": m in default_models,
+                }
+                for m in info["models"]
+            ],
+        })
+
+    profiles = get_default_grid_profiles()
+
+    task_count = 0
+    try:
+        db = _DB()
+        conn = db._get_conn()
+        task_count = conn.execute(
+            "SELECT COUNT(*) as c FROM canary_tasks WHERE built_in = 1"
+        ).fetchone()["c"]
+    except Exception:
+        task_count = 0
+
+    return {
+        "model_groups": model_groups,
+        "profiles": profiles,
+        "default_models": list(default_models),
+        "task_count": task_count,
+    }
 
 
 # ── Grid report HTML partial ─────────────────────────────────────────────────
