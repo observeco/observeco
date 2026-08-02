@@ -1237,6 +1237,36 @@ def snapshot_command(
     run_snapshot(snapshot_name=name, output_dir=out)
 
 
+# -- Tokens sync command (v2.4) --
+
+@app.command(name="tokens-sync")
+def tokens_sync_command(
+    full: bool = typer.Option(False, "--full", help="Full resync (all Hermes sessions)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Report only, no writes"),
+) -> None:
+    """Export Hermes state.db real token usage into observeco token_logs.
+
+    Reads Hermes sessions (input/output/cache tokens, cost, provider) and
+    writes them as source='hermes' rows via log_token_turn(). Fills the
+    output=0 gap left by the watch source. Idempotent (cursor-based).
+    """
+    from rich.console import Console
+
+    from observeco.tracking.hermes_bridge import sync_hermes_tokens
+
+    console = Console()
+    result = sync_hermes_tokens(full=full, dry_run=dry_run)
+    if result.get("status") == "noop":
+        console.print("[yellow]Nothing to sync — cursor is current.[/yellow]")
+        return
+    if dry_run:
+        console.print(f"[green]DRY RUN — would write {result.get('written')} row(s), "
+                      f"skip {result.get('skipped')} duplicate(s).[/green]")
+    else:
+        console.print(f"[green]Synced {result.get('written')} row(s), "
+                      f"skipped {result.get('skipped')} duplicate(s).[/green]")
+
+
 # -- Feedback command (v1.1) --
 
 @app.command(name="feedback")
