@@ -400,6 +400,47 @@
     }
   });
 
+  // ── Live grid-run state for the section header ──
+  // The header button/badge are server-rendered at page load, but run state
+  // changes while the page is open (run starts / finishes). Poll the run
+  // history and sync the "Model × Config Comparison" header + Run button.
+  window.syncGridRunState = function() {
+    var header = document.querySelector('.cap-section-h h3');
+    var runBtn = document.querySelector('.cap-section-h [onclick="runGrid()"]');
+    var agent = _getCapAgent();
+    // Reuse the server-rendered badge (if present at page load); create it
+    // on the fly only when the page was loaded before a run started.
+    var badge = document.getElementById('gridRunningBadge') ||
+                document.querySelector('.grid-running-badge');
+    if (!header || !runBtn) return;
+    fetch('/api/capability/grid/options', {headers:_authHeaders()})
+      .then(function(r) { return r.json(); })
+      .then(function(opts) {
+        var running = (opts.run_history || []).some(function(run) {
+          return run.status === 'running' && (!agent || run.agent === agent);
+        });
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.id = 'gridRunningBadge';
+          badge.className = 'grid-running-badge';
+          badge.style.cssText = 'display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--accent);font-weight:600;';
+          badge.innerHTML = '<span class="spinner" style="width:10px;height:10px;"></span> Grid run in progress…';
+          header.parentNode.insertBefore(badge, runBtn);
+        }
+        badge.style.display = running ? 'inline-flex' : 'none';
+        runBtn.disabled = running;
+        runBtn.style.opacity = running ? '.55' : '';
+        runBtn.style.cursor = running ? 'not-allowed' : '';
+        runBtn.innerHTML = running ? '🔄 Running…' : '🔄 Run Comparison';
+      })
+      .catch(function() { /* keep current state on transient errors */ });
+  };
+  // Sync on load and every 5s while the capability page is open.
+  document.addEventListener('DOMContentLoaded', function() {
+    syncGridRunState();
+    setInterval(syncGridRunState, 5000);
+  });
+
   // ── Toast ──
   window.showToast = function(msg) {
     var existing = document.getElementById('capToast');

@@ -2157,6 +2157,18 @@ body {
 @keyframes onboarding-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes onboarding-slide-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+/* Spinner — used by grid running view, judge reasoning, fleet breakdowns.
+   Was referenced in ~6 places but never defined, so every spinner rendered
+   as an invisible empty span. */
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid var(--border, #334155);
+  border-top-color: var(--accent, #22c55e);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
 .inline-code-sm {
   background: var(--bg, #0f172a); border: 1px solid var(--border, #334155);
   padding: 1px 6px; border-radius: 3px; font-size: 11px; font-family: 'SF Mono','Fira Code',monospace;

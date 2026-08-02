@@ -2369,6 +2369,20 @@ async def capability_page(agent: str = Query("default")):
         untested_style = ""
         perf_trend_style = "display:none;"
 
+    # ── Grid run state for the section header ──
+    # The Model × Config Comparison header must show when a run is active for
+    # this agent (spinner + disabled button), not just the table body below it.
+    grid_running = False
+    try:
+        running_row = conn.execute(
+            "SELECT id, started_at, total_cells FROM grid_runs "
+            "WHERE agent_name = ? AND status = 'running' ORDER BY started_at DESC LIMIT 1",
+            (agent,),
+        ).fetchone()
+        grid_running = running_row is not None
+    except Exception:
+        grid_running = False
+
     return HTMLResponse(content=f"""\
     <style>
       /* ── Capability Page Redesign ── */
@@ -2695,7 +2709,8 @@ async def capability_page(agent: str = Query("default")):
         <div class="cap-section">
           <div class="cap-section-h">
             <h3>📊 Model × Config Comparison</h3>
-            <button onclick="runGrid()" class="cap-btn cap-btn-sm">🔄 Run Comparison</button>
+            {'<span class="grid-running-badge" style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--accent);font-weight:600;"><span class="spinner" style="width:10px;height:10px;"></span> Grid run in progress…</span>' if grid_running else ''}
+            <button onclick="runGrid()" class="cap-btn cap-btn-sm" {'disabled' if grid_running else ''} style="{'opacity:.55;cursor:not-allowed;' if grid_running else ''}">🔄 {'Run Comparison' if not grid_running else 'Running…'}</button>
           </div>
           <div class="cap-section-body">
             <div id="gridTableContainer" hx-get="/api/capability/grid/table?agent={agent}" hx-trigger="load" hx-swap="innerHTML">
