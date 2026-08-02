@@ -2741,7 +2741,7 @@ async def capability_page(agent: str = Query("default")):
 
     </div>
 
-    <script src="/static/js/capability.js"></script>
+    <script src="/static/js/capability.js?v=1"></script>
     <script>
     // ── Populate model/profile checkboxes dynamically from /grid/options ──
     // capability.js registers DOMContentLoaded + htmx:afterSwap listeners, but
