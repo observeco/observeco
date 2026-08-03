@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 68
+SCHEMA_VERSION = 69
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -713,6 +713,8 @@ CREATE TABLE IF NOT EXISTS grid_runs (
     total_cells INTEGER NOT NULL,
     total_cost  REAL,
     judge       TEXT,              -- judge model spec used for llm_judge scoring
+    last_activity TEXT,            -- heartbeat: updated by the runner per cell,
+                                   -- used to detect stalled/orphaned runs
     error       TEXT
 );
 
@@ -1007,6 +1009,12 @@ CREATE TABLE IF NOT EXISTS dismissed_gaps (
     # Migration 68: judge column on grid_runs — which LLM judge produced a run
     (68, """-- Migration 68: record which LLM judge scored each grid run
 ALTER TABLE grid_runs ADD COLUMN judge TEXT;
+"""),
+    # Migration 69: heartbeat on grid_runs — stall/orphan detection. The runner
+    # updates last_activity per cell; reads that find a 'running' row with a
+    # stale heartbeat mark it failed instead of showing a phantom running state.
+    (69, """-- Migration 69: heartbeat for stalled-run detection
+ALTER TABLE grid_runs ADD COLUMN last_activity TEXT;
 """),
 ]
 

@@ -10,6 +10,7 @@ import logging
 import os
 import sqlite3 as _sqlite3
 import threading
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Query
@@ -1530,6 +1531,28 @@ async def grid_options():
 
 # ── Grid report HTML partial ─────────────────────────────────────────────────
 
+def _grid_run_is_stalled(conn, run_row) -> bool:
+    """True if a 'running' grid run has no heartbeat for STALL_MINUTES.
+
+    The runner updates grid_runs.last_activity at the start of each cell, so a
+    live run always has a fresh heartbeat. A stale one means the subprocess
+    died (killed dashboard/process, crash) without marking the run failed.
+    """
+    STALL_MINUTES = 15
+    try:
+        last = run_row["last_activity"]
+        if not last:
+            last = run_row["started_at"]
+        if not last:
+            return True
+        last_dt = datetime.fromisoformat(str(last).replace("Z", "+00:00"))
+        age = (datetime.now(timezone.utc) - last_dt).total_seconds() / 60.0
+        return age > STALL_MINUTES
+    except Exception:
+        # Unparseable heartbeat — treat as stalled rather than phantom-running.
+        return True
+
+
 @router.get("/grid/table", response_class=HTMLResponse)
 async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str] = Query(None)):
     """GET /api/capability/grid/table?agent=NAME&run_id=ID — grid table HTML partial."""
@@ -1539,14 +1562,30 @@ async def grid_table_partial(agent: str = Query("default"), run_id: Optional[str
     if not run_id:
         # Check for a running run first (show progress indicator)
         running_row = conn.execute(
-            "SELECT id, started_at, models, configs, total_cells FROM grid_runs WHERE agent_name = ? AND status = 'running' "
+            "SELECT id, started_at, last_activity, models, configs, total_cells FROM grid_runs WHERE agent_name = ? AND status = 'running' "
             "ORDER BY started_at DESC LIMIT 1",
             (agent,),
         ).fetchone()
         if running_row:
-            return HTMLResponse(
-                content=_grid_running_html(agent, running_row)
-            )
+            # Stalled-run guard: a 'running' row whose heartbeat is stale means
+            # the runner subprocess died without marking the run failed (common
+            # when the dashboard/process was killed mid-run). Mark it failed on
+            # read instead of showing a phantom 'running' state forever.
+            if _grid_run_is_stalled(conn, running_row):
+                try:
+                    now_iso = datetime.now(timezone.utc).isoformat()
+                    conn.execute(
+                        "UPDATE grid_runs SET status='failed', completed_at=?, error=? "
+                        "WHERE id=? AND status='running'",
+                        (now_iso, "stalled: no progress in 15+ minutes", running_row["id"]),
+                    )
+                    conn.commit()
+                except Exception:
+                    pass
+            else:
+                return HTMLResponse(
+                    content=_grid_running_html(agent, running_row)
+                )
         # Fall back to latest completed run
         row = conn.execute(
             "SELECT id FROM grid_runs WHERE agent_name = ? AND status = 'completed' "
@@ -1763,6 +1802,7 @@ def _grid_running_html(agent: str, run_row) -> str:
 
     pct = int(done_cells * 100 / total_cells) if total_cells else 0
     elapsed = ""
+    last_activity_mins = None
     try:
         start = _dt.datetime.fromisoformat(started_at.replace("Z", "+00:00"))
         mins = max(0, int((_dt.datetime.now(_dt.timezone.utc) - start).total_seconds() // 60))
@@ -1770,6 +1810,29 @@ def _grid_running_html(agent: str, run_row) -> str:
             elapsed = f" · {mins} min elapsed"
     except Exception:
         pass
+    # Liveness — how long since the runner last heartbeated (per-cell start).
+    # Makes a stalled run visible BEFORE the 15-min auto-fail threshold: the
+    # "last activity" line turns amber as the gap grows.
+    try:
+        last_act = run_row["last_activity"]
+        if last_act:
+            last_dt = _dt.datetime.fromisoformat(str(last_act).replace("Z", "+00:00"))
+            last_activity_mins = max(0, int((_dt.datetime.now(_dt.timezone.utc) - last_dt).total_seconds() // 60))
+    except Exception:
+        pass
+    liveness_html = ""
+    if last_activity_mins is not None:
+        if last_activity_mins >= 10:
+            liveness_html = (
+                '<div style="margin-top:8px;font-size:12px;color:var(--warn);">'
+                f'⚠️ No activity in {last_activity_mins} min — run may be stalled. '
+                'It will be marked failed if no progress in 15 min.</div>'
+            )
+        elif last_activity_mins >= 3:
+            liveness_html = (
+                '<div style="margin-top:8px;font-size:12px;color:var(--fg-3);">'
+                f'Last activity: {last_activity_mins} min ago</div>'
+            )
 
     model_badge = ", ".join(m.split("/")[-1] for m in models) if models else "—"
     profile_badge = ", ".join(configs) if configs else "—"
@@ -1793,8 +1856,9 @@ def _grid_running_html(agent: str, run_row) -> str:
         </div>
       </div>
       <p style="color:var(--fg-3);font-size:12px;margin-top:12px;">
-        Started at {started_at[:19] if started_at else 'unknown'}
+        Started at {started_at[:19] if started_at else 'unknown'}{elapsed}
       </p>
+      {liveness_html}
       <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0;">
         <span class="grid-confirm-chip">models: {_html_escape(model_badge)}</span>
         <span class="grid-confirm-chip">profiles: {_html_escape(profile_badge)}</span>

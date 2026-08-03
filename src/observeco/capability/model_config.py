@@ -188,12 +188,19 @@ def list_runnable_cloud_providers() -> dict[str, dict]:
             default_model = p.get('default_model', '')
             # Only keep chat-eligible models — filter out TTS/ASR/embedding/voice
             # variants that can't handle chat completions (would 0-out every grid cell).
+            # Also filter KNOWN-BROKEN chat models: mimo-v2.5(-pro) burns its output
+            # budget on hidden reasoning and returns EMPTY content under the default
+            # harness budget (verified live: '' at max_tokens=200, works at 400).
+            # They stay in hermes config (selectable) but are excluded from grid
+            # defaults so they don't poison every run with 100% provider_error.
             def _is_chat_model(mid: str) -> bool:
                 low = mid.lower()
-                return not any(
-                    token in low for token in
-                    ("tts", "asr", "voiceclone", "voicedesign", "voice-clone", "embed", "stt")
-                )
+                if any(token in low for token in
+                       ("tts", "asr", "voiceclone", "voicedesign", "voice-clone", "embed", "stt")):
+                    return False
+                if low.startswith("mimo"):
+                    return False
+                return True
             model_specs = [f"{name}/{m}" for m in provider_models if _is_chat_model(m)]
             # If the provider lists no explicit models, fetch the full set from
             # its API (e.g. ollama-cloud exposes ~19 models via /models). This

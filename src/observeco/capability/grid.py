@@ -152,10 +152,10 @@ class CapabilityGridRunner:
         judge = os.environ.get("OBSERVECO_JUDGE_MODEL", "").strip() or None
 
         conn.execute(
-            "INSERT INTO grid_runs (id, agent_name, started_at, status, models, configs, total_cells, judge) "
-            "VALUES (?, ?, ?, 'running', ?, ?, ?, ?)",
+            "INSERT INTO grid_runs (id, agent_name, started_at, status, models, configs, total_cells, judge, last_activity) "
+            "VALUES (?, ?, ?, 'running', ?, ?, ?, ?, ?)",
             (run_id, agent_name, now_iso,
-             json.dumps(models), json.dumps(configs), total_cells, judge),
+             json.dumps(models), json.dumps(configs), total_cells, judge, now_iso),
         )
         conn.commit()
 
@@ -168,6 +168,16 @@ class CapabilityGridRunner:
                     "Grid cell: model=%s profile=%s tasks=%d",
                     model_spec, config_label, len(tasks),
                 )
+
+                # Heartbeat — updated BEFORE the slow LLM work so liveness means
+                # "the runner is alive and working on a cell", not "it finished
+                # one". Reads use this to detect stalled/orphaned runs (status
+                # stuck at 'running' with a stale heartbeat -> mark failed).
+                conn.execute(
+                    "UPDATE grid_runs SET last_activity=? WHERE id=?",
+                    (datetime.now(timezone.utc).isoformat(), run_id),
+                )
+                conn.commit()
 
                 # Use HermesBenchmarkAdapter — tests the full agent (SOUL.md +
                 # skills + tools + streaming) with each model and profile.

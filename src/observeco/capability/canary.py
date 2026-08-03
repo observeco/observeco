@@ -422,7 +422,12 @@ class Scorer:
                         {"role": "user", "content": user_context},
                     ],
                     "temperature": 0,
-                    "max_tokens": 200,
+                    # 400 not 200: reasoning models (mimo-v2.5, deepseek-v4-pro)
+                    # burn output budget on hidden reasoning; 200 tokens causes
+                    # finish_reason='length' with EMPTY content -> chain skips a
+                    # provider that would otherwise score fine (verified live:
+                    # mimo-v2.5 returns <score>20</score> at 400, '' at 200).
+                    "max_tokens": 400,
                     "stream": False,
                 }).encode()
                 _req = _ureq.Request(
