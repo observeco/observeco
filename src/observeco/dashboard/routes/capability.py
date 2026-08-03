@@ -1874,7 +1874,7 @@ def _grid_running_html(agent: str, run_row) -> str:
 
 def _grid_empty_html(agent: str = "main") -> str:
     """Show empty state with dynamically-loaded models and profiles."""
-    return f"""
+    return """
     <div class="cap-empty">
       <div class="cap-empty-icon">📊</div>
       <h2>No Grid Runs Yet</h2>
@@ -2070,7 +2070,7 @@ def _generate_grid_summary(cells: list, models: list, configs: list) -> str:
             divergences.append((task, spread, avgs))
     divergences.sort(key=lambda x: x[1], reverse=True)
 
-    lines.append(f"<strong>Model ranking (agentic quality, all profiles):</strong>")
+    lines.append("<strong>Model ranking (agentic quality, all profiles):</strong>")
     for i, (m, s) in enumerate(model_rank, 1):
         avg = sum(s["acc"]) / s["total"]
         cost = sum(s["cost"]) / s["total"]

@@ -20,7 +20,7 @@ from typing import Optional
 
 from observeco.benchmark.adapters.hermes import HermesBenchmarkAdapter
 from observeco.capability.canary import Scorer
-from observeco.capability.model_config import get_default_grid_models, load_available_models
+from observeco.capability.model_config import get_default_grid_models
 from observeco.db import Database
 
 logger = logging.getLogger(__name__)

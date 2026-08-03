@@ -19,7 +19,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .direct_model import _load_dotenv, _resolve_provider
+from .direct_model import _resolve_provider
 
 logger = logging.getLogger(__name__)
 
