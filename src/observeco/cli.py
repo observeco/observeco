@@ -2763,7 +2763,7 @@ def grid_cap_run(
     Results stored in grid_runs/grid_results.
     """
     from observeco.capability.grid import CapabilityGridRunner
-    from observeco.capability.model_config import get_default_grid_models, load_available_models
+    from observeco.capability.model_config import get_default_grid_models
 
     # Resolve models — from config or explicit
     if models:
