@@ -48,7 +48,7 @@ A benchmark result is only as trustworthy as the environment discipline behind i
 8. **double-append of trial record** → single append (under regression test).
 9. **agent-side provenance absent** → record session cwd, model, budget, skill set, harness config hash; bind to session ID.
 
-When environment discipline is absent, any of these produces a verdict the summary reports as trustworthy and the trajectory proves wrong. When it is present, a result you see is a result you can trust — and if a run is contaminated, the run record says exactly how. That is the difference between "we ran a benchmark" and "you should believe the number." It is also the method paper's spine: the discipline is the argument for why any of Workbench's outputs carry weight.
+When environment discipline is absent, any of these produces a verdict the summary reports as trustworthy and the trajectory proves wrong. When it is present, a result you see is a result you can trust — and if a run is contaminated, the run record says exactly how. That is the difference between "we ran a benchmark" and "you should believe the number." It is also the method paper's spine: the discipline is the argument for why any of Workbench's outputs carry weight. (Nine environment failures were found during construction; where summary and trajectory disagreed, the trajectory was right every time — a disagreement-biased sample, not a base rate.)
 
 **Two failure signs, one class.** Trial 2 demonstrated wandering-induced false *negative* (capable model scored as failure for an environment-induced error). The same mechanism *inflates* on a different task shape — a session in the real repo given a merged-answer task "verifies" and reports success. One class, two signs; containment retires both.
 
