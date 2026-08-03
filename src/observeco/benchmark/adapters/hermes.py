@@ -242,6 +242,7 @@ class HermesBenchmarkAdapter:
                         "harness_type": "hermes",
                         "elapsed_seconds": self.timeout,
                         "provider_error": False,
+                        "timed_out": True,
                         "cost": 0.0,
                         "tokens": 0,
                     }
