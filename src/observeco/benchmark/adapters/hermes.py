@@ -105,10 +105,16 @@ class HermesBenchmarkAdapter:
     """Runs benchmark tasks through a Hermes agent session."""
 
     def __init__(self, hermes_bin: str = "hermes", timeout: int = 300,
-                 agent_profile: str = "", model: str = ""):
+                 agent_profile: str = "", model: str = "",
+                 workdir: str = ""):
         self.hermes_bin = hermes_bin
         self.timeout = timeout
         self.agent_profile = agent_profile
+        # Workdir for the spawned hermes session. NEVER inherit ambient process
+        # cwd — a replay must run inside its pinned worktree. Explicit cwd=
+        # removes dependence on the parent process's state (which has been an
+        # unpinned source of environment lies). Empty = inherit (default).
+        self.workdir = workdir
         # Model priority chain (first non-empty wins):
         #   1. Per-task model column (set in run_task)
         #   2. OBSERVECO_CANARY_MODEL env var (user-level default)
@@ -222,6 +228,7 @@ class HermesBenchmarkAdapter:
                     text=True,
                     preexec_fn=os.setsid,
                     env=child_env,
+                    cwd=self.workdir or None,
                 )
 
                 try:
