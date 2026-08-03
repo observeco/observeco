@@ -8,7 +8,7 @@
 
 ## 0. The thesis, stated once
 
-Every benchmark reports the summary. The trajectory is the truth. On the construction of this benchmark itself, summary and trajectory disagreed **nine times out of nine** — and the trajectory was right every time. Summary-level results are systematically untrustworthy in ways trajectory-level evidence detects. That is the empirical spine of this document, and it is not a rhetorical device: it is the observed failure rate of the benchmark's own harness, which would have silently corrupted every number the grid ever produced.
+Every benchmark reports the summary. The trajectory is the truth. On the construction of this benchmark itself, **nine environment failures were found, and in every case where summary and trajectory disagreed, the trajectory was right** — summary-only evidence would have produced a wrong verdict in all nine. That is not a rate: we investigated these cases *because* something looked wrong, so the sample is disagreement-biased, and how often summary and trajectory agree is unmeasured. What is measured, and striking, is that not one of the nine disagreements resolved in the summary's favor. This is the empirical spine of the document, and it is load-bearing: it is the observed reason the benchmark's own harness needed environment discipline, which would otherwise have silently corrupted every number the grid produced.
 
 Workbench is the private, personal instantiation of the SWE-bench construction methodology: benchmark instances mined from your own completed sessions, contamination-impossible by construction (private repo, tasks postdate any relevant training run), distribution-matched by definition. A personal SWE-bench. The novelty is the data source and the automation of curation; the methodology is convergent with the most validated benchmark lineage in the field, which we re-derived from first principles over eleven rounds of measurement.
 
@@ -34,9 +34,9 @@ Not all real work is scorable. Only Tier A feeds the grid; Tier B feeds the harn
 
 The grid is fed by a minority of real work, because only that minority is trustworthy enough to compare models on. A small honest grid beats a large noisy one.
 
-## 3. The environment gates (the instrument)
+## 3. Environment discipline — why any number Workbench emits is believable
 
-Nine environment lies were extracted by the adversarial loop. Each is now an enforced gate or a recorded provenance field. This is the load-bearing deliverable.
+A benchmark result is only as trustworthy as the environment discipline behind it. This is the product claim, not a bug list. Workbench treats environment isolation as a first-class gate, because nine documented ways the environment can lie were found during construction — each would have silently corrupted a number, and each is now an enforced gate or a recorded provenance field:
 
 1. **tool_name column None** → parse tool-call JSON, not the column.
 2. **model resolution override** → assert `model_used == intended` after every run; mark record contaminated on mismatch.
@@ -47,6 +47,8 @@ Nine environment lies were extracted by the adversarial loop. Each is now an enf
 7. **relative-path resolution against runner cwd** → resolve against worktree root (under regression test).
 8. **double-append of trial record** → single append (under regression test).
 9. **agent-side provenance absent** → record session cwd, model, budget, skill set, harness config hash; bind to session ID.
+
+When environment discipline is absent, any of these produces a verdict the summary reports as trustworthy and the trajectory proves wrong. When it is present, a result you see is a result you can trust — and if a run is contaminated, the run record says exactly how. That is the difference between "we ran a benchmark" and "you should believe the number." It is also the method paper's spine: the discipline is the argument for why any of Workbench's outputs carry weight.
 
 **Two failure signs, one class.** Trial 2 demonstrated wandering-induced false *negative* (capable model scored as failure for an environment-induced error). The same mechanism *inflates* on a different task shape — a session in the real repo given a merged-answer task "verifies" and reports success. One class, two signs; containment retires both.
 
@@ -60,9 +62,14 @@ The routing output is an **empirical model card** — the grid's frontier as mac
 
 Every failed real task — Tier B included — is an episode written to the harness `EpisodeLog`. The harness loop proposes edits grounded in real observed failures, lab-tests them against the promoted pool, and promotes winners through the existing fairness gate.
 
-**Contrastive replay** validates harness edits on the pinnable-but-unassertable subset: show the judge the old trajectory and the new trajectory against the original request, ask which better satisfies it. Order-randomized, ties on disagreement. This is a categorically easier judgment than absolute pass/fail, and at a handful of episodes per proposed edit, human adjudication is the ground truth with the judge as triage.
+This is the primary economic value, and it's worth being precise about why. Routing saves dollars; harness improvement compounds. A harness gain lifts every future task of that type, and it is the one branch whose output is not bounded by Sean's review bandwidth — a promoted edit, once graduated through the ladder, applies and the improvement accrues. The doc's value hierarchy is deliberate: **harness improvement > trust/coverage > dollar routing.** Routing is the enabler; harness improvement is the payoff.
 
-**Selection-bias honesty.** The curation gates select for easy-to-verify tasks, which are biased toward what the agent already handles well. Harness lift measured on Tier A is disclosed as "verifiable improvement on verifiable work"; impact on contextual Tier B is unmeasured unless contrastive-replay validates the specific failing episodes.
+**Selection-bias honesty (the load-bearing disclosure).** The curation gates select for easy-to-verify tasks, which are biased toward what the agent already handles well. That creates a validity gap the doc does not paper over: the harness loop's *evidence* comes from Tier B failures (behavioral signals: retried, corrected, abandoned), but its *measured lift* is on Tier A tasks (the verified pool). An edit is proposed from one population and validated on another. The honest handling is two-part:
+
+- **Contrastive replay** validates edits on the pinnable-but-unassertable subset — Tier B sessions that are restorable even though not assertion-scorable. Show the judge the old trajectory and the new trajectory against the original request, ask which better satisfies it. Comparative judgment is a categorically easier and better-calibrated task than absolute pass/fail — the pairwise-LLM-judging literature documents position and verbosity bias and standardizes the mitigations: order randomization plus swap-and-rerun with ties on disagreement (one extra judge call). At a handful of episodes per proposed edit, human adjudication is the ground truth with the judge as triage.
+- **Disclosed scope.** Lift measured on Tier A is reported as "verifiable improvement on verifiable work"; impact on contextual Tier B is explicitly unmeasured unless contrastive replay validates the specific failing episodes. We never claim Tier B improvement from Tier A evidence.
+
+The distinction this rests on: **replayable ≠ assertable.** Pinnable-but-unassertable tasks exist (the ambiguous refactor in a committed repo) and are the natural home for contrastive validation; unpinnable tasks (gone forever as replay targets) are disclosed, not scored. A-for-the-replayable-subset with contrastive adjudication, disclosure for the rest.
 
 ## 6. Autonomy ladder
 
@@ -86,9 +93,9 @@ Tests-as-assertions are preferred over LLM-generated outcome contracts wherever 
 
 ## 9. What is proven vs. pending
 
-**Proven:** the instrument works (2/2 candidates 3/3 under corrected gates, verified pro completion at pin); the funnel exists (42 write-target, 29% objective); the methodology is convergent with SWE-bench construction; nine environment lies closed, four under regression test.
+**Proven:** the instrument works (2/2 candidates 3/3 under corrected gates, verified pro completion at pin); the funnel exists (42 write-target, 29% objective); the methodology is convergent with SWE-bench construction; nine environment failures found and closed, four under regression test, and in every one the trajectory was right against the summary.
 
-**Pending:** the pool-wide replay rate (the ten-candidate batch — pre-registered protocol, gray-zone branch applies); the native clean batch (nice-to-have); fine-grained routing volume.
+**Pending:** the pool-wide replay rate (the ten-candidate batch — pre-registered protocol, gray-zone branch applies, and each run logs a **summary-vs-trajectory verdict field** for both agreements and disagreements so the base rate becomes measured rather than assumed); the native clean batch (nice-to-have); fine-grained routing volume.
 
 **Explicit non-overclaim:** 2/2 is n=2. The instrument is the finding. The rate is pending. This doc is written so that the next measurement either clears a bar or refutes one — it does not assume a bar was cleared.
 
@@ -97,7 +104,7 @@ Tests-as-assertions are preferred over LLM-generated outcome contracts wherever 
 Three artifacts, three audiences:
 - **3a — aggregate report:** demo serving the growth loop. Honest framing: "this is what Workbench produced for one user."
 - **3b — stranger-install:** the proof object. A stranger runs `workbench init` on their Hermes and gets their own report.
-- **3c — method paper:** the argument. Data is private; method isn't. Leads with the personal-SWE-bench framing, the discrimination gate, contrastive-replay validation, the funnel numbers, and the nine-environment-lies spine.
+- **3c — method paper:** the argument. Data is private; method isn't. Leads with the personal-SWE-bench framing, the discrimination gate, contrastive-replay validation, the funnel numbers, and the environment-discipline spine (nine failures found, trajectory right in every disagreement, base rate measured once the ten-task field logs it).
 
 ---
 
