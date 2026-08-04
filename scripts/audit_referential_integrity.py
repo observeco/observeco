@@ -93,17 +93,25 @@ def _css_selectors(css_text: str) -> set[str]:
     return out
 
 
-def _all_defined_css_classes() -> set[str]:
-    """Classes defined in the global stylesheet OR any template inline <style>.
+def _all_css_text() -> list[str]:
+    """Every CSS source: the global stylesheet + each template's inline <style>.
 
-    Templates like pathway.html carry their own <style> block; those classes
-    are NOT orphans even though they're absent from the global CSS. This is the
-    third scope correction (after routes and allowlist).
+    SINGLE SOURCE OF TRUTH for 'what CSS exists'. Both the class check and the
+    variable check must consume this — never maintain two independent notions of
+    where CSS lives, or a third direction reintroduces the under-scan bug.
     """
-    defined = _css_selectors(CSS.read_text())
+    texts = [CSS.read_text()]
     for p in _files(TEMPLATES, {".html"}):
         for style_block in re.findall(r"<style>(.*?)</style>", p.read_text(), re.S):
-            defined |= _css_selectors(style_block)
+            texts.append(style_block)
+    return texts
+
+
+def _all_defined_css_classes() -> set[str]:
+    """Classes defined in the global stylesheet OR any template inline <style>."""
+    defined: set[str] = set()
+    for css in _all_css_text():
+        defined |= _css_selectors(css)
     return defined
 
 
@@ -121,20 +129,29 @@ def _css_vars_referenced(text: str) -> set[str]:
     return set(re.findall(r"var\(--([a-zA-Z][a-zA-Z0-9_-]*)\)", text))
 
 
-def _css_vars_defined(css_text: str) -> set[str]:
-    return set(re.findall(r"^\s*--([a-zA-Z][a-zA-Z0-9_-]*)\s*:", css_text, re.M))
+def _css_vars_defined() -> set[str]:
+    """CSS variables defined across the SINGLE CSS source of truth.
+
+    Scans the global stylesheet AND every template inline <style> (via
+    _all_css_text), so template-local vars like --sec/--blue/--amber (defined
+    in pathway.html's own <style>) are not misreported as undefined.
+    """
+    defined: set[str] = set()
+    for css in _all_css_text():
+        defined |= set(re.findall(r"--([a-zA-Z][a-zA-Z0-9_-]*)\s*:", css))
+    return defined
 
 
 def direction2_undefined_vars() -> list[str]:
-    """CSS variables referenced anywhere but never defined in :root."""
-    css = CSS.read_text()
-    defined = _css_vars_defined(css)
+    """CSS variables referenced anywhere but never defined in any stylesheet."""
+    defined = _css_vars_defined()
     referenced: set[str] = set()
     # Templates + JS reference tokens in inline styles
     for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}):
         referenced.update(_css_vars_referenced(p.read_text()))
     # CSS itself may reference vars
-    referenced.update(_css_vars_referenced(css))
+    for css in _all_css_text():
+        referenced.update(_css_vars_referenced(css))
     return sorted(v for v in referenced if v not in defined)
 
 

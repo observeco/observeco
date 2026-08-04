@@ -151,6 +151,47 @@ different things; the difference between them is where defects live.
 
 ---
 
+## 4.5 Mechanism 3.5 — referential integrity, in every direction
+
+Four confirmed defects this session share one shape: **two halves that each
+pass their own check but were never checked against each other.**
+
+- templates emit classes → stylesheet defines no rules for them (orphaned CSS)
+- CSS vars referenced → never defined in `:root` (the latent `--fg-3` bug, 46 refs)
+- fetch/htmx calls a route → no route registered (dead buttons)
+- a POST route is registered → nothing calls it (built, never surfaced)
+
+The mechanical guard is a **set-difference audit**, one direction per reference
+class, run as a gate: `scripts/audit_referential_integrity.py` (ObserveCo-local;
+the *idea* — every reference resolves to a definition, in both directions — is
+portable and belongs in a skill, not the repo).
+
+**Deletion safety — the rule that governs every fix this tool drives.** A static
+analyzer reports "unreferenced class." You delete it. But a class that a *live
+JS selector* depends on (`querySelectorAll('.onboarding-panel')`) looks identical
+to a dead one from the analyzer's output alone. Deleting it silently breaks the
+UI — visible to nobody, caught by nothing, discovered weeks later.
+
+**So: never delete on the word of a static analyzer. Before removing any
+reported-orphaned symbol, grep the whole codebase for the string in JS,
+templates, and routes.** Deletion driven by static analysis requires a
+cross-referencing grep first. This session's near-miss (`onboarding-panel`, a
+live selector hook misclassified as vestigial) is the cautionary instance.
+
+**Scope discipline — every scope fix needs a positive test.** Teaching the audit
+about a new definition site (inline `<style>`) makes it report *less*. That's
+correct only when verified against real definition sites — otherwise you converge
+on green by teaching the tool to look away, rebuilding `|| echo` with better
+manners. After any scope widening, plant a genuinely-undefined reference and
+confirm the audit still fires on it (`tests/test_audit_scope.py`).
+
+**Green is the only state that carries information cheaply enough to be a floor.**
+A gate that ships red is a gate whose normal state is red, and a red-normal gate
+trains everyone to read past it. `make verify` must be green before it becomes a
+definition of done.
+
+---
+
 ## 5. The value-unit gate — the one thing mechanisms cannot catch
 
 Mechanisms catch implementation drift from a **correct** spec. Nothing catches a
