@@ -247,8 +247,7 @@ function switchTab(tab, btn) {
       'traces': 'tabTraces',
       'config': 'tabConfig',
       'billing': 'tabBilling',
-      'pathway': 'tabPathway',
-      'harness': 'tabHarness'
+      'pathway': 'tabPathway'
     };
 
     var targetId = tabMap[tab] || 'tabFleet';
@@ -260,7 +259,6 @@ function switchTab(tab, btn) {
       if (tab === 'tokens') htmx.ajax('GET', '/api/analytics/tokens' + _q, {target: '#analyticsContent', swap: 'innerHTML'});
       if (tab === 'drift') htmx.ajax('GET', '/api/drift-summary' + _q, {target: '#driftContainer', swap: 'innerHTML'});
       if (tab === 'capability') htmx.ajax('GET', '/api/capability/page' + _q, {target: '#capabilityContainer', swap: 'innerHTML'});
-      if (tab === 'harness') htmx.ajax('GET', '/api/harness/runs' + _q, {target: '#harnessPanel', swap: 'innerHTML'});
     }
   } catch (e) {
     console.error('switchTab error:', e);
