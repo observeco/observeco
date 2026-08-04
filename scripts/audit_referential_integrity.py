@@ -93,14 +93,26 @@ def _css_selectors(css_text: str) -> set[str]:
     return out
 
 
+def _all_defined_css_classes() -> set[str]:
+    """Classes defined in the global stylesheet OR any template inline <style>.
+
+    Templates like pathway.html carry their own <style> block; those classes
+    are NOT orphans even though they're absent from the global CSS. This is the
+    third scope correction (after routes and allowlist).
+    """
+    defined = _css_selectors(CSS.read_text())
+    for p in _files(TEMPLATES, {".html"}):
+        for style_block in re.findall(r"<style>(.*?)</style>", p.read_text(), re.S):
+            defined |= _css_selectors(style_block)
+    return defined
+
+
 def direction1_orphaned_classes() -> list[str]:
-    """Classes emitted in templates/JS but never defined in CSS."""
-    css = CSS.read_text()
-    defined = _css_selectors(css)
+    """Classes emitted in templates/JS but never defined in any stylesheet."""
+    defined = _all_defined_css_classes()
     emitted: set[str] = set()
     for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}):
         emitted.update(_classes_from_text(p.read_text()))
-    # Inline style attributes aren't classes; strip obvious utility/state hooks
     return sorted(c for c in emitted if c not in defined)
 
 
