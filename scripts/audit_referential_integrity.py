@@ -156,89 +156,95 @@ def direction2_undefined_vars() -> list[str]:
 
 
 # ── Direction 3: fetch/htmx targets -> registered routes ────────────────────
+def _normalize_route_key(path: str) -> str:
+    """Normalize a URL path to a comparison key.
+
+    Handles three shapes so a reference and a route compare equal:
+      - '/api/fleet/canary-card/{agent_name}'  (route)  -> /api/fleet/canary-card/<param>
+      - '/api/fleet/canary-card/agent'          (literal)-> /api/fleet/canary-card/<param>
+      - '/api/fleet/canary-card/' + concat      (JS ref) -> /api/fleet/canary-card/<param>
+    A trailing slash on a reference means a param continues via string concat,
+    so append <param>. Strips query strings. Returns '' if not an API path.
+    """
+    path = path.split("?")[0]
+    trailing_concat = path.endswith("/")  # param continues via JS concat
+    path = path.rstrip("/")
+    # Jinja params ({{ aname }}) first — must not be eaten by the {..} pass.
+    path = re.sub(r"\{\{[^}]+\}\}", "<param>", path)
+    path = re.sub(r"\{[^}]+\}", "<param>", path)
+    if trailing_concat:
+        path += "/<param>"
+    return path if path.startswith("/api") else ""
+
+
 def _registered_routes() -> set[str]:
-    """All concrete URL paths registered by FastAPI decorators.
+    """All normalized URL path keys registered by FastAPI decorators.
 
     Scans every APIRouter in src/observeco (routes/ AND standalone packages
-    like discover/), plus @app.* decorators in server.py. This is why the
-    discover routes resolve: they live outside dashboard/routes/.
+    like discover/), plus @app.* decorators in server.py.
     """
     routes: set[str] = set()
-
-    # Parse every APIRouter(prefix="X") + @router.*("path") across all of src.
     src_root = ROOT / "src/observeco"
     for mod in src_root.rglob("*.py"):
         text = mod.read_text()
         prefixes = re.findall(r'APIRouter\(prefix="([^"]+)"', text)
         prefix = prefixes[0] if prefixes else ""
         for method, path in re.findall(r'@router\.(get|post|put|delete)\("([^"]*)"', text):
-            full = prefix + path
-            full = re.sub(r"\{[^}]+\}", "<param>", full).rstrip("/")
-            routes.add(full)
-
-    # Parse server.py @app.get("/path")
+            key = _normalize_route_key(prefix + path)
+            if key:
+                routes.add(key)
     srv = SERVER.read_text()
     for method, path in re.findall(r'@app\.(get|post|put|delete)\("([^"]*)"', srv):
-        full = re.sub(r"\{[^}]+\}", "<param>", path).rstrip("/")
-        routes.add(full)
+        key = _normalize_route_key(path)
+        if key:
+            routes.add(key)
     return routes
 
 
 def _referenced_targets() -> set[str]:
-    """Concrete /api/... paths referenced by fetch(), htmx.ajax(), and hx-*.
+    """API paths referenced by any network call pattern.
 
-    Only actual network calls count — NOT <script src>/<link href> asset
-    references (which are not routes). Matches:
-      fetch('/api/foo'), fetch('/api/foo?x=1')
-      htmx.ajax('GET', '/api/foo', {...})
-      hx-get="/api/foo" hx-post="/api/foo"
+    Matches fetch(), htmx.ajax(), hx-{get,post,put,delete}, form action=,
+    and onclick/JS string references. Method is NOT required — we ask "is this
+    route reachable at all," not "with the right verb," so dropping the method
+    requirement removes a whole class of miss. Returns normalized route keys.
     """
     out: set[str] = set()
     for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}):
         text = p.read_text()
-        # fetch('...') — capture the first string arg
+        # fetch('/api/foo') — URL is the first string arg, method agnostic
         for m in re.finditer(r"fetch\(\s*['\"]([^'\"]+)['\"]", text):
-            path = m.group(1).split("?")[0].rstrip("/")
-            path = re.sub(r"\{[^}]+\}", "<param>", path)
-            if path.startswith("/api"):
-                out.add(path)
-        # htmx.ajax('GET', '...') — capture the second string arg
-        for m in re.finditer(r"htmx\.ajax\(\s*['\"](?:GET|POST|PUT|DELETE)['\"]\s*,\s*['\"]([^'\"]+)['\"]", text):
-            path = m.group(1).split("?")[0].rstrip("/")
-            path = re.sub(r"\{[^}]+\}", "<param>", path)
-            if path.startswith("/api"):
-                out.add(path)
-        # hx-get="/api/x" / hx-post="/api/x" — capture the quoted path
+            key = _normalize_route_key(m.group(1))
+            if key:
+                out.add(key)
+        # htmx.ajax('GET', '/api/foo', ...) — second string arg
+        for m in re.finditer(r"htmx\.ajax\(\s*['\"][^'\"]+['\"]\s*,\s*['\"]([^'\"]+)['\"]", text):
+            key = _normalize_route_key(m.group(1))
+            if key:
+                out.add(key)
+        # hx-get="/api/x" hx-post="/api/x"
         for m in re.finditer(r'hx-(?:get|post|put|delete)="([^"]+)"', text):
-            path = m.group(1).split("?")[0].rstrip("/")
-            path = re.sub(r"\{[^}]+\}", "<param>", path)
-            if path.startswith("/api"):
-                out.add(path)
+            key = _normalize_route_key(m.group(1))
+            if key:
+                out.add(key)
+        # form action="/api/x"
+        for m in re.finditer(r'<form[^>]*action="([^"]+)"', text):
+            key = _normalize_route_key(m.group(1))
+            if key:
+                out.add(key)
+        # onclick / inline handlers calling a route: onclick="fetch('/api/x')"
+        for m in re.finditer(r"on(?:click|change|submit)=\"[^\"]*fetch\(['\"]([^'\"]+)['\"]", text):
+            key = _normalize_route_key(m.group(1))
+            if key:
+                out.add(key)
     return out
 
 
 def direction3_orphaned_targets() -> list[str]:
-    """fetch/htmx targets with no registered route."""
+    """fetch/htmx/form targets with no registered route."""
     routes = _registered_routes()
     targets = _referenced_targets()
-    # A target resolves if a route equals it, or a route is its prefix+param
-    return sorted(t for t in targets if not _route_matches(t, routes))
-
-
-def _route_matches(target: str, routes: set[str]) -> bool:
-    if target in routes:
-        return True
-    # target like /api/fleet/agents matches /api/fleet/agents (exact handled).
-    # target with a concrete value matching a <param> route: /api/inbox/X/ack
-    # matches /api/inbox/<param>/ack
-    parts = target.split("/")
-    for route in routes:
-        rparts = route.split("/")
-        if len(rparts) != len(parts):
-            continue
-        if all(rp == pp or rp == "<param>" for rp, pp in zip(rparts, parts)):
-            return True
-    return False
+    return sorted(t for t in targets if t not in routes)
 
 
 # ── Direction 4: registered POST routes -> referenced anywhere ──────────────
@@ -254,37 +260,19 @@ def direction4_orphaned_post_routes() -> list[str]:
         for method, path in re.findall(r'@router\.(get|post|put|delete)\("([^"]*)"', text):
             if method != "post":
                 continue
-            full = prefix + path
-            full = re.sub(r"\{[^}]+\}", "<param>", full).rstrip("/")
-            post_routes.add(full)
+            key = _normalize_route_key(prefix + path)
+            if key:
+                post_routes.add(key)
     srv = SERVER.read_text()
     for method, path in re.findall(r'@app\.(post)\("([^"]*)"', srv):
-        full = re.sub(r"\{[^}]+\}", "<param>", path).rstrip("/")
-        post_routes.add(full)
+        key = _normalize_route_key(path)
+        if key:
+            post_routes.add(key)
 
-    # Gather all text that could reference a route (templates, JS, inline onclick)
-    reference_text = ""
-    for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}):
-        reference_text += p.read_text()
-
-    orphaned = []
-    for route in sorted(post_routes):
-        # Reconstruct the literal prefix (without <param>) to grep for
-        literal = route.replace("<param>", "{X}")
-        # Check if any concrete form of this route is referenced
-        # e.g. /api/inbox/{item_id}/ack -> look for "/api/inbox/" and "ack"
-        if not _route_referenced(route, reference_text):
-            orphaned.append(route)
+    # A POST route is orphaned if NO reference (any verb, any pattern) reaches it.
+    referenced = _referenced_targets()
+    orphaned = sorted(r for r in post_routes if r not in referenced)
     return orphaned
-
-
-def _route_referenced(route: str, text: str) -> bool:
-    """Heuristic: a route is referenced if its static prefix appears in text."""
-    # Take the part before the first <param> as the static prefix
-    parts = route.split("<param>")[0]
-    if parts and parts in text:
-        return True
-    return False
 
 
 # ── Report ───────────────────────────────────────────────────────────────────
