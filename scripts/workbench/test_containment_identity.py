@@ -68,3 +68,34 @@ def test_candidate_audited_against_worktree_would_flag():
     audited against the worktree WOULD flag. Confirms the fix is necessary."""
     res = mod.containment_check("t", CANDIDATE_ID, WORKTREE_T2)
     assert res["violated"] is True, "candidate has sibling refs — auditing it must flag (pre-fix bug demo)"
+
+
+def test_no_silent_candidate_id_fallback():
+    """The runner MUST NOT fall back to auditing the candidate id when the
+    adapter failed to capture the replay session id. A missing session id
+    means the trial is UNMEASURABLE (needs_review=true), never re-audited
+    against a different entity's history.
+
+    Fails on the fallback implementation (`replay_sid = result.get(...) or sid`),
+    which silently reintroduced the misbound-identity false positive when
+    `_parse_session_id` returned empty.
+    """
+    src = pathlib.Path(_SCRIPT).read_text()
+    # The dangerous pattern: binding replay_sid with a candidate-id fallback.
+    assert 'or sid' not in src, (
+        "candidate-id fallback in session binding reintroduces the misbound-identity bug"
+    )
+    # The required pattern: missing session id -> unmeasurable, not audited.
+    assert "session_id_not_captured" in src, (
+        "must quarantine trials whose session id could not be captured"
+    )
+
+
+def test_missing_session_id_yields_unmeasurable_not_violation():
+    """When session_id is empty, containment must be recorded as NOT a
+    violation (the agent may have been clean) but the trial must be quarantined
+    via needs_review. It must NOT be scored as a clean pass either."""
+    src = pathlib.Path(_SCRIPT).read_text()
+    # The unmeasurable branch sets violated=False but needs_review=True.
+    assert '"violated": False' in src and "session_id_not_captured" in src
+    assert "needs_review" in src

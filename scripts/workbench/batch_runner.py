@@ -255,14 +255,33 @@ def run_clean_k3(candidate: dict) -> dict:
             # Provenance fix: the replay runs in a NEW hermes-created session, not
             # the candidate's. The adapter returns its session_id from stderr.
             # Audit THAT session for containment — never the candidate's history
-            # (which references the real repo and would false-positive). The
-            # candidate id is only a fallback when the adapter couldn't capture it.
-            replay_sid = result.get("session_id") or sid
-            entry["replay_session_id"] = replay_sid
-            containment = containment_check(tag, replay_sid, path)
+            # (which references the real repo and would false-positive).
+            # CRITICAL: if the adapter could NOT capture the session id, do NOT
+            # fall back to auditing the candidate id. A missing session id means
+            # the trial is UNMEASURABLE (needs_review=true) — silently substituting
+            # a different entity's history is the exact misbound-identity bug that
+            # produced the false containment violations. Never infer what you can
+            # declare; and never audit what you cannot identify.
+            replay_sid = result.get("session_id") or ""
+            entry["replay_session_id"] = replay_sid or None
+            if not replay_sid:
+                containment = {
+                    "violated": False,
+                    "reason": "session_id_not_captured — trial unmeasurable, not audited",
+                    "leakage_reads": [],
+                    "writes_outside": [],
+                }
+                # A trial with no captured session id CANNOT be scored for
+                # containment. It is not a violation (the agent may have been
+                # clean) — it is UNMEASURABLE, which must quarantine it so a
+                # hollow pass/fail never enters the grid.
+                entry["needs_review"] = True
+                entry["review_reason"] = "session_id_not_captured"
+            else:
+                containment = containment_check(tag, replay_sid, path)
+                entry["needs_review"] = bool(containment["violated"])
             entry["containment"] = containment
             entry["trajectory_verdict"] = None
-            entry["needs_review"] = bool(containment["violated"])
             if containment["violated"]:
                 entry["status"] = "containment_violation"
                 entry["score_detail"] = "n/a (containment failed)"
