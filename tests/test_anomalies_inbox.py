@@ -309,6 +309,47 @@ def test_correlation_fold(syn_ctx, syn_store):
     conn.commit()
 
 
+def test_build_and_store_correlates_automatically(syn_ctx):
+    """Option B: write-time folding — correlation runs inside build_and_store.
+
+    The manual /api/inbox/refresh job was deleted (the audit's first real catch:
+    a registered POST route with no caller). Folding must now happen as part of
+    ingestion, so the parent appears after a plain build_and_store() with NO
+    separate correlate() call.
+    """
+    now_iso = _now_iso()
+    # Simulate the adapters emitting 3 circuit events in the same window.
+    for agent in ["auto-fold-a", "auto-fold-b", "auto-fold-c"]:
+        syn_ctx.store.upsert(
+            item_class="circuit_event",
+            agent_name=agent,
+            dedupe_key=f"auto_fold_{agent}",
+            tone="watch",
+            title=f"{agent} circuit tripped",
+            evidence={"metrics": {"test": 1}, "source_table": "test", "detector": "test"},
+            actions=[{"label": "Ack", "kind": "neutral"}],
+            why_source="source: test · detector: test",
+            first_seen=now_iso,
+        )
+
+    # build_and_store runs correlation internally — NO manual correlate() call.
+    build_and_store(syn_ctx)
+
+    # The parent must now exist with folded_count >= 3.
+    parents = [i for i in syn_ctx.store.list_items(limit=50)
+               if i.get("folded_count") and i["folded_count"] >= 3]
+    assert len(parents) >= 1, (
+        "build_and_store should correlate automatically (write-time folding); "
+        "a parent with folded_count>=3 must exist without any manual correlate() call"
+    )
+
+    # Clean up
+    conn = syn_ctx.db._get_conn()
+    conn.execute("DELETE FROM inbox_items WHERE id LIKE 'circuit_event::auto-fold-%'")
+    conn.execute("DELETE FROM inbox_items WHERE id LIKE 'circuit_event::__fleet__::correlated%'")
+    conn.commit()
+
+
 # ── §7.4: Split/restore ───────────────────────────────────────────
 
 def test_split_restore(syn_ctx, syn_store):

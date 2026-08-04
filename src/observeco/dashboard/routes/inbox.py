@@ -427,19 +427,6 @@ async def split_item(request: Request, parent_id: str):
     return await get_inbox(request)
 
 
-@router.post("/refresh")
-async def refresh_inbox(request: Request):
-    """POST /api/inbox/refresh — run all adapters + correlation, re-render."""
-    from observeco.inbox.correlate import correlate as run_correlate
-    from observeco.inbox.registry import build_and_store
-
-    count = build_and_store()
-    result = run_correlate(store)
-    logger.info("Inbox refresh: %d new items, %d correlated (%d folded)",
-                count, result.parents_created, result.children_folded)
-    return await get_inbox(request)
-
-
 @router.post("/cleanup/apply")
 async def apply_cleanup(request: Request):
     """POST /api/inbox/cleanup/apply — applies P0.0 classification fixes.
@@ -495,11 +482,9 @@ async def apply_cleanup(request: Request):
             conn.commit()
             results["reset_stale_circuits"] = f"reset {len(stale)} circuits"
 
-    # Rebuild inbox after cleanup
-    from observeco.inbox.correlate import correlate as run_correlate
+    # Rebuild inbox after cleanup (build_and_store runs correlation internally)
     from observeco.inbox.registry import build_and_store
     build_and_store()
-    run_correlate()
 
     return JSONResponse({"status": "ok", "results": results})
 

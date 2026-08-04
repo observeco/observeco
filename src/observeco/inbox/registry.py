@@ -561,7 +561,12 @@ def run_all_adapters(ctx: AdapterContext | None = None) -> list[dict]:
 
 
 def build_and_store(ctx: AdapterContext | None = None) -> int:
-    """Run all adapters, upsert results into inbox_items. Returns count."""
+    """Run all adapters, upsert results into inbox_items. Returns count.
+
+    Correlation runs automatically after each ingest (write-time folding),
+    so folding is always current with zero user action. Correlation is cheap
+    (reads ≤500 open items, groups by class) — not a manual job.
+    """
     if ctx is None:
         ctx = AdapterContext()
     items = run_all_adapters(ctx)
@@ -584,4 +589,7 @@ def build_and_store(ctx: AdapterContext | None = None) -> int:
         if auto_triage:
             ctx.store.auto_triage(item_id, auto_triage)
         count += 1
+    # Write-time folding — keeps parents current after every ingest.
+    from observeco.inbox.correlate import correlate
+    correlate(ctx.store)
     return count
