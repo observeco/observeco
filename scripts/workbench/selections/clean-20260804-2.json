@@ -1,0 +1,26 @@
+[
+  {
+    "id": "20260716_222458_08f889",
+    "model": "deepseek-v4-pro",
+    "sha": "fb05b55",
+    "rel": "src/observeco/capability/canary.py",
+    "marker": "_semantic_similarity",
+    "marker_strength": "strong",
+    "assertion": "subject_symbol",
+    "budget": 252,
+    "task_description": "Add the _semantic_similarity assertion type to the Scorer class in src/observeco/capability/canary.py. It must be wired into the dispatch table (recognized as a valid assertion type) and score output against a target using cosine similarity.",
+    "task": "Add the `_semantic_similarity` assertion type to the Scorer class in canary.py\n\nThe Scorer class is in src/observeco/capability/canary.py at the current location. Add the assertion type, wire it into the dispatch table, and verify the code parses."
+  },
+  {
+    "id": "20260716_111506_aaf7a1",
+    "model": "deepseek-v4-pro",
+    "sha": "fb05b55",
+    "rel": "src/observeco/db.py",
+    "marker": "harness_optimization_runs",
+    "marker_strength": "strong",
+    "assertion": "subject_symbol",
+    "budget": 180,
+    "task_description": "Add Migration 63 to src/observeco/db.py: three new tables for harness optimization (harness_optimization_runs, harness_eval_runs, harness_edits) per obs-spec-056 + obs-spec-061. Must be registered in the MIGRATIONS list.",
+    "task": "Add migration 63 to ObserveCo's db.py: 3 new tables for harness optimization (obs-spec-056 + obs-spec-061).\n\nThe db.py file is at src/observeco/db.py at the current location. Add Migration 63 with the three harness tables and register it in the MIGRATIONS list."
+  }
+]
