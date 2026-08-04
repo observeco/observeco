@@ -64,6 +64,15 @@
   --token-guidance: #ef4444;
   --surface-active: #1e293b;
   --surface-hover: #273548;
+  /* Referenced by components but never defined — silent-invalid before 2026-08-04.
+     (--fg-3 was the same latent defect, 46 refs, now fixed above.) */
+  --bg-1: #1b2942;
+  --bg-2: #243349;
+  --fg-1: #cbd5e1;
+  --fg-dim: #475569;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --radius: 8px;
+  --success: #22c55e;
 }
 
 /* ─── Base body (must be first — sets background and typography) ─── */
