@@ -170,6 +170,112 @@ def _render_item(item: dict) -> str:
   </div>"""
 
 
+# ── Cleanup card detection (P0.0) ────────────────────────────────────
+# Mirrors the queries in apply_cleanup() so the card shows iff a fix is
+# actually pending. Deterministic, read-only.
+
+def _detect_cleanup() -> list[str]:
+    """Return fix IDs that are pending (misclassification exists in DB).
+
+    Matches apply_cleanup(): a fix is pending when its target condition is
+    NOT yet satisfied. Empty list == fleet clean -> no card.
+    """
+    conn = db._get_conn()
+    fixes = []
+
+    # reclassify_profiles: profile-class agents (kanban/workspace/spectrum)
+    # are the misclassification target. If any still have class='service'
+    # (the pre-fix state), the fix is pending.
+    profile_names = ["kanban", "workspace", "spectrum"]
+    unclassified = conn.execute(
+        "SELECT COUNT(*) FROM agent_configs WHERE agent_name IN "
+        f"({','.join('?' * len(profile_names))}) AND class = 'service'",
+        profile_names,
+    ).fetchone()[0]
+    if unclassified:
+        fixes.append("reclassify_profiles")
+
+    # exclude_tests: test entities present as a live class.
+    test_names = ["test-config-agent", "my_new_agent"]
+    test_agents = conn.execute(
+        "SELECT COUNT(*) FROM agent_configs WHERE agent_name IN "
+        f"({','.join('?' * len(test_names))})",
+        test_names,
+    ).fetchone()[0]
+    if test_agents:
+        fixes.append("exclude_tests")
+
+    # reset_stale_circuits: tripped circuits whose cooldown expired >7d ago.
+    now = int(time.time())
+    stale = conn.execute(
+        "SELECT COUNT(*) FROM circuit_breakers "
+        "WHERE tripped = 1 AND cooldown_until < ?",
+        (now - 7 * 86400,),
+    ).fetchone()[0]
+    if stale:
+        fixes.append("reset_stale_circuits")
+
+    return fixes
+
+
+def _render_cleanup_card(fixes: list[str]) -> str:
+    """Render the P0.0 signal-cleanup card (mockup-anomalies-inbox-v2.html)."""
+    fix_defs = {
+        "reclassify_profiles": {
+            "title": "Reclassify idle profiles — not dead agents",
+            "why": "Flagged critical for \"dead in N pulse checks.\" But these are "
+                    "Hermes profiles — they only run when chatted with. Probing them "
+                    "like daemons manufactures false criticals. (DPA §2-A: UNKNOWN ≠ CRITICAL.)",
+            "fix": "Switch to activity-based monitoring — \"idle\" state, no criticals.",
+        },
+        "exclude_tests": {
+            "title": "Exclude test entities",
+            "why": "Discovered from config scan, never a real workload — feeds "
+                    "accumulated circuit failures into the alert rail.",
+            "fix": "Exclude from monitoring + alerts (persisted, like fleet × delete).",
+        },
+        "reset_stale_circuits": {
+            "title": "Reset stale circuits",
+            "why": "Circuits tripped long ago, never reset, still counted as active incidents.",
+            "fix": "Reset circuit + re-baseline. Next genuine failure starts a fresh count.",
+        },
+    }
+    checkboxes = "".join(
+        f'<label class="fix"><input type="checkbox" value="{fid}" checked>'
+        f'<div class="fx-body"><div class="fx-title">{fix_defs[fid]["title"]}</div>'
+        f'<div class="fx-why">{fix_defs[fid]["why"]}</div>'
+        f'<div class="fx-fix">{fix_defs[fid]["fix"]}</div></div></label>'
+        for fid in fixes if fid in fix_defs
+    )
+    effect = " ".join(
+        {
+            "reclassify_profiles": "idle profiles stop manufacturing false criticals",
+            "exclude_tests": "test entities leave the alert rail",
+            "reset_stale_circuits": "stale circuits reset to a clean baseline",
+        }.get(fid, "")
+        for fid in fixes
+    ).strip() or "apply classification fixes"
+    return f"""<div class="cleanup open" id="cleanupCard">
+  <div class="cleanup-h" onclick="document.getElementById('cleanupCard').classList.toggle('open')">
+    <span class="mark">✓</span>
+    <span class="t">Signal cleanup available <span class="tag">P0.0</span></span>
+    <span class="effect">applies → {effect}</span>
+    <span class="chev">▶</span>
+  </div>
+  <div class="cleanup-body">
+    <div class="cleanup-intro">Classification fixes detected from your live fleet.
+      These aren't new alerts — they're why the alert rail over-counts. Apply once;
+      every surface (rail, inbox, verdict bar) inherits the fix.</div>
+    {checkboxes}
+    <div class="cleanup-actions">
+      <button class="btn primary" onclick="applyCleanupFixes(this)">Apply {len(fixes)} fix{'es' if len(fixes) != 1 else ''}</button>
+      <button class="btn" onclick="this.closest('.cleanup').classList.remove('open')">Review later</button>
+      <span class="cleanup-note">writes to agent_configs + circuit_breakers · reversible</span>
+    </div>
+  </div>
+</div>"""
+
+
 # ── Endpoints ───────────────────────────────────────────────────────
 
 @router.get("", response_class=HTMLResponse)
@@ -227,6 +333,11 @@ async def get_inbox(request: Request, filter: str = "all"):
     </div>
   </div>""")
 
+    # Signal-cleanup card (P0.0) — render iff a fix is pending
+    pending_fixes = _detect_cleanup()
+    if pending_fixes:
+        feed_html_parts.append(_render_cleanup_card(pending_fixes))
+
     # Filters
     feed_html_parts.append(f"""<div class="filters" role="group" aria-label="Filter inbox">
     <button class="fchip{' active' if filter == 'all' else ''}" data-f="all" hx-get="/api/inbox?filter=all" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">All<span class="n">{total}</span></button>
@@ -234,7 +345,6 @@ async def get_inbox(request: Request, filter: str = "all"):
     <button class="fchip{' active' if filter == 'watch' else ''}" data-f="watch" hx-get="/api/inbox?filter=watch" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">Watch<span class="n">{counts.get('watch', 0)}</span></button>
     <button class="fchip{' active' if filter == 'insight' else ''}" data-f="insight" hx-get="/api/inbox?filter=insight" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">Insight<span class="n">{counts.get('insight', 0)}</span></button>
     <button class="fchip{' active' if filter == 'acked' else ''}" data-f="acked" hx-get="/api/inbox?filter=acked" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">Acked<span class="n" id="ackCount">{len(store.list_items(state='acked'))}</span></button>
-    <span class="kb-hint"><kbd>j</kbd>/<kbd>k</kbd> move · <kbd>x</kbd> ack · <kbd>e</kbd> expand</span>
   </div>""")
 
     # Feed sections

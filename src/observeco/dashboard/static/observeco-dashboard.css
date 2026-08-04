@@ -2486,3 +2486,31 @@ body {
 @media (max-width: 420px) {
   .c-profile .tiles { grid-template-columns: 1fr; }
 }
+
+/* ── Inbox signal-cleanup card (P0.0) — mockup anomalies-inbox-v2 ── */
+.cleanup {
+  background: linear-gradient(180deg, rgba(59,130,246,.05), transparent 60%);
+  border: 1px solid rgba(59,130,246,.35);
+  border-radius: var(--radius-lg); margin-bottom: 24px; overflow: hidden;
+}
+.cleanup-h { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-bottom: 1px solid var(--border-soft); cursor: pointer; user-select: none; }
+.cleanup-h:hover { background: rgba(59,130,246,.04); }
+.cleanup-h .mark { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; background: rgba(59,130,246,.15); color: var(--meta); font-size: 12px; font-weight: 700; font-family: var(--font-mono); flex-shrink: 0; }
+.cleanup-h .t { font-weight: 600; font-size: 14px; }
+.cleanup-h .t .tag { font-family: var(--font-mono); font-size: 10px; color: var(--meta); border: 1px solid rgba(59,130,246,.4); border-radius: 4px; padding: 1px 6px; margin-left: 8px; }
+.cleanup-h .effect { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--fg-2); }
+.cleanup-h .effect b { color: var(--accent); }
+.cleanup-h .chev { color: var(--muted); transition: transform .15s; font-size: 12px; }
+.cleanup.open .cleanup-h .chev { transform: rotate(90deg); }
+.cleanup-body { display: none; padding: 6px 18px 16px; }
+.cleanup.open .cleanup-body { display: block; }
+.cleanup-intro { font-size: 12.5px; color: var(--fg-2); padding: 10px 0 12px; max-width: 640px; }
+.cleanup .fix { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 1px solid var(--border-soft); border-radius: var(--radius-md); margin-bottom: 8px; background: rgba(15,23,42,.4); }
+.cleanup .fix:hover { border-color: var(--border); }
+.cleanup .fix input[type="checkbox"] { margin-top: 3px; accent-color: var(--meta); width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+.cleanup .fix .fx-body { flex: 1; min-width: 0; }
+.cleanup .fix .fx-title { font-size: 13px; font-weight: 600; }
+.cleanup .fix .fx-why { font-size: 12px; color: var(--fg-2); margin-top: 3px; }
+.cleanup .fix .fx-fix { font-size: 12px; margin-top: 6px; color: var(--accent); }
+.cleanup-actions { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+.cleanup-note { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); margin-left: auto; }

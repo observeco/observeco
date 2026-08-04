@@ -302,6 +302,25 @@ document.addEventListener('keydown', function(e) {
   if (tab) switchTab(tab.getAttribute('data-tab'), tab);
 });
 
+// ─── Inbox signal-cleanup Apply button (P0.0) ───
+function applyCleanupFixes(btn) {
+  var ids = [];
+  btn.closest('.cleanup-body').querySelectorAll('input:checked').forEach(function(c) { ids.push(c.value); });
+  if (!ids.length) return;
+  var tk = window.__OBSERVECO_TOKEN || '';
+  var hd = { 'Content-Type': 'application/json' };
+  if (tk) hd['X-ObserveCo-Token'] = tk;
+  btn.disabled = true; btn.textContent = 'Applying…';
+  fetch('/api/inbox/cleanup/apply', { method: 'POST', headers: hd, body: JSON.stringify({ fixes: ids }) })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok || d.status === 'ok') {
+        htmx.ajax('GET', '/api/inbox', { target: '#inboxContainer', swap: 'innerHTML' });
+      } else { btn.textContent = 'Failed'; }
+    })
+    .catch(function() { btn.textContent = 'Error'; });
+}
+
 // ─── Card toggle handlers (for v2 collapsible cards) ───
 function _attachCardToggles() {
   document.querySelectorAll('#fleetGrid [data-toggle]').forEach(function(t) {
