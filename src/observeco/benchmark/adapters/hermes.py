@@ -50,6 +50,8 @@ _RETRY_DELAYS = [2, 4]  # seconds, exponential-ish
 _TOKEN_USAGE_RE = re.compile(
     r"Usage: CompletionUsage\(completion_tokens=(\d+), prompt_tokens=(\d+), total_tokens=(\d+)"
 )
+# session_id: 20260804_194735_e27347 (emitted by `hermes chat -Q --verbose` on stderr)
+_SESSION_ID_RE = re.compile(r"session_id[:=]\s*([\w\-\.]+)", re.IGNORECASE)
 
 # Per-model pricing in $/1M tokens (input, output). Covers models used
 # by the Hermes adapter chain.
@@ -140,6 +142,16 @@ class HermesBenchmarkAdapter:
             "completion_tokens": int(m.group(1)),
             "total_tokens": int(m.group(3)),
         }
+
+    def _parse_session_id(self, stderr: str) -> str:
+        """Extract the created session id from Hermes verbose stderr.
+
+        `hermes chat -Q --verbose` emits `session_id: <id>` on stderr. This is
+        the session the replay actually ran in — bound to the run as provenance,
+        so containment and audits target the right entity. Empty = not found.
+        """
+        m = _SESSION_ID_RE.search(stderr or "")
+        return m.group(1) if m else ""
 
     def _estimate_cost(self, tokens: dict, model_used: str) -> float:
         """Estimate cost from token counts using a pricing table.
@@ -337,6 +349,7 @@ class HermesBenchmarkAdapter:
                     "provider_error": False,
                     "cost": cost,
                     "tokens": tokens["total_tokens"] if tokens else 0,
+                    "session_id": self._parse_session_id(stderr),
                 }
 
             except FileNotFoundError:
