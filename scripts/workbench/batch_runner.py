@@ -236,20 +236,40 @@ def run_clean_k3(candidate: dict) -> dict:
             entry["timed_out"] = result.get("timed_out", False)
 
             # 4. CONTAINMENT: did the agent stay in the worktree?
+            # Verdict fields are set HERE (not in the scoring block) so a
+            # containment violation still records explicit, honest values
+            # instead of silently missing fields.
+            #   summary_verdict   = marker check (what a naive summary reports).
+            #   containment_verdict = deterministic provenance from the transcript
+            #                       (confinement + leakage). NOT trajectory-truth.
+            #   trajectory_verdict = None. Never a copy of summary_verdict. Deferred
+            #                       to an LLM-judge trajectory pass (token cost per
+            #                       run — see workbench-v4 §0 pending list).
+            #   needs_review      = True iff containment violated. A violated run is
+            #                       quarantined (excluded from the grid) until an
+            #                       adjudicator clears it. Disagreement between
+            #                       summary and trajectory is unmeasurable today
+            #                       (trajectory_verdict is null), so the enforceable
+            #                       deterministic gate is containment.
             containment = containment_check(tag, sid, path)
             entry["containment"] = containment
+            entry["trajectory_verdict"] = None
+            entry["needs_review"] = bool(containment["violated"])
             if containment["violated"]:
                 entry["status"] = "containment_violation"
                 entry["score_detail"] = "n/a (containment failed)"
+                entry["containment_verdict"] = "violated"
+                entry["summary_verdict"] = "fail"
                 teardown_worktree(path, branch)
                 continue
 
-            # 5. SCORE from captured state BEFORE teardown
+            entry["containment_verdict"] = "clean"
+
+            # 5. SCORE from captured state BEFORE teardown.
             passed = target_present(path, candidate["marker"], candidate["rel"])
             entry["status"] = "pass" if passed else "fail"
             entry["score_detail"] = f"{candidate['marker']} present={passed}"
             entry["summary_verdict"] = "pass" if passed else "fail"
-            entry["trajectory_verdict"] = "pass" if passed else "fail"
         except Exception as e:  # noqa: BLE001
             entry.update({"status": "exception", "error": str(e)})
         finally:
