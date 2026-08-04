@@ -251,7 +251,15 @@ def run_clean_k3(candidate: dict) -> dict:
             #                       summary and trajectory is unmeasurable today
             #                       (trajectory_verdict is null), so the enforceable
             #                       deterministic gate is containment.
-            containment = containment_check(tag, sid, path)
+            #
+            # Provenance fix: the replay runs in a NEW hermes-created session, not
+            # the candidate's. The adapter returns its session_id from stderr.
+            # Audit THAT session for containment — never the candidate's history
+            # (which references the real repo and would false-positive). The
+            # candidate id is only a fallback when the adapter couldn't capture it.
+            replay_sid = result.get("session_id") or sid
+            entry["replay_session_id"] = replay_sid
+            containment = containment_check(tag, replay_sid, path)
             entry["containment"] = containment
             entry["trajectory_verdict"] = None
             entry["needs_review"] = bool(containment["violated"])
