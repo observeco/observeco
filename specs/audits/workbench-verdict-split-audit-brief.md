@@ -106,9 +106,15 @@ reading that learns more about the discipline than one reading passing tests.
 `077a3a0` removed the harness-optimizer **dashboard tab** (route, nav, content,
 JS) — the only dashboard surface with zero manual steering, which produced nine
 runs of nothing (every run gated-inert by preconditions). The backend CLI
-(`observeco harness optimize`) was left intact. This is cited as the "we removed
-a feature the process couldn't deliver" data point, but is secondary to the
-verdict-split finding above.
+(`observeco harness optimize`) was left intact.
+
+**Causal-boundary correction:** this removal is *not* cited as "a feature the
+process couldn't deliver." The process postdates the harness tab by a wide
+margin — the tab produced nine inert runs on its own, before any of this. The
+process did **not** surface it. It was removed during the same exercise, but the
+removal decision and the process are coincident, not causal. An auditor should
+read it as: a long-inert surface was deleted while the process was being defined
+alongside it. The verdict-split finding in §1–§3 is the process's actual product.
 
 ---
 

@@ -26,6 +26,17 @@ Both are the same failure: **a surface that reports success while the substance
 underneath is absent**, detectable only by looking at what actually happened
 rather than what was reported.
 
+**Category correction (2026-08-04):** the nine environment lies are not all
+instances of unfalsifiable compliance. Some were — the model-resolution override
+and the copied summary verdict reported false success. Others (shared worktree,
+post-fix pin) were plain environment defects: the environment was wrong, but it
+was not a surface claiming to have succeeded. The correct relationship: the nine
+lies are instances of **the environment lying to a measurement**; unfalsifiable
+compliance is the **artifact-level cousin**. Same family, not one category. The
+unifying thread is that both are only detectable by inspecting what happened
+rather than what was reported — but the mechanism (environment defect vs. agent
+producing a plausible-shaped artifact) differs, and the fixes differ accordingly.
+
 The rule: **any surface that reports success must carry the observable that
 would be different if it were false.** If you cannot name that observable, the
 claim is not buildable yet.
@@ -88,8 +99,30 @@ Standing instruction: record anything a reviewer would want to know, including �
 - assumptions you couldn't verify,
 - places where you produced something plausible without confirming it's correct.
 
-**Empty is a valid answer.** The key design point: it must be costless to report
-and never treated as failure, or you restore the incentive that hid the defect.
+**Binding (this mechanism must not be unfalsifiably compliant — apply §4 to §3):**
+
+- **Location:** one file per task, `defects.jsonl`, placed in the same directory as
+  the task's run record or diff artifact. One JSON object per line:
+  `{"task": "<id>", "finding": "...", "why_not_fixed": "...", "ts": "<iso>"}`.
+- **Empty is a real, distinguishable value:** a task with no observations MUST
+  write the single line `{"task": "<id>", "finding": "none"}`. The literal string
+  `none` makes *absence of the file* (task skipped the log) distinguishable from
+  *an empty log* (task checked, found nothing). A missing file is a violation;
+  a `"finding": "none"` line is not.
+- **The gate is greppable:** `grep -rL '"finding": "none"' --include=defects.jsonl .`
+  or a CI check that fails when any completed task ships no `defects.jsonl`.
+  Absence fails loudly, so a task can't silently skip it the way it silently
+  skipped the verdict.
+- **Status:** this mechanism was **UNVERIFIED** at binding time — the verdict-split
+  commit exercised mechanisms 1, 2's value-unit gate, and 4 but did not ship a
+  defect log. **Verified 2026-08-04:** `specs/audits/defects.jsonl` is the first
+  real task artifact produced under this binding — five findings from the
+  process-doc review, each with `why_not_fixed` and a real timestamp, written
+  under the rule it exercises. The mechanism is no longer aspiration; it has a
+  shipped example.
+
+The key design point: it must be costless to report and never treated as failure,
+or you restore the incentive that hid the defect.
 
 In the Workbench case, the honest entry would have been: *"trajectory_verdict is
 assigned the same value as summary_verdict; I had no independent trajectory
@@ -131,6 +164,17 @@ reliably audit it — it audits against the same understanding that produced the
 bug. A **fresh instance** given only the spec and the diff, asked "where does
 this fail to do what the spec claims," catches what the author cannot.
 
+**Binding (this gate must not be unfalsifiably compliant):**
+- The reviewer receives **only** the spec + the diff. No session context, no
+  prior review, no author commentary. Same constraint as the Workbench
+  containment gate: a reviewer who sees the author's reasoning audits against
+  the same understanding that produced the bug.
+- The reviewer's verdict is **recorded**, not conversational: a one-line
+  verdict appended to the spec — `ADVERSARIAL REVIEW PASSED` / `FAILED: <reason>`
+  — with the reviewer instance noted. An unmarked value unit is `UNVERIFIED`.
+- The gate fails closed: no value unit ships without a recorded adversarial
+  verdict, and the verdict must be a pass.
+
 This is the mechanizable version of what this conversation did manually. The
 part you cannot fully automate is the second mind reading the spec — you can
 only *schedule* it.
@@ -145,9 +189,26 @@ only *schedule* it.
 4. Build to make it pass; ship the defect log alongside.
 5. Bind every claim to its evidence (test name / run ID / `UNVERIFIED`).
 6. Correct the document to match the instrument — zero claims the artifact can't back.
+7. **Exit** (see below) — the loop must be able to terminate.
+
+**Exit rule (this thread's actual lesson):** adversarial review is excellent at
+finding defects and terrible at stopping. Without a termination rule, a process
+doc that can't finish will eat the schedule it was written to protect. Two
+declarations, made **before** review begins:
+- **Round budget:** the number of review→fix rounds a value unit may consume.
+- **Termination condition:** if a round's finding does not change what gets
+  built or what gets run next, **stop** — record the finding as resolved-or-
+  acknowledged, ship what exists, and move on. A finding that merely restates
+  the prior round's objection, or that a reviewer "would also have noted," is
+  not a change and does not extend the budget.
+
+The working rule: a process that can't terminate protects nothing. Budget and
+termination are declared up front so review stops when it stops being useful,
+not when someone gets tired.
 
 **Definition of done:** the distinguishing test passes in CI *and* the value-unit
-definition survived adversarial review. Not "the feature is built."
+definition survived adversarial review *and* the round budget was not exceeded
+(via termination, not abandonment). Not "the feature is built."
 
 ---
 
@@ -157,4 +218,10 @@ definition survived adversarial review. Not "the feature is built."
   copied-verdict defect; corrected scope (rename to `containment_verdict`,
   `trajectory_verdict=None`, quarantine rule); added `test_verdict_independence.py`.
 - `4a35654` — audit brief at `specs/audits/workbench-verdict-split-audit-brief.md`.
+- `5a86329` — this process doc.
+- This commit — adversarial review of this doc found five defects (mechanism 2
+  unbounded; unbound causal claim in the brief; nine-lies category error; value-unit
+  gate unbinding; no exit rule). All five fixed. Mechanism 2 verified by its own
+  shipped `specs/audits/defects.jsonl`. This is the loop's step 2/7 applied to the
+  process itself.
 - This document is the generalized process those commits tested.
