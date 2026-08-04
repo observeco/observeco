@@ -69,3 +69,26 @@ def test_needs_review_set_on_both_paths():
 def test_summary_verdict_remains_marker_check():
     """summary_verdict still reflects the marker check — that is its contract."""
     assert "entry[\"summary_verdict\"] = \"pass\" if passed else \"fail\"" in SRC
+
+
+def test_unmeasured_trials_never_yield_fail():
+    """17th fix: a candidate whose trials are all unmeasured (session_id not
+    captured, or infra-aborted with no completed trials) must be UNMEASURED,
+    never FAIL. Absence of evidence is not negative evidence — treating
+    unmeasured trials as failures would deflate exactly like trial-2's false
+    negative. This fails on the pre-fix code, where an all-unmeasured candidate
+    derived `passes=0` -> `FAIL`."""
+    # The status derivation must distinguish measured from unmeasured trials.
+    assert "measured = [t for t in trials if t[\"status\"] in (\"pass\", \"fail\")]" in SRC
+    # UNMEASURED must be a real outcome, gated on measured_count, not a bare
+    # `PASS if passes>=2 else FAIL` that turns absence into a failure.
+    assert '"UNMEASURED"' in SRC
+    # The all-unmeasured trial status is recorded explicitly, not left pending.
+    assert "entry[\"status\"] = \"unmeasured\"" in SRC
+
+
+def test_unmeasured_trial_records_null_not_fake():
+    """An unmeasured trial records null verdicts (unmeasured), never a
+    fabricated pass or fail — null-not-faked applied to the verdict itself."""
+    assert "entry[\"summary_verdict\"] = \"unmeasured\"" in SRC
+    assert "entry[\"containment_verdict\"] = \"unmeasured\"" in SRC
