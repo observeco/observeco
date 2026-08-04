@@ -177,6 +177,75 @@ def _normalize_route_key(path: str) -> str:
     return path if path.startswith("/api") else ""
 
 
+# A non-literal JS expression inside a fetch('...' + expr + '...') concat chain.
+# Matches: + encodeURIComponent(agent), + data.subscription.id, + (t ? ... : '').
+_EXPR = r"\+[^'\"]+?"  # everything up to the next literal string or the closing paren
+
+
+def _reconstruct_fetch_url(inner: str) -> str:
+    """Reconstruct a fetch() URL arg from its string-concatenation form.
+
+    The arg may be a single literal ('/api/foo') or a chain
+    ('/api/agent/' + expr + '/errors?days=' + expr). Non-literal JS expressions
+    become <param>; string literals are kept verbatim. So:
+      '/api/agent/' + expr + '/errors'  ->  /api/agent/<param>/errors
+    which then matches the registered route /api/agent/{name}/errors.
+
+    Returns '' if the chain does not begin with a literal /api prefix (so a
+    ternary like ('/api/x' + (cond ? ...)) which produces garbage is rejected).
+    """
+    # Match a leading literal /api prefix, then + expr + literal+ ... segments.
+    m = re.match(r"\s*['\"](/api/[^'\"]*)['\"]\s*(.*)$", inner)
+    if not m:
+        return ""
+    out = [m.group(1)]
+    rest = m.group(2)
+    # rest looks like: + expr + '/suffix' + expr + '/more'
+    for part in re.findall(r"\+([^+]*)", rest):
+        part = part.strip()
+        if part.startswith(("'", '"')) and part.endswith(("'", '"')) and len(part) >= 2:
+            out.append(part[1:-1])  # literal string content
+        elif part and part not in ("", ")", ","):
+            out.append("<param>")
+    result = "".join(out)
+    # A real path param is always preceded by '/' (path segment). A <param> not
+    # preceded by '/' is query-string garbage from a nested ternary
+    # ('/api/x' + (t ? '?a=' + t : '')) — reject it so we don't emit noise.
+    path_only = result.split("?")[0]
+    if "<param>" in path_only and "/<param>" not in path_only:
+        return ""
+    return result
+
+
+def _fetch_urls(text: str) -> set[str]:
+    """All /api URLs referenced by fetch() including concat chains."""
+    out: set[str] = set()
+    # Match fetch( <arg> ) where <arg> may itself contain nested parens.
+    # We capture up to the matching close paren heuristically: fetch( then
+    # everything up to the first ', {' options object or the final ')'.
+    for m in re.finditer(r"fetch\(\s*", text):
+        start = m.end()
+        # Find the arg: from start to the first comma at paren-depth 0 or final )
+        depth = 0
+        i = start
+        while i < len(text):
+            c = text[i]
+            if c == "(":
+                depth += 1
+            elif c == ")":
+                if depth == 0:
+                    break
+                depth -= 1
+            elif c == "," and depth == 0:
+                break
+            i += 1
+        arg = text[start:i]
+        path = _reconstruct_fetch_url(arg)
+        if path and path.startswith("/api"):
+            out.add(path)
+    return out
+
+
 def _registered_routes() -> set[str]:
     """All normalized URL path keys registered by FastAPI decorators.
 
@@ -208,13 +277,19 @@ def _referenced_targets() -> set[str]:
     and onclick/JS string references. Method is NOT required — we ask "is this
     route reachable at all," not "with the right verb," so dropping the method
     requirement removes a whole class of miss. Returns normalized route keys.
+
+    Scans templates + static JS + server.py (which renders inline HTML with
+    fetch() calls inside @app.get handlers). Omitting server.py made chisel/*
+    etc. look orphaned when they're called from server-rendered buttons.
     """
     out: set[str] = set()
-    for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}):
+    for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}) + [SERVER]:
         text = p.read_text()
-        # fetch('/api/foo') — URL is the first string arg, method agnostic
-        for m in re.finditer(r"fetch\(\s*['\"]([^'\"]+)['\"]", text):
-            key = _normalize_route_key(m.group(1))
+        # fetch('/api/foo' + expr + '/bar') — reconstruct full concat chain
+        # (handles plain '/api/foo' and concatenated forms; a naive first-literal
+        # regex would truncate '/api/agent/' and miss the '/profile' suffix).
+        for raw in _fetch_urls(text):
+            key = _normalize_route_key(raw)
             if key:
                 out.add(key)
         # htmx.ajax('GET', '/api/foo', ...) — second string arg

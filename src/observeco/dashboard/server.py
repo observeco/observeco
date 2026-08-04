@@ -3238,6 +3238,34 @@ async def api_watch_daemon_status():
     }
 
 
+@app.post("/api/watch-daemon/start", response_class=JSONResponse)
+async def api_watch_daemon_start():
+    """POST /api/watch-daemon/start — start the auto-compression watch daemon.
+
+    Frontend daemon panel (startWatchDaemon) calls this; only the status GET
+    existed, so the start button 404'd. Wired to the existing
+    chisel/watch.start_daemon(). Returns {status, pid} as the frontend expects.
+    """
+    from observeco.chisel.watch import start_daemon, _pid_file, _is_pid_alive
+    start_daemon()
+    pid = _pid_file()
+    if pid and _is_pid_alive(pid):
+        return JSONResponse({"status": "ok", "pid": pid})
+    return JSONResponse({"status": "error", "message": "Failed to start daemon"})
+
+
+@app.post("/api/watch-daemon/stop", response_class=JSONResponse)
+async def api_watch_daemon_stop():
+    """POST /api/watch-daemon/stop — stop the auto-compression watch daemon.
+
+    Frontend daemon panel (stopWatchDaemon) calls this; only the status GET
+    existed, so the stop button 404'd. Wired to chisel/watch.stop_daemon().
+    """
+    from observeco.chisel.watch import stop_daemon
+    stop_daemon()
+    return JSONResponse({"status": "ok"})
+
+
 # ---------------------------------------------------------------------------
 # § Memory Garden — scan endpoint
 # ---------------------------------------------------------------------------

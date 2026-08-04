@@ -8,6 +8,8 @@
     "tooltip", "verdict-bar", "view-all"
   ],
   "undefined_css_vars": [],
-  "orphaned_route_targets": [],
+  "orphaned_route_targets": [
+    "/api/waitlist"
+  ],
   "orphaned_post_routes": []
 }
