@@ -58,11 +58,29 @@ def _class_names_in_text(text: str) -> set[str]:
     return set(re.findall(r'class="([^"]+)"', text))
 
 
+# A valid CSS class token: starts with a letter/underscore, then letters,
+# digits, underscore, or hyphen. Rejects Jinja fragments (btn{%), JS string
+# concatenation tokens ((fail, 'red', 0, ?), and any non-identifier garbage.
+_VALID_CLASS_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_-]*$")
+
+
 def _classes_from_text(text: str) -> set[str]:
-    """Flatten all class="" tokens into individual class names."""
+    """Flatten all class="" tokens into individual valid class names.
+
+    Only static identifier tokens are kept. Jinja blocks ({% if x %}, {{ var }})
+    embedded in a class attribute (class="btn{% if x %} ghost{% endif %}") are
+    stripped before splitting, so their keywords (if/endif) don't leak through.
+    JS string concatenation (class="val ' + cond + '") yields fragments that
+    aren't identifiers and are rejected. This keeps the audit from drowning in
+    extraction noise.
+    """
     out: set[str] = set()
     for token in _class_names_in_text(text):
-        out.update(token.split())
+        # Strip Jinja statement/expression blocks entirely.
+        token = re.sub(r"\{[%{][^}]*[%}]\}", " ", token)
+        for c in token.split():
+            if _VALID_CLASS_RE.match(c):
+                out.add(c)
     return out
 
 
@@ -110,17 +128,22 @@ def direction2_undefined_vars() -> list[str]:
 
 # ── Direction 3: fetch/htmx targets -> registered routes ────────────────────
 def _registered_routes() -> set[str]:
-    """All concrete URL paths registered by FastAPI decorators."""
+    """All concrete URL paths registered by FastAPI decorators.
+
+    Scans every APIRouter in src/observeco (routes/ AND standalone packages
+    like discover/), plus @app.* decorators in server.py. This is why the
+    discover routes resolve: they live outside dashboard/routes/.
+    """
     routes: set[str] = set()
 
-    # Parse each route module: APIRouter(prefix="X") + @router.get("/path")
-    for mod in ROUTES.glob("*.py"):
+    # Parse every APIRouter(prefix="X") + @router.*("path") across all of src.
+    src_root = ROOT / "src/observeco"
+    for mod in src_root.rglob("*.py"):
         text = mod.read_text()
         prefixes = re.findall(r'APIRouter\(prefix="([^"]+)"', text)
         prefix = prefixes[0] if prefixes else ""
         for method, path in re.findall(r'@router\.(get|post|put|delete)\("([^"]*)"', text):
             full = prefix + path
-            # Replace path params {item_id} -> wildcard; strip trailing /
             full = re.sub(r"\{[^}]+\}", "<param>", full).rstrip("/")
             routes.add(full)
 
@@ -133,20 +156,33 @@ def _registered_routes() -> set[str]:
 
 
 def _referenced_targets() -> set[str]:
-    """Concrete /api/... paths referenced by fetch() and htmx.ajax() in JS+templates."""
+    """Concrete /api/... paths referenced by fetch(), htmx.ajax(), and hx-*.
+
+    Only actual network calls count — NOT <script src>/<link href> asset
+    references (which are not routes). Matches:
+      fetch('/api/foo'), fetch('/api/foo?x=1')
+      htmx.ajax('GET', '/api/foo', {...})
+      hx-get="/api/foo" hx-post="/api/foo"
+    """
     out: set[str] = set()
     for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}):
         text = p.read_text()
-        for m in re.findall(r"['\"]((?:/api|/)[a-zA-Z0-9_/\-{}?&=.;:]+)['\"]", text):
-            path = m.split("?")[0].rstrip("/")
-            # Drop query strings and template vars
-            path = re.sub(r"\{[^}]+\}", "<param>", path).rstrip("/")
-            if path.startswith("/api") or path.startswith("/static"):
+        # fetch('...') — capture the first string arg
+        for m in re.finditer(r"fetch\(\s*['\"]([^'\"]+)['\"]", text):
+            path = m.group(1).split("?")[0].rstrip("/")
+            path = re.sub(r"\{[^}]+\}", "<param>", path)
+            if path.startswith("/api"):
                 out.add(path)
-        # hx-get="/api/x"
-        for m in re.findall(r'hx-(?:get|post|put)="([^"]+)"', text):
-            path = m.split("?")[0].rstrip("/")
-            path = re.sub(r"\{[^}]+\}", "<param>", path).rstrip("/")
+        # htmx.ajax('GET', '...') — capture the second string arg
+        for m in re.finditer(r"htmx\.ajax\(\s*['\"](?:GET|POST|PUT|DELETE)['\"]\s*,\s*['\"]([^'\"]+)['\"]", text):
+            path = m.group(1).split("?")[0].rstrip("/")
+            path = re.sub(r"\{[^}]+\}", "<param>", path)
+            if path.startswith("/api"):
+                out.add(path)
+        # hx-get="/api/x" / hx-post="/api/x" — capture the quoted path
+        for m in re.finditer(r'hx-(?:get|post|put|delete)="([^"]+)"', text):
+            path = m.group(1).split("?")[0].rstrip("/")
+            path = re.sub(r"\{[^}]+\}", "<param>", path)
             if path.startswith("/api"):
                 out.add(path)
     return out
@@ -179,9 +215,10 @@ def _route_matches(target: str, routes: set[str]) -> bool:
 # ── Direction 4: registered POST routes -> referenced anywhere ──────────────
 def direction4_orphaned_post_routes() -> list[str]:
     """Registered POST routes with no reference in templates or JS."""
-    # Collect registered POST routes
+    # Collect registered POST routes (scan all of src/observeco, not just routes/)
     post_routes: set[str] = set()
-    for mod in ROUTES.glob("*.py"):
+    src_root = ROOT / "src/observeco"
+    for mod in src_root.rglob("*.py"):
         text = mod.read_text()
         prefixes = re.findall(r'APIRouter\(prefix="([^"]+)"', text)
         prefix = prefixes[0] if prefixes else ""
@@ -228,9 +265,10 @@ def main() -> int:
     ap.add_argument("--allowlist", type=str, default="", help="JSON file of allowed findings")
     args = ap.parse_args()
 
-    allow = set()
+    allow: dict[str, set[str]] = {}
     if args.allowlist:
-        allow = set(json.loads(Path(args.allowlist).read_text()))
+        raw = json.loads(Path(args.allowlist).read_text())
+        allow = {k: set(v) for k, v in raw.items()}
 
     findings: dict[str, list[str]] = {
         "orphaned_css_classes": direction1_orphaned_classes(),
@@ -242,7 +280,7 @@ def main() -> int:
     print("=== Referential Integrity Audit ===")
     new_findings = 0
     for name, items in findings.items():
-        unallowed = [i for i in items if i not in allow]
+        unallowed = [i for i in items if i not in allow.get(name, set())]
         print(f"\n[{name}] {len(items)} total, {len(unallowed)} NOT allowed")
         for i in sorted(unallowed)[:30]:
             print(f"  - {i}")

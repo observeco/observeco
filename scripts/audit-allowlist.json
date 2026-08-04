@@ -1,0 +1,12 @@
+{
+  "orphaned_css_classes": [
+    "btn-sm", "cap-ov-stat", "grid-check", "grid-model-cb", "grid-profile-cb",
+    "modal-body", "modal-card", "modal-footer", "modal-header", "modal-title",
+    "nav-actions", "pending-actions", "pending-card", "profile-avatar",
+    "profile-header", "profile-metrics", "rail-item", "status-chip",
+    "status-dot", "status-label", "tl-v", "tooltip", "verdict-bar", "view-all"
+  ],
+  "undefined_css_vars": [],
+  "orphaned_route_targets": [],
+  "orphaned_post_routes": []
+}
