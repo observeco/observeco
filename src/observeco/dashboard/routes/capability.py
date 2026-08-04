@@ -109,6 +109,44 @@ async def canary_reject_draft(payload: dict):
     return {"ok": True}
 
 
+@router.post("/canary/pending-tasks/mine", response_class=JSONResponse)
+async def canary_mine_drafts():
+    """POST /api/capability/canary/pending-tasks/mine — mine conversations into drafts.
+
+    Frontend calls this (capability.js mineConversations) but no route was
+    registered — the logic existed only in the CLI (observeco capability
+    mine-drafts). Wired to the same generate_drafts -> save_drafts_as_pending
+    pipeline so the button now works.
+    """
+    from observeco.capability.history_tasks import generate_drafts, save_drafts_as_pending
+    drafts = generate_drafts(limit=10)
+    if not drafts:
+        return {"ok": True, "count": 0, "note": "no qualifying sessions"}
+    saved = save_drafts_as_pending(drafts)
+    return {"ok": True, "count": saved}
+
+
+@router.post("/canary/pending-tasks/approve-batch", response_class=JSONResponse)
+async def canary_approve_drafts_batch(payload: dict):
+    """POST /api/capability/canary/pending-tasks/approve-batch — approve N drafts at once.
+
+    Frontend calls this (capability.js approveAllDrafts with task_ids array) but
+    only single-approve (/approve) existed. Reuses canary_approve_draft per id.
+    """
+    task_ids = payload.get("task_ids") or []
+    if not isinstance(task_ids, list) or not task_ids:
+        return {"ok": False, "error": "task_ids list required"}
+    approved = 0
+    failures = []
+    for tid in task_ids:
+        res = await canary_approve_draft({"task_id": tid})
+        if res.get("ok"):
+            approved += 1
+        else:
+            failures.append({"task_id": tid, "error": res.get("error", "unknown")})
+    return {"ok": True, "approved": approved, "failed": failures}
+
+
 @router.get("/canary/source-session", response_class=JSONResponse)
 async def canary_source_session(session_id: str = Query("")):
     """GET /api/capability/canary/source-session?session_id=X

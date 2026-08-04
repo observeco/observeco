@@ -55,3 +55,18 @@ def test_inline_style_class_not_orphaned():
         "graph-card is defined in pathway.html's inline <style>; "
         "the scope fix should have made it a defined class"
     )
+
+
+def test_post_route_detection_is_positive():
+    """A genuinely-orphaned POST route must still be caught (positive control).
+
+    /api/chisel/revert-skill is a registered POST route (server.py:5451) with no
+    reference anywhere — the "built, never surfaced" class. It MUST stay in
+    direction4's orphaned set. If extraction widening ever makes it vanish,
+    the script has learned to look away and the discipline is broken.
+    """
+    orphaned = audit.direction4_orphaned_post_routes()
+    assert "/api/chisel/revert-skill" in orphaned, (
+        "/api/chisel/revert-skill has no caller anywhere — it must be flagged "
+        "as an orphaned POST route (built, never surfaced)"
+    )
