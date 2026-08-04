@@ -69,3 +69,13 @@ def test_apply_cleanup_endpoint_is_reachable():
     """The Apply button must target the existing cleanup/apply endpoint."""
     assert "/api/inbox/cleanup/apply" in SRC
     assert "applyCleanupFixes" in SRC  # handler wired in app.js
+
+
+def test_detect_exclude_tests_checks_pre_fix_class_not_presence():
+    """REG: exclude_tests must not fire when test agents are already class='test'.
+    Presence alone was a false positive — the card would show 'exclude test
+    entities' even after they were already excluded. The check must target the
+    pre-fix state (class != 'test'), matching apply_cleanup()."""
+    assert "AND class != 'test'" in SRC
+    # The count query must be scoped to the pre-fix class, not raw presence.
+    assert "WHERE agent_name IN " in SRC

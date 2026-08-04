@@ -195,11 +195,13 @@ def _detect_cleanup() -> list[str]:
     if unclassified:
         fixes.append("reclassify_profiles")
 
-    # exclude_tests: test entities present as a live class.
+    # exclude_tests: test-named entities not yet excluded. The apply fix sets
+    # class='test'; a fix is pending only if a test-named agent is NOT already
+    # class='test' (presence alone is a false positive — they may be done).
     test_names = ["test-config-agent", "my_new_agent"]
     test_agents = conn.execute(
         "SELECT COUNT(*) FROM agent_configs WHERE agent_name IN "
-        f"({','.join('?' * len(test_names))})",
+        f"({','.join('?' * len(test_names))}) AND class != 'test'",
         test_names,
     ).fetchone()[0]
     if test_agents:
