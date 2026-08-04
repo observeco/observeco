@@ -265,6 +265,43 @@ def marker_in_completion(sid: str, rel: str, marker: str) -> bool:
     return False
 
 
+def is_cron_content(task: str) -> bool:
+    """Detect automated job output masquerading as real user work.
+
+    The 17th-instance law: screen on the TRAJECTORY (the task content), not the
+    summary (the session source column). A session may have source=telegram but
+    contain cron-job output ('Cronjob Response', 'Canary Benchmark — Daily',
+    a job_id) — that is automated work, not a user task, and must be rejected.
+    """
+    t = (task or "").lower()
+    cron_markers = [
+        "[replying to:",
+        "cronjob response",
+        "canary benchmark",
+        "job_id:",
+        "canary benchmark —",
+        "canary benchmark — daily",
+        "canary benchmark - daily",
+        "account suspension alert",
+    ]
+    return any(m in t for m in cron_markers)
+
+
+def is_entangled(sha: str, rel: str, candidate_pool: list[dict]) -> bool:
+    """Detect sequential-session entanglement: two sessions pinning to the same
+    SHA with overlapping target files, where one is a continuation of the other
+    (e.g. 'find all X' then 'replace X'). Both would be the same task replayed
+    against a shared world — emit one, not both.
+
+    A draft is entangled with an earlier emitted draft if it shares both the
+    pin SHA AND the target rel_path. The earlier draft wins; the later is rejected.
+    """
+    for prior in candidate_pool:
+        if prior["sha"] == sha and prior["rel"] == rel:
+            return True
+    return False
+
+
 def classify_objective(task: str) -> tuple[bool, str]:
     """Objective if it names a concrete artifact/action and isn't fuzzy. Provisional."""
     t = (task or "").lower()
@@ -299,6 +336,14 @@ def select_session(sid: str, decision_log: list[dict]) -> dict | None:
 
     # 2. objective screen
     task = first_user_message(sid)
+
+    # 2a. cron-content gate: screen on TRAJECTORY (content), not the source
+    # column. A telegram-source session containing cron output is automated
+    # work, not a user task — reject before objective classification.
+    if is_cron_content(task):
+        log_entry.update({"gate": "cron_content", "outcome": "reject", "reason": "cron_job_output", "first_user_msg": task})
+        return None
+
     is_obj, reason = classify_objective(task)
     if not is_obj:
         log_entry.update({"gate": "objective", "outcome": "reject", "reason": reason, "first_user_msg": task})
@@ -391,6 +436,16 @@ def main() -> None:
     for row in sessions:
         d = select_session(row["id"], decision_log)
         if d:
+            # Entanglement gate: same pin SHA + same target file as an earlier
+            # emitted draft = sequential continuation of one task. Emit the
+            # earlier, reject the later (both would replay a shared world).
+            if is_entangled(d["sha"], d["rel"], drafts):
+                decision_log.append({
+                    "session_id": d["id"], "gate": "entanglement", "outcome": "reject",
+                    "reason": "same sha+rel as prior draft (shared world)",
+                    "first_user_msg": d["task"],
+                })
+                continue
             drafts.append(d)
 
     with open(args.out, "w") as f:
