@@ -62,7 +62,7 @@ def file_at_pin(p: str) -> str | None:
 def uniqueness_precheck(content: str, old_string: str) -> dict:
     """The affordance's core mechanism: count occurrences, classify."""
     if not old_string:
-        return {"count": 0, "class": "empty_anchor"}
+        return {"count": 0, "class": "empty_anchor", "would_fire": True}
     count = content.count(old_string)
     if count == 0:
         return {"count": 0, "class": "not_found", "would_fire": True}
