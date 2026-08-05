@@ -1,0 +1,15 @@
+[
+  {
+    "id": "20260717_164758_f7b82a",
+    "model": "deepseek-v4-pro",
+    "sha": "fb05b55",
+    "rel": "src/observeco/dashboard/__init__.py",
+    "marker": "_local_tz",
+    "marker_strength": "strong",
+    "assertion": "subject_symbol",
+    "budget": 1062,
+    "task_description": "Add timezone-aware timestamp formatting utilities to src/observeco/dashboard/__init__.py and replace user-facing strftime calls across the dashboard routes to use them.",
+    "task": "Add timezone-aware timestamp formatting utility functions to the file src/observeco/dashboard/__init__.py at the current location (the repository you are working in): at least _local_tz, _tz_abbr, _fmt_dt, and _fmt_now. Then replace user-facing strftime calls across the dashboard route files to use these utilities. Work only within the current repository directory \u2014 do not look outside it for another copy.",
+    "repo_root": "observeco"
+  }
+]
