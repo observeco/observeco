@@ -350,6 +350,56 @@ def direction4_orphaned_post_routes() -> list[str]:
     return orphaned
 
 
+# ── Direction 5: bare-API anchors -> navigation failures ────────────────────
+def _is_bare_api_anchor(tag: str) -> bool:
+    """True if an <a> tag full-page-navigates to a token-protected /api/ route.
+
+    A bare anchor (no hx-*, no fetch/htmx.ajax onclick) does a full-page load,
+    which sends cookies only — it CANNOT send the X-ObserveCo-Token header, so
+    it 401s. htmx/fetch-driven anchors carry the header and are fine.
+    """
+    if any(hx in tag for hx in ("hx-get", "hx-post", "hx-put", "hx-delete", "hx-target")):
+        return False  # htmx-driven — carries the header
+    if "onclick" in tag and ("htmx.ajax" in tag or "fetch(" in tag):
+        return False  # JS-driven — carries the header
+    return True
+
+
+def direction5_bare_api_anchors() -> list[str]:
+    """Anchors that navigate to a token-protected /api/ route via full-page load.
+
+    The dashboard authenticates /api/ routes with the X-ObserveCo-Token HEADER
+    (auth.py). A plain <a href="/api/..."> does a full-page navigation, which
+    sends cookies only — it CANNOT send that header, so it 401s. Any such anchor
+    is a navigation failure (a "dead link" that resolves but dumps the user on a
+    chrome-less 401 page), even though the route exists and is referenced.
+
+    This is the class the set-difference directions can't see: the reference
+    resolves, but the way it's surfaced (full-page nav to a header-auth endpoint)
+    is wrong. The fix is to convert the anchor to an in-app htmx/fetch call that
+    carries the header, or to a tab switch.
+
+    Excludes: anchors that are htmx/fetch-driven (they carry the header), and
+    the AUTH_EXEMPT public routes (no token needed).
+    """
+    AUTH_EXEMPT = {
+        "/api/billing/success", "/api/billing/cancel", "/api/billing/webhook",
+        "/api/phase", "/api/discover/count",
+    }
+    bad: set[str] = set()
+    for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}) + [SERVER]:
+        text = p.read_text()
+        for m in re.finditer(r'<a\b[^>]*href="(/api/[^"]+)"[^>]*>', text):
+            href = m.group(1).split("?")[0]
+            if not _is_bare_api_anchor(m.group(0)):
+                continue  # htmx/fetch-driven — carries the header
+            if href in AUTH_EXEMPT or href.startswith("/api/licenses/"):
+                continue
+            if href.startswith("/api/"):
+                bad.add(href)
+    return sorted(bad)
+
+
 # ── Report ───────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -367,6 +417,7 @@ def main() -> int:
         "undefined_css_vars": direction2_undefined_vars(),
         "orphaned_route_targets": direction3_orphaned_targets(),
         "orphaned_post_routes": direction4_orphaned_post_routes(),
+        "bare_api_anchors": direction5_bare_api_anchors(),
     }
 
     print("=== Referential Integrity Audit ===")

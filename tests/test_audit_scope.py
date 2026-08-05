@@ -70,3 +70,22 @@ def test_post_route_detection_is_positive():
         "/api/chisel/revert-skill has no caller anywhere — it must be flagged "
         "as an orphaned POST route (built, never surfaced)"
     )
+
+
+def test_bare_api_anchor_detection_is_positive():
+    """A bare <a href=/api/...> anchor must be caught (positive control).
+
+    Direction 5 flags anchors that full-page-navigate to a token-protected
+    /api/ route (they 401 — the header-auth navigation-failure class). A bare
+    anchor with no hx-* and no fetch/htmx.ajax onclick MUST be flagged. If the
+    classifier ever stops matching it, the direction has learned to look away.
+    """
+    # The two dead links we fixed are now onclick-driven, so they must NOT be
+    # flagged (proves the exclusion works).
+    bad = audit.direction5_bare_api_anchors()
+    assert "/api/token-analytics" not in bad
+    assert "/api/brain/hermes-agent" not in bad
+    # Positive control: a bare anchor IS flagged; htmx/fetch-driven ones are not.
+    assert audit._is_bare_api_anchor('<a class="act" href="/api/some-route">x</a>') is True
+    assert audit._is_bare_api_anchor('<a href="/api/some-route" hx-get="/api/some-route">x</a>') is False
+    assert audit._is_bare_api_anchor('<a href="/api/some-route" onclick="fetch(\'/api/some-route\')">x</a>') is False
