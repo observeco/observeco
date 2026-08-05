@@ -36,12 +36,14 @@ REVISED = {
     "revision_reason": "phantom obs-spec-061 reference removed; three tables named explicitly",
     "original_task": "Add migration 63 to ObserveCo's db.py: 3 new tables for harness optimization (obs-spec-056 + obs-spec-061).",
     "task": (
-        "Add migration 63 to ObserveCo's db.py with exactly three new tables for "
+        "Add migration 63 to the db.py file at the current location (the "
+        "repository you are working in) with exactly three new tables for "
         "harness optimization: harness_optimization_runs, harness_eval_runs, and "
         "harness_edits. Each needs a reasonable schema consistent with its name "
         "and the existing migrations in the MIGRATIONS list. Register migration 63 "
         "in the MIGRATIONS list. Do not invent additional tables; the three named "
-        "tables are the complete deliverable."
+        "tables are the complete deliverable. Work only within the current "
+        "repository directory — do not look outside it for another copy of db.py."
     ),
     "marker": "harness_optimization_runs",
     "marker_strength": "strong",
