@@ -278,12 +278,15 @@ def _referenced_targets() -> set[str]:
     route reachable at all," not "with the right verb," so dropping the method
     requirement removes a whole class of miss. Returns normalized route keys.
 
-    Scans templates + static JS + server.py (which renders inline HTML with
-    fetch() calls inside @app.get handlers). Omitting server.py made chisel/*
-    etc. look orphaned when they're called from server-rendered buttons.
+    Scans templates + static JS + ALL python router files under src/observeco
+    (server.py AND standalone router modules like discover/api.py, which carry
+    inline HTML with hx-post/fetch/hx-get references). Omitting non-server router
+    files made discover/*, garden/* etc. look orphaned when they're called from
+    HTML those modules render.
     """
     out: set[str] = set()
-    for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}) + [SERVER]:
+    py_files = [SERVER] + sorted(ROOT.joinpath("src/observeco").rglob("*.py"))
+    for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}) + py_files:
         text = p.read_text()
         # fetch('/api/foo' + expr + '/bar') — reconstruct full concat chain
         # (handles plain '/api/foo' and concatenated forms; a naive first-literal
@@ -308,8 +311,17 @@ def _referenced_targets() -> set[str]:
             if key:
                 out.add(key)
         # onclick / inline handlers calling a route: onclick="fetch('/api/x')"
-        for m in re.finditer(r"on(?:click|change|submit)=\"[^\"]*fetch\(['\"]([^'\"]+)['\"]", text):
-            key = _normalize_route_key(m.group(1))
+        # OR onclick="...htmx.ajax('POST', '/api/x', ...)" (the in-app action
+        # pattern — both carry the auth header, so both are real references).
+        for m in re.finditer(
+            r"on(?:click|change|submit)=\"[^\"]*"
+            r"(?:fetch\('([^'\"]+)'|htmx\.ajax\('(?:GET|POST|PUT|DELETE)'\s*,\s*'([^'\"]+)')",
+            text,
+        ):
+            raw = m.group(1) or m.group(2)
+            if not raw:
+                continue
+            key = _normalize_route_key(raw)
             if key:
                 out.add(key)
     return out
@@ -345,8 +357,40 @@ def direction4_orphaned_post_routes() -> list[str]:
             post_routes.add(key)
 
     # A POST route is orphaned if NO reference (any verb, any pattern) reaches it.
+    # Include render-time references (the rendered HTML's fetch/htmx.ajax/hx-*
+    # calls), not just static source — runtime/DB-generated actions (e.g. the
+    # inbox's split/snooze/restore onclick built from stored actions) only appear
+    # in rendered output, and would otherwise look orphaned.
     referenced = _referenced_targets()
-    orphaned = sorted(r for r in post_routes if r not in referenced)
+    for body in _render_endpoints():
+        for raw in re.findall(r"['\"]((?:/api)/[^'\"]+)['\"]", body):
+            key = _normalize_route_key(raw)
+            if key:
+                referenced.add(key)
+    # A reference may carry a CONCRETE id where the route has a <param>
+    # (e.g. /api/inbox/agent_dead::...::2026-08-04T12:35:35/split matches
+    # /api/inbox/{parent_id}/split). Collapse any reference that agrees with the
+    # route on every literal segment and differs only at a param position.
+    referenced_paths = set(referenced)
+    # Routes that are exactly referenced (no param matching needed) are resolved.
+    resolved = set(r for r in post_routes if r in referenced_paths)
+    # Param-routes resolve if a concrete reference agrees on every literal segment
+    # and differs only at a param position.
+    for route in post_routes:
+        if "<param>" not in route:
+            continue
+        route_segs = route.split("/")
+        for ref in referenced_paths:
+            ref_segs = ref.split("/")
+            if len(ref_segs) != len(route_segs):
+                continue
+            if all(
+                rs == "<param>" or rs == rl
+                for rs, rl in zip(route_segs, ref_segs)
+            ):
+                resolved.add(route)
+                break
+    orphaned = sorted(r for r in post_routes if r not in resolved)
     return orphaned
 
 
