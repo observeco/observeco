@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 69
+SCHEMA_VERSION = 70
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -1015,6 +1015,17 @@ ALTER TABLE grid_runs ADD COLUMN judge TEXT;
     # stale heartbeat mark it failed instead of showing a phantom running state.
     (69, """-- Migration 69: heartbeat for stalled-run detection
 ALTER TABLE grid_runs ADD COLUMN last_activity TEXT;
+"""),
+    # Migration 70: fix hermes section_keywords — the generic vocabulary seeded in
+    # migration 26 matched none of the real Hermes SOUL.md headings (## Behavioral
+    # Contract, ## PTCA Protocol, ## Vision Protocol, ## Harness Dimensions), so
+    # every line fell through to 'guidance' and identity/skills/tools got ~0 chars
+    # → max(1, 0/4) = a placeholder '1'. Hermes drift detection therefore never
+    # produced real per-component signal. Add the actual Hermes heading vocabulary.
+    (70, """-- Migration 70: hermes SOUL.md section_keywords match real headings
+UPDATE config_format_registry
+SET section_keywords = '{"identity": ["identity", "role", "persona", "who you are", "you are", "i am", "aliased", "alias of", "accelerator"], "skills": ["skill", "available_skills", "skills"], "memory": ["memory", "context", "history", "previous", "conversation", "recall", "user profile", "personal info", "memory tool contract"], "tools": ["tool", "tool description", "tool schema", "api spec", "json schema", "parameter", "endpoint", "request format", "tools"], "guidance": ["guideline", "rule", "instruction", "constraint", "policy", "format", "output format", "do not", "never", "always", "must", "should", "behavioral contract", "protocol", "harness", "dimension", "governs", "rules that govern"]}'
+WHERE framework = 'hermes' AND config_filename = 'SOUL.md';
 """),
 ]
 
