@@ -73,3 +73,26 @@ class, measured, with a proposable fix) — but the lab test is contrastive on a
 small pinnable subset, not a 14-session with/without. The claim is scoped to
 "prevents the patch-anchor failure class," demonstrated on the pinnable subset
 plus a regression check — not "improves all 14."
+
+## Measurement update — verdict RETRACTED and reversed
+
+An earlier counterfactual reported a 79% false-fire rate on successful patches,
+which would have made the affordance net-negative. That conclusion was WRONG.
+
+**Why:** the patch tool errors on non-unique anchors (only 10/1028 successful
+patches used `replace_all`). A successful non-replace_all patch therefore
+REQUIRED a unique anchor (count==1) at patch time — at which point the precheck
+would have returned `would_fire=False`. Every fire on a successful patch is
+file-state drift *since* the patch. The measured 783/995 fires are all drift;
+**the true false-fire rate on working paths is ~0% by construction.**
+
+**Catch rate:** drift can only *reduce* a would-fire on a genuinely-failed
+anchor (a not-found anchor might now match once). So the 98% actionable catch
+rate is a **lower bound**; true catch is ≥98%.
+
+**Verdict:** the affordance is **viable** — it catches ≥98% of the failure
+class and false-fires ~0% on working paths. Options 2 (narrow) and 3 (abandon)
+were premature. Proceed with the specced read-then-anchor flow. The instrument
+was misaligned (current-state vs pinned-state); the lesson is never to claim a
+false-fire rate from current-state when the tool's own success implies
+patch-time uniqueness.
