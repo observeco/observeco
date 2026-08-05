@@ -174,6 +174,12 @@ def _normalize_route_key(path: str) -> str:
     path = re.sub(r"\{[^}]+\}", "<param>", path)
     if trailing_concat:
         path += "/<param>"
+    # Reject stray template fragments: a Python f-string expression like
+    # '/api/inbox/{_html_escape(item['id'])}' truncates at the inner quote,
+    # leaving an unbalanced '{' that no {..} pass can resolve. That's template
+    # source, not a URL — return '' so it can't become a false orphan/target.
+    if "{" in path and path.count("{") != path.count("}"):
+        return ""
     return path if path.startswith("/api") else ""
 
 
@@ -320,6 +326,13 @@ def _referenced_targets() -> set[str]:
         ):
             raw = m.group(1) or m.group(2)
             if not raw:
+                continue
+            # Reject Python f-string fragments: an inner quote in
+            # '/api/inbox/{_html_escape(item['id'])}/restore' truncates the regex
+            # at item[, leaving a stray '{' with no '}'. That's not a URL — it's
+            # template source. (Direction 4's render-time pass captures the real
+            # rendered value, so nothing is lost by skipping these here.)
+            if "{" in raw and raw.count("{") != raw.count("}"):
                 continue
             key = _normalize_route_key(raw)
             if key:
