@@ -171,6 +171,26 @@ def _render_item(item: dict) -> str:
                         f'onclick="event.preventDefault();event.stopPropagation();'
                         f'htmx.ajax(\'POST\', \'/api/inbox/{enc_id}/ack\', {{target: \'#inboxContainer\', swap: \'innerHTML\'}});return false">'
                         f'{act_label}</a>')
+        # "View judge reasoning →" / "Open canary detail →" -> in-app quality modal.
+        elif act_href.startswith("/api/canary-card/") or act_href.startswith("/api/fleet/canary-card/"):
+            agent = act_href.rsplit("/", 1)[-1]
+            agent_esc = _html_escape(agent)
+            act_link = (f'<a class="act {act_kind}" href="#" '
+                        f'onclick="event.preventDefault();event.stopPropagation();'
+                        f'openQualityBenchmark(\'{agent_esc}\');return false">'
+                        f'{act_label}</a>')
+        # "Open drift detail →" -> switch to the Drift tab in-app.
+        elif act_href.startswith("/api/drift/"):
+            act_link = (f'<a class="act {act_kind}" href="#" '
+                        f'onclick="event.preventDefault();event.stopPropagation();'
+                        f'switchTab(\'drift\', document.querySelector(\'.nav-tab.clickable[data-tab~=drift]\'));return false">'
+                        f'{act_label}</a>')
+        # "Open errors →" -> switch to the Error Timeline tab in-app.
+        elif act_href.startswith("/api/errors"):
+            act_link = (f'<a class="act {act_kind}" href="#" '
+                        f'onclick="event.preventDefault();event.stopPropagation();'
+                        f'switchTab(\'timeline\', document.querySelector(\'.nav-tab.clickable[data-tab~=timeline]\'));return false">'
+                        f'{act_label}</a>')
         else:
             act_link = f'<a class="act {act_kind}" href="{act_href}">{act_label}</a>'
         actions_html += act_link + "\n            "
