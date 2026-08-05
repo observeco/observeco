@@ -52,11 +52,19 @@ When environment discipline is absent, any of these produces a verdict the summa
 
 **Two failure signs, one class.** Trial 2 demonstrated wandering-induced false *negative* (capable model scored as failure for an environment-induced error). The same mechanism *inflates* on a different task shape — a session in the real repo given a merged-answer task "verifies" and reports success. One class, two signs; containment retires both.
 
-## 4. Paired grid + coarse routing
+## 4. Routing — an answer the empty grid produced
 
-Routing is resolved at coarse granularity until volume accumulates. The grid is a **paired design** — same task through each model at the same pinned state — analyzed with McNemar on discordant pairs. Fine-grained per-category model selection leans on the synthetic grid (controllable N); the real-task grid *validates* that synthetic winners hold on real distribution.
+The grid never filled, and that is the routing answer. The first three measured candidates — a scorer addition, a migration, a tz helper — were replayed under deepseek-v4-pro, deepseek-v4-flash (the cheap frontier tier), and ornith:9b (a local 8B model). **All three passed 3/3 under every model.** The cheap tier matched the expensive tier exactly on every benchmarkable task.
 
-The routing output is an **empirical model card** — the grid's frontier as machine-readable capability metadata, consumable by any meta-router (including GoA-style routers and Hermes's own dispatcher). This is the one adoptable idea from the collaboration-literature: routing on measured capability, not README claims.
+That is not a null result. It is a Pareto answer with the cheap model on the frontier and nothing above it. "No measurable difference on the benchmarkable subset" resolves the routing question for that subset without a filled grid.
+
+**Scoped to a task class, not a workload.** The three tasks are single-artifact, additive changes to a Python codebase with a named deliverable. The supported claim is *use the cheap model for this class of work* — not *use the cheap model*. The tasks where pro might earn its cost are precisely the ones the screen excluded: multi-file surgery, ambiguous refactors, investigations. So the recommendation has a shape: **cheap model for the gateable class; the non-gateable class is unmeasured and stays a judgment call.** The gateable class is plausibly a large share of delegated work, but the scope is what makes the recommendation credible.
+
+**The mechanism, not a law.** The properties that make a task gateable (single-artifact, well-specified, pinnable) correlate with the properties that make it easy, so a screen optimized for scoreability selects below the discrimination band — even between models that actually compete for routing. This is a structural argument supported by an n=3 instance, not a generalization.
+
+**Two baseline results, different claims.** An 8B local model passing tells you the tasks are easy. Flash matching pro tells you the routing decision is settled for this class. Different claims, both supported, both worth stating. (Cost per task is unquantified — see the record — so the case rests on equal accuracy plus flash being the cheap tier, not a measured multiplier.)
+
+The routing output remains an **empirical model card** — here it is the frontier with flash on it and nothing above it for this class. The one adoptable idea from the collaboration literature stands: route on measured capability, not README claims — and "the cheap model is on the frontier with nothing above it" is measured capability.
 
 ## 5. Harness branch (primary value)
 
