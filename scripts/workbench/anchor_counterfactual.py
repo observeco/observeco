@@ -108,7 +108,8 @@ def extract_failed_patches(sid: str) -> list[tuple[str, str]]:
     return out
 
 
-def is_actionable(sid: str) -> bool:
+def classify_session(sid: str) -> str:
+    """Return 'failure' | 'friction' | 'none' for a session's patch-anchor behavior."""
     conn = load_state()
     rows = conn.execute(
         "SELECT role, content FROM messages WHERE session_id=? ORDER BY timestamp", (sid,)
@@ -135,8 +136,100 @@ def is_actionable(sid: str) -> bool:
             if not resolved:
                 unresolved += 1
     if fails == 0:
-        return False
-    return (fails - unresolved) / fails < 0.6
+        return "none"
+    return "failure" if (fails - unresolved) / fails < 0.6 else "friction"
+
+
+def is_actionable(sid: str) -> bool:
+    return classify_session(sid) == "failure"
+
+
+def patches_with_outcome(sid: str) -> list[tuple[str, str, str]]:
+    """Pair each patch call with the tool result that follows it.
+    Returns (path, old_string, outcome) where outcome ∈ success|fail_anchor|fail_other."""
+    conn = load_state()
+    rows = conn.execute(
+        "SELECT role, content, tool_calls FROM messages WHERE session_id=? ORDER BY timestamp",
+        (sid,),
+    ).fetchall()
+    conn.close()
+    result = []
+    pending = []
+    for r in rows:
+        if r["role"] == "tool":
+            c = r["content"] or ""
+            success = '"success": true' in c
+            is_anchor_fail = (
+                "Provide more context" in c
+                or "Could not find a match" in c
+                or "Did you mean one of these" in c
+                or ("Found " in c and "matches for old_string" in c)
+            )
+            for path, old in pending:
+                outcome = "fail_anchor" if is_anchor_fail else ("success" if success else "fail_other")
+                result.append((path, old, outcome))
+            pending = []
+        elif r["role"] == "assistant" and r["tool_calls"]:
+            try:
+                for tc in json.loads(r["tool_calls"]):
+                    fn = tc.get("function", {})
+                    if fn.get("name") == "patch":
+                        args = fn.get("arguments", "")
+                        try:
+                            args = json.loads(args) if isinstance(args, str) else args
+                        except Exception:
+                            args = {}
+                        pending.append((args.get("path", ""), args.get("old_string", "") or ""))
+            except Exception:
+                pass
+    return result
+
+
+def measure_three_rates(session_ids: list[str]) -> dict:
+    """The fairness-gate measurement. Returns the three rates with their
+    state-drift confound disclosed:
+      1. would-fire on actionable failed anchors
+      2. false-fire on successful patches (throughput cost)
+      3. no-file (couldn't evaluate)
+    Honest limitation: uses CURRENT on-disk state, not the pinned state the
+    agent saw — inflates both 1 and 2 in the same direction, so the RATIO of
+    catch-to-false-fire is the robust signal, not either absolute.
+    """
+    stats = {
+        "actionable_fired": 0, "actionable_total": 0, "actionable_no_file": 0,
+        "success_fired": 0, "success_total": 0, "success_no_file": 0,
+        "friction_fired": 0, "friction_total": 0, "no_file_total": 0,
+    }
+    for sid in session_ids:
+        kind = classify_session(sid)
+        if kind == "none":
+            continue
+        for path, old, outcome in patches_with_outcome(sid):
+            if outcome != "fail_anchor" and outcome != "success":
+                continue
+            content = file_at_pin(path)
+            if content is None:
+                stats["no_file_total"] += 1
+                if kind == "failure" and outcome == "fail_anchor":
+                    stats["actionable_no_file"] += 1
+                continue
+            pre = uniqueness_precheck(content, old)
+            if kind == "failure" and outcome == "fail_anchor":
+                stats["actionable_total"] += 1
+                if pre["would_fire"]:
+                    stats["actionable_fired"] += 1
+            elif kind == "friction" and outcome == "fail_anchor":
+                stats["friction_total"] += 1
+                if pre["would_fire"]:
+                    stats["friction_fired"] += 1
+            elif outcome == "success":
+                stats["success_total"] += 1
+                if pre["would_fire"]:
+                    stats["success_fired"] += 1
+    stats["actionable_rate"] = stats["actionable_fired"] / max(stats["actionable_total"], 1)
+    stats["false_fire_rate"] = stats["success_fired"] / max(stats["success_total"], 1)
+    stats["friction_rate"] = stats["friction_fired"] / max(stats["friction_total"], 1)
+    return stats
 
 
 def main() -> None:

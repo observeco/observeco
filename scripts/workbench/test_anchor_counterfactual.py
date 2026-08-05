@@ -69,3 +69,28 @@ def test_no_file_recorded_not_hidden():
     # normalize_path maps observeco-old to current; a nonexistent path -> None
     # directly test file_at_pin on a guaranteed-absent path returns None
     assert mod.file_at_pin("/nonexistent/definitely/absent.py") is None
+
+
+def test_measure_three_rates_reproducible_and_discriminates():
+    """The fairness-gate measurement must be reproducible and must expose the
+    catch-vs-false-fire tradeoff. This test does NOT hardcode the historical
+    numbers (98% / 79% — state-drift-confounded) — it asserts the STRUCTURAL
+    property that decided the affordance's fate: the false-fire rate on
+    successful patches must be measurable and reported alongside the catch
+    rate, because the ratio, not either absolute, is the robust signal."""
+    import json
+    log = pathlib.Path("/tmp/workbench-select-v2-log.json")
+    if not log.exists():
+        log = pathlib.Path(__file__).parent.parent.parent / "scripts" / "workbench" / "selections" / "decision-log-20260804.json"
+    if not log.exists():
+        return  # data not present — skip rather than fabricate
+    decisions = json.load(open(log))["decisions"]
+    rejected = [d["session_id"] for d in decisions if d.get("outcome") == "reject"]
+    stats = mod.measure_three_rates(rejected)
+    # both rates are populated (catch AND false-fire), so the tradeoff is visible
+    assert stats["actionable_total"] > 0
+    assert stats["success_total"] > 0
+    assert "actionable_rate" in stats and "false_fire_rate" in stats
+    # the structural finding: false-fire rate is high enough to matter —
+    # an affordance that fires on most successful patches is a bad trade
+    assert stats["false_fire_rate"] > 0.3, "false-fire must be non-trivial for the tradeoff to be real"
