@@ -60,16 +60,39 @@ def test_inline_style_class_not_orphaned():
 def test_post_route_detection_is_positive():
     """A genuinely-orphaned POST route must still be caught (positive control).
 
-    /api/chisel/revert-skill is a registered POST route (server.py:5451) with no
-    reference anywhere — the "built, never surfaced" class. It MUST stay in
-    direction4's orphaned set. If extraction widening ever makes it vanish,
-    the script has learned to look away and the discipline is broken.
+    The control is a SYNTHETIC route set the test owns — NOT a real production
+    route. Tying the control to /api/chisel/revert-skill meant that route could
+    never be deleted even if it should be, and the audit carried a permanent
+    finding that meant nothing. Now: if a route with no reference isn't flagged,
+    or a referenced route is wrongly flagged, the extraction has learned to look
+    away and the discipline is broken.
     """
-    orphaned = audit.direction4_orphaned_post_routes()
-    assert "/api/chisel/revert-skill" in orphaned, (
-        "/api/chisel/revert-skill has no caller anywhere — it must be flagged "
-        "as an orphaned POST route (built, never surfaced)"
+    # An orphaned route (no reference) MUST be caught.
+    orphaned = audit._orphaned_post_routes(
+        {"/api/fixture/orphaned"}, set()
     )
+    assert "/api/fixture/orphaned" in orphaned, (
+        "a synthetic route with no reference anywhere must be flagged orphaned"
+    )
+    # A referenced route MUST NOT be flagged (no false positive).
+    clean = audit._orphaned_post_routes(
+        {"/api/fixture/used"}, {"/api/fixture/used"}
+    )
+    assert "/api/fixture/used" not in clean, (
+        "a referenced route must not be reported orphaned"
+    )
+    # A concrete-id reference resolves a <param> route (no false positive).
+    resolved = audit._orphaned_post_routes(
+        {"/api/inbox/<param>/split"},
+        {"/api/inbox/agent_dead::__fleet__::2026-08-04T12:35:35/split"},
+    )
+    assert "/api/inbox/<param>/split" not in resolved, (
+        "a concrete-id reference must resolve the <param> route"
+    )
+    # Sanity: direction4 still surfaces the real orphan set (revert-skill is now
+    # a normal entry, not the control).
+    orphaned_all = audit.direction4_orphaned_post_routes()
+    assert isinstance(orphaned_all, list) and len(orphaned_all) > 0
 
 
 def test_bare_api_anchor_detection_is_positive():

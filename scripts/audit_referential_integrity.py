@@ -348,6 +348,39 @@ def direction3_orphaned_targets() -> list[str]:
 
 
 # ── Direction 4: registered POST routes -> referenced anywhere ──────────────
+def _orphaned_post_routes(post_routes: set[str], referenced: set[str]) -> list[str]:
+    """Pure: given registered POST routes and all references, return the orphans.
+
+    Extracted so the positive control can exercise the orphan-detection logic
+    with a SYNTHETIC route set (a fixture owned by the test), instead of tying
+    it to a real production route that then can't be deleted even if it should
+    be. A reference may carry a CONCRETE id where the route has a <param>
+    (e.g. /api/inbox/agent_dead::...::2026-08-04T12:35:35/split matches
+    /api/inbox/{parent_id}/split) — collapse any reference that agrees with the
+    route on every literal segment and differs only at a param position.
+    """
+    referenced_paths = set(referenced)
+    # Routes that are exactly referenced (no param matching needed) are resolved.
+    resolved = set(r for r in post_routes if r in referenced_paths)
+    # Param-routes resolve if a concrete reference agrees on every literal segment
+    # and differs only at a param position.
+    for route in post_routes:
+        if "<param>" not in route:
+            continue
+        route_segs = route.split("/")
+        for ref in referenced_paths:
+            ref_segs = ref.split("/")
+            if len(ref_segs) != len(route_segs):
+                continue
+            if all(
+                rs == "<param>" or rs == rl
+                for rs, rl in zip(route_segs, ref_segs)
+            ):
+                resolved.add(route)
+                break
+    return sorted(r for r in post_routes if r not in resolved)
+
+
 def direction4_orphaned_post_routes() -> list[str]:
     """Registered POST routes with no reference in templates or JS."""
     # Collect registered POST routes (scan all of src/observeco, not just routes/)
@@ -380,31 +413,7 @@ def direction4_orphaned_post_routes() -> list[str]:
             key = _normalize_route_key(raw)
             if key:
                 referenced.add(key)
-    # A reference may carry a CONCRETE id where the route has a <param>
-    # (e.g. /api/inbox/agent_dead::...::2026-08-04T12:35:35/split matches
-    # /api/inbox/{parent_id}/split). Collapse any reference that agrees with the
-    # route on every literal segment and differs only at a param position.
-    referenced_paths = set(referenced)
-    # Routes that are exactly referenced (no param matching needed) are resolved.
-    resolved = set(r for r in post_routes if r in referenced_paths)
-    # Param-routes resolve if a concrete reference agrees on every literal segment
-    # and differs only at a param position.
-    for route in post_routes:
-        if "<param>" not in route:
-            continue
-        route_segs = route.split("/")
-        for ref in referenced_paths:
-            ref_segs = ref.split("/")
-            if len(ref_segs) != len(route_segs):
-                continue
-            if all(
-                rs == "<param>" or rs == rl
-                for rs, rl in zip(route_segs, ref_segs)
-            ):
-                resolved.add(route)
-                break
-    orphaned = sorted(r for r in post_routes if r not in resolved)
-    return orphaned
+    return _orphaned_post_routes(post_routes, referenced)
 
 
 # ── Direction 5: bare-API anchors -> navigation failures (RENDER-TIME) ───────
@@ -502,7 +511,15 @@ def main() -> int:
     allow: dict[str, set[str]] = {}
     if args.allowlist:
         raw = json.loads(Path(args.allowlist).read_text())
-        allow = {k: set(v) for k, v in raw.items()}
+        for k, v in raw.items():
+            # orphaned_post_routes is a TRIAGE QUEUE: entries are {route, note}
+            # so it reads as a to-do ("not yet triaged"), not an absolution.
+            # Extract just the route keys for set membership; a new orphan not
+            # on the queue still fires. Other sections stay plain string lists.
+            if v and isinstance(v[0], dict):
+                allow[k] = {item["route"] for item in v}
+            else:
+                allow[k] = set(v)
 
     findings: dict[str, list[str]] = {
         "orphaned_css_classes": direction1_orphaned_classes(),
