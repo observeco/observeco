@@ -4150,22 +4150,6 @@ async def api_no_llm_toggle(request: Request):
         return JSONResponse({"error": str(e)}, status_code=400)
 
 
-@app.post("/api/phase/transition")
-async def api_phase_transition(request: Request):
-    """Transition to a new phase. Only forward progression allowed."""
-    try:
-        body = await request.json()
-        phase = body.get("phase", "")
-        if phase not in ("zero", "setup", "live"):
-            return JSONResponse({"error": f"Invalid phase: {phase}"}, status_code=400)
-        current = db.get_phase()
-        db.set_phase(phase)
-        if phase == "setup" and current == "zero":
-            db.set_first_run_complete()
-        return JSONResponse({"phase": db.get_phase(), "transitioned": phase != current})
-    except Exception as e:
-        return JSONResponse({"error": str(e)}, status_code=400)
-
 
 # ── Agent Discovery Wizard ─────────────────────────────────────────
 
