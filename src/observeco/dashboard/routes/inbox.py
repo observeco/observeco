@@ -127,6 +127,11 @@ def _render_item(item: dict) -> str:
         act_kind = act.get("kind", "neutral")
         act_label = _html_escape(act.get("label", ""))
         act_href = act.get("href", "#")
+        # Dead-action guard: "View the window" pointed at a ?correlation= feature
+        # that was never built. Drop it from stored rows too — a dead link in old
+        # DB data must never render.
+        if "?correlation=" in act_href:
+            continue
         # "Open agent →" links -> in-app profile modal (same as fleet cards).
         if act_href.startswith("/api/agent-detail/"):
             agent = act_href[len("/api/agent-detail/"):]
@@ -150,6 +155,21 @@ def _render_item(item: dict) -> str:
                         f'switchTab(\'brain\', document.querySelector(\'.nav-tab.clickable[data-tab~=brain]\'));'
                         f'setTimeout(function(){{var sel=document.getElementById(\'brainAgentSelect\');'
                         f'if(sel){{sel.value=\'{agent_esc}\';sel.dispatchEvent(new Event(\'change\'))}}}},500);return false">'
+                        f'{act_label}</a>')
+        # "Split into N items" -> in-app POST (real endpoint, returns re-rendered inbox).
+        elif act_href.endswith("/split"):
+            enc_id = act_href[len("/api/inbox/"):-len("/split")]
+            enc_esc = _html_escape(enc_id)
+            act_link = (f'<a class="act {act_kind}" href="#" '
+                        f'onclick="event.preventDefault();event.stopPropagation();'
+                        f'htmx.ajax(\'POST\', \'/api/inbox/{enc_esc}/split\', {{target: \'#inboxContainer\', swap: \'innerHTML\'}});return false">'
+                        f'{act_label}</a>')
+        # "Ack as one" -> in-app POST ack (real endpoint).
+        elif act.get("ack_parent"):
+            enc_id = _html_escape(item_id)
+            act_link = (f'<a class="act {act_kind}" href="#" '
+                        f'onclick="event.preventDefault();event.stopPropagation();'
+                        f'htmx.ajax(\'POST\', \'/api/inbox/{enc_id}/ack\', {{target: \'#inboxContainer\', swap: \'innerHTML\'}});return false">'
                         f'{act_label}</a>')
         else:
             act_link = f'<a class="act {act_kind}" href="{act_href}">{act_label}</a>'

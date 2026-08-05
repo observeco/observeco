@@ -91,9 +91,8 @@ def correlate(store: InboxStore | None = None,
                     "detector": "inbox/correlate.py",
                 }),
                 "actions": json.dumps([
-                    {"label": "View the window →", "kind": "primary", "href": f"/api/inbox?correlation={parent_id}"},
-                    {"label": f"Split into {n} items", "kind": "neutral", "href": f"/api/inbox/{parent_id}/split"},
-                    {"label": "Ack as one", "kind": "neutral", "href": "#"},
+                    {"label": f"Split into {n} items", "kind": "primary", "href": f"/api/inbox/{parent_id}/split"},
+                    {"label": "Ack as one", "kind": "neutral", "href": "#", "ack_parent": True},
                 ]),
                 "why_source": fmt_why_source(
                     " & ".join(i.get("agent_name") or "fleet" for i in group[:3]),

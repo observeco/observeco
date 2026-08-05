@@ -350,7 +350,7 @@ def direction4_orphaned_post_routes() -> list[str]:
     return orphaned
 
 
-# ── Direction 5: bare-API anchors -> navigation failures ────────────────────
+# ── Direction 5: bare-API anchors -> navigation failures (RENDER-TIME) ───────
 def _is_bare_api_anchor(tag: str) -> bool:
     """True if an <a> tag full-page-navigates to a token-protected /api/ route.
 
@@ -365,8 +365,46 @@ def _is_bare_api_anchor(tag: str) -> bool:
     return True
 
 
+def _render_endpoints() -> list[str]:
+    """Render the app's main HTML surfaces via TestClient and return their bodies.
+
+    Category change vs static scanning: rather than teach the scanner about each
+    HTML generation site (templates, server.py inline, runtime/DB-built actions
+    from inbox/correlate.py), BOOT the app and hit the routes, then check the
+    HTML that actually comes back. This catches every generation path at once —
+    present and future — without knowing where any of them live. It's what would
+    have caught the 57 DB-generated "View the window" dead links without needing
+    a human to notice them on the page.
+    """
+    bodies: list[str] = []
+    try:
+        from fastapi.testclient import TestClient
+        from observeco.dashboard.auth import init_auth
+        from observeco.dashboard.server import app
+        secret = init_auth(app)
+        client = TestClient(app)
+        hdr = {"X-ObserveCo-Token": secret}
+        for path in ("/", "/api/inbox", "/api/inbox?filter=crit",
+                     "/api/inbox?filter=watch", "/api/inbox?filter=insight",
+                     "/api/inbox?filter=acked", "/api/fleet-summary",
+                     "/api/agents", "/api/alerts", "/api/errors",
+                     "/api/drift-summary", "/api/capability/page"):
+            try:
+                r = client.get(path, headers=hdr)
+                if r.status_code == 200 and "text/html" in r.headers.get("content-type", ""):
+                    bodies.append(r.text)
+            except Exception:
+                continue
+    except Exception:
+        # Server can't boot (e.g. no DB) — fall back to static scan so the
+        # direction still runs.
+        for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}) + [SERVER]:
+            bodies.append(p.read_text())
+    return bodies
+
+
 def direction5_bare_api_anchors() -> list[str]:
-    """Anchors that navigate to a token-protected /api/ route via full-page load.
+    """Anchors in RENDERED HTML that navigate to a token-protected /api/ route.
 
     The dashboard authenticates /api/ routes with the X-ObserveCo-Token HEADER
     (auth.py). A plain <a href="/api/..."> does a full-page navigation, which
@@ -374,10 +412,8 @@ def direction5_bare_api_anchors() -> list[str]:
     is a navigation failure (a "dead link" that resolves but dumps the user on a
     chrome-less 401 page), even though the route exists and is referenced.
 
-    This is the class the set-difference directions can't see: the reference
-    resolves, but the way it's surfaced (full-page nav to a header-auth endpoint)
-    is wrong. The fix is to convert the anchor to an in-app htmx/fetch call that
-    carries the header, or to a tab switch.
+    Checks the RENDERED HTML (app booted + routes hit), so runtime/DB-generated
+    anchors are caught too — the class the static directions can't see.
 
     Excludes: anchors that are htmx/fetch-driven (they carry the header), and
     the AUTH_EXEMPT public routes (no token needed).
@@ -387,9 +423,8 @@ def direction5_bare_api_anchors() -> list[str]:
         "/api/phase", "/api/discover/count",
     }
     bad: set[str] = set()
-    for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}) + [SERVER]:
-        text = p.read_text()
-        for m in re.finditer(r'<a\b[^>]*href="(/api/[^"]+)"[^>]*>', text):
+    for body in _render_endpoints():
+        for m in re.finditer(r'<a\b[^>]*href="(/api/[^"]+)"[^>]*>', body):
             href = m.group(1).split("?")[0]
             if not _is_bare_api_anchor(m.group(0)):
                 continue  # htmx/fetch-driven — carries the header
