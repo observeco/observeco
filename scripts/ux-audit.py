@@ -8,8 +8,11 @@ Returns exit 0 if all checks pass, non-zero if any fail.
 Compatible with cron — self-contained, no TTY, no interactive input.
 
 References:
-  - specs/dashboard-state-matrix.md — full state enumeration
-  - qa/ux-testing-playbook — human lens manual checks (this script covers automated layer)
+  - observeco-ux-architect (Hermes skill, design/observeco-ux-architect) — the
+    UX human-lens methodology AND state-matrix enumeration (formerly
+    specs/ux-testing-playbook.md and specs/dashboard-state-matrix.md, both
+    locked out of the repo 2026-08; now live as skills). This script covers the
+    automated layer; that skill covers the human lens.
 """
 
 import os
