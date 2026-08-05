@@ -27,14 +27,19 @@ task to the model that can actually do it, measured on real work instead of
 README claims.
 
 The reality: of roughly 16 sessions a week, **29% were objective enough to even
-be candidates** (had a named deliverable and a write target). Of those, the
-selection screen's honesty gates (does it have a repo write, a verifiable
-artifact, a pinnable start state) cut the yield to **8 drafts out of the pool,
-then 2 surviving candidates** — before I added the weak-baseline that told me
-something harder.
+be candidates** (had a named deliverable and a write target). The honest funnel
+chain is: **98 sessions → 42 with a write target → 29% objective → 8 drafts
+emitted → 2 reviewable after manual triage.** And that narrowing was a precision
+failure, not a strictness win — the 8 drafts were emitted by a buggy screen, and
+only 2 were actually reviewable. Three of the 8 leaked through because the
+source column lied (they were cron output, not user requests); two were an
+entangled pair (the same commit state split across two sessions); one was
+mislabeled. Fixing the screen's bugs shrank the *emitted* set — it did not grow
+the reviewable one.
 
-That 8→2 yield and 29% objective rate are the honest denominators. I state them
-first so nobody reads the results table without knowing how thin the funnel was.
+Those two denominators — 29% objective and 2 reviewable drafts — are the honest
+ones. I state them first so nobody reads the results table without knowing how
+thin the funnel was.
 
 ---
 
@@ -43,9 +48,11 @@ first so nobody reads the results table without knowing how thin the funnel was.
 The most useful thing in this project isn't the model comparison. It's the
 taxonomy of how a measurement environment can lie while the summary looks fine.
 Seventeen separate bugs were closed, every one found by reading the trajectory
-rather than trusting the summary row. When summary and trajectory disagreed,
-the trajectory was right nine times out of nine — a hedged, sample-biased
-count, but directionally unambiguous.
+rather than trusting the summary row. In every case where summary and trajectory
+disagreed, the trajectory was right — but I only investigated cases that already
+looked wrong, so this is a biased sample, not a base rate. Five families are
+illustrated below; the other twelve were instances of the same class at other
+layers.
 
 The families:
 
@@ -80,18 +87,28 @@ comparison. It was making the world not move, and noticing every way it moved.
 
 ## The finding that costs something
 
-Three tasks survived the funnel and passed a clean k=3 under the model under
-test — a scorer addition, a migration, a timezone refactor. Then I ran the
-weak baseline:
+Three tasks reached a clean k=3 under the model under test — a scorer addition,
+a migration, a timezone refactor. (The path to those three wasn't tidy: the
+migration candidate timed out, was adjudicated as a task-defect — its task text
+referenced a spec that didn't exist — then was revised and re-run; and one
+clean batch was discarded entirely when a containment bug invalidated its
+verdicts. The three k=3s came together across several re-runs.)
+Then I ran the weak baseline:
 
 - an 8B local model passed all three, 3/3
 - the cheap frontier model passed all three, 3/3, identically to the expensive
   one
 
 The tasks did not discriminate between any two models I would actually route
-between. Diagnosis was **B, not A**: the tasks aren't hard because the markers
-are weak, they're easy because they're well-specified single-artifact changes.
-An 8B can add a method, a migration, and a helper.
+between. Diagnosis was **B, not A** — and the way I told them apart is worth
+showing, because it's the discipline in action. The plausible read was A: the
+markers are too weak, satisfiable by a stub, so a weak model clears them. To
+check, I read the code the 8B model actually wrote in the nine replays. It was
+not stubs — a real `_semantic_similarity` assertion type with real weight
+vectors and dispatch logic, a real `SCHEMA_VERSION = 63` migration with the three
+tables defined, a genuine timezone utility module. An 8B model can add a method,
+a migration, and a helper, because these are well-specified single-artifact
+changes. That's what makes it **B**: the tasks are easy, not the markers weak.
 
 The structural reason is uncomfortable:
 
@@ -116,12 +133,11 @@ cheap-frontier). The mechanism is structural; the numbers are n=3.
 
 ## The honest numbers, as measured
 
-- **8→2 candidate yield** through the objective + write + pinnability gates, from a 16-session/week workload.
-- **29% of sessions** objective enough to be candidates.
+- **2 reviewable drafts** out of 8 emitted by a buggy screen (from 98 sessions → 42 write-target → 29% objective).
 - **3 tasks** reached a clean k=3 (each a distinct shape: scorer, migration, tz refactor).
 - **3/3 on each** under the weak 8B, the cheap frontier, and the expensive frontier model.
 - **~20% base rate** of genuine struggle in screened-out sessions, hand-classified, n=20, CI ≈ 6–44%. The first base rate in the project that isn't disagreement-sampled.
-- **12 sessions** backed the one edit I shipped, not 41 (episodes concentrated 13+13 in two sessions).
+- **12 failure sessions** produced **41 not-found episodes** backing the one edit I shipped — not 41 independent observations (two sessions accounted for 26 of the episodes; the concentration is the signal).
 
 Each of those has a sample size attached. None is a law. They're measurements
 of one workload, stated so a reader can see how thin each one is.
@@ -140,6 +156,33 @@ The process's main output was prevented work:
 The one thing that did ship: a one-line change to the not-found error message
 in the patch tool, making it actionable ("re-read the file and pass the exact
 current text"). Backed by twelve real sessions. That's the whole deliverable.
+
+---
+
+## If you're building this, do these three things
+
+The post is more useful if it ends on what transfers. Three concrete checks,
+each of which cost me a real mistake when I skipped it:
+
+1. **Run a weak baseline before you trust any benchmark you built.** The cheap
+   model passing everything the expensive one does is not a failure of your
+   models — it's the signal that your tasks don't discriminate. I spent
+   twenty-plus rounds building an instrument and got the routing answer only
+   when I ran an 8B against it. The weak baseline is the cheapest external
+   validity check you have; run it first, not last.
+
+2. **Check pinnability before you design a lab test.** A "replay with and
+   without the fix" experiment assumes you can pin the starting state. The
+   failure class that most needed testing turned out to be exactly the
+   non-pinnable working-copy population — there was no starting SHA to replay
+   from. Find that out before you build the replay harness, not after.
+
+3. **Verify tool invariants at the source before you infer rates from
+   behavior.** A 79% false-fire rate nearly killed a good fix. Reading the
+   patch tool's source showed a successful patch *requires* a unique anchor —
+   so every current-state "fire" on a successful patch was drift, and the true
+   rate was ~0%. When a measured rate depends on how a tool behaves, read the
+   tool's code; behavior is an assumption, source is a fact.
 
 ---
 
