@@ -58,13 +58,22 @@ def _get_counts() -> dict:
 
 
 def _build_verdict_sentence(counts: dict) -> str:
-    """Build verdict sentence per DPA §2-B and obs-spec-092 §3.6."""
+    """Build verdict sentence per DPA §2-B and obs-spec-092 §3.6.
+
+    action/watch/insight count OPEN items (expired snoozes count as open).
+    `snoozed` is items currently snoozed — shown separately so the count never
+    lies: snoozed != resolved, so the action count only drops if the item truly
+    cleared. The all-snoozed case must NOT read as all-clear.
+    """
     action = counts.get("alert", 0)
     watch = counts.get("watch", 0)
     triaged = counts.get("triaged", 0)
     insight = counts.get("insight", 0)
+    snoozed = counts.get("snoozed", 0)
 
-    if action == 0:
+    snooze_clause = f" — {snoozed} snoozed" if snoozed else ""
+
+    if action == 0 and snoozed == 0:
         parts = []
         if watch:
             parts.append(f"{watch} worth watching")
@@ -74,9 +83,16 @@ def _build_verdict_sentence(counts: dict) -> str:
             parts.append(f"{triaged} auto-triaged as noise")
         detail = ", ".join(parts)
         return f"Fleet quiet — {detail}." if detail else "Fleet quiet — no anomalies detected."
-    else:
-        return (f"{action} issue{'s' if action != 1 else ''} need action — "
-                f"{watch} worth watching, {triaged} auto-triaged as noise.")
+    if action == 0 and snoozed > 0:
+        # All current issues are snoozed — not all-clear, but nothing demanding
+        # action right now. Say so honestly.
+        parts = [f"{snoozed} snoozed for now"]
+        if watch:
+            parts.append(f"{watch} worth watching")
+        detail = ", ".join(parts)
+        return f"No issues need action — {detail}."
+    return (f"{action} issue{'s' if action != 1 else ''} need action{snooze_clause} — "
+            f"{watch} worth watching, {triaged} auto-triaged as noise.")
 
 
 def _render_item(item: dict) -> str:
@@ -226,6 +242,7 @@ def _render_item(item: dict) -> str:
         <div class="acts">
           {actions_html}
           <a class="act neutral" href="#" onclick="event.preventDefault();event.stopPropagation();htmx.ajax('POST', '/api/inbox/{_html_escape(item_id)}/ack', {{target: '#inboxContainer', swap: 'innerHTML'}}).then(() => htmx.trigger('#inboxContainer', 'inboxRefresh'))">Ack</a>
+          <a class="act neutral" href="#" onclick="event.preventDefault();event.stopPropagation();htmx.ajax('POST', '/api/inbox/{_html_escape(item_id)}/snooze', {{target: '#inboxContainer', swap: 'innerHTML'}}).then(() => htmx.trigger('#inboxContainer', 'inboxRefresh'))">Snooze 1h</a>
         </div>
       </div>
       <span class="when">{when}</span>
@@ -473,10 +490,15 @@ async def ack_item(request: Request, item_id: str):
 
 @router.post("/{item_id}/snooze")
 async def snooze_item(request: Request, item_id: str):
-    """POST /api/inbox/{id}/snooze — snooze until tomorrow."""
-    tomorrow = time.strftime("%Y-%m-%dT%H:%M:%S",
-                             time.gmtime(int(time.time()) + 86400))
-    store.snooze(item_id, tomorrow)
+    """POST /api/inbox/{id}/snooze — snooze for 1 hour (mockup's Snooze 1h).
+
+    Snoozed items leave the open feed but count separately in the verdict
+    ("N need action — M snoozed") so the dashboard never hides them. They
+    re-open via list_items()' read-time derivation once snoozed_until passes.
+    """
+    expiry = time.strftime("%Y-%m-%dT%H:%M:%S",
+                           time.gmtime(int(time.time()) + 3600))
+    store.snooze(item_id, expiry)
     return await get_inbox(request)
 
 

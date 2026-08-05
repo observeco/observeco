@@ -61,9 +61,17 @@ class InboxStore:
             where.append("state = ?")
             params.append(state)
         elif state is None:
-            # Default view: only OPEN items. Acked/snoozed/triaged items leave the
-            # feed and appear only under their explicit filters (Acked etc.).
-            where.append("state = 'open'")
+            # Default view: OPEN items only. Acked/triaged items leave the feed
+            # and appear only under explicit filters. SNOOZED items are treated
+            # as open once their snoozed_until has passed (expiry is a READ-TIME
+            # derivation, not a mutation — no UPDATE in a read path).
+            now = int(time.time())
+            where.append(
+                "(state = 'open' "
+                "OR (state = 'snoozed' AND snoozed_until IS NOT NULL "
+                "    AND CAST(strftime('%s', snoozed_until) AS INTEGER) < ?))"
+            )
+            params.append(now)
         if tone:
             where.append("tone = ?")
             params.append(tone)
@@ -216,14 +224,35 @@ class InboxStore:
     # ── Stats ──────────────────────────────────────────────────────────
 
     def get_counts(self) -> dict:
-        """Return counts of open items by tone and total triaged."""
+        """Return counts for the verdict sentence.
+
+        action/watch/insight count OPEN items by tone (an expired snooze counts
+        as open, matching list_items' read-time derivation). `snoozed` counts
+        items currently snoozed (not yet expired) — so the verdict can say
+        "N need action — M snoozed" without the snoozed ones double-counting
+        into N.
+        """
         conn = self.db._get_conn()
-        counts = {"alert": 0, "watch": 0, "insight": 0, "triaged": 0}
+        now = int(time.time())
+        counts = {"alert": 0, "watch": 0, "insight": 0, "triaged": 0, "snoozed": 0}
+        # Open-by-tone, treating expired snoozes as open.
         for row in conn.execute(
             "SELECT tone, COUNT(*) as c FROM inbox_items "
-            "WHERE state = 'open' GROUP BY tone"
+            "WHERE (state = 'open' "
+            "   OR (state = 'snoozed' AND snoozed_until IS NOT NULL "
+            "       AND CAST(strftime('%s', snoozed_until) AS INTEGER) < ?)) "
+            "GROUP BY tone",
+            (now,),
         ).fetchall():
             counts[row["tone"]] = row["c"]
+        # Active (unexpired) snoozes — shown separately in the verdict.
+        row = conn.execute(
+            "SELECT COUNT(*) as c FROM inbox_items "
+            "WHERE state = 'snoozed' AND snoozed_until IS NOT NULL "
+            "AND CAST(strftime('%s', snoozed_until) AS INTEGER) >= ?",
+            (now,),
+        ).fetchone()
+        counts["snoozed"] = row["c"] if row else 0
         row = conn.execute(
             "SELECT COUNT(*) as c FROM inbox_items WHERE state = 'triaged'"
         ).fetchone()

@@ -581,3 +581,63 @@ def test_store_upsert_and_counts(syn_ctx, syn_store):
     conn = syn_ctx.db._get_conn()
     conn.execute("DELETE FROM inbox_items WHERE id = ?", (item_id,))
     conn.commit()
+
+
+# ── §7.8: Snooze (Snooze 1h) ────────────────────────────────────────
+
+def test_snooze_removes_from_default_feed_and_counts_separately(syn_ctx, syn_store):
+    """Snooze removes item from the open feed; verdict counts it separately.
+
+    snoozed != resolved: the action count must NOT drop, and the item re-opens
+    via read-time derivation once snoozed_until passes.
+    """
+    import tempfile, os
+    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    tmp.close()
+    db = Database(tmp.name)
+    store = InboxStore(db)
+    item_id = store.upsert(
+        "agent_dead", "agent-x", "key-1", "alert", "agent-x dead",
+        {"metrics": {"v": 1}}, [{"label": "Ack", "kind": "neutral"}],
+        "why", pillar="reliability",
+    )
+    # In the open feed, counts as 1 action.
+    assert any(i["id"] == item_id for i in store.list_items())
+    counts = store.get_counts()
+    assert counts["alert"] == 1 and counts["snoozed"] == 0
+
+    # Snooze with a FUTURE expiry (1h): leaves the open feed, counts as snoozed.
+    future = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(int(time.time()) + 3600))
+    assert store.snooze(item_id, future)
+    assert not any(i["id"] == item_id for i in store.list_items())
+    counts = store.get_counts()
+    assert counts["alert"] == 0 and counts["snoozed"] == 1, counts
+
+    # Snooze with a PAST expiry: read-time derivation re-opens it (no mutation).
+    # Note: snooze() requires state='open', so set the past expiry directly on
+    # the already-snoozed row (simulating a snoozed_until that has since lapsed).
+    past = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(int(time.time()) - 10))
+    store.db._get_conn().execute(
+        "UPDATE inbox_items SET snoozed_until = ? WHERE id = ?",
+        (past, item_id),
+    )
+    store.db._get_conn().commit()  # state stays 'snoozed', but now expired
+    assert any(i["id"] == item_id for i in store.list_items()), \
+        "expired snooze must re-open via read-time derivation"
+    counts = store.get_counts()
+    assert counts["alert"] == 1 and counts["snoozed"] == 0, counts
+    os.unlink(tmp.name)
+
+
+def test_verdict_sentence_all_snoozed_not_all_clear():
+    """'0 issues — all snoozed' must NOT read as all-clear."""
+    from observeco.dashboard.routes.inbox import _build_verdict_sentence
+    # 1 snoozed, 0 action -> "No issues need action — 1 snoozed for now."
+    s = _build_verdict_sentence({"alert": 0, "watch": 0, "insight": 0,
+                                 "triaged": 0, "snoozed": 1})
+    assert "snoozed" in s and "quiet" not in s, s
+    assert "No issues need action" in s, s
+    # 2 action + 1 snoozed -> "2 issues need action — 1 snoozed — ..."
+    s2 = _build_verdict_sentence({"alert": 2, "watch": 0, "insight": 0,
+                                  "triaged": 0, "snoozed": 1})
+    assert "2 issues need action" in s2 and "1 snoozed" in s2, s2
