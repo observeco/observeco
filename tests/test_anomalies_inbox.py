@@ -444,6 +444,34 @@ def test_inbox_verdict_sentence(syn_ctx):
 
 # ── §7.6: Triage mutations ────────────────────────────────────────
 
+def test_ack_removes_item_from_default_feed():
+    """Acked items leave the default open feed and appear only under Acked filter.
+
+    Regression: previously list_items() defaulted to ALL states, so acking an
+    item left it dimmed-but-present in its tone section (the "Ack doesn't remove"
+    UX bug). Now default view is state='open' only.
+    """
+    import tempfile
+    tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    tmp.close()
+    db = Database(tmp.name)
+    store = InboxStore(db)
+    item_id = store.upsert(
+        "test_class", "agent-x", "key-1", "alert", "Test alert",
+        {"metrics": {"value": 5}}, [{"label": "Open agent →", "href": "/api/agent-detail/agent-x", "kind": "primary"}],
+        "why", pillar="reliability",
+    )
+    # Open feed contains it
+    assert any(i["id"] == item_id for i in store.list_items())
+    # Ack it
+    assert store.ack(item_id)
+    # Default feed no longer contains it
+    assert not any(i["id"] == item_id for i in store.list_items())
+    # It appears under the Acked filter
+    assert any(i["id"] == item_id for i in store.list_items(state="acked"))
+    os.unlink(tmp.name)
+
+
 def test_ack_endpoint():
     """POST /api/inbox/{id}/ack returns HTML htmx response."""
     # First get an item to ack

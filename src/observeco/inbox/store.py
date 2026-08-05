@@ -60,6 +60,10 @@ class InboxStore:
         if state:
             where.append("state = ?")
             params.append(state)
+        elif state is None:
+            # Default view: only OPEN items. Acked/snoozed/triaged items leave the
+            # feed and appear only under their explicit filters (Acked etc.).
+            where.append("state = 'open'")
         if tone:
             where.append("tone = ?")
             params.append(tone)

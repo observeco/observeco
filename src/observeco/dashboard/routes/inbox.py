@@ -119,13 +119,23 @@ def _render_item(item: dict) -> str:
 
     acked_cls = " acked" if state == "acked" else ""
 
-    # Actions HTML
+    # Actions HTML — agent-detail links open the in-app profile modal (Option A),
+    # not a bare API page. Other hrefs keep their link but stay in-app where possible.
     actions_html = ""
     for act in actions:
         act_kind = act.get("kind", "neutral")
         act_label = _html_escape(act.get("label", ""))
         act_href = act.get("href", "#")
-        act_link = f'<a class="act {act_kind}" href="{act_href}">{act_label}</a>'
+        # "Open agent →" links -> in-app profile modal (same as fleet cards).
+        if act_href.startswith("/api/agent-detail/"):
+            agent = act_href[len("/api/agent-detail/"):]
+            agent_esc = _html_escape(agent)
+            act_link = (f'<a class="act {act_kind}" href="#" '
+                        f'onclick="event.preventDefault();event.stopPropagation();'
+                        f'htmx.ajax(\'GET\', \'/api/agent/{agent_esc}/profile\', {{target: \'#modalContainer\', swap: \'innerHTML\'}});return false">'
+                        f'{act_label}</a>')
+        else:
+            act_link = f'<a class="act {act_kind}" href="{act_href}">{act_label}</a>'
         actions_html += act_link + "\n            "
 
     # Evidence grid — render some metric keys, format epoch values
@@ -342,11 +352,11 @@ async def get_inbox(request: Request, filter: str = "all"):
 
     # Filters
     feed_html_parts.append(f"""<div class="filters" role="group" aria-label="Filter inbox">
-    <button class="fchip{' active' if filter == 'all' else ''}" data-f="all" hx-get="/api/inbox?filter=all" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">All<span class="n">{total}</span></button>
-    <button class="fchip{' active' if filter == 'crit' else ''}" data-f="crit" hx-get="/api/inbox?filter=crit" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">Needs action<span class="n">{counts.get('alert', 0)}</span></button>
-    <button class="fchip{' active' if filter == 'watch' else ''}" data-f="watch" hx-get="/api/inbox?filter=watch" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">Watch<span class="n">{counts.get('watch', 0)}</span></button>
-    <button class="fchip{' active' if filter == 'insight' else ''}" data-f="insight" hx-get="/api/inbox?filter=insight" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">Insight<span class="n">{counts.get('insight', 0)}</span></button>
-    <button class="fchip{' active' if filter == 'acked' else ''}" data-f="acked" hx-get="/api/inbox?filter=acked" hx-target="#inboxFeed" hx-swap="innerHTML" hx-trigger="click">Acked<span class="n" id="ackCount">{len(store.list_items(state='acked'))}</span></button>
+    <button class="fchip{' active' if filter == 'all' else ''}" data-f="all" hx-get="/api/inbox?filter=all" hx-target="#inboxContainer" hx-swap="innerHTML" hx-trigger="click">All<span class="n">{total}</span></button>
+    <button class="fchip{' active' if filter == 'crit' else ''}" data-f="crit" hx-get="/api/inbox?filter=crit" hx-target="#inboxContainer" hx-swap="innerHTML" hx-trigger="click">Needs action<span class="n">{counts.get('alert', 0)}</span></button>
+    <button class="fchip{' active' if filter == 'watch' else ''}" data-f="watch" hx-get="/api/inbox?filter=watch" hx-target="#inboxContainer" hx-swap="innerHTML" hx-trigger="click">Watch<span class="n">{counts.get('watch', 0)}</span></button>
+    <button class="fchip{' active' if filter == 'insight' else ''}" data-f="insight" hx-get="/api/inbox?filter=insight" hx-target="#inboxContainer" hx-swap="innerHTML" hx-trigger="click">Insight<span class="n">{counts.get('insight', 0)}</span></button>
+    <button class="fchip{' active' if filter == 'acked' else ''}" data-f="acked" hx-get="/api/inbox?filter=acked" hx-target="#inboxContainer" hx-swap="innerHTML" hx-trigger="click">Acked<span class="n" id="ackCount">{len(store.list_items(state='acked'))}</span></button>
   </div>""")
 
     # Feed sections
