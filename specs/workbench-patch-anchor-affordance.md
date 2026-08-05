@@ -74,25 +74,46 @@ small pinnable subset, not a 14-session with/without. The claim is scoped to
 "prevents the patch-anchor failure class," demonstrated on the pinnable subset
 plus a regression check — not "improves all 14."
 
-## Measurement update — verdict RETRACTED and reversed
+## Measurement update — verdict RETRACTED and reversed, then SOURCE-VERIFIED
 
 An earlier counterfactual reported a 79% false-fire rate on successful patches,
-which would have made the affordance net-negative. That conclusion was WRONG.
+which would have made the affordance net-negative. That conclusion was WRONG —
+it was a current-state artifact, not a real rate.
 
-**Why:** the patch tool errors on non-unique anchors (only 10/1028 successful
-patches used `replace_all`). A successful non-replace_all patch therefore
-REQUIRED a unique anchor (count==1) at patch time — at which point the precheck
-would have returned `would_fire=False`. Every fire on a successful patch is
-file-state drift *since* the patch. The measured 783/995 fires are all drift;
-**the true false-fire rate on working paths is ~0% by construction.**
+**Why (structural):** the patch tool errors on non-unique anchors (only 10/1028
+successful patches used `replace_all`). A successful non-replace_all patch
+therefore REQUIRED a unique anchor at patch time.
 
-**Catch rate:** drift can only *reduce* a would-fire on a genuinely-failed
-anchor (a not-found anchor might now match once). So the 98% actionable catch
-rate is a **lower bound**; true catch is ≥98%.
+**Why (source-verified):** read `fuzzy_match.py:173-179` — the
+`if len(matches) > 1 and not replace_all:` error fires for EVERY strategy in the
+9-match chain (exact, line_trimmed, ..., context_aware). No first-match-wins, no
+fuzzy-ambiguity fallback. `_SIMILARITY_STRATEGIES` (block_anchor, context_aware)
+even REFUSE `replace_all` on approximate matches. `replace_all=True` is the ONLY
+exception, and it's excluded.
+
+**Measured (actual tool at current state, 995 successful non-replace_all
+patches):** 357 still match (precheck would NOT fire), 638 fail now (all drift —
+file changed since), 23 no-file. The 638 are drift by the confirmed invariant.
+
+**Catch rate:** drift can only REDUCE a would-fire on a genuinely-failed anchor.
+So the 98% actionable catch rate is a LOWER BOUND; true catch is ≥98%.
+
+## The three-row table (the honest measurement)
+
+| Row | Rate | Basis |
+|---|---|---|
+| Catches the failure class | **≥98%** | lower bound (drift only reduces catch) |
+| Doesn't interrupt working patches | **~0%** | source-verified uniqueness enforcement |
+| Fires on self-correcting cases | **12/12** | real, separate — loud fire where tool recovers anyway (a small win, stated not absorbed) |
 
 **Verdict:** the affordance is **viable** — it catches ≥98% of the failure
-class and false-fires ~0% on working paths. Options 2 (narrow) and 3 (abandon)
-were premature. Proceed with the specced read-then-anchor flow. The instrument
-was misaligned (current-state vs pinned-state); the lesson is never to claim a
-false-fire rate from current-state when the tool's own success implies
-patch-time uniqueness.
+class, interrupts ~0% of working patches, and fires loudly where the tool would
+have recovered anyway. Proceed with the specced read-then-anchor flow.
+
+## Lesson (generalized)
+
+"The ratio is robust" was a claim about confound behavior made without checking.
+Confounds are asymmetric by default; proportional inflation is the special case.
+The named class — *an instrument answering a different question than it appears
+to* — now has three instances: wrong entity (containment identity), wrong state
+(current-vs-pinned drift), wrong population (two-baseline overreach).
