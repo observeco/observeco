@@ -1,10 +1,12 @@
-# I built a personal benchmark, and the benchmarkable tasks didn't discriminate
+# My benchmark found no differences between the models — and that was the answer
 
 **The one-sentence finding:** I built a system to turn my real agent sessions into
 re-runnable benchmark tasks, and the tasks that were *benchmarkable* turned out
 not to *discriminate* between the models I was actually choosing between. The
-cheap model passed everything the expensive one did. The routing answer wrote
-itself — and it wasn't the one I'd spent the effort to find.
+cheap model passed everything the expensive one did. That looks like a failed
+benchmark — but it was the answer: **for this class of task, use the cheap model.**
+Equal accuracy at lower cost, measured. The grid stayed empty, and the emptiness
+was the routing recommendation.
 
 This is a post about why that happened, the seventeen ways my measurement lied
 to me before it was trustworthy, and the four things I correctly didn't build.
@@ -26,8 +28,10 @@ The pitch was the usual one: an empirical model card, a grid that routes each
 task to the model that can actually do it, measured on real work instead of
 README claims.
 
-The reality: of roughly 16 sessions a week, **29% were objective enough to even
-be candidates** (had a named deliverable and a write target). The honest funnel
+The reality: over the capture window I mined — 31 days, 98 sessions (≈22/week
+at that rate; ~16/week on the later 7-day count) — **29% were
+objective enough to even be candidates** (had a named deliverable and a write
+target). The honest funnel
 chain is: **98 sessions → 42 with a write target → 29% objective → 8 drafts
 emitted → 2 reviewable after manual triage.** And that narrowing was a precision
 failure, not a strictness win — the 8 drafts were emitted by a buggy screen, and
@@ -51,8 +55,9 @@ Seventeen separate bugs were closed, every one found by reading the trajectory
 rather than trusting the summary row. In every case where summary and trajectory
 disagreed, the trajectory was right — but I only investigated cases that already
 looked wrong, so this is a biased sample, not a base rate. Five families are
-illustrated below; the other twelve were instances of the same class at other
-layers.
+illustrated below; the remaining twelve were mostly the same class at other
+layers, plus a few plain infrastructure defects (a shared worktree, a post-fix
+pin, a double-append).
 
 The families:
 
@@ -126,8 +131,9 @@ measured. The grid stayed empty and that emptiness was the answer. A grid that
 discriminates nothing is a routing statement — the cheap model is on the
 frontier and nothing is above it.
 
-Scope: n=3 tasks, one workload, one model pair (frontier vs 8B, then frontier vs
-cheap-frontier). The mechanism is structural; the numbers are n=3.
+Scope: n=3 tasks, one workload, two comparisons — frontier vs 8B, then
+expensive frontier vs cheap frontier. The mechanism is structural; the numbers
+are n=3.
 
 ---
 
@@ -137,7 +143,7 @@ cheap-frontier). The mechanism is structural; the numbers are n=3.
 - **3 tasks** reached a clean k=3 (each a distinct shape: scorer, migration, tz refactor).
 - **3/3 on each** under the weak 8B, the cheap frontier, and the expensive frontier model.
 - **~20% base rate** of genuine struggle in screened-out sessions, hand-classified, n=20, CI ≈ 6–44%. The first base rate in the project that isn't disagreement-sampled.
-- **12 failure sessions** produced **41 not-found episodes** backing the one edit I shipped — not 41 independent observations (two sessions accounted for 26 of the episodes; the concentration is the signal).
+- **12 real sessions** backed the one edit I shipped, through 41 not-found episodes — not 41 independent observations (two sessions accounted for 26 of the episodes; the concentration is the signal).
 
 Each of those has a sample size attached. None is a law. They're measurements
 of one workload, stated so a reader can see how thin each one is.
