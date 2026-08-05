@@ -119,8 +119,9 @@ def _render_item(item: dict) -> str:
 
     acked_cls = " acked" if state == "acked" else ""
 
-    # Actions HTML — agent-detail links open the in-app profile modal (Option A),
-    # not a bare API page. Other hrefs keep their link but stay in-app where possible.
+    # Actions HTML — bare-API-page links open the in-app tab instead (Option A):
+    # agent-detail -> profile modal; token-analytics -> Tokens tab;
+    # brain/{agent}?mode=preview -> Brain tab + select that agent.
     actions_html = ""
     for act in actions:
         act_kind = act.get("kind", "neutral")
@@ -133,6 +134,22 @@ def _render_item(item: dict) -> str:
             act_link = (f'<a class="act {act_kind}" href="#" '
                         f'onclick="event.preventDefault();event.stopPropagation();'
                         f'htmx.ajax(\'GET\', \'/api/agent/{agent_esc}/profile\', {{target: \'#modalContainer\', swap: \'innerHTML\'}});return false">'
+                        f'{act_label}</a>')
+        # "Open token analytics →" -> switch to the Tokens tab in-app.
+        elif act_href == "/api/token-analytics":
+            act_link = (f'<a class="act {act_kind}" href="#" '
+                        f'onclick="event.preventDefault();event.stopPropagation();'
+                        f'switchTab(\'tokens\', document.querySelector(\'.nav-tab.clickable[data-tab~=tokens]\'));return false">'
+                        f'{act_label}</a>')
+        # "Preview compression →" -> switch to the Brain tab + select the agent.
+        elif act_href.startswith("/api/brain/") and "?mode=preview" in act_href:
+            agent = act_href[len("/api/brain/"):].split("?")[0]
+            agent_esc = _html_escape(agent)
+            act_link = (f'<a class="act {act_kind}" href="#" '
+                        f'onclick="event.preventDefault();event.stopPropagation();'
+                        f'switchTab(\'brain\', document.querySelector(\'.nav-tab.clickable[data-tab~=brain]\'));'
+                        f'setTimeout(function(){{var sel=document.getElementById(\'brainAgentSelect\');'
+                        f'if(sel){{sel.value=\'{agent_esc}\';sel.dispatchEvent(new Event(\'change\'))}}}},500);return false">'
                         f'{act_label}</a>')
         else:
             act_link = f'<a class="act {act_kind}" href="{act_href}">{act_label}</a>'
