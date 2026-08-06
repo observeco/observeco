@@ -115,6 +115,11 @@ def _analyse_prompt(prompt: str) -> dict:
     memory_t = breakdown["memory"]["tokens"]
     tools_t = breakdown["tools"]["tokens"]
     guidance_t = breakdown["guidance"]["tokens"]
+    # Fall-through: fraction of the prompt that landed in the generic guidance
+    # bucket. 100% fall-through = the classifier matched NOTHING (a vocabulary
+    # gap, not a measurement) — the exact bug that killed drift for two weeks.
+    # Record it now; threshold-alert once normal values are visible.
+    fallthrough_ratio = guidance_t / max(total_tokens, 1)
     savings_ratio = min(0.25, max(0.0, guidance_t / max(total_tokens, 1)))
 
     return {
@@ -124,6 +129,7 @@ def _analyse_prompt(prompt: str) -> dict:
         "tools_tokens": tools_t,
         "guidance_tokens": guidance_t,
         "total_tokens": total_tokens,
+        "fallthrough_ratio": fallthrough_ratio,
         "savings_ratio": savings_ratio,
         "breakdown": breakdown,
         "total_chars": total_chars,
@@ -190,6 +196,42 @@ def run_trim_file(agent_name: str, file_path: str) -> dict | None:
                 result["guidance_tokens"], result["total_tokens"],
                 result["savings_ratio"])
     return result
+
+
+# ── Zero-variance gate ──────────────────────────────────────────────────────
+# The 'detector stopped measuring' signature: a metric that SHOULD vary across
+# agents is constant across the whole population. e.g. identity_tokens==1 for
+# every agent is not "all agents identical" — it's a placeholder the classifier
+# produced instead of a measurement. This is the cheap, general check that
+# catches the family rather than the instance. It needs a population (>=3
+# agents) and a window, so it won't fire on a single agent or fresh install.
+
+def zero_variance_metrics(db, window_seconds: int = 7 * 86400,
+                          min_agents: int = 3) -> list[str]:
+    """Return chisel_trims token columns that are constant across the population
+    within the window. Constant across >= min_agents = stopped measuring.
+
+    Scoped to *_tokens columns (metrics that should vary with real drift).
+    Returns column names that are suspiciously constant.
+    """
+    import time as _time
+    conn = db._get_conn()
+    now = int(_time.time())
+    # columns of interest: the per-component token columns
+    cols = [c["name"] for c in conn.execute("PRAGMA table_info(chisel_trims)").fetchall()
+            if c["name"].endswith("_tokens")]
+    suspicious = []
+    for col in cols:
+        # distinct values across agents in the window
+        row = conn.execute(
+            f"SELECT COUNT(DISTINCT {col}) dv, COUNT(DISTINCT agent_name) da "
+            f"FROM chisel_trims WHERE timestamp > ?",
+            (now - window_seconds,),
+        ).fetchone()
+        # constant value (dv==1) across a real population (da >= min_agents)
+        if row and row["dv"] == 1 and row["da"] >= min_agents:
+            suspicious.append(col)
+    return suspicious
 
 
 # ── Skill Audit ──────────────────────────────────────────────────────────────

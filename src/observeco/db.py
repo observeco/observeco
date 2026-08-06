@@ -1471,14 +1471,19 @@ class Database:
             # handled). Skipping it here would leave new tables uncreated.
             self._recover_stranded_tables(conn)
             self._run_pending_migrations(conn)
-            # GS-019 §Downgrade: Log warning if DB version > code version
+            # GS-019 §Downgrade: REFUSE TO START if DB is newer than code.
+            # (This is the path that ran the old server — code 69 vs DB 70 — and
+            # silently wrote placeholder drift for two weeks. The warning died in
+            # the log. Down is visible; wrong data isn't.)
             cur = conn.execute("SELECT value FROM _meta WHERE key='schema_version'")
             row = cur.fetchone()
             current_version = int(row["value"]) if row else 1
             if current_version > SCHEMA_VERSION:
-                logger.warning(
-                    f"GS-019: Database version ({current_version}) > code version "
-                    f"({SCHEMA_VERSION}). Possible downgrade. Not modifying version."
+                raise RuntimeError(
+                    f"Refusing to start: Database schema version ({current_version}) "
+                    f"is NEWER than code version ({SCHEMA_VERSION}). "
+                    f"Update the code before starting — serving with a stale "
+                    f"classifier writes corrupt data."
                 )
             return
         except sqlite3.OperationalError:
@@ -1564,10 +1569,16 @@ class Database:
             )
             conn.commit()
         elif current_version > SCHEMA_VERSION:
-            # GS-019 §Downgrade: Log warning, don't force-set
-            logger.warning(
-                f"GS-019: Database version ({current_version}) > code version "
-                f"({SCHEMA_VERSION}). Possible downgrade. Not modifying version."
+            # GS-019 §Downgrade: REFUSE TO START. Code older than the DB means
+            # a stale classifier/detector would write measurements the new schema
+            # doesn't understand — exactly how drift went silent for two weeks
+            # (DB at 70, code at 69, placeholder data written, nobody saw the log
+            # warning). Down is visible; wrong data isn't. Fail loud.
+            raise RuntimeError(
+                f"Refusing to start: Database schema version ({current_version}) "
+                f"is NEWER than code version ({SCHEMA_VERSION}). "
+                f"Update the code (or `observeco doctor` to reconcile) before "
+                f"starting — serving with a stale classifier writes corrupt data."
             )
 
         # B2: Startup integrity guard — fail LOUD if the live DB is corrupt.
