@@ -57,17 +57,50 @@ The item-1 decision rule says: with <2 candidates, "neither reading applies.
 Test-backed path unavailable in this history. Report the breakdown and stop."
 That is the outcome. I am not padding the pool — zero candidates survive.
 
-The constructive finding: **item 2 (prospective capture) is now load-bearing
-for item 1's question, not just a compounding improvement.** The only way to
-ever test whether test-backed markers escape the benchmarkable-≠-easy
-correlation is to record pin state *at the time sessions happen*. The migration
-candidate proves the evidence is out there; the missing SHA is what killed it.
-This is the same lesson as the seventeen bugs: the measurement failed at the
-provenance layer, not the analysis layer.
+**Where the losses actually fell (the corrected binding constraint):**
+
+| Stage | Loss | Cumulative left |
+|---|---|---|
+| 98 sessions | — | 98 |
+| Ran a test | 75 lost | 23 |
+| Recoverable command + target | **19 lost** | 4 |
+| Fail-before / pass-after | **3 lost** | 1 |
+| Pin cleanly | **1 lost** | 0 |
+
+The pin killed only the **last** candidate. The binding constraint on the
+test-backed path is **not the missing SHA** — it is that this workload rarely
+produces a recoverable, targeted test invocation with a fail-then-pass
+transition. 19 of 23 were gone before pinning was even consulted, 3 more at
+fail-before/pass-after.
+
+This corrects the earlier framing that item 2 (prospective capture) is
+"load-bearing for item 1's question." Capture fixes the last gate (pinning)
+but does nothing about the 19 lost at recoverable-test-command. Even with
+perfect capture, this same 98-session window yields **one** candidate — and one
+candidate cannot answer the discrimination question. At the observed 1-in-98
+rate, five test-backed candidates take roughly a year to accumulate. **That is
+a path to resolving the confound in 2027, not a near-term unlock.**
+
+So item 2 should be built as **provenance hygiene** — it's cheap, it compounds,
+and every reconstruction-archeology session in this thread argues for it — but
+not as the unlock for the grid. If the doc records it as "the binding
+constraint on the test-backed path," a future reader will expect the grid to
+resume once capture lands, and it won't.
+
+**A sharper v5 finding:** the test-backed question is unanswerable
+retroactively, yes. But 23 sessions ran tests and only 4 produced a recoverable,
+targeted invocation — that is evidence about the workload independent of any
+pin: **this workload rarely works in a test-first loop where a specific test
+transitions red-to-green.** That's a real property, it explains why the
+assertion-vocabulary lever didn't open, and it belongs in the v5 grid-resumption
+condition. The condition should read: *resumes if five test-backed candidates
+accumulate under prospective capture* — with the note that at the observed rate
+that's a year away, so the grid stays retired in practice.
 
 **Defect log:** (1) No `git_sha` column exists in Hermes sessions — pin state is
-never captured. (2) The decision log stores truncated session ids (e.g. `_90ac`
-vs `_90ac4ba0`), which risk prefix-collision; my first scan mis-joined on them.
-(3) The migration candidate's fail-before/pass-after is real but unpinnable —
-recorded for when provenance capture lands, as a strong candidate for a
-prospective re-run.
+never captured (item 2 fixes). (2) The decision log stores truncated session
+ids (e.g. `_90ac` vs `_90ac4ba0`), risking prefix-collision; my first scan
+mis-joined on them. (3) The migration candidate's fail-before/pass-after is real
+but unpinnable — recorded as a candidate for a prospective re-run under capture.
+(4) The funnel's dominant loss — no recoverable targeted test invocation — is a
+workload property, not a tooling gap, and no capture change addresses it.
