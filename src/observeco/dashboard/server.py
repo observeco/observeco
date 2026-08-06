@@ -6455,6 +6455,42 @@ async def index():
                 f'</head>'
             )
             html = html[:head_end] + injection + html[head_end + len("</head>"):]
+
+    # 3. Inject a phase-zero empty-state onboarding CTA into the fleet view.
+    #    A fresh install (no agents, no pulses) would otherwise render a blank
+    #    dashboard with zero guidance. Gate on phase == 'zero' so existing/fleet
+    #    users see no change.
+    if db.get_phase() == "zero":
+        _empty_state = (
+            '<div id="fleetEmptyState" class="phase-banner" '
+            'style="margin:12px 0;border-left-color:#3b82f6;background:rgba(59,130,246,0.06);">'
+            '<div class="phase-banner-inner">'
+            '<span class="phase-banner-icon">🚀</span>'
+            '<div class="phase-banner-body">'
+            '<strong class="phase-banner-title">Welcome to ObserveCo</strong>'
+            '<div class="phase-banner-text">'
+            'ObserveCo watches your agents and surfaces anomalies, drift, and health '
+            'across your fleet.</div>'
+            '<div class="phase-banner-text" style="margin-top:6px;">'
+            'No agents were found yet.</div>'
+            '<div class="phase-banner-actions" style="margin-top:10px;display:flex;gap:8px;align-items:center;">'
+            '<button class="phase-banner-btn" '
+            'hx-post="/api/discover/run-html" '
+            'hx-target="#discoverResults" '
+            'hx-swap="innerHTML" '
+            'hx-indicator="#discoverSpinner">'
+            '🔍 Find my agents</button>'
+            '<span id="discoverSpinner" class="htmx-indicator" '
+            'style="font-size:12px;color:#64748b;">Discovering...</span>'
+            '</div>'
+            '<div id="discoverResults" style="margin-top:10px;"></div>'
+            '</div>'
+            '</div>'
+            '</div>'
+        )
+        _anchor = '<div class="zone2">'
+        if _anchor in html:
+            html = html.replace(_anchor, _empty_state + "\n" + _anchor, 1)
     return HTMLResponse(html)
 
 
