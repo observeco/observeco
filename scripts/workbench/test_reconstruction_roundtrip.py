@@ -57,12 +57,13 @@ def test_tracked_edit_roundtrips_lossless():
         subprocess.run(["git", "-C", repo, "worktree", "remove", "--force", wt], check=True)
 
 
-def test_untracked_content_is_lost():
-    """A subagent-created file reconstructs EMPTY — content is not captured.
+def test_untracked_content_is_preserved():
+    """A subagent-created file reconstructs WITH content.
 
-    This is the honest gap: spawn_untracked records paths only. The status-based
-    comparison in the round-trip script cannot see this; this content comparison
-    pins it as a known lossy case.
+    The capture was amended to record untracked file content as applyable
+    patches (git diff --no-index /dev/null <path>), closing the gap where
+    untracked files reconstructed empty. This test pins the fix: content must
+    round-trip, not just the path.
     """
     repo = _make_repo()
     wt = tempfile.mkdtemp(prefix="rt-wt-")
@@ -75,9 +76,8 @@ def test_untracked_content_is_lost():
         try:
             _restore_into(rest, state)
             restored = (Path(rest) / "new_file.py").read_text()
-            # The gap: content is lost. This test documents the CURRENT behavior.
-            assert restored == "", (
-                f"expected empty placeholder (content not captured), got: {restored!r}"
+            assert restored == "def real():\n    return 42\n", (
+                f"untracked content lost: got {restored!r}"
             )
         finally:
             subprocess.run(["git", "-C", repo, "worktree", "remove", "--force", rest], check=True)

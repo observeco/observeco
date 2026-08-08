@@ -43,11 +43,21 @@ def git(repo: str, *args: str, check: bool = True) -> subprocess.CompletedProces
 
 
 def capture_state(repo: str) -> dict:
-    """Record SHA + git diff HEAD + untracked list, exactly as the capture does."""
+    """Record SHA + git diff HEAD + untracked content, exactly as the capture does."""
     sha = git(repo, "rev-parse", "HEAD").stdout.strip()
     diff = git(repo, "diff", "HEAD").stdout
-    untracked = git(repo, "ls-files", "--others", "--exclude-standard").stdout.strip()
-    return {"sha": sha, "spawn_dirty_diff": diff, "spawn_untracked": untracked}
+    untracked_list = git(repo, "ls-files", "--others", "--exclude-standard").stdout.strip()
+    # untracked content as applyable patches (matches the amended capture)
+    untracked_patches = []
+    if untracked_list:
+        for line in untracked_list.splitlines():
+            p = subprocess.run(
+                ["git", "-C", repo, "diff", "--no-index", "--binary", "/dev/null", line],
+                capture_output=True, text=True, timeout=30,
+            )
+            if p.returncode in (0, 1) and p.stdout:
+                untracked_patches.append(p.stdout)
+    return {"sha": sha, "spawn_dirty_diff": diff, "spawn_untracked": "\n".join(untracked_patches)}
 
 
 def make_dirty_state(repo: str, case: str) -> None:
@@ -106,13 +116,14 @@ def restore_state(worktree: str, state: dict) -> None:
         )
         if apply.returncode != 0:
             raise RuntimeError(f"diff did not apply: {apply.stderr[:200]}")
-    # recreate untracked files (content not captured — only paths; mark as
-    # expected-missing, matching the capture's design)
+    # recreate untracked files from their captured content patches
     if state["spawn_untracked"].strip():
-        for line in state["spawn_untracked"].splitlines():
-            p = Path(worktree) / line
-            p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_text("")  # placeholder — content not captured
+        apply = subprocess.run(
+            ["git", "-C", worktree, "apply", "--binary", "-"],
+            input=state["spawn_untracked"], capture_output=True, text=True, timeout=30,
+        )
+        if apply.returncode != 0:
+            raise RuntimeError(f"untracked patch did not apply: {apply.stderr[:200]}")
 
 
 def diff_trees(orig: str, restored: str) -> list[str]:
