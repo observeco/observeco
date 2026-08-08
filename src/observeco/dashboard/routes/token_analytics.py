@@ -245,6 +245,48 @@ def _query_attribution(conn, since: int, agent: str) -> tuple[int, int]:
     return (r["attributed"], r["unattributed"])
 
 
+def _query_effective_spend(conn, since: int, agent: str) -> dict:
+    """Corrected spend from v_token_effective (migration 71-73).
+
+    Resolves the hermes/otel overlap at the token level (otel wins where
+    nonzero, hermes backfills) so the headline no longer double-counts the
+    same session from both sources. Returns three numbers that must NOT be
+    summed blindly:
+
+      measured   — effective joinable spend + clean orphans (overlap_suspect=0)
+      suspect    — orphan spans flagged as duplicates of hermes rows (±12h
+                   model+time); excluded from measured, shown as a footnote
+      simulated  — watch rows (benchmark fleet, estimates by construction);
+                   a separate traffic class, never summed with measured
+
+    Cost is reported_cost from the winning source per session — audit-only
+    claims, not a cross-source aggregate (see migration 71 docstring).
+    """
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
+        SELECT
+            COALESCE(SUM(CASE
+                WHEN traffic_class = 'measured' THEN reported_cost
+                WHEN traffic_class = 'measured_orphan' AND overlap_suspect = 0 THEN reported_cost
+                ELSE 0 END), 0) as measured,
+            COALESCE(SUM(CASE WHEN overlap_suspect = 1 THEN reported_cost ELSE 0 END), 0) as suspect
+        FROM v_token_effective WHERE recorded_at >= ? {agent_clause}
+    """, params)
+    r = cur.fetchone()
+    measured = float(r["measured"] or 0)
+    suspect = float(r["suspect"] or 0)
+    # Simulated = watch rows, entirely outside the precedence view.
+    cur = conn.execute(f"""
+        SELECT COALESCE(SUM(cost), 0) as sim
+        FROM token_logs WHERE recorded_at >= ? AND source = 'watch' {agent_clause}
+    """, params)
+    sim = float(cur.fetchone()["sim"] or 0)
+    return {"measured": measured, "suspect": suspect, "simulated": sim}
+
+
 @router.get("/tokens", response_class=HTMLResponse)
 async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0):
     """Token Analytics view — cost time-series, per-agent breakdown, cache efficiency.
@@ -335,6 +377,10 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         total_attributed, total_unattributed = _query_attribution(conn, since, agent)
         total_all = total_attributed + total_unattributed
         attr_pct = round(total_attributed / total_all * 100) if total_all else 0
+
+        # Corrected spend (v_token_effective): measured headline, suspect
+        # footnote, simulated (watch) kept separate — never summed together.
+        eff = _query_effective_spend(conn, since, agent)
 
         # Query 3: Timeline (last 500 calls)
         timeline = _query_timeline(conn, since, agent)
@@ -436,9 +482,17 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         for _, d in sorted_agents
     ]
 
-    # So What insight
+    # So What insight — computed against CORRECTED measured spend (not the
+    # raw token_logs total, which double-counts hermes/otel overlap).
+    measured_cost = eff["measured"]
+    suspect_cost = eff["suspect"]
+    simulated_cost = eff["simulated"]
     top_agent = sorted_agents[0][0] if sorted_agents else ""
     top_cost = sorted_agents[0][1]["cost"] if sorted_agents else 0
+    # Top-spender % is relative to the raw source-level total (total_cost):
+    # the per-agent table below shows raw rows, so its share must use the
+    # same basis. Against corrected measured_cost it can exceed 100% (the
+    # top agent's raw rows include both sides of the hermes/otel overlap).
     top_spender_pct = round(top_cost / max(total_cost, 1) * 100)
     turn_count = sum(d["count"] for _, d in sorted_agents)
     agents_with_cache = [d for _, d in sorted_agents if d["cache_read"] + d["cache_create"] > 0]
@@ -455,19 +509,28 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         rec = f"Fleet cache hit rate is {overall_cache_rate}% — prompt caching is barely engaged; enable cache_control on stable prefixes."
     else:
         rec = "Token mix looks healthy — cost is well-distributed and caching is engaged."
+    if suspect_cost > 0:
+        rec += f" −{_fmt_dollar(suspect_cost)} suspected duplicate spans excluded from the headline."
     badge_cls = "good" if confidence_pct > 80 else "warn" if confidence_pct > 50 else "bad"
     top_cls = "bad" if top_spender_pct > 50 else "warn" if top_spender_pct > 25 else "good"
     cache_cls = "good" if overall_cache_rate > 20 else "warn" if overall_cache_rate > 5 else "bad"
+    suspect_note = (
+        f'<div class="vc-note">−{_fmt_dollar(suspect_cost)} suspected duplicate spans '
+        f'excluded · {_fmt_dollar(simulated_cost)} simulated (watch, estimates)</div>'
+        if suspect_cost > 0 else
+        f'<div class="vc-note">{_fmt_dollar(simulated_cost)} simulated (watch, estimates) kept separate</div>'
+    )
     insight_html = f"""<div class="verdict-card" style="margin-bottom:var(--space-4)">
     <div class="vc-head"><span class="mark">$</span><span class="lead">SPEND VERDICT</span>
         <span class="vc-badge {badge_cls}">{confidence_pct}% accurate</span></div>
     <div class="vc-stats">
-        <div class="vc-stat"><span class="vc-num">{_fmt_dollar(total_cost)}</span><span class="vc-lab">total cost · {turn_count} calls</span></div>
+        <div class="vc-stat"><span class="vc-num">{_fmt_dollar(measured_cost)}</span><span class="vc-lab">measured spend · {turn_count} calls</span></div>
         <div class="vc-stat"><span class="vc-num {top_cls}">{top_spender_pct}%</span><span class="vc-lab">{_html_escape(top_agent)} top spender</span></div>
         <div class="vc-stat"><span class="vc-num {cache_cls}">{overall_cache_rate}%</span><span class="vc-lab">fleet cache hit</span></div>
         <div class="vc-stat"><span class="vc-num">{attr_pct}%</span><span class="vc-lab">attributed</span></div>
     </div>
     <div class="vc-rec">{rec}</div>
+    {suspect_note}
 </div>"""
 
     agent_count = len(sorted_agents)
@@ -512,7 +575,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         <div class="chart-box"><canvas id="cacheRateChart"></canvas></div>
     </div>
     <div class="panel chart-card">
-        <div class="cc-head"><h2>Cost / Turn</h2><span class="cc-val mono">${_fmt_dollar(total_cost / max(turn_count, 1))}</span><span class="cc-lab">lower better</span></div>
+        <div class="cc-head"><h2>Cost / Turn</h2><span class="cc-val mono">${_fmt_dollar(total_cost / max(turn_count, 1))}</span><span class="cc-lab">lower better · source-level</span></div>
         <div class="chart-box"><canvas id="cptChart"></canvas></div>
     </div>
 </div>
