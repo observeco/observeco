@@ -279,6 +279,13 @@ async def ingest_traces(request: Request):
                     # Default to cloud (0) when provider not found.
                     is_local = _provider_is_local.get(provider, 0)
 
+                    # Latency: the Hermes OTEL plugin emits hermes.api_duration_ms
+                    # on every LLM span. It was never read here (mapper written
+                    # against an older span schema), so latency_ms stayed 0 on
+                    # all rows. Read it going forward; historical backfill is a
+                    # separate unit (join to trace_spans on exact span_id).
+                    latency_ms = _safe_int(span_attrs.get("hermes.api_duration_ms", 0))
+
                     db.log_token_turn(
                         agent_name=agent_name,
                         turn_id=f"otel_{span_id}",
@@ -292,6 +299,7 @@ async def ingest_traces(request: Request):
                         model=model,
                         is_local=is_local,
                         session_id=span_attrs.get("hermes.session_id", "") or "",
+                        latency_ms=latency_ms,
                     )
                 elif has_llm_attrs:
                     logger.warning(
