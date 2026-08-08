@@ -510,13 +510,13 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     else:
         rec = "Token mix looks healthy — cost is well-distributed and caching is engaged."
     if suspect_cost > 0:
-        rec += f" −{_fmt_dollar(suspect_cost)} suspected duplicate spans excluded from the headline."
+        rec += f" −{_fmt_dollar(suspect_cost)} suspected duplicate spans excluded (heuristic)."
     badge_cls = "good" if confidence_pct > 80 else "warn" if confidence_pct > 50 else "bad"
     top_cls = "bad" if top_spender_pct > 50 else "warn" if top_spender_pct > 25 else "good"
     cache_cls = "good" if overall_cache_rate > 20 else "warn" if overall_cache_rate > 5 else "bad"
     suspect_note = (
         f'<div class="vc-note">−{_fmt_dollar(suspect_cost)} suspected duplicate spans '
-        f'excluded · {_fmt_dollar(simulated_cost)} simulated (watch, estimates)</div>'
+        f'excluded (heuristic) · {_fmt_dollar(simulated_cost)} simulated (watch, estimates)</div>'
         if suspect_cost > 0 else
         f'<div class="vc-note">{_fmt_dollar(simulated_cost)} simulated (watch, estimates) kept separate</div>'
     )
