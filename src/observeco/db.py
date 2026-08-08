@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 70
+SCHEMA_VERSION = 73
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -1026,6 +1026,141 @@ ALTER TABLE grid_runs ADD COLUMN last_activity TEXT;
 UPDATE config_format_registry
 SET section_keywords = '{"identity": ["identity", "role", "persona", "who you are", "you are", "i am", "aliased", "alias of", "accelerator"], "skills": ["skill", "available_skills", "skills"], "memory": ["memory", "context", "history", "previous", "conversation", "recall", "user profile", "personal info", "memory tool contract"], "tools": ["tool", "tool description", "tool schema", "api spec", "json schema", "parameter", "endpoint", "request format", "tools"], "guidance": ["guideline", "rule", "instruction", "constraint", "policy", "format", "output format", "do not", "never", "always", "must", "should", "behavioral contract", "protocol", "harness", "dimension", "governs", "rules that govern"]}'
 WHERE framework = 'hermes' AND config_filename = 'SOUL.md';
+"""),
+    # Migration 71: read-side precedence for token cost. token_logs receives
+    # overlapping rows for the same session from two sources (otel per-call
+    # spans and hermes per-session bridge rows). The dashboard previously
+    # SUM(cost) across both, double-counting every overlapping session.
+    # This view resolves the overlap at the TOKEN level (otel wins where it
+    # has nonzero tokens; hermes backfills sessions otel saw with zero) and
+    # exposes each winning source's cost claim as reported_cost for audit
+    # only — consumers must NOT aggregate reported_cost; cost is derived
+    # from the effective tokens via a single pricing pass.
+    #
+    # Orphan stance (no-sid otel rows): included, not dropped. Rows where
+    # source='otel' AND session_id='' are real measured traffic the session
+    # join cannot dedupe. They are surfaced as traffic_class='measured_orphan'
+    # with overlap_suspect=1 when a hermes row of the same model falls within
+    # ±12h (the bridge writes model going forward; old hermes rows have
+    # model='' so their matches cannot be confirmed and stay suspect=0 —
+    # the measured_orphan class itself is the flag). Watch rows (no
+    # session_id, simulated benchmark fleet) are excluded — separate
+    # traffic_class, never summed with measured spend.
+    # DROP + CREATE (not CREATE IF NOT EXISTS): a stale view of the same name
+    # would otherwise no-op the migration and verification would pass against
+    # the old definition. Views are cheap; redefinition is the intent.
+    (71, """-- Migration 71: v_token_effective — token-level precedence view
+DROP VIEW IF EXISTS v_token_effective;
+CREATE VIEW v_token_effective AS
+WITH src_sums AS (
+    SELECT
+        session_id,
+        agent_name,
+        source,
+        SUM(input_tokens) AS input_tokens,
+        SUM(output_tokens) AS output_tokens,
+        SUM(cache_read_tokens) AS cache_read_tokens,
+        SUM(cache_creation_tokens) AS cache_creation_tokens,
+        SUM(total_tokens) AS total_tokens,
+        SUM(cost) AS reported_cost,
+        MIN(recorded_at) AS recorded_at,
+        MAX(model) AS model
+    FROM token_logs
+    WHERE session_id != '' AND source IN ('otel','hermes')
+    GROUP BY session_id, source
+),
+pref AS (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY session_id
+            ORDER BY CASE WHEN source='otel' AND (input_tokens+output_tokens+cache_read_tokens+cache_creation_tokens) > 0 THEN 0 ELSE 1 END
+        ) AS rn
+    FROM src_sums
+)
+SELECT session_id, agent_name, source AS winning_source,
+       input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens,
+       total_tokens, reported_cost, recorded_at, model,
+       'measured' AS traffic_class, 0 AS overlap_suspect
+FROM pref WHERE rn = 1
+UNION ALL
+SELECT '' AS session_id, agent_name, 'otel' AS winning_source,
+       input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens,
+       total_tokens, cost AS reported_cost, recorded_at, model,
+       'measured_orphan' AS traffic_class,
+       CASE WHEN EXISTS (
+           SELECT 1 FROM token_logs h
+           WHERE h.source='hermes'
+             AND h.model != '' AND h.model = token_logs.model
+             AND ABS(h.recorded_at - token_logs.recorded_at) < 43200
+       ) THEN 1 ELSE 0 END AS overlap_suspect
+FROM token_logs
+WHERE source='otel' AND session_id='';
+"""),
+    # Migration 72: repair for the migration-71 shape bug. The first revision
+    # of migration 71 shipped with CREATE VIEW IF NOT EXISTS and an old column
+    # set (no traffic_class/winning_source/overlap_suspect/model). On DBs that
+    # already applied that revision (schema_version already 71), editing 71
+    # cannot re-run — the runner only applies target_version > current. This
+    # migration drops and recreates the view with the corrected shape so the
+    # historical data (pre-model-backfill hermes rows) surfaces under the
+    # documented orphan/suspect stance. Idempotent: DROP + CREATE rebuilds the
+    # view every run; fresh DBs apply 71 (already correct) then this no-ops.
+    (72, """-- Migration 72: rebuild v_token_effective with corrected shape
+DROP VIEW IF EXISTS v_token_effective;
+CREATE VIEW v_token_effective AS
+WITH src_sums AS (
+    SELECT
+        session_id,
+        agent_name,
+        source,
+        SUM(input_tokens) AS input_tokens,
+        SUM(output_tokens) AS output_tokens,
+        SUM(cache_read_tokens) AS cache_read_tokens,
+        SUM(cache_creation_tokens) AS cache_creation_tokens,
+        SUM(total_tokens) AS total_tokens,
+        SUM(cost) AS reported_cost,
+        MIN(recorded_at) AS recorded_at,
+        MAX(model) AS model
+    FROM token_logs
+    WHERE session_id != '' AND source IN ('otel','hermes')
+    GROUP BY session_id, source
+),
+pref AS (
+    SELECT *,
+        ROW_NUMBER() OVER (
+            PARTITION BY session_id
+            ORDER BY CASE WHEN source='otel' AND (input_tokens+output_tokens+cache_read_tokens+cache_creation_tokens) > 0 THEN 0 ELSE 1 END
+        ) AS rn
+    FROM src_sums
+)
+SELECT session_id, agent_name, source AS winning_source,
+       input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens,
+       total_tokens, reported_cost, recorded_at, model,
+       'measured' AS traffic_class, 0 AS overlap_suspect
+FROM pref WHERE rn = 1
+UNION ALL
+SELECT '' AS session_id, agent_name, 'otel' AS winning_source,
+       input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens,
+       total_tokens, cost AS reported_cost, recorded_at, model,
+       'measured_orphan' AS traffic_class,
+       CASE WHEN EXISTS (
+           SELECT 1 FROM token_logs h
+           WHERE h.source='hermes'
+             AND h.model != '' AND h.model = token_logs.model
+             AND ABS(h.recorded_at - token_logs.recorded_at) < 43200
+       ) THEN 1 ELSE 0 END AS overlap_suspect
+FROM token_logs
+WHERE source='otel' AND session_id='';
+"""),
+    # Migration 73: index for v_token_effective's overlap_suspect EXISTS.
+    # The view's suspect flag runs a correlated subquery on token_logs
+    # (source='hermes' AND model != '' AND model = ? AND ABS(ts) < 43200).
+    # Without an index this scans ~1M rows per orphan row — the headline
+    # render timed out at 300s in copy verification. (source, model, recorded_at)
+    # serves both the EXISTS filter and the time window.
+    (73, """-- Migration 73: index overlap_suspect lookup in v_token_effective
+CREATE INDEX IF NOT EXISTS idx_token_logs_src_model_ts
+ON token_logs(source, model, recorded_at);
 """),
 ]
 
