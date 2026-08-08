@@ -81,7 +81,8 @@ def read_hermes_sessions(min_rowid: int, full: bool = False) -> Iterator[sqlite3
         cur = conn.execute(f"""
             SELECT rowid, id, input_tokens, output_tokens,
                    cache_read_tokens, cache_write_tokens, reasoning_tokens,
-                   started_at, billing_provider, estimated_cost_usd, actual_cost_usd
+                   started_at, billing_provider, estimated_cost_usd, actual_cost_usd,
+                   source, model
             FROM sessions
             {base_where}
             ORDER BY rowid ASC
@@ -92,8 +93,16 @@ def read_hermes_sessions(min_rowid: int, full: bool = False) -> Iterator[sqlite3
         conn.close()
 
 
-def _derive_agent(session_id: str) -> str:
-    """Derive agent name from session id prefix (cron_xxx → cron)."""
+def _derive_agent(session_id: str, source: str = "") -> str:
+    """Derive agent name from the Hermes session.
+
+    Prefer `source` (cli/cron/tui/telegram/desktop/subagent) — it is the real
+    attribution. The session_id prefix is only a fallback and is unreliable:
+    Hermes timestamp-style ids (20260710_061127_3191ef56) split into a date,
+    not an agent, which previously produced agent_name='20260710' rows.
+    """
+    if source:
+        return source
     for sep in ["_", "-"]:
         if sep in session_id:
             return session_id.split(sep)[0]
@@ -139,7 +148,7 @@ def sync_hermes_tokens(full: bool = False, dry_run: bool = False) -> dict:
             )
             cost = float(row["actual_cost_usd"] or row["estimated_cost_usd"] or 0)
             db.log_token_turn(
-                agent_name=_derive_agent(sid),
+                agent_name=_derive_agent(sid, row["source"] or ""),
                 turn_id=f"hermes_{sid}",
                 total_tokens=total_tokens,
                 input_tokens=row["input_tokens"] or 0,
@@ -150,7 +159,7 @@ def sync_hermes_tokens(full: bool = False, dry_run: bool = False) -> dict:
                 cost=cost,
                 source="hermes",
                 session_id=sid,
-                model="",
+                model=row["model"] or "",
                 latency_ms=0,
                 recorded_at=int(row["started_at"] or time.time()),
             )
