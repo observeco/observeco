@@ -308,6 +308,19 @@ async def fleet_verdict():
     agents_data = []
     state_counts = {"critical": 0, "warning": 0, "healthy": 0, "unknown": 0}
     tripped_count = 0
+
+    # Which agents have otel data in the last 24h? (drives the data-quality chip)
+    has_otel: dict[str, bool] = {}
+    try:
+        conn_main = db._get_conn()
+        now_ts = int(time.time())
+        for row in conn_main.execute(
+            "SELECT DISTINCT agent_name FROM token_logs WHERE source='otel' AND recorded_at > ?",
+            (now_ts - 86400,),
+        ).fetchall():
+            has_otel[row["agent_name"]] = True
+    except Exception:
+        pass  # table may not exist — default to estimate
     agent_names_critical = []
     agent_names_warning = []
 
@@ -338,6 +351,7 @@ async def fleet_verdict():
             "status": cls,
             "last_seen": _fmt_ts(last_ts) if last_ts and last_ts < now else "—",
             "circuit_tripped": circuit_state.get("tripped", False) if circuit_state else False,
+            "dq": "acc" if has_otel.get(name) else "est",
         })
 
     # Verdict sentence

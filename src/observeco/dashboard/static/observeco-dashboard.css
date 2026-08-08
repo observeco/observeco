@@ -707,6 +707,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .verdict-card .vc-num.bad{color:var(--danger)}
 .verdict-card .vc-lab{font-size:var(--text-xs);color:var(--fg-3)}
 .verdict-card .vc-rec{margin-top:var(--space-3);font-size:var(--text-sm);color:var(--fg-2);border-top:1px solid var(--border);padding-top:var(--space-3)}
+.verdict-card .vc-note{margin-top:var(--space-2);font-size:11px;color:var(--fg-3);line-height:1.4}
 /* token tab chart grid (v0.3.1 design lineage) — single column, equal height
    so all 5 charts share the same time-axis length/scale (human-comparable). */
 .tok4-grid{display:grid;grid-template-columns:1fr;gap:var(--space-4);margin-bottom:var(--space-6)}
@@ -2403,23 +2404,30 @@ body {
 .c-profile .tile {
   background: rgba(15,23,42,.5); border: 1px solid var(--border-soft);
   border-radius: 8px; padding: 13px 14px; position: relative;
+  display: grid; grid-template-columns: 1fr; grid-template-areas:
+    "label"
+    "link"
+    "val"
+    "sub"
+    "drift";
+  column-gap: 8px; row-gap: 2px; align-items: start;
 }
 .c-profile .tile.bad { border-color: rgba(239,68,68,.4); }
 .c-profile .tile.unknown { border-style: dashed; }
-.c-profile .tile .t-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-right: 76px; }
-.c-profile .tile .t-val { font-size: 21px; font-weight: 700; margin-top: 4px; }
+.c-profile .tile .t-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; grid-area: label; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-profile .tile .t-val { font-size: 21px; font-weight: 700; margin-top: 4px; grid-area: val; }
 .c-profile .tile .t-val.red { color: var(--danger); }
 .c-profile .tile .t-val.green { color: var(--accent); }
 .c-profile .tile .t-val.amber { color: var(--warn); }
-.c-profile .tile .t-sub { font-size: 11.5px; color: var(--fg-2); margin-top: 3px; line-height: 1.4; }
+.c-profile .tile .t-sub { font-size: 11.5px; color: var(--fg-2); margin-top: 3px; line-height: 1.4; grid-area: sub; }
 .c-profile .tile .t-drift {
   display: inline-block; font-size: 10px; font-weight: 600; margin-top: 6px;
   color: var(--warn); background: rgba(234,179,8,.1);
-  border-radius: 4px; padding: 1px 6px;
+  border-radius: 4px; padding: 1px 6px; grid-area: drift; justify-self: start;
 }
 .c-profile .tile .t-link {
-  position: absolute; top: 10px; right: 11px; font-size: 10px; color: var(--muted);
-  cursor: pointer; text-decoration: none;
+  grid-area: link; position: static; font-size: 10px; color: var(--muted);
+  cursor: pointer; text-decoration: none; white-space: nowrap;
 }
 .c-profile .tile .t-link:hover { color: var(--fg-2); }
 

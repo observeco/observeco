@@ -438,6 +438,37 @@ class TestCrossTabConsistency:
                 f"reports {grid_count.group(1)} — cross-tab inconsistency"
             )
 
+    def test_data_quality_chip_reflects_otel_agents(self):
+        """The data-quality chip must reflect how many agents have otel data.
+
+        Regression: the verdict built agents_data WITHOUT the dq field, so
+        _data_quality_chip read a.get("dq","") = "" for every agent, tier1 was
+        always 0, and the chip showed "0%" / "0 otel · N watch-only" regardless
+        of real telemetry. The dq field must be present and the chip must count
+        acc (otel) agents.
+        """
+        from observeco.dashboard.routes.fleet import _data_quality_chip
+
+        # 3 of 4 agents have otel data (dq=acc) -> 75%
+        agents = [
+            {"name": "a", "dq": "acc"},
+            {"name": "b", "dq": "acc"},
+            {"name": "c", "dq": "acc"},
+            {"name": "d", "dq": "est"},  # watch-only
+        ]
+        html = _data_quality_chip(agents)
+        assert "75%" in html, f"expected 75%, got: {html}"
+        assert "3 otel" in html, f"expected 3 otel, got: {html}"
+        assert "1 watch-only" in html, f"expected 1 watch-only, got: {html}"
+
+        # Zero otel -> must show 0%, not be wrong
+        all_watch = [{"name": "x", "dq": "est"}, {"name": "y", "dq": "est"}]
+        html0 = _data_quality_chip(all_watch)
+        assert "0%" in html0 and "0 otel" in html0
+
+        # Empty -> no chip at all (avoid div/0)
+        assert _data_quality_chip([]) == ""
+
     def test_token_count_consistent_brain_vs_detail(self):
         """Token count for an agent should be consistent between Brain tab and agent detail."""
         # Get a known agent with SOUL.md
