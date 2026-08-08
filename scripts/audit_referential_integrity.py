@@ -533,6 +533,9 @@ def main() -> int:
     if args.allowlist:
         raw = json.loads(Path(args.allowlist).read_text())
         for k, v in raw.items():
+            # Skip non-list sections (e.g. "_meta" schema/header metadata).
+            if not isinstance(v, list):
+                continue
             # orphaned_post_routes is a TRIAGE QUEUE: entries are {route, note}
             # so it reads as a to-do ("not yet triaged"), not an absolution.
             # Extract just the route keys for set membership; a new orphan not
