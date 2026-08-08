@@ -112,3 +112,22 @@ def test_bare_api_anchor_detection_is_positive():
     assert audit._is_bare_api_anchor('<a class="act" href="/api/some-route">x</a>') is True
     assert audit._is_bare_api_anchor('<a href="/api/some-route" hx-get="/api/some-route">x</a>') is False
     assert audit._is_bare_api_anchor('<a href="/api/some-route" onclick="fetch(\'/api/some-route\')">x</a>') is False
+
+
+def test_init_auth_is_idempotent():
+    """init_auth() must be safe to call twice on the same app.
+
+    Regression: init_auth() re-added middleware on every call, which Starlette
+    forbids after the app has started. The test suite and the audit both call it
+    over the shared process-global `app`, so under some orderings the second
+    call raised "Cannot add middleware after an application has started" — and
+    the audit's render pass silently fell back to static scan, reporting green
+    while direction 5 never actually ran. Calling it twice must not raise.
+    """
+    from observeco.dashboard.auth import init_auth
+    from observeco.dashboard.server import app
+    # First call (may already be initialized by another test module — that's
+    # the point: it must be safe regardless of prior state).
+    init_auth(app)
+    # Second call must NOT raise.
+    init_auth(app)

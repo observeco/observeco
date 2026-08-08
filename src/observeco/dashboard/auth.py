@@ -165,8 +165,21 @@ def init_auth(app_obj, secret: str | None = None) -> str:
     If *secret* is provided (e.g. from a pre-loaded secret at module level),
     it is used directly instead of calling load_or_generate_secret() again.
     Returns the secret for display on first run.
+
+    IDEMPOTENT: if the auth middleware is already installed on this app, this
+    returns the existing secret without re-adding middleware. Starlette forbids
+    add_middleware() after the app has started, so calling init_auth() twice in
+    one process (as the test suite and the audit both do over the shared
+    process-global `app`) previously raised "Cannot add middleware after an
+    application has started" under some orderings and not others — the worst
+    kind of bug to meet in a deploy. Detecting the installed middleware and
+    returning early makes repeated calls safe.
     """
     global _cached_secret
+    # If the auth middleware is already installed, reuse the existing secret.
+    for mw in getattr(app_obj, "user_middleware", []):
+        if getattr(mw, "cls", None) is DashboardAuthMiddleware:
+            return _cached_secret or (secret if secret is not None else load_or_generate_secret())
     _cached_secret = secret if secret is not None else load_or_generate_secret()
     app_obj.add_middleware(DashboardAuthMiddleware, secret=_cached_secret)
     return _cached_secret
