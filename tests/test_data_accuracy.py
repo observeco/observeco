@@ -417,32 +417,25 @@ class TestCrossTabConsistency:
     """Verify the same metric shows consistent values across different tabs."""
 
     def test_agent_count_consistent_across_tabs(self):
-        """Agent count should be consistent between fleet verdict and fleet agents."""
-        # Fleet verdict shows a summary
-        verdict_html = _get_html("/api/fleet/verdict")
+        """Agent count should be consistent between fleet verdict and fleet grid.
 
-        # Fleet agents shows the full grid
+        The verdict is a summary card (shows a total count); the fleet grid is
+        paginated (page 1 shows a subset). So the correct cross-tab check is
+        that BOTH report the same TOTAL agent count — not that they list the
+        same names (the grid only shows one page).
+        """
+        verdict_html = _get_html("/api/fleet/verdict")
         agents_html = _get_html("/api/fleet/agents")
 
-        # Both should mention the same set of agents
-        # Extract agent names from both
-        verdict_agents = set(re.findall(r'class="m-name"[^>]*>([^<]+)<', verdict_html))
-        # If verdict doesn't have m-name, try other patterns
-        if not verdict_agents:
-            verdict_agents = set(re.findall(r'(\w+)</span>', verdict_html))
+        # Verdict: "<b>37</b>agents" chip
+        verdict_count = re.search(r"<b>(\d+)</b>\s*agents", verdict_html)
+        # Grid: '<span class="count">37 agents</span>' header
+        grid_count = re.search(r'class="count">(\d+)\s*agents', agents_html)
 
-        agents_grid = set(re.findall(r'class="card-name"[^>]*>([^<]+)<', agents_html))
-        if not agents_grid:
-            agents_grid = set(re.findall(r'tabindex="0"[^>]*>.*?>([^<]+)<', agents_html, re.DOTALL))
-
-        # Can't do exact match due to HTML structure differences, but
-        # the intersection should be significant
-        if verdict_agents and agents_grid:
-            overlap = verdict_agents & agents_grid
-            # At least some agents should appear in both
-            assert len(overlap) > 0 or len(verdict_agents) == 0, (
-                f"No overlap between verdict agents ({verdict_agents}) "
-                f"and fleet grid ({agents_grid})"
+        if verdict_count and grid_count:
+            assert verdict_count.group(1) == grid_count.group(1), (
+                f"verdict reports {verdict_count.group(1)} agents but fleet grid "
+                f"reports {grid_count.group(1)} — cross-tab inconsistency"
             )
 
     def test_token_count_consistent_brain_vs_detail(self):

@@ -37,6 +37,8 @@ jobs:
         run: uv run pytest tests/ -k "spec_fidelity" || echo "No spec-fidelity tests yet"
       - name: Import check
         run: uv run python3 -c "from observeco.dashboard.server import app; print('Import OK')"
+      - name: Referential-integrity audit + full test suite
+        run: make verify
 
   system-tests:
     runs-on: ubuntu-latest

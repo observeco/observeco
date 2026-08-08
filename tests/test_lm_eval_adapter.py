@@ -170,40 +170,6 @@ def test_generate_until_timeout_graceful():
 
 
 # ── Run ──────────────────────────────────────────────────────────────────
-
-tests = [
-    ("extends_lm", test_extends_lm),
-    ("init_defaults", test_init_defaults),
-    ("generate_until_signature", test_generate_until_signature),
-    ("loglikelihood_signature", test_loglikelihood_signature),
-    ("loglikelihood_rolling_signature", test_loglikelihood_rolling_signature),
-    ("score_exact_match", test_score_exact_match),
-    ("score_contains", test_score_contains),
-    ("score_no_match", test_score_no_match),
-    ("score_empty_continuation", test_score_empty_continuation),
-    ("trim_until", test_trim_until),
-    ("trim_until_no_match", test_trim_until_no_match),
-    ("trim_until_empty_until", test_trim_until_empty_until),
-    ("context_cache", test_context_cache),
-    ("detect_model", test_detect_model),
-    ("build_prompt_passthrough", test_build_prompt_passthrough),
-    ("generate_until_graceful_error", test_generate_until_graceful_error),
-    ("generate_until_timeout_graceful", test_generate_until_timeout_graceful),
-]
-
-passed = 0
-failed = 0
-for name, fn in tests:
-    try:
-        fn()
-        print(f"  ✅ {name}")
-        passed += 1
-    except AssertionError as e:
-        print(f"  ❌ {name}: {e}")
-        failed += 1
-    except Exception as e:
-        print(f"  💥 {name}: {e}")
-        failed += 1
-
-print(f"\n{passed}/{passed + failed} passed")
-sys.exit(0 if failed == 0 else 1)
+# The test_* functions above are collected and run directly by pytest.
+# (Previously this module ran them itself in a loop and called sys.exit(),
+# which crashed pytest with INTERNALERROR during collection. Removed.)

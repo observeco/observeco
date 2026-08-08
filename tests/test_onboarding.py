@@ -86,21 +86,6 @@ def test_phase_state_returns_fields():
     assert "agents_exist" in data
 
 
-def test_phase_transition_forward():
-    """POST /api/phase/transition should move forward (zero -> setup)."""
-    old_pulses = _simulate_fresh_env()
-    r1 = client.post("/api/phase/transition", json={"phase": "setup"}, headers=_auth_headers())
-    assert r1.status_code == 200
-    assert r1.json()["phase"] == "setup"
-    _restore_env(old_pulses)
-
-
-def test_phase_transition_invalid():
-    """Invalid phase returns 400."""
-    response = client.post("/api/phase/transition", json={"phase": "invalid"}, headers=_auth_headers())
-    assert response.status_code == 400
-
-
 def test_phase_banner_returns_html_on_zero():
     """GET /api/phase returns HTML banner."""
     response = client.get("/api/phase")

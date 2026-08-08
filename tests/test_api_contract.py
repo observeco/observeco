@@ -45,6 +45,7 @@ DYNAMIC_PREFIXES: set[str] = {
     "/api/billing/admin/cancel/",
     "/api/agents/",
     "/api/pro-preview/",
+    "/api/fleet/canary-card/",
 }
 
 # ── Response shape registry ──
@@ -170,8 +171,26 @@ def _path_matches_backend(frontend_path: str, backend_routes: set[str]) -> bool:
 # ── Tests ──
 
 
+def _frontend_source() -> str:
+    """Concatenate the real frontend sources: index_new.html + all JS files.
+
+    The dashboard serves index_new.html (not index.html, which no longer
+    exists) and loads fetch()/htmx paths from the JS bundle. Scanning only the
+    HTML would miss the JS-driven calls; scanning a nonexistent index.html
+    would crash. This is the single source of truth for frontend API paths.
+    """
+    parts: list[str] = []
+    tpl = Path("src/observeco/dashboard/templates/index_new.html")
+    if tpl.exists():
+        parts.append(tpl.read_text())
+    js_dir = Path("src/observeco/dashboard/static/js")
+    for js in sorted(js_dir.glob("*.js")):
+        parts.append(js.read_text())
+    return "\n".join(parts)
+
+
 def test_all_fetch_paths_have_backend_routes():
-    html = Path("src/observeco/dashboard/templates/index.html").read_text()
+    html = _frontend_source()
     backend = _get_backend_routes()
     frontend = _extract_fetch_paths(html)
 
@@ -190,7 +209,7 @@ def test_all_fetch_paths_have_backend_routes():
 
 
 def test_all_htmx_paths_have_backend_routes():
-    html = Path("src/observeco/dashboard/templates/index.html").read_text()
+    html = _frontend_source()
     backend = _get_backend_routes()
     frontend = _extract_htmx_paths(html)
 

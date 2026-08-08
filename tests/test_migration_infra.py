@@ -16,6 +16,8 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from observeco.db import (
     BACKUP_COOLDOWN_HOURS,
     BACKUP_MAX_COUNT,
@@ -152,24 +154,28 @@ class TestBackupBeforeMigrations:
 # ---------------------------------------------------------------------------
 
 class TestDowngradeGuard:
-    def test_downgrade_logs_warning(self, tmp_path, caplog):
-        """When DB version > code version, log warning and don't overwrite."""
+    def test_downgrade_refuses_to_start(self, tmp_path):
+        """When DB version > code version, REFUSE to start (hard-fail).
+
+        GS-019 §Downgrade: a stale classifier/detector would write measurements
+        with the wrong schema. Down is visible; wrong data isn't. So opening a
+        DB newer than the code must raise, not warn-and-continue.
+        """
         db = _make_db(tmp_path)
         conn = db._get_conn()
 
         # Tamper: set version higher than SCHEMA_VERSION
         _set_schema_version(conn, SCHEMA_VERSION + 10)
 
-        with caplog.at_level(logging.WARNING):
-            # Re-initialize — should detect downgrade
-            db2 = Database(db_path=tmp_path / "test.db")
+        # Re-initialize — must refuse to start. (Database init is lazy: the
+        # downgrade check runs on first _get_conn(), not construction.)
+        db2 = Database(db_path=tmp_path / "test.db")
+        with pytest.raises(RuntimeError, match="Refusing to start|NEWER|newer"):
+            db2._get_conn()
 
         # Version should NOT be overwritten
-        current = _get_schema_version(db2._get_conn())
+        current = _get_schema_version(conn)
         assert current == SCHEMA_VERSION + 10
-
-        # Warning should have been logged
-        assert any("downgrade" in r.message.lower() or "GS-019" in r.message for r in caplog.records)
 
     def test_normal_upgrade_sets_version(self, tmp_path):
         """When DB version < code version, version gets updated."""

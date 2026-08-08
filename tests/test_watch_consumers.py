@@ -32,10 +32,10 @@ def test_base_consumer_idempotent_start():
 
 
 def test_consumer_manager_registers_all():
-    """ConsumerManager should register all 5 standard consumers."""
+    """ConsumerManager should register all standard consumers."""
     mgr = ConsumerManager()
     mgr.register_all()
-    assert len(mgr.consumers) == 7
+    assert len(mgr.consumers) == 8
     names = [c.name for c in mgr.consumers]
     assert "drift" in names
     assert "garden" in names
@@ -43,6 +43,7 @@ def test_consumer_manager_registers_all():
     assert "heal" in names
     assert "prune" in names
     assert "token_history" in names
+    assert "config_timeline" in names
     assert "data_source_watchdog" in names
 
 

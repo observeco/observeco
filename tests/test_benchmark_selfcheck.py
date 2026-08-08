@@ -90,34 +90,6 @@ def test_compare_no_results():
     assert r["total_tasks"] == 0
 
 # ── Run ──────────────────────────────────────────────────────────────────
-
-tests = [
-    ("keyword_exact_match", test_keyword_exact_match),
-    ("keyword_partial_match", test_keyword_partial_match),
-    ("keyword_no_match", test_keyword_no_match),
-    ("keyword_punctuation", test_keyword_punctuation),
-    ("keyword_decimal", test_keyword_decimal),
-    ("keyword_json", test_keyword_json),
-    ("keyword_empty_expected", test_keyword_empty_expected),
-    ("keyword_empty_actual", test_keyword_empty_actual),
-    ("suite_unknown", test_suite_unknown),
-    ("no_tasks", test_no_tasks),
-    ("compare_no_results", test_compare_no_results),
-]
-
-passed = 0
-failed = 0
-for name, fn in tests:
-    try:
-        fn()
-        print(f"  ✅ {name}")
-        passed += 1
-    except AssertionError as e:
-        print(f"  ❌ {name}: {e}")
-        failed += 1
-    except Exception as e:
-        print(f"  💥 {name}: {e}")
-        failed += 1
-
-print(f"\n{passed}/{passed + failed} passed")
-sys.exit(0 if failed == 0 else 1)
+# The test_* functions above are collected and run directly by pytest.
+# (Previously this module ran them itself in a loop and called sys.exit(),
+# which crashed pytest with INTERNALERROR during collection. Removed.)
