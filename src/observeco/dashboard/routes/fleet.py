@@ -379,28 +379,6 @@ async def fleet_verdict():
     # Data quality chip
     dq_chip = _data_quality_chip(agents_data)
 
-    # Data quality warning banner (prominent when 0%)
-    dq_warning = ""
-    if total > 0:
-        # Recalculate from actual data
-        pct = 0
-        if total > 0:
-            # Count agents with any source info
-            from observeco.db import Database
-            _db = Database()
-            try:
-                conn = _db._get_conn()
-                row = conn.execute("SELECT COUNT(*) FROM agent_configs WHERE source IS NOT NULL AND source != ''").fetchone()
-                with_source = row[0] if row else 0
-                pct = round(with_source / total * 100)
-            except Exception:
-                pct = 0
-        if pct == 0:
-            dq_warning = f"""<div class="dq-warning">
-    <span class="dq-w-icon">⚠</span>
-    <span class="dq-w-text"><b>No telemetry data</b> — all {total} agents are watch-only. Add OpenTelemetry instrumentation for real-time health data.</span>
-</div>"""
-
     # Discovery gap (compute from circuit_breakers + drift breaches)
     gap_cumulative = 0
     max_gap = 0
@@ -424,7 +402,6 @@ async def fleet_verdict():
             {f'— {verdict_detail}' if verdict_detail else ''}
             <span class="sub"> {verdict['sub']}</span>
         </div>
-        {dq_warning}
         {f'<div class="verdict-sub2">{_html_escape(sub2)}</div>' if sub2 else ''}
     </div>
     <div class="verdict-meta">
