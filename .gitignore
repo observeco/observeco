@@ -56,6 +56,9 @@ observability_pricing_research.md
 observeco-launch-integration-proposal.md
 .internal/
 
+# Personal-data originals (P5 scrub) — never ship
+scripts/workbench/selections/*.orig.json
+
 # Docs build
 website/node_modules/
 website/.docusaurus/
