@@ -69,3 +69,24 @@ def test_pin_agreement_no_tool_paths():
     # no tool messages -> no touched repos
     verdict = pt.pin_agreement(conn, "s1", "abc1234")
     assert verdict == "no_tool_paths", verdict
+
+
+def test_scan_profile_reports_days_since_last_write():
+    """A store with a session today reports days_since_last_write=0."""
+    import tempfile
+    dbpath = tempfile.mktemp(suffix=".db")
+    conn = sqlite3.connect(dbpath)
+    # schema matching scan_profile's queries (source + capture columns)
+    conn.execute(
+        "CREATE TABLE sessions (id TEXT PRIMARY KEY, source TEXT, started_at REAL, "
+        "git_sha TEXT, spawn_dirty_diff TEXT, spawn_untracked TEXT)"
+    )
+    conn.execute("CREATE TABLE messages (session_id TEXT, role TEXT, content TEXT)")
+    conn.execute("INSERT INTO sessions VALUES ('s1', 'cli', strftime('%s','now'), NULL, NULL, NULL)")
+    conn.commit()
+    conn.close()
+    try:
+        result = pt.scan_profile(dbpath)
+        assert result["days_since_last_write"] == 0, result
+    finally:
+        os.remove(dbpath)

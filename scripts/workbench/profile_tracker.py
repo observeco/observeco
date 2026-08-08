@@ -117,8 +117,14 @@ def pin_agreement(conn, session_id: str, git_sha: str) -> str:
 
 
 def scan_profile(db_path: str) -> dict:
-    """Report capture + pin-agreement stats for one profile's state.db."""
+    """Report capture + pin-agreement stats for one profile's state.db.
+
+    Uses the canonical realpath as the store identity so symlinked aliases
+    (e.g. main -> accelerator) report once, not once per path. A hardlink/symlink
+    alias sharing an inode would otherwise double-count a store's volume.
+    """
     prof = Path(db_path).parent.name
+    realpath = os.path.realpath(db_path)
     try:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
         conn.row_factory = sqlite3.Row
@@ -126,7 +132,7 @@ def scan_profile(db_path: str) -> dict:
         has_capture = "git_sha" in cols
         if not has_capture:
             conn.close()
-            return {"profile": prof, "capture_columns": False, "note": "not yet on new code"}
+            return {"profile": prof, "realpath": realpath, "capture_columns": False, "note": "not yet on new code"}
 
         total = conn.execute("SELECT COUNT(*) c FROM sessions").fetchone()["c"]
         by_source = {
@@ -137,6 +143,13 @@ def scan_profile(db_path: str) -> dict:
             "SELECT id, git_sha FROM sessions WHERE git_sha IS NOT NULL AND git_sha!=''"
         ).fetchall()
         n_captured = len(captured)
+
+        # staleness: days since the store last saw a write (max started_at)
+        last_ts = conn.execute("SELECT MAX(started_at) m FROM sessions").fetchone()["m"]
+        days_since = None
+        if last_ts:
+            from datetime import datetime
+            days_since = max(0, round((datetime.now().timestamp() - last_ts) / 86400))
 
         # pin agreement on captured sessions
         agree = mismatch = no_tool = unresolvable = 0
@@ -150,18 +163,20 @@ def scan_profile(db_path: str) -> dict:
         conn.close()
         return {
             "profile": prof,
+            "realpath": realpath,
             "capture_columns": True,
             "total_sessions": total,
             "by_source": by_source,
             "captured": n_captured,
             "capture_rate": round(n_captured / total, 3) if total else 0.0,
+            "days_since_last_write": days_since,
             "pin_agree": agree,
             "pin_mismatch": mismatch,
             "pin_no_tool_paths": no_tool,
             "pin_unresolvable": unresolvable,
         }
     except Exception as e:
-        return {"profile": prof, "error": str(e)}
+        return {"profile": prof, "realpath": realpath, "error": str(e)}
 
 
 def main() -> int:
@@ -173,24 +188,44 @@ def main() -> int:
     dbs = sorted(glob.glob(os.path.join(args.profiles_dir, "*", "state.db")))
     results = [scan_profile(db) for db in dbs]
 
+    # Dedupe by realpath: symlink aliases (main -> accelerator) share one store.
+    # Report the canonical realpath once; keep all alias names so the link is visible.
+    seen_paths = {}
+    for r in results:
+        rp = r.get("realpath", "")
+        if rp in seen_paths:
+            seen_paths[rp]["_aliases"].append(r["profile"])
+        else:
+            seen_paths[rp] = dict(r)
+            seen_paths[rp]["_aliases"] = []
+    results = list(seen_paths.values())
+
     if args.json:
+        # drop internal _aliases unless present
+        for r in results:
+            if r.get("_aliases"):
+                r["aliases"] = r.pop("_aliases")
+            else:
+                r.pop("_aliases", None)
         print(json.dumps(results, indent=2))
         return 0
 
     # table
-    print(f"{'profile':14} {'cols':5} {'total':6} {'captured':9} {'rate':6} {'agree':6} {'mismatch':8} {'no_tool':8} {'unresolv':9}")
-    print("-" * 80)
+    print(f"{'store':14} {'aliases':16} {'cols':5} {'total':6} {'days_idle':9} {'captured':9} {'rate':6} {'agree':6} {'mismatch':8} {'no_tool':8}")
+    print("-" * 96)
     for r in results:
         if "error" in r:
-            print(f"{r['profile']:14} ERROR: {r['error']}")
+            print(f"{r['profile']:14} {'-':16} ERROR: {r['error']}")
             continue
         if not r.get("capture_columns"):
-            print(f"{r['profile']:14} {'no':5} {'-':6} {'-':9} {'-':6} (not on new code)")
+            al = ",".join(r.get("_aliases", [])) or "-"
+            print(f"{r['profile']:14} {al:16} {'no':5} {'-':6} {'-':9} {'-':9} {'-':6} (not on new code)")
             continue
+        al = ",".join(r.get("_aliases", [])) or "-"
+        idle = r.get("days_since_last_write", "-")
         print(
-            f"{r['profile']:14} {'yes':5} {r['total_sessions']:6} {r['captured']:9} "
-            f"{r['capture_rate']:6.3f} {r['pin_agree']:6} {r['pin_mismatch']:8} "
-            f"{r['pin_no_tool_paths']:8} {r['pin_unresolvable']:9}"
+            f"{r['profile']:14} {al:16} {'yes':5} {r['total_sessions']:6} {idle!s:9} "
+            f"{r['captured']:9} {r['capture_rate']:6.3f} {r['pin_agree']:6} {r['pin_mismatch']:8} {r['pin_no_tool_paths']:8}"
         )
     return 0
 
