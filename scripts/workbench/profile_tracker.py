@@ -91,6 +91,12 @@ def pin_agreement(conn, session_id: str, git_sha: str) -> str:
     """
     if not git_sha:
         return "no_sha"
+    # Check touched repos FIRST — a session with no tool paths can't be
+    # validated regardless of whether the SHA resolves. (Order matters: a
+    # session with no tool calls should report no_tool_paths, not unresolvable.)
+    touched = session_touched_repos(conn, session_id)
+    if not touched:
+        return "no_tool_paths"
     # resolve the SHA's repo: find which known repo contains this commit
     sha_repo = None
     for repo in KNOWN_REPOS:
@@ -107,9 +113,6 @@ def pin_agreement(conn, session_id: str, git_sha: str) -> str:
             continue
     if sha_repo is None:
         return "unresolvable"
-    touched = session_touched_repos(conn, session_id)
-    if not touched:
-        return "no_tool_paths"
     return "agree" if sha_repo in touched else "mismatch"
 
 
