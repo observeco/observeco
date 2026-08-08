@@ -668,7 +668,8 @@ def _synthesize_status_line(agent_name: str, pillars: list[dict]) -> tuple[str, 
                 line = f"{agent_name} is running \u2014 set up {', '.join(unset)} checks."
             else:
                 line = f"{agent_name} is running, but some data is incomplete."
-        return line, sub or "Health unknown in some areas", "warning"
+            sub = "Health unknown in some areas"
+        return line, sub, "warning"
 
     has_modifier = any(p.get("modifier") for p in pillars)
     if has_modifier:

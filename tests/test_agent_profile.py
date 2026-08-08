@@ -304,6 +304,27 @@ class TestVerdictConsistencyInvariant:
         assert severity != "healthy", "Unknown memory must not yield healthy verdict"
         assert "memory" in line.lower(), f"Should mention memory, got: {line}"
 
+    def test_unknown_pillar_else_branch_does_not_raise(self):
+        """Regression: an unknown pillar whose value does NOT end in 'd' must
+        render, not raise UnboundLocalError.
+
+        The else branch of the unknown-pillars path set `line` but not `sub`,
+        then referenced `sub` in the return — UnboundLocalError → 500 on the
+        profile modal. This is the branch that made "Run Benchmark" appear to
+        do nothing (the modal failed to load).
+        """
+        pillars = [
+            {"key": "quality", "state": "ok", "label": "Quality", "value": "3/3", "modifier": None},
+            {"key": "reliability", "state": "ok", "label": "Reliability", "value": "100%", "modifier": None},
+            {"key": "usage", "state": "ok", "label": "Usage today", "value": "2.2K", "modifier": None},
+            # unknown but value does NOT end in 'd' -> else branch
+            {"key": "memory", "state": "unknown", "label": "Memory", "value": "no scan", "modifier": None},
+        ]
+        line, sub, severity = _synthesize_status_line("hound", pillars)
+        assert severity == "warning"
+        assert sub, "sub must be set (was UnboundLocalError before the fix)"
+        assert "incomplete" in line.lower() or "setup" in line.lower(), f"got: {line}"
+
 
 # ═══════════════════════════════════════════════════════════════════
 # Needs Attention / Worth Knowing / Doing Well generation
