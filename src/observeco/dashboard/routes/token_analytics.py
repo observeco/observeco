@@ -97,35 +97,102 @@ def empty_html() -> str:
 
 
 def _query_agents(conn, since: int, agent: str) -> list[dict]:
-    """Per-agent aggregates via SQL GROUP BY (returns <50 rows)."""
-    cur = conn.execute("""
+    """Per-agent aggregates via SQL GROUP BY (returns <50 rows).
+
+    Reads from v_token_effective (migration 71-73) — MEASURED rows only
+    (traffic_class='measured' or clean orphans), precedence-resolved and
+    deduplicated. Watch rows are excluded: they are synthetic benchmark
+    estimates and would inflate the table (e.g. 7d raw table $101.51 vs
+    $18.08 measured headline). Component fields (identity/skills/...)
+    live only on raw otel rows, so they're fetched separately by
+    _query_components; here they default to 0.
+    """
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
         SELECT
             agent_name,
-            COALESCE(SUM(cost), 0) as cost,
+            COALESCE(SUM(reported_cost), 0) as cost,
             COALESCE(SUM(total_tokens), 0) as tokens,
             COALESCE(SUM(input_tokens), 0) as input,
             COALESCE(SUM(output_tokens), 0) as output,
             COALESCE(SUM(cache_creation_tokens), 0) as cache_create,
             COALESCE(SUM(cache_read_tokens), 0) as cache_read,
-            COALESCE(SUM(identity_tokens), 0) as identity,
-            COALESCE(SUM(skills_tokens), 0) as skills,
-            COALESCE(SUM(memory_tokens), 0) as memory,
-            COALESCE(SUM(tools_tokens), 0) as tools,
-            COALESCE(SUM(guidance_tokens), 0) as guidance,
-            COUNT(*) as count,
-            MAX(CASE WHEN source IN ('otel','sdk','proxy') THEN 1 ELSE 0 END) as has_accurate
-        FROM token_logs WHERE recorded_at >= ?
+            MAX(CASE WHEN winning_source = 'otel' THEN 1 ELSE 0 END) as has_accurate,
+            COUNT(*) as count
+        FROM v_token_effective
+        WHERE recorded_at >= ?
+          AND (traffic_class = 'measured'
+               OR (traffic_class = 'measured_orphan' AND overlap_suspect = 0))
+          {agent_clause}
         GROUP BY agent_name
-        ORDER BY SUM(cost) DESC
-    """, (since,))
+        ORDER BY SUM(reported_cost) DESC
+    """, params)
     rows = [dict(r) for r in cur.fetchall()]
-    if agent != "__all__":
-        rows = [r for r in rows if r["agent_name"] == agent]
+    for r in rows:
+        r.update({"identity": 0, "skills": 0, "memory": 0, "tools": 0, "guidance": 0})
     # Patch model: most common model per agent (MIN() gives alphabetically first — wrong)
     latest = _query_most_common_model(conn, since, agent)
     for r in rows:
         r["model"] = latest.get(r["agent_name"], "")
     return rows
+
+
+def _query_components(conn, since: int, agent: str) -> dict[str, int]:
+    """Component token composition from raw otel rows only.
+
+    identity/skills/memory/tools/guidance exist only on otel spans; the
+    precedence view doesn't carry them. Summed per agent across the fleet
+    for the composition panel (otels only — the only source with a real
+    breakdown; hermes bridge writes session aggregates, watch is synthetic).
+    """
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
+        SELECT
+            COALESCE(SUM(identity_tokens), 0) as identity,
+            COALESCE(SUM(skills_tokens), 0) as skills,
+            COALESCE(SUM(memory_tokens), 0) as memory,
+            COALESCE(SUM(tools_tokens), 0) as tools,
+            COALESCE(SUM(guidance_tokens), 0) as guidance
+        FROM token_logs
+        WHERE recorded_at >= ? AND source = 'otel' {agent_clause}
+    """, params)
+    r = cur.fetchone()
+    return {"identity": r["identity"] or 0, "skills": r["skills"] or 0,
+            "memory": r["memory"] or 0, "tools": r["tools"] or 0,
+            "guidance": r["guidance"] or 0}
+
+
+def _query_simulated_agents(conn, since: int, agent: str) -> list[dict]:
+    """Per-agent watch rows (simulated benchmark estimates).
+
+    Kept as a SEPARATE section from the measured table — watch is a
+    distinct population (100% output_tokens=0, burst-clustered, no
+    session_id), never summed into measured spend.
+    """
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
+        SELECT
+            agent_name,
+            COALESCE(SUM(cost), 0) as cost,
+            COALESCE(SUM(total_tokens), 0) as tokens,
+            COALESCE(SUM(cache_read_tokens), 0) as cache_read,
+            COALESCE(SUM(cache_creation_tokens), 0) as cache_create,
+            COUNT(*) as count
+        FROM token_logs
+        WHERE recorded_at >= ? AND source = 'watch' {agent_clause}
+        GROUP BY agent_name
+        ORDER BY SUM(cost) DESC
+    """, params)
+    return [dict(r) for r in cur.fetchall()]
 
 
 def _query_most_common_model(conn, since: int, agent: str) -> dict[str, str]:
@@ -151,7 +218,14 @@ def _query_most_common_model(conn, since: int, agent: str) -> dict[str, str]:
 
 
 def _query_buckets(conn, since: int, bucket_sec: int, agent: str) -> list[dict]:
-    """Time-bucket aggregates via SQL GROUP BY (returns <1000 rows)."""
+    """Time-bucket aggregates via SQL GROUP BY (returns <1000 rows).
+
+    Reads from v_token_effective (migration 71-73) — MEASURED rows only
+    (traffic_class='measured' or clean orphans), precedence-resolved and
+    deduplicated. Watch rows are excluded entirely: they are synthetic
+    benchmark estimates (output_tokens=0) and would pollute cache rate,
+    output/input ratio, and tokens/turn with a 98% non-measured sample.
+    """
     agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
     params = (bucket_sec, bucket_sec, since)
     if agent != "__all__":
@@ -159,15 +233,19 @@ def _query_buckets(conn, since: int, bucket_sec: int, agent: str) -> list[dict]:
     cur = conn.execute(f"""
         SELECT
             (recorded_at / ?) * ? as bucket_start,
-            COALESCE(SUM(cost), 0) as cost,
+            COALESCE(SUM(reported_cost), 0) as cost,
             COALESCE(SUM(total_tokens), 0) as total,
             COALESCE(SUM(input_tokens), 0) as input,
             COALESCE(SUM(output_tokens), 0) as output,
             COALESCE(SUM(cache_read_tokens), 0) as cache,
             COALESCE(SUM(cache_creation_tokens), 0) as cache_create,
-            COALESCE(SUM(CASE WHEN source NOT IN ('otel','sdk','proxy') THEN input_tokens + output_tokens ELSE 0 END), 0) as est,
+            0 as est,
             COUNT(*) as count
-        FROM token_logs WHERE recorded_at >= ? {agent_clause}
+        FROM v_token_effective
+        WHERE recorded_at >= ?
+          AND (traffic_class = 'measured'
+               OR (traffic_class = 'measured_orphan' AND overlap_suspect = 0))
+          {agent_clause}
         GROUP BY bucket_start
         ORDER BY bucket_start
     """, params)
@@ -179,15 +257,33 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     Samples across the full time range (not just the most recent 500 calls)
     so the timeline reflects the entire selected period.
     Anomaly = token count spike (>2x median) — marks real outliers.
+
+    MEASURED ONLY and OVERLAP-RESOLVED: filters to otel/hermes rows, and
+    drops the hermes side of any session that also has otel rows (otel wins
+    precedence — the same rule as v_token_effective). Without this, the
+    timeline shows both sides of the 733 overlapping sessions (~47% of 7d
+    hermes rows), re-importing the double-count the precedence view exists
+    to eliminate, and the anomaly detector then flags those duplicates as
+    spikes. Watch rows are synthetic estimates and are excluded entirely.
     """
     agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
     params = (since,)
     if agent != "__all__":
         params = params + (agent,)
+    source_clause = "AND source IN ('otel','hermes')"
+    # Precedence: exclude hermes rows whose session also has otel rows.
+    overlap_clause = """
+        AND NOT (source = 'hermes' AND session_id != '' AND EXISTS (
+            SELECT 1 FROM token_logs o
+            WHERE o.source = 'otel' AND o.session_id = token_logs.session_id
+              AND o.recorded_at >= ?
+        ))
+    """
+    params = params + (since,)  # for the EXISTS subquery
 
     # First, get total count in range to decide if we need to sample
     cur = conn.execute(f"""
-        SELECT COUNT(*) as cnt FROM token_logs WHERE recorded_at >= ? {agent_clause}
+        SELECT COUNT(*) as cnt FROM token_logs WHERE recorded_at >= ? {source_clause} {overlap_clause} {agent_clause}
     """, params)
     total = cur.fetchone()["cnt"]
 
@@ -195,7 +291,7 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
         # Small dataset — just return everything
         cur = conn.execute(f"""
             SELECT recorded_at, total_tokens
-            FROM token_logs WHERE recorded_at >= ? {agent_clause}
+            FROM token_logs WHERE recorded_at >= ? {source_clause} {overlap_clause} {agent_clause}
             ORDER BY recorded_at ASC
         """, params)
         rows = [dict(r) for r in cur.fetchall()]
@@ -207,7 +303,7 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
                 SELECT recorded_at, total_tokens,
                     ROW_NUMBER() OVER (ORDER BY recorded_at) as rn,
                     COUNT(*) OVER () as cnt
-                FROM token_logs WHERE recorded_at >= ? {agent_clause}
+                FROM token_logs WHERE recorded_at >= ? {source_clause} {overlap_clause} {agent_clause}
             ) WHERE rn % MAX(1, cnt / 500) = 0
             ORDER BY recorded_at ASC
             LIMIT 500
@@ -314,10 +410,14 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     try:
         conn = db._get_conn()
 
-        # Query 1: Per-agent aggregates
+        # Query 1: Per-agent aggregates (measured-only from v_token_effective)
         agent_rows = _query_agents(conn, since, agent)
         if not agent_rows:
             return HTMLResponse(empty_html())
+
+        # Component composition (otel-only breakdown) + simulated watch table
+        comp_totals = _query_components(conn, since, agent)
+        sim_rows = _query_simulated_agents(conn, since, agent)
 
         agent_data = {}
         total_cost = total_input = total_output = 0
@@ -439,14 +539,15 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         ("tools", "var(--token-tools)", "tools"),
         ("guidance", "var(--token-guidance)", "guidance"),
     ]
-    fleet_comp = {k: sum(d[k] for _, d in sorted_agents) for k, _, _ in COMP_ORDER}
+    fleet_comp = {k: comp_totals.get(k, 0) for k, _, _ in COMP_ORDER}
     comp_max = max(fleet_comp.values()) or 1
     comp_rows = ""
-    for key, color, label in COMP_ORDER:
-        val = fleet_comp[key]
-        pct = round(val / comp_max * 100)
-        tok = _fmt_tok(val)
-        comp_rows += f"""<div class="comp-row">
+    if sum(fleet_comp.values()) > 0:
+        for key, color, label in COMP_ORDER:
+            val = fleet_comp[key]
+            pct = round(val / comp_max * 100)
+            tok = _fmt_tok(val)
+            comp_rows += f"""<div class="comp-row">
     <span class="ag">{label}</span>
     <div class="comp-stack"><i class="ci" style="width:{pct}%;background:{color}"></i></div>
     <span class="mono" style="color:var(--fg-2);min-width:56px;text-align:right">{tok}</span>
@@ -535,6 +636,32 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
     agent_count = len(sorted_agents)
 
+    # Simulated (watch) per-agent rows — separate section, never summed
+    sim_rows_html = ""
+    for s in sim_rows:
+        s_cost = _fmt_dollar(s["cost"])
+        s_tok = _fmt_tok(s["tokens"])
+        s_cache = round(s["cache_read"] / max(s["cache_read"] + s["cache_create"], 1) * 100)
+        sim_rows_html += f"""<tr>
+    <td><span class="ag">{_html_escape(s["agent_name"])}</span></td>
+    <td class="mono r">{s_cost}</td>
+    <td class="mono r">{s_tok}</td>
+    <td class="mono">—</td>
+    <td><span class="dq est">Sim</span></td>
+    <td class="r"><span class="mono" style="color:var(--fg-3)">{s_cache}%</span></td>
+</tr>"""
+    sim_section = ""
+    if sim_rows_html:
+        sim_total = _fmt_dollar(sum(s["cost"] for s in sim_rows))
+        sim_section = f"""
+<div class="section-h" style="margin-top:var(--space-4)"><h2>Simulated (watch)</h2><span class="count">{len(sim_rows)} agents · {sim_total} estimates</span></div>
+<div class="tblwrap">
+    <table class="tbl">
+        <tr><th>Agent</th><th class="r">Cost</th><th class="r">Tokens</th><th>Model</th><th>Data</th><th class="r">Cache</th></tr>
+        {sim_rows_html}
+    </table>
+</div>"""
+
     html = f"""<div id="analyticsContent" hx-swap-oob="true">
 <div class="page-title">
         <h1>Token Analytics</h1>
@@ -587,10 +714,11 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         {agent_rows}
     </table>
 </div>
+{sim_section}
 
 <div class="section-h"><h2>Component Composition</h2><span class="count">per agent average</span></div>
 <div class="panel" style="margin-bottom:var(--space-6)">
-    {comp_rows if comp_rows else '<span style="color:var(--fg-3);font-size:var(--text-sm)">No composition data</span>'}
+    {comp_rows if comp_rows else '<span style="color:var(--fg-3);font-size:var(--text-sm)">No component data collected — enable the telemetry plugin to populate identity/skills/memory/tools/guidance breakdown.</span>'}
     <div class="tokleg">
         <span><i class="ci"></i> identity</span>
         <span><i class="cs"></i> skills</span>
