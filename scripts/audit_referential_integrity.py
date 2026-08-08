@@ -431,6 +431,30 @@ def _is_bare_api_anchor(tag: str) -> bool:
     return True
 
 
+_RENDER_CLIENT_CACHE: dict = {}
+
+
+def _get_render_client():
+    """Return a cached (TestClient, auth_header) pair, initializing once.
+
+    init_auth() adds middleware, which Starlette forbids after the app has
+    started. Re-initializing on every render pass (direction 4 calls it, then
+    direction 5 calls it again) raised "Cannot add middleware after an
+    application has started" on the second call. The old code swallowed that and
+    silently fell back to a static scan — so direction 5 NEVER actually ran its
+    render pass; the gate was green for it on static-analysis quality. Cache the
+    client so both directions reuse the already-started app and genuinely render.
+    """
+    if "client" not in _RENDER_CLIENT_CACHE:
+        from fastapi.testclient import TestClient
+        from observeco.dashboard.auth import init_auth
+        import observeco.dashboard.server as server_mod
+        secret = init_auth(server_mod.app)
+        _RENDER_CLIENT_CACHE["client"] = TestClient(server_mod.app)
+        _RENDER_CLIENT_CACHE["hdr"] = {"X-ObserveCo-Token": secret}
+    return _RENDER_CLIENT_CACHE["client"], _RENDER_CLIENT_CACHE["hdr"]
+
+
 def _render_endpoints() -> list[str]:
     """Render the app's main HTML surfaces via TestClient and return their bodies.
 
@@ -441,31 +465,28 @@ def _render_endpoints() -> list[str]:
     present and future — without knowing where any of them live. It's what would
     have caught the 57 DB-generated "View the window" dead links without needing
     a human to notice them on the page.
+
+    FAILS LOUD on boot failure: if the app can't boot (e.g. no DB), this raises
+    rather than silently degrading to a static scan. Every environment the audit
+    runs in can boot the app against a seeded DB, so an unbootable app during
+    the audit is itself a defect worth surfacing — not something to route
+    around. A silent fallback would produce answers of two different qualities
+    (render-time vs static) under the same function name, and nothing downstream
+    could tell which it got — the exact shape that hid onboarding.html.
     """
     bodies: list[str] = []
-    try:
-        from fastapi.testclient import TestClient
-        from observeco.dashboard.auth import init_auth
-        from observeco.dashboard.server import app
-        secret = init_auth(app)
-        client = TestClient(app)
-        hdr = {"X-ObserveCo-Token": secret}
-        for path in ("/", "/api/inbox", "/api/inbox?filter=crit",
-                     "/api/inbox?filter=watch", "/api/inbox?filter=insight",
-                     "/api/inbox?filter=acked", "/api/fleet-summary",
-                     "/api/agents", "/api/alerts", "/api/errors",
-                     "/api/drift-summary", "/api/capability/page"):
-            try:
-                r = client.get(path, headers=hdr)
-                if r.status_code == 200 and "text/html" in r.headers.get("content-type", ""):
-                    bodies.append(r.text)
-            except Exception:
-                continue
-    except Exception:
-        # Server can't boot (e.g. no DB) — fall back to static scan so the
-        # direction still runs.
-        for p in _files(TEMPLATES, {".html"}) + _files(JS, {".js"}) + [SERVER]:
-            bodies.append(p.read_text())
+    _client, _hdr = _get_render_client()
+    for path in ("/", "/api/inbox", "/api/inbox?filter=crit",
+                 "/api/inbox?filter=watch", "/api/inbox?filter=insight",
+                 "/api/inbox?filter=acked", "/api/fleet-summary",
+                 "/api/agents", "/api/alerts", "/api/errors",
+                 "/api/drift-summary", "/api/capability/page"):
+        try:
+            r = _client.get(path, headers=_hdr)
+            if r.status_code == 200 and "text/html" in r.headers.get("content-type", ""):
+                bodies.append(r.text)
+        except Exception:
+            continue
     return bodies
 
 
