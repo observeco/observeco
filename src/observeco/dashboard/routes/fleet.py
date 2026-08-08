@@ -142,92 +142,132 @@ def _so_what_insights(agent_name: str, cls: str, drift: list, trims: list,
 
 # ── DPA §2-A: Agent Health State Machine ─────────────────────────────
 
-def _classify_agent(pulse: dict, drift: list, circuit: dict, errors: list, now: int) -> str:
-    """Classify agent health per DPA §2-A rules. First match wins."""
+# Qualifying probe schemes — an agent whose health_check matches one of these
+# is MANAGED (a down state is an abnormal outage → alert). Anything else
+# (pgrep/echo/empty) is UNMANAGED (a down state is benign on-demand idle).
+_QUALIFYING_PROBE_PREFIXES = (
+    "launchd:",
+    "docker:",
+    "systemd:",
+    "http://",
+    "https://",
+)
+
+
+def _is_monitored(health_check: str | None) -> bool:
+    """True if the agent's health_check measures a managed process (is up).
+
+    Scheme-literal prefix match, NOT substring — 'pgrep -f httpserver' must
+    not qualify, and arbitrary shell commands must not either.
+    """
+    if not health_check:
+        return False
+    return health_check.startswith(_QUALIFYING_PROBE_PREFIXES)
+
+
+def _managed_agents() -> dict[str, bool]:
+    """Return {agent_name: bool is_managed} for every known agent.
+
+    managed = has a qualifying health_check (launchd/docker/systemd/http).
+    An agent absent from agent_configs is treated as unmanaged (no config).
+    """
+    out: dict[str, bool] = {}
+    try:
+        conn = db._get_conn()
+        for row in conn.execute(
+            "SELECT agent_name, health_check FROM agent_configs"
+        ).fetchall():
+            out[row["agent_name"]] = _is_monitored(row["health_check"])
+    except Exception:
+        pass  # table may not exist — default to unmanaged
+    return out
+
+
+def _classify_agent(pulse: dict, drift: list, circuit: dict, errors: list, now: int, *, ever_alive: bool = False, managed: bool = False) -> str:
+    """Classify agent health per the two-signal contract (DPA §2-A + fleet contract).
+
+    ever_alive = has this agent ever been observed alive (monitored boundary).
+    managed    = has a qualifying health_check (launchd/docker/systemd/http),
+                 so a down state is an outage, not benign idle.
+
+    Rules (top-to-bottom, first match wins):
+    1. not ever_alive AND managed        -> configured_never_ran (WARNING)
+    2. not ever_alive AND not managed    -> not_observed (excluded)
+    3. alive_now                         -> healthy
+    4. ever_alive AND not alive AND managed    -> managed_down (WARNING/CRITICAL)
+    5. ever_alive AND not alive AND not managed -> not_running (neutral)
+    """
     status = pulse.get("status", "") if pulse else ""
     last_ts = pulse.get("timestamp", 0) if pulse else 0
     delta = now - last_ts if last_ts else 999999
+    alive_now = (status == "alive")
 
-    # No pulse for >4h → UNKNOWN
-    if not pulse or delta > 14400:
-        return "unknown"
-
-    # pulse=dead + last_seen >5m → CRITICAL
-    if status == "dead" and delta > 300:
-        return "critical"
-
-    # pulse=error + consecutive >=3 → WARNING
-    # (approximate: count recent errors in > 0)
-    if status == "error":
-        # Check if we have 3+ consecutive errors — use recent pulse count
-        return "warning"
-
-    # pulse=alive + drift >10% → WARNING
-    max_drift = max((d.get("delta_pct", 0) for d in drift if d.get("breached")), default=0)
-    if status == "alive" and max_drift > 10:
-        return "warning"
-
-    # pulse=alive + errors_24h >5 → WARNING
-    recent_errors = len([e for e in errors if e.get("timestamp", 0) > now - 86400])
-    if status == "alive" and recent_errors > 5:
-        return "warning"
-
-    # pulse=alive + all clear → HEALTHY
-    if status == "alive":
+    # Alive now → healthy (rule 3). A live pulse is the strongest signal and
+    # makes the onboarding transition automatic: a never-alive agent that just
+    # went alive is HEALTHY, not excluded. (In real data alive_now implies
+    # ever_alive, but this ordering is defensive and matches the contract's
+    # "first agent starts" transition.)
+    if alive_now:
+        # Preserve the DPA warning refinements for healthy-but-degraded agents.
+        max_drift = max((d.get("delta_pct", 0) for d in drift if d.get("breached")), default=0)
+        recent_errors = len([e for e in errors if e.get("timestamp", 0) > now - 86400])
+        if max_drift > 10:
+            return "warning"
+        if recent_errors > 5:
+            return "warning"
         return "healthy"
 
-    return "unknown"
+    # Not alive now → apply the ever_alive gate (rules 1-2, 4-5)
+    if not ever_alive:
+        if managed:
+            return "configured_never_ran"
+        return "not_observed"
+
+    # Ever alive but not alive now → managed outage vs unmanaged idle (rules 4-5)
+    if managed:
+        return "managed_down"
+    return "not_running"
 
 
 # ── DPA §2-B: Fleet Verdict ──────────────────────────────────────────
 
 def _fleet_verdict(state_counts: dict) -> dict:
-    """Return verdict label, icon class, and sentence per DPA §2-B."""
-    crit = state_counts.get("critical", 0)
-    warn = state_counts.get("warning", 0)
-    healthy = state_counts.get("healthy", 0)
-    unknown = state_counts.get("unknown", 0)
-    total = sum(state_counts.values())
+    """Return verdict label, icon class, and sentence per the fleet contract §3.
 
-    if crit > 0:
-        return {
-            "severity": "crit",
-            "icon": "●",
-            "text": f"{crit} agent{'s' if crit != 1 else ''} need attention",
-            "sub": f"1 of {total} operating normally",
-            "cls": "crit",
-        }
-    if warn > 0:
-        return {
-            "severity": "warn",
-            "icon": "●",
-            "text": "All agents operational — signs detected",
-            "sub": f"{warn} agent{'s' if warn != 1 else ''} showing warning signs",
-            "cls": "warn",
-        }
-    if healthy > 0 and unknown > 0:
-        return {
-            "severity": "info",
-            "icon": "✓",
-            "text": f"All monitored agents healthy — {unknown} with unknown status",
-            "sub": "",
-            "cls": "info",
-        }
-    if healthy > 0:
-        return {
-            "severity": "info",
-            "icon": "✓",
-            "text": f"Fleet healthy — all {total} agents operating normally",
-            "sub": "",
-            "cls": "info",
-        }
-    return {
-        "severity": "neutral",
-        "icon": "⬡",
-        "text": "No agents discovered yet",
-        "sub": "nothing to monitor on this machine",
-        "cls": "neutral",
-    }
+    Categories: healthy / managed_down / not_running / configured_never_ran /
+    not_observed. Every sentence accounts for all agents.
+    """
+    healthy = state_counts.get("healthy", 0)
+    md = state_counts.get("managed_down", 0)
+    nr = state_counts.get("not_running", 0)
+    cn = state_counts.get("configured_never_ran", 0)
+    o = state_counts.get("not_observed", 0)
+
+    if md > 0:
+        total_m = healthy + md + nr
+        return {"severity": "crit", "icon": "●",
+                "text": f"{md} of {total_m} managed agents are DOWN",
+                "sub": f"{healthy} operating normally", "cls": "crit"}
+    if cn > 0:
+        return {"severity": "warn", "icon": "●",
+                "text": f"{cn} configured agents never ran — {o} not observed",
+                "sub": "", "cls": "warn"}
+    if healthy == 0 and md == 0 and nr == 0:
+        # nothing ever observed, or all excluded
+        return {"severity": "neutral", "icon": "⬡",
+                "text": f"No agents observed running yet — {cn} configured never ran, {o} not observed",
+                "sub": "", "cls": "neutral"}
+    if nr > 0:
+        return {"severity": "info", "icon": "✓",
+                "text": f"{healthy} agents healthy — {nr} not running, {o} not observed",
+                "sub": "", "cls": "info"}
+    if o > 0:
+        return {"severity": "info", "icon": "✓",
+                "text": f"{healthy} agents healthy — {o} not observed",
+                "sub": "", "cls": "info"}
+    return {"severity": "info", "icon": "✓",
+            "text": f"All {healthy} agents healthy",
+            "sub": "", "cls": "info"}
 
 
 # ── DPA §2-D: Data Quality Tier ──────────────────────────────────────
@@ -304,9 +344,10 @@ async def fleet_verdict():
     </div>
 </div>""")
 
-    # Classify each agent
+    # Classify each agent (two-signal contract)
     agents_data = []
-    state_counts = {"critical": 0, "warning": 0, "healthy": 0, "unknown": 0}
+    state_counts = {"healthy": 0, "managed_down": 0, "not_running": 0,
+                    "configured_never_ran": 0, "not_observed": 0}
     tripped_count = 0
 
     # Which agents have otel data in the last 24h? (drives the data-quality chip)
@@ -323,6 +364,7 @@ async def fleet_verdict():
         pass  # table may not exist — default to estimate
     agent_names_critical = []
     agent_names_warning = []
+    managed_by_agent = _managed_agents()
 
     for name, s in summary.items():
         status = s.get("status", "")
@@ -338,9 +380,11 @@ async def fleet_verdict():
             circuit_state or {},
             agent_errors,
             now,
+            ever_alive=bool(s.get("ever_alive", 0)),
+            managed=managed_by_agent.get(name, False),
         )
         state_counts[cls] = state_counts.get(cls, 0) + 1
-        if cls == "critical":
+        if cls == "managed_down":
             tripped_count += 1
             agent_names_critical.append(name)
         elif cls == "warning":
@@ -354,9 +398,11 @@ async def fleet_verdict():
             "dq": "acc" if has_otel.get(name) else "est",
         })
 
-    # Verdict sentence
+    # Verdict sentence — total = monitored count (healthy + managed_down + not_running),
+    # excluding not_observed / configured_never_ran from the "agents" chip.
     verdict = _fleet_verdict(state_counts)
-    total = sum(state_counts.values())
+    total = state_counts.get("healthy", 0) + state_counts.get("managed_down", 0) + state_counts.get("not_running", 0)
+    unmonitored = state_counts.get("not_observed", 0) + state_counts.get("configured_never_ran", 0)
 
     # Build agent list for verdict sentence — as pills, not inline text
     verdict_detail = ""
@@ -406,6 +452,7 @@ async def fleet_verdict():
     </div>
     <div class="verdict-meta">
         <div class="vchip"><b>{total}</b>agents</div>
+        {f'<div class="vchip unmon"><b>{unmonitored}</b>unmonitored</div>' if unmonitored else ''}
         {f'<div class="vchip crit"><b>{tripped_count}</b>tripped</div>' if tripped_count else ''}
         {f'<div class="vchip gap"><b>{gap_text}</b>undiscov.</div>' if gap_text else ''}
         {dq_chip}
@@ -675,7 +722,9 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
 
     # Classify and build cards, grouped by framework (or status as fallback)
     groups: dict[str, list[str]] = {}
-    state_counts = {"critical": 0, "warning": 0, "healthy": 0, "unknown": 0}
+    state_counts = {"healthy": 0, "managed_down": 0, "not_running": 0,
+                    "configured_never_ran": 0, "not_observed": 0}
+    managed_by_agent = _managed_agents()
 
     # Classify: read declared class from agent_configs (migration 58).
     # Brain (trim data) + memory (garden data) are DISPLAY signals, not the
@@ -729,12 +778,15 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
             circuit_state or {},
             agent_errors,
             now,
+            ever_alive=bool(s.get("ever_alive", 0)),
+            managed=managed_by_agent.get(name, False),
         )
         state_counts[cls] = state_counts.get(cls, 0) + 1
 
         # Apply status filter
         if status_filter:
-            filter_map = {"alive": "healthy", "error": "warning", "dead": "critical", "unknown": "unknown"}
+            filter_map = {"alive": "healthy", "error": "warning", "dead": "managed_down",
+                          "unknown": "not_observed"}
             if cls != filter_map.get(status_filter, ""):
                 continue
 

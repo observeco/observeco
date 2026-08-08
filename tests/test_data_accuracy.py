@@ -419,23 +419,31 @@ class TestCrossTabConsistency:
     def test_agent_count_consistent_across_tabs(self):
         """Agent count should be consistent between fleet verdict and fleet grid.
 
-        The verdict is a summary card (shows a total count); the fleet grid is
-        paginated (page 1 shows a subset). So the correct cross-tab check is
-        that BOTH report the same TOTAL agent count — not that they list the
-        same names (the grid only shows one page).
+        The verdict chip counts MONITORED agents (healthy + managed_down +
+        not_running); the fleet grid shows all DISCOVERED agents (including
+        not_observed / configured_never_ran). These are intentionally different
+        after the fleet-health contract (specs/audit-fleet-health-classification.md):
+        the verdict speaks only for monitored agents, and the unmonitored count
+        is disclosed separately. The correct cross-tab check is that the grid's
+        discovered count = verdict's monitored count + the unmonitored chip.
         """
         verdict_html = _get_html("/api/fleet/verdict")
         agents_html = _get_html("/api/fleet/agents")
 
-        # Verdict: "<b>37</b>agents" chip
+        # Verdict: "<b>27</b>agents" chip (monitored) + "<b>11</b>unmonitored" chip
         verdict_count = re.search(r"<b>(\d+)</b>\s*agents", verdict_html)
-        # Grid: '<span class="count">37 agents</span>' header
+        unmon_count = re.search(r"<b>(\d+)</b>\s*unmonitored", verdict_html)
+        # Grid: '<span class="count">38 agents</span>' header (all discovered)
         grid_count = re.search(r'class="count">(\d+)\s*agents', agents_html)
 
         if verdict_count and grid_count:
-            assert verdict_count.group(1) == grid_count.group(1), (
-                f"verdict reports {verdict_count.group(1)} agents but fleet grid "
-                f"reports {grid_count.group(1)} — cross-tab inconsistency"
+            monitored = int(verdict_count.group(1))
+            discovered = int(grid_count.group(1))
+            unmonitored = int(unmon_count.group(1)) if unmon_count else 0
+            # Monitored + unmonitored must equal discovered (every agent accounted for)
+            assert monitored + unmonitored == discovered, (
+                f"verdict monitored {monitored} + unmonitored {unmonitored} != "
+                f"grid discovered {discovered} — cross-tab inconsistency"
             )
 
     def test_data_quality_chip_reflects_otel_agents(self):
