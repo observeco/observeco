@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 74
+SCHEMA_VERSION = 75
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -1175,6 +1175,30 @@ ON token_logs(source, model, recorded_at);
         ALTER TABLE token_logs ADD COLUMN tool_name TEXT DEFAULT '';
         ALTER TABLE token_logs ADD COLUMN reasoning_tokens INTEGER DEFAULT 0;
     """),
+    (75, """-- Migration 75: obs-spec-057 v5 — instrument versioning + fingerprint + degraded
+-- §2.10: every run records its instrument version; a mismatch invalidates comparison.
+-- §2.9: agent fingerprint vector (soul/prefill/config/skills/model/scorer) for attribution.
+-- §2.9: degraded runs refuse baseline comparison.
+-- NOTE: renumbered from 70 (2026-08-09) — main's chain already used 70 for the
+-- hermes section_keywords drift fix; the live DB is at 74. This migration must
+-- run AFTER main's 71-74 or the columns never land.
+
+ALTER TABLE canary_runs ADD COLUMN task_hash TEXT;
+ALTER TABLE canary_runs ADD COLUMN assertion_version TEXT;
+ALTER TABLE canary_runs ADD COLUMN judge_version TEXT;
+ALTER TABLE canary_runs ADD COLUMN scorer_version TEXT;
+ALTER TABLE canary_runs ADD COLUMN degraded INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE canary_runs ADD COLUMN fingerprint TEXT;  -- JSON: {soul_hash, prefill_hash, config_hash, skills_hash, model, scorer_version}
+
+ALTER TABLE canary_results ADD COLUMN task_hash TEXT;
+ALTER TABLE canary_results ADD COLUMN degraded INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE canary_judge_cache ADD COLUMN criteria TEXT;
+ALTER TABLE canary_judge_cache ADD COLUMN judge_model TEXT;
+ALTER TABLE canary_judge_cache ADD COLUMN judge_prompt_version TEXT;
+
+ALTER TABLE canary_task_baselines ADD COLUMN task_hash TEXT;
+"""),
 ]
 
 _SCHEMA_SQL = """

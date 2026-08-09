@@ -50,6 +50,8 @@ _RETRY_DELAYS = [2, 4]  # seconds, exponential-ish
 _TOKEN_USAGE_RE = re.compile(
     r"Usage: CompletionUsage\(completion_tokens=(\d+), prompt_tokens=(\d+), total_tokens=(\d+)"
 )
+# session_id: 20260804_194735_e27347 (emitted by `hermes chat -Q --verbose` on stderr)
+_SESSION_ID_RE = re.compile(r"session_id[:=]\s*([\w\-\.]+)", re.IGNORECASE)
 
 # Per-model pricing in $/1M tokens (input, output). Covers models used
 # by the Hermes adapter chain.
@@ -105,10 +107,16 @@ class HermesBenchmarkAdapter:
     """Runs benchmark tasks through a Hermes agent session."""
 
     def __init__(self, hermes_bin: str = "hermes", timeout: int = 300,
-                 agent_profile: str = "", model: str = ""):
+                 agent_profile: str = "", model: str = "",
+                 workdir: str = ""):
         self.hermes_bin = hermes_bin
         self.timeout = timeout
         self.agent_profile = agent_profile
+        # Workdir for the spawned hermes session. NEVER inherit ambient process
+        # cwd — a replay must run inside its pinned worktree. Explicit cwd=
+        # removes dependence on the parent process's state (which has been an
+        # unpinned source of environment lies). Empty = inherit (default).
+        self.workdir = workdir
         # Model priority chain (first non-empty wins):
         #   1. Per-task model column (set in run_task)
         #   2. OBSERVECO_CANARY_MODEL env var (user-level default)
@@ -134,6 +142,16 @@ class HermesBenchmarkAdapter:
             "completion_tokens": int(m.group(1)),
             "total_tokens": int(m.group(3)),
         }
+
+    def _parse_session_id(self, stderr: str) -> str:
+        """Extract the created session id from Hermes verbose stderr.
+
+        `hermes chat -Q --verbose` emits `session_id: <id>` on stderr. This is
+        the session the replay actually ran in — bound to the run as provenance,
+        so containment and audits target the right entity. Empty = not found.
+        """
+        m = _SESSION_ID_RE.search(stderr or "")
+        return m.group(1) if m else ""
 
     def _estimate_cost(self, tokens: dict, model_used: str) -> float:
         """Estimate cost from token counts using a pricing table.
@@ -222,6 +240,7 @@ class HermesBenchmarkAdapter:
                     text=True,
                     preexec_fn=os.setsid,
                     env=child_env,
+                    cwd=self.workdir or None,
                 )
 
                 try:
@@ -242,6 +261,7 @@ class HermesBenchmarkAdapter:
                         "harness_type": "hermes",
                         "elapsed_seconds": self.timeout,
                         "provider_error": False,
+                        "timed_out": True,
                         "cost": 0.0,
                         "tokens": 0,
                     }
@@ -329,6 +349,7 @@ class HermesBenchmarkAdapter:
                     "provider_error": False,
                     "cost": cost,
                     "tokens": tokens["total_tokens"] if tokens else 0,
+                    "session_id": self._parse_session_id(stderr),
                 }
 
             except FileNotFoundError:
