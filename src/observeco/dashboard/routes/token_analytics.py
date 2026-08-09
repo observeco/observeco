@@ -268,6 +268,12 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     so the timeline reflects the entire selected period.
     Anomaly = token count spike (>2x median) — marks real outliers.
 
+    Returns (recorded_at, total_tokens, is_anomaly, cause_dict) where
+    cause_dict carries the per-call attribution used to explain WHY a red
+    bar is red: agent, model, source, finish_reason, tool_name, provider,
+    session_id. Without it, a red bar says "anomaly" but not what the
+    anomalous call actually was.
+
     MEASURED ONLY and OVERLAP-RESOLVED: filters to otel/hermes rows, and
     drops the hermes side of any session that also has otel rows (otel wins
     precedence — the same rule as v_token_effective). Without this, the
@@ -297,10 +303,12 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     """, params)
     total = cur.fetchone()["cnt"]
 
+    select_cols = """recorded_at, total_tokens, agent_name, model, source,
+                     finish_reason, tool_name, provider, session_id"""
     if total <= 500:
         # Small dataset — just return everything
         cur = conn.execute(f"""
-            SELECT recorded_at, total_tokens
+            SELECT {select_cols}
             FROM token_logs WHERE recorded_at >= ? {source_clause} {overlap_clause} {agent_clause}
             ORDER BY recorded_at ASC
         """, params)
@@ -309,8 +317,8 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
         # Large dataset — sample evenly across the full time range
         # Use a subquery with row_number to get evenly-spaced samples
         cur = conn.execute(f"""
-            SELECT recorded_at, total_tokens FROM (
-                SELECT recorded_at, total_tokens,
+            SELECT {select_cols} FROM (
+                SELECT {select_cols},
                     ROW_NUMBER() OVER (ORDER BY recorded_at) as rn,
                     COUNT(*) OVER () as cnt
                 FROM token_logs WHERE recorded_at >= ? {source_clause} {overlap_clause} {agent_clause}
@@ -328,10 +336,19 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     median = token_vals[len(token_vals) // 2]
     threshold = median * 2
 
-    timeline = [
-        (r["recorded_at"], r["total_tokens"] or 0, (r["total_tokens"] or 0) > threshold)
-        for r in rows
-    ]
+    timeline = []
+    for r in rows:
+        is_anom = (r["total_tokens"] or 0) > threshold
+        cause = {
+            "agent": r["agent_name"] or "?",
+            "model": r["model"] or "?",
+            "source": r["source"] or "?",
+            "finish_reason": r["finish_reason"] or "—",
+            "tool": r["tool_name"] or "",
+            "provider": r["provider"] or "?",
+            "session": (r["session_id"] or "")[:24],
+        }
+        timeline.append((r["recorded_at"], r["total_tokens"] or 0, is_anom, cause))
     return timeline
 
 
@@ -688,15 +705,44 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     ) // 1000
     target_cost = round(sum(cost_data) / max(len(cost_data), 1), 2)
 
-    # Timeline
-    turn_ts = [t for t, _, _ in timeline]
-    turn_tokens = [n for _, n, _ in timeline]
-    turn_anom = [a for _, _, a in timeline]
+    # Timeline (tuples now carry cause dict for tooltip/detail)
+    turn_ts = [t for t, _, _, _ in timeline]
+    turn_tokens = [n for _, n, _, _ in timeline]
+    turn_anom = [a for _, _, a, _ in timeline]
+    turn_cause = [c for _, _, _, c in timeline]
     if len(turn_tokens) > 500:
         turn_ts = turn_ts[-500:]
         turn_tokens = turn_tokens[-500:]
         turn_anom = turn_anom[-500:]
+        turn_cause = turn_cause[-500:]
     max_tok = max(turn_tokens) or 1
+
+    # Build per-column HTML: hover tooltip carries the call's cause; click
+    # pins it to the detail box below. Red (anomaly) columns explain WHY —
+    # agent, model, source, finish_reason, tool — so a spike is diagnosable
+    # without leaving the tab.
+    def _cause_parts(c: dict, t: int, a: bool) -> str:
+        parts = [f"{_fmt_tok(t)} tok", c["agent"], c["model"], c["source"]]
+        if c["tool"]:
+            parts.append(f"tool: {c['tool']}")
+        if c["finish_reason"] and c["finish_reason"] != "—":
+            parts.append(c["finish_reason"])
+        if a:
+            parts.append("anomaly (>2x median)")
+        return " · ".join(parts)
+
+    timeline_html = (
+        ''.join(
+            f'<div class="timeline-col{" anomaly" if a else ""}" '
+            f'style="height:max(4px, {t / max_tok * 100}%)" '
+            f'title="{_html_escape(_cause_parts(c, t, a))}" '
+            f'data-cause="{_html_escape(_cause_parts(c, t, a))}" '
+            f'onclick="showTimelineDetail(this)"></div>'
+            for t, a, c in zip(turn_tokens, turn_anom, turn_cause)
+        )
+        if turn_tokens
+        else '<span style="color:var(--fg-3);font-size:var(--text-sm)">No call data</span>'
+    )
 
     # Component composition
     COMP_ORDER = [
@@ -938,14 +984,21 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
 <div class="section-h"><h2>Per-Turn Timeline</h2><span class="count">{len(turn_tokens)} calls{'' if len(turn_tokens) <= 500 else ' · showing last 500'}</span></div>
 <div class="panel" style="margin-bottom:var(--space-6)">
-    <p style="font-size:12px;color:var(--fg-3);margin-bottom:10px;">Each column = one LLM call. Height = total tokens. <span style="color:var(--danger)">Red columns</span> = anomaly flagged.</p>
-    <div class="timeline-bar">
-        {''.join(
-            f'<div class="timeline-col{" anomaly" if a else ""}" style="height:max(4px, {t / max_tok * 100}%)" title="{_fmt_tok(t)} tok{" — anomaly" if a else ""}"></div>'
-            for t, a in zip(turn_tokens, turn_anom)
-        ) if turn_tokens else '<span style="color:var(--fg-3);font-size:var(--text-sm)">No call data</span>'}
+    <p style="font-size:12px;color:var(--fg-3);margin-bottom:10px;">Each column = one LLM call. Height = total tokens. <span style="color:var(--danger)">Red columns</span> = anomaly flagged (&gt;2x median). Hover a column for what that call was; click to pin the detail below.</p>
+    <div class="timeline-bar" id="timelineBar">
+        {timeline_html}
     </div>
+    <div id="timelineDetail" style="margin-top:10px;padding:10px 12px;border:1px solid var(--border, rgba(128,128,128,.25));border-radius:8px;background:var(--bg-2, rgba(255,255,255,.03));font-size:12px;color:var(--fg-3);display:none">Click a column to inspect that call.</div>
 </div>
+<script>
+function showTimelineDetail(el) {{
+    var detail = document.getElementById('timelineDetail');
+    if (!detail) return;
+    var d = el.getAttribute('data-cause') || el.getAttribute('title') || '';
+    detail.style.display = 'block';
+    detail.textContent = d;
+}}
+</script>
 
 <script>
 window._tokenChart = {json.dumps({"labels": labels, "cost_data": cost_data, "total_data": total_data, "input_data": input_data, "output_data": output_data, "cache_data": cache_data, "est_data": est_effective, "suppressed_est": suppressed_est, "range_label": range_label})};
