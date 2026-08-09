@@ -1,6 +1,6 @@
 # obs-spec-020: Token Analytics Dashboard
 
-**Status:** v4 Built 2026-07-26 — Per-turn timeline now samples across full time range (ROW_NUMBER modulo sampling), anomaly detection uses 2x median token spike (not 3x), model shows most common per agent (not alphabetically first). Cursor:wait on all elements during loads. SQL aggregation (1,158× fewer rows). Agent filter bug fixed. Est double-count fixed. 3 frontend accuracy bugs fixed.
+**Status:** v5 Built 2026-08-09 — Trustworthiness overhaul. All charts/timeline/table repointed at `v_token_effective` (precedence view, migrations 71–73) — previously ~98% of chart input was synthetic watch estimates, which is why nothing reconciled. Measured vs simulated split: watch in its own labeled "Simulated" section, never summed into the headline. Suspect overlap excluded with "(heuristic)" footnote ($291.54 all-time, validated 97% against message spans). Backfills: model (3,734 hermes rows), agent_name (3,319 date-corrupted rows → cli/tui/telegram/cron), span attrs (38,750 otel rows: latency/finish_reason/api_call_count/reasoning_tokens from trace_spans exact span_id join, 73.5% coverage). New panels: Latency / Call (honest "captured from Jun 29" coverage sentence), Tool vs Conversation (structural finish_reason split, 63.4% of otel spend all-time tool-invoking), Tool Mix (session-level apportionment, explicitly labeled, 38.2% of measured spend attributed). Verified: 7d $18.08 measured / $43.31 sim, 30d $331, all-time $567.17; 782 tests pass.
 **Product:** ObserveCo dashboard
 **Depends on:** obs-spec-014 (per-turn token tracking), token_logs table (exists)
 **Owner:** Pragma (COO)
@@ -963,3 +963,58 @@ The bar also shows data freshness, stale warnings when OTEL data stops flowing, 
 
 - **Cost optimization recommendations** (suggesting prompt compression based on token patterns)
 - **Real-time cost alerts** (push notifications when cost exceeds threshold — deferred to budget system)
+
+---
+
+## §14 Verified Findings (2026-08-09 — trustworthiness overhaul record)
+
+> Absorbed from `docs/token-attribution-incident-findings.md` (deleted after merge into this spec). Every finding survived verification against production data; several were discovered by checks designed to confirm something else. The arc: make cost attribution trustworthy before optimizing cost (GitHub Discussion #4), and in doing so surface operational defects that have nothing to do with token math.
+
+### F1. The working tree is production — sharpened twice
+The dashboard auto-applies whatever migration code sits in the working tree on next DB open; a first-draft migration reached the live 1GB DB (migration 71's first revision, corrected). Two sharpenings:
+- Every observeco dashboard process parents to the Hermes serve session (`hermes_cli.main serve`); kill a dashboard and it respawns under the same Hermes parent. The migration-actor trigger lives outside observeco's codebase.
+- Another agent's process merges your unreviewed work to main (migration 74, the test-DB guard). Verified work is one parallel process away from becoming someone else's merge — preserve on a branch early.
+
+### F2. The test suite migrates production — hazard, fixed
+`Database()` with the default path meant pytest opened live `pulse.db` and applied pending migrations (observed: 73→74 during a test run). Fix: `Database()` refuses the default path under `PYTEST_CURRENT_TEST` unless `OBSERVECO_TEST_DB` is set (loud raise, no silent fallback), and `tests/conftest.py` creates a WAL-safe backup copy per session. **The smoke alarm is not the lock** — live remains reachable from any working tree.
+
+### F3. WAL-mode DBs: shutil.copy2 produces torn copies
+`pulse.db` is WAL-mode; plain `shutil.copy2` misses WAL pages → malformed copies. Use the SQLite backup API (`src.backup(dst)`).
+
+### F4. Fields sold as "independent" can be degenerate
+`session_model_usage.first_seen/last_seen` = 0-second lifetime on 98.8% of rows; hermes token_logs = 1 aggregate row per session (a point, not a span). `messages.timestamp` is the true session span (a 630-message session spans 11 hours) — the suspect heuristic passes against it (97% of suspect dollars inside the matched session's real lifetime). Verify the comparator before trusting the verdict.
+
+### F5. "The column is empty" is a hypothesis about who's responsible
+Five fields the GitHub commenter asked for were marked "can't ship." Four were ours, with data sitting in our own tables the whole time: latency (plugin emits `hermes.api_duration_ms`; listener never read it), feature attribution (`task_id` is an opaque UUID; real signal is `hermes.tool_name` on tool spans), retry (no column, but `hermes.api_call_count` on spans), components (identity/skills/memory/tools/guidance declared, never populated). Billing is genuinely upstream (`actual_cost_usd` zero call sites). The ingestion mapper fails silently by omission — nothing downstream can tell "the field wasn't sent" from "we didn't read it."
+
+### F6. Ingestion mappers silently drop fields when the emitting schema moves
+The Hermes OTEL plugin emits 14 attributes per LLM span; the listener read 6. Eight dropped at one seam (`api_duration_ms`, `task_id`, `api_call_count`, `finish_reason`, `cost_usd`, `reasoning_tokens`, `assistant_content_chars`, `assistant_tool_call_count`). Raw spans were retained in `trace_spans` (38,527 LLM rows) with everything intact — nothing was lost, backfill possible. Five gaps attributed upstream; four were ours.
+
+### F7. Vacuous proofs, rebuilt with the vacuousness moved
+Watch/measured disjointness went through three vacuous attempts (agent-name INTERSECT, name-conditioned band join, model+time band join — watch has no model at all). The discriminating test: **token-magnitude correlation in co-active minutes** (Pearson r = 0.006) plus the empty-model fact and 99.3% same-agent burst structure. The Simulated panel is honest. *A check that passes by construction proves nothing; state the negative result before running.*
+
+### F8. Gates "parked" at ship time aren't gates
+The suspect spot-check and watch correlation both shipped ahead of their validation. The ship order is the priority order, whatever the plan said.
+
+### F9. Client-side discipline lost twice before the third attempt held
+Two commits went direct-to-main with `--no-verify` before the discipline held. The gate must move server-side (branch protection that `--no-verify` can't bypass). Not yet implemented.
+
+### F10. Migration-sequence collision: two agents, one counter
+A parallel worktree built migration 75 designed to run after 71–74 and bumped live `_meta` to 75 before its code merged. The DB is structurally at 75 (12 columns verified); main's code was at 74; the dashboard refused on reopen until 75's code merged. Nothing corrupted — the DB was ahead of the code, fix is bring code up. The shared resource is the **migration sequence number**; two agents allocating from one counter collide on 76. Options: (1) claimed ranges, (2) single migration file, (3) live out of reach of every worktree. Recommended 2+3. **Resolution:** m75 merged (cf38dff); merge-before-live rule adopted informally.
+
+### F11. The progression
+Draft migration → dashboard restart → test suite → parallel agent merging commits → parallel agent mutating live schema. Root cause throughout: **live production state reachable from too many uncontrolled paths.**
+
+### F12. Thin first results are a signal to check the denominator, not to declare the gap upstream
+Tool_name attribution first analysis said "2% coverage, park it." Four routes later (denominator reframe: tool spans live in a 10.7h window over 527 calls; `finish_reason='tool_calls'` structural anchor: 34,317 otel rows / 63.4% of spend; Hermes `messages` table: 38,343 tool messages / 26 tools / 832 hermes-tracked sessions; trace_id grouping: dead) it shipped as two panels. This reflex misfired twice this session (the five gaps, the `task` column) and was vindicated once (billing).
+
+### F13. Declared columns in Hermes state.db are frequently zero-filled
+`token_count` on messages = 0 on all 77,374 rows; `first_seen/last_seen` degenerate; components zero. Four zero-filled columns = systematic gap in Hermes' state writing, not coincidence — worth a single consolidated upstream issue (actual_cost_usd, token_count, components, tool_name on LLM spans).
+
+### Verified numbers that survived every re-derivation
+- Measured (all-time): **$567.17** (= verified $565.67 + $1.50 of 2 new rows). Suspect excluded: **$291.54** (validated 97%). Simulated (watch): **~$195**, separate population (r=0.006).
+- 7d: $18.08 measured · $43.31 simulated. 30d: $331 measured.
+- Decomposition: $291.54 + $40.85 = $332.39 ≈ $332.40; + $88.59 = $420.99 orphan total.
+- Watch: 100% output_tokens=0, 99.3% same-agent burst ≤60s, no model field, token-magnitude r=0.006.
+- Backfills: model 3,734; agent_name 3,319 (89% of hermes rows were dates like `20260701`); span attrs 38,750 (73.5% coverage; latency/finish_reason/api_call_count on 38,748, reasoning_tokens on 5,351).
+- Tool panels: 63.4% of otel spend all-time tool-invoking (finish_reason); Tool Mix covers 38.2% of measured spend (832 hermes-tracked tool sessions).
