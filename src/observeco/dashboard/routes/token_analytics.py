@@ -33,6 +33,16 @@ def _fmt_dollar(c: float) -> str:
         return f"${c:.2f}"
     return f"${c:.4f}"
 
+
+def _fmt_ms(ms: int) -> str:
+    """Format milliseconds as a human duration (e.g. 5.1s, 820ms)."""
+    if ms <= 0:
+        return "—"
+    if ms >= 1000:
+        return f"{ms / 1000:.1f}s"
+    return f"{ms}ms"
+
+
 def _html_escape(text: str) -> str:
     return (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                .replace('"', "&quot;").replace("'", "&#39;"))
@@ -325,6 +335,40 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     return timeline
 
 
+def _query_latency(conn, since: int, agent: str) -> dict:
+    """Per-call latency stats from measured otel rows (latency_ms backfilled).
+
+    Coverage note: latency_ms was only populated from span retention start
+    (Jun 29, migration-74 backfill). Rows before that are 0 — the caller
+    must render the coverage sentence, not imply those calls were fast.
+    """
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
+        SELECT
+            COUNT(*) AS n,
+            SUM(CASE WHEN latency_ms > 0 THEN 1 ELSE 0 END) AS n_with_latency,
+            AVG(CASE WHEN latency_ms > 0 THEN latency_ms END) AS avg_ms,
+            MIN(CASE WHEN latency_ms > 0 THEN latency_ms END) AS min_ms,
+            MAX(CASE WHEN latency_ms > 0 THEN latency_ms END) AS max_ms,
+            MIN(recorded_at) AS first_ts,
+            MAX(recorded_at) AS last_ts
+        FROM token_logs
+        WHERE recorded_at >= ? AND source = 'otel' {agent_clause}
+    """, params)
+    r = cur.fetchone()
+    if not r or not r["n"]:
+        return {"n": 0, "n_with_latency": 0, "avg_ms": 0, "min_ms": 0,
+                "max_ms": 0, "first_ts": 0, "last_ts": 0, "coverage_pct": 0.0}
+    cov = (r["n_with_latency"] or 0) / max(r["n"], 1) * 100
+    return {"n": r["n"], "n_with_latency": r["n_with_latency"] or 0,
+            "avg_ms": round(r["avg_ms"] or 0), "min_ms": r["min_ms"] or 0,
+            "max_ms": r["max_ms"] or 0, "first_ts": r["first_ts"] or 0,
+            "last_ts": r["last_ts"] or 0, "coverage_pct": round(cov, 1)}
+
+
 def _query_attribution(conn, since: int, agent: str) -> tuple[int, int]:
     """Attribution totals (attributed vs unattributed tokens)."""
     agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
@@ -484,6 +528,20 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
         # Query 3: Timeline (last 500 calls)
         timeline = _query_timeline(conn, since, agent)
+
+        # Query 4: Latency (measured otel only; backfilled from spans)
+        latency = _query_latency(conn, since, agent)
+        if latency["n_with_latency"] == 0:
+            latency_html = ("No latency data in this window — latency is captured "
+                            "from Jun 29 (span retention start); earlier calls were not captured.")
+        elif latency["coverage_pct"] < 100:
+            latency_html = (f"{latency['n_with_latency']:,} of {latency['n']:,} calls "
+                            f"({latency['coverage_pct']}%) have latency · "
+                            f"min {_fmt_ms(latency['min_ms'])} · max {_fmt_ms(latency['max_ms'])} · "
+                            "captured from Jun 29 (span retention start); earlier calls were not captured.")
+        else:
+            latency_html = (f"{latency['n_with_latency']:,} calls · "
+                            f"min {_fmt_ms(latency['min_ms'])} · max {_fmt_ms(latency['max_ms'])}")
 
     except Exception:
         return HTMLResponse(error_html())
@@ -704,6 +762,15 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     <div class="panel chart-card">
         <div class="cc-head"><h2>Cost / Turn</h2><span class="cc-val mono">${_fmt_dollar(total_cost / max(turn_count, 1))}</span><span class="cc-lab">lower better · source-level</span></div>
         <div class="chart-box"><canvas id="cptChart"></canvas></div>
+    </div>
+    <div class="panel chart-card">
+        <div class="cc-head"><h2>Latency / Call</h2>
+            <span class="cc-val mono">{_fmt_ms(latency['avg_ms'])}</span>
+            <span class="cc-lab">avg · measured</span>
+        </div>
+        <div class="chart-box" style="min-height:64px;display:flex;align-items:center">
+            <span style="color:var(--fg-3);font-size:var(--text-sm)">{latency_html}</span>
+        </div>
     </div>
 </div>
 
