@@ -369,6 +369,109 @@ def _query_latency(conn, since: int, agent: str) -> dict:
             "last_ts": r["last_ts"] or 0, "coverage_pct": round(cov, 1)}
 
 
+def _query_tool_vs_conversation(conn, since: int, agent: str) -> dict:
+    """Structural split: tool-invoking vs conversational spend.
+
+    finish_reason='tool_calls' is a per-call, 100%-coverage structural
+    indicator (backfilled from trace_spans, migration 74). No heuristic —
+    a call either terminated requesting a tool or it didn't. Answers
+    "how much spend is agentic loop traffic vs conversation" without any
+    tool names.
+    """
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+    cur = conn.execute(f"""
+        SELECT
+            COALESCE(SUM(CASE WHEN finish_reason = 'tool_calls' THEN cost ELSE 0 END), 0) AS tool_cost,
+            COALESCE(SUM(CASE WHEN finish_reason = 'tool_calls' THEN 1 ELSE 0 END), 0) AS tool_n,
+            COALESCE(SUM(CASE WHEN finish_reason NOT IN ('tool_calls', '') THEN cost ELSE 0 END), 0) AS conv_cost,
+            COALESCE(SUM(CASE WHEN finish_reason NOT IN ('tool_calls', '') THEN 1 ELSE 0 END), 0) AS conv_n,
+            COALESCE(SUM(CASE WHEN finish_reason = '' THEN cost ELSE 0 END), 0) AS unk_cost,
+            COALESCE(SUM(cost), 0) AS total_cost,
+            COALESCE(COUNT(*), 0) AS total_n
+        FROM token_logs
+        WHERE recorded_at >= ? AND source = 'otel' {agent_clause}
+    """, params)
+    r = cur.fetchone()
+    return {k: (r[k] or 0) for k in ("tool_cost", "tool_n", "conv_cost", "conv_n",
+                                     "unk_cost", "total_cost", "total_n")}
+
+
+def _query_tool_mix(conn, since: int, agent: str, state_db: str | None = None) -> dict:
+    """Tool-mix apportionment (session-level, honest label).
+
+    ATTRIBUTES PROPORTIONALLY, NOT CAUSALLY: hermes rows in a session are
+    attributed to that session's tool-message distribution. A session that
+    used terminal 40x and read_file 10x spreads its spend 80/20 across all
+    its calls. This answers "which tools did sessions use", not "which
+    step consumed which tokens". Coverage: hermes rows in tool-message
+    sessions only (~38% of measured spend all-time).
+    """
+    agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
+    params = (since,)
+    if agent != "__all__":
+        params = params + (agent,)
+
+    # hermes rows in this window, by session
+    rows = conn.execute(f"""
+        SELECT session_id, SUM(cost) AS cost, COUNT(*) AS n
+        FROM token_logs
+        WHERE recorded_at >= ? AND source = 'hermes' AND session_id != '' {agent_clause}
+        GROUP BY session_id
+    """, params).fetchall()
+    if not rows:
+        return {"tools": {}, "attributable_cost": 0.0, "total_cost": 0.0, "coverage_pct": 0.0,
+                "n_sessions": 0, "n_tool_sessions": 0}
+
+    total_cost = sum(r["cost"] or 0 for r in rows)
+    session_ids = [r["session_id"] for r in rows]
+
+    # tool message counts per session from Hermes state.db
+    if state_db is None:
+        import os
+        state_db = os.path.expanduser("~/.hermes/state.db")
+    import sqlite3
+    sconn = sqlite3.connect(state_db)
+    sconn.row_factory = sqlite3.Row
+    placeholders = ",".join("?" * len(session_ids))
+    tm = sconn.execute(f"""
+        SELECT session_id, tool_name, COUNT(*) AS n
+        FROM messages
+        WHERE tool_name IS NOT NULL AND tool_name != ''
+          AND session_id IN ({placeholders})
+        GROUP BY session_id, tool_name
+    """, session_ids).fetchall()
+    sconn.close()
+
+    # session -> {tool: count}
+    sess_tools: dict[str, dict[str, int]] = {}
+    for x in tm:
+        sess_tools.setdefault(x["session_id"], {})[x["tool_name"]] = x["n"]
+
+    tool_cost: dict[str, float] = {}
+    attr_cost = 0.0
+    n_tool_sessions = 0
+    for r in rows:
+        tools = sess_tools.get(r["session_id"])
+        if not tools:
+            continue
+        n_tool_sessions += 1
+        total_n = sum(tools.values())
+        for tool, n in tools.items():
+            tool_cost[tool] = tool_cost.get(tool, 0.0) + (r["cost"] or 0) * n / total_n
+        attr_cost += r["cost"] or 0
+
+    coverage = attr_cost / max(total_cost, 1) * 100
+    return {"tools": dict(sorted(tool_cost.items(), key=lambda kv: -kv[1])),
+            "attributable_cost": round(attr_cost, 2),
+            "total_cost": round(total_cost, 2),
+            "coverage_pct": round(coverage, 1),
+            "n_sessions": len(session_ids),
+            "n_tool_sessions": n_tool_sessions}
+
+
 def _query_attribution(conn, since: int, agent: str) -> tuple[int, int]:
     """Attribution totals (attributed vs unattributed tokens)."""
     agent_clause = "AND agent_name = ?" if agent != "__all__" else ""
@@ -542,6 +645,12 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         else:
             latency_html = (f"{latency['n_with_latency']:,} calls · "
                             f"min {_fmt_ms(latency['min_ms'])} · max {_fmt_ms(latency['max_ms'])}")
+
+        # Query 5: Tool vs conversation (structural, finish_reason)
+        tvc = _query_tool_vs_conversation(conn, since, agent)
+
+        # Query 6: Tool-mix apportionment (session-level, honest label)
+        tmix = _query_tool_mix(conn, since, agent)
 
     except Exception:
         return HTMLResponse(error_html())
@@ -772,6 +881,23 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
             <span style="color:var(--fg-3);font-size:var(--text-sm)">{latency_html}</span>
         </div>
     </div>
+    <div class="panel chart-card">
+        <div class="cc-head"><h2>Tool vs Conversation</h2>
+            <span class="cc-val mono">{tvc['tool_cost']/max(tvc['total_cost'],1)*100:.0f}%</span>
+            <span class="cc-lab">spend invokes a tool · structural</span>
+        </div>
+        <div class="chart-box" style="min-height:64px;display:flex;flex-direction:column;justify-content:center;gap:4px">
+            <div style="display:flex;justify-content:space-between;font-size:var(--text-sm)">
+                <span>tool-invoking calls (finish_reason=tool_calls)</span><span class="mono">{_fmt_dollar(tvc['tool_cost'])} · {tvc['tool_n']:,} calls</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:var(--text-sm)">
+                <span>conversational calls</span><span class="mono">{_fmt_dollar(tvc['conv_cost'])} · {tvc['conv_n']:,} calls</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);color:var(--fg-3)">
+                <span>no finish_reason (pre-Jun 29, no span)</span><span class="mono">{_fmt_dollar(tvc['unk_cost'])}</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="section-h"><h2>Per-Agent Spend</h2><span class="count">{len(sorted_agents)} agents</span></div>
@@ -798,6 +924,16 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 <div class="section-h"><h2>Cache Efficiency</h2><span class="count">read vs create · hit rate by agent</span></div>
 <div class="panel" style="margin-bottom:var(--space-6)">
     <div class="chart-box" style="height:max(180px, calc({len(sorted_agents)} * 26px))"><canvas id="cacheChart"></canvas></div>
+</div>
+
+<div class="section-h"><h2>Tool Mix (apportioned)</h2><span class="count">{tmix['n_tool_sessions']} of {tmix['n_sessions']} sessions · {tmix['coverage_pct']}% of hermes spend attributed</span></div>
+<div class="panel" style="margin-bottom:var(--space-6)">
+    <p style="font-size:12px;color:var(--fg-3);margin-bottom:10px;">Tool spend is apportioned at session level: each session's spend is spread across its tool-message distribution (terminal 40x + read_file 10x → spend split 80/20). This answers <em>which tools sessions used</em>, not which step consumed which tokens. <span style="color:var(--fg-3)">Covers {_fmt_dollar(tmix['attributable_cost'])} of {_fmt_dollar(tmix['total_cost'])} hermes spend ({tmix['coverage_pct']}%) — tool-message sessions only; otel-side spend and non-agentic sessions are unlabeled.</span></p>
+    {(''.join(
+        f'<div style="display:flex;justify-content:space-between;font-size:var(--text-sm);padding:3px 0;border-bottom:1px solid var(--border, rgba(128,128,128,.15))">'
+        f'<span>{tool}</span><span class="mono">{_fmt_dollar(cost)}</span></div>'
+        for tool, cost in list(tmix['tools'].items())[:15]
+    )) if tmix['tools'] else '<span style="color:var(--fg-3);font-size:var(--text-sm)">No tool-message sessions in this window.</span>'}
 </div>
 
 <div class="section-h"><h2>Per-Turn Timeline</h2><span class="count">{len(turn_tokens)} calls{'' if len(turn_tokens) <= 500 else ' · showing last 500'}</span></div>
