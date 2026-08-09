@@ -304,7 +304,8 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     total = cur.fetchone()["cnt"]
 
     select_cols = """recorded_at, total_tokens, agent_name, model, source,
-                     finish_reason, tool_name, provider, session_id"""
+                     finish_reason, tool_name, provider, session_id,
+                     input_tokens, output_tokens, cache_read_tokens"""
     if total <= 500:
         # Small dataset — just return everything
         cur = conn.execute(f"""
@@ -331,22 +332,41 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     if not rows:
         return []
 
-    # Statistical anomaly: token count > 2x the median
-    token_vals = sorted([r["total_tokens"] or 0 for r in rows])
-    median = token_vals[len(token_vals) // 2]
-    threshold = median * 2
+    # Per-source anomaly thresholds. The two sources are DIFFERENT UNITS:
+    # otel rows are single LLM calls (median 115K, ceiling ~621K); hermes
+    # rows are session aggregates — one row per session summing every call
+    # (median 30K, no ceiling — max 327M). A mixed threshold flags hermes
+    # session totals as 'anomaly' when they're just a different unit, and
+    # misses real otel spikes. Threshold per source so 'anomaly' means
+    # 'spike within your own population'.
+    otel_vals = sorted(r["total_tokens"] or 0 for r in rows if r["source"] == "otel")
+    hermes_vals = sorted(r["total_tokens"] or 0 for r in rows if r["source"] == "hermes")
+
+    def _double_median(vals) -> float | None:
+        if not vals:
+            return None
+        return (vals[len(vals) // 2] or 0) * 2
+
+    otel_threshold = _double_median(otel_vals)
+    hermes_threshold = _double_median(hermes_vals)
 
     timeline = []
     for r in rows:
-        is_anom = (r["total_tokens"] or 0) > threshold
+        src = r["source"] or "?"
+        thr = otel_threshold if src == "otel" else hermes_threshold
+        is_anom = thr is not None and (r["total_tokens"] or 0) > thr
         cause = {
             "agent": r["agent_name"] or "?",
             "model": r["model"] or "?",
-            "source": r["source"] or "?",
+            "source": src,
+            "unit": "session total" if src == "hermes" else "single call",
             "finish_reason": r["finish_reason"] or "—",
             "tool": r["tool_name"] or "",
             "provider": r["provider"] or "?",
             "session": (r["session_id"] or "")[:24],
+            "input": r["input_tokens"] or 0,
+            "output": r["output_tokens"] or 0,
+            "cache_read": r["cache_read_tokens"] or 0,
         }
         timeline.append((r["recorded_at"], r["total_tokens"] or 0, is_anom, cause))
     return timeline
@@ -719,16 +739,23 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
     # Build per-column HTML: hover tooltip carries the call's cause; click
     # pins it to the detail box below. Red (anomaly) columns explain WHY —
-    # agent, model, source, finish_reason, tool — so a spike is diagnosable
-    # without leaving the tab.
+    # agent, model, source, unit (single call vs session total), composition
+    # (input/cache %) — so a spike is diagnosable without leaving the tab.
     def _cause_parts(c: dict, t: int, a: bool) -> str:
-        parts = [f"{_fmt_tok(t)} tok", c["agent"], c["model"], c["source"]]
+        parts = [f"{_fmt_tok(t)} tok", c["agent"], c["model"], c["unit"]]
         if c["tool"]:
             parts.append(f"tool: {c['tool']}")
         if c["finish_reason"] and c["finish_reason"] != "—":
             parts.append(c["finish_reason"])
+        # Composition: input dominates? cache engaged? -> the 'why'
+        inp, out, cr = c["input"], c["output"], c["cache_read"]
+        if inp or out:
+            inp_pct = inp / max(inp + out, 1) * 100
+            parts.append(f"{inp_pct:.0f}% input")
+            if cr:
+                parts.append(f"{cr / max(inp, 1) * 100:.0f}% cached")
         if a:
-            parts.append("anomaly (>2x median)")
+            parts.append("spike vs same-source median")
         return " · ".join(parts)
 
     timeline_html = (
@@ -984,7 +1011,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
 <div class="section-h"><h2>Per-Turn Timeline</h2><span class="count">{len(turn_tokens)} calls{'' if len(turn_tokens) <= 500 else ' · showing last 500'}</span></div>
 <div class="panel" style="margin-bottom:var(--space-6)">
-    <p style="font-size:12px;color:var(--fg-3);margin-bottom:10px;">Each column = one LLM call. Height = total tokens. <span style="color:var(--danger)">Red columns</span> = anomaly flagged (&gt;2x median). Hover a column for what that call was; click to pin the detail below.</p>
+    <p style="font-size:12px;color:var(--fg-3);margin-bottom:10px;">Each column = one LLM call (otel) or one session total (hermes, marked in tooltip). Height = total tokens. <span style="color:var(--danger)">Red columns</span> = spike vs that source's own median. Hover a column for what that call/session was and its composition; click to pin the detail below.</p>
     <div class="timeline-bar" id="timelineBar">
         {timeline_html}
     </div>
