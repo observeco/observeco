@@ -182,6 +182,7 @@ class Scorer:
             "llm_judge": 1.0,
             "json_schema": 1.0,
             "tool_call_validation": 1.0,
+            "semantic_similarity": 0.8,
             "ordering": 0.7,
             "numeric_range": 0.6,
             "regex": 0.5,
@@ -208,6 +209,8 @@ class Scorer:
                     p, acc, reason = Scorer._ordering(assertion, output)
                 elif a_type == "tool_call_validation":
                     p, acc, reason = Scorer._tool_call_validation(assertion, output)
+                elif a_type == "semantic_similarity":
+                    p, acc, reason = Scorer._semantic_similarity(assertion, output)
                 else:
                     p, acc, reason = (False, 0.0, f"Unknown assertion type: {a_type}")
             except Exception as exc:
@@ -748,6 +751,45 @@ class Scorer:
             return (True, 1.0, f"tool_call_validation: tool '{expected_tool}' with all {args_total} expected args")
 
         return (True, 1.0, f"tool_call_validation: tool '{expected_tool}' found")
+
+    @staticmethod
+    def _semantic_similarity(assertion: dict, output: str) -> tuple[bool, float, str]:
+        """Compute cosine similarity between output and expected using sentence-transformers.
+
+        Lazy-loads the model on first call. Falls back to a contains check with
+        a warning log if sentence-transformers is not installed.
+
+        Assertion fields:
+            expected (str, required): The reference text to compare against.
+            threshold (float, optional): Pass/fail threshold (default 0.7).
+
+        ponytail: Loads all-MiniLM-L6-v2 (~80MB) on first use. The model stays
+        in memory for the process lifetime. Upgrade path: allow configurable
+        model name, or use a smaller ONNX-exported variant.
+        """
+        expected = assertion.get("expected", "")
+        if not expected:
+            return (False, 0.0, "semantic_similarity: no expected text specified")
+
+        threshold = float(assertion.get("threshold", 0.7))
+
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError:
+            logger.warning("sentence-transformers not installed — falling back to contains check")
+            return Scorer._contains(
+                {"keywords": [expected], "min_match": 1}, output
+            )
+
+        # Lazy-load the model once
+        if not hasattr(Scorer, "_SIM_MODEL"):
+            Scorer._SIM_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+
+        emb = Scorer._SIM_MODEL.encode([output, expected])
+        sim = float(emb[0] @ emb[1] / (sum(emb[0] ** 2) ** 0.5 * sum(emb[1] ** 2) ** 0.5 + 1e-12))
+        passed = sim >= threshold
+        return (passed, sim,
+                f"semantic_similarity: cos_sim={sim:.4f} {'PASS' if passed else 'FAIL'} (threshold={threshold})")
 
     @staticmethod
     def bootstrap_ci(values: list[float], n_bootstrap: int = 1000, ci: float = 0.95) -> tuple[float, float]:
@@ -1305,3 +1347,24 @@ class CanaryRunner:
             (run_id,),
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+# ── Self-check ────────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    # Quick smoke test: identical texts → high similarity, opposite texts → low
+    p, acc, reason = Scorer._semantic_similarity(
+        {"expected": "The cat sat on the mat", "threshold": 0.5},
+        "The cat sat on the mat",
+    )
+    assert p, f"identical texts should pass: {reason}"
+    assert acc > 0.99, f"identical texts should score near 1.0: {acc}"
+
+    p2, acc2, reason2 = Scorer._semantic_similarity(
+        {"expected": "The cat sat on the mat", "threshold": 0.5},
+        "Quantum mechanics describes the behaviour of subatomic particles",
+    )
+    assert not p2, f"unrelated texts should fail: {reason2}"
+    assert acc2 < 0.5, f"unrelated texts should score low: {acc2}"
+
+    print(f"semantic_similarity self-check: PASS (identical={acc:.4f}, unrelated={acc2:.4f})")
