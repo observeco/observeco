@@ -1,7 +1,7 @@
 {
   "_meta": {
     "scanner_caveat": "The referential-integrity scanner has been WRONG more often than the codebase across this session (5 routes misclassified as missing because they live under router prefixes or in api.py; prefix-boundary and source-echo false positives). Treat every 'orphaned' finding as a HYPOTHESIS to verify against source, not a fact. Dispositions below were verified by grep + render pass + handler read.",
-    "kind_schema": "Each orphaned_post_routes entry carries a 'kind' field: ui_affordance (registered route for a UI surface that was never wired — visual-ledger decision), headless_api (deliberate public API with no frontend caller — park as intentional), redundant (duplicate of another endpoint — delete candidate), parked (product call pending), dormant (registered + referenced under conditions)."
+    "kind_schema": "Each orphaned_post_routes entry carries a 'kind' field. Direction 4 asks 'does anything call this' — but a POST route legitimately has no FRONTEND caller for three distinct reasons, and only one is a defect: ui_affordance (registered route for a UI surface that was never wired — visual-ledger decision, THE defect), headless_api (deliberate public API with no frontend caller — park as intentional), headless_ingest (write endpoint for external processes/agents — no frontend caller is correct). Also: parked (product call pending), dormant (registered + referenced under conditions), redundant (duplicate of another endpoint — delete candidate)."
   },
   "orphaned_css_classes": [
     "btn-sm", "cap-ov-stat", "grid-check", "grid-model-cb", "grid-profile-cb",
@@ -15,7 +15,7 @@
   "orphaned_route_targets": [
     "/api/waitlist"
   ],
-  "orphaned_post_routes": [
+  "no_frontend_caller_post_routes": [
     {"route": "/api/agents/<param>/stop", "kind": "ui_affordance", "note": "stop-agent affordance, never surfaced — queued to visual ledger"},
     {"route": "/api/agents/add", "kind": "ui_affordance", "note": "feedback-bar add-agent, CSS exists, surface never wired — queued to visual ledger"},
     {"route": "/api/capability/drift/<param>/acknowledge", "kind": "ui_affordance", "note": "acknowledge-drift affordance, never surfaced — queued to visual ledger"},
@@ -44,11 +44,11 @@
     {"route": "/api/licenses/trial", "kind": "parked", "note": "product call"},
     {"route": "/api/licenses/validate", "kind": "parked", "note": "product call"},
     {"route": "/api/no-llm/toggle", "kind": "ui_affordance", "note": "no-llm toggle, never surfaced — queued to visual ledger"},
-    {"route": "/api/plugin-log", "kind": "ui_affordance", "note": "plugin-log view, never surfaced — queued to visual ledger"},
+    {"route": "/api/plugin-log", "kind": "headless_ingest", "note": "ingest endpoint — external agents POST plugin hook events; no frontend caller is correct"},
     {"route": "/api/restart-quality/scan", "kind": "ui_affordance", "note": "restart-quality-scan affordance, never surfaced — queued to visual ledger"},
     {"route": "/api/retention-config", "kind": "ui_affordance", "note": "retention-config affordance, never surfaced — queued to visual ledger"},
-    {"route": "/api/tokens/budget", "kind": "ui_affordance", "note": "token-budget affordance, never surfaced — queued to visual ledger"},
-    {"route": "/api/tokens/log", "kind": "ui_affordance", "note": "token-log ingest, never surfaced — queued to visual ledger"},
+    {"route": "/api/tokens/budget", "kind": "ui_affordance", "note": "token-budget affordance, never surfaced — queued to visual ledger; NO GET read surface exists (write-only for an invisible value)"},
+    {"route": "/api/tokens/log", "kind": "headless_ingest", "note": "ingest endpoint — external agents POST per-turn token usage; no frontend caller is correct"},
     {"route": "/api/v1/dlq/<param>/resolve", "kind": "headless_api", "note": "DELETED — unannounced API, no external consumer, no auth story; only GET /dlq (read) retained. Product decision: re-design if a public DLQ API is ever wanted."},
     {"route": "/api/v1/dlq/<param>/retry", "kind": "headless_api", "note": "DELETED — unannounced API, no external consumer, no auth story; only GET /dlq (read) retained."},
     {"route": "/api/v1/dlq/purge", "kind": "headless_api", "note": "DELETED — unannounced API, no external consumer, no auth story; only GET /dlq (read) retained."},

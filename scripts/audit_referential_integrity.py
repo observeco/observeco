@@ -382,7 +382,14 @@ def _orphaned_post_routes(post_routes: set[str], referenced: set[str]) -> list[s
 
 
 def direction4_orphaned_post_routes() -> list[str]:
-    """Registered POST routes with no reference in templates or JS."""
+    """Registered POST routes with no FRONTEND caller (templates/JS).
+
+    NOTE: this is a WEAKER claim than 'orphaned'. A POST route with no
+    frontend caller is only a defect if it's an unsurfaced UI affordance.
+    Public API routes (headless_api) and ingest endpoints written to by
+    external processes (headless_ingest) legitimately have no frontend caller.
+    The allowlist 'kind' field records which of the three each route is.
+    """
     # Collect registered POST routes (scan all of src/observeco, not just routes/)
     post_routes: set[str] = set()
     src_root = ROOT / "src/observeco"
@@ -549,7 +556,7 @@ def main() -> int:
         "orphaned_css_classes": direction1_orphaned_classes(),
         "undefined_css_vars": direction2_undefined_vars(),
         "orphaned_route_targets": direction3_orphaned_targets(),
-        "orphaned_post_routes": direction4_orphaned_post_routes(),
+        "no_frontend_caller_post_routes": direction4_orphaned_post_routes(),
         "bare_api_anchors": direction5_bare_api_anchors(),
     }
 
