@@ -286,6 +286,14 @@ async def ingest_traces(request: Request):
                     # separate unit (join to trace_spans on exact span_id).
                     latency_ms = _safe_int(span_attrs.get("hermes.api_duration_ms", 0))
 
+                    # Remaining dropped attrs (migration 74 columns):
+                    # finish_reason (truncation signal), api_call_count (retry
+                    # proxy input), tool_name (feature attribution), reasoning.
+                    finish_reason = str(span_attrs.get("hermes.finish_reason", ""))
+                    api_call_count = _safe_int(span_attrs.get("hermes.api_call_count", 0))
+                    tool_name = str(span_attrs.get("hermes.tool_name", ""))
+                    reasoning_tokens = _safe_int(span_attrs.get("hermes.reasoning_tokens", 0))
+
                     db.log_token_turn(
                         agent_name=agent_name,
                         turn_id=f"otel_{span_id}",
@@ -300,6 +308,10 @@ async def ingest_traces(request: Request):
                         is_local=is_local,
                         session_id=span_attrs.get("hermes.session_id", "") or "",
                         latency_ms=latency_ms,
+                        finish_reason=finish_reason,
+                        api_call_count=api_call_count,
+                        tool_name=tool_name,
+                        reasoning_tokens=reasoning_tokens,
                     )
                 elif has_llm_attrs:
                     logger.warning(

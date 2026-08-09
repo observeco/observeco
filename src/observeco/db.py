@@ -29,7 +29,7 @@ def _get_default_pulse_dirs() -> list[Path]:
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 73
+SCHEMA_VERSION = 74
 DB_DIR = Path(user_data_dir("observeco", "observeco"))
 DB_PATH = DB_DIR / "pulse.db"
 
@@ -1162,6 +1162,19 @@ WHERE source='otel' AND session_id='';
 CREATE INDEX IF NOT EXISTS idx_token_logs_src_model_ts
 ON token_logs(source, model, recorded_at);
 """),
+    # Migration 74: columns for the remaining hermes.* span attributes that
+    # otel_listener was dropping (mapper written against an older span
+    # schema — the plugin emits 14 attrs, the listener reads 6). finish_reason
+    # (truncation signal), api_call_count (retry proxy input), tool_name
+    # (feature attribution — task_id is an opaque per-session UUID, not a
+    # feature label), reasoning_tokens. All default-empty; backfilled from
+    # trace_spans in a separate unit.
+    (74, """
+        ALTER TABLE token_logs ADD COLUMN finish_reason TEXT DEFAULT '';
+        ALTER TABLE token_logs ADD COLUMN api_call_count INTEGER DEFAULT 0;
+        ALTER TABLE token_logs ADD COLUMN tool_name TEXT DEFAULT '';
+        ALTER TABLE token_logs ADD COLUMN reasoning_tokens INTEGER DEFAULT 0;
+    """),
 ]
 
 _SCHEMA_SQL = """
@@ -4329,6 +4342,8 @@ class Database:
                        model: str = "", latency_ms: int = 0,
                        tool_calls: str = "[]", topic_id: str = "",
                        is_local: int = 0, session_id: str = "",
+                       finish_reason: str = "", api_call_count: int = 0,
+                       tool_name: str = "", reasoning_tokens: int = 0,
                        recorded_at: int | None = None) -> dict:
         # Auto-compute cost when provider given but cost not set
         # Skip for local providers (cost is always $0)
@@ -4340,15 +4355,17 @@ class Database:
             "skills_tokens, memory_tokens, tools_tokens, guidance_tokens, "
             "provider, cost, anomaly_score, input_tokens, output_tokens, "
             "cache_creation_tokens, cache_read_tokens, cost_computed, source, "
-            "model, latency_ms, tool_calls, topic_id, recorded_at, is_local, session_id) "
-            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "model, latency_ms, tool_calls, topic_id, recorded_at, is_local, session_id, "
+            "finish_reason, api_call_count, tool_name, reasoning_tokens) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (agent_name, turn_id, total_tokens, identity_tokens, skills_tokens,
              memory_tokens, tools_tokens, guidance_tokens, provider, cost,
              anomaly_score, input_tokens, output_tokens,
              cache_creation_tokens, cache_read_tokens, cost_computed, source,
              model, latency_ms, tool_calls, topic_id,
              recorded_at if recorded_at is not None else int(time.time()),
-             is_local, session_id)
+             is_local, session_id, finish_reason, api_call_count, tool_name,
+             reasoning_tokens)
         )
 
         # Auto-register new agent in agent_configs (type classified by name pattern)
