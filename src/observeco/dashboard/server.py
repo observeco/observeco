@@ -4153,52 +4153,6 @@ async def api_no_llm_toggle(request: Request):
 
 # ── Agent Discovery Wizard ─────────────────────────────────────────
 
-@app.post("/api/discover/run")
-async def api_discover_run():
-    """Run agent discovery and cache results. Returns list of found candidates."""
-    try:
-        from observeco.auto_detect import run_discover as _run_disc
-        from observeco.auto_detect import run_llm_discovery
-
-        # Run static discovery first
-        _run_disc(show_all=False)
-
-        # Get current agents from config
-        from observeco.config import load_config
-        config = load_config()
-        candidates = []
-
-        # Static agents from config
-        for agent in (config.agents or []):
-            candidates.append({
-                "name": agent.name,
-                "type": agent.framework or "custom",
-                "source": "config",
-                "confidence": "high",
-            })
-
-        # If few found, try LLM discovery
-        if len(candidates) < 2:
-            try:
-                llm_candidates = run_llm_discovery()
-                for c in llm_candidates:
-                    # Deduplicate by name
-                    if not any(ex["name"].lower() == c.get("name", "").lower() for ex in candidates):
-                        candidates.append({
-                            "name": c.get("name", "unknown"),
-                            "type": c.get("type", "unknown"),
-                            "source": "llm",
-                            "confidence": c.get("confidence", "low"),
-                        })
-            except Exception:
-                pass
-
-        db.set_discovery_candidates(candidates)
-        return JSONResponse({"candidates": candidates, "count": len(candidates)})
-    except Exception as e:
-        return JSONResponse({"error": str(e), "candidates": [], "count": 0}, status_code=500)
-
-
 @app.get("/api/discover/candidates")
 async def api_discover_candidates():
     """Return cached discovery candidates."""

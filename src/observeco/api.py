@@ -405,26 +405,3 @@ async def dlq_list(limit: int = 50, authorization: str = Header(None)):
     stats = db.dlq_stats()
     return {"stats": stats, "entries": pending}
 
-
-@router.post("/dlq/{entry_id}/retry")
-async def dlq_retry(entry_id: int, authorization: str = Header(None)):
-    """Mark a DLQ entry as retried."""
-    _verify_auth(authorization)
-    db.dlq_mark_retried(entry_id)
-    return {"status": "retried", "id": entry_id}
-
-
-@router.post("/dlq/{entry_id}/resolve")
-async def dlq_resolve(entry_id: int, authorization: str = Header(None)):
-    """Mark a DLQ entry as resolved."""
-    _verify_auth(authorization)
-    db.dlq_mark_resolved(entry_id)
-    return {"status": "resolved", "id": entry_id}
-
-
-@router.post("/dlq/purge")
-async def dlq_purge(older_than_days: int = 7, authorization: str = Header(None)):
-    """Purge old DLQ entries."""
-    _verify_auth(authorization)
-    count = db.dlq_purge(older_than_days=older_than_days)
-    return {"status": "purged", "count": count}

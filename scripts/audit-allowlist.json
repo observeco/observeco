@@ -32,7 +32,7 @@
     {"route": "/api/commercial/telemetry", "kind": "parked", "note": "product call"},
     {"route": "/api/commercial/trials/cancel", "kind": "parked", "note": "product call"},
     {"route": "/api/commercial/trials/start", "kind": "parked", "note": "product call"},
-    {"route": "/api/discover/run", "kind": "redundant", "note": "wizard calls /api/discover/run-html (server.py:278,6478); this JSON twin never called — delete pending confirmation"},
+    {"route": "/api/discover/run", "kind": "redundant", "note": "DELETED — wizard calls /api/discover/run-html; JSON twin had no caller (parallel-path class, same as /api/phase/transition). Positive control: route now 404."},
     {"route": "/api/efficiency/optimize/preview/<param>", "kind": "parked", "note": "product call"},
     {"route": "/api/efficiency/optimize/revert/<param>", "kind": "parked", "note": "product call"},
     {"route": "/api/fleet/circuits/<param>/reset", "kind": "ui_affordance", "note": "circuit-reset affordance, never surfaced — queued to visual ledger"},
@@ -49,9 +49,9 @@
     {"route": "/api/retention-config", "kind": "ui_affordance", "note": "retention-config affordance, never surfaced — queued to visual ledger"},
     {"route": "/api/tokens/budget", "kind": "ui_affordance", "note": "token-budget affordance, never surfaced — queued to visual ledger"},
     {"route": "/api/tokens/log", "kind": "ui_affordance", "note": "token-log ingest, never surfaced — queued to visual ledger"},
-    {"route": "/api/v1/dlq/<param>/resolve", "kind": "headless_api", "note": "v1 DLQ resolve — NOT in master plan A.8; built toward an unannounced API — product decision"},
-    {"route": "/api/v1/dlq/<param>/retry", "kind": "headless_api", "note": "v1 DLQ retry — NOT in master plan A.8; built toward an unannounced API — product decision"},
-    {"route": "/api/v1/dlq/purge", "kind": "headless_api", "note": "v1 DLQ purge — NOT in master plan A.8; built toward an unannounced API — product decision"},
+    {"route": "/api/v1/dlq/<param>/resolve", "kind": "headless_api", "note": "DELETED — unannounced API, no external consumer, no auth story; only GET /dlq (read) retained. Product decision: re-design if a public DLQ API is ever wanted."},
+    {"route": "/api/v1/dlq/<param>/retry", "kind": "headless_api", "note": "DELETED — unannounced API, no external consumer, no auth story; only GET /dlq (read) retained."},
+    {"route": "/api/v1/dlq/purge", "kind": "headless_api", "note": "DELETED — unannounced API, no external consumer, no auth story; only GET /dlq (read) retained."},
     {"route": "/api/v1/events", "kind": "headless_api", "note": "v1 events — documented public API (master plan A.8, api.py docstring) — park as intentional"},
     {"route": "/api/v1/risks/classify", "kind": "headless_api", "note": "v1 risks/classify — documented public API (master plan A.8, api.py docstring) — park as intentional"}
   ]

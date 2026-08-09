@@ -42,10 +42,15 @@ def _restore_env(old_pulses):
     conn.commit()
 
 
-def test_discover_run_endpoint_exists():
-    """POST /api/discover/run should return 200 or 500 (LLM may be unavailable)."""
+def test_discover_run_endpoint_removed():
+    """POST /api/discover/run was deleted as redundant.
+
+    The wizard calls /api/discover/run-html (server.py hx-post); the JSON twin
+    /api/discover/run had no caller (same parallel-path class as
+    /api/phase/transition). Positive control: the route must now 404.
+    """
     response = client.post("/api/discover/run", headers=_auth_headers())
-    assert response.status_code in (200, 500, 404), f"Got {response.status_code}"
+    assert response.status_code == 404, f"Expected 404 (route deleted), got {response.status_code}"
 
 
 def test_discover_candidates_endpoint():
