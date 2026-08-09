@@ -1545,6 +1545,29 @@ class Database:
 
     def __init__(self, db_path: str | Path = DB_PATH):
         self.db_path = Path(db_path)
+        # GS-019 + test-safety guard: the DEFAULT DB path must never be
+        # opened from a test run. A test suite opening the live pulse.db
+        # through Database() silently applies pending migrations to
+        # production (observed: schema advanced 73->74 during a pytest
+        # run). Behavior under a test runner:
+        #   - OBSERVECO_TEST_DB set  -> default path REDIRECTS to it
+        #     (explicit, logged, never silent — the redirect target is
+        #     visible in every connection's path).
+        #   - PYTEST_CURRENT_TEST set, no OBSERVECO_TEST_DB -> REFUSE the
+        #     live path loudly (raise). A silent fallback would hide the
+        #     same confusion in the other direction.
+        _test_db = os.environ.get("OBSERVECO_TEST_DB")
+        _in_test = os.environ.get("PYTEST_CURRENT_TEST")
+        if _test_db:
+            if self.db_path == Path(DB_PATH):
+                logger.info("Database(): redirecting default path to test fixture %s", _test_db)
+                self.db_path = Path(_test_db)
+        elif _in_test and self.db_path == Path(DB_PATH):
+            raise RuntimeError(
+                "Database() refused the live DB path under a test runner. "
+                f"resolved={self.db_path} sentinel={_in_test}. "
+                "Set OBSERVECO_TEST_DB to a fixture copy, or pass an explicit db_path."
+            )
         # ponytail: per-thread connection pool. Lazy-init each thread's connection on
         # first _get_conn() from that thread. Upgrade path: a bounded pool with max-age.
         self._local = threading.local()
