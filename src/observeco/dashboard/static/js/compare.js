@@ -1,5 +1,5 @@
 // ─── Fleet Comparison sort ───
-let compareSort = { col: 'name', order: 'asc' };
+let compareSort = { col: 'spend', order: 'desc' };
 
 function updateCompareIndicators() {
   const activeCol = compareSort.col;

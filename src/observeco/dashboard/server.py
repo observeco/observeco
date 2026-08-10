@@ -2144,7 +2144,7 @@ async def api_fleet_summary():
 
 
 @app.get("/api/fleet-compare", response_class=HTMLResponse)
-async def api_fleet_compare(sort: str = "name", order: str = "asc"):
+async def api_fleet_compare(sort: str = "spend", order: str = "desc"):
     """Side-by-side fleet comparison — § Fleet Comparison. Supports sort column + order."""
     summary = db.get_agent_status_summary()
     agents = db.get_agents()
@@ -2152,6 +2152,22 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
     drift_latest = db.get_drift_latest_per_agent()
     circuit = db.get_circuit_breakers()
     all_errors = db.get_errors(limit=100)
+
+    # Measured spend per agent from the precedence view (same source as the
+    # Token tab). This is the user-backed number — "what am I spending per
+    # agent". Context size (chisel_trims) is demoted to a labeled secondary.
+    conn = db._get_conn()
+    conn.row_factory = __import__("sqlite3").Row
+    spend_rows = conn.execute("""
+        SELECT agent_name, COALESCE(SUM(reported_cost), 0) as cost,
+               COALESCE(SUM(total_tokens), 0) as tokens, COUNT(*) as n
+        FROM v_token_effective
+        WHERE traffic_class = 'measured'
+           OR (traffic_class = 'measured_orphan' AND overlap_suspect = 0)
+        GROUP BY agent_name
+        ORDER BY SUM(reported_cost) DESC
+    """).fetchall()
+    spend_by_agent = {r["agent_name"]: dict(r) for r in spend_rows}
 
     order_asc = order.lower() != "desc"
 
@@ -2191,6 +2207,8 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
             "status": s.get("status", "unknown"),
             "framework": fw.capitalize() if fw else "-",
             "tokens": tok_total,
+            "spend": spend_by_agent.get(name, {}).get("cost", 0),
+            "spend_tokens": spend_by_agent.get(name, {}).get("tokens", 0),
             "drift_pct": drift_pct,
             "drift_breached": drift_breached,
             "errors": err_count,
@@ -2203,6 +2221,7 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
         "name": lambda n: n.lower(),
         "framework": lambda n: agent_data[n]["framework"],
         "tokens": lambda n: agent_data[n]["tokens"],
+        "spend": lambda n: agent_data[n]["spend"],
         "drift": lambda n: agent_data[n]["drift_pct"],
         "errors": lambda n: agent_data[n]["errors"],
         "circuit": lambda n: 1 if agent_data[n]["circuit_tripped"] else 0,
@@ -2231,7 +2250,9 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
             if pct > 0:
                 comp_bars += f'<span style="display:inline-block;width:{pct:.0f}%;height:6px;background:{ccolor};border-radius:2px;margin-right:1px;" title="{cname}: {ctok}tok ({pct:.0f}%)"></span>'
 
-        tok_label = f"{tok_total:,}" if tok_total else "-"
+        spend = d["spend"]
+        spend_label = f"${spend:,.2f}" if spend else "—"
+        ctx_label = f"{tok_total:,}" if tok_total else "—"
         drift_pct = d["drift_pct"]
         drift_label = f"{drift_pct:+.1f}%" if drift_pct else "-"
         drift_color = "#ef4444" if d["drift_breached"] else "#22c55e" if abs(drift_pct) > 5 else "#64748b"
@@ -2243,7 +2264,8 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
         rows.append(f"""<tr onclick="htmx.ajax('GET', '/api/fleet/modal/{name}', {{target:'#modalContainer', swap:'innerHTML'}})" style="cursor:pointer">
     <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status {status}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>{name}</td>
     <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">{d["framework"]}</td>
-    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">{tok_label}</td>
+    <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;font-weight:600;">{spend_label}</td>
+    <td style="padding:10px 12px;font-size:10px;color:#64748b;">ctx {ctx_label}</td>
     <td style="padding:10px 12px;min-width:120px;"><div style="display:flex;gap:1px;align-items:center;height:6px;">{comp_bars if comp_bars else '<span style="color:#64748b;font-size:10px;">no data</span>'}</div></td>
     <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;color:{drift_color};">{drift_label}</td>
     <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;">{err_label}</td>
@@ -2264,7 +2286,8 @@ async def api_fleet_compare(sort: str = "name", order: str = "asc"):
             <tr style="border-bottom:1px solid var(--border);">
                 <th onclick="sortCompare('name')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Agent <span id="sortIndicator_name" class="sort-indicator"></span></th>
                 <th onclick="sortCompare('framework')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Framework <span id="sortIndicator_framework" class="sort-indicator"></span></th>
-                <th onclick="sortCompare('tokens')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Tokens <span id="sortIndicator_tokens" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('spend')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Spend <span id="sortIndicator_spend" class="sort-indicator"></span></th>
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Context</th>
                 <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Composition</th>
                 <th onclick="sortCompare('drift')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Drift <span id="sortIndicator_drift" class="sort-indicator"></span></th>
                 <th onclick="sortCompare('errors')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Errors <span id="sortIndicator_errors" class="sort-indicator"></span></th>
@@ -2689,6 +2712,10 @@ async def api_brain(agent: str = "all"):
             if full:
                 items.append(f'<span style="color:#38bdf8;">Full: {_fmt_tok(full)}</span>')
             savings_html = f'<div style="font-size:11px;color:#94a3b8;">{source_label}: {" · ".join(items)}</div>'
+        else:
+            # No meaningful compression activity — say so, don't dress it as a number.
+            savings_html = ('<div style="font-size:11px;color:#64748b;">'
+                            'no meaningful compression activity this week</div>')
 
         comp_labels = {"guidance":"Guidance","memory":"Memory","skills":"Skills","tools":"Tools","identity":"Identity"}
         comp_detail = " · ".join(f'{comp_labels.get(k,k)}: {_fmt_tok(v)}' for k,v in comp.items() if v > 0) if comp else "No component data"
@@ -2699,7 +2726,7 @@ async def api_brain(agent: str = "all"):
             <span style="font-size:13px;font-weight:700;color:#f8fafc;">Fleet Total</span>
             <span style="font-size:11px;color:#94a3b8;background:#1e293b;padding:2px 8px;border-radius:10px;">{f['framework']}</span>
           </div>
-          <div style="font-size:20px;font-weight:700;color:#f8fafc;margin-bottom:4px;">{_fmt_tok(total)} tokens</div>
+          <div style="font-size:20px;font-weight:700;color:#f8fafc;margin-bottom:4px;">{_fmt_tok(total)} <span style="font-size:12px;color:#64748b;">context</span></div>
           {_bar(comp, total)}
           <div style="font-size:11px;color:#64748b;margin-top:6px;">{comp_detail}</div>
           {savings_html}
@@ -2723,6 +2750,9 @@ async def api_brain(agent: str = "all"):
             if full:
                 items.append(f'Full: {_fmt_tok(full)}')
             savings_html = f'<div style="font-size:11px;color:#64748b;margin-top:4px;">{" · ".join(items)}</div>'
+        else:
+            savings_html = ('<div style="font-size:11px;color:#64748b;margin-top:4px;">'
+                            'no compression activity</div>')
 
         drift_html = ""
         if drift:
@@ -2746,7 +2776,7 @@ async def api_brain(agent: str = "all"):
             </div>
             <div>{spark}</div>
           </div>
-          <div style="font-size:16px;font-weight:700;color:#f8fafc;margin-bottom:4px;">{_fmt_tok(total)} tokens</div>
+          <div style="font-size:16px;font-weight:700;color:#f8fafc;margin-bottom:4px;">{_fmt_tok(total)} <span style="font-size:11px;color:#64748b;">context</span></div>
           {_bar(comp, total)}
           <div style="font-size:11px;color:#64748b;margin-top:6px;">{comp_detail}</div>
           {savings_html}
