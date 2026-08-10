@@ -672,20 +672,18 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
 
         # Query 4: Latency (measured otel only; backfilled from spans)
         latency = _query_latency(conn, since, agent)
-        if latency["n_with_latency"] == 0:
-            latency_html = ("No latency data in this window — latency is captured "
-                            "from Jun 29 (span retention start); earlier calls were not captured.")
-        elif latency["coverage_pct"] < 100:
-            latency_html = (f"{latency['n_with_latency']:,} of {latency['n']:,} calls "
-                            f"({latency['coverage_pct']}%) have latency · "
-                            f"min {_fmt_ms(latency['min_ms'])} · max {_fmt_ms(latency['max_ms'])} · "
-                            "captured from Jun 29 (span retention start); earlier calls were not captured.")
-        else:
-            latency_html = (f"{latency['n_with_latency']:,} calls · "
-                            f"min {_fmt_ms(latency['min_ms'])} · max {_fmt_ms(latency['max_ms'])}")
 
         # Query 5: Tool vs conversation (structural, finish_reason)
         tvc = _query_tool_vs_conversation(conn, since, agent)
+        # In-window (post-Jun-29) cost-weighted split — the headline. The
+        # unlabeled (pre-retention) share is excluded and shown as a note.
+        _tw = tvc["tool_cost"] + tvc["conv_cost"]
+        tvc_tool_pct = tvc["tool_cost"] / max(_tw, 1) * 100
+        tvc_conv_pct = tvc["conv_cost"] / max(_tw, 1) * 100
+        _tn = tvc["tool_n"] + tvc["conv_n"]
+        tvc_tool_n_pct = tvc["tool_n"] / max(_tn, 1) * 100
+        tvc_conv_n_pct = tvc["conv_n"] / max(_tn, 1) * 100
+        tvc_unk_pct = tvc["unk_cost"] / max(tvc["total_cost"], 1) * 100
 
         # Query 6: Tool-mix apportionment (session-level, honest label)
         tmix = _query_tool_mix(conn, since, agent)
@@ -965,25 +963,45 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
             <span class="cc-val mono">{_fmt_ms(latency['avg_ms'])}</span>
             <span class="cc-lab">avg · measured</span>
         </div>
-        <div class="chart-box" style="min-height:64px;display:flex;align-items:center">
-            <span style="color:var(--fg-3);font-size:var(--text-sm)">{latency_html}</span>
+        <div class="chart-box" style="min-height:64px">
+            <div class="latency-range">
+                <div class="latency-fill" style="left:0%;width:100%"></div>
+                <div class="latency-marker" style="left:0%" title="min"></div>
+                <div class="latency-marker" style="left:50%" title="avg"></div>
+                <div class="latency-marker" style="left:100%" title="max"></div>
+            </div>
+            <div class="latency-labels">
+                <span class="mono">min {_fmt_ms(latency['min_ms'])}</span>
+                <span class="mono">avg {_fmt_ms(latency['avg_ms'])}</span>
+                <span class="mono">max {_fmt_ms(latency['max_ms'])}</span>
+            </div>
+            <div class="latency-stats">
+                <span class="stat"><span class="k">calls</span> <span class="v mono">{latency['n_with_latency']:,}</span></span>
+                <span class="stat"><span class="k">coverage</span> <span class="v mono">{latency['coverage_pct']}%</span></span>
+            </div>
+            <div class="coverage-note">Latency captured from <strong>Jun 29</strong> (span retention start). Earlier calls were not captured — the {100 - latency['coverage_pct']:.0f}% gap is the pre-retention period, not fast calls.</div>
         </div>
     </div>
     <div class="panel chart-card">
         <div class="cc-head"><h2>Tool vs Conversation</h2>
-            <span class="cc-val mono">{tvc['tool_cost']/max(tvc['total_cost'],1)*100:.0f}%</span>
-            <span class="cc-lab">spend invokes a tool · structural</span>
+            <span class="cc-val mono">{tvc_tool_pct:.0f}%</span>
+            <span class="cc-lab">of labeled spend · tool-invoking</span>
         </div>
-        <div class="chart-box" style="min-height:64px;display:flex;flex-direction:column;justify-content:center;gap:4px">
-            <div style="display:flex;justify-content:space-between;font-size:var(--text-sm)">
-                <span>tool-invoking calls (finish_reason=tool_calls)</span><span class="mono">{_fmt_dollar(tvc['tool_cost'])} · {tvc['tool_n']:,} calls</span>
+        <div class="chart-box" style="min-height:64px">
+            <div class="split-bar">
+                <div class="seg tool" style="width:{tvc_tool_pct:.0f}%">{tvc_tool_pct:.0f}%</div>
+                <div class="seg conv" style="width:{tvc_conv_pct:.0f}%">{tvc_conv_pct:.0f}%</div>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:var(--text-sm)">
-                <span>conversational calls</span><span class="mono">{_fmt_dollar(tvc['conv_cost'])} · {tvc['conv_n']:,} calls</span>
+            <div class="split-legend">
+                <span class="item"><span class="swatch" style="background:var(--tool)"></span>
+                    Tool-invoking <span class="amt">{_fmt_dollar(tvc['tool_cost'])}</span> <span class="pct">{tvc_tool_pct:.0f}%</span></span>
+                <span class="item"><span class="swatch" style="background:var(--conv)"></span>
+                    Conversational <span class="amt">{_fmt_dollar(tvc['conv_cost'])}</span> <span class="pct">{tvc_conv_pct:.0f}%</span></span>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:var(--text-sm);color:var(--fg-3)">
-                <span>no finish_reason (pre-Jun 29, no span)</span><span class="mono">{_fmt_dollar(tvc['unk_cost'])}</span>
+            <div style="margin-top:12px;font-size:11px;color:var(--fg-3)">
+                By call count: <span class="mono">{tvc_tool_n_pct:.0f}%</span> tool · <span class="mono">{tvc_conv_n_pct:.0f}%</span> conv
             </div>
+            <div class="coverage-note">Headline is <strong>cost-weighted, in-window</strong> — it answers "where does the money go" for the calls we can see. <strong>{tvc_unk_pct:.0f}% of all-time spend is unlabeled</strong> (pre-Jun 29, no span) and excluded here; that share shrinks toward zero as the retention window rolls forward.</div>
         </div>
     </div>
 </div>

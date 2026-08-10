@@ -726,6 +726,26 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .chart-card .cc-legend .lg-est::before{background:#64748b}
 .chart-card .cc-warn{font-size:var(--text-xs);color:var(--danger);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:6px 8px;margin-bottom:var(--space-2)}
 .chart-card .cc-note{font-size:var(--text-xs);color:var(--fg-3);background:var(--bg-2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;margin-bottom:var(--space-2)}
+/* Tool vs Conversation split bar */
+.split-bar{display:flex;height:28px;border-radius:6px;overflow:hidden;margin:12px 0 8px;border:1px solid var(--border)}
+.split-bar .seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--bg-0);min-width:0}
+.split-bar .seg.tool{background:var(--tool,#58a6ff)}
+.split-bar .seg.conv{background:var(--conv,#3fb950)}
+.split-legend{display:flex;gap:16px;font-size:12px;color:var(--fg-2);flex-wrap:wrap}
+.split-legend .item{display:flex;align-items:center;gap:6px}
+.split-legend .swatch{width:10px;height:10px;border-radius:2px}
+.split-legend .amt{color:var(--fg-0);font-weight:600}
+.split-legend .pct{color:var(--fg-3)}
+/* Latency range bar */
+.latency-range{position:relative;height:8px;background:var(--bg-2);border-radius:4px;margin:16px 0 6px}
+.latency-fill{position:absolute;top:0;height:100%;background:linear-gradient(90deg,var(--accent-2,#79c0ff),var(--accent,#58a6ff));border-radius:4px}
+.latency-marker{position:absolute;top:-4px;width:2px;height:16px;background:var(--fg-0);border-radius:1px}
+.latency-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--fg-3)}
+.latency-stats{display:flex;gap:16px;margin-top:10px;font-size:12px}
+.latency-stats .stat .k{color:var(--fg-3)}
+.latency-stats .stat .v{color:var(--fg-0);font-weight:600}
+/* Coverage note — honest, load-bearing */
+.coverage-note{margin-top:10px;padding:8px 10px;background:var(--bg-2);border-radius:6px;font-size:11px;color:var(--fg-3);border-left:3px solid var(--fg-3)}
 .attr-ring{display:flex;align-items:center;gap:var(--space-4)}
 .attr-num{font-family:var(--font-mono);font-size:40px;font-weight:700;color:var(--accent);line-height:1}
 .attr-bar{height:14px;border-radius:3px;background:var(--bg);overflow:hidden;display:flex;margin:var(--space-3) 0 6px}
