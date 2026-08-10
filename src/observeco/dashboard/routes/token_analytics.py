@@ -367,6 +367,7 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
             "input": r["input_tokens"] or 0,
             "output": r["output_tokens"] or 0,
             "cache_read": r["cache_read_tokens"] or 0,
+            "recorded_at": r["recorded_at"] or 0,
         }
         timeline.append((r["recorded_at"], r["total_tokens"] or 0, is_anom, cause))
     return timeline
@@ -748,9 +749,16 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
         if c["finish_reason"] and c["finish_reason"] != "—":
             parts.append(c["finish_reason"])
         elif c["source"] == "otel":
-            # otel rows with no finish_reason are pre-retention (no span,
-            # before Jun 29) — say so instead of silently omitting.
-            parts.append("no finish_reason (pre-Jun 29, no span)")
+            # otel rows with no finish_reason: label by DERIVED cause, not
+            # asserted. Pre-retention (before Jun 29 span retention start)
+            # rows genuinely have no span. But in-window rows with null
+            # finish_reason are a mapper miss or a span with no finish
+            # reason — calling them 'pre-Jun 29' would be a false
+            # explanation. Distinguish by the actual timestamp.
+            if c["recorded_at"] < 1782744531:
+                parts.append("no finish_reason (pre-Jun 29, no span)")
+            else:
+                parts.append("no finish_reason (no span recorded)")
         # Composition: input dominates? cache engaged? -> the 'why'
         inp, out, cr = c["input"], c["output"], c["cache_read"]
         if inp or out:
