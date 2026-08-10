@@ -529,6 +529,98 @@ def direction5_bare_api_anchors() -> list[str]:
     return sorted(bad)
 
 
+# ── Direction 7: hardcoded metric literals in rendered output ──────────────
+# A rendered number must come from a variable. A comma-grouped digit literal
+# appearing inside a string that is returned as HTML, adjacent to a unit word
+# ("tokens", "$", "%", "ms"), is almost always either a fabricated metric
+# (e.g. the "47,812 tokens saved" hardcoded in the Brain auto-compression
+# tab) or a constant that should be named. This is the first direction that
+# catches FABRICATION rather than disconnection.
+#
+# (Numbered 7, not 6: Direction 6 is template-reachability, documented in
+# specs/audit-direction6-templates-manual.md. Reusing the number would make
+# that doc and this check point at different things.)
+#
+# Positive control: a planted fake metric string MUST fire this check; the
+# test in tests/test_audit_scope.py asserts it.
+
+_METRIC_LITERAL_RE = re.compile(
+    r"\b\d{1,3}(?:,\d{3})+\b"          # comma-grouped number (e.g. 47,812)
+    r"(?=\s*(?:tokens?|tok\b|saved|savings?|%|bytes?|ms\b|cost|spend|rows))",
+    re.IGNORECASE,
+)
+
+
+def _metric_literals_in_text(text: str) -> list[str]:
+    """Return hardcoded comma-grouped metric literals in a rendered string.
+
+    Pure and testable — the positive control (tests/test_audit_scope.py)
+    plants a fake metric string and asserts this fires here. Skips
+    f-string expressions `{...}` (those are variables) and skips
+    ports/status-codes/years which are legitimately literal.
+    """
+    stripped = re.sub(r"\{[^}]*\}", "{}", text)
+    hits: list[str] = []
+    for dm in _METRIC_LITERAL_RE.finditer(stripped):
+        val = int(dm.group(0).replace(",", ""))
+        if val in PORTISH or val in STATUS:
+            continue
+        if 1900 < val < 2100:
+            continue
+        if val > 100_000_000:
+            continue
+        hits.append(dm.group(0))
+    return hits
+
+
+def direction7_hardcoded_metric_literals() -> list[str]:
+    """Return (file:line) for hardcoded comma-grouped metric literals in any
+    string that is returned to the user as HTML or rendered content.
+
+    Scans both Python (f-string/string literals) and HTML templates. The
+    matching logic is in `_metric_literals_in_text` (pure, tested); this
+    wraps it over the file set and reports file:line locations.
+
+    Branch on file type: .py files need the quoted-string extractor (a
+    literal metric hides inside an f-string/string body); .html templates
+    are scanned on their RAW content directly, because a Jinja template is
+    not wrapped in quotes and the string-literal regex would never match it
+    (a hardcoded metric in a template is the same defect and arguably the
+    likelier home, since that's where mockup content lands).
+    """
+    findings: list[str] = []
+    py_files = sorted(_files(ROOT / "src/observeco/dashboard", {".py"}))
+    html_files = sorted(_files(ROOT / "src/observeco/dashboard/templates", {".html"}))
+
+    for p in py_files:
+        text = p.read_text()
+        for m in re.finditer(r'([f]?["\'])(.{15,}?)\1', text, re.S):
+            s = m.group(2)
+            for val in _metric_literals_in_text(s):
+                line = text.count("\n", 0, m.start()) + 1
+                findings.append(f"{p.name}:{line}:{val}")
+
+    for p in html_files:
+        text = p.read_text()
+        for dm in _METRIC_LITERAL_RE.finditer(text):
+            val = int(dm.group(0).replace(",", ""))
+            if val in PORTISH or val in STATUS:
+                continue
+            if 1900 < val < 2100:
+                continue
+            if val > 100_000_000:
+                continue
+            line = text.count("\n", 0, dm.start()) + 1
+            findings.append(f"{p.name}:{line}:{dm.group(0)}")
+
+    # dedupe, preserve order
+    return list(dict.fromkeys(findings))
+
+
+PORTISH = {9120, 9121, 9119, 8642, 8643, 9125, 9126, 3000, 8080, 8000}
+STATUS = set(range(400, 600))
+
+
 # ── Report ───────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -558,6 +650,7 @@ def main() -> int:
         "orphaned_route_targets": direction3_orphaned_targets(),
         "no_frontend_caller_post_routes": direction4_orphaned_post_routes(),
         "bare_api_anchors": direction5_bare_api_anchors(),
+        "hardcoded_metric_literals": direction7_hardcoded_metric_literals(),
     }
 
     print("=== Referential Integrity Audit ===")

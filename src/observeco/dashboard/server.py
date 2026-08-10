@@ -2845,14 +2845,6 @@ async def api_brain(agent: str = "all"):
             <span>💾 Auto-backup before compress</span>
             <span>📊 Logs savings to dashboard</span>
           </div>
-          <div style="margin-top:12px;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;text-align:left;font-family:var(--font-mono);font-size:11px;line-height:1.8;">
-            <span style="color:#64748b;">18:32</span> <span style="color:#94a3b8;">hound SOUL.md modified — auto-compressing...</span><br>
-            <span style="color:#64748b;">18:32</span> <span style="color:#22c55e;">✅ 4,200 → 3,276 tok (-22%)</span><br>
-            <span style="color:#64748b;">18:32</span> <span style="color:#64748b;">Backup: hound.SOUL.md.bak</span><br>
-            <span style="color:#64748b;">18:33</span> <span style="color:#a5b4fc;">Full compress: 3,800 → 2,470 tok (-35%)</span><br>
-            <div style="border-top:1px solid #1e293b;margin:4px 0;"></div>
-            <span style="color:#38bdf8;">📊 Cumulative fleet savings this week: 47,812 tokens saved</span>
-          </div>
           <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
             <button onclick="startWatchDaemon()" style="background:#16a34a;border:none;color:white;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">▶️ Start Daemon</button>
             <button onclick="stopWatchDaemon()" style="border:1px solid #ef4444;background:transparent;color:#fca5a5;padding:8px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">⏹ Stop</button>

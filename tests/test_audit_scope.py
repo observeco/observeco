@@ -131,3 +131,71 @@ def test_init_auth_is_idempotent():
     init_auth(app)
     # Second call must NOT raise.
     init_auth(app)
+
+
+def test_hardcoded_metric_literal_detection_is_positive():
+    """A planted fake metric string MUST be caught (positive control).
+
+    Direction 6 flags hardcoded comma-grouped numbers adjacent to a unit word
+    ("tokens", "$", "%", "ms") inside rendered content — the "47,812 tokens
+    saved" fabrication class. This direction's failure mode is silence, so the
+    control must prove it fires on a fake and does NOT fire on legitimate
+    variable-driven renders or non-metric literals.
+    """
+    # Positive: a planted fake metric MUST fire.
+    fake = 'Cumulative fleet savings this week: 47,812 tokens saved'
+    assert "47,812" in audit._metric_literals_in_text(fake), (
+        "a hardcoded '47,812 tokens saved' must be flagged as a fabricated metric"
+    )
+    # The production source must no longer contain the real 47,812.
+    server_src = (pathlib.Path(__file__).resolve().parent.parent
+                  / "src" / "observeco" / "dashboard" / "server.py").read_text()
+    assert "47,812" not in server_src, (
+        "the fabricated 47,812 must be removed from the Brain auto-compression tab"
+    )
+
+    # Negative: a variable-driven render must NOT fire (brace is stripped).
+    variable = "Cumulative savings this week: {cumulative:,} tokens saved"
+    assert "cumulative" not in audit._metric_literals_in_text(variable)
+    assert audit._metric_literals_in_text(variable) == [], (
+        "an f-string expression {cumulative:,} is a variable, not a hardcoded literal"
+    )
+
+    # Negative: a non-metric literal (no unit word adjacency) must NOT fire.
+    no_unit = "The report shows 47,812 entries in the table"
+    assert audit._metric_literals_in_text(no_unit) == [], (
+        "a comma-grouped number not adjacent to a unit word is not a rendered metric"
+    )
+
+    # Negative: ports / status codes / years must NOT fire.
+    assert audit._metric_literals_in_text("listening on 9,120 ms") == []
+    assert audit._metric_literals_in_text("HTTP 404, retrying") == []
+    assert audit._metric_literals_in_text("in 2024, the fleet grew") == []
+
+    # f-string semantics: a LITERAL inside an f-string must still fire (the
+    # brace-strip removes {expr} but not literal digits); a variable {expr}
+    # must not. This is the hole the reviewer flagged — 'skip any f-string'
+    # would let fabrication hide exactly where it's likeliest.
+    lit_in_fstring = 'f"fleet saved: 47,812 tokens this week"'
+    assert "47,812" in audit._metric_literals_in_text(lit_in_fstring), (
+        "a literal 47,812 inside an f-string must fire — the skip removes "
+        "{expr}, not literal digits"
+    )
+
+
+def test_hardcoded_metric_literal_scan_covers_templates():
+    """Direction 7 must scan .html templates, not just .py.
+
+    A hardcoded metric in a Jinja template is the same defect as one in an
+    f-string — arguably likelier, since that's where mockup content lands.
+    If the scan only handled quoted Python strings, it would miss templates
+    entirely (a template is not wrapped in quotes).
+    """
+    py = {p.name for p in audit._files(
+        audit.ROOT / "src/observeco/dashboard", {".py"})}
+    html = {p.name for p in audit._files(
+        audit.ROOT / "src/observeco/dashboard/templates", {".html"})}
+    assert "index_new.html" in html, "template scan path must include the main template"
+    # The positive control must hold for a template-shaped body too.
+    template_body = "<span>fleet savings: 47,812 tokens saved</span>"
+    assert "47,812" in audit._metric_literals_in_text(template_body)
