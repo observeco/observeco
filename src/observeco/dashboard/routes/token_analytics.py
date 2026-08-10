@@ -350,6 +350,45 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
     otel_threshold = _double_median(otel_vals)
     hermes_threshold = _double_median(hermes_vals)
 
+    # Enrichment for anomaly rows: fetch the diagnostic context that
+    # actually explains WHY a bar is large. For hermes session aggregates,
+    # that's the session's message/tool/user-message counts + duration (from
+    # Hermes state.db). For otel single calls, that's the span duration (from
+    # trace_spans) and the input-token share (already in the row). Only
+    # anomaly rows get enriched — bounded cost on a subset.
+    import os as _os
+    import sqlite3 as _sqlite3
+    _state_db = _os.path.expanduser("~/.hermes/state.db")
+
+    def _enrich(cause: dict) -> dict:
+        c = dict(cause)
+        if c["source"] == "hermes" and c["session"]:
+            try:
+                sc = _sqlite3.connect(_state_db)
+                sc.row_factory = _sqlite3.Row
+                m = sc.execute("""
+                    SELECT COUNT(*) AS n,
+                           SUM(CASE WHEN tool_name IS NOT NULL AND tool_name != '' THEN 1 ELSE 0 END) AS tools,
+                           SUM(CASE WHEN role='user' THEN 1 ELSE 0 END) AS user_msgs,
+                           MIN(timestamp) AS min_ts, MAX(timestamp) AS max_ts
+                    FROM messages WHERE session_id = ?
+                """, (c["session"],)).fetchone()
+                sc.close()
+                if m and m["n"]:
+                    c["session_msgs"] = m["n"]
+                    c["session_tools"] = m["tools"] or 0
+                    c["session_user"] = m["user_msgs"] or 0
+                    dur = (m["max_ts"] or 0) - (m["min_ts"] or 0)
+                    c["session_dur_s"] = int(dur) if dur and dur > 0 else None
+            except Exception:
+                pass
+        elif c["source"] == "otel" and c["session"]:
+            # otel single call: no session detail (it IS one call); the span
+            # duration is the useful addition but requires a trace_spans join
+            # keyed on turn_id. skip — input share already tells the story.
+            pass
+        return c
+
     timeline = []
     for r in rows:
         src = r["source"] or "?"
@@ -369,6 +408,8 @@ def _query_timeline(conn, since: int, agent: str) -> list[tuple]:
             "cache_read": r["cache_read_tokens"] or 0,
             "recorded_at": r["recorded_at"] or 0,
         }
+        if is_anom:
+            cause = _enrich(cause)
         timeline.append((r["recorded_at"], r["total_tokens"] or 0, is_anom, cause))
     return timeline
 
@@ -771,12 +812,39 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
             parts.append("spike vs same-source median")
         return " · ".join(parts)
 
+    # Enriched detail for the click-to-inspect box: session context (message/
+    # tool/user counts + duration) for hermes aggregates; input-token context
+    # for otel calls. This is the actual 'why' behind a red bar.
+    def _cause_detail(c: dict, t: int) -> str:
+        lines = [f"{_fmt_tok(t)} tok", f"{c['unit']} · {c['agent']} · {c['model']}"]
+        if c["tool"]:
+            lines.append(f"tool: {c['tool']}")
+        if c["finish_reason"] and c["finish_reason"] != "—":
+            lines.append(f"finish: {c['finish_reason']}")
+        inp, out, cr = c["input"], c["output"], c["cache_read"]
+        if inp or out:
+            lines.append(f"composition: {inp:,} input / {out:,} output"
+                         f"{' / ' + f'{cr:,} cached' if cr else ''}")
+        if c.get("session_msgs"):
+            dur = c.get("session_dur_s")
+            lines.append(f"session: {c['session_msgs']} msgs · {c['session_tools']} tools · "
+                         f"{c['session_user']} user msgs" + (f" · {dur/3600:.1f}h long" if dur else ""))
+        elif c["source"] == "otel" and (inp or out):
+            inp_pct = inp / max(inp + out, 1) * 100
+            lines.append(f"input context is {inp_pct:.0f}% of this call — large prompt/context re-send")
+        if c.get("session"):
+            lines.append(f"session_id: {c['session']}")
+        if c["provider"] and c["provider"] != "?":
+            lines.append(f"provider: {c['provider']}")
+        lines.append("flagged: spike vs same-source median (>2x)")
+        return "\n".join(lines)
+
     timeline_html = (
         ''.join(
             f'<div class="timeline-col{" anomaly" if a else ""}" '
             f'style="height:max(4px, {t / max_tok * 100}%)" '
             f'title="{_html_escape(_cause_parts(c, t, a))}" '
-            f'data-cause="{_html_escape(_cause_parts(c, t, a))}" '
+            f'data-cause="{_html_escape(_cause_detail(c, t) if a else _cause_parts(c, t, a))}" '
             f'onclick="showTimelineDetail(this)"></div>'
             for t, a, c in zip(turn_tokens, turn_anom, turn_cause)
         )
@@ -1048,7 +1116,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     <div class="timeline-bar" id="timelineBar">
         {timeline_html}
     </div>
-    <div id="timelineDetail" style="margin-top:10px;padding:10px 12px;border:1px solid var(--border, rgba(128,128,128,.25));border-radius:8px;background:var(--bg-2, rgba(255,255,255,.03));font-size:12px;color:var(--fg-3);display:none">Click a column to inspect that call.</div>
+    <div id="timelineDetail" style="margin-top:10px;padding:10px 12px;border:1px solid var(--border, rgba(128,128,128,.25));border-radius:8px;background:var(--bg-2, rgba(255,255,255,.03));font-size:12px;color:var(--fg-1);display:none;white-space:pre-line;line-height:1.6">Click a column to inspect that call.</div>
 </div>
 <script>
 function showTimelineDetail(el) {{
