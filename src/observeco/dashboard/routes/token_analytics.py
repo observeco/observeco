@@ -747,13 +747,20 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
             parts.append(f"tool: {c['tool']}")
         if c["finish_reason"] and c["finish_reason"] != "—":
             parts.append(c["finish_reason"])
+        elif c["source"] == "otel":
+            # otel rows with no finish_reason are pre-retention (no span,
+            # before Jun 29) — say so instead of silently omitting.
+            parts.append("no finish_reason (pre-Jun 29, no span)")
         # Composition: input dominates? cache engaged? -> the 'why'
         inp, out, cr = c["input"], c["output"], c["cache_read"]
         if inp or out:
             inp_pct = inp / max(inp + out, 1) * 100
             parts.append(f"{inp_pct:.0f}% input")
-            if cr:
-                parts.append(f"{cr / max(inp, 1) * 100:.0f}% cached")
+            if cr and inp > 0:
+                parts.append(f"{cr / inp * 100:.0f}% cached")
+            elif cr and inp == 0:
+                # degenerate: cache tokens without input tokens — label raw
+                parts.append(f"{_fmt_tok(cr)} cache")
         if a:
             parts.append("spike vs same-source median")
         return " · ".join(parts)
