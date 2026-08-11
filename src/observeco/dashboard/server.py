@@ -5130,7 +5130,7 @@ async def api_tokens_agents():
     from observeco.db import Database
     db = Database()
     conn = db._get_conn()
-    rows = conn.execute("SELECT DISTINCT agent_name FROM token_logs ORDER BY agent_name").fetchall()
+    rows = conn.execute("SELECT DISTINCT agent_name FROM token_logs WHERE source != 'watch' ORDER BY agent_name").fetchall()
     return {"agents": [r["agent_name"] for r in rows]}
 
 
@@ -5159,7 +5159,7 @@ async def api_tokens_breakdown(
     dim_col = {"agent": "agent_name", "provider": "provider", "workflow": "workflow_name", "service": "service_name"}
     col = dim_col.get(dimension, "agent_name")
 
-    where = "WHERE 1=1"
+    where = "WHERE source != 'watch'"
     params: list = []
     if from_ts:
         where += " AND recorded_at >= ?"

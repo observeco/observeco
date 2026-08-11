@@ -634,7 +634,7 @@ async def fleet_agents(status_filter: str = "", q: str = "", page: int = 1):
         now_ts = int(time.time())
         try:
             for row in conn_main.execute(
-                "SELECT DISTINCT agent_name FROM token_logs WHERE recorded_at > ?",
+                "SELECT DISTINCT agent_name FROM token_logs WHERE source != 'watch' AND recorded_at > ?",
                 (now_ts - 86400,),
             ).fetchall():
                 has_otel[row["agent_name"]] = True
