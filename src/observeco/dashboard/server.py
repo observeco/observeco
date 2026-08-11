@@ -2532,14 +2532,9 @@ async def api_brain(agent: str = "all"):
                 seen_comps.add(comp)
                 delta = d.get("delta_pct", 0) or 0
                 direction = "up" if delta > 0 else "down" if delta < 0 else "flat"
-                # Build 7-point weekly data from week_avg
-                week_avg = d.get("week_avg_tokens", d.get("current_tokens", 0)) or 0
-                curr = d.get("current_tokens", 0) or 0
-                points = [week_avg] * 6 + [curr]  # simulates 6 days avg + today
                 pct_str = f"{delta:+.0f}%" if delta != 0 else "0%"
                 drift.append({
                     "component": comp,
-                    "points": points,
                     "pct": pct_str,
                     "direction": direction,
                 })
@@ -2560,11 +2555,13 @@ async def api_brain(agent: str = "all"):
             hour = (p["timestamp"] - (now - 86400)) // 3600
             if 0 <= hour < 24:
                 turns[hour] += 1
-        # Scale: each pulse check = ~ some token usage. If no data, return empty
+        # Turn timeline: raw pulse-log COUNTS per hour, not tokens. (Formerly
+        # scaled by context size to fabricate a 'token' number — that implied
+        # measurement that never happened. Keep it as what it measures.)
         if sum(turns) > 0:
-            turns = [t * max(1, raw_tokens // max(sum(turns), 1)) for t in turns]
+            turn_counts = turns[:24]
         else:
-            turns = []  # no real data
+            turn_counts = []  # no real data
 
         fw = framework.capitalize() if framework else "Custom"
         name_label = fw
@@ -2580,7 +2577,7 @@ async def api_brain(agent: str = "all"):
             "lite_potential_pct": lite_potential_pct if not has_real_compress else None,
             "full_potential_pct": full_potential_pct if not has_real_compress else None,
             "drift": drift,
-            "turn_timeline": turns[:24],
+            "turn_timeline": turn_counts,
         }
 
     # Fleet total
@@ -2606,14 +2603,9 @@ async def api_brain(agent: str = "all"):
                 if d["component"] not in fleet_drift:
                     fleet_drift[d["component"]] = {
                         "component": d["component"],
-                        "points": d["points"][:],
                         "pct": d["pct"],  # simplified
                         "direction": d["direction"],
                     }
-                else:
-                    # Sum points
-                    for i in range(7):
-                        pass  # keep first for now
 
         # Fleet-level savings: compute potential from aggregate composition
         fleet_guidance_pct = (all_comps.get("guidance", 0) / max(raw_sum, 1)) * 100
@@ -2699,23 +2691,6 @@ async def api_brain(agent: str = "all"):
         f = result.pop("fleet")
         comp = f.get("components", {})
         total = f.get("raw_tokens", 0)
-        lite = f.get("lite_tokens")
-        full = f.get("full_tokens")
-        src = f.get("savings_source", "potential")
-        source_label = "measured" if src == "actual" else "estimated"
-
-        savings_html = ""
-        if lite or full:
-            items = []
-            if lite:
-                items.append(f'<span style="color:#22c55e;">Lite: {_fmt_tok(lite)}</span>')
-            if full:
-                items.append(f'<span style="color:#38bdf8;">Full: {_fmt_tok(full)}</span>')
-            savings_html = f'<div style="font-size:11px;color:#94a3b8;">{source_label}: {" · ".join(items)}</div>'
-        else:
-            # No meaningful compression activity — say so, don't dress it as a number.
-            savings_html = ('<div style="font-size:11px;color:#64748b;">'
-                            'no meaningful compression activity this week</div>')
 
         comp_labels = {"guidance":"Guidance","memory":"Memory","skills":"Skills","tools":"Tools","identity":"Identity"}
         comp_detail = " · ".join(f'{comp_labels.get(k,k)}: {_fmt_tok(v)}' for k,v in comp.items() if v > 0) if comp else "No component data"
@@ -2729,7 +2704,6 @@ async def api_brain(agent: str = "all"):
           <div style="font-size:20px;font-weight:700;color:#f8fafc;margin-bottom:4px;">{_fmt_tok(total)} <span style="font-size:12px;color:#64748b;">context</span></div>
           {_bar(comp, total)}
           <div style="font-size:11px;color:#64748b;margin-top:6px;">{comp_detail}</div>
-          {savings_html}
         </div>""")
 
     # Per-agent cards
@@ -2737,22 +2711,8 @@ async def api_brain(agent: str = "all"):
         comp = data.get("components", {})
         total = data.get("raw_tokens", 0)
         fw = data.get("framework", "")
-        lite = data.get("lite_tokens")
-        full = data.get("full_tokens")
         drift = data.get("drift", [])
         timeline = data.get("turn_timeline", [])
-
-        savings_html = ""
-        if lite or full:
-            items = []
-            if lite:
-                items.append(f'Lite: {_fmt_tok(lite)}')
-            if full:
-                items.append(f'Full: {_fmt_tok(full)}')
-            savings_html = f'<div style="font-size:11px;color:#64748b;margin-top:4px;">{" · ".join(items)}</div>'
-        else:
-            savings_html = ('<div style="font-size:11px;color:#64748b;margin-top:4px;">'
-                            'no compression activity</div>')
 
         drift_html = ""
         if drift:
@@ -2779,7 +2739,6 @@ async def api_brain(agent: str = "all"):
           <div style="font-size:16px;font-weight:700;color:#f8fafc;margin-bottom:4px;">{_fmt_tok(total)} <span style="font-size:11px;color:#64748b;">context</span></div>
           {_bar(comp, total)}
           <div style="font-size:11px;color:#64748b;margin-top:6px;">{comp_detail}</div>
-          {savings_html}
           {drift_html}
         </div>""")
 
