@@ -946,7 +946,7 @@ async def token_analytics(days: int = 7, agent: str = "__all__", hours: int = 0)
     <div class="vc-head"><span class="mark">$</span><span class="lead">SPEND VERDICT</span>
         <span class="vc-badge {badge_cls}">{confidence_pct}% accurate</span></div>
     <div class="vc-stats">
-        <div class="vc-stat"><span class="vc-num">{_fmt_dollar(measured_cost)}</span><span class="vc-lab">measured spend · {turn_count} calls</span></div>
+        <div class="vc-stat"><span class="vc-num">{_fmt_dollar(measured_cost)}</span><span class="vc-lab">estimated · computed from token counts, not billed · {turn_count} calls</span></div>
         <div class="vc-stat"><span class="vc-num {top_cls}">{top_spender_pct}%</span><span class="vc-lab">{_html_escape(top_agent)} top spender</span></div>
         <div class="vc-stat"><span class="vc-num {cache_cls}">{overall_cache_rate}%</span><span class="vc-lab">fleet cache hit</span></div>
         <div class="vc-stat"><span class="vc-num">{attr_pct}%</span><span class="vc-lab">attributed</span></div>
