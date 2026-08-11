@@ -11,25 +11,36 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
+    /* ============================================================
+       ObserveCo — instrument panel
+       Design system: assets/design-system/DESIGN.md (pinned by brief)
+       Type: Space Grotesk (display) · Inter (body) · JetBrains Mono (data)
+       Signature: live telemetry ticker
+       ============================================================ */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
       --bg: #0f172a;
       --surface: #1e293b;
       --surface-hover: #253349;
+      --surface-active: #334155;
       --border: #334155;
+      --border-subtle: #273548;
       --green: #22c55e;
-      --green-dim: rgba(34, 197, 94, 0.15);
+      --green-dim: rgba(34, 197, 94, 0.12);
       --blue: #3b82f6;
       --yellow: #eab308;
       --red: #ef4444;
       --fg: #f8fafc;
       --fg-2: #94a3b8;
       --fg-3: #64748b;
+      --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+      --tick-h: 34px;
     }
 
     html { scroll-behavior: smooth; }
@@ -40,223 +51,175 @@
       color: var(--fg);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      padding-top: var(--tick-h);
     }
 
-    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+
+    /* ─── SIGNATURE: TELEMETRY TICKER ─── */
+    .ticker {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      height: var(--tick-h);
+      background: rgba(11, 17, 32, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      overflow: hidden;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-2);
+      white-space: nowrap;
+    }
+    .ticker .tick-inner {
+      display: flex; align-items: center; gap: 0;
+      animation: ticker-scroll 42s linear infinite;
+      will-change: transform;
+    }
+    .ticker:hover .tick-inner { animation-play-state: paused; }
+    @keyframes ticker-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .tick-item {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 0 22px;
+      border-right: 1px solid var(--border-subtle);
+    }
+    .tick-item .tick-label { color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.08em; font-size: 9px; }
+    .tick-item .tick-val { color: var(--fg); font-weight: 500; }
+    .tick-item .tick-val.green { color: var(--green); }
+    .tick-item .tick-val.yellow { color: var(--yellow); }
+    .tick-item .tick-val.red { color: var(--red); }
+    .tick-item .tick-val.blue { color: var(--blue); }
+    .tick-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .tick-dot.green { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,.5); }
+    .tick-dot.yellow { background: var(--yellow); box-shadow: 0 0 6px rgba(234,179,8,.5); }
+    .tick-dot.red { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,.5); animation: pulse-alert 2s ease-in-out infinite; }
+    @keyframes pulse-alert { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
     /* ─── NAV ─── */
     nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      position: sticky; top: var(--tick-h); z-index: 100;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
-    nav .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    nav .container { display: flex; align-items: center; justify-content: space-between; height: 60px; }
     .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); }
-    .nav-logo svg { width: 32px; height: 32px; }
-    .nav-logo span { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
-    .nav-links { display: flex; gap: 32px; align-items: center; }
-    .nav-links a { color: var(--fg-2); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+    .nav-logo svg { width: 30px; height: 30px; }
+    .nav-logo span { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { color: var(--fg-2); text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.15s; }
     .nav-links a:hover { color: var(--fg); }
     .nav-cta {
-      background: var(--green) !important; color: #000 !important; padding: 8px 16px;
-      border-radius: 6px; font-weight: 600 !important; font-family: var(--font-mono); font-size: 13px !important;
+      background: var(--green); color: #000 !important; padding: 7px 14px;
+      border-radius: 4px; font-weight: 600 !important; font-family: var(--font-mono); font-size: 12px !important;
     }
     .nav-cta:hover { opacity: 0.9; }
 
     /* ─── HERO ─── */
-    .hero { padding: 140px 0 80px; text-align: center; }
+    .hero { padding: 96px 0 64px; position: relative; }
+    .hero .container { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
       background: var(--green-dim); border: 1px solid rgba(34, 197, 94, 0.3);
-      color: var(--green); padding: 6px 14px; border-radius: 999px;
-      font-size: 13px; font-weight: 500; margin-bottom: 24px;
+      color: var(--green); padding: 5px 12px; border-radius: 2px;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 500; margin-bottom: 22px;
+      letter-spacing: 0.04em;
     }
     .hero-badge .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     .hero h1 {
-      font-size: clamp(36px, 5vw, 64px); font-weight: 700; line-height: 1.1;
-      letter-spacing: -0.03em; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto;
+      font-family: var(--font-display);
+      font-size: clamp(38px, 4.6vw, 58px); font-weight: 700; line-height: 1.05;
+      letter-spacing: -0.03em; margin-bottom: 20px;
     }
     .hero h1 .green { color: var(--green); }
-    .hero p { font-size: 18px; color: var(--fg-2); max-width: 560px; margin: 0 auto 32px; line-height: 1.6; }
+    .hero h1 .dim { color: var(--fg-3); }
+    .hero p { font-size: 16px; color: var(--fg-2); max-width: 46ch; margin-bottom: 28px; line-height: 1.6; }
     .hero-install {
       display: inline-flex; align-items: center; gap: 12px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-      padding: 14px 24px; font-family: var(--font-mono); font-size: 15px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 12px 18px; font-family: var(--font-mono); font-size: 14px;
       color: var(--green); cursor: pointer; transition: border-color 0.15s;
     }
     .hero-install:hover { border-color: var(--green); }
-    .hero-install .copy { color: var(--fg-3); font-size: 13px; margin-left: 8px; }
-    .hero-note { margin-top: 16px; font-size: 13px; color: var(--fg-3); }
+    .hero-install .copy { color: var(--fg-3); font-size: 12px; margin-left: 6px; }
+    .hero-note { margin-top: 14px; font-size: 12px; color: var(--fg-3); font-family: var(--font-mono); }
     .hero-note span { color: var(--fg-2); }
 
-    /* ─── DASHBOARD PREVIEW (interactive mockup) ─── */
-    .preview { padding: 0 0 100px; }
-    .preview-frame {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden; box-shadow: 0 48px 96px rgba(0, 0, 0, 0.4);
+    /* live terminal */
+    .live-term {
+      background: #0b1120; border: 1px solid var(--border); border-radius: 6px;
+      font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7;
+      overflow: hidden; box-shadow: 0 32px 64px rgba(0,0,0,0.45);
     }
-    .preview-bar {
-      display: flex; align-items: center; gap: 8px; padding: 12px 16px;
-      background: rgba(15, 23, 42, 0.6); border-bottom: 1px solid var(--border);
+    .live-term .term-bar {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      background: rgba(15, 23, 42, 0.7); border-bottom: 1px solid var(--border);
     }
-    .preview-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .preview-dot.r { background: #ef4444; }
-    .preview-dot.y { background: #eab308; }
-    .preview-dot.g { background: #22c55e; }
-    .preview-url { flex: 1; text-align: center; font-size: 12px; color: var(--fg-3); font-family: var(--font-mono); }
+    .live-term .term-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .live-term .term-dot.r { background: #ef4444; } .live-term .term-dot.y { background: #eab308; } .live-term .term-dot.g { background: #22c55e; }
+    .live-term .term-title { flex: 1; text-align: center; font-size: 10px; color: var(--fg-3); letter-spacing: 0.06em; }
+    .live-term .term-body { padding: 16px 18px; min-height: 300px; }
+    .live-term .prompt { color: var(--green); }
+    .live-term .cmd { color: var(--fg); }
+    .live-term .out { color: var(--fg-2); }
+    .live-term .ok { color: var(--green); }
+    .live-term .warn { color: var(--yellow); }
+    .live-term .err { color: var(--red); }
+    .live-term .cursor { display: inline-block; width: 8px; height: 14px; background: var(--green); vertical-align: middle; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .term-line { opacity: 0; animation: term-in 0.3s ease-out forwards; }
+    @keyframes term-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
-    /* Mockup dashboard */
-    .mockup {
-      padding: 20px;
-      display: flex; flex-direction: column; gap: 16px;
-    }
-    .mockup-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    }
-    .mockup-card {
-      background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border);
-      border-radius: 8px; padding: 16px;
-    }
-    .mockup-card h4 {
-      font-size: 11px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.05em; color: var(--fg-3); margin-bottom: 8px;
-    }
-    .mockup-card .big {
-      font-size: 28px; font-weight: 700; font-family: var(--font-mono);
-    }
-    .mockup-card .big.green { color: var(--green); }
-    .mockup-card .big.yellow { color: var(--yellow); }
-    .mockup-card .big.red { color: var(--red); }
-    .mockup-card .sub { font-size: 12px; color: var(--fg-3); margin-top: 2px; }
-    .mockup-card .bar {
-      height: 6px; border-radius: 3px; margin-top: 8px;
-      background: var(--border); overflow: hidden;
-    }
-    .mockup-card .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-    .mockup-card .bar-fill.green { background: var(--green); }
-    .mockup-card .bar-fill.yellow { background: var(--yellow); }
-    .mockup-card .bar-fill.red { background: var(--red); }
-    .mockup-card .bar-fill.blue { background: var(--blue); }
-
-    .mockup-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .mockup-table th { text-align: left; color: var(--fg-3); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-    .mockup-table td { padding: 6px 8px; border-bottom: 1px solid rgba(51, 65, 85, 0.4); }
-    .mockup-table .status { display: inline-flex; align-items: center; gap: 4px; }
-    .mockup-table .dot-sm { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-    .mockup-table .dot-sm.green { background: var(--green); }
-    .mockup-table .dot-sm.yellow { background: var(--yellow); }
-    .mockup-table .dot-sm.red { background: var(--red); }
-
-    .mockup-nav {
-      display: flex; gap: 16px; margin-bottom: 4px;
-    }
-    .mockup-nav a {
-      font-size: 12px; color: var(--fg-3); text-decoration: none; padding-bottom: 4px;
-      border-bottom: 2px solid transparent; transition: all 0.15s;
-    }
-    .mockup-nav a.active { color: var(--green); border-bottom-color: var(--green); }
-    .mockup-nav a:hover { color: var(--fg); }
-
-    /* ─── SECTION ─── */
-    section { padding: 100px 0; }
+    /* ─── SECTION BASE ─── */
+    section { padding: 88px 0; }
     .section-label {
-      font-size: 12px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.1em; color: var(--green); margin-bottom: 12px;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--green); margin-bottom: 12px;
     }
     .section-title {
-      font-size: clamp(28px, 3.5vw, 40px); font-weight: 700;
-      letter-spacing: -0.02em; margin-bottom: 16px; line-height: 1.2;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.4vw, 40px); font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 14px; line-height: 1.15;
     }
-    .section-desc { font-size: 16px; color: var(--fg-2); max-width: 560px; line-height: 1.6; }
+    .section-desc { font-size: 15px; color: var(--fg-2); max-width: 56ch; line-height: 1.6; }
 
-    /* ─── FEATURES GRID ─── */
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
+    /* reveal on scroll */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* ─── FEATURES ─── */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 40px; }
     .feature-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 24px; transition: border-color 0.15s;
+      background: var(--bg); padding: 22px 22px 20px; transition: background 0.15s;
+      display: flex; flex-direction: column; gap: 8px;
     }
-    .feature-card:hover { border-color: var(--green); }
-    .feature-icon {
-      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
-      background: var(--green-dim); border-radius: 8px; margin-bottom: 16px; font-size: 18px;
-    }
-    .feature-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-    .feature-card p { font-size: 13px; color: var(--fg-2); line-height: 1.5; }
+    .feature-card:hover { background: var(--surface); }
+    .feature-card .f-icon { font-size: 16px; color: var(--green); font-family: var(--font-mono); }
+    .feature-card h3 { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
+    .feature-card p { font-size: 12.5px; color: var(--fg-2); line-height: 1.5; }
     .feature-card .tag {
-      display: inline-block; margin-top: 12px; font-size: 11px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px;
-      border-radius: 4px; border: 1px solid var(--border); color: var(--fg-3);
+      align-self: flex-start; margin-top: 4px; font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px;
+      border-radius: 2px; border: 1px solid var(--border); color: var(--fg-3);
     }
-    .feature-card .tag.free { border-color: var(--green); color: var(--green); }
+    .feature-card .tag.free { border-color: rgba(34,197,94,.4); color: var(--green); }
 
     /* ─── HOW IT WORKS ─── */
-    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 48px; }
-    .step { text-align: center; }
-    .step-num {
-      font-family: var(--font-mono); font-size: 40px; font-weight: 700;
-      color: var(--green); opacity: 0.3; margin-bottom: 16px;
-    }
-    .step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-    .step p { font-size: 14px; color: var(--fg-2); line-height: 1.5; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 40px; border: 1px solid var(--border); }
+    .step { padding: 26px 24px; border-right: 1px solid var(--border); background: var(--surface); }
+    .step:last-child { border-right: none; }
+    .step-num { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 12px; }
+    .step h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--fg-2); line-height: 1.5; }
+    .step p code { color: var(--green); font-family: var(--font-mono); font-size: 12px; }
 
-    /* ─── COMPARISON ─── */
-    .comparison {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden; margin-top: 48px;
-    }
-    .comparison-row { display: grid; grid-template-columns: 200px 1fr 1fr; border-bottom: 1px solid var(--border); }
-    .comparison-row:last-child { border-bottom: none; }
-    .comparison-row.header { background: rgba(15, 23, 42, 0.5); }
-    .comparison-cell { padding: 14px 20px; font-size: 14px; border-right: 1px solid var(--border); }
-    .comparison-cell:last-child { border-right: none; }
-    .comparison-row.header .comparison-cell { font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-3); }
-    .comparison-cell .check { color: var(--green); }
-    .comparison-cell .cross { color: var(--fg-3); }
-
-    /* ─── ROADMAP ─── */
-    .roadmap-items { margin-top: 48px; display: flex; flex-direction: column; gap: 0; }
-    .roadmap-item { display: grid; grid-template-columns: 120px 1fr; gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--border); }
-    .roadmap-item:last-child { border-bottom: none; }
-    .roadmap-version { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--green); }
-    .roadmap-item h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-    .roadmap-item p { font-size: 14px; color: var(--fg-2); }
-
-    /* ─── CTA ─── */
-    .cta { text-align: center; padding: 100px 0; border-top: 1px solid var(--border); }
-    .cta h2 { font-size: clamp(28px, 3.5vw, 40px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; }
-    .cta p { font-size: 16px; color: var(--fg-2); margin-bottom: 32px; }
-    .cta-install {
-      display: inline-flex; align-items: center; gap: 12px;
-      background: var(--green); color: #000; padding: 14px 28px; border-radius: 8px;
-      font-family: var(--font-mono); font-size: 15px; font-weight: 600;
-      text-decoration: none; transition: opacity 0.15s;
-    }
-    .cta-install:hover { opacity: 0.9; }
-
-    /* ─── FOOTER ─── */
-    footer { border-top: 1px solid var(--border); padding: 32px 0; text-align: center; font-size: 13px; color: var(--fg-3); }
-    footer a { color: var(--fg-2); text-decoration: none; }
-    footer a:hover { color: var(--fg); }
-
-    /* ─── RESPONSIVE ─── */
-    @media (max-width: 768px) {
-      .features-grid { grid-template-columns: 1fr; }
-      .steps { grid-template-columns: 1fr; gap: 40px; }
-      .comparison-row { grid-template-columns: 1fr; }
-      .comparison-cell { border-right: none; border-bottom: 1px solid var(--border); }
-      .comparison-cell:last-child { border-bottom: none; }
-      .roadmap-item { grid-template-columns: 1fr; gap: 8px; }
-      .nav-links { display: none; }
-      .mockup-row { grid-template-columns: 1fr; }
-    }
-
-    /* ─── TERMINAL DEMO ─── */
     .terminal {
-      background: #0b1120; border: 1px solid var(--border); border-radius: 8px;
-      padding: 24px; font-family: var(--font-mono); font-size: 14px;
-      line-height: 1.8; margin-top: 48px; overflow-x: auto;
+      background: #0b1120; border: 1px solid var(--border); border-radius: 6px;
+      padding: 22px 24px; font-family: var(--font-mono); font-size: 13px;
+      line-height: 1.8; margin-top: 20px; overflow-x: auto;
     }
     .terminal .prompt { color: var(--green); }
     .terminal .cmd { color: var(--fg); }
@@ -264,15 +227,91 @@
     .terminal .ok { color: var(--green); }
     .terminal .warn { color: var(--yellow); }
     .terminal .err { color: var(--red); }
+
+    /* ─── COMPARE ─── */
+    .comparison { border: 1px solid var(--border); margin-top: 40px; }
+    .comparison-row { display: grid; grid-template-columns: 220px 1fr 1fr; border-bottom: 1px solid var(--border); }
+    .comparison-row:last-child { border-bottom: none; }
+    .comparison-row.header { background: var(--surface); }
+    .comparison-cell { padding: 13px 18px; font-size: 13px; border-right: 1px solid var(--border); }
+    .comparison-cell:last-child { border-right: none; }
+    .comparison-row.header .comparison-cell { font-family: var(--font-mono); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-3); }
+    .comparison-cell .check { color: var(--green); font-weight: 600; }
+    .comparison-cell .cross { color: var(--fg-3); }
+
+    /* ─── ROADMAP ─── */
+    .roadmap-items { margin-top: 40px; border-left: 1px solid var(--border); padding-left: 0; }
+    .roadmap-item { display: grid; grid-template-columns: 130px 1fr; gap: 20px; padding: 20px 0 20px 24px; position: relative; }
+    .roadmap-item::before {
+      content: ""; position: absolute; left: -5px; top: 26px;
+      width: 9px; height: 9px; border-radius: 50%; background: var(--bg); border: 2px solid var(--green);
+    }
+    .roadmap-item.shipped::before { border-color: var(--green); }
+    .roadmap-item.now::before { border-color: var(--green); box-shadow: 0 0 8px rgba(34,197,94,.6); }
+    .roadmap-item.next::before { border-color: var(--blue); }
+    .roadmap-item.soon::before { border-color: var(--fg-3); }
+    .roadmap-version { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--green); padding-top: 2px; }
+    .roadmap-item.next .roadmap-version { color: var(--blue); }
+    .roadmap-item.soon .roadmap-version { color: var(--fg-3); }
+    .roadmap-item h3 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .roadmap-item p { font-size: 13px; color: var(--fg-2); }
+
+    /* ─── CTA ─── */
+    .cta { text-align: center; padding: 88px 0; border-top: 1px solid var(--border); }
+    .cta h2 { font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 40px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .cta p { font-size: 15px; color: var(--fg-2); margin-bottom: 28px; }
+    .cta-install {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--green); color: #000; padding: 13px 26px; border-radius: 4px;
+      font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+      text-decoration: none; transition: opacity 0.15s;
+    }
+    .cta-install:hover { opacity: 0.9; }
+
+    /* ─── FOOTER ─── */
+    footer { border-top: 1px solid var(--border); padding: 28px 0; }
+    footer .container { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--fg-3); }
+    footer a { color: var(--fg-2); text-decoration: none; }
+    footer a:hover { color: var(--fg); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .hero .container { grid-template-columns: 1fr; gap: 36px; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .step { border-right: none; border-bottom: 1px solid var(--border); }
+      .step:last-child { border-bottom: none; }
+      .comparison-row { grid-template-columns: 1fr; }
+      .comparison-cell { border-right: none; border-bottom: 1px solid var(--border); }
+      .comparison-cell:last-child { border-bottom: none; }
+      .roadmap-item { grid-template-columns: 1fr; gap: 6px; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 560px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      .ticker .tick-inner { animation: none; }
+      .term-line { opacity: 1; animation: none; }
+    }
   </style>
 </head>
 <body>
+
+<!-- SIGNATURE: TELEMETRY TICKER -->
+<div class="ticker" aria-hidden="true">
+  <div class="tick-inner" id="tickInner">
+    <!-- populated by JS -->
+  </div>
+</div>
 
 <!-- NAV -->
 <nav>
   <div class="container">
     <a href="#" class="nav-logo">
-      <svg viewBox="0 0 128 128" width="32" height="32">
+      <svg viewBox="0 0 128 128" width="30" height="30">
         <defs>
           <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:#22c55e"/>
@@ -298,275 +337,32 @@
 <!-- HERO -->
 <section class="hero">
   <div class="container">
-    <div class="hero-badge">
-      <span class="dot"></span>
-      v0.3 · Ship Ready · 610 tests · Open source · MIT license · No cloud
-    </div>
-    <h1>Tells you if your AI agents are <span class="green">working</span>, what they're doing, and where your <span class="green">money</span> goes.</h1>
-    <p>18 features. One install. 60 seconds to first health data. Your data never leaves your machine.</p>
-    <div class="hero-install" onclick="navigator.clipboard.writeText('pip install observeco && observeco dashboard'); this.querySelector('.copy').textContent='copied!'">
-      <span>$</span> pip install observeco && observeco dashboard
-      <span class="copy">click to copy</span>
-    </div>
-    <p class="hero-note"><span>Works with Hermes, OpenClaw, Ollama, or any agent framework.</span></p>
-  </div>
-</section>
-
-<!-- DASHBOARD PREVIEW (interactive mockup) -->
-<section class="preview">
-  <div class="container">
-    <div class="preview-frame">
-      <div class="preview-bar">
-        <div class="preview-dot r"></div>
-        <div class="preview-dot y"></div>
-        <div class="preview-dot g"></div>
-        <div class="preview-url">observeco dashboard</div>
+    <div>
+      <div class="hero-badge"><span class="dot"></span> v0.3 · 610 tests · MIT · no cloud</div>
+      <h1>Your agents are <span class="green">talking</span>.<br>ObserveCo is <span class="dim">listening</span>.</h1>
+      <p>Alive or dead. Bloated or lean. Costing you money or earning it back. One install, 60 seconds, and you can see exactly what your agents are doing — and where your money goes.</p>
+      <div class="hero-install" onclick="navigator.clipboard.writeText('pip install observeco && observeco dashboard'); this.querySelector('.copy').textContent='copied!'">
+        <span>$</span> pip install observeco && observeco dashboard
+        <span class="copy">click to copy</span>
       </div>
-      <div class="mockup" id="mockup-dashboard">
-        <div class="mockup-nav">
-          <a href="#" class="active" data-tab="Fleet">Fleet</a>
-          <a href="#" data-tab="Tokens">Tokens</a>
-          <a href="#" data-tab="Drift">Drift</a>
-          <a href="#" data-tab="Errors">Errors</a>
-          <a href="#" data-tab="Alerts">Alerts</a>
-          <a href="#" data-tab="Settings">Settings</a>
-        </div>
-
-        <!-- FLEET -->
-        <div class="tab-panel" data-tab="Fleet">
-          <div class="mockup-row">
-            <div class="mockup-card">
-              <h4>Fleet Health</h4>
-              <div class="big green">6/8</div>
-              <div class="sub">agents alive · 2 degraded</div>
-              <div class="bar"><div class="bar-fill green" style="width: 75%;"></div></div>
-            </div>
-            <div class="mockup-card">
-              <h4>Total Tokens Today</h4>
-              <div class="big">1.2M</div>
-              <div class="sub">across all agents · <span style="color: var(--green);">$0.04</span> estimated cost</div>
-              <div class="bar"><div class="bar-fill blue" style="width: 60%;"></div></div>
-            </div>
-          </div>
-          <div class="mockup-row">
-            <div class="mockup-card" style="grid-column: 1 / -1;">
-              <h4>Agent Fleet</h4>
-              <table class="mockup-table">
-                <tr><th>Agent</th><th>Status</th><th>Tokens</th><th>Drift</th><th>Errors</th><th>Circuit</th></tr>
-                <tr><td>hound</td><td><span class="status"><span class="dot-sm green"></span> alive</span></td><td>12.4K</td><td>+2%</td><td>0</td><td>closed</td></tr>
-                <tr><td>kepler</td><td><span class="status"><span class="dot-sm green"></span> alive</span></td><td>8.2K</td><td>-1%</td><td>0</td><td>closed</td></tr>
-                <tr><td>aleph</td><td><span class="status"><span class="dot-sm green"></span> alive</span></td><td>15.6K</td><td>+5%</td><td>1</td><td>closed</td></tr>
-                <tr><td>dreamer</td><td><span class="status"><span class="dot-sm yellow"></span> degraded</span></td><td>6.1K</td><td>+12%</td><td>3</td><td>open</td></tr>
-                <tr><td>raven</td><td><span class="status"><span class="dot-sm red"></span> dead</span></td><td>—</td><td>—</td><td>5</td><td>open</td></tr>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- TOKENS -->
-        <div class="tab-panel" data-tab="Tokens" style="display: none;">
-          <div class="mockup-row">
-            <div class="mockup-card">
-              <h4>Cost Today</h4>
-              <div class="big green">$0.04</div>
-              <div class="sub">1.2M tokens · across 5 agents</div>
-              <div class="bar"><div class="bar-fill blue" style="width: 60%;"></div></div>
-            </div>
-            <div class="mockup-card">
-              <h4>Cache Efficiency</h4>
-              <div class="big">68%</div>
-              <div class="sub">cache hit rate · saving ~$0.08/day</div>
-              <div class="bar"><div class="bar-fill green" style="width: 68%;"></div></div>
-            </div>
-          </div>
-          <div class="mockup-row">
-            <div class="mockup-card" style="grid-column: 1 / -1;">
-              <h4>Tokens Today by Agent</h4>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
-                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">aleph</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 100%;"></div></div>
-                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px;">15.6K</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">hound</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 79%;"></div></div>
-                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px;">12.4K</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">kepler</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 53%;"></div></div>
-                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px;">8.2K</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">dreamer</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 39%;"></div></div>
-                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px;">6.1K</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <span style="width: 60px; font-family: var(--font-mono); font-size: 12px; color: var(--fg-2);">raven</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 0%;"></div></div>
-                <span style="width: 44px; text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--fg-3);">0</span>
-              </div>
-            </div>
-          </div>
-          <div class="mockup-row">
-            <div class="mockup-card" style="grid-column: 1 / -1;">
-              <h4>Token Composition</h4>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
-                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">identity</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill green" style="width: 18%;"></div></div>
-                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">18%</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">skills</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 32%;"></div></div>
-                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">32%</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">memory</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill yellow" style="width: 24%;"></div></div>
-                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">24%</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">tools</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill blue" style="width: 14%;"></div></div>
-                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">14%</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <span style="width: 70px; font-size: 12px; color: var(--fg-2);">guidance</span>
-                <div class="bar" style="flex: 1; margin-top: 0;"><div class="bar-fill green" style="width: 12%;"></div></div>
-                <span style="width: 36px; text-align: right; font-family: var(--font-mono); font-size: 12px;">12%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- DRIFT -->
-        <div class="tab-panel" data-tab="Drift" style="display: none;">
-          <div class="mockup-row">
-            <div class="mockup-card">
-              <h4>Fleet Drift</h4>
-              <div class="big yellow">+3.6%</div>
-              <div class="sub">average across all agents · 7-day window</div>
-              <div class="bar"><div class="bar-fill yellow" style="width: 36%;"></div></div>
-            </div>
-            <div class="mockup-card">
-              <h4>Worst Offender</h4>
-              <div class="big red">dreamer</div>
-              <div class="sub">+12% · memory bloat detected</div>
-              <div class="bar"><div class="bar-fill red" style="width: 80%;"></div></div>
-            </div>
-          </div>
-          <div class="mockup-row">
-            <div class="mockup-card" style="grid-column: 1 / -1;">
-              <h4>Drift by Component</h4>
-              <table class="mockup-table">
-                <tr><th>Agent</th><th>Identity</th><th>Skills</th><th>Memory</th><th>Tools</th><th>Guidance</th><th>Overall</th></tr>
-                <tr><td>hound</td><td style="color: var(--green);">+1%</td><td style="color: var(--green);">+2%</td><td style="color: var(--green);">+3%</td><td style="color: var(--green);">0%</td><td style="color: var(--green);">+1%</td><td style="color: var(--green);">+2%</td></tr>
-                <tr><td>kepler</td><td style="color: var(--green);">0%</td><td style="color: var(--green);">-2%</td><td style="color: var(--green);">-1%</td><td style="color: var(--green);">0%</td><td style="color: var(--green);">-1%</td><td style="color: var(--green);">-1%</td></tr>
-                <tr><td>aleph</td><td style="color: var(--green);">+2%</td><td style="color: var(--yellow);">+6%</td><td style="color: var(--yellow);">+7%</td><td style="color: var(--green);">+1%</td><td style="color: var(--green);">+3%</td><td style="color: var(--yellow);">+5%</td></tr>
-                <tr><td>dreamer</td><td style="color: var(--green);">+3%</td><td style="color: var(--yellow);">+8%</td><td style="color: var(--red);">+24%</td><td style="color: var(--yellow);">+7%</td><td style="color: var(--green);">+2%</td><td style="color: var(--red);">+12%</td></tr>
-                <tr><td>raven</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td><td style="color: var(--fg-3);">—</td></tr>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- ERRORS -->
-        <div class="tab-panel" data-tab="Errors" style="display: none;">
-          <div class="mockup-row">
-            <div class="mockup-card">
-              <h4>Errors Today</h4>
-              <div class="big red">9</div>
-              <div class="sub">across 5 agents · 2 agents affected</div>
-              <div class="bar"><div class="bar-fill red" style="width: 45%;"></div></div>
-            </div>
-            <div class="mockup-card">
-              <h4>Clean Agents</h4>
-              <div class="big green">2/5</div>
-              <div class="sub">hound &amp; kepler · 0 errors</div>
-              <div class="bar"><div class="bar-fill green" style="width: 40%;"></div></div>
-            </div>
-          </div>
-          <div class="mockup-row">
-            <div class="mockup-card" style="grid-column: 1 / -1;">
-              <h4>Recent Errors</h4>
-              <table class="mockup-table">
-                <tr><th>Time</th><th>Agent</th><th>Error</th><th>Status</th></tr>
-                <tr><td>—</td><td>hound</td><td style="color: var(--fg-3);">no errors</td><td><span class="status"><span class="dot-sm green"></span> ok</span></td></tr>
-                <tr><td>—</td><td>kepler</td><td style="color: var(--fg-3);">no errors</td><td><span class="status"><span class="dot-sm green"></span> ok</span></td></tr>
-                <tr><td>14:02</td><td>aleph</td><td>timeout in skill load</td><td><span class="status"><span class="dot-sm yellow"></span> recovered</span></td></tr>
-                <tr><td>13:47</td><td>dreamer</td><td>memory overflow</td><td><span class="status"><span class="dot-sm yellow"></span> degraded</span></td></tr>
-                <tr><td>13:31</td><td>dreamer</td><td>tool call failed</td><td><span class="status"><span class="dot-sm yellow"></span> degraded</span></td></tr>
-                <tr><td>13:12</td><td>dreamer</td><td>rate limited</td><td><span class="status"><span class="dot-sm yellow"></span> degraded</span></td></tr>
-                <tr><td>12:58</td><td>raven</td><td>connection refused (×3)</td><td><span class="status"><span class="dot-sm red"></span> dead</span></td></tr>
-                <tr><td>12:40</td><td>raven</td><td>auth expired (×2)</td><td><span class="status"><span class="dot-sm red"></span> dead</span></td></tr>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- ALERTS -->
-        <div class="tab-panel" data-tab="Alerts" style="display: none;">
-          <div class="mockup-row">
-            <div class="mockup-card">
-              <h4>Channels Active</h4>
-              <div class="big green">3/3</div>
-              <div class="sub">Telegram · Discord · Email</div>
-              <div class="bar"><div class="bar-fill green" style="width: 100%;"></div></div>
-            </div>
-            <div class="mockup-card">
-              <h4>Last Alert Sent</h4>
-              <div class="big">12:58</div>
-              <div class="sub"><span style="color: var(--red);">raven</span> dead · delivered to 3 channels</div>
-              <div class="bar"><div class="bar-fill red" style="width: 100%;"></div></div>
-            </div>
-          </div>
-          <div class="mockup-row">
-            <div class="mockup-card" style="grid-column: 1 / -1;">
-              <h4>Alert Channels</h4>
-              <table class="mockup-table">
-                <tr><th>Channel</th><th>Status</th><th>Delivered</th><th>Toggle</th></tr>
-                <tr><td>Telegram</td><td><span class="status"><span class="dot-sm green"></span> connected ✓</span></td><td>14 today</td><td style="color: var(--green); font-family: var(--font-mono);">on</td></tr>
-                <tr><td>Discord</td><td><span class="status"><span class="dot-sm green"></span> connected ✓</span></td><td>14 today</td><td style="color: var(--green); font-family: var(--font-mono);">on</td></tr>
-                <tr><td>Email</td><td><span class="status"><span class="dot-sm green"></span> connected ✓</span></td><td>14 today</td><td style="color: var(--green); font-family: var(--font-mono);">on</td></tr>
-              </table>
-              <div style="margin-top: 14px;">
-                <span style="display: inline-flex; align-items: center; gap: 8px; background: var(--green); color: #000; padding: 8px 16px; border-radius: 6px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; cursor: pointer;">Send Test Alert</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- SETTINGS -->
-        <div class="tab-panel" data-tab="Settings" style="display: none;">
-          <div class="mockup-row">
-            <div class="mockup-card">
-              <h4>Dashboard Port</h4>
-              <div class="big">8123</div>
-              <div class="sub">http://localhost:8123</div>
-            </div>
-            <div class="mockup-card">
-              <h4>Auto-Refresh Interval</h4>
-              <div class="big">30s</div>
-              <div class="sub">dashboard polling cadence</div>
-            </div>
-          </div>
-          <div class="mockup-row">
-            <div class="mockup-card">
-              <h4>Pulse Check Interval</h4>
-              <div class="big">30s</div>
-              <div class="sub">agent heartbeat polling</div>
-            </div>
-            <div class="mockup-card">
-              <h4>Watch Daemon</h4>
-              <div class="big green">enabled</div>
-              <div class="sub">auto-heal dead agents on trip</div>
-              <div class="bar"><div class="bar-fill green" style="width: 100%;"></div></div>
-            </div>
-          </div>
-          <!-- Pro License Key removed — all features free for now -->
-        </div>
+      <p class="hero-note"><span>Works with Hermes, OpenClaw, Ollama, or any agent framework.</span></p>
+    </div>
+    <div class="live-term">
+      <div class="term-bar">
+        <div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div>
+        <div class="term-title">observeco dashboard — live</div>
+      </div>
+      <div class="term-body" id="termBody">
+        <div class="term-line" style="animation-delay:0.2s"><span class="prompt">$</span> <span class="cmd">observeco pulse check</span></div>
+        <div class="term-line" style="animation-delay:0.6s"><span class="out">Agent Fleet Health</span></div>
+        <div class="term-line" style="animation-delay:0.9s"><span class="ok">● hound</span> <span class="out">alive · 30s ago · 12,400 tok</span></div>
+        <div class="term-line" style="animation-delay:1.1s"><span class="ok">● kepler</span> <span class="out">alive · 30s ago · 8,200 tok</span></div>
+        <div class="term-line" style="animation-delay:1.3s"><span class="ok">● aleph</span> <span class="out">alive · 30s ago · 15,600 tok</span></div>
+        <div class="term-line" style="animation-delay:1.5s"><span class="warn">● dreamer</span> <span class="out">degraded · 2 missed heartbeats</span></div>
+        <div class="term-line" style="animation-delay:1.7s"><span class="err">● raven</span> <span class="out">dead · no response in 5m</span></div>
+        <div class="term-line" style="animation-delay:2.0s"><span class="prompt">$</span> <span class="cmd">observeco dashboard</span></div>
+        <div class="term-line" style="animation-delay:2.4s"><span class="out">Dashboard running at <span style="color:var(--blue)">http://localhost:8123</span></span></div>
+        <div class="term-line" style="animation-delay:2.8s"><span class="prompt">$</span> <span class="cursor"></span></div>
       </div>
     </div>
   </div>
@@ -575,114 +371,29 @@
 <!-- FEATURES -->
 <section id="features">
   <div class="container">
-    <div class="section-label">What you get</div>
-    <h2 class="section-title">18 features. Auto-detects your agent stack.</h2>
-    <p class="section-desc">Everything you need to know if your agents are alive, what's in their context, and when something breaks.</p>
+    <div class="section-label reveal">What you get</div>
+    <h2 class="section-title reveal">18 instruments. One panel.</h2>
+    <p class="section-desc reveal">Everything you need to know if your agents are alive, what's in their context, and when something breaks.</p>
 
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">💓</div>
-        <h3>Pulse Check</h3>
-        <p>Agent liveness — alive, dead, or errored. Every 30 seconds. Zero config.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3>Circuit Breaker</h3>
-        <p>N-failure trip → auto-block → cooldown. Stops cascade failures before they spread.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔧</div>
-        <h3>Heal Button</h3>
-        <p>One-click restart for dead agents. Manual trigger, you're in control.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🧠</div>
-        <h3>Token Breakdown</h3>
-        <p>See exactly what's in your agent's context — identity, skills, memory, tools, guidance.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📈</div>
-        <h3>Drift Tracking</h3>
-        <p>7-day rolling token trend per component. Know before context bloat becomes a problem.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔍</div>
-        <h3>Brain Analysis</h3>
-        <p>Find bloated, duplicate, or unused skills eating your context window. Compression preview with per-skill actions.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🌱</div>
-        <h3>Memory Garden</h3>
-        <p>Duplicates, contradictions, stale entries — find and fix memory bloat.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⏱️</div>
-        <h3>Error Timeline</h3>
-        <p>Full error history with context snapshots. Not just logs — annotated events.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔔</div>
-        <h3>In-Dashboard Alerts</h3>
-        <p>See alerts when you open the dashboard. Shows the discovery gap — how late you found out.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💾</div>
-        <h3>Local SQLite</h3>
-        <p>All data on your machine. Zero cloud. Zero telemetry. Your agents' data stays yours.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚖️</div>
-        <h3>Fleet Comparison</h3>
-        <p>Side-by-side agent matrix — tokens, composition, drift, errors, circuit status. Compare any two agents instantly.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📬</div>
-        <h3>Push Alerts</h3>
-        <p>Telegram, Discord, and email alerts when agents break. Delivery log, test button, channel management.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🩺</div>
-        <h3>Auto-Heal</h3>
-        <p>Per-agent toggle, L2 thresholds, heal events log. Watch daemon auto-restarts dead agents.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <!-- Pro License feature card removed — all features free for now -->
-      <div class="feature-card">
-        <div class="feature-icon">📖</div>
-        <h3>Glossary</h3>
-        <p>20+ entries with hint buttons across all tabs. Learn what drift, chisel, pulse, and clawforge mean — in context.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎯</div>
-        <h3>Confidence Framework</h3>
-        <p>FP/FN risk badges on every card. Know when to trust a recommendation and when to double-check.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔀</div>
-        <h3>Hermes Plugin</h3>
-        <p>OTEL plugin with 11 hooks — PR in review. Real token tracking from every LLM call.</p>
-        <span class="tag free">Free</span>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3>Token Analytics</h3>
-        <p>Chart.js time-series dashboard with per-agent breakdown, cost estimation, and cache efficiency tracking.</p>
-        <span class="tag free">Free</span>
-      </div>
+    <div class="features-grid reveal">
+      <div class="feature-card"><div class="f-icon">💓</div><h3>Pulse Check</h3><p>Agent liveness — alive, dead, or errored. Every 30 seconds. Zero config.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">⚡</div><h3>Circuit Breaker</h3><p>N-failure trip → auto-block → cooldown. Stops cascade failures before they spread.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🔧</div><h3>Heal Button</h3><p>One-click restart for dead agents. Manual trigger, you're in control.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🧠</div><h3>Token Breakdown</h3><p>See exactly what's in your agent's context — identity, skills, memory, tools, guidance.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">📈</div><h3>Drift Tracking</h3><p>7-day rolling token trend per component. Know before context bloat becomes a problem.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🔍</div><h3>Brain Analysis</h3><p>Find bloated, duplicate, or unused skills eating your context window. Compression preview with per-skill actions.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🌱</div><h3>Memory Garden</h3><p>Duplicates, contradictions, stale entries — find and fix memory bloat.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">⏱️</div><h3>Error Timeline</h3><p>Full error history with context snapshots. Not just logs — annotated events.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🔔</div><h3>In-Dashboard Alerts</h3><p>See alerts when you open the dashboard. Shows the discovery gap — how late you found out.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">💾</div><h3>Local SQLite</h3><p>All data on your machine. Zero cloud. Zero telemetry. Your agents' data stays yours.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">⚖️</div><h3>Fleet Comparison</h3><p>Side-by-side agent matrix — tokens, composition, drift, errors, circuit status. Compare any two agents instantly.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">📬</div><h3>Push Alerts</h3><p>Telegram, Discord, and email alerts when agents break. Delivery log, test button, channel management.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🩺</div><h3>Auto-Heal</h3><p>Per-agent toggle, L2 thresholds, heal events log. Watch daemon auto-restarts dead agents.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">📖</div><h3>Glossary</h3><p>20+ entries with hint buttons across all tabs. Learn what drift, chisel, pulse, and clawforge mean — in context.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🎯</div><h3>Confidence Framework</h3><p>FP/FN risk badges on every card. Know when to trust a recommendation and when to double-check.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🔀</div><h3>Hermes Plugin</h3><p>OTEL plugin with 11 hooks — PR in review. Real token tracking from every LLM call.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">📊</div><h3>Token Analytics</h3><p>Chart.js time-series dashboard with per-agent breakdown, cost estimation, and cache efficiency tracking.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🧪</div><h3>Canary Benchmarks</h3><p>Grid runs, drift charts, config timelines, quality cards. Measure agent capability, not just liveness.</p><span class="tag free">Free</span></div>
     </div>
   </div>
 </section>
@@ -690,14 +401,14 @@
 <!-- HOW IT WORKS -->
 <section id="how" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
   <div class="container">
-    <div class="section-label">How it works</div>
-    <h2 class="section-title">60 seconds to first health data.</h2>
+    <div class="section-label reveal">How it works</div>
+    <h2 class="section-title reveal">60 seconds to first health data.</h2>
 
-    <div class="steps">
+    <div class="steps reveal">
       <div class="step">
         <div class="step-num">01</div>
         <h3>Install</h3>
-        <p><code style="color: var(--green);">pip install observeco</code> — one command, no dependencies to manage.</p>
+        <p><code>pip install observeco</code> — one command, no dependencies to manage.</p>
       </div>
       <div class="step">
         <div class="step-num">02</div>
@@ -711,7 +422,7 @@
       </div>
     </div>
 
-    <div class="terminal">
+    <div class="terminal reveal">
       <div><span class="prompt">$</span> <span class="cmd">pip install observeco</span></div>
       <div class="output">✓ Installed observeco-0.3.0</div>
       <div>&nbsp;</div>
@@ -732,10 +443,10 @@
 <!-- COMPARE -->
 <section id="compare">
   <div class="container">
-    <div class="section-label">Why ObserveCo</div>
-    <h2 class="section-title">Built for agent operators, not infrastructure teams.</h2>
+    <div class="section-label reveal">Why ObserveCo</div>
+    <h2 class="section-title reveal">Built for agent operators, not infrastructure teams.</h2>
 
-    <div class="comparison">
+    <div class="comparison reveal">
       <div class="comparison-row header">
         <div class="comparison-cell"></div>
         <div class="comparison-cell">ObserveCo</div>
@@ -793,33 +504,33 @@
 <!-- ROADMAP -->
 <section id="roadmap" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
   <div class="container">
-    <div class="section-label">What's coming</div>
-    <h2 class="section-title">v0.3 is just the beginning.</h2>
-    <p class="section-desc">We ship fast. Every week, new capabilities. The dashboard that sees problems also fixes them.</p>
+    <div class="section-label reveal">What's coming</div>
+    <h2 class="section-title reveal">v0.3 is just the beginning.</h2>
+    <p class="section-desc reveal">We ship fast. Every week, new capabilities. The dashboard that sees problems also fixes them.</p>
 
-    <div class="roadmap-items">
-      <div class="roadmap-item">
+    <div class="roadmap-items reveal">
+      <div class="roadmap-item shipped">
         <div class="roadmap-version">v0.2 · Shipped</div>
         <div>
           <h3>Token Analytics + Data Infrastructure</h3>
           <p>Chart.js time-series dashboard, per-component token breakdown, drift tracking, memory garden, skill audit, heal button, error timeline, DB migrations.</p>
         </div>
       </div>
-      <div class="roadmap-item">
+      <div class="roadmap-item now">
         <div class="roadmap-version">v0.3 · Now</div>
         <div>
           <h3>Auto-heal + Push Alerts</h3>
           <p>Watch daemon auto-restarts dead agents. Telegram, Discord, and email alerts. Fleet comparison, drift alerts UI, circuit breaker config UI, glossary, confidence framework. 610 tests. Hermes OTEL plugin.</p>
         </div>
       </div>
-      <div class="roadmap-item">
+      <div class="roadmap-item next">
         <div class="roadmap-version">v0.4 · Next</div>
         <div>
           <h3>CI gates + Eval capture</h3>
           <p>CI quality gates with health thresholds. Eval dataset capture — save any agent turn as a regression test case. Static fleet report export.</p>
         </div>
       </div>
-      <div class="roadmap-item">
+      <div class="roadmap-item soon">
         <div class="roadmap-version">v1.0 · Soon</div>
         <div>
           <h3>OpenClaw runtime plugin</h3>
@@ -833,12 +544,12 @@
 <!-- CTA -->
 <section class="cta" id="install">
   <div class="container">
-    <h2>See your agents in 60 seconds.</h2>
-    <p>No signup. No account. Just open source.</p>
-    <a href="https://github.com/observeco/observeco" class="cta-install" target="_blank">
+    <h2 class="reveal">See your agents in 60 seconds.</h2>
+    <p class="reveal">No signup. No account. Just open source.</p>
+    <a href="https://github.com/observeco/observeco" class="cta-install reveal" target="_blank">
       <span>$</span> pip install observeco && observeco dashboard
     </a>
-    <p style="margin-top: 24px; font-size: 13px; color: var(--fg-3);">
+    <p style="margin-top: 24px; font-size: 12px; color: var(--fg-3); font-family: var(--font-mono);">
       <a href="https://github.com/observeco/observeco" target="_blank" style="color: var(--fg-2); text-decoration: none;">GitHub</a> · MIT License · Built for the AI agent community
     </p>
   </div>
@@ -847,28 +558,48 @@
 <!-- FOOTER -->
 <footer>
   <div class="container">
-    <p>© 2026 ObserveCo · Built with ❤️ for AI agent operators · <a href="https://github.com/observeco/observeco" target="_blank">GitHub</a></p>
+    <p>© 2026 ObserveCo · Runtime observability for AI agents</p>
+    <p><a href="https://github.com/observeco/observeco" target="_blank">GitHub</a> · <a href="/privacy">Privacy</a></p>
   </div>
 </footer>
 
-<!-- DASHBOARD MOCKUP TAB SWITCHING -->
 <script>
 (function () {
-  var mock = document.getElementById('mockup-dashboard');
-  if (!mock) return;
-  var tabs = mock.querySelectorAll('.mockup-nav a');
-  var panels = mock.querySelectorAll('.tab-panel');
-  function show(name) {
-    tabs.forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === name); });
-    panels.forEach(function (p) { p.style.display = p.getAttribute('data-tab') === name ? '' : 'none'; });
+  /* ─── TELEMETRY TICKER (signature) ─── */
+  var agents = [
+    { name: 'hound',  status: 'alive',    tok: '12.4K', cost: '$0.012' },
+    { name: 'kepler', status: 'alive',    tok: '8.2K',  cost: '$0.008' },
+    { name: 'aleph',  status: 'alive',    tok: '15.6K', cost: '$0.015' },
+    { name: 'dreamer',status: 'degraded', tok: '6.1K',  cost: '$0.006' },
+    { name: 'raven',  status: 'dead',     tok: '—',     cost: '—' }
+  ];
+  function tickItem(a) {
+    var dotCls = a.status === 'alive' ? 'green' : a.status === 'degraded' ? 'yellow' : 'red';
+    var valCls = a.status === 'alive' ? 'green' : a.status === 'degraded' ? 'yellow' : 'red';
+    return '<span class="tick-item">' +
+      '<span class="tick-dot ' + dotCls + '"></span>' +
+      '<span class="tick-label">' + a.name + '</span>' +
+      '<span class="tick-val ' + valCls + '">' + a.status + '</span>' +
+      '<span class="tick-val">' + a.tok + '</span>' +
+      '<span class="tick-val">' + a.cost + '</span>' +
+      '</span>';
   }
-  tabs.forEach(function (t) {
-    t.addEventListener('click', function (e) {
-      e.preventDefault();
-      show(t.getAttribute('data-tab'));
-    });
-  });
-  show('Fleet');
+  var tickInner = document.getElementById('tickInner');
+  if (tickInner) {
+    var set = agents.map(tickItem).join('') + agents.map(tickItem).join('');
+    tickInner.innerHTML = set;
+  }
+
+  /* ─── REVEAL ON SCROLL ─── */
+  var reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    reveals.forEach(function (r) { io.observe(r); });
+  } else {
+    reveals.forEach(function (r) { r.classList.add('in'); });
+  }
 })();
 </script>
 
