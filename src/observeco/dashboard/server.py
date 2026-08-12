@@ -2190,6 +2190,17 @@ async def api_fleet_compare(sort: str = "spend", order: str = "desc"):
     agent_data = {}
     all_names = set(summary.keys()) | set(agent_cfg.keys()) | set(latest_trims.keys()) | set(drift_by_agent.keys())
 
+    # Collapse the symlink alias: `main` is a filesystem alias of `accelerator`
+    # (~/.hermes/profiles/main -> accelerator). Show one row for the canonical
+    # name (`accelerator`) with an alias annotation, drop `main` from the list
+    # so fleet counts and per-agent tables aren't double-reported. Dashboard-side
+    # only — the symlink itself is untouched.
+    alias_map = {"main": "accelerator"}
+    ALIAS = "main"
+    if ALIAS in all_names:
+        all_names.discard(ALIAS)
+        all_names.add(alias_map[ALIAS])
+
     for name in all_names:
         s = summary.get(name, {})
         fw = agent_cfg.get(name, {}).get("framework", "") or ""
@@ -2289,7 +2300,7 @@ async def api_fleet_compare(sort: str = "spend", order: str = "desc"):
                 <th onclick="sortCompare('spend')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Spend <span id="sortIndicator_spend" class="sort-indicator"></span></th>
                 <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Context</th>
                 <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Composition</th>
-                <th onclick="sortCompare('drift')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Drift <span id="sortIndicator_drift" class="sort-indicator"></span></th>
+                <th onclick="sortCompare('drift')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Drift 7d peak <span id="sortIndicator_drift" class="sort-indicator"></span></th>
                 <th onclick="sortCompare('errors')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Errors <span id="sortIndicator_errors" class="sort-indicator"></span></th>
                 <th onclick="sortCompare('circuit')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Circuit <span id="sortIndicator_circuit" class="sort-indicator"></span></th>
                 <th onclick="sortCompare('last')" style="padding:10px 12px;text-align:left;color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;cursor:pointer;user-select:none;">Last <span id="sortIndicator_last" class="sort-indicator"></span></th>

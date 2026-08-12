@@ -2838,15 +2838,30 @@ class Database:
             )
         return [dict(r) for r in cur.fetchall()]
 
-    def get_drift_latest_per_agent(self) -> list[dict]:
-        """Latest drift row per agent (one row each). Avoids loading the full
-        chisel_drift table (can be ~1M rows) just to filter to ~39 agents."""
+    def get_drift_latest_per_agent(self, window_seconds: int = 7 * 86400) -> list[dict]:
+        """Most-drifted component per agent over a 7-day rolling window.
+
+        Aligned with the Drift tab (api_drift_summary): pins method='rolling',
+        uses a 7-day window, and dedupes to the component with the largest
+        |delta_pct| per agent. Previously this returned an arbitrary row at
+        max timestamp (one per component x method), which made Compare diverge
+        from the Drift tab on method, component, and window simultaneously.
+        """
         conn = self._get_conn()
+        now = int(__import__("time").time())
+        week_ago = now - window_seconds
         cur = conn.execute(
             "SELECT d.* FROM chisel_drift d "
-            "JOIN (SELECT agent_name, MAX(timestamp) AS mt FROM chisel_drift GROUP BY agent_name) m "
-            "ON d.agent_name = m.agent_name AND d.timestamp = m.mt "
-            "ORDER BY d.agent_name"
+            "JOIN ("
+            "  SELECT agent_name, MAX(ABS(delta_pct)) AS max_abs "
+            "  FROM chisel_drift "
+            "  WHERE method='rolling' AND timestamp > ? "
+            "  GROUP BY agent_name"
+            ") m ON d.agent_name = m.agent_name AND ABS(d.delta_pct) = m.max_abs "
+            "WHERE d.method='rolling' AND d.timestamp > ? "
+            "GROUP BY d.agent_name "
+            "ORDER BY d.agent_name",
+            (week_ago, week_ago),
         )
         return [dict(r) for r in cur.fetchall()]
 
