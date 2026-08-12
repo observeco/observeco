@@ -2149,7 +2149,6 @@ async def api_fleet_compare(sort: str = "spend", order: str = "desc"):
     summary = db.get_agent_status_summary()
     agents = db.get_agents()
     trims_all = db.get_trims(limit=30)
-    drift_latest = db.get_drift_latest_per_agent()
     circuit = db.get_circuit_breakers()
     all_errors = db.get_errors(limit=100)
 
@@ -2158,6 +2157,29 @@ async def api_fleet_compare(sort: str = "spend", order: str = "desc"):
     # agent". Context size (chisel_trims) is demoted to a labeled secondary.
     conn = db._get_conn()
     conn.row_factory = __import__("sqlite3").Row
+
+    # Compare-scoped drift: most-drifted component per agent over a 7-day
+    # rolling window, aligned with the Drift tab (api_drift_summary). Pins
+    # method='rolling', dedupes to the largest |delta_pct| per agent. This is
+    # COMPARE-ONLY — get_drift_latest_per_agent() is NOT touched because
+    # fleet.py uses it as an agent-existence oracle (narrowing its row set
+    # broke the verdict/grid counts). Compare reads the drift VALUE, so it can
+    # use the windowed query without affecting fleet inventory.
+    _now = int(__import__("time").time())
+    _week_ago = _now - 7 * 86400
+    drift_latest = [
+        dict(r) for r in conn.execute(
+            "SELECT d.* FROM chisel_drift d "
+            "JOIN ("
+            "  SELECT agent_name, MAX(ABS(delta_pct)) AS max_abs "
+            "  FROM chisel_drift WHERE method='rolling' AND timestamp > ? "
+            "  GROUP BY agent_name"
+            ") m ON d.agent_name = m.agent_name AND ABS(d.delta_pct) = m.max_abs "
+            "WHERE d.method='rolling' AND d.timestamp > ? "
+            "GROUP BY d.agent_name",
+            (_week_ago, _week_ago),
+        ).fetchall()
+    ]
     spend_rows = conn.execute("""
         SELECT agent_name, COALESCE(SUM(reported_cost), 0) as cost,
                COALESCE(SUM(total_tokens), 0) as tokens, COUNT(*) as n
@@ -2271,9 +2293,10 @@ async def api_fleet_compare(sort: str = "spend", order: str = "desc"):
         cb_status = "🔴 Tripped" if d["circuit_tripped"] else "✅ OK"
         ts = d["last_seen"]
         last_seen = _fmt_ts(ts) if ts else "-"
+        alias_annotation = '<span style="color:#94a3b8;font-size:9px;"> (alias main)</span>' if name == "accelerator" else ""
 
         rows.append(f"""<tr onclick="htmx.ajax('GET', '/api/fleet/modal/{name}', {{target:'#modalContainer', swap:'innerHTML'}})" style="cursor:pointer">
-    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status {status}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>{name}</td>
+    <td style="padding:10px 12px;font-weight:600;white-space:nowrap;"><span class="agent-status {status}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;"></span>{name}{alias_annotation}</td>
     <td style="padding:10px 12px;font-size:11px;color:#94a3b8;">{d["framework"]}</td>
     <td style="padding:10px 12px;font-family:var(--font-mono);font-size:12px;font-weight:600;">{spend_label}</td>
     <td style="padding:10px 12px;font-size:10px;color:#64748b;">ctx {ctx_label}</td>
