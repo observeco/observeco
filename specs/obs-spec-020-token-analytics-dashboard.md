@@ -1018,3 +1018,34 @@ Tool_name attribution first analysis said "2% coverage, park it." Four routes la
 - Watch: 100% output_tokens=0, 99.3% same-agent burst ≤60s, no model field, token-magnitude r=0.006.
 - Backfills: model 3,734; agent_name 3,319 (89% of hermes rows were dates like `20260701`); span attrs 38,750 (73.5% coverage; latency/finish_reason/api_call_count on 38,748, reasoning_tokens on 5,351).
 - Tool panels: 63.4% of otel spend all-time tool-invoking (finish_reason); Tool Mix covers 38.2% of measured spend (832 hermes-tracked tool sessions).
+
+### Drift tab vs Compare tab: three-axis divergence + duplicate agent (2026-08-12)
+
+> **Two decisions needed (don't bury these under the narrative):**
+> 1. **Window definition** — should the drift metric be *latest rolling snapshot*, *7-day peak*, or a *short trailing aggregate* (last hour's max)? Compare and Drift tab currently disagree.
+> 2. **Alias display** — `main` is a symlink alias of `accelerator` (same profile, shown as two rows). Should the fleet view collapse them to one entry with an alias annotation? (Dashboard-side only; requires no filesystem change.)
+
+#### F14. Compare tab drift diverges from the Drift tab on three axes
+`get_drift_latest_per_agent` (db.py:2841) returns **multiple rows per agent** (one per component×method at max timestamp); the dict comprehension keeps the last arbitrarily — `wow`-method `guidance`, which sorts after `rolling`/`absolute`. The Drift tab (`api_drift_summary`, server.py:3746) uses `method='rolling'`, 7-day window, most-drifted component. Three axes diverge:
+1. **Method** — Compare picks `wow` (week-over-week); Drift tab picks `rolling` (7-day).
+2. **Component** — Compare picks arbitrary; Drift tab picks most-drifted.
+3. **Window** — Compare takes max-timestamp; Drift tab takes 7-day peak. Verified `accelerator` tools: max-timestamp rolling = **+111.8%** vs 7-day peak = **+718%** — a rolling 5-minute sample, not a stable state.
+
+**Failure is conditional on drift existing.** Compare was correct for 28 of 30 agents — and correct for exactly the cases where nothing was happening. It breaks precisely when an agent starts drifting, which is why nobody caught it.
+
+**Fix:** pin method to `rolling`, dedupe to most-drifted component, and pick a consistent window (decision #1 above). The 5-min cadence argues against literal last-row snapshot; a trailing aggregate is the honest snapshot semantic if that's chosen.
+
+#### F15. The 28 "zero drift" agents are genuinely flat (not unmeasured)
+Discriminator: for `archive`/`blueprint`/`hound`, chisel_trims show constant context (197→197, 2,172→2,172) with thousands of drift rows across hundreds of timestamps — real, frequent computation reporting genuinely zero net change. `hound`'s 14,427 trims returning to 2,172 tokens is the clincher: drift computation runs against real churn and correctly reports no net change. Not the "decorative rows" failure mode.
+
+#### F16. `accelerator` and `main` are one profile via symlink alias
+Both resolve to the same Hermes profile: `~/.hermes/profiles/main -> accelerator` (directory symlink, verified `ls -ld`, created May 6). Byte-identical trims (3,671 tokens, same signature) and identical drift (+718%) follow from the shared context. `accelerator` is the real profile; `main` is a legacy alias.
+
+- **Dashboard-side:** one profile shows as two rows → fleet count off by one, per-agent tables double-report it. Recommend collapse-to-one-with-alias-annotation (decision #2). Requires no filesystem change.
+- **Filesystem-side (separate risk):** removing the `main` symlink itself is a *different* action — anything referencing the `main` profile path would break. Not "low-risk"; keep the two operations distinct.
+
+#### F17. Closing lesson: the cause was outside the dashboard's data model
+This investigation went display bug → definition problem → duplicate registration → collector suspicion → filesystem symlink — **four layers down**, each hypothesis wrong in a specific way. The config check couldn't answer (schema has no path field); the collector suspicion was misdirected (identical output has two causes: shared SOUL or single emitter). Generalizable rule for an observability tool: *when a dashboard shows something impossible, the cause is often outside the dashboard's data model entirely* — check the underlying system's filesystem/config before trusting the display layer.
+
+**Also worth noting:** the two drifting names resolve to one agent (decision #2), so the true drifting-agent count is 1, not 2.
+
