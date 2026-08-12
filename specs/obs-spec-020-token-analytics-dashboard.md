@@ -1049,3 +1049,11 @@ This investigation went display bug → definition problem → duplicate registr
 
 **Also worth noting:** the two drifting names resolve to one agent (decision #2), so the true drifting-agent count is 1, not 2.
 
+#### F18. Retry feature CLOSED as a negative finding (2026-08-12)
+Decision-record outcome. The `api_call_count > 1` proxy does **not** measure retries — it measures tool-loop turns. Cross-tab vs `finish_reason`:
+- retry-proxy rows that are ALSO `tool_calls`: **92.9%**
+- `tool_calls` rows that ALSO have retry proxy: **92.4%**
+
+`api_call_count > 1` is co-linear with `finish_reason='tool_calls'` (65.4% vs 65.7% of rows, 60.8% both), so it carries no independent retry signal. A "retry" panel built on it would claim "65% of calls were retries" when they're actually tool-loop turns. **Closed as a negative finding — do not build a retry panel off this proxy.** If a real retry signal is wanted, it must come from a distinct span attribute (a genuine provider retry), not a proxy derived from finish_reason.
+
+
