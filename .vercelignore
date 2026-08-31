@@ -1,0 +1,9 @@
+# Non-deployable leftovers — keep out of the public site
+website/draft/
+website/_old-root-backup-20260831/
+website/_check_links.py
+website/content-spec-v1.md
+website/.DS_Store
+website/draft/.DS_Store
+**/__pycache__/
+**/.DS_Store

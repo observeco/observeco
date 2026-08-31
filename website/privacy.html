@@ -10,10 +10,11 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --bg: #0f172a; --surface: #1e293b; --border: #334155;
-      --green: #22c55e; --green-dim: rgba(34,197,94,0.15);
-      --blue: #3b82f6; --yellow: #eab308; --red: #ef4444;
-      --fg: #f8fafc; --fg-2: #94a3b8; --fg-3: #64748b;
+      --bg: #f7f6f3; --surface: #ffffff; --border: #e4e2dc;
+      --green: #0e6e5c; --green-dim: rgba(14,110,92,0.08);
+      --blue: #1d5fbf; --yellow: #9a6500; --red: #b42318;
+      --fg: #1b1f24; --fg-2: #4a525c; --fg-3: #6b737e;
+      --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     }
@@ -22,7 +23,7 @@
     .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
 
     /* Nav */
-    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(15,23,42,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
     nav .container { display: flex; align-items: center; justify-content: space-between; height: 56px; }
     .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); font-weight: 700; font-size: 16px; }
     .nav-brand svg { width: 24px; height: 24px; }
@@ -32,20 +33,20 @@
 
     /* Content */
     .content { padding: 100px 0 60px; }
-    .page-title { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+    .page-title { font-family: var(--font-display); font-size: 34px; font-weight: 700; margin-bottom: 8px; }
     .page-meta { color: var(--fg-3); font-size: 14px; margin-bottom: 40px; }
-    h2 { font-size: 20px; font-weight: 700; margin: 40px 0 16px; color: var(--fg); }
-    h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--fg); }
+    h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin: 40px 0 16px; color: var(--fg); }
+    h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--fg); }
     p { margin-bottom: 16px; color: var(--fg-2); font-size: 15px; }
     ul, ol { margin-bottom: 16px; padding-left: 24px; }
     li { margin-bottom: 8px; color: var(--fg-2); font-size: 15px; }
     strong { color: var(--fg); font-weight: 600; }
-    code { font-family: var(--font-mono); background: var(--surface); padding: 2px 6px; border-radius: 4px; font-size: 13px; color: var(--green); }
+    code { font-family: var(--font-mono); background: var(--surface); padding: 2px 6px; border-radius: 6px; font-size: 13px; color: var(--green); }
     a { color: var(--blue); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
     /* Highlight box */
-    .highlight { background: var(--green-dim); border: 1px solid rgba(34,197,94,0.25); border-radius: 8px; padding: 20px 24px; margin: 24px 0; }
+    .highlight { background: var(--green-dim); border: 1px solid rgba(14,110,92,0.35); border-radius: 10px; padding: 20px 24px; margin: 24px 0; }
     .highlight p { color: var(--fg); margin-bottom: 0; }
     .highlight strong { color: var(--green); }
 
@@ -65,8 +66,8 @@
     <div class="container">
       <a href="/" class="nav-brand">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-          <circle cx="64" cy="64" r="60" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.3"/>
-          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="64" cy="64" r="60" fill="none" stroke="#0e6e5c" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#0e6e5c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         ObserveCo
       </a>

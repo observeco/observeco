@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Bonefirm — Competitive Analysis</title>
+<style>
+/* =====================================================================
+   ObserveCo Consulting Design System — light-first paper canvas
+   ===================================================================== */
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9; --surface-inset:#e8e7e2;
+  --line:#e4e2dc; --line-soft:#efeee9; --line-strong:#cfccc4;
+  --status-healthy:#227a4e; --status-healthy-tint:#e5f2ea;
+  --status-warning:#9a6500; --status-warning-tint:#fbf0d8;
+  --status-critical:#b42318; --status-critical-tint:#fbeae7;
+  --status-info:#1d5fbf; --status-info-tint:#e8f0fb;
+  --status-neutral:#5b6470; --status-neutral-tint:#eff1f4;
+  --insight:#0e6e5c; --insight-strong:#0a5447; --insight-tint:#e7f1ee; --insight-line:#c6dcd4;
+  --seg-steel:#3d6b9b; --seg-slate:#6e8b9e; --seg-rose:#a4716f; --seg-olive:#7f8c5a; --seg-terracotta:#b4653a;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e; --ink-on-insight:#ffffff; --link:#0a5447;
+  --font-display:'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+  --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --shadow-card:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);
+  --shadow-raised:0 2px 4px rgba(27,31,36,.05),0 12px 32px rgba(27,31,36,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+
+/* ── Print / PDF page setup ── */
+@page{size:210mm 297mm;margin:0}
+.page{
+  width:210mm;min-height:296mm;background:var(--surface);
+  padding:10mm 13mm 10mm 13mm;position:relative;page-break-after:always;overflow:hidden;
+}
+.page:last-child{page-break-after:auto}
+@page :first{margin:0}
+
+/* ── Type ── */
+.overline{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3);font-weight:600;margin:0 0 4px}
+h1{font-family:var(--font-display);font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-.015em;margin:0 0 6px}
+h2{font-family:var(--font-display);font-size:22px;line-height:1.15;font-weight:700;letter-spacing:-.01em;margin:0 0 3px;color:var(--ink)}
+h3{font-size:14px;font-weight:700;color:var(--ink);margin:0 0 3px}
+.sub{color:var(--ink-2);font-size:13px;max-width:66ch}
+p{margin:5px 0}
+.small{font-size:12px;color:var(--ink-3)}
+.mono{font-family:var(--font-mono);font-size:12px}
+strong{color:var(--ink);font-weight:700}
+
+/* ── Chips / badges ── */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.chip-insight{background:var(--insight-tint);color:var(--insight-strong)}
+.chip-healthy{background:var(--status-healthy-tint);color:var(--status-healthy)}
+.chip-warning{background:var(--status-warning-tint);color:var(--status-warning)}
+.chip-critical{background:var(--status-critical-tint);color:var(--status-critical)}
+.chip-info{background:var(--status-info-tint);color:var(--status-info)}
+.chip-neutral{background:var(--status-neutral-tint);color:var(--status-neutral)}
+
+/* ── Cards / panels ── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-card);padding:12px}
+.card.pad-lg{padding:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-card);overflow:hidden}
+.panel-head{padding:11px 14px 6px;border-bottom:1px solid var(--line-soft)}
+.panel-head h3{margin:0}
+.panel-body{padding:12px 14px}
+.insight{background:var(--insight-tint);border:1px solid var(--insight-line);border-radius:12px;padding:14px 16px}
+.insight h3{color:var(--insight-strong)}
+.quote{border-left:3px solid var(--insight);padding:8px 0 8px 16px;margin:12px 0;color:var(--ink-2);font-style:italic}
+.quote .att{display:block;margin-top:6px;font-style:normal;font-size:12px;color:var(--ink-3)}
+
+/* ── Grids ── */
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:repeat(4,1fr)}
+
+/* ── KPI ── */
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600}
+.kpi-value{font-family:var(--font-display);font-size:30px;line-height:1;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:3px 0 2px}
+.kpi-cap{font-size:11.5px;color:var(--ink-3)}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:var(--ink-3);padding:6px 8px;border-bottom:1px solid var(--line)}
+.tbl td{padding:6px 8px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-2)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl td.b{color:var(--ink);font-weight:600}
+.tbl .num{font-family:var(--font-mono);font-size:12px;white-space:nowrap}
+.yes{color:var(--status-healthy);font-weight:700}
+.no{color:var(--status-critical);font-weight:700}
+.partial{color:var(--status-warning);font-weight:700}
+.rowlabel{color:var(--ink);font-weight:600}
+
+/* ── Bars (CSS chart) ── */
+.bar-row{display:grid;grid-template-columns:170px 1fr 52px;align-items:center;gap:10px;margin:7px 0}
+.bar-label{font-size:12px;color:var(--ink-2);text-align:right;line-height:1.2}
+.bar-track{height:22px;background:var(--surface-inset);border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:6px}
+.bar-val{font-family:var(--font-mono);font-size:12px;color:var(--ink);font-weight:700}
+
+/* ── Legend ── */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2)}
+.swatch{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* ── Divider ── */
+hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+
+/* ── Section header within page ── */
+.sec-label{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.sec-label .num{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--insight)}
+.sec-label .t{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--ink)}
+
+/* ── Footer / page number ── */
+.pgfoot{position:absolute;bottom:9mm;left:15mm;right:15mm;display:flex;justify-content:space-between;font-size:9px;color:var(--ink-3);border-top:1px solid var(--line-soft);padding-top:5px}
+
+/* ── Roadmap timeline ── */
+.phase{display:grid;grid-template-columns:100px 1fr;gap:12px;margin:10px 0}
+.phase-marker{display:flex;flex-direction:column;align-items:flex-start}
+.phase-badge{font-size:10.5px;font-weight:700;color:var(--ink-on-insight);background:var(--insight);border-radius:8px;padding:4px 8px;text-align:center;width:100%}
+.phase-weeks{font-size:10px;color:var(--ink-3);margin-top:3px;text-align:center;width:100%;line-height:1.3}
+.phase-line{width:2px;background:var(--insight-line);flex:1;margin:8px auto 0}
+.phase-items{display:flex;flex-direction:column;gap:6px}
+.witem{display:flex;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 10px;align-items:baseline}
+.witem .wk{font-family:var(--font-mono);font-size:10.5px;color:var(--insight-strong);font-weight:700;min-width:30px}
+.witem .act{font-size:11.5px;color:var(--ink-2)}
+.witem .act b{color:var(--ink)}
+.witem .out{font-size:10px;color:var(--ink-3);margin-left:auto;text-align:right;max-width:190px}
+
+/* ── Stat callout ── */
+.statcall{display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px;border-radius:12px}
+.statcall .n{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1}
+.statcall .l{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.35}
+
+/* ── Print tweaks ── */
+@media print{
+  .page{box-shadow:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ PAGE 1 — COVER -->
+<div class="page" style="background:var(--canvas)">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.01em">Bonefirm<sup style="font-size:10px">™</sup></div>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Vytaliti Pte. Ltd. · Singapore</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="chip chip-insight">Non-hormonal</span>
+      <span class="chip chip-neutral">D2C · Premium</span>
+    </div>
+  </div>
+
+  <div style="margin-top:56px">
+    <div class="overline">Competitive Analysis · Consolidated · v4</div>
+    <h1 style="font-size:44px">The bones &amp; joints<br>menopause brand Asia forgot.</h1>
+    <p style="font-size:16px;color:var(--ink-2);max-width:52ch;margin-top:14px;line-height:1.5">
+      How Bonefirm justifies an <strong>SGD 8.50/day</strong> premium as the fair, single
+      replacement for the supplement stack — and the 90-day path to own the
+      <strong>bone/joint × menopause</strong> intersection no incumbent sees.
+    </p>
+  </div>
+
+  <div class="grid g4" style="margin-top:40px">
+    <div class="card" style="text-align:center;padding:14px">
+      <div class="kpi-value" style="color:var(--status-critical);font-size:28px">32.9%</div>
+      <div class="kpi-cap">joint pain = <b>#1</b> menopause symptom, SG women</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div class="kpi-value" style="color:var(--status-info);font-size:28px">18.6%</div>
+      <div class="kpi-cap">hot flushes rank only <b>5th</b> (18.6%)</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div class="kpi-value" style="font-size:28px">SGD 8.50</div>
+      <div class="kpi-cap">Bonefirm price/day — <b>inside</b> the stack range</div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div class="kpi-value" style="color:var(--status-healthy);font-size:28px">0→</div>
+      <div class="kpi-cap">premium structural slice, <b>owned by nobody</b></div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:28px">
+    <div class="overline" style="color:var(--insight-strong)">One-sentence claim · buyer language</div>
+    <p style="font-size:16px;line-height:1.5;color:var(--ink);margin:6px 0 0">
+      "Your bones and joints change during menopause — and Asian women feel it as
+      <strong>joint pain first, not hot flashes</strong>. Bonefirm looks after your bones and
+      joints through menopause, <strong>without hormones</strong>."
+    </p>
+  </div>
+
+  <div style="display:flex;gap:24px;margin-top:24px;flex-wrap:wrap">
+    <div><div class="kpi-label">Date</div><div style="font-size:13px;color:var(--ink-2)">2026-08-20</div></div>
+    <div><div class="kpi-label">Method</div><div style="font-size:13px;color:var(--ink-2)">Positioning Theory · TCO test · Category Trap</div></div>
+    <div><div class="kpi-label">Prepared by</div><div style="font-size:13px;color:var(--ink-2)">ObserveCo · Design System v.consulting</div></div>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4</span><span>01</span></div>
+</div>
+
+<!-- ============================================================ PAGE 2 — EXEC SUMMARY -->
+<div class="page">
+  <div class="sec-label"><span class="num">§</span><span class="t">Executive Summary — the core thesis</span></div>
+  <p style="color:var(--ink-2);font-size:14px;max-width:72ch">
+    Bonefirm is the product built around the symptoms Asian women actually experience —
+    <strong>joint pain first, silent bone loss beneath it</strong>. It justifies its premium
+    (SGD 8.50/day) as the fair, single, one-stop replacement for the stack women already buy separately.
+  </p>
+
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card">
+      <div class="kpi-label" style="color:var(--insight-strong)">The wedge</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        NUH/NUS research: <b>joint pain #1 (32.9%)</b> for Asian women. The market sells the
+        5th-ranked symptom (hot flushes). <b>Bonefirm serves the #1.</b>
+      </p>
+    </div>
+    <div class="card">
+      <div class="kpi-label" style="color:var(--insight-strong)">The beachhead</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        The <b>silent-risk-aware woman</b> — triggered by a DEXA scan, osteopenia, or a parent's
+        fracture; already paid SGD 130–150 for the scan. Nobody serves her.
+      </p>
+    </div>
+    <div class="card">
+      <div class="kpi-label" style="color:var(--insight-strong)">The moat</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        The <b>founder story + education engine</b> (book, RC talks, conference) — the one durable,
+        hard-to-copy asset. The moat is trust, not the formula.
+      </p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="panel-head"><h3>How SGD 8.50/day is justified — the premium, made fair &amp; culturally anchored</h3></div>
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th style="width:30%">Leg</th><th>Argument</th><th style="width:34%">Evidence</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="rowlabel">Leg 1 — Fair value <span class="chip chip-healthy" style="margin-left:6px">Parity, not cheap</span></td>
+            <td>The stack Bonefirm replaces (bone + joint + collagen + mood) runs <b>SGD 5.80–9.80/day</b>. SGD 8.50 sits <b>inside</b> that range — the premium is not a mark-up.</td>
+            <td><span class="num">SGD 5.80–9.80</span> stack (validated SG retail)</td>
+          </tr>
+          <tr>
+            <td class="rowlabel">Leg 2 — One-stop-shop</td>
+            <td>One product, one cause, one accountable formula instead of 4–5 scattered products. The East–West integration is proprietary.</td>
+            <td>NEM + Danshen + Chuanxiong + Dendrobium</td>
+          </tr>
+          <tr>
+            <td class="rowlabel">Premium anchor — TCM</td>
+            <td>Women who trust TCM already pay <b>SGD 7–20/day</b> for the same root cause. SGD 8.50 sits in that same premium band — culturally anchored.</td>
+            <td><span class="num">SGD 7–20</span> TCM herbal / day</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px 14px;background:var(--status-warning-tint);border-radius:10px;font-size:12.5px;color:var(--status-warning)">
+        <b>One open gate (B1):</b> prices are validated; whether women actually buy the full stack (4–5 products) or only 1–2 is not. Verdict: <b>feasible, with one condition (B1)</b>.
+      </div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:18px">
+    <div class="overline" style="color:var(--insight-strong)">The destination · positioning</div>
+    <p style="color:var(--ink);font-size:14px;margin:6px 0 0">
+      Bonefirm occupies the <strong>"bones and joints through menopause, for Asian women"</strong>
+      position — the brand built for the Asian woman's body: the silent bone loss and the #1 joint pain,
+      justified at premium by being the fair, culturally-anchored, single replacement for the stack.
+    </p>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4</span><span>02</span></div>
+</div>
+
+<!-- ============================================================ PAGE 3 — SYMPTOM CHART + SEGMENTS -->
+<div class="page">
+  <div class="sec-label"><span class="num">1</span><span class="t">The wedge in data — joint pain is #1, not hot flushes</span></div>
+  <p class="sub">NUH/NUS IWHP study (Maturitas 178:107853, 2023 · PMID 37806008), 1,054 midlife SG women. The market sells the 5th-ranked symptom; Bonefirm serves the #1 and the silent risk beneath it.</p>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>Symptom prevalence ranking — Singaporean midlife women</h3></div>
+    <div class="panel-body" style="padding-top:14px">
+      <div class="bar-row"><span class="bar-label"><b>#1 Joint / muscle pain</b></span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--status-critical)"></div></div><span class="bar-val">32.9%</span></div>
+      <div class="bar-row"><span class="bar-label">#2 Sleep problems</span><div class="bar-track"><div class="bar-fill" style="width:83.6%;background:var(--seg-terracotta)"></div></div><span class="bar-val">27.5%</span></div>
+      <div class="bar-row"><span class="bar-label">#3 Vaginal dryness</span><div class="bar-track"><div class="bar-fill" style="width:61.7%;background:var(--seg-rose)"></div></div><span class="bar-val">20.3%</span></div>
+      <div class="bar-row"><span class="bar-label">#4 Exhaustion</span><div class="bar-track"><div class="bar-fill" style="width:59.6%;background:var(--seg-olive)"></div></div><span class="bar-val">19.6%</span></div>
+      <div class="bar-row"><span class="bar-label"><b>#5 Hot flushes</b> <span style="color:var(--ink-3);font-weight:400">(what the market sells)</span></span><div class="bar-track"><div class="bar-fill" style="width:56.5%;background:var(--seg-slate)"></div></div><span class="bar-val">18.6%</span></div>
+      <div class="legend" style="margin-top:14px">
+        <span><span class="swatch" style="background:var(--status-critical)"></span>#1 — Bonefirm's wedge (32.9%)</span>
+        <span><span class="swatch" style="background:var(--seg-slate)"></span>#5 — hot flushes (18.6%), the Western #1</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--ink-3)">Bars scaled to 32.9% max</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <div class="kpi-label">Second headline number</div>
+      <div class="kpi-value" style="color:var(--insight-strong)">74.9%</div>
+      <div class="kpi-cap">of midlife SG women report some form of arthralgia (Study 2, Climacteric 2023 · PMID 38099561)</div>
+    </div>
+    <div class="card" style="background:var(--status-critical-tint);border-color:var(--status-critical)">
+      <div class="kpi-label" style="color:var(--status-critical)">The overturn</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        The medical community assumed hot flushes are #1. <b>NUH's Prof Yong Eu Leong:</b> for Asian women,
+        joint/muscle pain is #1 and hot flushes rank only 5th. This is published, peer-reviewed, SG-specific.
+      </p>
+    </div>
+  </div>
+
+  <hr>
+  <div class="sec-label"><span class="num">2</span><span class="t">The correct customer — "Women 45+" is a demographic, not a customer</span></div>
+  <div class="panel">
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Segment</th><th>Trigger</th><th>Willingness to pay</th><th>Served by?</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td class="b">Silent-risk-aware woman <span class="chip chip-critical" style="margin-left:4px">BEACHHEAD</span></td>
+            <td>DEXA scan / osteopenia / parent's fracture</td>
+            <td><b>High</b> — already paid for DEXA</td>
+            <td>Nobody</td>
+            <td class="yes">The beachhead</td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td class="b">"I feel it" woman (32.9%)</td>
+            <td>Current joint/muscle discomfort</td>
+            <td>Medium — compares vs glucosamine</td>
+            <td>Blackmores, Kinohimitsu, Kordel's</td>
+            <td class="partial">Expansion — largest, contested</td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td class="b">Daughter / caregiver</td>
+            <td>Parent's fracture or decline</td>
+            <td>High (emotional)</td>
+            <td>Nobody</td>
+            <td class="yes">Secondary buyer (founder's origin)</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;font-size:12px;color:var(--ink-2)">
+        <b>Beachhead rationale:</b> the only segment that (a) understands the "silent risk" framing, (b) is driven by fear of fracture, (c) is genuinely underserved, (d) will pay premium.
+      </div>
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4</span><span>03</span></div>
+</div>
+
+<!-- ============================================================ PAGE 4 — COMPETITIVE MATRIX + POSITIONING -->
+<div class="page">
+  <div class="sec-label"><span class="num">3</span><span class="t">Competitive set &amp; the empty intersection</span></div>
+  <p class="sub">Bonefirm is <b>#5+ on the menopause ladder, #8+ on the bone/joint ladder, &lt;1% of either</b> — fringe. But it is the <b>only brand at the bone/joint × menopause intersection</b>, empty because incumbents don't see it, not because it's unprofitable.</p>
+
+  <!-- Positioning map -->
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>Positioning map — bone/joint focus × menopause specificity</h3></div>
+    <div class="panel-body" style="padding:16px 20px 10px">
+      <svg viewBox="0 0 760 380" width="100%" style="height:300px" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Positioning map">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#cfccc4"/></marker>
+        </defs>
+        <!-- axes -->
+        <line x1="80" y1="60" x2="80" y2="310" stroke="#cfccc4" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="80" y1="310" x2="700" y2="310" stroke="#cfccc4" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="56" y="22" font-size="11" fill="#6b737e" text-anchor="start">Menopause-specific</text>
+        <text x="740" y="325" font-size="11" fill="#6b737e" text-anchor="end">Bone/joint focus →</text>
+        <text x="56" y="330" font-size="11" fill="#6b737e">Menopause-specific →</text>
+        <!-- gridlines -->
+        <line x1="80" y1="185" x2="700" y2="185" stroke="#e4e2dc" stroke-dasharray="3 4"/>
+        <line x1="390" y1="60" x2="390" y2="310" stroke="#e4e2dc" stroke-dasharray="3 4"/>
+        <!-- quadrant labels -->
+        <text x="92" y="72" font-size="9" fill="#9aa09b">Generic bone (Caltrate/Ostelin)</text>
+        <text x="398" y="72" font-size="9" fill="#9aa09b">Menopause symptom (Midi/Nutrafol)</text>
+        <text x="92" y="302" font-size="9" fill="#9aa09b">Joint/collagen (Blackmores/Kinohimitsu)</text>
+        <!-- competitors -->
+        <g font-size="12" text-anchor="start">
+          <circle cx="140" cy="268" r="7" fill="#6e8b9e"/><text x="150" y="272" fill="#4a525c">Caltrate · ~0.40</text>
+          <circle cx="178" cy="300" r="7" fill="#6e8b9e"/><text x="188" y="304" fill="#4a525c">Ostelin</text>
+          <circle cx="322" cy="262" r="7" fill="#8f9aa3"/><text x="332" y="266" fill="#4a525c">Blackmores · ~1.00</text>
+          <circle cx="250" cy="284" r="7" fill="#8f9aa3"/><text x="260" y="288" fill="#4a525c">Kordel's NEM</text>
+          <circle cx="362" cy="244" r="7" fill="#a4716f"/><text x="372" y="248" fill="#4a525c">Kinohimitsu · ~4.00</text>
+          <circle cx="540" cy="115" r="7" fill="#6e8b9e"/><text x="550" y="119" fill="#4a525c">The Better Menopause</text>
+          <circle cx="620" cy="92" r="7" fill="#6e8b9e"/><text x="630" y="96" fill="#4a525c">Midi Health · premium</text>
+          <circle cx="585" cy="150" r="7" fill="#6e8b9e"/><text x="595" y="154" fill="#4a525c">Nutrafol</text>
+          <circle cx="462" cy="212" r="7" fill="#7f8c5a"/><text x="472" y="216" fill="#4a525c">QN Wellness</text>
+          <!-- BONEFIRM -- the empty quadrant -->
+          <circle cx="432" cy="95" r="13" fill="none" stroke="#0e6e5c" stroke-width="2.5" stroke-dasharray="4 3"/>
+          <circle cx="432" cy="95" r="8" fill="#0e6e5c"/>
+          <text x="448" y="88" font-size="13" font-weight="700" fill="#0a5447">Bonefirm</text>
+          <text x="448" y="104" font-size="10" fill="#0a5447">Bone/joint × menopause — the empty slot</text>
+        </g>
+      </svg>
+      <div class="legend">
+        <span><span class="swatch" style="background:#0e6e5c"></span>Bonefirm — empty intersection</span>
+        <span><span class="swatch" style="background:#6e8b9e"></span>Generic bone</span>
+        <span><span class="swatch" style="background:#8f9aa3"></span>Joint</span>
+        <span><span class="swatch" style="background:#a4716f"></span>Collagen</span>
+        <span><span class="swatch" style="background:#7f8c5a"></span>SG plant-based</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Competitive matrix -->
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>Competitive capability matrix</h3></div>
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th>Capability</th><th>Bonefirm</th><th>Caltrate</th><th>Blackmores</th><th>Kordel's</th><th>Kinohimitsu</th><th>Midi/Nutrafol</th><th>QN</th></tr></thead>
+        <tbody>
+          <tr><td class="rowlabel">Menopause-specific</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+          <tr><td class="rowlabel">Bone/joint focus</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="partial">◐</td><td class="yes">✓</td></tr>
+          <tr><td class="rowlabel"><b>Bone/joint × menopause intersection</b></td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+          <tr><td class="rowlabel">Non-hormonal</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="partial">◐</td><td class="partial">◐</td></tr>
+          <tr><td class="rowlabel">NUH/NUS SG data</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+          <tr><td class="rowlabel">Founder + education</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+          <tr><td class="rowlabel">Clinical proof (full formula)</td><td class="no">✗</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="partial">◐</td><td class="partial">◐</td><td class="no">✗</td></tr>
+          <tr><td class="rowlabel">Retail presence</td><td class="no">✗</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+          <tr><td class="rowlabel">Price / day</td><td class="num" style="font-weight:700;color:var(--insight-strong)">SGD 8.50</td><td class="num">~0.40</td><td class="num">~1.00</td><td class="num">~1.00</td><td class="num">~4.00</td><td class="num">Premium</td><td class="num">Mid</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4</span><span>04</span></div>
+</div>
+
+<!-- ============================================================ PAGE 5 — TCO INFographic -->
+<div class="page">
+  <div class="sec-label"><span class="num">4</span><span class="t">The premium justification — total cost of ownership (fair, not cheap)</span></div>
+  <p class="sub">"SGD 8.50 vs Caltrate's 0.40 = 17–28x" is indefensible — the comparator is wrong. A menopausal Asian woman doesn't buy one supplement; she buys a <b>stack</b>.</p>
+
+  <!-- TCO cost comparison infographic -->
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>Daily cost — the stack Bonefirm replaces vs Bonefirm vs TCM</h3></div>
+    <div class="panel-body" style="padding-top:18px">
+      <div class="grid g3" style="gap:16px;align-items:stretch">
+        <div class="card" style="text-align:center;border:2px solid var(--line-strong);padding:16px">
+          <div class="kpi-label">The stack (bone+joint+collagen+mood)</div>
+          <div class="kpi-value" style="font-size:30px;color:var(--ink-2)">SGD 5.80<span style="font-size:18px">–</span>9.80</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:6px">Caltrate · Blackmores · Kinohimitsu · Ashwagandha — bought separately</div>
+          <div style="margin-top:10px;height:12px;background:var(--surface-inset);border-radius:6px;position:relative">
+            <div style="position:absolute;left:12%;width:58%;top:0;bottom:0;background:var(--seg-slate);border-radius:6px"></div>
+          </div>
+        </div>
+        <div class="card" style="text-align:center;border:2px solid var(--insight);background:var(--insight-tint);padding:16px">
+          <div class="kpi-label" style="color:var(--insight-strong)">Bonefirm — one product</div>
+          <div class="kpi-value" style="font-size:34px;color:var(--insight-strong)">SGD 8.50</div>
+          <div style="font-size:11px;color:var(--ink-2);margin-top:6px"><b>Sits inside the stack range</b> — the premium is fair, not a mark-up</div>
+          <div style="margin-top:10px;height:12px;background:var(--surface);border-radius:6px;position:relative;border:1px solid var(--insight-line)">
+            <div style="position:absolute;left:0;width:60%;top:0;bottom:0;background:var(--insight);border-radius:6px"></div>
+          </div>
+        </div>
+        <div class="card" style="text-align:center;border:2px solid var(--line-strong);padding:16px">
+          <div class="kpi-label">TCM herbal (cultural default)</div>
+          <div class="kpi-value" style="font-size:30px;color:var(--ink-2)">SGD 7<span style="font-size:18px">–</span>20</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:6px">Same root cause (Kidney yin deficiency). Bonefirm is in the <b>same premium band</b>.</div>
+          <div style="margin-top:10px;height:12px;background:var(--surface-inset);border-radius:6px;position:relative">
+            <div style="position:absolute;left:20%;width:65%;top:0;bottom:0;background:var(--seg-terracotta);border-radius:6px"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:10px 14px;background:var(--insight-tint);border-radius:10px;font-size:12.5px;color:var(--insight-strong)">
+        <b>The fair-value punchline:</b> a woman covering just the four things Bonefirm addresses already spends <b>SGD 5.80–9.80/day</b>. At SGD 8.50 Bonefirm sits <i>inside</i> that range — the premium is <b>fair</b>. This is a fair-value argument, <b>not a cheap-price one</b>.
+      </div>
+    </div>
+  </div>
+
+  <!-- Ingredient-symptom coverage -->
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>One product, one root cause — the ingredient–symptom coverage map</h3></div>
+    <div class="panel-body">
+      <div class="grid g2" style="gap:14px">
+        <div>
+          <div class="kpi-label" style="margin-bottom:8px">Western structural foundation</div>
+          <table class="tbl">
+            <thead><tr><th>Ingredient</th><th>Addresses</th><th>Evidence</th></tr></thead>
+            <tbody>
+              <tr><td class="b">NEM®</td><td>Joint/connective tissue</td><td class="num">Clinical · NCT02751944</td></tr>
+              <tr><td class="b">Vitamin C</td><td>Collagen synthesis</td><td class="num">Established</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div class="kpi-label" style="margin-bottom:8px">TCM botanical system</div>
+          <table class="tbl">
+            <thead><tr><th>Ingredient</th><th>Addresses</th><th>Evidence</th></tr></thead>
+            <tbody>
+              <tr><td class="b">Danshen</td><td>Bone loss, pain</td><td class="num">77–96% osteoporosis</td></tr>
+              <tr><td class="b">Chuanxiong</td><td>Joint pain, circulation</td><td class="num">Pharmacological</td></tr>
+              <tr><td class="b">Dendrobium</td><td>Bone loss (yin-nourisher)</td><td class="num">Prevents bone loss</td></tr>
+              <tr><td class="b">Morus · Rosa</td><td>Mood / calm</td><td class="num">Traditional</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip chip-healthy">✓ Joint pain (#1) — NEM+Danshen+Chuanxiong</span>
+        <span class="chip chip-healthy">✓ Bone loss (silent) — Danshen+Dendrobium+NEM</span>
+        <span class="chip chip-warning">◐ Mood — Rosa+Morus (defensible secondary)</span>
+        <span class="chip chip-neutral">✗ Hot flashes / sleep — NOT claimed</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4</span><span>05</span></div>
+</div>
+
+<!-- ============================================================ PAGE 6 — MARKET SHARE -->
+<div class="page">
+  <div class="sec-label"><span class="num">5</span><span class="t">Market share — the grab, low/medium/high</span></div>
+  <p class="sub">The SG women's bone/joint/menopause supplement market is fragmented and under-disclosed. Shares describe <b>share of purchasing</b> and overlap — they don't sum to 100%. The premium structural slice Bonefirm targets is small, high-intent, and uncontested.</p>
+
+  <!-- Addressable market stats -->
+  <div class="grid g4" style="margin-top:14px">
+    <div class="statcall" style="background:var(--surface-inset)"><div class="n">~320–360K</div><div class="l">SG female residents 45–59</div></div>
+    <div class="statcall" style="background:var(--status-info-tint)"><div class="n" style="color:var(--status-info)">32.9%</div><div class="l">with joint/muscle pain (#1)</div></div>
+    <div class="statcall" style="background:var(--status-warning-tint)"><div class="n" style="color:var(--status-warning)">~30–60K</div><div class="l">silent-risk-aware subset (beachhead)</div></div>
+    <div class="statcall" style="background:var(--insight-tint)"><div class="n" style="color:var(--insight-strong)">SGD 40–70M</div><div class="l">total SG women's bone/joint/menopause spend / yr</div></div>
+  </div>
+
+  <!-- Scenario chart -->
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-head"><h3>Market-share scenarios — annual steady-state revenue, premium structural slice</h3></div>
+    <div class="panel-body" style="padding-top:20px">
+      <svg viewBox="0 0 760 240" width="100%" role="img" aria-label="Market share scenario revenue chart">
+        <!-- zero baseline -->
+        <line x1="80" y1="190" x2="720" y2="190" stroke="#cfccc4" stroke-width="1.5"/>
+        <!-- y gridlines -->
+        <line x1="80" y1="128" x2="720" y2="128" stroke="#e4e2dc" stroke-dasharray="3 4"/>
+        <line x1="80" y1="66" x2="720" y2="66" stroke="#e4e2dc" stroke-dasharray="3 4"/>
+        <text x="72" y="194" font-size="10" fill="#6b737e" text-anchor="end">0</text>
+        <text x="72" y="132" font-size="10" fill="#6b737e" text-anchor="end">12M</text>
+        <text x="72" y="70" font-size="10" fill="#6b737e" text-anchor="end">24M</text>
+        <text x="72" y="14" font-size="10" fill="#6b737e" text-anchor="end">~37M</text>
+        <!-- LOW -->
+        <rect x="120" y="176" width="110" height="14" fill="#6e8b9e"/>
+        <rect x="120" y="150" width="110" height="26" fill="#a4716f"/>
+        <rect x="120" y="108" width="110" height="42" fill="#b4653a"/>
+        <text x="175" y="98" font-size="12" fill="#1b1f24" text-anchor="middle" font-weight="700">0.9–3.7M</text>
+        <text x="175" y="222" font-size="12" fill="#1b1f24" text-anchor="middle" font-weight="700">LOW</text>
+        <text x="175" y="238" font-size="10" fill="#6b737e" text-anchor="middle">~1–2% share</text>
+        <!-- MEDIUM -->
+        <rect x="325" y="128" width="110" height="62" fill="#0e6e5c"/>
+        <text x="380" y="116" font-size="12" fill="#1b1f24" text-anchor="middle" font-weight="700">4.6–14.7M</text>
+        <text x="380" y="222" font-size="12" fill="#1b1f24" text-anchor="middle" font-weight="700">MEDIUM</text>
+        <text x="380" y="238" font-size="10" fill="#6b737e" text-anchor="middle">~5–8% share</text>
+        <!-- HIGH -->
+        <rect x="530" y="40" width="110" height="150" fill="#0a5447"/>
+        <text x="585" y="28" font-size="12" fill="#1b1f24" text-anchor="middle" font-weight="700">11–36.7M</text>
+        <text x="585" y="222" font-size="12" fill="#1b1f24" text-anchor="middle" font-weight="700">HIGH</text>
+        <text x="585" y="238" font-size="10" fill="#6b737e" text-anchor="middle">~12–20% share</text>
+        <text x="400" y="18" font-size="11" fill="#4a525c" text-anchor="middle">Annual revenue (SGD), premium structural slice</text>
+      </svg>
+      <div class="legend">
+        <span><span class="swatch" style="background:#6e8b9e"></span>LOW — 1–2% · "proof doesn't land"</span>
+        <span><span class="swatch" style="background:#0e6e5c"></span>MEDIUM — 5–8% · realistic path</span>
+        <span><span class="swatch" style="background:#0a5447"></span>HIGH — 12–20% · category created</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>Scenario table</h3></div>
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th>Case</th><th>Key assumption</th><th>Share</th><th>Customers/yr</th><th>Revenue/yr</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="rowlabel">LOW <span class="chip chip-neutral" style="margin-left:4px">risk case</span></td>
+            <td>TCO weak; no partnerships; no evidence; competitor enters</td>
+            <td class="num">~1–2%</td><td class="num">~300–1,200</td><td class="num" style="font-weight:700;color:var(--ink)">SGD 0.9M–3.7M</td>
+          </tr>
+          <tr style="background:var(--insight-tint)">
+            <td class="rowlabel" style="color:var(--insight-strong)">MEDIUM <span class="chip chip-insight" style="margin-left:4px">realistic path</span></td>
+            <td>TCO holds; 2–3 partnerships; proof page live; education scales</td>
+            <td class="num">~5–8%</td><td class="num">~1,500–4,800</td><td class="num" style="font-weight:700;color:var(--insight-strong)">SGD 4.6M–14.7M</td>
+          </tr>
+          <tr>
+            <td class="rowlabel">HIGH <span class="chip chip-warning" style="margin-left:4px">evidence-backed upside</span></td>
+            <td>Medium + formula study + doctor endorsement + category created</td>
+            <td class="num">~12–20%</td><td class="num">~3,600–12,000</td><td class="num" style="font-weight:700;color:var(--ink)">SGD 11M–36.7M</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;font-size:12px;color:var(--ink-2)">
+        <b>Strategic takeaway:</b> the realistic path is <b>MEDIUM</b> — own the premium slice (~5–8%) via clinical/physio/TCM partnerships and the NUH/NUS wedge. <b>HIGH</b> needs formula-level evidence + a doctor endorsement. <b>LOW</b> is the risk if the TCO doesn't hold.
+      </div>
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4</span><span>06</span></div>
+</div>
+
+<!-- ============================================================ PAGE 7 — ACQUISITION CHANNELS -->
+<div class="page">
+  <div class="sec-label"><span class="num">6</span><span class="t">Customer acquisition — reach her at the moment of awareness</span></div>
+  <p class="sub">The beachhead customer is the <b>silent-risk-aware woman</b>. Reach her where she is at the moment of awareness — not broadcast to "women 45+". Ranked by intent, reachability, fit with the founder-led model.</p>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th style="width:6%">Rank</th><th style="width:27%">Channel</th><th>Why it's the right place</th><th style="width:10%">Intent</th><th style="width:13%">Reachability</th></tr></thead>
+        <tbody>
+          <tr><td class="num" style="color:var(--status-critical);font-weight:700">1</td><td class="b">DEXA / bone-density clinics</td><td>The moment of awareness — just got a scan showing osteopenia, paid SGD 130–150, seeking next steps.</td><td><span class="chip chip-critical">Highest</span></td><td><span class="chip chip-warning">Med (B2B)</span></td></tr>
+          <tr><td class="num">2</td><td class="b">Women's-health physios</td><td>Treat menopausal joint pain + muscle weakness; already educate on bone density. Endorsement = credibility bridge.</td><td><span class="chip chip-warning">High</span></td><td><span class="chip chip-warning">Med (B2B)</span></td></tr>
+          <tr><td class="num">3</td><td class="b">Menopause clinics / gynae</td><td>The medical authority. An endorsement clears the credibility gap fastest.</td><td><span class="chip chip-warning">High</span></td><td><span class="chip chip-neutral">Low–Med</span></td></tr>
+          <tr><td class="num">4</td><td class="b">TCM clinics</td><td>The cultural default (37% use herbal). The East–West integration is the natural fit.</td><td><span class="chip chip-warning">High</span></td><td><span class="chip chip-warning">Med (B2B)</span></td></tr>
+          <tr><td class="num">5</td><td class="b">RC / community talks</td><td>The founder's moat — the education engine feeding everything; where the daughter segment appears.</td><td><span class="chip chip-neutral">Medium</span></td><td><span class="chip chip-healthy">High</span></td></tr>
+          <tr><td class="num">6</td><td class="b">Facebook menopause groups</td><td>Peer trust. High-intent but self-promotion restricted — <i>answer, not advertise</i>.</td><td><span class="chip chip-warning">Med–High</span></td><td><span class="chip chip-neutral">Medium</span></td></tr>
+          <tr><td class="num">7</td><td class="b">Active Ageing Centres / HPB</td><td>Mass reach where women 45+ gather; awareness + daughter segment, lower intent.</td><td><span class="chip chip-neutral">Low–Med</span></td><td><span class="chip chip-healthy">High</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:10px">
+    <div class="overline" style="color:var(--insight-strong)">The recommended focus</div>
+    <p style="color:var(--ink);font-size:13px;margin:5px 0 0">
+      Lead with the <strong>clinical + TCM partnership channels (1–4)</strong>, powered by the founder's RC talks (5).
+      Partner with DEXA clinics and physios so Bonefirm is handed to the woman
+      <strong>at the moment she's told her bones are at risk — peak intent, with a trusted authority's recommendation.</strong>
+    </p>
+    <div style="margin-top:8px;padding:8px 12px;background:var(--surface);border-radius:10px;font-size:11.5px;color:var(--status-warning)">
+      <b>Why this beats broadcast:</b> she isn't "browsing supplements" — she's in a clinic, physio, or TCM consult. <b>Be where the awareness happens, not where she scrolls.</b> Caution: clinical channels are gatekeepers — B1 and B2 must come first.
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4</span><span>07</span></div>
+</div>
+
+<!-- ============================================================ PAGE 8 — 90-DAY ROADMAP -->
+<div class="page">
+  <div class="sec-label"><span class="num">7</span><span class="t">The 90-day roadmap — validate before you scale (gated on B1)</span></div>
+  <p class="sub">B1 is the gate — it decides whether the premium holds as a fair price (stack is real) or must lean on the identity axis.</p>
+
+  <!-- Phase 1 -->
+  <div class="phase">
+    <div class="phase-marker"><div class="phase-badge">Phase 1</div><div class="phase-weeks">Weeks 1–4<br>Validate</div><div class="phase-line"></div></div>
+    <div class="phase-items">
+      <div class="witem"><span class="wk">W1</span><div class="act"><b>B1 behavioral survey</b> — 20–30 SG women 45–60: what they buy, how many products, cost.</div><div class="out"><span class="chip chip-critical">THE GATE</span> — confirms the stack is real</div></div>
+      <div class="witem"><span class="wk">W2</span><div class="act"><b>B2 evidence pack</b> — NEM trial + Danshen review + Dendrobium study.</div><div class="out">credibility pack for partnerships</div></div>
+      <div class="witem"><span class="wk">W3</span><div class="act"><b>B3 NUS/NUH proof page</b> — "Joint pain is the #1 menopause symptom in SG (32.9%)."</div><div class="out">centerpiece claim, verifiable</div></div>
+      <div class="witem"><span class="wk">W4</span><div class="act"><b>B4 channel decision</b> — D2C-premium (education-led) vs retail.</div><div class="out">distribution decision</div></div>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase">
+    <div class="phase-marker"><div class="phase-badge" style="background:var(--seg-olive)">Phase 2</div><div class="phase-weeks">Weeks 5–8<br>Build proof &amp; partnerships</div><div class="phase-line"></div></div>
+    <div class="phase-items">
+      <div class="witem"><span class="wk">W5</span><div class="act"><b>B5 DEXA-clinic pilot</b> — approach 2–3 scan clinics with the evidence pack.</div><div class="out">first clinic partner = beachhead</div></div>
+      <div class="witem"><span class="wk">W6</span><div class="act"><b>B5 physio pilot</b> — approach 2–3 women's-health physios.</div><div class="out">credibility bridge + "I feel it" channel</div></div>
+      <div class="witem"><span class="wk">W7</span><div class="act"><b>B5 TCM-clinic pilot</b> — approach 2–3 TCM clinics with the East–West story.</div><div class="out">the cultural-default channel</div></div>
+      <div class="witem"><span class="wk">W8</span><div class="act"><b>B6 willingness-to-pay test</b> — does the TCO story clear the price objection?</div><div class="out">confirms the premium clears</div></div>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase">
+    <div class="phase-marker"><div class="phase-badge" style="background:var(--seg-terracotta)">Phase 3</div><div class="phase-weeks">Weeks 9–13<br>Scale the education engine</div></div>
+    <div class="phase-items">
+      <div class="witem"><span class="wk">W9</span><div class="act"><b>B7 productize RC talks</b> — record the founder's talk, build a downloadable guide.</div><div class="out">education engine, scalable</div></div>
+      <div class="witem"><span class="wk">W10</span><div class="act"><b>B7 join FB groups as educator</b> — answer, don't advertise.</div><div class="out">peer-trust channel, earned</div></div>
+      <div class="witem"><span class="wk">W11</span><div class="act"><b>B8 first doctor/physio endorsement</b> — convert a pilot partner to a named endorsement.</div><div class="out">credibility bridge, public</div></div>
+      <div class="witem"><span class="wk">W12</span><div class="act"><b>Publish the first proof case</b> — a silent-risk-aware woman's outcome (with permission).</div><div class="out">the first client proof</div></div>
+      <div class="witem"><span class="wk">W13</span><div class="act"><b>Review B1 + pilots</b> — scale partnerships or pivot the premium to the identity axis.</div><div class="out">go/no-go on the TCO-led premium</div></div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:8px">
+    <div class="overline" style="color:var(--insight-strong)">The 90-day goal</div>
+    <p style="color:var(--ink);font-size:13.5px;margin:6px 0 0">
+      Validated stack (B1) · evidence pack (B2) · NUS/NUH proof page (B3) · 2–3 clinical/TCM/physio partnerships (B5) ·
+      confirmed willingness-to-pay (B6) · first proof case. <b>The foundation for a defensible premium and a scalable
+      education engine — without spending on broadcast marketing before the proof exists.</b>
+    </p>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4</span><span>08</span></div>
+</div>
+
+<!-- ============================================================ PAGE 9 — WEBSITE CHANGES + SOURCES -->
+<div class="page">
+  <div class="sec-label"><span class="num">8</span><span class="t">Website change recommendations — additions, not a redesign</span></div>
+  <p class="sub">The site is ~80% aligned with the structural positioning (verified live 2026-08-20). Changes add evidence, the Asia-first inversion, the premium story, and the mood claim — HSA-safe, in buyer language.</p>
+
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th style="width:7%">Priority</th><th style="width:36%">Change</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td><span class="chip chip-critical">P1</span></td><td class="b">Add NUH/NUS proof block + lead homepage with the inversion + three evidence pillars</td><td>The wedge — the strongest claim, currently missing</td></tr>
+          <tr><td><span class="chip chip-critical">P2</span></td><td class="b">Replace "structural support" with "bones and joints, without hormones"; promote "Non-hormonal by design" to hero</td><td>The buyer's words, not analyst jargon</td></tr>
+          <tr><td><span class="chip chip-warning">P3</span></td><td class="b">Add "Why the price" section + comparison table (stack 5.80–9.80 vs 8.50) — <i>fair, not cheap</i>; anchor to the TCM premium band</td><td>The price justification, currently absent</td></tr>
+          <tr><td><span class="chip chip-warning">P4</span></td><td class="b">Add mood line + name Rosa/Morus; frame as TCM system logic, NOT hot-flash/sleep</td><td>Defensible secondary, strengthens TCO</td></tr>
+          <tr><td><span class="chip chip-info">P5</span></td><td class="b">Add "For healthcare professionals" page + education card + partner path</td><td>The beachhead channel</td></tr>
+          <tr><td><span class="chip chip-neutral">P6</span></td><td class="b">Founder story to homepage, first proof case, fix "test2" link, promote Chinese PDF</td><td>Credibility + consistency</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:8px;padding:8px 12px;background:var(--status-neutral-tint);border-radius:10px;font-size:11.5px;color:var(--status-neutral)">
+        <b>What NOT to change:</b> no hot-flash or sleep claims · no subscription model (dropped) · no "cheaper than Caltrate" — the price message is <b>fair value, never cheap</b>.
+      </div>
+    </div>
+  </div>
+
+  <hr style="margin:10px 0">
+  <div class="sec-label" style="margin-top:4px"><span class="num">§</span><span class="t">Sources &amp; confidence</span></div>
+  <div class="grid g2" style="gap:10px">
+    <div class="card" style="padding:10px">
+      <div class="kpi-label">Verified clinical (HIGH confidence)</div>
+      <ul style="margin:5px 0 0;padding-left:14px;font-size:10.5px;color:var(--ink-2)">
+        <li>Logan S et al. <i>Maturitas</i> 178:107853, 2023 · PMID 37806008 — joint pain #1 (32.9%), hot flushes 5th (18.6%)</li>
+        <li>Logan S et al. <i>Climacteric</i> 2023 · PMID 38099561 — 74.9% any arthralgia</li>
+        <li>APMF Consensus 2024 · <i>J Menopausal Med</i> 31(1):3-11 — Asia-first inversion</li>
+        <li>NEM trial NCT02751944 · Danshen review PMID 39421672 · Dendrobium study 2018</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:10px">
+      <div class="kpi-label">Estimates (directional)</div>
+      <ul style="margin:5px 0 0;padding-left:14px;font-size:10.5px;color:var(--ink-2)">
+        <li>Market size &amp; share — Low / Medium confidence, derived</li>
+        <li>Stack pricing SGD 5.80–9.80/day — validated SG retail (Straits Times, Kinohimitsu, Watsons/Guardian)</li>
+        <li>TCM herbal SGD 7–20/day — Eu Yan Sang, Yi TCM, Thomson, Ma Kuang</li>
+        <li>DEXA ~SGD 130–150, MediSave-claimable — healthscreening.sg, Regis Medical</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;padding:12px 14px;background:var(--insight);border-radius:12px;color:var(--ink-on-insight)">
+    <div style="font-family:var(--font-display);font-size:16px;font-weight:700">The one-sentence strategic summary</div>
+    <p style="font-size:12px;color:rgba(255,255,255,.92);margin:4px 0 0;max-width:74ch">
+      The NUH/NUS data is the wedge; the silent-risk-aware woman is the beachhead; the education engine is the
+      moat; the fair-value + cultural-anchor TCO is the premium justification; and the 90-day roadmap moves from
+      LOW toward MEDIUM market share, with HIGH as the evidence-backed upside.
+    </p>
+  </div>
+
+  <div class="pgfoot"><span>Bonefirm™ Competitive Analysis · v4 · ObserveCo design system</span><span>09</span></div>
+</div>
+
+</body>
+</html>
