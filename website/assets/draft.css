@@ -1965,6 +1965,10 @@ table.compare .generic { color: var(--yellow); }
 .flank-example p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--fg-2); max-width: 72ch; }
 
 /* Stepper controls */
+.flank-topbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.flank-topbar .btn-step { width: 42px; height: 42px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; font-size: 17px; display: grid; place-items: center; transition: border-color 0.2s ease, color 0.2s ease; }
+.flank-topbar .btn-step:hover { border-color: var(--green); color: var(--green); }
+.flank-topbar .flank-counter { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); letter-spacing: 0.1em; }
 .flank-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 20px; }
 .flank-controls .btn-step { width: 42px; height: 42px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--fg); cursor: pointer; font-size: 17px; display: grid; place-items: center; transition: border-color 0.2s ease, color 0.2s ease; }
 .flank-controls .btn-step:hover { border-color: var(--green); color: var(--green); }
