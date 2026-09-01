@@ -1343,11 +1343,11 @@ table.compare .generic { color: var(--yellow); }
     animation: gauge-sweep-loop 5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
   }
   @keyframes gauge-sweep {
-    0%   { transform: rotate(-90deg); }
-    20%  { transform: rotate(-96deg); }   /* anticipation — pull back */
-    70%  { transform: rotate(-33deg); }   /* overshoot past 29% */
-    85%  { transform: rotate(-40deg); }   /* wobble back */
-    100% { transform: rotate(-38deg); }   /* settle on 29% */
+    0%   { transform: rotate(-72deg); }  /* 10% — start */
+    20%  { transform: rotate(-78deg); }  /* anticipation — pull back */
+    70%  { transform: rotate(-33deg); }  /* overshoot past 29% */
+    85%  { transform: rotate(-40deg); }  /* wobble back */
+    100% { transform: rotate(-38deg); }  /* settle on 29% */
   }
 
   /* 3. Domino's — dot grid pops in with a ripple wave (stores multiplying).
@@ -1650,7 +1650,7 @@ table.compare .generic { color: var(--yellow); }
 .stock-chart .chart-label.end { fill: var(--green); font-weight: 600; }
 
 /* Avis gauge — semicircle needle sweep */
-.gauge { margin-top: var(--space-2); }
+.gauge { margin: var(--space-2) auto 0; display: flex; justify-content: center; }
 .gauge svg { width: 100%; max-width: 280px; height: auto; display: block; }
 .gauge .gauge-arc { fill: none; stroke: var(--surface-2); stroke-width: 12; }
 .gauge .gauge-tick { stroke: var(--fg-3); stroke-width: 2; }
@@ -1796,11 +1796,11 @@ table.compare .generic { color: var(--yellow); }
 }
 
 @keyframes gauge-sweep-loop {
-  0%   { transform: rotate(-90deg); }
-  3%   { transform: rotate(-96deg); }
-  10%  { transform: rotate(-33deg); }
-  13%  { transform: rotate(-40deg); }
-  15%  { transform: rotate(-38deg); }
+  0%   { transform: rotate(-72deg); }  /* 10% — start */
+  3%   { transform: rotate(-78deg); }  /* anticipation — pull back */
+  10%  { transform: rotate(-33deg); }  /* overshoot past 29% */
+  13%  { transform: rotate(-40deg); }  /* wobble back */
+  15%  { transform: rotate(-38deg); }  /* settle on 29% */
   100% { transform: rotate(-38deg); }
 }
 
