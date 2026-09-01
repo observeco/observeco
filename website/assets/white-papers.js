@@ -147,12 +147,12 @@
       { name: 'Finance', sh: '13.2', x: 688, y: 356, r: 28, c: TOK.steel },
       { name: 'Transport', sh: '7.6', x: 578, y: 434, r: 19, c: TOK.steel },
       { name: 'Info & comms', sh: '6.0', x: 502, y: 470, r: 16, c: TOK.steel },
-      { name: 'Health', sh: '2.6', x: 268, y: 522, r: 12, c: TOK.teal },
-      { name: 'Education', sh: '2.3', x: 234, y: 512, r: 11, c: TOK.teal },
-      { name: 'Admin & support', sh: '2.3', x: 200, y: 504, r: 11, c: TOK.teal },
-      { name: 'Retail', sh: '1.1', x: 172, y: 468, r: 8, c: TOK.teal },
-      { name: 'F&B', sh: '1.0', x: 146, y: 444, r: 8, c: TOK.teal },
-      { name: 'Arts & rec', sh: '1.0', x: 124, y: 424, r: 8, c: TOK.teal }
+      { name: 'Health', sh: '2.6', x: 268, y: 300, r: 12, c: TOK.teal },
+      { name: 'Education', sh: '2.3', x: 234, y: 355, r: 11, c: TOK.teal },
+      { name: 'Admin & support', sh: '2.3', x: 200, y: 410, r: 11, c: TOK.teal },
+      { name: 'Retail', sh: '1.1', x: 172, y: 465, r: 8, c: TOK.teal },
+      { name: 'F&B', sh: '1.0', x: 146, y: 520, r: 8, c: TOK.teal },
+      { name: 'Arts & rec', sh: '1.0', x: 124, y: 575, r: 8, c: TOK.teal }
     ];
     var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="Industry scatter by GDP share and entry difficulty. The big engine industries sit high and hard to enter. The small domestic industries sit low and open — the differentiation slot in between." font-family="' + S + '">' +
       head('3 · THE INDUSTRY MAP', 'Big numbers are busy. The slot is small.', 'Big share of GDP = structurally closed. Small domestic industries are where you can actually compete.') +
