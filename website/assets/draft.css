@@ -836,6 +836,38 @@ table.compare .generic { color: var(--yellow); }
 }
 .case-card .case-result strong { color: var(--green); font-weight: 700; }
 
+/* Consolidated before/after positioning blocks */
+.case-card .case-phase {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.case-card .case-phase .phase-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+}
+.case-card .case-phase .phase-statement {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+  color: var(--fg);
+}
+.case-card .case-phase .phase-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.case-card .case-phase .phase-bar .bar-label { color: var(--fg-3); white-space: nowrap; }
+.case-card .case-phase .phase-bar .bar-track { flex: 1; }
+.case-card .case-phase .phase-bar .bar-val { color: var(--fg); font-weight: 600; white-space: nowrap; }
+
 /* The one-word pattern strip */
 .word-strip { display: flex; flex-wrap: wrap; gap: 12px; margin-top: var(--space-3); }
 .word-chip {
