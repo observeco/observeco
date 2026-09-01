@@ -547,6 +547,11 @@ So here is the only way a small company wins: don't fight them for the crowd the
                 <button class="btn-step" id="prevStep" aria-label="Previous step">←</button>
                 <button class="btn-step" id="nextStep" aria-label="Next step">→</button>
                 <span class="flank-counter" id="counter">STEP 1 / 7</span>
+                <div class="act-spine" id="actSpine" role="tablist" aria-label="Acts">
+                  <button class="act-seg active" data-act="1" role="tab" aria-selected="true">Beachhead</button>
+                  <button class="act-seg" data-act="2" role="tab" aria-selected="false">The Wedge</button>
+                  <button class="act-seg" data-act="3" role="tab" aria-selected="false">Expansion</button>
+                </div>
               </div>
               <div class="flank-chips" aria-hidden="true">
                 <span class="chip chip-a" id="chipA">The mental list</span>
@@ -560,14 +565,7 @@ So here is the only way a small company wins: don't fight them for the crowd the
                   <p id="stepExample">Meet our running example — a tiny two-person company that makes rain jackets. They decided to take on the household brand that owns everyone's idea of a good raincoat. It didn't move a single person's mind, and after a few months the money ran out.</p>
                 </div>
               </div>
-              <div class="flank-controls">
-                <div class="act-spine" id="actSpine" role="tablist" aria-label="Acts">
-                  <button class="act-seg active" data-act="1" role="tab" aria-selected="true">Beachhead</button>
-                  <button class="act-seg" data-act="2" role="tab" aria-selected="false">The Wedge</button>
-                  <button class="act-seg" data-act="3" role="tab" aria-selected="false">Expansion</button>
-                </div>
-                <div class="flank-dots" id="flankDots" role="tablist" aria-label="Steps"></div>
-              </div>
+              <div class="flank-dots" id="flankDots" role="tablist" aria-label="Steps"></div>
               <div class="flank-scroll-cue"><span class="cue-bar" aria-hidden="true"></span>Keep scrolling to follow the story</div>
             </div>
             </div><!-- /flank-map-body -->
