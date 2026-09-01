@@ -262,13 +262,13 @@
     s += '<text x="204" y="600" text-anchor="middle" font-family="' + S + '" font-size="13.5" font-weight="600" fill="' + TOK.coral + '">execution: no moat</text>' +
 
       /* RIGHT: the CHOSEN (durable) */
-      '<rect x="560" y="164" width="610" height="520" rx="16" fill="' + TOK.surface + '" stroke="' + TOK.tealLine + '"/>' +
+      '<rect x="560" y="140" width="610" height="520" rx="16" fill="' + TOK.surface + '" stroke="' + TOK.tealLine + '"/>' +
       '<text x="577" y="180" font-family="' + M + '" font-size="12" font-weight="700" letter-spacing="2" fill="' + TOK.teal + '">AI CANNOT MAKE CHEAP</text>' +
       '<text x="577" y="204" font-family="' + D + '" font-size="24" font-weight="600" fill="' + TOK.ink + '">Being CHOSEN</text>' +
       '<text x="577" y="228" font-family="' + S + '" font-size="13" fill="' + TOK.ink3 + '">the word in the customer\u2019s mind — trust, relationship</text>';
     for (var j = 0; j < right.length; j++) {
       var ry = 260 + j * 100;
-      s += '<rect x="574" y="' + ry + '" width="582" height="88" rx="10" fill="' + TOK.tealTint + '" stroke="' + TOK.tealLine + '"/>' +
+      s += '<rect x="574" y="' + ry + '" width="582" height="76" rx="10" fill="' + TOK.tealTint + '" stroke="' + TOK.tealLine + '"/>' +
         '<text x="590" y="' + (ry + 26) + '" font-family="' + S + '" font-size="14.5" font-weight="600" fill="' + TOK.tealStrong + '">' + right[j][0] + '</text>' +
         '<text x="590" y="' + (ry + 54) + '" font-family="' + S + '" font-size="12.5" fill="' + TOK.ink3 + '">' + right[j][1] + '</text>';
     }
