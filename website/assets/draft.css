@@ -1305,17 +1305,16 @@ table.compare .generic { color: var(--yellow); }
     animation: chart-draw-loop 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
   .case-card:nth-child(1) .stock-chart.in-view .chart-dot.end {
-    animation: chart-dot-pop-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s infinite;
+    animation: chart-dot-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
+  }
+  @keyframes chart-dot-in {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
   }
   @keyframes chart-draw-loop {
     0%   { stroke-dashoffset: 400; }
     60%  { stroke-dashoffset: 0; }
     100% { stroke-dashoffset: 0; }
-  }
-  @keyframes chart-dot-pop-loop {
-    0%   { transform: scale(0); transform-origin: center; }
-    60%  { transform: scale(1.4); }
-    100% { transform: scale(1); }
   }
   .case-card:nth-child(1) .odometer.in-view .odo-digit:nth-child(1) .odo-strip { animation-delay: 0.1s; }
   .case-card:nth-child(1) .odometer.in-view .odo-digit:nth-child(2) .odo-strip { animation-delay: 0.2s; }
