@@ -245,6 +245,85 @@ h3 { font-size: 20px; }
   max-width: 60ch;
   margin-bottom: var(--space-4);
 }
+
+/* ─── PROCESS FLOW — 4-step infographic above the hero CTA ─── */
+.process-flow {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--border-soft);
+}
+.process-flow-headline {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.5vw, 24px);
+  font-weight: 600;
+  color: var(--fg);
+  text-align: center;
+  margin: 0 0 var(--space-4);
+  letter-spacing: 0.02em;
+}
+.process-flow-headline .arrow {
+  color: var(--amber);
+  margin: 0 0.3em;
+  font-weight: 400;
+}
+.process-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  text-align: center;
+}
+.process-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.step-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-2);
+  color: var(--fg-2);
+}
+.step-icon svg {
+  width: 40px;
+  height: 40px;
+}
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.step-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg);
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.step-desc {
+  font-size: 14px;
+  color: var(--fg-3);
+  line-height: 1.5;
+  max-width: 20ch;
+  margin: 0;
+}
+@media (max-width: 768px) {
+  .process-steps { grid-template-columns: repeat(2, 1fr); gap: var(--space-4) var(--space-3); }
+}
+@media (max-width: 480px) {
+  .process-steps { grid-template-columns: 1fr; }
+  .step-desc { max-width: none; }
+}
+
 .hero-ctas { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .hero .cta-caption {
   width: 100%;
