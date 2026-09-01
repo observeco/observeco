@@ -865,8 +865,11 @@ table.compare .generic { color: var(--yellow); }
   font-size: 13px;
 }
 .case-card .case-phase .phase-bar .bar-label { color: var(--fg-3); white-space: nowrap; }
-.case-card .case-phase .phase-bar .bar-track { flex: 1; }
-.case-card .case-phase .phase-bar .bar-val { color: var(--fg); font-weight: 600; white-space: nowrap; }
+.case-card .case-phase .phase-bar .bar-track { flex: 1; height: 14px; background: var(--surface-2); border-radius: 3px; position: relative; overflow: hidden; }
+.case-card .case-phase .phase-bar .bar-fill { height: 100%; border-radius: 3px; transform-origin: left; }
+.case-card .case-phase .phase-bar .bar-fill.before { background: var(--coral); }
+.case-card .case-phase .phase-bar .bar-fill.after { background: var(--green); }
+.case-card .case-phase .phase-bar .bar-val { color: var(--fg); font-weight: 600; white-space: nowrap; font-family: var(--font-mono); font-size: 12px; }
 
 /* The one-word pattern strip */
 .word-strip { display: flex; flex-wrap: wrap; gap: 12px; margin-top: var(--space-3); }
@@ -1138,6 +1141,16 @@ table.compare .generic { color: var(--yellow); }
      to the AFTER value when the card scrolls into view
      (transform-origin: left, GPU-accelerated). */
   .case-bars.in-view .bar-fill.after {
+    transform-origin: left;
+    animation: grow-bar-loop 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  /* Consolidated phase bars: BEFORE (orange) grows from 0, AFTER (teal)
+     grows from the before value — both when the phase-bar scrolls in. */
+  .phase-bar.in-view .bar-fill.before {
+    transform-origin: left;
+    animation: grow-fill-loop 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .phase-bar.in-view .bar-fill.after {
     transform-origin: left;
     animation: grow-bar-loop 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
