@@ -1348,33 +1348,16 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: rotate(-38deg); }
   }
 
-  /* 3. Domino's — dot grid pops in with a ripple wave (stores multiplying).
-     Middle dots first, edges later — like a ripple. Each dot overshoots
-     (scale 0 → 1.2 → 1). Grid is 5 cols × 3 rows; delays by distance
-     from the center dot (d8). */
-  .dot-grid.in-view .dot {
-    animation: dot-pop-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  /* 3. Domino's — store map: dots multiply outward from the single store
+     (a ripple of new stores). Ring 1 appears first, then ring 2, then
+     ring 3 — each dot pops in with overshoot. */
+  .store-map.in-view .map-dot {
+    animation: map-dot-pop-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
   }
-  /* center (d8) */
-  .dot-grid.in-view .dot:nth-child(8) { animation-delay: 0.1s; }
-  /* ring 1 (d3, d7, d9, d13) */
-  .dot-grid.in-view .dot:nth-child(3) { animation-delay: 0.2s; }
-  .dot-grid.in-view .dot:nth-child(7) { animation-delay: 0.2s; }
-  .dot-grid.in-view .dot:nth-child(9) { animation-delay: 0.2s; }
-  .dot-grid.in-view .dot:nth-child(13) { animation-delay: 0.2s; }
-  /* ring 2 (d2, d4, d12, d14) */
-  .dot-grid.in-view .dot:nth-child(2) { animation-delay: 0.3s; }
-  .dot-grid.in-view .dot:nth-child(4) { animation-delay: 0.3s; }
-  .dot-grid.in-view .dot:nth-child(12) { animation-delay: 0.3s; }
-  .dot-grid.in-view .dot:nth-child(14) { animation-delay: 0.3s; }
-  /* ring 3 (d1, d5, d6, d10, d11, d15) */
-  .dot-grid.in-view .dot:nth-child(1) { animation-delay: 0.4s; }
-  .dot-grid.in-view .dot:nth-child(5) { animation-delay: 0.4s; }
-  .dot-grid.in-view .dot:nth-child(6) { animation-delay: 0.4s; }
-  .dot-grid.in-view .dot:nth-child(10) { animation-delay: 0.4s; }
-  .dot-grid.in-view .dot:nth-child(11) { animation-delay: 0.4s; }
-  .dot-grid.in-view .dot:nth-child(15) { animation-delay: 0.4s; }
-  @keyframes dot-pop {
+  .store-map.in-view .map-dot.r1 { animation-delay: 0.2s; }
+  .store-map.in-view .map-dot.r2 { animation-delay: 0.4s; }
+  .store-map.in-view .map-dot.r3 { animation-delay: 0.6s; }
+  @keyframes map-dot-pop {
     0%   { transform: scale(0); opacity: 0; }
     60%  { transform: scale(1.2); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
@@ -1656,9 +1639,35 @@ table.compare .generic { color: var(--yellow); }
 .gauge .gauge-pivot { fill: var(--green); }
 .gauge .gauge-label { font-family: var(--font-mono); font-size: 12px; fill: var(--fg-3); }
 
-/* Domino's dot grid — stores multiplying */
-.dot-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: var(--space-2); max-width: 220px; }
-.dot-grid .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--green); }
+/* Domino's store map — stores multiplying outward from a single store */
+.store-map {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: var(--space-2);
+  max-width: 240px;
+  padding: 6px;
+}
+.store-marker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.map-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--green); opacity: 0; }
 
 /* Volvo shield — fill + checkmark draw */
 .shield { width: 96px; height: 114px; margin-top: var(--space-2); }
@@ -1799,7 +1808,7 @@ table.compare .generic { color: var(--yellow); }
   100% { transform: rotate(-38deg); }
 }
 
-@keyframes dot-pop-loop {
+@keyframes map-dot-pop-loop {
   0%   { transform: scale(0); opacity: 0; }
   9%   { transform: scale(1.2); opacity: 1; }
   15%  { transform: scale(1); opacity: 1; }
