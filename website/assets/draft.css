@@ -1340,14 +1340,12 @@ table.compare .generic { color: var(--yellow); }
      overshoots past 29% and wobbles back to settle. */
   .gauge.in-view .gauge-needle {
     transform-origin: 100px 100px;
-    animation: gauge-sweep-loop 5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    animation: gauge-sweep-loop 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
   @keyframes gauge-sweep {
-    0%   { transform: rotate(-72deg); }  /* 10% — start */
-    20%  { transform: rotate(-78deg); }  /* anticipation — pull back */
-    70%  { transform: rotate(-33deg); }  /* overshoot past 29% */
-    85%  { transform: rotate(-40deg); }  /* wobble back */
-    100% { transform: rotate(-38deg); }  /* settle on 29% */
+    0%   { transform: rotate(-72deg); }  /* 10% — start, in lock step with bars */
+    15%  { transform: rotate(-38deg); }  /* 29% — settle, same window as bars */
+    100% { transform: rotate(-38deg); }
   }
 
   /* 3. Domino's — dot grid pops in with a ripple wave (stores multiplying).
@@ -1796,11 +1794,8 @@ table.compare .generic { color: var(--yellow); }
 }
 
 @keyframes gauge-sweep-loop {
-  0%   { transform: rotate(-72deg); }  /* 10% — start */
-  3%   { transform: rotate(-78deg); }  /* anticipation — pull back */
-  10%  { transform: rotate(-33deg); }  /* overshoot past 29% */
-  13%  { transform: rotate(-40deg); }  /* wobble back */
-  15%  { transform: rotate(-38deg); }  /* settle on 29% */
+  0%   { transform: rotate(-72deg); }  /* 10% — start, in lock step with bars */
+  15%  { transform: rotate(-38deg); }  /* 29% — settle, same window as bars */
   100% { transform: rotate(-38deg); }
 }
 
