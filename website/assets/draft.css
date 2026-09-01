@@ -278,19 +278,55 @@ h3 { font-size: 20px; }
   align-items: center;
 }
 .step-icon {
-  width: 80px;
-  height: 80px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   background: var(--surface-2);
+  border: 1px solid var(--border-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: var(--space-2);
-  color: var(--fg-2);
+  color: var(--green);
+  box-shadow: 0 2px 8px rgba(20, 60, 50, 0.06);
 }
 .step-icon svg {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
+  overflow: visible;
+}
+/* Feather icons — clean continuous stroke (no hand-drawn fill) */
+.step-icon .pi {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Stroke draw-in on the icon outlines */
+.process-flow.in-view .step-icon .pi-a,
+.process-flow.in-view .step-icon .pi-b,
+.process-flow.in-view .step-icon .pi-c {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: pi-draw-loop 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.process-flow.in-view .step-icon .pi-a { animation-delay: 0.1s; }
+.process-flow.in-view .step-icon .pi-b { animation-delay: 0.35s; }
+.process-flow.in-view .step-icon .pi-c { animation-delay: 0.6s; }
+@keyframes pi-draw-loop {
+  0%   { stroke-dashoffset: 60; opacity: 1; }
+  25%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 0; }
+}
+/* Icon circle pulses softly — the process is alive */
+.process-flow.in-view .step-icon {
+  animation: icon-ring-loop 5s ease-in-out infinite;
+}
+.process-flow.in-view .step-icon:nth-of-type(1) { animation-delay: 0.1s; }
+.process-flow.in-view .step-icon:nth-of-type(2) { animation-delay: 0.35s; }
+.process-flow.in-view .step-icon:nth-of-type(3) { animation-delay: 0.6s; }
+.process-flow.in-view .step-icon:nth-of-type(4) { animation-delay: 0.85s; }
+@keyframes icon-ring-loop {
+  0%, 100% { box-shadow: 0 2px 8px rgba(20, 60, 50, 0.06); }
+  50%      { box-shadow: 0 4px 18px rgba(14, 110, 92, 0.22); }
 }
 .step-num {
   font-family: var(--font-mono);
