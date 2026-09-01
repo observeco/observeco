@@ -222,11 +222,13 @@
       '<path d="M640 230 L842 230 L842 520 L640 520 Z" fill="' + TOK.surface + '" stroke="' + TOK.tealLine + '" stroke-width="2"/>' +
       '<circle cx="838" cy="336" r="5" fill="' + TOK.teal + '"/>' +
       '<text x="742" y="270" text-anchor="middle" font-family="' + D + '" font-size="20" font-weight="600" fill="' + TOK.tealStrong + '">an open door</text>';
-    var dy = 300;
+    var dy = 250;
     for (var d = 0; d < door.length; d++) {
-      s += '<text x="742" y="' + (dy + d * 34) + '" text-anchor="middle" font-family="' + M + '" font-size="15" font-weight="600" fill="' + TOK.ink + '">' + door[d] + '</text>';
+      var by = dy + d * 49;
+      s += '<rect x="650" y="' + by + '" width="208" height="42" rx="8" fill="' + TOK.surface2 + '" stroke="' + TOK.tealLine + '"/>' +
+        '<text x="754" y="' + (by + 27) + '" text-anchor="middle" font-family="' + M + '" font-size="14" font-weight="600" fill="' + TOK.tealStrong + '">' + door[d] + '</text>';
     }
-    s += '<text x="742" y="508" text-anchor="middle" font-family="' + S + '" font-size="12.5" fill="' + TOK.tealStrong + '">tuition alone: S$1\u20131.8bn a year, no dominant name</text>' +
+    s += '<text x="754" y="505" text-anchor="middle" font-family="' + S + '" font-size="12.5" fill="' + TOK.tealStrong + '">tuition alone: S$1\u20131.8bn a year, no dominant name</text>' +
 
       '<text x="600" y="676" text-anchor="middle" font-family="' + S + '" font-size="13" fill="' + TOK.ink3 + '">The concentrated own scale, not words. The fragmented have the words, unowned.</text>' +
       '</svg>';
