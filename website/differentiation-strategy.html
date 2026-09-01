@@ -832,9 +832,9 @@ So here is the only way a small company wins: don't fight them for the crowd the
       }
     }
     function setRail() {
-      el.rail1.style.opacity = (step >= 0 && step <= 2) ? '1' : '0.42';
-      el.rail2.style.opacity = (step === 3) ? '1' : '0.42';
-      el.rail3.style.opacity = (step >= 4 && step <= 6) ? '1' : '0.42';
+      el.rail1.style.display = (step >= 0 && step <= 2) ? '' : 'none';
+      el.rail2.style.display = (step === 3) ? '' : 'none';
+      el.rail3.style.display = (step >= 4 && step <= 6) ? '' : 'none';
       el.rail1.querySelector('.rail-kicker').style.color = (step >= 0 && step <= 2) ? '#0e6e5c' : '#6b737e';
       el.rail2.querySelector('.rail-kicker').style.color = (step === 3) ? '#0e6e5c' : '#6b737e';
       el.rail3.querySelector('.rail-kicker').style.color = (step >= 4) ? '#0e6e5c' : '#6b737e';
