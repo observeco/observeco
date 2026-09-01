@@ -230,7 +230,7 @@ h3 { font-size: 20px; }
 .hero .container { max-width: 920px; }
 .hero h1 { max-width: 22ch; margin-bottom: var(--space-2); }
 .hero-tagline {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 22px;
   font-weight: 600;
   color: var(--fg);
@@ -523,8 +523,8 @@ h3 { font-size: 20px; }
   letter-spacing: 0.12em;
   color: var(--fg-3);
 }
-.fork-card h3 { font-size: 22px; }
-.fork-card p { color: var(--fg-2); flex: 1; }
+.fork-card h3 { font-size: 20px; }
+.fork-card p { color: var(--fg-2); font-size: 15px; flex: 1; }
 .fork-card a { align-self: flex-start; margin-top: var(--space-1); }
 
 /* Pain stats */
@@ -555,7 +555,7 @@ h3 { font-size: 20px; }
 }
 .card-item:hover { border-color: var(--green); }
 .card-item h3 { font-size: 20px; }
-.card-item p { color: var(--fg-2); font-size: 15.5px; flex: 1; }
+.card-item p { color: var(--fg-2); font-size: 15px; flex: 1; }
 .card-item a { align-self: flex-start; }
 
 /* Industry depth split */
@@ -593,14 +593,14 @@ h3 { font-size: 20px; }
   border-color: var(--green);
   background: linear-gradient(180deg, var(--green-dim), var(--surface));
 }
-.offer-card .offer-name { font-family: var(--font-display); font-size: 21px; font-weight: 600; color: var(--fg); }
+.offer-card .offer-name { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--fg); }
 .offer-card .offer-price { font-size: 15px; color: var(--fg-2); }
 .offer-card .offer-price strong { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--green); display: block; }
 .offer-card .offer-meta { color: var(--fg-3); font-size: 14px; }
 .offer-card .offer-cta { margin-top: var(--space-1); }
 .offer-card .offer-cta .btn { width: 100%; text-align: center; }
 .offer-card .offer-list { list-style: none; display: grid; gap: 10px; margin-top: var(--space-2); }
-.offer-card .offer-list li { position: relative; padding-left: 20px; color: var(--fg-2); font-size: 14.5px; }
+.offer-card .offer-list li { position: relative; padding-left: 20px; color: var(--fg-2); font-size: 15px; }
 .offer-card .offer-list li::before {
   content: "✓";
   position: absolute; left: 0; top: 0;
@@ -819,7 +819,7 @@ table.compare .generic { color: var(--yellow); }
   transition: border-color 0.2s ease;
 }
 .case-card:hover { border-color: var(--green); }
-.case-card .case-brand { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--fg); }
+.case-card .case-brand { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--fg); }
 .case-card .case-year { font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.1em; }
 .case-card .case-before, .case-card .case-after { font-size: 15px; }
 .case-card .case-before { color: var(--fg-3); }
