@@ -1463,62 +1463,25 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: rotate(-38deg); }
   }
 
-  /* 3. Domino's — USA map: 1 store (coral) appears first, then dots
-     spread across the country (teal), each popping in with overshoot. */
-  .usa-map.in-view .usa-dot {
-    animation: map-dot-pop-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  /* 3. Domino's — USA map: the coral origin domino appears first, then
+     99 teal dominoes ripple out across the country. Each fades in with
+     overshoot, staggered by its --i counter. (Only opacity is animated
+     so each tile keeps its inline rotation.) */
+  .usa-map.in-view use {
+    opacity: 0;
+    animation: domino-fade-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+    animation-delay: calc(0.1s + (var(--i, 1) * 0.04s));
   }
-  .usa-map.in-view .usa-dot.first { animation-delay: 0.1s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(2) { animation-delay: 0.30s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(3) { animation-delay: 0.33s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(4) { animation-delay: 0.36s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(5) { animation-delay: 0.39s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(6) { animation-delay: 0.42s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(7) { animation-delay: 0.45s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(8) { animation-delay: 0.48s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(9) { animation-delay: 0.51s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(10) { animation-delay: 0.54s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(11) { animation-delay: 0.57s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(12) { animation-delay: 0.60s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(13) { animation-delay: 0.63s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(14) { animation-delay: 0.66s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(15) { animation-delay: 0.69s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(16) { animation-delay: 0.72s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(17) { animation-delay: 0.75s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(18) { animation-delay: 0.78s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(19) { animation-delay: 0.81s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(20) { animation-delay: 0.84s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(21) { animation-delay: 0.87s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(22) { animation-delay: 0.90s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(23) { animation-delay: 0.93s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(24) { animation-delay: 0.96s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(25) { animation-delay: 0.99s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(26) { animation-delay: 1.02s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(27) { animation-delay: 1.05s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(28) { animation-delay: 1.08s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(29) { animation-delay: 1.11s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(30) { animation-delay: 1.14s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(31) { animation-delay: 1.17s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(32) { animation-delay: 1.20s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(33) { animation-delay: 1.23s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(34) { animation-delay: 1.26s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(35) { animation-delay: 1.29s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(36) { animation-delay: 1.32s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(37) { animation-delay: 1.35s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(38) { animation-delay: 1.38s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(39) { animation-delay: 1.41s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(40) { animation-delay: 1.44s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(41) { animation-delay: 1.47s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(42) { animation-delay: 1.50s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(43) { animation-delay: 1.53s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(44) { animation-delay: 1.56s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(45) { animation-delay: 1.59s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(46) { animation-delay: 1.62s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(47) { animation-delay: 1.65s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(48) { animation-delay: 1.68s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(49) { animation-delay: 1.71s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(50) { animation-delay: 1.74s; }
-  .usa-map.in-view .usa-dot:not(.first):nth-child(51) { animation-delay: 1.77s; }
+  .usa-map.in-view use[href="#domino-tile-origin"] {
+    animation-delay: 0.1s;
+  }
+  @keyframes domino-fade-loop {
+    0%   { opacity: 0; }
+    12%  { opacity: 1; }
+    17%  { opacity: 0.85; }
+    22%  { opacity: 1; }
+    100% { opacity: 1; }
+  }
   @keyframes map-dot-pop {
     0%   { transform: scale(0); opacity: 0; }
     60%  { transform: scale(1.2); opacity: 1; }
