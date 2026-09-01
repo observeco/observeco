@@ -1951,6 +1951,15 @@ table.compare .generic { color: var(--yellow); }
 .flank-map-card svg { display: block; width: 100%; height: auto; background: var(--bg); }
 .flank-map-card .flank-map-foot { padding: 20px 24px 24px; border-top: 1px solid var(--border); min-height: 240px; }
 
+/* Map + step content side by side, same eye level */
+.flank-map-body { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap: 0; align-items: stretch; }
+.flank-map-body > #mapSvg { min-width: 0; }
+.flank-map-body > .flank-map-foot { border-top: 0; border-left: 1px solid var(--border); min-height: 0; }
+@media (max-width: 980px) {
+  .flank-map-body { grid-template-columns: 1fr; }
+  .flank-map-body > .flank-map-foot { border-left: 0; border-top: 1px solid var(--border); }
+}
+
 /* Legend chips */
 .flank-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; min-height: 26px; }
 .flank-chips .chip { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; border-radius: 6px; padding: 5px 10px; }
