@@ -879,7 +879,7 @@ table.compare .generic { color: var(--yellow); }
   padding: var(--space-4);
 }
 .human .avatar {
-  width: 220px;
+  width: 320px;
   height: auto;
   border-radius: var(--radius-lg);
   border: 1px solid var(--green);
