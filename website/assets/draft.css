@@ -1809,9 +1809,10 @@ table.compare .generic { color: var(--yellow); }
 /* Great Wall SUV — dynamic car with rotating wheels */
 .suv { width: 100%; max-width: 280px; height: auto; margin-top: var(--space-2); display: block; }
 .suv .suv-ground { stroke: var(--border); stroke-width: 2; }
-.suv .suv-body { fill: var(--green-dim); stroke: var(--green); stroke-width: 2.5; }
+.suv .suv-body { fill: var(--green-dim); stroke: var(--green); stroke-width: 2.5; stroke-linejoin: round; }
 .suv .suv-roof { fill: var(--green); stroke: var(--green); stroke-width: 2.5; stroke-linejoin: round; }
 .suv .suv-window { fill: #ffffff; opacity: 0.15; }
+.suv .suv-arch { stroke: var(--green); stroke-width: 2.5; }
 .suv .suv-wheel {
   fill: var(--surface);
   stroke: var(--green);
