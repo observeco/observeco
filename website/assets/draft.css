@@ -695,6 +695,17 @@ h3 { font-size: 20px; }
 /* Distinct accent: a subtle top hairline in teal so the card family
    reads as its own section, not identical to the education cards. */
 .stat-card { border-top: 2px solid var(--green); }
+/* Competition journey: 39% (2024) -> 50% (2025) */
+.stat-card .sc-journey { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--fg); margin: 0; }
+.stat-card .sc-journey strong { color: var(--green); }
+.stat-card .sc-arrow { color: var(--fg-3); margin: 0 6px; font-size: 20px; }
+/* Comparison bars with year + value on the left */
+.stat-card .cmp-bars { margin-top: 6px; }
+.stat-card .cmp-bars .cmp-row { grid-template-columns: 72px 1fr; align-items: center; }
+.stat-card .cmp-bars .cmp-label { display: flex; flex-direction: column; gap: 1px; font-family: var(--font-mono); }
+.stat-card .cmp-bars .cmp-year { font-size: 10px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .cmp-bars .cmp-val { font-size: 14px; font-weight: 700; color: var(--fg); }
+.stat-card .sc-note { font-size: 13px; color: var(--fg-2); margin-top: 2px; }
 
 /* Method teaser / cards */
 .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
@@ -1737,40 +1748,19 @@ table.compare .generic { color: var(--yellow); }
 
   /* 6. 25K — crowd dots appear with a 'rain' effect (fall from above
      with stagger + overshoot), then the odometer rolls. */
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot {
-    animation: crowd-rain-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  /* 6. 25K — free vs paid: the positioned (S$500) bar overgrows the
+     generic (S$0) bar with overshoot. */
+  .stat-card:nth-child(6) .cmp-bars.in-view .cmp-fill.before {
+    animation: grow-fill-loop 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(1) { animation-delay: 0.05s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(2) { animation-delay: 0.1s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(3) { animation-delay: 0.15s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(4) { animation-delay: 0.2s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(5) { animation-delay: 0.25s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(6) { animation-delay: 0.3s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(7) { animation-delay: 0.35s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(8) { animation-delay: 0.4s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(9) { animation-delay: 0.45s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(10) { animation-delay: 0.5s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(11) { animation-delay: 0.55s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(12) { animation-delay: 0.6s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(13) { animation-delay: 0.65s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(14) { animation-delay: 0.7s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(15) { animation-delay: 0.75s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(16) { animation-delay: 0.8s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(17) { animation-delay: 0.85s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(18) { animation-delay: 0.9s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(19) { animation-delay: 0.95s; }
-  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(20) { animation-delay: 1s; }
+  .stat-card:nth-child(6) .cmp-bars.in-view .cmp-fill.after {
+    animation: grow-fill-overshoot-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s infinite;
+  }
   @keyframes crowd-rain {
     0%   { transform: translateY(-12px) scale(0.4); opacity: 0; }
     60%  { transform: translateY(2px) scale(1.2); opacity: 1; }
     100% { transform: translateY(0) scale(1); opacity: 1; }
   }
-  .stat-card:nth-child(6) .odometer.in-view .odo-strip {
-    animation: odo-roll-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-  }
-  .stat-card:nth-child(6) .odometer.in-view .odo-digit:nth-child(1) .odo-strip { animation-delay: 1.1s; }
-  .stat-card:nth-child(6) .odometer.in-view .odo-digit:nth-child(2) .odo-strip { animation-delay: 1.2s; }
-  .stat-card:nth-child(6) .odometer.in-view .odo-digit:nth-child(3) .odo-strip { animation-delay: 1.3s; }
 }
 
 /* ─── SIGNATURE CASE ANIMATIONS + STAT INFOGRAPHICS (18 Aug 2026) ─── */
