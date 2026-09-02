@@ -1415,6 +1415,13 @@ table.compare .generic { color: var(--yellow); }
   .case-card:nth-child(1) .stock-chart.in-view .chart-dot.end {
     animation: chart-dot-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
   }
+  /* Wang Lao Ji stock chart — same draw-up visual as Airbnb */
+  .case-card:nth-child(5) .stock-chart.in-view .chart-line {
+    animation: chart-draw-loop 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .case-card:nth-child(5) .stock-chart.in-view .chart-dot.end {
+    animation: chart-dot-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
+  }
   @keyframes chart-dot-in {
     0%   { opacity: 0; }
     100% { opacity: 1; }
