@@ -658,6 +658,44 @@ h3 { font-size: 20px; }
 .stat-block .num em { font-style: normal; color: var(--green); }
 .stat-block p { color: var(--fg-2); font-size: 15px; }
 
+/* Stat cards — consistent-but-distinct treatment.
+   Mirrors the case-card anatomy (surface, border, radius, padding)
+   so the stakes read as the same family as the education cards,
+   but keeps a distinct top bar + number treatment so the two
+   sections stay legibly different. */
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: border-color 0.2s ease;
+}
+.stat-card:hover { border-color: var(--green); }
+.stat-card .sc-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+}
+.stat-card .num {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--fg);
+  display: block;
+  line-height: 1;
+}
+.stat-card .num em { font-style: normal; color: var(--green); }
+.stat-card p { color: var(--fg-2); font-size: 15px; line-height: 1.5; }
+.stat-card .sc-source { color: var(--muted); font-size: 12px; margin-top: 2px; }
+/* Distinct accent: a subtle top hairline in teal so the card family
+   reads as its own section, not identical to the education cards. */
+.stat-card { border-top: 2px solid var(--green); }
+
 /* Method teaser / cards */
 .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
 .card-item {
@@ -1644,10 +1682,10 @@ table.compare .generic { color: var(--yellow); }
   /* 3. 50% up from 39% — comparison bars grow with overshoot; the 50%
      bar overshoots to 105% then settles to 100%; trend chip pops with
      anticipation. */
-  .stat-block:nth-child(3) .cmp-bars.in-view .cmp-fill.before {
+  .stat-card:nth-child(3) .cmp-bars.in-view .cmp-fill.before {
     animation: grow-fill-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
   }
-  .stat-block:nth-child(3) .cmp-bars.in-view .cmp-fill.after {
+  .stat-card:nth-child(3) .cmp-bars.in-view .cmp-fill.after {
     animation: grow-fill-overshoot-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s  infinite;
   }
   @keyframes grow-fill-overshoot {
@@ -1655,7 +1693,7 @@ table.compare .generic { color: var(--yellow); }
     70%  { transform: scaleX(1.05); }
     100% { transform: scaleX(1); }
   }
-  .stat-block:nth-child(3) .trend-chip.in-view {
+  .stat-card:nth-child(3) .trend-chip.in-view {
     animation: chip-pop-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.9s  infinite;
   }
   @keyframes chip-pop {
@@ -1699,40 +1737,40 @@ table.compare .generic { color: var(--yellow); }
 
   /* 6. 25K — crowd dots appear with a 'rain' effect (fall from above
      with stagger + overshoot), then the odometer rolls. */
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot {
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot {
     animation: crowd-rain-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
   }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(1) { animation-delay: 0.05s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(2) { animation-delay: 0.1s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(3) { animation-delay: 0.15s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(4) { animation-delay: 0.2s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(5) { animation-delay: 0.25s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(6) { animation-delay: 0.3s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(7) { animation-delay: 0.35s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(8) { animation-delay: 0.4s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(9) { animation-delay: 0.45s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(10) { animation-delay: 0.5s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(11) { animation-delay: 0.55s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(12) { animation-delay: 0.6s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(13) { animation-delay: 0.65s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(14) { animation-delay: 0.7s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(15) { animation-delay: 0.75s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(16) { animation-delay: 0.8s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(17) { animation-delay: 0.85s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(18) { animation-delay: 0.9s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(19) { animation-delay: 0.95s; }
-  .stat-block:nth-child(6) .crowd.in-view .crowd-dot:nth-child(20) { animation-delay: 1s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(1) { animation-delay: 0.05s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(2) { animation-delay: 0.1s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(3) { animation-delay: 0.15s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(4) { animation-delay: 0.2s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(5) { animation-delay: 0.25s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(6) { animation-delay: 0.3s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(7) { animation-delay: 0.35s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(8) { animation-delay: 0.4s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(9) { animation-delay: 0.45s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(10) { animation-delay: 0.5s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(11) { animation-delay: 0.55s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(12) { animation-delay: 0.6s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(13) { animation-delay: 0.65s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(14) { animation-delay: 0.7s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(15) { animation-delay: 0.75s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(16) { animation-delay: 0.8s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(17) { animation-delay: 0.85s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(18) { animation-delay: 0.9s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(19) { animation-delay: 0.95s; }
+  .stat-card:nth-child(6) .crowd.in-view .crowd-dot:nth-child(20) { animation-delay: 1s; }
   @keyframes crowd-rain {
     0%   { transform: translateY(-12px) scale(0.4); opacity: 0; }
     60%  { transform: translateY(2px) scale(1.2); opacity: 1; }
     100% { transform: translateY(0) scale(1); opacity: 1; }
   }
-  .stat-block:nth-child(6) .odometer.in-view .odo-strip {
+  .stat-card:nth-child(6) .odometer.in-view .odo-strip {
     animation: odo-roll-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
   }
-  .stat-block:nth-child(6) .odometer.in-view .odo-digit:nth-child(1) .odo-strip { animation-delay: 1.1s; }
-  .stat-block:nth-child(6) .odometer.in-view .odo-digit:nth-child(2) .odo-strip { animation-delay: 1.2s; }
-  .stat-block:nth-child(6) .odometer.in-view .odo-digit:nth-child(3) .odo-strip { animation-delay: 1.3s; }
+  .stat-card:nth-child(6) .odometer.in-view .odo-digit:nth-child(1) .odo-strip { animation-delay: 1.1s; }
+  .stat-card:nth-child(6) .odometer.in-view .odo-digit:nth-child(2) .odo-strip { animation-delay: 1.2s; }
+  .stat-card:nth-child(6) .odometer.in-view .odo-digit:nth-child(3) .odo-strip { animation-delay: 1.3s; }
 }
 
 /* ─── SIGNATURE CASE ANIMATIONS + STAT INFOGRAPHICS (18 Aug 2026) ─── */
