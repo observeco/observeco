@@ -707,6 +707,24 @@ h3 { font-size: 20px; }
 .stat-card .cmp-bars .cmp-val { font-size: 14px; font-weight: 700; color: var(--fg); }
 .stat-card .sc-note { font-size: 13px; color: var(--fg-2); margin-top: 2px; }
 
+/* Cost vs value comparison chart (25K) — two rows (Free, Analysis).
+   Each row: cost bar (coral) stacked above value bar (teal). The
+   contrast shows S$0 costs nothing and returns nothing, while S$500
+   costs little yet returns far more. */
+.value-chart { margin-top: 8px; display: flex; flex-direction: column; gap: 14px; }
+.vc-legend { display: flex; gap: 16px; font-size: 11px; color: var(--fg-3); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em; }
+.vc-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.vc-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.vc-swatch.vc-cost { background: var(--coral); }
+.vc-swatch.vc-value { background: var(--green); }
+.vc-row { display: grid; grid-template-columns: 64px 1fr; column-gap: 8px; row-gap: 3px; align-items: center; }
+.vc-label { grid-row: span 2; font-size: 12px; color: var(--fg); font-weight: 600; display: flex; flex-direction: column; line-height: 1.1; }
+.vc-sub { font-size: 10px; color: var(--fg-3); font-weight: 400; font-family: var(--font-mono); }
+.vc-cost-track { height: 8px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.vc-value-track { height: 14px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.vc-cost-fill { height: 100%; background: var(--coral); border-radius: 3px; transform-origin: left; transform: scaleX(0); }
+.vc-value-fill { height: 100%; background: var(--green); border-radius: 3px; transform-origin: left; transform: scaleX(0); }
+
 /* Method teaser / cards */
 .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
 .card-item {
@@ -1746,15 +1764,14 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: translateX(-50%) translateY(0); opacity: 1; }
   }
 
-  /* 6. 25K — crowd dots appear with a 'rain' effect (fall from above
-     with stagger + overshoot), then the odometer rolls. */
-  /* 6. 25K — free vs paid: the positioned (S$500) bar overgrows the
-     generic (S$0) bar with overshoot. */
-  .stat-card:nth-child(6) .cmp-bars.in-view .cmp-fill.before {
+  /* 6. 25K — cost vs value: cost bars grow first, then value bars
+     overgrow them (the contrast shows a little cost buys a lot of
+     value). */
+  .stat-card:nth-child(6) .value-chart.in-view .vc-cost-fill {
     animation: grow-fill-loop 5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
-  .stat-card:nth-child(6) .cmp-bars.in-view .cmp-fill.after {
-    animation: grow-fill-overshoot-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s infinite;
+  .stat-card:nth-child(6) .value-chart.in-view .vc-value-fill {
+    animation: grow-fill-overshoot-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s infinite;
   }
   @keyframes crowd-rain {
     0%   { transform: translateY(-12px) scale(0.4); opacity: 0; }

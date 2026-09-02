@@ -17,7 +17,7 @@
 (function () {
   'use strict';
 
-  var SELECTOR = '.hero-flow, .process-flow, .case-bars, .phase-bar, .stock-chart, .cost-scale, .flywheel-wrap, .rank-bar, .method-pipeline, .data-bar, .odometer, .gauge, .usa-map, .volvo-mark, .ladder, .suv, .dot-row, .cmp-bars, .donut, .marker-bar, .crowd, .trend-chip, .dot-stream, .white-space-band, .hero-map, .hero-map-col, .outcome-grid';
+  var SELECTOR = '.hero-flow, .process-flow, .case-bars, .phase-bar, .stock-chart, .cost-scale, .flywheel-wrap, .rank-bar, .method-pipeline, .data-bar, .odometer, .gauge, .usa-map, .volvo-mark, .ladder, .suv, .dot-row, .cmp-bars, .value-chart, .donut, .marker-bar, .crowd, .trend-chip, .dot-stream, .white-space-band, .hero-map, .hero-map-col, .outcome-grid';
 
   if (!('IntersectionObserver' in window)) {
     // No observer support — fall back to running all animations.
