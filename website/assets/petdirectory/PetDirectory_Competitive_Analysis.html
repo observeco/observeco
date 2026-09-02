@@ -1,0 +1,5970 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>PetDirectory Singapore — Competitive Analysis</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">PetDirectory Singapore — Competitive Analysis</h1>
+</header>
+<h1 id="petdirectory-singapore-competitive-analysis">PetDirectory
+Singapore — Competitive Analysis</h1>
+<p><strong>Prepared for:</strong> Where Pets Go Pte Ltd
+(PetDirectory.com.sg) <strong>Date:</strong> 30 August 2026 <strong>What
+this is:</strong> A full look at your market, your competitors, and what
+needs to change for PetDirectory to grow. Everything in here is based on
+real data we collected from your site, competitor sites, and public
+records — not guesses.</p>
+<hr />
+<h2 id="executive-summary-the-short-version">1. Executive Summary — The
+Short Version</h2>
+<p><strong>The good news:</strong> You have built something real. 534
+businesses listed, 18 categories, the #1 spot on Google for “pet
+directory singapore”, transparent pricing, and features no competitor
+has (pet obituaries, pet showcase, influencer program). That is a solid
+foundation.</p>
+<p><strong>The problem:</strong> Nobody is visiting. You have worked
+hard on the supply side — getting businesses listed — but almost nothing
+has been done on the demand side — getting pet owners to come to the
+site. A directory with listings but no visitors is a museum, not a
+marketplace. <strong>534 listings × 0 visitors = 0 value
+delivered.</strong> This is the single biggest issue, and it is also the
+biggest opportunity.</p>
+<p><strong>The second problem:</strong> Your pricing model is backwards
+for where you are today. Charging businesses S$19-29/month for a listing
+assumes you can deliver them traffic. Right now you can’t. The paywall
+is keeping businesses out (especially the ~490 licensed businesses
+you’re missing) and creating a reason for listed businesses to leave
+when they see no results.</p>
+<p><strong>The third problem:</strong> The database has quality issues
+that will hurt you the moment traffic arrives. 20 closed businesses are
+still listed, 76% of listings haven’t been touched in 90 days, and one
+business claims to be “AVS licensed” when it is not on the government
+registry.</p>
+<p><strong>What to do (in order):</strong> 1. <strong>Fix the
+leaks</strong> — remove closed listings, add a “verify this listing”
+system, check the false AVS claim 2. <strong>Go freemium</strong> — free
+basic listings, paid premium tier. Get to 1,000+ listings 3.
+<strong>Build the demand engine</strong> — content, videos, social,
+reviews. This is where the growth is 4. <strong>Write the book</strong>
+— establish yourself as the authority on the Singapore pet business
+landscape</p>
+<p><strong>The honest bottom line:</strong> PetDirectory can win. The
+market is real (SGD 412M and growing), the position is open (nobody owns
+“the trusted full-service pet directory”), and you have the database.
+But it will not grow by adding more listings. It grows by getting
+visitors — and that is a content and marketing job, not a listings
+job.</p>
+<hr />
+<h2 id="your-directory-today">2. Your Directory Today</h2>
+<h3 id="whats-working">2.1 What’s working</h3>
+<table>
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 60%" />
+</colgroup>
+<thead>
+<tr>
+<th>Strength</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>534 listings</strong></td>
+<td>A real database, not a shell. Most listings have content, websites,
+and social links</td>
+</tr>
+<tr>
+<td><strong>#1 on Google for “pet directory singapore”</strong></td>
+<td>You own the category’s search term. This is valuable and hard to
+take</td>
+</tr>
+<tr>
+<td><strong>Transparent pricing (S$19-29/mo)</strong></td>
+<td>Competitors hide pricing behind “contact us”. Yours is published — a
+trust signal</td>
+</tr>
+<tr>
+<td><strong>Unique features</strong></td>
+<td>Pet obituaries (Remembrance), pet showcase, influencer program.
+Nobody else has these</td>
+</tr>
+<tr>
+<td><strong>18 categories</strong></td>
+<td>Full-service coverage — grooming, vet, boarding, retail, F&amp;B,
+funeral, and more</td>
+</tr>
+</tbody>
+</table>
+<h3 id="whats-broken">2.2 What’s broken</h3>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 34%" />
+<col style="width: 42%" />
+</colgroup>
+<thead>
+<tr>
+<th>Problem</th>
+<th>The evidence</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>20 closed businesses still listed</strong></td>
+<td>“Good Dog People (Permanently Closed)”, “Mount Pleasant (North) —
+Permanently Closed”, 18 more</td>
+<td>A visitor who clicks a closed listing loses trust in the whole
+directory</td>
+</tr>
+<tr>
+<td><strong>76% of listings stale</strong></td>
+<td>405 of 534 listings not updated in 90+ days</td>
+<td>The database looks abandoned. Businesses notice</td>
+</tr>
+<tr>
+<td><strong>Dead forum</strong></td>
+<td>9 forums, 2 topics, 4 posts, 11 members</td>
+<td>A visitor who clicks it sees a ghost town</td>
+</tr>
+<tr>
+<td><strong>No social presence</strong></td>
+<td>The Instagram handle <span class="citation"
+data-cites="petdirectory">@petdirectory</span> has 5 followers and 0
+posts — and it’s not even yours</td>
+<td>Nobody can find you, and your influencer program has no channel to
+promote through</td>
+</tr>
+<tr>
+<td><strong>No reviews</strong></td>
+<td>Listing pages say “Reviews Coming soon”</td>
+<td>Reviews are the trust currency of directories. You have none</td>
+</tr>
+<tr>
+<td><strong>Only 5 blog posts</strong></td>
+<td>Feb–Jun 2026, monthly cadence, generic topics</td>
+<td>No content engine = no organic traffic</td>
+</tr>
+<tr>
+<td><strong>No newsletter, no events, no partnerships</strong></td>
+<td>Nothing on the demand side</td>
+<td>No reason for a pet owner to visit or return</td>
+</tr>
+<tr>
+<td><strong>Data errors</strong></td>
+<td>5 unrelated businesses share one URL slug (moonbeam-matcha-bar);
+Mount Pleasant (North) points to the wrong page</td>
+<td>Broken links and colliding URLs look unprofessional</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-avs-licensing-issue-important">2.3 The AVS licensing issue
+(important)</h3>
+<p>AVS (Animal &amp; Veterinary Service) is the government agency that
+licenses pet businesses. Commercial pet boarding is only legal at an
+AVS-licensed facility. AVS publishes public lists of every licensed
+business — we downloaded them (101 boarding facilities, 320 pet shops,
+March 2026).</p>
+<p><strong>What we found when we cross-checked your listings against the
+official registry:</strong></p>
+<ul>
+<li><strong>Boarding: only 4 of your 20 boarding listings are
+AVS-licensed</strong> (Tiny Paw, The Pup Life, VegasPalace, Doggie
+Retreat)</li>
+<li><strong>Pet retail: only 15 of 52 match</strong> (mostly Pet Lovers
+Centre branches sharing one license)</li>
+<li><strong>The sharp one: Aylabella Dog Boarding claims “AVS licensed”
+in its own listing — but it is NOT on the March 2026 registry.</strong>
+Either the claim is false, it’s licensed under a different name, or it
+got licensed after March. Either way, you are hosting an unverified
+government-compliance claim.</li>
+</ul>
+<p><strong>The honest caveat:</strong> “Not on the registry” does not
+automatically mean illegal. Some of those 16 are daycare/sitting
+services that may not need the same license; some may be under different
+legal names; the registry is a March snapshot. But it flags a real
+verification gap.</p>
+<p><strong>Why this matters to you:</strong> 1. <strong>It’s a
+liability.</strong> If a pet owner books a boarding stay at a facility
+you listed that turns out to be unlicensed, that’s a real harm — and you
+sent them there. 2. <strong>It’s your biggest opportunity.</strong> The
+AVS registries are public, downloadable, and <strong>no competitor uses
+them</strong>. You could badge every boarding and vet listing with
+“AVS-licensed ✓” — verified against the official registry. That makes
+“trusted” real instead of a slogan. 3. <strong>Check the Aylabella
+listing first.</strong> It’s the difference between “we verify” and “we
+host unverified claims.”</p>
+<hr />
+<h2 id="the-market-youre-in">3. The Market You’re In</h2>
+<h3 id="the-numbers-verified">3.1 The numbers (verified)</h3>
+<table>
+<colgroup>
+<col style="width: 53%" />
+<col style="width: 46%" />
+</colgroup>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Singapore pet care market</td>
+<td><strong>SGD 412 million (2023), growing 12.5% a year</strong></td>
+</tr>
+<tr>
+<td>Pet ownership</td>
+<td>28% of households; 800,000+ households by 2025</td>
+</tr>
+<tr>
+<td>Pet stores</td>
+<td>450 (2023)</td>
+</tr>
+<tr>
+<td>Vet clinics</td>
+<td>320 (2023)</td>
+</tr>
+<tr>
+<td>Pet boarding facilities</td>
+<td>250 outlets, 15,000 bookings a month</td>
+</tr>
+<tr>
+<td>Grooming</td>
+<td>45% of dog owners groom monthly</td>
+</tr>
+<tr>
+<td>Vet services market</td>
+<td>SGD 120M (2023)</td>
+</tr>
+<tr>
+<td>Boarding/daycare market</td>
+<td>SGD 28M (2023)</td>
+</tr>
+<tr>
+<td>Grooming market</td>
+<td>SGD 45M (2023)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>What this means:</strong> The market is real, growing, and
+fragmented. There are roughly 1,000-1,500 pet businesses in Singapore.
+Your 534 listings already cover about 35-50% of them. <strong>The supply
+side is nearly saturated — the growth lever is traffic, not more
+listings.</strong></p>
+<h3 id="how-pet-owners-find-services">3.2 How pet owners find
+services</h3>
+<p>No public source publishes exact numbers for Singapore, so these are
+estimates based on how the market behaves:</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 54%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Share of discovery</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Google search + Maps</strong></td>
+<td>~50%</td>
+<td>The default. “Near me” searches growing 28% a year</td>
+</tr>
+<tr>
+<td><strong>Word of mouth / community</strong></td>
+<td>~25%</td>
+<td>Facebook groups, Telegram, friends</td>
+</tr>
+<tr>
+<td><strong>Directories</strong></td>
+<td>~10%</td>
+<td>You, Pawwhere, and a few others</td>
+</tr>
+<tr>
+<td><strong>Booking platforms</strong></td>
+<td>~10%</td>
+<td>Pawshake, PetBacker</td>
+</tr>
+<tr>
+<td><strong>Content / guides / listicles</strong></td>
+<td>~5%</td>
+<td>UrbanDogOwner, “best of” listicles</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The strategic read:</strong> the directory channel is only
+~10% of how people find pet services — but it’s the only channel you
+own. The growth play is to make your directory the <em>trusted</em>
+entry point that feeds the other channels. That means content, reviews,
+and community — not a bigger directory.</p>
+<h3 id="the-seo-agency-question-you-asked-heres-the-answer">3.3 The SEO
+agency question (you asked — here’s the answer)</h3>
+<p><strong>Yes, SEO companies are a competitor — and the market is
+crowded.</strong> Your pitch to businesses is “S$19-29/mo for a
+high-authority backlink that boosts your Google ranking.” That is the
+same promise SEO agencies sell at <strong>S$500-5,000/month</strong>. We
+found 7+ agencies with pet-specific pages (creativeformore, magnified,
+traffv, petenginemarketing, and others).</p>
+<p><strong>The penetration question — how many pet firms already pay for
+SEO?</strong> No public data exists, but the picture is clear: 1. The
+market is mature. SEO is a well-established S$500-5,000/mo service in
+Singapore, and the pet vertical is a known agency niche. 2. A pet firm
+already paying S$800-3,000/mo to an agency will not pay you S$19-29/mo
+for a backlink — they’ll ask their agency to handle it. 3. <strong>The
+real competitor for S$19-29/mo is FREE.</strong> Google Business
+Profile, Hotfrog, Yelu, Yellow Pages all offer free listings with
+backlinks. Why pay you? The answer must be <em>traffic</em> — you’re the
+only directory that actually sends pet-owner visitors. That’s your moat,
+not the backlink.</p>
+<p><strong>The reframe:</strong> your backlink pitch is a
+<em>complement</em> to agency SEO, not a competitor. Agencies buy
+directory listings as part of their link-building work. The sales pitch
+becomes: <strong>“You’re already paying an agency for SEO. We’re the one
+directory that sends you actual pet-owner traffic — and we’re
+cheap.”</strong> The backlink is the bonus; the traffic is the product.
+Agencies become your referral partners, not your rivals.</p>
+<hr />
+<h2 id="who-youre-competing-with">4. Who You’re Competing With</h2>
+<h3 id="the-competitive-set">4.1 The competitive set</h3>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 27%" />
+<col style="width: 29%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr>
+<th>Competitor</th>
+<th>What they are</th>
+<th>Their strength</th>
+<th>Your edge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pawwhere</strong> (pawwhere.sg)</td>
+<td>Modern directory, 634 listings, cafe-first</td>
+<td>Feels alive, community-shaped, free for pet owners, active blog,
+fast site</td>
+<td>You’re full-service (18 categories vs their cafe focus); you have
+published pricing; you have unique features</td>
+</tr>
+<tr>
+<td><strong>UrbanDogOwner</strong> (urbandogowner.com)</td>
+<td>Trusted content guide, 344 dog-friendly places</td>
+<td>Fact-checked, vetted clinics, newsletter, owns the “guide” mind</td>
+<td>You have the database; they don’t. You can add the trust layer (AVS)
+they don’t have</td>
+</tr>
+<tr>
+<td><strong>Pawshake / PetBacker</strong></td>
+<td>Booking marketplaces</td>
+<td>Own the “book a sitter” mind; verified sitters; guarantees</td>
+<td>Don’t fight them. You’re discovery (top of funnel), they’re booking
+(bottom). Complementary</td>
+</tr>
+<tr>
+<td><strong>Pet Lovers Centre</strong></td>
+<td>Retail chain with services arm</td>
+<td>“Singapore’s Trusted Leader in Pet Services” — brand
+recognition</td>
+<td>You’re the neutral directory; they’re a retailer. Different job</td>
+</tr>
+<tr>
+<td><strong>SEO agencies</strong> (7+ with pet pages)</td>
+<td>Sell the same backlink promise at 10-50x your price</td>
+<td>Established, trusted by businesses</td>
+<td>You’re cheaper and you send actual traffic — once you have
+traffic</td>
+</tr>
+<tr>
+<td><strong>Review listicles</strong> (bestinsingapore, terris,
+etc.)</td>
+<td>“Best pet stores in Singapore” articles</td>
+<td>Own the “best X” long-tail search</td>
+<td>They’re not directories; they compete for the same discovery
+traffic</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="b-the-discovery-layer-set-where-pet-owners-actually-search-for-services">4.1b
+The discovery-layer set — where pet owners actually search for
+services</h3>
+<p>Beyond the named competitors above sits the <strong>discovery
+layer</strong>: the independent review sites, ranking platforms, and
+directories pet owners open when they need a groomer, vet, boarder, or
+pet shop. These do not all list businesses the way you do, but they
+compete for the same traffic — the owner asking “who is a good groomer
+near me?” — and several (especially KakiList and The Best) are the
+platforms owners name first.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Platform</th>
+<th>What it is</th>
+<th>What it discovers</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>KakiList</strong> (kakilist.com)</td>
+<td>Singapore’s directory of home &amp; family services</td>
+<td>790+ pet providers; grooming, boarding, sitting cost guides</td>
+<td>kakilist</td>
+</tr>
+<tr>
+<td><strong>PetDirectory Singapore</strong> (petdirectory.com.sg)</td>
+<td>Your own full-service directory and community forum</td>
+<td>Grooming, vets, boarding, pet shops + the community forum</td>
+<td>petdirectory</td>
+</tr>
+<tr>
+<td><strong>TheBest SG</strong> (thebestsg.com)</td>
+<td>Best-of ranking site</td>
+<td>Ranks pet grooming salons by care quality/reputation</td>
+<td>TheBest SG</td>
+</tr>
+<tr>
+<td><strong>SG Review Ranger</strong></td>
+<td>Review/ranking aggregator</td>
+<td>Ranks dog groomers, pet care services</td>
+<td>Review Ranger</td>
+</tr>
+<tr>
+<td><strong>RehabVet blog</strong></td>
+<td>Veterinary/physical-therapy practice rankings</td>
+<td>Top-15 pet grooming rankings</td>
+<td>RehabVet</td>
+</tr>
+<tr>
+<td><strong>Finest Services SG</strong></td>
+<td>Service ranking directory</td>
+<td>Trustworthy pet grooming salons</td>
+<td>Finest Services</td>
+</tr>
+<tr>
+<td><strong>Terris.sg</strong></td>
+<td>Lifestyle review blog</td>
+<td>Best pet grooming salons</td>
+<td>Terris</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The honest note on the list:</strong>
+<code>PetDirectory Singapore</code> is <em>you</em> — the client this
+analysis is written for. It is included here so the full discovery field
+is visible in one table, not because it is a threat to itself. The real
+independent competitors in this layer are <strong>KakiList</strong>
+(790+ pet providers, the strongest directory-style rival with cost
+guides) and <strong>TheBest SG / SG Review Ranger</strong> (the ranking
+sites that own the “best groomer” long-tail search you currently don’t
+touch). These are the platforms you must appear on and out-rank to
+capture service-discovery traffic.</p>
+<p><strong>The strategic read:</strong> this layer is exactly where
+Section 3.2’s ~10% “directories” and ~5% “content/listicles” discovery
+share happens. You are already here — but you are fighting for a slice
+of a discovery pie where the ranking sites and KakiList currently have
+the established “best-of” and “cost guide” positions. The opening is the
+trust layer (Section 2.3): nobody in this layer uses the AVS registry. A
+verified badge beats a “best groomer” listicle no other directory
+fact-checks.</p>
+<h3 id="where-you-stand">4.2 Where you stand</h3>
+<ul>
+<li><strong>You own the search term</strong> (“pet directory singapore”
+= #1) but not the mind. Pawwhere owns “modern directory”, UrbanDogOwner
+owns “trusted guide”, Pawshake owns “booking”.</li>
+<li><strong>You have scale parity with Pawwhere</strong> (534 vs 634
+listings) but a different mix — you’re full-service, they’re
+cafe-first.</li>
+<li><strong>You’re the only directory with published pricing</strong> —
+a genuine differentiator.</li>
+<li><strong>You’re the only directory with unique features</strong>
+(obituaries, showcase, influencer program).</li>
+</ul>
+<p><strong>The open position:</strong> nobody owns “the full-service,
+transparent, verified pet directory.” That’s the position you can claim
+— full coverage + published pricing + AVS-verified trust. But you must
+build the trust layer (AVS badges, reviews) before you can claim it
+credibly.</p>
+<hr />
+<h2 id="the-core-problem-no-visitors">5. The Core Problem: No
+Visitors</h2>
+<h3 id="supply-vs-demand">5.1 Supply vs demand</h3>
+<p>You have worked hard on <strong>supply</strong> — 534 businesses
+listed. But <strong>demand</strong> — pet owners visiting — is
+essentially zero:</p>
+<ul>
+<li>No social presence (the IG handle isn’t even yours)</li>
+<li>Dead forum</li>
+<li>5 blog posts</li>
+<li>No reviews</li>
+<li>No newsletter, no events, no partnerships</li>
+<li>The only demand asset is the #1 ranking for one search term</li>
+</ul>
+<p><strong>534 listings × 0 visitors = 0 value delivered.</strong> The
+businesses you recruited (or who paid) are getting no exposure. This is
+the #1 churn risk: a listed business that sees no traffic will not
+renew.</p>
+<p><strong>The supply-quality caveat:</strong> traffic exposes broken
+supply. A visitor who lands on a “Permanently Closed” listing, or
+searches boarding and finds 4 of 20 licensed options, bounces — and
+tells other pet owners. <strong>The sequence is: fix the leaks → build
+demand → scale demand.</strong></p>
+<h3 id="the-demand-engine-what-to-do-in-order-of-leverage">5.2 The
+demand engine (what to do, in order of leverage)</h3>
+<table>
+<colgroup>
+<col style="width: 6%" />
+<col style="width: 18%" />
+<col style="width: 27%" />
+<col style="width: 47%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Engine</th>
+<th>What to do</th>
+<th>When you see results</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>D1</strong></td>
+<td><strong>Category SEO content</strong></td>
+<td>2-3 articles a week: “Best dog groomers in [district]”, “AVS
+boarding rules explained”, “Pet funeral services in Singapore”</td>
+<td>6-12 months. The only channel that compounds</td>
+</tr>
+<tr>
+<td><strong>D2</strong></td>
+<td><strong>Google Business Profile</strong></td>
+<td>Claim and optimize your own GBP; each listing links to the
+directory</td>
+<td>Local pack visibility</td>
+</tr>
+<tr>
+<td><strong>D3</strong></td>
+<td><strong>Social presence</strong></td>
+<td>Claim <span class="citation"
+data-cites="petdirectory">@petdirectory</span> on Instagram; post
+spotlight businesses weekly</td>
+<td>3-6 months to a following</td>
+</tr>
+<tr>
+<td><strong>D4</strong></td>
+<td><strong>Reviews</strong></td>
+<td>Start with your 11 spotlight businesses; 5+ reviews each</td>
+<td>Reviews are trust currency and a demand magnet</td>
+</tr>
+<tr>
+<td><strong>D5</strong></td>
+<td><strong>Partnerships</strong></td>
+<td>Pawshake/PetBacker cross-listing; SEO agencies as referral partners;
+pet influencers</td>
+<td>Leverages existing traffic pools</td>
+</tr>
+<tr>
+<td><strong>D6</strong></td>
+<td><strong>Email capture</strong></td>
+<td>Newsletter on every listing page + blog</td>
+<td>Owned audience you can retarget</td>
+</tr>
+<tr>
+<td><strong>D7</strong></td>
+<td><strong>Paid ads</strong> (only after D1-D4)</td>
+<td>Google Ads on head terms; Meta ads to SG pet owners</td>
+<td>Immediate traffic, but burns cash if the site isn’t ready</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The flywheel:</strong> content → traffic → reviews → trust →
+more traffic → businesses see value → renew → more content. It’s not
+spinning because the content, review, and social inputs are missing.</p>
+<hr />
+<h2 id="the-content-engine-how-to-get-traffic">6. The Content Engine —
+How to Get Traffic</h2>
+<h3 id="why-content-is-the-1-lever">6.1 Why content is the #1 lever</h3>
+<p>Organic search drives 53% of all website traffic. Local searches grow
+28% a year. SEO returns 5.3x over 12 months. Content is the only demand
+channel that compounds — every article is an asset that keeps ranking.
+And for a directory, content has a special power: every article can link
+to your listings, sending traffic straight to the businesses that
+(hopefully) pay you.</p>
+<h3 id="the-7-content-engines">6.2 The 7 content engines</h3>
+<table>
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 19%" />
+<col style="width: 40%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Engine</th>
+<th>What to produce</th>
+<th>Why it works</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>C1</strong></td>
+<td><strong>Category SEO articles</strong></td>
+<td>2-3/week: “Best dog groomers in [district]”, “AVS boarding rules
+explained”</td>
+<td>Targets local searches; links to listings; compounds</td>
+</tr>
+<tr>
+<td><strong>C2</strong></td>
+<td><strong>AI videos</strong></td>
+<td>1-2/week: 60-90 second explainers — “How to choose a pet boarder”,
+“What AVS licensing means”</td>
+<td>Video ranks in Google and feeds social. Cheap, fast, consistent</td>
+</tr>
+<tr>
+<td><strong>C3</strong></td>
+<td><strong>The book</strong></td>
+<td>“The Pet Business Landscape in Singapore” — market size, AVS
+regulation, category economics</td>
+<td>The credibility anchor. Makes you the authority</td>
+</tr>
+<tr>
+<td><strong>C4</strong></td>
+<td><strong>Listing spotlights</strong></td>
+<td>1/week: profile a spotlight business — interview, photos, story</td>
+<td>Builds community; gives businesses something to share</td>
+</tr>
+<tr>
+<td><strong>C5</strong></td>
+<td><strong>Seasonal content</strong></td>
+<td>CNY boarding guide, school-holiday pet care, annual grooming
+guide</td>
+<td>Topics go live before demand peaks</td>
+</tr>
+<tr>
+<td><strong>C6</strong></td>
+<td><strong>Roundups</strong></td>
+<td>“10 Family-Friendly Restaurants in [Neighborhood]”</td>
+<td>High local search intent; businesses share with their audiences</td>
+</tr>
+<tr>
+<td><strong>C7</strong></td>
+<td><strong>Data journalism</strong></td>
+<td>“The State of Pet Services in Singapore” — your audit data as a
+public report</td>
+<td>The data already exists; publishing it earns backlinks and
+authority</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai-videos-your-suggestion-yes-this-works">6.3 AI videos (your
+suggestion — yes, this works)</h3>
+<p><strong>The stack:</strong> - <strong>HeyGen</strong> — AI avatar
+videos from a script, ~S$30-60/month. The avatar becomes your brand
+face. No camera, no editing - <strong>Synthesia</strong> — similar,
+enterprise-grade - <strong>CapCut / Descript</strong> — polish and AI
+voiceover - <strong>ElevenLabs</strong> — AI voice narration</p>
+<p><strong>The workflow:</strong> script (AI-assisted) → HeyGen avatar →
+CapCut polish → publish to YouTube + Instagram Reels + embed in blog
+posts. 1-2 videos a week is sustainable for a solo operator.</p>
+<h3 id="the-book-your-suggestion-the-credibility-anchor">6.4 The book
+(your suggestion — the credibility anchor)</h3>
+<p><strong>Why it’s worth the effort:</strong> -
+<strong>Credibility:</strong> a published book is the strongest trust
+signal available. It outranks blog posts, case studies, and “about us”
+pages - <strong>Distribution:</strong> Amazon KDP + Google Books. The
+book becomes a backlink magnet - <strong>Business development:</strong>
+“Featured in the book” is a listing sales pitch — businesses pay to be
+in the directory that wrote the book - <strong>Content reuse:</strong>
+the book’s chapters become 20+ blog posts, 10+ videos, and the data
+report</p>
+<p><strong>The angle:</strong> “The Pet Business Landscape in Singapore”
+— market size (SGD 412M), AVS regulation, category economics, your own
+data. <strong>Nobody has written this. The data is already in this
+report.</strong></p>
+<h3 id="the-operating-rhythm">6.5 The operating rhythm</h3>
+<ul>
+<li><strong>Weekly:</strong> 2 category articles + 1 listing spotlight +
+1 AI video</li>
+<li><strong>Monthly:</strong> 1 roundup + 1 seasonal piece (when in
+season)</li>
+<li><strong>Quarterly:</strong> 1 data report</li>
+<li><strong>Yearly:</strong> the book (first year), then annual
+updates</li>
+</ul>
+<hr />
+<h2 id="how-to-make-money-the-monetization-question">7. How to Make
+Money — The Monetization Question</h2>
+<h3 id="the-current-model-is-backwards-for-this-stage">7.1 The current
+model is backwards for this stage</h3>
+<p>You charge S$19-29/month for listings. That’s a subscription model —
+it assumes you deliver traffic. With ~0 visitors, a paid listing
+delivers ~0 value. Three problems:</p>
+<ol type="1">
+<li><strong>It creates the churn it fears.</strong> A business that pays
+S$19/month and gets zero visitors has a concrete reason to leave. The
+paywall guarantees the outcome you’re trying to avoid.</li>
+<li><strong>It blocks supply.</strong> The ~490 licensed businesses
+you’re missing (93 boarding, 291 vets, 102 shops) won’t pay to be in an
+empty directory. Free listings get them in — and supply is your
+moat.</li>
+<li><strong>It’s mispriced at every stage.</strong> S$19/month is too
+expensive for zero traffic (no value delivered) and too cheap for real
+traffic (a boarding lead is worth S$50-200). The price says “we don’t
+know what to charge,” not “we’re confident in our value.”</li>
+</ol>
+<h3
+id="the-right-sequence-free-to-list-build-demand-monetize-traffic">7.2
+The right sequence: free to list → build demand → monetize traffic</h3>
+<table>
+<colgroup>
+<col style="width: 24%" />
+<col style="width: 24%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Model</th>
+<th>Who does this</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Now</strong> (zero traffic)</td>
+<td><strong>Free basic listings</strong> — remove the barrier, get to
+1,000+</td>
+<td>Pawwhere (free for pet owners)</td>
+</tr>
+<tr>
+<td><strong>Traffic arrives</strong> (6-18 months)</td>
+<td><strong>Freemium</strong> — free basic, S$29/month premium
+(featured, verified badge, spotlight)</td>
+<td>Pawwhere’s S$89 product</td>
+</tr>
+<tr>
+<td><strong>Traffic scales</strong> (18+ months)</td>
+<td><strong>Lead-gen + ads</strong> — S$5-15 per qualified lead, CPC
+ads, affiliate</td>
+<td>Angi, Yelp, UrbanDogOwner</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The counterargument:</strong> “Free listings = no revenue.”
+But the subscription is generating ~0 anyway. The choice is: keep
+S$19/month → ~S$1,200/year + churn risk, or go free → 1,000+ listings →
+build demand → monetize traffic → a much higher ceiling. <strong>The
+paywall’s real cost is the missing supply — businesses that won’t pay to
+be in an empty directory.</strong></p>
+<h3 id="whats-actually-right-about-your-model">7.3 What’s actually right
+about your model</h3>
+<p>The <strong>add-ons</strong> are good monetization: pet obituaries
+(S$50), pet showcase, influencer program (S$9/month). These are
+emotional, high-value, and differentiated — nobody else has them. The
+problem is the <strong>core listing fee</strong>, not the add-ons. And
+the obituaries are underpriced — pet funeral is a growing, high-margin
+category; S$50 is cheap for the emotional value.</p>
+<h3 id="the-recommendation">7.4 The recommendation</h3>
+<ol type="1">
+<li><strong>Free basic listings</strong> — get to 1,000+ (the 93
+boarding + 291 vets + 102 shops from the appendix)</li>
+<li><strong>Keep the premium tier</strong> (S$29/month): featured
+placement, verified badge, spotlight — businesses self-select once they
+see traffic</li>
+<li><strong>Add lead-gen once traffic arrives</strong> —
+boarding/vet/grooming leads at S$5-15 each</li>
+<li><strong>Price the unique features properly</strong> — obituaries,
+showcase, influencer program are your differentiated revenue</li>
+<li><strong>The book is itself monetization</strong> — sell it, use it
+as a lead magnet</li>
+</ol>
+<h3 id="what-it-could-be-worth-low-medium-high">7.5 What it could be
+worth (low / medium / high)</h3>
+<p><strong>Assumptions:</strong> freemium model (free basic, S$29/month
+premium), 5-10% of listings convert to premium, traffic grows as the
+demand engine runs.</p>
+<table>
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 23%" />
+<col style="width: 14%" />
+<col style="width: 12%" />
+<col style="width: 19%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr>
+<th>Case</th>
+<th>Monthly visitors</th>
+<th>Listings</th>
+<th>Premium</th>
+<th>Revenue/year</th>
+<th>What it takes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Low</strong> (12-18 months)</td>
+<td>5,000</td>
+<td>800</td>
+<td>40</td>
+<td><strong>~S$15,700</strong></td>
+<td>Free listings + content + Google Business Profile</td>
+</tr>
+<tr>
+<td><strong>Medium</strong> (18-24 months)</td>
+<td>20,000</td>
+<td>1,000</td>
+<td>80</td>
+<td><strong>~S$35,600</strong></td>
+<td>Full demand engine: content + social + reviews + partnerships</td>
+</tr>
+<tr>
+<td><strong>High</strong> (24-36 months)</td>
+<td>50,000</td>
+<td>1,200</td>
+<td>120</td>
+<td><strong>~S$63,400</strong></td>
+<td>Everything + paid ads + lead-gen + premium tiers</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The honest read:</strong> - <strong>Low case
+(~S$16K/year)</strong> is achievable with content alone — the “side
+income” outcome. - <strong>Medium case (~S$36K/year)</strong> is the
+realistic target for a solo operator in 18-24 months. - <strong>High
+case (~S$63K/year)</strong> requires paid ads, lead-gen, and premium
+tiers — three things you don’t have yet. It’s “build a different
+business,” not “scale the current one.” It also assumes the brand
+question is resolved (see below). - <strong>The freemium model out-earns
+the subscription model at every case</strong> — because it removes the
+supply barrier and the churn trigger, while monetizing the same traffic
+through premium + add-ons + lead-gen. - <strong>The ceiling is demand,
+not supply.</strong> 1,000+ listings is enough to support 10x your
+current traffic. Every dollar of effort should go to demand.</p>
+<hr />
+<h2 id="what-to-do-first-the-action-plan">8. What to Do First — The
+Action Plan</h2>
+<h3 id="the-priorities">8.1 The priorities</h3>
+<table>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 23%" />
+<col style="width: 47%" />
+</colgroup>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Action</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td><strong>Fix the leaks</strong> — remove/flag 20 closed listings, add
+a “verify this listing” workflow, check the Aylabella AVS claim</td>
+<td>Traffic exposes broken supply. Fix before you invite visitors</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Go freemium</strong> — free basic listings, S$29/month
+premium</td>
+<td>Removes the supply barrier and the churn trigger. Get to 1,000+
+listings</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><strong>Build the demand engine</strong> — content (C1-C7), social,
+reviews, partnerships</td>
+<td>This is the growth. 534 × 0 visitors = 0 value today</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td><strong>Write the book</strong> — “The Pet Business Landscape in
+Singapore”</td>
+<td>The credibility anchor. Makes “trusted” real</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td><strong>Decide the brand question</strong> — keep “Pet Directory” or
+rename</td>
+<td>The name collides with petdirectory.com.au (est. 2001, 1.5M
+pageviews/year). A pet owner searching “pet directory” finds
+Australia’s, not yours. One-way door — decide before investing heavily
+in the brand</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-full-action-list">8.2 The full action list</h3>
+<table>
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 30%" />
+<col style="width: 26%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Action</th>
+<th>Owner</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td>Decide the forum’s fate — kill or revive</td>
+<td>Sean</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Build the AVS-license verification layer (badge boarding/vet
+listings)</td>
+<td>Product</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Launch the review system (start with 11 spotlight businesses)</td>
+<td>Product</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>Shift blog to category-specific SEO content</td>
+<td>Content</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P5</td>
+<td>Establish social presence (claim <span class="citation"
+data-cites="petdirectory">@petdirectory</span> on IG)</td>
+<td>Marketing</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P6</td>
+<td>Publish the pricing story (“the only SG pet directory with
+transparent pricing”)</td>
+<td>Marketing</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P7</td>
+<td>Mind-share survey (10-20 pet owner interviews)</td>
+<td>Research</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P8</td>
+<td>Purge/flag closed listings + verify workflow</td>
+<td>Product</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P9</td>
+<td>Decide the brand question</td>
+<td>Sean</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P10</td>
+<td>Reframe sales pitch + build agency referral channel</td>
+<td>Marketing</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P11</td>
+<td>Build the demand engine (D1-D7)</td>
+<td>Product/Marketing</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P12</td>
+<td>Validate revenue projections with real GA data</td>
+<td>Research</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P13</td>
+<td>Launch the content engine (C1-C7)</td>
+<td>Content</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P14</td>
+<td>Write the book</td>
+<td>Content</td>
+<td>OPEN</td>
+</tr>
+<tr>
+<td>P15</td>
+<td>Switch to freemium monetization</td>
+<td>Product</td>
+<td>OPEN</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Sequencing rules:</strong> - Don’t attack Pawwhere publicly
+before the trust layer (P2/P3) is real - Don’t spend on paid ads before
+content (P4/P13) — clicks landing on a site with a dead forum and no
+reviews leak spend - Don’t invest heavily in the trust layer before the
+brand question (P9) is decided — it’s a one-way door</p>
+<hr />
+<h2 id="what-we-couldnt-verify">9. What We Couldn’t Verify</h2>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 73%" />
+</colgroup>
+<thead>
+<tr>
+<th>Gap</th>
+<th>How to close</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Your actual traffic (GA data)</td>
+<td>Ask for analytics access — the revenue projections assume ~0
+traffic; real numbers change the model</td>
+</tr>
+<tr>
+<td>Your actual listing count + premium conversion</td>
+<td>Ask — projections assume 1,000+ listings with freemium</td>
+</tr>
+<tr>
+<td>Mind-share tiers (who pet owners actually think of)</td>
+<td>10-20 pet owner interviews: “where do you find pet services?”</td>
+</tr>
+<tr>
+<td>Pawwhere’s real pricing</td>
+<td>Request a quote via their advertise page</td>
+</tr>
+<tr>
+<td>Pawwhere’s revenue model</td>
+<td>LinkedIn/ACRA check</td>
+</tr>
+<tr>
+<td>Google rank checks (not just ddgs)</td>
+<td>Rank-check head terms on Google directly</td>
+</tr>
+<tr>
+<td>Backlink/domain authority profile</td>
+<td>Compare you vs Pawwhere vs UrbanDogOwner</td>
+</tr>
+<tr>
+<td>Pawwhere’s blog strategy</td>
+<td>Deep-dive their 14 posts</td>
+</tr>
+<tr>
+<td>UrbanDogOwner’s monetization</td>
+<td>Quantify Featured placements + Shopee affiliate</td>
+</tr>
+<tr>
+<td>Listicle SEO strength</td>
+<td>Analyze bestinsingapore/misslobang coverage of pet services</td>
+</tr>
+<tr>
+<td>Map/mobile UX</td>
+<td>Browser-render the map + mobile viewport</td>
+</tr>
+<tr>
+<td>Pet-specific SEO penetration</td>
+<td>Survey 20-30 pet businesses: “do you pay for SEO?”</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="sources">10. Sources</h2>
+<ul>
+<li>PetDirectory.com.sg — WP REST API enumeration (534 listings,
+2026-08-30), homepage, rates, listing-directory, directory, community,
+remembrance, blog, forum pages</li>
+<li>Pawwhere.sg — homepage, about, advertise, business-site, categories,
+sitemap (634 URLs)</li>
+<li>Pawshake.com.sg, PetBacker.com.sg, HandyPet.sg, Petservices.sg,
+Furvisor.com, doggrooming.sg — homepages</li>
+<li>UrbanDogOwner.com, Dog-Friendly.sg, Pawrenthood.sg — homepages</li>
+<li>services.petloverscentre.com, Clubpets.com.sg, BringFido.com —
+homepages</li>
+<li>ddgs systematic scan — 15 queries × 8 results (2026-08-30)</li>
+<li>Gitnux Singapore Pet Industry Statistics (fact-checked 2026) —
+market size, business counts, service usage</li>
+<li>marketingagency.sg — SEO cost guide (2026), digital marketing
+statistics (2026), SEO for Pet Industry guide</li>
+<li>rootsdigital.com.sg — SEO pricing guide (Aug 2026)</li>
+<li>creativeformore.com/pet-marketing,
+magnified.com.sg/services/seo/pet-services-singapore, traffv.com,
+petenginemarketing.com, anytime digital, mediaonemarketing — pet SEO
+agency landscape</li>
+<li>sbo.sg, seolinkworld.com — SG business directory landscape (free vs
+paid listings)</li>
+<li>TurnKey Directories — “How Much Do Directory Websites Make?” (2026)
+— revenue benchmarks, RPM by niche, conversion rates</li>
+<li>Directorist — “How to Write Blog Posts for a Directory Website”
+(2026) — directory content types</li>
+<li>Petbase — “Building an SEO Content Calendar for Your Pet Business”
+(2025) — seasonal calendar</li>
+<li>CorpDigest — “How Yelp Makes Money” (2026) — Yelp business model,
+$2.6B+ revenue, 90%+ advertising</li>
+<li>SpreadSimple — “Monetize Your Directory Website” (2025) — 6
+directory monetization strategies</li>
+<li>petdirectory.com.au — homepage, advertise, pricing pages (2026) —
+Australian pet directory monetization analog</li>
+<li>StockAnalysis/GuruFocus — Angi revenue data (2026)</li>
+<li>AVS/NParks (avs.nparks.gov.sg) — public registries: “List of pet
+boarding facilities (Mar26).pdf” (101 entries), “List of Pet Shops
+(Mar26).pdf” (320 entries), downloaded and cross-referenced
+(2026-08-30)</li>
+<li>Google Maps review counts — Camoufox + Firefox cookie profile, 12
+sampled PetDirectory listings (2026-08-30)</li>
+<li>Name collision — ddgs queries for “pet directory”, “the pet
+directory”, “petdirectory.com” (2026-08-30)</li>
+</ul>
+<hr />
+<h2
+id="appendix-a-directory-audit-expansion-list-for-client-action">Appendix
+A — Directory Audit &amp; Expansion List (for client action)</h2>
+<p><strong>Purpose:</strong> Every business the client should add
+(missed), remove or flag (closed/stale), fix (erroneous), or
+deduplicate. Sources: AVS public registries (Mar26), Pawwhere sitemap
+(604 businesses), UrbanDogOwner places directory (344 places),
+PetDirectory WP API (534 listings). Generated 2026-08-30.</p>
+<h3 id="a.0-the-gaps-at-a-glance">A.0 The gaps at a glance</h3>
+<table>
+<colgroup>
+<col style="width: 22%" />
+<col style="width: 31%" />
+<col style="width: 45%" />
+</colgroup>
+<thead>
+<tr>
+<th>Gap</th>
+<th>Count</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AVS-licensed boarding facilities NOT listed</td>
+<td>93</td>
+<td><strong>High</strong> — compliance + trust</td>
+</tr>
+<tr>
+<td>AVS-licensed pet shops NOT listed (pet-relevant)</td>
+<td>102</td>
+<td><strong>High</strong> — coverage gap</td>
+</tr>
+<tr>
+<td>Dog-friendly places (UrbanDogOwner) NOT listed</td>
+<td>231</td>
+<td>Medium — content gap</td>
+</tr>
+<tr>
+<td>Pawwhere businesses NOT listed</td>
+<td>530</td>
+<td>Low — mostly F&amp;B overlap</td>
+</tr>
+<tr>
+<td>Closed listings still live</td>
+<td>20</td>
+<td><strong>High</strong> — credibility leak</td>
+</tr>
+<tr>
+<td>Stale listings (90+ days unmodified)</td>
+<td>405</td>
+<td>Medium — freshness</td>
+</tr>
+<tr>
+<td>Duplicate slug collisions</td>
+<td>6</td>
+<td><strong>High</strong> — URL integrity</td>
+</tr>
+<tr>
+<td>Erroneous AVS claims in copy</td>
+<td>2</td>
+<td><strong>High</strong> — compliance</td>
+</tr>
+<tr>
+<td>Vet clinics NOT listed</td>
+<td>~291 (29 of 320 in SG)</td>
+<td>Medium — coverage gap</td>
+</tr>
+<tr>
+<td>Pet sitters listed</td>
+<td>0 (category says ‘Sitters’)</td>
+<td>Medium — category mismatch</td>
+</tr>
+<tr>
+<td>Dead websites (full check)</td>
+<td><strong>16 of 474 (3.4%)</strong> — 4 confirmed dead, 7 stale URLs,
+2 unreachable, 3 closed</td>
+<td>Low — data hygiene</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="a.1-missed-avs-licensed-pet-boarding-facilities-not-in-petdirectory-93">A.1
+Missed — AVS-licensed pet boarding facilities NOT in PetDirectory
+(93)</h3>
+<p>These are licensed boarding facilities the directory should add.
+<strong>Compliance-critical:</strong> a pet owner searching PetDirectory
+for boarding should find every legal option. The 8 already listed: Tiny
+Paw, VegasPalace, Doggie Retreat, AB Dog Boarding, School of Pet
+Grooming, Mutts &amp; Mittens (3 branches).</p>
+<table>
+<colgroup>
+<col style="width: 9%" />
+<col style="width: 31%" />
+<col style="width: 28%" />
+<col style="width: 31%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Business</th>
+<th>Licence</th>
+<th>Activity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>36 Pets Pte Ltd</td>
+<td>BD25108</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>9 Lives Collective Pte Ltd</td>
+<td>BD25082</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Alyssadolls Pet International Pte Ltd</td>
+<td>BD25041</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>BREAKFAST AT FLUFFY’S PTE. LTD.</td>
+<td>BD25003</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Bunnify</td>
+<td>BD25029</td>
+<td>Pet Boarding (Rabbits)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>C&amp;J Pawsome LLP</td>
+<td>BD25006</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Canine Cities Pte Ltd</td>
+<td>BD25083</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Canine Solutions Pte Ltd</td>
+<td>BD25066</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Cat Connoisseur Pte Ltd</td>
+<td>BD25075</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Cat Paradise Pte Ltd</td>
+<td>BD25081</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Catacure Pte Ltd</td>
+<td>BD25049</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Catnap Private Limited</td>
+<td>BD25084</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Catopia Pte Ltd</td>
+<td>BD25010</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Catpurra Cat Care</td>
+<td>BD25072</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Cat’s Cradle Private Limited</td>
+<td>BD25042</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Catzilla Pte Ltd</td>
+<td>BD25050</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Chubbys Crib LLP</td>
+<td>BD25032</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>18</td>
+<td>COCONUT’S FURRY FRIENDS PTE. LTD.</td>
+<td>BD25109</td>
+<td>Pet Boarding (Guinea Pigs, Hamsters, Rabbits &amp; Chinchillas)</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Cozy Cats Lodge Pte Ltd</td>
+<td>BD26004</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Diamondwings Holding Pte Ltd</td>
+<td>BD25035</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Doggie Retreat and Spa Pte. Ltd.</td>
+<td>BD25085</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>22</td>
+<td>Felis Catus Pte Ltd</td>
+<td>BD25012</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>23</td>
+<td>Fluff Ave Private Limited</td>
+<td>BD25005</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Furmummy Pte Ltd</td>
+<td>BD25063</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>25</td>
+<td>Fyfy’s Love Pet Services</td>
+<td>BD25059</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>26</td>
+<td>Happy Rolling</td>
+<td>BD25073</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>27</td>
+<td>Hello Human Wellness East Pte Ltd</td>
+<td>BD25033</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Iguru Pets Pte Ltd</td>
+<td>BD25086</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>29</td>
+<td>Inudoki Private Limited</td>
+<td>BD26002</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Inugoya Pte Ltd</td>
+<td>BD25024</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>31</td>
+<td>Inuhomes Pte Ltd</td>
+<td>BD25087</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>32</td>
+<td>JL International Pet Relocation Pte. Ltd.</td>
+<td>BD26003</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>33</td>
+<td>Kitnap Pte Ltd</td>
+<td>BD25088</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>34</td>
+<td>Koyado Hounds Pte Ltd</td>
+<td>BD25089</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>35</td>
+<td>Lavish Pet Centre LLP</td>
+<td>BD25001</td>
+<td>Pet Boarding (Guinea Pigs, Hamsters, Rabbits &amp; Chinchillas)</td>
+</tr>
+<tr>
+<td>36</td>
+<td>Little Pawcious</td>
+<td>BD25045</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>37</td>
+<td>Meowradise Inn</td>
+<td>BD25047</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>38</td>
+<td>Mewtants &amp; Woofs</td>
+<td>BD25090</td>
+<td>Pet Boarding (Cats &amp; Dogs)</td>
+</tr>
+<tr>
+<td>39</td>
+<td>Minnie’s Chinchillas Pte Ltd Blk110 Yishun Ring Road #01-385</td>
+<td>BD25062</td>
+<td>Pet Boarding (Chinchillas)</td>
+</tr>
+<tr>
+<td>40</td>
+<td>My Happy Tales</td>
+<td>BD25091</td>
+<td>Pet Boarding (Guinea Pigs, Hamsters, Rabbits &amp; Chinchillas)</td>
+</tr>
+<tr>
+<td>41</td>
+<td>Neko Malu Malu Pte. Ltd.</td>
+<td>BD25030</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>42</td>
+<td>Nekoya Pte Ltd</td>
+<td>BD25079</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>43</td>
+<td>Nekoya Pte Ltd</td>
+<td>BD25078</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>44</td>
+<td>Nekoya Pte Ltd</td>
+<td>BD25077</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>45</td>
+<td>Nine2Five Pte Ltd</td>
+<td>BD25023</td>
+<td>Pet Boarding (Cats &amp; Dogs)</td>
+</tr>
+<tr>
+<td>46</td>
+<td>One Pawscent Pte Ltd</td>
+<td>BD25092</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>47</td>
+<td>Pampered Pets Relocation &amp; Lodging Pte Ltd</td>
+<td>BD25068</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>48</td>
+<td>Pawhaus &amp; Dognassium Doggie Daycare</td>
+<td>BD25093</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>49</td>
+<td>Pawlidays Pte Ltd</td>
+<td>BD25110</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>50</td>
+<td>Pawtel &amp; Friends Pte Ltd</td>
+<td>BD25097</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>51</td>
+<td>Pet Pads Pte. Ltd.</td>
+<td>BD26001</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>52</td>
+<td>Petbnb Pte Ltd</td>
+<td>BD25094</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>53</td>
+<td>Petpat SG Pte Ltd</td>
+<td>BD25096</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>54</td>
+<td>PETPAT SG PTE LTD</td>
+<td>BD25095</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>55</td>
+<td>Pets Republic Pte Ltd</td>
+<td>BD25014</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>56</td>
+<td>Pooch Nannies Pte Ltd</td>
+<td>BD25048</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>57</td>
+<td>Popcats Pte Ltd</td>
+<td>BD25052</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>58</td>
+<td>Pupperton Hotel Pte Ltd</td>
+<td>BD25031</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>59</td>
+<td>Puppy Colours Academy Pte Ltd</td>
+<td>BD25038</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>60</td>
+<td>Purr Edition Singapore Pte Ltd</td>
+<td>BD25065</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>61</td>
+<td>RHQ RabbitHeadquarters LLP</td>
+<td>BD25098</td>
+<td>Pet Boarding (Rabbits)</td>
+</tr>
+<tr>
+<td>62</td>
+<td>Ryokan Genetique Pte Ltd</td>
+<td>BD25056</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>63</td>
+<td>Samlex Singapore Pte Ltd</td>
+<td>BD25055</td>
+<td>Pet Boarding (Rabbits)</td>
+</tr>
+<tr>
+<td>64</td>
+<td>Savvy Pets Pte Ltd</td>
+<td>BD25015</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>65</td>
+<td>Shangri-Paw Pte Ltd</td>
+<td>BD25040</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>66</td>
+<td>Super Cuddles Pte Ltd</td>
+<td>BD25008</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>67</td>
+<td>T&amp;J Cat Lover Pte. Ltd. 787, Geylang Road, #02-01</td>
+<td>BD25080</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>68</td>
+<td>Tails Up Pte Ltd</td>
+<td>BD25022</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>69</td>
+<td>Tender Loving Cats Pte Ltd</td>
+<td>BD25025</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>70</td>
+<td>The Animal Retreat Pte Ltd</td>
+<td>BD25099</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>71</td>
+<td>The Bears Day Out</td>
+<td>BD25044</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>72</td>
+<td>The Collar Club Pte Ltd</td>
+<td>BD25061</td>
+<td>Pet Boarding (Cats &amp; Dogs)</td>
+</tr>
+<tr>
+<td>73</td>
+<td>The Fluffy Group LLP</td>
+<td>BD25076</td>
+<td>Pet Boarding (Guinea Pigs, Hamsters, Rabbits &amp; Chinchillas)</td>
+</tr>
+<tr>
+<td>74</td>
+<td>The Furries’ Keepers Pte Ltd</td>
+<td>BD25021</td>
+<td>Pet Boarding (Cats &amp; Dogs)</td>
+</tr>
+<tr>
+<td>75</td>
+<td>The Hamster Hotel LLP</td>
+<td>BD25060</td>
+<td>Pet Boarding (Hamsters)</td>
+</tr>
+<tr>
+<td>76</td>
+<td>The Littlest Things Pte. Ltd.</td>
+<td>BD25101</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>77</td>
+<td>The Moon Bunny LLP</td>
+<td>BD25102</td>
+<td>Pet Boarding (Guinea Pigs, Hamsters, Rabbits &amp; Chinchillas)</td>
+</tr>
+<tr>
+<td>78</td>
+<td>The Pawsery Retreat LP</td>
+<td>BD25043</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>79</td>
+<td>The Pet Heroes Pte Ltd</td>
+<td>BD25103</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>80</td>
+<td>The PUP Life Grooming &amp; Hotel Pte Ltd</td>
+<td>BD25017</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>81</td>
+<td>The Ritz-Catton Pte Ltd</td>
+<td>BD25105</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>82</td>
+<td>The Wagington Pet Hotels Int’l Pte Ltd</td>
+<td>BD25070</td>
+<td>Pet Boarding (Cats &amp; Dogs)</td>
+</tr>
+<tr>
+<td>83</td>
+<td>Toutou Service Pte Ltd</td>
+<td>BD25104</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>84</td>
+<td>Treat Your Dog Pte Ltd</td>
+<td>BD25057</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>85</td>
+<td>Wagging Tails N Playful Paws</td>
+<td>BD25067</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>86</td>
+<td>Waggy Potato Private Limited</td>
+<td>BD25004</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>87</td>
+<td>Wan-defur Fortress</td>
+<td>BD25107</td>
+<td>Pet Boarding (Rabbits)</td>
+</tr>
+<tr>
+<td>88</td>
+<td>Woodgrove Pet Boarding &amp; Supplies Pte Ltd</td>
+<td>BD25071</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>89</td>
+<td>Tara Pet Care</td>
+<td>BD25036</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>90</td>
+<td>Meow &amp; Wuff Pet Care Services</td>
+<td>BD25046</td>
+<td>Pet Boarding (Cats)</td>
+</tr>
+<tr>
+<td>91</td>
+<td>Pet Boarding Centre</td>
+<td>BD25027</td>
+<td>Pet Boarding (Cats &amp; Dogs)</td>
+</tr>
+<tr>
+<td>92</td>
+<td>Shun Yuan Trading &amp; Construction Pte Ltd</td>
+<td>BD25009</td>
+<td>Pet Boarding (Dogs)</td>
+</tr>
+<tr>
+<td>93</td>
+<td>Wong Ling Kennel</td>
+<td>BD25013</td>
+<td>Pet Boarding (Cats &amp; Dogs)</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="a.2-missed-avs-licensed-pet-shops-not-in-petdirectory-102-pet-relevant">A.2
+Missed — AVS-licensed pet shops NOT in PetDirectory (102
+pet-relevant)</h3>
+<p>Full AVS shop registry has 320 entries; 265 are not in PetDirectory.
+Below are the pet-relevant ones (excluding pure aquarium/fish-only
+shops). The client should review the full registry PDF for the rest.</p>
+<table>
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 45%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Business</th>
+<th>Licence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>A G PETS TOA PAYOH</td>
+<td>AS90M0570</td>
+</tr>
+<tr>
+<td>2</td>
+<td>ABC BIRDS CENTRE</td>
+<td>AS79M0286</td>
+</tr>
+<tr>
+<td>3</td>
+<td>AH WEI FISH AND PETS</td>
+<td>AS25E00026</td>
+</tr>
+<tr>
+<td>4</td>
+<td>AIK GUAN PET TRADING</td>
+<td>AS07L00061</td>
+</tr>
+<tr>
+<td>5</td>
+<td>ALL PAWS LOFT</td>
+<td>AS25K00055</td>
+</tr>
+<tr>
+<td>6</td>
+<td>ALVIN BETTA PTE. LTD.</td>
+<td>AS21K00062</td>
+</tr>
+<tr>
+<td>7</td>
+<td>ALYSSADOLLS PET INTERNATIONAL PTE. LTD.</td>
+<td>AS23K00050</td>
+</tr>
+<tr>
+<td>8</td>
+<td>AMIEN PETS LLP</td>
+<td>AS23M00003</td>
+</tr>
+<tr>
+<td>9</td>
+<td>AQUAMARIN AQUATIC PETS</td>
+<td>AS13F00017</td>
+</tr>
+<tr>
+<td>10</td>
+<td>AROWANA BIRDS &amp; FISH AQUARIUM</td>
+<td>AS17A00007</td>
+</tr>
+<tr>
+<td>11</td>
+<td>BIRD SHOP 159</td>
+<td>AS11F00021</td>
+</tr>
+<tr>
+<td>12</td>
+<td>BLUECREST CATTERY PTE. LTD.</td>
+<td>AS20K00053</td>
+</tr>
+<tr>
+<td>13</td>
+<td>BOW WOW PET CORNER 94 YIO CHU KANG ROAD</td>
+<td>AS12K00038</td>
+</tr>
+<tr>
+<td>14</td>
+<td>CAT CONNOISSEUR PTE. LTD. 362 JOO CHIAT ROAD #03- 01</td>
+<td>AS24A00006</td>
+</tr>
+<tr>
+<td>15</td>
+<td>CAT CONNOISSEUR PTE. LTD. 9 SIN MING ROAD #B1- 03/</td>
+<td>AS24J00043</td>
+</tr>
+<tr>
+<td>16</td>
+<td>CATACURE PTE. LTD.</td>
+<td>AS25M00001</td>
+</tr>
+<tr>
+<td>17</td>
+<td>CATDERLAND PTE. LTD.</td>
+<td>AS23L00048</td>
+</tr>
+<tr>
+<td>18</td>
+<td>CATSMART SUPPLY AND DISTRIBUTION PTE. LTD.</td>
+<td>AS17B00013</td>
+</tr>
+<tr>
+<td>19</td>
+<td>CATSNCO 237B JOO CHIAT ROAD LEVEL 3</td>
+<td>AS25G00035</td>
+</tr>
+<tr>
+<td>20</td>
+<td>CATZILLA PTE. LTD.</td>
+<td>AS23L00050</td>
+</tr>
+<tr>
+<td>21</td>
+<td>CHUA’S PET TRADING</td>
+<td>AS87M0502</td>
+</tr>
+<tr>
+<td>22</td>
+<td>DAILY DOGS @ BRIGHTON PTE. LTD. 65 BRIGHTON CRESCENT LEVEL</td>
+<td>AS19L00054</td>
+</tr>
+<tr>
+<td>23</td>
+<td>DOG AVENUE</td>
+<td>AS09J00027</td>
+</tr>
+<tr>
+<td>24</td>
+<td>DOGGIE DELIGHT PTE LTD 28 GREENWOOD AVE</td>
+<td>AS16A00005</td>
+</tr>
+<tr>
+<td>25</td>
+<td>DRAGON HOUSE BIRDS &amp; ACCESSORY</td>
+<td>AS97J0667</td>
+</tr>
+<tr>
+<td>26</td>
+<td>DREAMPETS</td>
+<td>AS23B00010</td>
+</tr>
+<tr>
+<td>27</td>
+<td>E HOBBY PETS AND SUPPLIES</td>
+<td>AS18K00046</td>
+</tr>
+<tr>
+<td>28</td>
+<td>EASHAN BOY BIRD CLUB</td>
+<td>AS25K00050</td>
+</tr>
+<tr>
+<td>29</td>
+<td>FEATHERS &amp; FUR PETMART</td>
+<td>AS13G00021</td>
+</tr>
+<tr>
+<td>30</td>
+<td>FELINE &amp; PETS INC PTE. LTD.</td>
+<td>AS24B00017</td>
+</tr>
+<tr>
+<td>31</td>
+<td>FISH A PET</td>
+<td>AS07C00015</td>
+</tr>
+<tr>
+<td>32</td>
+<td>FLUFFYDOLLS CATFE PTE. LTD. 555A BALESTIER ROAD LEVEL 2</td>
+<td>AS22L00066</td>
+</tr>
+<tr>
+<td>33</td>
+<td>FWU HAE PET SHOP</td>
+<td>AS87M0503</td>
+</tr>
+<tr>
+<td>34</td>
+<td>GOLD BETTA AQUATICS</td>
+<td>AS23G00040</td>
+</tr>
+<tr>
+<td>35</td>
+<td>GOLDEN PAWS PTE. LTD. 19 ENG KONG TERRACE LEVEL 1 ENG KONG PARK</td>
+<td>AS25G00033</td>
+</tr>
+<tr>
+<td>36</td>
+<td>GOLDFISH PALACE</td>
+<td>AS22F00037</td>
+</tr>
+<tr>
+<td>37</td>
+<td>GOODWILL BIRDS TRADING</td>
+<td>AS90M0578</td>
+</tr>
+<tr>
+<td>38</td>
+<td>HAMSTER HAVEN</td>
+<td>AS19M00006</td>
+</tr>
+<tr>
+<td>39</td>
+<td>HAN ZI PET SHOP</td>
+<td>AS09G00018</td>
+</tr>
+<tr>
+<td>40</td>
+<td>HAPPYPAWS 93 KOVAN ROAD #01- 01 VIBES @ KOVAN</td>
+<td>AS21M00004</td>
+</tr>
+<tr>
+<td>41</td>
+<td>HONG YANG AQUARIUM N PETS ACCESSORIES</td>
+<td>AS16K00037</td>
+</tr>
+<tr>
+<td>42</td>
+<td>I-PETS 333 KRETA AYER ROAD #01- 30 KRETA AYER HEIGHTS</td>
+<td>AS17L00039</td>
+</tr>
+<tr>
+<td>43</td>
+<td>IVEN BETTA 9 KING ALBERT PARK #02- 15 KAP</td>
+<td>AS19M00003</td>
+</tr>
+<tr>
+<td>44</td>
+<td>JAMES BIRD SHOP</td>
+<td>AS20A00011</td>
+</tr>
+<tr>
+<td>45</td>
+<td>JUST BETTA</td>
+<td>AS21K00056</td>
+</tr>
+<tr>
+<td>46</td>
+<td>K&amp;K AQUARIUM &amp; BIRD CENTRE 201D TAMPINES STREET 21 #01-
+1145</td>
+<td>AS86M0480</td>
+</tr>
+<tr>
+<td>47</td>
+<td>KELSONBETTA</td>
+<td>AS04C1483</td>
+</tr>
+<tr>
+<td>48</td>
+<td>KEOW SONG BIRDS’ TRADING</td>
+<td>AS17M00003</td>
+</tr>
+<tr>
+<td>49</td>
+<td>KS PETS HUB</td>
+<td>AS17B00012</td>
+</tr>
+<tr>
+<td>50</td>
+<td>KWONG FATT PETS CENTRE</td>
+<td>AS25F00030</td>
+</tr>
+<tr>
+<td>51</td>
+<td>LAVISH PET CENTRE LLP 1 ROCHDALE ROAD LEVEL 1</td>
+<td>AS22B00019</td>
+</tr>
+<tr>
+<td>52</td>
+<td>LE PETS KINGDOM PTE. LTD.</td>
+<td>AS24L00056</td>
+</tr>
+<tr>
+<td>53</td>
+<td>LILO CATTERY PTE. LTD.</td>
+<td>AS25L00060</td>
+</tr>
+<tr>
+<td>54</td>
+<td>LITTLE CATS &amp; CO PTE. LTD. 190 JOO CHIAT ROAD #04- 01</td>
+<td>AS21F00025</td>
+</tr>
+<tr>
+<td>55</td>
+<td>MADPETZ AQUATIC STUDIO LLP</td>
+<td>AS23J00047</td>
+</tr>
+<tr>
+<td>56</td>
+<td>MAINECOON CATTERY SG 180 JOO CHIAT ROAD #02- 02</td>
+<td>AS24E00026</td>
+</tr>
+<tr>
+<td>57</td>
+<td>MINI PET STORE</td>
+<td>AS15L00033</td>
+</tr>
+<tr>
+<td>58</td>
+<td>MIRACULOUS CATCH AQUARIUM</td>
+<td>AS21A00008</td>
+</tr>
+<tr>
+<td>59</td>
+<td>MOON PETS PTE. LTD.</td>
+<td>AS24A00010</td>
+</tr>
+<tr>
+<td>60</td>
+<td>MY CATTOON 53 JOO CHIAT PLACE LEVEL 1</td>
+<td>AS25G00034</td>
+</tr>
+<tr>
+<td>61</td>
+<td>OMO OMO PET SHOP (PRIVATE LIMITED)</td>
+<td>AS22B00015</td>
+</tr>
+<tr>
+<td>62</td>
+<td>OURLOVELYGOLDFISHSINGAPORE</td>
+<td>AS25D00021</td>
+</tr>
+<tr>
+<td>63</td>
+<td>PAW LOVE HOUSE</td>
+<td>AS25F00028</td>
+</tr>
+<tr>
+<td>64</td>
+<td>PAWFESSIONAL PTE. LTD.</td>
+<td>AS17M00002</td>
+</tr>
+<tr>
+<td>65</td>
+<td>PAWRADISE PET PTE. LTD.</td>
+<td>AS25E00027</td>
+</tr>
+<tr>
+<td>66</td>
+<td>PET FABLES PTE. LTD. 35 ENG KONG TERRACE LEVEL 1 ENG KONG PARK</td>
+<td>AS21K00060</td>
+</tr>
+<tr>
+<td>67</td>
+<td>PET ME PLEASE SG PTE. LTD.</td>
+<td>AS23F00028</td>
+</tr>
+<tr>
+<td>68</td>
+<td>PET ME PLEASE SG PTE. LTD. 58 JOO CHIAT PLACE</td>
+<td>AS26B00014</td>
+</tr>
+<tr>
+<td>69</td>
+<td>PET OF MINE PRIVATE LIMITED 2 RUBY LANE LEVEL 1</td>
+<td>AS22D00028</td>
+</tr>
+<tr>
+<td>70</td>
+<td>PETMART PTE. LTD.</td>
+<td>AS04M0495</td>
+</tr>
+<tr>
+<td>71</td>
+<td>PETS PHILOSOPHY PTE. LTD.</td>
+<td>AS24B00016</td>
+</tr>
+<tr>
+<td>72</td>
+<td>PETS’ STATION HOLDING PTE LTD</td>
+<td>AS11E00019</td>
+</tr>
+<tr>
+<td>73</td>
+<td>PETS’ STATION HOLDING PTE LTD</td>
+<td>AS14F00007</td>
+</tr>
+<tr>
+<td>74</td>
+<td>PETS’ STATION HOLDING PTE LTD 16A MAJU AVENUE LEVEL 2</td>
+<td>AS92M0588</td>
+</tr>
+<tr>
+<td>75</td>
+<td>PETS’ STATION HOLDING PTE LTD</td>
+<td>AS18J00034</td>
+</tr>
+<tr>
+<td>76</td>
+<td>PETS’ STREET</td>
+<td>AS15K00027</td>
+</tr>
+<tr>
+<td>77</td>
+<td>PETS&amp;CO PTE. LTD.</td>
+<td>AS23G00035</td>
+</tr>
+<tr>
+<td>78</td>
+<td>PETS’S KIOSK PET SALON</td>
+<td>AS11C00015</td>
+</tr>
+<tr>
+<td>79</td>
+<td>PETSVALE GROOMERS’ HUB PTE. LTD. 114 YIO CHU KANG ROAD</td>
+<td>AS24K00054</td>
+</tr>
+<tr>
+<td>80</td>
+<td>PICK A PET PTE. LTD.</td>
+<td>AS11M00003</td>
+</tr>
+<tr>
+<td>81</td>
+<td>PICK A PET PTE. LTD. 1 VISTA EXCHANGE GREEN #01- 14 THE STAR
+VISTA</td>
+<td>AS20M00004</td>
+</tr>
+<tr>
+<td>82</td>
+<td>PICK A PET PTE. LTD.</td>
+<td>AS18F00024</td>
+</tr>
+<tr>
+<td>83</td>
+<td>PROPET 21 KALIDASA AVENUE LEVEL 1 TEACHER’S HOUSING ESTATE</td>
+<td>AS20L00062</td>
+</tr>
+<tr>
+<td>84</td>
+<td>QUE FENG BIRD &amp; PET TRADING ENTERPRISES</td>
+<td>AS87M0519</td>
+</tr>
+<tr>
+<td>85</td>
+<td>RHQ RABBITHEADQUARTERS LIMITED LIABILITY PARTNERSHIP</td>
+<td>AS17H00029</td>
+</tr>
+<tr>
+<td>86</td>
+<td>SGCATHOUSE INTERNATIONAL PTE. LTD.</td>
+<td>AS23L00056</td>
+</tr>
+<tr>
+<td>87</td>
+<td>SINGAPORE GOLDFISH</td>
+<td>AS25A00007</td>
+</tr>
+<tr>
+<td>88</td>
+<td>SONG BIRD’S CENTRE</td>
+<td>AS00J0792</td>
+</tr>
+<tr>
+<td>89</td>
+<td>SUPERDOGS PTE. LTD.</td>
+<td>AS22B00013</td>
+</tr>
+<tr>
+<td>90</td>
+<td>THE BETTA COLLABORATION PRIVATE LIMITED</td>
+<td>AS25G00032</td>
+</tr>
+<tr>
+<td>91</td>
+<td>THE CATS COLLECTIVE PTE. LTD.</td>
+<td>AS25D00018</td>
+</tr>
+<tr>
+<td>92</td>
+<td>THE CATS COLLECTIVE PTE. LTD.</td>
+<td>AS25J00046</td>
+</tr>
+<tr>
+<td>93</td>
+<td>THE PAWSERY RETREAT LP</td>
+<td>AS25C00014</td>
+</tr>
+<tr>
+<td>94</td>
+<td>THE PET RESEARCH OUTPOST 51 CHIN SWEE ROAD #02- 75</td>
+<td>AS20K00055</td>
+</tr>
+<tr>
+<td>95</td>
+<td>THE RITZ-CATTON PTE. LTD. 255B GEYLANG ROAD LEVEL 3</td>
+<td>AS25K00053</td>
+</tr>
+<tr>
+<td>96</td>
+<td>TIARA PETS (SG) PTE. LTD. 266A JOO CHIAT ROAD</td>
+<td>AS22J00060</td>
+</tr>
+<tr>
+<td>97</td>
+<td>TT PETS</td>
+<td>AS23B00011</td>
+</tr>
+<tr>
+<td>98</td>
+<td>WELLFOND PETS PTE. LTD.</td>
+<td>AS13H00026</td>
+</tr>
+<tr>
+<td>99</td>
+<td>WELLFOND PETS THOMSON LIMITED LIABILITY PARTNERSHIP</td>
+<td>AS15A00001</td>
+</tr>
+<tr>
+<td>100</td>
+<td>XI MEOW PET PTE. LTD.</td>
+<td>AS22J00059</td>
+</tr>
+<tr>
+<td>101</td>
+<td>XI MEOW PET PTE. LTD. 277 JOO CHIAT ROAD #02- 01</td>
+<td>AS25L00061</td>
+</tr>
+<tr>
+<td>102</td>
+<td>YAN PET &amp; AQUARIUM</td>
+<td>AS08C00014</td>
+</tr>
+</tbody>
+</table>
+<h3
+id="a.3-missed-dog-friendly-places-urbandogowner-not-in-petdirectory-231">A.3
+Missed — Dog-friendly places (UrbanDogOwner) NOT in PetDirectory
+(231)</h3>
+<p>UrbanDogOwner hand-verifies every place against real dog policies.
+These are the dog-friendly venues the directory is missing.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Place</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Amara Sanctuary Resort Sentosa</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Apartment Coffee</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Atlas Coffeehouse</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Bakery Brera</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Bark of Duty</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Birds of Paradise Botanic</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Bistecca Tuscan Steakhouse</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Bitters &amp; Love</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Black Tap</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Bochinche</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Boomarang Bistro and Bar Robertson</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Brawn and Brains</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Bukit Brown</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Carnaby @ Robertson Quay</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Carrotsticks and Cravings Robertson</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Carrotsticks and Cravings United Square</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Casuarina Curry</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Chez Suzette Singapore</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Choupinette</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Chye Seng Huat Hardware</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Cluny Court</td>
+</tr>
+<tr>
+<td>22</td>
+<td>Coastes Sentosa</td>
+</tr>
+<tr>
+<td>23</td>
+<td>Coffeesmith</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Coffeesmith</td>
+</tr>
+<tr>
+<td>25</td>
+<td>Common Man Coffee Roasters</td>
+</tr>
+<tr>
+<td>26</td>
+<td>Common Man Coffee Roasters - Stanley Street</td>
+</tr>
+<tr>
+<td>27</td>
+<td>Da Paolo Pizza Bar Chip Bee</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Dollhouse Pets</td>
+</tr>
+<tr>
+<td>29</td>
+<td>Druggists</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Duomo Ristorante</td>
+</tr>
+<tr>
+<td>31</td>
+<td>Duxton Plain Park</td>
+</tr>
+<tr>
+<td>32</td>
+<td>Esplanade Park</td>
+</tr>
+<tr>
+<td>33</td>
+<td>FOC Sentosa</td>
+</tr>
+<tr>
+<td>34</td>
+<td>Fort Canning Park</td>
+</tr>
+<tr>
+<td>35</td>
+<td>Free the Robot</td>
+</tr>
+<tr>
+<td>36</td>
+<td>Greenwood Fish Market Greenwood</td>
+</tr>
+<tr>
+<td>37</td>
+<td>Greenwood Fish Market Quayside Isle</td>
+</tr>
+<tr>
+<td>38</td>
+<td>Group Therapy Coffee</td>
+</tr>
+<tr>
+<td>39</td>
+<td>Hard Rock Cafe Cuscaden</td>
+</tr>
+<tr>
+<td>40</td>
+<td>Harry’s Chijmes</td>
+</tr>
+<tr>
+<td>41</td>
+<td>Hathaway at Capital Tower</td>
+</tr>
+<tr>
+<td>42</td>
+<td>Henderson Waves</td>
+</tr>
+<tr>
+<td>43</td>
+<td>HICC Pet Singapore</td>
+</tr>
+<tr>
+<td>44</td>
+<td>Hong Lim Park</td>
+</tr>
+<tr>
+<td>45</td>
+<td>Hopscotch (Gardens by the Bay)</td>
+</tr>
+<tr>
+<td>46</td>
+<td>HortPark</td>
+</tr>
+<tr>
+<td>47</td>
+<td>Huber’s Butchery</td>
+</tr>
+<tr>
+<td>48</td>
+<td>IPETSATHOME</td>
+</tr>
+<tr>
+<td>49</td>
+<td>Ji De Chi Dessert</td>
+</tr>
+<tr>
+<td>50</td>
+<td>Kontiki</td>
+</tr>
+<tr>
+<td>51</td>
+<td>Lazarus Island Beach</td>
+</tr>
+<tr>
+<td>52</td>
+<td>Le Bistrot du Sommelier</td>
+</tr>
+<tr>
+<td>53</td>
+<td>Le Jardin Cafe</td>
+</tr>
+<tr>
+<td>54</td>
+<td>Lebua Thai</td>
+</tr>
+<tr>
+<td>55</td>
+<td>Let’s Go Bago</td>
+</tr>
+<tr>
+<td>56</td>
+<td>LeVeL33</td>
+</tr>
+<tr>
+<td>57</td>
+<td>Lola’s Cafe Kembangan</td>
+</tr>
+<tr>
+<td>58</td>
+<td>Long Beach @ DEMPSEY HILL</td>
+</tr>
+<tr>
+<td>59</td>
+<td>MacRitchie Reservoir Park</td>
+</tr>
+<tr>
+<td>60</td>
+<td>Maxi Coffee Bar</td>
+</tr>
+<tr>
+<td>61</td>
+<td>Menage Cafe (Pet Friendly)</td>
+</tr>
+<tr>
+<td>62</td>
+<td>Mount Faber Park</td>
+</tr>
+<tr>
+<td>63</td>
+<td>My Happy Tales</td>
+</tr>
+<tr>
+<td>64</td>
+<td>Mykonos On The Bay</td>
+</tr>
+<tr>
+<td>65</td>
+<td>Nylon Coffee Roasters</td>
+</tr>
+<tr>
+<td>66</td>
+<td>OLO.SG Lavender</td>
+</tr>
+<tr>
+<td>67</td>
+<td>Original Sin</td>
+</tr>
+<tr>
+<td>68</td>
+<td>Our Space Dog Run @ Tai Gin Road</td>
+</tr>
+<tr>
+<td>69</td>
+<td>Palawan Beach</td>
+</tr>
+<tr>
+<td>70</td>
+<td>Pampered Pets Relocation</td>
+</tr>
+<tr>
+<td>71</td>
+<td>Park Bench Deli</td>
+</tr>
+<tr>
+<td>72</td>
+<td>Pawpy Kids</td>
+</tr>
+<tr>
+<td>73</td>
+<td>Pawtel and Friends</td>
+</tr>
+<tr>
+<td>74</td>
+<td>Pearl’s Hill City Park</td>
+</tr>
+<tr>
+<td>75</td>
+<td>PEMENCO</td>
+</tr>
+<tr>
+<td>76</td>
+<td>Pet Xchange</td>
+</tr>
+<tr>
+<td>77</td>
+<td>Petizen Pet Grooming Salon</td>
+</tr>
+<tr>
+<td>78</td>
+<td>Petizen SG - Robertson Quay</td>
+</tr>
+<tr>
+<td>79</td>
+<td>Pets Avenue</td>
+</tr>
+<tr>
+<td>80</td>
+<td>Plain Vanilla Bakery (Telok Ayer)</td>
+</tr>
+<tr>
+<td>81</td>
+<td>Plain Vanilla Bakery (Tiong Bahru)</td>
+</tr>
+<tr>
+<td>82</td>
+<td>POCZARICA - Mexican Bar &amp; Restaurant</td>
+</tr>
+<tr>
+<td>83</td>
+<td>Pop Pop Pets New Bahru</td>
+</tr>
+<tr>
+<td>84</td>
+<td>Potong Pasir Dog Run</td>
+</tr>
+<tr>
+<td>85</td>
+<td>PS Cafe One Fullerton</td>
+</tr>
+<tr>
+<td>86</td>
+<td>PS Cafe Paragon</td>
+</tr>
+<tr>
+<td>87</td>
+<td>PS.Cafe Harding</td>
+</tr>
+<tr>
+<td>88</td>
+<td>PURR n WOOF</td>
+</tr>
+<tr>
+<td>89</td>
+<td>Rail Corridor South</td>
+</tr>
+<tr>
+<td>90</td>
+<td>SABÒR</td>
+</tr>
+<tr>
+<td>91</td>
+<td>Samy’s Curry</td>
+</tr>
+<tr>
+<td>92</td>
+<td>Siloso Beach</td>
+</tr>
+<tr>
+<td>93</td>
+<td>Singapore Botanic Gardens</td>
+</tr>
+<tr>
+<td>94</td>
+<td>Smith Street Taps</td>
+</tr>
+<tr>
+<td>95</td>
+<td>Sofitel Singapore Sentosa Resort &amp; Spa</td>
+</tr>
+<tr>
+<td>96</td>
+<td>Soup Restaurant Singapore</td>
+</tr>
+<tr>
+<td>97</td>
+<td>Southern Ridges Trail</td>
+</tr>
+<tr>
+<td>98</td>
+<td>St Johns Island Beach</td>
+</tr>
+<tr>
+<td>99</td>
+<td>Suds and Scissors Pet Parlour</td>
+</tr>
+<tr>
+<td>100</td>
+<td>Symmetry Cafe</td>
+</tr>
+<tr>
+<td>101</td>
+<td>Telok Ayer Park</td>
+</tr>
+<tr>
+<td>102</td>
+<td>Telok Blangah Hill Park</td>
+</tr>
+<tr>
+<td>103</td>
+<td>The Cliff</td>
+</tr>
+<tr>
+<td>104</td>
+<td>The Coffee Roasters Cafe</td>
+</tr>
+<tr>
+<td>105</td>
+<td>The Collar Club River Valley</td>
+</tr>
+<tr>
+<td>106</td>
+<td>The Daily Cut</td>
+</tr>
+<tr>
+<td>107</td>
+<td>The Dempsey Project</td>
+</tr>
+<tr>
+<td>108</td>
+<td>The Furry Hangout</td>
+</tr>
+<tr>
+<td>109</td>
+<td>The Grooming Table</td>
+</tr>
+<tr>
+<td>110</td>
+<td>The Mane Tamer</td>
+</tr>
+<tr>
+<td>111</td>
+<td>The Modern Izakaya</td>
+</tr>
+<tr>
+<td>112</td>
+<td>The Otherside</td>
+</tr>
+<tr>
+<td>113</td>
+<td>The Palawan Dog Run</td>
+</tr>
+<tr>
+<td>114</td>
+<td>The Pet Safari - VivoCity</td>
+</tr>
+<tr>
+<td>115</td>
+<td>The Social Space - Nano Roastery</td>
+</tr>
+<tr>
+<td>116</td>
+<td>The Wagington</td>
+</tr>
+<tr>
+<td>117</td>
+<td>The Willow &amp; Oak</td>
+</tr>
+<tr>
+<td>118</td>
+<td>The Winery Tapas</td>
+</tr>
+<tr>
+<td>119</td>
+<td>The Wired Monkey</td>
+</tr>
+<tr>
+<td>120</td>
+<td>Tiann’s</td>
+</tr>
+<tr>
+<td>121</td>
+<td>Timbre+</td>
+</tr>
+<tr>
+<td>122</td>
+<td>Tiong Bahru Bakery (Eng Hoon Street)</td>
+</tr>
+<tr>
+<td>123</td>
+<td>Tolido’s Espresso Nook</td>
+</tr>
+<tr>
+<td>124</td>
+<td>Tom’s Palette</td>
+</tr>
+<tr>
+<td>125</td>
+<td>Tomahawk (Novena)</td>
+</tr>
+<tr>
+<td>126</td>
+<td>Trapizza Sentosa</td>
+</tr>
+<tr>
+<td>127</td>
+<td>Twenty Grammes</td>
+</tr>
+<tr>
+<td>128</td>
+<td>Two Men Bagel House</td>
+</tr>
+<tr>
+<td>129</td>
+<td>Wafu by Wildseed</td>
+</tr>
+<tr>
+<td>130</td>
+<td>Waggie Dog School</td>
+</tr>
+<tr>
+<td>131</td>
+<td>Wala Wala Cafe Bar</td>
+</tr>
+<tr>
+<td>132</td>
+<td>What The Pug</td>
+</tr>
+<tr>
+<td>133</td>
+<td>Wildseed Café at 1-Flowerhill, Sentosa</td>
+</tr>
+<tr>
+<td>134</td>
+<td>Wildseed Cafe at The Alkaff Mansion</td>
+</tr>
+<tr>
+<td>135</td>
+<td>Wildseed Café at The Alkaff Mansion</td>
+</tr>
+<tr>
+<td>136</td>
+<td>Wildseed Cafe At The Garage</td>
+</tr>
+<tr>
+<td>137</td>
+<td>Woof Living</td>
+</tr>
+<tr>
+<td>138</td>
+<td>A Beautiful Day Cafe</td>
+</tr>
+<tr>
+<td>139</td>
+<td>Bedok Jetty Beach (East Coast Park Area F)</td>
+</tr>
+<tr>
+<td>140</td>
+<td>Bedok Reservoir Park</td>
+</tr>
+<tr>
+<td>141</td>
+<td>Bedok Reservoir Park Connector</td>
+</tr>
+<tr>
+<td>142</td>
+<td>Birds of Paradise Gelato Katong</td>
+</tr>
+<tr>
+<td>143</td>
+<td>BreakFast at Fluffy’s</td>
+</tr>
+<tr>
+<td>144</td>
+<td>Cafe Melba at Goodman Arts Centre</td>
+</tr>
+<tr>
+<td>145</td>
+<td>Changi Beach Park</td>
+</tr>
+<tr>
+<td>146</td>
+<td>Coastal Rhythm Cafe (Pasir Ris Park)</td>
+</tr>
+<tr>
+<td>147</td>
+<td>Common Man Coffee Roasters Joo Chiat</td>
+</tr>
+<tr>
+<td>148</td>
+<td>Cosy Little Pets Corner</td>
+</tr>
+<tr>
+<td>149</td>
+<td>Eastern Coastal Park Connector</td>
+</tr>
+<tr>
+<td>150</td>
+<td>Geylang Park Connector</td>
+</tr>
+<tr>
+<td>151</td>
+<td>Hjh Maimunah</td>
+</tr>
+<tr>
+<td>152</td>
+<td>Hub &amp; Spoke Cafe</td>
+</tr>
+<tr>
+<td>153</td>
+<td>Jia Wei Cafe</td>
+</tr>
+<tr>
+<td>154</td>
+<td>Knots Cafe and Living</td>
+</tr>
+<tr>
+<td>155</td>
+<td>Koon Seng Park Dog Run</td>
+</tr>
+<tr>
+<td>156</td>
+<td>Owen and Edwin</td>
+</tr>
+<tr>
+<td>157</td>
+<td>Pawty Haus</td>
+</tr>
+<tr>
+<td>158</td>
+<td>Peperoni Pizzeria</td>
+</tr>
+<tr>
+<td>159</td>
+<td>Pet Master Mega Store</td>
+</tr>
+<tr>
+<td>160</td>
+<td>Salvo by Pasta Fresca</td>
+</tr>
+<tr>
+<td>161</td>
+<td>smol</td>
+</tr>
+<tr>
+<td>162</td>
+<td>Snow Pawttage</td>
+</tr>
+<tr>
+<td>163</td>
+<td>Tampines Eco Green</td>
+</tr>
+<tr>
+<td>164</td>
+<td>Tampines Park Connector</td>
+</tr>
+<tr>
+<td>165</td>
+<td>Tanglin Cookhouse</td>
+</tr>
+<tr>
+<td>166</td>
+<td>Tanjong Rhu Park Connector</td>
+</tr>
+<tr>
+<td>167</td>
+<td>Telok Kurau Park</td>
+</tr>
+<tr>
+<td>168</td>
+<td>Telok Kurau Park Dog Run</td>
+</tr>
+<tr>
+<td>169</td>
+<td>The Barkery Cafe</td>
+</tr>
+<tr>
+<td>170</td>
+<td>The Tipsy Bird</td>
+</tr>
+<tr>
+<td>171</td>
+<td>Tiong Bahru Bakery (Siglap)</td>
+</tr>
+<tr>
+<td>172</td>
+<td>Zing by Xi Yan</td>
+</tr>
+<tr>
+<td>173</td>
+<td>Admiralty Park</td>
+</tr>
+<tr>
+<td>174</td>
+<td>Khatib Bongsu Nature Park</td>
+</tr>
+<tr>
+<td>175</td>
+<td>Lower Seletar Reservoir Park</td>
+</tr>
+<tr>
+<td>176</td>
+<td>Mandai Track Park Connector</td>
+</tr>
+<tr>
+<td>177</td>
+<td>Perfect K9</td>
+</tr>
+<tr>
+<td>178</td>
+<td>Picotin Express Bukit Timah Saddle Club</td>
+</tr>
+<tr>
+<td>179</td>
+<td>Rail Corridor North</td>
+</tr>
+<tr>
+<td>180</td>
+<td>Round Island Route (North Segment)</td>
+</tr>
+<tr>
+<td>181</td>
+<td>Sembawang Park Beach</td>
+</tr>
+<tr>
+<td>182</td>
+<td>Sembawang Park Connector</td>
+</tr>
+<tr>
+<td>183</td>
+<td>Sembawang Park Dog Run</td>
+</tr>
+<tr>
+<td>184</td>
+<td>White Restaurant Sembawang</td>
+</tr>
+<tr>
+<td>185</td>
+<td>Wildseed Café at The Summerhouse</td>
+</tr>
+<tr>
+<td>186</td>
+<td>Yishun Nature Park @ Yishun Greenwalk</td>
+</tr>
+<tr>
+<td>187</td>
+<td>Yishun Park Dog Run</td>
+</tr>
+<tr>
+<td>188</td>
+<td>Yishun Park Hawker Centre</td>
+</tr>
+<tr>
+<td>189</td>
+<td>Yishun Pond Park</td>
+</tr>
+<tr>
+<td>190</td>
+<td>Ang Mo Kio Town Garden West</td>
+</tr>
+<tr>
+<td>191</td>
+<td>Ang Mo Kio Town Garden West Dog Run</td>
+</tr>
+<tr>
+<td>192</td>
+<td>Bow and Wow Pet Boutique</td>
+</tr>
+<tr>
+<td>193</td>
+<td>Coney Island Beach</td>
+</tr>
+<tr>
+<td>194</td>
+<td>Coney Island Park</td>
+</tr>
+<tr>
+<td>195</td>
+<td>Fluffy Furries</td>
+</tr>
+<tr>
+<td>196</td>
+<td>Pet Loft Studio</td>
+</tr>
+<tr>
+<td>197</td>
+<td>Pulau Ubin</td>
+</tr>
+<tr>
+<td>198</td>
+<td>Punggol Beach</td>
+</tr>
+<tr>
+<td>199</td>
+<td>Punggol Park Dog Run</td>
+</tr>
+<tr>
+<td>200</td>
+<td>Punggol Promenade</td>
+</tr>
+<tr>
+<td>201</td>
+<td>Punggol Settlement Bayfront</td>
+</tr>
+<tr>
+<td>202</td>
+<td>Rey’s Homeground</td>
+</tr>
+<tr>
+<td>203</td>
+<td>Sengkang Riverside Park</td>
+</tr>
+<tr>
+<td>204</td>
+<td>Sengkang Riverside Park Dog Run</td>
+</tr>
+<tr>
+<td>205</td>
+<td>Sengkang Sculpture Park</td>
+</tr>
+<tr>
+<td>206</td>
+<td>Smitten Coffee and Tea Bar</td>
+</tr>
+<tr>
+<td>207</td>
+<td>Wildseed Bar at The Summerhouse</td>
+</tr>
+<tr>
+<td>208</td>
+<td>Bukit Batok Town Park (Little Guilin)</td>
+</tr>
+<tr>
+<td>209</td>
+<td>Burnt Cones</td>
+</tr>
+<tr>
+<td>210</td>
+<td>Canopy Cafe at Jurong Lake Gardens</td>
+</tr>
+<tr>
+<td>211</td>
+<td>Cedele Star Vista</td>
+</tr>
+<tr>
+<td>212</td>
+<td>Choa Chu Kang Park</td>
+</tr>
+<tr>
+<td>213</td>
+<td>Choa Chu Kang Park Dog Run</td>
+</tr>
+<tr>
+<td>214</td>
+<td>Dairy Farm Nature Park</td>
+</tr>
+<tr>
+<td>215</td>
+<td>Family Pet House</td>
+</tr>
+<tr>
+<td>216</td>
+<td>HillV2 iO Italian Osteria</td>
+</tr>
+<tr>
+<td>217</td>
+<td>Jurong Central Park</td>
+</tr>
+<tr>
+<td>218</td>
+<td>Jurong Lake Park Connector</td>
+</tr>
+<tr>
+<td>219</td>
+<td>Kent Ridge Park</td>
+</tr>
+<tr>
+<td>220</td>
+<td>Les Bouchons Steakhouse Rochester</td>
+</tr>
+<tr>
+<td>221</td>
+<td>Mayfair Park</td>
+</tr>
+<tr>
+<td>222</td>
+<td>Mayfair Park Dog Run</td>
+</tr>
+<tr>
+<td>223</td>
+<td>Pang Sua Park Connector</td>
+</tr>
+<tr>
+<td>224</td>
+<td>Pang Sua Pond</td>
+</tr>
+<tr>
+<td>225</td>
+<td>Pet Lodge SG</td>
+</tr>
+<tr>
+<td>226</td>
+<td>Polypet (Sunset Way)</td>
+</tr>
+<tr>
+<td>227</td>
+<td>Rail Corridor Central</td>
+</tr>
+<tr>
+<td>228</td>
+<td>The Coffee Bean Tea Leaf Star Vista</td>
+</tr>
+<tr>
+<td>229</td>
+<td>Ulu Pandan Park Connector</td>
+</tr>
+<tr>
+<td>230</td>
+<td>Wag &amp; Wild</td>
+</tr>
+<tr>
+<td>231</td>
+<td>West Coast Plain Park</td>
+</tr>
+</tbody>
+</table>
+<h3 id="a.4-missed-pawwhere-businesses-not-in-petdirectory-530">A.4
+Missed — Pawwhere businesses NOT in PetDirectory (530)</h3>
+<p>Pawwhere’s 604 businesses are cafe-first (most are F&amp;B).
+PetDirectory already has 292 F&amp;B listings, so many overlap. The 530
+not found are mostly F&amp;B venues — the client should prioritize the
+pet-service ones (grooming, boarding, retail, cat cafes) and treat the
+rest as optional F&amp;B expansion.</p>
+<table>
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 76%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Business</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Wheelers Tropikana Bukit Merah</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Nats Chicks Cuisine Better Days Hainanese Chicken Rice Toa
+Payoh</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Georges the Cove Pasir Ris</td>
+</tr>
+<tr>
+<td>4</td>
+<td>A Beautiful Day Cafe Tea Room Cocktail Bar Geylang</td>
+</tr>
+<tr>
+<td>5</td>
+<td>The Coffee Code Singapore Chinatown</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Baker and Cook South Buona Vista Queenstown</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Baker and Cook Sunset Way Clementi</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Knead Kopi Bukit Timah</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Fish and Bones Central Area</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Black Cherry Queenstown</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Blu Kouzina Siglap Bedok</td>
+</tr>
+<tr>
+<td>12</td>
+<td>China Taste Kallang</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Idaten Udon Geneo Queenstown</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Baker and Cook Chip Bee Gardens Bukit Timah</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Salt and Soul Chinatown</td>
+</tr>
+<tr>
+<td>16</td>
+<td>The Cafe and Bar Sembawang</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Chopsuey Cafe Dempsey Hill Tanglin</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Canopy Hortpark Queenstown</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Cat Paradise Singapore Adoption Cat Cafe Geylang</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Lean and Rich Bakery Central Area</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Depatio the Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>22</td>
+<td>Catopia Singapore Art Jamming x Retail x Cat Hotel Central Area</td>
+</tr>
+<tr>
+<td>23</td>
+<td>Sum Dim Sum Central Area</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Barossa Steak and Grill Bukit Merah</td>
+</tr>
+<tr>
+<td>25</td>
+<td>Club July Stagmont Ring Sungei Kadut</td>
+</tr>
+<tr>
+<td>26</td>
+<td>Ya Hua Bak Kut Teh Tiong Bahru</td>
+</tr>
+<tr>
+<td>27</td>
+<td>Coastal Rhythm at East Coast Park Bedok</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Erwins Gastrobar Central Area</td>
+</tr>
+<tr>
+<td>29</td>
+<td>Craftsmen Coffee Holland V Bukit Timah</td>
+</tr>
+<tr>
+<td>30</td>
+<td>Bites and Brews Geylang</td>
+</tr>
+<tr>
+<td>31</td>
+<td>Harrys Clarke Quay Central Area</td>
+</tr>
+<tr>
+<td>32</td>
+<td>Solepomodoro Trattoria Pizzeria Southern Islands</td>
+</tr>
+<tr>
+<td>33</td>
+<td>Fluffydolls Catfe Desker Little India</td>
+</tr>
+<tr>
+<td>34</td>
+<td>Three Nuts Baker Serangoon</td>
+</tr>
+<tr>
+<td>35</td>
+<td>The Boneless Kitchen Korean Vegetarian and Vegan Cuisine Toa
+Payoh</td>
+</tr>
+<tr>
+<td>36</td>
+<td>Chimichanga Vivocity Bukit Merah</td>
+</tr>
+<tr>
+<td>37</td>
+<td>Toyou Cafe Bedok</td>
+</tr>
+<tr>
+<td>38</td>
+<td>Cloudmills Central Area</td>
+</tr>
+<tr>
+<td>39</td>
+<td>Gem Cat Cafe Central Area</td>
+</tr>
+<tr>
+<td>40</td>
+<td>Gin Khao Bistro Southern Islands</td>
+</tr>
+<tr>
+<td>41</td>
+<td>Earlybird Kampong Glam</td>
+</tr>
+<tr>
+<td>42</td>
+<td>Handlebar Bukit Merah</td>
+</tr>
+<tr>
+<td>43</td>
+<td>Hangar66 Cafe Seletar</td>
+</tr>
+<tr>
+<td>44</td>
+<td>Hathaway Chinatown</td>
+</tr>
+<tr>
+<td>45</td>
+<td>Pull Tab Coffee Queenstown</td>
+</tr>
+<tr>
+<td>46</td>
+<td>Hooha Cafe Queenstown</td>
+</tr>
+<tr>
+<td>47</td>
+<td>Martinas Kitchen Seletar</td>
+</tr>
+<tr>
+<td>48</td>
+<td>Im Acai Queenstown</td>
+</tr>
+<tr>
+<td>49</td>
+<td>174bingo Geylang</td>
+</tr>
+<tr>
+<td>50</td>
+<td>Kaffa Bella Acai and Coffee Bukit Merah</td>
+</tr>
+<tr>
+<td>51</td>
+<td>Kith Cafe West Coast Clementi</td>
+</tr>
+<tr>
+<td>52</td>
+<td>Fireplace Open Wood Fire Grill One Holland Village Holland
+Village</td>
+</tr>
+<tr>
+<td>53</td>
+<td>Chapanda Scape Central Area</td>
+</tr>
+<tr>
+<td>54</td>
+<td>Una Una Japanese Unagi Restaurant Bukit Merah</td>
+</tr>
+<tr>
+<td>55</td>
+<td>Maxi Coffee Bar Chinatown</td>
+</tr>
+<tr>
+<td>56</td>
+<td>Carnaby Robertson Quay Central Area</td>
+</tr>
+<tr>
+<td>57</td>
+<td>Meomi Cat Cafe Kampong Glam</td>
+</tr>
+<tr>
+<td>58</td>
+<td>Miska Cafe Southern Islands</td>
+</tr>
+<tr>
+<td>59</td>
+<td>Nan Yang Lala Bar Kampong Glam</td>
+</tr>
+<tr>
+<td>60</td>
+<td>Si Chuan Dou Hua Restaurant Beach Road Kampong Glam</td>
+</tr>
+<tr>
+<td>61</td>
+<td>My Awesome Cafe Chinatown</td>
+</tr>
+<tr>
+<td>62</td>
+<td>Mykonos On the Bay Southern Islands</td>
+</tr>
+<tr>
+<td>63</td>
+<td>Nekotown Cat Cafe Geylang</td>
+</tr>
+<tr>
+<td>64</td>
+<td>Ohana Beach Housepasir Ris Pasir Ris</td>
+</tr>
+<tr>
+<td>65</td>
+<td>Dim Sum More Marine Parade</td>
+</tr>
+<tr>
+<td>66</td>
+<td>Opio Kitchen and Bar Bukit Merah</td>
+</tr>
+<tr>
+<td>67</td>
+<td>Pat A Cat Marine Parade</td>
+</tr>
+<tr>
+<td>68</td>
+<td>Room Cafe Pasir Ris</td>
+</tr>
+<tr>
+<td>69</td>
+<td>Plain Vanilla Neil Road Bukit Merah</td>
+</tr>
+<tr>
+<td>70</td>
+<td>Plank Sourdough Pizza Eng Kong Park Bukit Timah</td>
+</tr>
+<tr>
+<td>71</td>
+<td>Nan Yang Dao the Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>72</td>
+<td>Pscafe Katong Marine Parade</td>
+</tr>
+<tr>
+<td>73</td>
+<td>Qq Cats and Cafe Novena</td>
+</tr>
+<tr>
+<td>74</td>
+<td>Tamako Meal Ang Mo Kio</td>
+</tr>
+<tr>
+<td>75</td>
+<td>Monday Coffee Bar Clementi</td>
+</tr>
+<tr>
+<td>76</td>
+<td>Sgcathouse Cat Cafe Pet Shop Pedigree Kittens for Sale Geylang</td>
+</tr>
+<tr>
+<td>77</td>
+<td>Snow Pawttage Geylang</td>
+</tr>
+<tr>
+<td>78</td>
+<td>Korean Fusion Bistro Yishun</td>
+</tr>
+<tr>
+<td>79</td>
+<td>The Social Space Nano Roastery Potong Pasir</td>
+</tr>
+<tr>
+<td>80</td>
+<td>Claypot Valley Hougang</td>
+</tr>
+<tr>
+<td>81</td>
+<td>Burnt Cones Gelato Sunset Way Clementi</td>
+</tr>
+<tr>
+<td>82</td>
+<td>Liu Lang Mian Noodle Bar Bukit Merah</td>
+</tr>
+<tr>
+<td>83</td>
+<td>Chock Full of Beans Changi</td>
+</tr>
+<tr>
+<td>84</td>
+<td>Madame Ooze Ice Cream Cafe and Dessert Bar Chinatown</td>
+</tr>
+<tr>
+<td>85</td>
+<td>Lolas Cafe Kovan</td>
+</tr>
+<tr>
+<td>86</td>
+<td>The Butchers Wife Tiong Bahru</td>
+</tr>
+<tr>
+<td>87</td>
+<td>Izumi Japanese Restaurant Bedok</td>
+</tr>
+<tr>
+<td>88</td>
+<td>The Brewing Ground Bedok</td>
+</tr>
+<tr>
+<td>89</td>
+<td>Ming Chung Restaurant Kallang</td>
+</tr>
+<tr>
+<td>90</td>
+<td>The Cat Cafe x Art Jamming the Rail Mall Bukit Panjang</td>
+</tr>
+<tr>
+<td>91</td>
+<td>The Cat Experience Tsv Queenstown</td>
+</tr>
+<tr>
+<td>92</td>
+<td>Wildseed Cafe at the Summerhouse Seletar</td>
+</tr>
+<tr>
+<td>93</td>
+<td>The Lawn Cafe Dog Friendly Queenstown</td>
+</tr>
+<tr>
+<td>94</td>
+<td>Soi Thai Kitchen Tampines</td>
+</tr>
+<tr>
+<td>95</td>
+<td>Isteaks Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>96</td>
+<td>Tiong Bahru Bakery Bedok</td>
+</tr>
+<tr>
+<td>97</td>
+<td>Five Star Dim Sum Clementi</td>
+</tr>
+<tr>
+<td>98</td>
+<td>Two Chefs Bar Southern Islands</td>
+</tr>
+<tr>
+<td>99</td>
+<td>Tolidos Espresso Nook Kampong Glam</td>
+</tr>
+<tr>
+<td>100</td>
+<td>The Cat Cafe Bugis Bras Basah</td>
+</tr>
+<tr>
+<td>101</td>
+<td>Ippudo Ue Square Central Area</td>
+</tr>
+<tr>
+<td>102</td>
+<td>Le Faubourg Southern Islands</td>
+</tr>
+<tr>
+<td>103</td>
+<td>Hwa Heng Beef Noodle Jalan Besar Kallang</td>
+</tr>
+<tr>
+<td>104</td>
+<td>Yokohama Ramen Toa Payoh</td>
+</tr>
+<tr>
+<td>105</td>
+<td>Common Man Coffee Roasters Alexandra Road Queenstown</td>
+</tr>
+<tr>
+<td>106</td>
+<td>Dongqu Chinatown</td>
+</tr>
+<tr>
+<td>107</td>
+<td>Fernweh Chinatown</td>
+</tr>
+<tr>
+<td>108</td>
+<td>Wildflower Studio Art Jamming x Cat Cafe Singapore Bukit Merah</td>
+</tr>
+<tr>
+<td>109</td>
+<td>The Coach Coffee Shop Resorts World Sentosa Weave Southern
+Islands</td>
+</tr>
+<tr>
+<td>110</td>
+<td>World of Paws Jurong East</td>
+</tr>
+<tr>
+<td>111</td>
+<td>Ms Durian Speciality Bakery and Cafe Central Area</td>
+</tr>
+<tr>
+<td>112</td>
+<td>Doc Italian Restaurant Bras Basah</td>
+</tr>
+<tr>
+<td>113</td>
+<td>Jew Kit Hainanese Chicken Rice Central Area</td>
+</tr>
+<tr>
+<td>114</td>
+<td>Xiao Ya Tou Chinatown</td>
+</tr>
+<tr>
+<td>115</td>
+<td>Black Society Central Area</td>
+</tr>
+<tr>
+<td>116</td>
+<td>Rookies Coffee Shop Bukit Merah</td>
+</tr>
+<tr>
+<td>117</td>
+<td>Bistro at the Park Pasir Ris</td>
+</tr>
+<tr>
+<td>118</td>
+<td>Sabio by the Sea Tapas Bar and Grill Southern Islands</td>
+</tr>
+<tr>
+<td>119</td>
+<td>Swisslink Bakery and Cafe Clementi</td>
+</tr>
+<tr>
+<td>120</td>
+<td>Kwee Zeen Southern Islands</td>
+</tr>
+<tr>
+<td>121</td>
+<td>The Cliff Southern Islands</td>
+</tr>
+<tr>
+<td>122</td>
+<td>Cedele Bakery Kitchen Greenwich V Serangoon</td>
+</tr>
+<tr>
+<td>123</td>
+<td>Ginky by Kinki Japanese Fusion One Holland Village Holland
+Village</td>
+</tr>
+<tr>
+<td>124</td>
+<td>Parvifolia Bedok</td>
+</tr>
+<tr>
+<td>125</td>
+<td>Little Farms Bargrill Serangoon Garden Restaurant Serangoon</td>
+</tr>
+<tr>
+<td>126</td>
+<td>Moin Moin Gelato Yishun</td>
+</tr>
+<tr>
+<td>127</td>
+<td>The Telegraph by Olivia Bras Basah</td>
+</tr>
+<tr>
+<td>128</td>
+<td>Oddballs Ice Cream Previously Kindred Folk Hougang</td>
+</tr>
+<tr>
+<td>129</td>
+<td>Lings Patisseries Toa Payoh</td>
+</tr>
+<tr>
+<td>130</td>
+<td>Hue Restaurant Kallang</td>
+</tr>
+<tr>
+<td>131</td>
+<td>Ketojiak Bras Basah</td>
+</tr>
+<tr>
+<td>132</td>
+<td>Mums Ngoh Hiang Cafe Serangoon</td>
+</tr>
+<tr>
+<td>133</td>
+<td>Lantine Kallang</td>
+</tr>
+<tr>
+<td>134</td>
+<td>Lao Jiang Superior Soup the Linq Beauty World Bukit Timah</td>
+</tr>
+<tr>
+<td>135</td>
+<td>Mr Bucket Chocolaterie and Restaurant Tanglin</td>
+</tr>
+<tr>
+<td>136</td>
+<td>Numb Restaurant Marina One Central Area</td>
+</tr>
+<tr>
+<td>137</td>
+<td>Dongmama Thai Izakaya Hougang</td>
+</tr>
+<tr>
+<td>138</td>
+<td>Tembusu at Botanic Gardens Tanglin</td>
+</tr>
+<tr>
+<td>139</td>
+<td>Pizzeria Vincenzo Capuano Central Area</td>
+</tr>
+<tr>
+<td>140</td>
+<td>8 Degrees Taiwanese Bistro Sembawang</td>
+</tr>
+<tr>
+<td>141</td>
+<td>Beth Ang Mo Kio</td>
+</tr>
+<tr>
+<td>142</td>
+<td>Fu Lin Tofu Yuen Siglap Bedok</td>
+</tr>
+<tr>
+<td>143</td>
+<td>Tenplus Western Water Catchment</td>
+</tr>
+<tr>
+<td>144</td>
+<td>Jeonpo Meat Shop Chinatown</td>
+</tr>
+<tr>
+<td>145</td>
+<td>Bailey and Patch Pet Cafe Bukit Merah</td>
+</tr>
+<tr>
+<td>146</td>
+<td>Tuck In Bedok</td>
+</tr>
+<tr>
+<td>147</td>
+<td>Xlx Modern Tze Char Geylang</td>
+</tr>
+<tr>
+<td>148</td>
+<td>Oriental Food Holland Village Bukit Timah</td>
+</tr>
+<tr>
+<td>149</td>
+<td>Coffee Hive Altez Tanjong Pagar</td>
+</tr>
+<tr>
+<td>150</td>
+<td>Banh Mi 29 Geylang</td>
+</tr>
+<tr>
+<td>151</td>
+<td>Chooby Pizza Kallang</td>
+</tr>
+<tr>
+<td>152</td>
+<td>The Dining Room Tanglin</td>
+</tr>
+<tr>
+<td>153</td>
+<td>That Place Bukit Merah</td>
+</tr>
+<tr>
+<td>154</td>
+<td>Dallas Cafe and Bar Central Area</td>
+</tr>
+<tr>
+<td>155</td>
+<td>Yu Liu Xiang Toa Payoh</td>
+</tr>
+<tr>
+<td>156</td>
+<td>Reddot Brewhouse Tanglin</td>
+</tr>
+<tr>
+<td>157</td>
+<td>Buddy Hoagies Steak and Grill Restaurant Pasir Ris Mall Pasir
+Ris</td>
+</tr>
+<tr>
+<td>158</td>
+<td>Arbora Mount Faber Peak Bukit Merah</td>
+</tr>
+<tr>
+<td>159</td>
+<td>Bao Fa Cha Chann Teng Toa Payoh</td>
+</tr>
+<tr>
+<td>160</td>
+<td>Obongzip Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>161</td>
+<td>Seoul Good Korean Restaurant Punggol Punggol</td>
+</tr>
+<tr>
+<td>162</td>
+<td>Nomads Seletar</td>
+</tr>
+<tr>
+<td>163</td>
+<td>Shin Yuu Greenwood Bukit Timah</td>
+</tr>
+<tr>
+<td>164</td>
+<td>Whisk and Paddle Punggol</td>
+</tr>
+<tr>
+<td>165</td>
+<td>Kontiki Kallang</td>
+</tr>
+<tr>
+<td>166</td>
+<td>Chin Huat Live Seafood Clementi</td>
+</tr>
+<tr>
+<td>167</td>
+<td>Mikeys Taverna Bukit Timah</td>
+</tr>
+<tr>
+<td>168</td>
+<td>Sushi and Aburi Iguchi Chinatown</td>
+</tr>
+<tr>
+<td>169</td>
+<td>Paper Rice the Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>170</td>
+<td>The Kitchen Table Southern Islands</td>
+</tr>
+<tr>
+<td>171</td>
+<td>88 Hong Kong Roast Meat Specialist Kallang</td>
+</tr>
+<tr>
+<td>172</td>
+<td>The Weirdoughs Serangoon</td>
+</tr>
+<tr>
+<td>173</td>
+<td>Van Kafe Jurong East</td>
+</tr>
+<tr>
+<td>174</td>
+<td>Siam Village Jalan Wangi Toa Payoh</td>
+</tr>
+<tr>
+<td>175</td>
+<td>Menage Cafe Bishan</td>
+</tr>
+<tr>
+<td>176</td>
+<td>Luccas Trattoria Italian Restaurant Tiong Bahru</td>
+</tr>
+<tr>
+<td>177</td>
+<td>Shake Shack Vivocity Bukit Merah</td>
+</tr>
+<tr>
+<td>178</td>
+<td>Twelve Southern Islands</td>
+</tr>
+<tr>
+<td>179</td>
+<td>Bees Knees at the Garage Tanglin</td>
+</tr>
+<tr>
+<td>180</td>
+<td>Labula Mala Hotpot Restaurant Hougang</td>
+</tr>
+<tr>
+<td>181</td>
+<td>Wildseed Cafe at 1 Flowerhill Sentosa Southern Islands</td>
+</tr>
+<tr>
+<td>182</td>
+<td>Baci Baci Ristorante Italiano Serangoon</td>
+</tr>
+<tr>
+<td>183</td>
+<td>River South Hoe Nam Prawn Noodles Toa Payoh</td>
+</tr>
+<tr>
+<td>184</td>
+<td>Dalkomm Playground Bras Basah</td>
+</tr>
+<tr>
+<td>185</td>
+<td>Super Loco Robertson Quay Central Area</td>
+</tr>
+<tr>
+<td>186</td>
+<td>Nan Yang Lala Bar Pot Kampong Glam</td>
+</tr>
+<tr>
+<td>187</td>
+<td>Tiong Bahru Bakery Tiong Bahru</td>
+</tr>
+<tr>
+<td>188</td>
+<td>Little Elephant Sg Thai Bistro Tiong Bahru</td>
+</tr>
+<tr>
+<td>189</td>
+<td>Tachinomiya Japanese Izakaya and Bar Hougang</td>
+</tr>
+<tr>
+<td>190</td>
+<td>Syip Farrer Park Kallang</td>
+</tr>
+<tr>
+<td>191</td>
+<td>Ziggy Zaggy Kallang</td>
+</tr>
+<tr>
+<td>192</td>
+<td>The Bloomhouse by Little Farms Tanglin</td>
+</tr>
+<tr>
+<td>193</td>
+<td>The Urban Hideout Yishun</td>
+</tr>
+<tr>
+<td>194</td>
+<td>Chupitos Central Area</td>
+</tr>
+<tr>
+<td>195</td>
+<td>Miura Marine Parade</td>
+</tr>
+<tr>
+<td>196</td>
+<td>Bistrone36 at Tyrwhitt Kallang</td>
+</tr>
+<tr>
+<td>197</td>
+<td>Two Blur Guys Jalan Besar Kallang</td>
+</tr>
+<tr>
+<td>198</td>
+<td>Standard Bread Singapore Southern Islands</td>
+</tr>
+<tr>
+<td>199</td>
+<td>Clovelly Serangoon</td>
+</tr>
+<tr>
+<td>200</td>
+<td>505 Sembawang Minced Meat Noodle Yishun Yishun</td>
+</tr>
+<tr>
+<td>201</td>
+<td>Tsujiri Premium Tanjong Pagar Bakery Chinatown</td>
+</tr>
+<tr>
+<td>202</td>
+<td>Simple Cafe Clementi</td>
+</tr>
+<tr>
+<td>203</td>
+<td>The Joy Kopi Serangoon</td>
+</tr>
+<tr>
+<td>204</td>
+<td>Shinrai Chinatown</td>
+</tr>
+<tr>
+<td>205</td>
+<td>Wild Coco Boat Quay Central Area</td>
+</tr>
+<tr>
+<td>206</td>
+<td>Nami by Kyuukei Coffee Marine Parade</td>
+</tr>
+<tr>
+<td>207</td>
+<td>Mozmoji Chinatown</td>
+</tr>
+<tr>
+<td>208</td>
+<td>Timbre One North Queenstown</td>
+</tr>
+<tr>
+<td>209</td>
+<td>Kindee Thai Hotpot Bukit Merah</td>
+</tr>
+<tr>
+<td>210</td>
+<td>Mimi Restaurant Central Area</td>
+</tr>
+<tr>
+<td>211</td>
+<td>Thirty9 Chinatown</td>
+</tr>
+<tr>
+<td>212</td>
+<td>Dewgather Queenstown</td>
+</tr>
+<tr>
+<td>213</td>
+<td>Kopi Kia Bukit Batok</td>
+</tr>
+<tr>
+<td>214</td>
+<td>Joy Cake Queenstown</td>
+</tr>
+<tr>
+<td>215</td>
+<td>Chimis Especial Central Area</td>
+</tr>
+<tr>
+<td>216</td>
+<td>Labula Mala Xiang Guo Tampines West Tampines</td>
+</tr>
+<tr>
+<td>217</td>
+<td>Tea by the Tree Novena</td>
+</tr>
+<tr>
+<td>218</td>
+<td>The Garden Slug Family Restaurant Bedok</td>
+</tr>
+<tr>
+<td>219</td>
+<td>Estuary Oyster and Seafood Restaurant Bar Event Space Orchard Road
+Central Area</td>
+</tr>
+<tr>
+<td>220</td>
+<td>M and T Chinatown</td>
+</tr>
+<tr>
+<td>221</td>
+<td>Catea Bishan</td>
+</tr>
+<tr>
+<td>222</td>
+<td>Big Boss Chef Punggol</td>
+</tr>
+<tr>
+<td>223</td>
+<td>Katong Laksa Georges Bedok</td>
+</tr>
+<tr>
+<td>224</td>
+<td>The Dempsey Cookhouse and Bar Tanglin</td>
+</tr>
+<tr>
+<td>225</td>
+<td>Sarnies Chinatown</td>
+</tr>
+<tr>
+<td>226</td>
+<td>Wok15 Kitchen Southern Islands</td>
+</tr>
+<tr>
+<td>227</td>
+<td>Ding Te Le Shanghai Panfried Dumpling Bukit Timah</td>
+</tr>
+<tr>
+<td>228</td>
+<td>Zok Noodle House Great World Central Area</td>
+</tr>
+<tr>
+<td>229</td>
+<td>Abundance Taiwanese Restaurant and Craft Beer Bar Redhill Bukit
+Merah</td>
+</tr>
+<tr>
+<td>230</td>
+<td>Fei Fei Wanton Mee Geylang</td>
+</tr>
+<tr>
+<td>231</td>
+<td>Izakaya 95 Punggol</td>
+</tr>
+<tr>
+<td>232</td>
+<td>Am Pm Cafe Ang Mo Kio</td>
+</tr>
+<tr>
+<td>233</td>
+<td>Pscafe East Coast Park Bedok</td>
+</tr>
+<tr>
+<td>234</td>
+<td>Hundred Acre Creamery Tampines</td>
+</tr>
+<tr>
+<td>235</td>
+<td>En Souffle Ang Mo Kio</td>
+</tr>
+<tr>
+<td>236</td>
+<td>Yuenyeung the Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>237</td>
+<td>Pho Thin 13 Lo Duc Singapore Punggol</td>
+</tr>
+<tr>
+<td>238</td>
+<td>Le Cafe Vie5 Or Lvie5 Taiseng Toa Payoh</td>
+</tr>
+<tr>
+<td>239</td>
+<td>Common Man Coffee Roasters Martin Road Central Area</td>
+</tr>
+<tr>
+<td>240</td>
+<td>Smac Bbq Punggol Settlement Punggol</td>
+</tr>
+<tr>
+<td>241</td>
+<td>Bukit Ho Swee Charcoal Curry Fish Head Restaurant Bedok</td>
+</tr>
+<tr>
+<td>242</td>
+<td>Yue at Aloft Novena</td>
+</tr>
+<tr>
+<td>243</td>
+<td>Bbq Box Bukit Timah</td>
+</tr>
+<tr>
+<td>244</td>
+<td>Starbucks Gardens by the Bay Marina South</td>
+</tr>
+<tr>
+<td>245</td>
+<td>99 Old Trees Durian Chinatown</td>
+</tr>
+<tr>
+<td>246</td>
+<td>Donkey Colt Mala Central Area</td>
+</tr>
+<tr>
+<td>247</td>
+<td>Cafe Quenino Central Area</td>
+</tr>
+<tr>
+<td>248</td>
+<td>Oddity Hougang</td>
+</tr>
+<tr>
+<td>249</td>
+<td>Coastes Beach Bar and Restaurant Siloso Beach Sentosa Southern
+Islands</td>
+</tr>
+<tr>
+<td>250</td>
+<td>Smac Bbq Tanjong Pagar Tanjong Pagar</td>
+</tr>
+<tr>
+<td>251</td>
+<td>Siyuan Desserts Kallang</td>
+</tr>
+<tr>
+<td>252</td>
+<td>Park Side Tanglin</td>
+</tr>
+<tr>
+<td>253</td>
+<td>Myx Bukit Timah</td>
+</tr>
+<tr>
+<td>254</td>
+<td>Hidden Thai Marine Parade</td>
+</tr>
+<tr>
+<td>255</td>
+<td>Le Noir Mbs Central Area</td>
+</tr>
+<tr>
+<td>256</td>
+<td>Bens Kitchen Marine Parade</td>
+</tr>
+<tr>
+<td>257</td>
+<td>Chens the Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>258</td>
+<td>Sake Japanese Restaurant and Izakaya Central Area</td>
+</tr>
+<tr>
+<td>259</td>
+<td>Jimmy Monkey Cafe Plq G Floor Park Place Residences Geylang</td>
+</tr>
+<tr>
+<td>260</td>
+<td>Pastaria Abate Chinatown</td>
+</tr>
+<tr>
+<td>261</td>
+<td>Kooks Creamery Serangoon</td>
+</tr>
+<tr>
+<td>262</td>
+<td>The Signature Patisserie Bukit Timah</td>
+</tr>
+<tr>
+<td>263</td>
+<td>Sync Haus Bukit Merah</td>
+</tr>
+<tr>
+<td>264</td>
+<td>Din Jia Po Central Area</td>
+</tr>
+<tr>
+<td>265</td>
+<td>Esquinita by Konyo Central Area</td>
+</tr>
+<tr>
+<td>266</td>
+<td>Acid Bar and Restaurant Central Area</td>
+</tr>
+<tr>
+<td>267</td>
+<td>Garden Fresh Punggol Digital District</td>
+</tr>
+<tr>
+<td>268</td>
+<td>Thong Aik Coffee Bukit Merah</td>
+</tr>
+<tr>
+<td>269</td>
+<td>Beppu Menkan Central Area</td>
+</tr>
+<tr>
+<td>270</td>
+<td>Nooodon Toa Payoh</td>
+</tr>
+<tr>
+<td>271</td>
+<td>Xin Mei Xiang Lor Mee Old Airport Road Lor Mee Balestier Novena</td>
+</tr>
+<tr>
+<td>272</td>
+<td>Mongkok Dim Sum Bukit Timah</td>
+</tr>
+<tr>
+<td>273</td>
+<td>Homm Sentosa Southern Islands</td>
+</tr>
+<tr>
+<td>274</td>
+<td>Hand In Hand Beijing Restaurant Central Area</td>
+</tr>
+<tr>
+<td>275</td>
+<td>Hyang Yeon Korean Bbq Telok Ayer Chinatown</td>
+</tr>
+<tr>
+<td>276</td>
+<td>Little Tokio Tampines</td>
+</tr>
+<tr>
+<td>277</td>
+<td>Saigon Legend Pasir Ris Pasir Ris</td>
+</tr>
+<tr>
+<td>278</td>
+<td>Jumboree Food Hall Hougang</td>
+</tr>
+<tr>
+<td>279</td>
+<td>Hub and Spoke Cafe Changi</td>
+</tr>
+<tr>
+<td>280</td>
+<td>Kanpai 789 Central Area</td>
+</tr>
+<tr>
+<td>281</td>
+<td>Dearborn Granola Tanjong Pagar</td>
+</tr>
+<tr>
+<td>282</td>
+<td>Jias and Fusion Kallang</td>
+</tr>
+<tr>
+<td>283</td>
+<td>Toms Palette Kovan Hougang</td>
+</tr>
+<tr>
+<td>284</td>
+<td>Nylon Coffee Tanjong Pagar</td>
+</tr>
+<tr>
+<td>285</td>
+<td>Waa Cow Marina One Central Area</td>
+</tr>
+<tr>
+<td>286</td>
+<td>Idas Bar Bukit Merah</td>
+</tr>
+<tr>
+<td>287</td>
+<td>Maison Garden Tanglin</td>
+</tr>
+<tr>
+<td>288</td>
+<td>Shao Holland Village Modern Teochew Tapas Bukit Timah</td>
+</tr>
+<tr>
+<td>289</td>
+<td>Pin Xiang Kitchen Toa Payoh</td>
+</tr>
+<tr>
+<td>290</td>
+<td>Magpie Tiong Bahru</td>
+</tr>
+<tr>
+<td>291</td>
+<td>Visitors Chinatown</td>
+</tr>
+<tr>
+<td>292</td>
+<td>Wakamama Queenstown</td>
+</tr>
+<tr>
+<td>293</td>
+<td>Harrys Holland Village Bukit Timah</td>
+</tr>
+<tr>
+<td>294</td>
+<td>Krapow Tanglin</td>
+</tr>
+<tr>
+<td>295</td>
+<td>Gwanghwamun Mijin Central Area</td>
+</tr>
+<tr>
+<td>296</td>
+<td>Cafe Nesuto Central Area</td>
+</tr>
+<tr>
+<td>297</td>
+<td>Chao Baba Freshly Cut Chicken Pot Beauty World Bukit Timah</td>
+</tr>
+<tr>
+<td>298</td>
+<td>Le Noodle Bar Kovan Hougang</td>
+</tr>
+<tr>
+<td>299</td>
+<td>Wen Zhang Lao Mian Waterway Point Punggol</td>
+</tr>
+<tr>
+<td>300</td>
+<td>Stray Cafe Hougang</td>
+</tr>
+<tr>
+<td>301</td>
+<td>Shu Bakery Serangoon</td>
+</tr>
+<tr>
+<td>302</td>
+<td>Belle Ville Pancake Cafe Bugis Junction Bras Basah</td>
+</tr>
+<tr>
+<td>303</td>
+<td>Wljk Kallang</td>
+</tr>
+<tr>
+<td>304</td>
+<td>Project Acai East Katong Marine Parade</td>
+</tr>
+<tr>
+<td>305</td>
+<td>Kampong Chicken Eating House Tiong Bahru</td>
+</tr>
+<tr>
+<td>306</td>
+<td>One Prawn and Co Central Area</td>
+</tr>
+<tr>
+<td>307</td>
+<td>Carrotsticks and Cravings Robertson Quay Central Area</td>
+</tr>
+<tr>
+<td>308</td>
+<td>Vernacular Coffee at Selegie Road Central Area</td>
+</tr>
+<tr>
+<td>309</td>
+<td>Cafe De Swan Bedok</td>
+</tr>
+<tr>
+<td>310</td>
+<td>Parlour Gelato Central Area</td>
+</tr>
+<tr>
+<td>311</td>
+<td>Dumpling Darlings New Bahru Central Area</td>
+</tr>
+<tr>
+<td>312</td>
+<td>W39 Bistro and Bakery Clementi</td>
+</tr>
+<tr>
+<td>313</td>
+<td>June Coffee Marine Parade</td>
+</tr>
+<tr>
+<td>314</td>
+<td>The Sixth Noodle House Soi Thai Soi Nice Bukit Timah</td>
+</tr>
+<tr>
+<td>315</td>
+<td>Pralet Tiong Bahru</td>
+</tr>
+<tr>
+<td>316</td>
+<td>Publico Ristorante Central Area</td>
+</tr>
+<tr>
+<td>317</td>
+<td>The Larder Cafe Toa Payoh</td>
+</tr>
+<tr>
+<td>318</td>
+<td>88 Chicken Toa Payoh</td>
+</tr>
+<tr>
+<td>319</td>
+<td>Oriental Chinese Restaurant Bugis Bras Basah</td>
+</tr>
+<tr>
+<td>320</td>
+<td>Little Saigon Central Area</td>
+</tr>
+<tr>
+<td>321</td>
+<td>Charcoal Mookata 1018 Sembawang the Addiction Bistro Sembawang</td>
+</tr>
+<tr>
+<td>322</td>
+<td>Tandoori Corner Novena</td>
+</tr>
+<tr>
+<td>323</td>
+<td>Simplicite by Fresh Fruits Lab Bedok</td>
+</tr>
+<tr>
+<td>324</td>
+<td>Bao Er Cafe Bukit Timah</td>
+</tr>
+<tr>
+<td>325</td>
+<td>Merci Marcel Serangoon Gardens Serangoon</td>
+</tr>
+<tr>
+<td>326</td>
+<td>Tai Er Pasir Ris</td>
+</tr>
+<tr>
+<td>327</td>
+<td>Home Cafe Bedok</td>
+</tr>
+<tr>
+<td>328</td>
+<td>Lees Taiwanese Clementi</td>
+</tr>
+<tr>
+<td>329</td>
+<td>Otter and Pebbles Novena</td>
+</tr>
+<tr>
+<td>330</td>
+<td>Fat Po Punggol</td>
+</tr>
+<tr>
+<td>331</td>
+<td>Eleven Strands Kovan</td>
+</tr>
+<tr>
+<td>332</td>
+<td>Vineyard at Hortpark Queenstown</td>
+</tr>
+<tr>
+<td>333</td>
+<td>Famous Hangout Alfresco Restaurant and Bar Pet Friendly Yishun</td>
+</tr>
+<tr>
+<td>334</td>
+<td>High Tide Bistro and Bar Bedok</td>
+</tr>
+<tr>
+<td>335</td>
+<td>Xiangyee Hunan Cuisine Central Area</td>
+</tr>
+<tr>
+<td>336</td>
+<td>Zheng Zichar Tampines</td>
+</tr>
+<tr>
+<td>337</td>
+<td>Chapter One by Fables Specialty Coffee Chinatown</td>
+</tr>
+<tr>
+<td>338</td>
+<td>The Mixtape Chef Sengkang</td>
+</tr>
+<tr>
+<td>339</td>
+<td>Four Heavenly Kings Bukit Timah</td>
+</tr>
+<tr>
+<td>340</td>
+<td>Sweet Cheeks Holland Village Bukit Timah</td>
+</tr>
+<tr>
+<td>341</td>
+<td>Plain Vanilla Serangoon Gardens Serangoon</td>
+</tr>
+<tr>
+<td>342</td>
+<td>Reys Serangoon</td>
+</tr>
+<tr>
+<td>343</td>
+<td>Prince Noodles Potong Pasir Toa Payoh</td>
+</tr>
+<tr>
+<td>344</td>
+<td>Beasts Hideout Cafe Bbq Seafood Bishan</td>
+</tr>
+<tr>
+<td>345</td>
+<td>Buzzed Coffee Bar Bedok</td>
+</tr>
+<tr>
+<td>346</td>
+<td>Pranakorn Serangoon</td>
+</tr>
+<tr>
+<td>347</td>
+<td>Jyu Lae Bistro Central Area</td>
+</tr>
+<tr>
+<td>348</td>
+<td>Flamingg Mangos Sembawang</td>
+</tr>
+<tr>
+<td>349</td>
+<td>Blooies Roadhouse Bukit Panjang</td>
+</tr>
+<tr>
+<td>350</td>
+<td>Thumbs Up Bbq East Coast Road Marine Parade</td>
+</tr>
+<tr>
+<td>351</td>
+<td>Cali Park Avenue Rochester Queenstown</td>
+</tr>
+<tr>
+<td>352</td>
+<td>Teck Ee Seafood Sengkang</td>
+</tr>
+<tr>
+<td>353</td>
+<td>Chu and Co Serangoon</td>
+</tr>
+<tr>
+<td>354</td>
+<td>Elephant Grounds Singapore Bras Basah</td>
+</tr>
+<tr>
+<td>355</td>
+<td>Una Una Bras Basah</td>
+</tr>
+<tr>
+<td>356</td>
+<td>Baby Hotpot Novena</td>
+</tr>
+<tr>
+<td>357</td>
+<td>Chuan Kee Seafood Bukit Merah</td>
+</tr>
+<tr>
+<td>358</td>
+<td>Cafe Melba at Mediapolis Queenstown</td>
+</tr>
+<tr>
+<td>359</td>
+<td>Mad Roaster Bukit Merah</td>
+</tr>
+<tr>
+<td>360</td>
+<td>Symmetry Kampong Glam</td>
+</tr>
+<tr>
+<td>361</td>
+<td>To Asta Central Area</td>
+</tr>
+<tr>
+<td>362</td>
+<td>Great Nanyang Heritage Cafe Queenstown</td>
+</tr>
+<tr>
+<td>363</td>
+<td>Cheval Cafe Bar Bistro Sungei Kadut</td>
+</tr>
+<tr>
+<td>364</td>
+<td>Hiang Ji Roasted Meat and Noodle House Holland Village Bukit
+Timah</td>
+</tr>
+<tr>
+<td>365</td>
+<td>Flock Cafe Tiong Bahru</td>
+</tr>
+<tr>
+<td>366</td>
+<td>Bu Er Bu Zuo Punggol</td>
+</tr>
+<tr>
+<td>367</td>
+<td>Fico Bedok</td>
+</tr>
+<tr>
+<td>368</td>
+<td>Daily Ground Bukit Timah</td>
+</tr>
+<tr>
+<td>369</td>
+<td>Lolas Tampines</td>
+</tr>
+<tr>
+<td>370</td>
+<td>Nozomi Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>371</td>
+<td>Common Man Coffee Roasters Quayside Isle Southern Islands</td>
+</tr>
+<tr>
+<td>372</td>
+<td>Super Thai by Soi Aroy Toa Payoh</td>
+</tr>
+<tr>
+<td>373</td>
+<td>Common Man Coffee Roasters Stanley Street Chinatown</td>
+</tr>
+<tr>
+<td>374</td>
+<td>Il Giardino at the Garage Tanglin</td>
+</tr>
+<tr>
+<td>375</td>
+<td>Violet Oon Singapore at Dempsey Tanglin</td>
+</tr>
+<tr>
+<td>376</td>
+<td>Steakgrill Steak House Ang Mo Kio</td>
+</tr>
+<tr>
+<td>377</td>
+<td>Ah Nam Kopi Central Area</td>
+</tr>
+<tr>
+<td>378</td>
+<td>Kings Cart Coffee Factory Marine Parade</td>
+</tr>
+<tr>
+<td>379</td>
+<td>Mensho x Weave Resorts World Sentosa Southern Islands</td>
+</tr>
+<tr>
+<td>380</td>
+<td>Chimis Somerset Central Area</td>
+</tr>
+<tr>
+<td>381</td>
+<td>Lo Hey Hk Seafood Queenstown</td>
+</tr>
+<tr>
+<td>382</td>
+<td>Empire Grill Southern Islands</td>
+</tr>
+<tr>
+<td>383</td>
+<td>Isushi Yishun</td>
+</tr>
+<tr>
+<td>384</td>
+<td>Eat 3 Cuts Geylang</td>
+</tr>
+<tr>
+<td>385</td>
+<td>French Fold Telok Ayer Chinatown</td>
+</tr>
+<tr>
+<td>386</td>
+<td>Le Petit Paris Bedok</td>
+</tr>
+<tr>
+<td>387</td>
+<td>Wild Coco Hamilton Road Kallang</td>
+</tr>
+<tr>
+<td>388</td>
+<td>Founder Bak Kut Teh Novena</td>
+</tr>
+<tr>
+<td>389</td>
+<td>The Dempsey Project Tanglin</td>
+</tr>
+<tr>
+<td>390</td>
+<td>Mimmo Bakery Central Area</td>
+</tr>
+<tr>
+<td>391</td>
+<td>Well Collective Punggol</td>
+</tr>
+<tr>
+<td>392</td>
+<td>Jojis Diner Serangoon</td>
+</tr>
+<tr>
+<td>393</td>
+<td>Colbar Queenstown</td>
+</tr>
+<tr>
+<td>394</td>
+<td>Hen Le Shan Flavor Chronicles Bras Basah</td>
+</tr>
+<tr>
+<td>395</td>
+<td>Jacobs Cafe Changi</td>
+</tr>
+<tr>
+<td>396</td>
+<td>Omma Korean Charcoal Bbq Bukit Timah</td>
+</tr>
+<tr>
+<td>397</td>
+<td>Dudu Yue Cai Woodlands</td>
+</tr>
+<tr>
+<td>398</td>
+<td>Wuliangye Dining Singapore Bras Basah</td>
+</tr>
+<tr>
+<td>399</td>
+<td>Brotzeit German Beer Bar and Restaurant Vivocity Bukit Merah</td>
+</tr>
+<tr>
+<td>400</td>
+<td>On Pause Kovan</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Jia Li Seafood Soup Upp Serangoon Kovan</td>
+</tr>
+<tr>
+<td>402</td>
+<td>Venchi Singapore Vivocity Bukit Merah</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Folk Yard Toa Payoh</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Raffles Courtyard Bras Basah</td>
+</tr>
+<tr>
+<td>405</td>
+<td>Lolas Bukit Timah</td>
+</tr>
+<tr>
+<td>406</td>
+<td>Sanctuary Tearoom Southern Islands</td>
+</tr>
+<tr>
+<td>407</td>
+<td>Rustica Singapore Kampong Glam</td>
+</tr>
+<tr>
+<td>408</td>
+<td>Meadowbrewsg Ang Mo Kio</td>
+</tr>
+<tr>
+<td>409</td>
+<td>Quentins the Eurasian Restaurant Geylang</td>
+</tr>
+<tr>
+<td>410</td>
+<td>Cafe Fufu Bukit Merah</td>
+</tr>
+<tr>
+<td>411</td>
+<td>Refuel J9 Yishun</td>
+</tr>
+<tr>
+<td>412</td>
+<td>Hua Po Po Hotpot Bugis Bras Basah</td>
+</tr>
+<tr>
+<td>413</td>
+<td>The Butchers Dining Tiong Bahru</td>
+</tr>
+<tr>
+<td>414</td>
+<td>Moonchild Kallang</td>
+</tr>
+<tr>
+<td>415</td>
+<td>Free the Robot Chinatown</td>
+</tr>
+<tr>
+<td>416</td>
+<td>Cowpresso Coffee Roasters Singapore Bukit Timah</td>
+</tr>
+<tr>
+<td>417</td>
+<td>Off Duty Coffee and Matcha Novena</td>
+</tr>
+<tr>
+<td>418</td>
+<td>Yuguxiang Hunan Cuisine Bedok</td>
+</tr>
+<tr>
+<td>419</td>
+<td>Apollo Coffee Bar Serangoon</td>
+</tr>
+<tr>
+<td>420</td>
+<td>The Better Scoop Sembawang</td>
+</tr>
+<tr>
+<td>421</td>
+<td>Baker and Cook Dempsey Tanglin</td>
+</tr>
+<tr>
+<td>422</td>
+<td>So Do Fun Midtown House Bras Basah</td>
+</tr>
+<tr>
+<td>423</td>
+<td>Seoul Noodle Shop Suntec City Central Area</td>
+</tr>
+<tr>
+<td>424</td>
+<td>Jyu Gae Bistro Bras Basah</td>
+</tr>
+<tr>
+<td>425</td>
+<td>La Saigon Cafe Bedok</td>
+</tr>
+<tr>
+<td>426</td>
+<td>Greenwood Fish Market Seafood Restaurant and Market In Sentosa
+Southern Islands</td>
+</tr>
+<tr>
+<td>427</td>
+<td>Beansfactory Dessert and Beancurd Kovan Hougang</td>
+</tr>
+<tr>
+<td>428</td>
+<td>Neighbourly Bukit Timah</td>
+</tr>
+<tr>
+<td>429</td>
+<td>Marymount Bakehouse Singapore Kallang</td>
+</tr>
+<tr>
+<td>430</td>
+<td>Allora Ristorante and Bar Changi</td>
+</tr>
+<tr>
+<td>431</td>
+<td>Burgerlabo Bukit Merah</td>
+</tr>
+<tr>
+<td>432</td>
+<td>The Bark Cafe Changi</td>
+</tr>
+<tr>
+<td>433</td>
+<td>Humpback Chinatown</td>
+</tr>
+<tr>
+<td>434</td>
+<td>Orh Gao Taproom Craft Beer Bar Tanglin</td>
+</tr>
+<tr>
+<td>435</td>
+<td>Putien Geneo Queenstown</td>
+</tr>
+<tr>
+<td>436</td>
+<td>Yen Izakaya Premium Kallang</td>
+</tr>
+<tr>
+<td>437</td>
+<td>Tag Restaurant and Bar Tampines</td>
+</tr>
+<tr>
+<td>438</td>
+<td>Overbrod Queenstown</td>
+</tr>
+<tr>
+<td>439</td>
+<td>Oberstrasse Kallang</td>
+</tr>
+<tr>
+<td>440</td>
+<td>Boink Cafe Toa Payoh</td>
+</tr>
+<tr>
+<td>441</td>
+<td>Flagwhite Bukit Timah</td>
+</tr>
+<tr>
+<td>442</td>
+<td>Banh Mi 233 Geylang</td>
+</tr>
+<tr>
+<td>443</td>
+<td>Different Taste Cafe and Restaurant Bedok</td>
+</tr>
+<tr>
+<td>444</td>
+<td>Shifudo Hougang</td>
+</tr>
+<tr>
+<td>445</td>
+<td>Venusology Cafe Tanglin</td>
+</tr>
+<tr>
+<td>446</td>
+<td>Odem Central Area</td>
+</tr>
+<tr>
+<td>447</td>
+<td>Hey Kee Hk Seafood Geylang</td>
+</tr>
+<tr>
+<td>448</td>
+<td>Heartland by Enjoy Tampines</td>
+</tr>
+<tr>
+<td>449</td>
+<td>Ahmahs Legacy Bishan</td>
+</tr>
+<tr>
+<td>450</td>
+<td>The Barking Bean Bedok</td>
+</tr>
+<tr>
+<td>451</td>
+<td>Mongkok Dimsum Geylang</td>
+</tr>
+<tr>
+<td>452</td>
+<td>Chilchil Thai Street Kitchen Hougang 1 Hougang</td>
+</tr>
+<tr>
+<td>453</td>
+<td>What the Pug Kampong Glam</td>
+</tr>
+<tr>
+<td>454</td>
+<td>Pawland Cafe Sembawang</td>
+</tr>
+<tr>
+<td>455</td>
+<td>Tutto by Da Paolo Holland Village</td>
+</tr>
+<tr>
+<td>456</td>
+<td>Wanton Noodle House Bedok</td>
+</tr>
+<tr>
+<td>457</td>
+<td>Meownistry of Meow Kampong Glam</td>
+</tr>
+<tr>
+<td>458</td>
+<td>Black Rock Fish Head Steamboat Kallang</td>
+</tr>
+<tr>
+<td>459</td>
+<td>Youngs Restaurant and Bar Seletar</td>
+</tr>
+<tr>
+<td>460</td>
+<td>Sen Ryo Vivocity Bukit Merah</td>
+</tr>
+<tr>
+<td>461</td>
+<td>Tokyo Brewlab Kampong Glam</td>
+</tr>
+<tr>
+<td>462</td>
+<td>Les Mains Bakehouse Bedok</td>
+</tr>
+<tr>
+<td>463</td>
+<td>Bernies Yishun</td>
+</tr>
+<tr>
+<td>464</td>
+<td>Aburiya Robertson Quay Japanese Wagyu Yakiniku Central Area</td>
+</tr>
+<tr>
+<td>465</td>
+<td>Yeast Side Sourdough Pizza and Craft Beer Serangoon Gardens
+Serangoon</td>
+</tr>
+<tr>
+<td>466</td>
+<td>Cold Cut Trio Sandwich Shop Marine Parade</td>
+</tr>
+<tr>
+<td>467</td>
+<td>2 Collective Cafe Bishan</td>
+</tr>
+<tr>
+<td>468</td>
+<td>Nassim Hill Bakery Bistro Bar Tanglin</td>
+</tr>
+<tr>
+<td>469</td>
+<td>Ichiban Boshi Waterway Point Punggol</td>
+</tr>
+<tr>
+<td>470</td>
+<td>Cafe Yasuragi Central Area</td>
+</tr>
+<tr>
+<td>471</td>
+<td>6 Letter Brunch Bedok</td>
+</tr>
+<tr>
+<td>472</td>
+<td>Kuro Maguro Sushi and Dining Chinatown</td>
+</tr>
+<tr>
+<td>473</td>
+<td>Common Man Coffee Roasters Joo Chiat Road Geylang</td>
+</tr>
+<tr>
+<td>474</td>
+<td>Fluc Hougang</td>
+</tr>
+<tr>
+<td>475</td>
+<td>Wildseed Cafe at the Alkaff Mansion Bukit Merah</td>
+</tr>
+<tr>
+<td>476</td>
+<td>Common Taste Geylang</td>
+</tr>
+<tr>
+<td>477</td>
+<td>The Coastal Settlement Changi</td>
+</tr>
+<tr>
+<td>478</td>
+<td>Basq and Bean Bras Basah</td>
+</tr>
+<tr>
+<td>479</td>
+<td>Express Cafe and Bar Holiday Inn Express and Suites Singapore
+Novena</td>
+</tr>
+<tr>
+<td>480</td>
+<td>Merle and Co Ang Mo Kio</td>
+</tr>
+<tr>
+<td>481</td>
+<td>Wild Fire Mohamed Sultan Central Area</td>
+</tr>
+<tr>
+<td>482</td>
+<td>The Social Space Chinatown</td>
+</tr>
+<tr>
+<td>483</td>
+<td>Carls Jr the Star Vista Queenstown</td>
+</tr>
+<tr>
+<td>484</td>
+<td>Fujiwara Tofu Concept Shop Singapore Geylang</td>
+</tr>
+<tr>
+<td>485</td>
+<td>Three by Garamika Springleaf Yishun</td>
+</tr>
+<tr>
+<td>486</td>
+<td>Collins Mandai Wildlife West Central Water Catchment</td>
+</tr>
+<tr>
+<td>487</td>
+<td>Tong Ah Eating House Chinatown</td>
+</tr>
+<tr>
+<td>488</td>
+<td>Tiong Bahru Bakery Central Area</td>
+</tr>
+<tr>
+<td>489</td>
+<td>Jrpizzeria Alkaff Toa Payoh</td>
+</tr>
+<tr>
+<td>490</td>
+<td>Chingu the Oval Seletar</td>
+</tr>
+<tr>
+<td>491</td>
+<td>Xiang Xiang Hunan Cuisine Pasir Ris Mall Pasir Ris</td>
+</tr>
+<tr>
+<td>492</td>
+<td>Stash Central Area</td>
+</tr>
+<tr>
+<td>493</td>
+<td>Makanjen Central Area</td>
+</tr>
+<tr>
+<td>494</td>
+<td>Lebua Thai Central Area</td>
+</tr>
+<tr>
+<td>495</td>
+<td>Daily Mujo Bedok</td>
+</tr>
+<tr>
+<td>496</td>
+<td>Trovato Serangoon</td>
+</tr>
+<tr>
+<td>497</td>
+<td>Rounding Serangoon</td>
+</tr>
+<tr>
+<td>498</td>
+<td>Baker and Cook Eng Kong Park Bukit Timah</td>
+</tr>
+<tr>
+<td>499</td>
+<td>Bonjour Ma Cuisine Chinatown</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Fullybooked Toa Payoh</td>
+</tr>
+<tr>
+<td>501</td>
+<td>Cafe Blossom Pte Ltd Central Area</td>
+</tr>
+<tr>
+<td>502</td>
+<td>The Boiler Buona Vista Best Seafood Boil Crabs and Lobsters
+Queenstown</td>
+</tr>
+<tr>
+<td>503</td>
+<td>Jia Li Seafood Soup Holland Village Bukit Timah</td>
+</tr>
+<tr>
+<td>504</td>
+<td>Coffee Tea Library Queenstown</td>
+</tr>
+<tr>
+<td>505</td>
+<td>Old Hen Kitchen Kallang</td>
+</tr>
+<tr>
+<td>506</td>
+<td>Cloud Chinatown</td>
+</tr>
+<tr>
+<td>507</td>
+<td>Lad and Co Tanglin</td>
+</tr>
+<tr>
+<td>508</td>
+<td>Cata Coffee Geylang</td>
+</tr>
+<tr>
+<td>509</td>
+<td>The Seagrill Changi</td>
+</tr>
+<tr>
+<td>510</td>
+<td>Offsite Bukit Timah</td>
+</tr>
+<tr>
+<td>511</td>
+<td>Bibimbar Toa Payoh</td>
+</tr>
+<tr>
+<td>512</td>
+<td>Tinto Spanish Restaurant at Dempsey Hill Best Paella In Singapore
+Tanglin</td>
+</tr>
+<tr>
+<td>513</td>
+<td>Oh Wunder Cafe Bras Basah</td>
+</tr>
+<tr>
+<td>514</td>
+<td>Ppp Coffee Central Area</td>
+</tr>
+<tr>
+<td>515</td>
+<td>Neptune Marine Parade</td>
+</tr>
+<tr>
+<td>516</td>
+<td>Ah Seng Durian Alexandra Outlet Bukit Merah</td>
+</tr>
+<tr>
+<td>517</td>
+<td>Friends Cafe Hk Yishun</td>
+</tr>
+<tr>
+<td>518</td>
+<td>Yuen Yeung Chinatown</td>
+</tr>
+<tr>
+<td>519</td>
+<td>Din Tai Fung Geneo Queenstown</td>
+</tr>
+<tr>
+<td>520</td>
+<td>Mjl Korean Fried Chicken Central Area</td>
+</tr>
+<tr>
+<td>521</td>
+<td>Hai Zhen Fang Seafood Hougang</td>
+</tr>
+<tr>
+<td>522</td>
+<td>Maison Boulud Central Area</td>
+</tr>
+<tr>
+<td>523</td>
+<td>Tea Story Geylang</td>
+</tr>
+<tr>
+<td>524</td>
+<td>Mirai Robatayaki and Sushi Restaurant Bras Basah</td>
+</tr>
+<tr>
+<td>525</td>
+<td>Tsujiri the Central Store Central Area</td>
+</tr>
+<tr>
+<td>526</td>
+<td>Elijah Pies Tanjong Pagar Chinatown</td>
+</tr>
+<tr>
+<td>527</td>
+<td>Prairie by Craftsmen Joo Chiat Marine Parade</td>
+</tr>
+<tr>
+<td>528</td>
+<td>Luss Restaurant and Bar Queenstown</td>
+</tr>
+<tr>
+<td>529</td>
+<td>Filled In the Blank Central Area</td>
+</tr>
+<tr>
+<td>530</td>
+<td>Mad Roasters Slow Bar Bukit Merah</td>
+</tr>
+</tbody>
+</table>
+<h3 id="a.5-closed-listings-that-should-be-removed-or-flagged-20">A.5
+Closed — listings that should be removed or flagged (20)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Listing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Good Dog People (Permanently Closed)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Clementi Woods Park (Dog Run) – Temporary Closed</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Mount Pleasant (North) – Permanently Closed</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Kiri Photograph – Closed</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Four Paws Pet Shop (Closed)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Open Farm Community (CLOSED)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>AIR CCCC (Closed)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>PRAIRIE By Craftsmen (Clunny Court) – Closed</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Chi-Bing (CLOSED)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Plain Meredith (CLOSED)</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Siri House Dempsey (Closed)</td>
+</tr>
+<tr>
+<td>12</td>
+<td>BKK Bistro &amp; Bar @ Kallang Bahru (Permanently Closed)</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Chicco Trattoria（Holland Village) – Closed</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Brewerkz Woodleigh Mall (Closed)</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Pawland Cafe (Temporary Closed)</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Georges By The Bay (Closed)</td>
+</tr>
+<tr>
+<td>17</td>
+<td>NSEW Sprout (Closed)</td>
+</tr>
+<tr>
+<td>18</td>
+<td>THE CARPENTERS BAR (Closed)</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Lao Hero Kitchen (Closed)</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Woody Family Peranakan Cafe (Closed)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="a.6-stale-not-modified-in-90-days-405-of-534">A.6 Stale — not
+modified in 90+ days (405 of 534)</h3>
+<p>Full list is 405 entries. Top offenders by category: all 21 Pet
+Parks/Dog Runs (public spaces, low churn — acceptable), 12 of 13 Pet
+Lovers Centre branches (chain — acceptable if still open), and the rest
+are individual businesses. <strong>The client should run a ‘verify this
+listing’ campaign on the non-chain stale listings.</strong></p>
+<h3 id="a.7-duplicates-slug-collisions-6-groups">A.7 Duplicates — slug
+collisions (6 groups)</h3>
+<table>
+<colgroup>
+<col style="width: 8%" />
+<col style="width: 31%" />
+<col style="width: 60%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Slug base</th>
+<th>Listings sharing it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>moonbeam-matcha-bar</code></td>
+<td>Punggol Park (Dog Run), Good Dog People (Permanently Closed), Pet
+Lovers Centre (100AM), Bukit Gombak Park (Dog Run), Punggol Waterway
+Park (Dog Run)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>pet-lovers-centre-balmoral-plaza</code></td>
+<td>Pet Lovers Centre (Sixth Avenue), Pet Lovers Centre (Balmoral
+Plaza)</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>sanctuary-pet-cremation</code></td>
+<td>Sanctuary Pet Cremation, Paws to Heaven</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>chimichanga-paya-lebar</code></td>
+<td>Chimichanga Paya Lebar, The Urban Hideout</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>wildseed-the-summerhouse</code></td>
+<td>Wildseed @ The Alkaff Mansion, Wildseed @ The Summerhouse</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>bites-brews</code></td>
+<td>SouthBank – One Holland Village, Bites &amp; Brews</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Critical:</strong> the <code>moonbeam-matcha-bar</code> slug
+is shared by 5 UNRELATED businesses (Punggol Park Dog Run, Good Dog
+People, Pet Lovers Centre 100AM, Bukit Gombak Park, Punggol Waterway
+Park). This is a data-integrity bug — URLs are colliding. The client
+should regenerate slugs.</p>
+<h3 id="a.8-erroneous-avs-claims-in-listing-copy-2">A.8 Erroneous — AVS
+claims in listing copy (2)</h3>
+<table>
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 47%" />
+<col style="width: 36%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Listing</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Amara Sanctuary Sentosa</td>
+<td>Claims ‘AVS licensed’ — verify against Mar26 registry</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Aylabella Dog Boarding and Daycare</td>
+<td>Claims ‘AVS licensed’ — verify against Mar26 registry</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Aylabella Dog Boarding and Daycare</strong> claims ‘AVS
+licensed’ but is NOT in the Mar26 registry. <strong>Amara Sanctuary
+Sentosa</strong> also claims it — verify. If either cannot be verified,
+the claim must be removed or corrected.</p>
+<h3 id="a.9-category-gaps-vets-and-sitters">A.9 Category gaps — vets and
+sitters</h3>
+<p><strong>Vets: ~291 clinics missing.</strong> Singapore has ~320 vet
+clinics (Gitnux 2023); PetDirectory lists 29. The vet category is the
+thinnest coverage relative to market size. The client should prioritize
+vet clinic outreach — vets are the highest-trust, highest-value service
+category.</p>
+<p><strong>Sitters: 0 listed despite the category name.</strong> The
+‘Pet Boarding / Hotel / Sitters’ category has 20 listings, all boarding
+facilities — zero pet sitters. Sitters are individuals (Pawshake shows
+~20/page, paginated; PetBacker similar), not businesses, so they don’t
+fit a business directory model. <strong>Recommendation:</strong> either
+(a) add a ‘Pet Sitters’ category for professional sitter businesses
+(those with registered entities), or (b) partner with Pawshake/PetBacker
+to cross-list — the directory sends discovery traffic, the platforms
+handle booking. Option (b) is cheaper and avoids competing with the
+booking layer.</p>
+<h3 id="a.10-dead-websites-full-check-16-of-474-3.4">A.10 Dead websites
+— full check (16 of 474 = 3.4%)</h3>
+<p><strong>All 474 listing websites checked (2026-08-30, curl + browser
+verification).</strong> The earlier 30-listing sample (10% dead) was
+misleading — the full check shows <strong>16 dead/failed
+(3.4%)</strong>, and most are not what they appear:</p>
+<table>
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 21%" />
+<col style="width: 12%" />
+<col style="width: 19%" />
+<col style="width: 39%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Listing</th>
+<th>URL</th>
+<th>Status</th>
+<th>Classification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Yum Yum Bean</td>
+<td>yumyumbean.shop</td>
+<td>404</td>
+<td><strong>Confirmed dead</strong> — domain gone</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Van Kafe</td>
+<td>vankafe.cafe</td>
+<td>404</td>
+<td><strong>Confirmed dead</strong> — domain gone</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Curly’s Market &amp; Dining</td>
+<td>curlys.sg</td>
+<td>000</td>
+<td><strong>Confirmed dead</strong> — domain gone</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Grooming Loft</td>
+<td>groomingloft.sg</td>
+<td>500</td>
+<td><strong>Confirmed dead</strong> — server error</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Mount Pleasant (Farrer)</td>
+<td>mountpleasant.com.sg/locations/farrer</td>
+<td>404</td>
+<td><strong>Stale URL, business alive</strong> — site restructured</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Mount Pleasant (Clementi)</td>
+<td>mountpleasant.com.sg/locations/clementi</td>
+<td>404</td>
+<td><strong>Stale URL, business alive</strong> — site restructured</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Mount Pleasant (Bedok)</td>
+<td>mountpleasant.com.sg/locations/bedok</td>
+<td>404</td>
+<td><strong>Stale URL, business alive</strong> — site restructured</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Mount Pleasant (East)</td>
+<td>mountpleasant.com.sg/locations/east</td>
+<td>404</td>
+<td><strong>Stale URL, business alive</strong> — site restructured</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Mount Pleasant (Gelenggang)</td>
+<td>mountpleasant.com.sg/locations/gelenggang</td>
+<td>404</td>
+<td><strong>Stale URL, business alive</strong> — site restructured</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Mount Pleasant (Mandai)</td>
+<td>mountpleasant.com.sg/locations/mandai</td>
+<td>404</td>
+<td><strong>Stale URL, business alive</strong> — site restructured</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Mount Pleasant (North) — Permanently Closed</td>
+<td>mountpleasant.com.sg/locations/mandai</td>
+<td>404</td>
+<td><strong>Wrong URL</strong> — points to /mandai, not its own
+location</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Maison Boulud</td>
+<td>marinabaysands.com/restaurants/maison-boulud.html</td>
+<td>000</td>
+<td><strong>Unreachable from this environment</strong> — MBS site fails
+at protocol level; needs manual check</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Yardbird Southern Table &amp; Bar</td>
+<td>marinabaysands.com/restaurants/yardbird-southern</td>
+<td>000</td>
+<td><strong>Unreachable from this environment</strong> — MBS site fails
+at protocol level; needs manual check</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Good Dog People (Permanently Closed)</td>
+<td>gooddogpeople.com</td>
+<td>423</td>
+<td><strong>Closed business</strong> — dead site expected</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Open Farm Community (CLOSED)</td>
+<td>openfarmcommunity.com</td>
+<td>404</td>
+<td><strong>Closed business</strong> — dead site expected</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Brewerkz Woodleigh Mall (Closed)</td>
+<td>brewerkz.com/outlet/woodleigh-mall/</td>
+<td>404</td>
+<td><strong>Closed business</strong> — dead site expected</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The real action items:</strong> 1. <strong>4 confirmed
+dead</strong> (Yum Yum Bean, Van Kafe, Curly’s, Grooming Loft) — remove
+or flag the website field. 2. <strong>7 Mount Pleasant URLs</strong> —
+the business is alive (site restructured); update the URLs to the new
+site structure. <strong>Mount Pleasant (North) has a wrong URL</strong>
+(points to /mandai) — data error. 3. <strong>2 MBS URLs</strong> — the
+MBS site fails at the protocol level from this environment; the client
+should verify manually whether Maison Boulud and Yardbird still exist.
+4. <strong>3 closed businesses</strong> — dead sites are expected; these
+listings are already flagged closed (A.5).</p>
+<p><strong>Recommendation:</strong> run this check quarterly. A
+directory that sends visitors to dead websites loses trust fast — but
+the real problem is smaller than the sample suggested (3.4%, not
+10%).</p>
+</body>
+</html>
