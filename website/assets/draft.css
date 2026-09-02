@@ -1464,22 +1464,19 @@ table.compare .generic { color: var(--yellow); }
   }
 
   /* 3. Domino's — USA map: the coral origin domino appears first, then
-     99 teal dominoes ripple out across the country. Each fades in with
-     overshoot, staggered by its --i counter. (Only opacity is animated
-     so each tile keeps its inline rotation.) */
+     99 teal dominoes ripple out across the country one after another.
+     One-shot cascade (forwards fill) so they appear in sequence and stay
+     visible — not a looping fade that shows them all at once. */
   .usa-map.in-view use {
     opacity: 0;
-    animation: domino-fade-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
-    animation-delay: calc(0.1s + (var(--i, 1) * 0.04s));
+    animation: domino-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation-delay: calc(0.1s + (var(--i, 1) * 0.05s));
   }
   .usa-map.in-view use[href="#domino-tile-origin"] {
     animation-delay: 0.1s;
   }
-  @keyframes domino-fade-loop {
+  @keyframes domino-in {
     0%   { opacity: 0; }
-    12%  { opacity: 1; }
-    17%  { opacity: 0.85; }
-    22%  { opacity: 1; }
     100% { opacity: 1; }
   }
   @keyframes map-dot-pop {
@@ -1488,44 +1485,43 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* 4. Volvo — airbag restraint: ring draws in, then the airbag module
-     inflates (scale up) and the burst lines radiate outward. */
-  .volvo-mark.in-view .volvo-ring {
+  /* 4. Volvo — car in shield: shield outline draws in, then the car
+     drives in (slides up + fades) and the wheels settle. */
+  .volvo-mark.in-view .volvo-shield-outline {
     stroke-dasharray: 220;
     stroke-dashoffset: 220;
     animation: volvo-draw-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s infinite;
   }
-  .volvo-mark.in-view .volvo-airbag {
+  .volvo-mark.in-view .volvo-shield {
+    animation: volvo-shield-fade 5s ease-out 0.3s infinite;
+  }
+  .volvo-mark.in-view .volvo-car-body,
+  .volvo-mark.in-view .volvo-car-roof {
     transform-box: fill-box;
     transform-origin: center;
-    animation: volvo-inflate-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s infinite;
+    animation: volvo-car-in 5s cubic-bezier(0.22, 1, 0.36, 1) 0.5s infinite;
   }
-  .volvo-mark.in-view .volvo-airbag-core {
+  .volvo-mark.in-view .volvo-wheel {
     transform-box: fill-box;
     transform-origin: center;
-    animation: volvo-core-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s infinite;
-  }
-  .volvo-mark.in-view .volvo-burst {
-    stroke-dasharray: 60;
-    stroke-dashoffset: 60;
-    animation: volvo-burst-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.7s infinite;
+    animation: volvo-wheel-in 5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s infinite;
   }
   @keyframes volvo-draw { to { stroke-dashoffset: 0; } }
-  @keyframes volvo-inflate-loop {
-    0%   { transform: scale(0); opacity: 0; }
-    20%  { transform: scale(1.15); opacity: 1; }
-    30%  { transform: scale(1); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+  @keyframes volvo-shield-fade {
+    0%   { opacity: 0; }
+    30%  { opacity: 1; }
+    100% { opacity: 1; }
   }
-  @keyframes volvo-core-loop {
-    0%   { transform: scale(0); opacity: 0; }
-    25%  { transform: scale(1); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+  @keyframes volvo-car-in {
+    0%   { transform: translateY(10px); opacity: 0; }
+    30%  { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
   }
-  @keyframes volvo-burst-loop {
-    0%   { stroke-dashoffset: 60; opacity: 0; }
-    30%  { stroke-dashoffset: 0; opacity: 1; }
-    100% { stroke-dashoffset: 0; opacity: 1; }
+  @keyframes volvo-wheel-in {
+    0%   { transform: scale(0); opacity: 0; }
+    40%  { transform: scale(1.2); opacity: 1; }
+    50%  { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
   }
 
   /* 5. Wanglaoji — ladder steps fill with overshoot (compounding climb).
