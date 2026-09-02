@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PetDirectory — Competitive Analysis</title>
+<style>
+/* =====================================================================
+   ObserveCo Consulting Design System — light-first paper canvas
+   ===================================================================== */
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9; --surface-inset:#e8e7e2;
+  --line:#e4e2dc; --line-soft:#efeee9; --line-strong:#cfccc4;
+  --status-healthy:#227a4e; --status-healthy-tint:#e5f2ea;
+  --status-warning:#9a6500; --status-warning-tint:#fbf0d8;
+  --status-critical:#b42318; --status-critical-tint:#fbeae7;
+  --status-info:#1d5fbf; --status-info-tint:#e8f0fb;
+  --status-neutral:#5b6470; --status-neutral-tint:#eff1f4;
+  --insight:#0e6e5c; --insight-strong:#0a5447; --insight-tint:#e7f1ee; --insight-line:#c6dcd4;
+  --seg-steel:#3d6b9b; --seg-slate:#6e8b9e; --seg-rose:#a4716f; --seg-olive:#7f8c5a; --seg-terracotta:#b4653a;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e; --ink-on-insight:#ffffff; --link:#0a5447;
+  --font-display:'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+  --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --shadow-card:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);
+  --shadow-raised:0 2px 4px rgba(27,31,36,.05),0 12px 32px rgba(27,31,36,.10);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased}
+
+/* ── Print / PDF page setup ── */
+@page{size:210mm 297mm;margin:0}
+.page{
+  width:210mm;min-height:296mm;background:var(--surface);
+  padding:8mm 12mm 8mm 12mm;position:relative;page-break-after:always;overflow:hidden;
+}
+.page:last-child{page-break-after:auto}
+@page :first{margin:0}
+
+/* ── Type ── */
+.overline{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-3);font-weight:600;margin:0 0 4px}
+h1{font-family:var(--font-display);font-size:40px;line-height:1.1;font-weight:700;letter-spacing:-.015em;margin:0 0 6px}
+h2{font-family:var(--font-display);font-size:22px;line-height:1.15;font-weight:700;letter-spacing:-.01em;margin:0 0 3px;color:var(--ink)}
+h3{font-size:14px;font-weight:700;color:var(--ink);margin:0 0 3px}
+.sub{color:var(--ink-2);font-size:13px;max-width:66ch}
+p{margin:5px 0}
+.small{font-size:12px;color:var(--ink-3)}
+.mono{font-family:var(--font-mono);font-size:12px}
+strong{color:var(--ink);font-weight:700}
+
+/* ── Chips / badges ── */
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.chip-insight{background:var(--insight-tint);color:var(--insight-strong)}
+.chip-healthy{background:var(--status-healthy-tint);color:var(--status-healthy)}
+.chip-warning{background:var(--status-warning-tint);color:var(--status-warning)}
+.chip-critical{background:var(--status-critical-tint);color:var(--status-critical)}
+.chip-info{background:var(--status-info-tint);color:var(--status-info)}
+.chip-neutral{background:var(--status-neutral-tint);color:var(--status-neutral)}
+
+/* ── Cards / panels ── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-card);padding:12px}
+.card.pad-lg{padding:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-card);overflow:hidden}
+.panel-head{padding:11px 14px 6px;border-bottom:1px solid var(--line-soft)}
+.panel-head h3{margin:0}
+.panel-body{padding:12px 14px}
+.insight{background:var(--insight-tint);border:1px solid var(--insight-line);border-radius:12px;padding:14px 16px}
+.insight h3{color:var(--insight-strong)}
+.quote{border-left:3px solid var(--insight);padding:8px 0 8px 16px;margin:12px 0;color:var(--ink-2);font-style:italic}
+.quote .att{display:block;margin-top:6px;font-style:normal;font-size:12px;color:var(--ink-3)}
+
+/* ── Grids ── */
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:repeat(4,1fr)}
+
+/* ── KPI ── */
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600}
+.kpi-value{font-family:var(--font-display);font-size:30px;line-height:1;font-weight:700;letter-spacing:-.02em;color:var(--ink);margin:3px 0 2px}
+.kpi-cap{font-size:11.5px;color:var(--ink-3)}
+
+/* ── Tables ── */
+table{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;color:var(--ink-3);padding:6px 8px;border-bottom:1px solid var(--line)}
+.tbl td{padding:6px 8px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-2)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl td.b{color:var(--ink);font-weight:600}
+.tbl .num{font-family:var(--font-mono);font-size:12px;white-space:nowrap}
+.yes{color:var(--status-healthy);font-weight:700}
+.no{color:var(--status-critical);font-weight:700}
+.partial{color:var(--status-warning);font-weight:700}
+.rowlabel{color:var(--ink);font-weight:600}
+
+/* ── Bars (CSS chart) ── */
+.bar-row{display:grid;grid-template-columns:170px 1fr 52px;align-items:center;gap:10px;margin:7px 0}
+.bar-label{font-size:12px;color:var(--ink-2);text-align:right;line-height:1.2}
+.bar-track{height:22px;background:var(--surface-inset);border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:6px}
+.bar-val{font-family:var(--font-mono);font-size:12px;color:var(--ink);font-weight:700}
+
+/* ── Legend ── */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-2)}
+.swatch{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* ── Divider ── */
+hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+
+/* ── Section header within page ── */
+.sec-label{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.sec-label .num{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--insight)}
+.sec-label .t{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--ink)}
+
+/* ── Footer / page number ── */
+.pgfoot{position:absolute;bottom:9mm;left:15mm;right:15mm;display:flex;justify-content:space-between;font-size:9px;color:var(--ink-3);border-top:1px solid var(--line-soft);padding-top:5px}
+
+/* ── Roadmap timeline ── */
+.phase{display:grid;grid-template-columns:100px 1fr;gap:12px;margin:10px 0}
+.phase-marker{display:flex;flex-direction:column;align-items:flex-start}
+.phase-badge{font-size:10.5px;font-weight:700;color:var(--ink-on-insight);background:var(--insight);border-radius:8px;padding:4px 8px;text-align:center;width:100%}
+.phase-weeks{font-size:10px;color:var(--ink-3);margin-top:3px;text-align:center;width:100%;line-height:1.3}
+.phase-line{width:2px;background:var(--insight-line);flex:1;margin:8px auto 0}
+.phase-items{display:flex;flex-direction:column;gap:6px}
+.witem{display:flex;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 8px;align-items:baseline}
+.witem .wk{font-family:var(--font-mono);font-size:10px;color:var(--insight-strong);font-weight:700;min-width:28px}
+.witem .act{font-size:10.5px;color:var(--ink-2)}
+.witem .act b{color:var(--ink)}
+.witem .out{font-size:9px;color:var(--ink-3);margin-left:auto;text-align:right;max-width:170px}
+
+/* ── Stat callout ── */
+.statcall{display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px;border-radius:12px}
+.statcall .n{font-family:var(--font-display);font-size:30px;font-weight:700;line-height:1}
+.statcall .l{font-size:11px;color:var(--ink-3);margin-top:6px;line-height:1.35}
+
+/* ── Print tweaks ── */
+@media print{
+  .page{box-shadow:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ PAGE 1 — COVER -->
+<div class="page" style="background:var(--canvas)">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.01em">PetDirectory<sup style="font-size:10px">.com.sg</sup></div>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:2px">Where Pets Go Pte. Ltd. · Singapore</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="chip chip-insight">Full-service</span>
+      <span class="chip chip-neutral">Directory · Marketplace</span>
+    </div>
+  </div>
+
+  <div style="margin-top:56px">
+    <div class="overline">Competitive Analysis · Client Report · v1</div>
+    <h1 style="font-size:44px">The trusted pet directory<br>Singapore hasn't claimed yet.</h1>
+    <p style="font-size:16px;color:var(--ink-2);max-width:52ch;margin-top:14px;line-height:1.5">
+      How PetDirectory owns the search term but not the mind — and the path from
+      <strong>534 listings × 0 visitors</strong> to a <strong>freemium demand engine</strong>
+      that makes "trusted" real.
+    </p>
+  </div>
+
+  <div class="grid g4" style="margin-top:40px">
+    <div class="card" style="text-align:center;padding:14px">
+      <div class="kpi-value" style="color:var(--status-info);font-size:28px">534</div>
+      <div class="kpi-cap">listings — <b>supply done</b></div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div class="kpi-value" style="color:var(--status-critical);font-size:28px">~0</div>
+      <div class="kpi-cap">visitors — <b>demand missing</b></div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div class="kpi-value" style="font-size:28px">SGD 412M</div>
+      <div class="kpi-cap">SG pet care market, <b>+12.5%/yr</b></div>
+    </div>
+    <div class="card" style="text-align:center;padding:14px">
+      <div class="kpi-value" style="color:var(--status-healthy);font-size:28px">#1</div>
+      <div class="kpi-cap">Google for "pet directory singapore"</div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:28px">
+    <div class="overline" style="color:var(--insight-strong)">One-sentence claim · buyer language</div>
+    <p style="font-size:16px;line-height:1.5;color:var(--ink);margin:6px 0 0">
+      "Every pet service in Singapore, one place, no surprises — with
+      <strong>published pricing</strong> and <strong>government-verified trust</strong>."
+    </p>
+  </div>
+
+  <div style="display:flex;gap:24px;margin-top:24px;flex-wrap:wrap">
+    <div><div class="kpi-label">Date</div><div style="font-size:13px;color:var(--ink-2)">2026-08-30</div></div>
+    <div><div class="kpi-label">Method</div><div style="font-size:13px;color:var(--ink-2)">Positioning Theory · WP API audit · AVS cross-reference</div></div>
+    <div><div class="kpi-label">Prepared by</div><div style="font-size:13px;color:var(--ink-2)">ObserveCo · Design System v.consulting</div></div>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>01</span></div>
+</div>
+
+<!-- ============================================================ PAGE 2 — EXEC SUMMARY -->
+<div class="page">
+  <div class="sec-label"><span class="num">§</span><span class="t">Executive Summary — the core thesis</span></div>
+  <p style="color:var(--ink-2);font-size:14px;max-width:72ch">
+    PetDirectory has built the <strong>supply</strong> — 534 businesses, 18 categories, #1 on Google for the head term.
+    But <strong>demand</strong> — pet owners visiting — is essentially zero. A directory with listings but no visitors
+    is a museum, not a marketplace. <strong>534 listings × 0 visitors = 0 value delivered.</strong>
+  </p>
+
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card">
+      <div class="kpi-label" style="color:var(--insight-strong)">The wedge</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        <b>Nobody owns "the trusted full-service pet directory."</b> Pawwhere is cafe-first, UrbanDogOwner is a guide,
+        Pawshake/PetBacker are booking. The full-service + published pricing + AVS-verified position is open.
+      </p>
+    </div>
+    <div class="card">
+      <div class="kpi-label" style="color:var(--insight-strong)">The problem</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        <b>No demand engine.</b> No social, dead forum, 5 blog posts, no reviews, no newsletter. Plus a broken database
+        (20 closed, 76% stale) and a pricing model that charges for value that doesn't exist yet.
+      </p>
+    </div>
+    <div class="card">
+      <div class="kpi-label" style="color:var(--insight-strong)">The path</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        <b>Fix leaks → go freemium → build demand → write the book.</b> Content is the compounding moat; the book is
+        the credibility anchor; freemium removes the churn trigger.
+      </p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="panel-head"><h3>The three structural problems (must be fixed in order)</h3></div>
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th style="width:6%">#</th><th style="width:26%">Problem</th><th>Evidence</th><th style="width:34%">Fix</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="num" style="color:var(--status-critical);font-weight:700">0</td>
+            <td class="b">Demand-side gap <span class="chip chip-critical" style="margin-left:4px">FOCUS</span></td>
+            <td>Supply has quantity (534) but zero demand engine. No social, dead forum, 5 posts, no reviews, no newsletter.</td>
+            <td>Build the demand engine (D1-D7) in parallel with fixing supply quality — traffic exposes broken supply.</td>
+          </tr>
+          <tr>
+            <td class="num">1</td>
+            <td class="b">Stale/closed listings</td>
+            <td>20 closed (Good Dog People, Mount Pleasant North), 405/534 (76%) not modified in 90 days, 5x duplicate slug.</td>
+            <td>Purge/flag closed; add "verify this listing" workflow with 90-day auto-flag.</td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td class="b">No trust/verification story</td>
+            <td>No badges, no reviews ("Coming soon"), Aylabella claims "AVS licensed" but is NOT on the registry.</td>
+            <td>AVS-license badge layer (registries verified: 101 boarding + 320 shops), verified tags, reviews.</td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td class="b">Monetization backwards</td>
+            <td>S$19-29/mo subscription charges for value that doesn't exist yet; blocks supply; creates churn.</td>
+            <td>Freemium: free basic, S$29/mo premium, price add-ons properly, lead-gen later.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:18px">
+    <div class="overline" style="color:var(--insight-strong)">The destination · positioning</div>
+    <p style="color:var(--ink);font-size:14px;margin:6px 0 0">
+      PetDirectory occupies the <strong>"trusted full-service pet directory"</strong> position — the one place in
+      Singapore that lists every pet service category, with transparent pricing, real listing content, and
+      government-registry alignment. The demand engine is the growth; the trust layer is the moat.
+    </p>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>02</span></div>
+</div>
+
+<!-- ============================================================ PAGE 3 — YOUR DIRECTORY TODAY -->
+<div class="page">
+  <div class="sec-label"><span class="num">1</span><span class="t">Your directory today — what's working, what's broken</span></div>
+  <p class="sub">Primary source: your open WP REST API (534 listings, full metadata, 2026-08-30) + live site pages. Everything here is verified, not estimated.</p>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card" style="background:var(--status-healthy-tint);border-color:var(--status-healthy)">
+      <div class="kpi-label" style="color:var(--status-healthy)">What's working</div>
+      <ul style="margin:8px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink-2)">
+        <li><b>534 listings</b> — a real database, not a shell (avg 1,039 chars, 89% with websites, 95% with socials)</li>
+        <li><b>#1 on Google</b> for "pet directory singapore" — the category's search anchor</li>
+        <li><b>Transparent pricing</b> (S$19-29/mo) — competitors hide it behind "contact us"</li>
+        <li><b>Unique features</b> — pet obituaries, pet showcase, influencer program. Nobody else has these</li>
+        <li><b>18 categories</b> — full-service coverage</li>
+      </ul>
+    </div>
+    <div class="card" style="background:var(--status-critical-tint);border-color:var(--status-critical)">
+      <div class="kpi-label" style="color:var(--status-critical)">What's broken</div>
+      <ul style="margin:8px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink-2)">
+        <li><b>20 closed businesses</b> still listed — a credibility leak</li>
+        <li><b>76% stale</b> — 405 of 534 listings not updated in 90+ days</li>
+        <li><b>Dead forum</b> — 9 forums, 2 topics, 4 posts, 11 members</li>
+        <li><b>No social</b> — @petdirectory IG has 5 followers, 0 posts, and it's not even yours</li>
+        <li><b>No reviews</b> — "Reviews Coming soon" on listing pages</li>
+        <li><b>Data errors</b> — 5 unrelated businesses share one URL slug; Mount Pleasant (North) points to the wrong page</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>Category coverage vs market size</h3></div>
+    <div class="panel-body" style="padding-top:14px">
+      <div class="bar-row"><span class="bar-label"><b>F&B (cafes, restaurants)</b></span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--seg-slate)"></div></div><span class="bar-val">292</span></div>
+      <div class="bar-row"><span class="bar-label">Grooming</span><div class="bar-track"><div class="bar-fill" style="width:33.2%;background:var(--seg-steel)"></div></div><span class="bar-val">97</span></div>
+      <div class="bar-row"><span class="bar-label">Pet Retail</span><div class="bar-track"><div class="bar-fill" style="width:17.8%;background:var(--seg-olive)"></div></div><span class="bar-val">52</span></div>
+      <div class="bar-row"><span class="bar-label">Vet / Physio</span><div class="bar-track"><div class="bar-fill" style="width:9.9%;background:var(--seg-terracotta)"></div></div><span class="bar-val">29</span></div>
+      <div class="bar-row"><span class="bar-label">Boarding / Sitters</span><div class="bar-track"><div class="bar-fill" style="width:6.8%;background:var(--seg-rose)"></div></div><span class="bar-val">20</span></div>
+      <div class="legend" style="margin-top:12px">
+        <span><span class="swatch" style="background:var(--seg-slate)"></span>F&B dominates — 55% of listings</span>
+        <span><span class="swatch" style="background:var(--seg-terracotta)"></span>Vets: 29 of ~320 in SG — the thinnest coverage</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--ink-3)">Bars scaled to 292 max</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:14px">
+    <div class="overline" style="color:var(--insight-strong)">The supply reality</div>
+    <p style="color:var(--ink);font-size:13px;margin:6px 0 0">
+      Supply has <strong>quantity but broken quality</strong> — and it's <strong>near-saturated</strong> (~35-50% of the
+      ~1,000-1,500 SG pet businesses). The growth lever is <strong>traffic, not more listings</strong> — but traffic
+      exposes broken supply, so fix the leaks first.
+    </p>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>03</span></div>
+</div>
+
+<!-- ============================================================ PAGE 4 — AVS ISSUE -->
+<div class="page">
+  <div class="sec-label"><span class="num">2</span><span class="t">The AVS licensing issue — compliance and the trust opportunity</span></div>
+  <p class="sub">AVS (Animal &amp; Veterinary Service) is the government agency that licenses pet businesses. Commercial pet boarding is only legal at an AVS-licensed facility. We downloaded the official registries (101 boarding, 320 shops, Mar26) and cross-referenced all 534 listings.</p>
+
+  <div class="grid g4" style="margin-top:14px">
+    <div class="statcall" style="background:var(--surface-inset)"><div class="n">71</div><div class="l">listings in AVS-relevant categories (13%)</div></div>
+    <div class="statcall" style="background:var(--status-critical-tint)"><div class="n" style="color:var(--status-critical)">4/20</div><div class="l">boarding listings match the AVS registry</div></div>
+    <div class="statcall" style="background:var(--status-warning-tint)"><div class="n" style="color:var(--status-warning)">15/52</div><div class="l">pet retail listings match (mostly PLC branches)</div></div>
+    <div class="statcall" style="background:var(--insight-tint)"><div class="n" style="color:var(--insight-strong)">93</div><div class="l">licensed boarding facilities NOT listed — the expansion list</div></div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-head"><h3>The reconciliation — where the 534 listings sit</h3></div>
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th>Category</th><th>Listings</th><th>AVS licence applies?</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="b">Pet Retail</td><td class="num">52</td><td class="yes">Yes</td><td>Pet shops need an AVS licence</td></tr>
+          <tr><td class="b">Pet Boarding / Hotel / Sitters</td><td class="num">20</td><td class="yes">Yes</td><td>Boarding facilities need an AVS licence</td></tr>
+          <tr><td>F&B (cafes, restaurants)</td><td class="num">292</td><td class="no">No</td><td>Food/hygiene licences (SFA), not AVS</td></tr>
+          <tr><td>Grooming</td><td class="num">97</td><td class="no">No</td><td>No AVS licence category for grooming salons</td></tr>
+          <tr><td>Vet / Physio</td><td class="num">29</td><td class="no">No</td><td>Vets licensed under Veterinary Surgeons Act</td></tr>
+          <tr><td>Daycare / Training</td><td class="num">22</td><td class="no">No</td><td>Daycare (no overnight) doesn't require the boarding licence</td></tr>
+          <tr><td>Staycation</td><td class="num">22</td><td class="no">No</td><td>Hotel-style stays, not commercial boarding</td></tr>
+          <tr><td>Pet Parks / Dog Run</td><td class="num">21</td><td class="no">No</td><td>Public spaces, not businesses</td></tr>
+          <tr><td>Other categories</td><td class="num">72</td><td class="no">No</td><td>Outside AVS licensing scope</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--ink-3)">Note: 77 listings carry 2+ categories (627 assignments vs 534 unique). The AVS-relevant set is 71 unique listings.</div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:14px">
+    <div class="overline" style="color:var(--insight-strong)">The sharp finding — Aylabella Dog Boarding</div>
+    <p style="color:var(--ink);font-size:13px;margin:6px 0 0">
+      Its own listing claims <strong>"AVS licensed cage-free dog boarding and daycare"</strong> — but it is
+      <strong>NOT on the March 2026 registry</strong>. Either the claim is false, it's licensed under a different
+      legal name, or it got licensed after March. Either way, you are hosting an <strong>unverified
+      government-compliance claim</strong>.
+    </p>
+  </div>
+
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card" style="background:var(--status-critical-tint);border-color:var(--status-critical)">
+      <div class="kpi-label" style="color:var(--status-critical)">The liability</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        If a pet owner books a boarding stay at a facility you listed that turns out to be unlicensed, that's a real
+        harm — and you sent them there. The "trusted" claim depends on trust.
+      </p>
+    </div>
+    <div class="card" style="background:var(--insight-tint);border-color:var(--insight)">
+      <div class="kpi-label" style="color:var(--insight-strong)">The opportunity</div>
+      <p style="font-size:12.5px;color:var(--ink-2);margin:8px 0 0">
+        AVS registries are public, downloadable, and <b>no competitor uses them</b>. Badge every boarding/vet listing
+        with "AVS-licensed ✓" — verified against the official registry. That makes "trusted" real instead of a slogan.
+      </p>
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>04</span></div>
+</div>
+
+<!-- ============================================================ PAGE 5 — MARKET -->
+<div class="page">
+  <div class="sec-label"><span class="num">3</span><span class="t">The market you're in — verified numbers</span></div>
+  <p class="sub">Gitnux (fact-checked 2026) + marketingagency.sg (2026). The market is real, growing, and fragmented — and the directory channel is only ~10% of discovery.</p>
+
+  <div class="grid g4" style="margin-top:14px">
+    <div class="statcall" style="background:var(--insight-tint)"><div class="n" style="color:var(--insight-strong)">SGD 412M</div><div class="l">SG pet care market (2023), +12.5%/yr</div></div>
+    <div class="statcall" style="background:var(--surface-inset)"><div class="n">28%</div><div class="l">of households own pets; 800K+ by 2025</div></div>
+    <div class="statcall" style="background:var(--status-info-tint)"><div class="n" style="color:var(--status-info)">320</div><div class="l">vet clinics in SG — you list 29</div></div>
+    <div class="statcall" style="background:var(--status-warning-tint)"><div class="n" style="color:var(--status-warning)">53%</div><div class="l">of all website traffic is organic search</div></div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-head"><h3>How pet owners find services — channel split (estimates)</h3></div>
+    <div class="panel-body" style="padding-top:14px">
+      <div class="bar-row"><span class="bar-label"><b>Google search + Maps</b></span><div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--status-info)"></div></div><span class="bar-val">~50%</span></div>
+      <div class="bar-row"><span class="bar-label">Word of mouth / community</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:var(--seg-slate)"></div></div><span class="bar-val">~25%</span></div>
+      <div class="bar-row"><span class="bar-label"><b>Directories</b> <span style="color:var(--ink-3);font-weight:400">(you)</span></span><div class="bar-track"><div class="bar-fill" style="width:20%;background:var(--insight)"></div></div><span class="bar-val">~10%</span></div>
+      <div class="bar-row"><span class="bar-label">Booking platforms</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:var(--seg-rose)"></div></div><span class="bar-val">~10%</span></div>
+      <div class="bar-row"><span class="bar-label">Content / guides / listicles</span><div class="bar-track"><div class="bar-fill" style="width:10%;background:var(--seg-olive)"></div></div><span class="bar-val">~5%</span></div>
+      <div class="legend" style="margin-top:12px">
+        <span><span class="swatch" style="background:var(--status-info)"></span>Google — the default</span>
+        <span><span class="swatch" style="background:var(--insight)"></span>Directories — the only channel you own</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--ink-3)">Estimates, not audited</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>The SEO agency question — yes, they're competitors (and a channel)</h3></div>
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th style="width:30%">Agency</th><th>Pet focus</th><th style="width:30%">What they sell</th></tr></thead>
+        <tbody>
+          <tr><td class="b">creativeformore.com/pet-marketing</td><td>Full-service pet marketing</td><td>Brand, paid media, SEO, social, influencer</td></tr>
+          <tr><td class="b">marketingagency.sg/seo-for-pet-industry</td><td>Pet SEO guide</td><td>"SEO for Pet Industry: Vets, Shops &amp; Groomers SG"</td></tr>
+          <tr><td class="b">magnified.com.sg/services/seo/pet-services-singapore</td><td>Pet SEO specialist</td><td>AVS-aware, estate-level Map Pack strategy</td></tr>
+          <tr><td class="b">traffv.com · petenginemarketing.com · anytime digital · mediaonemarketing</td><td>Pet business marketing</td><td>Local SEO, social, email, websites</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;padding:10px 14px;background:var(--status-warning-tint);border-radius:10px;font-size:12.5px;color:var(--status-warning)">
+        <b>SEO pricing in SG: S$500-5,000+/mo.</b> Your backlink pitch is the same promise agencies sell at 10-50x the price.
+        A pet firm already paying an agency won't pay you for a backlink. <b>The reframe: "You're already paying an agency
+        for SEO. We're the one directory that sends you actual pet-owner traffic."</b> The backlink is the bonus; the traffic
+        is the product. Agencies become referral partners, not rivals.
+      </div>
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>05</span></div>
+</div>
+
+<!-- ============================================================ PAGE 6 — COMPETITIVE SET -->
+<div class="page">
+  <div class="sec-label"><span class="num">4</span><span class="t">Who you're competing with — and the empty position</span></div>
+  <p class="sub">PetDirectory is #1 on the head term but fringe in the mind. The category's mind is split — and the full-service, transparent, verified position is unclaimed.</p>
+
+  <div class="panel" style="margin-top:12px">
+    <div class="panel-head"><h3>Competitive set</h3></div>
+    <div class="panel-body" style="padding:8px 10px">
+      <table class="tbl" style="font-size:11px">
+        <thead><tr><th style="width:20%">Competitor</th><th style="width:24%">What they are</th><th>Their strength</th><th style="width:26%">Your edge</th></tr></thead>
+        <tbody>
+          <tr><td class="b">Pawwhere</td><td>Modern directory, 634 listings, cafe-first</td><td>Feels alive, community-shaped, free for pet owners, active blog, fast site</td><td>Full-service (18 categories); published pricing; unique features</td></tr>
+          <tr><td class="b">UrbanDogOwner</td><td>Trusted content guide, 344 dog-friendly places</td><td>Fact-checked, vetted clinics, newsletter, owns the "guide" mind</td><td>You have the database; they don't. You can add the AVS trust layer they don't have</td></tr>
+          <tr><td class="b">Pawshake / PetBacker</td><td>Booking marketplaces</td><td>Own the "book a sitter" mind; verified sitters; guarantees</td><td>Don't fight them. You're discovery (top of funnel), they're booking (bottom). Complementary</td></tr>
+          <tr><td class="b">Pet Lovers Centre</td><td>Retail chain with services arm</td><td>"Singapore's Trusted Leader in Pet Services" — brand recognition</td><td>You're the neutral directory; they're a retailer. Different job</td></tr>
+          <tr><td class="b">SEO agencies (7+)</td><td>Sell the same backlink promise at 10-50x your price</td><td>Established, trusted by businesses</td><td>You're cheaper and you send actual traffic — once you have traffic</td></tr>
+          <tr><td class="b">Review listicles</td><td>"Best pet stores in Singapore" articles</td><td>Own the "best X" long-tail search</td><td>They're not directories; they compete for the same discovery traffic</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Positioning map -->
+  <div class="panel" style="margin-top:12px">
+    <div class="panel-head"><h3>Positioning map — full-service coverage × trust/verification</h3></div>
+    <div class="panel-body" style="padding:10px 16px 6px">
+      <svg viewBox="0 0 760 300" width="100%" style="height:230px" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Positioning map">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#cfccc4"/></marker>
+        </defs>
+        <!-- axes -->
+        <line x1="80" y1="50" x2="80" y2="240" stroke="#cfccc4" stroke-width="1.5" marker-end="url(#arr)"/>
+        <line x1="80" y1="240" x2="700" y2="240" stroke="#cfccc4" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="56" y="20" font-size="11" fill="#6b737e" text-anchor="start">Trust / verification</text>
+        <text x="740" y="255" font-size="11" fill="#6b737e" text-anchor="end">Full-service coverage →</text>
+        <text x="56" y="260" font-size="11" fill="#6b737e">Trust →</text>
+        <!-- gridlines -->
+        <line x1="80" y1="145" x2="700" y2="145" stroke="#e4e2dc" stroke-dasharray="3 4"/>
+        <line x1="390" y1="50" x2="390" y2="240" stroke="#e4e2dc" stroke-dasharray="3 4"/>
+        <!-- quadrant labels -->
+        <text x="92" y="60" font-size="9" fill="#9aa09b">Generic directories (Streetdirectory)</text>
+        <text x="398" y="60" font-size="9" fill="#9aa09b">Trusted guides (UrbanDogOwner)</text>
+        <text x="92" y="232" font-size="9" fill="#9aa09b">Cafe-first (Pawwhere)</text>
+        <!-- competitors -->
+        <g font-size="11" text-anchor="start">
+          <circle cx="140" cy="210" r="6" fill="#6e8b9e"/><text x="150" y="214" fill="#4a525c">Pawwhere · 634</text>
+          <circle cx="178" cy="232" r="6" fill="#6e8b9e"/><text x="188" y="236" fill="#4a525c">HandyPet</text>
+          <circle cx="322" cy="205" r="6" fill="#8f9aa3"/><text x="332" y="209" fill="#4a525c">Petservices.sg</text>
+          <circle cx="250" cy="222" r="6" fill="#8f9aa3"/><text x="260" y="226" fill="#4a525c">Furvisor</text>
+          <circle cx="540" cy="90" r="6" fill="#6e8b9e"/><text x="550" y="94" fill="#4a525c">UrbanDogOwner</text>
+          <circle cx="620" cy="72" r="6" fill="#6e8b9e"/><text x="630" y="76" fill="#4a525c">Pawrenthood</text>
+          <circle cx="585" cy="118" r="6" fill="#6e8b9e"/><text x="595" y="122" fill="#4a525c">Dog-Friendly.sg</text>
+          <circle cx="462" cy="168" r="6" fill="#7f8c5a"/><text x="472" y="172" fill="#4a525c">PLC services</text>
+          <!-- PETDIRECTORY -- the empty quadrant -->
+          <circle cx="432" cy="75" r="12" fill="none" stroke="#0e6e5c" stroke-width="2.5" stroke-dasharray="4 3"/>
+          <circle cx="432" cy="75" r="7" fill="#0e6e5c"/>
+          <text x="448" y="70" font-size="12" font-weight="700" fill="#0a5447">PetDirectory</text>
+          <text x="448" y="84" font-size="9" fill="#0a5447">Full-service × trust — the empty slot</text>
+        </g>
+      </svg>
+      <div class="legend" style="margin:4px 0 0">
+        <span><span class="swatch" style="background:#0e6e5c"></span>PetDirectory — empty intersection</span>
+        <span><span class="swatch" style="background:#6e8b9e"></span>Directories</span>
+        <span><span class="swatch" style="background:#8f9aa3"></span>Thin players</span>
+        <span><span class="swatch" style="background:#7f8c5a"></span>Incumbent</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:14px">
+    <div class="overline" style="color:var(--insight-strong)">The open position</div>
+    <p style="color:var(--ink);font-size:13px;margin:6px 0 0">
+      Nobody owns <strong>"the full-service, transparent, verified pet directory."</strong> Pawwhere is cafe-first;
+      UrbanDogOwner is a guide; Pawshake/PetBacker are booking; PLC is retail. The full-service directory with
+      published pricing and AVS-aligned verification is unclaimed — but you must build the trust layer (AVS badges,
+      reviews) before you can claim it credibly.
+    </p>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>06</span></div>
+</div>
+
+<!-- ============================================================ PAGE 7 — DEMAND ENGINE -->
+<div class="page">
+  <div class="sec-label"><span class="num">5</span><span class="t">The core problem — no visitors, and the demand engine</span></div>
+  <p class="sub">Supply is done; demand is zero. 534 listings × 0 visitors = 0 value delivered. The businesses you recruited are getting no exposure — this is the #1 churn risk. Traffic exposes broken supply, so fix the leaks first.</p>
+
+  <div class="panel" style="margin-top:12px">
+    <div class="panel-head"><h3>The demand engine (D1-D7) — in order of leverage</h3></div>
+    <div class="panel-body" style="padding:8px 10px">
+      <table class="tbl" style="font-size:11px">
+        <thead><tr><th style="width:6%">#</th><th style="width:22%">Engine</th><th>What to do</th><th style="width:24%">When you see results</th></tr></thead>
+        <tbody>
+          <tr><td class="num" style="color:var(--status-critical);font-weight:700">D1</td><td class="b">Category SEO content</td><td>2-3 articles/week: "Best dog groomers in [district]", "AVS boarding rules explained"</td><td>6-12 months. The only channel that compounds</td></tr>
+          <tr><td class="num">D2</td><td class="b">Google Business Profile</td><td>Claim/optimize your own GBP; each listing links to the directory</td><td>Local pack visibility</td></tr>
+          <tr><td class="num">D3</td><td class="b">Social presence</td><td>Claim @petdirectory on IG; post spotlight businesses weekly</td><td>3-6 months to a following</td></tr>
+          <tr><td class="num">D4</td><td class="b">Reviews</td><td>Start with 11 spotlight businesses; 5+ reviews each</td><td>Reviews are trust currency and a demand magnet</td></tr>
+          <tr><td class="num">D5</td><td class="b">Partnerships</td><td>Pawshake/PetBacker cross-listing; SEO agencies as referral partners; pet influencers</td><td>Leverages existing traffic pools</td></tr>
+          <tr><td class="num">D6</td><td class="b">Email capture</td><td>Newsletter on every listing page + blog</td><td>Owned audience you can retarget</td></tr>
+          <tr><td class="num">D7</td><td class="b">Paid ads</td><td>Google Ads on head terms; Meta ads to SG pet owners — only after D1-D4</td><td>Immediate traffic, but burns cash if the site isn't ready</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:10px">
+    <div class="overline" style="color:var(--insight-strong)">The demand flywheel</div>
+    <p style="color:var(--ink);font-size:12.5px;margin:4px 0 0">
+      content → traffic → reviews → trust → more traffic → businesses see value → renew → more content.
+      It's not spinning because the content, review, and social inputs are missing — and it won't spin on a broken database.
+    </p>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <div class="panel-head"><h3>The content engine (C1-C7) — how to get traffic</h3></div>
+    <div class="panel-body" style="padding:8px 10px">
+      <table class="tbl" style="font-size:11px">
+        <thead><tr><th style="width:6%">#</th><th style="width:24%">Engine</th><th>What to produce</th><th style="width:30%">Why it works</th></tr></thead>
+        <tbody>
+          <tr><td class="num">C1</td><td class="b">Category SEO articles</td><td>2-3/week: "Best dog groomers in [district]"</td><td>Targets local searches; links to listings; compounds</td></tr>
+          <tr><td class="num">C2</td><td class="b">AI videos (HeyGen)</td><td>1-2/week: 60-90s explainers — "How to choose a pet boarder"</td><td>Video ranks in Google + feeds social. Cheap, fast, consistent</td></tr>
+          <tr><td class="num">C3</td><td class="b">The book</td><td>"The Pet Business Landscape in Singapore" — market size, AVS, category economics</td><td>The credibility anchor. Makes you the authority</td></tr>
+          <tr><td class="num">C4</td><td class="b">Listing spotlights</td><td>1/week: profile a spotlight business</td><td>Builds community; gives businesses something to share</td></tr>
+          <tr><td class="num">C5</td><td class="b">Seasonal content</td><td>CNY boarding guide, school-holiday pet care</td><td>Topics go live before demand peaks</td></tr>
+          <tr><td class="num">C6</td><td class="b">Roundups</td><td>"10 Family-Friendly Restaurants in [Neighborhood]"</td><td>High local search intent; businesses share with their audiences</td></tr>
+          <tr><td class="num">C7</td><td class="b">Data journalism</td><td>"The State of Pet Services in Singapore" — your audit data as a public report</td><td>The data already exists; publishing it earns backlinks and authority</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>07</span></div>
+</div>
+
+<!-- ============================================================ PAGE 8 — MONETIZATION -->
+<div class="page">
+  <div class="sec-label"><span class="num">6</span><span class="t">Monetization — the current model is backwards for this stage</span></div>
+  <p class="sub">Charging S$19-29/month for listings assumes you deliver traffic. With ~0 visitors, a paid listing delivers ~0 value. The subscription model is a stage-3 model applied at stage 0.</p>
+
+  <div class="grid g3" style="margin-top:12px">
+    <div class="card" style="background:var(--status-critical-tint);border-color:var(--status-critical);padding:10px">
+      <div class="kpi-label" style="color:var(--status-critical)">Problem 1 — churn</div>
+      <p style="font-size:11.5px;color:var(--ink-2);margin:6px 0 0">A business that pays S$19/month and gets zero visitors has a concrete reason to leave. The paywall guarantees the churn you're trying to avoid.</p>
+    </div>
+    <div class="card" style="background:var(--status-critical-tint);border-color:var(--status-critical);padding:10px">
+      <div class="kpi-label" style="color:var(--status-critical)">Problem 2 — blocks supply</div>
+      <p style="font-size:11.5px;color:var(--ink-2);margin:6px 0 0">The ~490 licensed businesses you're missing (93 boarding, 291 vets, 102 shops) won't pay to be in an empty directory. Free listings get them in — and supply is your moat.</p>
+    </div>
+    <div class="card" style="background:var(--status-critical-tint);border-color:var(--status-critical);padding:10px">
+      <div class="kpi-label" style="color:var(--status-critical)">Problem 3 — mispriced</div>
+      <p style="font-size:11.5px;color:var(--ink-2);margin:6px 0 0">S$19/mo is too expensive for zero traffic and too cheap for real traffic (a boarding lead is worth S$50-200). The price says "we don't know what to charge."</p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <div class="panel-head"><h3>The right sequence — free to list → build demand → monetize traffic</h3></div>
+    <div class="panel-body" style="padding:8px 10px">
+      <table class="tbl" style="font-size:11px">
+        <thead><tr><th style="width:22%">Stage</th><th style="width:38%">Model</th><th>Who does this</th></tr></thead>
+        <tbody>
+          <tr><td class="b">Now (zero traffic)</td><td><b>Free basic listings</b> — remove the barrier, get to 1,000+</td><td>Pawwhere (free for pet owners)</td></tr>
+          <tr><td class="b">Traffic arrives (6-18 mo)</td><td><b>Freemium</b> — free basic, S$29/mo premium (featured, verified badge, spotlight)</td><td>Pawwhere's S$89 product</td></tr>
+          <tr><td class="b">Traffic scales (18+ mo)</td><td><b>Lead-gen + ads</b> — S$5-15 per qualified lead, CPC ads, affiliate</td><td>Angi, Yelp, UrbanDogOwner</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:8px;padding:8px 12px;background:var(--status-warning-tint);border-radius:10px;font-size:11.5px;color:var(--status-warning)">
+        <b>The counterargument:</b> "Free listings = no revenue." But the subscription is generating ~0 anyway. The choice is:
+        keep S$19/mo → ~S$1,200/yr + churn risk, or go free → 1,000+ listings → build demand → monetize traffic → a much
+        higher ceiling. <b>The paywall's real cost is the missing supply.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <div class="panel-head"><h3>What's actually right about your model</h3></div>
+    <div class="panel-body" style="padding:8px 10px">
+      <p style="font-size:11.5px;color:var(--ink-2);margin:0">
+        The <b>add-ons</b> are good monetization: pet obituaries (S$50), pet showcase, influencer program (S$9/month).
+        These are emotional, high-value, and differentiated — nobody else has them. The problem is the <b>core listing
+        fee</b>, not the add-ons. And the obituaries are underpriced — pet funeral is a growing, high-margin category;
+        S$50 is cheap for the emotional value.
+      </p>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <div class="panel-head"><h3>Revenue projections — low / medium / high (freemium-first)</h3></div>
+    <div class="panel-body" style="padding:8px 10px">
+      <table class="tbl" style="font-size:11px">
+        <thead><tr><th>Case</th><th>Monthly visitors</th><th>Listings</th><th>Premium</th><th>Revenue/year</th><th>What it takes</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="rowlabel">LOW <span class="chip chip-neutral" style="margin-left:4px">12-18 mo</span></td>
+            <td class="num">5,000</td><td class="num">800</td><td class="num">40</td>
+            <td class="num" style="font-weight:700;color:var(--ink)">~S$15,700</td>
+            <td>Free listings + content + Google Business Profile</td>
+          </tr>
+          <tr style="background:var(--insight-tint)">
+            <td class="rowlabel" style="color:var(--insight-strong)">MEDIUM <span class="chip chip-insight" style="margin-left:4px">realistic path</span></td>
+            <td class="num">20,000</td><td class="num">1,000</td><td class="num">80</td>
+            <td class="num" style="font-weight:700;color:var(--insight-strong)">~S$35,600</td>
+            <td>Full demand engine: content + social + reviews + partnerships</td>
+          </tr>
+          <tr>
+            <td class="rowlabel">HIGH <span class="chip chip-warning" style="margin-left:4px">24-36 mo</span></td>
+            <td class="num">50,000</td><td class="num">1,200</td><td class="num">120</td>
+            <td class="num" style="font-weight:700;color:var(--ink)">~S$63,400</td>
+            <td>Everything + paid ads + lead-gen + premium tiers</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:8px;font-size:11px;color:var(--ink-2)">
+        <b>Strategic takeaway:</b> the freemium model out-earns the subscription model at every case — because it removes
+        the supply barrier and the churn trigger, while monetizing the same traffic through premium + add-ons + lead-gen.
+        <b>HIGH</b> is "build a different business" (ads + lead-gen + premium tiers you don't have yet). The ceiling is
+        demand, not supply.
+      </div>
+    </div>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>08</span></div>
+</div>
+
+<!-- ============================================================ PAGE 9 — ACTION PLAN -->
+<div class="page">
+  <div class="sec-label"><span class="num">7</span><span class="t">What to do first — the action plan</span></div>
+  <p class="sub">Five priorities, in order. The full action list (P1-P15) follows.</p>
+
+  <div class="panel" style="margin-top:12px">
+    <div class="panel-head"><h3>The priorities</h3></div>
+    <div class="panel-body" style="padding:8px 10px">
+      <table class="tbl" style="font-size:11px">
+        <thead><tr><th style="width:8%">Priority</th><th style="width:36%">Action</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td><span class="chip chip-critical">1</span></td><td class="b">Fix the leaks — remove/flag 20 closed listings, add a "verify this listing" workflow, check the Aylabella AVS claim</td><td>Traffic exposes broken supply. Fix before you invite visitors</td></tr>
+          <tr><td><span class="chip chip-critical">2</span></td><td class="b">Go freemium — free basic listings, S$29/mo premium</td><td>Removes the supply barrier and the churn trigger. Get to 1,000+ listings</td></tr>
+          <tr><td><span class="chip chip-warning">3</span></td><td class="b">Build the demand engine — content (C1-C7), social, reviews, partnerships</td><td>This is the growth. 534 × 0 visitors = 0 value today</td></tr>
+          <tr><td><span class="chip chip-warning">4</span></td><td class="b">Write the book — "The Pet Business Landscape in Singapore"</td><td>The credibility anchor. Makes "trusted" real</td></tr>
+          <tr><td><span class="chip chip-info">5</span></td><td class="b">Decide the brand question — keep "Pet Directory" or rename</td><td>The name collides with petdirectory.com.au (est. 2001, 1.5M pageviews/yr). One-way door — decide before investing heavily in the brand</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Roadmap -->
+  <div class="phase" style="margin:6px 0">
+    <div class="phase-marker"><div class="phase-badge">Phase 1</div><div class="phase-weeks">Weeks 1-4<br>Fix &amp; free</div><div class="phase-line"></div></div>
+    <div class="phase-items">
+      <div class="witem"><span class="wk">W1</span><div class="act"><b>Purge/flag 20 closed listings</b> — remove or mark "Permanently Closed".</div><div class="out"><span class="chip chip-critical">THE LEAK</span> — credibility fix</div></div>
+      <div class="witem"><span class="wk">W2</span><div class="act"><b>Check Aylabella AVS claim</b> — verify against the registry; correct or remove.</div><div class="out">compliance fix</div></div>
+      <div class="witem"><span class="wk">W3</span><div class="act"><b>Switch to freemium</b> — free basic listings, S$29/mo premium.</div><div class="out">removes the barrier</div></div>
+      <div class="witem"><span class="wk">W4</span><div class="act"><b>Recruit the 93 licensed boarding facilities</b> — free listings, AVS badge.</div><div class="out">supply grows to 600+</div></div>
+    </div>
+  </div>
+
+  <div class="phase" style="margin:6px 0">
+    <div class="phase-marker"><div class="phase-badge" style="background:var(--seg-olive)">Phase 2</div><div class="phase-weeks">Weeks 5-12<br>Build demand</div><div class="phase-line"></div></div>
+    <div class="phase-items">
+      <div class="witem"><span class="wk">W5</span><div class="act"><b>Launch content engine</b> — 2-3 category SEO articles/week + 1 AI video/week (HeyGen).</div><div class="out">the compounding moat</div></div>
+      <div class="witem"><span class="wk">W6</span><div class="act"><b>Claim @petdirectory on IG</b> — post spotlight businesses weekly.</div><div class="out">social presence</div></div>
+      <div class="witem"><span class="wk">W7</span><div class="act"><b>Start review collection</b> — 11 spotlight businesses, 5+ reviews each.</div><div class="out">trust currency</div></div>
+      <div class="witem"><span class="wk">W8</span><div class="act"><b>Google Business Profile</b> — claim/optimize; each listing links to the directory.</div><div class="out">local pack visibility</div></div>
+      <div class="witem"><span class="wk">W9</span><div class="act"><b>Pitch SEO agencies as referral partners</b> — "the traffic is the product."</div><div class="out">distribution channel</div></div>
+      <div class="witem"><span class="wk">W10</span><div class="act"><b>Pawshake/PetBacker cross-listing</b> — directory sends discovery, they handle booking.</div><div class="out">leverages existing traffic</div></div>
+    </div>
+  </div>
+
+  <div class="phase" style="margin:6px 0">
+    <div class="phase-marker"><div class="phase-badge" style="background:var(--seg-terracotta)">Phase 3</div><div class="phase-weeks">Months 4-12<br>Scale &amp; authority</div><div class="phase-line"></div></div>
+    <div class="phase-items">
+      <div class="witem"><span class="wk">M4</span><div class="act"><b>Publish the data report</b> — "The State of Pet Services in Singapore" (C7).</div><div class="out">backlinks + authority</div></div>
+      <div class="witem"><span class="wk">M6</span><div class="act"><b>Write the book</b> — "The Pet Business Landscape in Singapore" (C3).</div><div class="out">the credibility anchor</div></div>
+      <div class="witem"><span class="wk">M9</span><div class="act"><b>Add lead-gen</b> — boarding/vet/grooming leads at S$5-15 each.</div><div class="out">new revenue stream</div></div>
+      <div class="witem"><span class="wk">M12</span><div class="act"><b>Review the brand question</b> — keep + differentiate, or rename.</div><div class="out">one-way door</div></div>
+    </div>
+  </div>
+
+  <div class="insight" style="margin-top:6px">
+    <div class="overline" style="color:var(--insight-strong)">The 12-month goal</div>
+    <p style="color:var(--ink);font-size:12.5px;margin:4px 0 0">
+      Clean database (P8) · freemium live (P15) · 1,000+ listings · content engine running (P13) · social claimed (P5) ·
+      reviews live (P3) · book in progress (P14). <b>The foundation for the demand flywheel — without spending on
+      broadcast marketing before the proof exists.</b>
+    </p>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1</span><span>09</span></div>
+</div>
+
+<!-- ============================================================ PAGE 10 — SOURCES -->
+<div class="page">
+  <div class="sec-label"><span class="num">§</span><span class="t">Sources &amp; confidence</span></div>
+
+  <div class="grid g2" style="gap:10px">
+    <div class="card" style="padding:10px">
+      <div class="kpi-label">Verified primary (HIGH confidence)</div>
+      <ul style="margin:5px 0 0;padding-left:14px;font-size:10.5px;color:var(--ink-2)">
+        <li>PetDirectory WP REST API — 534 listings, full metadata (2026-08-30)</li>
+        <li>AVS/NParks registries — 101 boarding + 320 shops (Mar26 PDFs), cross-referenced</li>
+        <li>Pawwhere sitemap — 634 listings (2026-08-30)</li>
+        <li>Google Maps review counts — Camoufox, 12 sampled listings</li>
+        <li>Gitnux SG Pet Industry Statistics (fact-checked 2026) — market size, business counts</li>
+        <li>marketingagency.sg — SEO cost guide, digital marketing statistics (2026)</li>
+        <li>TurnKey Directories — directory revenue benchmarks (2026)</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:10px">
+      <div class="kpi-label">Estimates (directional)</div>
+      <ul style="margin:5px 0 0;padding-left:14px;font-size:10.5px;color:var(--ink-2)">
+        <li>Channel split (~50/25/10/10/5) — derived from SG digital marketing stats</li>
+        <li>Revenue projections (S$15.7K/35.6K/63.4K) — TurnKey benchmarks + freemium assumptions</li>
+        <li>SEO penetration — triangulated, no public data (flagged OPEN)</li>
+        <li>Mind-share tiers — inferred, not measured (flagged OPEN)</li>
+        <li>Dead websites — full check of all 474 URLs (16 dead/failed, 3.4%)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px">
+    <div class="panel-head"><h3>What we couldn't verify (the client's inputs)</h3></div>
+    <div class="panel-body">
+      <table class="tbl">
+        <thead><tr><th style="width:40%">Gap</th><th>How to close</th></tr></thead>
+        <tbody>
+          <tr><td class="b">Your actual traffic (GA data)</td><td>Ask for analytics access — the revenue projections assume ~0 traffic; real numbers change the model</td></tr>
+          <tr><td class="b">Your actual listing count + premium conversion</td><td>Ask — projections assume 1,000+ listings with freemium</td></tr>
+          <tr><td class="b">Mind-share tiers</td><td>10-20 pet owner interviews: "where do you find pet services?"</td></tr>
+          <tr><td class="b">Pawwhere's real pricing + revenue model</td><td>Request a quote; LinkedIn/ACRA check</td></tr>
+          <tr><td class="b">Google rank checks (not just ddgs)</td><td>Rank-check head terms on Google directly</td></tr>
+          <tr><td class="b">Backlink/domain authority profile</td><td>Compare you vs Pawwhere vs UrbanDogOwner</td></tr>
+          <tr><td class="b">Pet-specific SEO penetration</td><td>Survey 20-30 pet businesses: "do you pay for SEO?"</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;padding:12px 14px;background:var(--insight);border-radius:12px;color:var(--ink-on-insight)">
+    <div style="font-family:var(--font-display);font-size:16px;font-weight:700">The one-sentence strategic summary</div>
+    <p style="font-size:12px;color:rgba(255,255,255,.92);margin:4px 0 0;max-width:74ch">
+      The demand gap is the wedge; the freemium model is the unlock; the content engine is the moat; the AVS trust
+      layer is the differentiator; the book is the credibility anchor — and the 12-month roadmap moves from
+      LOW toward MEDIUM revenue, with HIGH as the demand-engine upside.
+    </p>
+  </div>
+
+  <div class="pgfoot"><span>PetDirectory.com.sg Competitive Analysis · v1 · ObserveCo design system</span><span>10</span></div>
+</div>
+
+</body>
+</html>
