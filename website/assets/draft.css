@@ -1457,8 +1457,9 @@ table.compare .generic { color: var(--yellow); }
   }
 
   /* 3. Domino's — USA map: the coral origin domino is always visible
-     first. The 99 teal dominoes then ripple in one after another and
-     stay, triggered when the map scrolls into view. */
+     first. The 99 teal dominoes then ripple in one after another in a
+     continuous loop (dynamic), each appearing, holding, then resetting
+     so the cascade keeps running. */
   .usa-map use[href="#domino-tile-origin"] {
     opacity: 1;
   }
@@ -1466,12 +1467,14 @@ table.compare .generic { color: var(--yellow); }
     opacity: 0;
   }
   .usa-map.in-view use[href="#domino-tile"] {
-    animation: domino-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: domino-in-loop 6s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
     animation-delay: calc(0.1s + (var(--i, 1) * 0.05s));
   }
-  @keyframes domino-in {
+  @keyframes domino-in-loop {
     0%   { opacity: 0; }
-    100% { opacity: 1; }
+    6%   { opacity: 1; }
+    88%  { opacity: 1; }
+    100% { opacity: 0; }
   }
   @keyframes map-dot-pop {
     0%   { transform: scale(0); opacity: 0; }
@@ -1479,22 +1482,28 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* 4. Volvo — car in shield: shield outline draws in once, then the
-     car drives up. Shield stays white throughout (no blinking). */
+  /* 4. Volvo — car in shield: shield outline draws in, then the car
+     drives up, in a continuous loop (dynamic). Shield stays white
+     throughout (no blinking). */
   .volvo-mark.in-view .volvo-shield-outline {
-    stroke-dasharray: 220;
-    stroke-dashoffset: 220;
-    animation: volvo-draw 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    animation: volvo-draw-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s infinite;
   }
   .volvo-mark.in-view .volvo-car-body,
   .volvo-mark.in-view .volvo-car-roof {
     transform-box: fill-box;
     transform-origin: center;
-    animation: volvo-car-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards;
+    animation: volvo-car-in-loop 5s cubic-bezier(0.22, 1, 0.36, 1) 0.6s infinite;
   }
-  @keyframes volvo-draw { to { stroke-dashoffset: 0; } }
-  @keyframes volvo-car-in {
+  @keyframes volvo-draw-loop {
+    0%   { stroke-dashoffset: 300; }
+    20%  { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes volvo-car-in-loop {
     0%   { transform: translateY(10px); opacity: 0; }
+    20%  { transform: translateY(0); opacity: 1; }
     100% { transform: translateY(0); opacity: 1; }
   }
 
