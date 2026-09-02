@@ -1543,21 +1543,36 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* 6. Great Wall — mountain silhouette rises with expo-out, then a
-     subtle 'peak highlight' pulse at the summit (the climax). */
-  .mountain.in-view .mountain-peak {
-    animation: mountain-rise-loop 5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  /* 6. Great Wall SUV — the SUV specialist. The car drives in from the
+     left, the wheels spin continuously (rotating) while it moves. */
+  .suv.in-view .suv-body,
+  .suv.in-view .suv-roof,
+  .suv.in-view .suv-window {
+    animation: suv-drive-in-loop 5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
   }
-  @keyframes mountain-rise {
-    from { transform: scaleY(0); }
-    to   { transform: scaleY(1); }
+  .suv.in-view .suv-wheel, 
+  .suv.in-view .suv-wheel-spoke {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: suv-wheel-spin 1.5s linear infinite;
   }
-  .mountain.in-view .mountain-summit {
-    animation: summit-pulse 1.2s ease-in-out 1s infinite;
+  .suv.in-view .suv-ground {
+    stroke-dasharray: 4 4;
+    animation: suv-ground-move 1.5s linear infinite;
   }
-  @keyframes summit-pulse {
-    0%, 100% { opacity: 0; transform: scale(0.6); }
-    50%      { opacity: 1; transform: scale(1.4); }
+  @keyframes suv-drive-in-loop {
+    0%   { transform: translateX(-30px); opacity: 0; }
+    12%  { transform: translateX(6px); opacity: 1; }
+    18%  { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes suv-wheel-spin {
+    0%   { transform: rotate(0); }
+    100% { transform: rotate(360deg); }
+  }
+  @keyframes suv-ground-move {
+    0%   { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -40px; }
   }
 
   /* ── SINGAPORE STAKES INFOGRAPHICS (one distinct treatment each) ── */
@@ -1791,10 +1806,20 @@ table.compare .generic { color: var(--yellow); }
 .ladder-bar { height: 18px; background: var(--surface-2); border-radius: 4px; width: var(--h, 100%); position: relative; overflow: hidden; }
 .ladder-bar::after { content: ""; position: absolute; inset: 0; background: var(--green); transform-origin: left; transform: scaleX(0); }
 
-/* Great Wall mountain — silhouette grow */
-.mountain { width: 100%; max-width: 280px; height: auto; margin-top: var(--space-2); display: block; }
-.mountain .mountain-peak { fill: var(--green-dim); stroke: var(--green); stroke-width: 2.5; transform-origin: 100px 100px; transform: scaleY(0); }
-.mountain .mountain-summit { fill: var(--amber); opacity: 0; }
+/* Great Wall SUV — dynamic car with rotating wheels */
+.suv { width: 100%; max-width: 280px; height: auto; margin-top: var(--space-2); display: block; }
+.suv .suv-ground { stroke: var(--border); stroke-width: 2; }
+.suv .suv-body { fill: var(--green-dim); stroke: var(--green); stroke-width: 2.5; }
+.suv .suv-roof { fill: var(--green); stroke: var(--green); stroke-width: 2.5; stroke-linejoin: round; }
+.suv .suv-window { fill: #ffffff; opacity: 0.15; }
+.suv .suv-wheel {
+  fill: var(--surface);
+  stroke: var(--green);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.suv .suv-wheel-spoke { stroke: var(--green); stroke-width: 2; }
 
 /* Stat infographics */
 .dot-row { display: flex; gap: 8px; margin-top: 10px; }
@@ -1944,11 +1969,6 @@ table.compare .generic { color: var(--yellow); }
   100% { transform: scale(1); opacity: 1; }
 }
 
-@keyframes mountain-rise-loop {
-  0%   { transform: scaleY(0); }
-  15%  { transform: scaleY(1); }
-  100% { transform: scaleY(1); }
-}
 
 @keyframes dot-fall-loop {
   0%   { transform: translateY(0) scale(1); opacity: 1; }
