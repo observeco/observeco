@@ -1488,28 +1488,45 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* 4. Volvo — seatbelt draws in: belt line first, then buckle, then ring. */
+  /* 4. Volvo — airbag restraint: ring draws in, then the airbag module
+     inflates (scale up) and the burst lines radiate outward. */
   .volvo-mark.in-view .volvo-ring {
     stroke-dasharray: 220;
     stroke-dashoffset: 220;
-    animation: volvo-draw-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.6s infinite;
-  }
-  .volvo-mark.in-view .volvo-belt {
-    stroke-dasharray: 80;
-    stroke-dashoffset: 80;
     animation: volvo-draw-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s infinite;
   }
-  .volvo-mark.in-view .volvo-buckle {
-    stroke-dasharray: 20;
-    stroke-dashoffset: 20;
-    animation: volvo-draw-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s infinite;
+  .volvo-mark.in-view .volvo-airbag {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: volvo-inflate-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s infinite;
   }
-  .volvo-mark.in-view .volvo-buckle-rect {
-    stroke-dasharray: 30;
-    stroke-dashoffset: 30;
-    animation: volvo-draw-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s infinite;
+  .volvo-mark.in-view .volvo-airbag-core {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: volvo-core-loop 5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s infinite;
+  }
+  .volvo-mark.in-view .volvo-burst {
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    animation: volvo-burst-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.7s infinite;
   }
   @keyframes volvo-draw { to { stroke-dashoffset: 0; } }
+  @keyframes volvo-inflate-loop {
+    0%   { transform: scale(0); opacity: 0; }
+    20%  { transform: scale(1.15); opacity: 1; }
+    30%  { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes volvo-core-loop {
+    0%   { transform: scale(0); opacity: 0; }
+    25%  { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes volvo-burst-loop {
+    0%   { stroke-dashoffset: 60; opacity: 0; }
+    30%  { stroke-dashoffset: 0; opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 1; }
+  }
 
   /* 5. Wanglaoji — ladder steps fill with overshoot (compounding climb).
      Each bar overshoots (scaleX 0 → 1.05 → 1); each step's label pops in
