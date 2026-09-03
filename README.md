@@ -1,6 +1,8 @@
 # ObserveCo
 
-> ObserveCo tells you if your AI agents are working, what they're doing, where your money goes — and whether they're getting worse.
+> **ObserveCo is now a differentiation-strategy consultancy for Singapore small businesses.** We study your real competitive set and hand you the one differentiator most likely to win for your market — in days, at a fraction of a big firm's cost. → **[observeco.com](https://observeco.com)**
+
+> This repository is the open-source **agent-observability tool** that ObserveCo builds and runs on itself — proof of the AI-native capability behind the consultancy. It tells you if your AI agents are working, what they're doing, where your money goes — and whether they're getting worse.
 
 ```bash
 pip install 'observeco[dashboard]' && observeco dashboard
