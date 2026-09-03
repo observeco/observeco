@@ -1365,32 +1365,58 @@ table.compare .generic { color: var(--yellow); }
 }
 .watch-callout strong { color: var(--fg); }
 
-/* Watch decorative visuals — market map + signal radar */
-.watch-map, .watch-radar {
+/* Watch decorative visuals — white-space band + signal radar */
+.watch-radar {
   display: flex;
   justify-content: center;
   margin: var(--space-3) 0;
 }
-.watch-map svg { max-width: 520px; width: 100%; height: auto; }
 .watch-radar svg { max-width: 200px; width: 100%; height: auto; }
 
-/* Market map: players fade in, open space pulses */
-.wm-dot { fill: var(--green); opacity: 0; }
-.watch-map.in-view .wm-dot { animation: wm-dot-in 0.5s ease forwards; }
-.watch-map.in-view .wm-dot:nth-child(1) { animation-delay: 0.1s; }
-.watch-map.in-view .wm-dot:nth-child(2) { animation-delay: 0.2s; }
-.watch-map.in-view .wm-dot:nth-child(3) { animation-delay: 0.3s; }
-.watch-map.in-view .wm-dot:nth-child(4) { animation-delay: 0.4s; }
-.watch-map.in-view .wm-dot:nth-child(5) { animation-delay: 0.5s; }
-.watch-map.in-view .wm-dot:nth-child(6) { animation-delay: 0.6s; }
-.watch-map.in-view .wm-dot:nth-child(7) { animation-delay: 0.7s; }
-.watch-map.in-view .wm-dot:nth-child(8) { animation-delay: 0.8s; }
-.watch-map.in-view .wm-dot:nth-child(9) { animation-delay: 0.9s; }
-@keyframes wm-dot-in { to { opacity: 1; } }
-.wm-open-dot { fill: var(--coral); }
-.wm-open-ring { fill: none; stroke: var(--coral); stroke-width: 2; transform-origin: center; transform-box: fill-box; animation: wm-pulse 2s ease-out infinite; }
-@keyframes wm-pulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.2); opacity: 0; } }
-.wm-label { font-family: var(--font-mono); font-size: 10px; fill: var(--coral); text-transform: uppercase; letter-spacing: 0.08em; }
+/* Watch white-space band — mirrors The Method's white-space visual */
+.watch-ws-band {
+  position: relative;
+  overflow: hidden;
+  height: 300px;
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(120% 140% at 15% 20%, #0a5447 0%, #0e6e5c 45%, #0a5447 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--space-3) 0;
+}
+.watch-ws-band .ws-gaps { position: absolute; inset: 0; pointer-events: none; }
+.watch-ws-band .ws-gap {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 45%, rgba(255,255,255,0) 72%);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.watch-ws-band .ws-gap-1 { width: 150px; height: 150px; top: 12%;  left: 6%;  }
+.watch-ws-band .ws-gap-2 { width: 90px;  height: 90px;  top: 60%;  left: 18%; }
+.watch-ws-band .ws-gap-3 { width: 210px; height: 210px; top: 30%;  left: 34%; }
+.watch-ws-band .ws-gap-4 { width: 70px;  height: 70px;  top: 70%;  left: 48%; }
+.watch-ws-band .ws-gap-5 { width: 120px; height: 120px; top: 15%;  left: 60%; }
+.watch-ws-band .ws-gap-6 { width: 180px; height: 180px; top: 55%;  left: 72%; }
+.watch-ws-band .ws-gap-7 { width: 60px;  height: 60px;  top: 25%;  left: 84%; }
+.watch-ws-band .ws-gap-8 { width: 100px; height: 100px; top: 65%;  left: 90%; }
+.watch-ws-band .ws-gap-9 { width: 140px; height: 140px; top: 40%;  left: 12%; }
+.watch-ws-band .ws-gap { animation: none; }
+.watch-ws-band.in-view .ws-gap-1 { animation: ws-drift-1 14s ease-in-out infinite; }
+.watch-ws-band.in-view .ws-gap-2 { animation: ws-drift-2 11s ease-in-out infinite; }
+.watch-ws-band.in-view .ws-gap-3 { animation: ws-drift-3 17s ease-in-out infinite; }
+.watch-ws-band.in-view .ws-gap-4 { animation: ws-drift-4 9s  ease-in-out infinite; }
+.watch-ws-band.in-view .ws-gap-5 { animation: ws-drift-5 13s ease-in-out infinite; }
+.watch-ws-band.in-view .ws-gap-6 { animation: ws-drift-6 16s ease-in-out infinite; }
+.watch-ws-band.in-view .ws-gap-7 { animation: ws-drift-7 10s ease-in-out infinite; }
+.watch-ws-band.in-view .ws-gap-8 { animation: ws-drift-8 12s ease-in-out infinite; }
+.watch-ws-band.in-view .ws-gap-9 { animation: ws-drift-9 15s ease-in-out infinite; }
+.watch-ws-band .ws-caption { position: relative; z-index: 2; text-align: center; color: #ffffff; padding: 0 var(--space-3); max-width: 640px; }
+.watch-ws-band .ws-caption h2 { font-family: var(--font-display); font-size: clamp(1.6rem, 3.4vw, 2.4rem); font-weight: 600; line-height: 1.15; margin-bottom: var(--space-2); color: #ffffff; }
+.watch-ws-band .ws-caption p { font-family: var(--font-sans); font-size: clamp(1rem, 1.6vw, 1.15rem); color: rgba(255,255,255,0.9); line-height: 1.5; }
 
 /* Signal radar: sweep rotates, blips ping */
 .wr-ring { fill: none; stroke: var(--border); stroke-width: 1; }
