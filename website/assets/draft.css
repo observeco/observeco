@@ -1236,6 +1236,30 @@ table.compare .generic { color: var(--yellow); }
 .flywheel-wrap { display: flex; justify-content: center; margin-top: var(--space-3); }
 .flywheel-wrap svg { max-width: 640px; width: 100%; height: auto; }
 
+/* Registry counts strip — decorative visual of SG registry data */
+.registry-strip {
+  margin-top: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+}
+.registry-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.registry-num { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--green); line-height: 1.1; }
+.registry-name { font-size: 13px; color: var(--fg); font-weight: 600; }
+.registry-src { font-family: var(--font-mono); font-size: 10px; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.registry-asof { grid-column: 1 / -1; font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); margin: 0; padding-top: var(--space-1); border-top: 1px solid var(--border-subtle); }
+
 /* Industry ranking bars */
 .rank-bar { display: flex; align-items: center; gap: 10px; }
 .rank-bar .rank-track { flex: 1; height: 12px; background: var(--surface-2); border-radius: 3px; min-width: 60px; }
