@@ -1365,6 +1365,43 @@ table.compare .generic { color: var(--yellow); }
 }
 .watch-callout strong { color: var(--fg); }
 
+/* Watch decorative visuals — market map + signal radar */
+.watch-map, .watch-radar {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-3) 0;
+}
+.watch-map svg { max-width: 520px; width: 100%; height: auto; }
+.watch-radar svg { max-width: 200px; width: 100%; height: auto; }
+
+/* Market map: players fade in, open space pulses */
+.wm-dot { fill: var(--green); opacity: 0; }
+.watch-map.in-view .wm-dot { animation: wm-dot-in 0.5s ease forwards; }
+.watch-map.in-view .wm-dot:nth-child(1) { animation-delay: 0.1s; }
+.watch-map.in-view .wm-dot:nth-child(2) { animation-delay: 0.2s; }
+.watch-map.in-view .wm-dot:nth-child(3) { animation-delay: 0.3s; }
+.watch-map.in-view .wm-dot:nth-child(4) { animation-delay: 0.4s; }
+.watch-map.in-view .wm-dot:nth-child(5) { animation-delay: 0.5s; }
+.watch-map.in-view .wm-dot:nth-child(6) { animation-delay: 0.6s; }
+.watch-map.in-view .wm-dot:nth-child(7) { animation-delay: 0.7s; }
+.watch-map.in-view .wm-dot:nth-child(8) { animation-delay: 0.8s; }
+.watch-map.in-view .wm-dot:nth-child(9) { animation-delay: 0.9s; }
+@keyframes wm-dot-in { to { opacity: 1; } }
+.wm-open-dot { fill: var(--coral); }
+.wm-open-ring { fill: none; stroke: var(--coral); stroke-width: 2; transform-origin: center; transform-box: fill-box; animation: wm-pulse 2s ease-out infinite; }
+@keyframes wm-pulse { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(2.2); opacity: 0; } }
+.wm-label { font-family: var(--font-mono); font-size: 10px; fill: var(--coral); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Signal radar: sweep rotates, blips ping */
+.wr-ring { fill: none; stroke: var(--border); stroke-width: 1; }
+.wr-cross { stroke: var(--border); stroke-width: 1; }
+.wr-sweep-arc { fill: var(--green); opacity: 0.12; transform-origin: 100px 100px; animation: wr-sweep 4s linear infinite; }
+@keyframes wr-sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.wr-blip { fill: var(--coral); transform-origin: center; transform-box: fill-box; animation: wr-blip 2.4s ease-out infinite; }
+.wr-blip:nth-child(2) { animation-delay: 0.8s; }
+.wr-blip:nth-child(3) { animation-delay: 1.6s; }
+@keyframes wr-blip { 0% { transform: scale(0.4); opacity: 0.9; } 70% { transform: scale(1.4); opacity: 0.4; } 100% { transform: scale(1.4); opacity: 0; } }
+
 /* Industry ranking bars */
 .rank-bar { display: flex; align-items: center; gap: 10px; }
 .rank-bar .rank-track { flex: 1; height: 12px; background: var(--surface-2); border-radius: 3px; min-width: 60px; }
