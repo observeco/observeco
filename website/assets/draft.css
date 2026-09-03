@@ -2353,7 +2353,7 @@ table.compare .generic { color: var(--yellow); }
 .outcome-card .oc-steal .ss-note { color: var(--fg-3); font-size: 12px; }
 
 /* KPI row */
-.oc-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+.oc-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 18px; }
 .oc-kpi { background: var(--surface-muted, #f1f0ec); border-radius: 10px; padding: 10px 12px; }
 .oc-kpi .k-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-3); display: block; margin-bottom: 4px; }
 .oc-kpi .k-value { font-family: var(--font-mono); font-size: 19px; font-weight: 600; color: var(--fg); line-height: 1.1; }
