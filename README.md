@@ -404,3 +404,5 @@ ObserveCo monitors **agent processes, health, token usage, and inter-agent commu
 **What a kill switch cannot do:** Prevent the agent from restarting (auto-restart daemons will re-launch unless you also remove the agent config).
 **What auto-heal does:** Restart dead agents, reset tripped circuits, trim bloated memory. Configurable thresholds. Circuit breaker stops after 3 failures.
 **What auto-heal does NOT do:** Modify config files, delete agents, change system settings, or execute any action with irreversible side effects.
+
+<!-- reindex-bump: 2026-09-04 -->
