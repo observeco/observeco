@@ -60,10 +60,15 @@
   dropdowns.forEach(function (dd) {
     var toggle = dd.querySelector('.nav-dropdown-toggle');
     if (!toggle) return;
+    // A click-opened dropdown must stay open until outside-click/Escape,
+    // even if the cursor leaves the toggle (the menu sits 12px below it,
+    // so mouseleave would otherwise fire the instant you reach for it).
+    var clickOpened = false;
 
     function setOpen(open) {
       dd.classList.toggle('open', open);
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (!open) clickOpened = false;
     }
 
     // Click toggles (works on both desktop and mobile)
@@ -72,12 +77,15 @@
       e.stopPropagation();
       var isOpen = dd.classList.contains('open');
       closeAll(dd);
-      if (!isOpen) setOpen(true);
+      if (!isOpen) { setOpen(true); clickOpened = true; }
     });
 
     // Desktop hover open
     dd.addEventListener('mouseenter', function () { setOpen(true); });
-    dd.addEventListener('mouseleave', function () { setOpen(false); });
+    dd.addEventListener('mouseleave', function () {
+      // Don't close a click-opened dropdown on mouseleave — only outside-click/Escape.
+      if (!clickOpened) setOpen(false);
+    });
   });
 
   // Close on outside click
