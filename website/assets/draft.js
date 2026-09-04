@@ -99,12 +99,13 @@
    appearing and disappearing — a living 3D mind map.
 
    Engineered, not hand-drawn:
-   - True 3D: points live in x/y/z space, projected with perspective
-     and rotated around two axes — depth reads via scale + alpha.
+   - True 3D: points live in fixed x/y/z space, projected once with
+     perspective — depth reads via scale + alpha.
    - Spatially-hashed neighbor lookup for smooth O(n) links.
-   - Lifecycle fade: each dot materializes (0->1), holds, dissolves
-     (1->0), reborn at a fresh position — the appearing/disappearing
-     loop the brief asks for.
+   - In-place pulse: each dot holds a fixed position and fades in,
+     holds, then fades out — never drifts. The appearing/disappearing
+     "living constellation" rhythm shows dynamism without motion
+     distraction; connecting lines materialize between nearby dots.
    - Teal constellation accent that fits the consulting paper theme.
    ============================================================ */
 (function () {
@@ -150,8 +151,6 @@
   SPREAD = 620 * dpr;
   var FOCAL = 700 * dpr;
   var TILT = 0.5;
-  var ROT_Y = 0;
-  var ROT_SPEED = 0.00012;    // barely-there ambient drift
 
   function clampCount() {
     var w = window.innerWidth;
@@ -160,20 +159,23 @@
     return Math.round(base * hFactor);
   }
 
-  function spawn(p) {
+  // Assign a dot its single, fixed home position in world space.
+  // Dots NEVER move after this — only their opacity pulses.
+  function place(p) {
     p.x = (Math.random() - 0.5) * SPREAD * 2;
     p.y = (Math.random() - 0.5) * SPREAD * 2.6;
     p.z = (Math.random() - 0.5) * SPREAD * 1.2;
+  }
+  // Reset the fade lifecycle in place — the dot does not relocate.
+  function spawn(p) {
     p.life = 0;
     p.phase = 'in';
-    p.hold = 5000 + Math.random() * 9000;   // long hold = dots mostly at rest
-    p.vx = (Math.random() - 0.5) * 0.06;
-    p.vy = (Math.random() - 0.5) * 0.06;
-    p.vz = (Math.random() - 0.5) * 0.035;
-    p.r = (1.1 + Math.random() * 1.6) * dpr;   // smaller dots
+    p.hold = 2200 + Math.random() * 5200;   // visible pulse duration
+    p.r = (1.2 + Math.random() * 1.5) * dpr;
   }
   for (var i = 0; i < COUNT; i++) {
     particles[i] = {};
+    place(particles[i]);
     spawn(particles[i]);
     // Stagger initial lifecycle so the field is already alive.
     particles[i].life = Math.random();
@@ -195,6 +197,20 @@
     }
   }
 
+  // Pre-project every dot's fixed world position to screen space once.
+  // Dots do not move, so this is computed once (perspective with a soft tilt).
+  var sinT = Math.sin(TILT), cosT = Math.cos(TILT);
+  for (var i = 0; i < COUNT; i++) {
+    var p = particles[i];
+    var y2 = p.y * cosT - p.z * sinT;
+    var z2 = p.y * sinT + p.z * cosT;
+    var zf = 1 + z2 / FOCAL;
+    var sf = 1 / zf;
+    p.sx = cx + p.x * sf;
+    p.sy = cy + y2 * sf;
+    p.depth = Math.min(sf, 1.6);
+  }
+
   var last = 0;
 
   function frame(now) {
@@ -203,43 +219,23 @@
 
     ctx.clearRect(0, 0, W, H);
 
-    ROT_Y += ROT_SPEED * dt;
-    var sinY = Math.sin(ROT_Y), cosY = Math.cos(ROT_Y);
-    var sinT = Math.sin(TILT), cosT = Math.cos(TILT);
-
-    // 1) advance lifecycle + project
+    // 1) advance the fade lifecycle in place — positions never change
     for (var i = 0; i < COUNT; i++) {
       var p = particles[i];
-
-      if (!REDUCED) {
-        if (p.phase === 'in') {
-          p.life += 0.006 * (dt / 16.6);
-          if (p.life >= 1) { p.life = 1; p.phase = 'hold'; p.hold = 2600 + Math.random() * 5200; }
-        } else if (p.phase === 'hold') {
-          p.hold -= dt;
-          if (p.hold <= 0) p.phase = 'out';
-        } else {
-          p.life -= 0.004 * (dt / 16.6);
-          if (p.life <= 0) spawn(p);
-        }
-        p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
-        var h = SPREAD;
-        if (p.x < -h) p.x = h; if (p.x > h) p.x = -h;
-        if (p.y < -h * 1.3) p.y = h * 1.3; if (p.y > h * 1.3) p.y = -h * 1.3;
-        if (p.z < -h) p.z = h; if (p.z > h) p.z = -h;
+      if (REDUCED) { p.alpha = 0.2; continue; }
+      if (p.phase === 'in') {
+        p.life += 0.012 * (dt / 16.6);
+        if (p.life >= 1) { p.life = 1; p.phase = 'hold'; p.hold = 2200 + Math.random() * 5200; }
+      } else if (p.phase === 'hold') {
+        p.hold -= dt;
+        if (p.hold <= 0) p.phase = 'out';
+        if (p.hold > 900) p.life = 1;               // full during hold
+        else p.life = Math.max(0, p.hold / 900);    // begin fade near end of hold
+      } else {
+        p.life -= 0.008 * (dt / 16.6);
+        if (p.life <= 0) spawn(p);
       }
-
-      var x1 = p.x * cosY - p.z * sinY;
-      var z1 = p.x * sinY + p.z * cosY;
-      var y2 = p.y * cosT - z1 * sinT;
-      var z2 = p.y * sinT + z1 * cosT;
-
-      var zf = 1 + z2 / FOCAL;
-      var sf = 1 / zf;
-      p.sx = cx + x1 * sf;
-      p.sy = cy + y2 * sf;
-      p.depth = Math.min(sf, 1.6);
-      p.alpha = REDUCED ? 0.2 : (0.18 + 0.4 * p.life) * (0.22 + 0.5 * Math.min(p.depth, 1));
+      p.alpha = 0.14 + 0.42 * p.life * p.life * (3 - 2 * p.life) * (0.22 + 0.5 * Math.min(p.depth, 1));
     }
 
     buildGrid();
