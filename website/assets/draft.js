@@ -130,24 +130,27 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Paper base with a soft teal tint. Stops are periodic (first == last)
-  // so the downward drift wraps seamlessly.
-  var PAPER = [247, 246, 243];        // --bg bond paper
-  var TEAL = [14, 110, 92];          // insight teal
-  var CYCLE = 1.0;                   // gradient period in viewport-heights
-  var SPEED = 0.00006;               // drift speed (fraction of H per ms) — slow
+  // Paper base with a soft silver sheen. A "shiny silver" reads as a
+  // highlight on light paper — a cool-grey band lighter than the page,
+  // with a faint darker grey edge for the metallic feel. Stops are
+  // periodic (first == last) so the downward drift wraps seamlessly.
+  var SILVER_LIGHT = [226, 228, 231];   // cool silver highlight
+  var SILVER_DARK = [196, 199, 203];    // subtle grey edge for depth
+  var CYCLE = 1.0;                      // gradient period in viewport-heights
+  var SPEED = 0.00006;                  // drift speed (fraction of H per ms) — slow
 
   function draw(offset) {
     // Clear first — the gradient is semi-transparent, so without this it
-    // would accumulate frame over frame and saturate to solid teal.
+    // would accumulate frame over frame and saturate.
     ctx.clearRect(0, 0, W, H);
     // offset in [0, CYCLE*H): how far the gradient has drifted down.
     var g = ctx.createLinearGradient(0, -offset, 0, -offset + CYCLE * H);
-    // A soft teal band near the top of the cycle, fading to paper.
-    g.addColorStop(0.00, 'rgba(' + TEAL[0] + ',' + TEAL[1] + ',' + TEAL[2] + ',0.00)');
-    g.addColorStop(0.18, 'rgba(' + TEAL[0] + ',' + TEAL[1] + ',' + TEAL[2] + ',0.10)');
-    g.addColorStop(0.42, 'rgba(' + TEAL[0] + ',' + TEAL[1] + ',' + TEAL[2] + ',0.00)');
-    g.addColorStop(1.00, 'rgba(' + TEAL[0] + ',' + TEAL[1] + ',' + TEAL[2] + ',0.00)');
+    // A soft silver band near the top of the cycle, fading to paper.
+    g.addColorStop(0.00, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.00)');
+    g.addColorStop(0.16, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.45)');
+    g.addColorStop(0.30, 'rgba(' + SILVER_DARK[0] + ',' + SILVER_DARK[1] + ',' + SILVER_DARK[2] + ',0.18)');
+    g.addColorStop(0.46, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.00)');
+    g.addColorStop(1.00, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.00)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
   }
