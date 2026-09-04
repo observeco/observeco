@@ -244,36 +244,19 @@ h3 { font-size: 20px; }
   cursor: pointer;
 }
 
-/* ─── 3D PARTICLE NETWORK BACKGROUND ───
+/* ─── MOVING GRADIENT WASH BACKGROUND ───
    Fixed full-viewport canvas behind the page content. Negative
    z-index puts it above body's paper background but below all
    content (static elements paint above negative z-index children).
-   pointer-events none so it never blocks clicks. */
-.dots3d-canvas {
+   pointer-events none so it never blocks clicks. The wash is a
+   soft teal tint that drifts downward and loops — no mask needed,
+   it's already subtle and full-viewport. */
+.bg-wash {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
   z-index: -1;
   pointer-events: none;
-  /* Full dot visibility across the whole viewport — dots sit behind the
-     content (paper is translucent enough for the faint teal/ink alpha).
-     Only a soft vignette dims the extreme edges so the center — the hero
-     and the reading column — stays legible while the field reads clearly
-     on both desktop and mobile. Radial falloff, no hard center cut. */
-  -webkit-mask-image: radial-gradient(
-    ellipse 78% 82% at 50% 42%,
-    rgba(0,0,0,1) 0%,
-    rgba(0,0,0,1) 55%,
-    rgba(0,0,0,0.72) 76%,
-    rgba(0,0,0,0) 100%
-  );
-  mask-image: radial-gradient(
-    ellipse 78% 82% at 50% 42%,
-    rgba(0,0,0,1) 0%,
-    rgba(0,0,0,1) 55%,
-    rgba(0,0,0,0.72) 76%,
-    rgba(0,0,0,0) 100%
-  );
 }
 /* Keep the page body above the canvas stacking-wise (harmless —
    the site header is already sticky with z-index:100). */
@@ -2236,11 +2219,9 @@ table.compare .generic { color: var(--yellow); }
   body { font-size: 16px; }
 
   /* On mobile the text column is full-width — there are no margins to
-     hide in. Dim the whole field instead so it stays subtle behind text. */
-  .dots3d-canvas {
+     hide in. Dim the whole wash instead so it stays subtle behind text. */
+  .bg-wash {
     opacity: 0.45;
-    -webkit-mask-image: none;
-    mask-image: none;
   }
 
   .nav-links {
