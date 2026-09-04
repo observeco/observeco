@@ -132,27 +132,37 @@
 
   // Paper base with a soft silver sheen. A "shiny silver" reads as a
   // highlight on light paper — a cool-grey band lighter than the page,
-  // with a faint darker grey edge for the metallic feel. Stops are
-  // periodic (first == last) so the downward drift wraps seamlessly.
+  // with a faint darker grey edge for the metallic feel.
+  // ONE panel, HALF the canvas height (H/2), that drifts down the page
+  // and loops. When the panel reaches the bottom it wraps: the part that
+  // exits the bottom re-enters the top, so it reads as a single panel
+  // looping — never two full panels on screen at once.
   var SILVER_LIGHT = [226, 228, 231];   // cool silver highlight
   var SILVER_DARK = [196, 199, 203];    // subtle grey edge for depth
   var CYCLE = 1.0;                      // gradient period in viewport-heights
-  var SPEED = 0.00006;                  // drift speed (fraction of H per ms) — slow
+  var SPEED = 0.0002;                   // drift speed (fraction of H per ms) — 3x slower
 
   function draw(offset) {
-    // Clear first — the gradient is semi-transparent, so without this it
+    // Clear first — the panel is semi-transparent, so without this it
     // would accumulate frame over frame and saturate.
     ctx.clearRect(0, 0, W, H);
-    // offset in [0, CYCLE*H): how far the gradient has drifted down.
-    var g = ctx.createLinearGradient(0, -offset, 0, -offset + CYCLE * H);
-    // A soft silver band near the top of the cycle, fading to paper.
+    // ONE panel, H/2 tall. p is the panel's top edge, in [0, H].
+    var panelH = 0.5 * H;
+    var p = offset;
+    drawPanel(p, panelH);
+    // When the panel has moved more than H/2 down, the part that has
+    // exited the bottom re-enters the top — the seamless loop.
+    if (p > panelH) drawPanel(p - H, panelH);
+  }
+
+  function drawPanel(top, panelH) {
+    var g = ctx.createLinearGradient(0, top, 0, top + panelH);
     g.addColorStop(0.00, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.00)');
-    g.addColorStop(0.16, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.45)');
-    g.addColorStop(0.30, 'rgba(' + SILVER_DARK[0] + ',' + SILVER_DARK[1] + ',' + SILVER_DARK[2] + ',0.18)');
-    g.addColorStop(0.46, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.00)');
+    g.addColorStop(0.20, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.75)');
+    g.addColorStop(0.30, 'rgba(' + SILVER_DARK[0] + ',' + SILVER_DARK[1] + ',' + SILVER_DARK[2] + ',0.30)');
     g.addColorStop(1.00, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.00)');
     ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, top, W, panelH);
   }
 
   if (REDUCED) { draw(0); return; }
