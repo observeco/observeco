@@ -100,20 +100,20 @@
 })();
 
 /* ============================================================
-   BREATHING GLOW — ambient background
-   A fixed canvas behind the page draws ONE large, heavily-blurred
-   amber radial glow, centred on the viewport, that slowly breathes
-   in opacity — from a faint wash to a soft warm glow and back.
-   Nothing travels: there is no panel, no band, no translation, so
-   nothing reads as a moving object. It reads as light through a
-   window — the eye registers warmth, not motion.
+   EXPANDING RADIAL PULSE — ambient background
+   A fixed canvas behind the page draws ONE small bright amber core
+   that expands and lightens outward like a heartbeat of light —
+   a radial pulse that blooms into a soft halo, then dissolves and
+   re-pulses. There is no hard moving edge: it is a single gradient
+   whose radius grows and whose intensity dilutes, so it reads as
+   light radiating from the centre, not a travelling object.
 
    Engineered:
    - Single fixed canvas, full viewport, behind all content.
-   - Radial amber gradient (warm, high-luminance) tuned to a lower
-     peak opacity than teal so it doesn't wash the text on paper.
-   - Alpha eased with a long 8s sine loop. Zero motion of position.
-   - Respects prefers-reduced-motion: draws one static frame, no loop.
+   - Amber radial gradient: bright small core at start of cycle,
+     expanding radius + diluting alpha over the cycle.
+   - Eased growth (easeOut) so the bloom feels organic, not linear.
+   - Respects prefers-reduced-motion: draws one static dim frame, no loop.
    ============================================================ */
 (function () {
   'use strict';
@@ -140,36 +140,36 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Amber glow — reads as light on warm paper, not a coloured object.
-  // Warm/high-luminance, so peak alpha kept moderate (0.34) so the text
-  // stays readable. The glow is one big centred radial that breathes.
+  // Amber pulse — reads as a bloom of warm light on paper, not a coloured
+  // object. Warm/high-luminance, so peak alpha kept moderate so the text
+  // stays readable. One centred radial that grows + dilutes each cycle.
   var AMBER = [201, 138, 61];     // warm amber (sits on #f7f6f3 paper)
-  var CYCLE = 8000;               // full breathe cycle in ms
-  var PEAK = 0.34;                // peak alpha at the bright phase
-  var MIN = 0.10;                 // resting alpha at the dim phase
+  var CYCLE = 6000;               // ms per pulse
+  var MAX_R = 0.8;                // max radius as fraction of max dimension
+  var PEAK = 0.42;               // peak alpha at the bright core
 
-  function draw(alpha) {
+  function draw(t /* 0..1 progress through cycle */) {
     ctx.clearRect(0, 0, W, H);
-    // One large radial glow centred on the viewport, heavily blurred feel
-    // (soft falloff -> reads as light, not a ring).
-    var cx = W / 2, cy = H / 2, r = Math.max(W, H) * 0.8;
-    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-    g.addColorStop(0.00, 'rgba(' + AMBER[0] + ',' + AMBER[1] + ',' + AMBER[2] + ',' + alpha + ')');
-    g.addColorStop(0.55, 'rgba(' + AMBER[0] + ',' + AMBER[1] + ',' + AMBER[2] + ',' + (alpha * 0.45) + ')');
+    var cx = W / 2, cy = H / 2;
+    // Eased growth: slow start then accelerate (easeOut) — organic bloom.
+    var ease = 1 - Math.pow(1 - t, 2);
+    var r = Math.max(W, H) * MAX_R * ease;
+    // Core bright at start, lightens as it expands (outward dilution).
+    var peak = PEAK * (1 - 0.7 * t);
+    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(r, 1));
+    g.addColorStop(0.00, 'rgba(' + AMBER[0] + ',' + AMBER[1] + ',' + AMBER[2] + ',' + peak + ')');
+    g.addColorStop(0.45, 'rgba(' + AMBER[0] + ',' + AMBER[1] + ',' + AMBER[2] + ',' + (peak * 0.4) + ')');
     g.addColorStop(1.00, 'rgba(' + AMBER[0] + ',' + AMBER[1] + ',' + AMBER[2] + ',0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
   }
 
-  if (REDUCED) { draw(MIN); return; }
+  if (REDUCED) { draw(0.12); return; }
 
   var t0 = performance.now();
   function frame(now) {
-    var t = (now - t0) % CYCLE;
-    // Sine 0..1: bright at t=CYCLE/4, dim at t=0 and t=CYCLE/2.
-    var k = (Math.sin((t / CYCLE) * Math.PI * 2 - Math.PI / 2) + 1) / 2;
-    var alpha = MIN + (PEAK - MIN) * k;
-    draw(alpha);
+    var t = ((now - t0) % CYCLE) / CYCLE;
+    draw(t);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
