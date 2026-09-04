@@ -40,3 +40,53 @@
 
   targets.forEach(function (el) { observer.observe(el); });
 })();
+
+/* ============================================================
+   NAV DROPDOWN — References (desktop hover + click, mobile click)
+   ============================================================ */
+(function () {
+  'use strict';
+  var dropdowns = document.querySelectorAll('.nav-dropdown');
+  if (!dropdowns.length) return;
+
+  function closeAll(except) {
+    dropdowns.forEach(function (d) {
+      if (d !== except) d.classList.remove('open');
+      var t = d.querySelector('.nav-dropdown-toggle');
+      if (t) t.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  dropdowns.forEach(function (dd) {
+    var toggle = dd.querySelector('.nav-dropdown-toggle');
+    if (!toggle) return;
+
+    function setOpen(open) {
+      dd.classList.toggle('open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    // Click toggles (works on both desktop and mobile)
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var isOpen = dd.classList.contains('open');
+      closeAll(dd);
+      if (!isOpen) setOpen(true);
+    });
+
+    // Desktop hover open
+    dd.addEventListener('mouseenter', function () { setOpen(true); });
+    dd.addEventListener('mouseleave', function () { setOpen(false); });
+  });
+
+  // Close on outside click
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.nav-dropdown')) closeAll(null);
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeAll(null);
+  });
+})();
