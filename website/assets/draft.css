@@ -199,7 +199,7 @@ h3 { font-size: 20px; }
 .nav-links a.nav-cta:hover { background: var(--green-hover); color: #ffffff; }
 
 /* ─── NAV DROPDOWN — References ─── */
-.nav-dropdown { position: relative; }
+.nav-dropdown { position: relative; line-height: 0; }
 .nav-dropdown-toggle {
   background: none; border: none; cursor: pointer;
   color: var(--fg-2); font-family: var(--font-sans);
@@ -212,11 +212,11 @@ h3 { font-size: 20px; }
 .nav-dropdown.open .nav-dropdown-toggle { color: var(--fg); }
 .nav-dropdown.open .nav-dropdown-toggle .caret { transform: rotate(180deg); }
 .nav-dropdown-menu {
-  position: absolute; top: calc(100% + 12px); left: 50%;
+  position: absolute; top: 100%; left: 50%;
   transform: translateX(-50%);
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: 0 12px 32px rgba(27, 31, 36, 0.10);
-  min-width: 200px; padding: 6px;
+  min-width: 200px; padding: 12px 6px 6px;
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity 0.15s ease, visibility 0.15s ease;
 }

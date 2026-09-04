@@ -100,17 +100,19 @@
 })();
 
 /* ============================================================
-   MOVING GRADIENT WASH — ambient background
-   A fixed canvas behind the page draws a soft vertical gradient
-   (paper base with a gentle teal tint) that slowly drifts from
-   the top of the viewport downward, then loops seamlessly. No
-   dots, no lines, no motion of discrete elements — just a slow
-   breathing wash of colour that reads as calm, premium ambience.
+   BREATHING GLOW — ambient background
+   A fixed canvas behind the page draws ONE large, heavily-blurred
+   amber radial glow, centred on the viewport, that slowly breathes
+   in opacity — from a faint wash to a soft warm glow and back.
+   Nothing travels: there is no panel, no band, no translation, so
+   nothing reads as a moving object. It reads as light through a
+   window — the eye registers warmth, not motion.
 
    Engineered:
    - Single fixed canvas, full viewport, behind all content.
-   - Vertical gradient whose stops are periodic (start == end) so
-     the downward drift wraps without a visible jump.
+   - Radial amber gradient (warm, high-luminance) tuned to a lower
+     peak opacity than teal so it doesn't wash the text on paper.
+   - Alpha eased with a long 8s sine loop. Zero motion of position.
    - Respects prefers-reduced-motion: draws one static frame, no loop.
    ============================================================ */
 (function () {
@@ -138,51 +140,36 @@
   resize();
   window.addEventListener('resize', resize);
 
-  // Paper base with a soft silver sheen. A "shiny silver" reads as a
-  // highlight on light paper — a cool-grey band lighter than the page,
-  // with a faint darker grey edge for the metallic feel.
-  // ONE panel, HALF the canvas height (H/2), that drifts down the page
-  // and loops. When the panel reaches the bottom it wraps: the part that
-  // exits the bottom re-enters the top, so it reads as a single panel
-  // looping — never two full panels on screen at once.
-  var SILVER_LIGHT = [226, 228, 231];   // cool silver highlight
-  var SILVER_DARK = [196, 199, 203];    // subtle grey edge for depth
-  var CYCLE = 1.0;                      // gradient period in viewport-heights
-  var SPEED = 0.0002;                   // drift speed (fraction of H per ms) — 3x slower
+  // Amber glow — reads as light on warm paper, not a coloured object.
+  // Warm/high-luminance, so peak alpha kept moderate (0.34) so the text
+  // stays readable. The glow is one big centred radial that breathes.
+  var AMBER = [201, 138, 61];     // warm amber (sits on #f7f6f3 paper)
+  var CYCLE = 8000;               // full breathe cycle in ms
+  var PEAK = 0.34;                // peak alpha at the bright phase
+  var MIN = 0.10;                 // resting alpha at the dim phase
 
-  function draw(offset) {
-    // Clear first — the panel is semi-transparent, so without this it
-    // would accumulate frame over frame and saturate.
+  function draw(alpha) {
     ctx.clearRect(0, 0, W, H);
-    // ONE panel, H/2 tall. p is the panel's top edge, in [0, H].
-    var panelH = 0.5 * H;
-    var p = offset;
-    drawPanel(p, panelH);
-    // When the panel has moved more than H/2 down, the part that has
-    // exited the bottom re-enters the top — the seamless loop.
-    if (p > panelH) drawPanel(p - H, panelH);
-  }
-
-  function drawPanel(top, panelH) {
-    var g = ctx.createLinearGradient(0, top, 0, top + panelH);
-    g.addColorStop(0.00, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.00)');
-    g.addColorStop(0.20, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.75)');
-    g.addColorStop(0.30, 'rgba(' + SILVER_DARK[0] + ',' + SILVER_DARK[1] + ',' + SILVER_DARK[2] + ',0.30)');
-    g.addColorStop(1.00, 'rgba(' + SILVER_LIGHT[0] + ',' + SILVER_LIGHT[1] + ',' + SILVER_LIGHT[2] + ',0.00)');
+    // One large radial glow centred on the viewport, heavily blurred feel
+    // (soft falloff -> reads as light, not a ring).
+    var cx = W / 2, cy = H / 2, r = Math.max(W, H) * 0.8;
+    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0.00, 'rgba(' + AMBER[0] + ',' + AMBER[1] + ',' + AMBER[2] + ',' + alpha + ')');
+    g.addColorStop(0.55, 'rgba(' + AMBER[0] + ',' + AMBER[1] + ',' + AMBER[2] + ',' + (alpha * 0.45) + ')');
+    g.addColorStop(1.00, 'rgba(' + AMBER[0] + ',' + AMBER[1] + ',' + AMBER[2] + ',0)');
     ctx.fillStyle = g;
-    ctx.fillRect(0, top, W, panelH);
+    ctx.fillRect(0, 0, W, H);
   }
 
-  if (REDUCED) { draw(0); return; }
+  if (REDUCED) { draw(MIN); return; }
 
-  var offset = 0;
-  var last = 0;
+  var t0 = performance.now();
   function frame(now) {
-    var dt = Math.min(now - (last || now), 40);
-    last = now;
-    offset += SPEED * dt * H;
-    if (offset >= CYCLE * H) offset -= CYCLE * H;   // seamless loop
-    draw(offset);
+    var t = (now - t0) % CYCLE;
+    // Sine 0..1: bright at t=CYCLE/4, dim at t=0 and t=CYCLE/2.
+    var k = (Math.sin((t / CYCLE) * Math.PI * 2 - Math.PI / 2) + 1) / 2;
+    var alpha = MIN + (PEAK - MIN) * k;
+    draw(alpha);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
