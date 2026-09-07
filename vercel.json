@@ -5,6 +5,12 @@
   "rewrites": [
     { "source": "/privacy", "destination": "/privacy.html" }
   ],
+  "redirects": [
+    { "source": "/(.*)", "has": [{ "type": "host", "value": "www.observeco.com" }], "destination": "https://observeco.com/$1", "permanent": true },
+    { "source": "/index.html", "destination": "/", "permanent": true },
+    { "source": "/(.*)", "has": [{ "type": "host", "value": "observeco.ai" }], "destination": "https://observeco.com/$1", "permanent": true },
+    { "source": "/(.*)", "has": [{ "type": "host", "value": "www.observeco.ai" }], "destination": "https://observeco.com/$1", "permanent": true }
+  ],
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30
