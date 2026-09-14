@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="canonical" href="https://observeco.com/terms.html">
+  <title>Terms of Service — ObserveCo</title>
+  <meta name="description" content="ObserveCo's terms of service for the observeco.com website and ObserveCo software. Accepting the license, open-source terms, and acceptable use.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f7f6f3; --surface: #ffffff; --border: #e4e2dc;
+      --green: #0e6e5c; --green-dim: rgba(14,110,92,0.08);
+      --blue: #1d5fbf; --yellow: #9a6500; --red: #b42318;
+      --fg: #1b1f24; --fg-2: #4a525c; --fg-3: #6b737e;
+      --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-sans); background: var(--bg); color: var(--fg); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+
+    /* Nav */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+    nav .container { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); font-weight: 700; font-size: 16px; }
+    .nav-brand svg { width: 24px; height: 24px; }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a { color: var(--fg-2); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--fg); }
+
+    /* Content */
+    .content { padding: 100px 0 60px; }
+    .page-title { font-family: var(--font-display); font-size: 34px; font-weight: 700; margin-bottom: 8px; }
+    .page-meta { color: var(--fg-3); font-size: 14px; margin-bottom: 40px; }
+    h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin: 40px 0 16px; color: var(--fg); }
+    h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: var(--fg); }
+    p { margin-bottom: 16px; color: var(--fg-2); font-size: 15px; }
+    ul, ol { margin-bottom: 16px; padding-left: 24px; }
+    li { margin-bottom: 8px; color: var(--fg-2); font-size: 15px; }
+    strong { color: var(--fg); font-weight: 600; }
+    code { font-family: var(--font-mono); background: var(--surface); padding: 2px 6px; border-radius: 6px; font-size: 13px; color: var(--green); }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Highlight box */
+    .highlight { background: var(--green-dim); border: 1px solid rgba(14,110,92,0.35); border-radius: 10px; padding: 20px 24px; margin: 24px 0; }
+    .highlight p { color: var(--fg); margin-bottom: 0; }
+    .highlight strong { color: var(--green); }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 24px 0; margin-top: 40px; text-align: center; }
+    footer p { color: var(--fg-3); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container">
+      <a href="/" class="nav-brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+          <circle cx="64" cy="64" r="60" fill="none" stroke="#0e6e5c" stroke-width="2" opacity="0.3"/>
+          <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#0e6e5c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        ObserveCo
+      </a>
+      <div class="nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#install">Install</a>
+        <a href="https://github.com/observeco/observeco">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="container">
+      <h1 class="page-title">Terms of Service</h1>
+      <p class="page-meta">Effective date: September 14, 2026 · Last updated: September 14, 2026</p>
+
+      <div class="highlight">
+        <p><strong>The short version:</strong> ObserveCo is a local-first tool. The website you're reading grants you permission to use ObserveCo under an open-source license, free of charge for its open-source edition. Use it for any lawful purpose. We provide it "as is," without warranties. You're responsible for how you use it. These terms are simple because the software is simple: run it on your machine, keep your data yours.</p>
+      </div>
+
+      <h2>1. Acceptance of These Terms</h2>
+      <p>By accessing the observeco.com website or downloading, installing, or using the ObserveCo software, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the website or the software.</p>
+
+      <h2>2. The Software Is Open Source</h2>
+      <p>ObserveCo is distributed under the <a href="https://opensource.org/licenses/MIT">MIT License</a>. The source code is publicly available and can be reviewed, used, modified, and redistributed in accordance with that license, which governs the software itself. These Terms of Service govern your use of the observeco.com website and the ObserveCo service, and operate alongside — and do not override — the MIT License terms that apply to the software source code.</p>
+      <p>Nothing in these Terms restricts your rights under the MIT License with respect to the software's source code.</p>
+
+      <h2>3. Use of the Website</h2>
+      <h3>3.1 Permitted Use</h3>
+      <p>You may use the website to learn about, download, and understand the ObserveCo software. The website is made available free of charge.</p>
+      <h3>3.2 Prohibited Conduct</h3>
+      <p>You agree not to:</p>
+      <ul>
+        <li>Attempt to gain unauthorized access to the website or its underlying systems.</li>
+        <li>Scrape, harvest, or systematically extract website content beyond reasonable personal use.</li>
+        <li>Use the website to transmit malware, spam, or any unlawful content.</li>
+        <li>Interfere with the website's availability or security.</li>
+        <li>Misrepresent your identity or affiliation in connection with the website.</li>
+      </ul>
+
+      <h2>4. Paid Tiers and Pro Subscription (Where Applicable)</h2>
+      <p>ObserveCo may offer a paid "Pro" tier. If you purchase a subscription:</p>
+      <ul>
+        <li>You agree to pay the fees stated at the time of purchase.</li>
+        <li>Your license key is personal to you; do not share it.</li>
+        <li>We may update terms or fees with reasonable notice.</li>
+        <li>Refunds and cancellations, where they apply, are governed by the payment provider and any stated policy at the point of purchase.</li>
+      </ul>
+      <p>Except as required by applicable law, fees paid are non-refundable once a subscription period has begun.</p>
+
+      <h2>5. Acceptable Use of the Software</h2>
+      <p>You may use ObserveCo for any lawful purpose. You agree not to use it to:</p>
+      <ul>
+        <li>Violate any applicable law or regulation.</li>
+        <li>Infringe the intellectual property rights of others.</li>
+        <li>Distribute malware or engage in any harmful activity.</li>
+        <li>Operate it in any manner that harms other users or third parties.</li>
+      </ul>
+      <p>Because ObserveCo runs locally on your machine, control over what it monitors remains with you. You are responsible for the configuration and actions taken through the software.</p>
+
+      <h2>6. Data and Privacy</h2>
+      <p>ObserveCo is a local-first tool. Your data remains on your machine. Please refer to our <a href="/privacy.html">Privacy Policy</a> for a full description of what data is stored locally, what (if anything) is transmitted, and how telemetry works. In summary: data does not leave your machine unless you explicitly opt in to optional telemetry.</p>
+
+      <h2>7. Intellectual Property</h2>
+      <p>ObserveCo's branding, logo, website design, and documentation are the intellectual property of ObserveCo. The MIT-licensed source code is yours to use per that license. You may not use ObserveCo's name, logo, or branding to imply endorsement or affiliation without permission, other than as needed to attribute the software.</p>
+
+      <h2>8. Disclaimer of Warranties</h2>
+      <p>ObserveCo is provided <strong>"as is" and "as available," without warranties of any kind</strong>, whether express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement. We do not warrant that the software will be error-free, uninterrupted, or produce accurate results in all circumstances. AI agent monitoring is inherently dependent on the agents it monitors; you should not rely solely on the software for critical decisions.</p>
+
+      <h2>9. Limitation of Liability</h2>
+      <p>To the maximum extent permitted by law, ObserveCo (and its contributors) shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits, revenue, data, or goodwill, arising out of or related to your use of the website or software, even if advised of the possibility of such damages. In no event shall total liability exceed the amount paid by you (if any) for the software.</p>
+
+      <h2>10. Changes to These Terms</h2>
+      <p>We may update these Terms from time to time. The "Last updated" date will reflect the most recent change. Continued use of the website or software after changes take effect constitutes acceptance of the revised Terms. For material changes, we will provide reasonable notice.</p>
+
+      <h2>11. Governing Law</h2>
+      <p>These Terms are governed by the laws of Singapore, without regard to conflict-of-law principles. Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts of Singapore.</p>
+
+      <h2>12. Contact</h2>
+      <p>For questions about these Terms:</p>
+      <ul>
+        <li>Email: <a href="mailto:legal@observeco.ai">legal@observeco.ai</a></li>
+        <li>GitHub: <a href="https://github.com/observeco/observeco/issues">Open an issue</a></li>
+      </ul>
+
+      <div class="highlight" style="margin-top: 40px;">
+        <p><strong>ObserveCo: Your agents. Your data. Your machine.</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 ObserveCo · MIT License · Built with local-first principles</p>
+    </div>
+  </footer>
+</body>
+</html>
