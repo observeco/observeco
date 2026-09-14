@@ -2705,3 +2705,15 @@ table.compare .generic { color: var(--yellow); }
 .flank-scroll-cue .cue-bar { width: 28px; height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; position: relative; }
 .flank-scroll-cue .cue-bar::after { content: ""; position: absolute; inset: 0; background: var(--green); transform: translateX(-100%); animation: cue-slide 2.4s ease-in-out infinite; }
 @keyframes cue-slide { 0% { transform: translateX(-100%); } 60%,100% { transform: translateX(100%); } }
+
+/* ─── TOUCH TARGET SIZES (48px min for coarse pointers — audit 2026-09-15) ─── */
+@media (pointer: coarse) {
+  .nav-bar { height: auto; min-height: 64px; }
+  .nav-brand, .nav-links a, .nav-dropdown-toggle { display: inline-flex; align-items: center; min-height: 48px; }
+  .nav-links a { padding: 0 2px; }
+  #sg-intro .skip { padding: 16px 24px; font-size: 13px; }
+  .link-arrow { display: inline-flex; align-items: center; min-height: 48px; }
+  .btn-wa { min-height: 48px; padding: 14px 24px; display: inline-flex; align-items: center; justify-content: center; }
+}
+/* ponytail: 48px min-height on coarse pointers only — desktop nav stays compact (68px bar).
+   If a future design needs 48px on hover devices too, drop the media query scope. */

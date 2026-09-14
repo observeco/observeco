@@ -3,7 +3,8 @@
   "buildCommand": null,
   "outputDirectory": "website",
   "rewrites": [
-    { "source": "/privacy", "destination": "/privacy.html" }
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/terms", "destination": "/terms.html" }
   ],
   "redirects": [
     { "source": "/(.*)", "has": [{ "type": "host", "value": "www.observeco.com" }], "destination": "https://observeco.com/$1", "permanent": true },
