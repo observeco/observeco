@@ -262,6 +262,20 @@ h3 { font-size: 20px; }
    the site header is already sticky with z-index:100). */
 body { position: relative; }
 
+/* ─── INTERACTIVE NODE GRID BACKGROUND ───
+   Second fixed full-viewport canvas (see draft.js). Same negative
+   z-index as .bg-wash; being later in the DOM it paints above the
+   wash and below all content. pointer-events none so the cursor
+   reaches the page normally. Nothing here styles the nodes
+   themselves — they are drawn on the canvas. */
+.bg-nodes {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
 /* ─── MOBILE BOTTOM BAR CTA (thumb zone) ─── */
 .mobile-cta-bar {
   display: none;
