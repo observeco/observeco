@@ -1059,7 +1059,10 @@ table.compare .generic { color: var(--yellow); }
   padding: var(--space-4);
 }
 .human .avatar {
-  width: 320px;
+  /* 220px: portrait card sized to the photo's 2:3 ratio (533x800).
+     ponytail: hard-coded width tracks the photo's aspect ratio; if the
+     founder photo is swapped to landscape, bump this back to 320px. */
+  width: 220px;
   height: auto;
   border-radius: var(--radius-lg);
   border: 1px solid var(--green);
