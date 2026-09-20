@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-apple-03 — The late entrant's math</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee; --accent-line:#c6dcd4;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --warning:#9a6500; --warning-tint:#fbf0d8;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:16px;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:24px 32px 16px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:6px;}
+h2{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.subtitle{font-size:14px;color:var(--ink-2);line-height:1.5;}
+.fig-body{padding:22px 32px 24px;}
+.rows{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.row{display:grid;grid-template-columns:220px 1fr 90px;align-items:center;gap:12px;}
+.row-label{font-size:12px;color:var(--ink-2);text-align:right;line-height:1.3;}
+.row-track{height:34px;background:var(--surface-muted);border-radius:6px;overflow:hidden;position:relative;}
+.row-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:12px;font-size:12px;font-weight:700;color:white;white-space:nowrap;}
+.row-fill.strong{background:var(--accent);width:100%;}
+.row-fill.medium{background:#2d8a6e;width:62%;}
+.row-fill.weak{background:var(--warning);width:30%;}
+.row-val{font-size:13px;font-weight:700;color:var(--ink);text-align:right;}
+.callout{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:14px 18px;}
+.callout p{font-size:14px;color:var(--ink-2);line-height:1.55;}
+.callout strong{color:var(--accent-strong);}
+.foot{padding:12px 32px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">Positioning — the late entrant's math</div>
+    <h2>Seven Years Late, Projected Leader in One</h2>
+    <p class="subtitle">The analysts' bet: Apple enters a category Samsung has owned since 2019 — and takes the top spot within a year.</p>
+  </div>
+  <div class="fig-body">
+    <div class="rows">
+      <div class="row">
+        <div class="row-label">Foldables share of all phones</div>
+        <div class="row-track"><div class="row-fill weak">&lt;2% of smartphone shipments (Counterpoint)</div></div>
+        <div class="row-val">&lt;2%</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Apple's projected foldable share, 2026</div>
+        <div class="row-track"><div class="row-fill medium">28% — approaching Samsung's leading position (Counterpoint)</div></div>
+        <div class="row-val">28%</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Apple's projected rank, 2027</div>
+        <div class="row-track"><div class="row-fill strong">Global foldable leader — one year after entering (SAG)</div></div>
+        <div class="row-val">#1</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Wide-fold form factor, 2027</div>
+        <div class="row-track"><div class="row-fill medium">~20M units, ~55% of foldable market (SAG) — the sub-category Apple entered</div></div>
+        <div class="row-val">55%</div>
+      </div>
+    </div>
+    <div class="callout">
+      <p>Being first to market means nothing if you're not first in the mind. Samsung was first to foldables in 2019. Apple may own the word <strong>"foldable"</strong> in the consumer mind by 2027 — by redefining what the category is for.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: Counterpoint (Mar 2026), SAG (May 2026), TechCrunch. Confidence: Moderate (forecasts).</span>
+    <span class="confidence">Moderate Confidence</span>
+  </div>
+</div>
+</body>
+</html>

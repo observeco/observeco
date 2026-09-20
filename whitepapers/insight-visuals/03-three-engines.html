@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three Engines — Singapore's Economy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas: #f7f6f3;
+  --surface: #ffffff;
+  --surface-muted: #efeee9;
+  --ink: #1b1f24;
+  --ink-2: #4a525c;
+  --ink-3: #6b737e;
+  --accent: #0e6e5c;
+  --accent-strong: #0a5447;
+  --accent-tint: #e7f1ee;
+  --accent-line: #c6dcd4;
+  --critical: #b42318;
+  --critical-tint: #fbeae7;
+  --warning: #9a6500;
+  --warning-tint: #fbf0d8;
+  --line: #e4e2dc;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--canvas); color: var(--ink); font-family: var(--font-body); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.card { width: 1200px; background: var(--surface); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(27,31,36,.05), 0 1px 3px rgba(27,31,36,.07); overflow: hidden; }
+.card-header { padding: 32px 40px 24px; border-bottom: 1px solid var(--line); }
+.overline { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+h1 { font-family: var(--font-display); font-size: 38px; font-weight: 800; line-height: 1.1; color: var(--ink); margin-bottom: 8px; }
+.subtitle { font-size: 15px; color: var(--ink-2); line-height: 1.5; }
+.card-body { padding: 32px 40px; }
+
+.engines-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.engine-card { background: var(--surface-muted); border-radius: 10px; padding: 24px; position: relative; overflow: hidden; }
+.engine-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.engine-card.global::before { background: #0a5447; }
+.engine-card.govt::before { background: #0e6e5c; }
+.engine-card.domestic::before { background: var(--warning); }
+.engine-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 12px; }
+.engine-card.global .engine-label { color: #0a5447; }
+.engine-card.govt .engine-label { color: #0e6e5c; }
+.engine-card.domestic .engine-label { color: var(--warning); }
+.engine-value { font-family: var(--font-display); font-size: 40px; font-weight: 800; line-height: 1; margin-bottom: 4px; color: var(--ink); }
+.engine-unit { font-size: 13px; color: var(--ink-3); margin-bottom: 12px; }
+.engine-desc { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+.engine-examples { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-3); }
+.engine-examples span { display: inline-block; background: var(--surface-muted); padding: 2px 8px; border-radius: 4px; margin: 2px 4px 2px 0; }
+
+.bar-chart { display: flex; align-items: flex-end; gap: 20px; height: 110px; margin: 20px 0; padding: 0 16px; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bar { width: 100%; border-radius: 6px 6px 0 0; }
+.bar.global { background: #0a5447; }
+.bar.govt { background: #0e6e5c; }
+.bar.domestic { background: var(--warning); }
+.bar-label { font-size: 11px; color: var(--ink-3); text-align: center; }
+.bar-value { font-size: 13px; font-weight: 700; color: var(--ink); text-align: center; }
+
+.insight-box { background: var(--accent-tint); border: 1px solid var(--accent-line); border-radius: 10px; padding: 16px 20px; }
+.insight-box p { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+.insight-box strong { color: var(--accent-strong); }
+.card-footer { padding: 16px 40px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ink-3); }
+.confidence { display: inline-flex; align-items: center; gap: 6px; background: rgba(14,110,92,0.1); color: var(--accent-strong); padding: 3px 10px; border-radius: 999px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.confidence::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part One, Ch 1</div>
+    <h1>Three Engines Drive Singapore</h1>
+    <p class="subtitle">The same island, three completely different economies. Which one are you in?</p>
+  </div>
+  <div class="card-body">
+    <div class="engines-grid">
+      <div class="engine-card global">
+        <div class="engine-label">The Global Engine</div>
+        <div class="engine-value">S$494K</div>
+        <div class="engine-unit">value created per worker</div>
+        <div class="engine-desc">Foreign multinationals selling to the world. Capital-intensive, export-oriented, backed by global demand and decades of brand trust.</div>
+        <div class="engine-examples"><span>Wholesale Trade</span> <span>Finance</span> <span>Manufacturing</span></div>
+      </div>
+      <div class="engine-card govt">
+        <div class="engine-label">The Government Engine</div>
+        <div class="engine-value">S$116K</div>
+        <div class="engine-unit">value created per worker</div>
+        <div class="engine-desc">The state's own workforce. No market, no competitor. Funded by the nation's fiscal capacity and the most powerful brand on the island.</div>
+        <div class="engine-examples"><span>Public Admin</span> <span>Education</span> <span>Health Services</span></div>
+      </div>
+      <div class="engine-card domestic">
+        <div class="engine-label">The Domestic Layer</div>
+        <div class="engine-value">S$32K</div>
+        <div class="engine-unit">value created per worker</div>
+        <div class="engine-desc">Local shops, clinics, and services. Capped at 5.9M people. Where most Singaporeans live, work, and compete.</div>
+        <div class="engine-examples"><span>Food & Beverage</span> <span>Retail</span> <span>Personal Services</span></div>
+      </div>
+    </div>
+    <div class="bar-chart">
+      <div class="bar-group"><div class="bar-value">S$494K</div><div class="bar global" style="height:110px;"></div><div class="bar-label">Wholesale</div></div>
+      <div class="bar-group"><div class="bar-value">S$436K</div><div class="bar global" style="height:97px;"></div><div class="bar-label">Finance</div></div>
+      <div class="bar-group"><div class="bar-value">S$282K</div><div class="bar global" style="height:63px;"></div><div class="bar-label">Mfg</div></div>
+      <div class="bar-group"><div class="bar-value">S$150K</div><div class="bar govt" style="height:33px;"></div><div class="bar-label">Education</div></div>
+      <div class="bar-group"><div class="bar-value">S$116K</div><div class="bar govt" style="height:26px;"></div><div class="bar-label">Public Admin</div></div>
+      <div class="bar-group"><div class="bar-value">S$58K</div><div class="bar domestic" style="height:13px;"></div><div class="bar-label">Retail</div></div>
+      <div class="bar-group"><div class="bar-value">S$32K</div><div class="bar domestic" style="height:7px;"></div><div class="bar-label">F&B</div></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>The gap is not about effort.</strong> The global worker is not more hardworking — they are more <em>leveraged</em>. Three things stand behind them: the world's market, capital, and a brand people trust. The domestic worker has none of these. <strong>The brand is the one asset a small business can build too.</strong></p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: SingStat, value added per worker by industry, 2025</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

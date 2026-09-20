@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ObserveCo — Efficiency Session Table</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-alt: #131a2b;
+      --fg: #f8fafc;
+      --fg-2: #94a3b8;
+      --muted: #64748b;
+      --border: #334155;
+      --border-soft: #273548;
+      --accent: #22c55e;
+      --status-healthy: #22c55e;
+      --status-warning: #eab308;
+      --status-critical: #ef4444;
+      --meta: #3b82f6;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-pill: 9999px;
+      --arch-debug: #f97316;
+      --arch-research: #6366f1;
+      --arch-feature: #22c55e;
+      --arch-ops: #38bdf8;
+      --arch-edit: #a855f7;
+      --arch-unknown: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--fg);
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .section {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--fg);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Archetype Distribution Bar */
+    .archetype-distribution {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-md);
+    }
+
+    .archetype-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: var(--surface-alt);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+    }
+
+    .archetype-stat .arch-label {
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .archetype-stat .arch-count {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .archetype-stat .arch-score {
+      font-family: var(--font-mono);
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .archetype-stat .arch-score.good { background: rgba(34, 197, 94, 0.15); color: var(--status-healthy); }
+    .archetype-stat .arch-score.warn { background: rgba(234, 179, 8, 0.15); color: var(--status-warning); }
+    .archetype-stat .arch-score.bad { background: rgba(239, 68, 68, 0.15); color: var(--status-critical); }
+
+    .archetype-stat.debug .arch-label { color: var(--arch-debug); }
+    .archetype-stat.research .arch-label { color: var(--arch-research); }
+    .archetype-stat.feature .arch-label { color: var(--arch-feature); }
+    .archetype-stat.ops .arch-label { color: var(--arch-ops); }
+    .archetype-stat.edit .arch-label { color: var(--arch-edit); }
+    .archetype-stat.unknown .arch-label { color: var(--arch-unknown); }
+
+    /* Filter chips */
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .filter-chip {
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .filter-chip.all {
+      background: var(--surface);
+      color: var(--fg);
+      border-color: var(--border);
+    }
+
+    .filter-chip.all:hover, .filter-chip.all.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .filter-chip.debug { background: rgba(249, 115, 22, 0.1); color: var(--arch-debug); }
+    .filter-chip.debug:hover, .filter-chip.debug.active { background: var(--arch-debug); color: var(--bg); }
+
+    .filter-chip.research { background: rgba(99, 102, 241, 0.1); color: var(--arch-research); }
+    .filter-chip.research:hover, .filter-chip.research.active { background: var(--arch-research); color: var(--bg); }
+
+    .filter-chip.feature { background: rgba(34, 197, 94, 0.1); color: var(--arch-feature); }
+    .filter-chip.feature:hover, .filter-chip.feature.active { background: var(--arch-feature); color: var(--bg); }
+
+    .filter-chip.ops { background: rgba(56, 189, 248, 0.1); color: var(--arch-ops); }
+    .filter-chip.ops:hover, .filter-chip.ops.active { background: var(--arch-ops); color: var(--bg); }
+
+    .filter-chip.edit { background: rgba(168, 85, 247, 0.1); color: var(--arch-edit); }
+    .filter-chip.edit:hover, .filter-chip.edit.active { background: var(--arch-edit); color: var(--bg); }
+
+    .filter-chip.unknown { background: rgba(100, 116, 139, 0.1); color: var(--arch-unknown); }
+    .filter-chip.unknown:hover, .filter-chip.unknown.active { background: var(--arch-unknown); color: var(--bg); }
+
+    /* Table */
+    .sess-tbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .sess-tbl th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sess-tbl td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-soft);
+      vertical-align: middle;
+    }
+
+    .sess-row:hover td {
+      background: rgba(51, 65, 85, 0.3);
+    }
+
+    .sess-row:last-child td {
+      border-bottom: none;
+    }
+
+    /* Session column */
+    .session-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .session-name {
+      font-weight: 500;
+      color: var(--fg);
+    }
+
+    .session-meta {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    /* Archetype chip */
+    .chip {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .chip.debug { background: rgba(249, 115, 22, 0.15); color: var(--arch-debug); }
+    .chip.research { background: rgba(99, 102, 241, 0.15); color: var(--arch-research); }
+    .chip.feature { background: rgba(34, 197, 94, 0.15); color: var(--arch-feature); }
+    .chip.ops { background: rgba(56, 189, 248, 0.15); color: var(--arch-ops); }
+    .chip.edit { background: rgba(168, 85, 247, 0.15); color: var(--arch-edit); }
+    .chip.unknown { background: rgba(100, 116, 139, 0.15); color: var(--arch-unknown); }
+
+    /* Model column */
+    .model-cell {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--fg-2);
+    }
+
+    .model-cell.missing {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* Efficiency score */
+    .efficiency-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .efficiency-score.good { color: var(--status-healthy); }
+    .efficiency-score.warn { color: var(--status-warning); }
+    .efficiency-score.bad { color: var(--status-critical); }
+
+    .efficiency-bar {
+      width: 60px;
+      height: 4px;
+      background: var(--border-soft);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .efficiency-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    .efficiency-bar-fill.good { background: var(--status-healthy); }
+    .efficiency-bar-fill.warn { background: var(--status-warning); }
+    .efficiency-bar-fill.bad { background: var(--status-critical); }
+
+    /* Outcome */
+    .outcome {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .outcome.success { background: rgba(34, 197, 94, 0.15); color: var(--status-healthy); }
+    .outcome.partial { background: rgba(234, 179, 8, 0.15); color: var(--status-warning); }
+    .outcome.failed { background: rgba(239, 68, 68, 0.15); color: var(--status-critical); }
+
+    /* Section label */
+    .section-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Efficiency Session Table Section -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Efficiency Sessions</span>
+    </div>
+
+    <!-- Archetype Distribution Summary -->
+    <span class="section-label">Fleet-wide efficiency by archetype (last 24h)</span>
+    <div class="archetype-distribution">
+      <div class="archetype-stat debug">
+        <span class="arch-label">Debug</span>
+        <span class="arch-count">3 sessions</span>
+        <span class="arch-score good">▲ 87%</span>
+      </div>
+      <div class="archetype-stat research">
+        <span class="arch-label">Research</span>
+        <span class="arch-count">2 sessions</span>
+        <span class="arch-score warn">▼ 64%</span>
+      </div>
+      <div class="archetype-stat feature">
+        <span class="arch-label">Feature</span>
+        <span class="arch-count">1 session</span>
+        <span class="arch-score good">▲ 92%</span>
+      </div>
+      <div class="archetype-stat ops">
+        <span class="arch-label">Ops</span>
+        <span class="arch-count">1 session</span>
+        <span class="arch-score good">▲ 78%</span>
+      </div>
+      <div class="archetype-stat edit">
+        <span class="arch-label">Edit</span>
+        <span class="arch-count">0 sessions</span>
+        <span class="arch-score bad">—</span>
+      </div>
+      <div class="archetype-stat unknown">
+        <span class="arch-label">Unknown</span>
+        <span class="arch-count">1 session</span>
+        <span class="arch-score warn">▼ 52%</span>
+      </div>
+    </div>
+
+    <!-- Model Efficiency Comparison -->
+    <span class="section-label" style="margin-top:12px;">Efficiency by model (last 24h)</span>
+    <div class="archetype-distribution">
+      <div class="archetype-stat">
+        <span class="arch-label" style="font-family:var(--font-mono);font-size:11px;">deepseek-v4-flash</span>
+        <span class="arch-count">4 sessions</span>
+        <span class="arch-score good">▲ 78%</span>
+      </div>
+      <div class="archetype-stat">
+        <span class="arch-label" style="font-family:var(--font-mono);font-size:11px;">tencent/hy3:free</span>
+        <span class="arch-count">2 sessions</span>
+        <span class="arch-score warn">▼ 61%</span>
+      </div>
+      <div class="archetype-stat">
+        <span class="arch-label" style="font-family:var(--font-mono);font-size:11px;">claude-sonnet-4</span>
+        <span class="arch-count">1 session</span>
+        <span class="arch-score good">▲ 85%</span>
+      </div>
+      <div class="archetype-stat">
+        <span class="arch-label" style="font-family:var(--font-mono);font-size:11px;">qwen3.5:latest</span>
+        <span class="arch-count">1 session</span>
+        <span class="arch-score good">▲ 92%</span>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <span class="filter-chip all active">All</span>
+      <span class="filter-chip debug">Debug</span>
+      <span class="filter-chip research">Research</span>
+      <span class="filter-chip feature">Feature</span>
+      <span class="filter-chip ops">Ops</span>
+      <span class="filter-chip edit">Edit</span>
+      <span class="filter-chip unknown">Unknown</span>
+    </div>
+
+    <!-- Session Table -->
+    <table class="sess-tbl">
+      <thead>
+        <tr>
+          <th style="width: 28%;">Session</th>
+          <th style="width: 12%;">Archetype</th>
+          <th style="width: 22%;">Model</th>
+          <th style="width: 18%;">Efficiency</th>
+          <th style="width: 20%;">Outcome</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="sess-row">
+          <td>
+            <div class="session-cell">
+              <span class="session-name">Fix auth token refresh</span>
+              <span class="session-meta">sess_7k2m9p • 2h 14m ago</span>
+            </div>
+          </td>
+          <td><span class="chip debug">Debug</span></td>
+          <td><span class="model-cell">deepseek-v4-flash</span></td>
+          <td>
+            <div class="efficiency-score good">
+              <span>89%</span>
+              <div class="efficiency-bar"><div class="efficiency-bar-fill good" style="width: 89%;"></div></div>
+            </div>
+          </td>
+          <td><span class="outcome success">Resolved</span></td>
+        </tr>
+        <tr class="sess-row">
+          <td>
+            <div class="session-cell">
+              <span class="session-name">Research rate limiting patterns</span>
+              <span class="session-meta">sess_3n8x1q • 4h 32m ago</span>
+            </div>
+          </td>
+          <td><span class="chip research">Research</span></td>
+          <td><span class="model-cell">tencent/hy3:free</span></td>
+          <td>
+            <div class="efficiency-score warn">
+              <span>61%</span>
+              <div class="efficiency-bar"><div class="efficiency-bar-fill warn" style="width: 61%;"></div></div>
+            </div>
+          </td>
+          <td><span class="outcome partial">Partial</span></td>
+        </tr>
+        <tr class="sess-row">
+          <td>
+            <div class="session-cell">
+              <span class="session-name">Add user export endpoint</span>
+              <span class="session-meta">sess_9r4t2w • 6h 18m ago</span>
+            </div>
+          </td>
+          <td><span class="chip feature">Feature</span></td>
+          <td><span class="model-cell">deepseek-v4-flash</span></td>
+          <td>
+            <div class="efficiency-score good">
+              <span>92%</span>
+              <div class="efficiency-bar"><div class="efficiency-bar-fill good" style="width: 92%;"></div></div>
+            </div>
+          </td>
+          <td><span class="outcome success">Shipped</span></td>
+        </tr>
+        <tr class="sess-row">
+          <td>
+            <div class="session-cell">
+              <span class="session-name">Debug memory leak in worker</span>
+              <span class="session-meta">sess_5h7j3k • 8h 45m ago</span>
+            </div>
+          </td>
+          <td><span class="chip debug">Debug</span></td>
+          <td><span class="model-cell">qwen3.5:latest</span></td>
+          <td>
+            <div class="efficiency-score good">
+              <span>85%</span>
+              <div class="efficiency-bar"><div class="efficiency-bar-fill good" style="width: 85%;"></div></div>
+            </div>
+          </td>
+          <td><span class="outcome success">Resolved</span></td>
+        </tr>
+        <tr class="sess-row">
+          <td>
+            <div class="session-cell">
+              <span class="session-name">Deploy hotfix to staging</span>
+              <span class="session-meta">sess_2p6y8m • 12h 10m ago</span>
+            </div>
+          </td>
+          <td><span class="chip ops">Ops</span></td>
+          <td><span class="model-cell">deepseek-v4-flash</span></td>
+          <td>
+            <div class="efficiency-score good">
+              <span>78%</span>
+              <div class="efficiency-bar"><div class="efficiency-bar-fill good" style="width: 78%;"></div></div>
+            </div>
+          </td>
+          <td><span class="outcome success">Deployed</span></td>
+        </tr>
+        <tr class="sess-row">
+          <td>
+            <div class="session-cell">
+              <span class="session-name">Investigate API timeout spikes</span>
+              <span class="session-meta">sess_8w1n5v • 15h 22m ago</span>
+            </div>
+          </td>
+          <td><span class="chip research">Research</span></td>
+          <td><span class="model-cell">—</span></td>
+          <td>
+            <div class="efficiency-score warn">
+              <span>67%</span>
+              <div class="efficiency-bar"><div class="efficiency-bar-fill warn" style="width: 67%;"></div></div>
+            </div>
+          </td>
+          <td><span class="outcome partial">Investigating</span></td>
+        </tr>
+        <tr class="sess-row">
+          <td>
+            <div class="session-cell">
+              <span class="session-name">Refactor session classifier</span>
+              <span class="session-meta">sess_4d9b7c • 18h 55m ago</span>
+            </div>
+          </td>
+          <td><span class="chip debug">Debug</span></td>
+          <td><span class="model-cell">claude-sonnet-4</span></td>
+          <td>
+            <div class="efficiency-score good">
+              <span>87%</span>
+              <div class="efficiency-bar"><div class="efficiency-bar-fill good" style="width: 87%;"></div></div>
+            </div>
+          </td>
+          <td><span class="outcome success">Merged</span></td>
+        </tr>
+        <tr class="sess-row">
+          <td>
+            <div class="session-cell">
+              <span class="session-name">Analyze token usage patterns</span>
+              <span class="session-meta">sess_6f3x0z • 22h 8m ago</span>
+            </div>
+          </td>
+          <td><span class="chip unknown">Unknown</span></td>
+          <td><span class="model-cell">—</span></td>
+          <td>
+            <div class="efficiency-score bad">
+              <span>52%</span>
+              <div class="efficiency-bar"><div class="efficiency-bar-fill bad" style="width: 52%;"></div></div>
+            </div>
+          </td>
+          <td><span class="outcome failed">Incomplete</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Filter interaction (htmx would handle real filtering)
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        
+        const filter = chip.classList.contains('all') ? 'all' : chip.classList[1];
+        document.querySelectorAll('.sess-row').forEach(row => {
+          if (filter === 'all') {
+            row.style.display = '';
+          } else {
+            const archetypeChip = row.querySelector('.chip');
+            row.style.display = archetypeChip.classList.contains(filter) ? '' : 'none';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

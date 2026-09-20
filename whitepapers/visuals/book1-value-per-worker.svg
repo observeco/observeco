@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >Value per Worker</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="410" y="320" width="1400" height="900" rx="24" fill="#e7f1ee"/>
+<text x="360" y="480.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="end" >Global</text>
+<rect x="450" y="360" width="1200.0" height="200" rx="24" fill="#0e6e5c"/>
+<text x="1710.0" y="480.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#4a525c" text-anchor="start" >S$494k</text>
+<text x="360" y="790.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="end" >State</text>
+<rect x="450" y="670" width="364.3724696356275" height="200" rx="24" fill="#3d6b9b"/>
+<text x="874.3724696356276" y="790.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#4a525c" text-anchor="start" >S$150k</text>
+<text x="360" y="1100.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="end" >Domestic</text>
+<rect x="450" y="980" width="77.7327935222672" height="200" rx="24" fill="#b4653a"/>
+<text x="587.7327935222672" y="1100.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#4a525c" text-anchor="start" >S$32k</text>
+</g>
+</svg>

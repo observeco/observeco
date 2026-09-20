@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas: #f7f6f3; --surface: #ffffff; --surface-muted: #efeee9;
+  --ink: #1b1f24; --ink-2: #4a525c; --ink-3: #6b737e;
+  --accent: #0e6e5c; --accent-strong: #0a5447; --accent-tint: #e7f1ee; --accent-line: #c6dcd4;
+  --critical: #b42318; --critical-tint: #fbeae7;
+  --warning: #9a6500; --warning-tint: #fbf0d8;
+  --line: #e4e2dc;
+  --font-display: 'Playfair Display', Georgia, serif; --font-body: 'Inter', system-ui, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--canvas); font-family: var(--font-body); color: var(--ink); }
+.wrap { width: 1200px; padding: 28px 32px; background: var(--canvas); }
+/* Comparison row section (from fertility visual 03) */
+.section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); font-weight: 600; margin-bottom: 14px; }
+.comparison-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.comparison-card { background: var(--surface); border-radius: 10px; padding: 20px; text-align: center; border: 1px solid var(--line); }
+.comparison-card .country { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); font-weight: 600; margin-bottom: 8px; }
+.comparison-card .rate { font-family: var(--font-display); font-size: 52px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.comparison-card.sg .rate { color: var(--critical); }
+.comparison-card.jp .rate { color: var(--warning); }
+.comparison-card.kr .rate { color: var(--ink-3); }
+.comparison-card .note { font-size: 13px; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="section-label">The number nobody can look away from — total fertility rate, 2025</div>
+  <div class="comparison-row">
+    <div class="comparison-card sg"><div class="country">Singapore</div><div class="rate">0.87</div><div class="note">Lowest in the world</div></div>
+    <div class="comparison-card jp"><div class="country">Japan</div><div class="rate">1.20</div><div class="note">The global byword for low fertility</div></div>
+    <div class="comparison-card kr"><div class="country">South Korea</div><div class="rate">0.72</div><div class="note">Only country lower</div></div>
+  </div>
+</div>
+</body>
+</html>

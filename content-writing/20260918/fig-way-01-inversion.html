@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-way-01 — the ten-year inversion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:0;overflow:hidden;}
+.fig{width:1176px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:14px 26px 9px;border-bottom:1px solid var(--line);}
+.overline{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:23px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:11.5px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:12px 26px;}
+.arc{display:grid;grid-template-columns:1fr 60px 1fr;gap:10px;align-items:stretch;margin-bottom:10px;}
+.node{background:var(--accent-tint);border:1px solid rgba(14,110,92,.18);border-radius:9px;padding:10px 12px;}
+.node .yr{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--accent-strong);line-height:1;margin-bottom:4px;}
+.node h3{font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.node p{font-size:10.5px;color:var(--ink-2);line-height:1.35;}
+.node.late{background:var(--critical-tint);border-color:rgba(180,35,24,.2);}
+.node.late .yr{color:var(--critical);}
+.arrow{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--ink-3);font-weight:700;}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;border-top:1px solid var(--line);padding-top:10px;}
+.st{background:var(--surface-muted);border:1px solid var(--line);border-radius:9px;padding:8px 10px;}
+.st .n{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--ink);line-height:1;margin-bottom:3px;}
+.st .l{font-size:10px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.st .s{font-size:9.5px;color:var(--ink-3);line-height:1.3;}
+.st.hot{background:var(--critical-tint);border-color:rgba(180,35,24,.22);}
+.st.hot .n{color:var(--critical);}
+.foot{padding:8px 26px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">Ten years, and the same city on both ends</div>
+    <h2>Singapore Was First in the World at This. In 2028 It Will Be a Customer.</h2>
+    <p class="subtitle">The country that ran the first on-demand driverless taxi trial is now the market being sold to. The technology did not change hands. The position did.</p>
+  </div>
+  <div class="fig-body">
+    <div class="arc">
+      <div class="node">
+        <div class="yr">Aug 2016</div>
+        <h3>First in the world</h3>
+        <p>nuTonomy, an MIT spin-off, starts on-demand driverless taxis in one-north. Singapore becomes the first country with a public robotaxi trial, ahead of Uber.</p>
+      </div>
+      <div class="arrow">➜</div>
+      <div class="node late">
+        <div class="yr">2028</div>
+        <h3>Third operator, foreign-owned</h3>
+        <p>Waymo — an Alphabet subsidiary — aims to launch commercial driverless ride-hailing here. Arriving behind Grab and ComfortDelGro.</p>
+      </div>
+    </div>
+    <div class="strip">
+      <div class="st"><div class="n">2014</div><div class="l">Testing began</div><div class="s">Singapore has been trialling AVs since 2014.</div></div>
+      <div class="st"><div class="n">2016</div><div class="l">one-north testbed</div><div class="s">The on-road testbed that made the world-first possible.</div></div>
+      <div class="st hot"><div class="n">2017</div><div class="l">The pioneer was acquired</div><div class="s">nuTonomy absorbed by Delphi. The head start did not become ownership.</div></div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Sources: Reuters and The Straits Times, 25-26 Aug 2016 (world-first trial); LTA, "Fact or Fiction: Autonomous Vehicles" (2014 testing, 2016 one-north); LTA news release, 18 Sep 2026.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

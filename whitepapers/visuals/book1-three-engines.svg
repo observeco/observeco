@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >Three Engines</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="134" y="400.0" width="440" height="900.0" rx="22" fill="#0e6e5c"/>
+<text x="354.0" y="440.0" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="bold" fill="#ffffff" text-anchor="middle" >S$494k</text>
+<text x="354.0" y="360.0" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Global</text>
+<rect x="654" y="1026.7206477732793" width="440" height="273.2793522267206" rx="22" fill="#3d6b9b"/>
+<text x="874.0" y="1066.7206477732793" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="bold" fill="#ffffff" text-anchor="middle" >S$150k</text>
+<text x="874.0" y="986.7206477732793" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="bold" fill="#1b1f24" text-anchor="middle" >State</text>
+<rect x="1174" y="1241.7004048582996" width="440" height="58.29959514170041" rx="22" fill="#b4653a"/>
+<text x="1394.0" y="1281.7004048582996" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="bold" fill="#ffffff" text-anchor="middle" >S$32k</text>
+<text x="1394.0" y="1201.7004048582996" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Domestic</text>
+</g>
+</svg>

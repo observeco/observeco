@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-aom-02 — first in the material vs first in the mind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:12px;overflow:hidden;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:16px 28px 11px;border-bottom:1px solid var(--line);}
+.overline{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:25px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:12px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:14px 28px 14px;display:grid;grid-template-columns:1fr 66px 1fr;gap:12px;align-items:stretch;}
+.col{border-radius:10px;padding:12px 15px;}
+.col.bad{background:var(--critical-tint);border:1px solid rgba(180,35,24,.22);}
+.col.good{background:var(--accent-tint);border:1px solid rgba(14,110,92,.22);}
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-bottom:7px;}
+.tag.bad{background:rgba(180,35,24,.14);color:var(--critical);}
+.tag.good{background:rgba(14,110,92,.16);color:var(--accent-strong);}
+.col h3{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--ink);margin-bottom:6px;line-height:1.2;}
+.col .claim{font-size:11px;color:var(--ink-2);line-height:1.4;margin-bottom:9px;padding-bottom:9px;border-bottom:1px dashed rgba(27,31,36,.14);}
+.qa{display:flex;flex-direction:column;gap:5px;}
+.q{display:grid;grid-template-columns:62px 1fr;gap:8px;font-size:11px;line-height:1.35;}
+.q b{color:var(--ink-3);font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;padding-top:2px;}
+.q span{color:var(--ink-2);}
+.q span.no{color:var(--critical);font-weight:600;}
+.q span.yes{color:var(--accent-strong);font-weight:600;}
+.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;}
+.mid .vs{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--ink-3);}
+.mid .line{width:1px;flex:1;background:var(--line);}
+.foot{padding:8px 28px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">Positioning theory — being first in the mind is not being first to exist</div>
+    <h2>First in the Material Is Not First in the Mind</h2>
+    <p class="subtitle">"Singapore's first to use coffee leather" sounds like the strongest possible position. Test it the way you test any claim a customer has to carry.</p>
+  </div>
+  <div class="fig-body">
+    <div class="col bad">
+      <span class="tag bad">A supply-chain fact</span>
+      <h3>"First in Singapore to use coffee leather."</h3>
+      <p class="claim">Describes what the brand <em>bought</em> — a fabric found at a public trade show. Anyone with a business card and a minimum order can buy it tomorrow.</p>
+      <div class="qa">
+        <div class="q"><b>Recall</b><span class="yes">Yes — a clean, memorable line.</span></div>
+        <div class="q"><b>Feel</b><span class="no">No — describes the input, not the experience.</span></div>
+        <div class="q"><b>Repeat</b><span class="no">No — a fact, not a word. Try it at dinner.</span></div>
+        <div class="q"><b>Defensible</b><span class="no">No — the material is not hers. It is on sale.</span></div>
+      </div>
+    </div>
+    <div class="mid">
+      <div class="line"></div>
+      <div class="vs">vs</div>
+      <div class="line"></div>
+    </div>
+    <div class="col good">
+      <span class="tag good">A position</span>
+      <h3>"The bag you have to feel."</h3>
+      <p class="claim">Built from her own words — <em>"we have lost our connection with craftsmanship and material, how fabric feels on our skin."</em> Names a real problem and picks a fight with online shopping.</p>
+      <div class="qa">
+        <div class="q"><b>Recall</b><span class="yes">Yes — one idea, plainly said.</span></div>
+        <div class="q"><b>Feel</b><span class="yes">Yes — the customer's hand, not the factory.</span></div>
+        <div class="q"><b>Repeat</b><span class="yes">Yes — repeatable by someone who is not the founder.</span></div>
+        <div class="q"><b>Defensible</b><span class="yes">Yes — it makes the hand pleat the proof.</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Framework: positioning theory — "being first in the customer's mind is not the same as being first to exist" (Prima Taste, Secretlab). Founder quote: The Straits Times, 17 Sep 2026. Applied analysis — a lead to verify, not a settled finding.</span>
+    <span class="confidence">Moderate Confidence</span>
+  </div>
+</div>
+</body>
+</html>

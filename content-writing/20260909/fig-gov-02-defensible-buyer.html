@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-gov-02 — The most defensible buyer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee; --accent-line:#c6dcd4;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:16px;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:24px 32px 16px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:6px;}
+h2{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.subtitle{font-size:14px;color:var(--ink-2);line-height:1.5;}
+.fig-body{padding:22px 32px 24px;}
+.flow{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px;}
+.node{background:var(--surface-muted);border-radius:12px;padding:16px 20px;text-align:center;min-width:210px;}
+.node .n-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600;margin-bottom:6px;}
+.node .n-num{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--accent-strong);}
+.node .n-sub{font-size:12px;color:var(--ink-2);margin-top:4px;}
+.arrow{font-size:28px;color:var(--accent);font-weight:700;}
+.arrow .a-label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600;text-align:center;}
+.callout{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.callout p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.callout strong{color:var(--accent-strong);}
+.foot{padding:12px 32px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">Small Island, Crowded Market — Book 1, Ch 1 &amp; 3</div>
+    <h2>The Most Defensible Buyer in the Country</h2>
+    <p class="subtitle">The state funds and buys domestic services — it doesn't run them all itself.</p>
+  </div>
+  <div class="fig-body">
+    <div class="flow">
+      <div class="node">
+        <div class="n-label">The state</div>
+        <div class="n-num">S$97.5B</div>
+        <div class="n-sub">operating spend / yr</div>
+      </div>
+      <div class="arrow">→<span class="a-label">funds &amp; buys</span></div>
+      <div class="node">
+        <div class="n-label">Domestic services</div>
+        <div class="n-num">Care · Health</div>
+        <div class="n-sub">eldercare, childcare, social support</div>
+      </div>
+      <div class="arrow">→<span class="a-label">from providers</span></div>
+      <div class="node">
+        <div class="n-label">Small operators</div>
+        <div class="n-num">The door</div>
+        <div class="n-sub">key = compliance &amp; standards</div>
+      </div>
+    </div>
+    <div class="callout">
+      <p>The government doesn't want to own every eldercare centre. It wants them to <strong>exist</strong>, so it pays for them and expects the sector to provide them. A small operator who can run a reliable programme and meet the standards is a provider the state <strong>actively needs</strong>. Government-funded demand doesn't vanish in a downturn — it's the most defensible stream a small business can enter.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: SingStat, manuscript Ch 1 &amp; 3. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

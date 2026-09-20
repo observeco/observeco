@@ -1,0 +1,226 @@
+/* ============================================================
+   PRINT-READY A5 BOOK LAYOUT
+   The Map and How a Small Business Gets Chosen
+   Trim: 148 x 210 mm (A5)
+   Bleed: 3 mm all sides
+   Gutter (inner margin): 20 mm  |  Outer margin: 15 mm
+   Top/Bottom: 18 mm
+   ============================================================ */
+
+@page {
+  size: 148mm 210mm;
+  margin: 18mm 15mm 18mm 20mm; /* top right bottom left (left = gutter for recto) */
+  @bottom-center {
+    content: counter(page);
+    font-family: "Georgia", serif;
+    font-size: 9pt;
+    color: #444;
+  }
+}
+
+/* Alternate pages: swap gutter to the right (verso) */
+@page :left {
+  margin: 18mm 20mm 18mm 15mm;
+  @top-center {
+    content: string(booktitle);
+    font-family: "Georgia", serif;
+    font-size: 8pt;
+    color: #888;
+  }
+}
+
+@page :right {
+  margin: 18mm 15mm 18mm 20mm;
+  @top-center {
+    content: string(chaptitle);
+    font-family: "Georgia", serif;
+    font-size: 8pt;
+    color: #888;
+  }
+}
+
+/* Full-bleed pages (for infographics) */
+@page fullbleed {
+  size: 154mm 216mm; /* trim + 2x bleed */
+  margin: 0;
+}
+
+/* ============================================================
+   BASE TYPOGRAPHY
+   ============================================================ */
+html {
+  font-size: 8.5pt;
+  line-height: 1.45;
+}
+
+body {
+  font-family: "Georgia", "Times New Roman", serif;
+  color: #1a1a1a;
+  background: #ffffff;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* ============================================================
+   HEADINGS
+   ============================================================ */
+h1, h2, h3, h4 {
+  font-family: "Georgia", serif;
+  color: #0e6e5c; /* insight green accent */
+  line-height: 1.2;
+  page-break-after: avoid;
+  text-align: left;
+  hyphens: none;
+}
+
+h1 {
+  font-size: 16pt;
+  margin: 0 0 6mm 0;
+  string-set: booktitle content();
+}
+
+h2 {
+  font-size: 12pt;
+  margin: 8mm 0 4mm 0;
+  string-set: chaptitle content();
+  page-break-before: auto;
+}
+
+h3 {
+  font-size: 10pt;
+  margin: 6mm 0 3mm 0;
+}
+
+h4 {
+  font-size: 8.5pt;
+  margin: 4mm 0 2mm 0;
+}
+
+/* ============================================================
+   PARAGRAPHS
+   ============================================================ */
+p {
+  margin: 0 0 3mm 0;
+  orphans: 3;
+  widows: 3;
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4mm 0;
+  font-size: 7pt;
+  page-break-inside: avoid;
+}
+
+th {
+  background: #0e6e5c;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 2mm 2.5mm;
+  text-align: left;
+}
+
+td {
+  padding: 2mm 2.5mm;
+  border-bottom: 0.3pt solid #ccc;
+  vertical-align: top;
+}
+
+tr:nth-child(even) td {
+  background: #f7f6f3; /* paper */
+}
+
+/* ============================================================
+   BLOCKQUOTES / CALLOUTS
+   ============================================================ */
+blockquote {
+  margin: 4mm 0;
+  padding: 3mm 5mm;
+  border-left: 3pt solid #0e6e5c;
+  background: #f7f6f3;
+  font-style: italic;
+  page-break-inside: avoid;
+}
+
+/* ============================================================
+   IMAGES / INFOGRAPHICS
+   ============================================================ */
+img {
+  max-width: 100%;
+  height: auto;
+  page-break-inside: avoid;
+}
+
+/* Full-bleed figure pages */
+.figure-fullbleed {
+  page: fullbleed;
+  margin: 0;
+  padding: 0;
+}
+
+.figure-fullbleed img {
+  width: 154mm;
+  height: 216mm;
+  object-fit: contain;
+}
+
+/* Inline figures */
+.figure {
+  margin: 4mm 0;
+  text-align: center;
+  page-break-inside: avoid;
+}
+
+.figure img {
+  width: 100%;
+}
+
+.figcaption {
+  font-size: 7.5pt;
+  color: #666;
+  font-style: italic;
+  margin-top: 1.5mm;
+  text-align: center;
+}
+
+/* ============================================================
+   FRONT MATTER
+   ============================================================ */
+.titlepage {
+  text-align: center;
+  page-break-after: always;
+}
+
+.titlepage h1 {
+  font-size: 24pt;
+  margin-top: 40mm;
+  color: #0e6e5c;
+}
+
+.titlepage .subtitle {
+  font-size: 12.5pt;
+  color: #444;
+  margin-top: 6mm;
+}
+
+.titlepage .author {
+  font-size: 11pt;
+  margin-top: 20mm;
+  color: #1a1a1a;
+}
+
+/* ============================================================
+   PAGE BREAKS
+   ============================================================ */
+.pagebreak {
+  page-break-before: always;
+}
+
+/* Avoid breaking inside key elements */
+.avoid-break {
+  page-break-inside: avoid;
+}

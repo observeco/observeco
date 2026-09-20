@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Heartland-Downtown Mismatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.mismatch{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;}
+.side{border-radius:12px;padding:28px;text-align:center;}
+.side.heartland{background:var(--surface-muted);border:1px solid var(--line);}
+.side.downtown{background:var(--accent-tint);border:1px solid var(--accent-line);}
+.side .zone{font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:8px;}
+.side.heartland .zone{color:var(--ink-3);}
+.side.downtown .zone{color:var(--accent);}
+.side .pct{font-family:var(--font-display);font-size:64px;font-weight:800;line-height:1;margin-bottom:4px;}
+.side.heartland .pct{color:var(--ink);}
+.side.downtown .pct{color:var(--accent-strong);}
+.side .desc{font-size:14px;color:var(--ink-2);line-height:1.5;}
+.side .tag{display:inline-block;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;margin-top:12px;}
+.side.heartland .tag{background:rgba(180,35,24,.08);color:var(--critical);}
+.side.downtown .tag{background:rgba(14,110,92,.1);color:var(--accent-strong);}
+.arrow-row{display:flex;justify-content:center;align-items:center;gap:16px;margin-bottom:28px;padding:16px;background:var(--surface-muted);border-radius:10px;}
+.arrow-row .icon{font-size:24px;}
+.arrow-row .text{font-size:14px;color:var(--ink-2);font-weight:500;}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface-muted);border-radius:10px;padding:18px;text-align:center;}
+.stat-card .value{font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.stat-card .label{font-size:11px;color:var(--ink-3);line-height:1.3;}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Two, the five streams</div>
+    <h1>The Premium Customers Are Downtown. You're Not.</h1>
+    <p class="subtitle">83% of new businesses register outside the CBD. The premium, higher-spending customers sit exactly where the new businesses are not.</p>
+  </div>
+  <div class="card-body">
+    <div class="mismatch">
+      <div class="side heartland">
+        <div class="zone">The Heartland</div>
+        <div class="pct">83%</div>
+        <div class="desc">of new businesses register outside the CBD. HDB estates, suburban malls, industrial parks — anywhere that is not the core of the city.</div>
+        <div class="tag">Mass market, thin margins</div>
+      </div>
+      <div class="side downtown">
+        <div class="zone">The Downtown</div>
+        <div class="pct">17%</div>
+        <div class="desc">of new businesses register in the CBD. Raffles Place, Marina Bay, Orchard Road — where the executives, professionals, expatriates, and visitors cluster.</div>
+        <div class="tag">Premium demand, high margins</div>
+      </div>
+    </div>
+    <div class="arrow-row">
+      <div class="icon">💰</div>
+      <div class="text">The money is not spread evenly across the island. It pools in the centre, in a concentration far greater than the 83% staying away would suggest.</div>
+      <div class="icon">📍</div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="value">S$20,000/mo</div><div class="label">Top occupational earners<br>(radiologist, derivatives dealer)</div></div>
+      <div class="stat-card"><div class="value">S$8,736/mo</div><div class="label">Finance & Insurance median<br>— top industry by income</div></div>
+      <div class="stat-card"><div class="value">~330,000</div><div class="label">High-net-worth individuals<br>+ 1,739 ultra-HNW</div></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>You do not have to be physically downtown to serve the downtown customer.</strong> The premium customer is not loyal to a postal code. They are loyal to a standard. If you can build a reputation for excellence anywhere on the island, the premium customers will travel to you, or they will hire you to travel to them. The geography matters, but the reputation matters more.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: ACRA, SingStat, Credit Suisse. Figures 2024–2025. Confidence: High/Moderate.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

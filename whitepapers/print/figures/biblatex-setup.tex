@@ -1,0 +1,11 @@
+% Preamble (replaces the hand-formatted references entirely):
+\usepackage[notes,backend=biber,isbn=false]{biblatex-chicago}
+\addbibresource{references.bib}
+% In the bibliography: ragged right, no hyphenation, hanging indent is automatic.
+\appto{\bibsetup}{\raggedright\hyphenpenalty=10000\exhyphenpenalty=10000}
+% Back matter (unnumbered, correct running heads):
+%   \backmatter
+%   \printbibliography[title={References}]
+% Categorised version if wanted:
+%   \printbibliography[type=book,title={Books}]
+%   \printbibliography[type=online,title={Singapore sources}]

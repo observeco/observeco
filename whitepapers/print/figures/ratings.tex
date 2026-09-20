@@ -1,0 +1,28 @@
+% ---- Rating symbols that cannot produce tofu boxes ----
+% Drawn with TikZ, so they render in ANY font setup.
+\usepackage{tikz}
+\newcommand{\rhigh}{\tikz[baseline=-0.6ex]\fill (0,0) circle (0.9ex);}                       % filled = High
+\newcommand{\rmed}{\tikz[baseline=-0.6ex]{\draw (0,0) circle (0.9ex);\fill (0,0) -- (90:0.9ex) arc (90:270:0.9ex) -- cycle;}} % half = Moderate
+\newcommand{\rlow}{\tikz[baseline=-0.6ex]\draw (0,0) circle (0.9ex);}                        % open = Low
+% Legend line to place under every rating table:
+\newcommand{\ratingkey}{\par\smallskip\noindent{\footnotesize Key: \rhigh\ high \quad \rmed\ moderate \quad \rlow\ low}}
+
+% ---- The AI exposure matrix, rebuilt (folio 208 area) ----
+% Two-word headers, symbols, one landscape-free page instead of five portrait pages.
+\begin{table}[!htbp]\centering
+\caption{AI exposure by F\&B sub-category}\label{tab:ai-fnb}
+{\small
+\begin{tabular}{@{}p{11.2em}ccccc@{}}
+\toprule
+Sub-category & AI can copy & Trust needed & End-to-end & Cost cut & New revenue\\
+\midrule
+Delivery \& ghost kitchens & \rhigh & \rlow & \rhigh & \rhigh & \rmed\\
+Quick-service / fast food  & \rmed  & \rlow & \rmed  & \rmed  & \rlow\\
+Coffee \& bubble-tea chains& \rmed  & \rlow & \rmed  & \rmed  & \rmed\\
+Food courts \& kopitiams   & \rmed  & \rlow & \rmed  & \rmed  & \rlow\\
+% ... remaining rows from the manuscript ...
+\bottomrule
+\end{tabular}}
+\ratingkey
+\par\smallskip\noindent{\footnotesize Leaders in parentheses moved to a note: Grab leads delivery; McDonald's $\sim$40\% of QSR; Starbucks $\sim$140 outlets, LiHo/KOI $\sim$40.}
+\end{table}

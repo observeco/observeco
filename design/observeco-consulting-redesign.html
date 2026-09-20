@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo - Consulting Redesign (DRAFT mockup)</title>
+<!--
+  DRAFT MOCKUP - ObserveCo consulting pivot.
+  Design only. No production files touched.
+  Tokens inlined verbatim from design/consulting-tokens.css.
+  Nav structure reuses the live _nav.html groups (Monitor/Analyze/Intelligence/Settings);
+  telemetry sub-tabs relabeled for the consulting pivot (mapping in comment below):
+    Monitor:      Fleet (active, core view) | Alerts | Review Cycle (was Error Timeline) | Coverage Map (was Pathway Map)
+    Analyze:      Insights (was Tokens) | Benchmarks (was Compare) | Positioning (was Drift)   [Brain dropped]
+    Intelligence: Differentiation (was Anomalies) | Market Signals (was Health Score) | Watch Notes (was Traces)
+    Settings:     Config | Billing
+  All visible copy: illustrative sample data, labeled in the footer.
+-->
+<style>
+  /* =====================================================================
+     ObserveCo Consulting Design System tokens
+     Inlined verbatim from design/consulting-tokens.css
+     ===================================================================== */
+  :root {
+    /* ── Surface Palette (light-first, paper canvas) ── */
+    --canvas: #f7f6f3;
+    --surface: #ffffff;
+    --surface-hover: #f1f0ec;
+    --surface-active: #e9e7e1;
+    --surface-muted: #efeee9;
+    --surface-inset: #e8e7e2;
+    --line: #e4e2dc;
+    --line-soft: #efeee9;
+    --line-strong: #cfccc4;
+
+    /* ── Status Palette (mapped from telemetry semantics) ── */
+    --status-healthy: #227a4e;
+    --status-healthy-tint: #e5f2ea;
+    --status-warning: #9a6500;
+    --status-warning-tint: #fbf0d8;
+    --status-critical: #b42318;
+    --status-critical-tint: #fbeae7;
+    --status-info: #1d5fbf;
+    --status-info-tint: #e8f0fb;
+    --status-neutral: #5b6470;
+    --status-neutral-tint: #eff1f4;
+
+    /* ── Insight Accent (differentiation-strategy brand) ── */
+    --insight: #0e6e5c;
+    --insight-strong: #0a5447;
+    --insight-tint: #e7f1ee;
+    --insight-line: #c6dcd4;
+
+    /* ── Chart / Segment Palette ── */
+    --seg-steel: #3d6b9b;
+    --seg-slate: #6e8b9e;
+    --seg-rose: #a4716f;
+    --seg-olive: #7f8c5a;
+    --seg-terracotta: #b4653a;
+
+    /* ── Text Palette ── */
+    --ink: #1b1f24;
+    --ink-2: #4a525c;
+    --ink-3: #6b737e;
+    --ink-on-insight: #ffffff;
+    --link: #0a5447;
+
+    /* ── Typography ── */
+    --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --text-caption: 11px;
+    --text-sm: 12px;
+    --text-body: 14px;
+    --text-lg: 16px;
+    --text-xl: 20px;
+    --text-2xl: 26px;
+    --text-3xl: 34px;
+    --leading-display: 1.15;
+    --leading-body: 1.55;
+    --leading-tight: 1.25;
+    --tracking-overline: 0.08em;
+
+    /* ── Spacing (4px baseline grid) ── */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* ── Shape (softer, editorial) ── */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --radius-pill: 9999px;
+
+    /* ── Elevation (print-flat hierarchy) ── */
+    --elev-flat: none;
+    --shadow-card: 0 1px 2px rgba(27, 31, 36, 0.04), 0 1px 3px rgba(27, 31, 36, 0.06);
+    --shadow-raised: 0 2px 4px rgba(27, 31, 36, 0.05), 0 12px 32px rgba(27, 31, 36, 0.10);
+    --shadow-sticky: 0 1px 0 rgba(27, 31, 36, 0.05), 0 8px 24px rgba(27, 31, 36, 0.06);
+    --focus-ring: 0 0 0 3px color-mix(in srgb, var(--insight) 30%, transparent);
+
+    /* ── Motion (restrained, editorial) ── */
+    --motion-fast: 120ms;
+    --motion-base: 200ms;
+    --motion-slow: 320ms;
+    --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* =====================================================================
+     Component layer (mockup)
+     ===================================================================== */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  :focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  /* Draft marker */
+  .draft-strip {
+    background: var(--ink);
+    color: var(--canvas);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    text-align: center;
+    padding: 6px var(--space-4);
+  }
+
+  /* ── Header: brand row + nav row ── */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--surface);
+    box-shadow: var(--shadow-sticky);
+  }
+  .topbar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: 0 var(--space-8);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .brand-mark { display: block; width: 26px; height: 26px; }
+  .topbar-right {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .search {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--canvas);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    width: 240px;
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+  .search svg { flex: none; }
+  .sub-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    padding: 5px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .sub-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--status-healthy);
+    box-shadow: 0 0 0 3px var(--status-healthy-tint);
+  }
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--insight-tint);
+    border: 1px solid var(--insight-line);
+    color: var(--insight-strong);
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-row {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-8);
+    padding: 0 var(--space-8);
+    height: 42px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .nav-row::-webkit-scrollbar { display: none; }
+  .nav-group {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-4);
+  }
+  .glabel {
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-overline);
+    color: var(--ink-3);
+    font-weight: 600;
+  }
+  .nav-tab {
+    font-size: 13px;
+    color: var(--ink-2);
+    padding: 11px 2px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+  }
+  .nav-tab:hover { color: var(--ink); }
+  .nav-tab.active {
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom-color: var(--insight);
+  }
+
+  /* ── Page head ── */
+  .page-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    padding: var(--space-8) var(--space-8) var(--space-2);
+  }
+  .overline {
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-overline);
+    color: var(--ink-3);
+    font-weight: 600;
+    margin: 0 0 var(--space-1);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    line-height: var(--leading-display);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    margin: 0 0 var(--space-1);
+  }
+  .page-sub { margin: 0; color: var(--ink-2); font-size: 14px; max-width: 62ch; }
+  .actions { display: inline-flex; gap: var(--space-2); align-items: center; }
+
+  .btn {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    padding: 9px 18px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--insight); color: var(--ink-on-insight); }
+  .btn-primary:hover { background: var(--insight-strong); }
+  .btn-secondary { background: var(--surface); border-color: var(--line-strong); color: var(--ink-2); }
+  .btn-secondary:hover { background: var(--surface-hover); color: var(--ink); }
+
+  /* ── KPI strip ── */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-8) 0;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-5) var(--space-5) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    transition: box-shadow var(--motion-base) var(--ease-standard);
+  }
+  .kpi-card:hover { box-shadow: var(--shadow-raised); }
+  .kpi-top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+  .kpi-label {
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-overline);
+    color: var(--ink-3);
+    font-weight: 600;
+  }
+  .kpi-row { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+  .kpi-value {
+    font-family: var(--font-display);
+    font-size: 34px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .kpi-cap { margin: 0; font-size: 12px; color: var(--ink-3); }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    padding: 2px 10px;
+    white-space: nowrap;
+  }
+  .chip-healthy { background: var(--status-healthy-tint); color: var(--status-healthy); }
+  .chip-warning { background: var(--status-warning-tint); color: var(--status-warning); }
+  .chip-critical { background: var(--status-critical-tint); color: var(--status-critical); }
+  .chip-info { background: var(--status-info-tint); color: var(--status-info); }
+  .chip-insight { background: var(--insight-tint); color: var(--insight-strong); }
+  .chip-neutral { background: var(--status-neutral-tint); color: var(--status-neutral); }
+
+  /* ── Content grid: portfolio table + insight panel ── */
+  .content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-8) var(--space-10);
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-5) 0;
+  }
+  .panel-title {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    line-height: var(--leading-tight);
+    font-weight: 700;
+    margin: 0;
+  }
+  .panel-meta { font-size: 12px; color: var(--ink-3); margin-left: var(--space-2); }
+  .filters { display: inline-flex; gap: var(--space-1); align-items: center; }
+  .filter {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    border: 1px solid transparent;
+    border-radius: var(--radius-pill);
+    padding: 4px 12px;
+    cursor: pointer;
+    background: transparent;
+    transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+  }
+  .filter:hover { color: var(--ink); background: var(--surface-hover); }
+  .filter.active { background: var(--surface-active); color: var(--ink); font-weight: 600; }
+
+  .table-wrap { overflow-x: auto; padding: 0 var(--space-2) var(--space-2); }
+  table.tbl { width: 100%; border-collapse: collapse; min-width: 760px; }
+  .tbl th {
+    text-align: left;
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-overline);
+    font-weight: 600;
+    color: var(--ink-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+  .tbl td {
+    padding: 13px var(--space-4);
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: middle;
+    font-size: 14px;
+    color: var(--ink-2);
+    transition: background var(--motion-fast) var(--ease-standard);
+  }
+  .tbl tbody tr:hover td { background: var(--surface-hover); }
+  .tbl tbody tr:last-child td { border-bottom: none; }
+  .biz-name { color: var(--ink); font-weight: 600; }
+  .biz-code { display: block; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-3); margin-top: 1px; }
+  .score { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .delta { font-family: var(--font-mono); font-size: 11.5px; margin-left: 6px; }
+  .delta-up { color: var(--status-healthy); }
+  .delta-down { color: var(--status-critical); }
+  .delta-flat { color: var(--ink-3); }
+  .ws-open { color: var(--insight-strong); font-weight: 600; }
+  .ws-covered { color: var(--ink-3); }
+  .press-low { color: var(--ink-3); }
+  .press-moderate { color: var(--ink-2); }
+  .press-high { color: var(--status-critical); font-weight: 600; }
+  .press-elevated { color: var(--status-warning); font-weight: 600; }
+  .traj { font-size: 14px; }
+  .t-up { color: var(--status-healthy); }
+  .t-down { color: var(--status-critical); }
+  .t-flat { color: var(--ink-3); }
+  .reviewed { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
+
+  /* ── Insight panel (differentiation angle) ── */
+  .insight-panel {
+    background: var(--insight-tint);
+    border: 1px solid var(--insight-line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .insight-panel h3 {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    line-height: var(--leading-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .insight-panel .lede { margin: 0; color: var(--ink-2); font-size: 14px; }
+  .evidence { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .evidence li { display: flex; gap: var(--space-2); align-items: baseline; font-size: 13.5px; color: var(--ink-2); }
+  .evidence .marker {
+    flex: none;
+    width: 7px; height: 7px;
+    border-radius: 2px;
+    background: var(--insight);
+    transform: translateY(-1px);
+  }
+  .rec-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .rec-box p { margin: 0; font-size: 13.5px; color: var(--ink); line-height: var(--leading-body); }
+  .confidence { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+  .confidence .row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-3); }
+  .confidence .row strong { color: var(--ink-2); font-weight: 600; }
+  .meter { height: 6px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--insight) 16%, transparent); overflow: hidden; }
+  .meter > span { display: block; height: 100%; width: 78%; border-radius: var(--radius-pill); background: var(--insight); }
+
+  .foot-note { text-align: center; font-size: 12px; color: var(--ink-3); padding: 0 var(--space-4) var(--space-8); }
+
+  /* ── Responsive ── */
+  @media (max-width: 1180px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .content-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .topbar { padding: 0 var(--space-4); gap: var(--space-3); }
+    .nav-row { padding: 0 var(--space-4); }
+    .page-head { padding: var(--space-6) var(--space-4) var(--space-2); }
+    .kpis { grid-template-columns: 1fr; padding: var(--space-3) var(--space-4) 0; }
+    .content-grid { padding: var(--space-3) var(--space-4) var(--space-8); }
+    .search { display: none; }
+    .kpi-value { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="draft-strip">DRAFT mockup - consulting redesign. Design only; no production files touched.</div>
+
+  <header class="app-header">
+    <div class="topbar">
+      <a class="brand" href="#fleet" aria-label="ObserveCo home">
+        <svg class="brand-mark" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+          <rect x="1" y="1" width="24" height="24" rx="7" fill="#0e6e5c"/>
+          <path d="M6 14.5 L9.5 14.5 L11 9.5 L12.5 17 L14 10.5 L15.5 15.5 L17 12.5 L20 12.5"
+                stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12.5" cy="17" r="1.1" fill="#ffffff" fill-opacity="0.85"/>
+        </svg>
+        ObserveCo
+      </a>
+      <div class="topbar-right">
+        <span class="search" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="6" cy="6" r="4.4" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M9.4 9.4 L12.4 12.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          Search portfolio
+        </span>
+        <span class="sub-pill"><span class="sub-dot" aria-hidden="true"></span>Differentiation Watch</span>
+        <span class="avatar" aria-hidden="true">SC</span>
+      </div>
+    </div>
+    <nav class="nav-row" aria-label="Primary">
+      <div class="nav-group">
+        <span class="glabel">Monitor</span>
+        <a class="nav-tab active" href="#fleet" aria-current="page">Fleet</a>
+        <a class="nav-tab" href="#alerts">Alerts</a>
+        <a class="nav-tab" href="#review">Review Cycle</a>
+        <a class="nav-tab" href="#coverage">Coverage Map</a>
+      </div>
+      <div class="nav-group">
+        <span class="glabel">Analyze</span>
+        <a class="nav-tab" href="#insights">Insights</a>
+        <a class="nav-tab" href="#benchmarks">Benchmarks</a>
+        <a class="nav-tab" href="#positioning">Positioning</a>
+      </div>
+      <div class="nav-group">
+        <span class="glabel">Intelligence</span>
+        <a class="nav-tab" href="#differentiation">Differentiation</a>
+        <a class="nav-tab" href="#signals">Market Signals</a>
+        <a class="nav-tab" href="#notes">Watch Notes</a>
+      </div>
+      <div class="nav-group">
+        <span class="glabel">Settings</span>
+        <a class="nav-tab" href="#config">Config</a>
+        <a class="nav-tab" href="#billing">Billing</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-head">
+      <div>
+        <p class="overline">Portfolio overview</p>
+        <h1>Differentiation at a glance</h1>
+        <p class="page-sub">Fourteen businesses under watch, refreshed weekly from live market signals.</p>
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary" type="button">Export report</button>
+        <button class="btn btn-primary" type="button">New engagement</button>
+      </div>
+    </section>
+
+    <section class="kpis" aria-label="Key indicators">
+      <article class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Differentiation Index</span>
+          <span class="chip chip-healthy">+6 vs last quarter</span>
+        </div>
+        <div class="kpi-row">
+          <span class="kpi-value">68</span>
+          <svg width="96" height="30" viewBox="0 0 96 30" fill="none" aria-hidden="true">
+            <path d="M0 21 L13 17 L26 19 L39 12 L52 9 L65 7 L78 4 L96 2 L96 30 L0 30 Z" fill="#e7f1ee"/>
+            <path d="M0 21 L13 17 L26 19 L39 12 L52 9 L65 7 L78 4 L96 2" stroke="#0e6e5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="96" cy="2" r="2.6" fill="#0e6e5c"/>
+          </svg>
+        </div>
+        <p class="kpi-cap">Across 14 portfolio businesses</p>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Open whitespace</span>
+          <span class="chip chip-insight">Actionable</span>
+        </div>
+        <div class="kpi-row">
+          <span class="kpi-value">3</span>
+        </div>
+        <p class="kpi-cap">2 in logistics, 1 in F&amp;B</p>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Competitive pressure</span>
+          <span class="chip chip-warning">3 flagged</span>
+        </div>
+        <div class="kpi-row">
+          <span class="kpi-value">Elevated</span>
+        </div>
+        <p class="kpi-cap">Northstar, Bluewater and Strait</p>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Coverage</span>
+          <span class="chip chip-info">9 Watch, 5 one-shot</span>
+        </div>
+        <div class="kpi-row">
+          <span class="kpi-value">14</span>
+        </div>
+        <p class="kpi-cap">Renews 21 Aug 2026</p>
+      </article>
+    </section>
+
+    <div class="content-grid">
+      <section class="panel" aria-labelledby="portfolio-title">
+        <div class="panel-head">
+          <h2 class="panel-title" id="portfolio-title">Portfolio<span class="panel-meta">14 businesses under watch, updated 12 Aug 2026</span></h2>
+          <div class="filters" role="group" aria-label="Filter portfolio">
+            <button class="filter active" type="button" data-filter="all" aria-pressed="true">All 14</button>
+            <button class="filter" type="button" data-filter="risk" aria-pressed="false">At risk 2</button>
+            <button class="filter" type="button" data-filter="watch" aria-pressed="false">Watch 3</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th scope="col">Business</th>
+                <th scope="col">Segment</th>
+                <th scope="col">Differentiation Index</th>
+                <th scope="col">Whitespace</th>
+                <th scope="col">Pressure</th>
+                <th scope="col">Trajectory</th>
+                <th scope="col">Status</th>
+                <th scope="col">Reviewed</th>
+              </tr>
+            </thead>
+            <tbody id="portfolioRows">
+              <tr data-status="ok">
+                <td><span class="biz-name">Northstar Logistics</span><span class="biz-code">NS-01</span></td>
+                <td>Logistics</td>
+                <td><span class="score">72</span><span class="delta delta-up">+4</span></td>
+                <td><span class="ws-open">Open</span></td>
+                <td><span class="press-moderate">Moderate</span></td>
+                <td><span class="traj t-up">↑</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">12 Aug</span></td>
+              </tr>
+              <tr data-status="watch">
+                <td><span class="biz-name">Kopi Culture</span><span class="biz-code">KC-02</span></td>
+                <td>F&amp;B</td>
+                <td><span class="score">58</span><span class="delta delta-up">+2</span></td>
+                <td><span class="ws-open">Open</span></td>
+                <td><span class="press-elevated">Elevated</span></td>
+                <td><span class="traj t-up">↑</span></td>
+                <td><span class="chip chip-warning">Watch</span></td>
+                <td><span class="reviewed">12 Aug</span></td>
+              </tr>
+              <tr data-status="ok">
+                <td><span class="biz-name">Habitat &amp; Co.</span><span class="biz-code">HC-03</span></td>
+                <td>Home retail</td>
+                <td><span class="score">64</span><span class="delta delta-up">+1</span></td>
+                <td><span class="ws-covered">Covered</span></td>
+                <td><span class="press-low">Low</span></td>
+                <td><span class="traj t-flat">→</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">11 Aug</span></td>
+              </tr>
+              <tr data-status="ok">
+                <td><span class="biz-name">Meridian Health</span><span class="biz-code">MH-04</span></td>
+                <td>Health services</td>
+                <td><span class="score">81</span><span class="delta delta-up">+7</span></td>
+                <td><span class="ws-open">Open</span></td>
+                <td><span class="press-moderate">Moderate</span></td>
+                <td><span class="traj t-up">↑</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">11 Aug</span></td>
+              </tr>
+              <tr data-status="risk">
+                <td><span class="biz-name">Bluewater Marine</span><span class="biz-code">BM-05</span></td>
+                <td>Marine services</td>
+                <td><span class="score">47</span><span class="delta delta-down">-3</span></td>
+                <td><span class="ws-covered">Covered</span></td>
+                <td><span class="press-high">High</span></td>
+                <td><span class="traj t-down">↓</span></td>
+                <td><span class="chip chip-critical">At risk</span></td>
+                <td><span class="reviewed">10 Aug</span></td>
+              </tr>
+              <tr data-status="ok">
+                <td><span class="biz-name">Crafted Supply Co.</span><span class="biz-code">CS-06</span></td>
+                <td>B2B supplies</td>
+                <td><span class="score">66</span><span class="delta delta-up">+5</span></td>
+                <td><span class="ws-open">Open</span></td>
+                <td><span class="press-moderate">Moderate</span></td>
+                <td><span class="traj t-up">↑</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">10 Aug</span></td>
+              </tr>
+              <tr data-status="watch">
+                <td><span class="biz-name">Lumi&egrave;re Studio</span><span class="biz-code">LS-07</span></td>
+                <td>Design services</td>
+                <td><span class="score">61</span><span class="delta delta-up">+2</span></td>
+                <td><span class="ws-open">Open</span></td>
+                <td><span class="press-elevated">Elevated</span></td>
+                <td><span class="traj t-flat">→</span></td>
+                <td><span class="chip chip-warning">Watch</span></td>
+                <td><span class="reviewed">9 Aug</span></td>
+              </tr>
+              <tr data-status="ok">
+                <td><span class="biz-name">Petal &amp; Pail</span><span class="biz-code">PP-08</span></td>
+                <td>Retail</td>
+                <td><span class="score">57</span><span class="delta delta-flat">0</span></td>
+                <td><span class="ws-covered">Covered</span></td>
+                <td><span class="press-moderate">Moderate</span></td>
+                <td><span class="traj t-flat">→</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">9 Aug</span></td>
+              </tr>
+              <tr data-status="ok">
+                <td><span class="biz-name">Harbour Point F&amp;B Group</span><span class="biz-code">HP-09</span></td>
+                <td>F&amp;B</td>
+                <td><span class="score">55</span><span class="delta delta-flat">-1</span></td>
+                <td><span class="ws-covered">Covered</span></td>
+                <td><span class="press-moderate">Moderate</span></td>
+                <td><span class="traj t-flat">→</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">8 Aug</span></td>
+              </tr>
+              <tr data-status="ok">
+                <td><span class="biz-name">Atlas Engineering</span><span class="biz-code">AE-10</span></td>
+                <td>Engineering</td>
+                <td><span class="score">70</span><span class="delta delta-up">+3</span></td>
+                <td><span class="ws-open">Open</span></td>
+                <td><span class="press-moderate">Moderate</span></td>
+                <td><span class="traj t-up">↑</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">8 Aug</span></td>
+              </tr>
+              <tr data-status="ok">
+                <td><span class="biz-name">North Wind Advisory</span><span class="biz-code">NW-11</span></td>
+                <td>Professional services</td>
+                <td><span class="score">63</span><span class="delta delta-up">+2</span></td>
+                <td><span class="ws-open">Open</span></td>
+                <td><span class="press-low">Low</span></td>
+                <td><span class="traj t-up">↑</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">7 Aug</span></td>
+              </tr>
+              <tr data-status="watch">
+                <td><span class="biz-name">Bluegrass Growers</span><span class="biz-code">BG-12</span></td>
+                <td>Agri-trade</td>
+                <td><span class="score">52</span><span class="delta delta-down">-2</span></td>
+                <td><span class="ws-covered">Covered</span></td>
+                <td><span class="press-high">High</span></td>
+                <td><span class="traj t-down">↓</span></td>
+                <td><span class="chip chip-warning">Watch</span></td>
+                <td><span class="reviewed">7 Aug</span></td>
+              </tr>
+              <tr data-status="ok">
+                <td><span class="biz-name">Merlion Ventures</span><span class="biz-code">MV-13</span></td>
+                <td>Fintech</td>
+                <td><span class="score">74</span><span class="delta delta-up">+6</span></td>
+                <td><span class="ws-open">Open</span></td>
+                <td><span class="press-moderate">Moderate</span></td>
+                <td><span class="traj t-up">↑</span></td>
+                <td><span class="chip chip-healthy">On track</span></td>
+                <td><span class="reviewed">6 Aug</span></td>
+              </tr>
+              <tr data-status="risk">
+                <td><span class="biz-name">Strait &amp; Co Traders</span><span class="biz-code">ST-14</span></td>
+                <td>Trading</td>
+                <td><span class="score">49</span><span class="delta delta-flat">0</span></td>
+                <td><span class="ws-covered">Covered</span></td>
+                <td><span class="press-elevated">Elevated</span></td>
+                <td><span class="traj t-flat">→</span></td>
+                <td><span class="chip chip-critical">At risk</span></td>
+                <td><span class="reviewed">6 Aug</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="insight-panel" aria-labelledby="insight-title">
+        <p class="overline">Insight of the week</p>
+        <h3 id="insight-title">Logistics whitespace is real, and time-boxed</h3>
+        <p class="lede">Fourteen competitors indexed across SG logistics. Two positions stay open, and both anchor on price. One funded entrant is already scaling.</p>
+        <ul class="evidence">
+          <li><span class="marker" aria-hidden="true"></span>14 competitors indexed in the segment</li>
+          <li><span class="marker" aria-hidden="true"></span>2 open positions of 14; 12 occupied</li>
+          <li><span class="marker" aria-hidden="true"></span>18-24% price-anchoring gap vs new entrants</li>
+        </ul>
+        <div class="rec-box">
+          <p class="overline">Recommendation</p>
+          <p>Move Northstar into the open vertical last-mile position within 90 days. The window closes as two funded entrants scale.</p>
+          <div><button class="btn btn-primary" type="button">Open strategy note</button></div>
+        </div>
+        <div class="confidence">
+          <div class="row"><span>Confidence</span><strong>78%, from 3 market signals</strong></div>
+          <div class="meter" role="img" aria-label="78 percent confidence"><span></span></div>
+        </div>
+      </aside>
+    </div>
+
+    <p class="foot-note">Illustrative sample data for the pivot mockup. DRAFT - not production.</p>
+  </main>
+
+  <script>
+    (function () {
+      var chips = document.querySelectorAll('.filter[data-filter]');
+      var rows = document.querySelectorAll('#portfolioRows tr[data-status]');
+      chips.forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          chips.forEach(function (c) { c.classList.remove('active'); c.setAttribute('aria-pressed', 'false'); });
+          chip.classList.add('active');
+          chip.setAttribute('aria-pressed', 'true');
+          var f = chip.getAttribute('data-filter');
+          rows.forEach(function (r) {
+            var show = f === 'all' || r.getAttribute('data-status') === f;
+            r.style.display = show ? '' : 'none';
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

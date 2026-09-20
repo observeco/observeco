@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Four Ways to Win — Choose Your Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.plays-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
+.play-card{border-radius:12px;padding:24px;}
+.play-card.scale{background:var(--surface-muted);border:1px solid var(--line);}
+.play-card.johor{background:var(--surface-muted);border:1px solid var(--line);}
+.play-card.customer{background:var(--surface-muted);border:1px solid var(--line);}
+.play-card.position{background:var(--accent-tint);border:1px solid var(--accent-line);}
+.play-card .num{font-family:var(--font-display);font-size:16px;font-weight:800;margin-bottom:8px;}
+.play-card.scale .num{color:var(--ink-3);}
+.play-card.johor .num{color:var(--ink-3);}
+.play-card.customer .num{color:var(--ink-3);}
+.play-card.position .num{color:var(--accent);}
+.play-card h3{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.play-card .needs{font-size:12px;color:var(--ink-3);margin-bottom:8px;font-style:italic;}
+.play-card p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+.play-card .tag{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;margin-top:8px;}
+.play-card.scale .tag{background:rgba(107,115,126,.1);color:var(--ink-3);}
+.play-card.johor .tag{background:rgba(107,115,126,.1);color:var(--ink-3);}
+.play-card.customer .tag{background:rgba(107,115,126,.1);color:var(--ink-3);}
+.play-card.position .tag{background:rgba(14,110,92,.1);color:var(--accent-strong);}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part One, Ch 4</div>
+    <h1>Four Ways to Win. Only One Fits a Single Owner-Operator.</h1>
+    <p class="subtitle">The structure produces four ways to win. Three of them ask more of the owner than the fourth — capital, a cross-border operation, or a tech build.</p>
+  </div>
+  <div class="card-body">
+    <div class="plays-grid">
+      <div class="play-card scale">
+        <div class="num">Play 1</div>
+        <h3>Scale and consolidation</h3>
+        <div class="needs">Needs: capital, portfolio mindset</div>
+        <p>A fragmented, thin-margin market is exactly where someone buys up and integrates a struggling category. The finance-ceiling force explains why the field is open.</p>
+        <div class="tag">Not for a single owner-operator</div>
+      </div>
+      <div class="play-card johor">
+        <div class="num">Play 2</div>
+        <h3>The Johor escape</h3>
+        <div class="needs">Needs: cross-border operation</div>
+        <p>The JS-SEZ twinning model — front office in Singapore, back office in Johor. A genuine path out of the cost cap, for a firm that wants to stay an operator rather than become a brand.</p>
+        <div class="tag">Needs cross-border operation</div>
+      </div>
+      <div class="play-card customer">
+        <div class="num">Play 3</div>
+        <h3>Owning the customer relationship</h3>
+        <div class="needs">Needs: tech and logistics build</div>
+        <p>The platforms own 99% of the commerce relationship. Clawing that relationship back — owning the client list and the re-order loop directly — is real and durable.</p>
+        <div class="tag">Needs tech build</div>
+      </div>
+      <div class="play-card position">
+        <div class="num">Play 4</div>
+        <h3>Owning a position</h3>
+        <div class="needs">Needs: consistency, the willingness to own one specific thing</div>
+        <p>In an economy that runs on offline, peer-referred trust, a clear and defensible position is what a lone operator can build and hold. It asks only for consistency.</p>
+        <div class="tag">The play for a single owner-operator</div>
+      </div>
+    </div>
+    <div class="insight-box">
+      <p><strong>The kway-teow hawker, the clinic worker, the tuition teacher — this is exactly who the fourth play is for.</strong> Someone without a chain's capital, a logistics team, or a cross-border operation, but with the ability to own something specific enough to be referred, remembered, and re-hired in a market that runs on trust.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: The author's analysis from the structural data. Confidence: Analysis.</span>
+    <span class="confidence">Analysis</span>
+  </div>
+</div>
+</body>
+</html>

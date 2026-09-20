@@ -1,0 +1,170 @@
+/* ============================================================
+   ObserveCo Consulting — White Paper pages
+   (whitepapers.html index + whitepaper-01..06.html articles)
+   Extends the draft site's consulting design system. Reuses the
+   existing draft.css classes (hero, section, card-grid, table-wrap,
+   btn, etc.) and adds only what the white-paper pages need.
+   ============================================================ */
+
+/* ── White paper graphic (inline SVG include) ──
+   .wp-graphic holds the injected [data-wp-graphic] SVG. On the
+   paper canvas surface, 1200px wide, scrollable on small screens. */
+.wp-graphic {
+  width: 100%;
+  overflow-x: auto;
+  margin: var(--space-3) 0 var(--space-4);
+}
+.wp-graphic svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.wp-graphic.wp-flat svg { border: none; }
+
+/* ── White paper index cards ─────────────────────────────── */
+.wp-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+.wp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.wp-card:hover { border-color: var(--green); }
+.wp-card .wp-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.wp-card h3 { font-size: 21px; }
+.wp-card p { color: var(--fg-2); font-size: 15px; flex: 1; }
+.wp-card .wp-card-cta { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-1); }
+.wp-card .wp-card-cta .tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  padding: 3px 10px;
+}
+.wp-card-cta a { font-weight: 600; }
+
+/* ── White paper article layout ──────────────────────────── */
+.wp-article-hero { padding: var(--space-5) 0 var(--space-4); }
+.wp-article-hero .container { max-width: 900px; }
+.wp-article-hero .meta-row {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-3);
+  margin-bottom: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.wp-article-hero .meta-row .sep { color: var(--fg-muted); }
+.wp-article-hero h1 { max-width: 22ch; margin-bottom: var(--space-3); }
+.wp-article-hero .sub { font-size: 19px; color: var(--fg-2); max-width: 62ch; }
+
+/* Article body — readable, evidence-forward, editorial */
+.wp-body { padding-bottom: var(--space-5); }
+.wp-body .container { max-width: 760px; }
+.wp-body article {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--fg);
+}
+.wp-body article > * { margin-bottom: var(--space-3); }
+.wp-body h2 {
+  font-size: clamp(24px, 3.2vw, 30px);
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.wp-body h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+.wp-body h3 { font-size: 21px; margin-top: var(--space-4); margin-bottom: var(--space-2); }
+.wp-body p { color: var(--fg-2); max-width: 68ch; }
+.wp-body strong { color: var(--fg); }
+.wp-body ul, .wp-body ol { padding-left: 24px; color: var(--fg-2); display: grid; gap: var(--space-2); }
+.wp-body li { color: var(--fg-2); }
+.wp-body blockquote {
+  margin: var(--space-4) 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--green);
+  background: var(--green-dim);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.4;
+}
+.wp-body blockquote p { color: var(--fg); }
+.wp-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+  margin: var(--space-4) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: block;
+  overflow-x: auto;
+}
+.wp-body thead th {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+  background: var(--surface-2);
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.wp-body td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+.wp-body tr:last-child td { border-bottom: none; }
+.wp-body .wp-caption {
+  font-size: 13px;
+  color: var(--fg-3);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-2);
+  margin-top: var(--space-3);
+  max-width: 68ch;
+}
+.wp-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-5) 0;
+}
+.wp-body a { color: var(--green); }
+
+/* Article footer nav: prev/next + back to index */
+.wp-article-nav {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+  align-items: center;
+}
+.wp-article-nav .link-arrow { font-size: 15px; }
+.wp-article-nav .wp-prev { margin-right: auto; }
+.wp-article-nav .wp-next { margin-left: auto; }
+
+@media (max-width: 860px) {
+  .wp-grid { grid-template-columns: 1fr; }
+}

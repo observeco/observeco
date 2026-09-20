@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Pet Economy — Where the Childless Money Goes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.hero-stat{text-align:center;padding:28px;background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:12px;margin-bottom:28px;}
+.hero-stat .number{font-family:var(--font-display);font-size:56px;font-weight:800;color:var(--accent-strong);line-height:1;margin-bottom:4px;}
+.hero-stat .context{font-size:15px;color:var(--ink-2);}
+.breakdown-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.breakdown-card{background:var(--surface-muted);border-radius:10px;padding:20px;text-align:center;}
+.breakdown-card .emoji{font-size:28px;margin-bottom:6px;}
+.breakdown-card .value{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.breakdown-card .label{font-size:12px;color:var(--ink-3);line-height:1.3;}
+.growth-row{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
+.growth-card{background:var(--surface-muted);border-radius:10px;padding:18px;}
+.growth-card h3{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.growth-card .stat{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px;}
+.growth-card p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Two, Ch 1</div>
+    <h1>The Money That Would Have Gone to a Child Went to the Dog</h1>
+    <p class="subtitle">Singapore's pet population is growing — dogs 2%/yr, cats 7%/yr. The pet-care industry is largely a creation of young households raising a pet the way their parents raised a child.</p>
+  </div>
+  <div class="card-body">
+    <div class="hero-stat">
+      <div class="number">S$412M</div>
+      <div class="context">Pet care market (2023) — up 12.5% in a year, projected to reach S$650M by 2028 (8.7% CAGR)</div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">Where the Money Goes</div>
+    <div class="breakdown-row">
+      <div class="breakdown-card"><div class="emoji">🍖</div><div class="value">S$185M</div><div class="label">Pet food<br>Top 5 brands hold ~55%</div></div>
+      <div class="breakdown-card"><div class="emoji">🩺</div><div class="value">S$120M</div><div class="label">Veterinary services<br>Contested, no single name</div></div>
+      <div class="breakdown-card"><div class="emoji">🧸</div><div class="value">S$107M</div><div class="label">Retail, grooming, boarding<br>Pet Lovers Centre: largest chain</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">Why This Market Exists</div>
+    <div class="growth-row">
+      <div class="growth-card"><div class="stat">+7%/yr</div><h3>Cat population growth</h3><p>The childless are not poor. They are the most free-spending adults in the country, on the wrong categories. The money did not disappear when the birth rate fell. It moved sideways.</p></div>
+      <div class="growth-card"><div class="stat">+2%/yr</div><h3>Dog population growth</h3><p>The dog needs walking when nobody is home. The cat needs feeding on the weekend. That is care, and it is bought by exactly the same person: the busy adult with money and no time.</p></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>Of the three decisions a pet owner makes — what I feed, who treats my pet, where I buy the stuff — only the veterinary decision is genuinely up for grabs.</strong> A name that could own "who treats my pet" in a growing S$120M market is an open slot as the category consolidates. The ownership is still settling.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: Gitnux, Mars Veterinary, Pet Lovers Centre. Figures 2023. Confidence: High/Moderate.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Elderly Consumer — 20.7% and Rising</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.hero-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.hero-card{background:var(--surface-muted);border-radius:10px;padding:24px;text-align:center;}
+.hero-card .value{font-family:var(--font-display);font-size:36px;font-weight:800;line-height:1;margin-bottom:4px;color:var(--ink);}
+.hero-card .label{font-size:12px;color:var(--ink-3);line-height:1.4;}
+.hero-card.accent .value{color:var(--accent);}
+.hero-card.critical .value{color:var(--critical);}
+.segment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.segment-card{border-radius:12px;padding:24px;}
+.segment-card.silver{background:var(--accent-tint);border:1px solid var(--accent-line);}
+.segment-card.working{background:var(--surface-muted);border:1px solid var(--line);}
+.segment-card.alone{background:var(--critical-tint);border:1px solid rgba(180,35,24,.12);}
+.segment-card .tag{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:8px;}
+.segment-card.silver .tag{color:var(--accent);}
+.segment-card.working .tag{color:var(--ink-3);}
+.segment-card.alone .tag{color:var(--critical);}
+.segment-card h3{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.segment-card .stat{font-family:var(--font-display);font-size:22px;font-weight:800;margin-bottom:4px;}
+.segment-card.silver .stat{color:var(--accent-strong);}
+.segment-card.working .stat{color:var(--ink);}
+.segment-card.alone .stat{color:var(--critical);}
+.segment-card p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Two, Ch 3</div>
+    <h1>The Ageing Is Three Separate Markets, Not One</h1>
+    <p class="subtitle">One in five citizens is now 65+. It was one in eight ten years ago. It is headed to one in four. The failure to separate the three segments inside ageing is the single most expensive mistake a business can make.</p>
+  </div>
+  <div class="card-body">
+    <div class="hero-row">
+      <div class="hero-card accent"><div class="value">20.7%</div><div class="label">of citizens aged 65+<br>(up from 13.1% in 2015)</div></div>
+      <div class="hero-card"><div class="value">88,000</div><div class="label">seniors living alone<br>(doubled since 2015)</div></div>
+      <div class="hero-card critical"><div class="value">67%</div><div class="label">of people aged 60–64<br>are still employed</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">The Three Markets Inside "Ageing"</div>
+    <div class="segment-grid">
+      <div class="segment-card silver">
+        <div class="tag">The silver economy</div>
+        <div class="stat">Independence & care</div>
+        <h3>The senior as consumer</h3>
+        <p>Buying health, care, financial planning. They are going to live longer than any generation before them. The demand is independence, not medical.</p>
+      </div>
+      <div class="segment-card working">
+        <div class="tag">The working elderly</div>
+        <div class="stat">67% still employed at 60–64</div>
+        <h3>Both labour pool and customer</h3>
+        <p>50% of those aged 65–69 still work. One of the highest rates in the world. They are at the same time a labour pool and a customer base.</p>
+      </div>
+      <div class="segment-card alone">
+        <div class="tag">The senior who lives alone</div>
+        <div class="stat">88,000 people</div>
+        <h3>Buying everything</h3>
+        <p>Meals, safety, transport, monitoring — because there is nobody at home to do it. The person she lets into her flat is the person she trusts.</p>
+      </div>
+    </div>
+    <div class="insight-box">
+      <p><strong>A 65-year-old who is still working, and an 82-year-old living alone, are not the same customer. They are almost not the same species of customer.</strong> The ageing is real. The segmentation inside it is the opportunity. Treat "an ageing population" as one market and you will make the single most expensive error in this chapter.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: Population.gov.sg, SingStat. Figures 2025. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

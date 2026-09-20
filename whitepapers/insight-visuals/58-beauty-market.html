@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Beauty Market — S$1.67 Billion, Owned by Pharmacies</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.hero-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.hero-card{background:var(--surface-muted);border-radius:10px;padding:24px;text-align:center;}
+.hero-card .value{font-family:var(--font-display);font-size:32px;font-weight:800;line-height:1;margin-bottom:4px;color:var(--ink);}
+.hero-card .label{font-size:12px;color:var(--ink-3);line-height:1.4;}
+.hero-card.accent .value{color:var(--accent);}
+.split-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+.split-card{border-radius:12px;padding:24px;}
+.split-card.product{background:var(--accent-tint);border:1px solid var(--accent-line);}
+.split-card.service{background:var(--surface-muted);border:1px solid var(--line);}
+.split-card .tag{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:8px;}
+.split-card.product .tag{color:var(--accent);}
+.split-card.service .tag{color:var(--ink-3);}
+.split-card h3{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.split-card p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+.split-card .stat{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px;}
+.brand-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.brand-card{background:var(--surface-muted);border-radius:8px;padding:14px;text-align:center;}
+.brand-card .name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.brand-card .note{font-size:11px;color:var(--ink-3);}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Four, Ch 2</div>
+    <h1>The Product Word Is Owned. The Salon Word Is Open.</h1>
+    <p class="subtitle">S$1.67 billion beauty market. Pharmacy chains hold 80% of the product channel. But no salon chain holds a meaningful share — that word is free.</p>
+  </div>
+  <div class="card-body">
+    <div class="hero-row">
+      <div class="hero-card accent"><div class="value">S$1.67B</div><div class="label">Beauty & personal care<br>market (2024)</div></div>
+      <div class="hero-card"><div class="value">5,540</div><div class="label">Beauty establishments<br>S$1.37B operating receipts</div></div>
+      <div class="hero-card"><div class="value">80%</div><div class="label">of product channel<br>held by pharmacy chains</div></div>
+    </div>
+    <div class="split-row">
+      <div class="split-card product">
+        <div class="tag">The product word — owned</div>
+        <div class="stat">Guardian, Watsons, Unity</div>
+        <h3>Pharmacy oligopoly</h3>
+        <p>Every Singaporean has walked past the same three pharmacy logos on every mall floor. The product word is taken. L'Oréal leads at ~10% of the broader market.</p>
+      </div>
+      <div class="split-card service">
+        <div class="tag">The salon word — open</div>
+        <div class="stat">No chain holds meaningful share</div>
+        <h3>Fragmented, unowned</h3>
+        <p>The salon where she gets her hair done is a name no one can guess. Kimage, Leekaja, 1989, KC Group — none dominates. That word is a lead worth testing.</p>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">The Homegrown Wave — 34 Singapore Beauty Brands Going Global</div>
+    <div class="brand-grid">
+      <div class="brand-card"><div class="name">Sigi Skin</div><div class="note">Clean beauty</div></div>
+      <div class="brand-card"><div class="name">Allies of Skin</div><div class="note">Clinical skincare</div></div>
+      <div class="brand-card"><div class="name">Skin Inc</div><div class="note">Customised serums</div></div>
+      <div class="brand-card"><div class="name">Estetica</div><div class="note">Heritage beauty</div></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>The product word is owned by the pharmacy oligopoly. The salon word is open.</strong> Every Singaporean has a salon she goes to — and that salon is a name no one can guess, because no chain holds a meaningful share. That is the same shape as tuition: a fragmented, growing category where a brand could be built.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: Statista via US ITA, SkillsFuture/SSG, L'Oréal. Figures 2024. Confidence: High/Moderate.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

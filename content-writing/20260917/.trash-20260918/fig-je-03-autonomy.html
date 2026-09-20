@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-je-03 — what calibrated confidence unlocks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:12px;overflow:hidden;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:15px 28px 10px;border-bottom:1px solid var(--line);}
+.overline{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:25px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:12px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:13px 28px 13px;}
+.quote{background:var(--surface-muted);border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;margin-bottom:11px;}
+.quote .q{font-family:var(--font-display);font-size:17px;font-style:italic;color:var(--ink);line-height:1.45;margin-bottom:5px;}
+.quote p{font-size:10px;color:var(--ink-3);}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:11px;}
+.fstep{background:var(--surface-muted);border:1px solid var(--line);border-radius:9px;padding:9px 11px;}
+.fstep .n{font-size:9px;font-weight:700;color:var(--accent-strong);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+.fstep h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.fstep p{font-size:10.5px;color:var(--ink-2);line-height:1.35;}
+.fstep .tier{display:inline-block;font-size:9px;font-weight:700;border-radius:999px;padding:2px 8px;margin-bottom:4px;}
+.tier.mid{background:#fdf3d8;color:#92600a;border:1px solid rgba(146,96,10,.25);}
+.tier.low{background:var(--critical-tint);color:var(--critical);border:1px solid rgba(180,35,24,.2);}
+.tier.high{background:var(--accent-tint);color:var(--accent-strong);border:1px solid rgba(14,110,92,.2);}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center;border-top:1px solid var(--line);padding-top:11px;}
+.split h4{font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:7px;}
+.callout{background:#2a2f36;border-radius:9px;padding:10px 13px;}
+.callout .big{font-family:var(--font-display);font-size:25px;font-weight:800;color:#8fd4c4;line-height:1;margin-bottom:4px;}
+.callout p{font-size:10.5px;color:#c3c9d1;line-height:1.4;}
+.foot{padding:8px 28px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">The under-read feature — not speed, not price</div>
+    <h2>The Confidence Number Is the Product</h2>
+    <p class="subtitle">Calibrated probability is what lets a system draw the line between "the machine decides" and "a human decides". That line is the difference between an assistant and an operator.</p>
+  </div>
+  <div class="fig-body">
+    <div class="quote">
+      <div class="q">"If a model can do a task 95% of the time but doesn't say when it's in the 5%, it can't automate that task."</div>
+      <p>TypeSafe AI, launch post, 15 Sep 2026 — the sentence the coverage keeps under-reading.</p>
+    </div>
+    <div class="flow">
+      <div class="fstep"><span class="tier high">Confidence above the line</span><h3>The system acts</h3><p>Auto-execute, no human in the loop. The decision was cheap, instant, and honest about its own certainty.</p></div>
+      <div class="fstep"><span class="tier mid">On the line</span><h3>It asks once</h3><p>One escalation, exactly when the probability says it needs one. Not on every step forever.</p></div>
+      <div class="fstep"><span class="tier low">Below the line</span><h3>A human decides</h3><p>The hard cases still go to a person. The threshold is an engineering dial, not a leap of faith.</p></div>
+    </div>
+    <div class="split">
+      <div>
+        <h4>The blocker was never intelligence</h4>
+        <p style="font-size:11px;color:var(--ink-2);line-height:1.5;margin-bottom:8px;">Speed and cost make Jev interesting. Calibrated probability is what makes automation possible. Today every AI system needs a human on every step because the model cannot say when it is in the 5%. The moment every decision carries an honest probability, tiered autonomy becomes buildable — and measurable.</p>
+        <p style="font-size:10.5px;color:var(--ink-3);line-height:1.4;">Pattern it like a CPU: L1 the fast cheap decider, L2 the slow expensive reasoner. Route everything through L1 first; escalate only what is actually hard.</p>
+      </div>
+      <div class="callout">
+        <div class="big">Cheaper decisions</div>
+        <p>Do not reduce the number of decisions. They <strong>multiply</strong>. That is the Jevons paradox the company is named for — every order-of-magnitude drop in the cost of a decision makes previously uneconomical decisions worth making.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: TypeSafe AI launch post (calibration quote, primitives); applied analysis on tiered autonomy and the L1/L2 pattern. The Jevons reading is the company's own framing.</span>
+    <span class="confidence">Moderate</span>
+  </div>
+</div>
+</body>
+</html>

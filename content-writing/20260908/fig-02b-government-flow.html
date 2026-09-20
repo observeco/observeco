@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas: #f7f6f3; --surface: #ffffff; --surface-muted: #efeee9;
+  --ink: #1b1f24; --ink-2: #4a525c; --ink-3: #6b737e;
+  --accent: #0e6e5c; --accent-strong: #0a5447; --accent-tint: #e7f1ee; --accent-line: #c6dcd4;
+  --line: #e4e2dc;
+  --font-display: 'Playfair Display', Georgia, serif; --font-body: 'Inter', system-ui, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--canvas); font-family: var(--font-body); color: var(--ink); }
+.wrap { width: 1200px; padding: 28px 32px; background: var(--canvas); }
+.section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); font-weight: 600; margin-bottom: 16px; }
+.flow-visual { background: var(--surface); border-radius: 12px; padding: 24px; border: 1px solid var(--line); }
+.flow-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 16px; }
+.flow-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.flow-label { width: 220px; font-size: 13px; color: var(--ink-2); text-align: right; }
+.flow-track { flex: 1; height: 28px; background: var(--line); border-radius: 6px; overflow: hidden; }
+.flow-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; font-size: 12px; font-weight: 700; color: white; }
+.flow-fill.sd { background: var(--accent); width: 56.5%; }
+.flow-fill.health { background: #2d8a6e; width: 19%; }
+.flow-fill.social { background: #4a9e85; width: 5.3%; }
+.flow-fill.other { background: var(--ink-3); width: 19.2%; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="section-label">The second payroll — every civil-servant salary is a standing order into the domestic economy</div>
+  <div class="flow-visual">
+    <div class="flow-title">Where the S$97.5B goes</div>
+    <div class="flow-row"><div class="flow-label">Social Development</div><div class="flow-track"><div class="flow-fill sd">S$55.1B — 56.5%</div></div></div>
+    <div class="flow-row"><div class="flow-label">Health</div><div class="flow-track"><div class="flow-fill health">S$18.5B</div></div></div>
+    <div class="flow-row"><div class="flow-label">Social &amp; Family Dev</div><div class="flow-track"><div class="flow-fill social">S$5.2B</div></div></div>
+    <div class="flow-row"><div class="flow-label">Other (defence, education, etc.)</div><div class="flow-track"><div class="flow-fill other">Remaining</div></div></div>
+  </div>
+</div>
+</body>
+</html>

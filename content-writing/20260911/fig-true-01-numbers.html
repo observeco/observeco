@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-true-01 — True Fitness numbers, read honestly</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee; --accent-line:#c6dcd4;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --warning:#9a6500; --warning-tint:#fbf0d8;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:16px;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:24px 32px 16px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--critical);font-weight:600;margin-bottom:6px;}
+h2{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.subtitle{font-size:14px;color:var(--ink-2);line-height:1.5;}
+.fig-body{padding:22px 32px 24px;}
+.rows{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.row{display:grid;grid-template-columns:220px 1fr 130px;align-items:center;gap:12px;}
+.row-label{font-size:12px;color:var(--ink-2);text-align:right;line-height:1.3;font-weight:600;}
+.row-track{height:34px;background:var(--surface-muted);border-radius:6px;overflow:hidden;position:relative;}
+.row-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:12px;font-size:12px;font-weight:700;color:white;white-space:nowrap;}
+.row-fill.strong{background:var(--critical);width:100%;}
+.row-fill.medium{background:#c96a3e;width:62%;}
+.row-fill.weak{background:var(--warning);width:30%;}
+.row-val{font-size:13px;font-weight:700;color:var(--ink);text-align:right;line-height:1.35;}
+.row-val small{display:block;font-size:11px;font-weight:500;color:var(--ink-3);}
+.callout{background:var(--critical-tint);border:1px solid rgba(180,35,24,.18);border-radius:10px;padding:14px 18px;}
+.callout p{font-size:14px;color:var(--ink-2);line-height:1.55;}
+.callout strong{color:var(--critical);}
+.foot{padding:12px 32px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(180,35,24,.1);color:var(--critical);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--critical);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">Insolvency — reading the numbers honestly</div>
+    <h2>True Fitness' Numbers: This Was Not a Surprise</h2>
+    <p class="subtitle">From the parent company's own bourse filing — a business whose liabilities exceeded its assets by roughly 3:1, before the doors shut.</p>
+  </div>
+  <div class="fig-body">
+    <div class="rows">
+      <div class="row">
+        <div class="row-label">Revenue 2025</div>
+        <div class="row-track"><div class="row-fill strong">HK$181.2M (S$29.3M) — but the loss on top of it was HK$34.3M</div></div>
+        <div class="row-val">+rev,<br><small>still net loss</small></div>
+      </div>
+      <div class="row">
+        <div class="row-label">Net liabilities<br>Dec 31 2025</div>
+        <div class="row-track"><div class="row-fill strong">HK$405.8M (S$64M+) — assets HK$149.7M vs liabilities HK$555.5M</div></div>
+        <div class="row-val">−HK$405.8M</div>
+      </div>
+      <div class="row">
+        <div class="row-label">8 months 2026</div>
+        <div class="row-track"><div class="row-fill medium">Loss HK$19.1M on revenue HK$118.4M — the hole deepened</div></div>
+        <div class="row-val">−HK$19.1M</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Net liabilities<br>Aug 31 2026</div>
+        <div class="row-track"><div class="row-fill strong">HK$429.3M — assets HK$204.5M vs liabilities HK$633.8M</div></div>
+        <div class="row-val">−HK$429.3M</div>
+      </div>
+      <div class="row">
+        <div class="row-label">Owed to parent</div>
+        <div class="row-track"><div class="row-fill weak">HK$309.7M due to Kontafarma group at end-August — inside the debt</div></div>
+        <div class="row-val">HK$309.7M</div>
+      </div>
+    </div>
+    <div class="callout">
+      <p>This was not a cash-flow panic. The <strong>net liabilities exceeded assets by roughly 3:1</strong> — and the 2026 accounts show the hole getting deeper. The parent said it is refocusing on its pharmaceutical business, which brings in about 77% of group revenue.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: Kontafarma HKEX filing (10 Sep 2026), ST (11 Sep 2026). Confidence: High (filing figures) / Moderate (judgment).</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

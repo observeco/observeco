@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-grab-03 — Grab's vertical track record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee; --accent-line:#c6dcd4;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --warning:#9a6500; --warning-tint:#fbf0d8;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:16px;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:24px 32px 16px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:6px;}
+h2{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.subtitle{font-size:14px;color:var(--ink-2);line-height:1.5;}
+.fig-body{padding:22px 32px 24px;}
+table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px;}
+th{background:var(--surface-muted);color:var(--ink-3);text-transform:uppercase;font-size:11px;letter-spacing:.06em;padding:10px 12px;text-align:left;font-weight:700;}
+td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top;}
+td.vert{font-weight:600;color:var(--ink);}
+td.win{color:var(--accent-strong);font-weight:700;}
+td.lose{color:var(--critical);font-weight:700;}
+td.mix{color:var(--warning);font-weight:700;}
+.callout{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:14px 18px;}
+.callout p{font-size:14px;color:var(--ink-2);line-height:1.55;}
+.callout strong{color:var(--accent-strong);}
+.foot{padding:12px 32px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">The super-app track record</div>
+    <h2>Grab's Other Verticals — What Took Off, What Didn't</h2>
+    <p class="subtitle">Grab has launched many "everyday everything" verticals. The pattern predicts the car marketplace.</p>
+  </div>
+  <div class="fig-body">
+    <table>
+      <thead><tr><th>Vertical</th><th>Launched</th><th>Status</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td class="vert">GrabShuttle (transit)</td><td>2016</td><td class="lose">Discontinued Jan 2020</td><td>On-demand bus service ceased</td></tr>
+        <tr><td class="vert">GrabTravel / hotels</td><td>2019</td><td class="mix">Evolved → GrabStays</td><td>Relaunched as GrabStays May 2026 (Nuitée)</td></tr>
+        <tr><td class="vert">GrabInsurance</td><td>2019</td><td class="mix">Active, small</td><td>ZhongAn JV; niche</td></tr>
+        <tr><td class="vert">GrabMart (grocery)</td><td>2019</td><td class="win">Growing</td><td>Grew 1.7× the rate of food delivery (Q2 2026)</td></tr>
+        <tr><td class="vert">GXS bank / GrabPay</td><td>2022</td><td class="win">Strong</td><td>US$1.6B deposits (SG+MY); near-zero acquisition cost</td></tr>
+        <tr><td class="vert">GrabStays (hotels)</td><td>May 2026</td><td class="mix">New, unproven</td><td>Launched 4 months ago</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <p>The pattern: Grab wins where it <strong>extends an existing high-frequency habit</strong> (food → groceries, rides → payments). It struggles where it <strong>jumps into a low-frequency, high-commitment category</strong> (transit was discontinued; travel keeps relaunching). A car is the <strong>lowest-frequency, highest-commitment</strong> purchase of all.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: Grab press, Vulcan Post, fintechnews.sg, CNA. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Breathing Glow Colour Switcher</title>
+<style>
+  :root {
+    --canvas: #f7f6f3;
+    --ink: #1b1f24;
+    --ink-2: #4a525c;
+    --ink-3: #6b737e;
+    --insight: #0e6e5c;
+    --insight-strong: #0a5447;
+    --insight-tint: #e7f1ee;
+    --insight-line: #c6dcd4;
+    --line: #e4e2dc;
+    --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: var(--canvas); color: var(--ink); }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 20px; background: rgba(247,246,243,0.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+  }
+  .topbar .brand { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--insight); }
+  .topbar .brand small { font-family: var(--font-body); font-weight: 500; color: var(--ink-3); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 8px; }
+  .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .tab {
+    border: 1px solid var(--line); background: var(--surface, #fff); color: var(--ink-2);
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+    padding: 7px 14px; border-radius: 9999px; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tab:hover { border-color: var(--insight-line); color: var(--insight); }
+  .tab.active { background: var(--insight); border-color: var(--insight); color: #fff; }
+
+  .stage { position: fixed; inset: 0; overflow: hidden; }
+  .glow {
+    position: absolute; left: 50%; top: 50%; width: 90vmax; height: 90vmax;
+    transform: translate(-50%, -50%);
+    filter: blur(60px);
+    animation: breathe 8s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.12; }
+    50% { opacity: 0.45; }
+  }
+
+  .demo-content {
+    position: relative; z-index: 2; height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 8vw; max-width: 900px;
+  }
+  .demo-content .overline {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--insight); font-weight: 700; margin-bottom: 16px;
+  }
+  .demo-content h1 {
+    font-family: var(--font-display); font-size: clamp(30px, 5vw, 52px);
+    line-height: 1.15; font-weight: 700; margin-bottom: 20px; max-width: 16ch;
+  }
+  .demo-content p { font-size: 15px; line-height: 1.6; color: var(--ink-2); max-width: 46ch; }
+
+  .concept-label {
+    position: fixed; bottom: 20px; left: 20px; z-index: 40;
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);
+    background: rgba(255,255,255,0.7); border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 6px; letter-spacing: 0.04em;
+  }
+  .concept-label b { color: var(--insight); }
+
+  @media (max-width: 640px) {
+    .topbar { flex-wrap: wrap; gap: 8px; }
+    .tabs { margin-left: 0; width: 100%; }
+    .demo-content { padding: 0 6vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">ObserveCo<small>Breathing Glow · Colour Switcher</small></div>
+  <div class="tabs">
+    <button class="tab active" data-color="teal">Teal (baseline)</button>
+    <button class="tab" data-color="amber">Amber</button>
+    <button class="tab" data-color="rose">Rose</button>
+    <button class="tab" data-color="steel">Steel blue</button>
+  </div>
+</div>
+
+<section class="stage">
+  <div class="glow" id="glow"></div>
+  <div class="demo-content">
+    <div class="overline">Breathing Glow</div>
+    <h1>Light through a window — calm, alive, never moving.</h1>
+    <p>A single soft glow slowly breathes in opacity. Nothing travels, so nothing reads as a panel. The eye registers warmth, not motion.</p>
+  </div>
+</section>
+
+<div class="concept-label">Glow colour: <b id="colorName">Teal</b></div>
+
+<script>
+  var glow = document.getElementById('glow');
+  var colorName = document.getElementById('colorName');
+  var tabs = document.querySelectorAll('.tab');
+
+  // Each colour tuned to its own peak opacity so they read equally on warm paper.
+  // Amber is high-luminance -> lower peak; steel is low-luminance -> higher peak.
+  var COLORS = {
+    teal:  { rgb: '14,110,92',  peak: 0.45, name: 'Teal' },
+    amber: { rgb: '201,138,61', peak: 0.34, name: 'Amber' },
+    rose:  { rgb: '164,113,111', peak: 0.40, name: 'Rose' },
+    steel: { rgb: '61,107,155', peak: 0.50, name: 'Steel blue' }
+  };
+
+  function applyColor(key) {
+    var c = COLORS[key];
+    glow.style.background = 'radial-gradient(circle, rgba(' + c.rgb + ',0.85) 0%, rgba(' + c.rgb + ',0) 60%)';
+    // Update the breathe keyframes' 50% opacity to the colour's tuned peak.
+    var sheet = document.styleSheets[0];
+    for (var i = 0; i < sheet.cssRules.length; i++) {
+      var r = sheet.cssRules[i];
+      if (r.name === 'breathe') {
+        var rules = r.cssRules;
+        for (var j = 0; j < rules.length; j++) {
+          if (rules[j].keyText === '50%') {
+            rules[j].style.opacity = c.peak;
+          }
+        }
+      }
+    }
+    colorName.textContent = c.name;
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      applyColor(tab.getAttribute('data-color'));
+    });
+  });
+
+  applyColor('teal');
+</script>
+</body>
+</html>

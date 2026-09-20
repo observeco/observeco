@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Care Economy — The Wave That Changes Everything</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas: #f7f6f3; --surface: #ffffff; --surface-muted: #efeee9;
+  --ink: #1b1f24; --ink-2: #4a525c; --ink-3: #6b737e;
+  --accent: #0e6e5c; --accent-strong: #0a5447; --accent-tint: #e7f1ee; --accent-line: #c6dcd4;
+  --critical: #b42318; --critical-tint: #fbeae7;
+  --warning: #9a6500; --warning-tint: #fbf0d8;
+  --line: #e4e2dc;
+  --font-display: 'Playfair Display', Georgia, serif; --font-body: 'Inter', system-ui, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--canvas); color: var(--ink); font-family: var(--font-body); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.card { width: 1200px; background: var(--surface); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(27,31,36,.05), 0 1px 3px rgba(27,31,36,.07); overflow: hidden; }
+.card-header { padding: 32px 40px 24px; border-bottom: 1px solid var(--line); }
+.overline { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+h1 { font-family: var(--font-display); font-size: 38px; font-weight: 800; line-height: 1.1; color: var(--ink); margin-bottom: 8px; }
+.subtitle { font-size: 15px; color: var(--ink-2); line-height: 1.5; }
+.card-body { padding: 32px 40px; }
+
+.iceberg { display: flex; flex-direction: column; gap: 0; margin-bottom: 24px; }
+.iceberg-layer { padding: 20px 24px; display: flex; align-items: center; gap: 20px; }
+.iceberg-layer.headline { background: var(--critical-tint); border: 1px solid rgba(180,35,24,0.15); border-radius: 12px 12px 0 0; }
+.iceberg-layer.real { background: var(--accent-tint); border: 1px solid var(--accent-line); border-top: none; border-radius: 0 0 12px 12px; }
+.iceberg-icon { font-size: 32px; flex-shrink: 0; }
+.iceberg-content .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 4px; }
+.iceberg-layer.headline .label { color: var(--critical); }
+.iceberg-layer.real .label { color: var(--accent); }
+.iceberg-content .value { font-family: var(--font-display); font-size: 30px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.iceberg-layer.headline .value { color: var(--critical); }
+.iceberg-layer.real .value { color: var(--accent-strong); }
+.iceberg-content .desc { font-size: 13px; color: var(--ink-2); line-height: 1.4; }
+
+.breakdown-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+.breakdown-card { background: var(--surface-muted); border-radius: 10px; padding: 20px; }
+.breakdown-card .icon { font-size: 24px; margin-bottom: 6px; }
+.breakdown-card h3 { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.breakdown-card .stat { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+.breakdown-card p { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+
+.customer-insight { background: var(--surface-muted); border-radius: 10px; padding: 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 20px; }
+.customer-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-tint); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+.customer-text h3 { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.customer-text p { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+
+.insight-box { background: var(--accent-tint); border: 1px solid var(--accent-line); border-radius: 10px; padding: 16px 20px; }
+.insight-box p { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+.insight-box strong { color: var(--accent-strong); }
+.card-footer { padding: 16px 40px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ink-3); }
+.confidence { display: inline-flex; align-items: center; gap: 6px; background: rgba(14,110,92,0.1); color: var(--accent-strong); padding: 3px 10px; border-radius: 999px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.confidence::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Two, Ch 3</div>
+    <h1>The Care Economy Is Not What the Headlines Say</h1>
+    <p class="subtitle">The "silver economy" headline is $72 billion. The real market a business can own is a few hundred million. Here's why that's actually better.</p>
+  </div>
+  <div class="card-body">
+    <div class="iceberg">
+      <div class="iceberg-layer headline"><div class="iceberg-icon">📰</div><div class="iceberg-content"><div class="label">What the headlines say</div><div class="value">US$72 billion</div><div class="desc">"Silver economy" — total spending power of every person over 60, including groceries, housing, electricity. A headline, not a market.</div></div></div>
+      <div class="iceberg-layer real"><div class="iceberg-icon">💰</div><div class="iceberg-content"><div class="label">What a business can actually own</div><div class="value">S$280M – S$850M</div><div class="desc">The paid layer of care for ~52,000 seniors with moderate-to-severe disability. Home care, day care, residential care, meals, safety monitoring. Growing every year.</div></div></div>
+    </div>
+    <div class="breakdown-grid">
+      <div class="breakdown-card"><div class="icon">🏠</div><div class="stat">75%</div><h3>of care is unpaid</h3><p>Family members — the daughter rushing across town with food. The free layer is breaking. Every dollar that stops being free moves into a market a business can own.</p></div>
+      <div class="breakdown-card"><div class="icon">👩‍👧</div><div class="stat">1 in 4</div><h3>working adults will be sandwiched by 2030</h3><p>Caring for an ageing parent and a child, with their own working life between. 95% say it's their responsibility. The capacity to actually do it has collapsed.</p></div>
+      <div class="breakdown-card"><div class="icon">👵</div><div class="stat">88,000</div><h3>seniors live alone</h3><p>More than double since 2015. Each one buying everything — meals, safety, transport, monitoring — because there's nobody at home to do it.</p></div>
+      <div class="breakdown-card"><div class="icon">💵</div><div class="stat">S$600/mo</div><h3>Home Caregiving Grant (from Apr 2026)</h3><p>The state is writing cheques to make sure the market exists. A small business in care is standing in a current the state has chosen to strengthen.</p></div>
+    </div>
+    <div class="customer-insight">
+      <div class="customer-avatar">👩‍💼</div>
+      <div class="customer-text"><h3>The customer is not the senior. It's the daughter.</h3><p>The 45-year-old who leaves her office at 6pm, collects her child, then drives across town with food for her mother. She wants to be a good daughter. She simply has no hours left. Every paid care service exists to buy back her time.</p></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>The paid layer is small, but the unpaid layer is where the growth is.</strong> The daughter cannot keep doing it — she's out of hours. As the family layer fails, the care moves from unpaid to paid. That is the wave, and it is still mostly ahead of us. The river is not an ocean, but it flows through every neighbourhood, and almost nobody has built a reliable boat on it yet.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: NUS/MOH RHS, Duke-NUS, MSF, AIC. Care market estimate flagged Moderate confidence.</span>
+    <span class="confidence">Moderate Confidence</span>
+  </div>
+</div>
+</body>
+</html>

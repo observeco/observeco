@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Platform Economy — Who Owns Your Customer?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+
+.marketplace-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.marketplace-card{background:var(--surface-muted);border-radius:10px;padding:18px;text-align:center;}
+.marketplace-card .name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.marketplace-card .share{font-family:var(--font-display);font-size:32px;font-weight:800;line-height:1;margin-bottom:4px;}
+.marketplace-card.shopee .share{color:var(--accent);}
+.marketplace-card.lazada .share{color:#4a7a6e;}
+.marketplace-card.amazon .share{color:var(--ink-3);}
+.marketplace-card.tiktok .share{color:var(--warning);}
+.marketplace-card .note{font-size:11px;color:var(--ink-3);}
+
+.bar-chart{margin-bottom:24px;}
+.bar-row{display:grid;grid-template-columns:120px 1fr 50px;align-items:center;gap:12px;margin-bottom:10px;}
+.bar-label{font-size:12px;color:var(--ink-2);text-align:right;}
+.bar-track{height:28px;background:var(--surface-muted);border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;font-size:11px;font-weight:700;color:white;}
+.bar-fill.grab{background:var(--accent);width:53%;}
+.bar-fill.pf{background:#4a7a6e;width:30%;}
+.bar-fill.other{background:var(--ink-3);width:17%;}
+.bar-value{font-size:13px;font-weight:700;color:var(--ink);}
+
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part One, Ch 3</div>
+    <h1>The Platforms Own Your Customer</h1>
+    <p class="subtitle">Shopee alone captures 53% of platform commerce. The top three take 99%. You may be packing the boxes, but the platform knows your customer's name.</p>
+  </div>
+  <div class="card-body">
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">E-Commerce Platform Share (Singapore)</div>
+    <div class="marketplace-row">
+      <div class="marketplace-card shopee"><div class="name">Shopee</div><div class="share">52%</div><div class="note">All-category marketplace</div></div>
+      <div class="marketplace-card lazada"><div class="name">Lazada</div><div class="share">36%</div><div class="note">Alibaba-backed</div></div>
+      <div class="marketplace-card amazon"><div class="name">Amazon</div><div class="share">6%</div><div class="note">International</div></div>
+      <div class="marketplace-card tiktok"><div class="name">TikTok Shop</div><div class="share">6%</div><div class="note">Social commerce</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">Food Delivery Platform Share</div>
+    <div class="bar-chart">
+      <div class="bar-row"><div class="bar-label">Grab</div><div class="bar-track"><div class="bar-fill grab">53%+</div></div><div class="bar-value">~53%</div></div>
+      <div class="bar-row"><div class="bar-label">foodpanda</div><div class="bar-track"><div class="bar-fill pf">~30%</div></div><div class="bar-value">~30%</div></div>
+      <div class="bar-row"><div class="bar-label">Others</div><div class="bar-track"><div class="bar-fill other">~17%</div></div><div class="bar-value">~17%</div></div>
+    </div>
+    <div style="background:var(--surface-muted);border-radius:10px;padding:16px 20px;margin-bottom:24px;">
+      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:8px;">The Numbers That Matter</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div style="text-align:center;"><div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--critical);">99%</div><div style="font-size:11px;color:var(--ink-3);">Top 3 platforms take<br>of all platform commerce</div></div>
+        <div style="text-align:center;"><div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--accent);">US$5.9B</div><div style="font-size:11px;color:var(--ink-3);">Total e-commerce<br>market size</div></div>
+        <div style="text-align:center;"><div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--warning);">50%+</div><div style="font-size:11px;color:var(--ink-3);">Online spend goes<br>to cross-border sellers</div></div>
+      </div>
+    </div>
+    <div class="insight-box">
+      <p><strong>A platform is a shelf, not a brand.</strong> When a shopper types a search into Shopee, they get a grid of near-identical products and the cheapest wins. There is no brand in that grid, only listings. The platform is <em>where you get found</em>; the brand is <em>what you must become</em>. The main defence is to build a direct relationship with your customers, so the platform is not the only way they can reach you.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: Momentum Works, CNA, Statista. Figures 2024–2025. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

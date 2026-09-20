@@ -57,14 +57,19 @@ class TestFleetCardAgentType:
         html = self._get_fleet_html()
         assert "loadTab(" in html
         # Check that agent-type cards use 'agent' type
-        # Services use 'service' type, workflows use 'other'
-        # CI may only have workflow cards — accept any valid type
-        assert "'agent'" in html or "'service'" in html or "'other'" in html
+        # Non-agent types are 'service' and 'workflow' (default), not 'other'
+        assert "'agent'" in html or "'service'" in html or "'workflow'" in html
 
     def test_service_cards_pass_type_service(self):
-        """Service/Workflow cards pass 'service' as third arg to loadTab."""
+        """Service/Workflow cards pass a valid non-agent type to loadTab.
+
+        The fleet template emits the third loadTab arg as the agent_type value:
+        'agent', 'service', or 'workflow' (default), sourced from the entry's
+        name_type mapping (server.py L4626/4633). 'other' is not a produced type.
+        This DB may only hold workflow cards, so accept either non-agent type.
+        """
         html = self._get_fleet_html()
-        assert "'service'" in html or "'other'" in html
+        assert "'service'" in html or "'workflow'" in html
 
     def test_service_cards_no_brain_row(self):
         """Service cards should NOT contain Brain metric rows.

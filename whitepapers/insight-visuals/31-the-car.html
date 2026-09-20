@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Car — The Most Expensive Want</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+
+.hero-stat{text-align:center;padding:28px;background:var(--critical-tint);border:1px solid rgba(180,35,24,.15);border-radius:12px;margin-bottom:28px;}
+.hero-stat .number{font-family:var(--font-display);font-size:64px;font-weight:800;color:var(--critical);line-height:1;margin-bottom:4px;}
+.hero-stat .context{font-size:15px;color:var(--ink-2);}
+
+.cost-breakdown{background:var(--surface-muted);border-radius:12px;padding:24px;margin-bottom:24px;}
+.cost-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:16px;}
+.cost-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.cost-label{width:160px;font-size:12px;color:var(--ink-2);text-align:right;}
+.cost-track{flex:1;height:28px;background:var(--line);border-radius:6px;overflow:hidden;}
+.cost-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;font-size:11px;font-weight:700;color:white;}
+.cost-fill.coe{background:var(--critical);width:52%;}
+.cost-fill.car{background:var(--warning);width:30%;}
+.cost-fill.tax{background:#7c8a6e;width:12%;}
+.cost-fill.ins{background:var(--ink-3);width:6%;}
+.cost-value{font-size:13px;font-weight:700;color:var(--ink);}
+
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface-muted);border-radius:10px;padding:20px;text-align:center;}
+.stat-card .value{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.stat-card .label{font-size:12px;color:var(--ink-3);line-height:1.4;}
+.stat-card.critical{background:var(--critical-tint);border:1px solid rgba(180,35,24,.1);}
+.stat-card.critical .value{color:var(--critical);}
+
+.brand-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.brand-card{background:var(--surface-muted);border-radius:8px;padding:14px;text-align:center;}
+.brand-card .name{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.brand-card .share{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--accent);margin-bottom:2px;}
+.brand-card .note{font-size:11px;color:var(--ink-3);}
+
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Two, Ch 2</div>
+    <h1>The World's Most Expensive Permission to Drive</h1>
+    <p class="subtitle">Before you buy the car, you must buy the right to put it on the road. That right costs more than the car itself.</p>
+  </div>
+  <div class="card-body">
+    <div class="hero-stat">
+      <div class="number">S$129,000</div>
+      <div class="context">Certificate of Entitlement (COE) price, 2026 — just the permission, not the car</div>
+    </div>
+    <div class="cost-breakdown">
+      <div class="cost-title">What a Modest Singapore Car Actually Costs</div>
+      <div class="cost-row"><div class="cost-label">COE (permission)</div><div class="cost-track"><div class="cost-fill coe">S$129K — 52%</div></div><div class="cost-value">S$129,000</div></div>
+      <div class="cost-row"><div class="cost-label">The car itself</div><div class="cost-track"><div class="cost-fill car">~S$75K — 30%</div></div><div class="cost-value">~S$75,000</div></div>
+      <div class="cost-row"><div class="cost-label">Tax & registration</div><div class="cost-track"><div class="cost-fill tax">~S$30K — 12%</div></div><div class="cost-value">~S$30,000</div></div>
+      <div class="cost-row"><div class="cost-label">Insurance & other</div><div class="cost-track"><div class="cost-fill ins">~S$15K — 6%</div></div><div class="cost-value">~S$15,000</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">The Car Loan Reality</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="value">70%</div><div class="label">Max financing<br>of car value</div></div>
+      <div class="stat-card"><div class="value">7 years</div><div class="label">Max loan tenure<br>for a depreciating asset</div></div>
+      <div class="stat-card critical"><div class="value">10 years</div><div class="label">COE expiry<br>Then it's gone entirely</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">Who Sells the Cars (2025 New Registrations)</div>
+    <div class="brand-row">
+      <div class="brand-card"><div class="name">BYD</div><div class="share">21.2%</div><div class="note">#1 brand, Chinese EV</div></div>
+      <div class="brand-card"><div class="name">Toyota</div><div class="share">#2</div><div class="note">Long-time leader, now overtaken</div></div>
+      <div class="brand-card"><div class="name">EVs overall</div><div class="share">~45%</div><div class="note">of new registrations</div></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>A household that buys a car is signalling that it has arrived, and committing years of future income to prove it.</strong> The car is the one purchase in the whole country where the depreciating asset, the borrowing, and the debt all point the same direction. When a business sees a car, it sees a household with confidence — and very little left over for other big-ticket spending.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: Bloomberg, DBS/OCBC/UOB, LTA. Figures 2025–2026. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

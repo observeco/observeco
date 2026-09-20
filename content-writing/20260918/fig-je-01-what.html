@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-je-01 — what Jev is</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:0;overflow:hidden;}
+.fig{width:1176px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:14px 26px 9px;border-bottom:1px solid var(--line);}
+.overline{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:23px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:11.5px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:12px 26px;}
+.task{background:var(--surface-muted);border:1px solid var(--line);border-radius:9px;padding:8px 12px;margin-bottom:9px;}
+.task .lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:3px;}
+.task .q{font-size:12.5px;color:var(--ink);font-weight:600;}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:9px;}
+.side{border-radius:9px;padding:10px 12px;}
+.side.talk{background:var(--critical-tint);border:1px solid rgba(180,35,24,.2);}
+.side.decide{background:var(--accent-tint);border:1px solid rgba(14,110,92,.2);}
+.side .k{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;}
+.side.talk .k{color:var(--critical);}
+.side.decide .k{color:var(--accent-strong);}
+.side .out{font-size:11px;line-height:1.45;margin-bottom:5px;}
+.side.talk .out{color:var(--ink-2);font-style:italic;}
+.side.decide .out{color:var(--ink);font-weight:700;}
+.side .note{font-size:9.5px;line-height:1.35;padding-top:5px;border-top:1px solid rgba(27,31,36,.1);}
+.side.talk .note{color:var(--critical);}
+.side.decide .note{color:var(--accent-strong);}
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;border-top:1px solid var(--line);padding-top:9px;}
+.ty{background:var(--surface-muted);border:1px solid var(--line);border-radius:9px;padding:8px 10px;}
+.ty .n{font-size:9px;font-weight:700;color:var(--accent-strong);letter-spacing:.09em;text-transform:uppercase;margin-bottom:3px;}
+.ty h3{font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.ty p{font-size:9.5px;color:var(--ink-2);line-height:1.3;}
+.foot{padding:8px 26px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">One task, two ways — the same job done by a talker and a decider</div>
+    <h2>You Give It the Answers. It Picks One.</h2>
+    <p class="subtitle">Jev cannot write a sentence, hold a conversation, or write code. That is the design, not a limit — and it is why code can use the answer directly.</p>
+  </div>
+  <div class="fig-body">
+    <div class="task">
+      <div class="lbl">The task</div>
+      <div class="q">"Is this customer message a complaint or a compliment?"</div>
+    </div>
+    <div class="split">
+      <div class="side talk">
+        <div class="k">A normal AI — it talks</div>
+        <div class="out">"Based on the tone and content, it appears the customer is expressing dissatisfaction with the delivery time. This would typically be classified as a complaint."</div>
+        <div class="note">Then you write code to find the word "complaint" in that paragraph — and hope it is always phrased this way. Seconds. Cents.</div>
+      </div>
+      <div class="side decide">
+        <div class="k">Jev — it decides</div>
+        <div class="out">complaint · 94% sure</div>
+        <div class="note">You declared the two possible answers before asking. Nothing to read. Nothing to parse. 70 milliseconds. A fraction of a cent.</div>
+      </div>
+    </div>
+    <div class="types">
+      <div class="ty"><div class="n">Noul — true or false</div><h3>"Is this true?"</h3><p>A number from 0 to 1.</p></div>
+      <div class="ty"><div class="n">Choice</div><h3>"Which of these fits?"</h3><p>One of up to 255, plus the odds on each.</p></div>
+      <div class="ty"><div class="n">Score</div><h3>"How bad is this?"</h3><p>A tier from 2 to 10, plus confidence.</p></div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: TypeSafe AI launch post, 15 Sep 2026 (primitives, pricing, latency). The worked example is illustrative; the output shape is as described by the vendor.</span>
+    <span class="confidence">High: claims · Illustrative: example</span>
+  </div>
+</div>
+</body>
+</html>

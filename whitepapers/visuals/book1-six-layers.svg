@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >Six Layers</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="494" y="300" width="760" height="130" rx="20" fill="#ffffff" stroke="#cfccc4" stroke-width="2"/>
+<text x="874.0" y="383.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Engines</text>
+<rect x="494" y="475" width="760" height="130" rx="20" fill="#ffffff" stroke="#cfccc4" stroke-width="2"/>
+<text x="874.0" y="558.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Waves</text>
+<rect x="494" y="650" width="760" height="130" rx="20" fill="#ffffff" stroke="#cfccc4" stroke-width="2"/>
+<text x="874.0" y="733.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Industries</text>
+<rect x="494" y="825" width="760" height="130" rx="20" fill="#ffffff" stroke="#cfccc4" stroke-width="2"/>
+<text x="874.0" y="908.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Walls</text>
+<rect x="494" y="1000" width="760" height="130" rx="20" fill="#ffffff" stroke="#cfccc4" stroke-width="2"/>
+<text x="874.0" y="1083.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >AI</text>
+<rect x="494" y="1175" width="760" height="130" rx="20" fill="#0e6e5c"/>
+<text x="874.0" y="1258.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#ffffff" text-anchor="middle" >Decision</text>
+</g>
+</svg>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-cyb-04 — the openings for small business</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee; --accent-line:#c6dcd4;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --warning:#9a6500; --warning-tint:#fbf0d8;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:16px;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:24px 32px 16px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:6px;}
+h2{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.subtitle{font-size:14px;color:var(--ink-2);line-height:1.5;}
+.fig-body{padding:22px 32px 24px;}
+.chain{display:flex;flex-direction:column;gap:12px;margin-bottom:18px;}
+.link{display:grid;grid-template-columns:36px 1fr;gap:14px;align-items:start;}
+.link .num{width:30px;height:30px;border-radius:50%;background:var(--accent-tint);color:var(--accent-strong);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:15px;border:1px solid var(--accent-line);}
+.link .body{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;}
+.link h4{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.link h4 .who{font-size:11px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:999px;font-weight:600;}
+.link p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+.link p b{color:var(--accent-strong);}
+.callout{background:var(--accent-tint);border:1px solid rgba(14,110,92,.18);border-radius:10px;padding:14px 18px;}
+.callout p{font-size:14px;color:var(--ink-2);line-height:1.55;}
+.callout strong{color:var(--accent-strong);}
+.foot{padding:12px 32px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">The so-what — three doors for a small Singapore business</div>
+    <h2>The Three Doors the Falling Premium Opens</h2>
+    <p class="subtitle">The falling premium is not only a reason to buy. It is a reason a small operator can build a business around the thing the big incumbents overprice and underdeliver.</p>
+  </div>
+  <div class="fig-body">
+    <div class="chain">
+      <div class="link">
+        <div class="num">1</div>
+        <div class="body">
+          <h4>The SME cyber-hygiene shop <span class="who">Service / product</span></h4>
+          <p>Meet the three minimums for the thousands of small firms that now want cover: <b>MFA setup, offline back-ups, patch management</b>, done as a service for a nameable fee. The insured firms need exactly this, and most haven't done it yet.</p>
+        </div>
+      </div>
+      <div class="link">
+        <div class="num">2</div>
+        <div class="body">
+          <h4>The broker/advisor for the under-served firm <span class="who">Distribution / advice</span></h4>
+          <p>Eight insurers report demand but not distribution depth. A <b>named, vouchable intermediary</b> who translates a small firm's actual risk into the right policy — a word nobody in the category owns yet.</p>
+        </div>
+      </div>
+      <div class="link">
+        <div class="num">3</div>
+        <div class="body">
+          <h4>The incident-response specialist <span class="who">Recovery / niche</span></h4>
+          <p>Small firms will be breached; most can't afford a big-firm forensics bill. A <b>niche responder</b> who knows how small shops run — recovery, not the enterprise playbook.<sup>*</sup></p>
+        </div>
+      </div>
+    </div>
+    <div class="callout">
+      <p><sup>*</sup>These are positioning leads, not settled findings — verify demand and competition before entering. The pattern is the same one that maps everywhere: <strong>a tailwind lands hardest in the fragmented, under-served corner — the exact ground a positioned small business wins.</strong></p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: ST (14 Sep 2026); Book 1 map — digitising wave, the small-business tech specialist slot, the under-served corner. Confidence: opportunities = Moderate (verify), mechanism = High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

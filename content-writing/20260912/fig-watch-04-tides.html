@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-watch-04 — falling tide vs rising tide, where the current is running</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee; --accent-line:#c6dcd4;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --warning:#9a6500; --warning-tint:#fbf0d8;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:16px;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:24px 32px 16px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);font-weight:600;margin-bottom:6px;}
+h2{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.subtitle{font-size:14px;color:var(--ink-2);line-height:1.5;}
+.fig-body{padding:22px 32px 24px;}
+.tides{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px;}
+.tide{border-radius:12px;padding:20px 22px;}
+.tide.falling{background:var(--critical-tint);border:1px solid rgba(180,35,24,.18);}
+.tide.rising{background:var(--accent-tint);border:1px solid rgba(14,110,92,.18);}
+.tide-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:8px;}
+.tide.falling .tide-label{color:var(--critical);}
+.tide.rising .tide-label{color:var(--accent-strong);}
+.tide h3{font-family:var(--font-display);font-size:22px;font-weight:800;margin-bottom:12px;color:var(--ink);}
+.tide ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.tide li{font-size:13px;color:var(--ink-2);line-height:1.45;padding-left:16px;position:relative;}
+.tide.rising li::before{content:'';position:absolute;left:0;top:6px;width:8px;height:8px;border-radius:50%;background:var(--accent);}
+.tide.falling li::before{content:'';position:absolute;left:0;top:6px;width:8px;height:8px;border-radius:50%;background:var(--critical);}
+.tide li strong{color:var(--ink);}
+.moral{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 22px;}
+.moral p{font-size:15px;color:var(--ink-2);line-height:1.6;}
+.moral strong{color:var(--ink);}
+.foot{padding:12px 32px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:var(--surface-muted);color:var(--ink-2);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ink-3);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">The choice — falling tide, rising tide</div>
+    <h2>The Current Is Running Somewhere. Are You Standing In It?</h2>
+    <p class="subtitle">Switzerland's watch industry is one example; Singapore's map is another. Both are answers to the same question a business owner should ask first.</p>
+  </div>
+  <div class="fig-body">
+    <div class="tides">
+      <div class="tide falling">
+        <div class="tide-label">Falling tide</div>
+        <h3>Swiss watch exports</h3>
+        <ul>
+          <li><strong>−42% volume</strong> in nine years (25.4M → 14.6M pieces)</li>
+          <li>Price-raise strategy saved only <strong>Rolex, Patek, Cartier</strong></li>
+          <li>Mid-market crushed — <strong>fewer than 1 in 4</strong> mid-price players thrive</li>
+          <li>Substitutes won: resale market, Japanese, Chinese contenders</li>
+          <li><strong>Skill was not the problem.</strong> The current was.</li>
+        </ul>
+      </div>
+      <div class="tide rising">
+        <div class="tide-label">Rising tides (Singapore, numbered)</div>
+        <h3>Ageing · care · health · small-business tech</h3>
+        <ul>
+          <li><strong>20.7%</strong> of residents 65+ — and rising (13.1% in 2015)</li>
+          <li><strong>1.49M</strong> singles — one person buys everything alone</li>
+          <li><strong>TFR 0.87</strong> — fewer kids, but expensively raised</li>
+          <li><strong>48-pt</strong> SME tech adoption gap — closing now</li>
+          <li>Health &amp; social structure: <strong>1/10 brutal — most open in the economy</strong></li>
+        </ul>
+      </div>
+    </div>
+    <div class="moral">
+      <p><strong>In a falling tide, an excellent position is a lifeboat — it means you sink last. In a rising tide, a merely competent position earns more than a brilliant one fighting the current.</strong> Choose the tide first. Then choose your boat.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Sources: Federation of the Swiss Watch Industry via ST/Bloomberg; Book 1 manuscript (SingStat, MTI). Confidence: High (figures) / Moderate (framing judgment).</span>
+    <span class="confidence">High/Moderate</span>
+  </div>
+</div>
+</body>
+</html>

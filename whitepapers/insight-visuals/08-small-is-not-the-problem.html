@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your 2-Person Shop Can Match a 250-Person Company</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+
+.head-to-head{display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:center;margin-bottom:32px;}
+.business-card{background:var(--surface-muted);border-radius:12px;padding:28px;text-align:center;}
+.business-card .emoji{font-size:40px;margin-bottom:8px;}
+.business-card .size{font-size:11px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:4px;}
+.business-card.small .size{color:var(--accent);}
+.business-card.large .size{color:var(--ink-3);}
+.business-card .name{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--ink);margin-bottom:12px;}
+.business-card .workers{font-size:13px;color:var(--ink-2);margin-bottom:16px;}
+.business-card .output{background:var(--surface);border-radius:8px;padding:12px;}
+.business-card .output-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600;margin-bottom:4px;}
+.business-card .output-value{font-family:var(--font-display);font-size:28px;font-weight:800;line-height:1;}
+.business-card.small .output-value{color:var(--accent);}
+.business-card.large .output-value{color:var(--ink);}
+.business-card .output-unit{font-size:12px;color:var(--ink-3);}
+
+.vs-divider{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.vs-divider .vs{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--ink-3);}
+.vs-divider .note{font-size:11px;color:var(--ink-3);text-align:center;max-width:100px;line-height:1.3;}
+
+.spread-section{margin-bottom:28px;}
+.spread-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:16px;text-align:center;}
+.spread-row{display:grid;grid-template-columns:180px 1fr 80px;align-items:center;gap:12px;margin-bottom:10px;}
+.spread-label{font-size:13px;color:var(--ink-2);text-align:right;}
+.spread-track{height:32px;background:var(--surface-muted);border-radius:6px;overflow:hidden;}
+.spread-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:12px;font-size:12px;font-weight:700;color:white;}
+.spread-fill.best{background:var(--accent);}
+.spread-fill.avg{background:var(--warning);}
+.spread-fill.worst{background:var(--critical);}
+.spread-val{font-size:14px;font-weight:700;color:var(--ink);}
+
+.myth-buster{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.myth-card{border-radius:10px;padding:20px;}
+.myth-card.wrong{background:var(--critical-tint);border:1px solid rgba(180,35,24,.12);}
+.myth-card.right{background:var(--accent-tint);border:1px solid var(--accent-line);}
+.myth-card .tag{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px;}
+.myth-card.wrong .tag{color:var(--critical);}
+.myth-card.right .tag{color:var(--accent);}
+.myth-card h3{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.myth-card p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part One, Ch 2</div>
+    <h1>Your 2-Person Shop Can Match a 250-Person Company</h1>
+    <p class="subtitle">The "small business productivity problem" is not that small equals doomed. It's that most small firms never find their position — and the few that do outperform companies fifty times their size.</p>
+  </div>
+  <div class="card-body">
+    <div class="head-to-head">
+      <div class="business-card small">
+        <div class="emoji">🏪</div>
+        <div class="size">Best-Run Micro Firm</div>
+        <div class="name">2–4 employees</div>
+        <div class="workers">Small team, clear position, one word the neighbourhood knows</div>
+        <div class="output">
+          <div class="output-label">Value per worker</div>
+          <div class="output-value">≈ Large firm</div>
+          <div class="output-unit">matches the median company with 250 staff</div>
+        </div>
+      </div>
+      <div class="vs-divider">
+        <div class="vs">vs</div>
+        <div class="note">Same size class. Same industry.</div>
+      </div>
+      <div class="business-card large">
+        <div class="emoji">🏢</div>
+        <div class="size">Worst-Run Small Firm</div>
+        <div class="name">Same 2–4 employees</div>
+        <div class="workers">No position, generic offer, competes on price</div>
+        <div class="output">
+          <div class="output-label">Value per worker</div>
+          <div class="output-value">7× lower</div>
+          <div class="output-unit">than the best small firm of the same size</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="spread-section">
+      <div class="spread-title">The 7-to-1 Spread — Same Size, Same Industry, Wildly Different Results</div>
+      <div class="spread-row">
+        <div class="spread-label">Best small firm</div>
+        <div class="spread-track"><div class="spread-fill best" style="width:100%;">Produces 7× more per worker</div></div>
+        <div class="spread-val">Top</div>
+      </div>
+      <div class="spread-row">
+        <div class="spread-label">Average small firm</div>
+        <div class="spread-track"><div class="spread-fill avg" style="width:33%;">65% of large-firm productivity</div></div>
+        <div class="spread-val">~65%</div>
+      </div>
+      <div class="spread-row">
+        <div class="spread-label">Worst small firm</div>
+        <div class="spread-track"><div class="spread-fill worst" style="width:14%;">1/7th of the best</div></div>
+        <div class="spread-val">Bottom</div>
+      </div>
+    </div>
+
+    <div class="myth-buster">
+      <div class="myth-card wrong">
+        <div class="tag">What everyone thinks</div>
+        <h3>"Small businesses struggle because they're small"</h3>
+        <p>If that were true, nothing you did would close the gap. You'd be stuck. The data says the opposite.</p>
+      </div>
+      <div class="myth-card right">
+        <div class="tag">What the data actually says</div>
+        <h3>"Small businesses struggle because they're undifferentiated"</h3>
+        <p>The gap between the best and worst small firms is 7 to 1. That gap is almost entirely about position and execution — not size. A positioned 2-person business can out-earn a generic 10-person one.</p>
+      </div>
+    </div>
+
+    <div class="insight-box">
+      <p><strong>If the gap were about size, you would be stuck — nothing you did would close it.</strong> But it is about how you run the business. And that is a problem you can actually do something about. The question is not "how do I get bigger?" — it is "how do I become the best small firm in my space?"</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: OECD MultiProd Database, OECD 2026. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

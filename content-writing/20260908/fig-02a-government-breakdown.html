@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas: #f7f6f3; --surface: #ffffff; --surface-muted: #efeee9;
+  --ink: #1b1f24; --ink-2: #4a525c; --ink-3: #6b737e;
+  --accent: #0e6e5c; --accent-strong: #0a5447; --accent-tint: #e7f1ee; --accent-line: #c6dcd4;
+  --line: #e4e2dc;
+  --font-display: 'Playfair Display', Georgia, serif; --font-body: 'Inter', system-ui, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--canvas); font-family: var(--font-body); color: var(--ink); }
+.wrap { width: 1200px; padding: 28px 32px; background: var(--canvas); }
+.section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); font-weight: 600; margin-bottom: 14px; }
+.breakdown-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.breakdown-card { background: var(--surface); border-radius: 10px; padding: 20px; text-align: center; border: 1px solid var(--line); }
+.breakdown-card .value { font-family: var(--font-display); font-size: 30px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+.breakdown-card .label { font-size: 12px; color: var(--ink-3); line-height: 1.4; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="section-label">Where the S$97.5 billion goes</div>
+  <div class="breakdown-grid">
+    <div class="breakdown-card"><div class="value" style="color:#0e6e5c">S$55.1B</div><div class="label">Social Development<br>largest single block</div></div>
+    <div class="breakdown-card"><div class="value" style="color:#2d8a6e">S$18.5B</div><div class="label">Health<br>care market built here</div></div>
+    <div class="breakdown-card"><div class="value" style="color:#4a9e85">S$5.2B</div><div class="label">Social &amp; Family Development<br>eldercare, subsidies</div></div>
+    <div class="breakdown-card"><div class="value" style="color:#3d6b9b">158,000</div><div class="label">Public servants<br>+ teachers, nurses, officers</div></div>
+  </div>
+</div>
+</body>
+</html>

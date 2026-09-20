@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root{
+    --canvas:#f7f6f3;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;
+    --insight:#0e6e5c;--insight-strong:#0a5447;--green-may:#7db13a;
+    --serif:'Iowan Old Style','Palatino',Georgia,serif;
+    --sans:'Inter',-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:1200px;height:672px;overflow:hidden;background:#e9e7e1;}
+  .stage{width:1200px;height:672px;display:flex;flex-direction:column;padding:34px 48px 30px;}
+  .title{font-family:var(--serif);font-size:26px;color:var(--ink);font-weight:600;}
+  .t-sub{font-family:var(--sans);font-size:13px;color:var(--ink-3);margin-top:2px;letter-spacing:.02em;}
+  .row{display:flex;gap:30px;margin-top:20px;flex:1;align-items:center;}
+  .frame{
+    flex:1;position:relative;border-radius:16px;overflow:hidden;
+    box-shadow:0 20px 50px rgba(27,31,36,.30), 0 4px 14px rgba(27,31,36,.16);
+    background:#111;
+  }
+  .frame img{width:100%;height:100%;object-fit:cover;display:block;}
+  .cap{
+    width:340px;padding:4px 0;
+    font-family:var(--sans);color:var(--ink-2);font-size:13px;line-height:1.55;
+  }
+  .cap b{color:var(--insight);}
+  .cap .wedge{font-family:var(--serif);font-style:italic;font-size:18px;color:var(--insight-strong);margin-bottom:10px;line-height:1.25;}
+  .cap .badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:var(--insight);padding:6px 12px;border-radius:999px;margin-bottom:12px;}
+  .cap p{margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="badge" style="display:inline-block;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:var(--insight);padding:6px 12px;border-radius:999px;width:fit-content;align-self:flex-start;">Spectrum · Product Design Review</div>
+  <div class="title">Maybank Wealth Management — Redesign</div>
+  <div class="t-sub">Positioning: ASEAN is home, not foreign · Wedge: “You don't cross borders. Why should your wealth?” · CTA reverses the cost of action</div>
+
+  <div class="row">
+    <div class="frame"><img src="maybank-redesign-ad.png" alt="redesigned ad"></div>
+    <div class="cap">
+      <div class="wedge">“You don't cross borders. Why should your wealth?”</div>
+      <b>Customer:</b> a 40-something affluent professional or business owner living, earning and investing across Malaysia, Singapore and Indonesia.<br><br>
+      <b>One promise, won:</b> your whole region treated as one home market — the only bank pairing ASEAN-native reach with the region's largest Islamic capability.<br><br>
+      <b>Human, not old-luxury:</b> warm paper (#f7f6f3), teal-verdigris insight accent, a family grounded over a KL → Singapore → Jakarta route.<br><br>
+      <b>Cost-reversing CTA:</b> “Get your free 30-minute cross-border review — No obligation · No fees for the first call.”
+    </div>
+  </div>
+  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #d8d4cc;display:flex;justify-content:space-between;font-family:var(--sans);font-size:11.5px;color:var(--ink-3);">
+    <span>ObserveCo Consulting light-first system · serif display · paper #f7f6f3 · accent #0e6e5c</span>
+    <span>1200 × 672 · Humanising Financial Services</span>
+  </div>
+</div>
+</body>
+</html>

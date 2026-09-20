@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Tool vs Conversation + Latency panel redesign</title>
+<style>
+/* ObserveCo design tokens (from SOUL.md) */
+:root {
+  --bg-0: #0d1117; --bg-1: #161b22; --bg-2: #1c2128;
+  --fg-0: #e6edf3; --fg-1: #c9d1d9; --fg-2: #8b949e; --fg-3: #6e7681;
+  --border: #30363d;
+  --accent: #58a6ff; --accent-2: #79c0ff;
+  --tool: #58a6ff;      /* tool-invoking — blue */
+  --conv: #3fb950;      /* conversational — green */
+  --unk: #6e7681;       /* unlabeled — muted grey */
+  --danger: #f85149;
+  --radius: 8px;
+  --space-4: 16px; --space-6: 24px;
+  --text-sm: 12px; --text-md: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--bg-0); color: var(--fg-0); padding: 24px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+/* Panel card — matches existing chart-card */
+.panel {
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: var(--space-4);
+  max-width: 420px; margin-bottom: var(--space-6);
+}
+.cc-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+.cc-head h2 { font-size: 14px; font-weight: 600; color: var(--fg-0); }
+.cc-val { font-size: 24px; font-weight: 700; color: var(--fg-0); }
+.cc-lab { font-size: 11px; color: var(--fg-3); }
+
+/* ── Tool vs Conversation: cost-weighted split bar ── */
+.split-bar {
+  display: flex; height: 28px; border-radius: 6px; overflow: hidden;
+  margin: 12px 0 8px; border: 1px solid var(--border);
+}
+.split-bar .seg { display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: var(--bg-0); min-width: 0; }
+.seg.tool { background: var(--tool); }
+.seg.conv { background: var(--conv); }
+.seg.unk { background: var(--unk); color: var(--fg-2); }
+.split-legend { display: flex; gap: 16px; font-size: 12px; color: var(--fg-2); flex-wrap: wrap; }
+.split-legend .item { display: flex; align-items: center; gap: 6px; }
+.split-legend .swatch { width: 10px; height: 10px; border-radius: 2px; }
+.split-legend .amt { color: var(--fg-0); font-weight: 600; }
+.split-legend .pct { color: var(--fg-3); }
+
+/* ── Latency: range bar ── */
+.latency-range { position: relative; height: 8px; background: var(--bg-2);
+  border-radius: 4px; margin: 16px 0 6px; }
+.latency-range .fill { position: absolute; top: 0; height: 100%;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  border-radius: 4px; }
+.latency-range .marker { position: absolute; top: -4px; width: 2px; height: 16px;
+  background: var(--fg-0); border-radius: 1px; }
+.latency-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--fg-3); }
+.latency-stats { display: flex; gap: 16px; margin-top: 10px; font-size: 12px; }
+.latency-stats .stat .k { color: var(--fg-3); }
+.latency-stats .stat .v { color: var(--fg-0); font-weight: 600; }
+
+/* Coverage note — honest, load-bearing */
+.coverage-note { margin-top: 10px; padding: 8px 10px; background: var(--bg-2);
+  border-radius: 6px; font-size: 11px; color: var(--fg-3); border-left: 3px solid var(--fg-3); }
+</style>
+</head>
+<body>
+
+<!-- ══════════ TOOL VS CONVERSATION (in-window cost-weighted headline) ══════════ -->
+<div class="panel">
+  <div class="cc-head">
+    <h2>Tool vs Conversation</h2>
+    <span class="cc-val mono">92%</span>
+    <span class="cc-lab">of labeled spend · tool-invoking</span>
+  </div>
+
+  <!-- in-window split bar (tool vs conv, renormalized; the money story) -->
+  <div class="split-bar">
+    <div class="seg tool" style="width:92%">92%</div>
+    <div class="seg conv" style="width:8%">8%</div>
+  </div>
+  <div class="split-legend">
+    <span class="item"><span class="swatch" style="background:var(--tool)"></span>
+      Tool-invoking <span class="amt">$463</span> <span class="pct">92%</span></span>
+    <span class="item"><span class="swatch" style="background:var(--conv)"></span>
+      Conversational <span class="amt">$43</span> <span class="pct">8%</span></span>
+  </div>
+
+  <!-- secondary: call-count, clearly subordinate -->
+  <div style="margin-top:12px;font-size:11px;color:var(--fg-3)">
+    By call count: <span class="mono">89%</span> tool · <span class="mono">11%</span> conv
+  </div>
+
+  <div class="coverage-note">
+    Headline is <strong>cost-weighted, in-window</strong> — it answers "where does the
+    money go" for the calls we can see. <strong>31% of all-time spend is unlabeled</strong>
+    (pre-Jun 29, no span) and excluded here; that share shrinks toward zero as the
+    retention window rolls forward. Call-count can diverge (7d: 91% of calls but 47%
+    of spend are tool-invoking once unlabeled is included).
+  </div>
+</div>
+
+<!-- ══════════ LATENCY / CALL (range bar) ══════════ -->
+<div class="panel">
+  <div class="cc-head">
+    <h2>Latency / Call</h2>
+    <span class="cc-val mono">10.3s</span>
+    <span class="cc-lab">avg · measured</span>
+  </div>
+
+  <!-- range bar: min → avg → max -->
+  <div class="latency-range">
+    <div class="fill" style="left:0%;width:100%"></div>
+    <div class="marker" style="left:0%" title="min"></div>
+    <div class="marker" style="left:50%" title="avg"></div>
+    <div class="marker" style="left:100%" title="max"></div>
+  </div>
+  <div class="latency-labels">
+    <span class="mono">min 0.4s</span>
+    <span class="mono">avg 10.3s</span>
+    <span class="mono">max 42s</span>
+  </div>
+
+  <div class="latency-stats">
+    <span class="stat"><span class="k">calls</span> <span class="v mono">38,748</span></span>
+    <span class="stat"><span class="k">coverage</span> <span class="v mono">73.5%</span></span>
+  </div>
+
+  <div class="coverage-note">
+    Latency captured from <strong>Jun 29</strong> (span retention start). Earlier
+    calls were not captured — the 26.5% gap is the pre-retention period, not
+    fast calls.
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — 5 Ambient Background Concepts</title>
+<style>
+  :root {
+    --canvas: #f7f6f3;
+    --surface: #ffffff;
+    --ink: #1b1f24;
+    --ink-2: #4a525c;
+    --ink-3: #6b737e;
+    --insight: #0e6e5c;
+    --insight-strong: #0a5447;
+    --insight-tint: #e7f1ee;
+    --insight-line: #c6dcd4;
+    --line: #e4e2dc;
+    --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: var(--canvas); color: var(--ink); }
+
+  /* ── Top bar ── */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 20px; background: rgba(247,246,243,0.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+  }
+  .topbar .brand { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--insight); }
+  .topbar .brand small { font-family: var(--font-body); font-weight: 500; color: var(--ink-3); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 8px; }
+  .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .tab {
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+    padding: 7px 14px; border-radius: 9999px; cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tab:hover { border-color: var(--insight-line); color: var(--insight); }
+  .tab.active { background: var(--insight); border-color: var(--insight); color: #fff; }
+
+  /* ── Stage ── */
+  .stage { position: fixed; inset: 0; top: 0; overflow: hidden; }
+  .bg-layer { position: absolute; inset: 0; }
+
+  /* ── Demo content (same for all) ── */
+  .demo-content {
+    position: relative; z-index: 2; height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 8vw; max-width: 900px;
+  }
+  .demo-content .overline {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--insight); font-weight: 700; margin-bottom: 16px;
+  }
+  .demo-content h1 {
+    font-family: var(--font-display); font-size: clamp(30px, 5vw, 52px);
+    line-height: 1.15; font-weight: 700; margin-bottom: 20px; max-width: 16ch;
+  }
+  .demo-content p {
+    font-size: 15px; line-height: 1.6; color: var(--ink-2); max-width: 46ch;
+  }
+  .demo-content .tag {
+    display: inline-block; margin-top: 28px; padding: 8px 16px;
+    background: var(--insight-tint); border: 1px solid var(--insight-line);
+    color: var(--insight-strong); border-radius: 9999px;
+    font-size: 12.5px; font-weight: 600;
+  }
+
+  /* ── Concept label (bottom-left) ── */
+  .concept-label {
+    position: fixed; bottom: 20px; left: 20px; z-index: 40;
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);
+    background: rgba(255,255,255,0.7); border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 6px; letter-spacing: 0.04em;
+  }
+  .concept-label b { color: var(--insight); }
+
+  /* ── Demo 1: Breathing teal glow ── */
+  #d1 .bg-layer { background: var(--canvas); }
+  #d1 .glow {
+    position: absolute; left: 50%; top: 50%; width: 90vmax; height: 90vmax;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(14,110,92,0.85) 0%, rgba(14,110,92,0) 60%);
+    filter: blur(60px);
+    animation: breathe 8s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { opacity: 0.12; }
+    50% { opacity: 0.45; }
+  }
+
+  /* ── Demo 2: Static grain + hue drift ── */
+  #d2 .bg-layer { background: var(--canvas); }
+  #d2 .grain {
+    position: absolute; inset: 0; opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+    mix-blend-mode: multiply;
+  }
+  #d2 .hue-drift {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(14,110,92,0.22), rgba(14,110,92,0.06));
+    animation: hueDrift 30s ease-in-out infinite;
+  }
+  @keyframes hueDrift {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* ── Demo 3: Floating soft orbs ── */
+  #d3 .bg-layer { background: var(--canvas); }
+  #d3 .orb {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle, rgba(14,110,92,0.5) 0%, rgba(14,110,92,0) 70%);
+    filter: blur(50px);
+  }
+  #d3 .orb.o1 { width: 45vmax; height: 45vmax; left: -10vmax; top: 5vmax; animation: orb1 26s ease-in-out infinite; }
+  #d3 .orb.o2 { width: 35vmax; height: 35vmax; right: -8vmax; top: 30vmax; animation: orb2 32s ease-in-out infinite; }
+  #d3 .orb.o3 { width: 28vmax; height: 28vmax; left: 30vmax; bottom: -10vmax; animation: orb3 38s ease-in-out infinite; }
+  @keyframes orb1 {
+    0%, 100% { transform: translate(0,0); opacity: 0.22; }
+    50% { transform: translate(6vmax, 4vmax); opacity: 0.45; }
+  }
+  @keyframes orb2 {
+    0%, 100% { transform: translate(0,0); opacity: 0.25; }
+    50% { transform: translate(-5vmax, -3vmax); opacity: 0.50; }
+  }
+  @keyframes orb3 {
+    0%, 100% { transform: translate(0,0); opacity: 0.18; }
+    50% { transform: translate(-4vmax, -5vmax); opacity: 0.40; }
+  }
+
+  /* ── Demo 4: Single soft light sweep ── */
+  #d4 .bg-layer { background: var(--canvas); }
+  #d4 .sweep {
+    position: absolute; top: 0; bottom: 0; width: 60vw;
+    background: linear-gradient(90deg, rgba(14,110,92,0) 0%, rgba(14,110,92,0.10) 50%, rgba(14,110,92,0) 100%);
+    filter: blur(30px);
+    animation: sweep 15s ease-in-out infinite;
+  }
+  @keyframes sweep {
+    0% { left: -60vw; }
+    50% { left: 100vw; }
+    100% { left: -60vw; }
+  }
+
+  /* ── Demo 5: Slow topographic contour drift ── */
+  #d5 .bg-layer { background: var(--canvas); }
+  #d5 canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .topbar { flex-wrap: wrap; gap: 8px; }
+    .tabs { margin-left: 0; width: 100%; }
+    .demo-content { padding: 0 6vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">ObserveCo<small>Ambient Background Concepts</small></div>
+  <div class="tabs">
+    <button class="tab active" data-demo="d1">1 · Breathing Glow</button>
+    <button class="tab" data-demo="d2">2 · Grain + Hue</button>
+    <button class="tab" data-demo="d3">3 · Soft Orbs</button>
+    <button class="tab" data-demo="d4">4 · Light Sweep</button>
+    <button class="tab" data-demo="d5">5 · Contours</button>
+  </div>
+</div>
+
+<!-- Demo 1 -->
+<section class="stage" id="d1">
+  <div class="bg-layer"><div class="glow"></div></div>
+  <div class="demo-content">
+    <div class="overline">Concept 1 · Breathing Glow</div>
+    <h1>Light through a window — calm, alive, never moving.</h1>
+    <p>A single soft teal glow slowly breathes in opacity. Nothing travels, so nothing reads as a panel. The eye registers warmth, not motion.</p>
+    <span class="tag">Zero translation · 8s pulse · most calm</span>
+  </div>
+</section>
+
+<!-- Demo 2 -->
+<section class="stage" id="d2" style="display:none">
+  <div class="bg-layer"><div class="grain"></div><div class="hue-drift"></div></div>
+  <div class="demo-content">
+    <div class="overline">Concept 2 · Grain + Hue Drift</div>
+    <h1>Premium paper texture, alive with a slow colour breath.</h1>
+    <p>A fine film-grain gives tactility; the teal tint drifts over 30 seconds. The eye can't track a colour shift as motion — it just feels alive.</p>
+    <span class="tag">Almost no motion · 30s hue · safest</span>
+  </div>
+</section>
+
+<!-- Demo 3 -->
+<section class="stage" id="d3" style="display:none">
+  <div class="bg-layer">
+    <div class="orb o1"></div>
+    <div class="orb o2"></div>
+    <div class="orb o3"></div>
+  </div>
+  <div class="demo-content">
+    <div class="overline">Concept 3 · Soft Orbs</div>
+    <h1>Depth-of-field light, drifting like bokeh.</h1>
+    <p>Three huge, heavily-blurred teal circles crawl diagonally. The blur is what separates this from the old sharp dots — it reads as lens light, not particles.</p>
+    <span class="tag">3 blurred orbs · 26–38s · depth</span>
+  </div>
+</section>
+
+<!-- Demo 4 -->
+<section class="stage" id="d4" style="display:none">
+  <div class="bg-layer"><div class="sweep"></div></div>
+  <div class="demo-content">
+    <div class="overline">Concept 4 · Light Sweep</div>
+    <h1>A sheen moving across a surface — horizontal, not a panel.</h1>
+    <p>One wide, very soft band of light sweeps horizontally across the page. The direction change reframes it as light on a surface, not a panel sliding down.</p>
+    <span class="tag">1 wide band · 15s sweep · horizontal</span>
+  </div>
+</section>
+
+<!-- Demo 5 -->
+<section class="stage" id="d5" style="display:none">
+  <div class="bg-layer"><canvas id="contourCanvas"></canvas></div>
+  <div class="demo-content">
+    <div class="overline">Concept 5 · Contour Drift</div>
+    <h1>Faint terrain lines, slowly undulating.</h1>
+    <p>Three wavy contour lines barely move — the pattern subtly undulates. Ties to the Singapore-map motif; reads as texture, not a moving object.</p>
+    <span class="tag">3 wavy lines · slow phase · map motif</span>
+  </div>
+</section>
+
+<div class="concept-label">Concept <b id="conceptNum">1</b> / 5</div>
+
+<script>
+  // ── Tab switcher ──
+  var tabs = document.querySelectorAll('.tab');
+  var stages = document.querySelectorAll('.stage');
+  var conceptNum = document.getElementById('conceptNum');
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      var id = tab.getAttribute('data-demo');
+      stages.forEach(function (s) { s.style.display = (s.id === id) ? 'block' : 'none'; });
+      conceptNum.textContent = id.replace('d', '');
+      if (id === 'd5') startContours();
+    });
+  });
+
+  // ── Demo 5: contour drift ──
+  var contourCanvas = document.getElementById('contourCanvas');
+  var cctx = contourCanvas.getContext('2d');
+  var contourRunning = false;
+
+  function sizeContours() {
+    contourCanvas.width = window.innerWidth;
+    contourCanvas.height = window.innerHeight;
+  }
+  sizeContours();
+  window.addEventListener('resize', sizeContours);
+
+  function startContours() {
+    if (contourRunning) return;
+    contourRunning = true;
+    var t0 = performance.now();
+    function frame(now) {
+      var t = (now - t0) / 1000;
+      cctx.clearRect(0, 0, contourCanvas.width, contourCanvas.height);
+      var W = contourCanvas.width, H = contourCanvas.height;
+      var lines = [
+        { y: 0.30, amp: 0.05, freq: 0.0016, speed: 0.20, phase: 0 },
+        { y: 0.50, amp: 0.07, freq: 0.0012, speed: 0.14, phase: 2.1 },
+        { y: 0.70, amp: 0.05, freq: 0.0018, speed: 0.17, phase: 4.2 }
+      ];
+      lines.forEach(function (ln) {
+        cctx.beginPath();
+        for (var x = 0; x <= W; x += 4) {
+          var y = H * ln.y + Math.sin(x * ln.freq + t * ln.speed + ln.phase) * H * ln.amp;
+          if (x === 0) cctx.moveTo(x, y); else cctx.lineTo(x, y);
+        }
+        cctx.strokeStyle = 'rgba(14,110,92,0.10)';
+        cctx.lineWidth = 1.5;
+        cctx.stroke();
+      });
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+</script>
+</body>
+</html>

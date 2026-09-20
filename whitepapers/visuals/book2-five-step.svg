@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >Five Steps</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="24" y="530" width="1700" height="340" rx="24" fill="#e7f1ee"/>
+<circle cx="194" cy="700" r="130" fill="#ffffff" stroke="#cfccc4" stroke-width="3"/>
+<text x="194" y="670" font-family="Georgia, 'Times New Roman', serif" font-size="60" font-weight="bold" fill="#6b737e" text-anchor="middle" >1</text>
+<text x="194" y="760" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Know</text>
+<line x1="332" y1="700" x2="372" y2="700" stroke="#6b737e" stroke-width="6"/>
+<polygon points="396,700 372,688.0 372,712.0" fill="#6b737e"/>
+<circle cx="534" cy="700" r="130" fill="#ffffff" stroke="#cfccc4" stroke-width="3"/>
+<text x="534" y="670" font-family="Georgia, 'Times New Roman', serif" font-size="60" font-weight="bold" fill="#6b737e" text-anchor="middle" >2</text>
+<text x="534" y="760" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Map</text>
+<line x1="672" y1="700" x2="712" y2="700" stroke="#6b737e" stroke-width="6"/>
+<polygon points="736,700 712,688.0 712,712.0" fill="#6b737e"/>
+<circle cx="874" cy="700" r="130" fill="#ffffff" stroke="#cfccc4" stroke-width="3"/>
+<text x="874" y="670" font-family="Georgia, 'Times New Roman', serif" font-size="60" font-weight="bold" fill="#6b737e" text-anchor="middle" >3</text>
+<text x="874" y="760" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Evaluate</text>
+<line x1="1012" y1="700" x2="1052" y2="700" stroke="#6b737e" stroke-width="6"/>
+<polygon points="1076,700 1052,688.0 1052,712.0" fill="#6b737e"/>
+<circle cx="1214" cy="700" r="130" fill="#ffffff" stroke="#cfccc4" stroke-width="3"/>
+<text x="1214" y="670" font-family="Georgia, 'Times New Roman', serif" font-size="60" font-weight="bold" fill="#6b737e" text-anchor="middle" >4</text>
+<text x="1214" y="760" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Find</text>
+<line x1="1352" y1="700" x2="1392" y2="700" stroke="#6b737e" stroke-width="6"/>
+<polygon points="1416,700 1392,688.0 1392,712.0" fill="#6b737e"/>
+<circle cx="1554" cy="700" r="130" fill="#ffffff" stroke="#cfccc4" stroke-width="3"/>
+<text x="1554" y="670" font-family="Georgia, 'Times New Roman', serif" font-size="60" font-weight="bold" fill="#6b737e" text-anchor="middle" >5</text>
+<text x="1554" y="760" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Decide</text>
+</g>
+</svg>

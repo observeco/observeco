@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singapore's Scale — The Numbers Behind the Miracle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.hero-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px;}
+.hero-card{background:var(--surface-muted);border-radius:10px;padding:18px 14px;text-align:center;}
+.hero-card .value{font-family:var(--font-display);font-size:30px;font-weight:800;line-height:1;margin-bottom:4px;color:var(--ink);}
+.hero-card .label{font-size:11px;color:var(--ink-3);line-height:1.3;}
+.hero-card.accent .value{color:var(--accent);}
+.hero-card.critical .value{color:var(--critical);}
+
+.context-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
+.context-card{background:var(--surface-muted);border-radius:10px;padding:20px;display:flex;gap:16px;align-items:flex-start;}
+.context-card .icon{font-size:28px;flex-shrink:0;}
+.context-card h3{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.context-card .stat{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px;}
+.context-card p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part One, the landscape</div>
+    <h1>The Scale of Singapore</h1>
+    <p class="subtitle">A country the size of a city, running like a continent. These are the headline numbers — and what they actually mean for a small business.</p>
+  </div>
+  <div class="card-body">
+    <div class="hero-row">
+      <div class="hero-card accent"><div class="value">S$789.5B</div><div class="label">GDP (2025)</div></div>
+      <div class="hero-card accent"><div class="value">+5.0%</div><div class="label">Real GDP growth</div></div>
+      <div class="hero-card"><div class="value">S$3.1T</div><div class="label">Foreign direct investment</div></div>
+      <div class="hero-card"><div class="value">~320%</div><div class="label">Trade-to-GDP ratio</div></div>
+      <div class="hero-card accent"><div class="value">#1</div><div class="label">World competitiveness (2026)</div></div>
+    </div>
+    <div class="context-grid">
+      <div class="context-card"><div class="icon">🏭</div><div><div class="stat">S$132.8B</div><h3>Manufacturing value added</h3><p>Up 13.9%. Total output S$479.1B. Led by electronics, transport engineering, precision engineering. The engine's core — capital-intensive, multinational-dominated.</p></div></div>
+      <div class="context-card"><div class="icon">✈️</div><div><div class="stat">S$3.1 trillion</div><h3>Foreign direct investment stock</h3><p>More than 4× the size of Singapore's entire annual economy. Foreign companies have parked this capital here. It is why the global engine exists.</p></div></div>
+      <div class="context-card"><div class="icon">🌐</div><div><div class="stat">~320%</div><h3>Trade-to-GDP ratio</h3><p>Everything the island buys and sells across its borders runs at roughly 3× the size of the economy. One of the highest ratios on earth.</p></div></div>
+      <div class="context-card"><div class="icon">👤</div><div><div class="stat">S$129,194</div><h3>Per capita GDP</h3><p>But this average hides the three-engine split. The global worker's output is 15× the domestic worker's. The headline is not the ground.</p></div></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>The headline says the economy is booming. And the numbers say the headlines are right.</strong> But the problem is the decade, not the good years. Between 2016 and 2024, labour productivity grew 2.5%/yr while real income grew only 1.3%/yr. The economy got more productive; the people who work in it did not get the gain in proportion.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: SingStat, IMD, World Bank. All figures 2025 unless noted. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

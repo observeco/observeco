@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-way-03 — what stays open</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:0;overflow:hidden;}
+.fig{width:1176px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:14px 26px 9px;border-bottom:1px solid var(--line);}
+.overline{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:23px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:11.5px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:12px 26px;}
+.quote{background:#2a2f36;border-radius:9px;padding:8px 13px;margin-bottom:8px;}
+.quote .q{font-family:var(--font-display);font-size:14px;font-style:italic;color:#fff;line-height:1.4;margin-bottom:4px;}
+.quote p{font-size:9.5px;color:#8fd4c4;font-weight:600;}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.col{border-radius:9px;padding:9px 11px;}
+.col.closed{background:var(--surface-muted);border:1px solid var(--line);}
+.col.open{background:var(--accent-tint);border:1px solid rgba(14,110,92,.18);}
+.col .k{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+.col.closed .k{color:var(--ink-3);}
+.col.open .k{color:var(--accent-strong);}
+.row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:3.5px 0;border-bottom:1px solid rgba(27,31,36,.07);}
+.row:last-child{border-bottom:none;padding-bottom:0;}
+.row .nm{font-size:10.5px;font-weight:700;color:var(--ink);line-height:1.25;}
+.row .sb{font-size:9px;color:var(--ink-2);line-height:1.3;margin-top:1px;}
+.who{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:999px;white-space:nowrap;}
+.who.no{background:rgba(107,115,126,.14);color:var(--ink-3);}
+.who.yes{background:rgba(14,110,92,.14);color:var(--accent-strong);}
+.foot{padding:8px 26px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">The service layer — what a robotaxi cannot bring with it</div>
+    <h2>Waymo Brings the Cars. Somebody Local Has to Bring Everything Else.</h2>
+    <p class="subtitle">Read the announcement as a supply chain and the openings appear. The technology is imported. The work of fitting it into Singapore is not.</p>
+  </div>
+  <div class="fig-body">
+    <div class="quote">
+      <div class="q">"Many riders enjoy using Waymo to connect to mass transit, including more than a third of riders in San Francisco who are picked up or dropped off near transit stations."</div>
+      <p>Waymo, 18 Sep 2026 — the first-and-last-mile pitch</p>
+    </div>
+    <div class="cols">
+      <div class="col closed">
+        <div class="k">Already owned — do not compete here</div>
+        <div class="row"><div><div class="nm">The driving technology</div><div class="sb">Waymo Driver: lidar, radar, cameras, and a decade of US mileage.</div></div><div class="who no">Closed</div></div>
+        <div class="row"><div><div class="nm">The fleet and the app</div><div class="sb">Capital-heavy, vertically integrated, Alphabet-backed.</div></div><div class="who no">Closed</div></div>
+      </div>
+      <div class="col open">
+        <div class="k">Left open — where local work starts</div>
+        <div class="row"><div><div class="nm">Charging and depot operations</div><div class="sb">A 100% electric fleet needs power, space, and 24-hour upkeep.</div></div><div class="who yes">Open</div></div>
+        <div class="row"><div><div class="nm">Cleaning and turnaround</div><div class="sb">Every vehicle, every day. Labour that scales with the fleet.</div></div><div class="who yes">Open</div></div>
+        <div class="row"><div><div class="nm">Remote and field support</div><div class="sb">The AV Specialist roles the government is already training for.</div></div><div class="who yes">Open</div></div>
+        <div class="row"><div><div class="nm">First-and-last-mile integration</div><div class="sb">Wiring robotaxis into MRT and bus interchange flows.</div></div><div class="who yes">Open</div></div>
+        <div class="row"><div><div class="nm">Trust and safety casework</div><div class="sb">Public acceptance, incident response, local regulatory work.</div></div><div class="who yes">Open</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Sources: Waymo statement and LTA release, 18 Sep 2026; MOT manpower transition package, 7 Jul 2026 (AV Specialist roles). Layer split is applied analysis.</span>
+    <span class="confidence">Moderate Confidence</span>
+  </div>
+</div>
+</body>
+</html>

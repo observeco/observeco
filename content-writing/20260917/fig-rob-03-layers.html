@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-rob-03 — where the value lands</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:12px;overflow:hidden;}
+.fig{width:1176px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:12px 26px 8px;border-bottom:1px solid var(--line);}
+.overline{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:3px;}
+h2{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--ink);margin-bottom:2px;line-height:1.15;}
+.subtitle{font-size:11px;color:var(--ink-2);line-height:1.35;}
+.fig-body{padding:10px 26px 10px;}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:9px;}
+.col{border-radius:9px;padding:9px 12px;}
+.col.closed{background:var(--critical-tint);border:1px solid rgba(180,35,24,.2);}
+.col.open{background:var(--accent-tint);border:1px solid rgba(14,110,92,.2);}
+.col .k{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;}
+.col.closed .k{color:var(--critical);}
+.col.open .k{color:var(--accent-strong);}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:9px;padding:3px 0;border-bottom:1px solid rgba(27,31,36,.07);}
+.row:last-child{border-bottom:none;}
+.row .nm{font-size:10.5px;font-weight:700;color:var(--ink);line-height:1.2;}
+.row .sub{font-size:9px;color:var(--ink-3);line-height:1.25;margin-top:1px;}
+.row .who{font-size:9px;font-weight:700;text-align:right;white-space:nowrap;}
+.row .who.no{color:var(--critical);}
+.row .who.yes{color:var(--accent-strong);}
+.quote{border-top:1px solid var(--line);padding-top:8px;}
+.quote .q{font-family:var(--font-display);font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:4px;}
+.quote .q em{font-style:normal;color:var(--accent-strong);}
+.quote p{font-size:9.5px;color:var(--ink-3);line-height:1.35;}
+.foot{padding:7px 26px;border-top:1px solid var(--line);font-size:9px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:8.5px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">The value chain, layer by layer — who can actually play</div>
+    <h2>The Robot Belongs to SoftBank. The Service Layer Belongs to Nobody.</h2>
+    <p class="subtitle">A machine arrives alone. Everything that makes it productive — and compliant — must be supplied by someone else.</p>
+  </div>
+  <div class="fig-body">
+    <div class="cols">
+      <div class="col closed">
+        <div class="k">Closed — capital-intensive, already owned</div>
+        <div class="row"><div><div class="nm">Autonomy software</div><div class="sub">Gravis: $200M SoftBank Series A. Kajima: A4CSEL.</div></div><div class="who no">Not open</div></div>
+        <div class="row"><div><div class="nm">The machines</div><div class="sub">Caterpillar, Volvo, Hitachi, Develon, John Deere, JCB.</div></div><div class="who no">Not open</div></div>
+      </div>
+      <div class="col open">
+        <div class="k">Open — "nascent in Singapore", owned by nobody</div>
+        <div class="row"><div><div class="nm">Operator training</div><div class="sub">One engineer, one week in Japan. That is today's capability.</div></div><div class="who yes">Open</div></div>
+        <div class="row"><div><div class="nm">Site integration</div><div class="sub">Digital task planning and workflow design for a live site.</div></div><div class="who yes">Open</div></div>
+        <div class="row"><div><div class="nm">Maintenance</div><div class="sub">Hardware upkeep on mixed-brand retrofitted fleets.</div></div><div class="who yes">Open</div></div>
+        <div class="row"><div><div class="nm">Data interpretation</div><div class="sub">Machine telemetry turned into a contractor's decisions.</div></div><div class="who yes">Open</div></div>
+        <div class="row"><div><div class="nm">Safety &amp; compliance</div><div class="sub">Geofencing, LiDAR, e-stops — guidelines still being written.</div></div><div class="who yes">Open</div></div>
+      </div>
+    </div>
+    <div class="quote">
+      <div class="q">"Scaling autonomous construction will require new skills in data interpretation, digital task planning, system integration and maintenance. As these capabilities are <em>nascent in Singapore</em>..."</div>
+      <p>JTC Corporation, press release, 17 Sep 2026 — the buyer naming the gap in writing.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Sources: JTC press release, 17 Sep 2026 (quote, Gravis/SoftBank); Gravis Robotics, 17 Aug 2026; ST, 17 Sep 2026. Layer split is applied analysis.</span>
+    <span class="confidence">Moderate Confidence</span>
+  </div>
+</div>
+</body>
+</html>

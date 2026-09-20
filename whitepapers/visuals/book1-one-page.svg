@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >One Page</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="214" y="320" width="1320" height="1070" rx="24" fill="#e7f1ee"/>
+<text x="274" y="405" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="start" >My engine</text>
+<line x1="274" y1="465" x2="1474" y2="465" stroke="#cfccc4" stroke-width="4"/>
+<text x="274" y="615" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="start" >My wave</text>
+<line x1="274" y1="675" x2="1474" y2="675" stroke="#cfccc4" stroke-width="4"/>
+<text x="274" y="825" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="start" >My industry</text>
+<line x1="274" y1="885" x2="1474" y2="885" stroke="#cfccc4" stroke-width="4"/>
+<text x="274" y="1035" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="start" >My wall or door</text>
+<line x1="274" y1="1095" x2="1474" y2="1095" stroke="#cfccc4" stroke-width="4"/>
+<text x="274" y="1245" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="start" >My word</text>
+<line x1="274" y1="1305" x2="1474" y2="1305" stroke="#cfccc4" stroke-width="4"/>
+</g>
+</svg>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F&B Sub-Categories — Every Product Category, Mapped</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.cat-card{background:var(--surface-muted);border-radius:10px;padding:16px;position:relative;overflow:hidden;}
+.cat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.cat-card.walled::before{background:var(--accent);}
+.cat-card.open::before{background:var(--warning);}
+.cat-card.fragmented::before{background:var(--ink-3);}
+.cat-card .tag{font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:6px;}
+.cat-card.walled .tag{color:var(--accent);}
+.cat-card.open .tag{color:var(--warning);}
+.cat-card.fragmented .tag{color:var(--ink-3);}
+.cat-card h3{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.cat-card .brand{font-size:12px;color:var(--ink-2);line-height:1.4;}
+.cat-card .brand strong{color:var(--ink);}
+.cat-card .word{font-size:11px;color:var(--accent);font-style:italic;margin-top:6px;}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Four, Ch 1</div>
+    <h1>F&B Is Not One Market — It Is Six</h1>
+    <p class="subtitle">Each product category has different brands, different structures, and different words. A small business does not enter "F&B" — it enters one product category and takes one word.</p>
+  </div>
+  <div class="card-body">
+    <div class="cat-grid">
+      <div class="cat-card walled"><div class="tag">Walled — two-name shelf</div><h3>Delivery Platforms</h3><div class="brand"><strong>Grab</strong> over half, <strong>foodpanda</strong> the main rival. Deliveroo exited. The shelf owns the customer, not the food.</div><div class="word">Grab owns "delivery" — but it's a channel, not a brand</div></div>
+      <div class="cat-card walled"><div class="tag">Walled — one giant</div><h3>Quick-Service / Fast Food</h3><div class="brand"><strong>McDonald's ~40%</strong> of the slice. KFC, Subway, Burger King, Domino's. Global chains with decades of brand.</div><div class="word">McDonald's owns "fast" — the everyday meal word</div></div>
+      <div class="cat-card walled"><div class="tag">Walled — landlords</div><h3>Coffee Shops & Food Courts</h3><div class="brand"><strong>Kimly, Koufu, Food Republic</strong>. The landlords of the stalls, not the food itself.</div><div class="word">They own the venue, not the dish</div></div>
+      <div class="cat-card open"><div class="tag">Open — fragmented field</div><h3>Full-Service Restaurants</h3><div class="brand"><strong>Jumbo, Paradise, Putien, Dian Xiao Er</strong>. Domestic groups, no single name dominates.</div><div class="word">The celebration meal word appears open</div></div>
+      <div class="cat-card open"><div class="tag">Open — contested, no leader</div><h3>Coffee & Bubble Tea</h3><div class="brand"><strong>Starbucks ~140, Luckin ~81, LiHo, KOI ~40, Gong Cha, Tiger Sugar</strong>. Contested, no clear leader.</div><div class="word">The bubble-tea word: no clear owner, unverified</div></div>
+      <div class="cat-card fragmented"><div class="tag">Fragmented — long tail</div><h3>Hawker Stalls</h3><div class="brand">Thousands of independents. No brands. The backbone of Singapore's food culture.</div><div class="word">The hawker who owns a dish owns a word no rival can take</div></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>A small business does not enter "F&B"; it enters one product category, competes in one mental category, and takes one word.</strong> The delivery platform is a shelf, not a food brand. The coffee chain is contested, not owned. The hawker stall is the long tail where a specific dish can become a word. Choose your category, then own your word.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: Momentum Works/CNA, Statista, CNBC/Mothership. Figures 2024–2025. Confidence: High/Moderate.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

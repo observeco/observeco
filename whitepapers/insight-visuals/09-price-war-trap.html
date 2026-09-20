@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Price War Trap — Why Competing on Price Is Structural Suicide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.squeeze-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.squeeze-card{border-radius:12px;padding:24px;text-align:center;}
+.squeeze-card.rent{background:var(--critical-tint);border:1px solid rgba(180,35,24,.12);}
+.squeeze-card.labour{background:var(--warning-tint);border:1px solid rgba(154,101,0,.15);}
+.squeeze-card.market{background:var(--surface-muted);border:1px solid var(--line);}
+.squeeze-card .icon{font-size:28px;margin-bottom:6px;}
+.squeeze-card .label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px;}
+.squeeze-card.rent .label{color:var(--critical);}
+.squeeze-card.labour .label{color:var(--warning);}
+.squeeze-card.market .label{color:var(--ink-3);}
+.squeeze-card h3{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.squeeze-card p{font-size:13px;color:var(--ink-2);line-height:1.4;}
+.squeeze-card .stat{font-family:var(--font-display);font-size:20px;font-weight:800;margin-bottom:4px;}
+.squeeze-card.rent .stat{color:var(--critical);}
+.squeeze-card.labour .stat{color:var(--warning);}
+.squeeze-card.market .stat{color:var(--ink);}
+.mechanism{background:var(--surface-muted);border-radius:12px;padding:24px;margin-bottom:24px;display:flex;align-items:center;gap:24px;}
+.mechanism .step{text-align:center;padding:12px 16px;background:var(--surface);border-radius:8px;border:1px solid var(--line);min-width:120px;}
+.mechanism .step .num{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--critical);margin-bottom:4px;}
+.mechanism .step .text{font-size:12px;color:var(--ink-2);}
+.mechanism .arrow{font-size:18px;color:var(--ink-3);}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part One, Ch 2</div>
+    <h1>The Price War Is a Trap, Not a Strategy</h1>
+    <p class="subtitle">High, fixed costs. A capped market. A productivity-wage gap. The margin to absorb a price war is structurally thin. You can cut your way to zero customers and still owe the month's rent.</p>
+  </div>
+  <div class="card-body">
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">The Triple Squeeze</div>
+    <div class="squeeze-row">
+      <div class="squeeze-card rent"><div class="icon">🏠</div><div class="stat">Among the highest</div><div class="label">Fixed cost #1</div><h3>Commercial rent</h3><p>Does not fall when revenue falls. The landlord wants his cheque in full, every month.</p></div>
+      <div class="squeeze-card labour"><div class="icon">👤</div><div class="stat">+4.0%</div><div class="label">Fixed cost #2</div><h3>Wages must keep rising</h3><p>Good people will leave for a better offer across the street. The margin to absorb those rises is thin.</p></div>
+      <div class="squeeze-card market"><div class="icon">🔒</div><div class="stat">5.9M</div><div class="label">The ceiling</div><h3>Capped market</h3><p>Only so many mouths to feed. Growth is not "expand the market" — it is "take a larger share of a fixed pie."</p></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">How the Price War Kills You</div>
+    <div class="mechanism">
+      <div class="step"><div class="num">1</div><div class="text">You cut your price</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="num">2</div><div class="text">Margin shrinks</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="num">3</div><div class="text">Rent stays fixed</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="num">4</div><div class="text">No new volume big enough</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="num">5</div><div class="text">Slow structural bleed</div></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>Competing on price is structurally dangerous here, not merely a bad strategy.</strong> The cost base does not bend, and the market is capped. The business that cuts its price does not get margin relief. It gets a slow, structural bleed: each discount shaves profit, the fixed rent stays exactly where it was, and there is no new volume big enough to make up the difference. <strong>You can cut your way to zero customers and still owe the month's rent.</strong></p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: MOM, SingStat, QBE 2025. Figures 2025. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-je-02 — the arithmetic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:0;overflow:hidden;}
+.fig{width:1176px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:14px 26px 9px;border-bottom:1px solid var(--line);}
+.overline{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:23px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:11.5px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:12px 26px;}
+.scenario{background:var(--surface-muted);border:1px solid var(--line);border-radius:9px;padding:7px 12px;margin-bottom:9px;font-size:11.5px;color:var(--ink);font-weight:600;}
+.scenario span{color:var(--ink-3);font-weight:500;}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:9px;}
+.side{border-radius:9px;padding:10px 12px;}
+.side.old{background:var(--critical-tint);border:1px solid rgba(180,35,24,.2);}
+.side.new{background:var(--accent-tint);border:1px solid rgba(14,110,92,.2);}
+.side .k{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;}
+.side.old .k{color:var(--critical);}
+.side.new .k{color:var(--accent-strong);}
+.side .big{font-family:var(--font-display);font-size:26px;font-weight:800;line-height:1;margin-bottom:4px;}
+.side.old .big{color:var(--critical);}
+.side.new .big{color:var(--accent-strong);}
+.side .d{font-size:10.5px;color:var(--ink-2);line-height:1.4;}
+.shift{border-top:1px solid var(--line);padding-top:9px;display:grid;grid-template-columns:1.3fr 1fr;gap:12px;align-items:center;}
+.shift h4{font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.shift p{font-size:10.5px;color:var(--ink-2);line-height:1.45;}
+.callout{background:#2a2f36;border-radius:9px;padding:9px 12px;}
+.callout .big{font-family:var(--font-display);font-size:19px;font-weight:800;color:#8fd4c4;line-height:1.15;margin-bottom:3px;}
+.callout p{font-size:10px;color:#c3c9d1;line-height:1.4;}
+.foot{padding:8px 26px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">What a fifteen-hundred-times price change does to one ordinary job</div>
+    <h2>The Job Did Not Get Cheaper. Sampling Stopped Being Necessary.</h2>
+    <p class="subtitle">Tag and triage every support message. Read the two columns side by side, then read what actually changed — it is not the bill.</p>
+  </div>
+  <div class="fig-body">
+    <div class="scenario">A support desk receiving <b>200,000 messages a month</b> <span>— tag each one by topic, flag the angry ones</span></div>
+    <div class="cmp">
+      <div class="side old">
+        <div class="k">A normal AI — it writes first</div>
+        <div class="big">thousands / mo</div>
+        <div class="d">Every call pays for a full paragraph before you can read the answer. So you sample: tag a thousand, assume the rest look similar.</div>
+      </div>
+      <div class="side new">
+        <div class="k">Jev — typed answer, output free</div>
+        <div class="big">low single dollars</div>
+        <div class="d">You pay for the input only, and nothing writes a paragraph. The whole 200,000 lands inside a rounding error.</div>
+      </div>
+    </div>
+    <div class="shift">
+      <div>
+        <h4>The thing that actually changed</h4>
+        <p>You went from reading a sample to reading everything, for less than the sample used to cost. That is not a cheaper version of the same business. It is a different one.</p>
+      </div>
+      <div class="callout">
+        <div class="big">$0.042</div>
+        <p>per million input tokens. Output free. Roughly the cost of a million separate judgments.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: published Jev pricing ($0.042/MTok, free output), listed on Vercel AI Gateway. The support-desk figures are an illustrative worked example, not a reported case.</span>
+    <span class="confidence">High: pricing · Illustrative: costs</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >Walls and Doors</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="129" y="360" width="700" height="130" rx="22" fill="#a4716f"/>
+<text x="479.0" y="444" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.08em" >Walls</text>
+<rect x="189" y="580" width="580" height="170" rx="20" fill="#fbeae7" stroke="#e8c9c5" stroke-width="2"/>
+<text x="479.0" y="683.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Banks</text>
+<rect x="189" y="805" width="580" height="170" rx="20" fill="#fbeae7" stroke="#e8c9c5" stroke-width="2"/>
+<text x="479.0" y="908.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Supermarkets</text>
+<rect x="189" y="1030" width="580" height="170" rx="20" fill="#fbeae7" stroke="#e8c9c5" stroke-width="2"/>
+<text x="479.0" y="1133.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Delivery</text>
+<rect x="189" y="1255" width="580" height="170" rx="20" fill="#fbeae7" stroke="#e8c9c5" stroke-width="2"/>
+<text x="479.0" y="1358.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Telecom</text>
+<rect x="919" y="360" width="700" height="130" rx="22" fill="#0e6e5c"/>
+<text x="1269.0" y="444" font-family="Helvetica, Arial, sans-serif" font-size="44" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="0.08em" >Doors</text>
+<rect x="979" y="580" width="580" height="170" rx="20" fill="#e7f1ee" stroke="#c6dcd4" stroke-width="2"/>
+<text x="1269.0" y="683.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Tuition</text>
+<rect x="979" y="805" width="580" height="170" rx="20" fill="#e7f1ee" stroke="#c6dcd4" stroke-width="2"/>
+<text x="1269.0" y="908.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Senior care</text>
+<rect x="979" y="1030" width="580" height="170" rx="20" fill="#e7f1ee" stroke="#c6dcd4" stroke-width="2"/>
+<text x="1269.0" y="1133.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Beauty</text>
+<rect x="979" y="1255" width="580" height="170" rx="20" fill="#e7f1ee" stroke="#c6dcd4" stroke-width="2"/>
+<text x="1269.0" y="1358.0" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Pets</text>
+</g>
+</svg>

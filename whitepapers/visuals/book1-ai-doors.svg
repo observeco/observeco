@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >AI Opens Doors</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="674.0" y="330" width="400" height="640" rx="24" fill="#e7f1ee"/>
+<rect x="714.0" y="360" width="320" height="560" rx="16" fill="#ffffff" stroke="#cfccc4" stroke-width="3"/>
+<polygon points="1034.0,360 1254.0,280 1254.0,1000 1034.0,920" fill="#e7f1ee" stroke="#c6dcd4" stroke-width="3"/>
+<line x1="804.0" y1="640" x2="1126.0" y2="640" stroke="#0e6e5c" stroke-width="9"/>
+<polygon points="1154.0,640 1126.0,626.0 1126.0,654.0" fill="#0e6e5c"/>
+<text x="874.0" y="1160" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="italic" fill="#0a5447" text-anchor="middle" >one person = a team</text>
+</g>
+</svg>

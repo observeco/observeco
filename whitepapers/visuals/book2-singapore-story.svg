@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >The Singapore Story</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="120" y="680" width="1508" height="240" rx="24" fill="#e7f1ee"/>
+<line x1="180" y1="800" x2="1568" y2="800" stroke="#cfccc4" stroke-width="8"/>
+<circle cx="457.6" cy="800" r="34" fill="#0e6e5c"/>
+<text x="457.6" y="890" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Port war</text>
+<circle cx="874.0" cy="800" r="34" fill="#0e6e5c"/>
+<text x="874.0" y="890" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Entrepot</text>
+<circle cx="1290.4" cy="800" r="34" fill="#0e6e5c"/>
+<text x="1290.4" y="890" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="bold" fill="#1b1f24" text-anchor="middle" >Positioning</text>
+</g>
+</svg>

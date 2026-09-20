@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Domestic Helper — The Person Who Makes It All Work</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.hero-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.hero-card{background:var(--surface-muted);border-radius:10px;padding:24px;text-align:center;}
+.hero-card .value{font-family:var(--font-display);font-size:36px;font-weight:800;line-height:1;margin-bottom:4px;color:var(--ink);}
+.hero-card .label{font-size:12px;color:var(--ink-3);line-height:1.4;}
+.hero-card.accent .value{color:var(--accent);}
+.household-vis{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:12px;padding:28px;margin-bottom:24px;display:flex;align-items:center;gap:32px;}
+.household-icon{font-size:48px;flex-shrink:0;}
+.household-text h3{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.household-text p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.household-text .stat{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--accent-strong);margin-bottom:4px;}
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
+.detail-card{background:var(--surface-muted);border-radius:10px;padding:18px;}
+.detail-card h3{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.detail-card p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+.detail-card .stat{font-family:var(--font-display);font-size:18px;font-weight:800;color:var(--accent);margin-bottom:4px;}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Two, the five streams</div>
+    <h1>1 in 5 Households Runs on a Helper</h1>
+    <p class="subtitle">The domestic helper is not the customer. She is the person who makes the dual-income household work — and she is the one who actually goes to the shops.</p>
+  </div>
+  <div class="card-body">
+    <div class="hero-row">
+      <div class="hero-card"><div class="value">1.23M</div><div class="label">Foreign workers<br>in Singapore</div></div>
+      <div class="hero-card accent"><div class="value">317,000</div><div class="label">Foreign domestic workers<br>(live-in helpers)</div></div>
+      <div class="hero-card"><div class="value">1 in 5</div><div class="label">Households<br>has a helper</div></div>
+    </div>
+    <div class="household-vis">
+      <div class="household-icon">👩‍👧‍👦</div>
+      <div class="household-text">
+        <div class="stat">The helper is the person who makes the whole arrangement hold.</div>
+        <h3>She buys the groceries. She takes the children to the playground. She cooks the meals.</h3>
+        <p>In practical terms, the helper is often the person in the household who actually goes to the shops and actually decides, at the shelf, what gets bought. If you run a small grocery or a neighbourhood provision shop, the helper is one of your most important customers — and she is often under-appreciated in the way owners think about their customer base.</p>
+      </div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-card"><div class="stat">Both parents work</div><h3>The dual-income family only exists because of her</h3><p>In Singapore, when both parents work and there is no extended family around, the helper is the person who makes the whole arrangement hold. She is what puts both salaries into the spending pool that reaches your shop.</p></div>
+      <div class="detail-card"><div class="stat">She remembers which stall gives good service</div><h3>Your most loyal customer may be invisible</h3><p>She is the one who goes back every week. She is the one who remembers which stall gives good service. Treat her as a proper customer, not as an afterthought.</p></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>The foreign-worker and helper payroll is real money, but it is money that is sensitive to policy.</strong> The number of work passes the government issues is a tool of national policy, and it moves up and down with the economy. A business that builds its whole model on this current is building on a base that can be tightened. Build into it, but do not let it be your only water.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: MOM, SingStat. Figures 2025. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-aom-03 — the nine ways to differentiate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:12px;overflow:hidden;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:14px 28px 10px;border-bottom:1px solid var(--line);}
+.overline{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:23px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:11.5px;color:var(--ink-2);line-height:1.35;}
+.fig-body{padding:11px 28px 11px;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:9px;}
+.card{border:1px solid var(--line);border-radius:7px;padding:6px 9px;background:var(--surface);display:flex;gap:7px;align-items:flex-start;}
+.card .num{font-family:var(--font-display);font-size:14px;font-weight:800;color:var(--ink-3);line-height:1;min-width:13px;padding-top:2px;}
+.card.hit{background:var(--accent-tint);border-color:rgba(14,110,92,.24);}
+.card.hit .num{color:var(--accent);}
+.card.miss{background:var(--surface-muted);}
+.card .txt h3{font-size:11px;font-weight:700;color:var(--ink);margin-bottom:1px;line-height:1.25;}
+.card.hit .txt h3{color:var(--accent-strong);}
+.card .txt p{font-size:9.5px;color:var(--ink-2);line-height:1.3;}
+.verdict{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--line);padding-top:9px;}
+.vbox{border-radius:8px;padding:8px 12px;}
+.vbox.bad{background:var(--critical-tint);border:1px solid rgba(180,35,24,.2);}
+.vbox.good{background:var(--accent-tint);border:1px solid rgba(14,110,92,.2);}
+.vbox .k{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+.vbox.bad .k{color:var(--critical);}
+.vbox.good .k{color:var(--accent-strong);}
+.vbox p{font-size:10.5px;color:var(--ink-2);line-height:1.4;}
+.vbox strong{color:var(--ink);}
+.foot{padding:7px 28px;border-top:1px solid var(--line);font-size:9px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">Run through all nine — an honest scorecard</div>
+    <h2>The Nine Ways to Differentiate, Scored</h2>
+    <p class="subtitle">There are nine recognised ways to build differentiation. Aomorie scores strongly on the two hardest to say out loud, and leads with the one anyone can buy.</p>
+  </div>
+  <div class="fig-body">
+    <div class="grid">
+      <div class="card miss"><div class="num">1</div><div class="txt"><h3>Be first — material only</h3><p>True as a supply fact. The fabric was bought, not invented. Not first in the mind.</p></div></div>
+      <div class="card hit"><div class="num">2</div><div class="txt"><h3>Own an attribute: touch</h3><p>The open word. Her own quote names it. Nobody in this corner owns it.</p></div></div>
+      <div class="card miss"><div class="num">3</div><div class="txt"><h3>Leadership — not available</h3><p>No scale, no share, one-woman operation.</p></div></div>
+      <div class="card miss"><div class="num">4</div><div class="txt"><h3>Heritage — not available</h3><p>Two years old. Heritage cannot be manufactured.</p></div></div>
+      <div class="card hit"><div class="num">5</div><div class="txt"><h3>Market speciality: the pleat</h3><p>Expert in one object — the pleated bag — is itself a credential.</p></div></div>
+      <div class="card miss"><div class="num">6</div><div class="txt"><h3>Next generation — weak</h3><p>"New material" is a feature claim, matched once the fabric is public.</p></div></div>
+      <div class="card miss"><div class="num">7</div><div class="txt"><h3>Most preferred — not yet</h3><p>1,455 followers. No high-energy group claimed.</p></div></div>
+      <div class="card miss"><div class="num">8</div><div class="txt"><h3>Hot-selling — earned, unused</h3><p>Boutiques is selective and accepted her. Real social proof, unspent.</p></div></div>
+      <div class="card hit"><div class="num">9</div><div class="txt"><h3>Production method — the moat</h3><p>Hand pleating, hours per bag, 10–15 units a batch. Machines cannot copy it.</p></div></div>
+    </div>
+    <div class="verdict">
+      <div class="vbox bad">
+        <div class="k">Undifferentiated — as a brand</div>
+        <p><strong>No word in the customer's mind.</strong> Leading with a material competitors can also buy, and with sustainability — now an entry ticket, not an edge.</p>
+      </div>
+      <div class="vbox good">
+        <div class="k">Genuinely differentiated — as a maker</div>
+        <p><strong>The hand pleat, the material in the hand, the founder's taste.</strong> All three are real and uncopyable. None of them is in the headline.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span class="legend"><i style="background:#0e6e5c"></i>Real / available &nbsp;&nbsp;<i style="background:#c9c6be"></i>Not available or weak</span>
+    <span>Framework: brand-differentiation (the nine ways; production method; own an attribute). Confidence: Moderate — applied analysis.</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>banner — construction robots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:480px;padding:12px;overflow:hidden;}
+.banner{width:1200px;min-height:456px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;display:flex;flex-direction:column;}
+.top{padding:18px 30px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+.brand{font-family:var(--font-display);font-size:15px;font-weight:800;color:var(--ink);letter-spacing:.01em;}
+.brand span{color:var(--accent);}
+.kicker{font-size:10px;font-weight:700;color:var(--accent-strong);text-transform:uppercase;letter-spacing:.12em;background:var(--accent-tint);border:1px solid rgba(14,110,92,.18);padding:4px 11px;border-radius:999px;}
+.mid{padding:20px 30px 16px;flex:1;display:flex;flex-direction:column;justify-content:center;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;color:var(--ink);line-height:1.12;margin-bottom:12px;letter-spacing:-.01em;}
+h1 em{font-style:normal;color:var(--accent);}
+.dek{font-size:13.5px;color:var(--ink-2);line-height:1.5;max-width:1000px;}
+.dek strong{color:var(--ink);font-weight:700;}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:0 30px 16px;}
+.kpi{background:var(--accent-tint);border:1px solid rgba(14,110,92,.16);border-radius:9px;padding:8px 11px;}
+.kpi .n{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--accent-strong);line-height:1;margin-bottom:2px;}
+.kpi .l{font-size:9.5px;font-weight:600;color:var(--ink-2);line-height:1.25;}
+.kpi.red{background:var(--critical-tint);border-color:rgba(180,35,24,.2);}
+.kpi.red .n{color:var(--critical);}
+.bottom{padding:11px 30px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:16px;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="top">
+    <div class="brand">Observe<span>Co</span></div>
+    <div class="kicker">Trending on X &middot; 17 Sep 2026</div>
+  </div>
+  <div class="mid">
+    <h1>The construction robots aren't arriving because they're better.<br>They're arriving because the biggest buyer <em>wrote them into the tender.</em></h1>
+    <p class="dek">JTC has mandated robotics in its construction tenders <strong>since 2025</strong>. HDB has put robots into <strong>16 of the 31</strong> Build-To-Order projects tendered since then. Behind both sits a pipeline of <strong>800 hectares</strong> of earthworks and <strong>S$53 billion</strong> in projected demand. That is not a technology trend — it is a procurement schedule, and it has dates on it.</p>
+  </div>
+  <div class="strip">
+    <div class="kpi"><div class="n">5%</div><div class="l">of larger projects have robots today</div></div>
+    <div class="kpi"><div class="n">800ha</div><div class="l">JTC earthworks pipeline, 5 years</div></div>
+    <div class="kpi red"><div class="n">~90%</div><div class="l">of manual workers are foreign</div></div>
+    <div class="kpi"><div class="n">2028</div><div class="l">earliest deployment on JTC sites</div></div>
+  </div>
+  <div class="bottom">
+    <span>Sources: JTC press release and The Straits Times, 17 Sep 2026; ST, 11 Jul 2026 citing BCA and MOM. Demand figure as attributed to BCA via ST.</span>
+    <span>Draft &mdash; not published</span>
+  </div>
+</div>
+</body>
+</html>

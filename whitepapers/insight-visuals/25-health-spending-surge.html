@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Spending Surge — The Biggest Jump in the Budget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --canvas: #f7f6f3; --surface: #ffffff; --surface-muted: #efeee9;
+  --ink: #1b1f24; --ink-2: #4a525c; --ink-3: #6b737e;
+  --accent: #0e6e5c; --accent-strong: #0a5447; --accent-tint: #e7f1ee; --accent-line: #c6dcd4;
+  --critical: #b42318; --critical-tint: #fbeae7;
+  --warning: #9a6500; --warning-tint: #fbf0d8;
+  --line: #e4e2dc;
+  --font-display: 'Playfair Display', Georgia, serif; --font-body: 'Inter', system-ui, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--canvas); color: var(--ink); font-family: var(--font-body); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+.card { width: 1200px; background: var(--surface); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 1px 2px rgba(27,31,36,.05), 0 1px 3px rgba(27,31,36,.07); overflow: hidden; }
+.card-header { padding: 32px 40px 24px; border-bottom: 1px solid var(--line); }
+.overline { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+h1 { font-family: var(--font-display); font-size: 38px; font-weight: 800; line-height: 1.1; color: var(--ink); margin-bottom: 8px; }
+.subtitle { font-size: 15px; color: var(--ink-2); line-height: 1.5; }
+.card-body { padding: 32px 40px; }
+
+.trend-hero { display: flex; align-items: center; gap: 32px; margin-bottom: 28px; padding: 24px; background: var(--accent-tint); border: 1px solid var(--accent-line); border-radius: 12px; }
+.trend-values { display: flex; align-items: baseline; gap: 12px; }
+.trend-old { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--ink-3); text-decoration: line-through; }
+.trend-arrow { font-size: 24px; color: var(--accent); }
+.trend-new { font-family: var(--font-display); font-size: 44px; font-weight: 800; color: var(--accent-strong); }
+.trend-unit { font-size: 13px; color: var(--ink-2); }
+.trend-change { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: white; padding: 4px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; margin-top: 8px; }
+.trend-context h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.trend-context p { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+
+.movers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+.mover-card { background: var(--surface-muted); border-radius: 8px; padding: 14px; text-align: center; }
+.mover-card .category { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); font-weight: 600; margin-bottom: 6px; }
+.mover-card .change { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+.mover-card .detail { font-size: 11px; color: var(--ink-3); line-height: 1.3; }
+
+.breakdown-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+.breakdown-card { background: var(--surface-muted); border-radius: 10px; padding: 20px; }
+.breakdown-card .icon { font-size: 24px; margin-bottom: 6px; }
+.breakdown-card h3 { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.breakdown-card .stat { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+.breakdown-card p { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+
+.insight-box { background: var(--accent-tint); border: 1px solid var(--accent-line); border-radius: 10px; padding: 16px 20px; }
+.insight-box p { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+.insight-box strong { color: var(--accent-strong); }
+.card-footer { padding: 16px 40px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--ink-3); }
+.confidence { display: inline-flex; align-items: center; gap: 6px; background: rgba(14,110,92,0.1); color: var(--accent-strong); padding: 3px 10px; border-radius: 999px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+.confidence::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Two, Ch 1</div>
+    <h1>Health Spending Jumped 48% in Five Years</h1>
+    <p class="subtitle">The biggest jump of any category in the Household Expenditure Survey. Not a trend — the demographic wave in purest form.</p>
+  </div>
+  <div class="card-body">
+    <div class="trend-hero">
+      <div>
+        <div class="trend-values"><div class="trend-old">S$320</div><div class="trend-arrow">→</div><div class="trend-new">S$474</div></div>
+        <div class="trend-unit">per household per month</div>
+        <div class="trend-change">↑ +48%</div>
+      </div>
+      <div class="trend-context">
+        <h2>The biggest jump of any spending category</h2>
+        <p>A visit to the GP is S$40–70. A specialist is S$150–250. Home care is S$20–25/hour. And there is nothing cyclical about this — it is the demographic wave in purest form. The country is ageing, and the money is following.</p>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">The Five Fastest-Growing Spending Categories (5-Year Change)</div>
+    <div class="movers-grid">
+      <div class="mover-card"><div class="category">Health & Care</div><div class="change">+48%</div><div class="detail">S$320 → S$474/mo</div></div>
+      <div class="mover-card"><div class="category">Online Shopping</div><div class="change">+153%</div><div class="detail">4.7% → 11.9% of spend</div></div>
+      <div class="mover-card"><div class="category">Eating Out</div><div class="change">+19%</div><div class="detail">S$810 → S$966/mo</div></div>
+      <div class="mover-card"><div class="category">Private Tuition</div><div class="change">+29%</div><div class="detail">S$1.4bn → S$1.8bn</div></div>
+      <div class="mover-card"><div class="category">Streaming</div><div class="change">+495%</div><div class="detail">6.9% → 41.1% of HH</div></div>
+    </div>
+    <div class="breakdown-grid">
+      <div class="breakdown-card"><div class="icon">🏥</div><div class="stat">S$40–70</div><h3>The GP Visit</h3><p>Every household's first touchpoint with the health system. The demand is not medical — it is independence and care.</p></div>
+      <div class="breakdown-card"><div class="icon">🏠</div><div class="stat">S$20–25/hr</div><h3>Home Care</h3><p>The fastest-growing segment. A senior who lives alone needs someone to fix the aircon, drive to the clinic, sort the will.</p></div>
+      <div class="breakdown-card"><div class="icon">💊</div><div class="stat">US$44bn by 2030</div><h3>National Health Expenditure</h3><p>Projected to nearly double. Over a quarter of the population will be 65+ by 2030. Every grey hair is a customer.</p></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>The moving money splits two ways.</strong> It goes to the digitised — online, streamed, delivered — and it goes to the old, to health, care, and the services that compensate for shrinking households. The trick is to be on the side of the country as it actually is, not as it pretended to be.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: SingStat Household Expenditure Survey 2023, MOH. Figures as of August 2026.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-bts-03 — the wall and the doors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee; --accent-line:#c6dcd4;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:16px;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:24px 32px 16px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:6px;}
+h2{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.subtitle{font-size:14px;color:var(--ink-2);line-height:1.5;}
+.fig-body{padding:24px 32px 26px;}
+.wall{display:grid;grid-template-columns:1fr 96px 1fr;gap:0;align-items:stretch;}
+.wall-left,.wall-right{padding:16px 20px;border-radius:12px;}
+.wall-left{background:var(--critical-tint);border:1px solid rgba(180,35,24,.25);}
+.wall-right{background:var(--accent-tint);border:1px solid rgba(14,110,92,.22);}
+.wall-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:12px;}
+.wall-left .wall-label{color:var(--critical);}
+.wall-right .wall-label{color:var(--accent-strong);}
+.wall-left h3{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--ink);margin-bottom:8px;}
+.wall-left p{font-size:13px;color:var(--ink-2);line-height:1.55;margin-bottom:10px;}
+.wall-left ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
+.wall-left li{font-size:12.5px;color:var(--ink-2);line-height:1.5;padding-left:16px;position:relative;}
+.wall-left li::before{content:'✕';position:absolute;left:0;color:var(--critical);font-weight:700;}
+.wall-right h3{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--ink);margin-bottom:8px;}
+.wall-right p{font-size:13px;color:var(--ink-2);line-height:1.55;margin-bottom:10px;}
+.wall-right ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+.door{border-left:3px solid var(--accent);padding:6px 0 6px 12px;}
+.door b{font-size:13px;color:var(--ink);display:block;}
+.door span{font-size:12px;color:var(--ink-2);line-height:1.5;}
+.gate{display:flex;align-items:center;justify-content:center;}
+.gate div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 8px;text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-3);line-height:1.4;}
+.foot{padding:12px 32px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">Walls vs doors — the tailwind is not in the stadium, it is around it</div>
+    <h2>Don't Enter the Wall. Serve What Pours Out of It.</h2>
+    <p class="subtitle">Taylor Swift's six 2024 shows brought an estimated S$350–500M in tourism receipts — ~70% of concertgoers flew in. The door is everything the visitor spends after the encore.</p>
+  </div>
+  <div class="fig-body">
+    <div class="wall">
+      <div class="wall-left">
+        <div class="wall-label">The wall</div>
+        <h3>The stadium business</h3>
+        <p>You will not promote the global acts. Capital and exclusive deals decide who does.</p>
+        <ul>
+          <li>Live Nation / global promoters</li>
+          <li>One-off exclusivity deals</li>
+          <li>State mega-event grants &amp; machinery</li>
+        </ul>
+      </div>
+      <div class="gate"><div>small<br>business<br>door</div></div>
+      <div class="wall-right">
+        <div class="wall-label">The doors</div>
+        <h3>What the money pours into</h3>
+        <p>Three fragmented, trust-driven, under-served layers — exactly the ground a positioned small business wins.</p>
+        <ul>
+          <li class="door"><b>1 · The concert-tourist service layer</b><span>Fan-club logistics, pre/post-show experiences, venue-corridor F&B, concert-time transport</span></li>
+          <li class="door"><b>2 · The talent-node services</b><span>Training, audition prep, content production — the local pre-production layer for a studio that keeps coming back</span></li>
+          <li class="door"><b>3 · The premium visitor</b><span>The trusted local who packages Singapore around the show — the S$200 dinner, the day-after</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: Maybank estimate via ST/BT (Feb 2024) for Swift S$350–500M receipts; MAS Q1 2024 "surge in tourism activity" (CNA). Doors are Book 1 positioning leads — verify before entering. Confidence: estimates Moderate; doors Moderate.</span>
+    <span class="confidence">Moderate Confidence</span>
+  </div>
+</div>
+</body>
+</html>

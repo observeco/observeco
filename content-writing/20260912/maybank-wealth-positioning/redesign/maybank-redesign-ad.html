@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root{
+    --canvas:#f7f6f3;       /* warm bond paper — light-first */
+    --surface:#ffffff;
+    --ink:#1b1f24;          /* near-black, not pure black */
+    --ink-2:#4a525c;
+    --ink-3:#6b737e;
+    --insight:#0e6e5c;       /* teal-verdigris brand accent */
+    --insight-strong:#0a5447;
+    --insight-tint:#e7f1ee;
+    --insight-line:#c6dcd4;
+    --amber:#c9892e;        /* warm heritage accent — used sparingly, NOT old-brown luxury */
+    --amber-soft:#e7c38a;
+    --green-may:#7db13a;     /* Maybank yellow-green heritage nod */
+    --line:#e4e2dc;
+    --serif:'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+    --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:1200px;height:672px;overflow:hidden;background:var(--canvas);}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{width:1200px;height:672px;display:flex;}
+
+  /* ── LEFT: copy zone ── */
+  .copy{
+    width:650px;height:672px;padding:56px 0 40px 62px;
+    display:flex;flex-direction:column;justify-content:space-between;
+    position:relative;z-index:2;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .brandmark{
+    width:40px;height:48px;border-radius:9px 9px 9px 9px;
+    background:linear-gradient(150deg,var(--green-may) 0%,var(--insight) 100%);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(14,110,92,.28);
+  }
+  .brandmark svg{width:22px;height:22px;}
+  .brandtext{line-height:1.12;}
+  .brandtext .bn{font-weight:800;font-size:18px;letter-spacing:.02em;}
+  .brandtext .bs{
+    font-size:10.5px;font-weight:600;color:var(--insight-strong);letter-spacing:.22em;
+    text-transform:uppercase;padding-top:2px;
+  }
+
+  .kicker{
+    display:inline-flex;align-items:center;gap:10px;
+    font-size:12.5px;font-weight:700;color:var(--insight-strong);
+    letter-spacing:.14em;text-transform:uppercase;margin:26px 0 0 2px;
+  }
+  .kicker::before{content:'';width:26px;height:2px;background:var(--amber);}
+
+  h1{
+    font-family:var(--serif);
+    font-weight:600;font-size:58px;line-height:1.06;letter-spacing:-.01em;
+    margin-top:16px;color:var(--ink);
+    max-width:560px;
+  }
+  h1 .em{font-style:italic;color:var(--insight);}
+
+  .sub{
+    margin-top:20px;font-size:19px;line-height:1.5;color:var(--ink-2);
+    max-width:536px;font-weight:400;
+  }
+
+  .support{
+    margin-top:14px;display:flex;gap:10px;align-items:flex-start;
+    max-width:540px;font-size:14.5px;line-height:1.5;color:var(--ink-3);
+  }
+  .support .badge{
+    flex:none;margin-top:2px;width:20px;height:20px;border-radius:6px;
+    background:var(--insight-tint);display:flex;align-items:center;justify-content:center;
+  }
+  .support .badge svg{width:12px;height:12px;stroke:var(--insight);}
+
+  .cta{display:flex;align-items:center;gap:18px;margin-top:30px;}
+  .ctabtn{
+    display:inline-flex;align-items:center;gap:12px;
+    background:var(--insight);color:#fff;
+    font-size:17px;font-weight:700;letter-spacing:.01em;
+    padding:16px 26px;border-radius:12px;text-decoration:none;
+    box-shadow:0 3px 0 var(--insight-strong);
+  }
+  .ctabtn .arr{font-size:20px;line-height:1;transform:translateY(-1px);}
+  .cta-note{font-size:13px;color:var(--ink-3);line-height:1.45;max-width:186px;}
+  .cta-note b{color:var(--ink-2);font-weight:600;}
+
+  /* ── RIGHT: human/region visual ── */
+  .visual{position:relative;flex:1;height:672px;overflow:hidden;}
+  .panel{
+    position:absolute;top:44px;right:46px;bottom:44px;left:20px;
+    border-radius:22px;
+    background:
+      radial-gradient(120% 90% at 85% 8%, #f3ead7 0%, #ece2cd 42%, #e5d9bf 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  /* soft landmass tint */
+  .land{
+    position:absolute;inset:0;border-radius:22px;
+    background:
+      radial-gradient(42% 38% at 58% 62%, rgba(14,110,92,.10), rgba(14,110,92,0) 70%),
+      radial-gradient(38% 40% at 32% 26%, rgba(125,177,58,.10), rgba(125,177,58,0) 70%);
+  }
+  /* human family silhouette motif — grounded, warm */
+  .people{position:absolute;left:22px;top:26px;opacity:.92;}
+  .people svg{width:120px;height:70px;}
+
+  .route{position:absolute;inset:0;}
+  .cit-label{
+    font-family:var(--serif);font-style:italic;font-size:17px;color:#6a5a45;
+    transform:translateY(6px);
+  }
+  .cit-dot{opacity:.95;}
+  .cit-halo{opacity:.55;}
+
+  .chips{position:absolute;left:20px;bottom:20px;display:flex;gap:8px;}
+  .chip{
+    font-size:11.5px;font-weight:700;letter-spacing:.04em;
+    padding:7px 12px;border-radius:999px;
+    background:rgba(255,255,255,.72);color:#5b5c52;
+    border:1px solid rgba(126,115,90,.18);
+  }
+  .chip.on{background:var(--insight);color:#fff;border-color:transparent;}
+
+  .watermark{
+    position:absolute;right:26px;bottom:22px;
+    font-family:var(--serif);font-style:italic;font-size:15px;color:#a99c83;
+    letter-spacing:.02em;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- COPY ZONE -->
+  <div class="copy">
+    <div>
+      <div class="brand">
+        <div class="brandmark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20V10M20 20V10M4 10l8-6 8 6M13 10v4M11 10v4"/>
+          </svg>
+        </div>
+        <div class="brandtext">
+          <div class="bn">MAYBANK</div>
+          <div class="bs">Wealth Management</div>
+        </div>
+      </div>
+
+      <div class="kicker">ASEAN is home, not foreign</div>
+
+      <h1>You don't<br>cross borders.<br><span class="em">Why should your wealth?</span></h1>
+
+      <p class="sub">You live, work and invest across Malaysia, Singapore and Indonesia. One trusted bank treats the whole region as a single home market — so your money moves the way you do, without ever hitting a foreign wall.</p>
+
+      <div class="support">
+        <div class="badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+        </div>
+        <span>Shariah and conventional wealth under one roof — backed by the region's largest Islamic bank.</span>
+      </div>
+    </div>
+
+    <div class="cta">
+      <a class="ctabtn" href="#">Get your free 30-minute <u>cross-border</u> review <span class="arr">→</span></a>
+      <div class="cta-note"><b>No obligation</b> · No fees for the first call.<br>Your plan, either way.</div>
+    </div>
+  </div>
+
+  <!-- VISUAL ZONE -->
+  <div class="visual">
+    <div class="panel">
+      <div class="land"></div>
+
+      <div class="people">
+        <svg viewBox="0 0 150 80" fill="none">
+          <ellipse cx="32" cy="64" rx="14" ry="3" fill="rgba(120,90,50,.18)"/>
+          <circle cx="32" cy="42" r="8" fill="#3f6a4c"/>
+          <path d="M32 50c-7-1-12 4-14 13h28c-2-9-7-14-14-13z" fill="#3f6a4c"/>
+          <ellipse cx="30" cy="50" rx="1.2" ry="2" fill="#fff" opacity=".85"/>
+          <ellipse cx="35" cy="50" rx="1.2" ry="2" fill="#fff" opacity=".85"/>
+          <ellipse cx="98" cy="62" rx="12" ry="3" fill="rgba(120,90,50,.18)"/>
+          <circle cx="98" cy="40" r="7.5" fill="#c08a4a"/>
+          <path d="M98 48c-7-1-11 4-13 12h26c-2-8-6-13-13-12z" fill="#c08a4a"/>
+          <circle cx="96" cy="48.5" r="1.1" fill="#fff" opacity=".7"/>
+          <circle cx="101" cy="48.5" r="1.1" fill="#fff" opacity=".7"/>
+          <path d="M58 66c6-1 11 1 15 6" stroke="#7a5a35" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="75" cy="72" r="2.6" fill="#7a5a35"/>
+        </svg>
+      </div>
+
+      <svg class="route" viewBox="0 0 460 480" preserveAspectRatio="xMidYMid meet">
+        <!-- dashed route: KL (top) -> Singapore (mid) -> Jakarta (lower) -->
+        <path d="M150 120 C 195 175, 250 238, 262 300 S 300 430, 322 456"
+              stroke="#c9892e" stroke-width="4" stroke-dasharray="1 13" stroke-linecap="round" fill="none" opacity=".85"/>
+        <!-- sea line -->
+        <path d="M90 470 C 180 360, 160 190, 120 95"
+              stroke="rgba(14,110,92,.22)" stroke-width="1.5" fill="none" stroke-dasharray="4 6"/>
+
+        <!-- Kuala Lumpur -->
+        <g transform="translate(150 120)">
+          <circle class="cit-halo" cx="0" cy="0" r="22" fill="#0e6e5c"/>
+          <circle class="cit-dot" cx="0" cy="0" r="11" fill="#0e6e5c"/>
+          <circle cx="0" cy="0" r="4.4" fill="#fff"/>
+          <text class="cit-label" x="-14" y="-24">Kuala Lumpur</text>
+        </g>
+        <!-- Singapore -->
+        <g transform="translate(262 300)">
+          <circle class="cit-halo" cx="0" cy="0" r="26" fill="#c9892e"/>
+          <circle class="cit-dot" cx="0" cy="0" r="12" fill="#c9892e"/>
+          <circle cx="0" cy="0" r="4.6" fill="#fff"/>
+          <text class="cit-label" x="10" y="-30">Singapore</text>
+        </g>
+        <!-- Jakarta -->
+        <g transform="translate(322 456)">
+          <circle class="cit-halo" cx="0" cy="0" r="22" fill="#0e6e5c"/>
+          <circle class="cit-dot" cx="0" cy="0" r="11" fill="#0e6e5c"/>
+          <circle cx="0" cy="0" r="4.4" fill="#fff"/>
+          <text class="cit-label" x="-4" y="-24">Jakarta</text>
+        </g>
+      </svg>
+
+      <div class="chips">
+        <span class="chip on">One home market</span>
+        <span class="chip">Shariah + conventional</span>
+        <span class="chip">10 ASEAN nations</span>
+      </div>
+
+      <div class="watermark">Humanising Financial Services</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

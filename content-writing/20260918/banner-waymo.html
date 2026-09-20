@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>banner-waymo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:480px;padding:0;}
+.banner{width:1200px;height:480px;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;display:grid;grid-template-columns:1fr 400px;}
+.left{padding:44px 40px;display:flex;flex-direction:column;justify-content:center;}
+.overline{font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-weight:700;margin-bottom:16px;}
+h1{font-family:var(--font-display);font-size:44px;line-height:1.1;font-weight:800;color:var(--ink);letter-spacing:-.01em;margin-bottom:18px;}
+h1 em{font-style:italic;color:var(--accent-strong);}
+.sub{font-size:16px;color:var(--ink-2);line-height:1.55;max-width:630px;margin-bottom:24px;}
+.rule{width:70px;height:3px;background:var(--accent);border-radius:2px;margin-bottom:18px;}
+.meta{display:flex;gap:26px;font-size:12.5px;color:var(--ink-3);font-weight:600;}
+.meta span b{color:var(--ink);font-weight:700;}
+.right{background:#2a2f36;padding:36px 30px;display:flex;flex-direction:column;justify-content:center;gap:14px;}
+.kcard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:14px 16px;}
+.kcard .k{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:#8fd4c4;margin-bottom:5px;}
+.kcard .v{font-size:15px;color:#fff;font-weight:700;line-height:1.35;}
+.kcard .s{font-size:11.5px;color:#c3c9d1;margin-top:4px;line-height:1.4;}
+.kcard.hi{background:rgba(14,110,92,.34);border-color:rgba(143,212,196,.42);}
+.kcard.hi .v{font-family:var(--font-display);font-size:25px;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="left">
+    <div class="overline">Positioning analysis — Singapore's robotaxi decade</div>
+    <h1>The Country That Went First<br><em>Is Now Being Sold To.</em></h1>
+    <div class="rule"></div>
+    <p class="sub">Singapore ran the world's first on-demand driverless taxi trial in 2016, beating Uber. Ten years later an Alphabet subsidiary is announcing it will be the third operator here, in 2028. The technology did not change hands. The position did.</p>
+    <div class="meta">
+      <span>Trigger: <b>ST + LTA, 18 Sep 2026</b></span>
+      <span>Lens: <b>Positioning theory</b></span>
+      <span>Read: <b>First vs first-in-mind</b></span>
+    </div>
+  </div>
+  <div class="right">
+    <div class="kcard hi"><div class="k">The head start</div><div class="v">2016: first in the world</div><div class="s">nuTonomy, one-north. Ahead of Uber.</div></div>
+    <div class="kcard"><div class="k">Where the pioneer went</div><div class="v">Acquired in 2017</div><div class="s">Being first to exist is not owning the category.</div></div>
+    <div class="kcard"><div class="k">Still open</div><div class="v">The service layer</div><div class="s">Charging, depots, support, transit integration.</div></div>
+  </div>
+</div>
+</body>
+</html>

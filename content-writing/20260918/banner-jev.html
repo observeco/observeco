@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>banner-jev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:480px;padding:0;}
+.banner{width:1200px;height:480px;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;display:grid;grid-template-columns:1fr 400px;}
+.left{padding:42px 40px;display:flex;flex-direction:column;justify-content:center;}
+.overline{font-size:11.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent);font-weight:700;margin-bottom:14px;}
+h1{font-family:var(--font-display);font-size:43px;line-height:1.1;font-weight:800;color:var(--ink);letter-spacing:-.01em;margin-bottom:16px;}
+h1 em{font-style:italic;color:var(--accent-strong);}
+.sub{font-size:15.5px;color:var(--ink-2);line-height:1.55;max-width:630px;margin-bottom:20px;}
+.rule{width:70px;height:3px;background:var(--accent);border-radius:2px;margin-bottom:16px;}
+.meta{display:flex;gap:24px;font-size:12.5px;color:var(--ink-3);font-weight:600;}
+.meta span b{color:var(--ink);font-weight:700;}
+.right{background:#2a2f36;padding:32px 30px;display:flex;flex-direction:column;justify-content:center;gap:12px;}
+.kcard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:12px 15px;}
+.kcard .k{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:#8fd4c4;margin-bottom:4px;}
+.kcard .v{font-size:14.5px;color:#fff;font-weight:700;line-height:1.3;}
+.kcard .s{font-size:11px;color:#c3c9d1;margin-top:3px;line-height:1.35;}
+.kcard.hi{background:rgba(14,110,92,.34);border-color:rgba(143,212,196,.42);}
+.kcard.hi .v{font-family:var(--font-display);font-size:24px;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="left">
+    <div class="overline">A new AI model that cannot write a word</div>
+    <h1>Four Cents Buys a Million Decisions.<br><em>Here's What That Unlocks.</em></h1>
+    <div class="rule"></div>
+    <p class="sub">Jev returns typed decisions — yes/no, pick one, a score — with an honest confidence number, in 70 milliseconds. Every write-up stops at how fast and how cheap. Nobody answers the only question that matters: what would you actually build with it?</p>
+    <div class="meta">
+      <span>Trigger: <b>Launch, 15 Sep 2026</b></span>
+      <span>Lens: <b>Positioning + use cases</b></span>
+      <span>Read: <b>What it's for</b></span>
+    </div>
+  </div>
+  <div class="right">
+    <div class="kcard hi"><div class="k">The price change</div><div class="v">$0.042 / million</div><div class="s">Output free. A decision costs a fraction of a cent.</div></div>
+    <div class="kcard"><div class="k">The real unlock</div><div class="v">The honest number</div><div class="s">Calibrated confidence — what draws the line between acting and asking.</div></div>
+    <div class="kcard"><div class="k">The position</div><div class="v">The AI function call</div><div class="s">Not "System One." The model you call when you need a decision, not a paragraph.</div></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotels — Two Resorts, 400 Hotels, S$274 Average Rate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+.hero-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.hero-card{background:var(--surface-muted);border-radius:10px;padding:20px;text-align:center;}
+.hero-card .value{font-family:var(--font-display);font-size:28px;font-weight:800;line-height:1;margin-bottom:4px;color:var(--ink);}
+.hero-card .label{font-size:12px;color:var(--ink-3);line-height:1.4;}
+.resort-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.resort-card{border-radius:12px;padding:24px;}
+.resort-card.mbs{background:var(--accent-tint);border:1px solid var(--accent-line);}
+.resort-card.rws{background:var(--surface-muted);border:1px solid var(--line);}
+.resort-card .name{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.resort-card .share{font-family:var(--font-display);font-size:24px;font-weight:800;margin-bottom:4px;}
+.resort-card.mbs .share{color:var(--accent-strong);}
+.resort-card.rws .share{color:var(--ink);}
+.resort-card .detail{font-size:13px;color:var(--ink-2);line-height:1.5;}
+.local-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.local-card{background:var(--surface-muted);border-radius:8px;padding:14px;text-align:center;}
+.local-card .name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.local-card .note{font-size:11px;color:var(--ink-3);}
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Four, Ch 2</div>
+    <h1>400 Hotels, Two Resorts at the Top</h1>
+    <p class="subtitle">S$32.8 billion tourism economy. 81.9% occupancy. S$274 average room rate. The two integrated resorts dominate the premium end; the homegrown luxury names own the prestige.</p>
+  </div>
+  <div class="card-body">
+    <div class="hero-row">
+      <div class="hero-card"><div class="value">400+</div><div class="label">Hotels<br>70,000+ rooms</div></div>
+      <div class="hero-card"><div class="value">81.9%</div><div class="label">Average occupancy<br>(2025)</div></div>
+      <div class="hero-card"><div class="value">S$274</div><div class="label">Average room rate<br>per night</div></div>
+      <div class="hero-card"><div class="value">S$224</div><div class="label">RevPAR<br>(revenue per available room)</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">The Two Giants</div>
+    <div class="resort-row">
+      <div class="resort-card mbs"><div class="name">Marina Bay Sands</div><div class="share">~12.8% of luxury market</div><div class="detail">International (Las Vegas Sands). One of the two integrated resorts. Casino revenue US$2.1B H1 2026.</div></div>
+      <div class="resort-card rws"><div class="name">Resorts World Sentosa</div><div class="share">~8.5% of luxury market</div><div class="detail">International (Genting). The second giant. Universal Studios, Oceanarium, Gardens by the Bay.</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px;">The Homegrown Luxury Names</div>
+    <div class="local-grid">
+      <div class="local-card"><div class="name">Shangri-La</div><div class="note">Homegrown prestige</div></div>
+      <div class="local-card"><div class="name">Capella</div><div class="note">Travel + Leisure's best hotel brand 2023–26</div></div>
+      <div class="local-card"><div class="name">Raffles</div><div class="note">The heritage icon</div></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>The two resorts dominate the premium end. The luxury locals own the homegrown prestige. The rest of the400 hotels is a fragmented market of international and local brands.</strong> A small business in the accommodation space does not compete with MBS — it serves the visitors the resorts bring in, the experiences, the dining, the transport, the services that make a tourist's stay complete.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: STB. Figures 2025. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

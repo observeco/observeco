@@ -65,3 +65,16 @@ website/.docusaurus/
 website/build/
 .vercel
 .env*
+
+# Dependencies — api/ is its own npm project; only website/ was covered before.
+node_modules/
+
+# Editor / backup artifacts (never version these)
+*.bak
+*.bak-*
+.bak-*
+*.tmp
+*.old
+
+# Regenerable scrape cache (rewritten every collector run)
+.title_age_cache.json

@@ -1,0 +1,25 @@
+{
+  "run_at": "2026-09-18T18:08:38+08:00",
+  "auth": "OAuth1 (Postiz-stored tokens), account 2054901336500756480 @1571keplerj Premium",
+  "Aomorie": {
+    "status": "published",
+    "article_id": "2100889744435793920",
+    "post_id": "2100891515518341428",
+    "url": "https://x.com/i/articles/2100889744435793920",
+    "publish_attempts": [429, 429, 429, 200],
+    "verified": "GET /2/tweets/2100891515518341428 -> 200, article.title matches, created_at 2026-09-18T10:15:44Z"
+  },
+  "Construction robots": {
+    "status": "publish_failed",
+    "article_id": "2100891553611018240",
+    "url": null,
+    "publish_attempts": [400, 400, 400],
+    "error": "400 The specified article could not be found or is not owned by the authenticated user.",
+    "blocker": "known OAuth1 publish ownership failure (draft created 201, publish 400). Aomorie succeeded via same route after 429s, so not categorical, but per cron instruction further publish calls halted to respect 5/24h cap."
+  },
+  "retweets_verified": {
+    "Aomorie_ST_2100505088527667213": "retweeted_by -> 200, 2054901336500756480 present",
+    "Construction_robots_ST_2100498693346427019": "retweeted_by -> 200, 2054901336500756480 present"
+  },
+  "note": "GET /2/articles/{id} does NOT exist in X OpenAPI (only POST /draft and POST /publish). Independent verification was done via the published tweet object (GET /2/tweets/{post_id})."
+}

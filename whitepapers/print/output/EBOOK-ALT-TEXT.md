@@ -1,0 +1,45 @@
+# E-book Alt Text — ObserveCo Books
+
+Alt text for the e-book editions of *Small Island, Crowded Market* (Book 1) and *How a Small Business Gets Chosen* (Book 2). Each description is written for a reader who cannot see the figure, so it carries the data or the relationship the figure shows, not the decoration. Figure numbers are as they appear in the print reference PDFs.
+
+---
+
+## Book 1 — Small Island, Crowded Market
+
+| Figure filename | Figure number | Alt text |
+|---|---|---|
+| `fig-three-engines.pdf` | Figure 3.1 | Horizontal bar chart of value added per worker in 2024, colour-coded by engine. Wholesale trade S$494,000 and finance S$436,000 (global engine); education and health S$150,000 and public admin S$116,000 (state engine); retail S$58,000 and food and beverage S$32,000 (domestic engine). Source: SingStat. |
+| `fig-value-per-worker.pdf` | Figure 4.1 | Horizontal bar chart of value added per worker in 2024. Wholesale trade leads at S$494,000 and finance at S$436,000 (the global engine); education and health sit at S$150,000 and S$116,000 (the state engine); retail at S$58,000 and food and beverage at S$32,000 (the domestic layer). The global engine produces roughly fifteen times the value per worker of food and beverage. |
+| `fig-four-waves.pdf` | Figure 13.1 | Four small charts, one per demographic wave. Fertility fell from 0.97 to 0.87 births per woman between 2015 and 2025; citizens aged 65+ rose from 13.1% to 20.7%; seniors living alone rose from 62,000 to 88,000; household health spending rose from S$320 to S$474 a month. Source: SingStat. |
+| `fig-care-economy.pdf` | Figure 15.1 | Two-part chart. The left panel shows citizens aged 65+ rising from 13.1% in 2015 to 20.7% in 2025, one in five. The right panel contrasts the S$97 billion headline of total senior spending power against the S$0.28–0.85 billion addressable paid-care market a business can actually sell into, on a log scale. |
+| `fig-industry-map.pdf` | Figure 17.1 | Scatter chart of industries by value added (log scale, 2024) against five-year growth. Wholesale trade, manufacturing, and finance sit in the engine layer at the top; retail trade and food and beverage sit in the domestic layer at the bottom. The engine-layer industries are large but closed to small business; the domestic layer is small but where small businesses compete. |
+| `fig-friendly-brutal.pdf` | Figure 20.1 | Horizontal bar chart scoring industries on competitive pressure from 0 (friendly) to 10 (brutal). Health and social services scores 1 (friendliest), professional services 4, education and tuition 7, personal services 6, admin and support 8, retail 9, and food and beverage 10 (most brutal). |
+| `fig-ladder-mind.pdf` | Figure 25.1 | A four-rung ladder of the mind. The top rung is "the name they recall first, trusted, defaults to"; the second is "the one they compare to, considered, needs a reason"; the third is "the one they have heard of, recognised, rarely chosen"; the bottom is "everyone else, not in the mind at all." The mind ranks a category and defaults to the top rung. |
+| `fig-walls-doors.pdf` | Figure 26.1 | Two panels. The left, "Walls: concentrated," shows the share held by the top few: e-commerce platforms 99%, supermarkets 82%, audit (Big Four) 100%, telecoms 93%. The right, "Doors: fragmented," lists tuition centres (1,000+ centres, no owner), salons and personal care (fragmented, local), home care (licence-bound, no brand), and car servicing (independent workshops). |
+| `fig-six-layers.pdf` | Figure 40.1 | A six-layer stack of the map, read in order: 1 the engine (global, state, or domestic), 2 the wave (ageing, fertility, care), 3 the industry (size, growth, data quality), 4 the structure (concentrated wall or fragmented door), 5 the names (who already owns a word), 6 the opening (the two or three words still free). |
+
+## Book 2 — How a Small Business Gets Chosen
+
+| Figure filename | Figure number | Alt text |
+|---|---|---|
+| `fig-b2-singapore-story.pdf` | Figure 1.1 | A timeline of how Singapore positioned itself: independence in 1965 with no resources; the word chosen in the 1970s, "clean, safe, corruption-free," a promise nobody else was making; the proof delivered through rule of law and infrastructure; the word owned by the 1980s–90s as multinationals arrived. |
+| `fig-b2-heritage-brands.pdf` | Figure 3.1 | A timeline of when each heritage brand claimed its word: Tiger Balm 1924 "relief," Ya Kun 1944 "kaya toast," Khong Guan 1947 "the biscuit tin," Old Chang Kee 1956 "curry puff," Sheng Siong 1985 "the deal," BreadTalk 2000 "designer bread." A century of owning a word. |
+| `fig-b2-category-creators.pdf` | Figure 4.1 | Four category creators and the word each created: BreadTalk (2000) "designer bread," Banyan Tree (1994) "romantic sanctuary," TWG Tea (2008) "luxury tea," Secretlab (2014) "premium gaming chair." Each took a staple and made it a treat, a private villa, a luxury, or a premium tier. |
+| `fig-b2-challengers.pdf` | Figure 4.2 | The challenger pattern: NTUC FairPrice owns "the trusted default" as the leader; Sheng Siong owns "the deal" as the challenger; Cold Storage and Meidi-ya own "quality, imported" as the premium tier. The challenger does not attack the leader's strength; it claims the word the leader cannot own without contradicting itself. |
+| `fig-b2-ladder-mind.pdf` | Figure 12.1 | The same four-rung ladder of the mind as Book 1: the name recalled first and trusted, the one compared to, the one merely recognised, and everyone else not in the mind. The mind ranks a category and defaults to the top rung. |
+| `fig-four-postures.pdf` | Figure 16.1 | The four postures of the market battle. Defence: you are the leader, attack yourself before a challenger does. Offence: you are the challenger, attack a leader's weakness on a narrow front. Flank: you create the category, move into a space no one owns. Guerrilla: you are the small and the niche, find a segment too small for the leaders. |
+| `fig-b2-word.pdf` | Figure 21.1 | Two columns. Words that get you chosen are specific, ownable, repeatable: "the dementia specialist," "the curry puff place," "the deal," "safe and reliable wells." Words that get you ignored are generic claims everyone makes: quality, service, value, innovation, trusted, excellence. |
+| `fig-price-vs-word.pdf` | Figure 23.1 | A bar chart indexed to the incumbent at 100. TradersGPS (Collin Seow) and a white-labelled identical system both show relative price 100 and customers 100; the challenger at half the price (relative price 55) won only 4 customers. Same algorithm, half the price, the word still won. Price cannot buy a word. |
+| `fig-b2-referral.pdf` | Figure 24.1 | The referral loop in four steps: 1 you own one word sharp enough to be remembered; 2 the customer can say it in one line without you there; 3 they tell someone else because it is easy to pass on; 4 that person arrives convinced, the sale is half made, and the loop runs again. |
+| `fig-five-step.pdf` | Figure 33.1 | The five-step process of finding a position: 1 know the competitive set, who actually competes for your customer; 2 map the customer's mind, what word they already associate with the category; 3 evaluate every way to stand out, which differences you can actually win; 4 find the open slot and the trap, which word is free and which only looks free; 5 claim and hold it. |
+| `fig-b2-positioning-statement.pdf` | Figure 34.1 | The positioning statement template: "For [the specific customer] who exactly, not everyone; I am [the word], one word not a list; because [the proof], why it is true not a claim; so [the benefit], what changes for them." Worked example: "For the working adult with a parent who has dementia, I am the dementia specialist." |
+| `fig-b2-one-page.pdf` | Figure 35.1 | The one-page position worksheet with six lines: my customer (the specific person, not the market), my competitive set (who they would otherwise choose), the word they already own (what the incumbent holds), my word (the one I will be known for), my proof (why it is true), and what I will stop doing (the discipline of saying no). |
+| `fig-where-fails.pdf` | Figure 40.1 | Three ways a good word still fails. It widened: Ka-Soh and Tenderfresh owned a word then added everything else, and the category died. No demand under it: Thirsty4Balls was flawlessly different but nobody wanted it. It was owned perfectly but the category shrank: Creative Technologies went from US$1.6 billion in 1996 to US$61 million by 2022. |
+
+---
+
+## Notes
+
+- **`fig-b2-process.pdf`** is attached but is not among the 20 figures requested and does not appear in the reference PDF's figure list. It is excluded here; add alt text for it if it is used in the final book.
+- Figure numbers are taken from the print reference PDFs (`book1-v4.pdf`, `book2-v4.pdf`). If the e-book renumbers figures, the alt text itself stays valid — only the number column would change.
+- Every number in the alt text is one that appears in the figure itself; none is invented.

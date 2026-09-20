@@ -1,0 +1,34 @@
+[2026-09-17 20:05:20]     cover uploaded (DRYRUN_MEDIA_ID)
+[2026-09-17 20:05:20]     embedded fig-aom-01-material.png (DRYRUN_MEDIA_ID)
+[2026-09-17 20:05:20]     embedded fig-aom-02-position.png (DRYRUN_MEDIA_ID)
+[2026-09-17 20:05:20]     embedded fig-aom-03-nine.png (DRYRUN_MEDIA_ID)
+[2026-09-17 20:05:20]     cover uploaded (DRYRUN_MEDIA_ID)
+[2026-09-17 20:05:20]     embedded fig-rob-01-arithmetic.png (DRYRUN_MEDIA_ID)
+[2026-09-17 20:05:20]     embedded fig-rob-02-tender.png (DRYRUN_MEDIA_ID)
+[2026-09-17 20:05:20]     embedded fig-rob-03-layers.png (DRYRUN_MEDIA_ID)
+[2026-09-18 18:08:38] ============================================================
+[2026-09-18 18:08:38] Publishing 20260917 X Articles
+[2026-09-18 18:08:38] --- Aomorie ---
+[2026-09-18 18:08:39]     cover uploaded (2100889729948692481)
+[2026-09-18 18:08:40]     embedded fig-aom-01-material.png (2100889733903831040)
+[2026-09-18 18:08:40]     embedded fig-aom-02-position.png (2100889737561321472)
+[2026-09-18 18:08:41]     embedded fig-aom-03-nine.png (2100889741097132032)
+[2026-09-18 18:08:41]     payload: 69 blocks, 4 entities
+[2026-09-18 18:08:42]     draft created: 2100889744435793920
+[2026-09-18 18:08:42]     waiting 60s for the draft to settle before publishing
+[2026-09-18 18:09:43]     publish 1 -> 429 {"detail":"Too Many Requests","status":429,"title":"Too Many Requests","type":"about:blank"}
+[2026-09-18 18:10:43]     publish 2 -> 429 {"detail":"Too Many Requests","status":429,"title":"Too Many Requests","type":"about:blank"}
+[2026-09-18 18:12:44]     publish 3 -> 429 {"detail":"Too Many Requests","status":429,"title":"Too Many Requests","type":"about:blank"}
+[2026-09-18 18:15:44]     publish 4 -> 200 {"data":{"post_id":"2100891515518341428"}}
+[2026-09-18 18:15:44]     PUBLISHED: https://x.com/i/articles/2100889744435793920
+[2026-09-18 18:15:49] --- Construction robots ---
+[2026-09-18 18:15:50]     cover uploaded (2100891539929169920)
+[2026-09-18 18:15:51]     embedded fig-rob-01-arithmetic.png (2100891543469244416)
+[2026-09-18 18:15:52]     embedded fig-rob-02-tender.png (2100891547143479296)
+[2026-09-18 18:15:53]     embedded fig-rob-03-layers.png (2100891550406602752)
+[2026-09-18 18:15:53]     payload: 63 blocks, 4 entities
+[2026-09-18 18:15:54]     draft created: 2100891553611018240
+[2026-09-18 18:15:54]     waiting 60s for the draft to settle before publishing
+[2026-09-18 18:16:54]     publish 1 -> 400 {"detail":"One or more parameters to your request was invalid.","errors":[{"message":"The specified article could not be found or is not owned by the authenticated user."}],"title":"Invalid Request","
+[2026-09-18 18:17:40]     publish 2 -> 400 {"detail":"One or more parameters to your request was invalid.","errors":[{"message":"The specified article could not be found or is not owned by the authenticated user."}],"title":"Invalid Request","
+[2026-09-18 18:18:25]     publish 3 -> 400 {"detail":"One or more parameters to your request was invalid.","errors":[{"message":"The specified article could not be found or is not owned by the authenticated user."}],"title":"Invalid Request","

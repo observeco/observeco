@@ -1,0 +1,164 @@
+/* design-systems/observeco/consulting-tokens.css
+ * Structured token bindings for ObserveCo Consulting Design System.
+ * Strategy-consulting product surface — light-first paper canvas, serif display
+ * authority, insight-teal brand accent, evidence-forward status palette.
+ *
+ * Copy this entire :root block into your HTML <style> tag.
+ * Light is canonical. Dark (projection) mode available via [data-theme="dark"].
+ * All text colors meet WCAG AA (>= 4.5:1) on their assigned surfaces.
+ */
+
+:root {
+  /* ── Surface Palette (light-first, paper canvas) ──
+   * Consulting leads with white/paper: print heritage, trust, clarity.
+   * Dark navy (old --bg) reads as a dev tool; paper reads as analysis.
+   */
+  --canvas: #f7f6f3;          /* Page canvas — warm bond paper, not pure white */
+  --surface: #ffffff;         /* Cards, panels, tables */
+  --surface-hover: #f1f0ec;   /* Row hover, subtle emphasis */
+  --surface-active: #e9e7e1;  /* Pressed, selected */
+  --surface-muted: #efeee9;   /* Zebra rows, inset wells */
+  --surface-inset: #e8e7e2;   /* Deep inset, code blocks */
+  --line: #e4e2dc;            /* Hairline borders, dividers */
+  --line-soft: #efeee9;       /* Lighter hairlines, table row rules */
+  --line-strong: #cfccc4;     /* Stronger borders: buttons, focus-adjacent */
+
+  /* ── Status Palette (mapped from telemetry semantics) ──
+   * Same meaning as the old dark system, darkened for AA on paper.
+   * Each status has a tint for chips/badges: text = base, bg = tint.
+   */
+  --status-healthy: #227a4e;  /* 🟢 On track (was #22c55e pulse-ok) */
+  --status-healthy-tint: #e5f2ea;
+  --status-warning: #9a6500;  /* 🟡 Watch / elevated (was #eab308 degraded) */
+  --status-warning-tint: #fbf0d8;
+  --status-critical: #b42318; /* 🔴 At risk (was #ef4444 dead agent) */
+  --status-critical-tint: #fbeae7;
+  --status-info: #1d5fbf;     /* 🔵 In review / baseline (was #3b82f6 meta) */
+  --status-info-tint: #e8f0fb;
+  --status-neutral: #5b6470;  /* Stable / no signal */
+  --status-neutral-tint: #eff1f4;
+
+  /* ── Insight Accent (differentiation-strategy brand) ──
+   * Deep teal-verdigris: intelligence + premium editorial, distinct from
+   * status green (which stays olive-forest). Text-safe on white (6.1:1).
+   */
+  --insight: #0e6e5c;         /* Primary brand/insight accent */
+  --insight-strong: #0a5447;  /* Hover, pressed, links */
+  --insight-tint: #e7f1ee;    /* Insight panel background */
+  --insight-line: #c6dcd4;    /* Insight panel border */
+
+  /* ── Chart / Segment Palette (replaces telemetry token composition) ──
+   * Muted editorial hues for portfolio segmentation and charts.
+   * DO NOT MIX with the status palette.
+   */
+  --seg-steel: #3d6b9b;       /* was --token-identity indigo */
+  --seg-slate: #6e8b9e;       /* was --token-skills violet */
+  --seg-rose: #a4716f;        /* was --token-memory pink */
+  --seg-olive: #7f8c5a;       /* was --token-tools teal */
+  --seg-terracotta: #b4653a;  /* was --token-guidance orange */
+
+  /* ── Text Palette (ink on paper) ── */
+  --ink: #1b1f24;             /* Primary text — near-black, not pure black */
+  --ink-2: #4a525c;           /* Secondary text, body captions */
+  --ink-3: #6b737e;           /* Tertiary, meta, timestamps */
+  --ink-on-insight: #ffffff;  /* Text on insight-filled buttons */
+  --link: #0a5447;            /* Links, underline emphasis */
+
+  /* ── Typography ──
+   * Serif display for authority (consulting reports are set in serif),
+   * Inter for data-dense body, mono reserved for identifiers.
+   */
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-caption: 11px;       /* Overlines, table headers */
+  --text-sm: 12px;            /* Chips, metadata */
+  --text-body: 14px;          /* Body, table cells */
+  --text-lg: 16px;            /* Larger body, card titles */
+  --text-xl: 20px;            /* Section titles */
+  --text-2xl: 26px;           /* Panel headlines */
+  --text-3xl: 34px;           /* Page H1, KPI numerals */
+  --leading-display: 1.15;
+  --leading-body: 1.55;
+  --leading-tight: 1.25;
+  --tracking-overline: 0.08em;
+
+  /* ── Spacing (4px baseline grid) ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Shape (softer, editorial) ──
+   * Larger radii than the old 4/8/12 telemetry system: 6/10/14/18.
+   * Rule: controls 10px, status chips pill, cards 14-18px.
+   */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-pill: 9999px;
+
+  /* ── Elevation (print-flat hierarchy) ──
+   * Hairlines first, shadows second. Tinted to ink hue, never pure black.
+   */
+  --elev-flat: none;
+  --shadow-card: 0 1px 2px rgba(27, 31, 36, 0.04), 0 1px 3px rgba(27, 31, 36, 0.06);
+  --shadow-raised: 0 2px 4px rgba(27, 31, 36, 0.05), 0 12px 32px rgba(27, 31, 36, 0.10);
+  --shadow-sticky: 0 1px 0 rgba(27, 31, 36, 0.05), 0 8px 24px rgba(27, 31, 36, 0.06);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--insight) 30%, transparent);
+
+  /* ── Motion (restrained, editorial) ──
+   * Fast for state change, slow for reveals. No bounce, no spring.
+   */
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Dark (projection) mode ──
+ * Light is canonical for consulting credibility. This variant exists for
+ * boardroom projection and late-night review rooms only.
+ */
+[data-theme="dark"] {
+  --canvas: #10141a;
+  --surface: #171c23;
+  --surface-hover: #1e252e;
+  --surface-active: #27303b;
+  --surface-muted: #141a21;
+  --surface-inset: #0d1117;
+  --line: #2a323d;
+  --line-soft: #222a33;
+  --line-strong: #3a4450;
+  --status-healthy: #34c77b;
+  --status-healthy-tint: color-mix(in srgb, #34c77b 18%, var(--surface));
+  --status-warning: #d9a441;
+  --status-warning-tint: color-mix(in srgb, #d9a441 18%, var(--surface));
+  --status-critical: #f0645c;
+  --status-critical-tint: color-mix(in srgb, #f0645c 18%, var(--surface));
+  --status-info: #6fa8ff;
+  --status-info-tint: color-mix(in srgb, #6fa8ff 18%, var(--surface));
+  --status-neutral: #9aa4b0;
+  --status-neutral-tint: color-mix(in srgb, #9aa4b0 18%, var(--surface));
+  --insight: #3fb69b;
+  --insight-strong: #63c9b0;
+  --insight-tint: color-mix(in srgb, #3fb69b 16%, var(--surface));
+  --insight-line: #2d4a42;
+  --ink: #f1f0ec;
+  --ink-2: #b9c0c9;
+  --ink-3: #8a929c;
+  --ink-on-insight: #10141a;
+  --link: #63c9b0;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.30), 0 1px 3px rgba(0, 0, 0, 0.40);
+  --shadow-raised: 0 2px 4px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-sticky: 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--insight) 40%, transparent);
+}

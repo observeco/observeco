@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-je-03 — the use cases</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:0;overflow:hidden;}
+.fig{width:1176px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:12px 26px 8px;border-bottom:1px solid var(--line);}
+.overline{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:3px;}
+h2{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:11px;color:var(--ink-2);line-height:1.35;}
+.fig-body{padding:10px 26px;}
+.groups{display:grid;grid-template-columns:1.05fr 1fr 1fr;gap:9px;}
+.grp{border-radius:9px;padding:8px 10px;}
+.grp.a{background:var(--accent-tint);border:1px solid rgba(14,110,92,.2);}
+.grp.b{background:var(--surface-muted);border:1px solid var(--line);}
+.grp.c{background:#eef1f4;border:1px solid #d8dee5;}
+.grp .gh{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:2px;}
+.grp.a .gh{color:var(--accent-strong);}
+.grp.b .gh{color:var(--ink-2);}
+.grp.c .gh{color:#4a5a6b;}
+.grp .gs{font-size:9px;color:var(--ink-3);margin-bottom:6px;line-height:1.3;}
+.item{padding:3.5px 0;border-bottom:1px solid rgba(27,31,36,.07);}
+.item:last-child{border-bottom:none;padding-bottom:0;}
+.item .t{font-size:10.5px;font-weight:700;color:var(--ink);line-height:1.25;}
+.item .d{font-size:9px;color:var(--ink-2);line-height:1.3;margin-top:1px;}
+.item .n{color:var(--accent-strong);font-weight:700;}
+.grp.c .item .n{color:#4a5a6b;}
+.foot{padding:7px 26px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+.confidence.mid{background:rgba(107,115,126,.14);color:var(--ink-2);}
+.confidence.mid::before{background:var(--ink-3);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">Thirteen use cases, in the order they arrive</div>
+    <h2>What You Can Build With Four-Cent Decisions</h2>
+    <p class="subtitle">Every one is the same shape: a job that was too expensive to do properly, so it was done badly or not at all.</p>
+  </div>
+  <div class="fig-body">
+    <div class="groups">
+      <div class="grp a">
+        <div class="gh">Group 1 — you could start today</div>
+        <div class="gs">Each one is a job that currently gets sampled because reading everything costs too much.</div>
+        <div class="item"><div class="t"><span class="n">1.</span> Check an agent's work, every step</div><div class="d">Did it read the right file? Is this action risky? Hoping becomes knowing.</div></div>
+        <div class="item"><div class="t"><span class="n">2.</span> Read the whole pile, not a sample</div><div class="d">Contracts, logs, reviews, invoices, notes, survey answers.</div></div>
+        <div class="item"><div class="t"><span class="n">3.</span> Routing</div><div class="d">"Who handles this?" — better than a rules list, because it judges.</div></div>
+        <div class="item"><div class="t"><span class="n">4.</span> Spotting the attack</div><div class="d">Prompt injection, odd account behaviour. A yes/no call.</div></div>
+        <div class="item"><div class="t"><span class="n">5.</span> Are these the same thing?</div><div class="d">Duplicate customers, relevant results, repeat comments.</div></div>
+      </div>
+      <div class="grp b">
+        <div class="gh">Group 2 — only works because it's instant</div>
+        <div class="gs">Under a tenth of a second is the line where AI stops being something you wait for.</div>
+        <div class="item"><div class="t"><span class="n">6.</span> AI inside the moment</div><div class="d">A voice that decides whether to interrupt. Enemies that react. A form that adapts as you type.</div></div>
+        <div class="item"><div class="t"><span class="n">7.</span> Flipping which one is the exception</div><div class="d">The model makes the soft call. The code keeps the authority.</div></div>
+        <div class="item"><div class="t"><span class="n">8.</span> Two lanes instead of one</div><div class="d">Cheap decider first, hard cases up to the big model. Caching, for judgment.</div></div>
+        <div class="item"><div class="t"><span class="n">9.</span> The line between acting and asking</div><div class="d">Above the confidence line it acts alone. Below it, a person decides. The dial is tunable.</div></div>
+      </div>
+      <div class="grp c">
+        <div class="gh">Group 3 — nobody has started</div>
+        <div class="gs">The part I would bet on, and the part that answers the question nobody can answer yet.</div>
+        <div class="item"><div class="t"><span class="n">10.</span> Every message against the rulebook</div><div class="d">Banks and insurers sample today. Now every message is checked, scored, and auditable.</div></div>
+        <div class="item"><div class="t"><span class="n">11.</span> Checking the confidence numbers</div><div class="d">Is it right 90 times out of 100? That drifts. Nobody owns this job yet.</div></div>
+        <div class="item"><div class="t"><span class="n">12.</span> Quality as a live number</div><div class="d">Score every output as it happens, not once a quarter.</div></div>
+        <div class="item"><div class="t"><span class="n">13.</span> Things nobody has named yet</div><div class="d">Every big price drop makes never-worth-it decisions worth making. Nobody planned 2FA either.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Sources: TypeSafe AI launch post, 15 Sep 2026 (primitives, pricing, latency, the calibration quote). Use-case groupings are applied analysis, not vendor claims.</span>
+    <span class="confidence mid">Moderate · Low-Moderate for group 3</span>
+  </div>
+</div>
+</body>
+</html>

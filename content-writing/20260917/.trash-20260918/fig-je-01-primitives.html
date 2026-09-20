@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-je-01 — what Jev actually returns</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:12px;overflow:hidden;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:15px 28px 10px;border-bottom:1px solid var(--line);}
+.overline{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:25px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:12px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:13px 28px 13px;}
+.prim{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:11px;}
+.pcard{background:var(--accent-tint);border:1px solid rgba(14,110,92,.18);border-radius:9px;padding:9px 11px;}
+.pcard .n{font-size:9px;font-weight:700;color:var(--accent-strong);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+.pcard h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.pcard p{font-size:10.5px;color:var(--ink-2);line-height:1.35;}
+.pcard .ret{font-size:9.5px;font-weight:600;color:var(--ink);margin-top:5px;background:rgba(255,255,255,.65);border-radius:6px;padding:4px 7px;}
+.split{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:center;border-top:1px solid var(--line);padding-top:11px;}
+.split h4{font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:7px;}
+.mech{display:flex;gap:8px;}
+.mech .col{flex:1;background:var(--surface-muted);border:1px solid var(--line);border-radius:9px;padding:8px 10px;}
+.mech .col .k{font-size:9px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.09em;margin-bottom:3px;}
+.mech .col .v{font-size:12px;font-weight:700;color:var(--ink);line-height:1.3;margin-bottom:2px;}
+.mech .col .d{font-size:9.5px;color:var(--ink-2);line-height:1.3;}
+.mech .col.new{background:#2a2f36;border-color:#2a2f36;}
+.mech .col.new .k{color:#8fd4c4;}
+.mech .col.new .v{color:#fff;}
+.mech .col.new .d{color:#c3c9d1;}
+.callout{background:var(--critical-tint);border:1px solid rgba(180,35,24,.2);border-radius:9px;padding:10px 13px;}
+.callout .big{font-family:var(--font-display);font-size:25px;font-weight:800;color:var(--critical);line-height:1;margin-bottom:4px;}
+.callout p{font-size:10.5px;color:var(--ink-2);line-height:1.4;}
+.foot{padding:8px 28px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">The output contract — typed, bounded, one of three shapes</div>
+    <h2>What Jev Actually Returns</h2>
+    <p class="subtitle">You declare the possible answers before you ask. Jev picks among them and attaches a calibrated probability. It cannot produce free text, code, or conversation — architecturally, not by policy.</p>
+  </div>
+  <div class="fig-body">
+    <div class="prim">
+      <div class="pcard"><div class="n">Noul — their word for boolean</div><h3>"Is this true?"</h3><p>One probability from 0 to 1. The smallest decision there is.</p><div class="ret">Returns: probability</div></div>
+      <div class="pcard"><div class="n">Choice</div><h3>"Which of these fits?"</h3><p>One option out of up to 255, plus the full spread of probabilities across all options.</p><div class="ret">Returns: 1 of up to 255 + spread</div></div>
+      <div class="pcard"><div class="n">Score</div><h3>"Where does this sit?"</h3><p>A score across 2 to 10 tiers, plus a confidence value. Calibrated, not guessed.</p><div class="ret">Returns: tier + confidence</div></div>
+    </div>
+    <div class="split">
+      <div>
+        <h4>Why it's fast: the bucket brigade vs one pass</h4>
+        <div class="mech">
+          <div class="col">
+            <div class="k">Normal LLM</div>
+            <div class="v">One token at a time</div>
+            <div class="d">Each token conditioned on the last. The bucket has to arrive before the next one starts.</div>
+          </div>
+          <div class="col new">
+            <div class="k">Jev</div>
+            <div class="v">One forward pass</div>
+            <div class="d">The answers were fixed in advance, so every candidate is scored at once. No bucket brigade.</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        <div class="big">Not allowed to invent</div>
+        <p>If you asked "cat or dog", the answer <strong>cannot</strong> be "banana". The set of possible answers is closed. That is the source of the speed, the price, and the type safety.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: TypeSafe AI, "Introducing System One Models &amp; Jev" (15 Sep 2026); Vercel AI Gateway model page. Mechanism as claimed by the vendor; no architecture paper has been published.</span>
+    <span class="confidence">High: claims · Moderate: internals</span>
+  </div>
+</div>
+</body>
+</html>

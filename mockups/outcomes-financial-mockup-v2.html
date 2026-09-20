@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three Bounded Outcomes — steal market share</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ObserveCo Consulting design system (consulting-tokens.css)
+   Light-first paper canvas, insight teal, serif display.
+   ============================================================ */
+:root {
+  --canvas: #f7f6f3;
+  --surface: #ffffff;
+  --surface-hover: #f1f0ec;
+  --surface-muted: #efeee9;
+  --line: #e4e2dc;
+  --line-soft: #efeee9;
+  --line-strong: #cfccc4;
+  --status-healthy: #227a4e;
+  --status-healthy-tint: #e5f2ea;
+  --status-warning: #9a6500;
+  --status-warning-tint: #fbf0d8;
+  --status-critical: #b42318;
+  --status-critical-tint: #fbeae7;
+  --status-info: #1d5fbf;
+  --status-info-tint: #e8f0fb;
+  --insight: #0e6e5c;
+  --insight-strong: #0a5447;
+  --insight-tint: #e7f1ee;
+  --insight-line: #c6dcd4;
+  --ink: #1b1f24;
+  --ink-2: #4a525c;
+  --ink-3: #6b737e;
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-pill: 9999px;
+  --shadow-card: 0 1px 2px rgba(27, 31, 36, 0.04), 0 1px 3px rgba(27, 31, 36, 0.06);
+  --shadow-raised: 0 2px 4px rgba(27, 31, 36, 0.05), 0 12px 32px rgba(27, 31, 36, 0.10);
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --ease-standard: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-body);
+  background: var(--canvas);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  padding: 48px 24px 80px;
+}
+.container { max-width: 1120px; margin: 0 auto; }
+:focus-visible { outline: 2px solid var(--insight); outline-offset: 3px; border-radius: 3px; }
+
+/* Section header */
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px; margin-bottom: 22px; }
+.section-head h2 { font-family: var(--font-display); font-size: clamp(26px, 4vw, 36px); font-weight: 600; line-height: 1.12; letter-spacing: -0.015em; margin: 0; }
+.section-head .lead { color: var(--ink-2); font-size: 15px; max-width: 62ch; margin: 0; }
+.kicker { font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--insight); margin-bottom: 12px; }
+
+/* Tier legend — who you're stealing from */
+.tier-legend {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-bottom: 26px; padding: 16px 18px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+}
+.tier-legend .tl-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); align-self: center; margin-right: 4px; }
+.tier-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: var(--ink-2); padding: 6px 12px; border-radius: var(--radius-pill); background: var(--surface-muted); }
+.tier-pill b { font-family: var(--font-mono); font-size: 11px; color: var(--ink); }
+.tier-pill.t1 { background: var(--status-critical-tint); color: var(--status-critical); }
+.tier-pill.t1 b { color: var(--status-critical); }
+.tier-pill.t2 { background: var(--status-warning-tint); color: var(--status-warning); }
+.tier-pill.t2 b { color: var(--status-warning); }
+.tier-pill.t3 { background: var(--status-healthy-tint); color: var(--status-healthy); }
+.tier-pill.t3 b { color: var(--status-healthy); }
+
+/* ─── OUTCOME GRID ─── */
+.outcome-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; }
+@media (max-width: 980px) { .outcome-grid { grid-template-columns: 1fr; } }
+
+.outcome-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  overflow: hidden;
+  transition: border-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+}
+.outcome-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--line-soft);
+  transition: background var(--motion-base) var(--ease-standard);
+}
+.outcome-card.on { border-color: var(--insight-line); box-shadow: var(--shadow-raised); }
+.outcome-card.on::before { background: var(--insight); }
+
+/* Card header */
+.oc-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.oc-kicker { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.oc-area { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.oc-title { font-family: var(--font-display); font-size: 24px; font-weight: 600; line-height: 1.15; margin: 0 0 6px; }
+.oc-thesis { font-size: 14px; line-height: 1.55; color: var(--ink-2); margin: 0 0 16px; }
+
+/* Who you steal from — replaces "risk/defensibility" tags */
+.oc-steal { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); padding: 8px 12px; border-radius: var(--radius-md); margin-bottom: 16px; }
+.oc-steal b { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.oc-steal .ss-note { color: var(--ink-3); font-size: 12px; }
+
+/* KPI row — the financial headline */
+.oc-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+.oc-kpi { background: var(--surface-muted); border-radius: var(--radius-md); padding: 10px 12px; }
+.oc-kpi .k-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); display: block; margin-bottom: 4px; }
+.oc-kpi .k-value { font-family: var(--font-mono); font-size: 19px; font-weight: 600; color: var(--ink); line-height: 1.1; }
+.oc-kpi .k-value small { font-size: 12px; font-weight: 500; color: var(--ink-3); }
+.oc-kpi .k-delta { font-family: var(--font-mono); font-size: 10px; display: block; margin-top: 2px; }
+.k-delta.up { color: var(--status-healthy); }
+.k-delta.flat { color: var(--ink-3); }
+
+/* Chart area */
+.oc-chart { position: relative; height: 150px; margin-bottom: 16px; border: 1px solid var(--line-soft); border-radius: var(--radius-md); background: var(--surface); overflow: hidden; }
+.oc-chart .chart-label { position: absolute; top: 8px; left: 12px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); z-index: 2; }
+.oc-chart svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* How-you-steal insight footer */
+.oc-how {
+  margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line-soft);
+  background: var(--insight-tint); border-radius: var(--radius-md); padding: 14px;
+}
+.oc-how .how-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--insight-strong); display: block; margin-bottom: 5px; }
+.oc-how p { font-size: 13px; line-height: 1.55; color: var(--ink-2); margin: 0; }
+.oc-how p strong { color: var(--ink); font-weight: 600; }
+
+/* ─── CHART ANIMATIONS (gated by .in-view) ─── */
+.donut-ring { fill: none; stroke: var(--line-soft); stroke-width: 14; }
+.donut-fill { fill: none; stroke: var(--insight); stroke-width: 14; stroke-linecap: round; stroke-dasharray: 0 100; transition: stroke-dasharray 1.1s var(--ease-emphasis); }
+.in-view .donut-fill { stroke-dasharray: 100 0; }
+.donut-center { font-family: var(--font-mono); font-size: 15px; font-weight: 600; fill: var(--ink); }
+.donut-sub { font-family: var(--font-mono); font-size: 8px; fill: var(--ink-3); letter-spacing: 0.1em; }
+.flat-line { fill: none; stroke: var(--insight); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 400; stroke-dashoffset: 400; transition: stroke-dashoffset 1.2s var(--ease-emphasis); }
+.in-view .flat-line { stroke-dashoffset: 0; }
+.flat-dot { fill: var(--insight); opacity: 0; transition: opacity 0.3s ease 1.1s; }
+.in-view .flat-dot { opacity: 1; }
+
+.bar { fill: var(--insight); opacity: 0; transform-origin: bottom; transform: scaleY(0); transition: transform 0.7s var(--ease-emphasis), opacity 0.3s ease; }
+.in-view .bar { transform: scaleY(1); opacity: 1; }
+.in-view .bar:nth-child(1) { transition-delay: 0.05s; }
+.in-view .bar:nth-child(2) { transition-delay: 0.15s; }
+.in-view .bar:nth-child(3) { transition-delay: 0.25s; }
+.in-view .bar:nth-child(4) { transition-delay: 0.35s; }
+.in-view .bar:nth-child(5) { transition-delay: 0.45s; }
+.in-view .bar:nth-child(6) { transition-delay: 0.55s; }
+.bar-grid { stroke: var(--line-soft); stroke-width: 1; }
+
+.scurve { fill: none; stroke: var(--insight); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 500; stroke-dashoffset: 500; transition: stroke-dashoffset 1.4s var(--ease-emphasis); }
+.in-view .scurve { stroke-dashoffset: 0; }
+.scurve-area { fill: url(#scurveGrad); opacity: 0; transition: opacity 0.6s ease 0.9s; }
+.in-view .scurve-area { opacity: 1; }
+.rival-marker { opacity: 0; transition: opacity 0.3s ease 1.3s; }
+.in-view .rival-marker { opacity: 1; }
+.rival-line { stroke: var(--status-critical); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.rival-dot { fill: var(--status-critical); }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .donut-fill, .flat-line, .bar, .scurve, .scurve-area, .rival-marker, .flat-dot { transition: none; opacity: 1; transform: none; stroke-dashoffset: 0; stroke-dasharray: 100 0; }
+  .bar { transform: scaleY(1); }
+}
+
+/* Footnote */
+.oc-note { margin-top: 26px; font-size: 12.5px; color: var(--ink-3); max-width: 88ch; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="section-head">
+    <div>
+      <p class="kicker">Three bounded outcomes</p>
+      <h2>Three ways to steal the market.</h2>
+    </div>
+    <p class="lead">Every outcome is the same fight: take share from a competitor. The only thing that changes is which tier you take it from — and how fast the revenue grows once you do.</p>
+  </div>
+
+  <div class="tier-legend">
+    <span class="tl">Who you're up against</span>
+    <span class="tier-pill t1"><b>Tier 1</b> the big incumbent</span>
+    <span class="tier-pill t2"><b>Tier 2</b> the mid challengers</span>
+    <span class="tier-pill t3"><b>Tier 3</b> the small fragmented players</span>
+  </div>
+
+  <div class="outcome-grid">
+
+    <!-- ══════════ OUTCOME 1 · NARROW HOLD ══════════ -->
+    <article class="outcome-card" id="out1">
+      <div class="oc-head">
+        <span class="oc-kicker">Outcome 1</span>
+        <span class="oc-area">steal a niche</span>
+      </div>
+      <h3 class="oc-title">Narrow hold</h3>
+      <p class="oc-thesis">You take the whole small corner nobody important wants. Slow revenue, but it's a pure win — you're the only name there, and the big players never bothered to show up.</p>
+
+      <div class="oc-steal t3">
+        <span class="tier-pill t3"><b>Steals from</b>&nbsp;Tier 3</span>
+        <span class="ss-note">small, fragmented, no one defends it</span>
+      </div>
+
+      <div class="oc-kpis">
+        <div class="oc-kpi"><span class="k-label">Revenue</span><span class="k-value">$1.2<small>M</small></span><span class="k-delta flat">+4% / yr</span></div>
+        <div class="oc-kpi"><span class="k-label">Niche share</span><span class="k-value">90<small>%</small></span><span class="k-delta up">you own it</span></div>
+        <div class="oc-kpi"><span class="k-label">Growth shape</span><span class="k-value" style="font-size:15px;">flat</span><span class="k-delta flat">steady, small</span></div>
+      </div>
+
+      <div class="oc-chart">
+        <span class="chart-label">Revenue · 5 yrs</span>
+        <svg viewBox="0 0 300 150" role="img" aria-label="Flat revenue line and donut showing you own the niche">
+          <g transform="translate(58,75)">
+            <circle class="donut-ring" r="30" cx="0" cy="0"/>
+            <circle class="donut-fill" r="30" cx="0" cy="0" transform="rotate(-90)"/>
+            <text class="donut-center" x="0" y="1" text-anchor="middle">90%</text>
+            <text class="donut-sub" x="0" y="14" text-anchor="middle">YOURS</text>
+          </g>
+          <polyline class="flat-line" points="110,95 150,93 190,96 230,94 270,95 290,94"/>
+          <circle class="flat-dot" cx="290" cy="94" r="3.5"/>
+          <text x="110" y="118" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">Y1</text>
+          <text x="272" y="118" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">Y5</text>
+        </svg>
+      </div>
+
+      <div class="oc-how">
+        <span class="oc-how-label">How you steal it</span>
+        <p><strong>Out-specialise them.</strong> The small players split the niche and none of them stands out. Be the single name they think of — more specific than any of them — and you take the whole niche by default.</p>
+      </div>
+    </article>
+
+    <!-- ══════════ OUTCOME 2 · ADJACENT MOVE ══════════ -->
+    <article class="outcome-card" id="out2">
+      <div class="oc-head">
+        <span class="oc-kicker">Outcome 2</span>
+        <span class="oc-area">steal the next segment</span>
+      </div>
+      <h3 class="oc-title">Adjacent move</h3>
+      <p class="oc-thesis">Your customers bring you the next group. You step into the segment next door and take it from the mid players who were serving it poorly — real, compounding revenue growth.</p>
+
+      <div class="oc-steal t2">
+        <span class="tier-pill t2"><b>Steals from</b>&nbsp;Tier 2</span>
+        <span class="ss-note">mid challengers who serve it badly</span>
+      </div>
+
+      <div class="oc-kpis">
+        <div class="oc-kpi"><span class="k-label">Revenue</span><span class="k-value">$4.8<small>M</small></span><span class="k-delta up">+18% / yr</span></div>
+        <div class="oc-kpi"><span class="k-label">Segment share</span><span class="k-value">34<small>%</small></span><span class="k-delta up">and climbing</span></div>
+        <div class="oc-kpi"><span class="k-label">Margin shape</span><span class="k-value" style="font-size:15px;">bar step</span><span class="k-delta flat">share per segment</span></div>
+      </div>
+
+      <div class="oc-chart">
+        <span class="chart-label">Revenue · segment by segment</span>
+        <svg viewBox="0 0 300 150" role="img" aria-label="Ascending bars showing revenue and share climbing segment by segment">
+          <line class="bar-grid" x1="20" y1="120" x2="290" y2="120"/>
+          <line class="bar-grid" x1="20" y1="85" x2="290" y2="85"/>
+          <line class="bar-grid" x1="20" y1="50" x2="290" y2="50"/>
+          <rect class="bar" x="30"  y="100" width="30" height="20" rx="3"/>
+          <rect class="bar" x="75"  y="88"  width="30" height="32" rx="3"/>
+          <rect class="bar" x="120" y="72"  width="30" height="48" rx="3"/>
+          <rect class="bar" x="165" y="55"  width="30" height="65" rx="3"/>
+          <rect class="bar" x="210" y="38"  width="30" height="82" rx="3"/>
+          <rect class="bar" x="255" y="22"  width="30" height="98" rx="3"/>
+          <text x="30" y="134" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">S1</text>
+          <text x="75" y="134" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">S2</text>
+          <text x="120" y="134" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">S3</text>
+          <text x="165" y="134" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">S4</text>
+          <text x="210" y="134" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">S5</text>
+          <text x="255" y="134" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">S6</text>
+        </svg>
+      </div>
+
+      <div class="oc-how">
+        <span class="oc-how-label">How you steal it</span>
+        <p><strong>Out-serve the gap.</strong> Your own customers hand you the referral — they know the next group with the same problem. Move there before the mid player notices, and take the segment on service they never gave it.</p>
+      </div>
+    </article>
+
+    <!-- ══════════ OUTCOME 3 · CATEGORY CREATED ══════════ -->
+    <article class="outcome-card" id="out3">
+      <div class="oc-head">
+        <span class="oc-kicker">Outcome 3</span>
+        <span class="oc-area">steal the whole market</span>
+      </div>
+      <h3 class="oc-title">Category created</h3>
+      <p class="oc-thesis">You redefine the question everyone's been arguing about. The big incumbent's lead no longer counts — their share is now the prize, and it comes to the one who owns the new question.</p>
+
+      <div class="oc-steal t1">
+        <span class="tier-pill t1"><b>Steals from</b>&nbsp;Tier 1</span>
+        <span class="ss-note">the incumbent's whole market</span>
+      </div>
+
+      <div class="oc-kpis">
+        <div class="oc-kpi"><span class="k-label">Revenue</span><span class="k-value">$38<small>M</small></span><span class="k-delta up">S-curve</span></div>
+        <div class="oc-kpi"><span class="k-label">Category share</span><span class="k-value">61<small>%</small></span><span class="k-delta up">lead the new one</span></div>
+        <div class="oc-kpi"><span class="k-label">Margin shape</span><span class="k-value" style="font-size:15px">S-curve</span><span class="k-delta flat">then plateau</span></div>
+      </div>
+
+      <div class="oc-chart">
+        <span class="chart-label">Revenue · the S-curve</span>
+        <svg viewBox="0 0 300 150" role="img" aria-label="S-curve showing explosive revenue growth then plateau as the incumbent enters">
+          <defs>
+            <linearGradient id="scurveGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--insight)" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="var(--insight)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path class="scurve-area" d="M20,128 C60,126 90,120 120,104 C150,84 170,52 200,34 C230,20 260,16 280,16 L280,128 Z"/>
+          <path class="scurve" d="M20,128 C60,126 90,120 120,104 C150,84 170,52 200,34 C230,20 260,16 280,16"/>
+          <g class="rival-marker">
+            <line class="rival-line" x1="200" y1="10" x2="200" y2="128"/>
+            <circle class="rival-dot" cx="200" cy="34" r="4"/>
+            <text x="200" y="140" font-family="var(--font-mono)" font-size="8" fill="var(--status-critical)" text-anchor="middle">incumbent wakes up</text>
+          </g>
+          <text x="20" y="140" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">Y1</text>
+          <text x="268" y="140" font-family="var(--font-mono)" font-size="8" fill="var(--ink-3)">Y5</text>
+        </svg>
+      </div>
+
+      <div class="oc-how">
+        <span class="oc-how-label">How you steal it</span>
+        <p><strong>Change the question.</strong> The big company can't pivot fast because it's defending the whole old market. Define the new category in your words, be the leading name in it, and the incumbent's share follows yours — it has no choice but to answer.</p>
+      </div>
+    </article>
+
+  </div>
+
+  <p class="oc-note">Illustrative figures for the invented rain-jacket company — no real company or market is depicted. The one idea: every outcome is a way of taking share from a competitor. The higher the tier you steal from, the bigger the revenue prize — and the harder the ground is to hold.</p>
+
+</div>
+
+<script>
+/* Scroll-trigger: add .in-view to the grid so charts animate once on entry. */
+(function () {
+  'use strict';
+  var grid = document.querySelector('.outcome-grid');
+  if (!grid) return;
+  if (!('IntersectionObserver' in window)) { grid.classList.add('in-view'); return; }
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('in-view'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.2 });
+  obs.observe(grid);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-way-02 — the numbers that matter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:0;overflow:hidden;}
+.fig{width:1176px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:14px 26px 9px;border-bottom:1px solid var(--line);}
+.overline{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:23px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:11.5px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:12px 26px;}
+.ratio{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.side{border-radius:9px;padding:11px 13px;}
+.side.human{background:#2a2f36;}
+.side.machine{background:var(--accent-tint);border:1px solid rgba(14,110,92,.18);}
+.side .k{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
+.side.human .k{color:#8fd4c4;}
+.side.machine .k{color:var(--accent-strong);}
+.side .big{font-family:var(--font-display);font-size:30px;font-weight:800;line-height:1;margin-bottom:4px;}
+.side.human .big{color:#fff;}
+.side.machine .big{color:var(--ink);}
+.side p{font-size:10.5px;line-height:1.4;}
+.side.human p{color:#c3c9d1;}
+.side.machine p{color:var(--ink-2);}
+.road{border-top:1px solid var(--line);padding-top:10px;}
+.road h4{font-size:11px;font-weight:700;color:var(--ink);margin-bottom:7px;}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.stp{background:var(--surface-muted);border:1px solid var(--line);border-radius:9px;padding:8px 10px;}
+.stp .y{font-size:9px;font-weight:700;color:var(--accent-strong);text-transform:uppercase;letter-spacing:.09em;margin-bottom:3px;}
+.stp .v{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.25;margin-bottom:2px;}
+.stp .d{font-size:9.5px;color:var(--ink-3);line-height:1.3;}
+.foot{padding:8px 26px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">What is actually on the road today, and what arrives when</div>
+    <h2>70,000 Drivers. About 20 Robotaxis. And a Government Saying It Will Not Go Faster Than the Retraining.</h2>
+    <p class="subtitle">The gap between the announcement and the road is the whole story. Read the numbers together and the "2028 launch" stops looking like a threat.</p>
+  </div>
+  <div class="fig-body">
+    <div class="ratio">
+      <div class="side human">
+        <div class="k">On the road now — human</div>
+        <div class="big">70,000+</div>
+        <p>Taxi and private-hire drivers in Singapore today. Point-to-point transport is still a people business.</p>
+      </div>
+      <div class="side machine">
+        <div class="k">On the road now — autonomous</div>
+        <div class="big">~20</div>
+        <p>Autonomous vehicles on Singapore roads, mostly in trials. A rounding error against the manned fleet.</p>
+      </div>
+    </div>
+    <div class="road">
+      <h4>The roadmap, in the order it happens</h4>
+      <div class="steps">
+        <div class="stp"><div class="y">Next few months</div><div class="v">Cars arrive</div><div class="d">All-electric Jaguar I-PACE fleet lands. Not carrying passengers.</div></div>
+        <div class="stp"><div class="y">2027</div><div class="v">Manual driving</div><div class="d">Trained specialists drive to map local roads, monsoon rain, and road geometry.</div></div>
+        <div class="stp"><div class="y">2028</div><div class="v">Commercial service</div><div class="d">Fully driverless ride-hailing opens to the public through the Waymo app.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Sources: gov.sg explainer, 8 Jul 2026 (70,000+ drivers, ~20 AVs); LTA news release, 18 Sep 2026 (fleet, 2027, 2028); Waymo statement, 18 Sep 2026.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

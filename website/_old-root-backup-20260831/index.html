@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ObserveCo — Runtime observability for AI agents</title>
+  <meta name="description" content="ObserveCo tells you if your AI agents are working, what they're doing, and where your money goes. Open source. Local. No cloud.">
+  <meta property="og:title" content="ObserveCo — Runtime observability for AI agents">
+  <meta property="og:description" content="Tells you if your AI agents are working, what they're doing, and where your money goes.">
+  <meta property="og:image" content="assets/dashboard-preview.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       ObserveCo — old product landing, restyled to the consulting
+       design system (design/consulting-tokens.css): light-first
+       paper canvas, insight teal accent, serif display authority.
+       Structure, content and the live telemetry ticker signature
+       are unchanged.
+       Type: serif display (system stack) · Inter (body) · JetBrains Mono (data)
+       Signature: live telemetry ticker
+       ============================================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f7f6f3;
+      --surface: #ffffff;
+      --surface-hover: #f1f0ec;
+      --surface-active: #e9e7e1;
+      --border: #e4e2dc;
+      --border-subtle: #efeee9;
+      --green: #0e6e5c;
+      --green-dim: rgba(14, 110, 92, 0.10);
+      --blue: #1d5fbf;
+      --yellow: #9a6500;
+      --red: #b42318;
+      --fg: #1b1f24;
+      --fg-2: #4a525c;
+      --fg-3: #6b737e;
+      --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+      --tick-h: 34px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding-top: var(--tick-h);
+    }
+
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+
+    /* ─── SIGNATURE: TELEMETRY TICKER ─── */
+    .ticker {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      height: var(--tick-h);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      overflow: hidden;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg-2);
+      white-space: nowrap;
+    }
+    .ticker .tick-inner {
+      display: flex; align-items: center; gap: 0;
+      animation: ticker-scroll 42s linear infinite;
+      will-change: transform;
+    }
+    .ticker:hover .tick-inner { animation-play-state: paused; }
+    @keyframes ticker-scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .tick-item {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 0 22px;
+      border-right: 1px solid var(--border-subtle);
+    }
+    .tick-item .tick-label { color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.08em; font-size: 9px; }
+    .tick-item .tick-val { color: var(--fg); font-weight: 500; }
+    .tick-item .tick-val.green { color: var(--green); }
+    .tick-item .tick-val.yellow { color: var(--yellow); }
+    .tick-item .tick-val.red { color: var(--red); }
+    .tick-item .tick-val.blue { color: var(--blue); }
+    .tick-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .tick-dot.green { background: var(--green); box-shadow: 0 0 6px rgba(14,110,92,.45); }
+    .tick-dot.yellow { background: var(--yellow); box-shadow: 0 0 6px rgba(154,101,0,.45); }
+    .tick-dot.red { background: var(--red); box-shadow: 0 0 6px rgba(180,35,24,.45); animation: pulse-alert 2s ease-in-out infinite; }
+    @keyframes pulse-alert { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky; top: var(--tick-h); z-index: 100;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--fg); }
+    .nav-logo svg { width: 30px; height: 30px; }
+    .nav-logo span { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { color: var(--fg-2); text-decoration: none; font-size: 13px; font-weight: 500; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--fg); }
+    .nav-cta {
+      background: var(--green); color: #fff !important; padding: 7px 14px;
+      border-radius: 10px; font-weight: 600 !important; font-family: var(--font-mono); font-size: 12px !important;
+    }
+    .nav-cta:hover { opacity: 0.9; }
+
+    /* ─── HERO ─── */
+    .hero { padding: 96px 0 64px; position: relative; }
+    .hero .container { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green-dim); border: 1px solid rgba(14, 110, 92, 0.35);
+      color: var(--green); padding: 5px 12px; border-radius: 6px;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 500; margin-bottom: 22px;
+      letter-spacing: 0.04em;
+    }
+    .hero-badge .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(38px, 4.6vw, 58px); font-weight: 700; line-height: 1.05;
+      letter-spacing: -0.03em; margin-bottom: 20px;
+    }
+    .hero h1 .green { color: var(--green); }
+    .hero h1 .dim { color: var(--fg-3); }
+    .hero p { font-size: 16px; color: var(--fg-2); max-width: 46ch; margin-bottom: 28px; line-height: 1.6; }
+    .hero-install {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 18px; font-family: var(--font-mono); font-size: 14px;
+      color: var(--green); cursor: pointer; transition: border-color 0.15s;
+    }
+    .hero-install:hover { border-color: var(--green); }
+    .hero-install .copy { color: var(--fg-3); font-size: 12px; margin-left: 6px; }
+    .hero-note { margin-top: 14px; font-size: 12px; color: var(--fg-3); font-family: var(--font-mono); }
+    .hero-note span { color: var(--fg-2); }
+
+    /* live terminal */
+    .live-term {
+      background: #10141a; border: 1px solid #2a323d; border-radius: 10px;
+      --green: #3fb69b; --yellow: #d9a441; --red: #f0645c; --blue: #6fa8ff;
+      --fg: #e6edf3; --fg-2: #9db0c3; --fg-3: #6c7f96;
+      font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7;
+      overflow: hidden; box-shadow: 0 24px 48px rgba(27, 31, 36, 0.20);
+    }
+    .live-term .term-bar {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      background: rgba(13, 17, 23, 0.85); border-bottom: 1px solid #2a323d;
+    }
+    .live-term .term-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .live-term .term-dot.r { background: #f0645c; } .live-term .term-dot.y { background: #d9a441; } .live-term .term-dot.g { background: #34c77b; }
+    .live-term .term-title { flex: 1; text-align: center; font-size: 10px; color: var(--fg-3); letter-spacing: 0.06em; }
+    .live-term .term-body { padding: 16px 18px; min-height: 300px; }
+    .live-term .prompt { color: var(--green); }
+    .live-term .cmd { color: var(--fg); }
+    .live-term .out { color: var(--fg-2); }
+    .live-term .ok { color: var(--green); }
+    .live-term .warn { color: var(--yellow); }
+    .live-term .err { color: var(--red); }
+    .live-term .cursor { display: inline-block; width: 8px; height: 14px; background: var(--green); vertical-align: middle; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .term-line { opacity: 0; animation: term-in 0.3s ease-out forwards; }
+    @keyframes term-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+    /* ─── SECTION BASE ─── */
+    section { padding: 88px 0; }
+    .section-label {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--green); margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.4vw, 40px); font-weight: 700;
+      letter-spacing: -0.02em; margin-bottom: 14px; line-height: 1.15;
+    }
+    .section-desc { font-size: 15px; color: var(--fg-2); max-width: 56ch; line-height: 1.6; }
+
+    /* reveal on scroll */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .reveal.in { opacity: 1; transform: none; }
+
+    /* ─── FEATURES ─── */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 40px; }
+    .feature-card {
+      background: var(--bg); padding: 22px 22px 20px; transition: background 0.15s;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .feature-card:hover { background: var(--surface); }
+    .feature-card .f-icon { font-size: 16px; color: var(--green); font-family: var(--font-mono); }
+    .feature-card h3 { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
+    .feature-card p { font-size: 12.5px; color: var(--fg-2); line-height: 1.5; }
+    .feature-card .tag {
+      align-self: flex-start; margin-top: 4px; font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px;
+      border-radius: 2px; border: 1px solid var(--border); color: var(--fg-3);
+    }
+    .feature-card .tag.free { border-color: rgba(14,110,92,.4); color: var(--green); }
+
+    /* ─── HOW IT WORKS ─── */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 40px; border: 1px solid var(--border); }
+    .step { padding: 26px 24px; border-right: 1px solid var(--border); background: var(--surface); }
+    .step:last-child { border-right: none; }
+    .step-num { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 12px; }
+    .step h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--fg-2); line-height: 1.5; }
+    .step p code { color: var(--green); font-family: var(--font-mono); font-size: 12px; }
+
+    .terminal {
+      background: #10141a; border: 1px solid #2a323d; border-radius: 10px;
+      --green: #3fb69b; --yellow: #d9a441; --red: #f0645c; --blue: #6fa8ff;
+      --fg: #e6edf3; --fg-2: #9db0c3; --fg-3: #6c7f96;
+      padding: 22px 24px; font-family: var(--font-mono); font-size: 13px;
+      line-height: 1.8; margin-top: 20px; overflow-x: auto;
+    }
+    .terminal .prompt { color: var(--green); }
+    .terminal .cmd { color: var(--fg); }
+    .terminal .output { color: var(--fg-2); }
+    .terminal .ok { color: var(--green); }
+    .terminal .warn { color: var(--yellow); }
+    .terminal .err { color: var(--red); }
+
+    /* ─── COMPARE ─── */
+    .comparison { border: 1px solid var(--border); margin-top: 40px; }
+    .comparison-row { display: grid; grid-template-columns: 220px 1fr 1fr; border-bottom: 1px solid var(--border); }
+    .comparison-row:last-child { border-bottom: none; }
+    .comparison-row.header { background: var(--surface); }
+    .comparison-cell { padding: 13px 18px; font-size: 13px; border-right: 1px solid var(--border); }
+    .comparison-cell:last-child { border-right: none; }
+    .comparison-row.header .comparison-cell { font-family: var(--font-mono); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--fg-3); }
+    .comparison-cell .check { color: var(--green); font-weight: 600; }
+    .comparison-cell .cross { color: var(--fg-3); }
+
+    /* ─── ROADMAP ─── */
+    .roadmap-items { margin-top: 40px; border-left: 1px solid var(--border); padding-left: 0; }
+    .roadmap-item { display: grid; grid-template-columns: 130px 1fr; gap: 20px; padding: 20px 0 20px 24px; position: relative; }
+    .roadmap-item::before {
+      content: ""; position: absolute; left: -5px; top: 26px;
+      width: 9px; height: 9px; border-radius: 50%; background: var(--bg); border: 2px solid var(--green);
+    }
+    .roadmap-item.shipped::before { border-color: var(--green); }
+    .roadmap-item.now::before { border-color: var(--green); box-shadow: 0 0 8px rgba(14,110,92,.5); }
+    .roadmap-item.next::before { border-color: var(--blue); }
+    .roadmap-item.soon::before { border-color: var(--fg-3); }
+    .roadmap-version { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--green); padding-top: 2px; }
+    .roadmap-item.next .roadmap-version { color: var(--blue); }
+    .roadmap-item.soon .roadmap-version { color: var(--fg-3); }
+    .roadmap-item h3 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .roadmap-item p { font-size: 13px; color: var(--fg-2); }
+
+    /* ─── CTA ─── */
+    .cta { text-align: center; padding: 88px 0; border-top: 1px solid var(--border); }
+    .cta h2 { font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 40px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .cta p { font-size: 15px; color: var(--fg-2); margin-bottom: 28px; }
+    .cta-install {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--green); color: #fff; padding: 13px 26px; border-radius: 10px;
+      font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+      text-decoration: none; transition: opacity 0.15s;
+    }
+    .cta-install:hover { opacity: 0.9; }
+
+    /* ─── FOOTER ─── */
+    footer { border-top: 1px solid var(--border); padding: 28px 0; }
+    footer .container { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--fg-3); }
+    footer a { color: var(--fg-2); text-decoration: none; }
+    footer a:hover { color: var(--fg); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .hero .container { grid-template-columns: 1fr; gap: 36px; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .step { border-right: none; border-bottom: 1px solid var(--border); }
+      .step:last-child { border-bottom: none; }
+      .comparison-row { grid-template-columns: 1fr; }
+      .comparison-cell { border-right: none; border-bottom: 1px solid var(--border); }
+      .comparison-cell:last-child { border-bottom: none; }
+      .roadmap-item { grid-template-columns: 1fr; gap: 6px; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 560px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+      .ticker .tick-inner { animation: none; }
+      .term-line { opacity: 1; animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIGNATURE: TELEMETRY TICKER -->
+<div class="ticker" aria-hidden="true">
+  <div class="tick-inner" id="tickInner">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <a href="#" class="nav-logo">
+      <svg viewBox="0 0 128 128" width="30" height="30">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#0e6e5c"/>
+            <stop offset="100%" style="stop-color:#0a5447"/>
+          </linearGradient>
+        </defs>
+        <circle cx="64" cy="64" r="60" fill="none" stroke="url(#g1)" stroke-width="2" opacity="0.3"/>
+        <polyline points="8,64 28,64 34,40 40,80 46,36 52,88 58,44 64,64 70,44 76,88 82,36 88,80 94,40 100,64 120,64" fill="none" stroke="#0e6e5c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>ObserveCo</span>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#compare">Compare</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="https://github.com/observeco/observeco" target="_blank">GitHub</a>
+      <a href="#install" class="nav-cta">pip install</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div>
+      <div class="hero-badge"><span class="dot"></span> v0.3 · 610 tests · MIT · no cloud</div>
+      <h1>Your agents are <span class="green">talking</span>.<br>ObserveCo is <span class="dim">listening</span>.</h1>
+      <p>Alive or dead. Bloated or lean. Costing you money or earning it back. One install, 60 seconds, and you can see exactly what your agents are doing — and where your money goes.</p>
+      <div class="hero-install" onclick="navigator.clipboard.writeText('pip install observeco && observeco dashboard'); this.querySelector('.copy').textContent='copied!'">
+        <span>$</span> pip install observeco && observeco dashboard
+        <span class="copy">click to copy</span>
+      </div>
+      <p class="hero-note"><span>Works with Hermes, OpenClaw, Ollama, or any agent framework.</span></p>
+    </div>
+    <div class="live-term">
+      <div class="term-bar">
+        <div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div>
+        <div class="term-title">observeco dashboard — live</div>
+      </div>
+      <div class="term-body" id="termBody">
+        <div class="term-line" style="animation-delay:0.2s"><span class="prompt">$</span> <span class="cmd">observeco pulse check</span></div>
+        <div class="term-line" style="animation-delay:0.6s"><span class="out">Agent Fleet Health</span></div>
+        <div class="term-line" style="animation-delay:0.9s"><span class="ok">● hound</span> <span class="out">alive · 30s ago · 12,400 tok</span></div>
+        <div class="term-line" style="animation-delay:1.1s"><span class="ok">● kepler</span> <span class="out">alive · 30s ago · 8,200 tok</span></div>
+        <div class="term-line" style="animation-delay:1.3s"><span class="ok">● aleph</span> <span class="out">alive · 30s ago · 15,600 tok</span></div>
+        <div class="term-line" style="animation-delay:1.5s"><span class="warn">● dreamer</span> <span class="out">degraded · 2 missed heartbeats</span></div>
+        <div class="term-line" style="animation-delay:1.7s"><span class="err">● raven</span> <span class="out">dead · no response in 5m</span></div>
+        <div class="term-line" style="animation-delay:2.0s"><span class="prompt">$</span> <span class="cmd">observeco dashboard</span></div>
+        <div class="term-line" style="animation-delay:2.4s"><span class="out">Dashboard running at <span style="color:var(--blue)">http://localhost:8123</span></span></div>
+        <div class="term-line" style="animation-delay:2.8s"><span class="prompt">$</span> <span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="section-label reveal">What you get</div>
+    <h2 class="section-title reveal">18 instruments. One panel.</h2>
+    <p class="section-desc reveal">Everything you need to know if your agents are alive, what's in their context, and when something breaks.</p>
+
+    <div class="features-grid reveal">
+      <div class="feature-card"><div class="f-icon">💓</div><h3>Pulse Check</h3><p>Agent liveness — alive, dead, or errored. Every 30 seconds. Zero config.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">⚡</div><h3>Circuit Breaker</h3><p>N-failure trip → auto-block → cooldown. Stops cascade failures before they spread.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🔧</div><h3>Heal Button</h3><p>One-click restart for dead agents. Manual trigger, you're in control.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🧠</div><h3>Token Breakdown</h3><p>See exactly what's in your agent's context — identity, skills, memory, tools, guidance.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">📈</div><h3>Drift Tracking</h3><p>7-day rolling token trend per component. Know before context bloat becomes a problem.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🔍</div><h3>Brain Analysis</h3><p>Find bloated, duplicate, or unused skills eating your context window. Compression preview with per-skill actions.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🌱</div><h3>Memory Garden</h3><p>Duplicates, contradictions, stale entries — find and fix memory bloat.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">⏱️</div><h3>Error Timeline</h3><p>Full error history with context snapshots. Not just logs — annotated events.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🔔</div><h3>In-Dashboard Alerts</h3><p>See alerts when you open the dashboard. Shows the discovery gap — how late you found out.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">💾</div><h3>Local SQLite</h3><p>All data on your machine. Zero cloud. Zero telemetry. Your agents' data stays yours.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">⚖️</div><h3>Fleet Comparison</h3><p>Side-by-side agent matrix — tokens, composition, drift, errors, circuit status. Compare any two agents instantly.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">📬</div><h3>Push Alerts</h3><p>Telegram, Discord, and email alerts when agents break. Delivery log, test button, channel management.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🩺</div><h3>Auto-Heal</h3><p>Per-agent toggle, L2 thresholds, heal events log. Watch daemon auto-restarts dead agents.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">📖</div><h3>Glossary</h3><p>20+ entries with hint buttons across all tabs. Learn what drift, chisel, pulse, and clawforge mean — in context.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🎯</div><h3>Confidence Framework</h3><p>FP/FN risk badges on every card. Know when to trust a recommendation and when to double-check.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🔀</div><h3>Hermes Plugin</h3><p>OTEL plugin with 11 hooks — PR in review. Real token tracking from every LLM call.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">📊</div><h3>Token Analytics</h3><p>Chart.js time-series dashboard with per-agent breakdown, cost estimation, and cache efficiency tracking.</p><span class="tag free">Free</span></div>
+      <div class="feature-card"><div class="f-icon">🧪</div><h3>Canary Benchmarks</h3><p>Grid runs, drift charts, config timelines, quality cards. Measure agent capability, not just liveness.</p><span class="tag free">Free</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="section-label reveal">How it works</div>
+    <h2 class="section-title reveal">60 seconds to first health data.</h2>
+
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Install</h3>
+        <p><code>pip install observeco</code> — one command, no dependencies to manage.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Discover</h3>
+        <p>Auto-detects your agents from config files. Zero configuration if you use Hermes or OpenClaw.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Monitor</h3>
+        <p>Dashboard shows fleet health, token breakdown, drift trends, and errors in real time.</p>
+      </div>
+    </div>
+
+    <div class="terminal reveal">
+      <div><span class="prompt">$</span> <span class="cmd">pip install observeco</span></div>
+      <div class="output">✓ Installed observeco-0.3.0</div>
+      <div>&nbsp;</div>
+      <div><span class="prompt">$</span> <span class="cmd">observeco pulse check</span></div>
+      <div class="output">Agent Fleet Health</div>
+      <div><span class="ok">● hound</span> <span class="output">alive · 30s ago · 12,400 tokens</span></div>
+      <div><span class="ok">● kepler</span> <span class="output">alive · 30s ago · 8,200 tokens</span></div>
+      <div><span class="ok">● aleph</span> <span class="output">alive · 30s ago · 15,600 tokens</span></div>
+      <div><span class="warn">● dreamer</span> <span class="output">degraded · 2 missed heartbeats</span></div>
+      <div><span class="err">● raven</span> <span class="output">dead · no response in 5m</span></div>
+      <div>&nbsp;</div>
+      <div><span class="prompt">$</span> <span class="cmd">observeco dashboard</span></div>
+      <div class="output">Dashboard running at <span style="color: var(--blue);">http://localhost:8123</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare">
+  <div class="container">
+    <div class="section-label reveal">Why ObserveCo</div>
+    <h2 class="section-title reveal">Built for agent operators, not infrastructure teams.</h2>
+
+    <div class="comparison reveal">
+      <div class="comparison-row header">
+        <div class="comparison-cell"></div>
+        <div class="comparison-cell">ObserveCo</div>
+        <div class="comparison-cell">Alternatives</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Setup time</div>
+        <div class="comparison-cell"><span class="check">60 seconds</span> — pip install, done</div>
+        <div class="comparison-cell"><span class="cross">2+ hours</span> — Grafana + Prometheus</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Understands tokens</div>
+        <div class="comparison-cell"><span class="check">✓</span> Per-component breakdown, drift, cost</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Generic metrics, no context concept</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Memory hygiene</div>
+        <div class="comparison-cell"><span class="check">✓</span> Duplicates, contradictions, debt score</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Not available</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Circuit breakers</div>
+        <div class="comparison-cell"><span class="check">✓</span> Built-in, auto-cooldown</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Manual configuration</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Auto-heal</div>
+        <div class="comparison-cell"><span class="check">✓</span> Per-agent toggle, L2 thresholds</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Manual restart required</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Push alerts</div>
+        <div class="comparison-cell"><span class="check">✓</span> Telegram, Discord, email</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Manual integration required</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Hermes plugin</div>
+        <div class="comparison-cell"><span class="check">✓</span> Native OTEL plugin — 11 hooks</div>
+        <div class="comparison-cell"><span class="cross">✗</span> Manual integration required</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Cost</div>
+        <div class="comparison-cell"><span class="check">Free forever</span> — MIT license</div>
+        <div class="comparison-cell"><span class="cross">$15-59/mo</span> — per host</div>
+      </div>
+      <div class="comparison-row">
+        <div class="comparison-cell" style="font-weight: 500;">Data</div>
+        <div class="comparison-cell"><span class="check">Local</span> — SQLite, no cloud</div>
+        <div class="comparison-cell"><span class="cross">Cloud</span> — your data leaves your machine</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="section-label reveal">What's coming</div>
+    <h2 class="section-title reveal">v0.3 is just the beginning.</h2>
+    <p class="section-desc reveal">We ship fast. Every week, new capabilities. The dashboard that sees problems also fixes them.</p>
+
+    <div class="roadmap-items reveal">
+      <div class="roadmap-item shipped">
+        <div class="roadmap-version">v0.2 · Shipped</div>
+        <div>
+          <h3>Token Analytics + Data Infrastructure</h3>
+          <p>Chart.js time-series dashboard, per-component token breakdown, drift tracking, memory garden, skill audit, heal button, error timeline, DB migrations.</p>
+        </div>
+      </div>
+      <div class="roadmap-item now">
+        <div class="roadmap-version">v0.3 · Now</div>
+        <div>
+          <h3>Auto-heal + Push Alerts</h3>
+          <p>Watch daemon auto-restarts dead agents. Telegram, Discord, and email alerts. Fleet comparison, drift alerts UI, circuit breaker config UI, glossary, confidence framework. 610 tests. Hermes OTEL plugin.</p>
+        </div>
+      </div>
+      <div class="roadmap-item next">
+        <div class="roadmap-version">v0.4 · Next</div>
+        <div>
+          <h3>CI gates + Eval capture</h3>
+          <p>CI quality gates with health thresholds. Eval dataset capture — save any agent turn as a regression test case. Static fleet report export.</p>
+        </div>
+      </div>
+      <div class="roadmap-item soon">
+        <div class="roadmap-version">v1.0 · Soon</div>
+        <div>
+          <h3>OpenClaw runtime plugin</h3>
+          <p>40-60% fewer tokens per turn. Intent-aware context loading that only loads what your agent needs, when it needs it.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="install">
+  <div class="container">
+    <h2 class="reveal">See your agents in 60 seconds.</h2>
+    <p class="reveal">No signup. No account. Just open source.</p>
+    <a href="https://github.com/observeco/observeco" class="cta-install reveal" target="_blank">
+      <span>$</span> pip install observeco && observeco dashboard
+    </a>
+    <p style="margin-top: 24px; font-size: 12px; color: var(--fg-3); font-family: var(--font-mono);">
+      <a href="https://github.com/observeco/observeco" target="_blank" style="color: var(--fg-2); text-decoration: none;">GitHub</a> · MIT License · Built for the AI agent community
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <p>© 2026 ObserveCo · Runtime observability for AI agents</p>
+    <p><a href="https://github.com/observeco/observeco" target="_blank">GitHub</a> · <a href="/privacy">Privacy</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  /* ─── TELEMETRY TICKER (signature) ─── */
+  var agents = [
+    { name: 'hound',  status: 'alive',    tok: '12.4K', cost: '$0.012' },
+    { name: 'kepler', status: 'alive',    tok: '8.2K',  cost: '$0.008' },
+    { name: 'aleph',  status: 'alive',    tok: '15.6K', cost: '$0.015' },
+    { name: 'dreamer',status: 'degraded', tok: '6.1K',  cost: '$0.006' },
+    { name: 'raven',  status: 'dead',     tok: '—',     cost: '—' }
+  ];
+  function tickItem(a) {
+    var dotCls = a.status === 'alive' ? 'green' : a.status === 'degraded' ? 'yellow' : 'red';
+    var valCls = a.status === 'alive' ? 'green' : a.status === 'degraded' ? 'yellow' : 'red';
+    return '<span class="tick-item">' +
+      '<span class="tick-dot ' + dotCls + '"></span>' +
+      '<span class="tick-label">' + a.name + '</span>' +
+      '<span class="tick-val ' + valCls + '">' + a.status + '</span>' +
+      '<span class="tick-val">' + a.tok + '</span>' +
+      '<span class="tick-val">' + a.cost + '</span>' +
+      '</span>';
+  }
+  var tickInner = document.getElementById('tickInner');
+  if (tickInner) {
+    var set = agents.map(tickItem).join('') + agents.map(tickItem).join('');
+    tickInner.innerHTML = set;
+  }
+
+  /* ─── REVEAL ON SCROLL ─── */
+  var reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    reveals.forEach(function (r) { io.observe(r); });
+  } else {
+    reveals.forEach(function (r) { r.classList.add('in'); });
+  }
+})();
+</script>
+
+</body>
+</html>

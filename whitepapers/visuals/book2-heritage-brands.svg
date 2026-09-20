@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1748" height="1500" viewBox="0 0 1748 1500">
+<rect width="1748" height="1500" fill="#f7f6f3"/>
+<g transform="translate(874.0,750.0) scale(1.06) translate(-874.0,-750.0)">
+<text x="120" y="150" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="bold" fill="#1b1f24" text-anchor="start" >Heritage Brands</text>
+<rect x="120" y="196" width="64" height="6" fill="#0e6e5c"/>
+<rect x="120" y="680" width="1508" height="240" rx="24" fill="#e7f1ee"/>
+<line x1="180" y1="800" x2="1568" y2="800" stroke="#cfccc4" stroke-width="8"/>
+<circle cx="1568" cy="800" r="40" fill="#0e6e5c"/>
+<text x="1568" y="720" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="bold" fill="#0a5447" text-anchor="middle" >a century</text>
+<text x="180" y="890" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="italic" fill="#4a525c" text-anchor="start" >owning a word</text>
+</g>
+</svg>

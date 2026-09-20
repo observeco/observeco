@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>Banner — cyber insurance / the falling premium</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee; --accent-line:#c6dcd4;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --warning:#9a6500; --warning-tint:#fbf0d8;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:1200px;height:480px;overflow:hidden;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);}
+.banner{width:1200px;height:480px;display:flex;flex-direction:column;padding:28px 40px 26px;position:relative;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.wordmark{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;color:var(--ink);letter-spacing:0.02em;}
+.wordmark .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);}
+.series{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--ink-3);font-weight:600;}
+.content{flex:1;display:flex;gap:36px;align-items:center;}
+.left{flex:1.15;}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--critical);font-weight:700;margin-bottom:10px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.12;color:var(--ink);margin-bottom:12px;}
+.subhead{font-size:18px;color:var(--ink-2);line-height:1.4;font-weight:500;}
+.right{flex:1;display:flex;justify-content:center;align-items:center;}
+.hero{text-align:center;background:var(--accent-tint);border:1px solid rgba(14,110,92,0.18);border-radius:14px;padding:20px 26px;min-width:330px;}
+.hero-num{font-family:var(--font-display);font-size:52px;font-weight:800;color:var(--accent-strong);line-height:1;margin-bottom:6px;}
+.hero-label{font-size:14px;color:var(--ink-2);line-height:1.4;font-weight:500;}
+.stats-head{display:flex;align-items:center;gap:10px;margin:12px 0 10px;}
+.stats-head .tag{font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent-strong);font-weight:700;}
+.stats-head .rule{flex:1;height:1px;background:var(--line);}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;display:flex;flex-direction:column;gap:2px;}
+.stat .s-num{font-family:var(--font-display);font-size:26px;font-weight:800;color:var(--accent-strong);line-height:1.1;}
+.stat .s-num.down{color:var(--critical);}
+.stat .s-label{font-size:12px;color:var(--ink-2);line-height:1.35;}
+</style>
+</head>
+<body>
+<div class="banner">
+  <div class="topbar">
+    <div class="wordmark"><span class="dot"></span>ObserveCo</div>
+    <div class="series">Small Island, Crowded Market — The Map</div>
+  </div>
+  <div class="content">
+    <div class="left">
+      <div class="overline">A falling price, a rising tailwind</div>
+      <h1>Cyber Insurance Just Got Cheaper for Small Business. The Risk Didn't. That's the Opportunity.</h1>
+      <p class="subhead">Premiums for small firms halved since 2022, coverage widened, and AI-driven attacks keep rising. When the price falls and the risk doesn't, a niche becomes a door.</p>
+    </div>
+    <div class="right">
+      <div class="hero">
+        <div class="hero-num">−50%</div>
+        <div class="hero-label">annual premium for small firms (revenue &lt; S$2M) since the 2021–22 highs — still buying S$250k of cover.</div>
+      </div>
+    </div>
+  </div>
+  <div class="stats-head">
+    <span class="tag">Why the door is open</span>
+    <span class="rule"></span>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="s-num">39%</span><span class="s-label">of 400 SG firms hit by an AI-related cyber incident in the past year (QBE survey) — the demand side is real</span></div>
+    <div class="stat"><span class="s-num">3</span><span class="s-label">achievable minimums to get covered: MFA, offline back-ups, patch management — the hygiene a small firm can actually do</span></div>
+    <div class="stat"><span class="s-num down">6,000</span><span class="s-label">S$6,000 starting premium for S$2M cover (mid-market) — down 25% from S$8,000 in 2022</span></div>
+  </div>
+</div>
+</body>
+</html>

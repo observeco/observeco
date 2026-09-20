@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>White paper graphic render check</title>
+<link href="assets/draft.css" rel="stylesheet">
+<style>
+  body { background: var(--bg); padding: 24px; font-family: var(--font-sans); }
+  h1 { font-family: var(--font-display); margin-bottom: 8px; }
+  p { color: var(--fg-2); margin-bottom: 24px; }
+  .wp-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px; margin-bottom: 40px; }
+  .wp-wrap h2 { font-family: var(--font-display); margin: 0 0 4px 8px; font-size: 18px; }
+  .wp-wrap .k { font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; color: var(--fg-3); margin: 0 0 12px 8px; }
+</style>
+</head>
+<body>
+  <h1>White paper infographic render check</h1>
+  <p>Each block should render a 1200px SVG on the paper canvas.</p>
+
+  <div class="wp-wrap"><h2>WP1 · Two Economies</h2><div class="sub">data-wp-graphic=01</div><div data-wp-graphic="WP01"></div></div>
+  <div class="wp-wrap"><h2>WP2 · Four Waves</h2><div class="sub">data-wp-graphic=02</div><div data-wp-graphic="WP02"></div></div>
+  <div class="wp-wrap"><h2>WP3 · Industry Map</h2><div class="sub">data-wp-graphic=03</div><div data-wp-graphic="WP03"></div></div>
+  <div class="wp-wrap"><h2>WP4 · Wall vs Door</h2><div class="sub">data-wp-graphic=04</div><div data-wp-graphic="WP04"></div></div>
+  <div class="wp-wrap"><h2>WP5 · AI Map</h2><div class="sub">data-wp-graphic=05</div><div data-wp-graphic="WP05"></div></div>
+  <div class="wp-wrap"><h2>WP6 · Decision Line</h2><div class="sub">data-wp-graphic=06</div><div data-wp-graphic="WP06"></div></div>
+
+  <script src="assets/white-papers.js"></script>
+</body>
+</html>

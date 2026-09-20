@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>fig-aom-01 — what coffee leather actually is</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#f7f6f3; --surface:#ffffff; --surface-muted:#efeee9;
+  --ink:#1b1f24; --ink-2:#4a525c; --ink-3:#6b737e;
+  --accent:#0e6e5c; --accent-strong:#0a5447; --accent-tint:#e7f1ee;
+  --critical:#b42318; --critical-tint:#fbeae7;
+  --line:#e4e2dc;
+  --font-display:'Playfair Display',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:440px;padding:12px;overflow:hidden;}
+.fig{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.fig-header{padding:16px 28px 11px;border-bottom:1px solid var(--line);}
+.overline{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:4px;}
+h2{font-family:var(--font-display);font-size:25px;font-weight:800;color:var(--ink);margin-bottom:2px;}
+.subtitle{font-size:12px;color:var(--ink-2);line-height:1.4;}
+.fig-body{padding:14px 28px 14px;}
+.layers{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px;}
+.layer{background:var(--accent-tint);border:1px solid rgba(14,110,92,.18);border-radius:9px;padding:9px 11px;}
+.layer .n{font-size:9px;font-weight:700;color:var(--accent-strong);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px;}
+.layer h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.layer p{font-size:10.5px;color:var(--ink-2);line-height:1.35;}
+.layer.dark{background:#2a2f36;border-color:#2a2f36;}
+.layer.dark .n{color:#8fd4c4;}
+.layer.dark h3{color:#fff;}
+.layer.dark p{color:#c3c9d1;}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:center;border-top:1px solid var(--line);padding-top:12px;}
+.split h4{font-size:11.5px;font-weight:700;color:var(--ink);margin-bottom:7px;}
+.swatches{display:flex;gap:8px;}
+.sw{flex:1;text-align:center;}
+.sw .chip{height:34px;border-radius:7px;border:1px solid var(--line);}
+.sw .lbl{font-size:10px;color:var(--ink-2);margin-top:4px;font-weight:600;}
+.sw .lbl span{display:block;font-size:9px;color:var(--ink-3);font-weight:500;margin-top:1px;}
+.callout{background:var(--critical-tint);border:1px solid rgba(180,35,24,.2);border-radius:9px;padding:10px 13px;}
+.callout .big{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--critical);line-height:1;margin-bottom:4px;}
+.callout p{font-size:10.5px;color:var(--ink-2);line-height:1.4;}
+.foot{padding:8px 28px;border-top:1px solid var(--line);font-size:9.5px;color:var(--ink-3);display:flex;justify-content:space-between;align-items:center;gap:14px;}
+.confidence{display:inline-flex;align-items:center;gap:5px;background:rgba(14,110,92,.12);color:var(--accent-strong);padding:2px 9px;border-radius:999px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;}
+.confidence::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="fig">
+  <div class="fig-header">
+    <div class="overline">The material, layer by layer — and the honest count</div>
+    <h2>What "Coffee Leather" Actually Is</h2>
+    <p class="subtitle">Not a proprietary invention — a purchased input with four named components. Read it the way you read any spec: what is it made of, and who else can buy it?</p>
+  </div>
+  <div class="fig-body">
+    <div class="layers">
+      <div class="layer"><div class="n">Base</div><h3>Bamboo fibre</h3><p>The structural substrate of the material.</p></div>
+      <div class="layer"><div class="n">Foam layer</div><h3>Sorona polymer</h3><p>DuPont bio-based PTT — 37% renewable plant content. USDA BioPreferred.</p></div>
+      <div class="layer"><div class="n">Binder</div><h3>Water-based resin</h3><p>Bonds the layers — not a formaldehyde cross-linker.</p></div>
+      <div class="layer dark"><div class="n">The signature</div><h3>Spent coffee grounds</h3><p>Give it the mellow black hue and the faint coffee smell.</p></div>
+    </div>
+    <div class="split">
+      <div>
+        <h4>The range: five colours, one material</h4>
+        <div class="swatches">
+          <div class="sw"><div class="chip" style="background:#121212;"></div><div class="lbl">Black<span>coffee leather</span></div></div>
+          <div class="sw"><div class="chip" style="background:#d8cbb4;"></div><div class="lbl">Seed<span>vegan PU</span></div></div>
+          <div class="sw"><div class="chip" style="background:#b9c4a8;"></div><div class="lbl">Leaf<span>vegan PU</span></div></div>
+          <div class="sw"><div class="chip" style="background:#9c7b5e;"></div><div class="lbl">Bean<span>vegan PU</span></div></div>
+          <div class="sw"><div class="chip" style="background:#6b5343;"></div><div class="lbl">Leather<span>vegan PU</span></div></div>
+        </div>
+      </div>
+      <div class="callout">
+        <div class="big">1 of 5</div>
+        <p>Coffee grounds are black — so <strong>only the black items are coffee leather.</strong> The other four colours are vegan PU. The founder discloses this plainly. The <em>headline</em> says coffee leather; the product line says one in five.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Source: The Straits Times, 17 Sep 2026 (Carmen Sin); DuPont Sorona material data (USDA BioPreferred); aomorie.com. The material was bought at Intertextile Shanghai — a public trade show.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObserveCo — Expanding Radial Pulse</title>
+<style>
+  :root {
+    --canvas: #f7f6f3;
+    --ink: #1b1f24;
+    --ink-2: #4a525c;
+    --insight: #0e6e5c;
+    --line: #e4e2dc;
+    --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: var(--canvas); color: var(--ink); }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 20px; background: rgba(247,246,243,0.92);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--line);
+  }
+  .topbar .brand { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--insight); }
+  .topbar .brand small { font-family: var(--font-body); font-weight: 500; color: #6b737e; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 8px; }
+  .controls { display: flex; gap: 10px; margin-left: auto; align-items: center; flex-wrap: wrap; }
+  .controls label { font-size: 12px; color: #6b737e; font-weight: 600; }
+  .controls select {
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 600;
+    padding: 6px 10px; border-radius: 8px; cursor: pointer;
+  }
+
+  .stage { position: fixed; inset: 0; overflow: hidden; }
+  canvas.pulse { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  .demo-content {
+    position: relative; z-index: 2; height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 8vw; max-width: 900px;
+  }
+  .demo-content .overline {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--insight); font-weight: 700; margin-bottom: 16px;
+  }
+  .demo-content h1 {
+    font-family: var(--font-display); font-size: clamp(30px, 5vw, 52px);
+    line-height: 1.15; font-weight: 700; margin-bottom: 20px; max-width: 18ch;
+  }
+  .demo-content p { font-size: 15px; line-height: 1.6; color: var(--ink-2); max-width: 46ch; }
+  .demo-content .tag {
+    display: inline-block; margin-top: 28px; padding: 8px 16px;
+    background: #e7f1ee; border: 1px solid #c6dcd4; color: #0a5447;
+    border-radius: 9999px; font-size: 12.5px; font-weight: 600;
+  }
+
+  .concept-label {
+    position: fixed; bottom: 20px; left: 20px; z-index: 40;
+    font-family: var(--font-mono); font-size: 11px; color: #6b737e;
+    background: rgba(255,255,255,0.7); border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 6px; letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 640px) {
+    .topbar { flex-wrap: wrap; gap: 8px; }
+    .controls { margin-left: 0; width: 100%; }
+    .demo-content { padding: 0 6vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">ObserveCo<small>Expanding Radial Pulse</small></div>
+  <div class="controls">
+    <label>Colour</label>
+    <select id="colorSel">
+      <option value="amber" selected>Amber</option>
+      <option value="teal">Teal</option>
+      <option value="rose">Rose</option>
+    </select>
+  </div>
+</div>
+
+<section class="stage">
+  <canvas class="pulse" id="pulseCanvas"></canvas>
+  <div class="demo-content">
+    <div class="overline">Expanding Radial Pulse</div>
+    <h1>A single dot of light blooms into a soft halo, then dissolves.</h1>
+    <p>A bright small core at the centre expands and lightens outward — like a heartbeat of light radiating toward the edges, then resetting and pulsing again. Zero translation of a hard edge.</p>
+    <span class="tag">Core grows + dilutes · ~6s pulse · directional</span>
+  </div>
+</section>
+
+<div class="concept-label">Pulse · centre-origin</div>
+
+<script>
+  var canvas = document.getElementById('pulseCanvas');
+  var ctx = canvas.getContext('2d');
+  var colorSel = document.getElementById('colorSel');
+
+  var COLORS = {
+    amber: { rgb: '201,138,61',  peak: 0.42 },
+    teal:  { rgb: '14,110,92',   peak: 0.38 },
+    rose:  { rgb: '164,113,111', peak: 0.40 }
+  };
+
+  var W = 0, H = 0;
+  function resize() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.width = Math.floor(window.innerWidth * dpr);
+    H = canvas.height = Math.floor(window.innerHeight * dpr);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  var CYCLE = 6000;   // ms per pulse
+  var MAX_R = 0.8;    // max radius as fraction of max dim
+
+  var current = COLORS.amber;
+
+  function draw(t /* 0..1 progress through cycle */) {
+    var c = current;
+    ctx.clearRect(0, 0, W, H);
+    var cx = W / 2, cy = H / 2;
+    // Eased growth: slow start, accelerate, then ease out as it dilutes.
+    // radius grows 0 -> MAX_R over the cycle; alpha dilutes bright -> faint.
+    var ease = 1 - Math.pow(1 - t, 2);              // easeInOut-ish growth
+    var r = Math.max(W, H) * MAX_R * ease;
+    // Core bright at start, lightens as it expands (outward dilution).
+    var peak = c.peak * (1 - 0.7 * t);
+    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(r, 1));
+    g.addColorStop(0.00, 'rgba(' + c.rgb + ',' + peak + ')');
+    g.addColorStop(0.45, 'rgba(' + c.rgb + ',' + (peak * 0.4) + ')');
+    g.addColorStop(1.00, 'rgba(' + c.rgb + ',0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  var t0 = performance.now();
+  function frame(now) {
+    var t = ((now - t0) % CYCLE) / CYCLE;
+    draw(t);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  colorSel.addEventListener('change', function () {
+    current = COLORS[colorSel.value];
+  });
+</script>
+</body>
+</html>

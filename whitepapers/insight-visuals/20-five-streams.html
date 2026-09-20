@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Five Streams — Where the Money Actually Flows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--canvas:#f7f6f3;--surface:#ffffff;--surface-muted:#efeee9;--ink:#1b1f24;--ink-2:#4a525c;--ink-3:#6b737e;--accent:#0e6e5c;--accent-strong:#0a5447;--accent-tint:#e7f1ee;--accent-line:#c6dcd4;--critical:#b42318;--critical-tint:#fbeae7;--warning:#9a6500;--warning-tint:#fbf0d8;--line:#e4e2dc;--font-display:'Playfair Display',Georgia,serif;--font-body:'Inter',system-ui,sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--canvas);color:var(--ink);font-family:var(--font-body);display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}
+.card{width:1200px;background:var(--surface);border-radius:16px;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,31,36,.05),0 1px 3px rgba(27,31,36,.07);overflow:hidden;}
+.card-header{padding:32px 40px 24px;border-bottom:1px solid var(--line);}
+.overline{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:8px;}
+h1{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;color:var(--ink);margin-bottom:8px;}
+.subtitle{font-size:15px;color:var(--ink-2);line-height:1.5;}
+.card-body{padding:32px 40px;}
+
+.streams-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+.stream-card{background:var(--surface-muted);border-radius:10px;padding:16px;text-align:center;position:relative;overflow:hidden;}
+.stream-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stream-card.s1::before{background:var(--accent);}
+.stream-card.s2::before{background:#7c8a6e;}
+.stream-card.s3::before{background:var(--warning);}
+.stream-card.s4::before{background:#b4653a;}
+.stream-card.s5::before{background:var(--critical);}
+.stream-card .num{font-family:var(--font-display);font-size:14px;font-weight:800;margin-bottom:6px;}
+.stream-card.s1 .num{color:var(--accent);}
+.stream-card.s2 .num{color:#7c8a6e;}
+.stream-card.s3 .num{color:var(--warning);}
+.stream-card.s4 .num{color:#b4653a;}
+.stream-card.s5 .num{color:var(--critical);}
+.stream-card h3{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.stream-card .customer{font-size:11px;color:var(--ink-3);margin-bottom:6px;}
+.stream-card .verdict{font-size:11px;font-weight:600;padding:4px 8px;border-radius:4px;display:inline-block;}
+.stream-card.s1 .verdict{background:rgba(14,110,92,.1);color:var(--accent-strong);}
+.stream-card.s2 .verdict{background:rgba(124,138,110,.1);color:#5a6b4a;}
+.stream-card.s3 .verdict{background:rgba(154,101,0,.1);color:var(--warning);}
+.stream-card.s4 .verdict{background:rgba(180,101,58,.1);color:#8a4a2a;}
+.stream-card.s5 .verdict{background:rgba(180,35,24,.1);color:var(--critical);}
+
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
+.detail-card{background:var(--surface-muted);border-radius:10px;padding:18px;}
+.detail-card h3{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.detail-card .stat{font-family:var(--font-display);font-size:20px;font-weight:800;color:var(--accent);margin-bottom:4px;}
+.detail-card p{font-size:13px;color:var(--ink-2);line-height:1.5;}
+
+.insight-box{background:var(--accent-tint);border:1px solid var(--accent-line);border-radius:10px;padding:16px 20px;}
+.insight-box p{font-size:14px;color:var(--ink-2);line-height:1.6;}
+.insight-box strong{color:var(--accent-strong);}
+.card-footer{padding:16px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--ink-3);}
+.confidence{display:inline-flex;align-items:center;gap:6px;background:rgba(14,110,92,.1);color:var(--accent-strong);padding:3px 10px;border-radius:999px;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.08em;}
+.confidence::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="card-header">
+    <div class="overline">Small Island, Crowded Market — Book 1 · Part Two, the five streams</div>
+    <h1>Five Streams Feed Singapore's Domestic Layer</h1>
+    <p class="subtitle">Your job is not to attract customers in general. Your job is to stand in the path of one of these streams and take a small cut as it passes.</p>
+  </div>
+  <div class="card-body">
+    <div class="streams-grid">
+      <div class="stream-card s1"><div class="num">Stream 1</div><h3>Domestic Consumer</h3><div class="customer">5.9M residents, S$12,446/mo median HH</div><div class="verdict">Most crowded, most punishing</div></div>
+      <div class="stream-card s2"><div class="num">Stream 2</div><h3>Government Money</h3><div class="customer">S$97B operating spend, care & health</div><div class="verdict">Most defensible once in</div></div>
+      <div class="stream-card s3"><div class="num">Stream 3</div><h3>B2B Spend</h3><div class="customer">800 companies >S$100M revenue</div><div class="verdict">Most stable recurring revenue</div></div>
+      <div class="stream-card s4"><div class="num">Stream 4</div><h3>Foreign Worker Payroll</h3><div class="customer">1.23M workers + 317K helpers</div><div class="verdict">Most overlooked opportunity</div></div>
+      <div class="stream-card s5"><div class="num">Stream 5</div><h3>Premium Downtown</h3><div class="customer">83% of new businesses register OUTSIDE CBD</div><div class="verdict">Hardest to enter, pays best</div></div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-card"><div class="stat">85%</div><h3>Consumer stream: referral is everything</h3><p>Fewer than 1 in 4 F&B businesses survive 5 years. The consumer stream rewards the owner who has picked one rung of the ladder and does that one thing better than the street around it.</p></div>
+      <div class="detail-card"><div class="stat">S$97B</div><h3>Government stream: the door is compliance</h3><p>The state funds care, health, education. Getting in takes work — standards, audits, qualifications. But once you're in, it's the most defensible stream a small business can enter.</p></div>
+      <div class="detail-card"><div class="stat">800</div><h3>B2B stream: the pyramid</h3><p>800 big companies sit at the top. Below them, tier-one suppliers. Below that, tier-two and tier-three — where small businesses live. The path: get one small job, do it perfectly.</p></div>
+      <div class="detail-card"><div class="stat">1.23M</div><h3>Foreign worker stream: the tap you don't control</h3><p>Real money, but sensitive to policy. The number of work passes is a tool of national policy. Build into it, but don't let it be your only water.</p></div>
+    </div>
+    <div class="insight-box">
+      <p><strong>You cannot stand in all five streams at once.</strong> Each stream asks for a different customer, a different product, a different temperament. The scarce thing is not the money. The scarce thing is the owner who has chosen a stream and built a business that fits it. Choose your stream, and you have already done what most of your competitors will never manage.</p>
+    </div>
+  </div>
+  <div class="card-footer">
+    <span>Source: SingStat, QBE 2025, ACRA, STB. Figures 2025. Confidence: High.</span>
+    <span class="confidence">High Confidence</span>
+  </div>
+</div>
+</body>
+</html>
