@@ -3227,7 +3227,7 @@ async def api_watch_daemon_start():
     existed, so the start button 404'd. Wired to the existing
     chisel/watch.start_daemon(). Returns {status, pid} as the frontend expects.
     """
-    from observeco.chisel.watch import start_daemon, _pid_file, _is_pid_alive
+    from observeco.chisel.watch import _is_pid_alive, _pid_file, start_daemon
     start_daemon()
     pid = _pid_file()
     if pid and _is_pid_alive(pid):

@@ -198,8 +198,6 @@ def _classify_agent(pulse: dict, drift: list, circuit: dict, errors: list, now: 
     5. ever_alive AND not alive AND not managed -> not_running (neutral)
     """
     status = pulse.get("status", "") if pulse else ""
-    last_ts = pulse.get("timestamp", 0) if pulse else 0
-    delta = now - last_ts if last_ts else 999999
     alive_now = (status == "alive")
 
     # Alive now → healthy (rule 3). A live pulse is the strongest signal and
