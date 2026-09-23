@@ -9,6 +9,10 @@ decisions folded in; tactical build order removed.
 **v3 change:** Email decisions locked (Resend transactional / Brevo marketing, `mail.observeco.com`).
 Added §6.4 — Brevo is a processor, never a contact store. Corrected the now-stale claim that the
 provider choice was open.
+**v4 change:** Added the optional phone field (§3.6–3.7) — it activates DNC and WhatsApp policy, a
+separate regime from PDPA, so phone is scoped as a matching key rather than a marketing channel.
+Added §12 — ten blind spots, of which B1 (open email relay) and B2 (no input-quality floor) need a
+decision before build.
 
 ---
 
@@ -114,6 +118,67 @@ you may lawfully message.
 Current text states: *"We don't run servers that store your data"*, *"There are no ObserveCo
 servers that process or store your data"*, *"We never share your data with third parties. No
 third-party data processors."* All three become false on launch. Blocking, not cleanup.
+
+### 3.6 The input contract
+
+The form is the system's primary input, so its field set is an architectural contract, not UI
+copy. Sean's decision: **identity first** (so abandoned forms remain contactable).
+
+| Step | Fields | Required |
+|---|---|---|
+| 1 You | First name · Last name · Email · **Phone (optional)** | name + email |
+| 2 Business | Business name · Website · Role | business name |
+| 3 Market | Category / what you sell · City | category |
+| 4 Position | Current positioning sentence *(or "we don't have one")* · What you believe makes you different · What competitors undercut you on | position |
+| 5 Numbers | Your price point · Their price point · How many competitors you can name | optional but drives depth |
+
+**Email is the only hard delivery dependency.** Every other field improves the report; none of
+them blocks it (§4.4). The **cannot-refuse contract** holds: the answers alone must carry all
+five scores.
+
+### 3.7 The phone number — a different regime
+
+**Collecting a phone number is not the same kind of act as collecting an email.** Three
+distinct rule-sets switch on, and two of them are not PDPA.
+
+**1. It may not be personal data at all — or it may be.** PDPA s4(5) excludes *business contact
+information* given solely for business purposes (corporate email, business title, office phone).
+A **mobile number is not presumptively business contact information**, and a sole proprietor's
+personal mobile is personal data. So the schema must record **whose number it is and on what
+basis** — `phone_kind` ∈ {business_line, personal_mobile, unknown}. Treating it as exempt by
+default is the error.
+
+**2. DNC is a separate regime and it is strict.** The Do Not Call provisions govern *outbound*
+messages to Singapore telephone numbers, across three registers (No Voice Call, No Text
+Message, No Fax Message).
+
+| Constraint | Consequence for us |
+|---|---|
+| Must check the register **before sending**, unless we hold **clear and unambiguous consent in evidential form** | Consent must be stored as evidence, not assumed |
+| A check is valid for **21 days** — older than that, re-check | Store the check timestamp **on the number**, not the campaign |
+| Only **8-digit numbers starting 3, 6, 8 or 9** are accepted | Validate at capture; reject others |
+| Bulk checking is a CSV upload, results in up to **24 hours**, charged **per number** | Not a request-path operation; it is a batch job |
+| The *ongoing relationship* exemption waives the check for **text and fax only — never voice** | A WhatsApp/SMS follow-up is covered; a **phone call is not** |
+| The exemption requires an **opt-out facility inside every message**, with the reply number live for **30 days** | An opt-out path is mandatory, not optional |
+
+**3. WhatsApp adds a private rule-set on top.** Meta requires **opt-in before messaging**, and
+since Nov 2024 that opt-in may be general (not WhatsApp-specific) provided it complies with
+local law — but it must clearly state that the person is opting in and **name the business**.
+Crucially: **outside a 24-hour customer-service window, only pre-approved templates may be
+sent**, they must be correctly categorised (utility vs marketing), and there is a **per-user
+marketing-template limit**. Miscategorisation carries platform penalties.
+
+**Design decision — phone is a matching key, not a marketing channel.**
+
+The cheap, defensible posture is to **never send outbound WhatsApp**. The report email carries
+the same `wa.me` link the rest of the site already uses, so contact stays **user-initiated** and
+outside DNC entirely. The number's job is then **inbound matching**: when someone WhatsApps,
+we resolve the number to a lead and see their report and stage.
+
+That gets the CRM linkage without opening a regulated outbound channel, and it keeps the
+existing DNC-safe posture intact. If outbound is ever wanted, it needs: a fourth consent
+purpose, an evidential consent record, a DNC check with its 21-day stamp, and an in-message
+opt-out — none of which should be built speculatively.
 
 ---
 
@@ -505,7 +570,122 @@ for a purchasing decision.
 
 ---
 
-## 11. What this spec does not claim
+## 12. Blind spots — not covered by this spec
+
+Honest list of what is missing. **B1 and B2 change the architecture and need a decision before
+build.** The rest are real but deferrable.
+
+### B1 — The form is an open relay for email, and nothing in this spec stops it ⚠
+
+The single most serious gap. **Anyone can POST an arbitrary address to the form and cause
+observeco.com to email that person a report about a business they have no relationship with.**
+
+Consequences, in order of severity:
+
+1. **We would be processing and mailing personal data of people who never consented** — a PDPA
+   problem created by a third party, using our domain.
+2. **Domain reputation damage.** `sean.foo@observeco.com` is your primary address, and
+   `observeco.com` carries DKIM. A few thousand unsolicited sends from a domain with no sending
+   history is how a domain gets blacklisted — and that would take the *transactional* stream
+   (licence emails, report deliveries) down with it.
+3. **Jev spend.** Each submission costs model calls and possibly Places credits.
+4. **Spam-trap poisoning.** A form filled with harvested addresses poisons the sending domain
+   permanently.
+
+**Architectural consequence: the send must be gated on email confirmation.** The submitter
+confirms the address before the report is emailed — which also proves the address is theirs and
+gives a defensible consent timestamp. That is a real UX cost (some leads are lost at the
+confirmation step) traded against not being an open relay. **This needs Sean's decision.**
+
+Minimum companion controls: per-IP and per-address rate limits, a bot check at submission, and
+a hard daily send ceiling that alerts rather than silently exceeding.
+
+### B2 — "Cannot refuse" has no data-quality floor
+
+The cannot-refuse contract says a report is always produced. But nothing here distinguishes
+**comprehensive input** from **`asdf` in every field**. Garbage in produces a confident score
+with a verdict sentence, and that gets **emailed to a real person under your name** as though
+it were an analysis.
+
+Template C (need-more-detail) exists in principle, but the **threshold is undefined**. Needed: a
+measured input-quality gate — what minimum signal must be present before a score is produced —
+and a rule that a below-floor submission gets template C rather than a bad score. This is the
+input-side twin of the calibration gate, and it is currently unspecified.
+
+### B3 — No instrumentation, and this is an observability company
+
+Nothing in the spec defines what to measure. Without it there is no way to know whether the page
+works, and no evidence to tune it. Minimum set: submissions, abandonment by step, confirmation
+rate, report delivered, report opened, WhatsApp clicks, calls booked, deals won — plus pipeline
+health (queued, held, failed, retried).
+
+There is a sharper version of this: **this pipeline monitors nothing.** ObserveCo's whole
+proposition is that agents must be observable, and the spec builds a multi-stage async pipeline
+with a gated scorer, a regression canary and a degradation ladder — with **no monitoring of the
+pipeline itself** and no alerting to Sean when a report fails. The canary (§8.3) covers the
+*scorer*; nothing covers the *worker*. An unmonitored pipeline that silently stops emailing is
+the precise failure ObserveCo sells against.
+
+### B4 — Company size is not captured, and it is your own core segmentation
+
+`specs/observeco-consulting-pivot-positioning.md` splits the market into two bookends (0–9
+employees vs 10–500), with different products and prices aimed at each. The form captures role
+but **not company size**, so the free report cannot route to the right offer, and the CRM cannot
+segment the way your strategy already does. One field.
+
+### B5 — Jurisdictional scope is undefined
+
+PDPA is Singapore law. Nothing in the spec states what happens when a prospect is in the EU/UK
+(GDPR), or elsewhere. The site is globally reachable; the offer is SG-scoped. Either the form
+states the scope, or the consent notice and processor register need a GDPR variant. Currently
+the spec assumes Singapore throughout and does not say so.
+
+### B6 — The report makes claims about someone's business, with no disclaimer or liability line
+
+It asserts their position is Fragile or Viable and names a gate. If a prospect acts on a 62 and
+it goes badly, there is currently no statement of what the report is and is not. Needs a plain
+non-advice line in the report and on the page — the same discipline the site already applies to
+"AI does the analysis, a person owns the answer" (which the free report deliberately does *not*
+claim).
+
+### B7 — Retention has no number
+
+§3.1 says "a scheduled job that deletes or anonymises" but never states a period. A retention
+policy without a period is not a policy. Needs an explicit choice: how long are reports,
+contacts, and consent records kept, and separately for those who never convert.
+
+### B8 — The system of record has no backup story
+
+Supabase is now the sole record for contacts, consent and reports. Losing it means losing the
+consent evidence — which is the thing that makes the marketing lawful. Needs the same durability
+discipline as `sqlite-durability` / the drift-durability work: scheduled export, verified
+restore, and consent rows exported somewhere independent of the operational database.
+
+### B9 — The rubric is intellectual property sitting behind a free form
+
+The five dimensions, their weights and the band boundaries are the method. A competitor can
+submit once, receive a report, and reverse-engineer a meaningful part of it. The substance is
+withheld (§4), so the exposure is bounded — but it is real, and it argues for the report showing
+scores and reasoning **without** exposing the criteria text or weights.
+
+### B10 — Cost ceilings are undefined
+
+Jev is cheap (measured ~$0.0009 per 40 items) and the volume is low, so this is minor — but
+Google Places at $5/1k and per-number DNC checks (§3.7) are the two costs that scale with abuse
+rather than with success. B1's rate limiting is the mitigation; a spend alert is the backstop.
+
+### Not gaps — deliberate deferrals, recorded so they are not mistaken for oversights
+
+- The **nurture cadence, sequence and exit rules** (D3 — low priority with no customers)
+- The **name** (D1 — KIV)
+- **Tactical build order and sprint sequencing** (out of scope by explicit instruction)
+- **Whether outbound WhatsApp is ever used** (§3.7 — do not build speculatively)
+- **PDPA rewrite of `privacy.html`** — a prerequisite, but its content is a legal-copy task,
+  not an architectural one
+
+---
+
+## 13. What this spec does not claim
 
 - That Jev will clear the gate. §8.6 exists because it may not.
 - That the weights are correct — they are a hypothesis for calibration.
