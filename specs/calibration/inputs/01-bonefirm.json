@@ -1,0 +1,64 @@
+{
+  "_meta": {
+    "case": "bonefirm",
+    "business": "Bonefirm — bone & joint supplement for women 45+ through menopause",
+    "reconstruction_of": "specs/obs-spec-095 §10.1 calibration corpus",
+    "form_fidelity": "What the founder would have typed at engagement start. Deliberately preserves the founder's own framing — including the flaws the analysis later corrected. Written BEFORE reading the conclusion.",
+    "contains_client_material": true,
+    "labelled_verdict": "Feasible, with one condition (B1)",
+    "labelled_verdict_note": "Held separately from this file. Not shown to the scorer.",
+    "status": "awaiting_fidelity_check"
+  },
+
+  "form": {
+    "first_name": "Shirley",
+    "last_name": "REDACTED",
+    "email": "REDACTED@REDACTED.com",
+    "phone": "+65 9XXX XXXX",
+    "business_name": "Bonefirm",
+    "website": "https://bonefirm.com",
+    "role": "Founder",
+    "company_size_band": "0-9",
+    "city": "Singapore",
+    "category": "Health supplements — bone and joint support for women going through menopause. Daily capsule. Made in Singapore, GMP-certified. Non-hormonal.",
+    "positioning_sentence": "The only supplement Asian women need for their bones through menopause — a non-hormonal structural system built on NEM eggshell membrane plus a blend of traditional Chinese botanicals.",
+    "differentiator": "We are the only ones combining a clinically-studied Western ingredient (NEM eggshell membrane) with traditional Chinese medicine botanicals (Danshen, Chuanxiong, Dendrobium). It is an East-meets-West formula. GMP-manufactured in Singapore. And I am the founder — this came from my own menopause experience, so women trust that I understand what they are going through.",
+    "undercut_on": "Price. Anyone can buy NEM capsules on their own from Watsons or online for much less. Competitors also keep launching cheaper versions of the same thing.",
+    "your_price_point": "S$8.50 per day",
+    "their_price_point": "I don't know exactly. Probably S$0.50 to S$1 a day for the pharmacy brands.",
+    "competitors_named_count": "5-8"
+  },
+
+  "competitors_named": [
+    "Caltrate (calcium + D3, the pharmacy brand)",
+    "Blackmores (glucosamine for joints)",
+    "Kinohimitsu (collagen drinks)",
+    "Kordel's (joint and bone supplements)",
+    "Nature's Way"
+  ],
+
+  "customer_description": "Women 45 and above going through menopause. Also their daughters — a lot of our buyers are women in their 20s and 30s buying for their mother.",
+
+  "_notes_for_harness": {
+    "why_these_answers": "Chosen to preserve the founder's own framing. The positioning sentence is her stated claim, superlative included ('the only supplement Asian women need'). She names 5 competitors, all of them the OBVIOUS ones — the pharmacy and retail brands — and does not name the global menopause symptom brands (Midi, Nutrafol, The Better Menopause) that the analysis treats as the real category competitors.",
+    "flaws_preserved": [
+      "Analyst jargon in her own mouth: 'non-hormonal structural system' — the analysis later found nobody understands this phrase and replaced it with 'bones and joints, without hormones'",
+      "The superlative 'the only supplement Asian women need' — unprovable, later dropped",
+      "Competitor set is the retail shelf, not the menopause category — misses the real competitive frame",
+      "Undercut on price only — no mention of the menopause-specific position at all",
+      "Customer description is a DEMOGRAPHIC ('women 45+'), not a customer with a trigger, need and willingness to pay. The analysis's central correction. Note she adds the daughter observation herself, which is real and unprompted."
+    ],
+    "context_the_analysis_had_that_is_deliberately_absent": [
+      "The NUH/NUS finding that Asian women rank joint pain #1 (32.9%) and hot flashes 5th (18.6%) — the analysis's central wedge, and the founder did not know it",
+      "Validated stack costs (SGD 5.80-9.80/day)",
+      "The TCM anchor (SGD 7-20/day)",
+      "That NEM is a commodity, not a moat",
+      "That the silent-risk-aware woman is the beachhead"
+    ],
+    "enrichment_that_would_be_available_in_production": {
+      "acra": "entity lookup by business name",
+      "web": "bonefirm.com — positioning copy, pricing, founder bio",
+      "search": "competitor set for 'bone joint supplement Singapore menopause'"
+    }
+  }
+}
