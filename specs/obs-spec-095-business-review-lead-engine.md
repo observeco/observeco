@@ -8,6 +8,10 @@
 The ten questions (§1.1) now frame the document. **§5.4 is new and changes the scoring model** —
 a gate layer in front of the weighted composite. Accountability (§8), monitoring, jurisdiction
 (§9) and asset protection are now architectural sections rather than footnotes.
+**v6 change:** D11 accepted — Turnstile captcha + confirmation before send (§3.7), with the
+ordering that makes it the real LLM-spend protection. The two-way benefit is now §7.7: submissions
+are primary research, which adds a third consent purpose (D19). **§3.10 is new** — the B2 working
+note. D12 remains open.
 
 ---
 
@@ -216,14 +220,41 @@ Consequences, worst first:
 3. **Model spend** from abuse.
 4. **Spam-trap poisoning** — permanent, and unfixable once done.
 
-**Architectural consequence: the send is gated on email confirmation.** The submitter confirms
-the address before the report is emailed. That proves the address is theirs and yields a
-defensible consent timestamp. It is a real UX cost — some leads are lost at the confirmation
-step — traded against not being an open relay. **This is a decision for Sean (§12).**
+**Decision (D11, accepted): a captcha at submission + confirmation before send.**
 
-Companion controls, non-negotiable regardless of that decision: per-IP and per-address rate
-limits, a bot check at submission, and a **hard daily send ceiling that alerts** rather than
-silently exceeding.
+**Captcha — Cloudflare Turnstile.** Free for unlimited challenge volume; Managed mode is free for
+everyone; 20 widgets per account; does **not** require the Cloudflare CDN, so it works on a Vercel
+site. You already run Cloudflare for DNS, so there is no new vendor.
+
+**⚠ But the captcha does not protect the thing you want protected, on its own.**
+
+A captcha stops automated *submission*. It does not stop LLM spend. **The model calls happen in the
+worker**, and if the worker runs on unconfirmed submissions, a bot that solves one challenge still
+triggers a full Jev + enrichment run — and can do it repeatedly with different addresses.
+
+**The confirmation gate is what actually protects the LLM budget**, because it moves *all* model
+work behind a verified address. That ordering is the design, not an implementation detail:
+
+```
+submit (captcha)  ──> store as `pending`     ──> confirmation email      [zero model cost]
+                          │
+                          └── confirmed ──> queue ──> enrichment ──> Jev ──> report
+                                                                   ↑
+                                            nothing reaches this until the address is proven
+```
+
+Consequence: **an unconfirmed submission costs nothing but a row and one email.** That is the
+strongest spend protection available, and it is free — it falls out of the confirmation gate rather
+than requiring a separate budget mechanism.
+
+Residual controls after both: per-IP and per-address rate limits, and a **hard daily send ceiling
+that alerts** rather than silently exceeding.
+
+**The two-way benefit.** You are right that this is not one-directional, and it is worth naming
+because it changes the data model: a quality submission is not only a report request, it is
+**primary research** — self-reported price points, competitor counts, and positioning statements
+from SG SMEs. That is the raw material behind the industry-dataset claim your consulting offer
+already makes as its moat (§7.7). It also has a consent consequence, which §7.7 sets out.
 
 ### 3.8 Input quality floor
 
@@ -250,6 +281,71 @@ Two vectors specific to this form:
   submitter can place adversarial instructions in it. Content from the form must reach Jev as
   **data in a structured field**, never as instructions, and the enriched web text (§4) is
   equally untrusted.
+
+### 3.10 B2 working note — the input-quality floor (open, D12)
+
+A report cannot always be produced, and refusing to score is a **feature**, not a failure: a
+confident score on unusable input is worse than an honest request for more detail.
+
+**The governing principle — quality is not a word count.** The floor should measure **what we can
+actually judge about their position**, not how much they typed. A 400-character answer naming the
+category, three competitors and a price is scorable; 2,000 characters of vision and journey copy
+scoring nothing.
+
+**What the input must carry.** Six things — one per gate and dimension:
+
+| Slot | Drives | Refused when |
+|---|---|---|
+| Category / what the business does and to whom | Market headroom (G1) | Absent or non-specific enough to place in a category |
+| A positioning or differentiator sentence | Defensibility (G4), Position availability (G3) | Absent or a **non-position** — see below |
+| Competitors, named or counted | Competitive pressure (G2) | Zero, **and** enrichment finds none |
+| A price point or price band | Competitive pressure (G2) | Absent, **and** unenrichable |
+| A customer description | Demand reach (G5) | Absent |
+| City + category for enrichment | All | Absent |
+
+**Scoring is possible when every dimension has *either* a form answer *or* a passing enrichment
+source.** It is refused when any dimension has neither. That keeps the cannot-refuse contract
+honest: we refuse only when we genuinely have nothing, never merely because a field was skipped.
+
+**Three traps to design against:**
+
+1. **Placeholder text.** `asdf`, `test`, `n/a`, `-`, `.`, and strings of one repeated character must
+   fail regardless of length. A cheap deterministic check — this is not a model's job.
+2. **Repetition inflation.** The same paragraph pasted into three fields satisfies a word count and
+   nothing else. Detect duplicate answers across fields.
+3. **The generic positioning sentence.** *"We provide quality service and value to our customers"*
+   is long, fluent, and **not a position**. A submission whose differentiator slot holds a generic
+   sentence is not merely low-quality — **it is the finding.** The report should say so: *"You
+   haven't defined what makes you different — that is the first thing to fix."* That is a real
+   report, not a refusal, and it makes the "we don't have one" checkbox load-bearing.
+
+**The three options.** The mechanism matters less than which one is chosen, because they produce
+different products:
+
+| Option | How it works | Cost | Honest |
+|---|---|---|---|
+| **A. Deterministic checks only** | Length, placeholder rejection, duplicate detection, required-slot presence | Free, instant, deterministic | Detects empty and junk. Cannot detect fluent vagueness |
+| **B. A Jev sufficiency judgment** | One narrow, closed question per submission: *"does this state contain enough to assess the business's market position, competitors and customer?"* | ~1 call per submission — negligible | Judgement, fits the doctrine (§1). Needs its own calibration |
+| **C. Score anyway, label the input** | Always score; report the input quality as a visible caveat and widen the confidence band | Free | Most transparent. **But it breaks the cannot-refuse intent in the other direction** — it produces confident-looking scores from thin input |
+
+**Recommendation: A + B.** Deterministic checks are the floor (free, catches junk), and one sufficiency
+judgment catches fluent emptiness. That respects §3.4's measured doctrine — *"if code resolves the
+unit, make zero calls"* — because the model is only asked about the residue that passes the
+deterministic filters.
+
+**Where the threshold should come from.** Not intuition. The six calibration cases give scorable
+inputs; **the floor should be set so all six pass comfortably**, then tested against deliberately
+degraded variants of each. If the floor refuses a known-good case, it is too high; if it accepts a
+degraded one, it is too low.
+
+**Two things D12 still needs from Sean:**
+
+1. **Refusal is free to the submitter, but not to us** — template C costs a send and a support
+   expectation. If someone resubmits three times without improving, is that a hard stop, or does
+   Sean want to see those submissions as a signal that the form is asking the wrong questions?
+2. **Who answers a refusal?** Template C promises a way forward. Either it names exactly what to
+   add (a self-serve path), or it offers a call (a human path). The first scales; the second does
+   not, and it is what the copy currently implies.
 
 ---
 
@@ -609,7 +705,67 @@ consent evidence — the thing that makes the marketing lawful.
 Needs the same discipline as the existing `sqlite-durability` and drift-durability work:
 scheduled export, **verified restore** (not just a backup file that has never been opened), and
 **consent rows exported somewhere independent of the operational database**. A backup that lives
-in the same provider as the data is not a durability story.
+A backup that lives in the same provider as the data is not a durability story.
+
+### 7.7 The data is research, and that needs its own consent purpose
+
+Sean's point, and it is the more valuable half of the exchange: **a quality submission is not only
+a report request — it is primary research.** Self-reported price points, competitor counts and
+positioning sentences from SG SMEs are exactly the raw material behind the industry-dataset claim
+your consulting offer already makes as its moat. Most consultancies buy that data or synthesise it.
+This collects it as a byproduct of a free service.
+
+**It is a third purpose, and it cannot ride on the other two (D19 — Sean to decide).**
+
+| # | Purpose | Basis |
+|---|---|---|
+| 1 | Deliver the requested report | Required to perform what was asked |
+| 2 | Follow-up / nurture about ObserveCo's services | Optional, separate |
+| 3 | **Aggregate market research and industry datasets** | Optional, separate — **new** |
+
+Purpose 3 must be its own line and its own row. Absorbing research use into "we'll send you a
+report" is the same bundling failure §3.2 already forbids — and it is worse here, because the
+contributor receives nothing extra for it.
+
+**The retention interplay is the interesting part.** §7.5 says contacts who never convert are
+deleted soonest. That is compatible with keeping the *research* — **if** the contribution is
+genuinely anonymised rather than merely pseudonymised. That distinction is the whole design:
+
+| Form | PDPA status | May it survive deletion? |
+|---|---|---|
+| Identifiable (name/email/company attached) | Personal data | **No** |
+| Pseudonymised (keyed back via an ID we hold) | **Still personal data** — re-identifiable | **No** |
+| Truly anonymised (no key exists, no re-identification path) | Not personal data | **Yes** |
+
+So the deletion job must **strip and aggregate before it deletes**, and the aggregate must be built
+so it cannot be re-associated. "We deleted the contact but kept the row" is not anonymisation.
+
+**Two operational rules on the dataset:**
+
+- **A k-anonymity floor on anything surfaced.** No published or client-facing figure may be derived
+  from a segment with fewer than a minimum number of contributors — otherwise the "aggregate" names
+  one business. The floor is a threshold to set, but a floor is required.
+- **A boundary on reuse.** Numbers a client disclosed to us must not be presented back as
+  competitor intelligence in *another* client's paid analysis. That is a conflict of interest and a
+  trust failure, and it is worth stating because the commercial temptation to blend sources is real.
+  Aggregate, anonymised market shape is defensible; "one of our clients told us Competitor X charges
+  S$12" is not.
+
+**Why this matters commercially:** the dataset claim in your positioning
+(`observeco-consulting-pivot-positioning.md`) is *"we maintain SG industry datasets"* — currently
+maintained by hand. This turns each free submission into a contribution to that asset. It is the
+compounding reason to run the free report at all, beyond lead capture. And it is honest only while
+purpose 3 is consented to separately, which is what D19 decides.
+
+### 7.8 Where the form data may and may not be used
+
+A boundary that keeps §7.7 lawful and the offer credible:
+
+- **May** be used: to produce that submitter's report; in aggregate, anonymised form, in datasets,
+  whitepapers and analysis — subject to the k-anonymity floor.
+- **May not** be used: as competitor intelligence in another client's paid engagement;
+  in marketing copy in a way that identifies the submitter or their business; or to train a model
+  without purpose 3 disclosed as including that.
 
 ---
 
@@ -866,14 +1022,15 @@ purchasing decision.
 
 | # | Decision | My recommendation |
 |---|---|---|
-| **D11** | **Email confirmation before send** (§3.7) — the open-relay fix | **Yes.** The domain-reputation risk outweighs the lost leads |
-| **D12** | **Input-quality floor** (§3.8) — where G6 fires | Derive from calibration, not intuition |
+| **D11** | **Email confirmation before send** (§3.7) | **ACCEPTED** — with Turnstile at submission |
+| **D12** | **Input-quality floor** (§3.8) — where G6 fires | **Open — §3.10 sets out the options** |
 | **D13** | **Gate thresholds** for G1–G5 (§5.4) | Start at the stated values, calibrate |
 | **D14** | **Jurisdiction** (§9) — scope the offer to SG, or build a GDPR path | Scope to SG explicitly |
 | **D15** | **Retention periods** (§7.5) | Provisional table stands as the starting point |
 | **D16** | **Human baseline** (§10.5) — Sean scores the six cases blind | **Yes.** One hour, and it is the only validity evidence we can get cheaply |
 | **D17** | **Nurture cadence and exit rules** (D3) | Defer — low priority, architecture supports it |
 | **D18** | **The name** (D1) | KIV |
+| **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **Open — Sean to decide** |
 
 ---
 
