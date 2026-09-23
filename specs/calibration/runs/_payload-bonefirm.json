@@ -1,0 +1,22 @@
+{
+  "case": "bonefirm",
+  "scored_by": "sean",
+  "run": "blind-human-baseline-D16",
+  "dimensions": {
+    "headroom": 4,
+    "pressure": 4,
+    "position": 5,
+    "defensibility": 4,
+    "demand": 2
+  },
+  "confidence": {
+    "headroom": "high",
+    "pressure": "medium",
+    "position": "medium",
+    "defensibility": "medium",
+    "demand": "medium"
+  },
+  "g6_input_sufficient": false,
+  "verdict": "",
+  "one_gate": ""
+}
