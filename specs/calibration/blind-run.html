@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blind scoring — Bonefirm</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    color: var(--foreground);
+    font-family: inherit;
+    font-size: 14px;
+    margin: 0;
+  }
+  .hd { margin-bottom: 14px; }
+  .hd h3 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+  .hd p { margin: 0; color: var(--muted-foreground); font-size: 12.5px; line-height: 1.5; }
+  .warn {
+    border-left: 2px solid var(--accent);
+    padding: 7px 0 7px 10px;
+    margin: 12px 0 16px;
+    color: var(--muted-foreground);
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  table { border-collapse: collapse; width: 100%; }
+  th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 0 8px 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .dname { font-weight: 500; white-space: nowrap; }
+  .dwt { color: var(--muted-foreground); font-size: 11.5px; font-weight: 400; }
+  .scale { display: flex; gap: 4px; }
+  button.sc {
+    width: 30px; height: 28px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--foreground);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    padding: 0;
+  }
+  button.sc:hover { border-color: var(--muted-foreground); }
+  button.sc.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--card);
+    font-weight: 600;
+  }
+  select, textarea, input[type=number] {
+    background: transparent;
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 7px;
+    font-family: inherit;
+    font-size: 12.5px;
+  }
+  textarea { width: 100%; box-sizing: border-box; resize: vertical; line-height: 1.5; }
+  select { min-width: 92px; }
+  .row2 { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; }
+  .field { flex: 1; min-width: 200px; }
+  .field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted-foreground); margin-bottom: 5px; }
+  .gates { margin-top: 14px; font-size: 12.5px; }
+  .gates .g { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .gates .g:last-child { border-bottom: none; }
+  .pass { color: var(--accent); font-weight: 500; }
+  .fail { color: var(--muted-foreground); font-weight: 600; }
+  .submit {
+    margin-top: 18px;
+    padding: 9px 18px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: var(--card);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .submit:hover { opacity: .88; }
+  .note { color: var(--muted-foreground); font-size: 11.5px; margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <h3>Blind scoring — 01 Bonefirm</h3>
+  <p>Score from <strong>01-bonefirm.json only</strong>. Do not open <code>EXPECTED-SEALED.md</code>.</p>
+</div>
+
+<div class="warn">
+  Judge <em>the business in the input as submitted</em> — not what you know the analysis concluded,
+  and not what it could become. If an answer comes from memory of the engagement rather than from
+  reading the input, note it in the verdict box.
+</div>
+
+<table>
+  <thead>
+    <tr><th>Dimension</th><th>1 &rarr; 5</th><th>Your confidence</th></tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<div class="gates" id="gates"></div>
+
+<div class="row2">
+  <div class="field">
+    <label>G6 — was the input sufficient to score?</label>
+    <select id="g6">
+      <option value="pass">Yes — scorable</option>
+      <option value="fail">No — needed more</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Minutes spent</label>
+    <input type="number" id="mins" min="1" max="120" placeholder="e.g. 9" style="width:90px">
+  </div>
+</div>
+
+<div class="row2">
+  <div class="field" style="flex:1 1 100%">
+    <label>The verdict — one sentence</label>
+    <textarea id="verdict" rows="2" placeholder="e.g. 'Feasible, but the premium only holds if ...'"></textarea>
+  </div>
+</div>
+
+<div class="row2">
+  <div class="field" style="flex:1 1 100%">
+    <label>The one gate — the single thing that decides it</label>
+    <textarea id="gate" rows="2" placeholder="The one thing you would need to check to know whether this works"></textarea>
+  </div>
+</div>
+
+<button class="submit" id="go">Submit my scores</button>
+<p class="note">Submitting sends these six numbers and your two sentences into the chat. Jev has not run yet.</p>
+
+<script>
+const DIMS = [
+  { key:'headroom',       name:'Market headroom',       wt:'15%', floor:2 },
+  { key:'pressure',       name:'Competitive pressure',  wt:'20%', floor:2 },
+  { key:'position',       name:'Position availability', wt:'25%', floor:2 },
+  { key:'defensibility',  name:'Defensibility',         wt:'25%', floor:2 },
+  { key:'demand',         name:'Demand reach',          wt:'15%', floor:2 }
+];
+const state = {};
+
+const rows = document.getElementById('rows');
+DIMS.forEach(d => {
+  const tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td class="dname">' + d.name + ' <span class="dwt">' + d.wt + '</span></td>' +
+    '<td><div class="scale" data-dim="' + d.key + '">' +
+      [1,2,3,4,5].map(n => '<button class="sc" data-v="' + n + '">' + n + '</button>').join('') +
+    '</div></td>' +
+    '<td><select data-conf="' + d.key + '">' +
+      '<option value="high">High</option>' +
+      '<option value="medium" selected>Medium</option>' +
+      '<option value="low">Low</option>' +
+    '</select></td>';
+  rows.appendChild(tr);
+});
+
+rows.addEventListener('click', e => {
+  const b = e.target.closest('button.sc');
+  if (!b) return;
+  const wrap = b.parentElement;
+  const dim = wrap.dataset.dim;
+  state[dim] = Number(b.dataset.v);
+  wrap.querySelectorAll('button.sc').forEach(x => x.classList.toggle('on', x === b));
+  drawGates();
+});
+
+function drawGates() {
+  const box = document.getElementById('gates');
+  box.innerHTML = DIMS.map(d => {
+    const v = state[d.key];
+    let label, cls;
+    if (v === undefined) { label = '—'; cls = ''; }
+    else if (v >= d.floor) { label = 'pass'; cls = 'pass'; }
+    else { label = 'FIRES'; cls = 'fail'; }
+    return '<div class="g"><span>G' + (DIMS.indexOf(d)+1) + ' ' + d.name +
+           ' <span class="dwt">floor &ge; ' + d.floor + '</span></span>' +
+           '<span class="' + cls + '">' + label + '</span></div>';
+  }).join('');
+}
+drawGates();
+
+document.getElementById('go').addEventListener('click', () => {
+  const missing = DIMS.filter(d => state[d.key] === undefined);
+  if (missing.length) {
+    alert('Still unscored: ' + missing.map(d => d.name).join(', '));
+    return;
+  }
+  const conf = {};
+  document.querySelectorAll('[data-conf]').forEach(s => conf[s.dataset.conf] = s.value);
+  const payload = {
+    case: 'bonefirm',
+    scored_by: 'sean',
+    run: 'blind-human-baseline-D16',
+    dimensions: Object.fromEntries(DIMS.map(d => [d.key, state[d.key]])),
+    confidence: conf,
+    g6_input_sufficient: document.getElementById('g6').value === 'pass',
+    verdict: document.getElementById('verdict').value.trim(),
+    one_gate: document.getElementById('gate').value.trim(),
+    minutes: Number(document.getElementById('mins').value) || null
+  };
+  window.hermes.send(
+    'BLIND SCORE (Bonefirm) — my scores are below. Record them and do not tell me the expected answer.\n\n' +
+    JSON.stringify(payload, null, 2)
+  );
+});
+</script>
+</body>
+</html>

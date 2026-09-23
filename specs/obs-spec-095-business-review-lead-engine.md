@@ -497,11 +497,17 @@ reduce the score; it changes what the report **is**.
 | Gate | Condition | If failed |
 |---|---|---|
 | **G1** Category trap | Market headroom ≥ 2/5 | Report states *category trap* — no composite is shown |
-| **G2** Commodity floor | Competitive pressure ≥ 1/5 | Report states the market is priced to the floor |
-| **G3** No open position | Position availability ≥ 1/5 | Report states the position is occupied |
-| **G4** Nothing to defend | Defensibility ≥ 1/5 | Report states there is currently no differentiator |
-| **G5** No identifiable buyer | Demand reach ≥ 1/5 | Report states the customer is undefined |
-| **G6** Input floor | §3.8 minimum signal met | Template C — no score |
+| **G2** Commodity floor | Competitive pressure ≥ 2/5 | Report states the market is priced to the floor |
+| **G3** No open position | Position availability ≥ 2/5 | Report states the position is occupied |
+| **G4** Nothing to defend | Defensibility ≥ 2/5 | Report states there is currently no differentiator |
+| **G5** No identifiable buyer | Demand reach ≥ 2/5 | Report states the customer is undefined |
+| **G6** Input floor | §3.10 minimum signal met | Template C — no score |
+
+**⚠ Floor semantics — every floor is ≥ 2, because 1 means failing.** The first draft set most
+floors to 1, which made a score of **1 pass the very gate it was meant to fire**: a business with
+zero defensibility would have cleared G4. Caught by the calibration check
+(`specs/calibration/check_blind_run.py`), not by review. It is the same class of bug as §5.4 itself
+— a control that cannot fire on the condition it exists to catch.
 
 **Part 2: the weighted composite**, computed only when all six gates pass. Bands: Fragile (5–39) ·
 Contested (40–59) · Viable, conditional (60–74) · Strong (75–95), clamped to 5–95 so no score can
