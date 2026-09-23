@@ -12,6 +12,10 @@ a gate layer in front of the weighted composite. Accountability (§8), monitorin
 ordering that makes it the real LLM-spend protection. The two-way benefit is now §7.7: submissions
 are primary research, which adds a third consent purpose (D19). **§3.10 is new** — the B2 working
 note. D12 remains open.
+**v7 change:** D12 accepted — an inadequate submission gets a polite guidance email (template C as
+coaching, with minimum-viable examples and a pre-filled resubmit), with **unlimited resubmission**.
+Safe because confirmation gates the queue. Added the send-budget rule: all sends count against one
+ceiling, and at the ceiling the site stops accepting rather than queueing.
 
 ---
 
@@ -319,33 +323,72 @@ honest: we refuse only when we genuinely have nothing, never merely because a fi
    haven't defined what makes you different — that is the first thing to fix."* That is a real
    report, not a refusal, and it makes the "we don't have one" checkbox load-bearing.
 
-**The three options.** The mechanism matters less than which one is chosen, because they produce
-different products:
+**Decision (D12, accepted): an inadequate submission receives a polite guidance email, offered
+without limit.**
 
-| Option | How it works | Cost | Honest |
-|---|---|---|---|
-| **A. Deterministic checks only** | Length, placeholder rejection, duplicate detection, required-slot presence | Free, instant, deterministic | Detects empty and junk. Cannot detect fluent vagueness |
-| **B. A Jev sufficiency judgment** | One narrow, closed question per submission: *"does this state contain enough to assess the business's market position, competitors and customer?"* | ~1 call per submission — negligible | Judgement, fits the doctrine (§1). Needs its own calibration |
-| **C. Score anyway, label the input** | Always score; report the input quality as a visible caveat and widen the confidence band | Free | Most transparent. **But it breaks the cannot-refuse intent in the other direction** — it produces confident-looking scores from thin input |
+**The model: two outcomes, and neither is a dead end.**
 
-**Recommendation: A + B.** Deterministic checks are the floor (free, catches junk), and one sufficiency
-judgment catches fluent emptiness. That respects §3.4's measured doctrine — *"if code resolves the
-unit, make zero calls"* — because the model is only asked about the residue that passes the
-deterministic filters.
+| Outcome | Trigger | Response |
+|---|---|---|
+| **Report** | Every dimension has a form answer **or** a passing enrichment source | Scored report (template A) |
+| **Guidance** | At least one dimension has neither | Polite email (template C) — what to add, minimum viable input, worked examples |
 
-**Where the threshold should come from.** Not intuition. The six calibration cases give scorable
-inputs; **the floor should be set so all six pass comfortably**, then tested against deliberately
-degraded variants of each. If the floor refuses a known-good case, it is too high; if it accepts a
-degraded one, it is too low.
+There is no third outcome. A submission is never silently dropped, and no one is ever left with
+nothing.
 
-**Two things D12 still needs from Sean:**
+**Template C is a coaching email, not a refusal notice.** It must carry:
 
-1. **Refusal is free to the submitter, but not to us** — template C costs a send and a support
-   expectation. If someone resubmits three times without improving, is that a hard stop, or does
-   Sean want to see those submissions as a signal that the form is asking the wrong questions?
-2. **Who answers a refusal?** Template C promises a way forward. Either it names exactly what to
-   add (a self-serve path), or it offers a call (a human path). The first scales; the second does
-   not, and it is what the copy currently implies.
+1. **What we could and could not work with** — named per slot, not a generic "your input was
+   insufficient."
+2. **The minimum viable input per missing slot** — the smallest thing that would make it scorable.
+3. **A worked example** — ideally a real one from a published client analysis, showing a
+   before/after pair at the required level of specificity.
+4. **One click to resubmit**, pre-filled with whatever they already gave.
+
+**Unlimited resubmission (Sean's decision).** No attempt cap, no lockout. The reasoning holds
+because of §3.7's ordering:
+
+- Before confirmation, a submission reaches **no model work at all**.
+- After confirming their own address, an inadequate submission reaches **one deterministic
+  sufficiency check and one email** — no enrichment, no Jev, no report.
+- **So the only thing anyone can do unlimited times is mail an address they control.** That is
+  self-inflicted inbox noise, not third-party harm. Unlimited is safe *because* confirmation gates
+  the queue.
+
+**The one genuine cost, and its control.** Uncapped template C sends are a **send-budget
+exhaustion vector** — someone resubmitting hundreds of times consumes the daily ceiling and
+`sean.foo@observeco.com`'s reputation. Two rules:
+
+- **All sends count against one ceiling** — report, confirmation and guidance alike. A ceiling that
+  only counts successful reports is not a ceiling.
+- **At the ceiling, the site stops accepting submissions** rather than silently queueing a backlog.
+  An honest "we're at capacity today, try tomorrow" beats a queue that quietly grows and then
+  bursts.
+
+**Repeated failure on the same slot is a product signal, not a user problem.** If resubmissions
+cluster on one field, the form is asking the question badly. Guidance emails name which slots went
+missing on each attempt, so the pattern is measurable (§8.2) and informs the form's copy — which is
+the useful answer to "is refusal terminal" now that it is unlimited.
+
+**The mechanism (unchanged): A + B.**
+
+| Layer | What it is | Cost |
+|---|---|---|
+| **A. Deterministic** | Slot presence, placeholder rejection (`asdf`, `test`, `n/a`, repeated single characters), duplicate-answer detection | free, instant, no model |
+| **B. One Jev sufficiency judgment** | One narrow closed question on the residue: *"does this contain enough to assess market position, competitors and customer?"* | ~1 call, negligible |
+
+A+B respects the measured doctrine in `jev-protocol-fit-audit` — *if code resolves the unit, make
+zero calls* — because the model only sees what the deterministic layer cannot decide.
+
+**Threshold calibration.** The floor is set so **all six calibration cases pass comfortably**, then
+tested against deliberately degraded variants. Refuses a known-good case → too high. Accepts a
+degraded one → too low.
+
+**The generic positioning sentence is a report, not a guidance email.** *"We provide quality service
+and value to our customers"* is fluent, long, and **not a position** — and that is **the finding**,
+not a data-quality failure. The report names it: *"You haven't defined what makes you different.
+That is the first thing to fix."* Guidance is reserved for genuine emptiness. The
+**"we don't have one" checkbox** makes the honest path easy and cannot be penalised.
 
 ---
 
@@ -1023,7 +1066,7 @@ purchasing decision.
 | # | Decision | My recommendation |
 |---|---|---|
 | **D11** | **Email confirmation before send** (§3.7) | **ACCEPTED** — with Turnstile at submission |
-| **D12** | **Input-quality floor** (§3.8) — where G6 fires | **Open — §3.10 sets out the options** |
+| **D12** | **Input-quality floor** (§3.10) — where the guidance path fires | **ACCEPTED** — guidance email, unlimited attempts |
 | **D13** | **Gate thresholds** for G1–G5 (§5.4) | Start at the stated values, calibrate |
 | **D14** | **Jurisdiction** (§9) — scope the offer to SG, or build a GDPR path | Scope to SG explicitly |
 | **D15** | **Retention periods** (§7.5) | Provisional table stands as the starting point |
