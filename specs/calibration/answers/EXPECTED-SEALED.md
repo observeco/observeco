@@ -61,13 +61,18 @@ defensibility of 1 would have passed G4 instead of firing it. Caught by
 | Market headroom | **4** | Menopause supplement market is real, growing, and the Asia-specific gap is documented |
 | Competitive pressure | **3** | Crowded from both directions (retail calcium at the floor, global menopause brands above) but no one owns the intersection |
 | Position availability | **4** | The bone/joint × menopause intersection is genuinely empty |
-| Defensibility | **2** | **The weak one.** NEM is a commodity; the formula has no clinical proof; the position is copyable. The analysis's own advantage quadrant puts the only durable moat in trust and education, which is hard to build |
+| Defensibility | **3** | **REVISED** 2→3. The formula is not a naked ingredient. NEM is buyable, but the seven-ingredient designed system (NEM + 5 botanicals + Vitamin C — *"designed as a whole, not in parts"*), developed with experts in SG/US, is a real manufacturing and formulation barrier that does not exist off a shelf. Still not high — the analysis's own argument holds that a competitor can reverse-engineer a copy over time, and the analysis locates the *durable* moat in trust and education, not the product |
 | Demand reach | **3** | A segment exists (silent-risk-aware woman) but is not the demographic the founder named |
 
-- **Composite: 63 → Viable, conditional (60–74)**
+- **Composite: 58 → Contested (40–59)** [was 63]
 - **Gates: all pass**
 - **The ONE GATE:** whether women actually buy the *stack* — the premium's fairness rests on the
   comparator being real. The analysis names this B1.
+- **⚠ REVISED 2026-09-23 after Sean's review.** Defensibility moved 2→3 once the input was
+  corrected to include the formulation claim the live site actually makes. See the correction note
+  in `inputs/01-bonefirm.json`. **The original label was not wrong — the original INPUT was thin.**
+  Jev scored the thin version correctly; that is a fidelity defect in the reconstruction, and it is
+  the class of error this whole exercise exists to catch.
 
 ### 02 — GreenPackers
 

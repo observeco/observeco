@@ -22,7 +22,7 @@
     "city": "Singapore",
     "category": "Health supplements — bone and joint support for women going through menopause. Daily capsule. Made in Singapore, GMP-certified. Non-hormonal.",
     "positioning_sentence": "The only supplement Asian women need for their bones through menopause — a non-hormonal structural system built on NEM eggshell membrane plus a blend of traditional Chinese botanicals.",
-    "differentiator": "We are the only ones combining a clinically-studied Western ingredient (NEM eggshell membrane) with traditional Chinese medicine botanicals (Danshen, Chuanxiong, Dendrobium). It is an East-meets-West formula. GMP-manufactured in Singapore. And I am the founder — this came from my own menopause experience, so women trust that I understand what they are going through.",
+    "differentiator": "We are the only ones combining a clinically-studied Western ingredient (NEM eggshell membrane) with traditional Chinese medicine botanicals. It is an East-meets-West formula. The complete system is seven ingredients: NEM as the structural foundation, plus Salvia miltiorrhiza (Danshen), Ligusticum chuanxiong, Morus alba, Dendrobium officinale, Rosa rugosa, and Vitamin C. It is not a single component with extras bolted on — it is formulated as a system, designed as a whole rather than in parts. The botanicals support circulation and tissue nourishment, which is what NEM needs to work in the body. GMP-manufactured in Singapore. Developed with experts in Singapore and the United States, and it took real formulation work to get the combination to this point — this is not something I could have put together by buying ingredients off a shelf.",
     "undercut_on": "Price. Anyone can buy NEM capsules on their own from Watsons or online for much less. Competitors also keep launching cheaper versions of the same thing.",
     "your_price_point": "S$8.50 per day",
     "their_price_point": "I don't know exactly. Probably S$0.50 to S$1 a day for the pharmacy brands.",
@@ -48,6 +48,12 @@
       "Undercut on price only — no mention of the menopause-specific position at all",
       "Customer description is a DEMOGRAPHIC ('women 45+'), not a customer with a trigger, need and willingness to pay. The analysis's central correction. Note she adds the daughter observation herself, which is real and unprompted."
     ],
+    "corrections_after_sean_review_2026_09_23": {
+      "what_changed": "The differentiator field was too thin. It named three botanicals as a list and omitted the FORMULATION claim the live site actually makes. Corrected to reflect bonefirm.com/pages/the-science: seven named ingredients, 'designed as a whole, not in parts', the botanicals supporting the conditions NEM needs, and 'developed with experts in Singapore and the United States'.",
+      "why_it_matters": "This was a REAL input-fidelity defect, not a labelling dispute. The original file under-stated the differentiator relative to what the founder's own website claims. Jev scored defensibility 2 on the thin version — which was a correct reading of the thin version. Garbage in, correct garbage-out.",
+      "the_real_tension": "The site under-claims the integration in its marketing copy while the founder over-claims the R&D privately. The form is the wrong instrument to distinguish a designed formulation from a cosmetic blend — it can only read the claim. This is a rubric limitation, to be recorded.",
+      "honest_note_on_provenance": "The formulation detail is verifiable from the public site. The claim that the founder 'underwent significant R&D' is the client's assertion, and the analysis itself does not record it — so the reconstruction states what the site supports and stops there."
+    },
     "context_the_analysis_had_that_is_deliberately_absent": [
       "The NUH/NUS finding that Asian women rank joint pain #1 (32.9%) and hot flashes 5th (18.6%) — the analysis's central wedge, and the founder did not know it",
       "Validated stack costs (SGD 5.80-9.80/day)",

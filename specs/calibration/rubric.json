@@ -1,7 +1,7 @@
 {
   "_meta": {
     "name": "obs-095 business viability rubric",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) — otherwise calibration validates a scorer that is not the one shipped.",
     "model": "jev-latest",
     "scale": {
@@ -74,13 +74,13 @@
 
     "defensibility": {
       "type": "score",
-      "instructions": "Judge ONLY defensibility: is what makes this business different hard for a competitor to copy, and hard to build? Higher means more defensible. Consider each claimed differentiator: could a competitor buy the same ingredient, hire the same supplier, or copy the same message this quarter? A differentiator that rests on a purchasable input, a public document, or a price point is NOT defensible. A differentiator that rests on accumulated trust, an owned distribution channel, a proprietary dataset, or years of relationship is defensible. Consider the business as described, including anything it says about itself.",
+      "instructions": "Judge ONLY defensibility: how long would it take a well-resourced competitor to copy what makes this business different? Judge TIME-TO-COPY, not the type of advantage, and not how much work the founder did to get there — effort already spent does not make something defensible. Consider each claimed differentiator and ask how a competitor would respond: can they buy the same input and relabel it, or must they do real development work of their own? A differentiator resting on a purchasable input, a public document, or a price point is copyable almost immediately. A differentiator resting on a formulation, process, or technical system that a competitor must develop independently takes months of their own work. A differentiator resting on accumulated trust, an owned channel, a proprietary dataset, or years of relationship cannot be bought or quickly rebuilt. Judge the business as described, including the specificity of what it claims.",
       "levels": [
-        "Nothing to defend. There is no differentiator at all, or the one claimed is freely purchasable by any competitor.",
-        "Fragile. The differentiator exists on paper but a competitor can copy it in weeks.",
-        "Moderate. Some durable element exists — a relationship, a channel, or a track record — but it is thin or unproven.",
-        "Strong. A real durable element that would take a competitor a year or more to replicate.",
-        "Very strong. Multiple compounding advantages that a well-funded competitor could not replicate quickly."
+        "No moat. There is no differentiator at all, or the one claimed is a purchasable input any competitor can relabel this quarter.",
+        "Shallow. A competitor can copy it in weeks without doing any development of their own — a claim, a message, or an off-the-shelf ingredient.",
+        "Real but replicable. A competitor must do genuine development work of their own — a formulation, a process, or a technical system — so copying takes them months, not weeks. Still nothing they cannot eventually build.",
+        "Durable. Copying takes a competitor a year or more, or requires assets they do not have — accumulated trust, an owned distribution channel, a proprietary dataset, or years of relationship.",
+        "Compounding. Several advantages that reinforce each other, where a well-funded competitor could not replicate the position even given the time."
       ]
     },
 
