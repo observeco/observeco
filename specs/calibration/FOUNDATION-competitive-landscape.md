@@ -1,6 +1,6 @@
 # FOUNDATION — Competitive Landscape Construction
 
-**Status:** PROPOSAL for Sean's guidance. This is the foundation the rest depends on.
+**Status:** PROPOSAL v2 for Sean's guidance. Supersedes v1, which contradicted itself (§9).
 **Date:** 2026-09-23
 **Supersedes:** the input model in OBS-SPEC-095 §3.6 and the enrichment layer in §4.
 
@@ -12,88 +12,127 @@
 instead, and why they would".**
 
 Measured from the delivered analyses. Bonefirm's competitive set is not a list of supplement
-brands — it is a **substitution taxonomy**, and its organising sentence says so explicitly:
+brands — it is a **substitution taxonomy**, and its organising sentence says so:
 
 > *"the customer can buy from any of these today. Each row includes its **reason-to-purchase**
 > — why the customer buys from them instead of Bonefirm."*
 
-Its eight tiers:
-
-| Tier | Section | What it captures |
-|---|---|---|
-| 0 | §2.8 **DIY (diet, exercise, weight-bearing)** | **THE DEFAULT** — what she does if she buys nothing |
-| 1 | §2.1 Generic bone health (mass retail) | The cheap incumbent — sets the price floor |
-| 2 | §2.2 Joint health (glucosamine/NEM) | The direct competitor |
-| 3 | §2.3 Collagen (skin + joint) | The **adjacent crossover** — a different axis, same wallet |
-| 4 | §2.4 Menopause symptom brands (global) | The **category incumbent** — what the buyer thinks she is shopping for |
-| 5 | §2.5 SG TCM/plant-based | The **local alternative** |
-| 6 | §2.6 Medical / doctor-adjacent | The **professional route** |
-| 7 | §2.7 General women's health / MLM | Indirect — dilutes the same budget |
-
 Every row carries the same four columns: **Brand · What · Price · Why customers buy**.
 
-**That structure is generative.** It is derived from the customer's decision, not from the
-seller's self-image — which is exactly why the owner cannot supply it. The owner knows who
-they lose to on the shelf. They do not think in substitution tiers.
+The taxonomy is derived from **the customer's decision**, not the seller's self-image. That is
+precisely why the owner cannot supply it: the owner knows who they lose to on the shelf; they
+do not think in substitution tiers.
 
 ---
 
-## 2. What generates the set — the minimum inputs
+## 2. THE tier list — one list, used throughout this document
 
-The inputs needed are **not** a competitor list. They are the four facts that define the
-**substitution space**. Three are already form fields; one is new.
+Eight tiers in a fixed order. Every later section uses **these names and these numbers**.
+
+| # | Tier | What it captures | Always present? |
+|---|---|---|---|
+| **0** | **The Default** | What the customer does if they buy nothing at all — DIY, do-nothing, live with it | **Always** |
+| **1** | **The Cheap Substitute** | The cheapest thing that does the job. **Sets the price floor** | **Always** |
+| **2** | **The Direct Set** | Who else sells this exact thing | **Always** |
+| **3** | **The Category Incumbent** | Who owns the category **the buyer thinks they are shopping in** | **Always** — and usually where the owner's blindspot lives |
+| **4** | **The Adjacent Crossover** | Takes this customer's money on a different axis. Not a substitute — a rival for the wallet | When the buyer has competing priorities |
+| **5** | **The Professional Route** | The expert or institutional path — doctor, clinic, consultant, agent | Regulated / high-trust categories |
+| **6** | **The Indirect** | Dilutes the budget for the same person without competing on the product | Often |
+| **7** | **The Emerging** | Who has entered recently and is not yet visible to the owner | Paid tier mainly |
+
+**Tier 3 is the category incumbent.** That is the one to remember: it is where the owner's
+blindspot lives, because it is the tier they did not name.
+
+---
+
+## 3. The mapping to Bonefirm — the same eight tiers, populated
+
+This is the proof the tier list fits real work. Bonefirm's delivered analysis has eight
+competitive sections, and they map onto the eight tiers:
+
+| # | Tier | Bonefirm's section | Rows |
+|---|---|---|---|
+| 0 | The Default | §2.8 DIY (diet, exercise, weight-bearing) | the do-nothing path |
+| 1 | The Cheap Substitute | §2.1 Generic bone health (mass retail) | Caltrate, Ostelin, Centrum |
+| 2 | The Direct Set | §2.2 Joint health (glucosamine/collagen/NEM) | Blackmores, Nature's Way, Kordel's |
+| **3** | **The Category Incumbent** | **§2.4 Menopause symptom brands (global)** | **The Better Menopause, Midi Health, Nutrafol** |
+| 4 | The Adjacent Crossover | §2.3 Collagen (skin + joint) | Kinohimitsu, Ocean Health |
+| 5 | The Professional Route | §2.6 Medical / doctor-adjacent | HRT, bisphosphonates, DEXA |
+| 6 | The Indirect | §2.7 General women's health / MLM | budget dilution |
+| 7 | The Emerging | *(not present in this analysis)* | — |
+
+**Two things this makes visible.**
+
+**First, the analysis lists its sections in a different order than the tiers.** §2.3 collagen
+sits after §2.2 joint health, but collagen is Tier 4 and joint health is Tier 2. The analysis
+ordered its sections by *product similarity*; the tier list orders by *the customer's
+decision*. **That reordering is mine, and it is the point** — the decision order is what makes
+the set generative.
+
+**Second, the owner named only Tiers 1 and 2.** She said Caltrate, Blackmores, Kinohimitsu,
+Kordel's, Nature's Way — a cheap substitute, a direct competitor, and one adjacent crossover.
+**She did not name her Tier 3, which the analysis identifies as the real competitive frame.**
+That omission is the blindspot, and it is now visible as an empty tier rather than as a vague
+sense that her list was incomplete.
+
+---
+
+## 4. What generates the set — the minimum inputs
+
+The inputs needed are **not** a competitor list. They are the facts that define the
+**substitution space**. Three are already form fields; one is new and critical.
 
 | # | Input | Why it is load-bearing | Already in form? |
 |---|---|---|---|
-| 1 | **What you sell** | Sets the category the buyer would place you in | yes |
-| 2 | **What job the customer hires it for** — what they are trying to achieve, not what you make | **This is the substitution space.** Bonefirm sells a supplement; the job is "protect my bones and joints through menopause" | **NEW — the critical one** |
+| 1 | **What you sell** | Sets the product category | yes |
+| 2 | **What your customer is trying to achieve** — the job they are hiring you for, not what you make | **This generates the substitution space** | **NEW — the critical one** |
 | 3 | **Who the customer is, and the trigger that makes them buy now** | Defines the wallet and the moment | yes (partly) |
 | 4 | **Your price** | Sets the rung — determines which tiers are visible to this buyer | yes |
 | 5 | **Your claim** — what you say makes you different | Sets the contested axis | yes |
 | 6 | **URL** *(optional)* | Lets us read rather than rely on self-report | yes |
 
-**Input 2 is the missing piece and it is the one that makes this work.** "What do you sell"
-returns a category. **"What is the customer trying to achieve"** returns a substitution space,
-because competitors are defined by the job, not by the product.
+**Why input 2 is the one that matters.** Ask a supplement founder "what do you sell" → "a
+menopause supplement" → you get supplement brands, i.e. Tiers 1 and 2 only. Ask "what is she
+trying to achieve" → "keep moving without pain, protect her bones before a fracture" → you get
+exercise, physiotherapy, calcium, collagen, TCM and menopause brands. **That is Tiers 0–5.**
 
-Ask a supplement founder "what do you sell" → "a menopause supplement" → you get supplement
-brands. Ask "what is she trying to achieve" → "keep moving without pain, protect her bones
-before a fracture" → **you get DIY exercise, physiotherapy, calcium, collagen, TCM, and
-menopause brands.** The second question is the one that produces the analysis's actual set.
+Competitors are defined by the **job**, not the product. Input 2 converts a product category
+into a substitution space.
 
 ---
 
-## 3. The generation protocol
+## 5. The generation protocol
 
-Eight tiers. Each has a **generation question** and a **sourcing method** — so it is
-repeatable, not improvised.
+Each tier is generated by a question and sourced a specific way — repeatable, not improvised.
+The tier names and numbers are exactly those in §2.
 
-| Tier | Generated by asking | Sourced via | Always present? |
+| Tier | Generated by asking | Sourced via | Evidence to collect |
 |---|---|---|---|
-| **0 · The Default** | What does the customer do today if they buy nothing at all? | Reasoning — often no search needed | **Yes, always.** DIY/do-nothing is always a competitor, and the analyses always name it |
-| **1 · The Cheap Substitute** | What is the cheapest thing that does this job? | Search: job + "cheap / budget / free". **Sets the price floor** | Yes |
-| **2 · The Direct Set** | Who else sells this exact thing? | Search + registry (SSIC/SFA/ECDA/MOH) | Yes |
-| **3 · The Category Incumbent** | Who owns the category the **buyer** thinks they are shopping in? | Search on the **buyer's** category word, not the seller's | Yes — and usually where the owner's blindspot lives |
-| **4 · The Adjacent Crossover** | What else takes this customer's money, that is not a substitute but a rival for the wallet? | The customer's other spend | When the buyer has competing priorities |
-| **5 · The Professional Route** | What does the expert/institutional path look like? | Category-dependent (MOH, professional bodies) | Regulated categories |
-| **6 · The Indirect** | What dilutes the budget for the same person? | Adjacency | Optional |
-| **7 · The Emerging** | Who has entered recently? | ACRA registration recency, news, funding | Paid tier mainly |
+| **0 · The Default** | What does the customer do today if they buy nothing? | Reasoning — often no search needed | What the default costs; why people choose it |
+| **1 · The Cheap Substitute** | What is the cheapest thing that does this job? | Search: job + "cheap / budget / free" | **Price** — this establishes the floor |
+| **2 · The Direct Set** | Who else sells this exact thing? | Search + registry (SSIC / SFA / ECDA / MOH) | Price + claim |
+| **3 · The Category Incumbent** | **Who owns the category the BUYER thinks they are shopping in?** | Search on the **buyer's** category word, not the seller's | **Claim** — what they say they own. The evidence the current pipeline never collects |
+| **4 · The Adjacent Crossover** | What else takes this customer's money on a different axis? | The customer's other spend | Price + claim |
+| **5 · The Professional Route** | What does the expert or institutional path look like? | Category-dependent (MOH, professional bodies) | What the professional path is and costs |
+| **6 · The Indirect** | What dilutes the budget for the same person? | Adjacency | Price + claim |
+| **7 · The Emerging** | Who entered recently? | ACRA registration recency, news, funding | Recency evidence |
 
-**Every row must be able to answer "why would the customer buy from them instead?"** A row
-that cannot answer that is not a competitor — it is a name. **That single test filters the
-set better than any similarity rule.**
+**One test applies to every row in every tier:**
+
+> **Can this row answer "why would the customer buy from them instead?"**
+>
+> A row that cannot is a **name**, not a competitor. This filters the set better than any
+> similarity rule.
 
 ---
 
-## 4. Robustness — how we know the set is good enough
-
-The set is robust when it satisfies all five:
+## 6. Robustness — how we know the set is good enough
 
 | # | Test | Why |
 |---|---|---|
-| R1 | **Tier 0 is present and named** | Every analysis has it. If we cannot say what the customer does with no purchase, we have not understood the decision |
+| R1 | **Tier 0 is present and named** | Every analysis names it. If we cannot say what the customer does with no purchase, we have not understood the decision |
 | R2 | **Tier 1 establishes a price floor** | The cheapest real alternative bounds what the buyer will pay. Without it, price has no referent |
-| R3 | **Tier 3 is populated from the buyer's category word** | This is where owner blindspots cluster. An empty Tier 3 means we used the seller's language |
+| R3 | **Tier 3 is populated from the buyer's category word** | Where owner blindspots cluster. An empty Tier 3 means we used the seller's language |
 | R4 | **Every row has a reason-to-purchase** | A name without a reason is not evidence of competition |
 | R5 | **The owner's named set appears somewhere in the result** | If none of their names appear, we have misread the category — a hard error signal |
 
@@ -103,76 +142,77 @@ the likelier error is ours.
 
 ---
 
-## 5. How the evidence is gathered
-
-| Tier | Evidence needed | Method |
-|---|---|---|
-| 0 | What the default costs and why people choose it | reasoning + search |
-| 1 | **Price** | fetch/search — establishes the floor |
-| 2 | **Price + claim** | fetch each site |
-| 3 | **Claim** — what they say they own | **fetch each site.** This is the evidence the current pipeline never collects |
-| 4–7 | Price + claim where findable | fetch |
-
-**The fetch step is load-bearing, not optional.** It is what makes Tiers 2–4 answerable at
-all, and it is exactly what was missing when `position_availability` came back at 0.19
-confidence. There is no version of this that works on the owner's answers alone.
-
----
-
-## 6. The human value chain
+## 7. The human value chain
 
 Sean's point: *"it is probably on me to provide the required guidance for you to chip away.
 That is why the human value chain is important."*
 
-The division of labour this protocol implies:
-
 | Stage | Machine does | Human does |
 |---|---|---|
-| **Generate** | Enumerate Tiers 0–7 from the four inputs. Breadth is a machine's strength | — |
+| **Generate** | Enumerate Tiers 0–7 from the inputs. Breadth is a machine's strength | — |
 | **Source** | Fetch each candidate, extract price and claim | — |
-| **Contrast** | Compute the delta between the owner's list and the derived set | **Adjudicate** which tier is the real competitive frame |
-| **Correct** | — | **Add what is not findable.** Sean knew about Bonefirm's R&D; no fetch would have surfaced it. The un-googleable is the human's |
-| **Read** | Produce the drafted read | **Decide** whether the read is honest and what it means |
+| **Contrast** | Compute the delta between the owner's list and the derived set | **Adjudicate which tier is the real frame** |
+| **Correct** | — | **Add what is not findable** |
+| **Read** | Draft the read | **Decide whether it is honest** |
 
 **Two places only the human can stand:**
 
-1. **The un-findable fact.** Private knowledge — the founder's development work, a
-   relationship, a plan not yet public. No amount of fetching recovers it.
+1. **The un-findable fact.** Sean knew about Bonefirm's R&D; no fetch surfaces it. Private
+   knowledge — a development effort, a relationship, a plan not yet public.
 2. **The frame.** Which tier *is* the market. The machine can rank by evidence; only a human
    decides that the menopause brands outrank the shelf brands for this buyer.
 
 That is the value chain: **the machine supplies breadth and evidence; the human supplies the
-frame and the un-findable.** The protocol must make the human's two jobs explicit and make
-them *easy* — which means presenting the derived set so the human can prune it in minutes,
-not re-derive it from scratch.
+frame and the un-findable.** The protocol's job is to make the human's two contributions
+**cheap** — present the derived set so a human can prune it in minutes, not re-derive it.
 
 ---
 
-## 7. What this changes
+## 8. What this changes, and what is still open
 
-1. **A generation stage is added** between collection and scoring. It did not exist.
-2. **One new form field** — *"what is your customer trying to achieve?"* — which is the field
-   that makes the substitution space derivable.
-3. **The owner's competitor list is re-roled** from input data to **blindspot probe and
-   safety check (R5)**.
-4. **The fetch layer becomes load-bearing** — it is the evidence for Tiers 2–4.
-5. **Refusal conditions are now definable**: if the job (input 2) is unstated or unstateable,
-   or if Tier 2 cannot be populated, we cannot construct a set and the report is refused —
-   an observability limit on our side.
+**Changes:**
 
----
+1. A **generation stage** is added between collection and scoring. It did not exist.
+2. **One new form field** — *"what is your customer trying to achieve?"*
+3. The owner's competitor list is re-roled from input data to **blindspot probe + safety
+   check (R5)**.
+4. The **fetch layer becomes load-bearing** — it is the evidence for Tiers 2–5.
+5. **Refusal conditions are now definable:** if input 2 is unstated or unstateable, or Tier 2
+   cannot be populated, we cannot construct a set and the report is refused — an observability
+   limit on our side, not an input failure by the user.
 
-## 8. Open questions for Sean
+**Open questions for Sean:**
 
-1. **Is the eight-tier structure right, or is it an artefact of Bonefirm's category?** Two of
-   the six analyses would settle it. I would derive the set for GreenPackers and PetDirectory
-   and check whether the same tiers emerge — or whether the tiers are category-specific.
-2. **Is input 2 the right new field?** *"What is your customer trying to achieve?"* It is the
-   field that generates the substitution space, but it is also the field a struggling founder
-   is least likely to answer well. Is there a better way to ask it?
+1. **Does the tier list generalise?** It fits Bonefirm. Two more analyses would settle it — I
+   would derive the set for GreenPackers and PetDirectory and check whether the same eight
+   tiers emerge, or whether tiers are category-specific.
+2. **Is "what is your customer trying to achieve?" the right field?** It generates the
+   substitution space — and it is also the field a struggling founder is least likely to
+   answer well. Is there a better way to ask it?
 3. **How deep does the free report go?** Tiers 0–3 with reasons is already more than the owner
-   knows. Tiers 4–7 plus price mapping starts to be the paid deliverable.
-4. **Where does the human sit in the *free* path?** The value chain above assumes a human
-   adjudicates the frame. The free report has no human. So the free report either uses a
-   machine-derived frame (weaker, and we must say so) — or the free report does not present a
-   frame at all, only the set and the contrasts.
+   knows. Tiers 4–7 plus price mapping starts to *be* the paid deliverable.
+4. **Where does the human sit in the free path?** The chain in §7 assumes a human adjudicates
+   the frame. The free report has no human. Either it ships a machine-derived frame and says
+   so — weaker, and labelled — or it presents no frame at all, only the set and the contrasts.
+
+---
+
+## 9. Why v1 was replaced
+
+v1 of this document defined its tiers **twice, differently**. §1 was derived from Bonefirm's
+section order; §3 was written as an idealised protocol from scratch. The two were never
+reconciled, so **tiers 3 and 4 meant opposite things in the same document** — §1 put the
+adjacent crossover at 3 and the category incumbent at 4, while §3 had them the other way
+round. Tier 7 differed too: §1 had "Indirect" (Bonefirm's §2.7), §3 had "Emerging."
+
+v2 fixes this by:
+
+1. Defining the tier list **once** — §2 — and referencing it everywhere else.
+2. Ordering it by **the customer's decision** rather than by product similarity.
+3. Stating explicitly in §3 that the reordering relative to Bonefirm's section order is
+   deliberate and mine.
+
+**The lesson worth keeping:** a document that defines its central vocabulary twice will
+contradict itself. And a document that reproduces a known contradiction — even labelled as
+historical — reintroduces the ambiguity it claims to fix. Define once, reference everywhere,
+and remove the old version rather than archiving it in place.
