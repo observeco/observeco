@@ -1,0 +1,74 @@
+{
+  "_meta": {
+    "case": "E2-coupang-flywheel",
+    "control_type": "GROUP E — CEILING TEST (flywheel half). Sean: 'any company that has significant IP or flywheel will have high defensibility'.",
+    "purpose": "ASML tested the IP half of Sean's claim. This tests the FLYWHEEL half — a moat built not on patents but on compounding scale economics and network effects. If defensibility scores 5 here too, the dimension recognises flywheels and not just IP.",
+    "prediction": "Defensibility 5/5. A score of 3-4 would mean the dimension only rewards IP, not compounding scale.",
+    "ground_truth": "Coupang is South Korea's dominant e-commerce operator. It built its own end-to-end logistics rather than renting third-party delivery, which enables 'Dawn Delivery' (order by midnight, delivered by 7am) — a service no competitor matches. Its density economics compound: more customers per delivery route lowers cost per drop, which funds lower prices, which attracts more customers. Wow membership drives repeat purchase. It ran at a loss for roughly a decade to build this, which is itself the barrier — no competitor can justify that cost now.",
+    "sources": ["Public reporting on Coupang's logistics build and Dawn Delivery", "Disclosed operating history (approx. a decade of losses before profitability)"],
+    "status": "ceiling run"
+  },
+  "form": {
+    "business_name": "Coupang",
+    "website": "coupang.com",
+    "role": "CEO",
+    "company_size_band": "500+",
+    "city": "Seoul, South Korea",
+    "category": "Online retail and delivery in South Korea — everyday goods, groceries and fresh food, delivered to the home.",
+    "positioning_sentence": "Everything you need, delivered before you wake up.",
+    "differentiator": "Our advantage is not any single product or patent — it is a system that compounds. We built our own delivery network end to end instead of renting third-party couriers, which is what lets us deliver by 7am on orders placed after midnight. Because we own the whole route, delivery density is ours to improve: the more orders in a given area, the cheaper each drop becomes, and we convert that into lower prices and faster delivery, which brings more orders into the same area. That loop has been running for over a decade and is why we now serve the majority of Korean online shoppers. Our Wow membership makes the default choice automatic for tens of millions of people, so our volume advantage widens rather than narrows. A competitor would have to fund years of losses and rebuild the entire physical network before the loop even started turning — and by then the density advantage would be larger than when they began. We also run our own fresh-food and grocery operations on the same network, which no competitor has combined at this scale.",
+    "undercut_on": "Nothing structurally. Early on we were the most expensive option to run and lost money for a decade doing it. Smaller players compete on price for specific categories but cannot match speed, and none can match the breadth of what we deliver next morning.",
+    "your_price_point": "Competitive on everyday goods; membership fee for Wow.",
+    "their_price_point": "Marketplace sellers are sometimes cheaper on single items; no competitor matches dawn delivery at any price.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Naver Shopping (marketplace and search-led commerce)",
+    "SSG.com and E-Mart (Shinsegae's grocery and online arm)",
+    "CJ Logistics (third-party delivery provider)",
+    "Kurly / Market Kurly (fresh grocery, next-morning)",
+    "AliExpress and Temu (cross-border, price-led)"
+  ],
+  "customer_description": "Korean households broadly — the default online retailer for everyday goods. The trigger is a routine need, decided late in the evening, with an expectation of delivery before the next working day.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from Korea's online retail market structure, disclosed logistics arrangements and delivery-service comparisons.",
+    "tier_0_default": {
+      "members": ["buying in-store", "waiting until the weekend to shop", "not buying at all"],
+      "why": "Physical retail still takes a share of everyday spend."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["Temu and AliExpress (cross-border, price-led)", "marketplace sellers on Naver", "Daiso and discount retail", "traditional markets"],
+      "price_floor": "Cross-border platforms price below domestic retail on many unbranded items.",
+      "why": "Price is contested from below but speed is not."
+    },
+    "tier_2_direct_set": {
+      "members": ["Naver Shopping", "SSG.com", "Market Kurly", "E-Mart online", "11st", "Tmon/Wemakeprice (the latter two in distress)"],
+      "why": "Same occasion, same goods — but none owns the delivery network."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["Coupang — owns 'delivered before you wake up' outright; the only player with a self-owned end-to-end network at national density"],
+      "why": "The retrieval cue is speed, and it is owned completely and physically, not just in messaging.",
+      "diagnostic": "A flywheel-owned position: the cue is defensible because it is a physical system, not a claim."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["CJ Logistics and Hanjin as delivery providers", "convenience store networks (CU, GS25) as pickup points", "B2B distribution"],
+      "why": "Occupies the same last-mile space through a different commercial model."
+    },
+    "tier_5_professional_route": {
+      "members": ["buying direct from manufacturers", "wholesale membership channels", "specialist retailers by category"],
+      "why": "The governed path for specific goods."
+    },
+    "tier_6_indirect": {
+      "members": ["regulatory scrutiny of dominant platforms", "labour rules on delivery workers", "demographic and spending shifts"],
+      "why": "The real threats are regulatory, not competitive."
+    }
+  },
+  "_expected_reasoning": {
+    "market_headroom": "Very large, and e-commerce continues to gain share. Expected 4.",
+    "competitive_room": "Crowded nominal field but a widening practical gap. Expected 4.",
+    "mental_advantage": "'Dawn delivery' is the default association. Expected 5.",
+    "defensibility": "**THE TEST.** Compounding density economics, self-owned network, membership retention, a decade-long loss barrier, and a loop that widens over time. Expected **5**. A 3-4 means the scale only rewards patents.",
+    "demand_reach": "Majority of Korean online shoppers. Expected 5."
+  },
+  "_what_this_case_uniquely_tests": "Whether the defensibility level descriptions recognise a FLYWHEEL as level 5, or whether they only recognise patentable IP. The level-5 text does say 'several advantages that reinforce each other', which a flywheel satisfies — this tests whether the model reads it that way."
+}

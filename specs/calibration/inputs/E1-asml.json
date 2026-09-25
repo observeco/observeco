@@ -1,0 +1,74 @@
+{
+  "_meta": {
+    "case": "E1-asml",
+    "control_type": "GROUP E — CEILING TEST. Does the defensibility scale's LEVEL 5 actually exist / is it reachable?",
+    "purpose": "Sean: 'any company that has significant IP or flywheel will have high defensibility... These companies are a 5.' Every one of the 16 prior cases scored 1-4 and NO input ever mentioned a patent, trade secret, flywheel or switching cost. Level 5 was unreachable by construction. This case supplies a canonical level-5 business to test whether the top of the scale exists in practice.",
+    "prediction": "Defensibility 5/5. A score of 4 or below means the top level is unreachable and the scale is effectively 1-4.",
+    "ground_truth": "ASML holds a 100% monopoly on EUV lithography, >90% of the global lithography market, 2,000+ EUV patents, exclusive Zeiss optics supply (ASML owns ~24.9% of Zeiss SMT), a 5,000-supplier parts network, 30 years of R&D, and installed-base lock-in on which every leading-edge fab depends. Independent analysts describe it as 'compounding barriers that no competitor has shown the ability to overcome'.",
+    "sources": ["PatSnap EUV patent assessment (Oct 2025)", "TMB ASML analysis (Apr 2026)", "StrangeVC 'ASML's 30-Year Monopoly' (Oct 2025)"],
+    "status": "ceiling run"
+  },
+  "form": {
+    "business_name": "ASML",
+    "website": "asml.com",
+    "role": "CEO / Board",
+    "company_size_band": "500+",
+    "city": "Veldhoven, Netherlands (global)",
+    "category": "Semiconductor lithography equipment — extreme ultraviolet (EUV) and deep ultraviolet (DUV) systems used to print circuitry onto silicon wafers for chip fabrication.",
+    "positioning_sentence": "The only company in the world that can supply EUV lithography systems.",
+    "differentiator": "We hold a complete monopoly on EUV lithography — there is no second supplier, and we control over 90% of the global lithography market. This rests on more than 2,000 EUV patents covering the technology, developed over 30 years of R&D at a cost no competitor could justify repeating. Our optics come from Zeiss exclusively, and we hold a stake in Zeiss SMT so that supply cannot be redirected to a rival; the light source, the optics and the precision mechanics are integrated such that no single component can be substituted. We are supported by a network of around 5,000 suppliers that took decades to assemble and is not replicable. Once a fab is built around our machines, the tooling, process recipes and process control are all calibrated to us, so the installed base cannot switch. Every leading-edge semiconductor in the world is produced on our equipment, and the leading-edge nodes cannot be manufactured without it.",
+    "undercut_on": "Nothing that matters. Competitors have attempted EUV development and withdrawn — the engineering and capital requirements were prohibitive. We are not cheaper; we are the only option. The residual risk is geopolitical export controls and our customers' own capex cycles, neither of which is a competitor.",
+    "your_price_point": "Not price-competitive by design — each EUV system costs well over US$100M and is priced on value and scarcity.",
+    "their_price_point": "No competing EUV product exists at any price.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Canon (DUV and nanoimprint — no EUV capability)",
+    "Nikon (DUV only — withdrew from EUV development)",
+    "Applied Materials / Lam Research (adjacent deposition and etch, not lithography)",
+    "Chinese state-backed lithography efforts (SSMB and domestic EUV programmes)",
+    "Customer in-house development (none have succeeded)"
+  ],
+  "customer_description": "A very small number of leading-edge semiconductor manufacturers — TSMC, Samsung, Intel and, where permitted, SMIC. The trigger is building or expanding a leading-edge fabrication line, which is impossible without EUV.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from published patent assessments, supplier-chain analysis and the disclosed structure of the lithography market.",
+    "tier_0_default": {
+      "members": ["not manufacturing leading-edge chips at all", "staying on mature nodes", "designing chips fabricated by someone else"],
+      "why": "Most chip production does not need EUV; only leading-edge volume does."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["DUV multi-patterning (Canon, Nikon)", "mature-node processes", "advanced packaging to extend older nodes"],
+      "price_floor": "DUV systems are far cheaper but cannot reach leading-edge geometries.",
+      "why": "A genuine lower-cost route, which caps the addressable market but does not touch the leading edge."
+    },
+    "tier_2_direct_set": {
+      "members": ["Nikon (DUV)", "Canon (DUV, nanoimprint)", "Chinese domestic EUV programmes"],
+      "why": "The only entities that compete in lithography at all — none with a shipping EUV product."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["ASML — owns 'the only EUV supplier' outright, globally and completely"],
+      "why": "Unlike every other case in the ladder, there is no contest for the incumbent position. It is absolute.",
+      "diagnostic": "The strongest possible Tier 3: a monopoly on the category's defining capability."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["Applied Materials", "Lam Research", "KLA (process control)", "TEL (coater/developer)"],
+      "why": "Occupy the same fab floor and the same capital budget, but do not print features."
+    },
+    "tier_5_professional_route": {
+      "members": ["foundry partners (TSMC) as an alternative to owning a fab", "fabless design houses", "government-funded research fabs"],
+      "why": "The governed path — outsource the manufacturing entirely rather than buy the tool."
+    },
+    "tier_6_indirect": {
+      "members": ["export controls and geopolitics", "customer capex cycles", "the shift to advanced packaging and chiplets", "chip design moving to architectures that need less leading-edge silicon"],
+      "why": "The real risks to the position are political and cyclical, not competitive."
+    }
+  },
+  "_expected_reasoning": {
+    "market_headroom": "Very large and growing, driven by AI compute demand. Expected 4-5.",
+    "competitive_room": "Zero effective competition in EUV. Expected 5.",
+    "mental_advantage": "The default and only answer for EUV. Expected 5.",
+    "defensibility": "**THE TEST.** 2,000+ patents, exclusive optics supply, non-substitutable integration, installed-base lock-in, 30 years of R&D, 5,000-supplier network. Expected **5**. Anything below 5 means level 5 is unreachable in practice.",
+    "demand_reach": "Extremely few buyers (~5), but total penetration within them and no alternative. Expected 3-4."
+  },
+  "_what_this_case_uniquely_tests": "Whether the top of the defensibility scale exists. It is also the project's first case where the business is unambiguously, globally dominant AND richly IP-protected — the exact combination Sean named as a 5."
+}

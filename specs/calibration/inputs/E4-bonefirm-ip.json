@@ -1,0 +1,74 @@
+{
+  "_meta": {
+    "case": "E4-bonefirm-ip",
+    "control_type": "GROUP E — BOUNDARY TEST. Tests Sean's own hedge: 'Bonefirm is probably a 3.5-4 depending on their IP depth.'",
+    "purpose": "Sean scored Bonefirm defensibility 4 BLIND, revised to 3.5-4 'depending on their IP depth', while Jev scores 3. This case isolates IP depth as the single variable: IDENTICAL business to C3/01-bonefirm apart from an explicit statement of what IP protection exists. It answers whether IP depth is what separates a 3 from a 4.",
+    "prediction": "If Jev moves to 4 -> IP depth IS the level 3/4 boundary, and Sean's hedge is exactly right. If it stays 3 -> the boundary is time-to-copy regardless of formal IP, and a patent on a formulation does not reach level 4.",
+    "ground_truth": "The founder developed a TCM + NEM formulation through significant R&D. What is NOT established: whether a patent was filed, whether the formulation is protected as a trade secret, and whether it can be reverse-engineered. The supplement industry reality (Nutritional Outlook) is that individual ingredient amounts within a blend can be held as a trade secret because labels need only disclose the total blend amount - but IF the formula can be reverse-engineered, the secret does not last.",
+    "sources": ["Nutritional Outlook, 'Intellectual property in nutraceuticals' (Aug 2026)", "Sean's correction: 'bonefirm is a unique recipe of TCM + Nem which the founder underwent significant R&D to achieve'"],
+    "status": "boundary run"
+  },
+  "form": {
+    "business_name": "Bonefirm",
+    "website": "bonefirm.com",
+    "role": "Founder",
+    "company_size_band": "1-10",
+    "city": "Singapore",
+    "category": "Health supplements for women — joint, bone and mobility support, positioned around menopause and perimenopause.",
+    "positioning_sentence": "The only supplement Asian women need for their joints and bones.",
+    "differentiator": "We spent years in R&D developing a formulation that combines Traditional Chinese Medicine principles with modern nutritional science into a single proprietary blend. The specification is not published - we protect the formulation as a trade secret rather than a patent, because a patent would require us to disclose the exact composition and ratios and would expire, whereas a trade secret does not expire if it is not reverse-engineered. The ingredients must be extracted a particular way and combined in a specific sequence and ratio; getting the ratios wrong produces a materially different product, and that sequence is the part we do not disclose. We also developed the manufacturing process ourselves rather than using a contract manufacturer's off-the-shelf blend, which means the process is ours and not available to anyone else through a supplier. The name is trademarked. We do not believe the blend can be replicated by simply copying the ingredient list, because the extraction and sequencing are where the effect comes from and they are not visible in a finished capsule.",
+    "undercut_on": "Price. Larger supplement brands sell generic joint products far cheaper, and they are on every pharmacy shelf where we are not. A customer who does not believe in the formulation just buys the cheapest glucosamine.",
+    "your_price_point": "Premium — materially above mass-market joint supplements.",
+    "their_price_point": "Mass-market joint supplements sell at a fraction of our price on pharmacy shelves.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Caltrate",
+    "Blackmores",
+    "Kinohimitsu",
+    "Kordel's",
+    "Nature's Way"
+  ],
+  "customer_description": "Women around menopause and perimenopause with joint and bone concerns — plus a meaningful share of younger women buying it for their mothers.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from the TCM + modern-nutrition crossover category, published outlet coverage, and the branded-supplement shelf set the owner does not see.",
+    "tier_0_default": {
+      "members": ["doing nothing", "generic glucosamine from a pharmacy", "diet and exercise changes"],
+      "why": "Most joint discomfort is managed without a branded supplement."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["mass-market glucosamine and calcium (Caltrate, Blackmores, Kordel's)", "supermarket own-brand joint products", "generic TCM dispensary blends (cheap, practitioner-compounded)"],
+      "price_floor": "Generic glucosamine and any TCM hall's own joint blend sit far below the premium branded position.",
+      "why": "The cheap route is both cheaper AND, for the TCM-hall customer, closer to the tradition the brand invokes."
+    },
+    "tier_2_direct_set": {
+      "members": ["Kinohimitsu", "Blackmores", "Kordel's", "Nature's Way", "other branded joint-and-bone specialists"],
+      "why": "Same shelf, same claim space, far greater distribution."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["The Better Menopause, Midi Health, Nutrafol (menopause-positioned brands that own the peri/menopause conversation)", "mass-market pharmacy brands that own the shelf"],
+      "why": "The tier the owner never named - these own the menopause conversation the brand is implicitly competing for.",
+      "diagnostic": "The owner's five named competitors are all shelf brands. The derived set has 17 including the category-incumbent tier."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["TCM physicians prescribing custom blends", "physiotherapists and chiropractors", "collagen and bone-health drinks", "women's health clinics"],
+      "why": "Takes the same concern through a practitioner route."
+    },
+    "tier_5_professional_route": {
+      "members": ["doctors and rheumatologists", "physiotherapy", "registered TCM practitioners"],
+      "why": "The governed path for clinical joint and bone problems."
+    },
+    "tier_6_indirect": {
+      "members": ["HRT and menopause medication changing treatment routes", "supplement-industry regulatory tightening", "cost-of-living cutting discretionary supplements"],
+      "why": "Changes whether a supplement is the chosen route at all."
+    }
+  },
+  "_expected_reasoning": {
+    "market_headroom": "Large and growing concern, but a crowded claim space. Expected 3-4.",
+    "competitive_room": "Shelf brands hold distribution; heavy price competition. Expected 2-3.",
+    "mental_advantage": "Narrow - known for one thing, and the menopause conversation is owned by others. Expected 2-3.",
+    "defensibility": "**THE TEST.** A trade secret on a formulation IS 'a formulation or process' (level 3), and the explicit statement that it is NOT patentable-disclosed and NOT reverse-engineerable argues for durability. Does that reach level 4 ('a year or more, or assets they do not have')? Expected 3-4 - this is exactly the boundary under test.",
+    "demand_reach": "Women 45+ segment with a channel. Expected 3."
+  },
+  "_controls": "Compare directly against runs/jev-bonefirm.json (rubric 0.4.1, defensibility 3, raw 1.65, 70% mass on level 3). The ONLY difference in the state is the explicit trade-secret/manufacturing-process disclosure."
+}
