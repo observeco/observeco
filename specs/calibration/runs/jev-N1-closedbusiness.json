@@ -1,8 +1,8 @@
 {
   "case": "N1-closedbusiness",
   "model_id": "jev-1.13.0",
-  "rubric_version": "0.4.0",
-  "generated_at": "2026-09-25T04:06:05+00:00",
+  "rubric_version": "0.4.1",
+  "generated_at": "2026-09-25T06:59:23+00:00",
   "dimensions_display_1to5": {
     "market_headroom": 3,
     "competitive_room": 2,
@@ -10,36 +10,34 @@
     "defensibility": 1,
     "demand_reach": 2
   },
-  "dimensions_unscored": [
-    "demand_reach"
-  ],
+  "dimensions_unscored": [],
   "display_for_client": {
     "market_headroom": 3,
     "competitive_room": 2,
     "mental_advantage": 1,
     "defensibility": 1,
-    "demand_reach": "insufficient evidence to score"
+    "demand_reach": 2
   },
   "raw_jev_scores_0to4": {
-    "market_headroom": 2.24,
-    "competitive_room": 0.86,
-    "mental_advantage": 0.35,
-    "defensibility": 0.02,
-    "demand_reach": 1.0
+    "market_headroom": 2.26,
+    "competitive_room": 0.87,
+    "mental_advantage": 0.28,
+    "defensibility": 0.01,
+    "demand_reach": 0.95
   },
   "evidence_coverage": {
-    "market_headroom": 0.73,
-    "competitive_room": 0.8,
-    "mental_advantage": 0.71,
+    "market_headroom": 0.74,
+    "competitive_room": 0.81,
+    "mental_advantage": 0.77,
     "defensibility": 0.99,
-    "demand_reach": 0.17
+    "demand_reach": 0.21
   },
   "confidence": {
-    "market_headroom": 0.73,
-    "competitive_room": 0.8,
-    "mental_advantage": 0.71,
+    "market_headroom": 0.74,
+    "competitive_room": 0.81,
+    "mental_advantage": 0.77,
     "defensibility": 0.99,
-    "demand_reach": 0.17
+    "demand_reach": 0.21
   },
   "coverage_floor": 0.2,
   "judgment_intervals": {
@@ -50,11 +48,11 @@
         3,
         4
       ],
-      "mass_covered": 0.94
+      "mass_covered": 0.95
     },
     "competitive_room": {
-      "expected_jev_0to4": 0.86,
-      "expected_display_1to5": 1.86,
+      "expected_jev_0to4": 0.87,
+      "expected_display_1to5": 1.87,
       "band_80pct_display_1to5": [
         1,
         2
@@ -62,26 +60,26 @@
       "mass_covered": 0.95
     },
     "mental_advantage": {
-      "expected_jev_0to4": 0.35,
-      "expected_display_1to5": 1.35,
+      "expected_jev_0to4": 0.27,
+      "expected_display_1to5": 1.27,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.99
+      "mass_covered": 1.0
     },
     "defensibility": {
-      "expected_jev_0to4": 0.02,
-      "expected_display_1to5": 1.02,
+      "expected_jev_0to4": 0.01,
+      "expected_display_1to5": 1.01,
       "band_80pct_display_1to5": [
         1,
         1
       ],
-      "mass_covered": 0.98
+      "mass_covered": 0.99
     },
     "demand_reach": {
-      "expected_jev_0to4": 1.01,
-      "expected_display_1to5": 2.01,
+      "expected_jev_0to4": 0.95,
+      "expected_display_1to5": 1.95,
       "band_80pct_display_1to5": [
         1,
         3
@@ -92,36 +90,36 @@
   "probabilities": {
     "market_headroom": {
       "0": 0.0,
-      "1": 0.03,
-      "2": 0.71,
-      "3": 0.23,
+      "1": 0.02,
+      "2": 0.73,
+      "3": 0.22,
       "4": 0.03
     },
     "competitive_room": {
-      "0": 0.19,
-      "1": 0.76,
+      "0": 0.18,
+      "1": 0.77,
       "2": 0.05,
       "3": 0.0,
       "4": 0.0
     },
     "mental_advantage": {
-      "0": 0.66,
-      "1": 0.33,
-      "2": 0.01,
+      "0": 0.73,
+      "1": 0.27,
+      "2": 0.0,
       "3": 0.0,
       "4": 0.0
     },
     "defensibility": {
-      "0": 0.98,
-      "1": 0.02,
+      "0": 0.99,
+      "1": 0.01,
       "2": 0.0,
       "3": 0.0,
       "4": 0.0
     },
     "demand_reach": {
-      "0": 0.47,
+      "0": 0.5,
       "1": 0.15,
-      "2": 0.29,
+      "2": 0.26,
       "3": 0.08,
       "4": 0.01
     }
@@ -135,10 +133,11 @@
     "demand_reach": 15
   },
   "weights_used_renormalised": {
-    "market_headroom": 17.65,
-    "competitive_room": 23.53,
-    "mental_advantage": 29.41,
-    "defensibility": 29.41
+    "market_headroom": 15.0,
+    "competitive_room": 20.0,
+    "mental_advantage": 25.0,
+    "defensibility": 25.0,
+    "demand_reach": 15.0
   },
   "gates_firing": [
     "mental_advantage",
