@@ -1,6 +1,6 @@
 # FOUNDATION — Competitive Landscape Construction
 
-**Status:** PROPOSAL v2 for Sean's guidance. Supersedes v1, which contradicted itself (§9).
+**Status:** PROPOSAL v2 for Sean's guidance. Supersedes v1, which contradicted itself (§10).
 **Date:** 2026-09-23
 **Supersedes:** the input model in OBS-SPEC-095 §3.6 and the enrichment layer in §4.
 
@@ -38,14 +38,66 @@ Eight tiers in a fixed order. Every later section uses **these names and these n
 | **4** | **The Adjacent Crossover** | Takes this customer's money on a different axis. Not a substitute — a rival for the wallet | When the buyer has competing priorities |
 | **5** | **The Professional Route** | The expert or institutional path — doctor, clinic, consultant, agent | Regulated / high-trust categories |
 | **6** | **The Indirect** | Dilutes the budget for the same person without competing on the product | Often |
-| **7** | **The Emerging** | Who has entered recently and is not yet visible to the owner | Paid tier mainly |
+| **7** | **The Emerging** | Who has entered recently and is not yet visible to the owner | **Always — and derived, not asked** |
 
-**Tier 3 is the category incumbent.** That is the one to remember: it is where the owner's
-blindspot lives, because it is the tier they did not name.
+**Tier 7 is a derived tier.** Sean's point: *"Tier 7 is something most customers would expect
+us to derive for them."* The customer genuinely cannot supply it — the whole definition of the
+tier is that these entrants are not yet visible to them. **It must be derived, and it must
+never be an optional or paid-only tier.**
 
 ---
 
-## 3. The mapping to Bonefirm — the same eight tiers, populated
+## 3. Tier 7 is derivable — verified against open SG data
+
+Probed `data.gov.sg` directly (`probe_acra_columns.py`). The ACRA open collection carries the
+column set needed:
+
+| Column | What it gives |
+|---|---|
+| `primary_ssic_code` / `primary_ssic_description` | **Industry classification** |
+| `secondary_ssic_code` / `secondary_ssic_description` | Secondary activity |
+| `registration_incorporation_date` | **Recency** |
+| `entity_name`, `uen`, `entity_status_description` | Identity and whether still live |
+| `primary_user_described_activity` | The entity's own plain-language description |
+| `postal_code`, `street_name` | Location |
+| `former_entity_name1..15` | **Rebrand history** |
+
+53 columns, per-letter bulk CSV, monthly refresh, coverage to 2026-09-16.
+
+**So Tier 7 is answerable from open data:**
+
+> *"Who registered in SSIC `<code>` in the last N months, still live, in `<region>`?"*
+
+**No API key, no gated access.** (ACRA's richer Business Profile Data API is gated behind a
+FormSG request — we do not need it for this.)
+
+### Three capabilities this unlocks beyond a name list
+
+1. **Rebrand detection.** `former_entity_name1..15` — a competitor that changed its name is a
+   position shift, and the analyses have already found one of these in the wild (the Gymmboxx
+   → 24/7 Fitness rebrand surfaced during the fitness review).
+2. **User-described activity.** A plain-language description that often reveals the actual
+   positioning better than the SSIC code.
+3. **Entity status.** We can exclude struck-off and dormant entities, so the list is live
+   entrants rather than a registration graveyard.
+
+### The genuine limits — state these, do not paper over them
+
+| Limit | Consequence |
+|---|---|
+| **Registration ≠ trading** | A registered entity may never open. Tier 7 surfaces *candidates*, not established competitors. Must be labelled as such. |
+| **Bulk CSV, not a query API** | Per-letter files, no "registered since X in industry Y" endpoint. At ~100 reports/month this is a real processing cost and a caching design question. |
+| **SSIC granularity** | Filtering quality depends on the code depth actually populated. Verify per category before claiming precision. |
+| **Only where ACRA covers it** | Companies and LLPs, not sole proprietorships registered under the Business Names Act in every case, and not unregistered activity. |
+| **A window, not a feed** | Monthly refresh. Fine for a quarterly product; not real-time. |
+
+**Presentation rule:** Tier 7 is labelled **"recently registered in your category"** — never
+presented as confirmed competitors. That distinction is the difference between a finding and a
+fabrication.
+
+---
+
+## 4. The mapping to Bonefirm — the same eight tiers, populated
 
 This is the proof the tier list fits real work. Bonefirm's delivered analysis has eight
 competitive sections, and they map onto the eight tiers:
@@ -77,7 +129,7 @@ sense that her list was incomplete.
 
 ---
 
-## 4. What generates the set — the minimum inputs
+## 5. What generates the set — the minimum inputs
 
 The inputs needed are **not** a competitor list. They are the facts that define the
 **substitution space**. Three are already form fields; one is new and critical.
@@ -101,7 +153,7 @@ into a substitution space.
 
 ---
 
-## 5. The generation protocol
+## 6. The generation protocol
 
 Each tier is generated by a question and sourced a specific way — repeatable, not improvised.
 The tier names and numbers are exactly those in §2.
@@ -126,7 +178,7 @@ The tier names and numbers are exactly those in §2.
 
 ---
 
-## 6. Robustness — how we know the set is good enough
+## 7. Robustness — how we know the set is good enough
 
 | # | Test | Why |
 |---|---|---|
@@ -142,7 +194,7 @@ the likelier error is ours.
 
 ---
 
-## 7. The human value chain
+## 8. The human value chain
 
 Sean's point: *"it is probably on me to provide the required guidance for you to chip away.
 That is why the human value chain is important."*
@@ -168,7 +220,7 @@ frame and the un-findable.** The protocol's job is to make the human's two contr
 
 ---
 
-## 8. What this changes, and what is still open
+## 9. What this changes, and what is still open
 
 **Changes:**
 
@@ -191,13 +243,13 @@ frame and the un-findable.** The protocol's job is to make the human's two contr
    answer well. Is there a better way to ask it?
 3. **How deep does the free report go?** Tiers 0–3 with reasons is already more than the owner
    knows. Tiers 4–7 plus price mapping starts to *be* the paid deliverable.
-4. **Where does the human sit in the free path?** The chain in §7 assumes a human adjudicates
+4. **Where does the human sit in the free path?** The chain in §8 assumes a human adjudicates
    the frame. The free report has no human. Either it ships a machine-derived frame and says
    so — weaker, and labelled — or it presents no frame at all, only the set and the contrasts.
 
 ---
 
-## 9. Why v1 was replaced
+## 10. Why v1 was replaced
 
 v1 of this document defined its tiers **twice, differently**. §1 was derived from Bonefirm's
 section order; §3 was written as an idealised protocol from scratch. The two were never

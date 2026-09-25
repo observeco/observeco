@@ -91,6 +91,18 @@ def main() -> None:
         print(f"  MISSING canonical tiers: {missing}")
         ok = False
 
+    # section numbers must be unique — an inserted section once collided with an
+    # existing one and silently broke every "§N" cross-reference in the doc
+    heads = re.findall(r"^## (\d+[a-z]?)\.", text, re.M)
+    dupes = {h for h in heads if heads.count(h) > 1}
+    if dupes:
+        print(f"  DUPLICATE section numbers: {sorted(dupes)}")
+        ok = False
+    expected = [str(i) for i in range(1, len(heads) + 1)]
+    if heads != expected:
+        print(f"  section sequence broken: {heads} (expected {expected})")
+        ok = False
+
     print()
     print("single-definition check:", "PASS" if ok else "FAIL")
     sys.exit(0 if ok else 1)
