@@ -1,0 +1,84 @@
+{
+  "_meta": {
+    "case": "C6-euyansang",
+    "control_type": "GROUP B — category structure. Strong operator in an UNSTRUCTURED category with no official registry of competitive position.",
+    "prediction": "Strong band. Predicted discriminating dimension: defensibility. 146 years of heritage, 44 SG retail outlets, 28-30 clinics, acquired for S$800M — should score defensibility high on cumulative brand trust.",
+    "ground_truth": "Founded 1879, 146 years old. 188 retail outlets across China/HK/Macau/Malaysia/Singapore (44 in Singapore). 28-30 TCM clinics across four markets. Acquired 2024-25 by Mitsui & Co and Rohto Pharmaceutical for S$800 million — Mitsui ~60%, Rohto 3%, founding family retaining 10%. SGX-listed 2000. Described by CNA as 'a household name'.",
+    "sources": ["euyansang.com/pages/our-businesses", "euyansang.com/pages/about-us", "CNA acquisition coverage"],
+    "why_this_case": "Tests two things at once. (1) Does the rubric score HERITAGE as defensible? 146 years is the longest trust accumulation in the set. (2) Can the derivation work in a category with no register of competitive position — TCM has regulated practitioners but no competitor registry, unlike SFA/ECDA/MOH.",
+    "status": "control run"
+  },
+
+  "form": {
+    "business_name": "Eu Yan Sang",
+    "website": "euyansang.com",
+    "role": "Management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Traditional Chinese medicine — retail herbal products, TCM clinics and integrative health. 44 retail outlets in Singapore, 28-30 TCM clinics across four markets.",
+    "positioning_sentence": "Asia's most trusted TCM brand — 146 years of heritage, combining the science of medicine with the wisdom of TCM.",
+    "differentiator": "We are 146 years old and have been a household name in Singapore for generations. Our practitioners are meticulously selected by a Medical Board and licensed by local regulators, and all herbal medication adheres to strict regulatory rules. We have 188 retail outlets across five markets plus 28-30 clinics, and our brand carries trust that spans generations — parents who bought from us bring their children. We were acquired by Mitsui & Co and Rohto Pharmaceutical in a deal valued at S$800 million, which is external validation of the brand's worth.",
+    "undercut_on": "Price and convenience. Smaller TCM halls and neighbourhood medical halls sell similar herbs cheaper, and online sellers now ship traditional remedies directly. Some customers who know what they want buy the raw herb elsewhere rather than a branded product.",
+    "your_price_point": "Premium branded TCM pricing — above neighbourhood medical halls",
+    "their_price_point": "Neighbourhood TCM halls and medical halls price below us on comparable herbs. Online sellers undercut further on packaged remedies.",
+    "competitors_named_count": "5-8"
+  },
+
+  "competitors_named": [
+    "Neighbourhood TCM medical halls and herbal shops (many, individually small)",
+    "Hockhua Tonic",
+    "Other branded TCM chains",
+    "Western medical clinics and GPs (the alternative for the same health need)",
+    "Online sellers of packaged traditional remedies",
+    "Health supplements retailed through pharmacies and supermarkets",
+    "Zhong Hua Medical Institution / charitable TCM providers at low cost"
+  ],
+
+  "customer_description": "Health-conscious Singaporeans across generations, weighted toward older adults and those managing chronic or preventive health needs, plus younger customers arriving through the wellness and integrative-health trend. Trigger: a specific health concern, a chronic condition being managed, or preventive/wellness purchase.",
+
+  "derived_competitive_set": {
+    "_note": "DERIVED WITHOUT A COMPETITOR REGISTRY. TCM practitioners are licensed but there is no published register of competitive position — unlike SFA/ECDA/MOH for food/childcare/clinics. This is the second derivation-coverage test.",
+    "derivation_method": "Search only. No registry maps to this competitive position.",
+    "tier_0_default": {
+      "members": ["doing nothing / resting", "self-medication with supermarket products", "dietary adjustment"],
+      "why": "Cheaper. Many minor complaints resolve without treatment."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["neighbourhood TCM medical halls (unbranded, cheaper herbs)", "Zhong Hua Medical Institution and charitable TCM providers (low-cost or free)", "supermarket and pharmacy supplements", "online sellers of packaged remedies"],
+      "price_floor": "Charitable TCM is near-free; neighbourhood halls substantially below branded TCM",
+      "why": "Same herbs, lower price, often closer to home."
+    },
+    "tier_2_direct_set": {
+      "members": ["Hockhua Tonic", "other branded TCM chains", "independent medical halls with a clinic attached", "TCM clinics inside hospitals (e.g. those at Mount Elizabeth Novena, where EYS itself operates)"],
+      "why": "Same products and services, competing for the same health purchase."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["Eu Yan Sang — 'a household name' for TCM in Singapore, with 146 years of accumulated mind-share"],
+      "why": "For branded TCM specifically, EYS owns the category in the public mind. A customer who wants trusted branded TCM names EYS first.",
+      "diagnostic": "Small delta — the owner named the real competitive set including Hockhua and the charitable providers. Sophisticated operator.",
+      "caveat": "The category ladder exists HERE because TCM is a consumer category with brand recognition. Contrast with C9 (managed IT), where Tier 3 was empty."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["Western GP and specialist clinics (the alternative for the same health need)", "health supplements through pharmacies and supermarkets", "wellness and spa businesses", "dietary supplement brands"],
+      "why": "Takes the same health spend through a different modality. This is a genuinely large crossover — most Singaporeans use both Western and TCM care."
+    },
+    "tier_5_professional_route": {
+      "members": ["MOH-regulated TCM practitioner licensing", "hospital-integrated TCM services", "Western medical specialists"],
+      "why": "The governed path — real and relevant, since TCM practitioners are licensed and hospital-integrated TCM exists."
+    },
+    "tier_6_indirect": {
+      "members": ["ageing population increasing demand", "integrative-health trend legitimising TCM", "rising healthcare costs pushing patients toward TCM"],
+      "why": "These EXPAND the category rather than dilute it — a rare case where the indirect tier is a tailwind."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "Real, growing with the ageing population and the wellness trend. Expected 4.",
+    "competitive_room": "Fragmented at the unbranded end but EYS holds the branded tier. Charitable providers suppress the price ceiling for basic treatment. Expected 3.",
+    "position_availability": "EYS owns branded TCM in the mind. But note 'trusted TCM' is a position held by heritage rather than claimed — and it is contestable by a well-funded entrant, which is precisely the S$800M acquisition logic. Expected 4.",
+    "defensibility": "**THE KEY TEST.** 146 years of intergenerational trust, 188 outlets, licensed practitioner bench, Medical Board selection, regulatory compliance depth, and third-party acquisition validation at S$800M. Unlike the hawker's reputation, this is institutional and embodied in a corporate structure — it can be SOLD, which is the proof it is a durable asset. Expected 4-5.",
+    "demand_reach": "Broad, multi-generational, dense islandwide via 44 outlets plus clinics. Expected 4-5."
+  },
+
+  "_derivation_finding": "Tier 3 POPULATED here, unlike C9. TCM is a consumer category with brand recognition, so a category ladder exists. This confirms the C9 finding: Tier 3 is a consumer-mind tier, and works wherever a consumer category exists — regardless of whether a government registry does."
+}

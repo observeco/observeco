@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "case": "C2-activesg",
+    "control_type": "GROUP A — validity vs external ground truth. A leader with NO commercial motive.",
+    "prediction": "Strong band on provision, but competitive_room should be affected by the fact that ActiveSG does not compete commercially. Predicted discriminating dimension: position_availability.",
+    "ground_truth": "29 gyms in Singapore. S$2.50 per entry, S$30/month unlimited. Government-subsidised, operated under Sport Singapore (a statutory board). Owns the bottom of the market structurally — no commercial operator can undercut it.",
+    "sources": ["SGFitness delivered analysis §3.1 (verified Google Maps scan + official sites, 11 Sep 2026)"],
+    "why_this_case": "Every other control is a commercial business. ActiveSG is a subsidised public good that happens to compete. It tests whether the rubric can score a non-commercial operator without either (a) penalising it for not having a commercial moat, or (b) inflating it because it is well-known.",
+    "status": "control run"
+  },
+
+  "form": {
+    "business_name": "ActiveSG",
+    "website": "activesgcircle.gov.sg",
+    "role": "Programme management under Sport Singapore",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Public gyms and sports facilities. 29 gyms islandwide, plus pools and sports halls. Pay-per-entry and monthly access.",
+    "positioning_sentence": "The most affordable way to exercise in Singapore — no contract, no barrier.",
+    "differentiator": "We are a national public programme, not a commercial gym. At S$2.50 per entry and S$30 a month for unlimited access, we are structurally the cheapest way to exercise in Singapore and no commercial operator can undercut us — our pricing is subsidised as a public health objective, not set to make a profit. We hold 29 gyms islandwide, located in the heartlands where commercial premium gyms do not operate. We also have no contract and no sales pressure, which is precisely what the market's most common complaints are about.",
+    "undercut_on": "Nothing on price — we set the floor. What we lose on is facilities and experience: our gyms are functional rather than premium, with fewer classes, less equipment depth, and no spa or pool-side amenities at most locations. Customers who can afford better sometimes pay for it.",
+    "your_price_point": "S$2.50 per entry; S$30/month unlimited",
+    "their_price_point": "Commercial gyms run from S$70/month at the value end to S$400+/month premium. We are 2-13% of their entry price.",
+    "competitors_named_count": "3-5"
+  },
+
+  "competitors_named": [
+    "Anytime Fitness (161 gyms, S$70-158/mo, 24/7)",
+    "24/7 Fitness (the former Gymmboxx rollup, 22 outlets, S$98-178/mo)",
+    "Virgin Active, Pure Fitness, Fitness First (premium, S$178-400+/mo)",
+    "Free alternatives — running, park exercise, home workouts",
+    "Community centre gyms and HDB fitness corners"
+  ],
+
+  "customer_description": "The broadest possible base — anyone in Singapore who wants to exercise, with particular reach into heartland residents, students, seniors and price-sensitive households. Trigger: a decision to start or resume exercise, without wanting to commit to a contract.",
+
+  "derived_competitive_set": {
+    "_note": "Derived from the SGFitness analysis's verified competitive scan (6,519-text review corpus, 78 places, 13 brands) plus the flank corpus.",
+    "tier_0_default": {
+      "members": ["not exercising at all", "home workouts", "running and park exercise", "HDB fitness corners (free)"],
+      "why": "Free. For many people the real competition is inertia, not another gym."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["ActiveSG (S$2.50/entry, S$30/mo — the floor)", "community centre gyms", "HDB fitness corners", "free outdoor exercise"],
+      "price_floor": "S$2.50 per entry / S$30 per month — set by ActiveSG itself",
+      "why": "Structurally the cheapest access. No commercial operator can price below a subsidised national programme."
+    },
+    "tier_2_direct_set": {
+      "members": ["Anytime Fitness (161 gyms, S$70-158/mo)", "24/7 Fitness (22 outlets, S$98-178/mo)", "Fitness First (14 clubs, from S$200/mo)", "Virgin Active (6 clubs, S$178-400/mo)", "Pure Fitness (12 locations)", "Platinum Fitness (4 locations, S$150-300/mo)", "True Fitness (10 outlets — CLOSED 10 Sep 2026, liquidated)"],
+      "why": "Same service, same occasion. The market is saturated at every price tier and the middle tier just died in a liquidation."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["ActiveSG — 'government-subsidised gym floor', owns cheapest access and no-contract", "Virgin Active / Pure — owns premium full-facility", "Anytime — owns 24/7 franchise value", "F45 / Barry's — own boutique class-based HIIT"],
+      "why": "The SGFitness analysis's §3.1 records the word each player owns. Each tier of the market has a distinct owner, which is why the middle had no word and True Fitness died there.",
+      "diagnostic": "Small delta — the owner named the full competitive set accurately, including the free alternatives."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["boutique studios (yoga, pilates, padel)", "recovery clubs", "outdoor activity clubs", "sports teams and leagues"],
+      "why": "Takes the same fitness time and money through a different format."
+    },
+    "tier_5_professional_route": {
+      "members": ["physiotherapy and rehabilitation clinics", "hospital sports medicine", "therapeutic/illness-specific exercise programmes"],
+      "why": "The governed path — and the SGFitness analysis identified therapeutic/illness-specific as one of two genuinely empty flank lanes."
+    },
+    "tier_6_indirect": {
+      "members": ["rising cost of living squeezing discretionary memberships", "WFH changing exercise habits and location", "sports nutrition and wearables taking fitness spend"],
+      "why": "Changes whether a gym membership is bought at all."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "Huge market, but the analysis's finding is that it is saturated at every price tier. Expected 3.",
+    "competitive_room": "**TEST.** ActiveSG sets a floor no commercial operator can challenge, and sits in the heartland where premium gyms do not go. But ActiveSG itself faces no commercial pressure at its own price point. Expected 3-4. If it scores 5, the dimension may be reading a subsidy as commercial advantage.",
+    "position_availability": "**PREDICTED DISCRIMINATOR.** ActiveSG owns 'cheapest access, no contract' outright and structurally — no commercial operator can contest it. Expected 4-5. This is the second incumbent test alongside C5 (4) and KOI (2).",
+    "defensibility": "**THE INTERESTING ONE.** ActiveSG's advantage is a policy subsidy, not a commercial moat. It is completely non-transferable and un-copyable by a commercial operator — but it is also not the BUSINESS's asset; it could be withdrawn by policy. Expected 3-4. A high score here is defensible (nobody can copy it) but the reason differs from every commercial case.",
+    "demand_reach": "The broadest reach in the set — islandwide, all demographics, lowest barrier. Expected 5."
+  },
+
+  "_what_this_case_uniquely_tests": "Whether the rubric conflates 'cannot be copied' with 'is a business asset'. ActiveSG's position cannot be copied by any competitor, and yet it is not something the entity built or can sell. If defensibility scores 5 here, consider whether the level descriptions should distinguish 'advantage you own' from 'advantage you are granted'."
+}

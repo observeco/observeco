@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "case": "C3-pet-lovers-centre",
+    "control_type": "GROUP A — validity vs external ground truth",
+    "prediction": "Strong band. Predicted discriminating dimension: defensibility. Largest and oldest pet retail chain in SEA — should score defensibility 4+, unlike the hawker whose reputation is not transferable.",
+    "ground_truth": "Founded 1973. 69 stores in Singapore, 140+ across SEA (Malaysia 67, Thailand 26, Philippines 11). 'The first and largest pet care retail chain in Singapore and Southeast Asia' — their own and third-party descriptions agree. Household name.",
+    "sources": ["Wikipedia", "corporate.petloverscentre.com/about-us", "RocketReach/ZoomInfo profiles"],
+    "why_this_case": "Same category as PetDirectory, which the delivered analysis scored as 'position open, demand side unbuilt'. PLC is the incumbent IN that category. Tests whether the rubric ranks the category leader above the directory client.",
+    "status": "control run"
+  },
+
+  "form": {
+    "business_name": "Pet Lovers Centre",
+    "website": "petloverscentre.com",
+    "role": "Management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Pet retail and pet care services — food, accessories, grooming, veterinary-adjacent services. 69 stores in Singapore, 140+ across five countries.",
+    "positioning_sentence": "The largest and oldest pet care retail chain in Singapore and Southeast Asia — a household name since 1973.",
+    "differentiator": "We have 51 years of accumulated trust and the widest and freshest product range in the market. We are the first and largest pet care retail chain in Southeast Asia, with 69 stores in Singapore alone — a footprint no other pet retailer here approaches. We hold exclusive brand partnerships, including bringing international brands like ANIGENE into Singapore, which gives us product access competitors cannot match. Our scale lets us hold national distribution and supplier terms that smaller retailers cannot get.",
+    "undercut_on": "Price. Online sellers and smaller independent pet shops undercut us on price, and general e-commerce platforms sell the same branded pet food cheaper with no storefront cost. Some customers know exactly what they want and just buy it online.",
+    "your_price_point": "Retail pricing with a loyalty programme; broadly at the higher end for physical pet retail",
+    "their_price_point": "Online and marketplace sellers are typically 10-20% cheaper on identical branded products. Smaller independents compete on personal service.",
+    "competitors_named_count": "3-5"
+  },
+
+  "competitors_named": [
+    "Online sellers and e-commerce marketplaces selling the same branded pet food",
+    "Smaller independent pet shops",
+    "Grocery and hypermarket pet aisles",
+    "Other pet retail chains (Kohepets, Pet Safari)",
+    "The vet clinic as the alternative source of pet care advice and products"
+  ],
+
+  "customer_description": "Singapore pet owners — dog and cat owners predominantly, broadly across income levels but weighted toward those willing to pay for branded food and in-store advice. Trigger: a new pet, a food or health concern, or a scheduled grooming/vet need.",
+
+  "derived_competitive_set": {
+    "_note": "Derived for pet retail and services in Singapore.",
+    "tier_0_default": {
+      "members": ["feeding table scraps or generic food", "doing nothing about grooming", "home grooming"],
+      "why": "Cheaper. A pet can be fed without a specialist retailer."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["grocery and hypermarket pet aisles (FairPrice, Sheng Siong, Giant)", "e-commerce marketplaces (Shopee, Lazada, Amazon)", "online-only pet retailers (Kohepets)", "subscription food delivery services"],
+      "price_floor": "Marketplace pricing on identical branded products, typically 10-20% below physical retail",
+      "why": "Same branded product, lower price, delivered. No storefront cost to carry."
+    },
+    "tier_2_direct_set": {
+      "members": ["Pet Safari (physical pet retail chain)", "Kohepets (online pet retailer)", "independent pet shops islandwide", "pet speciality chains"],
+      "why": "Same category, same product, competing for the same pet-owner purchase."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["Pet Lovers Centre — 'Singapore's Trusted Leader in Pet Services'; the household name"],
+      "why": "The owner shopping for pet supplies in Singapore has PLC at the top of their list. The PetDirectory analysis itself records this: 'Pet Lovers Centre | 'Singapore's Trusted Leader in Pet Services' — brand recognition | You're the neutral directory; they're a retailer.'",
+      "diagnostic": "**Unusual case: the owner IS the incumbent.** They named competitors accurately including the online threat. Small delta expected."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["veterinary clinics (as a competing source of products and advice)", "grooming specialists", "pet insurance", "pet boarding and daycare"],
+      "why": "Takes the same pet-care wallet on a different service axis."
+    },
+    "tier_5_professional_route": {
+      "members": ["AVS-licensed veterinary practices", "AVS licensing as the regulatory gate for boarding"],
+      "why": "The governed path — relevant because AVS licensing defines who can legally operate boarding."
+    },
+    "tier_6_indirect": {
+      "members": ["rising cost of living reducing discretionary pet spend", "adoption rates and pet ownership trends"],
+      "why": "Changes the size of the pet-owning base itself."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "Real, growing market — SGD 412M in 2023, growing 12.5%/yr (from the PetDirectory analysis). Expected 4-5.",
+    "competitive_room": "Fragmented retail but with genuine online price pressure. PLC has scale advantage but cannot control price against marketplaces. Expected 3.",
+    "position_availability": "PLC holds the position. Expected 4-5 if the dimension works for incumbents — a second test alongside C5.",
+    "defensibility": "**THE KEY DIMENSION FOR THIS CASE.** 51 years of trust, 69 SG stores, exclusive brand partnerships, national scale and supplier terms. Unlike the hawker, these ARE non-transferable and would take a competitor years to replicate. Expected 4.",
+    "demand_reach": "Broad, identifiable pet-owner base with clear triggers. Expected 4-5."
+  },
+
+  "_comparison": "PetDirectory (the delivered client analysis): 'Market real, position open, but the demand side is unbuilt.' If PLC scores clearly above PetDirectory's level, the rubric correctly ranks the incumbent above the client with no traffic."
+}

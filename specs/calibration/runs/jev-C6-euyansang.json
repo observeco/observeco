@@ -1,0 +1,70 @@
+{
+  "case": "C6-euyansang",
+  "model_id": "jev-1.13.0",
+  "rubric_version": "0.2.0",
+  "generated_at": "2026-09-25T02:48:06+00:00",
+  "dimensions_display_1to5": {
+    "market_headroom": 4,
+    "competitive_room": 2,
+    "position_availability": 3,
+    "defensibility": 4,
+    "demand_reach": 4
+  },
+  "raw_jev_scores_0to4": {
+    "market_headroom": 2.89,
+    "competitive_room": 1.32,
+    "position_availability": 2.03,
+    "defensibility": 2.94,
+    "demand_reach": 2.7
+  },
+  "confidence": {
+    "market_headroom": 0.74,
+    "competitive_room": 0.73,
+    "position_availability": 0.1,
+    "defensibility": 0.86,
+    "demand_reach": 0.57
+  },
+  "probabilities": {
+    "market_headroom": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.2,
+      "3": 0.7,
+      "4": 0.1
+    },
+    "competitive_room": {
+      "0": 0.01,
+      "1": 0.71,
+      "2": 0.24,
+      "3": 0.04,
+      "4": 0.0
+    },
+    "position_availability": {
+      "0": 0.18,
+      "1": 0.13,
+      "2": 0.21,
+      "3": 0.42,
+      "4": 0.06
+    },
+    "defensibility": {
+      "0": 0.01,
+      "1": 0.04,
+      "2": 0.01,
+      "3": 0.89,
+      "4": 0.05
+    },
+    "demand_reach": {
+      "0": 0.06,
+      "1": 0.06,
+      "2": 0.12,
+      "3": 0.65,
+      "4": 0.11
+    }
+  },
+  "input_sufficiency": "sufficient",
+  "gates_firing": [],
+  "composite": 67,
+  "band": "Viable, conditional",
+  "computed_by": "code, from jev judgments (spec 1)",
+  "key_compared": false
+}

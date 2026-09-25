@@ -1,0 +1,70 @@
+{
+  "case": "C2-activesg",
+  "model_id": "jev-1.13.0",
+  "rubric_version": "0.2.0",
+  "generated_at": "2026-09-25T02:47:54+00:00",
+  "dimensions_display_1to5": {
+    "market_headroom": 3,
+    "competitive_room": 2,
+    "position_availability": 3,
+    "defensibility": 3,
+    "demand_reach": 4
+  },
+  "raw_jev_scores_0to4": {
+    "market_headroom": 1.87,
+    "competitive_room": 0.99,
+    "position_availability": 2.21,
+    "defensibility": 1.57,
+    "demand_reach": 2.67
+  },
+  "confidence": {
+    "market_headroom": 0.82,
+    "competitive_room": 0.83,
+    "position_availability": 0.0,
+    "defensibility": 0.0,
+    "demand_reach": 0.42
+  },
+  "probabilities": {
+    "market_headroom": {
+      "0": 0.01,
+      "1": 0.16,
+      "2": 0.79,
+      "3": 0.04,
+      "4": 0.0
+    },
+    "competitive_room": {
+      "0": 0.11,
+      "1": 0.8099999999999999,
+      "2": 0.06,
+      "3": 0.02,
+      "4": 0.0
+    },
+    "position_availability": {
+      "0": 0.33,
+      "1": 0.01,
+      "2": 0.03,
+      "3": 0.38,
+      "4": 0.25
+    },
+    "defensibility": {
+      "0": 0.45,
+      "1": 0.12,
+      "2": 0.01,
+      "3": 0.24,
+      "4": 0.18
+    },
+    "demand_reach": {
+      "0": 0.07,
+      "1": 0.06,
+      "2": 0.18,
+      "3": 0.51,
+      "4": 0.18
+    }
+  },
+  "input_sufficiency": "sufficient",
+  "gates_firing": [],
+  "composite": 59,
+  "band": "Contested",
+  "computed_by": "code, from jev judgments (spec 1)",
+  "key_compared": false
+}

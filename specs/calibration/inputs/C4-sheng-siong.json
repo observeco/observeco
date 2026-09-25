@@ -1,0 +1,80 @@
+{
+  "_meta": {
+    "case": "C4-sheng-siong",
+    "control_type": "GROUP B — category structure. Strong player vs a much stronger one.",
+    "prediction": "Viable band, NOT Strong. Predicted discriminating dimension: competitive_room — this is the test that the rubric does not award a high competitive score to a genuinely squeezed player.",
+    "ground_truth": "Top three SG supermarket players (FairPrice, Sheng Siong, DFI) = 88% of value share in 2025 (Euromonitor). FairPrice is a co-operative with statutory-adjacent standing. Sheng Siong is #2, listed, profitable, posting strong profit growth as shoppers seek value (Aug 2026), and declared a higher interim dividend.",
+    "sources": ["Euromonitor Supermarkets in Singapore report", "internationalsupermarketnews.com Aug 2026", "grocerytradenews.com 2026 ranking"],
+    "why_this_case": "A genuinely strong, profitable, listed business facing an incumbent (FairPrice) that it structurally cannot displace. If the rubric scores competitive_room high here, it is not reading market structure. If it scores Sheng Siong LOW overall because FairPrice exists, it is confusing 'strong opponent' with 'weak business'.",
+    "status": "control run"
+  },
+
+  "form": {
+    "business_name": "Sheng Siong Group",
+    "website": "shengsiong.com.sg",
+    "role": "Management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Supermarket and grocery retail. Heartland-focused store network serving Singapore's HDB neighbourhoods.",
+    "positioning_sentence": "Singapore's heartland supermarket — value pricing and fresh produce where people actually live.",
+    "differentiator": "We are the clear number two in Singapore grocery and the largest homegrown supermarket chain, with a heartland store network positioned where the big-format competitors do not go. We compete on fresh produce quality and everyday value rather than on being cheapest overall, and we have done this profitably for decades — we are listed on SGX and just posted stronger profit growth and raised our interim dividend. Our store economics are proven and our network is dense in the residential catchments we target.",
+    "undercut_on": "Price and scale. FairPrice is a co-operative with government-linked standing, far more stores, and a social pricing mandate that we cannot match on price. Online grocery delivery from the larger players is also a growing structural threat.",
+    "your_price_point": "Everyday value grocery pricing, broadly competitive with FairPrice",
+    "their_price_point": "FairPrice often prices at or below us as part of its mandate. Online-only grocery and marketplaces undercut on specific staple items.",
+    "competitors_named_count": "3-5"
+  },
+
+  "competitors_named": [
+    "NTUC FairPrice — the co-operative market leader, far more stores, social pricing mandate",
+    "DFI Retail Group (Cold Storage, Giant, CS Fresh)",
+    "Online grocery delivery (RedMart, Amazon Fresh, pandamart)",
+    "Wet markets and hawker-adjacent fresh produce for daily shopping",
+    "Convenience stores for top-up purchases"
+  ],
+
+  "customer_description": "Singapore heartland households — HDB residents doing routine grocery shopping near home, and increasingly value-conscious shoppers across a wider base. Trigger: routine weekly grocery purchase plus top-up trips.",
+
+  "derived_competitive_set": {
+    "_note": "Derived for Singapore grocery retail. Highly concentrated at the top.",
+    "tier_0_default": {
+      "members": ["eating out or hawker food instead of cooking", "growing one's own produce"],
+      "why": "Avoids the grocery purchase entirely. A real substitute for a share of food occasions."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["wet markets and traditional fresh markets", "hawker-centre ingredient stalls", "value chains (Valu$)", "marketplace sellers for packaged staples"],
+      "price_floor": "Wet-market fresh pricing, typically below supermarket for produce",
+      "why": "Fresher and cheaper for daily produce, particularly for older shoppers."
+    },
+    "tier_2_direct_set": {
+      "members": ["NTUC FairPrice (market leader, co-operative)", "DFI Retail Group — Cold Storage, Giant, CS Fresh", "Giant supermarkets", "prime supermarket and value formats", "online grocery (RedMart, pandamart, Amazon Fresh)"],
+      "why": "Same product, same shopping occasion. **The top three players hold 88% of value share between them** — a structurally concentrated market."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["NTUC FairPrice — the co-operative that owns 'Singapore's supermarket' in the public mind, with a social mandate and a government-linked parent"],
+      "why": "For most Singaporeans, doing a grocery shop means FairPrice unless there is a reason otherwise. A co-operative with a social pricing mandate is not a competitor a private retailer can displace.",
+      "diagnostic": "Sheng Siong named FairPrice and described the structural disadvantage accurately. Small delta — sophisticated operator."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["convenience stores (7-Eleven, Cheers) for top-up", "food delivery platforms replacing cooking occasions", "specialist retailers (butchers, bakeries, health food)"],
+      "why": "Takes the same food spend through a different purchase mode."
+    },
+    "tier_5_professional_route": {
+      "members": [],
+      "why": "n/a — no professional or institutional path in grocery."
+    },
+    "tier_6_indirect": {
+      "members": ["inflation shifting shoppers to value formats", "WFH changing shopping geography and frequency"],
+      "why": "Changes where and how often the grocery occasion happens."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "Stable, large, low-growth, extremely concentrated at the top. Real but structurally unfavourable to a new entrant. Expected 3.",
+    "competitive_room": "**THE TEST.** Top three = 88% of value share. FairPrice has a social pricing mandate. There is real room for a well-run #2 with a heartland niche — Sheng Siong is profitable and growing — but it cannot take share from FairPrice on price. Expected 2-3, NOT 4-5. If this scores 4+, the dimension is not reading market concentration.",
+    "position_availability": "'The heartland value supermarket' — genuinely held by Sheng Siong and not contested by FairPrice, which serves a broader mandate. Expected 4.",
+    "defensibility": "Decades of store economics, a dense heartland network, fresh-produce supply relationships, listed-company scale. Real and non-transferable, but NOT unique — DFI could build the same. Expected 3.",
+    "demand_reach": "Every heartland household; highly identifiable and dense. Expected 4-5."
+  },
+
+  "_note_on_the_structural_test": "This is the only control where a strong business faces an opponent it structurally cannot beat. A rubric that cannot express 'strong business, squeezed market' would be useless for the majority of real SMEs, who mostly compete against someone bigger."
+}

@@ -75,12 +75,15 @@ def build_state(payload: dict) -> str:
         for key, tier in derived.items():
             if key.startswith("_"):
                 continue
+            if not isinstance(tier, dict):
+                # non-tier keys (e.g. a derivation_method note) — skip, don't crash
+                continue
             name = key.replace("_", " ").upper()
             lines.append(f"{name}")
             members = tier.get("members") or []
             if members:
                 lines.append(f"  members: {'; '.join(members)}")
-            for field in ("why", "price_floor", "diagnostic"):
+            for field in ("why", "price_floor", "diagnostic", "caveat"):
                 if tier.get(field):
                     lines.append(f"  {field}: {tier[field]}")
             lines.append("")

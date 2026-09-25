@@ -1,0 +1,70 @@
+{
+  "case": "C3-pet-lovers-centre",
+  "model_id": "jev-1.13.0",
+  "rubric_version": "0.2.0",
+  "generated_at": "2026-09-25T02:47:55+00:00",
+  "dimensions_display_1to5": {
+    "market_headroom": 4,
+    "competitive_room": 2,
+    "position_availability": 3,
+    "defensibility": 4,
+    "demand_reach": 4
+  },
+  "raw_jev_scores_0to4": {
+    "market_headroom": 2.73,
+    "competitive_room": 1.01,
+    "position_availability": 1.66,
+    "defensibility": 2.93,
+    "demand_reach": 2.64
+  },
+  "confidence": {
+    "market_headroom": 0.66,
+    "competitive_room": 0.96,
+    "position_availability": 0.0,
+    "defensibility": 0.87,
+    "demand_reach": 0.46
+  },
+  "probabilities": {
+    "market_headroom": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.34,
+      "3": 0.59,
+      "4": 0.07
+    },
+    "competitive_room": {
+      "0": 0.02,
+      "1": 0.95,
+      "2": 0.03,
+      "3": 0.0,
+      "4": 0.0
+    },
+    "position_availability": {
+      "0": 0.28,
+      "1": 0.2,
+      "2": 0.16,
+      "3": 0.3,
+      "4": 0.06
+    },
+    "defensibility": {
+      "0": 0.01,
+      "1": 0.03,
+      "2": 0.02,
+      "3": 0.9,
+      "4": 0.04
+    },
+    "demand_reach": {
+      "0": 0.07,
+      "1": 0.09,
+      "2": 0.11,
+      "3": 0.58,
+      "4": 0.15
+    }
+  },
+  "input_sufficiency": "sufficient",
+  "gates_firing": [],
+  "composite": 67,
+  "band": "Viable, conditional",
+  "computed_by": "code, from jev judgments (spec 1)",
+  "key_compared": false
+}
