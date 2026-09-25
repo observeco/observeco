@@ -38,12 +38,24 @@ Eight tiers in a fixed order. Every later section uses **these names and these n
 | **4** | **The Adjacent Crossover** | Takes this customer's money on a different axis. Not a substitute — a rival for the wallet | When the buyer has competing priorities |
 | **5** | **The Professional Route** | The expert or institutional path — doctor, clinic, consultant, agent | Regulated / high-trust categories |
 | **6** | **The Indirect** | Dilutes the budget for the same person without competing on the product | Often |
-| **7** | **The Emerging** | Who has entered recently and is not yet visible to the owner | **Always — and derived, not asked** |
+| **7** | **The Emerging** | Who has entered recently and is not yet visible to the owner | **PAID only — Sean's decision** |
 
-**Tier 7 is a derived tier.** Sean's point: *"Tier 7 is something most customers would expect
-us to derive for them."* The customer genuinely cannot supply it — the whole definition of the
-tier is that these entrants are not yet visible to them. **It must be derived, and it must
-never be an optional or paid-only tier.**
+**Tier 7 is a derived tier, and it belongs to the paid service.** Sean's point: *"Tier 7 is
+something most customers would expect us to derive for them"* — and the customer genuinely
+cannot supply it, because the whole definition of the tier is that these entrants are not yet
+visible to them. **It must be derived; it must never be asked.**
+
+**Decision (2026-09-23): Tier 7 is out of the free report and belongs to the paid service.**
+This is not only a scope cut — it closes a loop with what the site already sells. The Watch
+page promises:
+
+> *"New-entrant alerts, before they take your customers."*
+> *"Who registered last quarter, who's quietly scaling, what they're charging."*
+
+**That promise has been unbacked until now.** Tier 7 is what makes it real, and it is also the
+only tier whose *value grows with the cadence* — new entrants appearing is quarterly news by
+definition, whereas Tiers 0–6 are largely static. So Tier 7 belongs in the recurring product
+both commercially and structurally.
 
 ---
 
@@ -232,6 +244,25 @@ frame and the un-findable.** The protocol's job is to make the human's two contr
 5. **Refusal conditions are now definable:** if input 2 is unstated or unstateable, or Tier 2
    cannot be populated, we cannot construct a set and the report is refused — an observability
    limit on our side, not an input failure by the user.
+6. **The free/paid line now follows the tiers** (Sean's decision, 2026-09-23). The free report
+   covers **Tiers 0–6** — derived and scored, no Tier 7, no human adjudication. The paid
+   engagement adds **Tier 7 (derived new entrants)**, the human frame, the full differentiator
+   evaluation and the 90-day roadmap.
+
+### The free/paid boundary, stated in terms of what is actually withheld
+
+| | Free report | Paid engagement |
+|---|---|---|
+| **Tiers 0–6** | derived, with reasons | same, human-adjudicated |
+| **Tier 7 (new entrants)** | **withheld** | derived, with rebrand history |
+| **The frame** — which tier *is* the market | machine-derived, labelled as such | human-adjudicated |
+| Differentiator evaluation, traps, positioning statement, roadmap | withheld | full |
+
+**Why this line holds up.** Each side has something the other cannot have. The free report
+genuinely cannot adjudicate the frame — there is no human in the loop. The paid service
+genuinely cannot be replaced by the free report, because the most actionable single output
+(Tier 7: who just entered your category) and the judgement (which tier is the real market) are
+both withheld. Neither side is a partial copy of the other.
 
 **Open questions for Sean:**
 
@@ -241,11 +272,9 @@ frame and the un-findable.** The protocol's job is to make the human's two contr
 2. **Is "what is your customer trying to achieve?" the right field?** It generates the
    substitution space — and it is also the field a struggling founder is least likely to
    answer well. Is there a better way to ask it?
-3. **How deep does the free report go?** Tiers 0–3 with reasons is already more than the owner
-   knows. Tiers 4–7 plus price mapping starts to *be* the paid deliverable.
-4. **Where does the human sit in the free path?** The chain in §8 assumes a human adjudicates
-   the frame. The free report has no human. Either it ships a machine-derived frame and says
-   so — weaker, and labelled — or it presents no frame at all, only the set and the contrasts.
+3. **Does the free report present a machine-derived frame at all?** Tiers 0–6 plus the owner's
+   blindspot delta is already substantial without naming a frame. Naming one without a human
+   adjudicating it is the weaker option — but a report with no frame may read as incomplete.
 
 ---
 
