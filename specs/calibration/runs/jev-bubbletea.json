@@ -1,0 +1,70 @@
+{
+  "case": "bubbletea",
+  "model_id": "jev-1.13.0",
+  "rubric_version": "0.2.0",
+  "generated_at": "2026-09-25T02:30:33+00:00",
+  "dimensions_display_1to5": {
+    "market_headroom": 4,
+    "competitive_room": 3,
+    "position_availability": 2,
+    "defensibility": 2,
+    "demand_reach": 3
+  },
+  "raw_jev_scores_0to4": {
+    "market_headroom": 2.89,
+    "competitive_room": 1.91,
+    "position_availability": 1.2,
+    "defensibility": 0.56,
+    "demand_reach": 2.19
+  },
+  "confidence": {
+    "market_headroom": 0.64,
+    "competitive_room": 0.68,
+    "position_availability": 0.55,
+    "defensibility": 0.61,
+    "demand_reach": 0.46
+  },
+  "probabilities": {
+    "market_headroom": {
+      "0": 0.01,
+      "1": 0.01,
+      "2": 0.23,
+      "3": 0.59,
+      "4": 0.16
+    },
+    "competitive_room": {
+      "0": 0.0,
+      "1": 0.24,
+      "2": 0.61,
+      "3": 0.15,
+      "4": 0.0
+    },
+    "position_availability": {
+      "0": 0.17,
+      "1": 0.57,
+      "2": 0.17,
+      "3": 0.08,
+      "4": 0.01
+    },
+    "defensibility": {
+      "0": 0.45,
+      "1": 0.54,
+      "2": 0.01,
+      "3": 0.0,
+      "4": 0.0
+    },
+    "demand_reach": {
+      "0": 0.08,
+      "1": 0.07,
+      "2": 0.45,
+      "3": 0.39,
+      "4": 0.01
+    }
+  },
+  "input_sufficiency": "sufficient",
+  "gates_firing": [],
+  "composite": 53,
+  "band": "Contested",
+  "computed_by": "code, from jev judgments (spec 1)",
+  "key_compared": false
+}

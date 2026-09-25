@@ -1,0 +1,14 @@
+OBSERVECO — POSITIONING SCORECARD
+==============================================
+
+  53/100    CONTESTED
+
+  Market headroom         [####.]   4/5  (conf 0.64)
+  Competitive room        [###..]   3/5  (conf 0.68)
+  Position availability   [##...]   2/5  (conf 0.55)
+  Defensibility           [##...]   2/5  (conf 0.61)
+  Demand reach            [###..]   3/5  low confidence (0.46)
+
+  Input sufficiency : sufficient
+  Model             : jev-1.13.0
+  Rubric            : 0.2.0

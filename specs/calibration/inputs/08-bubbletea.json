@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "case": "bubbletea",
+    "business": "A Singapore bubble tea chain — 3 outlets, soy-milk-based line, health positioning",
+    "reconstruction_of": "derivations/01-bubbletea.json",
+    "form_fidelity": "Form inputs are as a founder would supply them. The derived competitive set is included as EVIDENCE — this is the corrected pipeline (derive -> evidence -> score), not the old owner-list-only path.",
+    "status": "scoring run",
+    "no_label_written": "No expected answer recorded. Compare against the delivered CaiCa analysis verdict."
+  },
+
+  "form": {
+    "business_name": "A Singapore bubble tea chain",
+    "website": "(not provided)",
+    "role": "Founder",
+    "company_size_band": "0-9",
+    "city": "Singapore",
+    "category": "Bubble tea — hand-shaken milk tea and fruit tea. 3 outlets, heartland and mall locations. A soy-milk-based line as a health positioning. Drinks largely at HPB Nutri-Grade B/C.",
+    "positioning_sentence": "Singapore's first chain brewing tea with soy bean milk — a local, healthier bubble tea.",
+    "differentiator": "We are the first chain in Singapore to brew with soy bean milk instead of dairy creamer. Local brand, founded here, and our drinks are healthier by Nutri-Grade measure than the standard milk tea. We also have a snack pairing line.",
+    "undercut_on": "Price and visibility. The big chains have far more outlets and can promote harder. And the imported brands are opening everywhere.",
+    "your_price_point": "S$5.50–7.50 per tall cup",
+    "their_price_point": "There is cheap bubble tea under S$3.50. The mid-tier chains are around the same as us. Not sure about the premium ones.",
+    "competitors_named_count": "1-2"
+  },
+
+  "competitors_named": [
+    "KOI",
+    "The imported Chinese brands"
+  ],
+
+  "customer_description": "Students, office workers and families passing a mall or MRT station. Trigger is mostly impulse — walking past, or ordering delivery for home.",
+
+  "derived_competitive_set": {
+    "_note": "EVIDENCE supplied by the derivation stage. This is what makes position_availability and competitive_room answerable — they were asked without this evidence in the Bonefirm and ObserveCo runs and came back at 0.19/0.38/0.45 confidence.",
+    "tier_0_default": {
+      "members": ["nothing / water", "hawker kopi ~S$1.20-2.00", "convenience-store bottled drinks ~S$1.50-2.50", "home-brewed tea"],
+      "why": "Cheaper, no detour. Most drink occasions resolve here — bubble tea is a treat, not a habit."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["Mixue (S$1.50-3.50, no membership, 30+ heartland and MRT outlets)", "R&B Tea (Large from S$4.90)", "Each-A-Cup (budget, 48 outlets)", "hawker bubble tea stalls"],
+      "why": "Cheapest cup on the island. Mixue needs no app or membership and sits exactly where students and families pass.",
+      "price_floor": "S$1.50"
+    },
+    "tier_2_direct_set": {
+      "members": ["KOI Thé (90 outlets: 62 cafés + 26 Express counters inside MRT stations and hospitals)", "LiHO TEA (~70-84 outlets, homegrown)", "CHAGEE (44 outlets, fastest riser)", "Chicha San Chen (32 outlets)", "Playmade", "Sharetea", "HEYTEA"],
+      "why": "Same product, same occasion, already nearby. KOI's advantage is reach, not novelty. 62+ bubble tea brands operate in Singapore; 953 bubble tea businesses islandwide. No dominant player."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["KOI Thé — 'Singaporeans' favourite by polling', the brand credited with starting the modern wave", "CHAGEE — 'not a bubble tea brand, a tea expert'; original leaf tea, no powder, no creamer", "LiHO — 'No.1 homegrown'"],
+      "why": "The buyer is shopping for a TREAT DRINK, not for 'bubble tea'. The brand at the top of their mental list wins. KOI holds reach, CHAGEE holds the premium craft ladder, LiHO holds homegrown.",
+      "diagnostic": "The owner named no member of this tier. The owner's claim is 'local + healthier'. CHAGEE grew fastest by REJECTING the bubble tea label the owner is embracing."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["specialty coffee", "dessert / shaved ice", "convenience-store RTD tea (CHAGEE teabags now on FairPrice shelves at S$12/8 = ~S$1.90 a home cup)"],
+      "why": "Takes the same treat-drink occasion with a different product. A S$6.50 coffee and a S$6.50 milk tea are the same decision to a buyer wanting a nice cold drink."
+    },
+    "tier_6_indirect": {
+      "members": ["health messaging reducing treat frequency", "home brewing"],
+      "why": "Not a purchase rival — dilutes the number of treat occasions."
+    }
+  },
+
+  "_notes_for_harness": {
+    "what_changed_from_the_old_pipeline": "For the first time the scorer receives a DERIVED competitive set as evidence. Bonefirm and ObserveCo were scored against an owner-supplied list only, which is why position_availability and competitive_room came back at low confidence. This run tests whether supplied evidence resolves that.",
+    "the_owner_named_almost_nothing": "Two entries — 'KOI' and 'the imported Chinese brands'. That is the blindspot probe: it should be a large delta against the derived set.",
+    "compare_against": "The delivered CaiCa analysis. Its verdict: the local + healthier wedge is shared, copyable and contradicted by the actual taste; CHAGEE is the dominant frame; the product must be fixed before any position is worth taking."
+  }
+}
