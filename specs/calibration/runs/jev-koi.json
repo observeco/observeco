@@ -1,0 +1,70 @@
+{
+  "case": "koi",
+  "model_id": "jev-1.13.0",
+  "rubric_version": "0.2.0",
+  "generated_at": "2026-09-25T02:37:43+00:00",
+  "dimensions_display_1to5": {
+    "market_headroom": 4,
+    "competitive_room": 3,
+    "position_availability": 2,
+    "defensibility": 4,
+    "demand_reach": 4
+  },
+  "raw_jev_scores_0to4": {
+    "market_headroom": 3.16,
+    "competitive_room": 2.01,
+    "position_availability": 1.14,
+    "defensibility": 2.89,
+    "demand_reach": 2.63
+  },
+  "confidence": {
+    "market_headroom": 0.77,
+    "competitive_room": 0.54,
+    "position_availability": 0.53,
+    "defensibility": 0.85,
+    "demand_reach": 0.43
+  },
+  "probabilities": {
+    "market_headroom": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.05,
+      "3": 0.73,
+      "4": 0.22
+    },
+    "competitive_room": {
+      "0": 0.0,
+      "1": 0.27,
+      "2": 0.45,
+      "3": 0.28,
+      "4": 0.0
+    },
+    "position_availability": {
+      "0": 0.21,
+      "1": 0.5,
+      "2": 0.24,
+      "3": 0.04,
+      "4": 0.01
+    },
+    "defensibility": {
+      "0": 0.01,
+      "1": 0.03,
+      "2": 0.05,
+      "3": 0.88,
+      "4": 0.03
+    },
+    "demand_reach": {
+      "0": 0.1,
+      "1": 0.04,
+      "2": 0.13,
+      "3": 0.56,
+      "4": 0.16
+    }
+  },
+  "input_sufficiency": "sufficient",
+  "gates_firing": [],
+  "composite": 66,
+  "band": "Viable, conditional",
+  "computed_by": "code, from jev judgments (spec 1)",
+  "key_compared": false
+}

@@ -1,0 +1,76 @@
+{
+  "_meta": {
+    "case": "N2-koi-stripped",
+    "control_type": "TRUE NEGATIVE CONTROL — the sharpest test in the set",
+    "prediction": "Contested, NOT Viable. Must drop ~10+ points from C1 (KOI 66). Predicted discriminating dimension: defensibility, expected to fall from 4 to 2.",
+    "purpose": "N2 holds everything constant EXCEPT the variable the rubric claims to measure. Same business, same category, same derived competitive set, same price, same customer — but with the differentiator removed. If this does not drop, defensibility is responding to a general impression of competence rather than to the actual differentiator.",
+    "design": "KOI's real differentiators are: 20 years of trust, 88 outlets built on word-of-mouth with NO advertising, a proven scalable operating model, and the group's innovation hub role. N2 removes all of those and keeps the operational competence.",
+    "status": "control run"
+  },
+
+  "form": {
+    "business_name": "KOI Thé Singapore",
+    "website": "koithe.com/sg",
+    "role": "Country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bubble tea — premium handcrafted tea beverages. 88-90 outlets in Singapore.",
+    "positioning_sentence": "Premium handcrafted tea beverages.",
+    "differentiator": "We have a lot of outlets and we are well-run. We follow the group's standard recipes and we hit consistent quality across stores. We run the usual promotions and a loyalty programme.",
+    "_stripped": "REMOVED from the C1 input: the 20-year trust story, the word-of-mouth-with-no-advertising history, the 2007-to-88-outlet growth narrative, the 20% share and 13% growth figures, the 'innovation hub for Southeast Asia' role, the Signature KOI second brand, and the explicit claim to be the group's proven proof of concept. What remains is operational competence and scale, with no claimed source of it.",
+    "undercut_on": "Price. Some cheaper chains undercut us, and the newer imported brands compete on novelty.",
+    "your_price_point": "S$5.50-7.50 per tall cup",
+    "their_price_point": "Mixue at S$1.50-3.50. Most mid-tier at our level.",
+    "competitors_named_count": "5-8"
+  },
+
+  "competitors_named": [
+    "LiHO TEA",
+    "CHAGEE",
+    "Each-A-Cup",
+    "Chicha San Chen",
+    "Mixue",
+    "HEYTEA",
+    "Specialty coffee for the same occasion"
+  ],
+
+  "customer_description": "Tea drinkers wanting a premium cup. Broad base across heartland and malls.",
+
+  "derived_competitive_set": {
+    "_note": "IDENTICAL to C1 (KOI) and the bubble tea case. Held constant.",
+    "tier_0_default": {
+      "members": ["nothing / water", "hawker kopi ~S$1.20-2.00", "convenience-store bottled drinks", "home-brewed tea"],
+      "why": "Cheaper, no detour. Most drink occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["Mixue (S$1.50-3.50)", "R&B Tea", "Each-A-Cup (48 outlets)", "hawker stalls"],
+      "price_floor": "S$1.50",
+      "why": "Cheapest cup on the island."
+    },
+    "tier_2_direct_set": {
+      "members": ["LiHO (~70-84)", "CHAGEE (44, fastest riser)", "Chicha San Chen (32)", "Playmade", "Sharetea", "HEYTEA"],
+      "why": "Same product, same occasion. 62+ brands; 953 businesses islandwide. Fragmented."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["KOI Thé", "CHAGEE — 'not a bubble tea brand, a tea expert'", "LiHO — 'No.1 homegrown'"],
+      "why": "The buyer shops for a treat drink; the top-of-mind brand wins. KOI holds the largest network and the longest trust — but in THIS input KOI's claim to it has been removed."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["specialty coffee", "dessert", "convenience-store RTD tea"],
+      "why": "Same treat-drink occasion."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "Unchanged — the category is the same. Expected 4.",
+    "competitive_room": "Unchanged — same market. Expected 3.",
+    "position_availability": "Should be LOWER than C1, because the claim to own the category is what was stripped. This dimension is already known to be broken for incumbents, so this is a second test of it.",
+    "defensibility": "THE TEST. With no claimed source of the advantage — no history, no trust story, no network-building narrative — what remains is a large well-run chain with standard recipes. Level 2 at best ('competitor must do real development work') and arguably level 1. Expected 2, a fall of 2 from C1.",
+    "demand_reach": "Unchanged — same customer. Expected 4."
+  },
+
+  "_what_failure_looks_like": {
+    "false_pass": "If N2 scores 66 or near it, defensibility is measuring general competence, not defensibility. The dimension must be rewritten to demand a SPECIFIC copy-resistance claim.",
+    "correct_behaviour": "N2 lands Contested (~53-59), clearly below C1's 66, with defensibility down ~2 levels."
+  }
+}

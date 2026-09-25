@@ -1,0 +1,88 @@
+{
+  "_meta": {
+    "case": "koi",
+    "business": "KOI Thé Singapore — 88 outlets, ~20% market share, 20 years operating",
+    "purpose": "CONTROL CASE. Every case scored so far was a business in trouble (CaiCa failing, GreenPackers fringe, Bonefirm/ObserveCo unproven). There was no case where the answer is obviously 'this works'. Without one, score clustering at 2-4 cannot be interpreted: it may be correct about the sample, or the rubric may be unable to say 'Strong'. This case settles it.",
+    "experimental_design": "SAME CATEGORY as the bubble tea case, and the SAME derived competitive set is reused. That holds category and evidence constant, so the only variable is the business. CaiCa: composite 53, Contested. If KOI also lands 53-ish, the rubric cannot discriminate between a failing brand and the market leader — which would invalidate the score.",
+    "sources": [
+      "APEA Hall of Fame 2025 — KOI Thé Singapore profile (official award profile)",
+      "World Branding Awards — KOI Thé brand profile",
+      "VulcanPost — S$45M revenue 2017 at 23% margin (regulatory filings)",
+      "Alex Lew (independent) — outlet-level unit economics modeling",
+      "koithe.com store finder — 90 outlets recounted 13 Sep 2026"
+    ],
+    "status": "scoring run",
+    "no_label_written": "No expected answer recorded. The test is whether the rubric can produce a band above Contested."
+  },
+
+  "form": {
+    "business_name": "KOI Thé Singapore",
+    "website": "koithe.com/sg",
+    "role": "Country management (subsidiary of KOI Café Group)",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bubble tea — premium handcrafted tea beverages. 88-90 outlets in Singapore: 62 KOI Thé cafés, 26 smaller KOI Thé Express counters inside MRT stations and hospitals, and 2 Signature KOI stores. Operating here since 2007.",
+    "positioning_sentence": "Premium handcrafted tea, served with consistency and sincerity — the benchmark for quality tea in Singapore.",
+    "differentiator": "We have built trust cup by cup for nearly twenty years, deliberately without advertising. We grew from one outlet in Toa Payoh in 2007 to 88 outlets nationwide on product consistency and word of mouth alone. Our operational model is proven and scalable — our Singapore operation is the group's innovation hub for Southeast Asia, pioneering new menu concepts that other markets then adopt. We hold about 20% market share with 13% annual revenue growth, and we have consistently maintained top ranks in both bubble tea sales and brand awareness. We run a second brand, Signature KOI, to reach different customer segments, and we are the group's first international market and its proven proof of concept.",
+    "undercut_on": "Nothing structurally. New imported brands open more visibly and get more press, and we are the biggest chain so we attract more direct comparison. At the outlet level, rent is our main cost pressure — a high-rent site needs far higher throughput.",
+    "your_price_point": "S$5.50-7.50 per tall cup (premium mid-tier)",
+    "their_price_point": "Mixue sits at S$1.50-3.50 as the value floor. HEYTEA and Chicha San Chen are above us. Most mid-tier chains are at our level.",
+    "competitors_named_count": "5-8"
+  },
+
+  "competitors_named": [
+    "LiHO TEA (homegrown, ~70-84 outlets)",
+    "CHAGEE (44 outlets, fastest riser)",
+    "Each-A-Cup (48 outlets, budget)",
+    "Chicha San Chen (32 outlets, premium craft)",
+    "Mixue (value floor, S$1.50)",
+    "HEYTEA (premium)",
+    "Playmade, Sharetea, R&B Tea",
+    "The imported Chinese and Taiwanese entrants generally",
+    "Specialty coffee, for the same treat-drink occasion"
+  ],
+
+  "customer_description": "Tea enthusiasts and everyday Singaporeans wanting a premium beverage. Broad base — students, office workers, families across heartland and mall locations. Word-of-mouth driven rather than advertising-acquired.",
+
+  "derived_competitive_set": {
+    "_note": "IDENTICAL to the set derived for the bubble tea case. Reused deliberately so category and evidence are held constant and only the business varies.",
+    "tier_0_default": {
+      "members": ["nothing / water", "hawker kopi ~S$1.20-2.00", "convenience-store bottled drinks ~S$1.50-2.50", "home-brewed tea"],
+      "why": "Cheaper, no detour. Most drink occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["Mixue (S$1.50-3.50, no membership, 30+ heartland and MRT outlets)", "R&B Tea (Large from S$4.90)", "Each-A-Cup (budget, 48 outlets)", "hawker bubble tea stalls"],
+      "why": "Cheapest cup on the island, positioned where students and families pass.",
+      "price_floor": "S$1.50"
+    },
+    "tier_2_direct_set": {
+      "members": ["LiHO TEA (~70-84 outlets, homegrown)", "CHAGEE (44 outlets, fastest riser)", "Chicha San Chen (32 outlets)", "Playmade", "Sharetea", "HEYTEA", "KOI Thé (90 outlets)"],
+      "why": "Same product, same occasion. 62+ bubble tea brands operate in Singapore; 953 businesses islandwide. Fragmented — KOI holds the largest single network at ~90, roughly 20% share."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["KOI Thé — 'Singaporeans' favourite by polling'; the brand credited with starting the modern wave", "CHAGEE — 'not a bubble tea brand, a tea expert'", "LiHO — 'No.1 homegrown'"],
+      "why": "The buyer is shopping for a TREAT DRINK. KOI holds the largest network and the longest trust; CHAGEE holds the premium craft ladder; LiHO holds homegrown.",
+      "diagnostic": "KOI named this tier in full, including CHAGEE, Mixue and the crossover. Large delta from the owner's list: NONE. That is the inverse of every other case scored."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["specialty coffee", "dessert / shaved ice", "convenience-store RTD tea"],
+      "why": "Takes the same treat-drink occasion with a different product."
+    },
+    "tier_6_indirect": {
+      "members": ["health messaging reducing treat frequency", "home brewing"],
+      "why": "Dilutes the number of treat occasions."
+    }
+  },
+
+  "_notes_for_harness": {
+    "why_this_is_the_critical_test": "This is the first case where the correct answer is unambiguous: KOI is the market leader, profitable, growing 13%, 20 years in, largest network, top-of-mind. A rubric that cannot place it above 'Contested' cannot distinguish a failing business from the leader in the same market.",
+    "the_comparison": "CaiCa (same category, same derived evidence): composite 53, Contested. CaiCa is shrinking from 6 outlets to 3, rated 3.1-3.9 stars, brand 'not recalled by almost anyone'.",
+    "what_to_look_for": [
+      "Does any dimension score 5? If nothing can score 5, the rubric has no ceiling.",
+      "Does position_availability score high? KOI OWNS the top of the mental ladder — if this does not score 4-5, the question is measuring the wrong thing.",
+      "Does defensibility score high? 20 years of trust, 88 outlets, word-of-mouth with no advertising is the textbook durable moat.",
+      "Does the composite land clearly above 53?"
+    ],
+    "an_honest_counterpoint": "An independent analyst (Alex Lew, Apr 2026) models outlet-level economics as thin: S$3.8k/month operating profit at 250 cups/day, 5.2-9.2 year payback, and notes 'a strong franchise brand does not guarantee outlet economics'. So the BRAND is strong but a single OUTLET may be marginal. This case scores the business/brand, which is what a form submission describes."
+  }
+}

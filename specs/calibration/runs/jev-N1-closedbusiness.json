@@ -1,0 +1,72 @@
+{
+  "case": "N1-closedbusiness",
+  "model_id": "jev-1.13.0",
+  "rubric_version": "0.2.0",
+  "generated_at": "2026-09-25T02:42:13+00:00",
+  "dimensions_display_1to5": {
+    "market_headroom": 3,
+    "competitive_room": 2,
+    "position_availability": 2,
+    "defensibility": 1,
+    "demand_reach": 2
+  },
+  "raw_jev_scores_0to4": {
+    "market_headroom": 2.29,
+    "competitive_room": 0.88,
+    "position_availability": 0.83,
+    "defensibility": 0.02,
+    "demand_reach": 0.85
+  },
+  "confidence": {
+    "market_headroom": 0.71,
+    "competitive_room": 0.8,
+    "position_availability": 0.54,
+    "defensibility": 0.98,
+    "demand_reach": 0.29
+  },
+  "probabilities": {
+    "market_headroom": {
+      "0": 0.0,
+      "1": 0.03,
+      "2": 0.69,
+      "3": 0.25,
+      "4": 0.03
+    },
+    "competitive_room": {
+      "0": 0.18,
+      "1": 0.77,
+      "2": 0.05,
+      "3": 0.0,
+      "4": 0.0
+    },
+    "position_availability": {
+      "0": 0.36,
+      "1": 0.53,
+      "2": 0.05,
+      "3": 0.02,
+      "4": 0.04
+    },
+    "defensibility": {
+      "0": 0.98,
+      "1": 0.02,
+      "2": 0.0,
+      "3": 0.0,
+      "4": 0.0
+    },
+    "demand_reach": {
+      "0": 0.53,
+      "1": 0.15,
+      "2": 0.25,
+      "3": 0.06,
+      "4": 0.01
+    }
+  },
+  "input_sufficiency": "insufficient",
+  "gates_firing": [
+    "defensibility"
+  ],
+  "composite": null,
+  "band": "GATE",
+  "computed_by": "code, from jev judgments (spec 1)",
+  "key_compared": false
+}
