@@ -1,36 +1,101 @@
 {
   "case": "N1-closedbusiness",
   "model_id": "jev-1.13.0",
-  "rubric_version": "0.2.0",
-  "generated_at": "2026-09-25T02:42:13+00:00",
+  "rubric_version": "0.3.0",
+  "generated_at": "2026-09-25T03:47:40+00:00",
   "dimensions_display_1to5": {
     "market_headroom": 3,
     "competitive_room": 2,
-    "position_availability": 2,
+    "mental_advantage": 1,
     "defensibility": 1,
     "demand_reach": 2
   },
+  "dimensions_unscored": [
+    "demand_reach"
+  ],
+  "display_for_client": {
+    "market_headroom": 3,
+    "competitive_room": 2,
+    "mental_advantage": 1,
+    "defensibility": 1,
+    "demand_reach": "insufficient evidence to score"
+  },
   "raw_jev_scores_0to4": {
-    "market_headroom": 2.29,
+    "market_headroom": 2.33,
     "competitive_room": 0.88,
-    "position_availability": 0.83,
+    "mental_advantage": 0.23,
     "defensibility": 0.02,
-    "demand_reach": 0.85
+    "demand_reach": 0.98
+  },
+  "evidence_coverage": {
+    "market_headroom": 0.68,
+    "competitive_room": 0.8,
+    "mental_advantage": 0.8,
+    "defensibility": 0.99,
+    "demand_reach": 0.18
   },
   "confidence": {
-    "market_headroom": 0.71,
+    "market_headroom": 0.68,
     "competitive_room": 0.8,
-    "position_availability": 0.54,
-    "defensibility": 0.98,
-    "demand_reach": 0.29
+    "mental_advantage": 0.8,
+    "defensibility": 0.99,
+    "demand_reach": 0.18
+  },
+  "coverage_floor": 0.2,
+  "judgment_intervals": {
+    "market_headroom": {
+      "expected_jev_0to4": 2.35,
+      "expected_display_1to5": 3.35,
+      "band_80pct_display_1to5": [
+        3,
+        4
+      ],
+      "mass_covered": 0.93
+    },
+    "competitive_room": {
+      "expected_jev_0to4": 0.87,
+      "expected_display_1to5": 1.87,
+      "band_80pct_display_1to5": [
+        1,
+        2
+      ],
+      "mass_covered": 0.95
+    },
+    "mental_advantage": {
+      "expected_jev_0to4": 0.23,
+      "expected_display_1to5": 1.23,
+      "band_80pct_display_1to5": [
+        1,
+        2
+      ],
+      "mass_covered": 1.0
+    },
+    "defensibility": {
+      "expected_jev_0to4": 0.02,
+      "expected_display_1to5": 1.02,
+      "band_80pct_display_1to5": [
+        1,
+        1
+      ],
+      "mass_covered": 0.98
+    },
+    "demand_reach": {
+      "expected_jev_0to4": 0.97,
+      "expected_display_1to5": 1.97,
+      "band_80pct_display_1to5": [
+        1,
+        3
+      ],
+      "mass_covered": 0.92
+    }
   },
   "probabilities": {
     "market_headroom": {
       "0": 0.0,
-      "1": 0.03,
-      "2": 0.69,
-      "3": 0.25,
-      "4": 0.03
+      "1": 0.02,
+      "2": 0.66,
+      "3": 0.27,
+      "4": 0.05
     },
     "competitive_room": {
       "0": 0.18,
@@ -39,12 +104,12 @@
       "3": 0.0,
       "4": 0.0
     },
-    "position_availability": {
-      "0": 0.36,
-      "1": 0.53,
-      "2": 0.05,
-      "3": 0.02,
-      "4": 0.04
+    "mental_advantage": {
+      "0": 0.77,
+      "1": 0.23,
+      "2": 0.0,
+      "3": 0.0,
+      "4": 0.0
     },
     "defensibility": {
       "0": 0.98,
@@ -54,19 +119,34 @@
       "4": 0.0
     },
     "demand_reach": {
-      "0": 0.53,
-      "1": 0.15,
-      "2": 0.25,
-      "3": 0.06,
+      "0": 0.48,
+      "1": 0.16,
+      "2": 0.28,
+      "3": 0.07,
       "4": 0.01
     }
   },
   "input_sufficiency": "insufficient",
+  "weights_declared": {
+    "market_headroom": 15,
+    "competitive_room": 20,
+    "mental_advantage": 25,
+    "defensibility": 25,
+    "demand_reach": 15
+  },
+  "weights_used_renormalised": {
+    "market_headroom": 17.65,
+    "competitive_room": 23.53,
+    "mental_advantage": 29.41,
+    "defensibility": 29.41
+  },
   "gates_firing": [
+    "mental_advantage",
     "defensibility"
   ],
   "composite": null,
   "band": "GATE",
   "computed_by": "code, from jev judgments (spec 1)",
+  "_caveat": "evidence_coverage measures how much competitor evidence was retrievable, NOT the probability the judgment is correct. No human-labelled calibration set exists, so no calibrated confidence interval can be reported.",
   "key_compared": false
 }

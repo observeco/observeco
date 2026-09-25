@@ -1,70 +1,149 @@
 {
   "case": "C2-activesg",
   "model_id": "jev-1.13.0",
-  "rubric_version": "0.2.0",
-  "generated_at": "2026-09-25T02:47:54+00:00",
+  "rubric_version": "0.3.0",
+  "generated_at": "2026-09-25T03:47:43+00:00",
   "dimensions_display_1to5": {
     "market_headroom": 3,
     "competitive_room": 2,
-    "position_availability": 3,
+    "mental_advantage": 5,
     "defensibility": 3,
     "demand_reach": 4
   },
+  "dimensions_unscored": [
+    "defensibility"
+  ],
+  "display_for_client": {
+    "market_headroom": 3,
+    "competitive_room": 2,
+    "mental_advantage": 5,
+    "defensibility": "insufficient evidence to score",
+    "demand_reach": 4
+  },
   "raw_jev_scores_0to4": {
-    "market_headroom": 1.87,
+    "market_headroom": 1.89,
     "competitive_room": 0.99,
-    "position_availability": 2.21,
-    "defensibility": 1.57,
-    "demand_reach": 2.67
+    "mental_advantage": 3.58,
+    "defensibility": 1.52,
+    "demand_reach": 2.63
+  },
+  "evidence_coverage": {
+    "market_headroom": 0.84,
+    "competitive_room": 0.83,
+    "mental_advantage": 0.65,
+    "defensibility": 0.0,
+    "demand_reach": 0.41
   },
   "confidence": {
-    "market_headroom": 0.82,
+    "market_headroom": 0.84,
     "competitive_room": 0.83,
-    "position_availability": 0.0,
+    "mental_advantage": 0.65,
     "defensibility": 0.0,
-    "demand_reach": 0.42
+    "demand_reach": 0.41
+  },
+  "coverage_floor": 0.2,
+  "judgment_intervals": {
+    "market_headroom": {
+      "expected_jev_0to4": 1.88,
+      "expected_display_1to5": 2.88,
+      "band_80pct_display_1to5": [
+        3,
+        3
+      ],
+      "mass_covered": 0.81
+    },
+    "competitive_room": {
+      "expected_jev_0to4": 0.99,
+      "expected_display_1to5": 1.99,
+      "band_80pct_display_1to5": [
+        2,
+        2
+      ],
+      "mass_covered": 0.81
+    },
+    "mental_advantage": {
+      "expected_jev_0to4": 3.59,
+      "expected_display_1to5": 4.59,
+      "band_80pct_display_1to5": [
+        4,
+        5
+      ],
+      "mass_covered": 0.88
+    },
+    "defensibility": {
+      "expected_jev_0to4": 1.5,
+      "expected_display_1to5": 2.5,
+      "band_80pct_display_1to5": [
+        1,
+        4
+      ],
+      "mass_covered": 0.84
+    },
+    "demand_reach": {
+      "expected_jev_0to4": 2.62,
+      "expected_display_1to5": 3.62,
+      "band_80pct_display_1to5": [
+        3,
+        5
+      ],
+      "mass_covered": 0.86
+    }
   },
   "probabilities": {
     "market_headroom": {
       "0": 0.01,
-      "1": 0.16,
-      "2": 0.79,
+      "1": 0.14,
+      "2": 0.8099999999999999,
       "3": 0.04,
       "4": 0.0
     },
     "competitive_room": {
       "0": 0.11,
-      "1": 0.8099999999999999,
+      "1": 0.81,
       "2": 0.06,
       "3": 0.02,
       "4": 0.0
     },
-    "position_availability": {
-      "0": 0.33,
-      "1": 0.01,
-      "2": 0.03,
-      "3": 0.38,
-      "4": 0.25
+    "mental_advantage": {
+      "0": 0.0,
+      "1": 0.03,
+      "2": 0.09,
+      "3": 0.14,
+      "4": 0.74
     },
     "defensibility": {
-      "0": 0.45,
+      "0": 0.47,
       "1": 0.12,
       "2": 0.01,
       "3": 0.24,
-      "4": 0.18
+      "4": 0.16
     },
     "demand_reach": {
-      "0": 0.07,
+      "0": 0.08,
       "1": 0.06,
-      "2": 0.18,
-      "3": 0.51,
-      "4": 0.18
+      "2": 0.19,
+      "3": 0.5,
+      "4": 0.17
     }
   },
   "input_sufficiency": "sufficient",
+  "weights_declared": {
+    "market_headroom": 15,
+    "competitive_room": 20,
+    "mental_advantage": 25,
+    "defensibility": 25,
+    "demand_reach": 15
+  },
+  "weights_used_renormalised": {
+    "market_headroom": 20.0,
+    "competitive_room": 26.67,
+    "mental_advantage": 33.33,
+    "demand_reach": 20.0
+  },
   "gates_firing": [],
-  "composite": 59,
-  "band": "Contested",
+  "composite": 72,
+  "band": "Viable, conditional",
   "computed_by": "code, from jev judgments (spec 1)",
+  "_caveat": "evidence_coverage measures how much competitor evidence was retrievable, NOT the probability the judgment is correct. No human-labelled calibration set exists, so no calibrated confidence interval can be reported.",
   "key_compared": false
 }

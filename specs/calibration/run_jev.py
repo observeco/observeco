@@ -148,28 +148,90 @@ def band_of(c: int | None, bands: list) -> str:
     return "out of range"
 
 
+def _interval(dist: dict | None, conf: float | None) -> dict | None:
+    """Judgment interval from the raw level distribution.
+
+    Reports the expected value plus the narrowest contiguous-ish band covering 80% of
+    the mass. This is the model's OWN spread — it is NOT a confidence interval in the
+    statistical sense (no calibration set exists to quantify that; see
+    RESEARCH-confidence-and-position.md 3.2).
+    """
+    if not isinstance(dist, dict) or not dist:
+        return None
+    try:
+        items = sorted(((int(k), float(v)) for k, v in dist.items()), key=lambda kv: kv[0])
+    except (TypeError, ValueError):
+        return None
+    if not items:
+        return None
+    ev = sum(k * p for k, p in items)
+    # narrowest band covering >=80% of mass, preferring the more concentrated one
+    best = None
+    n = len(items)
+    for i in range(n):
+        acc = 0.0
+        for j in range(i, n):
+            acc += items[j][1]
+            if acc >= 0.8:
+                width = j - i
+                if best is None or width < best[0]:
+                    best = (width, items[i][0], items[j][0], acc)
+                break
+    if best is None:
+        best = (n - 1, items[0][0], items[-1][0], 1.0)
+    return {
+        "expected_jev_0to4": round(ev, 3),
+        "expected_display_1to5": round(ev + 1, 2),
+        "band_80pct_display_1to5": [best[1] + 1, best[2] + 1],
+        "mass_covered": round(best[3], 3),
+    }
+
+
 def score(payload: dict, result: dict, rubric: dict) -> dict:
+    """Compute gates + composite IN CODE from Jev's judgments.
+
+    Two corrections from the confidence research (RESEARCH-confidence-and-position.md):
+      * the displayed quantity is renamed `evidence_coverage` -- it measures how much
+        competitor evidence was retrievable, NOT the probability the score is right;
+      * a dimension whose coverage falls below the floor is reported as `unscored`
+        rather than rendered as a number. A 0.00 coverage is a dead-even distribution,
+        i.e. NO judgment -- printing a score for it is fabrication.
+    Weights are renormalised over the scored dimensions only, and the weights actually
+    used are recorded so the change is auditable across versions.
+    """
     meta = rubric["_meta"]
     weights = meta["weights"]
     gates = {k: v for k, v in meta["gates"].items() if not k.startswith("_")}
     bands = meta["bands"]
+    floor = meta.get("display_floor", 0.20)
 
     answers = (result or {}).get("answers") or {}
-    dims, conf, dist = {}, {}, {}
+    dims, cov, dist = {}, {}, {}
     for name in weights:
         a = answers.get(name) or {}
         s = a.get("score")
         if s is None:
             raise SystemExit(f"no score returned for {name}: {a}")
         dims[name] = int(round(s)) + 1          # 0-indexed -> 1..5 display
-        conf[name] = a.get("confidence")
+        cov[name] = a.get("confidence")
         dist[name] = a.get("probabilities")
 
-    suff = (answers.get("input_sufficiency") or {}).get("choice")
+    # a dimension is scored only if it clears the coverage floor
+    unscored = [k for k in weights
+                if not isinstance(cov[k], (int, float)) or cov[k] < floor]
+    scored = [k for k in weights if k not in unscored]
 
-    fires = [k for k, floor in gates.items() if dims[k] < floor]
-    composite = None if fires else round(
-        sum(dims[k] / 5 * weights[k] for k in weights))
+    if scored:
+        total_w = sum(weights[k] for k in scored)
+        weights_used = {k: round(weights[k] / total_w * 100, 2) for k in scored}
+        fires = [k for k in scored if dims[k] < gates[k]]
+        composite = None if fires else round(
+            sum(dims[k] / 5 * weights_used[k] for k in scored))
+        band = "GATE" if fires else band_of(composite, bands)
+    else:
+        weights_used, fires, composite, band = {}, [], None, "UNSCORED"
+
+    suff = (answers.get("input_sufficiency") or {}).get("choice")
 
     return {
         "case": payload["_meta"]["case"],
@@ -177,14 +239,29 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         "rubric_version": meta["version"],
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "dimensions_display_1to5": dims,
+        "dimensions_unscored": unscored,
+        "display_for_client": {
+            k: (dims[k] if k in scored else "insufficient evidence to score")
+            for k in weights
+        },
         "raw_jev_scores_0to4": {k: answers[k].get("score") for k in weights if k in answers},
-        "confidence": conf,
+        # `evidence_coverage` is the honest name; `confidence` retained for compat
+        "evidence_coverage": cov,
+        "confidence": cov,
+        "coverage_floor": floor,
+        "judgment_intervals": {k: _interval(dist[k], cov[k]) for k in weights},
         "probabilities": dist,
         "input_sufficiency": suff,
+        "weights_declared": weights,
+        "weights_used_renormalised": weights_used,
         "gates_firing": fires,
         "composite": composite,
-        "band": "GATE" if fires else band_of(composite, bands),
+        "band": band,
         "computed_by": "code, from jev judgments (spec 1)",
+        "_caveat": ("evidence_coverage measures how much competitor evidence was "
+                    "retrievable, NOT the probability the judgment is correct. No "
+                    "human-labelled calibration set exists, so no calibrated "
+                    "confidence interval can be reported."),
         "key_compared": False,
     }
 
@@ -223,10 +300,17 @@ def main() -> None:
     for name in rubric["_meta"]["weights"]:
         d = out["dimensions_display_1to5"][name]
         floor = rubric["_meta"]["gates"][name]
-        c = out["confidence"][name]
+        c = out["evidence_coverage"][name]
         cf = f"{c:.2f}" if isinstance(c, (int, float)) else str(c)
-        print(f"  {name:24} {d}/5  conf {cf:>5}  floor>={floor}  "
-              f"{'FIRES' if d < floor else 'pass'}")
+        if name in out["dimensions_unscored"]:
+            print(f"  {name:24} --    coverage {cf:>5}  BELOW FLOOR -> unscored "
+                  f"(raw {d}/5 not shown)")
+            continue
+        iv = out["judgment_intervals"].get(name) or {}
+        band = iv.get("band_80pct_display_1to5")
+        bs = f"{band[0]}-{band[1]}" if band else "?"
+        print(f"  {name:24} {d}/5  coverage {cf:>5}  floor>={floor}  "
+              f"{'FIRES' if d < floor else 'pass'}  interval {bs}")
     print()
     print(f"  input sufficiency : {out['input_sufficiency']}")
     print(f"  gates firing      : {out['gates_firing'] or 'none'}")

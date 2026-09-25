@@ -1,8 +1,8 @@
 {
   "_meta": {
     "name": "obs-095 business viability rubric",
-    "version": "0.2.0",
-    "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) — otherwise calibration validates a scorer that is not the one shipped.",
+    "version": "0.3.0",
+    "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) \u2014 otherwise calibration validates a scorer that is not the one shipped.",
     "model": "jev-latest",
     "scale": {
       "type": "score",
@@ -11,46 +11,87 @@
       "conversion": "display = jev_score + 1",
       "warning": "The API returns an EXPECTED LEVEL, so a perfect score is 4.0, not 5.0. Off-by-one here silently shifts every dimension down one."
     },
-    "direction_warning": "Every dimension is named so that HIGHER IS MORE FAVOURABLE. 'Competitive pressure' was renamed 'Competitive room' because the original name invites an inverted score — a scorer reading 'pressure' as high-when-bad would invert one dimension against the other four and the composite would be meaningless.",
+    "direction_warning": "Every dimension is named so that HIGHER IS MORE FAVOURABLE. 'Competitive pressure' was renamed 'Competitive room' because the original name invites an inverted score \u2014 a scorer reading 'pressure' as high-when-bad would invert one dimension against the other four and the composite would be meaningless.",
     "weights": {
       "market_headroom": 15,
       "competitive_room": 20,
-      "position_availability": 25,
+      "mental_advantage": 25,
       "defensibility": 25,
       "demand_reach": 15
     },
     "gates": {
       "market_headroom": 2,
       "competitive_room": 2,
-      "position_availability": 2,
+      "mental_advantage": 2,
       "defensibility": 2,
       "demand_reach": 2,
-      "_note": "Floors are on the 1-5 display scale. 1 means failing, so every floor is >= 2. A floor of 1 cannot fire."
+      "_note": "Floors on the 1-5 display scale. 1 means failing, so every floor is >= 2."
     },
     "bands": [
-      ["Fragile", 5, 39],
-      ["Contested", 40, 59],
-      ["Viable, conditional", 60, 74],
-      ["Strong", 75, 95]
-    ]
+      [
+        "Fragile",
+        5,
+        39
+      ],
+      [
+        "Contested",
+        40,
+        59
+      ],
+      [
+        "Viable, conditional",
+        60,
+        74
+      ],
+      [
+        "Strong",
+        75,
+        95
+      ]
+    ],
+    "dimension_change_log": [
+      {
+        "version": "0.3.0",
+        "change": "position_availability -> mental_advantage",
+        "reason": "The old dimension asked an ABSOLUTE question (is the seat free?) about a phenomenon the positioning literature measures RELATIVELY (Romaniuk/Ehrenberg-Bass: advantage is the excess over what a brand of this size would be expected to own). It inverted for incumbents. TESTED: leader-vs-failing gap went from -0.05 (below the 0.08 noise floor = zero signal) to +1.38 (17x noise). See FINDING-position-reframe-tested.md",
+        "audit": "prior_definition kept in _superseded for one release"
+      }
+    ],
+    "_superseded": {
+      "position_availability": {
+        "weight": 25,
+        "definition": {
+          "type": "score",
+          "instructions": "Judge ONLY position availability: is the position the business wants to occupy still OPEN, or does someone already own it? Higher means more open. Assess whether the word or idea the business claims is already owned by a named competitor in the buyer's mind, and whether the claim is one that competitors could trivially copy or already share. A claim that several competitors also make is NOT an available position. Consider what the business actually claims, as stated.",
+          "levels": [
+            "Taken and defended. The claimed position is clearly owned by an established competitor.",
+            "Mostly taken. The claim is shared by several competitors, or copyable in a season.",
+            "Partly open. The claim is not owned outright, but it is not exclusively theirs either.",
+            "Open. The position is genuinely unoccupied, with only weak or incidental overlap.",
+            "Wide open. The position is clearly unoccupied and the incumbents are not even oriented toward it."
+          ]
+        },
+        "why_retired": "Absolute framing inverted for incumbents: KOI (market leader) scored 1.12 vs CaiCa (failing) 1.17. Gap was smaller than run-to-run noise."
+      }
+    },
+    "display_floor": 0.2,
+    "display_floor_note": "Below this evidence coverage a dimension is reported as \"unscored\", never as a number. Rationale: a coverage of 0.00 is a dead-even distribution = no judgment at all; printing a score for it fabricates a finding. Confirmed by control runs C2/C3 which returned exact zeros (see CONTROL-CASE-PLAN.md)."
   },
-
   "questions": {
     "market_headroom": {
       "type": "score",
       "instructions": "Judge ONLY market headroom: is there room for a new or small entrant to be chosen in this category at all? Ignore how good this particular business is, ignore its brand, and ignore how differentiated it is. Consider whether the category the business names is a real category a buyer would recognise, whether it is growing or shrinking, and whether new entrants do get chosen in it. A category can be large and still be a trap if the label is contested or the buyer does not shop that way.",
       "levels": [
-        "No headroom. The category named is a trap — contested, or an artefact of how the business describes itself — and there is no identifiable category in which a buyer could choose them.",
+        "No headroom. The category named is a trap \u2014 contested, or an artefact of how the business describes itself \u2014 and there is no identifiable category in which a buyer could choose them.",
         "Very little. The category is real but shrinking, or so broad the business cannot be placed within it.",
         "Moderate. A real category with real buyers, but flat, or structurally unfavourable to new entrants.",
         "Good. A real, growing category in which new entrants do visibly get chosen.",
         "Strong. A large, growing category with documented, growing demand and plenty of room for new entrants."
       ]
     },
-
     "competitive_room": {
       "type": "score",
-      "instructions": "Judge ONLY competitive room: how much space does competition leave for this business to operate and earn? Higher means MORE room — a fragmented, uncontested market. Lower means less room — concentrated incumbents, price-driven commoditisation, or a floor price set by a much larger player. Assess concentration, the strength of the named competitors, and whether the market competes primarily on price. Do not consider the business's own positioning or quality.",
+      "instructions": "Judge ONLY competitive room: how much space does competition leave for this business to operate and earn? Higher means MORE room \u2014 a fragmented, uncontested market. Lower means less room \u2014 concentrated incumbents, price-driven commoditisation, or a floor price set by a much larger player. Assess concentration, the strength of the named competitors, and whether the market competes primarily on price. Do not consider the business's own positioning or quality.",
       "levels": [
         "No room. Dominated by concentrated incumbents, competing almost entirely on price, with no viable margin left.",
         "Very little. A dominant player or a severe price floor; the business is structurally squeezed.",
@@ -59,31 +100,17 @@
         "Strong. Uncontested, fragmented, with no dominant player and no established price floor."
       ]
     },
-
-    "position_availability": {
-      "type": "score",
-      "instructions": "Judge ONLY position availability: is the position the business wants to occupy still OPEN, or does someone already own it? Higher means more open. Assess whether the word or idea the business claims is already owned by a named competitor in the buyer's mind, and whether the claim is one that competitors could trivially copy or already share. A claim that several competitors also make is NOT an available position. Consider what the business actually claims, as stated.",
-      "levels": [
-        "Taken and defended. The claimed position is clearly owned by an established competitor.",
-        "Mostly taken. The claim is shared by several competitors, or copyable in a season.",
-        "Partly open. The claim is not owned outright, but it is not exclusively theirs either.",
-        "Open. The position is genuinely unoccupied, with only weak or incidental overlap.",
-        "Wide open. The position is clearly unoccupied and the incumbents are not even oriented toward it."
-      ]
-    },
-
     "defensibility": {
       "type": "score",
-      "instructions": "Judge ONLY defensibility: how long would it take a well-resourced competitor to copy what makes this business different? Judge TIME-TO-COPY, not the type of advantage, and not how much work the founder did to get there — effort already spent does not make something defensible. Consider each claimed differentiator and ask how a competitor would respond: can they buy the same input and relabel it, or must they do real development work of their own? A differentiator resting on a purchasable input, a public document, or a price point is copyable almost immediately. A differentiator resting on a formulation, process, or technical system that a competitor must develop independently takes months of their own work. A differentiator resting on accumulated trust, an owned channel, a proprietary dataset, or years of relationship cannot be bought or quickly rebuilt. Judge the business as described, including the specificity of what it claims.",
+      "instructions": "Judge ONLY defensibility: how long would it take a well-resourced competitor to copy what makes this business different? Judge TIME-TO-COPY, not the type of advantage, and not how much work the founder did to get there \u2014 effort already spent does not make something defensible. Consider each claimed differentiator and ask how a competitor would respond: can they buy the same input and relabel it, or must they do real development work of their own? A differentiator resting on a purchasable input, a public document, or a price point is copyable almost immediately. A differentiator resting on a formulation, process, or technical system that a competitor must develop independently takes months of their own work. A differentiator resting on accumulated trust, an owned channel, a proprietary dataset, or years of relationship cannot be bought or quickly rebuilt. Judge the business as described, including the specificity of what it claims.",
       "levels": [
         "No moat. There is no differentiator at all, or the one claimed is a purchasable input any competitor can relabel this quarter.",
-        "Shallow. A competitor can copy it in weeks without doing any development of their own — a claim, a message, or an off-the-shelf ingredient.",
-        "Real but replicable. A competitor must do genuine development work of their own — a formulation, a process, or a technical system — so copying takes them months, not weeks. Still nothing they cannot eventually build.",
-        "Durable. Copying takes a competitor a year or more, or requires assets they do not have — accumulated trust, an owned distribution channel, a proprietary dataset, or years of relationship.",
+        "Shallow. A competitor can copy it in weeks without doing any development of their own \u2014 a claim, a message, or an off-the-shelf ingredient.",
+        "Real but replicable. A competitor must do genuine development work of their own \u2014 a formulation, a process, or a technical system \u2014 so copying takes them months, not weeks. Still nothing they cannot eventually build.",
+        "Durable. Copying takes a competitor a year or more, or requires assets they do not have \u2014 accumulated trust, an owned distribution channel, a proprietary dataset, or years of relationship.",
         "Compounding. Several advantages that reinforce each other, where a well-funded competitor could not replicate the position even given the time."
       ]
     },
-
     "demand_reach": {
       "type": "score",
       "instructions": "Judge ONLY demand reach: is there an identifiable, reachable group of buyers who would pay for this, and can this business find them? Higher means more reachable. Consider whether the customer is described in a way that identifies a real group with a trigger to buy, whether that group is concentrated somewhere the business can reach it, and whether it is willing to pay the stated price. A demographic such as an age band is NOT a reachable segment on its own. Do not consider whether the market is large.",
@@ -95,7 +122,6 @@
         "Strong. A tightly defined, concentrated, paying segment that the business can reach directly and cheaply."
       ]
     },
-
     "input_sufficiency": {
       "type": "choice",
       "instructions": "Judge ONLY whether the submitted information contains enough to assess this business's position. You need enough to identify its category, something that could constitute a differentiator or positioning, some sense of its competitors, and some sense of its customer. If one of those is entirely absent, or the answers are placeholders or generic filler with no specific content about this business, the input is insufficient.",
@@ -103,6 +129,17 @@
         "sufficient": "There is enough specific, substantive information to assess the category, the claimed differentiator, the competitors and the customer.",
         "insufficient": "At least one of category, differentiator, competitors or customer is absent, or the answers are placeholders or generic statements that could apply to any business."
       }
+    },
+    "mental_advantage": {
+      "type": "score",
+      "instructions": "Judge ONLY mental advantage: does this business over-index on buying situations RELATIVE TO WHAT A BUSINESS OF ITS SIZE WOULD BE EXPECTED TO OWN? This is a RELATIVE measure, never absolute. First establish the buying situations (the occasions, needs and contexts that make a buyer enter this category). Then, for each, ask whether this business is linked to it MORE STRONGLY than a business of its size and market position would predict, or LESS STRONGLY. A large, well-known player holding its situation is NOT a low score: holding a situation against expected erosion is an advantage. Equally, a tiny player owning one situation disproportionately to its size is a STRONG advantage. Judge the excess over expectation, not the raw prominence of the brand.",
+      "levels": [
+        "Over-index nowhere. Compared with what a business of this size would be expected to own, it is linked to no buying situation beyond bare presence. It has no situation it is retrieved for.",
+        "Over-indexes nowhere but is present. It appears in the category but owns no situation more strongly than its size alone would predict.",
+        "At expectation. Linked to its buying situations at roughly the level its size predicts; neither advantaged nor disadvantaged.",
+        "Over-indexes on one or more situations. It is retrieved in specific buying situations more strongly than a business of its size would predict.",
+        "Strongly over-indexes. It is the first retrieval for one or more valuable, frequently-occurring buying situations, beyond what its size predicts; rivals are not close on those situations."
+      ]
     }
   }
 }
