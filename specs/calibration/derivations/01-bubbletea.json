@@ -1,0 +1,129 @@
+{
+  "_meta": {
+    "case": "derivation-01-bubbletea",
+    "purpose": "FIRST EXECUTION of the eight-tier derivation (FOUNDATION §6). Not a calibration case — a live test of the procedure itself, run on a category where I have NOT read a delivered analysis.",
+    "why_this_category": "CaiCa has a delivered analysis, so Sean can check this derivation against a finished expert product. But I derived it from the live web, not from the analysis — so the comparison is a genuine test rather than a replay.",
+    "method": "Derived from the six form inputs using the six web-search results captured 2026-09-23. Not from the CaiCa analysis.",
+    "contains": "derived tier set + which tiers the evidence supports vs which are inferred",
+    "status": "for Sean's adjudication"
+  },
+
+  "form_inputs": {
+    "what_you_sell": "Bubble tea — hand-shaken milk tea and fruit tea drinks. 3 outlets, heartland and mall locations. Soy-milk-based line as a health positioning.",
+    "customer_job_best_endeavour": "A treat drink — something cold, sweet and indulgent to pick up on the way somewhere or as a small daily reward. The healthy variant is 'a treat I don't feel guilty about'.",
+    "customer_and_trigger": "Students, office workers and families passing a mall or MRT station. Trigger is proximity and impulse — walking past, or ordering on delivery for home.",
+    "price": "S$5.50-7.50 per tall cup (mid-tier)",
+    "claim": "Singapore's first chain brewing tea with soy bean milk — a local, healthier bubble tea. Nutri-Grade B/C drinks.",
+    "url": "(none provided)"
+  },
+
+  "derived_set": [
+    {
+      "tier": 0,
+      "name": "The Default",
+      "members": ["drinking nothing / water", "coffee or kopi at a hawker centre (~S$1.20-2.00)", "canned or bottled drinks from a convenience store (~S$1.50-2.50)", "making tea at home"],
+      "reason_to_purchase": "Cheaper and requires no detour. The overwhelming majority of drink occasions resolve here — bubble tea is a treat, not a daily habit for most Singaporeans.",
+      "evidence": "inferred from the category's own structure: bubble tea is an indulgence purchase, and a treat category's default is always 'no treat'",
+      "confidence": "moderate — this is reasoning, not a fetched source",
+      "price_floor_set": null
+    },
+    {
+      "tier": 1,
+      "name": "The Cheap Substitute",
+      "members": ["Mixue (S$1.50-3.50, no membership)", "R&B Tea (Large Fresh Milk from S$4.90)", "Each-A-Cup (budget, 48 outlets)", "hawker/market bubble tea stalls"],
+      "reason_to_purchase": "Cheapest cup on the island. Mixue's standing prices need no app or membership — it is the answer to 'cheapest bubble tea in Singapore'. Its 30+ outlets sit in heartland malls, MRT stations and next to schools, exactly where a student or family would pass.",
+      "price_floor": "S$1.50 (Mixue King Cone), most drinks under S$3.50",
+      "evidence": "FETCHED — misslobang.com 2026 deals guide, price table",
+      "confidence": "high — multiple sources agree",
+      "note": "This tier sets the floor that every other tier prices against. Note it sits BELOW the 'mid-tier' band the owner claims."
+    },
+    {
+      "tier": 2,
+      "name": "The Direct Set",
+      "members": ["KOI Thé (90 SG outlets)", "LiHO TEA (homegrown, ~70-84 outlets)", "CHAGEE (44 outlets)", "Chicha San Chen (32 outlets)", "Playmade", "Sharetea", "Each-A-Cup", "HEYTEA"],
+      "reason_to_purchase": "Same product, same occasion, already nearby. KOI is the widest network at 90 outlets (62 cafés + 26 Express counters inside MRT stations and hospitals) — reach, not novelty, is its advantage. CHAGEE is the fastest riser at 44, scaling from 36 in months. Chicha San Chen brews to order from its own Taiwan tea farms.",
+      "evidence": "FETCHED — outlet counts recounted from each brand's own store finder, 13 Sep 2026",
+      "confidence": "high for outlet counts (primary source: each brand's own site)",
+      "note": "62+ bubble tea brands operate in Singapore. 953 bubble tea businesses islandwide (poidata, May 2026). This is a heavily fragmented tier — no single dominant player."
+    },
+    {
+      "tier": 3,
+      "name": "The Category Incumbent — THE BLINDSPOT TIER",
+      "members": ["KOI Thé", "LiHO TEA", "CHAGEE"],
+      "reason_to_purchase": "The owner frames this as a bubble tea category with a health angle. **The buyer is not shopping for 'bubble tea' — they are shopping for a treat drink, and the brand at the top of their mental list wins.** KOI is 'Singaporeans' favourite by polling' and the brand credited with starting the modern wave. CHAGEE reframed itself out of the category entirely: 'not a bubble tea brand, a tea expert' — original leaf tea, no powder, no creamer.",
+      "evidence": "FETCHED — misslobang polling/positioning claims; the CaiCa analysis independently found the same CHAGEE reframe",
+      "confidence": "moderate for the mental-ladder claim (no unaided-recall survey); high for the CHAGEE reframe (their own marketing)",
+      "diagnostic_note": "**The owner named no Tier 3 member.** Their claim is 'local + healthier'. Tier 3 shows the brands actually owning the treat-drink mind are imported (Taiwanese and Chinese), and the one that grew fastest did it by REJECTING the bubble tea label the owner is embracing. That is the blindspot."
+    },
+    {
+      "tier": 4,
+      "name": "The Adjacent Crossover",
+      "members": ["specialty coffee (Starbucks, %Arabica, local third-wave)", "dessert and shaved ice", "yakult/fruit-juice chains", "convenience-store RTD tea (FairPrice now stocks CHAGEE teabags at S$12/8 = ~S$1.90 a home cup)"],
+      "reason_to_purchase": "Takes the same treat-drink occasion with a different product. A S$6.50 coffee and a S$6.50 milk tea are the same purchase decision to a buyer who wants 'a nice cold drink'.",
+      "evidence": "FETCHED — the CHAGEE teabag shelf listing is a concrete crossover signal into retail",
+      "confidence": "moderate",
+      "note": "This tier was NOT in the owner's frame, and it is where the wallet's real competition sits for the 'treat' job."
+    },
+    {
+      "tier": 5,
+      "name": "The Professional Route",
+      "members": [],
+      "reason_to_purchase": "n/a",
+      "evidence": "no professional or institutional path exists for a beverage category",
+      "confidence": "high",
+      "note": "Legitimately absent. The taxonomy predicts this — tier 5 only exists in regulated/high-trust categories."
+    },
+    {
+      "tier": 6,
+      "name": "The Indirect",
+      "members": ["HPB Nutri-Grade regulation (a policy force, not a competitor — it constrains what can be claimed)", "health-conscious home brewing", "gym/diet culture reducing treat frequency"],
+      "reason_to_purchase": "Not a purchase rival — a budget and behaviour dilutor. Health messaging reduces the number of treat occasions.",
+      "evidence": "inferred",
+      "confidence": "low",
+      "note": "Weakest tier in this derivation. Should be validated or dropped."
+    },
+    {
+      "tier": 7,
+      "name": "The Emerging — WITHHELD (paid tier)",
+      "members": [
+        "Molly Tea (茉莉奶白) — Shenzhen, flagship Orchard Central 6 Mar 2026, 18,000 cups in first 3 days, second CBD store 11 May 2026",
+        "Black Tree (上海泰茶) — 313@somerset, first outlet outside China",
+        "Tealive — Malaysian chain, single Changi T3 outlet since Jun 2025",
+        "Mr. Sun Tea — Taiwanese, at *SCAPE, trading since 1999",
+        "Gong Cha 2.0 — announced 2026 relaunch, global brand, not yet trading as at Sep 2026 (95% probability, per an independent case study)",
+        "Yi Fang Taiwan Fruit Tea — Punggol Coast Mall"
+      ],
+      "reason_to_purchase": "New entrants arriving fast and at scale. Molly Tea sold 18,000 cups in three days and immediately opened a second, larger CBD store — it is the largest SE Asia store and the brand's largest CBD outlet worldwide.",
+      "evidence": "FETCHED — honeycombers review + misslobang arrival roundup",
+      "confidence": "high for the arrivals themselves (dates, addresses verified)",
+      "note": "WITHHELD from the free report per Sean's decision. Also NOTE: this was found by WEB SEARCH, not by the ACRA derivation — the ACRA path would be the systematic version and would catch entrants no roundup covers."
+    }
+  ],
+
+  "_derivation_notes": {
+    "what_the_tiers_revealed_that_the_owner_did_not_say": [
+      "The price floor is S$1.50, not the S$5.50 mid-tier the owner prices at — a 3.7x gap the owner did not acknowledge",
+      "The category is fragmented (62+ brands, 953 businesses) with NO dominant player — so 'competitive pressure' is not concentration, it is noise",
+      "Tier 3 is owned by imported brands (KOI/Taiwan, CHAGEE/China) while the owner's claim is 'local' — the localness claim is being made against a market that does not reward it",
+      "CHAGEE grew fastest by rejecting the bubble tea label; the owner is doubling down on it",
+      "Tier 4 (treat-drink crossover) was entirely absent from the owner's frame and is where the wallet competition actually sits",
+      "Tier 7 shows five+ arrivals in 12 months, including a Shenzhen chain that sold 18,000 cups in 3 days — the market is being invaded, not just competed in"
+    ],
+    "checks_against_FOUNDATION_R": {
+      "R1_tier0_present_and_named": "PASS — coffee/kopi/RTD/nothing named",
+      "R2_tier1_sets_price_floor": "PASS — S$1.50 Mixue, fetched",
+      "R3_tier3_from_buyers_category_word": "PASS — derived from 'treat drink', not the seller's 'bubble tea'",
+      "R4_every_row_has_reason_to_purchase": "PASS",
+      "R5_owner_names_appear_in_result": "PASS — the owner did not name competitors explicitly in the inputs, so this check could not run as designed. WEAKNESS."
+    },
+    "honest_limits": [
+      "Tier 0 rests on reasoning, not a fetched source",
+      "Tier 3's mental-ladder claim has no unaided-recall survey behind it — it is inferred from polling commentary",
+      "Tier 6 is weak and may not belong",
+      "Tier 7 here came from web search, not the ACRA derivation — so it is the less systematic version of the tier",
+      "No price was fetched for most Tier 2 members individually — only the Tier 1 floor and the owner's own price band are sourced",
+      "R5 could not run because the form inputs did not include the owner's named competitor list"
+    ],
+    "unexpected_finding": "The derivation produced a conclusion the inputs never hinted at: that the owner is competing on a claim ('local, healthier') that the market's own structure does not reward, while the fastest-growing player won by abandoning the category label entirely. That is the same shape of finding the CaiCa analysis reached — reached here from public data in six searches."
+  }
+}
