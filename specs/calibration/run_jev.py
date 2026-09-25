@@ -140,12 +140,16 @@ def call_jev(state: str, questions: dict, model: str, timeout: int = 90,
 
 
 def band_of(c: int | None, bands: list) -> str:
+    """Map a composite to its band. Raises on an unmapped value rather than silently
+    returning 'out of range' -- a composite outside the band table means the scale is
+    misconfigured, and that must be loud."""
     if c is None:
         return "GATE"
     for name, lo, hi in bands:
         if lo <= c <= hi:
             return name
-    return "out of range"
+    raise SystemExit(
+        f"composite {c} falls outside every band {bands} -- bands are misconfigured")
 
 
 def _interval(dist: dict | None, conf: float | None) -> dict | None:
@@ -293,7 +297,9 @@ def main() -> None:
 
     result = call_jev(state, questions, rubric["_meta"]["model"])
     if result is None:
-        raise SystemExit("jev unavailable — no output written (exit 2)")
+        print(f"JEV UNAVAILABLE for {args.input} — no output written (exit 2)",
+              file=sys.stderr)
+        sys.exit(2)
 
     out = score(payload, result, rubric)
     run_dir = HERE / "runs"

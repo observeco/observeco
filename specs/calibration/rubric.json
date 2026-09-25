@@ -1,7 +1,7 @@
 {
   "_meta": {
     "name": "obs-095 business viability rubric",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) \u2014 otherwise calibration validates a scorer that is not the one shipped.",
     "model": "jev-latest",
     "scale": {
@@ -46,7 +46,7 @@
       [
         "Strong",
         75,
-        95
+        100
       ]
     ],
     "dimension_change_log": [
@@ -71,6 +71,12 @@
         "change": "defensibility SPLIT from 5 to 6 levels (old L3 -> new L3 'Replicable' + new L4 'Protected')",
         "reason": "Sean: 'a well-protected single formulation should not score the same as something copyable in months.' Confirmed by E4-bonefirm-ip: adding explicit trade-secret, undisclosed-process and non-reverse-engineerable disclosure to Bonefirm left the score at 3 and raised confidence 0.71 -> 0.97, because old L3's text already named 'a formulation, a process, or a technical system' -- IP was inside L3 by construction. The distinction Sean wants is real and was not expressible on the old scale.",
         "evidence": "FINDING-defensibility-ceiling.md; E1 ASML 5/5, E2 Coupang 5/5, E4 vs bonefirm"
+      },
+      {
+        "version": "0.6.0",
+        "change": "market_headroom: CROWDING framing -> UNMET-DEMAND framing; levels rewritten to kind-distinct anchors",
+        "reason": "Sean: 'the market is congested because ASML has the monopoly and can't expand beyond its current capacity.' Verified: ~50-60 EUV tools/yr, 10-20 per fab, ~EUR 38.8bn backlog (~1.5 yrs), 2027 output largely committed, buyers competing for allocation. The old question returned 3/5 for ASML and 4/5 for crowded bubble tea -- a saturated market outscored a supply-starved one. It also duplicated competitive_room.",
+        "evidence": "experiment_headroom_reframe.py: ASML 1.95->3.33; bubbletea 2.84->1.88; gap vs best-other -0.89 -> +1.38"
       }
     ],
     "_superseded": {
@@ -88,6 +94,20 @@
           ]
         },
         "why_retired": "Absolute framing inverted for incumbents: KOI (market leader) scored 1.12 vs CaiCa (failing) 1.17. Gap was smaller than run-to-run noise."
+      },
+      "market_headroom_0_5_0": {
+        "change": "crowding framing -> unmet-demand framing",
+        "definition": {
+          "instructions": "Judge ONLY market headroom: is there room for a new or small entrant to be chosen in this category at all? Consider whether the category the business names is a real category a buyer would recognise, whether it is growing or shrinking, and whether new entrants do get chosen in it.",
+          "levels": [
+            "No headroom. The category named is a trap -- contested, or an artefact of how the business describes itself.",
+            "Very little. The category is real but shrinking, or so broad the business cannot be placed within it.",
+            "Moderate. A real category with real buyers, but flat, or structurally unfavourable to new entrants.",
+            "Good. A real, growing category in which new entrants do visibly get chosen.",
+            "Strong. A large, growing category with documented, growing demand and plenty of room for new entrants."
+          ]
+        },
+        "why_retired": "Measured a crowding question, not unmet demand; scored a saturated market above a supply-starved one, and duplicated competitive_room."
       }
     },
     "display_floor": 0.2,
@@ -101,18 +121,20 @@
     },
     "normalisation_note": "Composite = sum(display / level_count * weight) over scored dimensions, weights renormalised across scored dimensions only. Each dimension is normalised by ITS OWN level count, so a dimension at maximum contributes its full weight regardless of how many levels it has. Defensibility is 6-level (0.5.0); the other four remain 5-level.",
     "gate_note": "Floors stay at display 2. The 0.5.0 split inserted a level ABOVE the old level 3, so the BOTTOM of the scale is unchanged and a floor of 2 still means 'not no-moat'.",
-    "bands_note": "Bands were calibrated on the 5-level composite. Rescaling to a 6-level defensibility moves the low boundary by <1 point, so bands are kept unchanged to preserve comparability with every prior composite. Re-calibrate only after the ladder is re-run and reviewed."
+    "bands_note": "Bands were calibrated on the 5-level composite. Rescaling to a 6-level defensibility moves the low boundary by <1 point, so bands are kept unchanged to preserve comparability with every prior composite. Re-calibrate only after the ladder is re-run and reviewed.",
+    "dimension_division_of_labour": "market_headroom asks whether UNMET DEMAND exists (is the opportunity real). competitive_room asks how hard it is for an operator to take share (is the opportunity reachable). Before 0.6.0 both asked a crowding question and were near-duplicates; neither measured unmet demand at all.",
+    "band_change_note": "Top band extended 95 -> 100 in 0.6.0. A composite of 96 was produced and fell outside the scale. Reason: defensibility now has 6 levels and market_headroom can reach 5, so the arithmetic maximum is 100, not the ~95 the bands were originally written against. Lower boundaries are unchanged so every historical composite keeps its band."
   },
   "questions": {
     "market_headroom": {
       "type": "score",
-      "instructions": "Judge ONLY market headroom: is there room for a new or small entrant to be chosen in this category at all? Ignore how good this particular business is, ignore its brand, and ignore how differentiated it is. Consider whether the category the business names is a real category a buyer would recognise, whether it is growing or shrinking, and whether new entrants do get chosen in it. A category can be large and still be a trap if the label is contested or the buyer does not shop that way.",
+      "instructions": "Judge ONLY market headroom: is there more DEMAND in this category than is currently being SERVED? Judge whether buyers are getting what they need, or whether demand is going unmet -- people waiting, being rationed, turned away, going without, or paying inflated prices because supply cannot keep up. Do NOT judge how crowded the category is, and do NOT judge whether a new entrant would be welcomed; those are separate questions. A category served by a single supplier who cannot expand fast enough to meet orders is NOT a trap -- it is under-supplied, and unmet demand is headroom. Equally, a large category where supply already meets demand has little headroom, however big it is, because any new entrant must take share from someone rather than serve unmet need.",
       "levels": [
-        "No headroom. The category named is a trap \u2014 contested, or an artefact of how the business describes itself \u2014 and there is no identifiable category in which a buyer could choose them.",
-        "Very little. The category is real but shrinking, or so broad the business cannot be placed within it.",
-        "Moderate. A real category with real buyers, but flat, or structurally unfavourable to new entrants.",
-        "Good. A real, growing category in which new entrants do visibly get chosen.",
-        "Strong. A large, growing category with documented, growing demand and plenty of room for new entrants."
+        "No demand. There is no identifiable buying demand for this category at all.",
+        "Demand is served. Buyers can get this easily; supply meets or exceeds what is wanted, and the category is flat or shrinking.",
+        "Demand is met, contested. Real, steady demand, but supply already satisfies it -- a new entrant must take share from an incumbent rather than serve unmet need.",
+        "Demand exceeds supply. Buyers wait, are rationed, or pay inflated prices because supply cannot keep up, and the shortfall is growing.",
+        "Demand far exceeds supply. The category cannot serve the demand that exists; buyers are allocated, queued or going without, and the constraint is the binding limit on the whole market."
       ]
     },
     "competitive_room": {
