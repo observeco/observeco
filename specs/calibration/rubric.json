@@ -1,7 +1,7 @@
 {
   "_meta": {
     "name": "obs-095 business viability rubric",
-    "version": "0.3.0",
+    "version": "0.4.1",
     "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) \u2014 otherwise calibration validates a scorer that is not the one shipped.",
     "model": "jev-latest",
     "scale": {
@@ -55,6 +55,16 @@
         "change": "position_availability -> mental_advantage",
         "reason": "The old dimension asked an ABSOLUTE question (is the seat free?) about a phenomenon the positioning literature measures RELATIVELY (Romaniuk/Ehrenberg-Bass: advantage is the excess over what a brand of this size would be expected to own). It inverted for incumbents. TESTED: leader-vs-failing gap went from -0.05 (below the 0.08 noise floor = zero signal) to +1.38 (17x noise). See FINDING-position-reframe-tested.md",
         "audit": "prior_definition kept in _superseded for one release"
+      },
+      {
+        "version": "0.4.0",
+        "change": "mental_advantage top anchor SPLIT (levels 4 and 5 distinguished)",
+        "reason": "The relative framing merged two different kinds of advantage, which let a single hawker stall (C5) tie a national programme (C2), both at 5/5 with C5 decisive at 5-5/0.80. Level 5 is now reserved for being the DEFAULT RETRIEVAL for a valuable, frequently-occurring situation; level 4 is over-indexing for your size without being anyone's default. The old anchor rewarded the excess over expectation alone, which structurally favours small players at the top of the scale."
+      },
+      {
+        "version": "0.4.1",
+        "change": "REVERTED the 0.4.0 top-anchor split",
+        "reason": "The 0.4.0 split FAILED its stated purpose. It was meant to separate C5 (one hawker stall, over-indexes for its size) from C2 (a national programme, the default answer). Both still scored 5/5. It also DEGRADED the middle: C3 Pet Lovers Centre moved 3->4, destroying the diagnostic clarity the ordering work had just established, N2 2->3, C6 4->5. The new level-4 text was easier to satisfy than the old one, so mass shifted up. Net negative; reverted. Kept in the log for audit."
       }
     ],
     "_superseded": {

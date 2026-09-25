@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "case": "D2-petlovers-cue",
+    "control_type": "GROUP D — ORDERING DIAGNOSTIC. THE DECISIVE TEST.",
+    "purpose": "C3 (Pet Lovers Centre) scored MA 3/5. C3's stated differentiator is composed ENTIRELY of size facts ('largest', 'widest range', 'footprint no other retailer approaches', 'our scale lets us'). Under the relative framing, a business whose every claim is a size claim has nothing to over-index ON, so 'at expectation' (3/5) is the arithmetically correct answer.",
+    "the_question_this_answers": "Is C3's 3/5 (a) a real finding that the business has no retrieval cue beyond scale, or (b) an artefact of the owner's input mentioning only scale? These have very different consequences for the product.",
+    "method": "IDENTICAL business, IDENTICAL category, IDENTICAL derived competitive set. Only the DIFFERENTIATOR text changes — and only by adding a situational retrieval cue the owner could plausibly have stated. This isolates input-sensitivity from the dimension itself.",
+    "prediction": "If MA rises above 3 -> the dimension is INPUT-SENSITIVE: score depends on whether the owner states a cue. If MA stays at 3 -> the finding is that no cue exists, and the dimension is robust.",
+    "status": "diagnostic run"
+  },
+
+  "form": {
+    "business_name": "Pet Lovers Centre",
+    "website": "petloverscentre.com",
+    "role": "Owner / Managing Director",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Pet retail and pet care services — food, accessories, grooming, veterinary-adjacent services. 69 stores in Singapore, 140+ across five countries.",
+    "positioning_sentence": "The largest and oldest pet care retail chain in Singapore and Southeast Asia — a household name since 1973.",
+
+    "differentiator": "We have 51 years of accumulated trust and the widest and freshest product range in the market. We are the first and largest pet care retail chain in Southeast Asia, with 69 stores in Singapore alone — a footprint no other pet retailer here approaches. We hold exclusive brand partnerships, including bringing international brands like ANIGENE into Singapore, which gives us product access competitors cannot match. Our scale lets us hold national distribution and supplier terms that smaller retailers cannot get. Beyond the size, the situation we own is the new pet: when someone in Singapore brings home their first puppy or kitten, or a rescue, we are where they come to get set up — the first bed, the first collar, the food transition, and the advice on what a first-time owner actually needs. People come back to us through the pet's whole life because that first visit is where the relationship started.",
+
+    "undercut_on": "Price. Online sellers and smaller independent pet shops undercut us on price, and general e-commerce platforms sell the same branded pet food cheaper with no storefront cost. Some customers know exactly what they want and just buy it online.",
+    "your_price_point": "Mid to upper-mid. Premium on fresh and exclusive brands, competitive on staples.",
+    "their_price_point": "Online platforms 10-25% below on identical branded SKUs; independent shops lower on accessories.",
+    "competitors_named_count": "3-5"
+  },
+
+  "competitors_named": [
+    "Pet Station, Perromart (online-first, price-led)",
+    "Independent neighbourhood pet shops",
+    "Shopee / Lazada sellers of branded pet food",
+    "Vet clinics selling food and medication directly",
+    "Supermarkets entering pet food with own-brand ranges"
+  ],
+
+  "customer_description": "Pet owners across Singapore, weighted toward HDB and condominium households with dogs and cats. The highest-intent moment is a new pet arriving — first-time owners especially, who need to buy everything at once and do not yet know what they need.",
+
+  "derived_competitive_set": {
+    "derivation_method": "Derived from PetDirectory competitive analysis (13-competitor set), published outlet counts, and online-versus-offline pricing coverage.",
+    "tier_0_default": {
+      "members": ["using a hand-me-down bed and bowl from a friend", "supermarket own-brand pet food during the grocery shop", "not yet owning a pet"],
+      "why": "Most pet-food volume is routine replenishment absorbed into a normal grocery trip."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["Shopee and Lazada marketplace sellers", "supermarket own-brand pet food", "Daiso and value stores for accessories", "wholesale/breeder channels"],
+      "price_floor": "Marketplace listings for identical branded SKUs undercut every physical retailer by 10-25%.",
+      "why": "For replenishment of a known SKU, online is structurally cheaper."
+    },
+    "tier_2_direct_set": {
+      "members": ["Pet Lovers Centre (69 SG stores)", "Pet Station", "Perromart", "larger independent pet shops", "specialist pet chains"],
+      "why": "Same products, same occasions; the independents compete on relationship and local convenience."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["Pet Lovers Centre — the default physical destination and the only national chain with recognisable scale", "marketplaces — own the 'cheaper and delivered' default", "supermarkets — increasingly own plain replenishment"],
+      "why": "PLC holds the physical-retail default position by scale; no one owns a distinctive situational cue outright in this category.",
+      "diagnostic": "This is the tier under test. The added cue claims the 'new pet' situation as the cue the brand owns."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["veterinary clinics selling food and medication", "pet grooming salons", "pet insurance and subscription food services", "pet-sitting and daycare"],
+      "why": "Captures the pet owner's spend through a service rather than retail."
+    },
+    "tier_5_professional_route": {
+      "members": ["veterinarians for diet and medication", "pet nutritionists", "breeders and rescue organisations as advisors"],
+      "why": "The governed path for anything clinical or breed-specific."
+    },
+    "tier_6_indirect": {
+      "members": ["e-commerce normalising doorstep delivery", "cost of living reducing discretionary pet spend", "condo and HDB rules on pet ownership affecting acquisition"],
+      "why": "Changes whether and where pet spend happens."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "Large, resilient category with growing pet ownership. Expected 3-4.",
+    "competitive_room": "Fragmented physical market but heavy online price competition. Expected 3.",
+    "mental_advantage": "**UNDER TEST.** With the 'new pet' cue added, expected 4 IF the dimension is input-sensitive to a stated cue. Stays 3 if the dimension reads only scale regardless of what the owner says.",
+    "defensibility": "51 years, 69 stores, exclusive brand distribution. Expected 4.",
+    "demand_reach": "Wide — 69 stores islandwide, all pet owners. Expected 4."
+  },
+
+  "_controls": "Compare directly against C3 (identical business, size-only differentiator, MA 3/5). The ONLY difference in the state is the trailing sentence describing the 'new pet' situation."
+}

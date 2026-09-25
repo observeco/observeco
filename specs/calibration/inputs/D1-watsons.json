@@ -1,0 +1,79 @@
+{
+  "_meta": {
+    "case": "D1-watsons",
+    "control_type": "GROUP D — ORDERING DIAGNOSTIC. Large dominant incumbent, LOW-SALIENCE category, NO distinctive retrieval claim.",
+    "purpose": "Discriminates between the three candidate explanations for the C3/C5 ordering anomaly (see DIAGNOSTIC-ordering.md).",
+    "prediction": "MA 3/5 under ALL THREE hypotheses. This case is the BLANK CONTROL: it cannot distinguish them, it only establishes the baseline.",
+    "ground_truth": "Singapore health & beauty #1 by market share at 18% (up from 16% in 2020), 100+ outlets. Euromonitor 2025. Only one of the three main chains with its own loyalty programme.",
+    "sources": ["Euromonitor, Health and Beauty Specialists in Singapore 2025", "AsiaOne / Yahoo Finance price comparisons (outlet counts)"],
+    "status": "diagnostic run"
+  },
+
+  "form": {
+    "business_name": "Watsons Singapore",
+    "website": "watsons.com.sg",
+    "role": "Country operation of AS Watson Group",
+    "company_size_band": "500+",
+    "city": "Singapore",
+    "category": "Health and beauty retail. Personal care, toiletries, cosmetics, over-the-counter medication, pharmacy services. Sold through stores islandwide plus online.",
+    "positioning_sentence": "Your everyday health and beauty store, everywhere.",
+    "differentiator": "We are the largest health and beauty retailer in Singapore with around 18% market share, more than 100 outlets, and the only loyalty programme among the three main chains. We also run pharmacy e-consultation services, which no competitor in our segment offers. Our scale means we carry the widest brand range and can sustain promotions the smaller chains cannot match.",
+    "undercut_on": "Nothing, on price. All three main chains price within cents of each other and match each other's promotions. We are not cheaper and do not try to be. What we lose on is that nobody chooses us for anything specific — customers pick whichever chain is nearest.",
+    "your_price_point": "Mid-market, in line with Guardian and Unity.",
+    "their_price_point": "Within a few cents across all three chains; promotions match each other.",
+    "competitors_named_count": "3-5"
+  },
+
+  "competitors_named": [
+    "Guardian Health & Beauty (137 stores, DFI Retail Group, ~14% share)",
+    "Unity Pharmacy (60+ stores, NTUC FairPrice)",
+    "Supermarkets — FairPrice, Cold Storage, Sheng Siong now carry the same categories",
+    "Online — Shopee, Lazada, iHerb for repeat purchases"
+  ],
+
+  "customer_description": "Broadest possible — anyone buying toiletries, personal care or basic medication. Trigger is almost always proximity or a specific errand, not brand preference.",
+
+  "derived_competitive_set": {
+    "derivation_method": "Derived from Euromonitor category share data, published outlet counts, and trade press on the personal-care retail segment. Note: the three main chains are close to interchangeable on price and range, which is itself the key competitive fact.",
+    "tier_0_default": {
+      "members": ["not buying — using up what is at home", "supermarket aisle during the weekly grocery shop", "borrowing from a household member"],
+      "why": "Most personal-care purchases are subsumed into a grocery trip rather than being a destination decision."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["Sheng Siong / FairPrice / Giant own-brand toiletries", "Daiso (flat pricing)", "value stores and neighbourhood provision shops", "Shopee and Lazada for repeat consumables"],
+      "price_floor": "Supermarket own-brand and marketplace listings sit below all three chains on staples.",
+      "why": "The commodity end of personal care has moved to supermarkets and marketplaces."
+    },
+    "tier_2_direct_set": {
+      "members": ["Guardian Health & Beauty (137 stores)", "Unity Pharmacy (60+ stores)", "Watsons (100+ stores)"],
+      "why": "Three chains, near-identical pricing and range, competing almost entirely on location and promotion timing."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["Watsons — largest share (18%) and the only loyalty programme", "Guardian — historically the pharmacy brand, now pivoting to mass-market", "Unity — cheapest at regular price, smallest range"],
+      "why": "The category has no distinctive-word incumbent. Ownership is by outlet proximity, not by owning a phrase in the buyer's mind. This is the diagnostic point.",
+      "diagnostic": "**CRITICAL FOR THE TEST.** Unlike KOI ('the trusted everyday tea') or the Michelin hawker ('the best bak chor mee'), NO chain here owns a retrieval cue. Customers pick the nearest."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["Sephora and cosmetics specialists (premium beauty)", "specialist skincare retailers", "pharmacies attached to clinics", "convenience stores (7-Eleven) carrying toiletries"],
+      "why": "Takes the same spend through a different format or a more specialist framing."
+    },
+    "tier_5_professional_route": {
+      "members": ["doctors and polyclinics for medication", "dermatologists and aesthetic clinics for skin", "hospital pharmacies"],
+      "why": "The governed path for anything beyond over-the-counter."
+    },
+    "tier_6_indirect": {
+      "members": ["e-commerce shifting repeat purchases away from stores", "private-label growth in supermarkets", "cost-of-living shifting staples to value channels"],
+      "why": "Changes where the category is bought at all."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "Mature, flat category, three dominant chains plus supermarkets. Expected 2-3.",
+    "competitive_room": "Concentrated top three, price-matched, supermarkets entering. Expected 2.",
+    "mental_advantage": "**THE DIAGNOSTIC.** Large and dominant, but owns NO distinctive buying situation — the store is chosen by proximity. Under the salience hypothesis: low. Under the size-cap hypothesis: low. Under the distinctive-retrieval hypothesis: low. All three predict ~3. Blank control.",
+    "defensibility": "Scale and loyalty programme are real but replicable; no pricing power. Expected 3.",
+    "demand_reach": "Very high — islandwide, all demographics. Expected 4-5."
+  },
+
+  "_what_this_case_tests": "Whether a dominant incumbent in a low-salience category with no distinctive claim scores ~3. If it scores 5, the dimension is rewarding size. If ~3, the baseline for the diagnostic is established."
+}
