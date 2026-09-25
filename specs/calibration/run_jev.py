@@ -204,6 +204,13 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
     gates = {k: v for k, v in meta["gates"].items() if not k.startswith("_")}
     bands = meta["bands"]
     floor = meta.get("display_floor", 0.20)
+    # each dimension is normalised by ITS OWN level count, so a 6-level dimension at
+    # maximum still contributes its full weight (0.5.0 split defensibility 5 -> 6)
+    counts = meta.get("level_counts") or {}
+    qs = rubric.get("questions") or {}
+    for k in weights:
+        if k not in counts:
+            counts[k] = len((qs.get(k) or {}).get("levels") or []) or 5
 
     answers = (result or {}).get("answers") or {}
     dims, cov, dist = {}, {}, {}
@@ -212,7 +219,7 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         s = a.get("score")
         if s is None:
             raise SystemExit(f"no score returned for {name}: {a}")
-        dims[name] = int(round(s)) + 1          # 0-indexed -> 1..5 display
+        dims[name] = int(round(s)) + 1          # 0-indexed -> 1..N display
         cov[name] = a.get("confidence")
         dist[name] = a.get("probabilities")
 
@@ -226,7 +233,7 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         weights_used = {k: round(weights[k] / total_w * 100, 2) for k in scored}
         fires = [k for k in scored if dims[k] < gates[k]]
         composite = None if fires else round(
-            sum(dims[k] / 5 * weights_used[k] for k in scored))
+            sum(dims[k] / counts[k] * weights_used[k] for k in scored))
         band = "GATE" if fires else band_of(composite, bands)
     else:
         weights_used, fires, composite, band = {}, [], None, "UNSCORED"
@@ -299,17 +306,18 @@ def main() -> None:
     print()
     for name in rubric["_meta"]["weights"]:
         d = out["dimensions_display_1to5"][name]
+        n = (rubric["_meta"].get("level_counts") or {}).get(name, 5)
         floor = rubric["_meta"]["gates"][name]
         c = out["evidence_coverage"][name]
         cf = f"{c:.2f}" if isinstance(c, (int, float)) else str(c)
         if name in out["dimensions_unscored"]:
             print(f"  {name:24} --    coverage {cf:>5}  BELOW FLOOR -> unscored "
-                  f"(raw {d}/5 not shown)")
+                  f"(raw {d}/{n} not shown)")
             continue
         iv = out["judgment_intervals"].get(name) or {}
         band = iv.get("band_80pct_display_1to5")
         bs = f"{band[0]}-{band[1]}" if band else "?"
-        print(f"  {name:24} {d}/5  coverage {cf:>5}  floor>={floor}  "
+        print(f"  {name:24} {d}/{n}  coverage {cf:>5}  floor>={floor}  "
               f"{'FIRES' if d < floor else 'pass'}  interval {bs}")
     print()
     print(f"  input sufficiency : {out['input_sufficiency']}")

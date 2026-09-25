@@ -1,8 +1,8 @@
 {
   "case": "C9-b2b-it-services",
   "model_id": "jev-1.13.0",
-  "rubric_version": "0.4.1",
-  "generated_at": "2026-09-25T06:59:21+00:00",
+  "rubric_version": "0.5.0",
+  "generated_at": "2026-09-25T07:46:14+00:00",
   "dimensions_display_1to5": {
     "market_headroom": 3,
     "competitive_room": 3,
@@ -19,67 +19,67 @@
     "demand_reach": 4
   },
   "raw_jev_scores_0to4": {
-    "market_headroom": 2.31,
-    "competitive_room": 1.78,
-    "mental_advantage": 1.69,
-    "defensibility": 0.74,
-    "demand_reach": 2.63
+    "market_headroom": 2.32,
+    "competitive_room": 1.81,
+    "mental_advantage": 1.72,
+    "defensibility": 1.03,
+    "demand_reach": 2.62
   },
   "evidence_coverage": {
     "market_headroom": 0.67,
     "competitive_room": 0.78,
-    "mental_advantage": 0.35,
-    "defensibility": 0.77,
-    "demand_reach": 0.61
+    "mental_advantage": 0.29,
+    "defensibility": 0.81,
+    "demand_reach": 0.62
   },
   "confidence": {
     "market_headroom": 0.67,
     "competitive_room": 0.78,
-    "mental_advantage": 0.35,
-    "defensibility": 0.77,
-    "demand_reach": 0.61
+    "mental_advantage": 0.29,
+    "defensibility": 0.81,
+    "demand_reach": 0.62
   },
   "coverage_floor": 0.2,
   "judgment_intervals": {
     "market_headroom": {
-      "expected_jev_0to4": 2.31,
-      "expected_display_1to5": 3.31,
+      "expected_jev_0to4": 2.33,
+      "expected_display_1to5": 3.33,
       "band_80pct_display_1to5": [
         3,
         4
       ],
-      "mass_covered": 0.96
+      "mass_covered": 0.95
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.78,
-      "expected_display_1to5": 2.78,
+      "expected_jev_0to4": 1.81,
+      "expected_display_1to5": 2.81,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.98
+      "mass_covered": 0.97
     },
     "mental_advantage": {
-      "expected_jev_0to4": 1.69,
-      "expected_display_1to5": 2.69,
+      "expected_jev_0to4": 1.73,
+      "expected_display_1to5": 2.73,
       "band_80pct_display_1to5": [
         2,
         4
       ],
-      "mass_covered": 0.95
+      "mass_covered": 0.94
     },
     "defensibility": {
-      "expected_jev_0to4": 0.73,
-      "expected_display_1to5": 1.73,
+      "expected_jev_0to4": 1.05,
+      "expected_display_1to5": 2.05,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 1.0
+      "mass_covered": 0.86
     },
     "demand_reach": {
-      "expected_jev_0to4": 2.64,
-      "expected_display_1to5": 3.64,
+      "expected_jev_0to4": 2.62,
+      "expected_display_1to5": 3.62,
       "band_80pct_display_1to5": [
         3,
         4
@@ -91,37 +91,38 @@
     "market_headroom": {
       "0": 0.01,
       "1": 0.02,
-      "2": 0.63,
+      "2": 0.62,
       "3": 0.33,
-      "4": 0.01
+      "4": 0.02
     },
     "competitive_room": {
       "0": 0.0,
-      "1": 0.24,
-      "2": 0.74,
-      "3": 0.02,
+      "1": 0.22,
+      "2": 0.75,
+      "3": 0.03,
       "4": 0.0
     },
     "mental_advantage": {
-      "0": 0.05,
-      "1": 0.49,
-      "2": 0.18,
-      "3": 0.28,
+      "0": 0.06,
+      "1": 0.46,
+      "2": 0.17,
+      "3": 0.31,
       "4": 0.0
     },
     "defensibility": {
-      "0": 0.27,
-      "1": 0.73,
-      "2": 0.0,
-      "3": 0.0,
-      "4": 0.0
+      "0": 0.12,
+      "1": 0.74,
+      "2": 0.12,
+      "3": 0.01,
+      "4": 0.01,
+      "5": 0.0
     },
     "demand_reach": {
       "0": 0.0,
-      "1": 0.02,
-      "2": 0.37,
-      "3": 0.56,
-      "4": 0.05
+      "1": 0.03,
+      "2": 0.36,
+      "3": 0.57,
+      "4": 0.04
     }
   },
   "input_sufficiency": "sufficient",
@@ -140,7 +141,7 @@
     "demand_reach": 15.0
   },
   "gates_firing": [],
-  "composite": 58,
+  "composite": 56,
   "band": "Contested",
   "computed_by": "code, from jev judgments (spec 1)",
   "_caveat": "evidence_coverage measures how much competitor evidence was retrievable, NOT the probability the judgment is correct. No human-labelled calibration set exists, so no calibrated confidence interval can be reported.",
