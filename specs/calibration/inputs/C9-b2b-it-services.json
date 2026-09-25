@@ -1,0 +1,78 @@
+{
+  "_meta": {
+    "case": "C9-b2b-it-services",
+    "control_type": "GROUP C — DERIVATION COVERAGE. Tests whether the front-end works without a registry and without a consumer category.",
+    "prediction": "Either derives a usable set or refuses cleanly. Silent under-derivation is the WORST outcome — worse than refusal.",
+    "purpose": "Every derivation so far has been consumer-facing with findable competitors. This is a B2B service firm: no consumer mind, no storefront, no registry that maps to its competitive position. ACRA covers the entity but not who it competes with.",
+    "ground_truth": "Market is real and crowded — at least 6 SG managed-IT providers found in one search (Advance IT, FunctionEight, iXiZ, Rezolva, TYPENT, Techease), all SME-targeted, all with published service tiers. Competitor set is FINDABLE by search even though no registry exists.",
+    "status": "control run"
+  },
+
+  "form": {
+    "business_name": "A Singapore managed-IT services firm",
+    "website": "(provided — SME-focused managed IT and cybersecurity)",
+    "role": "Founder / Director",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Managed IT services and cybersecurity for Singapore SMEs. Fixed monthly retainer on a per-user basis. Helpdesk, on-site support, monitoring, backup, cloud, cybersecurity.",
+    "positioning_sentence": "One accountable team for every layer of your IT, instead of juggling eight vendors.",
+    "differentiator": "We publish our rates. Almost nobody else in Singapore managed IT does — every comparison with competitors turns into four meetings and a custom quote. We also hold bizSAFE Level 3 for site work, and we align compliance work to PDPA and, for regulated clients, MAS expectations. Our clients name us as the single owner of every service line, so nothing falls between two suppliers.",
+    "undercut_on": "Price at the low end and incumbency at the high end. Smaller providers quote per-ticket rates below our retainer, and the larger MSPs have longer relationships and more engineers.",
+    "your_price_point": "Per user per month, tiered: Essential under 30 staff, Business 30-100, Enterprise 101-150. Rates confirmed against seat count, site count and hardware age.",
+    "their_price_point": "Others publish less. Some quote from S$2 per user per day. Larger MSPs are on negotiated contracts, so their real pricing is not public.",
+    "competitors_named_count": "3-5"
+  },
+
+  "competitors_named": [
+    "One in-house IT hire (the alternative to buying)",
+    "Separate single-service vendors (the status quo we replace)",
+    "The larger established MSPs with longer client relationships",
+    "Cheaper per-ticket IT support shops"
+  ],
+
+  "customer_description": "Singapore SME owners and operations leads, typically 30-150 staff, in healthcare, retail, finance, nonprofits, manufacturing, education and legal. They have either no in-house IT or one overloaded person. Trigger: an outage, a compliance requirement, or a growing headcount that IT can no longer keep up with.",
+
+  "derived_competitive_set": {
+    "_note": "DERIVED WITHOUT A REGISTRY. ACRA covers the entity but not competitive position. This set was built from search alone — the test is whether that is sufficient.",
+    "tier_0_default": {
+      "members": ["doing nothing — tolerating IT problems", "the owner or an office manager handling IT ad hoc", "an informal arrangement with a tech-savvy staff member"],
+      "why": "Free, and for a small SME a working laptop is a working laptop until it isn't. The default is to absorb the problem rather than buy a service."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["per-ticket or break-fix IT support shops", "freelance IT technicians", "a single in-house hire at the low end", "consumer-grade SaaS tools bought ad hoc"],
+      "price_floor": "Published as low as ~S$2 per user per day at the low end; break-fix is cheaper per event",
+      "why": "Pay for what breaks, nothing monthly, no contract. For an SME with occasional problems this looks cheaper than a retainer."
+    },
+    "tier_2_direct_set": {
+      "members": ["Advance IT (SME-focused, SG-based team, 99.5% retention claim)", "FunctionEight (20+ yrs, regional, Asia partner for Western firms)", "iXiZ Technology (est. 2006, per-user rate from S$2/user/day)", "Rezolva (est. 2012, publishes 8 service lines and 3 named tiers)", "TYPENT (4 productized outcomes with defined SLAs)", "Techease Solutions (explicitly 'transparent, fee-only, vendor-agnostic')"],
+      "why": "Same service, same retainer model, same SME target. Six credible providers findable in ONE search — crowded and undifferentiated."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["the larger established MSPs (longer relationships, more engineers, enterprise logos)", "the in-house IT department as the mental default"],
+      "why": "The buyer is not shopping for 'managed IT' — they are shopping for 'make my IT stop being a problem'. The category word is a supplier-side term. Owners who have never bought managed IT have no mental ladder for it at all; they have one for 'my IT guy'.",
+      "diagnostic": "The owner did NOT name any of the six competitors found. Large delta — the blindspot is structural, not careless. Their positioning ('one team instead of eight vendors') responds to the vendor-juggling problem, not to a named competitor."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["IT hardware resellers who bundle support", "accounting/HR outsourcing firms bundling IT", "cybersecurity-only specialists", "cloud resellers (Microsoft/Google partners)"],
+      "why": "Takes the same SME IT budget on a narrower or adjacent scope."
+    },
+    "tier_5_professional_route": {
+      "members": ["audit and compliance firms for MAS/PDPA obligations", "CSA-recognised cybersecurity consultants", "bizSAFE/certification bodies"],
+      "why": "The governed path — relevant because compliance is part of what the buyer needs."
+    },
+    "tier_6_indirect": {
+      "members": ["SaaS consolidation reducing the need for managed support", "cloud migration reducing on-prem hardware needs", "AI tools reducing helpdesk volume"],
+      "why": "Shrinks the underlying problem the service exists to solve."
+    }
+  },
+
+  "_derivation_findings": {
+    "did_the_derivation_work": "PARTIALLY, with a specific and useful failure.",
+    "tiers_that_populated_cleanly": "Tiers 1, 2, 4 and 5 populated with named, evidenced members from search alone. Tier 2 found six real competitors in one search.",
+    "tier_that_failed": "Tier 3 — the category incumbent — could not be populated with named competitors. There IS no consumer mind for 'managed IT services'. No brand owns a word. The tier produced only generic categories and the in-house alternative, which is a substitute, not an incumbent.",
+    "what_this_means": "Tier 3 is a CONSUMER-MIND tier and needs a consumer category. In a B2B service market with no brand-level mind-share, Tier 3 has nothing to populate. The taxonomy is not wrong — it correctly reports the tier is empty — but the derivation must SAY that rather than present an empty tier as a finding about competition.",
+    "the_reframe_needed": "For B2B without a brand mind, Tier 3 should become 'who holds the RELATIONSHIP' — the incumbent account-holder — rather than 'who owns the category word'. A real adaptation, not a workaround.",
+    "tier_7_note": "ACRA IS usable here — entity-level registrations of competing MSPs are findable, and rebrand history applies. Tier 7 works in B2B even though the consumer tiers do not.",
+    "verdict": "The derivation does NOT refuse. It produces a usable set for Tiers 1-2-4-5 and correctly detects that Tier 3 is empty. An empty Tier 3 must be surfaced as 'no brand owns this category' rather than silently rendered."
+  }
+}
