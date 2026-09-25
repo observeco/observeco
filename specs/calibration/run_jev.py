@@ -223,7 +223,23 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         s = a.get("score")
         if s is None:
             raise SystemExit(f"no score returned for {name}: {a}")
-        dims[name] = int(round(s)) + 1          # 0-indexed -> 1..N display
+        # Jev returns `score` = the PROBABILITY-WEIGHTED answer across the level index
+        # (verified against the API contract and every stored run: |score - E[level]| <= 0.03,
+        # the residual being 2-dp rounding of the probabilities). The model emits one bin per
+        # level, so defensibility carries 6 bins and the rest 5 -- `int(round(score)) + 1` is
+        # therefore already the correct 1-based display mapping. An earlier attempt to remap
+        # score proportionally onto 1..N was WRONG and has been reverted: it disagreed with the
+        # model's own argmax more often than this does (77.6% vs 81.2%).
+        #
+        # ROUNDING: half-UP, not Python's banker's rounding. Levels are ORDINAL and there is no
+        # "even" neighbour, so round-half-to-even is arbitrary. It also corrupted the clearest
+        # case: ASML defensibility has E[level] = 4.51 stored as 4.50, and banker's rounding
+        # sent 4.50 -> 4 (display 5) when the model's own argmax is level 5 (display 6).
+        import decimal
+        n = counts[name]
+        lvl = int(decimal.Decimal(str(s)).quantize(
+            decimal.Decimal("1"), rounding=decimal.ROUND_HALF_UP)) + 1
+        dims[name] = max(1, min(n, lvl))
         cov[name] = a.get("confidence")
         dist[name] = a.get("probabilities")
 
