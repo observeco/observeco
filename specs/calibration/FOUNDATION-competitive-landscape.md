@@ -149,15 +149,35 @@ The inputs needed are **not** a competitor list. They are the facts that define 
 | # | Input | Why it is load-bearing | Already in form? |
 |---|---|---|---|
 | 1 | **What you sell** | Sets the product category | yes |
-| 2 | **What your customer is trying to achieve** — the job they are hiring you for, not what you make | **This generates the substitution space** | **NEW — the critical one** |
+| 2 | **"On a best-endeavour basis, what do you think your target customer is trying to achieve?"** | **This generates the substitution space** | **NEW — the critical one** |
 | 3 | **Who the customer is, and the trigger that makes them buy now** | Defines the wallet and the moment | yes (partly) |
 | 4 | **Your price** | Sets the rung — determines which tiers are visible to this buyer | yes |
 | 5 | **Your claim** — what you say makes you different | Sets the contested axis | yes |
 | 6 | **URL** *(optional)* | Lets us read rather than rely on self-report | yes |
 
-**Why input 2 is the one that matters.** Ask a supplement founder "what do you sell" → "a
-menopause supplement" → you get supplement brands, i.e. Tiers 1 and 2 only. Ask "what is she
-trying to achieve" → "keep moving without pain, protect her bones before a fracture" → you get
+**Why the wording of input 2 matters.** Sean's correction to my version, and it is
+structurally better in three ways:
+
+1. **"Best-endeavour basis"** removes the pressure to be right. The question stops being a
+   test the founder can fail and becomes an estimate they can give.
+2. **"What do you THINK"** marks it explicitly as belief, not fact. That makes the answer
+   **data about the founder's perception** — which is what we actually need, since the
+   whole purpose is to compare their perception against the derived set.
+3. **"Your TARGET customer"** scopes it. My wording implied the customer they currently
+   have; the useful answer is about the customer they are aiming at.
+
+**The framing consequence is the important one.** My version asked for a fact the founder
+often does not have, which invites either a wrong answer or no answer. Sean's version asks
+for a belief they certainly do have — **so the field becomes reliably answerable, and the
+answer becomes a measurement rather than an input to be trusted.**
+
+**It fits the tier model exactly.** The founder's stated target is a "what they think" input;
+its job is to be **contrasted** with the derived set (§6 R5), never to define it. The wording
+is what makes that honest rather than a trap.
+
+**Where this field came from.** Ask a supplement founder "what do you sell" → "a menopause
+supplement" → you get supplement brands, i.e. Tiers 1 and 2 only. Ask what the customer is
+trying to achieve → "keep moving without pain, protect her bones before a fracture" → you get
 exercise, physiotherapy, calcium, collagen, TCM and menopause brands. **That is Tiers 0–5.**
 
 Competitors are defined by the **job**, not the product. Input 2 converts a product category
@@ -255,7 +275,7 @@ frame and the un-findable.** The protocol's job is to make the human's two contr
 |---|---|---|
 | **Tiers 0–6** | derived, with reasons | same, human-adjudicated |
 | **Tier 7 (new entrants)** | **withheld** | derived, with rebrand history |
-| **The frame** — which tier *is* the market | machine-derived, labelled as such | human-adjudicated |
+| **The frame** — which tier *is* the market | **machine-derived, labelled as such** | human-adjudicated |
 | Differentiator evaluation, traps, positioning statement, roadmap | withheld | full |
 
 **Why this line holds up.** Each side has something the other cannot have. The free report
@@ -266,15 +286,59 @@ both withheld. Neither side is a partial copy of the other.
 
 **Open questions for Sean:**
 
-1. **Does the tier list generalise?** It fits Bonefirm. Two more analyses would settle it — I
-   would derive the set for GreenPackers and PetDirectory and check whether the same eight
-   tiers emerge, or whether tiers are category-specific.
-2. **Is "what is your customer trying to achieve?" the right field?** It generates the
-   substitution space — and it is also the field a struggling founder is least likely to
-   answer well. Is there a better way to ask it?
-3. **Does the free report present a machine-derived frame at all?** Tiers 0–6 plus the owner's
-   blindspot delta is already substantial without naming a frame. Naming one without a human
-   adjudicating it is the weaker option — but a report with no frame may read as incomplete.
+1. ~~Does the tier list generalise?~~ **RESOLVED — it generalises.** See §5a.
+2. ~~Is "what is your customer trying to achieve?" the right field?~~ **RESOLVED** — Sean's
+   wording adopted (see §5). Open sub-question: does "target customer" confuse a founder who
+   has no clear target yet?
+3. ~~Does the free report present a machine-derived frame?~~ **RESOLVED** — yes, machine-derived
+   and labelled as such (Sean's decision).
+
+### 5a. Tier generalisation — TESTED across all six analyses
+
+`test_tier_generalisation.py` maps every delivered analysis's competitive-set sections onto the
+eight tiers. Result:
+
+| Tier | Bonefirm | GreenPackers | PetDirectory | CaiCa | SGFitness | SaladShop |
+|---|---|---|---|---|---|---|
+| 0 The Default | FIT | partial | FIT | partial | FIT | FIT |
+| 1 Cheap Substitute | FIT | FIT | partial | FIT | FIT | FIT |
+| 2 Direct Set | FIT | FIT | FIT | FIT | FIT | FIT |
+| **3 Category Incumbent** | **FIT** | **FIT** | **FIT** | **FIT** | **FIT** | **FIT** |
+| 4 Adjacent Crossover | FIT | partial | FIT | FIT | FIT | FIT |
+| 5 Professional Route | FIT | absent | absent | absent | FIT | absent |
+| 6 The Indirect | FIT | partial | FIT | partial | partial | partial |
+| 7 The Emerging | absent | absent | absent | partial | partial | absent |
+
+**MUST-present tiers (0–3): every one is present in every case.** Tier 2 and Tier 3 are FIT
+6/6. **No analysis contained a competitive group the taxonomy could not place.**
+
+**Tier 3 is FIT in all six** — and that is the load-bearing result, because Tier 3 is the
+blindspot tier. It appeared in every engagement, under a different label each time:
+
+| Case | Tier 3, as the analysis found it |
+|---|---|
+| Bonefirm | Menopause symptom brands — *"the real frame"* |
+| GreenPackers | Incumbent plastic — *"THE MISSING SET... the default purchase for most F&B operators"* |
+| PetDirectory | The discovery layer — *"where pet owners actually search for services"* |
+| CaiCa | CHAGEE — *"not a bubble tea brand, a tea expert"* |
+| SGFitness | The positioning column — the word each player owns |
+| SaladShop | SaladStop! owning "health/wellness" |
+
+**Six different industries, six different names for the same tier.** That is the evidence the
+taxonomy is structural rather than an artefact of Bonefirm's category.
+
+**Tiers 5–7 are legitimately category-dependent.** No professional route exists for bubble tea
+or salad; Tier 7 is absent from most analyses simply because it was not covered. **Absence is
+not failure — but it is worth noting that Tier 7 is the tier the analyses were weakest on,
+which is consistent with it being the one that needs the ACRA derivation rather than human
+research.**
+
+**A methodological note.** The first run of this test reported GreenPackers as ABSENT on
+Tier 3. That was **my mapping being too strict, not the taxonomy failing** — I required a
+section literally about "the buyer's category word" and missed that §2.2 *"the incumbent
+plastic purchase... the default purchase for most F&B operators"* is the same thing. The test
+found a real ambiguity; the fix was to the mapping, and the lesson is that a tier test is only
+as good as its reading of the sections.
 
 ---
 

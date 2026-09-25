@@ -66,6 +66,20 @@ def tier_tables(text: str) -> list[dict[str, str]]:
     return out
 
 
+def normalise(label: str) -> str:
+    """Compare tier names ignoring a leading article and case.
+
+    The compact generalisation matrix uses short names ('Category Incumbent') while
+    the definition table uses full ones ('The Category Incumbent'). Same tier — the
+    check should test identity, not formatting.
+    """
+    s = label.strip().lower()
+    for art in ("the ", "a ", "an "):
+        if s.startswith(art):
+            s = s[len(art):]
+    return re.sub(r"[^a-z0-9 ]", "", s).strip()
+
+
 def main() -> None:
     text = DOC.read_text()
     tables = tier_tables(text)
@@ -80,7 +94,7 @@ def main() -> None:
     for i, t in enumerate(tables):
         for num, label in t.items():
             want = CANONICAL.get(num)
-            if want and label.lower() != want.lower():
+            if want and normalise(label) != normalise(want):
                 print(f"  MISMATCH table {i} tier {num}: {label!r} != canonical {want!r}")
                 ok = False
 
