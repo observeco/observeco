@@ -1,0 +1,102 @@
+{
+  "01-bonefirm": {
+    "ambiguous": 0.01,
+    "elastic": 0.98,
+    "inelastic": 0.01
+  },
+  "07-observeco": {
+    "ambiguous": 0.08,
+    "elastic": 0.88,
+    "inelastic": 0.04
+  },
+  "08-bubbletea": {
+    "ambiguous": 0.0,
+    "elastic": 1.0,
+    "inelastic": 0.0
+  },
+  "09-koi": {
+    "ambiguous": 0.01,
+    "elastic": 0.98,
+    "inelastic": 0.01
+  },
+  "C2-activesg": {
+    "ambiguous": 0.17,
+    "elastic": 0.6,
+    "inelastic": 0.23
+  },
+  "C3-pet-lovers-centre": {
+    "ambiguous": 0.07,
+    "elastic": 0.92,
+    "inelastic": 0.01
+  },
+  "C4-sheng-siong": {
+    "ambiguous": 0.07,
+    "elastic": 0.9,
+    "inelastic": 0.03
+  },
+  "C5-michelin-hawker": {
+    "ambiguous": 0.11,
+    "elastic": 0.76,
+    "inelastic": 0.13
+  },
+  "C6-euyansang": {
+    "ambiguous": 0.18,
+    "elastic": 0.72,
+    "inelastic": 0.1
+  },
+  "C9-b2b-it-services": {
+    "ambiguous": 0.04,
+    "elastic": 0.9299999999999999,
+    "inelastic": 0.03
+  },
+  "D1-watsons": {
+    "ambiguous": 0.02,
+    "elastic": 0.96,
+    "inelastic": 0.02
+  },
+  "D2-petlovers-cue": {
+    "ambiguous": 0.04,
+    "elastic": 0.96,
+    "inelastic": 0.0
+  },
+  "E1-asml": {
+    "ambiguous": 0.0,
+    "elastic": 0.0,
+    "inelastic": 1.0
+  },
+  "E2-coupang-flywheel": {
+    "ambiguous": 0.22,
+    "elastic": 0.47000000000000003,
+    "inelastic": 0.31
+  },
+  "E4-bonefirm-ip": {
+    "ambiguous": 0.01,
+    "elastic": 0.99,
+    "inelastic": 0.0
+  },
+  "F1-boeing-airbus": {
+    "ambiguous": 0.0,
+    "elastic": 0.0,
+    "inelastic": 1.0
+  },
+  "F2-watsons-guardian": {
+    "ambiguous": 0.02,
+    "elastic": 0.97,
+    "inelastic": 0.01
+  },
+  "F3-vicom": {
+    "ambiguous": 0.0,
+    "elastic": 0.01,
+    "inelastic": 0.99
+  },
+  "N1-closedbusiness": {
+    "ambiguous": 0.01,
+    "elastic": 0.98,
+    "inelastic": 0.01
+  },
+  "N2-koi-stripped": {
+    "ambiguous": 0.01,
+    "elastic": 0.98,
+    "inelastic": 0.01
+  }
+}

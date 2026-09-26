@@ -93,6 +93,14 @@ def build_state(payload: dict) -> str:
 
 def build_questions(rubric: dict) -> dict:
     qs = {}
+    # A3: the classifier is asked FIRST and is NOT a scored dimension. It carries no
+    # weight and never enters the composite -- it decides which DIMENSIONS APPLY.
+    for name, spec in (rubric["_meta"].get("classifiers") or {}).items():
+        qs[name] = {
+            "type": "choice",
+            "instructions": spec["instructions"],
+            "criteria": spec["criteria"],
+        }
     for name, spec in rubric["questions"].items():
         if spec["type"] == "score":
             qs[name] = {
@@ -246,6 +254,33 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
     # a dimension is scored only if it clears the coverage floor
     unscored = [k for k in weights
                 if not isinstance(cov[k], (int, float)) or cov[k] < floor]
+
+    # ── A3: the elasticity classifier decides whether market_headroom APPLIES ──────
+    # NOT a confidence judgement -- a structural one. In an elastic-capacity market
+    # unmet demand cannot accumulate (any shortfall is absorbed by rivals opening
+    # capacity), so the dimension is a near-constant and scoring it multiplies noise
+    # by its weight. Verified over 17 cases: 12 elastic cases span raw 1.78-1.98, a
+    # 0.10 band inside the 0.08 noise floor. Where supply is inelastic the shortfall
+    # has nowhere to go and shows up as an order book, which IS measurable.
+    # The classifier is asked FIRST and carries no weight: it selects the dimension
+    # set, it does not enter the composite.
+    classification = None
+    elasticity = (answers.get("market_elasticity") or {})
+    if elasticity:
+        probs = elasticity.get("probabilities") or {}
+        choice = (max(probs, key=lambda k: float(probs[k])) if probs
+                  else elasticity.get("choice"))
+        classification = {
+            "elasticity": choice,
+            "confidence": elasticity.get("confidence"),
+            "probabilities": probs,
+            "rule_version": "A3",
+        }
+        disp = (meta.get("elasticity_dispositions") or {}).get(choice) or {}
+        if disp.get("market_headroom") == "not_applicable" \
+                and "market_headroom" not in unscored:
+            unscored.append("market_headroom")
+
     scored = [k for k in weights if k not in unscored]
 
     if scored:
@@ -260,15 +295,34 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
 
     suff = (answers.get("input_sufficiency") or {}).get("choice")
 
+    # A3: when market_headroom is not applicable, the client gets a QUALIFIER SENTENCE
+    # in its place. Without this the dimension would silently vanish from the report --
+    # the user would see four numbers and no explanation of the missing fifth.
+    qualifier = None
+    if classification:
+        d = (meta.get("elasticity_dispositions") or {}).get(
+            classification["elasticity"]) or {}
+        qualifier = {
+            "dimension": "market_headroom",
+            "disposition": d.get("market_headroom"),
+            "sentence": d.get("sentence"),
+            "also_report": d.get("also_report"),
+        }
+
     return {
         "case": payload["_meta"]["case"],
         "model_id": (result or {}).get("model"),
         "rubric_version": meta["version"],
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "classification": classification,
+        "market_headroom_qualifier": qualifier,
         "dimensions_display_1to5": dims,
         "dimensions_unscored": unscored,
         "display_for_client": {
-            k: (dims[k] if k in scored else "insufficient evidence to score")
+            k: (dims[k] if k in scored
+                else (qualifier["sentence"].split(".")[0] + "."
+                      if qualifier and k == "market_headroom" and qualifier["sentence"]
+                      else "insufficient evidence to score"))
             for k in weights
         },
         "raw_jev_scores_0to4": {k: answers[k].get("score") for k in weights if k in answers},
@@ -343,6 +397,17 @@ def main() -> None:
               f"{'FIRES' if d < floor else 'pass'}  interval {bs}")
     print()
     print(f"  input sufficiency : {out['input_sufficiency']}")
+    c = out.get("classification")
+    if c:
+        p = c.get("probabilities") or {}
+        ps = "  ".join(f"{k}:{float(v):.2f}" for k, v in sorted(p.items()))
+        print(f"  elasticity (A3)   : {c['elasticity'].upper()}"
+              + (f"   [{ps}]" if ps else ""))
+        q = out.get("market_headroom_qualifier") or {}
+        if q.get("disposition") == "not_applicable":
+            print(f"    -> market_headroom NOT SCORED (elastic market); "
+                  f"its 15% renormalised over the rest")
+            print(f"    -> client sees: \"{q.get('sentence')}\"")
     print(f"  gates firing      : {out['gates_firing'] or 'none'}")
     print(f"  composite         : {out['composite']}   band: {out['band']}")
 

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "name": "obs-095 business viability rubric",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) \u2014 otherwise calibration validates a scorer that is not the one shipped.",
     "model": "jev-latest",
     "scale": {
@@ -118,6 +118,38 @@
       "defensibility": 6,
       "demand_reach": 5,
       "mental_advantage": 5
+    },
+    "classifiers": {
+      "market_elasticity": {
+        "purpose": "DECIDES WHICH DIMENSIONS APPLY (A3). NOT a scored dimension -- it carries no weight and never enters the composite.",
+        "instructions": "Judge ONLY whether supply in this business's market can flex to meet an increase in demand. Ask: if demand doubled tomorrow, could the existing suppliers expand output to meet it? If rivals can add capacity -- more outlets, more staff, more floor space, more production runs -- then supply is ELASTIC and any shortfall is absorbed rather than accumulating. If they cannot, because capacity is physically, legally or structurally fixed -- fabrication plants, aircraft assembly lines, licensed premises, harbour berths, land -- then supply is INELASTIC and unmet demand accumulates as a queue or an order book. Judge the MARKET, not this specific business: a single restaurant cannot add tables tonight, but the restaurant market can absorb the demand elsewhere, so the market is elastic. A market is inelastic only when the constraint binds on ALL suppliers at once.",
+        "criteria": {
+          "elastic": "If demand rose, suppliers could expand capacity to meet it. Rivals can add outlets, staff, space or production. Any shortfall is absorbed by competitors, so no queue or backlog accumulates.",
+          "inelastic": "If demand rose, suppliers could NOT expand capacity to meet it. The constraint is physical, legal or structural and binds on every supplier -- plants, assembly lines, licensed capacity, land or berths. Unmet demand accumulates as a queue or order book.",
+          "ambiguous": "Capacity is mixed, transitionary, or the constraint binds on some suppliers but not others. The market cannot be cleanly assigned."
+        },
+        "rule": "elastic -> market_headroom is NOT scored (its qualifier sentence is reported instead) and its 15% is renormalised over the remaining dimensions. inelastic -> market_headroom IS scored. ambiguous -> scored AND flagged, with both readings reported.",
+        "why": "In an elastic-capacity market, unmet demand cannot accumulate: any shortfall is absorbed by rivals opening capacity, so the crowding/unmet axis is a constant and scoring it multiplies a near-constant by 15%. Verified: 12 of 17 cases span raw 1.78-1.98, a 0.10 band narrower than the 0.08 noise floor. In an inelastic market the shortfall has nowhere to go and shows up as an order book, which is measurable. See FINDING-elasticity-test.md, FINDING-discriminating-test.md, FINDING-midsized-test.md.",
+        "validated_against": "specs/calibration/FINDING-elasticity-test.md -- 17 cases hand-classified BLIND to the scores (12 elastic, 2 inelastic, 1 ambiguous, 1 inelastic-ish, 1 N/A). Model classification is compared against that label set in test_a3_elasticity.py.",
+        "ponytail": "Ambiguity is REPORTED, never resolved by the code. The model may legitimately be uncertain (a market mid-transition, or a firm-inelastic player in an elastic market -- the C5 hawker case). Forcing a side would manufacture a precision the evidence does not support. Ceiling: two-way branch + a contested flag. Upgrade path: a numeric elasticity score with a stated threshold if the three-way choice proves too coarse in use."
+      }
+    },
+    "elasticity_dispositions": {
+      "elastic": {
+        "market_headroom": "not_applicable",
+        "sentence": "Demand in your market is served and contested. Buyers can already get what you sell, so there is no pool of unmet demand to step into -- growth means taking share from an incumbent rather than serving need nobody is meeting.",
+        "also_report": "Concentration: who currently holds the buying situations in this category, and how hard they are to displace."
+      },
+      "inelastic": {
+        "market_headroom": "scored",
+        "sentence": "Supply in your market cannot flex to meet demand. Buyers wait, are rationed or are turned away, and the shortfall accumulates as a backlog rather than being absorbed by rivals.",
+        "also_report": "The demand-to-capacity ratio (orders or backlog against current revenue), normalised to what is normal for your category."
+      },
+      "ambiguous": {
+        "market_headroom": "scored_contested",
+        "sentence": "Your market's capacity is mixed or in transition -- some parts can flex, others cannot. The unmet-demand reading is reported but should be treated as contested.",
+        "also_report": "Both readings: the elastic view (demand served, compete for share) and the inelastic view (demand exceeds supply, a backlog exists)."
+      }
     },
     "normalisation_note": "Composite = sum(display / level_count * weight) over scored dimensions, weights renormalised across scored dimensions only. Each dimension is normalised by ITS OWN level count, so a dimension at maximum contributes its full weight regardless of how many levels it has. Defensibility is 6-level (0.5.0); the other four remain 5-level.",
     "gate_note": "Floors stay at display 2. The 0.5.0 split inserted a level ABOVE the old level 3, so the BOTTOM of the scale is unchanged and a floor of 2 still means 'not no-moat'.",
