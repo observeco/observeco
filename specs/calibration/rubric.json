@@ -31,21 +31,21 @@
       [
         "Fragile",
         5,
-        39
+        37
       ],
       [
         "Contested",
-        40,
-        59
+        38,
+        57
       ],
       [
         "Viable, conditional",
-        60,
-        74
+        58,
+        76
       ],
       [
         "Strong",
-        75,
+        77,
         100
       ]
     ],
@@ -153,7 +153,7 @@
     },
     "normalisation_note": "Composite = sum(display / level_count * weight) over scored dimensions, weights renormalised across scored dimensions only. Each dimension is normalised by ITS OWN level count, so a dimension at maximum contributes its full weight regardless of how many levels it has. Defensibility is 6-level (0.5.0); the other four remain 5-level.",
     "gate_note": "Floors stay at display 2. The 0.5.0 split inserted a level ABOVE the old level 3, so the BOTTOM of the scale is unchanged and a floor of 2 still means 'not no-moat'.",
-    "bands_note": "Bands were calibrated on the 5-level composite. Rescaling to a 6-level defensibility moves the low boundary by <1 point, so bands are kept unchanged to preserve comparability with every prior composite. Re-calibrate only after the ladder is re-run and reviewed.",
+    "bands_note": "RE-CALIBRATED in 0.7.0 to the scale's own anchors. The composite a business gets when EVERY dimension sits at the same anchor is a property of the scale arithmetic: all-dims-at-2 = 38.33, at-3 = 57.50, at-4 = 76.67. The original bands were those anchors hand-rounded to tens (40/60/75); snapping them back to 38/58/77 removes the 2-point drift. Two consequences: (1) 'Strong' now requires genuinely being at or above 'good on every dimension' -- the old floor of 75 sat BELOW the anchor, so a business could be labelled Strong while scoring under 'good on every dimension'; (2) the composite floor is 38.33, not 0, because every gate fires below display 2 -- so 'Fragile 5-37' describes a region almost no case can occupy, which is a known artefact of keeping the band table's lower bound at 5.",
     "dimension_division_of_labour": "market_headroom asks whether UNMET DEMAND exists (is the opportunity real). competitive_room asks how hard it is for an operator to take share (is the opportunity reachable). Before 0.6.0 both asked a crowding question and were near-duplicates; neither measured unmet demand at all.",
     "band_change_note": "Top band extended 95 -> 100 in 0.6.0. A composite of 96 was produced and fell outside the scale. Reason: defensibility now has 6 levels and market_headroom can reach 5, so the arithmetic maximum is 100, not the ~95 the bands were originally written against. Lower boundaries are unchanged so every historical composite keeps its band."
   },
