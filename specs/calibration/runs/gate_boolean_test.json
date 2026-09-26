@@ -1,4 +1,22 @@
 {
+  "01-bonefirm": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.02,
+        "some_room_exists": 0.98
+      }
+    ]
+  },
+  "07-observeco": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.0,
+        "some_room_exists": 1.0
+      }
+    ]
+  },
   "08-bubbletea": {
     "gate_demand": [
       "some_demand_exists",
@@ -19,6 +37,60 @@
       {
         "no_room_at_all": 0.08,
         "some_room_exists": 0.92
+      }
+    ]
+  },
+  "09-koi": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.05,
+        "some_room_exists": 0.95
+      }
+    ]
+  },
+  "C2-activesg": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.07,
+        "some_room_exists": 0.93
+      }
+    ]
+  },
+  "C3-pet-lovers-centre": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.01,
+        "some_room_exists": 0.99
+      }
+    ]
+  },
+  "C4-sheng-siong": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.0,
+        "some_room_exists": 1.0
+      }
+    ]
+  },
+  "C5-michelin-hawker": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.03,
+        "some_room_exists": 0.97
+      }
+    ]
+  },
+  "C6-euyansang": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.01,
+        "some_room_exists": 0.99
       }
     ]
   },
@@ -65,6 +137,60 @@
       {
         "no_room_at_all": 0.26,
         "some_room_exists": 0.74
+      }
+    ]
+  },
+  "D2-petlovers-cue": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.0,
+        "some_room_exists": 1.0
+      }
+    ]
+  },
+  "E1-asml": {
+    "gate_room": [
+      "no_room_at_all",
+      {
+        "no_room_at_all": 0.65,
+        "some_room_exists": 0.35
+      }
+    ]
+  },
+  "E2-coupang-flywheel": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.13,
+        "some_room_exists": 0.87
+      }
+    ]
+  },
+  "E4-bonefirm-ip": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.03,
+        "some_room_exists": 0.97
+      }
+    ]
+  },
+  "F1-boeing-airbus": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.03,
+        "some_room_exists": 0.97
+      }
+    ]
+  },
+  "F2-watsons-guardian": {
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.0,
+        "some_room_exists": 1.0
       }
     ]
   },

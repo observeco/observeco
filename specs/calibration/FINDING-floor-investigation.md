@@ -48,9 +48,14 @@ scores across 20 cases say otherwise:
 | **market_headroom** | 2.04 | 5 | **2–3** | 1.76 (44%) |
 | **competitive_room** | **1.32** | 5 | **1–4** | **1.29 (32%)** |
 
-**`competitive_room` — which holds the HIGHEST weight of the five at 20% — is the WORST-performing
-dimension in the entire rubric.** It has the lowest mean score, the narrowest raw span (32% of its
-scale), and it uses only 2 display levels (13 cases at 2, 7 at 3).
+**`competitive_room` — third-highest weight at 20% — is the WORST-performing dimension in the
+entire rubric.** It has the lowest mean score, the narrowest raw span (32% of its scale), and it
+uses only 2 display levels (13 cases at 2, 7 at 3).
+
+*(Correction: an earlier draft of this finding called `competitive_room` "the HIGHEST weight of the
+five at 20%". Wrong — `mental_advantage` and `defensibility` hold 25% each. `competitive_room` is
+third at 20%. Weights: 25 / 25 / 20 / 15 / 15. The substantive point is unaffected: a 20%-weight
+dimension that uses 32% of its scale is the largest scoring gap in the rubric.)*
 
 `market_headroom` at 15% is the second-worst. **The two dimensions I spent the session attacking
 are not the worst problem. `competitive_room` is.**
