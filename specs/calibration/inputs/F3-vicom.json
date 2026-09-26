@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "case": "F3-vicom",
+    "control_type": "GROUP F — capacity elasticity. MID-SIZED INELASTIC with demand MET. Tests the refined hypothesis.",
+    "purpose": "F1 (Boeing/Airbus) confirmed the prediction but is a famously extraordinary company — its 3.20 could be the model RECOGNISING Boeing rather than reading the mechanism. This case is mid-sized (S$119.5m revenue) and obscure outside Singapore, which removes the fame confound. It also tests a REFINED hypothesis: inelastic supply is necessary but NOT sufficient for unmet demand to accumulate.",
+    "pre_registered_prediction": "market_headroom LOW — display 3, raw ~1.8-2.0. FALSIFIED if raw >= 2.6. If it returns HIGH, the model is reading 'regulated duopoly / barrier to entry' as unmet demand, which would be a real defect in what the dimension measures.",
+    "hypothesis_refinement": "ORIGINAL (imprecise): inelastic supply -> unmet demand accumulates. FALSIFIED BY THIS CASE'S EXISTENCE: VICOM has inelastic supply (LTA authorises every centre) and demand is nonetheless fully met. REFINED: inelasticity makes accumulation POSSIBLE (it is what allows a backlog or queue to form and remain observable); whether accumulation actually occurs depends on the demand-to-capacity balance. So the axis is still elasticity for OBSERVABILITY, but the scored quantity is demand vs capacity.",
+    "elasticity_axis": "INELASTIC (market-level, regulatory). Only operators authorised by the LTA may perform mandatory vehicle inspections, and the LTA decides how many operators and centres to authorise. A competitor cannot open an inspection centre without that authorisation. Barrier is regulatory, not physical — but the effect on supply flexibility is identical.",
+    "ground_truth": "A duopoly. VICOM holds 72.9% share in FY2024 (525,108 vehicles inspected) and 72.3% in 2025 (519,088 inspections), operating 6 of the 8 LTA-Authorised Inspection Centres; with its 78%-owned subsidiary JIC it controls 7 of 8. STA Inspection operates the remaining 2. Inspection fees are standardised across all centres with little room to adjust (S$71.94 incl. GST per private-car inspection; S$35.97 re-inspection). CRITICALLY FOR THIS TEST: demand is MET. Revenue has grown only 11.97% since 2015 while operating profit and net profit slightly DECREASED; growth is described as 'limited by Singapore's stagnant car population and the fixed inspection fee'. Market share has ERODED from over 75% in 2020 to 72.3% in 2025, attributed to aggressive competitor pricing on corporate fleets. Published live centre traffic shows LOW waits (under 20 minutes) at most centres. No queue, no backlog, no waiting list.",
+    "sources": [
+      "corporate-monitor.org — VICOM Ltd report (Sep 2025): 72.9% share, 6 of 8 centres, duopoly structure, standardised fees",
+      "VICOM FY2024 media release (21 Feb 2025) — 525,108 vehicles inspected, 72.9% share, revenue S$119.5m",
+      "glavcotinsights.com — VICOM first-principles brief: 519,088 inspections, 72.3% share in 2025",
+      "minichart.com.sg — VICOM AGM 2026: share erosion 75% -> 72.3%, Ang Mo Kio closure, S$2.1m JIC goodwill impairment",
+      "vicom.com.sg/our-locations — live centre traffic: Low (under 20 min) / Medium (20-45 min) / High (over 45 min)",
+      "LTA OneMotoring — authorised inspection centre list"
+    ],
+    "why_this_case": "It holds the axis constant and varies only the demand/capacity balance. Same inelastic regulatory supply as ASML and Boeing, but demand is satisfied. If the model reads the MECHANISM it scores this LOW (like the elastic pack). If it reads only the BARRIER ('regulated duopoly, high barriers to entry') it scores this HIGH — and that would show the dimension measures protection, not opportunity. This is the case that distinguishes those two readings.",
+    "status": "pre-registered, not yet run"
+  },
+
+  "form": {
+    "business_name": "VICOM Ltd",
+    "website": "vicom.com.sg",
+    "role": "Management",
+    "company_size_band": "500+",
+    "city": "Singapore",
+    "category": "Vehicle inspection and technical testing. Mandatory periodic roadworthiness and emissions inspection for all Singapore-registered vehicles, carried out at LTA-Authorised Inspection Centres, plus an accredited materials and product testing arm.",
+    "positioning_sentence": "The vehicle inspection centre most Singapore drivers use, because the government requires the inspection and authorises the centres.",
+    "differentiator": "We are the dominant operator in a market where every vehicle on the road must be inspected on a fixed schedule and only LTA-authorised centres may do it. We run six of the eight authorised inspection centres in Singapore and, with our subsidiary, seven of eight. That authorisation is a real barrier — a competitor cannot enter without it. We have decades of operating history, high fixed-cost leverage, standardised procedures and a profitable, cash-generative vehicle testing business that funds our expansion into accredited testing. We are also one of the LTA-appointed partners installing ERP 2.0 on-board units.",
+    "undercut_on": "Growth is structurally capped. Singapore's car population is stagnant, the inspection fee is held flat and standardised across all centres, and we cannot raise prices. Our market share has slipped from above 75% to 72.3% as the competitor prices aggressively for corporate fleet contracts. We lost a centre when the Ang Mo Kio lease expired, which cut revenue and triggered a goodwill impairment. There is no way to grow the vehicle inspection business by winning more demand — only by taking share from the one competitor, and they are doing the same to us.",
+    "your_price_point": "S$71.94 including GST for a standard private-car periodic inspection; S$35.97 for a re-inspection. Standardised across all authorised centres.",
+    "their_price_point": "STA Inspection charges the same standardised fees and competes instead on fleet contracts and turnaround for corporate customers. Pricing is not the lever in this market.",
+    "competitors_named_count": "1-2"
+  },
+
+  "competitors_named": [
+    "STA Inspection — the only other authorised operator, two centres, competing on corporate fleet pricing",
+    "Our own subsidiary JIC Inspection Services — partially third-party owned, operated under its own brand",
+    "LTA — sets inspection frequency, authorises centres, and decides how many operators exist"
+  ],
+
+  "customer_description": "Owners of Singapore-registered vehicles — private motorists, taxi and private-hire fleets, goods-vehicle operators and corporate fleets — who must have their vehicle inspected at a fixed interval to keep it legally on the road. Trigger: an LTA inspection notice issued about three months before the due date, received at a mandatory and non-negotiable interval.",
+
+  "derived_competitive_set": {
+    "_note": "Derived for mandatory vehicle inspection in Singapore. A regulated duopoly with a non-discretionary demand base.",
+    "tier_0_default": {
+      "members": ["deregistering the vehicle", "scrapping it", "switching to public transport"],
+      "why": "Avoids inspection entirely by exiting car ownership. Real at the margin and rising slowly with COE prices."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [],
+      "why": "There is no cheap substitute for a mandatory inspection. A vehicle that is not inspected cannot legally be kept on the road, so no lower-cost path exists. The nearest thing to a substitute is delay — running past the due date and absorbing the fine — which is non-compliance, not competition."
+    },
+    "tier_2_direct_set": {
+      "members": ["STA Inspection Pte Ltd"],
+      "why": "One competitor. Both offer the same standardised service at the same standardised price. With VICOM at 72.3-72.9%, this is a duopoly, and the two-centre competitor is the only alternative an inspection customer can choose."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["VICOM itself — the original and dominant operator, six of eight centres, the default for most drivers"],
+      "why": "The incumbent in this category is the business being scored. The only structure question is whether a challenger can take volume from it, and share is drifting slowly in the challenger's favour."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["motor workshops performing pre-inspection checks and rectification", "dealers handling inspection for trade-ins", "IU and ERP-related service points", "insurance-linked vehicle assessments"],
+      "why": "Captures the customer around the inspection event without performing the statutory inspection. Workshops can prepare a vehicle so it passes first time but cannot issue the certificate."
+    },
+    "tier_5_professional_route": {
+      "members": ["fleet managers and leasing companies bundling inspection into fleet service contracts", "transport operators with in-house maintenance arranging inspections centrally"],
+      "why": "The corporate fleet route is where the actual competition happens — the competitor is pricing aggressively for fleet contracts, which is the stated cause of VICOM's share erosion."
+    },
+    "tier_6_indirect": {
+      "members": ["COE policy and car population growth", "EV adoption changing inspection content", "public transport expansion reducing car ownership", "ERP 2.0 shifting the on-board unit relationship"],
+      "why": "Sets the size of the mandated demand pool. If the car population does not grow, total inspection volume does not grow."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "**THE TEST.** Supply is inelastic — only LTA-authorised centres may inspect, and a competitor cannot open one without authorisation. BUT demand is met and the market is saturated: stagnant car population, flat standardised fees, revenue growth of 11.97% over a DECADE with operating profit and net profit slightly declining, share eroding from over 75% to 72.3%, and published centre traffic showing low waits. No queue, no backlog, no waiting list. Demand does not exceed capacity. Expected 3 (raw ~1.8-2.0) — same as the elastic pack. If this returns 4-5, the model is reading the barrier to entry rather than the demand/capacity balance, which would falsify the refined hypothesis and identify a defect in the dimension.",
+    "competitive_room": "Very tight — one competitor, same price, competing only on fleet contracts. Not an open field; incumbency is largely protected by authorisation. Expected 1-2.",
+    "mental_advantage": "Strong but quiet. For most Singapore drivers 'get the car inspected' means VICOM — it is the default retrieval, with the largest network and the original brand. Not merely recalled alongside an equal. Expected 4-5.",
+    "defensibility": "Real and specifically regulatory. LTA authorisation is an actual obstruction — you cannot enter without it — alongside licence-held sites, high fixed-cost infrastructure and decades of operating history. This is 'Protected' in the strict sense: not merely costly to replicate but obstructed. Expected 4 (of 6), possibly 5. Explicitly NOT 2-3: the barrier is a genuine obstruction, not just development cost.",
+    "demand_reach": "Every vehicle owner in Singapore, at a mandatory interval — an extremely identifiable, addressable and non-discretionary base. Expected 4-5."
+  },
+
+  "_note_on_the_test": "F1 (Boeing/Airbus) tested inelastic + unmet -> HIGH. F3 (VICOM) tests inelastic + met -> predicted LOW. Together they separate the two readings: if the model scores both high, it is reading regulation and barriers, not opportunity. F3 is mid-sized, so unlike F1 the result cannot be explained by the model recognising a famous company."
+}
