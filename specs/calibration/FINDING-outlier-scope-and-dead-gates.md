@@ -1,14 +1,19 @@
-# FINDING — 80/20 resolution: delete the dead gates, stop chasing outliers, and the weight/discrimination misalignment
+# FINDING — Outlier scope decision, dead gates, and a separate weight/discrimination observation
 
 **Date:** 2026-09-25
 **Trigger:** Sean — *"We should adopt a 80/20 approach. We can't and shouldn't solve for extreme outliers."*
-**Verdict:** **The 80/20 frame resolves the ASML problem by declaring it out of scope, and in doing so
-exposes a larger issue: the dimension weights do not match the dimensions' actual discriminating
-power. Two dimensions holding 35% of the weight deliver 10.5 composite points between them.**
+**Note on the trigger:** "80/20" here is **an expression, not a numeric directive.** It means *focus
+on the common case; do not engineer for the tail.* Sean confirmed this explicitly — it is not to be
+taken literally, and it licenses no reweighting arithmetic. Sections 1–2 below are the decision that
+follows from it. **Sections 3–4 are my own observations, made independently — they are NOT part of
+the 80/20 decision and should not be read as one.**
+**Verdict:** **ASML and Boeing/Airbus are out of scope. The three dead gates are free to delete
+(verified zero-risk). Separately, the dimension weights do not match the dimensions' measured
+discriminating power, but that is an observation to carry, not an instruction to act on.**
 
 ---
 
-## 1. ASML is out of scope — and the evidence says it never mattered anyway
+## 1. ASML is out of scope — and it never mattered anyway
 
 Sean's call: ASML and Boeing/Airbus are outliers; the form's population is ordinary SMEs; do not
 build for the tail.
@@ -50,9 +55,13 @@ The gates themselves are documented as unreachable:
 
 ---
 
-## 3. The real 80/20 finding: weight does not match discrimination
+## 3. SEPARATE OBSERVATION — weight does not match discrimination
 
-This is more important than the gates. How many composite points can each dimension actually move?
+**This section is not part of the 80/20 decision.** It is an independent measurement I made while
+investigating the gates. It is recorded because it is true and material, and because it bears
+directly on A3 — not because Sean asked for it or because it follows from "80/20."
+
+How many composite points can each dimension actually move?
 
 | dimension | weight | reaches | **moves** | **effective** |
 |---|---:|---|---:|---:|
@@ -75,10 +84,10 @@ The composite is effectively a three-dimension instrument wearing five dimension
 
 ---
 
-## 4. The trap I must flag before anyone reweights
+## 4. The trap to flag before anyone reweights
 
-The obvious next move is to rebalance the weights to match the measured discrimination — give
-`competitive_room` 5% instead of 20%.
+The obvious move on reading §3 is to rebalance the weights to match the measured discrimination —
+give `competitive_room` 5% instead of 20%.
 
 **That would be fitting to the corpus.** This is the exact error this project has made repeatedly
 (0.6.0 validated on 4 cases; the aggregation rule; the CAGR test). The distinction:
