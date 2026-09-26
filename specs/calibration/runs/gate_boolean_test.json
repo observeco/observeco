@@ -1,0 +1,140 @@
+{
+  "08-bubbletea": {
+    "gate_demand": [
+      "some_demand_exists",
+      {
+        "no_demand_at_all": 0.0,
+        "some_demand_exists": 1.0
+      }
+    ],
+    "gate_reach": [
+      "some_route_exists",
+      {
+        "no_reachable_customers": 0.01,
+        "some_route_exists": 0.99
+      }
+    ],
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.08,
+        "some_room_exists": 0.92
+      }
+    ]
+  },
+  "C9-b2b-it-services": {
+    "gate_demand": [
+      "some_demand_exists",
+      {
+        "no_demand_at_all": 0.0,
+        "some_demand_exists": 1.0
+      }
+    ],
+    "gate_reach": [
+      "some_route_exists",
+      {
+        "no_reachable_customers": 0.01,
+        "some_route_exists": 0.99
+      }
+    ],
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.02,
+        "some_room_exists": 0.98
+      }
+    ]
+  },
+  "D1-watsons": {
+    "gate_demand": [
+      "some_demand_exists",
+      {
+        "no_demand_at_all": 0.0,
+        "some_demand_exists": 1.0
+      }
+    ],
+    "gate_reach": [
+      "some_route_exists",
+      {
+        "no_reachable_customers": 0.0,
+        "some_route_exists": 1.0
+      }
+    ],
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.26,
+        "some_room_exists": 0.74
+      }
+    ]
+  },
+  "F3-vicom": {
+    "gate_demand": [
+      "some_demand_exists",
+      {
+        "no_demand_at_all": 0.0,
+        "some_demand_exists": 1.0
+      }
+    ],
+    "gate_reach": [
+      "some_route_exists",
+      {
+        "no_reachable_customers": 0.0,
+        "some_route_exists": 1.0
+      }
+    ],
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.18,
+        "some_room_exists": 0.82
+      }
+    ]
+  },
+  "N1-closedbusiness": {
+    "gate_demand": [
+      "some_demand_exists",
+      {
+        "no_demand_at_all": 0.0,
+        "some_demand_exists": 1.0
+      }
+    ],
+    "gate_reach": [
+      "some_route_exists",
+      {
+        "no_reachable_customers": 0.43,
+        "some_route_exists": 0.57
+      }
+    ],
+    "gate_room": [
+      "no_room_at_all",
+      {
+        "no_room_at_all": 0.87,
+        "some_room_exists": 0.13
+      }
+    ]
+  },
+  "N2-koi-stripped": {
+    "gate_demand": [
+      "some_demand_exists",
+      {
+        "no_demand_at_all": 0.0,
+        "some_demand_exists": 1.0
+      }
+    ],
+    "gate_reach": [
+      "some_route_exists",
+      {
+        "no_reachable_customers": 0.0,
+        "some_route_exists": 1.0
+      }
+    ],
+    "gate_room": [
+      "some_room_exists",
+      {
+        "no_room_at_all": 0.19,
+        "some_room_exists": 0.81
+      }
+    ]
+  }
+}
