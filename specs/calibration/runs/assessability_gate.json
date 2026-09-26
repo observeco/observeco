@@ -1,0 +1,82 @@
+{
+  "01-bonefirm": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "07-observeco": {
+    "competitive_market": 0.99,
+    "no_competitive_market": 0.01
+  },
+  "08-bubbletea": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "09-koi": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "C2-activesg": {
+    "competitive_market": 0.92,
+    "no_competitive_market": 0.08
+  },
+  "C3-pet-lovers-centre": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "C4-sheng-siong": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "C5-michelin-hawker": {
+    "competitive_market": 0.98,
+    "no_competitive_market": 0.02
+  },
+  "C6-euyansang": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "C9-b2b-it-services": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "D1-watsons": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "D2-petlovers-cue": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "E1-asml": {
+    "competitive_market": 0.0,
+    "no_competitive_market": 1.0
+  },
+  "E2-coupang-flywheel": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "E4-bonefirm-ip": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "F1-boeing-airbus": {
+    "competitive_market": 0.96,
+    "no_competitive_market": 0.04
+  },
+  "F2-watsons-guardian": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "F3-vicom": {
+    "competitive_market": 0.94,
+    "no_competitive_market": 0.06
+  },
+  "N1-closedbusiness": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  },
+  "N2-koi-stripped": {
+    "competitive_market": 1.0,
+    "no_competitive_market": 0.0
+  }
+}
