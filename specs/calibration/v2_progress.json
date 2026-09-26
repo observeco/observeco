@@ -1,0 +1,2270 @@
+{
+  "BK01.json": {
+    "case": "BK01-breadtalk",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "inelastic": 0.01,
+        "elastic": 0.97,
+        "ambiguous": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "BK02.json": {
+    "case": "BK02-four",
+    "composite": 51,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.94,
+      "probabilities": {
+        "ambiguous": 0.03,
+        "elastic": 0.96,
+        "inelastic": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 6,
+      "noise_used": 3.0
+    }
+  },
+  "BK03.json": {
+    "case": "BK03-paris",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "inelastic": 0.01,
+        "elastic": 0.97,
+        "ambiguous": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "BK04.json": {
+    "case": "BK04-tiong",
+    "composite": 58,
+    "band": "Viable, conditional",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.94,
+      "probabilities": {
+        "inelastic": 0.01,
+        "elastic": 0.96,
+        "ambiguous": 0.03
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    }
+  },
+  "BK05.json": {
+    "case": "BK05-polar",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.95,
+      "probabilities": {
+        "ambiguous": 0.03,
+        "elastic": 0.96,
+        "inelastic": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "BT01.json": {
+    "case": "BT01-mixue",
+    "composite": 62,
+    "band": "Viable, conditional",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.98,
+      "probabilities": {
+        "ambiguous": 0.01,
+        "inelastic": 0.0,
+        "elastic": 0.99
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Viable, conditional"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    }
+  },
+  "BT02.json": {
+    "case": "BT02-koi",
+    "composite": 57,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.97,
+      "probabilities": {
+        "ambiguous": 0.02,
+        "inelastic": 0.01,
+        "elastic": 0.97
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "BT03.json": {
+    "case": "BT03-chicha",
+    "composite": 57,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.91,
+      "probabilities": {
+        "ambiguous": 0.03,
+        "inelastic": 0.03,
+        "elastic": 0.94
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "BT04.json": {
+    "case": "BT04-heytea",
+    "composite": 52,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.97,
+      "probabilities": {
+        "ambiguous": 0.01,
+        "elastic": 0.98,
+        "inelastic": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    }
+  },
+  "BT05.json": {
+    "case": "BT05-randb",
+    "composite": 40,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.98,
+      "probabilities": {
+        "inelastic": 0.01,
+        "ambiguous": 0.01,
+        "elastic": 0.98
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 3,
+      "noise_used": 3.0
+    }
+  },
+  "BT06.json": {
+    "case": "BT06-each-a-cup",
+    "composite": 51,
+    "band": "Contested",
+    "secs": 1.0,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.97,
+      "probabilities": {
+        "inelastic": 0.01,
+        "ambiguous": 0.01,
+        "elastic": 0.98
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 6,
+      "noise_used": 3.0
+    }
+  },
+  "BT07.json": {
+    "case": "BT07-chagee",
+    "composite": 52,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.97,
+      "probabilities": {
+        "inelastic": 0.01,
+        "ambiguous": 0.01,
+        "elastic": 0.98
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    }
+  },
+  "BT08.json": {
+    "case": "BT08-liho",
+    "composite": 52,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "ambiguous": 0.02,
+        "inelastic": 0.01,
+        "elastic": 0.97
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    }
+  },
+  "BT09.json": {
+    "case": "BT09-playmade",
+    "composite": 46,
+    "band": "Contested",
+    "secs": 0.6,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.98,
+      "probabilities": {
+        "inelastic": 0.01,
+        "ambiguous": 0.01,
+        "elastic": 0.98
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    }
+  },
+  "BT10.json": {
+    "case": "BT10-sharetea",
+    "composite": 46,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.98,
+      "probabilities": {
+        "inelastic": 0.0,
+        "elastic": 0.99,
+        "ambiguous": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    }
+  },
+  "EL01.json": {
+    "case": "EL01-courts",
+    "composite": 42,
+    "band": "Contested",
+    "secs": 0.6,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.92,
+      "probabilities": {
+        "inelastic": 0.02,
+        "elastic": 0.95,
+        "ambiguous": 0.03
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    }
+  },
+  "EL02.json": {
+    "case": "EL02-harvey",
+    "composite": 33,
+    "band": "Fragile",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.84,
+      "probabilities": {
+        "elastic": 0.89,
+        "inelastic": 0.06,
+        "ambiguous": 0.05
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "EL03.json": {
+    "case": "EL03-best",
+    "composite": 38,
+    "band": "Contested",
+    "secs": 0.6,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.93,
+      "probabilities": {
+        "inelastic": 0.02,
+        "ambiguous": 0.02,
+        "elastic": 0.96
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    }
+  },
+  "EL04.json": {
+    "case": "EL04-gain",
+    "composite": 38,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.93,
+      "probabilities": {
+        "elastic": 0.95,
+        "ambiguous": 0.03,
+        "inelastic": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    }
+  },
+  "EW01.json": {
+    "case": "EW01-owndays",
+    "composite": 53,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.97,
+      "probabilities": {
+        "inelastic": 0.0,
+        "elastic": 0.99,
+        "ambiguous": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "EW02.json": {
+    "case": "EW02-zoff",
+    "composite": 33,
+    "band": "Fragile",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "elastic": 0.98,
+        "ambiguous": 0.02,
+        "inelastic": 0.0
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "EW03.json": {
+    "case": "EW03-lenskart",
+    "composite": 53,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "ambiguous": 0.02,
+        "elastic": 0.98,
+        "inelastic": 0.0
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "EW04.json": {
+    "case": "EW04-spectacle",
+    "composite": 37,
+    "band": "Fragile",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "ambiguous": 0.02,
+        "elastic": 0.97,
+        "inelastic": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "FF01.json": {
+    "case": "FF01-mcdonalds",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.93,
+      "probabilities": {
+        "elastic": 0.95,
+        "ambiguous": 0.03,
+        "inelastic": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "FF02.json": {
+    "case": "FF02-kfc",
+    "composite": 48,
+    "band": "Contested",
+    "secs": 0.6,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.93,
+      "probabilities": {
+        "inelastic": 0.02,
+        "ambiguous": 0.03,
+        "elastic": 0.95
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 1,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    }
+  },
+  "FF03.json": {
+    "case": "FF03-burger",
+    "composite": 48,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.94,
+      "probabilities": {
+        "inelastic": 0.01,
+        "elastic": 0.97,
+        "ambiguous": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 1,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    }
+  },
+  "FF04.json": {
+    "case": "FF04-subway",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.97,
+      "probabilities": {
+        "inelastic": 0.01,
+        "ambiguous": 0.01,
+        "elastic": 0.98
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "FF05.json": {
+    "case": "FF05-jollibee",
+    "composite": 57,
+    "band": "Contested",
+    "secs": 0.6,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "inelastic": 0.01,
+        "ambiguous": 0.02,
+        "elastic": 0.97
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "FF06.json": {
+    "case": "FF06-shake",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.93,
+      "probabilities": {
+        "ambiguous": 0.03,
+        "elastic": 0.95,
+        "inelastic": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "FU01.json": {
+    "case": "FU01-ikea",
+    "composite": 57,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.84,
+      "probabilities": {
+        "ambiguous": 0.09,
+        "inelastic": 0.02,
+        "elastic": 0.89
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "FU02.json": {
+    "case": "FU02-castlery",
+    "composite": 57,
+    "band": "Contested",
+    "secs": 0.6,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.87,
+      "probabilities": {
+        "elastic": 0.92,
+        "inelastic": 0.01,
+        "ambiguous": 0.07
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "FU03.json": {
+    "case": "FU03-scanteak",
+    "composite": 57,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.81,
+      "probabilities": {
+        "ambiguous": 0.11,
+        "inelastic": 0.02,
+        "elastic": 0.87
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "FU04.json": {
+    "case": "FU04-cellini",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.8,
+      "probabilities": {
+        "elastic": 0.86,
+        "inelastic": 0.02,
+        "ambiguous": 0.12
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "GY01.json": {
+    "case": "GY01-activesg",
+    "composite": 53,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.69,
+      "probabilities": {
+        "ambiguous": 0.1,
+        "elastic": 0.79,
+        "inelastic": 0.11
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "GY02.json": {
+    "case": "GY02-anytime",
+    "composite": 55,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.81,
+      "probabilities": {
+        "inelastic": 0.06,
+        "elastic": 0.88,
+        "ambiguous": 0.06
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 2,
+      "noise_used": 3.0
+    }
+  },
+  "GY03.json": {
+    "case": "GY03-fitness",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.75,
+      "probabilities": {
+        "inelastic": 0.08,
+        "ambiguous": 0.08,
+        "elastic": 0.84
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "GY04.json": {
+    "case": "GY04-pure",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.86,
+      "probabilities": {
+        "inelastic": 0.04,
+        "elastic": 0.91,
+        "ambiguous": 0.05
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "GY05.json": {
+    "case": "GY05-virgin",
+    "composite": 39,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.84,
+      "probabilities": {
+        "elastic": 0.9,
+        "inelastic": 0.05,
+        "ambiguous": 0.05
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 2,
+      "noise_used": 3.0
+    }
+  },
+  "GY06.json": {
+    "case": "GY06-24-7",
+    "composite": 33,
+    "band": "Fragile",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.77,
+      "probabilities": {
+        "elastic": 0.84,
+        "inelastic": 0.08,
+        "ambiguous": 0.08
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "GY07.json": {
+    "case": "GY07-true",
+    "composite": 27,
+    "band": "Fragile",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.82,
+      "probabilities": {
+        "ambiguous": 0.06,
+        "elastic": 0.88,
+        "inelastic": 0.06
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 1,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "HB01.json": {
+    "case": "HB01-watsons",
+    "composite": 52,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "inelastic": 0.01,
+        "elastic": 0.97,
+        "ambiguous": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    }
+  },
+  "HB02.json": {
+    "case": "HB02-guardian",
+    "composite": 67,
+    "band": "Viable, conditional",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.94,
+      "probabilities": {
+        "inelastic": 0.01,
+        "elastic": 0.96,
+        "ambiguous": 0.03
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Viable, conditional"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    }
+  },
+  "HB03.json": {
+    "case": "HB03-unity",
+    "composite": 53,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.96,
+      "probabilities": {
+        "elastic": 0.98,
+        "ambiguous": 0.01,
+        "inelastic": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "HB04.json": {
+    "case": "HB04-sephora",
+    "composite": 53,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.94,
+      "probabilities": {
+        "inelastic": 0.01,
+        "elastic": 0.96,
+        "ambiguous": 0.03
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "KP01.json": {
+    "case": "KP01-ya",
+    "composite": 57,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.93,
+      "probabilities": {
+        "ambiguous": 0.02,
+        "inelastic": 0.02,
+        "elastic": 0.96
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "KP02.json": {
+    "case": "KP02-killiney",
+    "composite": 51,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.97,
+      "probabilities": {
+        "elastic": 0.98,
+        "inelastic": 0.01,
+        "ambiguous": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 6,
+      "noise_used": 3.0
+    }
+  },
+  "KP03.json": {
+    "case": "KP03-toast",
+    "composite": 51,
+    "band": "Contested",
+    "secs": 0.8,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.95,
+      "probabilities": {
+        "elastic": 0.97,
+        "inelastic": 0.01,
+        "ambiguous": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 6,
+      "noise_used": 3.0
+    }
+  },
+  "KP04.json": {
+    "case": "KP04-chin",
+    "composite": 47,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.93,
+      "probabilities": {
+        "elastic": 0.95,
+        "inelastic": 0.02,
+        "ambiguous": 0.03
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    }
+  },
+  "PS01.json": {
+    "case": "PS01-pcf",
+    "composite": 58,
+    "band": "Viable, conditional",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "inelastic",
+      "confidence": 0.57,
+      "probabilities": {
+        "inelastic": 0.72,
+        "elastic": 0.23,
+        "ambiguous": 0.05
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    }
+  },
+  "PS02.json": {
+    "case": "PS02-my",
+    "composite": 49,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "no_competitive_market": 0.0,
+        "competitive_market": 1.0
+      },
+      "refuses": false,
+      "elasticity": "inelastic",
+      "confidence": 0.67,
+      "probabilities": {
+        "ambiguous": 0.04,
+        "elastic": 0.18,
+        "inelastic": 0.78
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 8,
+      "noise_used": 3.0
+    }
+  },
+  "SM01.json": {
+    "case": "SM01-ntuc",
+    "composite": 58,
+    "band": "Viable, conditional",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.8,
+      "probabilities": {
+        "inelastic": 0.07,
+        "ambiguous": 0.07,
+        "elastic": 0.86
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    }
+  },
+  "SM02.json": {
+    "case": "SM02-sheng",
+    "composite": 65,
+    "band": "Viable, conditional",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.76,
+      "probabilities": {
+        "inelastic": 0.02,
+        "ambiguous": 0.14,
+        "elastic": 0.84
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 5
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Viable, conditional"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 8,
+      "noise_used": 3.0
+    }
+  },
+  "SM03.json": {
+    "case": "SM03-cold",
+    "composite": 53,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.9,
+      "probabilities": {
+        "elastic": 0.93,
+        "ambiguous": 0.04,
+        "inelastic": 0.03
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  },
+  "SM04.json": {
+    "case": "SM04-giant",
+    "composite": 37,
+    "band": "Fragile",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.91,
+      "probabilities": {
+        "ambiguous": 0.04,
+        "elastic": 0.94,
+        "inelastic": 0.02
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    }
+  },
+  "SM05.json": {
+    "case": "SM05-don",
+    "composite": 53,
+    "band": "Contested",
+    "secs": 0.5,
+    "classification": {
+      "assessability": "competitive_market",
+      "assessability_confidence": 1.0,
+      "assessability_probabilities": {
+        "competitive_market": 1.0,
+        "no_competitive_market": 0.0
+      },
+      "refuses": false,
+      "elasticity": "elastic",
+      "confidence": 0.92,
+      "probabilities": {
+        "elastic": 0.95,
+        "ambiguous": 0.04,
+        "inelastic": 0.01
+      },
+      "rule_version": "A3"
+    },
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "band_interval": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    }
+  }
+}

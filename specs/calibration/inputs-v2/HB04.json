@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "case": "HB04-sephora",
+    "business": "Sephora Singapore",
+    "product_category": "Health and beauty retail: personal care and cosmetics",
+    "category_price_spread": "moderate (Watsons/Guardian converged; Sephora premium above)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "MID-HIGH mental_advantage expected (owns the premium beauty position)",
+    "LABEL_SOURCE": "Published: Sephora Singapore held 7% share in 2025 (Euromonitor); 'premium international beauty brands list at Sephora first'",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: Sephora Singapore held 7% share in 2025 (Euromonitor); 'premium international beauty brands list at Sephora first'"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "Sephora Singapore",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Health and beauty retail: personal care and cosmetics",
+    "positioning_sentence": "The premium beauty destination.",
+    "differentiator": "The premium beauty destination. Exclusive international brands list with us first before going to the mass chains.",
+    "undercut_on": "We hold 7% share against Watsons' 18%, and we do not sell household or pharmacy essentials.",
+    "your_price_point": "premium (7% share)",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Watsons",
+    "Guardian",
+    "Unity Pharmacy",
+    "Sa Sa"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "supermarket personal-care aisle",
+        "don't buy",
+        "use what you have"
+      ],
+      "why": "Cheaper or no purchase."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Unity Pharmacy (60+ stores, cheapest at regular price)",
+        "supermarket own-brand",
+        "Shopee/Lazada online"
+      ],
+      "why": "Lowest regular price for the same product.",
+      "price_floor": "Unity regular price"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Watsons (18% share)",
+        "Guardian / DFI (14%)",
+        "Unity Pharmacy",
+        "Sephora (7%)",
+        "Sa Sa"
+      ],
+      "why": "Same product: personal care and beauty bought in store. Concentrated -- top 3 hold ~39%."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "Watsons - largest share at 18%, up from 16%",
+        "Guardian - the DFI rival, 120+ locations",
+        "Sephora - the premium beauty specialist"
+      ],
+      "why": "Watsons owns 'biggest', Guardian 'neighbourhood', Sephora 'premium'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "department-store beauty counters",
+        "pharmacy-only (prescription)",
+        "dermatologist clinics"
+      ],
+      "why": "Same need, different channel or authority."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "minimalism / skin-barrier trend reducing products bought"
+      ],
+      "why": "Reduces purchase frequency."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "RedMart Health",
+        "iHerb",
+        "Lazada Health",
+        "Shopee Health"
+      ],
+      "why": "Derived from market entries; all online-native."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Health and beauty retail: personal care and cosmetics), not the owner's list. Price spread in this category: moderate (Watsons/Guardian converged; Sephora premium above). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

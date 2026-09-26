@@ -1,0 +1,101 @@
+{
+  "_meta": {
+    "case": "FF02-kfc",
+    "business": "KFC Singapore",
+    "product_category": "Fast food: quick counter-service meal",
+    "category_price_spread": "wide at the item level (S$3.03-35.02), converged at the meal level (S$5 floor)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "HIGH mental_advantage expected (owns 'the chicken place')",
+    "LABEL_SOURCE": "Published: $5 Real Deals range replacing the old deal menu; 8pc bucket S$28.30; the most expensive flagship item at S$35.02",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: $5 Real Deals range replacing the old deal menu; 8pc bucket S$28.30; the most expensive flagship item at S$35.02"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "KFC Singapore",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Fast food: quick counter-service meal",
+    "positioning_sentence": "Fried chicken is what we do and everyone knows it.",
+    "differentiator": "Fried chicken is what we do and everyone knows it. Real Deals puts a complete meal at S$5 on weekdays.",
+    "undercut_on": "Our deals are weekday-only and dine-in only, not on delivery, and excluded at Jewel, Sentosa and the Zoo.",
+    "your_price_point": "Real Deals from S$5",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "McDonald's",
+    "Burger King",
+    "Popeyes",
+    "Jollibee"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "hawker meal ~S$4-5",
+        "cook at home",
+        "convenience-store meal",
+        "skip the meal"
+      ],
+      "why": "Cheaper and equally fast. Most lunch occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "KFC Real Deals S$5",
+        "McDonald's McSaver S$5",
+        "Jollibee Yumburger S$1.20",
+        "hawker Western food"
+      ],
+      "why": "A complete meal at the S$5 floor. TWO chains now share this price.",
+      "price_floor": "S$1.20 single item / S$5 meal"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "McDonald's",
+        "KFC",
+        "Burger King",
+        "Subway",
+        "Jollibee",
+        "Popeyes",
+        "Domino's",
+        "Pizza Hut"
+      ],
+      "why": "Same product: a counter-service burger/chicken/pizza meal."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "McDonald's - the default, most outlets, McSaver S$5",
+        "KFC - the chicken specialist, $5 Real Deals",
+        "Burger King - the deepest-discount challenger"
+      ],
+      "why": "Each holds a rung: default / chicken / discount."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "fast-casual (Shake Shack, Five Guys, Nando's)",
+        "food delivery",
+        "hawker food as the real baseline"
+      ],
+      "why": "Same meal, different price tier or channel."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "health messaging",
+        "cost-of-living cutting eating out"
+      ],
+      "why": "Reduces fast-food occasions."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "Guzman y Gomez",
+        "Japanese/Korean fast-casual entrants"
+      ],
+      "why": "Derived from new openings."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Fast food: quick counter-service meal), not the owner's list. Price spread in this category: wide at the item level (S$3.03-35.02), converged at the meal level (S$5 floor). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

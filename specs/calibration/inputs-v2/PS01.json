@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "case": "PS01-pcf",
+    "business": "PCF Sparkletots",
+    "product_category": "Preschool / childcare: full-day early education",
+    "category_price_spread": "wide (S$163.50/mo anchor-capped vs premium private)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "HIGH mental_advantage expected (largest network, anchor fee cap)",
+    "LABEL_SOURCE": "Published: 'the biggest preschool network in Singapore'; ECDA Anchor Operator so the fee cap applies; kindergarten S$163.50/mo GST-inclusive",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: 'the biggest preschool network in Singapore'; ECDA Anchor Operator so the fee cap applies; kindergarten S$163.50/mo GST-inclusive"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "PCF Sparkletots",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Preschool / childcare: full-day early education",
+    "positioning_sentence": "The largest preschool network in the country, as an ECDA Anchor Operator with fees capped and GST already included.",
+    "differentiator": "The largest preschool network in the country, as an ECDA Anchor Operator with fees capped and GST already included.",
+    "undercut_on": "Being the biggest and the cheapest means we are not seen as premium. Parents who want a brand-name curriculum look elsewhere.",
+    "your_price_point": "S$163.50/mo kindergarten",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "My First Skool",
+    "EtonHouse",
+    "MindChamps",
+    "Little Olive Tree"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "grandparent care",
+        "stay-home parent",
+        "part-time playgroup only"
+      ],
+      "why": "No fee at all. Most families start here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "PCF Sparkletots (kindergarten S$163.50/mo)",
+        "My First Skool (ECDA anchor operator, same fee cap)",
+        "MOE Kindergarten"
+      ],
+      "why": "The ECDA Anchor Operator fee cap sets the effective price floor.",
+      "price_floor": "S$163.50/mo (kindergarten, GST incl.)"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "PCF Sparkletots",
+        "My First Skool",
+        "EtonHouse",
+        "MindChamps",
+        "Little Olive Tree",
+        "MapleBear"
+      ],
+      "why": "Same product: full-day care and education for the same age group."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "PCF Sparkletots - the largest network in the country",
+        "My First Skool - the NTUC anchor operator",
+        "EtonHouse - the premium international-curriculum claim"
+      ],
+      "why": "PCF owns 'largest', MFS 'anchor operator', EtonHouse 'premium'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "enrichment classes instead of preschool",
+        "private tuition",
+        "foreign-system international schools"
+      ],
+      "why": "Same developmental need, different delivery and price tier."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "falling birth rate",
+        "WFH enabling home care"
+      ],
+      "why": "Reduces the number of children needing places."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "new ECDA-registered operators",
+        "boutique bilingual preschools"
+      ],
+      "why": "Derived from ECDA registration listings."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Preschool / childcare: full-day early education), not the owner's list. Price spread in this category: wide (S$163.50/mo anchor-capped vs premium private). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

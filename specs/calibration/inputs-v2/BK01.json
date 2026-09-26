@@ -1,0 +1,96 @@
+{
+  "_meta": {
+    "case": "BK01-breadtalk",
+    "business": "BreadTalk",
+    "product_category": "Bakery: packaged bread and buns for home consumption",
+    "category_price_spread": "moderate (value loaf vs artisan)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "HIGH mental_advantage expected (the iconic local chain)",
+    "LABEL_SOURCE": "Published: the iconic local chain with the most outlets; sells 30 buns for a promotional price; 9-best-bakeries list 2026",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: the iconic local chain with the most outlets; sells 30 buns for a promotional price; 9-best-bakeries list 2026"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "BreadTalk",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bakery: packaged bread and buns for home consumption",
+    "positioning_sentence": "The most recognisable bakery chain in Singapore.",
+    "differentiator": "The most recognisable bakery chain in Singapore. Familiar buns, new flavours every month, an outlet in almost every mall.",
+    "undercut_on": "We are not halal-certified and not artisan. We are a mass chain.",
+    "your_price_point": "mid/budget",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Four Leaves",
+    "Paris Baguette",
+    "Tiong Bahru Bakery",
+    "Polar Puffs & Cakes"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "supermarket house-brand bread",
+        "rice instead"
+      ],
+      "why": "Cheaper, bought with the weekly shop."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "supermarket in-store bakery",
+        "Giant/FairPrice house brand",
+        "Swee Heng"
+      ],
+      "why": "Lowest price per loaf.",
+      "price_floor": "house brand"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "BreadTalk",
+        "Four Leaves",
+        "Paris Baguette",
+        "Polar Puffs & Cakes",
+        "Duke Bakery",
+        "Tiong Bahru Bakery"
+      ],
+      "why": "Same product: bread and buns bought on the go. All compete on the same shelf."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "BreadTalk - the iconic local chain, most outlets",
+        "Four Leaves - the everyday neighbourhood staple",
+        "Tiong Bahru Bakery - the artisan premium claim"
+      ],
+      "why": "BreadTalk owns 'iconic local', Four Leaves 'everyday', TBB 'artisan'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "cafe pastries",
+        "convenience-store bread",
+        "dessert shops"
+      ],
+      "why": "Same carb occasion, different product."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "low-carb diets",
+        "home baking"
+      ],
+      "why": "Reduces bread occasions."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "Japanese/Korean bakery chains",
+        "artisan microbakeries"
+      ],
+      "why": "Derived from new openings."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Bakery: packaged bread and buns for home consumption), not the owner's list. Price spread in this category: moderate (value loaf vs artisan). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

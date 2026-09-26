@@ -1,0 +1,1610 @@
+[
+  {
+    "cid": "BT01",
+    "name": "Mixue Singapore",
+    "cat": "bubble-tea",
+    "price": "S$1.50-3.50",
+    "label": "strong",
+    "label_why": "owns the S$1.50 price floor outright",
+    "composite": 62,
+    "band": "Viable, conditional",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Viable, conditional"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT02",
+    "name": "KOI The Singapore",
+    "cat": "bubble-tea",
+    "price": "S$5.50-7.50",
+    "label": "strong",
+    "label_why": "90 outlets, largest network, 20 yrs, market leader",
+    "composite": 57,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT03",
+    "name": "Chicha San Chen",
+    "cat": "bubble-tea",
+    "price": "S$5.50+",
+    "label": "strong",
+    "label_why": "own tea farms, brewed to order - hard to replicate",
+    "composite": 57,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT04",
+    "name": "HEYTEA Singapore",
+    "cat": "bubble-tea",
+    "price": "premium",
+    "label": "strong",
+    "label_why": "invented the cheese-foam category",
+    "composite": 52,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT05",
+    "name": "R&B Tea",
+    "cat": "bubble-tea",
+    "price": "from ~S$3.60",
+    "label": "weak",
+    "label_why": "budget, no distinct position",
+    "composite": 40,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 3,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT06",
+    "name": "Each-A-Cup",
+    "cat": "bubble-tea",
+    "price": "budget",
+    "label": "weak",
+    "label_why": "48 outlets but no distinct claim",
+    "composite": 51,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 6,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT07",
+    "name": "CHAGEE Singapore",
+    "cat": "bubble-tea",
+    "price": "mid-tier",
+    "label": "strong",
+    "label_why": "explicit anti-category position; fastest riser",
+    "composite": 52,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT08",
+    "name": "LiHO TEA",
+    "cat": "bubble-tea",
+    "price": "mid-tier",
+    "label": "mid",
+    "label_why": "homegrown no.1 claim, but one of many",
+    "composite": 52,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT09",
+    "name": "Playmade",
+    "cat": "bubble-tea",
+    "price": "mid-tier",
+    "label": "weak",
+    "label_why": "a feature (fresh pearls), not a position",
+    "composite": 46,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BT10",
+    "name": "Sharetea",
+    "cat": "bubble-tea",
+    "price": "mid-tier",
+    "label": "weak",
+    "label_why": "no local distinction",
+    "composite": 46,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "GY01",
+    "name": "ActiveSG",
+    "cat": "gym",
+    "price": "S$15-30/mo (or S$2.50/entry)",
+    "label": "strong",
+    "label_why": "the price floor every gym is judged against",
+    "composite": 53,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "GY02",
+    "name": "Anytime Fitness Singapore",
+    "cat": "gym",
+    "price": "S$70-158/mo",
+    "label": "strong",
+    "label_why": "161 outlets, 24/7, hardest footprint to copy",
+    "composite": 55,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 2,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "GY03",
+    "name": "Fitness First Singapore",
+    "cat": "gym",
+    "price": "S$200-225/mo",
+    "label": "mid",
+    "label_why": "established, but priced above and no unique claim",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "GY04",
+    "name": "Pure Fitness Singapore",
+    "cat": "gym",
+    "price": "S$175-400/mo",
+    "label": "mid",
+    "label_why": "2 clubs, premium amenities, narrow reach",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "GY05",
+    "name": "Virgin Active Singapore",
+    "cat": "gym",
+    "price": "S$220-265/mo",
+    "label": "strong",
+    "label_why": "owns premium recovery amenities, pools",
+    "composite": 39,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 2,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "GY06",
+    "name": "24/7 Fitness",
+    "cat": "gym",
+    "price": "S$98-178/mo",
+    "label": "weak",
+    "label_why": "cheaper 24/7, no distinct position",
+    "composite": 33,
+    "band": "Fragile",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "GY07",
+    "name": "True Fitness Singapore",
+    "cat": "gym",
+    "price": "was S$165-190/mo",
+    "label": "dead",
+    "label_why": "closed all SG clubs 10 Sep 2026",
+    "composite": 27,
+    "band": "Fragile",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 1,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "SM01",
+    "name": "NTUC FairPrice",
+    "cat": "supermarket",
+    "price": "mainstream/value",
+    "label": "strong",
+    "label_why": "the national default, largest retailer",
+    "composite": 58,
+    "band": "Viable, conditional",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "SM02",
+    "name": "Sheng Siong",
+    "cat": "supermarket",
+    "price": "value",
+    "label": "strong",
+    "label_why": "owns value+fresh, peer-leading margin",
+    "composite": 65,
+    "band": "Viable, conditional",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 5
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Viable, conditional"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 8,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "SM03",
+    "name": "Cold Storage",
+    "cat": "supermarket",
+    "price": "premium",
+    "label": "weak",
+    "label_why": "premium claim now contested by FairPrice Finest",
+    "composite": 53,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "SM04",
+    "name": "Giant",
+    "cat": "supermarket",
+    "price": "value",
+    "label": "weak",
+    "label_why": "value claim lost to Sheng Siong on scale",
+    "composite": 37,
+    "band": "Fragile",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "SM05",
+    "name": "Don Don Donki",
+    "cat": "supermarket",
+    "price": "premium/value hybrid",
+    "label": "strong",
+    "label_why": "owns the Japanese-experience format",
+    "composite": 53,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "KP01",
+    "name": "Ya Kun Kaya Toast",
+    "cat": "kopitiam",
+    "price": "sets from S$5.60",
+    "label": "strong",
+    "label_why": "1926 heritage standard, largest chain",
+    "composite": 57,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "KP02",
+    "name": "Killiney Kopitiam",
+    "cat": "kopitiam",
+    "price": "sets from ~S$5",
+    "label": "mid",
+    "label_why": "rival heritage claim but second to Ya Kun",
+    "composite": 51,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 6,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "KP03",
+    "name": "Toast Box",
+    "cat": "kopitiam",
+    "price": "sets from ~S$5-7",
+    "label": "weak",
+    "label_why": "modern imitation of the format",
+    "composite": 51,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 6,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "KP04",
+    "name": "Chin Mee Chin",
+    "cat": "kopitiam",
+    "price": "sets from ~S$5",
+    "label": "mid",
+    "label_why": "iconic single location, no scale",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BK01",
+    "name": "BreadTalk",
+    "cat": "bakery",
+    "price": "mid/budget",
+    "label": "strong",
+    "label_why": "the iconic local chain, most outlets",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BK02",
+    "name": "Four Leaves",
+    "cat": "bakery",
+    "price": "budget/everyday",
+    "label": "mid",
+    "label_why": "everyday staple, wide footprint",
+    "composite": 51,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 6,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BK03",
+    "name": "Paris Baguette",
+    "cat": "bakery",
+    "price": "premium",
+    "label": "strong",
+    "label_why": "owns Korean premium, halal",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BK04",
+    "name": "Tiong Bahru Bakery",
+    "cat": "bakery",
+    "price": "premium artisan",
+    "label": "strong",
+    "label_why": "artisan position, French-trained association",
+    "composite": 58,
+    "band": "Viable, conditional",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "BK05",
+    "name": "Polar Puffs & Cakes",
+    "cat": "bakery",
+    "price": "budget",
+    "label": "weak",
+    "label_why": "known for one product, not a destination",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FF01",
+    "name": "McDonald's Singapore",
+    "cat": "fast-food",
+    "price": "McSaver from S$5",
+    "label": "strong",
+    "label_why": "the default, most outlets, most downloaded app",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FF02",
+    "name": "KFC Singapore",
+    "cat": "fast-food",
+    "price": "Real Deals from S$5",
+    "label": "strong",
+    "label_why": "owns 'the chicken place'",
+    "composite": 48,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 1,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FF03",
+    "name": "Burger King Singapore",
+    "cat": "fast-food",
+    "price": "coupons to 62% off",
+    "label": "weak",
+    "label_why": "position is discounting itself - copyable",
+    "composite": 48,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 1,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FF04",
+    "name": "Subway Singapore",
+    "cat": "fast-food",
+    "price": "Everyday Value S$6.80",
+    "label": "mid",
+    "label_why": "owns 'not fried', but dearer than S$5 meals",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FF05",
+    "name": "Jollibee Singapore",
+    "cat": "fast-food",
+    "price": "value",
+    "label": "mid",
+    "label_why": "owns Filipino comfort, few outlets outside community",
+    "composite": 57,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FF06",
+    "name": "Shake Shack Singapore",
+    "cat": "fast-food",
+    "price": "premium (ShackBurger S$12.17)",
+    "label": "strong",
+    "label_why": "owns premium burger tier",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "HB01",
+    "name": "Watsons Singapore",
+    "cat": "health-beauty",
+    "price": "value/mass",
+    "label": "strong",
+    "label_why": "largest share 18%, up from 16%",
+    "composite": 52,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "HB02",
+    "name": "Guardian Singapore",
+    "cat": "health-beauty",
+    "price": "value/mass",
+    "label": "mid",
+    "label_why": "14% share, flat, neighbourhood claim",
+    "composite": 67,
+    "band": "Viable, conditional",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Viable, conditional"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 9,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "HB03",
+    "name": "Unity Pharmacy",
+    "cat": "health-beauty",
+    "price": "cheapest at regular price",
+    "label": "mid",
+    "label_why": "cheapest at regular price but limited range",
+    "composite": 53,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "HB04",
+    "name": "Sephora Singapore",
+    "cat": "health-beauty",
+    "price": "premium (7% share)",
+    "label": "strong",
+    "label_why": "owns premium beauty, 7% share",
+    "composite": 53,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "EW01",
+    "name": "OWNDAYS Singapore",
+    "cat": "eyewear",
+    "price": "S$98 with lenses",
+    "label": "strong",
+    "label_why": "owns transparent inclusive pricing S$98",
+    "composite": 53,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "EW02",
+    "name": "Zoff Singapore",
+    "cat": "eyewear",
+    "price": "S$98 with lenses",
+    "label": "mid",
+    "label_why": "identical price to OWNDAYS, no reason to choose",
+    "composite": 33,
+    "band": "Fragile",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "EW03",
+    "name": "Lenskart Singapore",
+    "cat": "eyewear",
+    "price": "S$40 with SALE60",
+    "label": "mid",
+    "label_why": "owns cheapest, but only on price",
+    "composite": 53,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "EW04",
+    "name": "Spectacle Hut",
+    "cat": "eyewear",
+    "price": "mid-premium",
+    "label": "weak",
+    "label_why": "neither cheapest nor distinctive",
+    "composite": 37,
+    "band": "Fragile",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FU01",
+    "name": "IKEA Singapore",
+    "cat": "furniture",
+    "price": "entry/budget",
+    "label": "strong",
+    "label_why": "owns cheap-whole-flat",
+    "composite": 57,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FU02",
+    "name": "Castlery",
+    "cat": "furniture",
+    "price": "mid-range",
+    "label": "mid",
+    "label_why": "owns design-without-markup",
+    "composite": 57,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FU03",
+    "name": "Scanteak",
+    "cat": "furniture",
+    "price": "mid-premium",
+    "label": "strong",
+    "label_why": "solid teak specialisation since 1974",
+    "composite": 57,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 2,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 0,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "FU04",
+    "name": "Cellini",
+    "cat": "furniture",
+    "price": "premium",
+    "label": "strong",
+    "label_why": "in-house leather manufacturing, built to last",
+    "composite": 47,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 10,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "PS01",
+    "name": "PCF Sparkletots",
+    "cat": "preschool",
+    "price": "S$163.50/mo kindergarten",
+    "label": "strong",
+    "label_why": "largest network, anchor fee cap",
+    "composite": 58,
+    "band": "Viable, conditional",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "demand_reach": 3
+    },
+    "unscored": [],
+    "bi": {
+      "bands": [
+        "Contested",
+        "Viable, conditional"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "PS02",
+    "name": "My First Skool",
+    "cat": "preschool",
+    "price": "anchor-capped (same as PCF)",
+    "label": "mid",
+    "label_why": "same cap, fewer centres, little reason to choose",
+    "composite": 49,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 8,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "EL01",
+    "name": "Courts Singapore",
+    "cat": "electronics",
+    "price": "converged",
+    "label": "weak",
+    "label_why": "no distinct position; prices within 3-8%",
+    "composite": 42,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Contested"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 5,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "EL02",
+    "name": "Harvey Norman Singapore",
+    "cat": "electronics",
+    "price": "converged",
+    "label": "weak",
+    "label_why": "no distinct position; prices within 3-8%",
+    "composite": 33,
+    "band": "Fragile",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile"
+      ],
+      "reliable": true,
+      "distance_to_boundary": 4,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "EL03",
+    "name": "Best Denki Singapore",
+    "cat": "electronics",
+    "price": "converged",
+    "label": "weak",
+    "label_why": "no distinct position; prices within 3-8%",
+    "composite": 38,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    },
+    "err": null
+  },
+  {
+    "cid": "EL04",
+    "name": "Gain City",
+    "cat": "electronics",
+    "price": "converged",
+    "label": "weak",
+    "label_why": "no distinct position; prices within 3-8%",
+    "composite": 38,
+    "band": "Contested",
+    "dims": {
+      "market_headroom": 3,
+      "competitive_room": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ],
+    "bi": {
+      "bands": [
+        "Fragile",
+        "Contested"
+      ],
+      "reliable": false,
+      "distance_to_boundary": 1,
+      "noise_used": 3.0
+    },
+    "err": null
+  }
+]

@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "case": "EW02-zoff",
+    "business": "Zoff Singapore",
+    "product_category": "Eyewear: prescription spectacles",
+    "category_price_spread": "wide (S$40-98+ with lenses)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "MID-HIGH mental_advantage expected (same price point, Japanese design claim)",
+    "LABEL_SOURCE": "Published: $98 with lenses, matching OWNDAYS; positioned as the Japanese rival at the same inclusive price",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: $98 with lenses, matching OWNDAYS; positioned as the Japanese rival at the same inclusive price"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "Zoff Singapore",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Eyewear: prescription spectacles",
+    "positioning_sentence": "Japanese-designed frames at the same S$98 all-inclusive price, with lens options for focus-adjustment comfort.",
+    "differentiator": "Japanese-designed frames at the same S$98 all-inclusive price, with lens options for focus-adjustment comfort.",
+    "undercut_on": "We are priced identically to OWNDAYS, so customers have no price reason to choose us over them.",
+    "your_price_point": "S$98 with lenses",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "OWNDAYS",
+    "Lenskart",
+    "Spectacle Hut",
+    "Pearle Vision"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "keep the old pair",
+        "contact lenses",
+        "don't correct"
+      ],
+      "why": "Delays the purchase."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Lenskart S$40 with SALE60",
+        "online-only frames",
+        "JB optical shops"
+      ],
+      "why": "Lowest delivered price for a complete pair, lenses included.",
+      "price_floor": "S$40"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "OWNDAYS (S$98 with lenses)",
+        "Zoff (S$98 with lenses)",
+        "Lenskart",
+        "Spectacle Hut",
+        "Pearle Vision",
+        "MOL"
+      ],
+      "why": "Same product: a complete pair of prescription glasses."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "OWNDAYS - the S$98-inclusive-lens standard, free progressives",
+        "Zoff - the Japanese rival at the same price point",
+        "Lenskart - the online price disruptor"
+      ],
+      "why": "OWNDAYS owns 'transparent inclusive pricing', Lenskart 'cheapest'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "LASIK surgery",
+        "contact lenses",
+        "online-only retailers"
+      ],
+      "why": "Same need (sight correction), different product."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "screen-time habits",
+        "myopia management for children"
+      ],
+      "why": "Changes demand shape rather than removing it."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "online-first frame brands",
+        "myopia-control specialists"
+      ],
+      "why": "Derived from new openings."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Eyewear: prescription spectacles), not the owner's list. Price spread in this category: wide (S$40-98+ with lenses). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

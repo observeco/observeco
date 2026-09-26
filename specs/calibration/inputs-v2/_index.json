@@ -1,0 +1,416 @@
+{
+  "n": 55,
+  "categories": {
+    "bubble-tea": "Bubble tea / flavoured tea beverage, drunk on the go",
+    "gym": "Fitness gym membership, recurring access to train",
+    "supermarket": "Supermarket grocery retail, weekly household shop",
+    "kopitiam": "Local coffee-shop breakfast: kaya toast and kopi",
+    "bakery": "Bakery: packaged bread and buns for home consumption",
+    "fast-food": "Fast food: quick counter-service meal",
+    "health-beauty": "Health and beauty retail: personal care and cosmetics",
+    "eyewear": "Eyewear: prescription spectacles",
+    "furniture": "Furniture: home furnishing for a new flat",
+    "preschool": "Preschool / childcare: full-day early education",
+    "electronics": "Consumer electronics retail: TVs and appliances"
+  },
+  "category_price_spreads": {
+    "bubble-tea": "wide (S$1.50-5.50, 267%)",
+    "gym": "wide (S$15-400/mo, 26x)",
+    "supermarket": "moderate (premium vs value shelf)",
+    "kopitiam": "moderate (S$4.20-8+ per set)",
+    "bakery": "moderate (value loaf vs artisan)",
+    "fast-food": "wide at the item level (S$3.03-35.02), converged at the meal level (S$5 floor)",
+    "health-beauty": "moderate (Watsons/Guardian converged; Sephora premium above)",
+    "eyewear": "wide (S$40-98+ with lenses)",
+    "furniture": "wide (flat-pack vs solid teak vs leather)",
+    "preschool": "wide (S$163.50/mo anchor-capped vs premium private)",
+    "electronics": "CONVERGED (flagships within 3-8% across retailers)"
+  },
+  "companies": {
+    "BT01": {
+      "name": "Mixue Singapore",
+      "cat": "bubble-tea",
+      "prediction": "HIGH mental_advantage expected (owns the price floor outright)",
+      "price": "S$1.50-3.50",
+      "label_source": "Published price S$1.50 KingCone, the cheapest cup on the island; won by CREATING a new price floor"
+    },
+    "BT02": {
+      "name": "KOI The Singapore",
+      "cat": "bubble-tea",
+      "prediction": "HIGH mental_advantage and HIGH defensibility expected (market leader, 20 yrs)",
+      "price": "S$5.50-7.50",
+      "label_source": "Published store finder: 90 outlets counted 13 Sep 2026, the largest single network"
+    },
+    "BT03": {
+      "name": "Chicha San Chen",
+      "cat": "bubble-tea",
+      "prediction": "HIGH defensibility expected (own tea farms = hard to replicate)",
+      "price": "S$5.50+",
+      "label_source": "Published: brews from leaves grown on its OWN Taiwan tea farms; 32 outlets; 7 yrs in SG May 2026"
+    },
+    "BT04": {
+      "name": "HEYTEA Singapore",
+      "cat": "bubble-tea",
+      "prediction": "MID-HIGH mental_advantage expected (owns the cheese-foam idea)",
+      "price": "premium",
+      "label_source": "Published: cheezo salted cheese foam over fresh fruit tea; the app is the most actively maintained of any chain"
+    },
+    "BT05": {
+      "name": "R&B Tea",
+      "cat": "bubble-tea",
+      "prediction": "LOW-MID expected (budget tier, no distinct position)",
+      "price": "from ~S$3.60",
+      "label_source": "Published price from ~S$3.60, budget tier; no distinctive claim in the category roundups"
+    },
+    "BT06": {
+      "name": "Each-A-Cup",
+      "cat": "bubble-tea",
+      "prediction": "LOW-MID expected (48 outlets but no distinct claim)",
+      "price": "budget",
+      "label_source": "Published: 48 outlets counted 13 Sep 2026, founded 1999, budget tier; no distinctive positioning claim"
+    },
+    "BT07": {
+      "name": "CHAGEE Singapore",
+      "cat": "bubble-tea",
+      "prediction": "HIGH mental_advantage expected (explicit anti-category position)",
+      "price": "mid-tier",
+      "label_source": "Published: 46 outlets in 24 months, fastest riser; 'We're not a bubble tea brand' - Business Times"
+    },
+    "BT08": {
+      "name": "LiHO TEA",
+      "cat": "bubble-tea",
+      "prediction": "MID-HIGH mental_advantage expected (owns 'homegrown No.1')",
+      "price": "mid-tier",
+      "label_source": "Published: ~84 outlets, founded 2017 Singapore; markets itself as 'a proud Singapore tea beverage brand'"
+    },
+    "BT09": {
+      "name": "Playmade",
+      "cat": "bubble-tea",
+      "prediction": "LOW-MID expected (a feature, not a position)",
+      "price": "mid-tier",
+      "label_source": "Published: 'hand-rolled pearls of the day' is the signature; mid-tier price; no outlet-count leadership"
+    },
+    "BT10": {
+      "name": "Sharetea",
+      "cat": "bubble-tea",
+      "prediction": "LOW expected (Taiwanese chain with no local distinction)",
+      "price": "mid-tier",
+      "label_source": "Published: Taiwanese, 1992 origin, mid-tier; signature winter melon tea; no distinct SG position claimed"
+    },
+    "GY01": {
+      "name": "ActiveSG",
+      "cat": "gym",
+      "prediction": "HIGH mental_advantage expected (the price floor every gym is judged against)",
+      "price": "S$15-30/mo (or S$2.50/entry)",
+      "label_source": "Published on activesgcircle.gov.sg: S$30/mo peak, S$15 off-peak, ~30 sites; 'the price floor every commercial gym is implicitly judged against'"
+    },
+    "GY02": {
+      "name": "Anytime Fitness Singapore",
+      "cat": "gym",
+      "prediction": "HIGH defensibility expected (161 outlets = hard to replicate footprint)",
+      "price": "S$70-158/mo",
+      "label_source": "Published: 161 outlets islandwide, all 24/7 keycard access, 4,000+ gyms globally via reciprocity"
+    },
+    "GY03": {
+      "name": "Fitness First Singapore",
+      "cat": "gym",
+      "prediction": "MID-HIGH defensibility expected (established chain, publishes rates)",
+      "price": "S$200-225/mo",
+      "label_source": "Published on fitnessfirst.com/sg: Home Club S$200/mo, Passport S$225/mo, 14 clubs, zero joining fee"
+    },
+    "GY04": {
+      "name": "Pure Fitness Singapore",
+      "cat": "gym",
+      "prediction": "MID-HIGH defensibility expected (only 2 clubs = concentration, not reach)",
+      "price": "S$175-400/mo",
+      "label_source": "Published: 2 CBD clubs (Asia Square, Ocean Financial Centre), 25m lap pool, sauna, steam room, jacuzzi"
+    },
+    "GY05": {
+      "name": "Virgin Active Singapore",
+      "cat": "gym",
+      "prediction": "MID-HIGH mental_advantage expected (owns 'premium recovery')",
+      "price": "S$220-265/mo",
+      "label_source": "Published: 5 clubs, pools at multiple sites, compression boots and oxygen therapy; S$41-92/week"
+    },
+    "GY06": {
+      "name": "24/7 Fitness",
+      "cat": "gym",
+      "prediction": "LOW-MID expected (undercuts the chains but no distinct position)",
+      "price": "S$98-178/mo",
+      "label_source": "Published: S$98/mo on 12-month, S$178 rolling; positioned as the cheaper 24/7 alternative"
+    },
+    "GY07": {
+      "name": "True Fitness Singapore",
+      "cat": "gym",
+      "prediction": "GATE or VERY LOW expected (documented closure 10 Sep 2026)",
+      "price": "was S$165-190/mo",
+      "label_source": "DOCUMENTED DEATH: shut all Singapore clubs on 10 September 2026 into provisional liquidation; creditors' voluntary winding-up proposed 7 Oct 2026"
+    },
+    "SM01": {
+      "name": "NTUC FairPrice",
+      "cat": "supermarket",
+      "prediction": "HIGH mental_advantage expected (the national default)",
+      "price": "mainstream/value",
+      "label_source": "Published: 125 stores, largest food retailer in Singapore; group revenue S$4.7bn FY2025; 1.7m app users"
+    },
+    "SM02": {
+      "name": "Sheng Siong",
+      "cat": "supermarket",
+      "prediction": "HIGH mental_advantage expected (owns 'cheapest fresh')",
+      "price": "value",
+      "label_source": "Published: 77 stores, peer-leading operating margin 8-9%, 'no frills, disciplined investment model underpins its margin leadership' (DBS)"
+    },
+    "SM03": {
+      "name": "Cold Storage",
+      "cat": "supermarket",
+      "prediction": "MID-MENTAL expected (premium claim now contested)",
+      "price": "premium",
+      "label_source": "Published: 48 stores; DFI once held a near-monopoly in premium but FairPrice Finest expanded 9->39 stores; now owned by Macrovalue"
+    },
+    "SM04": {
+      "name": "Giant",
+      "cat": "supermarket",
+      "prediction": "LOW-MID expected (value claim lost to Sheng Siong on scale)",
+      "price": "value",
+      "label_source": "Published: 40 stores against FairPrice's 125 and Sheng Siong's 77; 'lags far behind' in a price-sensitive segment where scale drives procurement"
+    },
+    "SM05": {
+      "name": "Don Don Donki",
+      "cat": "supermarket",
+      "prediction": "MID-HIGH mental_advantage expected (owns the Japanese-experience position)",
+      "price": "premium/value hybrid",
+      "label_source": "Published: listed among new entrants with a distinct 'Japanese experiential' format; grew store count islandwide"
+    },
+    "KP01": {
+      "name": "Ya Kun Kaya Toast",
+      "cat": "kopitiam",
+      "prediction": "HIGH mental_advantage and defensibility expected (the heritage standard)",
+      "price": "sets from S$5.60",
+      "label_source": "Published: heritage dating to a 1926 coffee stall, largest heritage chain; sets from S$5.60; 'the definitive kaya toast'"
+    },
+    "KP02": {
+      "name": "Killiney Kopitiam",
+      "cat": "kopitiam",
+      "prediction": "MID-HIGH mental_advantage expected (rival heritage claim, 1919)",
+      "price": "sets from ~S$5",
+      "label_source": "Published: shophouse coffee-shop lineage dated 1919; 'two of Singapore's most storied Hainanese kopitiam chains'"
+    },
+    "KP03": {
+      "name": "Toast Box",
+      "cat": "kopitiam",
+      "prediction": "MID-MENTAL expected (modern mass-market, BreadTalk-owned)",
+      "price": "sets from ~S$5-7",
+      "label_source": "Published: BreadTalk group's modern mass-market take on the kopitiam format, mall-based"
+    },
+    "KP04": {
+      "name": "Chin Mee Chin",
+      "cat": "kopitiam",
+      "prediction": "MID-HIGH defensibility expected (single iconic location = hard to copy)",
+      "price": "sets from ~S$5",
+      "label_source": "Published: listed among the best kaya toast spots 2026; a single iconic East Coast Road location"
+    },
+    "BK01": {
+      "name": "BreadTalk",
+      "cat": "bakery",
+      "prediction": "HIGH mental_advantage expected (the iconic local chain)",
+      "price": "mid/budget",
+      "label_source": "Published: the iconic local chain with the most outlets; sells 30 buns for a promotional price; 9-best-bakeries list 2026"
+    },
+    "BK02": {
+      "name": "Four Leaves",
+      "cat": "bakery",
+      "prediction": "MID defensibility expected (everyday staple, wide footprint)",
+      "price": "budget/everyday",
+      "label_source": "Published: 'the everyday neighbourhood bakery staple' in the 2026 nine-best roundup; not halal-certified"
+    },
+    "BK03": {
+      "name": "Paris Baguette",
+      "cat": "bakery",
+      "prediction": "MID-HIGH mental_advantage expected (owns 'Korean premium')",
+      "price": "premium",
+      "label_source": "Published: halal-certified; positioned as the premium Korean bakery chain in the 2026 nine-best roundup"
+    },
+    "BK04": {
+      "name": "Tiong Bahru Bakery",
+      "cat": "bakery",
+      "prediction": "MID-HIGH defensibility expected (artisan position, founder-chef association)",
+      "price": "premium artisan",
+      "label_source": "Published: 'the artisan premium claim'; French-trained baker association; 9-best list 2026; not halal"
+    },
+    "BK05": {
+      "name": "Polar Puffs & Cakes",
+      "cat": "bakery",
+      "prediction": "LOW-MID expected (a product, not a position)",
+      "price": "budget",
+      "label_source": "Published: halal-certified; known primarily for curry puffs and a legacy cake range; no distinct premium or artisan claim"
+    },
+    "FF01": {
+      "name": "McDonald's Singapore",
+      "cat": "fast-food",
+      "prediction": "HIGH mental_advantage expected (the default, most outlets)",
+      "price": "McSaver from S$5",
+      "label_source": "Published: McSaver Meals from S$5 (Filet-O-Fish, McChicken, Smoky Beef); 'Singapore's most downloaded F&B app'"
+    },
+    "FF02": {
+      "name": "KFC Singapore",
+      "cat": "fast-food",
+      "prediction": "HIGH mental_advantage expected (owns 'the chicken place')",
+      "price": "Real Deals from S$5",
+      "label_source": "Published: $5 Real Deals range replacing the old deal menu; 8pc bucket S$28.30; the most expensive flagship item at S$35.02"
+    },
+    "FF03": {
+      "name": "Burger King Singapore",
+      "cat": "fast-food",
+      "prediction": "MID-MENTAL expected (discount-led, not position-led)",
+      "price": "coupons to 62% off",
+      "label_source": "Published: 'the most aggressive of the six on pure percentage savings', up to 62% off with coupon DL8"
+    },
+    "FF04": {
+      "name": "Subway Singapore",
+      "cat": "fast-food",
+      "prediction": "MID-mental_advantage expected (owns 'not fried')",
+      "price": "Everyday Value S$6.80",
+      "label_source": "Published: Everyday Value Meal S$6.80 (6-inch sub, cookie, drink); 'the only one of the cheap meals that is not fried'"
+    },
+    "FF05": {
+      "name": "Jollibee Singapore",
+      "cat": "fast-food",
+      "prediction": "MID mental_advantage expected (owns 'Filipino comfort')",
+      "price": "value",
+      "label_source": "Published: Yumburger S$1.20 - among the cheapest single items of all 14 chains; Chickenjoy S$4.25"
+    },
+    "FF06": {
+      "name": "Shake Shack Singapore",
+      "cat": "fast-food",
+      "prediction": "MID-HIGH mental_advantage expected (owns 'premium burger')",
+      "price": "premium (ShackBurger S$12.17)",
+      "label_source": "Published: ShackBurger S$12.17, shake US$8.25 - premium tier in the 14-chain price comparison"
+    },
+    "HB01": {
+      "name": "Watsons Singapore",
+      "cat": "health-beauty",
+      "prediction": "HIGH mental_advantage expected (largest share, 18%)",
+      "price": "value/mass",
+      "label_source": "Published: Watsons held the largest share at 18% in 2025, up from 16% in 2020 (Euromonitor)"
+    },
+    "HB02": {
+      "name": "Guardian Singapore",
+      "cat": "health-beauty",
+      "prediction": "MID-HIGH mental_advantage expected (the entrenched rival, 14%)",
+      "price": "value/mass",
+      "label_source": "Published: DFI Retail Group held 14% share in 2025; 120+ locations, 'strong in HDB neighbourhood malls'"
+    },
+    "HB03": {
+      "name": "Unity Pharmacy",
+      "cat": "health-beauty",
+      "prediction": "MID-MENTAL expected (cheapest claim, but limited range)",
+      "price": "cheapest at regular price",
+      "label_source": "Published: Unity is cheapest at regular price among the three chains, 60+ stores, integrated with public healthcare"
+    },
+    "HB04": {
+      "name": "Sephora Singapore",
+      "cat": "health-beauty",
+      "prediction": "MID-HIGH mental_advantage expected (owns the premium beauty position)",
+      "price": "premium (7% share)",
+      "label_source": "Published: Sephora Singapore held 7% share in 2025 (Euromonitor); 'premium international beauty brands list at Sephora first'"
+    },
+    "EW01": {
+      "name": "OWNDAYS Singapore",
+      "cat": "eyewear",
+      "prediction": "HIGH mental_advantage expected (owns transparent inclusive pricing)",
+      "price": "S$98 with lenses",
+      "label_source": "Published: 'Glasses from $98 with standard high-index aspheric lenses of any power included (no lens top-up), plus FREE Enhanced Progressive Lenses'"
+    },
+    "EW02": {
+      "name": "Zoff Singapore",
+      "cat": "eyewear",
+      "prediction": "MID-HIGH mental_advantage expected (same price point, Japanese design claim)",
+      "price": "S$98 with lenses",
+      "label_source": "Published: $98 with lenses, matching OWNDAYS; positioned as the Japanese rival at the same inclusive price"
+    },
+    "EW03": {
+      "name": "Lenskart Singapore",
+      "cat": "eyewear",
+      "prediction": "MID-HIGH mental_advantage expected (owns 'cheapest complete pair')",
+      "price": "S$40 with SALE60",
+      "label_source": "Published: 'Lenskart $40 with SALE60' - the lowest delivered price for a complete pair in the 2026 comparison"
+    },
+    "EW04": {
+      "name": "Spectacle Hut",
+      "cat": "eyewear",
+      "prediction": "LOW-MID expected (no distinct price or design claim)",
+      "price": "mid-premium",
+      "label_source": "Published: included in the 2026 eyewear comparisons with no distinctive price, design or service claim attached to it"
+    },
+    "FU01": {
+      "name": "IKEA Singapore",
+      "cat": "furniture",
+      "prediction": "HIGH mental_advantage expected (owns 'cheap whole flat')",
+      "price": "entry/budget",
+      "label_source": "Published: 3 stores, New Home Package $300 voucher per $2,000 spend, entry-tier benchmark; 'furnish a 4-room flat for $15,000'"
+    },
+    "FU02": {
+      "name": "Castlery",
+      "cat": "furniture",
+      "prediction": "MID-HIGH mental_advantage expected (owns 'design without designer prices')",
+      "price": "mid-range",
+      "label_source": "Published: 'a Singapore-founded brand known for modern designer furniture at mid-range prices', founded 2013, direct supply chain"
+    },
+    "FU03": {
+      "name": "Scanteak",
+      "cat": "furniture",
+      "prediction": "HIGH defensibility expected (solid teak specialisation since 1974)",
+      "price": "mid-premium",
+      "label_source": "Published: 'has been selling teak furniture since 1974 and now runs more than 140 stores across Singapore, Japan and Taiwan'; solid teak that can be sanded and re-oiled"
+    },
+    "FU04": {
+      "name": "Cellini",
+      "cat": "furniture",
+      "prediction": "MID-HIGH defensibility expected (in-house manufacturing, leather specialisation)",
+      "price": "premium",
+      "label_source": "Published: 'Premium - leather sofas and full sets, a sofa meant to last a decade'; in-house manufacturing; over $1,000 free delivery"
+    },
+    "PS01": {
+      "name": "PCF Sparkletots",
+      "cat": "preschool",
+      "prediction": "HIGH mental_advantage expected (largest network, anchor fee cap)",
+      "price": "S$163.50/mo kindergarten",
+      "label_source": "Published: 'the biggest preschool network in Singapore'; ECDA Anchor Operator so the fee cap applies; kindergarten S$163.50/mo GST-inclusive"
+    },
+    "PS02": {
+      "name": "My First Skool",
+      "cat": "preschool",
+      "prediction": "HIGH mental_advantage expected (NTUC anchor operator, same cap)",
+      "price": "anchor-capped (same as PCF)",
+      "label_source": "Published: an ECDA Anchor Operator so the same fee cap applies; part of NTUC, the social-enterprise group"
+    },
+    "EL01": {
+      "name": "Courts Singapore",
+      "cat": "electronics",
+      "prediction": "MID expected (no distinct position; price converged at 3-8%)",
+      "price": "converged",
+      "label_source": "Published: 'Samsung, LG, Sony, and TCL flagships land within 3 to 8 percent of each other across Courts, Harvey Norman, and Best Denki, and the gap flips depending on the week'"
+    },
+    "EL02": {
+      "name": "Harvey Norman Singapore",
+      "cat": "electronics",
+      "prediction": "MID expected (no distinct position; price converged at 3-8%)",
+      "price": "converged",
+      "label_source": "Published: same 3-8% price band as Courts and Best Denki; big-format showrooms"
+    },
+    "EL03": {
+      "name": "Best Denki Singapore",
+      "cat": "electronics",
+      "prediction": "MID expected (no distinct position; price converged at 3-8%)",
+      "price": "converged",
+      "label_source": "Published: same 3-8% price band as Courts and Harvey Norman; Japanese-service positioning claim"
+    },
+    "EL04": {
+      "name": "Gain City",
+      "cat": "electronics",
+      "prediction": "MID expected (no distinct position; price converged at 3-8%)",
+      "price": "converged",
+      "label_source": "Published: listed among the visible Singapore electronics players in the same converged price band; aircon/installation strength"
+    }
+  }
+}

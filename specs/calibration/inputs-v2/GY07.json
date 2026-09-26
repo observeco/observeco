@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "case": "GY07-true",
+    "business": "True Fitness Singapore",
+    "product_category": "Fitness gym membership, recurring access to train",
+    "category_price_spread": "wide (S$15-400/mo, 26x)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "GATE or VERY LOW expected (documented closure 10 Sep 2026)",
+    "LABEL_SOURCE": "DOCUMENTED DEATH: shut all Singapore clubs on 10 September 2026 into provisional liquidation; creditors' voluntary winding-up proposed 7 Oct 2026",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "DOCUMENTED DEATH: shut all Singapore clubs on 10 September 2026 into provisional liquidation; creditors' voluntary winding-up proposed 7 Oct 2026"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "True Fitness Singapore",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Fitness gym membership, recurring access to train",
+    "positioning_sentence": "We were the mid-priced full-service chain between ActiveSG and Fitness First, with classes and premium equipment.",
+    "differentiator": "We were the mid-priced full-service chain between ActiveSG and Fitness First, with classes and premium equipment.",
+    "undercut_on": "We have closed. Members who paid in advance are unsecured creditors.",
+    "your_price_point": "was S$165-190/mo",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Fitness First",
+    "Anytime Fitness",
+    "ActiveSG",
+    "Virgin Active"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "no exercise",
+        "home workouts / free YouTube",
+        "running in the park",
+        "HDB fitness corner"
+      ],
+      "why": "Free. Most exercise intentions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "ActiveSG MyActiveGYM S$15-30/mo, ~30 sites",
+        "SAFRA EnergyOne S$45-54",
+        "condo gym (bundled)"
+      ],
+      "why": "Government-run price floor every commercial gym is judged against.",
+      "price_floor": "S$15/mo off-peak"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Anytime Fitness (100+ outlets, 24/7)",
+        "Fitness First (14 clubs)",
+        "Virgin Active (5 clubs)",
+        "Pure Fitness (2 clubs)",
+        "24/7 Fitness"
+      ],
+      "why": "Same product: a monthly membership to lift weights and take classes."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "ActiveSG - the default, cheapest, ubiquitous",
+        "Anytime Fitness - most outlets, 24/7 keycard",
+        "Fitness First - the established CBD chain"
+      ],
+      "why": "Each holds a clear rung: cheapest / most accessible / most established."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "boutique studios (F45, Ritual, yoga)",
+        "personal trainers",
+        "ClassPass"
+      ],
+      "why": "Same goal (get fit), different delivery model."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "sedentary lifestyle",
+        "work-hours creep"
+      ],
+      "why": "Reduces the number of training occasions."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "24/7 Fitness (growing)",
+        "boutique studio openings"
+      ],
+      "why": "Derived from new openings, not asked of the owner."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Fitness gym membership, recurring access to train), not the owner's list. Price spread in this category: wide (S$15-400/mo, 26x). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}
