@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "case": "F2-watsons-guardian",
+    "control_type": "GROUP F — capacity elasticity. MARKET-ELASTIC duopoly. THE DISCRIMINATING TEST (opposite prediction to F1).",
+    "purpose": "Same duopoly STRUCTURE as F1 (Boeing/Airbus) but the opposite market-level supply elasticity. A new store can be opened in months, so unmet demand cannot accumulate — supply flexes to meet it. Hypothesis predicts LOW headroom. F1 predicts HIGH. Two opposite pre-registered predictions = a test that can actually fail.",
+    "pre_registered_prediction": "market_headroom LOW — display 3 (raw ~1.8-2.0), indistinguishable from the elastic pack. If it returns 4-5, the elasticity hypothesis is FALSIFIED: it would mean duopoly structure, not supply elasticity, drives the reading.",
+    "elasticity_axis": "ELASTIC (market-level). A retail store can be opened in months; fit-out and leasing are the only barriers. Supply flexes to meet demand, so nothing accumulates.",
+    "ground_truth": "Health and beauty specialists in Singapore are concentrated, with leading companies increasing dominance 2020-2025. Watsons holds 18% value share in 2025 (up from 16% in 2020); DFI Retail Group (Guardian) 14%; Sephora 7%. Watsons ~99 SG stores; Guardian ~126 SG stores. Despite concentration, the observable is price and promotion intensity, not scarcity — reported as 'many promotions', with the two chains price-matching each other, and multiple malls hosting two or three of them. Category is described as 'highly competitive'.",
+    "sources": [
+      "Euromonitor — Health and Beauty Specialists in Singapore (2025 company shares)",
+      "watsons.com.sg — Singapore store count (~99 stores, 33 in-store pharmacies)",
+      "rocketreach — Guardian Singapore (>126 stores nationwide)",
+      "AsiaOne / Yahoo Finance — Watsons vs Guardian vs Unity price and promotion comparisons"
+    ],
+    "why_this_case": "This is the control that isolates the axis. It has the SAME duopoly structure as F1 but ELASTIC supply. If structure drove the reading, this would score HIGH like F1. If supply elasticity drives it — as hypothesised — this scores LOW like the elastic pack. It is the cleanest possible discriminator between the two competing explanations.",
+    "note_on_concentration": "Concentration here is HIGH (top 3 = 39% of a fragmented specialist market; the two leaders = 32%) yet unmet demand does not accumulate, because a competitor can simply open another store. This is direct evidence that concentration and headroom are DIFFERENT AXES — concentration governs who captures value, not whether demand is met.",
+    "status": "pre-registered, not yet run"
+  },
+
+  "form": {
+    "business_name": "Watsons Singapore",
+    "website": "watsons.com.sg",
+    "role": "Management",
+    "company_size_band": "500+",
+    "city": "Singapore",
+    "category": "Health and beauty specialist retail — personal care, cosmetics, skincare, over-the-counter health products, and in-store pharmacy services. Sold through ~99 stores islandwide plus online.",
+    "positioning_sentence": "Singapore's leading health and beauty retailer — the store you walk past on the way home.",
+    "differentiator": "We are the largest health and beauty retailer in Singapore by value share at roughly 18%, and we are the flagship brand of Asia's biggest health and beauty group. We carry a wider beauty range than our nearest rival, bring in around 15 new-to-market beauty brands a year, run the category's most-used loyalty programme, and have added pharmacy services inside our stores — moving us beyond pure retail into health. Our network covers the island and our online and offline channels are joined up.",
+    "undercut_on": "Price perception and range depth against the nearest rival. Guardian often carries slightly lower base prices and a stronger entry-level offering, and both chains discount heavily and match each other's promotions — so we rarely win on price alone. Specialty beauty retailers take the premium end, and marketplaces undercut us on staples.",
+    "your_price_point": "Everyday health and beauty pricing, broadly matching the other chain and typically lifted by frequent promotions.",
+    "their_price_point": "Guardian tends to price slightly lower at base; Sephora and specialty beauty sit well above us; marketplaces and e-commerce undercut us on commodity items.",
+    "competitors_named_count": "3-5"
+  },
+
+  "competitors_named": [
+    "Guardian (DFI Retail Group) — the other major chain, ~126 stores, slightly lower base pricing",
+    "Unity Pharmacy — pharmacy-led, smaller range, government-linked",
+    "Sephora and specialty beauty retailers — the premium end",
+    "Online marketplaces and e-commerce for commodity personal care",
+    "Supermarkets and hypermarkets carrying personal care ranges"
+  ],
+
+  "customer_description": "Singapore consumers buying personal care, beauty and everyday health products. Trigger: routine replenishment plus impulse and promotion-driven purchase, typically a short walk-in trip rather than a planned occasion.",
+
+  "derived_competitive_set": {
+    "_note": "Derived for Singapore health and beauty specialist retail. Concentrated at the top, but supply is elastic.",
+    "tier_0_default": {
+      "members": ["not buying the product", "using what one already has"],
+      "why": "Avoids the purchase. Large for discretionary beauty, smaller for necessities."
+    },
+    "tier_1_cheap_substitute": {
+      "members": ["online marketplaces (Shopee, Lazada) for commodity personal care", "supermarket and hypermarket personal care aisles", "value and Daiso-style formats", "duty-free and travel retail"],
+      "why": "Same product, lower price, but usually a planned purchase rather than a walk-in one."
+    },
+    "tier_2_direct_set": {
+      "members": ["Guardian (DFI Retail Group)", "Unity Pharmacy", "Pharmaplus and other smaller chains"],
+      "why": "Same product, same walk-in occasion. Watsons 18% and Guardian 14% are the two leaders; a third chain or an independent pharmacy can open in a neighbourhood in months."
+    },
+    "tier_3_category_incumbent": {
+      "members": ["Guardian — the long-established chain, founded 1972, ~126 stores, strong with entry-level and pharmacy-led buyers"],
+      "why": "For many shoppers the two chains are interchangeable — they stand next to each other in malls and match each other's prices. Neither owns the category mind exclusively."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": ["pharmacies and clinics for health products", "specialty skincare and dermocosmetic brands selling direct", "department store beauty counters"],
+      "why": "Takes the same beauty or health spend through a different purchase mode."
+    },
+    "tier_5_professional_route": {
+      "members": ["dermatologists, aesthetic clinics and pharmacists recommending specific products"],
+      "why": "A professional recommendation can redirect the health-and-skincare purchase away from the chains."
+    },
+    "tier_6_indirect": {
+      "members": ["beauty content and influencer recommendations shifting demand to brands the chains may not stock", "the rise of K-beauty and J-beauty brand discovery", "ageing population shifting mix toward health over beauty"],
+      "why": "Changes which products get demanded and whether the chain is the right place to buy them."
+    }
+  },
+
+  "_expected_reasoning": {
+    "market_headroom": "**THE TEST.** Supply is elastic: a competitor can open another store in months, and the two chains already price-match each other with heavy promotion. Concentration is high (Watsons 18%, Guardian 14%, Sephora 7%) but no unmet demand accumulates, because capacity flexes. Expected 3 (raw ~1.8-2.0) — indistinguishable from the elastic pack. If this returns 4-5, the elasticity hypothesis is falsified.",
+    "competitive_room": "Tight. A concentrated duopoly with heavy promotion and price-matching, plus specialty and online eroding the edges. Expected 2-3.",
+    "mental_advantage": "Real but split. Watsons is the largest by share and the most-recalled chain, but it is not the default retrieval — Guardian is interchangeable in the shopper's mind and the two sit side by side in malls. Expected 3-4, NOT 5.",
+    "defensibility": "Moderate. Scale, store network, exclusive brand relationships and a loyalty programme are real, but a competitor can replicate the format with capital and time. No formulation, patent or unobtainable supply. Expected 3 (of 6) — 'Replicable', development required but nothing obstructs it. NOT 2: the store network and exclusive brand deals are not nothing.",
+    "demand_reach": "Broad consumer base, dense islandwide network, frequent small purchases. Highly identifiable. Expected 4."
+  },
+
+  "_note_on_the_test": "F1 and F2 share duopoly structure and differ only in market-level supply elasticity. They are the discriminating pair: same structure, opposite predicted headroom. If they do not separate, supply elasticity is not the driver and the design reverts to a qualifier for all markets."
+}
