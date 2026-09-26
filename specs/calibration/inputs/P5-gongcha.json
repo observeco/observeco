@@ -1,0 +1,91 @@
+{
+  "_meta": {
+    "case": "P5-gongcha",
+    "business": "Gong Cha Singapore",
+    "control_type": "GROUP P -- price position vs positioning. EXTERNAL LABEL.",
+    "pre_registered_prediction": "LOWEST (mid-tier, no distinct position, SHUT Oct 2025)",
+    "label_source": "Published Singapore menu/promo prices re-verified Sep 2026 (misslobang, drinkwhisper, menuzsg). External to me and unseen by the model.",
+    "hypothesis": "Positioning theory: a category supports a distinct VALUE position and a distinct PREMIUM position; both are defensible. The crowded MIDDLE with no distinct position is where businesses die. Price position is therefore NOT monotonically related to positioning strength -- it is U-shaped.",
+    "input_authorship_caveat": "These forms were RECONSTRUCTED by me from public sources, not self-reported by the business. For a live business that weakens the test; it is unavoidable for a dead one (Gong Cha). Noted, not hidden.",
+    "status": "control run"
+  },
+  "form": {
+    "business_name": "Gong Cha Singapore",
+    "website": "gong-cha-sg.com (now offline)",
+    "role": "Franchise operation, ceased trading",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bubble tea -- mid-tier Taiwanese chain. Had 29 outlets in Singapore. Ceased operations 2 October 2025; no replacement franchise partner has been named and the website is offline.",
+    "positioning_sentence": "A bubble tea chain with a broad menu covering milk teas, brewed teas, brown sugar series and fruit drinks, at mid-tier prices.",
+    "differentiator": "We carry a wide menu -- Horlicks series, Taiwan premium extracted teas, milk tea series, rejuvenating drinks, brown sugar series and brewed teas -- so there is something for most customers. Prices sit in the middle of the market, with brewed teas from S$3.90, standard milk teas from S$4.50 and the Horlicks series at S$7.00. We have operated in Singapore for many years and had 29 outlets at our peak.",
+    "undercut_on": "Cheaper chains go below us and premium chains sell a distinct product above us. We sit in between without a signature of our own.",
+    "your_price_point": "S$3.90-7.00; mid-tier",
+    "their_price_point": "Mixue at S$1.50-3.50 below us; KOI, Chicha San Chen and HEYTEA above us.",
+    "competitors_named_count": "5-8"
+  },
+  "competitors_named": [
+    "KOI The",
+    "CHAGEE",
+    "LiHO TEA",
+    "Mixue (value floor)",
+    "Each-A-Cup (budget)",
+    "R&B Tea",
+    "Chicha San Chen",
+    "HEYTEA",
+    "Playmade and Sharetea"
+  ],
+  "derived_competitive_set": {
+    "_note": "IDENTICAL across all bubble tea cases. Category and competitor evidence held constant so the business is the only variable.",
+    "tier_0_default": {
+      "members": [
+        "nothing / water",
+        "hawker kopi ~S$1.20-2.00",
+        "convenience-store bottled drinks ~S$1.50-2.50",
+        "home-brewed tea"
+      ],
+      "why": "Cheaper, no detour. Most drink occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Mixue (S$1.50-3.50, no membership, heartland and MRT outlets)",
+        "R&B Tea (Large from S$4.90)",
+        "Each-A-Cup (budget, 48 outlets)",
+        "hawker bubble tea stalls"
+      ],
+      "why": "Cheapest cup on the island, positioned where students and families pass.",
+      "price_floor": "S$1.50"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "LiHO TEA (~70-84 outlets)",
+        "CHAGEE (44 outlets)",
+        "Chicha San Chen (32 outlets)",
+        "Playmade",
+        "Sharetea",
+        "HEYTEA",
+        "KOI The (90 outlets)",
+        "R&B Tea",
+        "Each-A-Cup"
+      ],
+      "why": "Same product, same occasion. 62+ bubble tea brands in Singapore; ~953 businesses islandwide. Fragmented; largest single network ~90 outlets."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "KOI The -- widest network and longest trust",
+        "CHAGEE -- 'not a bubble tea brand, a tea expert'",
+        "LiHO -- 'No.1 homegrown'",
+        "Mixue -- holds the value floor"
+      ],
+      "why": "The buyer is shopping for a TREAT DRINK. Each incumbent holds a different rung."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "specialty coffee",
+        "dessert / shaved ice",
+        "convenience-store RTD tea"
+      ],
+      "why": "Takes the same treat-drink occasion with a different product."
+    }
+  },
+  "customer_description": "General bubble tea drinkers in heartland malls and MRT areas. No distinct customer group -- we served whoever was passing and wanted milk tea."
+}

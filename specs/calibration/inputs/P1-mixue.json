@@ -1,0 +1,90 @@
+{
+  "_meta": {
+    "case": "P1-mixue",
+    "business": "Mixue Singapore",
+    "control_type": "GROUP P -- price position vs positioning. EXTERNAL LABEL.",
+    "pre_registered_prediction": "HIGH (distinct value position, owns the floor)",
+    "label_source": "Published Singapore menu/promo prices re-verified Sep 2026 (misslobang, drinkwhisper, menuzsg). External to me and unseen by the model.",
+    "hypothesis": "Positioning theory: a category supports a distinct VALUE position and a distinct PREMIUM position; both are defensible. The crowded MIDDLE with no distinct position is where businesses die. Price position is therefore NOT monotonically related to positioning strength -- it is U-shaped.",
+    "input_authorship_caveat": "These forms were RECONSTRUCTED by me from public sources, not self-reported by the business. For a live business that weakens the test; it is unavoidable for a dead one (Gong Cha). Noted, not hidden.",
+    "status": "control run"
+  },
+  "form": {
+    "business_name": "Mixue Singapore",
+    "website": "(none in Singapore -- walk-in only)",
+    "role": "Country operation of a Chinese group",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bubble tea -- value-priced drinks and soft-serve. Entered Singapore 2022. Expands through heartland malls and MRT stations rather than Orchard. No membership scheme.",
+    "positioning_sentence": "The cheapest good cold drink and cone on the island -- no app, no card, no thinking required.",
+    "differentiator": "We hold a price position no competitor can follow to. Most of our menu sits under S$3.50 and our signature KingCone is S$1.50 -- the cheapest cone from any chain here. Our whole model is permanently low standing prices rather than promotions, so we do not run vouchers and need no membership. Our supply chain and vertical integration across a very large global network are what make that price possible. We entered in 2022 and expanded fast into heartland malls and MRT stations. We raised the KingCone from S$1 to S$1.50 in November 2024 on ingredient costs and it has held since -- we still remain the cheapest cone, so our floor survives a price rise that would remove anyone else's.",
+    "undercut_on": "Nothing structurally. Rivals undercut with vouchers and membership deals rather than shelf price.",
+    "your_price_point": "S$1.50-5.00; most drinks under S$3.50",
+    "their_price_point": "Most chains run S$5.50-7.50 for a Tall. We set the floor they price against.",
+    "competitors_named_count": "5-8"
+  },
+  "competitors_named": [
+    "KOI The (widest network, premium mid-tier)",
+    "CHAGEE (44 outlets)",
+    "LiHO TEA",
+    "Chicha San Chen",
+    "HEYTEA",
+    "R&B Tea and Each-A-Cup (budget)",
+    "hawker kopi and convenience stores",
+    "Cheap soft-serve and dessert stands"
+  ],
+  "derived_competitive_set": {
+    "_note": "IDENTICAL across all bubble tea cases. Category and competitor evidence held constant so the business is the only variable.",
+    "tier_0_default": {
+      "members": [
+        "nothing / water",
+        "hawker kopi ~S$1.20-2.00",
+        "convenience-store bottled drinks ~S$1.50-2.50",
+        "home-brewed tea"
+      ],
+      "why": "Cheaper, no detour. Most drink occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Mixue (S$1.50-3.50, no membership, heartland and MRT outlets)",
+        "R&B Tea (Large from S$4.90)",
+        "Each-A-Cup (budget, 48 outlets)",
+        "hawker bubble tea stalls"
+      ],
+      "why": "Cheapest cup on the island, positioned where students and families pass.",
+      "price_floor": "S$1.50"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "LiHO TEA (~70-84 outlets)",
+        "CHAGEE (44 outlets)",
+        "Chicha San Chen (32 outlets)",
+        "Playmade",
+        "Sharetea",
+        "HEYTEA",
+        "KOI The (90 outlets)",
+        "R&B Tea",
+        "Each-A-Cup"
+      ],
+      "why": "Same product, same occasion. 62+ bubble tea brands in Singapore; ~953 businesses islandwide. Fragmented; largest single network ~90 outlets."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "KOI The -- widest network and longest trust",
+        "CHAGEE -- 'not a bubble tea brand, a tea expert'",
+        "LiHO -- 'No.1 homegrown'",
+        "Mixue -- holds the value floor"
+      ],
+      "why": "The buyer is shopping for a TREAT DRINK. Each incumbent holds a different rung."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "specialty coffee",
+        "dessert / shaved ice",
+        "convenience-store RTD tea"
+      ],
+      "why": "Takes the same treat-drink occasion with a different product."
+    }
+  },
+  "customer_description": "Students, families and anyone wanting a cheap cold drink or cone on a hot day without thinking about deals. Heartland and MRT footfall. Price-led but loyal because nobody else is at this price."
+}

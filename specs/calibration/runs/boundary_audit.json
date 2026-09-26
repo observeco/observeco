@@ -1,0 +1,177 @@
+[
+  {
+    "case": "C2-activesg",
+    "composite": 73,
+    "band": "Viable, conditional",
+    "elasticity": "elastic",
+    "dist": 3
+  },
+  {
+    "case": "C3-pet-lovers-centre",
+    "composite": 68,
+    "band": "Viable, conditional",
+    "elasticity": "elastic",
+    "dist": 8
+  },
+  {
+    "case": "C4-sheng-siong",
+    "composite": 70,
+    "band": "Viable, conditional",
+    "elasticity": "elastic",
+    "dist": 6
+  },
+  {
+    "case": "C5-michelin-hawker",
+    "composite": 77,
+    "band": "Strong",
+    "elasticity": "elastic",
+    "dist": 1
+  },
+  {
+    "case": "C6-euyansang",
+    "composite": 72,
+    "band": "Viable, conditional",
+    "elasticity": "elastic",
+    "dist": 4
+  },
+  {
+    "case": "C9-b2b-it-services",
+    "composite": 56,
+    "band": "Contested",
+    "elasticity": "elastic",
+    "dist": 1
+  },
+  {
+    "case": "D1-watsons",
+    "composite": 44,
+    "band": "Contested",
+    "elasticity": "elastic",
+    "dist": 7
+  },
+  {
+    "case": "D2-petlovers-cue",
+    "composite": 66,
+    "band": "Viable, conditional",
+    "elasticity": "elastic",
+    "dist": 9
+  },
+  {
+    "case": "E1-asml",
+    "composite": 91,
+    "band": "Strong",
+    "elasticity": "inelastic",
+    "dist": 15
+  },
+  {
+    "case": "E2-coupang-flywheel",
+    "composite": 77,
+    "band": "Strong",
+    "elasticity": "elastic",
+    "dist": 1
+  },
+  {
+    "case": "E4-bonefirm-ip",
+    "composite": 51,
+    "band": "Contested",
+    "elasticity": "elastic",
+    "dist": 6
+  },
+  {
+    "case": "F1-boeing-airbus",
+    "composite": 71,
+    "band": "Viable, conditional",
+    "elasticity": "inelastic",
+    "dist": 5
+  },
+  {
+    "case": "F2-watsons-guardian",
+    "composite": 57,
+    "band": "Contested",
+    "elasticity": "elastic",
+    "dist": 0
+  },
+  {
+    "case": "F3-vicom",
+    "composite": 64,
+    "band": "Viable, conditional",
+    "elasticity": "inelastic",
+    "dist": 7
+  },
+  {
+    "case": "N1-closedbusiness",
+    "composite": null,
+    "band": "GATE",
+    "elasticity": "elastic",
+    "dist": null
+  },
+  {
+    "case": "N2-koi-stripped",
+    "composite": 43,
+    "band": "Contested",
+    "elasticity": "elastic",
+    "dist": 6
+  },
+  {
+    "case": "P1-mixue",
+    "composite": 70,
+    "band": "Viable, conditional",
+    "elasticity": null,
+    "dist": 6
+  },
+  {
+    "case": "P2-chicha",
+    "composite": 62,
+    "band": "Viable, conditional",
+    "elasticity": null,
+    "dist": 5
+  },
+  {
+    "case": "P3-heytea",
+    "composite": 66,
+    "band": "Viable, conditional",
+    "elasticity": null,
+    "dist": 9
+  },
+  {
+    "case": "P4-rbtea",
+    "composite": 53,
+    "band": "Contested",
+    "elasticity": null,
+    "dist": 4
+  },
+  {
+    "case": "P5-gongcha",
+    "composite": null,
+    "band": "GATE",
+    "elasticity": null,
+    "dist": null
+  },
+  {
+    "case": "bonefirm",
+    "composite": 49,
+    "band": "Contested",
+    "elasticity": "elastic",
+    "dist": 8
+  },
+  {
+    "case": "bubbletea",
+    "composite": 46,
+    "band": "Contested",
+    "elasticity": "elastic",
+    "dist": 9
+  },
+  {
+    "case": "koi",
+    "composite": 76,
+    "band": "Viable, conditional",
+    "elasticity": "elastic",
+    "dist": 0
+  },
+  {
+    "case": "observeco",
+    "composite": 65,
+    "band": "Viable, conditional",
+    "elasticity": "elastic",
+    "dist": 8
+  }
+]
