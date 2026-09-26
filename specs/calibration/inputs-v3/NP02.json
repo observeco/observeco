@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "case": "NP02-a",
+    "business": "A home pet grooming and boarding service",
+    "product_category": "Home-based services that the HDB/URA scheme does NOT permit",
+    "category_price_spread": "not applicable - the constraint is legal, not price",
+    "scale": "sole operator, operates from home",
+    "purpose": "HOME-BASED BUSINESS validity set (n=50). The actual lead-magnet population: thin public evidence, sole operators, statutory scale caps. Tests the 0.9.0 display_floor change on the population where evidence coverage is genuinely lowest.",
+    "PRE_REGISTERED_LABEL": "refused",
+    "LABEL_SOURCE": "STATUTORY: animal-related businesses, including keeping animals for sale and boarding services, are not allowed in HDB flats under the scheme; HDB's non-permitted list names pet shops and animal-related services.",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "STATUTORY: animal-related businesses, including keeping animals for sale and boarding services, are not allowed in HDB flats under the scheme; HDB's non-permitted list names pet shops and animal-related services."
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external (press coverage, published prices, or statute); the form is thinner than a real submission."
+  },
+  "form": {
+    "business_name": "A home pet grooming and boarding service",
+    "role": "Owner-operator",
+    "company_size_band": "1",
+    "city": "Singapore",
+    "category": "Home-based services that the HDB/URA scheme does NOT permit",
+    "positioning_sentence": "I groom and board dogs from my flat, with the animals kept in a dedicated room rather than a kennel.",
+    "differentiator": "I groom and board dogs from my flat, with the animals kept in a dedicated room rather than a kennel.",
+    "undercut_on": "Grooming and boarding animals is not permitted from an HDB flat at all, whichever room I use.",
+    "your_price_point": "market rate for grooming",
+    "their_price_point": "See the derived competitive set for the category ladder.",
+    "competitors_named_count": "2-4"
+  },
+  "competitors_named": [
+    "commercial groomers",
+    "pet boarding kennels",
+    "home-based pet services"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "no service at all"
+      ],
+      "why": "The activity cannot legally operate from the premises."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "licensed commercial premises only"
+      ],
+      "why": "The service exists, but only off residential premises."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "commercial operators of the same service"
+      ],
+      "why": "Competitors are all commercial; there is no home-based direct set because home-based operation is prohibited."
+    },
+    "_rules": "HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work.",
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Home-based services that the HDB/URA scheme does NOT permit), not the owner's list. Price spread in this category: not applicable - the constraint is legal, not price. Note the regulatory frame: HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work."
+  }
+}

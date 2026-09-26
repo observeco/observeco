@@ -1,0 +1,58 @@
+{
+  "_meta": {
+    "case": "NP05-a",
+    "business": "A home retail shop",
+    "product_category": "Home-based services that the HDB/URA scheme does NOT permit",
+    "category_price_spread": "not applicable - the constraint is legal, not price",
+    "scale": "sole operator, operates from home",
+    "purpose": "HOME-BASED BUSINESS validity set (n=50). The actual lead-magnet population: thin public evidence, sole operators, statutory scale caps. Tests the 0.9.0 display_floor change on the population where evidence coverage is genuinely lowest.",
+    "PRE_REGISTERED_LABEL": "refused",
+    "LABEL_SOURCE": "STATUTORY: HDB's non-permitted list includes 'shops and any form of retail activity', and the scheme also forbids advertisements, signage or posters at the residential premises and large-scale storage or frequent loading and unloading.",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "STATUTORY: HDB's non-permitted list includes 'shops and any form of retail activity', and the scheme also forbids advertisements, signage or posters at the residential premises and large-scale storage or frequent loading and unloading."
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external (press coverage, published prices, or statute); the form is thinner than a real submission."
+  },
+  "form": {
+    "business_name": "A home retail shop",
+    "role": "Owner-operator",
+    "company_size_band": "1",
+    "city": "Singapore",
+    "category": "Home-based services that the HDB/URA scheme does NOT permit",
+    "positioning_sentence": "I sell clothing and accessories from my flat, with customers coming by appointment to browse and buy.",
+    "differentiator": "I sell clothing and accessories from my flat, with customers coming by appointment to browse and buy.",
+    "undercut_on": "Retail activity is not permitted from the flat, and displaying signage or storing stock at scale is separately prohibited.",
+    "your_price_point": "retail pricing",
+    "their_price_point": "See the derived competitive set for the category ladder.",
+    "competitors_named_count": "2-4"
+  },
+  "competitors_named": [
+    "retail shops",
+    "online marketplaces",
+    "home bakers (permitted)"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "no service at all"
+      ],
+      "why": "The activity cannot legally operate from the premises."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "licensed commercial premises only"
+      ],
+      "why": "The service exists, but only off residential premises."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "commercial operators of the same service"
+      ],
+      "why": "Competitors are all commercial; there is no home-based direct set because home-based operation is prohibited."
+    },
+    "_rules": "HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work.",
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Home-based services that the HDB/URA scheme does NOT permit), not the owner's list. Price spread in this category: not applicable - the constraint is legal, not price. Note the regulatory frame: HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work."
+  }
+}

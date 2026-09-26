@@ -1,0 +1,93 @@
+{
+  "_meta": {
+    "case": "HF01-snow",
+    "business": "Snow Beauty",
+    "product_category": "Facial and skincare treatment",
+    "category_price_spread": "moderate (S$48 express to S$128 signature)",
+    "scale": "sole operator, operates from home",
+    "purpose": "HOME-BASED BUSINESS validity set (n=50). The actual lead-magnet population: thin public evidence, sole operators, statutory scale caps. Tests the 0.9.0 display_floor change on the population where evidence coverage is genuinely lowest.",
+    "PRE_REGISTERED_LABEL": "strong",
+    "LABEL_SOURCE": "PUBLIC LISTING: Choa Chu Kang home studio, 9am-8pm daily; uses organic products; offers couple facials where two people are treated side by side; also runs housecall facials islandwide; $10 off first trial for new customers.",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "PUBLIC LISTING: Choa Chu Kang home studio, 9am-8pm daily; uses organic products; offers couple facials where two people are treated side by side; also runs housecall facials islandwide; $10 off first trial for new customers."
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external (press coverage, published prices, or statute); the form is thinner than a real submission."
+  },
+  "form": {
+    "business_name": "Snow Beauty",
+    "role": "Owner-operator",
+    "company_size_band": "1",
+    "city": "Singapore",
+    "category": "Facial and skincare treatment",
+    "positioning_sentence": "Organic products and couple facials.",
+    "differentiator": "Organic products and couple facials - two people treated side by side in the same room. We also come to your home islandwide if you prefer.",
+    "undercut_on": "At S$60 we are mid-priced for a home studio, and we are one person so weekday evenings fill first.",
+    "your_price_point": "from S$60 for 60-min Signature Facial",
+    "their_price_point": "See the derived competitive set for the category ladder.",
+    "competitors_named_count": "2-4"
+  },
+  "competitors_named": [
+    "other home facial studios",
+    "mall facial chains",
+    "housecall facials"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "home skincare routine",
+        "skip it"
+      ],
+      "why": "Free. Most skincare occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "neighbourhood facial S$40-60",
+        "group-buy discount facials"
+      ],
+      "why": "Same treatment cheaper, no home setting.",
+      "price_floor": "S$40"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "home-based facial studios (heartland, appointment-only)",
+        "mall facial chains",
+        "housecall facial services"
+      ],
+      "why": "Same treatment, same occasion. Home studios compete with chains on price and with housecalls on convenience."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "chains with brand recall and packages",
+        "home studios with strong review counts",
+        "studios with a training credential"
+      ],
+      "why": "Each holds a rung: 'the brand', 'the trusted home one', 'the qualified one'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "medical aesthetics clinics",
+        "fat-freezing and slimming studios",
+        "DIY devices"
+      ],
+      "why": "Same goal, different authority and price tier."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "pushy package-selling damaging the category's reputation",
+        "skin-barrier minimalism"
+      ],
+      "why": "Reduces willingness to book at all."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "new home studios opening monthly",
+        "Korean-academy certified entrants"
+      ],
+      "why": "Derived from new listings."
+    },
+    "_rules": "HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work.",
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Facial and skincare treatment), not the owner's list. Price spread in this category: moderate (S$48 express to S$128 signature). Note the regulatory frame: HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work."
+  }
+}

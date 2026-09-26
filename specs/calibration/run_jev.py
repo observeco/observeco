@@ -292,9 +292,14 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         cov[name] = a.get("confidence")
         dist[name] = a.get("probabilities")
 
-    # a dimension is scored only if it clears the coverage floor
+    # a dimension is scored only if it clears the coverage floor.
+    # NOTE the edge case: the test is `cov < floor`, so a floor of exactly 0.0 would
+    # KEEP a coverage of exactly 0.00 -- the dead-even distribution the floor exists to
+    # exclude. A coverage of 0.00 means NO judgment at all, so it is dropped explicitly
+    # regardless of where the floor is set.
     unscored = [k for k in weights
-                if not isinstance(cov[k], (int, float)) or cov[k] < floor]
+                if not isinstance(cov[k], (int, float)) or cov[k] <= 0.0
+                or cov[k] < floor]
 
     # ── A3: the elasticity classifier decides whether market_headroom APPLIES ──────
     # NOT a confidence judgement -- a structural one. In an elastic-capacity market

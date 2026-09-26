@@ -1,0 +1,377 @@
+{
+  "n": 52,
+  "categories": {
+    "home-baking": "Custom celebration cakes and bakes, ordered ahead for an occasion",
+    "home-nails": "Manicure and pedicure, gel and nail art",
+    "home-facial": "Facial and skincare treatment",
+    "home-tuition": "Private academic tuition, one-to-one at the tutor's or student's home",
+    "home-creative": "Bespoke creative work made at home: florals, calligraphy, embroidery",
+    "home-not-permitted": "Home-based services that the HDB/URA scheme does NOT permit"
+  },
+  "companies": {
+    "HB01": {
+      "name": "Bob the Baker Boy",
+      "cat": "home-baking",
+      "label": "graduated",
+      "price": "custom cakes over S$1,000 top-end",
+      "scale": "45-50 staff, commercial premises"
+    },
+    "HB02": {
+      "name": "Pinch Bakehouse",
+      "cat": "home-baking",
+      "label": "graduated",
+      "price": "corporate gifting range",
+      "scale": "commercial premises, corporate clients"
+    },
+    "HB03": {
+      "name": "Sanwichio",
+      "cat": "home-baking",
+      "label": "graduated",
+      "price": "rolls S$14-16, whole cakes S$65, macarons S$9-14",
+      "scale": "brick-and-mortar at Millage Eunos"
+    },
+    "HB04": {
+      "name": "The Egyptian Baker",
+      "cat": "home-baking",
+      "label": "graduated",
+      "price": "pastries S$3.50-4, bars S$12",
+      "scale": "own storefront, one-woman operation"
+    },
+    "HB05": {
+      "name": "ROA",
+      "cat": "home-baking",
+      "label": "graduated",
+      "price": "cakes from S$48, cookies from S$2.50",
+      "scale": "factory production, exporting to 3+ countries"
+    },
+    "HB06": {
+      "name": "Moncheri",
+      "cat": "home-baking",
+      "label": "mid",
+      "price": "custom cupcakes, brownies, cookies, tiramisu",
+      "scale": "sole operator, operates from home"
+    },
+    "HB07": {
+      "name": "Flowermaker.sg",
+      "cat": "home-baking",
+      "label": "mid",
+      "price": "handcrafted soy wax candles with flowers",
+      "scale": "sole operator, operates from home"
+    },
+    "HB08": {
+      "name": "A home baker competing on price",
+      "cat": "home-baking",
+      "label": "weak",
+      "price": "undercuts commercial bakers",
+      "scale": "sole operator, operates from home"
+    },
+    "HB09": {
+      "name": "A dormant home baker",
+      "cat": "home-baking",
+      "label": "weak",
+      "price": "last posting over 12 months ago",
+      "scale": "sole operator, operates from home"
+    },
+    "HB10": {
+      "name": "A gluten-free specialist home baker",
+      "cat": "home-baking",
+      "label": "strong",
+      "price": "premium for dietary-specific bakes",
+      "scale": "sole operator, operates from home"
+    },
+    "HN01": {
+      "name": "Tee (DOT) Nail Bar",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "not published - by enquiry",
+      "scale": "sole operator, operates from home"
+    },
+    "HN02": {
+      "name": "Cuteticle SG",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "express gel from S$35",
+      "scale": "sole operator, operates from home"
+    },
+    "HN03": {
+      "name": "Crybaby SG",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "express gel from S$25",
+      "scale": "sole operator, operates from home"
+    },
+    "HN04": {
+      "name": "Bubd Nails",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "classic unlimited colour manicure S$43",
+      "scale": "sole operator, operates from home"
+    },
+    "HN05": {
+      "name": "Get Nailed SG",
+      "cat": "home-nails",
+      "label": "weak",
+      "price": "express manicure from S$25",
+      "scale": "sole operator, operates from home"
+    },
+    "HN06": {
+      "name": "Nails Of Society",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "mystery sets S$35-55",
+      "scale": "sole operator, operates from home"
+    },
+    "HN07": {
+      "name": "I Nail For Fung",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "gel from S$45, après extensions from S$80",
+      "scale": "sole operator, operates from home"
+    },
+    "HN08": {
+      "name": "Frisky Nails",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "express gel from S$45",
+      "scale": "sole operator, operates from home"
+    },
+    "HN09": {
+      "name": "Eleven Pinks",
+      "cat": "home-nails",
+      "label": "strong",
+      "price": "unlimited designs S$80",
+      "scale": "sole operator, operates from home"
+    },
+    "HN10": {
+      "name": "Maniqure By Ling",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "gel from S$45 + embellishments from S$0.50",
+      "scale": "sole operator, operates from home"
+    },
+    "HN11": {
+      "name": "Nailnicorn",
+      "cat": "home-nails",
+      "label": "strong",
+      "price": "mystery sets S$40-50, gel from S$22",
+      "scale": "sole operator, operates from home"
+    },
+    "HN12": {
+      "name": "Euns Nails",
+      "cat": "home-nails",
+      "label": "weak",
+      "price": "express gel S$20, extensions +S$20",
+      "scale": "sole operator, operates from home"
+    },
+    "HN13": {
+      "name": "YatoNails",
+      "cat": "home-nails",
+      "label": "mid",
+      "price": "unlimited designs S$50, extensions S$65",
+      "scale": "sole operator, operates from home"
+    },
+    "HN14": {
+      "name": "DazzlingNails",
+      "cat": "home-nails",
+      "label": "weak",
+      "price": "express gel from S$15",
+      "scale": "sole operator, operates from home"
+    },
+    "HL01": {
+      "name": "The Lash Fairy",
+      "cat": "home-nails",
+      "label": "strong",
+      "price": "not published - by enquiry",
+      "scale": "sole operator, operates from home"
+    },
+    "HL02": {
+      "name": "Lunalili Nails",
+      "cat": "home-nails",
+      "label": "strong",
+      "price": "published on Fresha, appointment-based",
+      "scale": "sole operator, operates from home"
+    },
+    "HL03": {
+      "name": "Perky Lash home-visit service",
+      "cat": "home-nails",
+      "label": "strong",
+      "price": "manicure S$108, pedicure S$118, classic lash S$128",
+      "scale": "islandwide mobile service, proprietary product"
+    },
+    "HF01": {
+      "name": "Snow Beauty",
+      "cat": "home-facial",
+      "label": "strong",
+      "price": "from S$60 for 60-min Signature Facial",
+      "scale": "sole operator, operates from home"
+    },
+    "HF02": {
+      "name": "Facial Inc",
+      "cat": "home-facial",
+      "label": "mid",
+      "price": "from S$50 for 60-min Express Bojin",
+      "scale": "sole operator, operates from home"
+    },
+    "HF03": {
+      "name": "My Skin Diary",
+      "cat": "home-facial",
+      "label": "mid",
+      "price": "from S$88 Premium Facial Trial",
+      "scale": "sole operator, operates from home"
+    },
+    "HF04": {
+      "name": "Pretty Please Beauty Studio",
+      "cat": "home-facial",
+      "label": "strong",
+      "price": "express facial from S$48",
+      "scale": "sole operator, operates from home"
+    },
+    "HF05": {
+      "name": "Glow Beauty",
+      "cat": "home-facial",
+      "label": "weak",
+      "price": "no price published - WhatsApp to enquire",
+      "scale": "sole operator, operates from home"
+    },
+    "HF06": {
+      "name": "Mono Studio",
+      "cat": "home-facial",
+      "label": "strong",
+      "price": "from S$98 BB Micro-needling",
+      "scale": "sole operator, operates from home"
+    },
+    "HF07": {
+      "name": "Ivy HomeBeauty",
+      "cat": "home-facial",
+      "label": "strong",
+      "price": "from S$58, eyebrow shaping and shoulder massage included",
+      "scale": "sole operator, operates from home"
+    },
+    "HF08": {
+      "name": "Sebelle",
+      "cat": "home-facial",
+      "label": "strong",
+      "price": "from S$128 for 90-min Signature Facial",
+      "scale": "sole operator, operates from home"
+    },
+    "HF09": {
+      "name": "Toa Payoh Home Facial",
+      "cat": "home-facial",
+      "label": "mid",
+      "price": "by enquiry, appointment only",
+      "scale": "sole operator, operates from home"
+    },
+    "HT01": {
+      "name": "An ex-MOE teacher, JC level",
+      "cat": "home-tuition",
+      "label": "strong",
+      "price": "S$90-130/h",
+      "scale": "sole operator, operates from home"
+    },
+    "HT02": {
+      "name": "An ex-MOE teacher, Primary level",
+      "cat": "home-tuition",
+      "label": "mid",
+      "price": "S$50-70/h",
+      "scale": "sole operator, operates from home"
+    },
+    "HT03": {
+      "name": "A full-time private tutor, Sec 3-5",
+      "cat": "home-tuition",
+      "label": "mid",
+      "price": "S$45-60/h",
+      "scale": "sole operator, operates from home"
+    },
+    "HT04": {
+      "name": "A part-time tutor, Primary 1-4",
+      "cat": "home-tuition",
+      "label": "weak",
+      "price": "S$25-35/h",
+      "scale": "sole operator, operates from home"
+    },
+    "HT05": {
+      "name": "An online-only tutor",
+      "cat": "home-tuition",
+      "label": "weak",
+      "price": "discounted vs in-person for the same level",
+      "scale": "sole operator, operates from home"
+    },
+    "HC01": {
+      "name": "Operarose Studio",
+      "cat": "home-creative",
+      "label": "strong",
+      "price": "bespoke calligraphy and embroidery, by commission",
+      "scale": "sole operator, operates from home"
+    },
+    "HC02": {
+      "name": "The Bloomish Eden",
+      "cat": "home-creative",
+      "label": "strong",
+      "price": "bespoke silk florals from S$420",
+      "scale": "sole operator, operates from home"
+    },
+    "HC03": {
+      "name": "A home-based florist (freelance)",
+      "cat": "home-creative",
+      "label": "mid",
+      "price": "published pricelists per occasion",
+      "scale": "sole operator, operates from home"
+    },
+    "HC04": {
+      "name": "A home-based mobile hairdresser",
+      "cat": "home-creative",
+      "label": "mid",
+      "price": "not published - varies by service",
+      "scale": "sole operator, operates from home"
+    },
+    "HC05": {
+      "name": "A home-based sewing and alteration service",
+      "cat": "home-creative",
+      "label": "weak",
+      "price": "per-garment pricing",
+      "scale": "sole operator, operates from home"
+    },
+    "HC06": {
+      "name": "A home-based food-photography freelancer",
+      "cat": "home-creative",
+      "label": "strong",
+      "price": "package pricing per shoot",
+      "scale": "sole operator, operates from home"
+    },
+    "NP01": {
+      "name": "A home massage service",
+      "cat": "home-not-permitted",
+      "label": "refused",
+      "price": "market rate for massage",
+      "scale": "sole operator, operates from home"
+    },
+    "NP02": {
+      "name": "A home pet grooming and boarding service",
+      "cat": "home-not-permitted",
+      "label": "refused",
+      "price": "market rate for grooming",
+      "scale": "sole operator, operates from home"
+    },
+    "NP03": {
+      "name": "A home catering service",
+      "cat": "home-not-permitted",
+      "label": "refused",
+      "price": "per-head catering pricing",
+      "scale": "sole operator, operates from home"
+    },
+    "NP04": {
+      "name": "A home tuition centre",
+      "cat": "home-not-permitted",
+      "label": "refused",
+      "price": "class pricing per term",
+      "scale": "sole operator, operates from home"
+    },
+    "NP05": {
+      "name": "A home retail shop",
+      "cat": "home-not-permitted",
+      "label": "refused",
+      "price": "retail pricing",
+      "scale": "sole operator, operates from home"
+    }
+  }
+}
