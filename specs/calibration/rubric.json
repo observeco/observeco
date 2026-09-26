@@ -1,7 +1,7 @@
 {
   "_meta": {
     "name": "obs-095 business viability rubric",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) \u2014 otherwise calibration validates a scorer that is not the one shipped.",
     "model": "jev-latest",
     "scale": {
@@ -20,12 +20,14 @@
       "demand_reach": 15
     },
     "gates": {
-      "market_headroom": 2,
-      "competitive_room": 2,
       "mental_advantage": 2,
       "defensibility": 2,
-      "demand_reach": 2,
-      "_note": "Floors on the 1-5 display scale. 1 means failing, so every floor is >= 2."
+      "_note": "Floors on the 1-5 display scale. 1 means failing, so every floor is >= 2. ONLY these two dimensions gate on score. Three former gates (market_headroom, competitive_room, demand_reach) were REMOVED in 0.8.0: their floors sat below the model's reachable range, so they could never fire -- measured, the model never returns display 1 on any of them. Deleting them changes 0 of 23 composites (verified). The 'we cannot assess this business' test is now the separate `assessability` classifier below, which fires for a different and correct reason.",
+      "_assessability": {
+        "question": "assessability",
+        "refuse_when": "no_competitive_market",
+        "why": "Positioning analysis finds a place in the customer's mind that RIVALS have not taken. With no rivals there is no occupied position to find space beside and nothing for the instrument to measure -- the report would be meaningless, not merely wrong. This is the RIGHT job for a gate: not 'is this business bad?' but 'can the method work here?' VALIDATED: fires on ASML (P=1.00) and nothing else, max 0.08 across 19 other cases -- separation 0.92. Critically it does NOT fire on Boeing/Airbus (0.04) or Watsons/Guardian (0.00): both are duopolies where rivals compete hard for position, so the method works. See FINDING-assessability-gate.md."
+      }
     },
     "bands": [
       [
@@ -49,6 +51,8 @@
         100
       ]
     ],
+    "band_noise": 3.0,
+    "band_noise_note": "EMPIRICAL re-run noise, in composite points: how much a case actually moves when the SAME input is re-scored. Measured over 32 recorded repeat runs across 8 cases (noise_study/, repeats/): mean within-case sd 1.06, max 3.00, 3 of 5 cases zero variance, only 3 of 25 dimension-observations moved at all. Cases whose composite sits within this distance of a band boundary report a RANGE of bands, not a single word, because a 1-point display step against real noise makes the verdict word flip on a re-run (measured: 6 of 23 scored cases). PROVENANCE: this is OBSERVED spread, NOT the model's posterior. A convolution over Jev's own per-dimension probabilities gives sd ~7-8 pts, roughly 4x the truth -- the model is far more reproducible than its probabilities imply, so posterior spread must never be used as an error bar.",
     "dimension_change_log": [
       {
         "version": "0.3.0",
@@ -120,6 +124,17 @@
       "mental_advantage": 5
     },
     "classifiers": {
+      "assessability": {
+        "purpose": "DECIDES WHETHER THE METHOD CAN WORK AT ALL. A refusal gate, not a scored dimension -- no weight, never enters the composite. This is the CORRECT job for a gate: not 'is this business bad?' but 'can positioning analysis be performed here?'",
+        "instructions": "Positioning analysis finds a place in the customer's mind that RIVALS have not already taken. That requires a market in which more than one supplier competes for the same customers. Judge ONLY whether this is such a market. Judge the MARKET the business competes in, not the business's own quality, size or strength.",
+        "criteria": {
+          "no_competitive_market": "No -- this business is effectively the sole supplier, or customers have no meaningful alternative to it. There is no competitive struggle for position, so there is nothing to analyse.",
+          "competitive_market": "Yes -- other suppliers compete for the same customers, so there is a struggle for position to analyse."
+        },
+        "refuse_when": "no_competitive_market",
+        "validated_against": "Tested on 20 cases (test_assessability_gate.py -> runs/assessability_gate.json): fires on ASML at P=1.00 and on nothing else; max P=0.08 across the other 19 -- separation 0.92. Does NOT fire on Boeing/Airbus (0.04) or Watsons/Guardian (0.00). See FINDING-assessability-gate.md.",
+        "ponytail": "n=1 POSITIVE. ASML is the only case in the corpus that should refuse on this ground, so the validation rests on a single case. Other unassessable classes are untested and may not be caught: a statutory sole operator, a licensed monopoly, a pre-revenue business with no market presence, a genuine category-of-one, or an industry too new to have formed positions. Ceiling: one binary question. Upgrade path: test the additional classes before relying on it for production refusals."
+      },
       "market_elasticity": {
         "purpose": "DECIDES WHICH DIMENSIONS APPLY (A3). NOT a scored dimension -- it carries no weight and never enters the composite.",
         "instructions": "Judge ONLY whether supply in this business's market can flex to meet an increase in demand. Ask: if demand doubled tomorrow, could the existing suppliers expand output to meet it? If rivals can add capacity -- more outlets, more staff, more floor space, more production runs -- then supply is ELASTIC and any shortfall is absorbed rather than accumulating. If they cannot, because capacity is physically, legally or structurally fixed -- fabrication plants, aircraft assembly lines, licensed premises, harbour berths, land -- then supply is INELASTIC and unmet demand accumulates as a queue or an order book. Judge the MARKET, not this specific business: a single restaurant cannot add tables tonight, but the restaurant market can absorb the demand elsewhere, so the market is elastic. A market is inelastic only when the constraint binds on ALL suppliers at once.",

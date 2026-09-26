@@ -2,14 +2,14 @@
   "case": "P5-gongcha",
   "model_id": "jev-1.13.0",
   "rubric_version": "0.7.0",
-  "generated_at": "2026-09-26T06:49:50+00:00",
+  "generated_at": "2026-09-26T06:57:32+00:00",
   "classification": {
     "elasticity": "elastic",
     "confidence": 0.98,
     "probabilities": {
-      "ambiguous": 0.01,
+      "elastic": 0.99,
       "inelastic": 0.0,
-      "elastic": 0.99
+      "ambiguous": 0.01
     },
     "rule_version": "A3"
   },
@@ -18,6 +18,13 @@
     "disposition": "not_applicable",
     "sentence": "Demand in your market is served and contested. Buyers can already get what you sell, so there is no pool of unmet demand to step into -- growth means taking share from an incumbent rather than serving need nobody is meeting.",
     "also_report": "Concentration: who currently holds the buying situations in this category, and how hard they are to displace."
+  },
+  "band_interval": {
+    "bands": [
+      "GATE"
+    ],
+    "reliable": true,
+    "distance_to_boundary": null
   },
   "dimensions_display_1to5": {
     "market_headroom": 3,
@@ -38,25 +45,25 @@
     "demand_reach": "insufficient evidence to score"
   },
   "raw_jev_scores_0to4": {
-    "market_headroom": 1.72,
-    "competitive_room": 1.49,
-    "mental_advantage": 0.74,
-    "defensibility": 0.23,
-    "demand_reach": 1.25
+    "market_headroom": 1.73,
+    "competitive_room": 1.43,
+    "mental_advantage": 0.73,
+    "defensibility": 0.24,
+    "demand_reach": 1.33
   },
   "evidence_coverage": {
     "market_headroom": 0.77,
-    "competitive_room": 0.58,
-    "mental_advantage": 0.7,
-    "defensibility": 0.85,
-    "demand_reach": 0.16
+    "competitive_room": 0.63,
+    "mental_advantage": 0.69,
+    "defensibility": 0.84,
+    "demand_reach": 0.0
   },
   "confidence": {
     "market_headroom": 0.77,
-    "competitive_room": 0.58,
-    "mental_advantage": 0.7,
-    "defensibility": 0.85,
-    "demand_reach": 0.16
+    "competitive_room": 0.63,
+    "mental_advantage": 0.69,
+    "defensibility": 0.84,
+    "demand_reach": 0.0
   },
   "coverage_floor": 0.2,
   "judgment_intervals": {
@@ -70,17 +77,17 @@
       "mass_covered": 1.0
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.49,
-      "expected_display_1to5": 2.49,
+      "expected_jev_0to4": 1.44,
+      "expected_display_1to5": 2.44,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.92
+      "mass_covered": 0.93
     },
     "mental_advantage": {
-      "expected_jev_0to4": 0.74,
-      "expected_display_1to5": 1.74,
+      "expected_jev_0to4": 0.73,
+      "expected_display_1to5": 1.73,
       "band_80pct_display_1to5": [
         1,
         2
@@ -88,22 +95,22 @@
       "mass_covered": 0.95
     },
     "defensibility": {
-      "expected_jev_0to4": 0.24,
-      "expected_display_1to5": 1.24,
+      "expected_jev_0to4": 0.23,
+      "expected_display_1to5": 1.23,
       "band_80pct_display_1to5": [
         1,
         1
       ],
-      "mass_covered": 0.81
+      "mass_covered": 0.8
     },
     "demand_reach": {
-      "expected_jev_0to4": 1.24,
-      "expected_display_1to5": 2.24,
+      "expected_jev_0to4": 1.33,
+      "expected_display_1to5": 2.33,
       "band_80pct_display_1to5": [
         1,
         3
       ],
-      "mass_covered": 0.88
+      "mass_covered": 0.83
     }
   },
   "probabilities": {
@@ -116,31 +123,31 @@
     },
     "competitive_room": {
       "0": 0.01,
-      "1": 0.56,
-      "2": 0.36,
-      "3": 0.07,
+      "1": 0.6,
+      "2": 0.33,
+      "3": 0.06,
       "4": 0.0
     },
     "mental_advantage": {
-      "0": 0.31,
-      "1": 0.64,
+      "0": 0.32,
+      "1": 0.63,
       "2": 0.05,
       "3": 0.0,
       "4": 0.0
     },
     "defensibility": {
-      "0": 0.81,
-      "1": 0.16,
-      "2": 0.02,
+      "0": 0.8,
+      "1": 0.17,
+      "2": 0.03,
       "3": 0.0,
-      "4": 0.01,
+      "4": 0.0,
       "5": 0.0
     },
     "demand_reach": {
-      "0": 0.36,
+      "0": 0.34,
       "1": 0.16,
-      "2": 0.36,
-      "3": 0.12,
+      "2": 0.33,
+      "3": 0.17,
       "4": 0.0
     }
   },

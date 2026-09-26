@@ -160,6 +160,47 @@ def band_of(c: int | None, bands: list) -> str:
         f"composite {c} falls outside every band {bands} -- bands are misconfigured")
 
 
+# Empirical re-run noise: how much a composite actually moves when the SAME input is
+# re-scored. Read from rubric._meta.band_noise; the value here is the fallback.
+# Measured over 32 repeat runs across 8 cases (noise_study/, repeats/): mean within-case
+# sd 1.06, max 3.00, 3 of 5 cases zero variance, only 3 of 25 dimension-observations
+# moved at all.
+# PROVENANCE MATTERS: this is the OBSERVED spread, NOT the model's own posterior. A
+# convolution over Jev's per-dimension probabilities gives sd ~7-8, roughly 4x the
+# truth -- the model is far more reproducible than its probabilities imply, so posterior
+# spread must NOT be used as an error bar. See FINDING-band-cliff-fix.md.
+BAND_NOISE = 3.0
+
+
+def band_interval(c: int | None, bands: list, noise: float = BAND_NOISE) -> dict:
+    """Every band reachable within the empirical noise, and whether the word is safe.
+
+    A 1-point display step against ~1-point real noise means a case sitting near a
+    boundary gets a verdict WORD that can flip on a re-run (measured: 26% of the
+    corpus). This does not remove the ambiguity -- it REPORTS it. A cliff becomes an
+    interval, which is the honest representation.
+    """
+    if c is None:
+        return {"bands": ["GATE"], "reliable": True, "distance_to_boundary": None}
+    bounds = [hi for _n, _lo, hi in bands][:-1]
+    dist = min(abs(c - b) for b in bounds)
+    reachable = []
+    step = max(1, int(noise))
+    for d in range(-step, step + 1):
+        b = band_of(max(0, min(100, c + d)), bands)
+        if b not in reachable:
+            reachable.append(b)
+    # `reliable` means ONE band is reachable within the noise. Deriving it from the
+    # reachable set rather than from the distance keeps the two consistent -- an earlier
+    # version could flag a case ambiguous while listing a single band.
+    return {
+        "bands": reachable,
+        "reliable": len(reachable) == 1,
+        "distance_to_boundary": dist,
+        "noise_used": noise,
+    }
+
+
 def _interval(dist: dict | None, conf: float | None) -> dict | None:
     """Judgment interval from the raw level distribution.
 
@@ -265,17 +306,31 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
     # The classifier is asked FIRST and carries no weight: it selects the dimension
     # set, it does not enter the composite.
     classification = None
+    assessability = (answers.get("assessability") or {})
+    assess_refuses = False
+    if assessability:
+        probs = assessability.get("probabilities") or {}
+        choice = (max(probs, key=lambda k: float(probs[k])) if probs
+                  else assessability.get("choice"))
+        acfg = (meta.get("gates") or {}).get("_assessability") or {}
+        assess_refuses = (choice == acfg.get("refuse_when"))
+        classification = {"assessability": choice,
+                          "assessability_confidence": assessability.get("confidence"),
+                          "assessability_probabilities": probs,
+                          "refuses": assess_refuses}
+
     elasticity = (answers.get("market_elasticity") or {})
     if elasticity:
         probs = elasticity.get("probabilities") or {}
         choice = (max(probs, key=lambda k: float(probs[k])) if probs
                   else elasticity.get("choice"))
-        classification = {
+        classification = dict(classification or {})
+        classification.update({
             "elasticity": choice,
             "confidence": elasticity.get("confidence"),
             "probabilities": probs,
             "rule_version": "A3",
-        }
+        })
         disp = (meta.get("elasticity_dispositions") or {}).get(choice) or {}
         if disp.get("market_headroom") == "not_applicable" \
                 and "market_headroom" not in unscored:
@@ -286,12 +341,19 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
     if scored:
         total_w = sum(weights[k] for k in scored)
         weights_used = {k: round(weights[k] / total_w * 100, 2) for k in scored}
-        fires = [k for k in scored if dims[k] < gates[k]]
+        fires = [k for k in scored if k in gates and dims[k] < gates[k]]
+        # the assessability refusal is a DIFFERENT job from a low score: 'we cannot
+        # analyse this business' vs 'we analysed it and it is not viable'
+        if assess_refuses:
+            fires = ["assessability"] + [f for f in fires if f != "assessability"]
         composite = None if fires else round(
             sum(dims[k] / counts[k] * weights_used[k] for k in scored))
         band = "GATE" if fires else band_of(composite, bands)
     else:
-        weights_used, fires, composite, band = {}, [], None, "UNSCORED"
+        weights_used = {k: round(weights[k] / sum(weights[j] for j in scored) * 100, 2)
+                        for k in scored} if scored else {}
+        fires = ["assessability"] if assess_refuses else []
+        composite, band = None, "GATE" if fires else "UNSCORED"
 
     suff = (answers.get("input_sufficiency") or {}).get("choice")
 
@@ -316,6 +378,8 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "classification": classification,
         "market_headroom_qualifier": qualifier,
+        "band_interval": band_interval(
+            composite, bands, noise=meta.get("band_noise", BAND_NOISE)),
         "dimensions_display_1to5": dims,
         "dimensions_unscored": unscored,
         "display_for_client": {
@@ -380,21 +444,25 @@ def main() -> None:
     print(f"recorded -> {path.relative_to(HERE)}")
     print(f"model returned: {out['model_id']}")
     print()
+    gates = {k: v for k, v in rubric["_meta"]["gates"].items() if not k.startswith("_")}
     for name in rubric["_meta"]["weights"]:
         d = out["dimensions_display_1to5"][name]
         n = (rubric["_meta"].get("level_counts") or {}).get(name, 5)
-        floor = rubric["_meta"]["gates"][name]
         c = out["evidence_coverage"][name]
         cf = f"{c:.2f}" if isinstance(c, (int, float)) else str(c)
         if name in out["dimensions_unscored"]:
-            print(f"  {name:24} --    coverage {cf:>5}  BELOW FLOOR -> unscored "
+            print(f"  {name:24} --    coverage {cf:>5}  not scored "
                   f"(raw {d}/{n} not shown)")
             continue
         iv = out["judgment_intervals"].get(name) or {}
         band = iv.get("band_80pct_display_1to5")
         bs = f"{band[0]}-{band[1]}" if band else "?"
-        print(f"  {name:24} {d}/{n}  coverage {cf:>5}  floor>={floor}  "
-              f"{'FIRES' if d < floor else 'pass'}  interval {bs}")
+        if name in gates:
+            print(f"  {name:24} {d}/{n}  coverage {cf:>5}  floor>={gates[name]}  "
+                  f"{'FIRES' if d < gates[name] else 'pass'}  interval {bs}")
+        else:
+            print(f"  {name:24} {d}/{n}  coverage {cf:>5}  no gate (score-only)  "
+                  f"interval {bs}")
     print()
     print(f"  input sufficiency : {out['input_sufficiency']}")
     c = out.get("classification")
@@ -409,7 +477,20 @@ def main() -> None:
                   f"its 15% renormalised over the rest")
             print(f"    -> client sees: \"{q.get('sentence')}\"")
     print(f"  gates firing      : {out['gates_firing'] or 'none'}")
-    print(f"  composite         : {out['composite']}   band: {out['band']}")
+    bi = out.get("band_interval") or {}
+    if out["composite"] is None:
+        print(f"  composite         : None   band: GATE")
+    elif bi.get("reliable"):
+        print(f"  composite         : {out['composite']}   band: {out['band']}"
+              f"   (stable: {bi.get('distance_to_boundary')} pts from a boundary, "
+              f"noise {bi.get('noise_used')})")
+    else:
+        print(f"  composite         : {out['composite']}   band: "
+              f"{' OR '.join(bi.get('bands') or [out['band']])}"
+              f"   <-- AMBIGUOUS: only {bi.get('distance_to_boundary')} pt from a "
+              f"boundary, noise {bi.get('noise_used')}")
+        print(f"    -> the band WORD can flip on a re-run; report the range, not the "
+              f"single word")
 
 
 if __name__ == "__main__":

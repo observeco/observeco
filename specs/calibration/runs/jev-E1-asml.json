@@ -1,9 +1,16 @@
 {
   "case": "E1-asml",
   "model_id": "jev-1.13.0",
-  "rubric_version": "0.7.0",
-  "generated_at": "2026-09-26T02:38:13+00:00",
+  "rubric_version": "0.8.0",
+  "generated_at": "2026-09-26T06:59:21+00:00",
   "classification": {
+    "assessability": "no_competitive_market",
+    "assessability_confidence": 1.0,
+    "assessability_probabilities": {
+      "competitive_market": 0.0,
+      "no_competitive_market": 1.0
+    },
+    "refuses": true,
     "elasticity": "inelastic",
     "confidence": 0.99,
     "probabilities": {
@@ -19,11 +26,18 @@
     "sentence": "Supply in your market cannot flex to meet demand. Buyers wait, are rationed or are turned away, and the shortfall accumulates as a backlog rather than being absorbed by rivals.",
     "also_report": "The demand-to-capacity ratio (orders or backlog against current revenue), normalised to what is normal for your category."
   },
+  "band_interval": {
+    "bands": [
+      "GATE"
+    ],
+    "reliable": true,
+    "distance_to_boundary": null
+  },
   "dimensions_display_1to5": {
     "market_headroom": 4,
     "competitive_room": 3,
     "mental_advantage": 5,
-    "defensibility": 5,
+    "defensibility": 6,
     "demand_reach": 5
   },
   "dimensions_unscored": [
@@ -33,35 +47,35 @@
     "market_headroom": 4,
     "competitive_room": "insufficient evidence to score",
     "mental_advantage": 5,
-    "defensibility": 5,
+    "defensibility": 6,
     "demand_reach": 5
   },
   "raw_jev_scores_0to4": {
-    "market_headroom": 3.34,
-    "competitive_room": 2.11,
-    "mental_advantage": 3.72,
-    "defensibility": 4.46,
-    "demand_reach": 3.9
+    "market_headroom": 3.32,
+    "competitive_room": 2.1,
+    "mental_advantage": 3.79,
+    "defensibility": 4.52,
+    "demand_reach": 3.89
   },
   "evidence_coverage": {
-    "market_headroom": 0.6,
+    "market_headroom": 0.63,
     "competitive_room": 0.0,
-    "mental_advantage": 0.77,
-    "defensibility": 0.64,
-    "demand_reach": 0.92
+    "mental_advantage": 0.82,
+    "defensibility": 0.68,
+    "demand_reach": 0.91
   },
   "confidence": {
-    "market_headroom": 0.6,
+    "market_headroom": 0.63,
     "competitive_room": 0.0,
-    "mental_advantage": 0.77,
-    "defensibility": 0.64,
-    "demand_reach": 0.92
+    "mental_advantage": 0.82,
+    "defensibility": 0.68,
+    "demand_reach": 0.91
   },
   "coverage_floor": 0.2,
   "judgment_intervals": {
     "market_headroom": {
-      "expected_jev_0to4": 3.34,
-      "expected_display_1to5": 4.34,
+      "expected_jev_0to4": 3.31,
+      "expected_display_1to5": 4.31,
       "band_80pct_display_1to5": [
         4,
         5
@@ -69,40 +83,40 @@
       "mass_covered": 0.94
     },
     "competitive_room": {
-      "expected_jev_0to4": 2.11,
-      "expected_display_1to5": 3.11,
+      "expected_jev_0to4": 2.09,
+      "expected_display_1to5": 3.09,
       "band_80pct_display_1to5": [
         2,
         5
       ],
-      "mass_covered": 0.83
+      "mass_covered": 0.84
     },
     "mental_advantage": {
-      "expected_jev_0to4": 3.74,
-      "expected_display_1to5": 4.74,
+      "expected_jev_0to4": 3.77,
+      "expected_display_1to5": 4.77,
       "band_80pct_display_1to5": [
         5,
         5
       ],
-      "mass_covered": 0.86
+      "mass_covered": 0.88
     },
     "defensibility": {
-      "expected_jev_0to4": 4.47,
-      "expected_display_1to5": 5.47,
+      "expected_jev_0to4": 4.53,
+      "expected_display_1to5": 5.53,
       "band_80pct_display_1to5": [
-        4,
+        5,
         6
       ],
-      "mass_covered": 0.99
+      "mass_covered": 0.81
     },
     "demand_reach": {
-      "expected_jev_0to4": 3.91,
-      "expected_display_1to5": 4.91,
+      "expected_jev_0to4": 3.9,
+      "expected_display_1to5": 4.9,
       "band_80pct_display_1to5": [
         5,
         5
       ],
-      "mass_covered": 0.91
+      "mass_covered": 0.9
     }
   },
   "probabilities": {
@@ -110,37 +124,37 @@
       "0": 0.0,
       "1": 0.01,
       "2": 0.05,
-      "3": 0.53,
-      "4": 0.41
+      "3": 0.56,
+      "4": 0.38
     },
     "competitive_room": {
-      "0": 0.17,
-      "1": 0.4,
+      "0": 0.16,
+      "1": 0.42,
       "2": 0.0,
       "3": 0.01,
-      "4": 0.42
+      "4": 0.41
     },
     "mental_advantage": {
       "0": 0.01,
       "1": 0.02,
-      "2": 0.05,
-      "3": 0.06,
-      "4": 0.86
+      "2": 0.04,
+      "3": 0.05,
+      "4": 0.88
     },
     "defensibility": {
       "0": 0.0,
       "1": 0.0,
       "2": 0.01,
-      "3": 0.21,
+      "3": 0.18,
       "4": 0.08,
-      "5": 0.7
+      "5": 0.73
     },
     "demand_reach": {
       "0": 0.0,
       "1": 0.0,
       "2": 0.0,
-      "3": 0.09,
-      "4": 0.91
+      "3": 0.1,
+      "4": 0.9
     }
   },
   "input_sufficiency": "sufficient",
@@ -157,9 +171,11 @@
     "defensibility": 31.25,
     "demand_reach": 18.75
   },
-  "gates_firing": [],
-  "composite": 91,
-  "band": "Strong",
+  "gates_firing": [
+    "assessability"
+  ],
+  "composite": null,
+  "band": "GATE",
   "computed_by": "code, from jev judgments (spec 1)",
   "_caveat": "evidence_coverage measures how much competitor evidence was retrievable, NOT the probability the judgment is correct. No human-labelled calibration set exists, so no calibrated confidence interval can be reported.",
   "key_compared": false
