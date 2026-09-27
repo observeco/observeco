@@ -7,10 +7,25 @@
 | v1.2.0 | baseline (DEF wording only) | 65.6% | 8.5% | +0.35 | |
 | v1.3.2 | DR corroboration fix (trading floor) | 64.5% | 7.2% | +0.29 | |
 | v1.4.0 | RS per-situation, not one share fight | 58.1% | 7.5% | +0.10 | over-corrected |
-| **v1.4.1** | RS + recognition requirement | **63.0%** | **6.0%** | **+0.24** | best disputes |
+| v1.4.1 | RS + recognition | 63.0% | **6.0%** | **+0.24** | best exact since v1.2.0 |
+| **v1.5.0** | MA addressable segment | 59.1% | **5.2%** | **+0.24** | best disputes |
 
-Targets: exact ≥75%, disputes ≤5%, offset ±0.25. **Not yet met.** Progress is real on the
-two measures that matter for a usable instrument — disputes 8.5% → 6.0%, offset +0.35 → +0.24.
+Targets: exact ≥75%, disputes ≤5%, offset ±0.25. **Disputes and offset both improved;
+exact agreement did not.** Disputes 8.5% → 5.2% and offset +0.35 → +0.24 across the run.
+
+**v1.5.0 exposed a NEW regression:** Gong Cha (shut all 29 SG outlets) scores MA 1 against
+Sean's 4. My "ceased → not retrieved" rule is wrong for mental_advantage: closure destroys
+REACH (a DR fact) but not MEMORY (an MA fact). **The same physical fact has opposite
+implications for different dimensions, so a corroboration rule must be dimension-specific,
+not global.** I had been building one shared "physical evidence" doctrine — this shows it is
+too blunt.
+
+**And a construct question a re-word cannot fix:** Sean scores 5 for Courts, Donki, Harvey
+Norman and Cold Storage, whose prices converge within 3–8%. My level 5 says "rivals are not
+close". Either his 5 means *dominant presence* rather than *uncontested* (my level is
+mis-worded), or it is calibration, or he grades absolute standing. **MA has been re-worded
+twice and moved three of four cases by exactly one point — a third re-wording is the wrong
+move.** This needs an answer from Sean, not another edit.
 
 ## THE CENTRAL LESSON: one defect class, found in three dimensions
 
