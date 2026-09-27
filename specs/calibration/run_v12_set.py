@@ -12,9 +12,9 @@ import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-RUBRIC = "rubric-v1.2.0.json"
-OUTDIR = "runs-v12"
-PROGRESS = HERE / "r12_progress.json"
+RUBRIC = "rubric-v1.3.0.json"
+OUTDIR = "runs-v13"
+PROGRESS = HERE / "r13_progress.json"
 
 cases = sorted(p for p in glob.glob(str(HERE / "inputs-v4" / "*.json"))
                if not p.endswith("_index.json"))

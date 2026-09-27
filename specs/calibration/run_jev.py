@@ -253,6 +253,16 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
     used are recorded so the change is auditable across versions.
     """
     meta = rubric["_meta"]
+    # FAIL LOUD on an inconsistent version stamp. _meta.version is authoritative -- it is
+    # what every run file records and what the mixed-version guard compares. A build script
+    # that sets only a top-level "version" leaves _meta stale, so two DIFFERENT rubrics can
+    # stamp the SAME number and the guard never fires. Caught exactly that in v1.3.0.
+    _top = rubric.get("version")
+    if _top and _top != meta.get("version"):
+        raise SystemExit(
+            "FATAL: rubric version conflict -- top-level version=%r but _meta.version=%r. "
+            "_meta.version is authoritative and is what run files record. An inconsistent "
+            "stamp defeats the mixed-version guard." % (_top, meta.get("version")))
     weights = meta["weights"]
     gates = {k: v for k, v in meta["gates"].items() if not k.startswith("_")}
     bands = meta["bands"]
