@@ -2,7 +2,7 @@
   "case": "BT10-sharetea",
   "model_id": "jev-1.13.0",
   "rubric_version": "0.9.0",
-  "generated_at": "2026-09-26T07:23:38+00:00",
+  "generated_at": "2026-09-26T08:09:26+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
@@ -12,10 +12,10 @@
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.98,
+    "confidence": 0.97,
     "probabilities": {
-      "inelastic": 0.0,
-      "elastic": 0.99,
+      "inelastic": 0.01,
+      "elastic": 0.98,
       "ambiguous": 0.01
     },
     "rule_version": "A3"
@@ -52,67 +52,67 @@
     "demand_reach": 3
   },
   "raw_jev_scores_0to4": {
-    "market_headroom": 1.87,
-    "competitive_room": 1.89,
-    "mental_advantage": 1.21,
-    "defensibility": 0.6,
-    "demand_reach": 1.79
+    "market_headroom": 1.9,
+    "competitive_room": 1.88,
+    "mental_advantage": 1.19,
+    "defensibility": 0.56,
+    "demand_reach": 1.85
   },
   "evidence_coverage": {
-    "market_headroom": 0.89,
-    "competitive_room": 0.64,
-    "mental_advantage": 0.75,
-    "defensibility": 0.71,
-    "demand_reach": 0.27
+    "market_headroom": 0.91,
+    "competitive_room": 0.65,
+    "mental_advantage": 0.76,
+    "defensibility": 0.68,
+    "demand_reach": 0.3
   },
   "confidence": {
-    "market_headroom": 0.89,
-    "competitive_room": 0.64,
-    "mental_advantage": 0.75,
-    "defensibility": 0.71,
-    "demand_reach": 0.27
+    "market_headroom": 0.91,
+    "competitive_room": 0.65,
+    "mental_advantage": 0.76,
+    "defensibility": 0.68,
+    "demand_reach": 0.3
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "market_headroom": {
-      "expected_jev_0to4": 1.87,
-      "expected_display_1to5": 2.87,
+      "expected_jev_0to4": 1.9,
+      "expected_display_1to5": 2.9,
       "band_80pct_display_1to5": [
         3,
         3
       ],
-      "mass_covered": 0.87
+      "mass_covered": 0.9
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.9,
-      "expected_display_1to5": 2.9,
+      "expected_jev_0to4": 1.89,
+      "expected_display_1to5": 2.89,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.84
+      "mass_covered": 0.85
     },
     "mental_advantage": {
-      "expected_jev_0to4": 1.22,
-      "expected_display_1to5": 2.22,
-      "band_80pct_display_1to5": [
-        2,
-        3
-      ],
-      "mass_covered": 0.91
-    },
-    "defensibility": {
-      "expected_jev_0to4": 0.59,
-      "expected_display_1to5": 1.59,
+      "expected_jev_0to4": 1.19,
+      "expected_display_1to5": 2.19,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.99
+      "mass_covered": 0.81
+    },
+    "defensibility": {
+      "expected_jev_0to4": 0.56,
+      "expected_display_1to5": 1.56,
+      "band_80pct_display_1to5": [
+        1,
+        2
+      ],
+      "mass_covered": 0.98
     },
     "demand_reach": {
-      "expected_jev_0to4": 1.79,
-      "expected_display_1to5": 2.79,
+      "expected_jev_0to4": 1.84,
+      "expected_display_1to5": 2.84,
       "band_80pct_display_1to5": [
         1,
         4
@@ -123,38 +123,38 @@
   "probabilities": {
     "market_headroom": {
       "0": 0.0,
-      "1": 0.13,
-      "2": 0.87,
+      "1": 0.1,
+      "2": 0.9,
       "3": 0.0,
       "4": 0.0
     },
     "competitive_room": {
       "0": 0.0,
       "1": 0.26,
-      "2": 0.58,
-      "3": 0.16,
+      "2": 0.59,
+      "3": 0.15,
       "4": 0.0
     },
     "mental_advantage": {
-      "0": 0.04,
-      "1": 0.75,
-      "2": 0.16,
+      "0": 0.05,
+      "1": 0.76,
+      "2": 0.14,
       "3": 0.05,
       "4": 0.0
     },
     "defensibility": {
-      "0": 0.42,
-      "1": 0.57,
-      "2": 0.01,
+      "0": 0.46,
+      "1": 0.52,
+      "2": 0.02,
       "3": 0.0,
       "4": 0.0,
       "5": 0.0
     },
     "demand_reach": {
-      "0": 0.23,
-      "1": 0.08,
+      "0": 0.2,
+      "1": 0.1,
       "2": 0.37,
-      "3": 0.31,
+      "3": 0.32,
       "4": 0.01
     }
   },

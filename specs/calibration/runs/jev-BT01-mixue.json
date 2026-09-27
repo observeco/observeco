@@ -2,7 +2,7 @@
   "case": "BT01-mixue",
   "model_id": "jev-1.13.0",
   "rubric_version": "0.9.0",
-  "generated_at": "2026-09-26T07:22:39+00:00",
+  "generated_at": "2026-09-26T08:08:28+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
@@ -15,8 +15,8 @@
     "confidence": 0.98,
     "probabilities": {
       "ambiguous": 0.01,
-      "inelastic": 0.0,
-      "elastic": 0.99
+      "inelastic": 0.01,
+      "elastic": 0.98
     },
     "rule_version": "A3"
   },
@@ -31,7 +31,7 @@
       "Viable, conditional"
     ],
     "reliable": true,
-    "distance_to_boundary": 5,
+    "distance_to_boundary": 8,
     "noise_used": 3.0
   },
   "dimensions_display_1to5": {
@@ -39,7 +39,7 @@
     "competitive_room": 3,
     "mental_advantage": 4,
     "defensibility": 2,
-    "demand_reach": 4
+    "demand_reach": 5
   },
   "dimensions_unscored": [
     "market_headroom"
@@ -49,34 +49,34 @@
     "competitive_room": 3,
     "mental_advantage": 4,
     "defensibility": 2,
-    "demand_reach": 4
+    "demand_reach": 5
   },
   "raw_jev_scores_0to4": {
-    "market_headroom": 1.9,
-    "competitive_room": 1.78,
-    "mental_advantage": 3.3,
+    "market_headroom": 1.91,
+    "competitive_room": 1.68,
+    "mental_advantage": 3.2,
     "defensibility": 0.91,
-    "demand_reach": 3.48
+    "demand_reach": 3.53
   },
   "evidence_coverage": {
-    "market_headroom": 0.9,
-    "competitive_room": 0.55,
-    "mental_advantage": 0.58,
-    "defensibility": 0.67,
-    "demand_reach": 0.57
+    "market_headroom": 0.91,
+    "competitive_room": 0.54,
+    "mental_advantage": 0.64,
+    "defensibility": 0.65,
+    "demand_reach": 0.6
   },
   "confidence": {
-    "market_headroom": 0.9,
-    "competitive_room": 0.55,
-    "mental_advantage": 0.58,
-    "defensibility": 0.67,
-    "demand_reach": 0.57
+    "market_headroom": 0.91,
+    "competitive_room": 0.54,
+    "mental_advantage": 0.64,
+    "defensibility": 0.65,
+    "demand_reach": 0.6
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "market_headroom": {
-      "expected_jev_0to4": 1.89,
-      "expected_display_1to5": 2.89,
+      "expected_jev_0to4": 1.91,
+      "expected_display_1to5": 2.91,
       "band_80pct_display_1to5": [
         3,
         3
@@ -84,35 +84,35 @@
       "mass_covered": 0.89
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.79,
-      "expected_display_1to5": 2.79,
+      "expected_jev_0to4": 1.69,
+      "expected_display_1to5": 2.69,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.83
+      "mass_covered": 0.87
     },
     "mental_advantage": {
-      "expected_jev_0to4": 3.31,
-      "expected_display_1to5": 4.31,
+      "expected_jev_0to4": 3.21,
+      "expected_display_1to5": 4.21,
       "band_80pct_display_1to5": [
         4,
         5
       ],
-      "mass_covered": 0.93
+      "mass_covered": 0.92
     },
     "defensibility": {
-      "expected_jev_0to4": 0.91,
-      "expected_display_1to5": 1.91,
+      "expected_jev_0to4": 0.9,
+      "expected_display_1to5": 1.9,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.89
+      "mass_covered": 0.88
     },
     "demand_reach": {
-      "expected_jev_0to4": 3.49,
-      "expected_display_1to5": 4.49,
+      "expected_jev_0to4": 3.52,
+      "expected_display_1to5": 4.52,
       "band_80pct_display_1to5": [
         4,
         5
@@ -123,39 +123,39 @@
   "probabilities": {
     "market_headroom": {
       "0": 0.0,
-      "1": 0.11,
+      "1": 0.1,
       "2": 0.89,
-      "3": 0.0,
+      "3": 0.01,
       "4": 0.0
     },
     "competitive_room": {
       "0": 0.01,
-      "1": 0.35,
-      "2": 0.48,
-      "3": 0.16,
+      "1": 0.41,
+      "2": 0.46,
+      "3": 0.12,
       "4": 0.0
     },
     "mental_advantage": {
       "0": 0.0,
-      "1": 0.02,
+      "1": 0.03,
       "2": 0.05,
-      "3": 0.53,
-      "4": 0.4
+      "3": 0.6,
+      "4": 0.32
     },
     "defensibility": {
-      "0": 0.29,
-      "1": 0.6,
-      "2": 0.06,
+      "0": 0.31,
+      "1": 0.57,
+      "2": 0.07,
       "3": 0.01,
       "4": 0.04,
       "5": 0.0
     },
     "demand_reach": {
       "0": 0.0,
-      "1": 0.0,
-      "2": 0.01,
-      "3": 0.49,
-      "4": 0.5
+      "1": 0.01,
+      "2": 0.0,
+      "3": 0.45,
+      "4": 0.54
     }
   },
   "input_sufficiency": "sufficient",
@@ -173,7 +173,7 @@
     "demand_reach": 17.65
   },
   "gates_firing": [],
-  "composite": 62,
+  "composite": 65,
   "band": "Viable, conditional",
   "computed_by": "code, from jev judgments (spec 1)",
   "_caveat": "evidence_coverage measures how much competitor evidence was retrievable, NOT the probability the judgment is correct. No human-labelled calibration set exists, so no calibrated confidence interval can be reported.",

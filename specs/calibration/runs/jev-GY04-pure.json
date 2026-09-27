@@ -2,7 +2,7 @@
   "case": "GY04-pure",
   "model_id": "jev-1.13.0",
   "rubric_version": "0.9.0",
-  "generated_at": "2026-09-26T07:26:02+00:00",
+  "generated_at": "2026-09-26T08:11:50+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
@@ -12,11 +12,11 @@
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.86,
+    "confidence": 0.83,
     "probabilities": {
-      "inelastic": 0.04,
-      "elastic": 0.91,
-      "ambiguous": 0.05
+      "inelastic": 0.05,
+      "elastic": 0.89,
+      "ambiguous": 0.06
     },
     "rule_version": "A3"
   },
@@ -52,45 +52,45 @@
     "demand_reach": 3
   },
   "raw_jev_scores_0to4": {
-    "market_headroom": 1.93,
-    "competitive_room": 1.12,
-    "mental_advantage": 2.03,
-    "defensibility": 0.55,
+    "market_headroom": 1.92,
+    "competitive_room": 1.1,
+    "mental_advantage": 2.01,
+    "defensibility": 0.56,
     "demand_reach": 1.73
   },
   "evidence_coverage": {
     "market_headroom": 0.9,
-    "competitive_room": 0.88,
-    "mental_advantage": 0.18,
+    "competitive_room": 0.89,
+    "mental_advantage": 0.17,
     "defensibility": 0.63,
     "demand_reach": 0.23
   },
   "confidence": {
     "market_headroom": 0.9,
-    "competitive_room": 0.88,
-    "mental_advantage": 0.18,
+    "competitive_room": 0.89,
+    "mental_advantage": 0.17,
     "defensibility": 0.63,
     "demand_reach": 0.23
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "market_headroom": {
-      "expected_jev_0to4": 1.93,
-      "expected_display_1to5": 2.93,
+      "expected_jev_0to4": 1.92,
+      "expected_display_1to5": 2.92,
       "band_80pct_display_1to5": [
         3,
         3
       ],
-      "mass_covered": 0.89
+      "mass_covered": 0.88
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.12,
-      "expected_display_1to5": 2.12,
+      "expected_jev_0to4": 1.09,
+      "expected_display_1to5": 2.09,
       "band_80pct_display_1to5": [
         2,
         2
       ],
-      "mass_covered": 0.86
+      "mass_covered": 0.87
     },
     "mental_advantage": {
       "expected_jev_0to4": 2.02,
@@ -99,16 +99,16 @@
         2,
         4
       ],
-      "mass_covered": 0.96
+      "mass_covered": 0.94
     },
     "defensibility": {
-      "expected_jev_0to4": 0.56,
-      "expected_display_1to5": 1.56,
+      "expected_jev_0to4": 0.55,
+      "expected_display_1to5": 1.55,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.81
+      "mass_covered": 0.83
     },
     "demand_reach": {
       "expected_jev_0to4": 1.74,
@@ -117,35 +117,35 @@
         1,
         4
       ],
-      "mass_covered": 0.92
+      "mass_covered": 0.93
     }
   },
   "probabilities": {
     "market_headroom": {
       "0": 0.0,
-      "1": 0.09,
-      "2": 0.89,
+      "1": 0.1,
+      "2": 0.88,
       "3": 0.02,
       "4": 0.0
     },
     "competitive_room": {
-      "0": 0.01,
-      "1": 0.86,
-      "2": 0.13,
+      "0": 0.02,
+      "1": 0.87,
+      "2": 0.11,
       "3": 0.0,
       "4": 0.0
     },
     "mental_advantage": {
-      "0": 0.04,
+      "0": 0.05,
       "1": 0.34,
-      "2": 0.18,
+      "2": 0.16,
       "3": 0.44,
-      "4": 0.0
+      "4": 0.01
     },
     "defensibility": {
-      "0": 0.66,
-      "1": 0.15,
-      "2": 0.17,
+      "0": 0.65,
+      "1": 0.18,
+      "2": 0.15,
       "3": 0.01,
       "4": 0.01,
       "5": 0.0
@@ -153,9 +153,9 @@
     "demand_reach": {
       "0": 0.23,
       "1": 0.13,
-      "2": 0.39,
-      "3": 0.17,
-      "4": 0.08
+      "2": 0.38,
+      "3": 0.19,
+      "4": 0.07
     }
   },
   "input_sufficiency": "sufficient",

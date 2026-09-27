@@ -2,21 +2,21 @@
   "case": "HB03-unity",
   "model_id": "jev-1.13.0",
   "rubric_version": "0.9.0",
-  "generated_at": "2026-09-26T07:26:41+00:00",
+  "generated_at": "2026-09-26T08:12:29+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
     "assessability_probabilities": {
-      "competitive_market": 1.0,
-      "no_competitive_market": 0.0
+      "no_competitive_market": 0.0,
+      "competitive_market": 1.0
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.96,
+    "confidence": 0.95,
     "probabilities": {
-      "elastic": 0.98,
-      "ambiguous": 0.01,
-      "inelastic": 0.01
+      "elastic": 0.96,
+      "inelastic": 0.02,
+      "ambiguous": 0.02
     },
     "rule_version": "A3"
   },
@@ -52,67 +52,67 @@
     "demand_reach": 3
   },
   "raw_jev_scores_0to4": {
-    "market_headroom": 1.91,
-    "competitive_room": 1.12,
-    "mental_advantage": 2.76,
-    "defensibility": 1.34,
-    "demand_reach": 2.02
+    "market_headroom": 1.92,
+    "competitive_room": 1.1,
+    "mental_advantage": 2.79,
+    "defensibility": 1.42,
+    "demand_reach": 2.07
   },
   "evidence_coverage": {
-    "market_headroom": 0.92,
-    "competitive_room": 0.8,
-    "mental_advantage": 0.64,
-    "defensibility": 0.38,
-    "demand_reach": 0.1
+    "market_headroom": 0.93,
+    "competitive_room": 0.82,
+    "mental_advantage": 0.6,
+    "defensibility": 0.33,
+    "demand_reach": 0.14
   },
   "confidence": {
-    "market_headroom": 0.92,
-    "competitive_room": 0.8,
-    "mental_advantage": 0.64,
-    "defensibility": 0.38,
-    "demand_reach": 0.1
+    "market_headroom": 0.93,
+    "competitive_room": 0.82,
+    "mental_advantage": 0.6,
+    "defensibility": 0.33,
+    "demand_reach": 0.14
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "market_headroom": {
-      "expected_jev_0to4": 1.91,
-      "expected_display_1to5": 2.91,
+      "expected_jev_0to4": 1.92,
+      "expected_display_1to5": 2.92,
       "band_80pct_display_1to5": [
         3,
         3
       ],
-      "mass_covered": 0.91
+      "mass_covered": 0.92
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.11,
-      "expected_display_1to5": 2.11,
+      "expected_jev_0to4": 1.09,
+      "expected_display_1to5": 2.09,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.83
+      "mass_covered": 0.85
     },
     "mental_advantage": {
-      "expected_jev_0to4": 2.76,
-      "expected_display_1to5": 3.76,
+      "expected_jev_0to4": 2.78,
+      "expected_display_1to5": 3.78,
       "band_80pct_display_1to5": [
-        3,
+        2,
         4
       ],
-      "mass_covered": 0.82
+      "mass_covered": 0.86
     },
     "defensibility": {
-      "expected_jev_0to4": 1.32,
-      "expected_display_1to5": 2.32,
+      "expected_jev_0to4": 1.39,
+      "expected_display_1to5": 2.39,
       "band_80pct_display_1to5": [
         1,
         3
       ],
-      "mass_covered": 0.85
+      "mass_covered": 0.83
     },
     "demand_reach": {
-      "expected_jev_0to4": 2.03,
-      "expected_display_1to5": 3.03,
+      "expected_jev_0to4": 2.06,
+      "expected_display_1to5": 3.06,
       "band_80pct_display_1to5": [
         1,
         4
@@ -123,38 +123,38 @@
   "probabilities": {
     "market_headroom": {
       "0": 0.0,
-      "1": 0.09,
-      "2": 0.91,
+      "1": 0.08,
+      "2": 0.92,
       "3": 0.0,
       "4": 0.0
     },
     "competitive_room": {
       "0": 0.06,
-      "1": 0.77,
-      "2": 0.17,
+      "1": 0.79,
+      "2": 0.15,
       "3": 0.0,
       "4": 0.0
     },
     "mental_advantage": {
       "0": 0.01,
-      "1": 0.07,
-      "2": 0.17,
-      "3": 0.65,
-      "4": 0.1
+      "1": 0.08,
+      "2": 0.16,
+      "3": 0.62,
+      "4": 0.13
     },
     "defensibility": {
-      "0": 0.29,
-      "1": 0.39,
-      "2": 0.17,
+      "0": 0.3,
+      "1": 0.34,
+      "2": 0.19,
       "3": 0.01,
-      "4": 0.14,
+      "4": 0.16,
       "5": 0.0
     },
     "demand_reach": {
-      "0": 0.21,
+      "0": 0.2,
       "1": 0.08,
       "2": 0.23,
-      "3": 0.43,
+      "3": 0.44,
       "4": 0.05
     }
   },
