@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v5 — architecture, gaps integrated.
-**Date:** 2026-09-23
+**Status:** DRAFT v8 — calibration integrated.
+**Date:** 2026-09-23 (v8: 2026-09-27)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -16,6 +16,11 @@ note. D12 remains open.
 coaching, with minimum-viable examples and a pre-filled resubmit), with **unlimited resubmission**.
 Safe because confirmation gates the queue. Added the send-budget rule: all sends count against one
 ceiling, and at the ceiling the site stops accepting rather than queueing.
+**v8 change — calibration integrated. §5.1 is a SIX-dimension set and §5.4 no longer contains
+score gates**; both described 0.9.0 and were corrected against measured results (§10.7 is new).
+D13 superseded, D16 fulfilled, D20–D23 added. §10.6's launch criterion is now band agreement
+(D20), §5.3.1 records the rubric-promotion build gate, and §10.1.1 separates the canary from the
+calibration corpus.
 
 ---
 
@@ -296,16 +301,22 @@ actually judge about their position**, not how much they typed. A 400-character 
 category, three competitors and a price is scorable; 2,000 characters of vision and journey copy
 scoring nothing.
 
-**What the input must carry.** Six things — one per gate and dimension:
+**What the input must carry.** One signal per scored dimension:
 
 | Slot | Drives | Refused when |
 |---|---|---|
-| Category / what the business does and to whom | Market headroom (G1) | Absent or non-specific enough to place in a category |
-| A positioning or differentiator sentence | Defensibility (G4), Position availability (G3) | Absent or a **non-position** — see below |
-| Competitors, named or counted | Competitive pressure (G2) | Zero, **and** enrichment finds none |
-| A price point or price band | Competitive pressure (G2) | Absent, **and** unenrichable |
-| A customer description | Demand reach (G5) | Absent |
+| Category / what the business does and to whom | Market headroom · Competitive room | Absent or non-specific enough to place in a category |
+| A positioning or differentiator sentence | Relative strength · Mental advantage · Defensibility | Absent or a **non-position** — see below |
+| Competitors, named or counted | Relative strength | Zero, **and** enrichment finds none |
+| A price point or price band | Competitive room | Absent, **and** unenrichable |
+| A customer description | Demand reach · Mental advantage | Absent |
 | City + category for enrichment | All | Absent |
+
+**The floor refuses; it does not score low.** Below the floor the scorer returns
+`REFUSED_INPUT_QUALITY` naming the missing signals (§5.4). Reporting a low score for an
+unanswerable submission would attribute the submitter's brevity to their business — the same
+defect class as scoring the form instead of the business, which §10.7 records as the single most
+repeated error in calibration.
 
 **Scoring is possible when every dimension has *either* a form answer *or* a passing enrichment
 source.** It is refused when any dimension has neither. That keeps the cannot-refuse contract
@@ -437,32 +448,45 @@ worse than a gap.
 
 | Input | Feeds dimension |
 |---|---|
-| ACRA / data.gov.sg (open, SSIC-filterable) | Market headroom |
-| Competitor set via search | Competitive pressure |
-| Competitor messaging via fetch | Position availability |
-| Competitor size/tenure | Defensibility |
+| ACRA / data.gov.sg (open, SSIC-filterable) | Market headroom · Competitive room |
+| Competitor set via search | Relative strength |
+| Competitor messaging via fetch | Relative strength · Mental advantage |
+| Competitor size/tenure | Relative strength · Defensibility |
 
 ### 4.5 Non-load-bearing by construction
 
-Per the cannot-refuse contract: **the form answers alone must carry all five scores.** Enrichment
+Per the cannot-refuse contract: **the form answers alone must carry all six scores.** Enrichment
 is best-effort behind a hard timeout. A failed fetch degrades depth, never existence.
 
 ---
 
 ## 5. L3 — Scoring
 
-### 5.1 The five dimensions
+### 5.1 The six dimensions
+
+**Calibrated** (§10.7). The previous five-dimension set was 0.9.0 and two of its dimensions no
+longer exist under those names.
 
 | # | Dimension | Weight | What it measures |
 |---|---|---|---|
-| 1 | Market headroom | 15% | Is there room to be chosen at all? |
-| 2 | Competitive pressure | 20% | How crowded and price-contested? |
-| 3 | Position availability | 25% | Does the word you want already have an owner? |
-| 4 | Defensibility | 25% | Hard-to-copy × hard-to-build |
-| 5 | Demand reach | 15% | Is there an identifiable, reachable, paying segment? |
+| 1 | Relative strength | 25% | For each buying situation it competes in, how firmly does it hold that situation against the named occupants of it? Judged **per situation**, never as one share fight — positioning is about product categories, not industries. |
+| 2 | Mental advantage | 20% | How much mind the brand holds in its segment. A **magnitude**, not a competitive claim: a brand can hold a great deal of mind while close rivals hold a similar amount. **Independent of closure** — a closed brand can still be the first name that comes to mind. |
+| 3 | Defensibility | 20% | The challenger's cost to displace it: the accumulated barriers the business **holds**, not the differentiator its form claims. |
+| 4 | Competitive room | 15% | **Landscape, not business.** Fragmented and uncontested = 5; few giants and a price war = 1. |
+| 5 | Market headroom | 10% | Is there unmet demand? Dropped automatically where supply is capacity-elastic (A3). |
+| 6 | Demand reach | 10% | Can it find and reach an identifiable paying group? Addressability, not demand size. A business **currently trading** is at least 3. |
 
-Weighted toward 3 and 4 because the brief is *viability through differentiation*, not industry
-attractiveness.
+**Positioning carries 70%** (relative strength + mental advantage + defensibility), because the
+brief is *viability through differentiation*, not industry attractiveness.
+
+**Note the reversal from 0.9.0.** `competitive pressure` treated a crowded market as *bad*;
+`competitive_room` scores a **fragmented** market as **favourable**. The earlier polarity was
+backwards. `position availability` — whether a word was unclaimed — is replaced by
+`relative_strength`, which measures the position actually **held against the derived competitive
+set**, because an unclaimed word nobody buys is not a position.
+
+**Weights are no longer hypotheses.** D6 said they would be refined by calibration; that
+refinement is done (§10.7), against 120 human-graded businesses across 27 categories.
 
 ### 5.2 Variable dimension set (required by D7)
 
@@ -470,54 +494,96 @@ A dimension that cannot clear is dropped and stated. **The scorer and the report
 support N dimensions from day one** — weights renormalised at runtime, not hardcoded in the
 template. A hardcoded five-bar layout makes a four-dimension ship a rewrite.
 
+**This is now a measured normal case, not an edge case.** `market_headroom` is dropped in **95% of
+cases** (114 of 120) because A3 finds the supply capacity-elastic. A five-dimension render is
+therefore the exception, and four- and five-dimension paths are what the renderer will run every
+day.
+
 ### 5.3 One rubric, two implementations
 
 The Python calibration harness and the production scorer must read **the same rubric JSON**.
 Otherwise calibration validates a scorer that is not the one shipped. This is the most likely way
 to fool ourselves.
 
-### 5.4 The composite must be gated, not merely weighted ⚠
+### 5.3.1 The rubric promotion step (a build gate, not a note)
 
-**This is the most important correction in this revision.**
+**This predicted failure has occurred.** There is currently **no production scorer** — the
+scorer exists only as the calibration harness — and the file a production scorer would load,
+`specs/calibration/rubric.json`, is **still 0.9.0, with `relative_strength` absent from it**. Every
+calibration result in §10.7 therefore describes a rubric that is not in service.
 
-With the weights in §5.1, a submission scoring **0 on Market headroom — a textbook category
-trap — and 5/5 on every other dimension reaches 85/100, band "Strong."** A weighted sum lets
-strength in four dimensions compensate for a fatal flaw in the fifth. That is precisely the error
-the Category Trap check exists to catch, and it is the single most dangerous property of the
-scoring model as originally written.
+Which file is live is a **build decision with a gate**, because the failure mode is silent: a
+calibrated rubric that nothing loads raises no error and produces no symptom until a client is
+shown a score from the retired model.
 
-TypeSafe's own composite-scoring guidance says the same thing: weights suit **compensating**
-preferences, and an *"any serious violation"* rule needs **separate conditions**.
+| Step | Requirement |
+|---|---|
+| 1 | The chosen rubric is promoted to `specs/calibration/rubric.json` — the single path both implementations read |
+| 2 | The promoted file's `_meta.version` **must** equal its top-level `version`; the harness fails loudly on a mismatch |
+| 3 | Superseded rubrics are retained as `rubric-v<X>.json` for the audit trail, never left as the live file |
+| 4 | No report is served unless the loaded rubric's `_meta.version` is the promoted one |
 
-**Fix — the score is two parts.**
+**Status: step 1 is NOT done.** Until it is, §10.7 describes a file nothing serves.
 
-**Part 1: gates (hard preconditions).** Evaluated before any composite. A failing gate does not
-reduce the score; it changes what the report **is**.
+### 5.4 Two refusals, and no score gates ⚠
 
-| Gate | Condition | If failed |
+**Calibrated (§10.7). This section previously specified six score gates; calibration tested and
+removed them. A superseded note at the end of this section records why, because the reasoning
+matters more than the deletion.**
+
+**There are no score gates.** A gate turns *"this business has no moat"* into *"we cannot assess
+this business"* — different statements, and the second one discards exactly the negative signal
+the report exists to deliver. **A low dimension score is a finding** — reported, reasoned about,
+and named in the verdict. It is never grounds for refusal.
+
+**Two refusals remain, and both mean "we cannot answer" — never "the answer is bad".**
+
+| Refusal | Trigger | Output |
 |---|---|---|
-| **G1** Category trap | Market headroom ≥ 2/5 | Report states *category trap* — no composite is shown |
-| **G2** Commodity floor | Competitive pressure ≥ 2/5 | Report states the market is priced to the floor |
-| **G3** No open position | Position availability ≥ 2/5 | Report states the position is occupied |
-| **G4** Nothing to defend | Defensibility ≥ 2/5 | Report states there is currently no differentiator |
-| **G5** No identifiable buyer | Demand reach ≥ 2/5 | Report states the customer is undefined |
-| **G6** Input floor | §3.10 minimum signal met | Template C — no score |
+| **Assessability** | The business cannot be analysed from any available input (the classifier's `refuse_when` choice) | `REFUSED_UNASSESSABLE` — no composite |
+| **Input quality** | The §3.10 floor is not met | `REFUSED_INPUT_QUALITY`, naming the missing signals — no composite |
 
-**⚠ Floor semantics — every floor is ≥ 2, because 1 means failing.** The first draft set most
-floors to 1, which made a score of **1 pass the very gate it was meant to fire**: a business with
-zero defensibility would have cleared G4. Caught by the calibration check
-(`specs/calibration/check_blind_run.py`), not by review. It is the same class of bug as §5.4 itself
-— a control that cannot fire on the condition it exists to catch.
+Neither is a third gate on low scores. The assessability classifier is asked **first and carries
+no weight**: it selects whether the instrument can judge the business at all, and is not a scored
+dimension.
 
-**Part 2: the weighted composite**, computed only when all six gates pass. Bands: Fragile (5–39) ·
-Contested (40–59) · Viable, conditional (60–74) · Strong (75–95), clamped to 5–95 so no score can
-imply certainty the method lacks.
+**The composite** is computed whenever any dimension is scored, over the scored dimensions only,
+with weights renormalised at runtime and the weights actually used recorded (§5.2).
 
-**The gate thresholds are hypotheses**, calibrated exactly as the weights are (§10).
+```
+composite = round( Σ ( level_i / count_i ) × weight_used_i )
+```
 
-A gate failure is still a **useful report** — arguably more useful, because it names the one
-thing that is wrong rather than averaging it away. It is also the honest answer, and the version
-a prospect can act on.
+**Note the formula: the level is divided by its `count`, not by `count − 1`.** The lowest level
+therefore contributes `1/count`, so the composite **floor is ≈20, not 0**. This is stated because
+a reported "scale compression" defect turned out to be a replication error using `count − 1`
+(§10.7) — it is easy to "fix" a scale that is not broken.
+
+**Bands (calibrated):** Fragile 5–37 · Contested 38–57 · Viable, conditional 58–76 · Strong
+77–100. Band edges are derived from level-means, so they do **not** move when weights move.
+
+**The compensating-flaw concern is real, and is handled by disclosure rather than gating.** A
+weighted sum does let strength in one dimension mask a flaw in another. Calibration established
+that gating is the wrong remedy, because refusing the report loses the finding entirely. The
+remedy is that the report **always names the weakest dimension and the single largest weighted
+shortfall** — the "one gate" of §5.5, computed as a predicate, never written by a model. A
+compensating flaw is therefore *stated in the verdict* rather than averaged away or suppressed.
+
+**Weight concentration is the second control.** Positioning carries 70% across three correlated
+dimensions, so a submission cannot reach the top band on market attractiveness alone.
+
+> **Superseded — why the gates were removed.** The gate layer specified here was tested against a
+> 75-case blind run. The `defensibility ≥ 2` gate fired on 10 cases, and **8 of those 10 were
+> live, large businesses** — KFC, Burger King, Zoff, Harvey Norman, Spectacle Hut, Pure Fitness,
+> Virgin Active, R&B Tea. **The model was not wrong about them:** a generic fried-chicken chain
+> genuinely has no moat. The gate turned *"this business has no moat"* into *"we cannot assess
+> this business"*, and refusing those 8 cases removed exactly the negative signal the report
+> exists to deliver. Removing the gates eliminated 8 false refusals out of 10 firings.
+>
+> This is the same class of bug the floors of 1 produced (a control that cannot fire on the
+> condition it exists to catch). **The floors were fixed; the gates themselves were the wrong
+> instrument.** A gate failure is not a useless report — it is a *wrong* one, because it answers
+> "can this be analysed?" when the finding is "this business is weak".
 
 ### 5.5 The verdict and the one gate must be computed, not written
 
@@ -525,7 +591,7 @@ If a language model writes the verdict sentence, two identical submissions can p
 verdicts — and §10.2's reproducibility claim becomes false. **A report we cannot reproduce is a
 report we cannot defend.**
 
-- **The verdict is a predicate** over (band, weakest dimension, failed gates). The sentence is a
+- **The verdict is a predicate** over (band, weakest dimension, any refusal). The sentence is a
   **template** filled from it, not generated.
 - **THE ONE GATE is an argmin** over weighted contribution, tie-broken by confidence then by
   dimension order. Deterministic, and explainable when a prospect asks why.
@@ -551,11 +617,16 @@ never client analyses. Deliberate egress decision, recorded in the processor reg
 
 ### 5.8 The rubric is the asset, and it sits behind a free form
 
-The five dimensions, their weights, the gate thresholds and the band boundaries **are the method**.
+The six dimensions, their weights, the **level texts** and the band boundaries **are the method**.
 A competitor can submit once, receive a report, and reverse-engineer a meaningful part of it.
 
+**The level texts are the most exposed part of the asset.** A single submission returned against a
+known input reveals which level each dimension landed on, and the reasoning attached to it — enough
+to reconstruct a working approximation of the scale. There are no longer gate thresholds to protect
+(§5.4), which removes one exposure and does nothing about this one.
+
 The substance is withheld (§7.2), so the exposure is bounded — but it is real. **The report shows
-scores and reasoning without exposing the criteria text, the weights or the gate thresholds.** No
+scores and reasoning without exposing the criteria text, the weights or the band boundaries.** No
 debug output, no raw Jev payloads, no rubric version in email bodies.
 
 ### 5.9 Dependency on a single model vendor
@@ -898,8 +969,14 @@ is never hit is cheap insurance; a bill discovered at month end is not.
 ### 8.6 The rubric is the asset (Q9)
 
 See §5.8. The design consequence belongs here too: the report shows **scores and reasoning**;
-it never shows the criteria text, the weights, the gate thresholds or raw model payloads. Nor
-does it expose `rubric_version` in a body a competitor can read.
+it never shows the criteria text, the weights or raw model payloads. Nor does it expose
+`rubric_version` in a body a competitor can read.
+
+**The model pin is not currently enforced by the rubric.** §5.9 cites `jev-1.13.0` as the pinned
+dependency, but the rubric records its model as **`jev-latest`** — so the pin lives in this
+document, not in the artifact that determines behaviour. Either pin the version in the rubric or
+record that enforcement is external; leaving the two disagreeing means §5.9's mitigation reads as
+stronger than it is.
 
 ---
 
@@ -938,10 +1015,39 @@ Labels are **the position as it stood at engagement start**, fed to Jev, which m
 analysed conclusion — the only correct analogue to production, where Jev scores a form submission
 rather than a finished analysis.
 
+### 10.1.1 Two corpora, two jobs — do not conflate them
+
+The six cases above are a **canary**, not the calibration corpus. They answer different questions
+and must not be merged.
+
+| | Canary corpus (§10.1) | Calibration corpus (§10.7) |
+|---|---|---|
+| Size | 6 fixed cases | 120 businesses, 27 categories |
+| Input | form-shaped, from real engagements | form-shaped, mixed real and authored |
+| Purpose | **detect drift** — same input, fixed expected output, run on a schedule | **measure agreement** — how closely the instrument tracks a human grader |
+| Changes over time? | **Never.** A canary whose fixture moves detects nothing | Grows as coverage gaps close |
+| What a failure means | The model or the rubric moved | The instrument is not yet calibrated |
+
+**⚠ The canary corpus is incomplete, and the launch gate cannot run without it.** Five of the six
+cases — GreenPackers, CaiCa, PetDirectory, SGFitness, SaladShop — **do not exist in any corpus.**
+Only Bonefirm does. Restoring them as form-shaped inputs is a **build prerequisite for §10.6**,
+not a documentation item.
+
+**A caveat that survives from §10.5:** all six were authored by the same person, so they are not
+drawn from the population the free form actually sees. The 120-case corpus addresses that
+distribution gap — which is precisely why both are needed, and why neither replaces the other.
+
 ### 10.2 Provenance — every report carries
 
-`rubric_version` · `model_id` (as returned by the API) · `prompt_hash` · `input_hash` ·
-`enrichment_sources[]` · `dimensions_used[]` · `gates_evaluated` · `generated_at`
+`rubric_version` · `rubric_meta_version` · `model_id` (as returned by the API) · `prompt_hash` ·
+`input_hash` · `enrichment_sources[]` · `dimensions_used[]` · **`weights_used`** · `refusals[]` ·
+`generated_at`
+
+**`weights_used` is required, not optional:** weights are renormalised at runtime whenever a
+dimension is dropped (§5.2), so the effective weighting of a report cannot be reconstructed from
+the rubric alone. **`rubric_meta_version` is recorded separately** because the retracted bug in
+§10.7 arose from two version fields disagreeing — if they can differ, both must be captured.
+`refusals[]` replaces `gates_evaluated`; refusals are the only gate-like outcomes remaining (§5.4).
 
 A report we cannot reproduce is a report we cannot defend to a paying prospect.
 
@@ -990,19 +1096,46 @@ This is the weakest part of the design, and it should not be oversold.
 4. **One negative control proves the scorer *can* fail — not that it fails for the right reason.**
    Several controls are needed, spanning distinct failure modes: an empty field, a self-
    contradictory answer, a generic positioning sentence with no differentiator.
-5. **There is no human baseline.** We have never measured what a competent human — Sean — scores
-   from the same inputs, blind. Without it we cannot claim Jev approximates good judgment; only
-   that it agrees with the documents.
+5. **The human baseline now exists, and it changed the design.** This item previously read that
+   no baseline had ever been measured. It has: Sean graded **120 businesses across 27 categories**
+   at dimension level, blind to the instrument's scores, plus a separate composite regrade. That
+   is the reference set for §10.7 — twenty times the scale this item originally asked for.
 
-**The cheapest fix for #5 is one hour of work:** Sean scores the six cases from the form-shaped
-inputs, blind, before seeing Jev's. That single number — human agreement versus model agreement —
-is the only evidence that the instrument measures something real, and it costs almost nothing.
+   Its findings were not merely reassuring. **Each one moved the method:**
+   - His grades **redefined `mental_advantage`** — how much mind the brand holds, and
+     **independent of closure**. The instrument had been suppressing a closed brand to 1 when the
+     brand was still the first name Singaporeans think of for bubble tea.
+   - He **confirmed `competitive_room`'s polarity the reverse of 0.9.0** and closed it out.
+   - He **halved the disputes on `defensibility`** by naming what it should measure — *"took
+     decades and huge capital"*. The instrument had been scoring the differentiator a form
+     **claims** rather than the barrier a business **holds**.
+   - **59 of 61 of his composite entries copied the instrument's own score** into the adjacent
+     column. Dimension scores had their own distributions, so they were not copied — but this is
+     why **composites in §10.7 are recomputed from his dimension scores**, never taken from his
+     composite column. Any agreement figure that used his composite would have been an artefact.
+
+   **One caveat survives and must be stated:** a single grader's labels can be calibrated *to*
+   rather than calibrated *against*. A second independent grader would separate the two, and is
+   not available. This is the honest boundary of what §10.7 proves.
 
 ### 10.6 Launch gate
 
-**Ship the scored report only when Jev clears all six cases and fails the negative controls as
-predicted.** "Clears" = same band per case, every dimension within ±1 level, all gates stable,
-controls fail.
+**Ship the scored report when the instrument clears the following, on the corpora in §10.1 and
+§10.7.**
+
+| Criterion | Bar | Measured today |
+|---|---|---|
+| Band agreement | ≥90% of cases within **one band** of the reference label | **100%** (n=114) |
+| Gross band error | ≤5% of cases **two or more bands** off | **0%** |
+| Dimension disputes | ≤5% of dimension scores **≥2 levels** apart | **2.8%** |
+| Negative controls | Every control **fails**, each with its own predicted failure reason | **not built** |
+| Canary cases present | All six (§10.1) | **1 of 6 — gate cannot run** |
+
+**Dimension-exact agreement is explicitly NOT the bar.** It sits at 56.5%, and requiring it would
+hold the product to a granularity a five-point human-judged scale does not support. **The client
+sees a band and a narrative, never a number (§5.8)** — so band agreement is the measure that
+matches what can actually be wrong from the client's side. This supersedes the earlier "every
+dimension within ±1 level", which was never met and was replaced by decision D20.
 
 **Disagreement triage — judge-vs-corpus disagreement is UNRESOLVED until hand-read.** Do not
 default to "Jev is wrong"; that has been the wrong call before.
@@ -1012,6 +1145,68 @@ default to "Jev is wrong"; that has been the wrong call before.
 | J1 | Hand-read confirms Jev missed | Fix criterion/unit/gate. Jev was wrong. |
 | J2 | Hand-read confirms the analysis missed it | Correct the label — **a finding about our own method** |
 | J3 | Both defensible | Dimension genuinely ambiguous → **drop it and state it** (D7) |
+
+---
+
+### 10.7 What calibration established (v1.2.0 → v1.8.0)
+
+**Method.** 120 businesses across 27 categories, form-shaped inputs, scored under a rubric whose
+every change was isolated to **one dimension** with the other five asserted byte-identical as a
+control. Reference labels: Sean's blind dimension grades (§10.5 item 5).
+
+**One defect class accounted for every improvement: the instrument was reading the SUBMISSION
+instead of the BUSINESS.**
+
+| Dimension | What it read | What it must read |
+|---|---|---|
+| `demand_reach` | whether the form *named* a channel | whether the business demonstrably reaches buyers — currently trading sets a floor of 3 |
+| `relative_strength` | one share fight against every named competitor | the position held **per situation**, corroborated |
+| `mental_advantage` | whether the *model* could articulate a retrieval occasion | whether the *segment* holds the brand in mind |
+| `defensibility` | the differentiator the form **claims** | the accumulated barriers the business **holds** |
+
+**Two recurring mechanical causes.** (1) The form's `undercut_on` field is the business
+**self-reporting its weakness**, and it was being scored as the verdict — **candour was punished**.
+(2) **Absence of detail in a form was read as absence in the world.** A business with seven outlets
+was scored as having no route to buyers because its form was terse.
+
+**Corroboration is dimension-specific.** The same physical fact has *opposite* implications in
+different dimensions: closure destroys **reach** (`demand_reach`) but not **memory**
+(`mental_advantage`). A single shared "physical evidence" rule was tested and is too blunt.
+
+**Measured trajectory.** Noise floor ±0.4 pts / ±2 cases, established by re-running one rubric
+twice — 19 of 720 cells moved, symmetrically (9 down, 10 up), so the movement below is real:
+
+| | exact | disputes ≥2 | offset |
+|---|---|---|---|
+| v1.2.0 baseline | 66.7% | 8.6% | +0.23 |
+| v1.6.0 | 55.9% | 4.7% | +0.09 |
+| **v1.8.0** | 56.5% | **2.8%** | +0.09 |
+
+**Exact agreement fell while disputes halved, and that is the intended trade.** Exact
+disagreement was converted into *adjacent* disagreement: cells at gap 0 fell 319 → 271 while
+gap ≥2 fell **41 → 23**. **A wrong band misleads a client; an adjacent one does not.** Since the
+client sees a band, disputes are the measure matching the product.
+
+**Product-level result:** band agreement **100% within one band, 0% two or more off** (n=114), and
+**85% exact on the target segment** — businesses the grader placed in the lower two bands, which is
+the segment D3 names as the lead magnet's audience.
+
+**What calibration did NOT establish.**
+- **Agreement, not accuracy.** The reference labels are one human's; correlated error between the
+  instrument and that human would agree and still both be wrong (§10.5 item 1).
+- **A second grader is absent**, so calibrated-*to* versus calibrated-*against* is unresolved.
+- **The weakest region is the top end** — a −7.7 mean composite offset for businesses the grader
+  rated 80+, which is off-target but real.
+- **The lowest band is a thin cell**; the extreme figures there rest on n=3.
+- **One defect I reported and then retracted.** I reported the composite as "compressed" (+13 at
+  the low end, −4.5 at the high end). It was **my own replication bug**: I used
+  `(level−1)/(count−1)` where the harness uses `level/count`, so I was comparing a floor-0 scale
+  against a floor-20 one. Verified against the harness's stored output and retracted. It is
+  recorded here because the corrected figures are what §5.4's formula note protects against.
+
+> **The single lesson worth carrying:** any re-implementation of a harness calculation must be
+> verified against the harness's own stored output **before** any finding is built on it. One
+> cheap call would have caught the retracted finding above.
 
 ---
 
@@ -1073,21 +1268,31 @@ purchasing decision.
 |---|---|---|
 | **D11** | **Email confirmation before send** (§3.7) | **ACCEPTED** — with Turnstile at submission |
 | **D12** | **Input-quality floor** (§3.10) — where the guidance path fires | **ACCEPTED** — guidance email, unlimited attempts |
-| **D13** | **Gate thresholds** for G1–G5 (§5.4) | Start at the stated values, calibrate |
+| **D13** | **Gate thresholds** for G1–G5 (§5.4) | ~~Start at the stated values, calibrate~~ **SUPERSEDED** — the gates were removed by calibration (§5.4, §10.7). No thresholds remain to set |
 | **D14** | **Jurisdiction** (§9) — scope the offer to SG, or build a GDPR path | Scope to SG explicitly |
 | **D15** | **Retention periods** (§7.5) | Provisional table stands as the starting point |
-| **D16** | **Human baseline** (§10.5) — Sean scores the six cases blind | **Yes.** One hour, and it is the only validity evidence we can get cheaply |
+| **D16** | **Human baseline** (§10.5) | **FULFILLED — and exceeded.** Sean graded **120 businesses across 27 categories** blind, plus a composite regrade, not the six cases proposed here. Results in §10.7. Caveat carried: a second grader is absent |
 | **D17** | **Nurture cadence and exit rules** (D3) | Defer — low priority, architecture supports it |
 | **D18** | **The name** (D1) | KIV |
 | **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **Open — Sean to decide** |
+| **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
+| **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
+| **D22** | **Rubric promotion** (§5.3.1) — which file is live | **ACCEPTED — promote to `specs/calibration/rubric.json` as a build gate.** Currently 0.9.0 with `relative_strength` absent; calibration has validated an instrument nothing serves |
+| **D23** | **Canary restoration** (§10.1.1) | **REQUIRED before §10.6 can run.** 5 of 6 cases absent (GreenPackers, CaiCa, PetDirectory, SGFitness, SaladShop) |
 
 ---
 
 ## 14. What this spec does not claim
 
-- That Jev will clear the gate. §10.6 exists because it may not.
-- That clearing the gate proves accuracy. §10.5 — it proves agreement.
-- That the weights or gate thresholds are correct. They are hypotheses (§5.1, §5.4).
+- That Jev will clear the gate. §10.6 exists because it may not — and **cannot run today**, since
+  5 of the 6 canary cases are absent (§10.1.1).
+- That clearing the gate proves accuracy. §10.5 — it proves **agreement**, against one grader.
+- That the weights are correct. They are **calibrated** (§10.7, D20), which is stronger than a
+  hypothesis and weaker than accuracy: they track one human across 120 businesses, and a second
+  grader would test whether that human was right.
+- That calibration has been deployed. **It has not** — §5.3.1: there is no production scorer, and
+  the live rubric is still 0.9.0 with `relative_strength` absent. §10.7 describes an instrument
+  nothing currently serves.
 - That enrichment will be reliable — §4.5 makes it non-load-bearing.
 - That the current Stripe path works — F1 says it does not.
 - That any provider choice is permanent — §6.3 keeps it reversible.
