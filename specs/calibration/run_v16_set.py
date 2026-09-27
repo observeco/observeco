@@ -13,8 +13,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 RUBRIC = "rubric-v1.6.0.json"
-OUTDIR = "runs-v16"
-PROGRESS = HERE / "r16_progress.json"
+OUTDIR = "runs-v16b"
+PROGRESS = HERE / "r16b_progress.json"
 
 cases = sorted(p for p in glob.glob(str(HERE / "inputs-v4" / "*.json"))
                if not p.endswith("_index.json"))

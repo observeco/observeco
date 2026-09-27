@@ -1,0 +1,2032 @@
+{
+  "BK01-breadtalk.json": {
+    "case": "BK01-breadtalk",
+    "composite": 80,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BK02-four.json": {
+    "case": "BK02-four",
+    "composite": 62,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BK03-paris.json": {
+    "case": "BK03-paris",
+    "composite": 57,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BK04-tiong.json": {
+    "case": "BK04-tiong",
+    "composite": 67,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BK05-polar.json": {
+    "case": "BK05-polar",
+    "composite": 54,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BT06-each-a-cup.json": {
+    "case": "BT06-each-a-cup",
+    "composite": 60,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BT07-chagee.json": {
+    "case": "BT07-chagee",
+    "composite": 66,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BT08-liho.json": {
+    "case": "BT08-liho",
+    "composite": 74,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BT09-playmade.json": {
+    "case": "BT09-playmade",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "BT10-sharetea.json": {
+    "case": "BT10-sharetea",
+    "composite": 56,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "C2-activesg.json": {
+    "case": "C2-activesg",
+    "composite": 84,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 5,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "C4-sheng-siong.json": {
+    "case": "C4-sheng-siong",
+    "composite": 76,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 5,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 5
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "C5-michelin-hawker.json": {
+    "case": "C5-michelin-hawker",
+    "composite": 80,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 3,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "C6-euyansang.json": {
+    "case": "C6-euyansang",
+    "composite": 84,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 5,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "C9-b2b-it-services.json": {
+    "case": "C9-b2b-it-services",
+    "composite": 46,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "D2-petlovers-cue.json": {
+    "case": "D2-petlovers-cue",
+    "composite": 84,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 5,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "E1-asml.json": {
+    "case": "E1-asml",
+    "composite": null,
+    "band": "GATE",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 6,
+      "competitive_room": 3,
+      "market_headroom": 4,
+      "demand_reach": 5
+    },
+    "unscored": [
+      "competitive_room"
+    ]
+  },
+  "E2-coupang-flywheel.json": {
+    "case": "E2-coupang-flywheel",
+    "composite": 88,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 6,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "E4-bonefirm-ip.json": {
+    "case": "E4-bonefirm-ip",
+    "composite": 41,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "EL01-courts.json": {
+    "case": "EL01-courts",
+    "composite": 65,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "EL02-harvey.json": {
+    "case": "EL02-harvey",
+    "composite": 57,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "EL03-best.json": {
+    "case": "EL03-best",
+    "composite": 53,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "EL04-gain.json": {
+    "case": "EL04-gain",
+    "composite": 53,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "EW01-owndays.json": {
+    "case": "EW01-owndays",
+    "composite": 72,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "EW02-zoff.json": {
+    "case": "EW02-zoff",
+    "composite": 53,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "EW03-lenskart.json": {
+    "case": "EW03-lenskart",
+    "composite": 59,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "EW04-spectacle.json": {
+    "case": "EW04-spectacle",
+    "composite": 47,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "F1-boeing-airbus.json": {
+    "case": "F1-boeing-airbus",
+    "composite": 80,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 6,
+      "competitive_room": 2,
+      "market_headroom": 4,
+      "demand_reach": 5
+    },
+    "unscored": []
+  },
+  "F2-watsons-guardian.json": {
+    "case": "F2-watsons-guardian",
+    "composite": 70,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "F3-vicom.json": {
+    "case": "F3-vicom",
+    "composite": 76,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 4,
+      "defensibility": 5,
+      "competitive_room": 2,
+      "market_headroom": 2,
+      "demand_reach": 4
+    },
+    "unscored": []
+  },
+  "FF01-mcdonalds.json": {
+    "case": "FF01-mcdonalds",
+    "composite": 80,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FF02-kfc.json": {
+    "case": "FF02-kfc",
+    "composite": 67,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FF03-burger.json": {
+    "case": "FF03-burger",
+    "composite": 61,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FF04-subway.json": {
+    "case": "FF04-subway",
+    "composite": 57,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FF05-jollibee.json": {
+    "case": "FF05-jollibee",
+    "composite": 57,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FF06-shake.json": {
+    "case": "FF06-shake",
+    "composite": 62,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FU01-ikea.json": {
+    "case": "FU01-ikea",
+    "composite": 80,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FU02-castlery.json": {
+    "case": "FU02-castlery",
+    "composite": 67,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FU03-scanteak.json": {
+    "case": "FU03-scanteak",
+    "composite": 76,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "FU04-cellini.json": {
+    "case": "FU04-cellini",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "GY02-anytime.json": {
+    "case": "GY02-anytime",
+    "composite": 76,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "GY03-fitness.json": {
+    "case": "GY03-fitness",
+    "composite": 70,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "GY04-pure.json": {
+    "case": "GY04-pure",
+    "composite": 57,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "GY05-virgin.json": {
+    "case": "GY05-virgin",
+    "composite": 62,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "GY06-24-7.json": {
+    "case": "GY06-24-7",
+    "composite": 41,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "GY07-true.json": {
+    "case": "GY07-true",
+    "composite": 29,
+    "band": "Fragile",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 1,
+      "mental_advantage": 1,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB01-bob.json": {
+    "case": "HB01-bob",
+    "composite": 54,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB02-guardian.json": {
+    "case": "HB02-guardian",
+    "composite": 70,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB02-pinch.json": {
+    "case": "HB02-pinch",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB03-sanwichio.json": {
+    "case": "HB03-sanwichio",
+    "composite": 46,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB03-unity.json": {
+    "case": "HB03-unity",
+    "composite": 70,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB04-sephora.json": {
+    "case": "HB04-sephora",
+    "composite": 67,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB04-the.json": {
+    "case": "HB04-the",
+    "composite": 46,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB05-roa.json": {
+    "case": "HB05-roa",
+    "composite": 56,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 2,
+      "defensibility": 3,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB06-moncheri.json": {
+    "case": "HB06-moncheri",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB07-flowermaker.sg.json": {
+    "case": "HB07-flowermaker.sg",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB08-a.json": {
+    "case": "HB08-a",
+    "composite": 37,
+    "band": "Fragile",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB09-a.json": {
+    "case": "HB09-a",
+    "composite": 30,
+    "band": "Fragile",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 1,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HB10-a.json": {
+    "case": "HB10-a",
+    "composite": 50,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HC01-operarose.json": {
+    "case": "HC01-operarose",
+    "composite": 50,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HC02-the.json": {
+    "case": "HC02-the",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HC03-a.json": {
+    "case": "HC03-a",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HC04-a.json": {
+    "case": "HC04-a",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HC05-a.json": {
+    "case": "HC05-a",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HC06-a.json": {
+    "case": "HC06-a",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF01-snow.json": {
+    "case": "HF01-snow",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF02-facial.json": {
+    "case": "HF02-facial",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF03-my.json": {
+    "case": "HF03-my",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF04-pretty.json": {
+    "case": "HF04-pretty",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF05-glow.json": {
+    "case": "HF05-glow",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF06-mono.json": {
+    "case": "HF06-mono",
+    "composite": 50,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF07-ivy.json": {
+    "case": "HF07-ivy",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF08-sebelle.json": {
+    "case": "HF08-sebelle",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HF09-toa.json": {
+    "case": "HF09-toa",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HL01-the.json": {
+    "case": "HL01-the",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HL02-lunalili.json": {
+    "case": "HL02-lunalili",
+    "composite": 46,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HL03-perky.json": {
+    "case": "HL03-perky",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN01-tee.json": {
+    "case": "HN01-tee",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN02-cuteticle.json": {
+    "case": "HN02-cuteticle",
+    "composite": 46,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN03-crybaby.json": {
+    "case": "HN03-crybaby",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN04-bubd.json": {
+    "case": "HN04-bubd",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN05-get.json": {
+    "case": "HN05-get",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN06-nails.json": {
+    "case": "HN06-nails",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN07-i.json": {
+    "case": "HN07-i",
+    "composite": 44,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN08-frisky.json": {
+    "case": "HN08-frisky",
+    "composite": 46,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN09-eleven.json": {
+    "case": "HN09-eleven",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN10-maniqure.json": {
+    "case": "HN10-maniqure",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN11-nailnicorn.json": {
+    "case": "HN11-nailnicorn",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN12-euns.json": {
+    "case": "HN12-euns",
+    "composite": 37,
+    "band": "Fragile",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN13-yatonails.json": {
+    "case": "HN13-yatonails",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HN14-dazzlingnails.json": {
+    "case": "HN14-dazzlingnails",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HT01-an.json": {
+    "case": "HT01-an",
+    "composite": 50,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HT02-an.json": {
+    "case": "HT02-an",
+    "composite": 50,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HT03-a.json": {
+    "case": "HT03-a",
+    "composite": 40,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HT04-a.json": {
+    "case": "HT04-a",
+    "composite": 37,
+    "band": "Fragile",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "HT05-an.json": {
+    "case": "HT05-an",
+    "composite": 37,
+    "band": "Fragile",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "KP01-ya.json": {
+    "case": "KP01-ya",
+    "composite": 76,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "KP02-killiney.json": {
+    "case": "KP02-killiney",
+    "composite": 59,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "KP03-toast.json": {
+    "case": "KP03-toast",
+    "composite": 66,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "KP04-chin.json": {
+    "case": "KP04-chin",
+    "composite": 62,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "N1-closedbusiness.json": {
+    "case": "N1-closedbusiness",
+    "composite": 30,
+    "band": "Fragile",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 1,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "NP01-a.json": {
+    "case": "NP01-a",
+    "composite": null,
+    "band": "GATE",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 1,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 1
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "NP02-a.json": {
+    "case": "NP02-a",
+    "composite": null,
+    "band": "GATE",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 1,
+      "mental_advantage": 1,
+      "defensibility": 1,
+      "competitive_room": 1,
+      "market_headroom": 3,
+      "demand_reach": 1
+    },
+    "unscored": []
+  },
+  "NP03-a.json": {
+    "case": "NP03-a",
+    "composite": null,
+    "band": "GATE",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 1,
+      "mental_advantage": 1,
+      "defensibility": 1,
+      "competitive_room": 1,
+      "market_headroom": 3,
+      "demand_reach": 1
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "NP04-a.json": {
+    "case": "NP04-a",
+    "composite": null,
+    "band": "GATE",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 1,
+      "mental_advantage": 1,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 1
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "NP05-a.json": {
+    "case": "NP05-a",
+    "composite": 24,
+    "band": "Fragile",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 1,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 1,
+      "market_headroom": 2,
+      "demand_reach": 1
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "P1-mixue.json": {
+    "case": "P1-mixue",
+    "composite": 79,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "P2-chicha.json": {
+    "case": "P2-chicha",
+    "composite": 69,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 4,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "P3-heytea.json": {
+    "case": "P3-heytea",
+    "composite": 73,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 3,
+      "competitive_room": 4,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "P4-rbtea.json": {
+    "case": "P4-rbtea",
+    "composite": 56,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "P5-gongcha.json": {
+    "case": "P5-gongcha",
+    "composite": 38,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 1,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 2
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "PS01-pcf.json": {
+    "case": "PS01-pcf",
+    "composite": 74,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": []
+  },
+  "PS02-my.json": {
+    "case": "PS02-my",
+    "composite": 55,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 3
+    },
+    "unscored": []
+  },
+  "SM01-ntuc.json": {
+    "case": "SM01-ntuc",
+    "composite": 84,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 5,
+      "defensibility": 5,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "SM03-cold.json": {
+    "case": "SM03-cold",
+    "composite": 70,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "SM04-giant.json": {
+    "case": "SM04-giant",
+    "composite": 60,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 4,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "SM05-don.json": {
+    "case": "SM05-don",
+    "composite": 62,
+    "band": "Viable, conditional",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 4,
+      "mental_advantage": 3,
+      "defensibility": 3,
+      "competitive_room": 2,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "bubbletea.json": {
+    "case": "bubbletea",
+    "composite": 46,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "koi.json": {
+    "case": "koi",
+    "composite": 79,
+    "band": "Strong",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 5,
+      "mental_advantage": 4,
+      "defensibility": 4,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  },
+  "observeco.json": {
+    "case": "observeco",
+    "composite": 56,
+    "band": "Contested",
+    "rubric_version": "1.6.0",
+    "dims": {
+      "relative_strength": 3,
+      "mental_advantage": 2,
+      "defensibility": 3,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 4
+    },
+    "unscored": [
+      "market_headroom"
+    ]
+  }
+}
