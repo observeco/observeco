@@ -1,0 +1,272 @@
+{
+  "_meta": {
+    "name": "obs-095 business viability rubric",
+    "version": "1.2.0",
+    "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) \u2014 otherwise calibration validates a scorer that is not the one shipped.",
+    "model": "jev-latest",
+    "scale": {
+      "type": "score",
+      "jev_levels": "0-4 (0-indexed)",
+      "human_display": "1-5",
+      "conversion": "display = jev_score + 1",
+      "warning": "The API returns an EXPECTED LEVEL, so a perfect score is 4.0, not 5.0. Off-by-one here silently shifts every dimension down one."
+    },
+    "direction_warning": "Every dimension is named so that HIGHER IS MORE FAVOURABLE. 'Competitive pressure' was renamed 'Competitive room' because the original name invites an inverted score \u2014 a scorer reading 'pressure' as high-when-bad would invert one dimension against the other four and the composite would be meaningless.",
+    "weights": {
+      "relative_strength": 25,
+      "mental_advantage": 20,
+      "defensibility": 20,
+      "competitive_room": 15,
+      "market_headroom": 10,
+      "demand_reach": 10
+    },
+    "gates": {
+      "_note": "0.9.0: NO SCORE GATES. They did the wrong job. `defensibility` floor 2 fired on 10 of 75 cases and 8 of those were LIVE, LARGE businesses -- KFC, Burger King, Zoff, Harvey Norman, Spectacle Hut, Pure Fitness, Virgin Active, R&B Tea. The model is not wrong about them: a generic fried-chicken chain genuinely has no moat. The defect is that the gate turned 'this business has no moat' into 'we cannot assess this business'. Those are different statements. A no-moat business is eminently assessable, and refusing it throws away exactly the negative signal the report exists to deliver. Measured: the gate does NOT separate dead from alive (defensibility=1 covers 2 dead and 8 alive), it separates 'has a moat' from 'has no moat'. This also contradicted the gate principle already established here -- gates should say 'cannot assess', not 'is this business bad'. Removing them eliminates 8 false refusals, makes the previously-unreachable 'Fragile' band reachable (5 cases, correctly the closed and position-less ones), and leaves ONE gate doing ONE job. A no-moat business now scores LOW instead of refusing. See FINDING-score-gates-wrong-job.md.",
+      "_assessability": {
+        "question": "assessability",
+        "refuse_when": "no_competitive_market",
+        "why": "Positioning analysis finds a place in the customer's mind that RIVALS have not taken. With no rivals there is no occupied position to find space beside and nothing for the instrument to measure -- the report would be meaningless, not merely wrong. This is the RIGHT job for a gate: not 'is this business bad?' but 'can the method work here?' VALIDATED: fires on ASML (P=1.00) and nothing else, max 0.08 across 19 other cases -- separation 0.92. Critically it does NOT fire on Boeing/Airbus (0.04) or Watsons/Guardian (0.00): both are duopolies where rivals compete hard for position, so the method works. See FINDING-assessability-gate.md."
+      }
+    },
+    "bands": [
+      [
+        "Fragile",
+        5,
+        37
+      ],
+      [
+        "Contested",
+        38,
+        57
+      ],
+      [
+        "Viable, conditional",
+        58,
+        76
+      ],
+      [
+        "Strong",
+        77,
+        100
+      ]
+    ],
+    "band_noise": 3.0,
+    "band_noise_note": "EMPIRICAL re-run noise, in composite points: how much a case actually moves when the SAME input is re-scored. Measured over 32 recorded repeat runs across 8 cases (noise_study/, repeats/): mean within-case sd 1.06, max 3.00, 3 of 5 cases zero variance, only 3 of 25 dimension-observations moved at all. Cases whose composite sits within this distance of a band boundary report a RANGE of bands, not a single word, because a 1-point display step against real noise makes the verdict word flip on a re-run (measured: 6 of 23 scored cases). PROVENANCE: this is OBSERVED spread, NOT the model's posterior. A convolution over Jev's own per-dimension probabilities gives sd ~7-8 pts, roughly 4x the truth -- the model is far more reproducible than its probabilities imply, so posterior spread must never be used as an error bar.",
+    "dimension_change_log": [
+      {
+        "version": "0.3.0",
+        "change": "position_availability -> mental_advantage",
+        "reason": "The old dimension asked an ABSOLUTE question (is the seat free?) about a phenomenon the positioning literature measures RELATIVELY (Romaniuk/Ehrenberg-Bass: advantage is the excess over what a brand of this size would be expected to own). It inverted for incumbents. TESTED: leader-vs-failing gap went from -0.05 (below the 0.08 noise floor = zero signal) to +1.38 (17x noise). See FINDING-position-reframe-tested.md",
+        "audit": "prior_definition kept in _superseded for one release"
+      },
+      {
+        "version": "0.4.0",
+        "change": "mental_advantage top anchor SPLIT (levels 4 and 5 distinguished)",
+        "reason": "The relative framing merged two different kinds of advantage, which let a single hawker stall (C5) tie a national programme (C2), both at 5/5 with C5 decisive at 5-5/0.80. Level 5 is now reserved for being the DEFAULT RETRIEVAL for a valuable, frequently-occurring situation; level 4 is over-indexing for your size without being anyone's default. The old anchor rewarded the excess over expectation alone, which structurally favours small players at the top of the scale."
+      },
+      {
+        "version": "0.4.1",
+        "change": "REVERTED the 0.4.0 top-anchor split",
+        "reason": "The 0.4.0 split FAILED its stated purpose. It was meant to separate C5 (one hawker stall, over-indexes for its size) from C2 (a national programme, the default answer). Both still scored 5/5. It also DEGRADED the middle: C3 Pet Lovers Centre moved 3->4, destroying the diagnostic clarity the ordering work had just established, N2 2->3, C6 4->5. The new level-4 text was easier to satisfy than the old one, so mass shifted up. Net negative; reverted. Kept in the log for audit."
+      },
+      {
+        "version": "0.5.0",
+        "change": "defensibility SPLIT from 5 to 6 levels (old L3 -> new L3 'Replicable' + new L4 'Protected')",
+        "reason": "Sean: 'a well-protected single formulation should not score the same as something copyable in months.' Confirmed by E4-bonefirm-ip: adding explicit trade-secret, undisclosed-process and non-reverse-engineerable disclosure to Bonefirm left the score at 3 and raised confidence 0.71 -> 0.97, because old L3's text already named 'a formulation, a process, or a technical system' -- IP was inside L3 by construction. The distinction Sean wants is real and was not expressible on the old scale.",
+        "evidence": "FINDING-defensibility-ceiling.md; E1 ASML 5/5, E2 Coupang 5/5, E4 vs bonefirm"
+      },
+      {
+        "version": "0.6.0",
+        "change": "market_headroom: CROWDING framing -> UNMET-DEMAND framing; levels rewritten to kind-distinct anchors",
+        "reason": "Sean: 'the market is congested because ASML has the monopoly and can't expand beyond its current capacity.' Verified: ~50-60 EUV tools/yr, 10-20 per fab, ~EUR 38.8bn backlog (~1.5 yrs), 2027 output largely committed, buyers competing for allocation. The old question returned 3/5 for ASML and 4/5 for crowded bubble tea -- a saturated market outscored a supply-starved one. It also duplicated competitive_room.",
+        "evidence": "experiment_headroom_reframe.py: ASML 1.95->3.33; bubbletea 2.84->1.88; gap vs best-other -0.89 -> +1.38"
+      }
+    ],
+    "_superseded": {
+      "position_availability": {
+        "weight": 25,
+        "definition": {
+          "type": "score",
+          "instructions": "Judge ONLY position availability: is the position the business wants to occupy still OPEN, or does someone already own it? Higher means more open. Assess whether the word or idea the business claims is already owned by a named competitor in the buyer's mind, and whether the claim is one that competitors could trivially copy or already share. A claim that several competitors also make is NOT an available position. Consider what the business actually claims, as stated.",
+          "levels": [
+            "Taken and defended. The claimed position is clearly owned by an established competitor.",
+            "Mostly taken. The claim is shared by several competitors, or copyable in a season.",
+            "Partly open. The claim is not owned outright, but it is not exclusively theirs either.",
+            "Open. The position is genuinely unoccupied, with only weak or incidental overlap.",
+            "Wide open. The position is clearly unoccupied and the incumbents are not even oriented toward it."
+          ]
+        },
+        "why_retired": "Absolute framing inverted for incumbents: KOI (market leader) scored 1.12 vs CaiCa (failing) 1.17. Gap was smaller than run-to-run noise."
+      },
+      "market_headroom_0_5_0": {
+        "change": "crowding framing -> unmet-demand framing",
+        "definition": {
+          "instructions": "Judge ONLY market headroom: is there room for a new or small entrant to be chosen in this category at all? Consider whether the category the business names is a real category a buyer would recognise, whether it is growing or shrinking, and whether new entrants do get chosen in it.",
+          "levels": [
+            "No headroom. The category named is a trap -- contested, or an artefact of how the business describes itself.",
+            "Very little. The category is real but shrinking, or so broad the business cannot be placed within it.",
+            "Moderate. A real category with real buyers, but flat, or structurally unfavourable to new entrants.",
+            "Good. A real, growing category in which new entrants do visibly get chosen.",
+            "Strong. A large, growing category with documented, growing demand and plenty of room for new entrants."
+          ]
+        },
+        "why_retired": "Measured a crowding question, not unmet demand; scored a saturated market above a supply-starved one, and duplicated competitive_room."
+      }
+    },
+    "display_floor": 0.0,
+    "display_floor_note": "Below this evidence coverage a dimension is reported as \"unscored\", never as a number (the test is `coverage < display_floor`, so a coverage EXACTLY equal to the floor is KEPT). Rationale: a coverage of 0.00 is a dead-even distribution = no judgment at all; printing a score for it fabricates a finding. Confirmed by control runs C2/C3 which returned exact zeros (see CONTROL-CASE-PLAN.md). CHANGED 0.9.0, 0.2 -> 0.0: the floor now matches its own stated rationale. At 0.20 it was ALSO dropping coverage of 0.06-0.19 -- 14 dimensions across the 55-case set -- which is a WEAK judgment, not 'no judgment at all'. Dropping those changed the weight denominator, so a case with a dropped dimension was scored over a different set from one without: measured mean composite shift 2.4 pts, max 8, and 3 band words depended on WHICH dimensions were counted. The sweep over floors 0.00/0.05/0.10/0.20 showed: coverage exactly 0.00 occurred in ZERO of those 14 cases, label monotonicity held at every floor, and 0.20 bought only 0.8 pt of weak->mid separation for the comparability loss. At 0.0 all 55 cases share one dimension set (market_headroom excepted, dropped structurally by A3). WEAK COVERAGE IS NOW FLAGGED, NOT DROPPED -- a dimension should be excluded when there is no judgment, not when the judgment is unsure. BUG FOUND AND FIXED (HBB set): with the floor at exactly 0.0 the comparison `coverage < 0.0` is never true, so a coverage of exactly 0.00 was KEPT and scored -- the precise error the floor exists to prevent. It was masked because the one case that hit it (NP04, coverage 0.00) also had market_headroom dropped by A3 for an unrelated reason. run_jev.py now drops coverage <= 0.0 explicitly, so a dead-even distribution is never printed as a number.",
+    "level_counts": {
+      "market_headroom": 5,
+      "competitive_room": 5,
+      "defensibility": 6,
+      "demand_reach": 5,
+      "mental_advantage": 5
+    },
+    "classifiers": {
+      "assessability": {
+        "purpose": "DECIDES WHETHER THE METHOD CAN WORK AT ALL. A refusal gate, not a scored dimension -- no weight, never enters the composite. This is the CORRECT job for a gate: not 'is this business bad?' but 'can positioning analysis be performed here?'",
+        "instructions": "Positioning analysis finds a place in the customer's mind that RIVALS have not already taken. That requires a market in which more than one supplier competes for the same customers. Judge ONLY whether this is such a market. Judge the MARKET the business competes in, not the business's own quality, size or strength.",
+        "criteria": {
+          "no_competitive_market": "No -- this business is effectively the sole supplier, or customers have no meaningful alternative to it. There is no competitive struggle for position, so there is nothing to analyse.",
+          "competitive_market": "Yes -- other suppliers compete for the same customers, so there is a struggle for position to analyse."
+        },
+        "refuse_when": "no_competitive_market",
+        "validated_against": "Tested on 20 cases (test_assessability_gate.py -> runs/assessability_gate.json): fires on ASML at P=1.00 and on nothing else; max P=0.08 across the other 19 -- separation 0.92. Does NOT fire on Boeing/Airbus (0.04) or Watsons/Guardian (0.00). See FINDING-assessability-gate.md.",
+        "ponytail": "n=1 POSITIVE. ASML is the only case in the corpus that should refuse on this ground, so the validation rests on a single case. Other unassessable classes are untested and may not be caught: a statutory sole operator, a licensed monopoly, a pre-revenue business with no market presence, a genuine category-of-one, or an industry too new to have formed positions. Ceiling: one binary question. Upgrade path: test the additional classes before relying on it for production refusals."
+      },
+      "market_elasticity": {
+        "purpose": "DECIDES WHICH DIMENSIONS APPLY (A3). NOT a scored dimension -- it carries no weight and never enters the composite.",
+        "instructions": "Judge ONLY whether supply in this business's market can flex to meet an increase in demand. Ask: if demand doubled tomorrow, could the existing suppliers expand output to meet it? If rivals can add capacity -- more outlets, more staff, more floor space, more production runs -- then supply is ELASTIC and any shortfall is absorbed rather than accumulating. If they cannot, because capacity is physically, legally or structurally fixed -- fabrication plants, aircraft assembly lines, licensed premises, harbour berths, land -- then supply is INELASTIC and unmet demand accumulates as a queue or an order book. Judge the MARKET, not this specific business: a single restaurant cannot add tables tonight, but the restaurant market can absorb the demand elsewhere, so the market is elastic. A market is inelastic only when the constraint binds on ALL suppliers at once.",
+        "criteria": {
+          "elastic": "If demand rose, suppliers could expand capacity to meet it. Rivals can add outlets, staff, space or production. Any shortfall is absorbed by competitors, so no queue or backlog accumulates.",
+          "inelastic": "If demand rose, suppliers could NOT expand capacity to meet it. The constraint is physical, legal or structural and binds on every supplier -- plants, assembly lines, licensed capacity, land or berths. Unmet demand accumulates as a queue or order book.",
+          "ambiguous": "Capacity is mixed, transitionary, or the constraint binds on some suppliers but not others. The market cannot be cleanly assigned."
+        },
+        "rule": "elastic -> market_headroom is NOT scored (its qualifier sentence is reported instead) and its 15% is renormalised over the remaining dimensions. inelastic -> market_headroom IS scored. ambiguous -> scored AND flagged, with both readings reported.",
+        "why": "In an elastic-capacity market, unmet demand cannot accumulate: any shortfall is absorbed by rivals opening capacity, so the crowding/unmet axis is a constant and scoring it multiplies a near-constant by 15%. Verified: 12 of 17 cases span raw 1.78-1.98, a 0.10 band narrower than the 0.08 noise floor. In an inelastic market the shortfall has nowhere to go and shows up as an order book, which is measurable. See FINDING-elasticity-test.md, FINDING-discriminating-test.md, FINDING-midsized-test.md.",
+        "validated_against": "specs/calibration/FINDING-elasticity-test.md -- 17 cases hand-classified BLIND to the scores (12 elastic, 2 inelastic, 1 ambiguous, 1 inelastic-ish, 1 N/A). Model classification is compared against that label set in test_a3_elasticity.py.",
+        "ponytail": "Ambiguity is REPORTED, never resolved by the code. The model may legitimately be uncertain (a market mid-transition, or a firm-inelastic player in an elastic market -- the C5 hawker case). Forcing a side would manufacture a precision the evidence does not support. Ceiling: two-way branch + a contested flag. Upgrade path: a numeric elasticity score with a stated threshold if the three-way choice proves too coarse in use."
+      }
+    },
+    "elasticity_dispositions": {
+      "elastic": {
+        "market_headroom": "not_applicable",
+        "sentence": "Demand in your market is served and contested. Buyers can already get what you sell, so there is no pool of unmet demand to step into -- growth means taking share from an incumbent rather than serving need nobody is meeting.",
+        "also_report": "Concentration: who currently holds the buying situations in this category, and how hard they are to displace."
+      },
+      "inelastic": {
+        "market_headroom": "scored",
+        "sentence": "Supply in your market cannot flex to meet demand. Buyers wait, are rationed or are turned away, and the shortfall accumulates as a backlog rather than being absorbed by rivals.",
+        "also_report": "The demand-to-capacity ratio (orders or backlog against current revenue), normalised to what is normal for your category."
+      },
+      "ambiguous": {
+        "market_headroom": "scored_contested",
+        "sentence": "Your market's capacity is mixed or in transition -- some parts can flex, others cannot. The unmet-demand reading is reported but should be treated as contested.",
+        "also_report": "Both readings: the elastic view (demand served, compete for share) and the inelastic view (demand exceeds supply, a backlog exists)."
+      }
+    },
+    "normalisation_note": "Composite = sum(display / level_count * weight) over scored dimensions, weights renormalised across scored dimensions only. Each dimension is normalised by ITS OWN level count, so a dimension at maximum contributes its full weight regardless of how many levels it has. Defensibility is 6-level (0.5.0); the other four remain 5-level.",
+    "gate_note": "Floors stay at display 2. The 0.5.0 split inserted a level ABOVE the old level 3, so the BOTTOM of the scale is unchanged and a floor of 2 still means 'not no-moat'.",
+    "bands_note": "RE-CALIBRATED in 0.7.0 to the scale's own anchors. The composite a business gets when EVERY dimension sits at the same anchor is a property of the scale arithmetic: all-dims-at-2 = 38.33, at-3 = 57.50, at-4 = 76.67. The original bands were those anchors hand-rounded to tens (40/60/75); snapping them back to 38/58/77 removes the 2-point drift. Two consequences: (1) 'Strong' now requires genuinely being at or above 'good on every dimension' -- the old floor of 75 sat BELOW the anchor, so a business could be labelled Strong while scoring under 'good on every dimension'; (2) the composite floor is 38.33, not 0, because every gate fires below display 2 -- so 'Fragile 5-37' describes a region almost no case can occupy, which is a known artefact of keeping the band table's lower bound at 5.",
+    "dimension_division_of_labour": "market_headroom asks whether UNMET DEMAND exists (is the opportunity real). competitive_room asks how hard it is for an operator to take share (is the opportunity reachable). Before 0.6.0 both asked a crowding question and were near-duplicates; neither measured unmet demand at all.",
+    "band_change_note": "Top band extended 95 -> 100 in 0.6.0. A composite of 96 was produced and fell outside the scale. Reason: defensibility now has 6 levels and market_headroom can reach 5, so the arithmetic maximum is 100, not the ~95 the bands were originally written against. Lower boundaries are unchanged so every historical composite keeps its band.",
+    "_changelog_1_0_0": [
+      "NEW relative_strength (25%) -- position vs the DERIVED competitive set. Fixes the missing axis: McDonald's SG 150+ outlets scored 47 vs Jollibee 26 outlets 57.",
+      "mental_advantage AMENDED (25->20%) to Sean's construct: retrieved among the buyers you can actually serve. Removes the undefined 'expected of its size' benchmark.",
+      "defensibility 25->20%, competitive_room 20->15%, market_headroom 15->10%, demand_reach 15->10% to make room without growing the instrument's total burden.",
+      "The 70/30 positioning-vs-other split is preserved: relative_strength + mental_advantage + defensibility = 65% positioning; competitive_room + market_headroom = 25% landscape; demand_reach = 10% addressability.",
+      "demand_reach definition UNCHANGED (Sean D2). competitive_room and market_headroom stay in the score (Sean D3)."
+    ],
+    "_bands_note": "Band edges are carried from 0.9.0 and MUST be re-derived after the first v1.0.0 run with six dimensions. Do not treat band WORDS from this rubric as calibrated yet.",
+    "_changelog_1_2_0": [
+      "CLEAN SINGLE-VARIABLE TEST. v1.1.0 changed four dimensions at once and could not be attributed: DEF improved (>=2-apart 14%->7%) while CR (exact 77%->65%) and DR (67%->54%) regressed. Reverted to v1.0.0 for CR and DR.",
+      "KEPT: DEF (Q1). 'Effort already spent earns nothing' was a genuine defect -- it excluded accumulated SCALE, a standard barrier to entry. Now distinguishes flow effort (earns nothing) from stock barriers (count); test is the challenger's cost.",
+      "KEPT: MH (Q6) instruction note on regulated demand caps (COE-limited vehicle inspections). UNTESTED -- MH is dropped in 105 of 120 cases, so it can affect at most 5.",
+      "REVERTED: CR (Q2). His message was 'correct me if I am wrong', and the analysis concluded my definition stood (Book 1: a capped market defaults to undercutting). Rewriting the levels was not warranted by the evidence.",
+      "REVERTED: DR (Q3). He was explaining what HIS score meant, not complaining about the wording. v1.0.0 already graded definability; adding CLARITY explicitly and demoting reachability made agreement worse.",
+      "RS (Q4) and MA (Q5) unchanged throughout."
+    ],
+    "_method_note": "ONE VARIABLE AT A TIME. A revision must be attributable: change one dimension's wording, re-run, measure. v1.1.0 violated this and cost a full corpus run."
+  },
+  "questions": {
+    "market_headroom": {
+      "type": "score",
+      "instructions": "Judge ONLY market headroom: is there more DEMAND in this category than is currently being SERVED? Judge whether buyers are getting what they need, or whether demand is going unmet -- people waiting, being rationed, turned away, going without, or paying inflated prices because supply cannot keep up. Do NOT judge how crowded the category is, and do NOT judge whether a new entrant would be welcomed; those are separate questions. WHERE DEMAND IS ITSELF CAPPED BY REGULATION there is no unmet demand to serve, however necessary the service: if a rule limits how many buyers can exist -- for example vehicle inspections, where the COE system caps the number of vehicles that can be registered -- then supply can meet the capped demand and headroom is LOW or NOT APPLICABLE, even though every buyer must buy. Equally, a large category where supply already meets demand has little headroom, however big it is, because any new entrant must take share rather than serve unmet need.",
+      "levels": [
+        "No demand. There is no identifiable buying demand for this category at all.",
+        "Demand is served. Buyers can get this easily; supply meets or exceeds what is wanted, and the category is flat or shrinking.",
+        "Demand is met, contested. Real, steady demand, but supply already satisfies it -- a new entrant must take share from an incumbent rather than serve unmet need.",
+        "Demand exceeds supply. Buyers wait, are rationed, or pay inflated prices because supply cannot keep up, and the shortfall is growing.",
+        "Demand far exceeds supply. The category cannot serve the demand that exists; buyers are allocated, queued or going without, and the constraint is the binding limit on the whole market."
+      ],
+      "_revised": "2026-09-27 v1.1.0 (Sean Q6): he correctly marked VICOM n/a -- COE restrictions cap the number of vehicles, so inspection demand is capped and no unmet demand can persist. My 3 was too high. Regulated demand caps are now stated in the instructions."
+    },
+    "competitive_room": {
+      "type": "score",
+      "instructions": "Judge ONLY competitive room: how much space does competition leave for this business to operate and earn? Higher means MORE room \u2014 a fragmented, uncontested market. Lower means less room \u2014 concentrated incumbents, price-driven commoditisation, or a floor price set by a much larger player. Assess concentration, the strength of the named competitors, and whether the market competes primarily on price. Do not consider the business's own positioning or quality.",
+      "levels": [
+        "No room. Dominated by concentrated incumbents, competing almost entirely on price, with no viable margin left.",
+        "Very little. A dominant player or a severe price floor; the business is structurally squeezed.",
+        "Some. Crowded and price-contested, but gaps exist for a small operator.",
+        "Good. Competitive but fragmented; several players coexist without a single dominant one crushing the rest.",
+        "Strong. Uncontested, fragmented, with no dominant player and no established price floor."
+      ]
+    },
+    "defensibility": {
+      "type": "score",
+      "instructions": "Judge ONLY defensibility: how DURABLE is this business's position -- how long would it take a well-resourced competitor to take it from them, and what obstructs the attempt? This is the DURABILITY of the position that relative_strength describes, NOT a second measure of the position itself. Distinguish two things carefully. (1) EFFORT THE FOUNDER SPENT -- 'we worked hard', 'we have been going for years', 'we care more' -- earns nothing on its own; how hard something was to build is not what makes it hard to take. (2) ACCUMULATED BARRIERS -- assets a challenger cannot cheaply assemble: scale built over decades (a store network, a distribution system, a supply chain), a brand sustained by heavy long-term spending, an owned channel, a proprietary dataset, accumulated trust, a patent or trade secret, an exclusive supply agreement, or a regulatory licence. Accumulated barriers DO count, however they were built: a position that took forty years and enormous capital to construct is genuinely expensive for a challenger to replicate. THE TEST IS ALWAYS THE CHALLENGER'S COST, never the incumbent's effort: ask what a well-funded rival would have to spend, and how long, to take this position. If the answer is 'buy the same input and relabel it', there is no durability. If the answer is 'build 150 outlets and a national supply chain', there is a great deal.",
+      "levels": [
+        "No moat. Nothing obstructs a challenger. There is no differentiator at all, or the one claimed is a purchasable input any competitor can relabel this quarter.",
+        "Shallow. A competitor can copy it in weeks by buying the same thing -- a claim, a message, an off-the-shelf ingredient, a standard fit-out. No accumulated barrier.",
+        "Replicable. A competitor must do real work of their own, but nothing obstructs them beyond the cost of doing it: the approach is visible and a committed challenger gets there in months, not years.",
+        "Protected. A genuine accumulated barrier a challenger cannot cheaply assemble: scale built over years (a store network, distribution, supply chain), a brand sustained by heavy long-term spending, an owned channel, a proprietary dataset, accumulated trust, a patent or trade secret, an exclusive supply arrangement, or a licence. Taking the position means years and substantial capital, not months.",
+        "Durable. The barrier would take a well-resourced challenger a decade or more, or requires assets they cannot assemble at all -- a national network, decades of accumulated trust, an exclusive relationship or licence, a dataset nobody else holds.",
+        "Compounding. Several barriers reinforce each other, so that even a well-funded challenger given time could not replicate the position."
+      ],
+      "_revised": "2026-09-27 v1.1.0 (Sean Q1): 'effort already spent earns nothing' was too broad -- it excluded accumulated SCALE, which is a standard barrier to entry. Now distinguishes flow effort (still earns nothing) from stock barriers (count). Test = challenger's cost. Makes McDonald's DEF 4-5 defensible, where the old wording forced 2."
+    },
+    "demand_reach": {
+      "type": "score",
+      "instructions": "Judge ONLY demand reach: is there an identifiable, reachable group of buyers who would pay for this, and can this business find them? Higher means more reachable. Consider whether the customer is described in a way that identifies a real group with a trigger to buy, whether that group is concentrated somewhere the business can reach it, and whether it is willing to pay the stated price. A demographic such as an age band is NOT a reachable segment on its own. Do not consider whether the market is large.",
+      "levels": [
+        "No identifiable buyer. The customer is undefined, or defined so broadly no one can be targeted.",
+        "Weak. Only a demographic is named; no trigger, no channel, and no evidence they will pay this price.",
+        "Moderate. A describable segment with a plausible trigger, but no established route to reach them.",
+        "Good. A clearly identified segment with a trigger and at least one credible channel to reach it.",
+        "Strong. A tightly defined, concentrated, paying segment that the business can reach directly and cheaply."
+      ]
+    },
+    "input_sufficiency": {
+      "type": "choice",
+      "instructions": "Judge ONLY whether the submitted information contains enough to assess this business's position. You need enough to identify its category, something that could constitute a differentiator or positioning, some sense of its competitors, and some sense of its customer. If one of those is entirely absent, or the answers are placeholders or generic filler with no specific content about this business, the input is insufficient.",
+      "criteria": {
+        "sufficient": "There is enough specific, substantive information to assess the category, the claimed differentiator, the competitors and the customer.",
+        "insufficient": "At least one of category, differentiator, competitors or customer is absent, or the answers are placeholders or generic statements that could apply to any business."
+      }
+    },
+    "mental_advantage": {
+      "type": "score",
+      "instructions": "Judge ONLY mental advantage: among the buyers this business can ACTUALLY SERVE, how strongly is it retrieved when a buying occasion fires? First establish the ADDRESSABLE SEGMENT -- the buyers within this business's realistic reach given its size and footprint. A home baker's addressable segment is its estate, not the island; a national chain's is the island. Then, for each buying situation inside that segment, ask whether this business is the one that comes to mind, and how firmly. This is RELATIVE TO THE ADDRESSABLE SEGMENT, never absolute: a large brand holding its segment against expected erosion is an advantage, and a tiny business owning an occasion across its segment is also an advantage. Judge RETRIEVAL inside the segment, not familiarity at large -- a business can be widely known and still be nobody's first thought.",
+      "levels": [
+        "Not retrieved. Within its addressable segment it is not a first thought for any buying occasion, and is barely recognised as an option at all.",
+        "Weakly present. Known inside the segment but retrieved for no occasion more than any other option; an also-ran that buyers would accept but never seek.",
+        "At expectation for the segment. Retrieved for its occasions at roughly the level a business of its reach would be expected to achieve; neither advantaged nor disadvantaged.",
+        "Strong retrieval. The first or near-first thought within its addressable segment for one or more valuable, frequently-occurring buying occasions.",
+        "Owns the segment. The default first thought within its addressable segment for one or more valuable occasions, and rivals are not close on those occasions."
+      ],
+      "_amended": "2026-09-27 (Sean D1): anchor changed from 'what a business of its size would be expected to own' (an undefined benchmark) to 'the ADDRESSABLE SEGMENT'. His construct."
+    },
+    "relative_strength": {
+      "type": "score",
+      "instructions": "Judge ONLY relative strength: how strong is this business's CURRENT POSITION against the competitors in its DERIVED COMPETITIVE SET? The yardstick is the NAMED occupants of that set -- not the market in general, not a hypothetical rival, and not a business of the same size. First establish the buying situations in the category and the derived competitive set. Then, for each, ask where this business ACTUALLY STANDS against those specific occupants: share of the occasions, footprint (outlets, coverage, catchment), price position, and any documented buyer preference. Judge the OBSERVED standing on published or stated evidence -- never the business's own claim about itself, and never size alone, since a large occupant can still be losing position to a smaller one. 3 = parity with the median occupant of the set. Above 3 = it holds more than the median occupant. Below 3 = it holds less.",
+      "levels": [
+        "Absent from the set. It does not hold a position against the named occupants at all -- it is not a factor buyers weigh for any situation in this category.",
+        "Marginal. Present but weaker than almost every occupant of the set; a fringe or declining option that holds no situation against those specific rivals.",
+        "At parity. Holds its position at roughly the level of the median occupant of the set; no clear advantage or disadvantage against those specific rivals.",
+        "Strong. Holds one or more situations more firmly than most occupants of the set; ranked near the top of its derived set on footprint, preference or price position.",
+        "Dominant. The clear leader within its derived set on the situations that matter -- the reference point the other occupants position themselves against."
+      ],
+      "_added": "2026-09-27 (Sean): the axis the objective always required -- 'positioning and differentiation RELATIVE TO COMPETITION' -- and the instrument never had. Anchored on the derived competitive set, not on size expectation."
+    }
+  }
+}
