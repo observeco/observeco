@@ -1,0 +1,20 @@
+{
+  "_note": "Corpus-level refusals. These are NOT scored and NOT counted in any alignment denominator. Distinct from the assessability gate: that says 'we cannot analyse this business', this says 'this is not a business, it is a rule representative'. A REAL not-permitted business is a separate, unimplemented product case.",
+  "reason_code": "SYNTHETIC_RULE_REPRESENTATIVE",
+  "reason": "Authored as a representative of the HDB Home-Based Business Scheme boundary, not measured from a real operator. Scoring a statutory rule as a business would be fabrication; the rubric exists to prevent exactly that.",
+  "decided_by": "Sean, 2026-09-27 (D4)",
+  "cases": [
+    "NP01-a",
+    "NP02-a",
+    "NP03-a",
+    "NP04-a",
+    "NP05-a"
+  ],
+  "names": [
+    "A home massage service",
+    "A home pet grooming and boarding service",
+    "A home catering service",
+    "A home tuition centre",
+    "A home retail shop"
+  ]
+}

@@ -49,6 +49,16 @@ def load(run_dir):
     return out
 
 
+def refused_cases():
+    """Corpus-level refusals (synthetic rule representatives). Excluded from every
+    denominator -- a rule is not a business, so scoring agreement against it would be
+    measuring the wrong thing. See build_refusals.py."""
+    f = HERE / "inputs-v4" / "_refused.json"
+    if not f.exists():
+        return set()
+    return set(json.loads(f.read_text()).get("cases") or [])
+
+
 def stats(pairs):
     n = len(pairs)
     if n < 3:
@@ -74,9 +84,11 @@ def main(run_dir):
     rows = list(csv.DictReader(open(HERE / "sean-regrade-raw.csv")))
     by = {r["company"]: r for r in rows}
     mine = load(run_dir)
+    refused = refused_cases()
 
     print("=" * 92)
-    print("ALIGNMENT — %s   (CR closed/adopted per Sean)" % run_dir)
+    print("ALIGNMENT — %s   (CR closed/adopted per Sean; %d refused cases excluded)"
+          % (run_dir, len(refused)))
     print("=" * 92)
     print()
     print("  %-4s %4s %6s %6s %7s %7s %7s %9s" %
@@ -86,6 +98,8 @@ def main(run_dir):
     for d in DIMS:
         pairs = []
         for cid, e in idx["companies"].items():
+            if cid in refused:
+                continue
             m = (mine.get(cid) or {}).get(d)
             h = num((by.get(e["name"]) or {}).get("YOUR_" + ABBR[d]))
             if d in CLOSED and h is not None:
