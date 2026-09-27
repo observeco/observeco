@@ -1,8 +1,8 @@
-"""Run the v1.1.0 corpus (120 businesses) and measure whether the revised level wording
-closes the level shift that Q1-Q6 identified.
+"""Run the v1.8.0 corpus (mental_advantage re-anchored to Sean's labels).
 
-The test: agreement with Sean's regrade before (v1.0.0) and after (v1.1.0).
-If the revision worked, the +0.2 to +0.4 shift should shrink and exact agreement rise.
+Copy of run_v17_set.py with a fail-loud guard against inheriting a stale OUTDIR/PROGRESS
+from its parent -- the exact silent failure that produced an empty runs-v17 and a false
+"complete: 120" message.
 """
 import glob
 import json
@@ -12,9 +12,9 @@ import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-RUBRIC = "rubric-v1.7.0.json"
-OUTDIR = "runs-v16b"
-PROGRESS = HERE / "r16b_progress.json"
+RUBRIC = "rubric-v1.8.0.json"
+OUTDIR = "runs-v18"
+PROGRESS = HERE / "r18_progress.json"
 
 cases = sorted(p for p in glob.glob(str(HERE / "inputs-v4" / "*.json"))
                if not p.endswith("_index.json"))
@@ -22,6 +22,11 @@ print("cases: %d" % len(cases))
 
 progress = json.loads(PROGRESS.read_text()) if PROGRESS.exists() else {}
 if progress:
+    vs0 = {v.get("rubric_version") for v in progress.values()
+           if isinstance(v, dict) and v.get("case")}
+    if vs0 and vs0 != {"1.8.0"}:
+        sys.exit("FATAL: %s holds rubric versions %s, expected 1.8.0. A stale progress "
+                 "file would silently skip every case." % (PROGRESS.name, vs0))
     print("resuming: %d done" % len(progress))
 
 start = time.time()
@@ -57,5 +62,10 @@ print("complete: %d | failed: %d | %.0fs"
       % (len([v for v in progress.values() if v.get("case")]), fail, time.time() - start))
 vs = {v.get("rubric_version") for v in progress.values() if v.get("case")}
 print("rubric versions: %s" % sorted(x for x in vs if x))
-if len(vs) != 1:
-    print("** FATAL: mixed rubric versions **")
+
+n_out = len(list((HERE / OUTDIR).glob("jev-*.json")))
+print("output files: %d" % n_out)
+if n_out == 0:
+    sys.exit("FATAL: run reported complete but %s is EMPTY -- nothing was scored." % OUTDIR)
+if vs != {"1.8.0"}:
+    sys.exit("FATAL: mixed or wrong rubric versions: %s" % sorted(x for x in vs if x))

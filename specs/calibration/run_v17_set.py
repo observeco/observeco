@@ -13,8 +13,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 RUBRIC = "rubric-v1.7.0.json"
-OUTDIR = "runs-v16b"
-PROGRESS = HERE / "r16b_progress.json"
+OUTDIR = "runs-v17"
+PROGRESS = HERE / "r17_progress.json"
 
 cases = sorted(p for p in glob.glob(str(HERE / "inputs-v4" / "*.json"))
                if not p.endswith("_index.json"))
@@ -22,6 +22,15 @@ print("cases: %d" % len(cases))
 
 progress = json.loads(PROGRESS.read_text()) if PROGRESS.exists() else {}
 if progress:
+    # GUARD 1: refuse to resume off a progress file built by a different rubric.
+    # Added after a silent failure: a previous generated runner inherited OUTDIR and
+    # PROGRESS from its parent, "resumed" off a stale file, ran NOTHING, printed
+    # "complete: 120", and left an EMPTY output directory as the only evidence.
+    vs0 = {v.get("rubric_version") for v in progress.values()
+           if isinstance(v, dict) and v.get("case")}
+    if vs0 and vs0 != {"1.7.0"}:
+        sys.exit("FATAL: %s holds rubric versions %s, expected 1.7.0. A stale progress "
+                 "file would silently skip every case." % (PROGRESS.name, vs0))
     print("resuming: %d done" % len(progress))
 
 start = time.time()
@@ -57,5 +66,11 @@ print("complete: %d | failed: %d | %.0fs"
       % (len([v for v in progress.values() if v.get("case")]), fail, time.time() - start))
 vs = {v.get("rubric_version") for v in progress.values() if v.get("case")}
 print("rubric versions: %s" % sorted(x for x in vs if x))
-if len(vs) != 1:
-    print("** FATAL: mixed rubric versions **")
+
+# GUARD 2: a "complete" run must actually have written files.
+n_out = len(list((HERE / OUTDIR).glob("jev-*.json")))
+print("output files: %d" % n_out)
+if n_out == 0:
+    sys.exit("FATAL: run reported complete but %s is EMPTY -- nothing was scored." % OUTDIR)
+if vs != {"1.7.0"}:
+    sys.exit("FATAL: mixed or wrong rubric versions: %s" % sorted(x for x in vs if x))
