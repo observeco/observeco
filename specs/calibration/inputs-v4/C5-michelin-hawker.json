@@ -1,0 +1,105 @@
+{
+  "_meta": {
+    "case": "C5-michelin-hawker",
+    "control_type": "GROUP B \u2014 CATEGORY STRUCTURE. The sharpest test in the plan.",
+    "prediction": "Viable or Contested band. CRITICAL FAILURE CRITERION: if defensibility scores >= 4, the dimension is measuring 'is this business good' rather than 'is it defensible', and must be rewritten to demand a specific copy-resistance claim.",
+    "purpose": "Hill Street Tai Hwa is unambiguously successful \u2014 a Michelin STAR held every year since 2016, the only hawker stall in Singapore with one \u2014 yet it has almost none of what the rubric's level descriptions call defensibility: no chain, no distribution, no proprietary system, no accumulated institutional trust, no dataset. It has a recipe and a reputation. If the rubric cannot distinguish 'successful' from 'defensible' this case proves it.",
+    "ground_truth": "One MICHELIN Star, 2026 Guide, held every year since 2016. One of 12 establishments listed in every Singapore selection since 2016. The only hawker stall with a star.",
+    "sources": [
+      "guide.michelin.com official listing",
+      "multiple 2026 review roundups"
+    ],
+    "status": "control run"
+  },
+  "form": {
+    "business_name": "Hill Street Tai Hwa Pork Noodle",
+    "website": "(none \u2014 no website; the business operates from a hawker stall)",
+    "role": "Owner-operator",
+    "company_size_band": "0-9",
+    "city": "Singapore",
+    "category": "Bak chor mee (minced pork noodles) \u2014 a single hawker stall at 466 Crawford Lane, #01-12. Cooked to order.",
+    "positioning_sentence": "Singapore's best bak chor mee. The only hawker stall in the country with a Michelin star.",
+    "differentiator": "We hold one MICHELIN Star and have held it every single year since 2016 \u2014 the only hawker stall in Singapore to do so. Our mee pok is cooked to order and dressed with a specific vinegar-chilli-soy blend, layered with crispy dried plaice, pork liver and crackling. We have been popular since long before the star, and people queue for it even at off-peak hours.",
+    "undercut_on": "Price. We charge $8-15 a bowl, which is two to three times what other bak chor mee stalls charge. Plenty of stalls sell a bowl for $4-5 and some customers will not pay our price or wait in our queue.",
+    "your_price_point": "S$8-15 per bowl",
+    "their_price_point": "S$4-5 for a standard bowl at most other bak chor mee stalls.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Other bak chor mee stalls (the general hawker-competitor set \u2014 many, individually small)",
+    "Song Fa Bak Kut Teh (heritage hawker brand, queues, expansion into malls)",
+    "Tai Hwa's own former staff who have opened their own stalls",
+    "The surrounding Crawford Lane / Lavender food options for the same lunch occasion",
+    "Home cooking / instant noodles for the same meal"
+  ],
+  "customer_description": "Local bak chor mee lovers, office workers in the Lavender/Crawford area, and food tourists who come specifically because of the Michelin listing. Trigger: the specific craving, or the desire to eat at a starred establishment.",
+  "derived_competitive_set": {
+    "_note": "Derived for the hawker-noodle category. Consumer-facing, no registry for individual stalls \u2014 ACRA covers the business entity but not the stall's competitive position.",
+    "tier_0_default": {
+      "members": [
+        "cooking at home",
+        "instant noodles",
+        "skipping lunch",
+        "eating whatever is nearest"
+      ],
+      "why": "Cheaper and no queue. For a weekday lunch the default is convenience, not a starred hawker stall."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "any of the ~100+ other bak chor mee stalls islandwide at S$4-5",
+        "other hawker noodle stalls (fishball, wanton, prawn noodle) at S$4-6",
+        "food court noodle outlets"
+      ],
+      "price_floor": "S$4-5",
+      "why": "Half the price or less, no queue, and for most eaters a bowl of noodles is a bowl of noodles."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "the handful of other celebrated bak chor mee stalls (e.g. Seng Kee, Ah Seng, MacPherson)",
+        "other Michelin-listed hawker stalls (Bib Gourmand set)",
+        "Tai Hwa alumni stalls"
+      ],
+      "why": "Same dish, same occasion, comparable quality reputation. The Michelin guide itself lists alternatives."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "Hill Street Tai Hwa itself \u2014 the ONLY hawker stall with a Michelin star, held since 2016",
+        "the broader 'famous Singapore hawker' tier: Song Fa, Tian Tian, Maxwell's chicken rice \u2014 brands with queues and heritage"
+      ],
+      "why": "The buyer shopping for 'the best bak chor mee' or 'a Michelin meal' has a short list. Tai Hwa is at the top of it for bak chor mee. But the buyer shopping for 'lunch near Lavender' has no such list.",
+      "diagnostic": "This case is the INVERSE of every troubled case: the owner named the tier accurately and completely. Small delta."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "bak kut teh (Song Fa)",
+        "other Michelin-listed cheap eats",
+        "food courts and cafes near Lavender"
+      ],
+      "why": "Same lunch occasion, different dish. A Michelin-hunting tourist weighing Tai Hwa against Tian Tian chicken rice is making one decision."
+    },
+    "tier_5_professional_route": {
+      "members": [],
+      "why": "n/a \u2014 no professional or institutional path for noodles."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "grocery inflation reducing hawker-frequency",
+        "WFH reducing CBD-area lunch traffic"
+      ],
+      "why": "Dilutes the number of hawker lunch occasions."
+    }
+  },
+  "_expected_reasoning": {
+    "market_headroom": "The hawker food category is real, large and stable, though flat \u2014 not a growth category but not a trap. Expected 3-4.",
+    "competitive_room": "Extremely fragmented (100+ stalls) but no price power at the category level; the $8-15 price is only viable because of the star. Expected 3.",
+    "position_availability": "**Should be HIGH \u2014 this is the incumbent test.** Tai Hwa genuinely owns 'the Michelin-star hawker' position and nobody else holds it. If position_availability scores 2 here as it did for KOI, the dimension is confirmed broken for incumbents. Expected 4-5 if the dimension works.",
+    "defensibility": "**THE CRITICAL TEST.** What is actually defensible here? A recipe \u2014 copyable, and already copied by alumni who opened their own stalls. A reputation built over decades \u2014 real but not purchasable or transferable. A Michelin star \u2014 awarded annually and revocable, and not the business's asset to control. NO chain, NO system, NO distribution, NO dataset, NO formula. Level 2 ('competitor must do genuine development work') is arguable; level 1 ('copyable in weeks without development') is closer to truth for the recipe itself, though not for the reputation. Expected 2-3. **If it scores 4-5 the dimension is broken.**",
+    "demand_reach": "A specific, identifiable, queuing customer base \u2014 locals plus food tourists. Expected 4-5."
+  },
+  "_what_each_outcome_means": {
+    "defensibility_2_or_3": "DIMENSION VALID. It correctly separates 'successful' from 'defensible'. The star is not a moat.",
+    "defensibility_4_or_5": "DIMENSION BROKEN. It is scoring general quality/reputation, not copy-resistance. Rewrite to require a specific, named, non-transferable asset.",
+    "position_availability_4_or_5": "DIMENSION FIXABLE. It works for incumbents who genuinely own a position; the KOI result was about something else.",
+    "position_availability_2": "DIMENSION CONFIRMED BROKEN for incumbents. Two independent strong incumbents both scoring 2 settles it."
+  }
+}

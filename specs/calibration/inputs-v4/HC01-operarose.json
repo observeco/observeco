@@ -1,0 +1,95 @@
+{
+  "_meta": {
+    "case": "HC01-operarose",
+    "business": "Operarose Studio",
+    "product_category": "Bespoke creative work made at home: florals, calligraphy, embroidery",
+    "category_price_spread": "wide (S$20 small gift to S$420+ bespoke commission)",
+    "scale": "sole operator, operates from home",
+    "purpose": "HOME-BASED BUSINESS validity set (n=50). The actual lead-magnet population: thin public evidence, sole operators, statutory scale caps. Tests the 0.9.0 display_floor change on the population where evidence coverage is genuinely lowest.",
+    "PRE_REGISTERED_LABEL": "strong",
+    "LABEL_SOURCE": "PUBLISHED SITE: Singapore calligraphy and hand-embroidery artist; after 15 years in corporate banking the founder retired from finance to stay home with her child and pursue the craft; offers live-event calligraphy, bottle painting and hand engraving; in-studio services available worldwide; has worked with brands.",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "PUBLISHED SITE: Singapore calligraphy and hand-embroidery artist; after 15 years in corporate banking the founder retired from finance to stay home with her child and pursue the craft; offers live-event calligraphy, bottle painting and hand engraving; in-studio services available worldwide; has worked with brands."
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external (press coverage, published prices, or statute); the form is thinner than a real submission."
+  },
+  "form": {
+    "business_name": "Operarose Studio",
+    "role": "Owner-operator",
+    "company_size_band": "1",
+    "city": "Singapore",
+    "category": "Bespoke creative work made at home: florals, calligraphy, embroidery",
+    "positioning_sentence": "Bespoke calligraphy and hand embroidery with live-event work.",
+    "differentiator": "Bespoke calligraphy and hand embroidery with live-event work - I attend the event and personalise items for guests as they arrive, so each one leaves with something made in front of them.",
+    "undercut_on": "Everything is made by hand by one person, so I cannot take high-volume corporate orders and my lead times are long.",
+    "your_price_point": "bespoke calligraphy and embroidery, by commission",
+    "their_price_point": "See the derived competitive set for the category ladder.",
+    "competitors_named_count": "2-4"
+  },
+  "competitors_named": [
+    "commercial calligraphy services",
+    "other home crafters",
+    "print-on-demand personalised gifts"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "buy nothing",
+        "supermarket flowers",
+        "mass-produced gift"
+      ],
+      "why": "Cheaper and instant."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "supermarket bouquet S$15-30",
+        "mass-market gift shops",
+        "print-on-demand personalised gifts"
+      ],
+      "why": "Lowest price for something giftable.",
+      "price_floor": "S$15"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "other home-based florists and crafters",
+        "commercial florists",
+        "commercial calligraphy/engraving services"
+      ],
+      "why": "Same product: a bespoke made-to-order piece. Home crafters compete with commercial studios on price and personalisation."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "commercial florists with a shopfront",
+        "home crafters with a signature style",
+        "studios offering workshops as well"
+      ],
+      "why": "Each holds a rung: 'the shop I can walk into', 'the maker whose style I recognise'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "gift cards and experiences",
+        "mass-customisation platforms",
+        "printable/downloadable art"
+      ],
+      "why": "Same gifting moment, no maker."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "cost-cutting reducing gift spend",
+        "experience-over-object gifting"
+      ],
+      "why": "Reduces commission volume."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "new home crafters and florists",
+        "workshop-led entrants"
+      ],
+      "why": "Derived from new listings."
+    },
+    "_rules": "HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work.",
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Bespoke creative work made at home: florals, calligraphy, embroidery), not the owner's list. Price spread in this category: wide (S$20 small gift to S$420+ bespoke commission). Note the regulatory frame: HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work."
+  }
+}

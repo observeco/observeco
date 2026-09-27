@@ -1,0 +1,95 @@
+{
+  "_meta": {
+    "case": "HT02-an",
+    "business": "An ex-MOE teacher, Primary level",
+    "product_category": "Private academic tuition, one-to-one at the tutor's or student's home",
+    "category_price_spread": "wide (S$25/h part-time primary to S$130/h ex-MOE JC)",
+    "scale": "sole operator, operates from home",
+    "purpose": "HOME-BASED BUSINESS validity set (n=50). The actual lead-magnet population: thin public evidence, sole operators, statutory scale caps. Tests the 0.9.0 display_floor change on the population where evidence coverage is genuinely lowest.",
+    "PRE_REGISTERED_LABEL": "mid",
+    "LABEL_SOURCE": "PUBLISHED RATE LADDER: ex/current MOE teachers at Primary level command S$50-70/h; the premium over a part-time tutor (S$25-35/h) is roughly double.",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "PUBLISHED RATE LADDER: ex/current MOE teachers at Primary level command S$50-70/h; the premium over a part-time tutor (S$25-35/h) is roughly double."
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external (press coverage, published prices, or statute); the form is thinner than a real submission."
+  },
+  "form": {
+    "business_name": "An ex-MOE teacher, Primary level",
+    "role": "Owner-operator",
+    "company_size_band": "1",
+    "city": "Singapore",
+    "category": "Private academic tuition, one-to-one at the tutor's or student's home",
+    "positioning_sentence": "A former primary school teacher who knows the syllabus sequencing and the common misconceptions at each level.",
+    "differentiator": "A former primary school teacher who knows the syllabus sequencing and the common misconceptions at each level.",
+    "undercut_on": "The primary premium is much smaller than at JC, so the price gap over a full-time tutor does not justify itself for every parent.",
+    "your_price_point": "S$50-70/h",
+    "their_price_point": "See the derived competitive set for the category ladder.",
+    "competitors_named_count": "2-4"
+  },
+  "competitors_named": [
+    "part-time tutors",
+    "full-time tutors",
+    "tuition centres"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "self-study",
+        "school remedial class",
+        "free online resources"
+      ],
+      "why": "Free and often adequate. Most students resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "group tuition centre S$15-25/h",
+        "online group classes",
+        "part-time tutor at the low end S$25-35/h"
+      ],
+      "why": "Cheapest paid instruction per hour.",
+      "price_floor": "S$25/h"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "60,000+ active home tutors across agencies",
+        "full-time private tutors",
+        "MOE teachers doing private tuition"
+      ],
+      "why": "Same service: one-to-one and in person. The published rate ladder is the market's own price for each tier."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "ex/current MOE teachers (highest published tier)",
+        "full-time tutors with a track record",
+        "agencies with brand trust"
+      ],
+      "why": "The rate ladder IS the mental ladder: MOE teachers command S$90-130/h at JC because parents rank curriculum credibility first."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "online-only tuition",
+        "enrichment and Olympiad classes",
+        "AI study tools"
+      ],
+      "why": "Same academic goal, different delivery."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "falling birth rate",
+        "school-based support improving"
+      ],
+      "why": "Reduces the number of students needing tuition."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "new agency-entered tutors",
+        "subject specialists (e.g. computing, drama)"
+      ],
+      "why": "Derived from agency listings."
+    },
+    "_rules": "HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work.",
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Private academic tuition, one-to-one at the tutor's or student's home), not the owner's list. Price spread in this category: wide (S$25/h part-time primary to S$130/h ex-MOE JC). Note the regulatory frame: HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work."
+  }
+}

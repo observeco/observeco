@@ -1,0 +1,1155 @@
+{
+  "n": 120,
+  "built": "2026-09-27",
+  "purpose": "REBUILT corpus after D1-D3 realignment + new relative_strength dimension + dedup. One canonical entry per business.",
+  "dedup": {
+    "entries_before": 132,
+    "businesses_after": 120,
+    "removed": 12,
+    "rule": "one entry per business; prefer a case with a recorded run, then the richest form. Duplicates retained as repeat datapoints."
+  },
+  "repeats": [
+    {
+      "kept": "inputs/C2-activesg",
+      "dropped": "inputs-v2/GY01",
+      "business": "ActiveSG"
+    },
+    {
+      "kept": "inputs/E4-bonefirm-ip",
+      "dropped": "inputs/01-bonefirm",
+      "business": "Bonefirm"
+    },
+    {
+      "kept": "inputs/P2-chicha",
+      "dropped": "inputs-v2/BT03",
+      "business": "CHICHA San Chen"
+    },
+    {
+      "kept": "inputs/P3-heytea",
+      "dropped": "inputs-v2/BT04",
+      "business": "HEYTEA Singapore"
+    },
+    {
+      "kept": "inputs/09-koi",
+      "dropped": "inputs/N2-koi-stripped",
+      "business": "KOI Th\u00e9 Singapore"
+    },
+    {
+      "kept": "inputs/09-koi",
+      "dropped": "inputs-v2/BT02",
+      "business": "KOI Th\u00e9 Singapore"
+    },
+    {
+      "kept": "inputs/P1-mixue",
+      "dropped": "inputs-v2/BT01",
+      "business": "Mixue Singapore"
+    },
+    {
+      "kept": "inputs/D2-petlovers-cue",
+      "dropped": "inputs/C3-pet-lovers-centre",
+      "business": "Pet Lovers Centre"
+    },
+    {
+      "kept": "inputs/P4-rbtea",
+      "dropped": "inputs-v2/BT05",
+      "business": "R&B Tea Singapore"
+    },
+    {
+      "kept": "inputs/C4-sheng-siong",
+      "dropped": "inputs-v2/SM02",
+      "business": "Sheng Siong Group"
+    },
+    {
+      "kept": "inputs/F2-watsons-guardian",
+      "dropped": "inputs/D1-watsons",
+      "business": "Watsons Singapore"
+    },
+    {
+      "kept": "inputs/F2-watsons-guardian",
+      "dropped": "inputs-v2/HB01",
+      "business": "Watsons Singapore"
+    }
+  ],
+  "companies": {
+    "GY06-24-7": {
+      "name": "24/7 Fitness",
+      "cat": "gym",
+      "source_set": "S2",
+      "source": "inputs-v2/GY06",
+      "case": "GY06-24-7",
+      "stem": "GY06",
+      "form_richness_chars": 417
+    },
+    "bubbletea": {
+      "name": "A Singapore bubble tea chain",
+      "cat": "bubble-tea",
+      "source_set": "S1",
+      "source": "inputs/08-bubbletea",
+      "case": "bubbletea",
+      "stem": "08-bubbletea",
+      "form_richness_chars": 796
+    },
+    "N1-closedbusiness": {
+      "name": "A closed bubble tea outlet",
+      "cat": "bubble-tea",
+      "source_set": "S1",
+      "source": "inputs/N1-closedbusiness",
+      "case": "N1-closedbusiness",
+      "stem": "N1-closedbusiness",
+      "form_richness_chars": 481
+    },
+    "HB09-a": {
+      "name": "A dormant home baker",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB09",
+      "case": "HB09-a",
+      "stem": "HB09",
+      "form_richness_chars": 467
+    },
+    "HT03-a": {
+      "name": "A full-time private tutor, Sec 3-5",
+      "cat": "home-tuition",
+      "source_set": "S3",
+      "source": "inputs-v3/HT03",
+      "case": "HT03-a",
+      "stem": "HT03",
+      "form_richness_chars": 552
+    },
+    "HB10-a": {
+      "name": "A gluten-free specialist home baker",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB10",
+      "case": "HB10-a",
+      "stem": "HB10",
+      "form_richness_chars": 588
+    },
+    "HB08-a": {
+      "name": "A home baker competing on price",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB08",
+      "case": "HB08-a",
+      "stem": "HB08",
+      "form_richness_chars": 569
+    },
+    "HC03-a": {
+      "name": "A home-based florist (freelance)",
+      "cat": "home-creative",
+      "source_set": "S3",
+      "source": "inputs-v3/HC03",
+      "case": "HC03-a",
+      "stem": "HC03",
+      "form_richness_chars": 563
+    },
+    "HC06-a": {
+      "name": "A home-based food-photography freelancer",
+      "cat": "home-creative",
+      "source_set": "S3",
+      "source": "inputs-v3/HC06",
+      "case": "HC06-a",
+      "stem": "HC06",
+      "form_richness_chars": 469
+    },
+    "HC04-a": {
+      "name": "A home-based mobile hairdresser",
+      "cat": "home-creative",
+      "source_set": "S3",
+      "source": "inputs-v3/HC04",
+      "case": "HC04-a",
+      "stem": "HC04",
+      "form_richness_chars": 479
+    },
+    "HC05-a": {
+      "name": "A home-based sewing and alteration service",
+      "cat": "home-creative",
+      "source_set": "S3",
+      "source": "inputs-v3/HC05",
+      "case": "HC05-a",
+      "stem": "HC05",
+      "form_richness_chars": 482
+    },
+    "NP03-a": {
+      "name": "A home catering service",
+      "cat": "home-not-permitted",
+      "source_set": "S3",
+      "source": "inputs-v3/NP03",
+      "case": "NP03-a",
+      "stem": "NP03",
+      "form_richness_chars": 571
+    },
+    "NP01-a": {
+      "name": "A home massage service",
+      "cat": "home-not-permitted",
+      "source_set": "S3",
+      "source": "inputs-v3/NP01",
+      "case": "NP01-a",
+      "stem": "NP01",
+      "form_richness_chars": 519
+    },
+    "NP02-a": {
+      "name": "A home pet grooming and boarding service",
+      "cat": "home-not-permitted",
+      "source_set": "S3",
+      "source": "inputs-v3/NP02",
+      "case": "NP02-a",
+      "stem": "NP02",
+      "form_richness_chars": 475
+    },
+    "NP05-a": {
+      "name": "A home retail shop",
+      "cat": "home-not-permitted",
+      "source_set": "S3",
+      "source": "inputs-v3/NP05",
+      "case": "NP05-a",
+      "stem": "NP05",
+      "form_richness_chars": 474
+    },
+    "NP04-a": {
+      "name": "A home tuition centre",
+      "cat": "home-not-permitted",
+      "source_set": "S3",
+      "source": "inputs-v3/NP04",
+      "case": "NP04-a",
+      "stem": "NP04",
+      "form_richness_chars": 537
+    },
+    "C9-b2b-it-services": {
+      "name": "A Singapore managed-IT services firm",
+      "cat": "b2b-it",
+      "source_set": "S1",
+      "source": "inputs/C9-b2b-it-services",
+      "case": "C9-b2b-it-services",
+      "stem": "C9-b2b-it-services",
+      "form_richness_chars": 1142
+    },
+    "HT04-a": {
+      "name": "A part-time tutor, Primary 1-4",
+      "cat": "home-tuition",
+      "source_set": "S3",
+      "source": "inputs-v3/HT04",
+      "case": "HT04-a",
+      "stem": "HT04",
+      "form_richness_chars": 539
+    },
+    "C2-activesg": {
+      "name": "ActiveSG",
+      "cat": "gym",
+      "source_set": "S1",
+      "source": "inputs/C2-activesg",
+      "case": "C2-activesg",
+      "stem": "C2-activesg",
+      "form_richness_chars": 1153
+    },
+    "HT01-an": {
+      "name": "An ex-MOE teacher, JC level",
+      "cat": "home-tuition",
+      "source_set": "S3",
+      "source": "inputs-v3/HT01",
+      "case": "HT01-an",
+      "stem": "HT01",
+      "form_richness_chars": 571
+    },
+    "HT02-an": {
+      "name": "An ex-MOE teacher, Primary level",
+      "cat": "home-tuition",
+      "source_set": "S3",
+      "source": "inputs-v3/HT02",
+      "case": "HT02-an",
+      "stem": "HT02",
+      "form_richness_chars": 518
+    },
+    "HT05-an": {
+      "name": "An online-only tutor",
+      "cat": "home-tuition",
+      "source_set": "S3",
+      "source": "inputs-v3/HT05",
+      "case": "HT05-an",
+      "stem": "HT05",
+      "form_richness_chars": 578
+    },
+    "GY02-anytime": {
+      "name": "Anytime Fitness Singapore",
+      "cat": "gym",
+      "source_set": "S2",
+      "source": "inputs-v2/GY02",
+      "case": "GY02-anytime",
+      "stem": "GY02",
+      "form_richness_chars": 406
+    },
+    "E1-asml": {
+      "name": "ASML",
+      "cat": "semiconductor",
+      "source_set": "S1",
+      "source": "inputs/E1-asml",
+      "case": "E1-asml",
+      "stem": "E1-asml",
+      "form_richness_chars": 1625
+    },
+    "EL03-best": {
+      "name": "Best Denki Singapore",
+      "cat": "electronics",
+      "source_set": "S2",
+      "source": "inputs-v2/EL03",
+      "case": "EL03-best",
+      "stem": "EL03",
+      "form_richness_chars": 470
+    },
+    "HC02-the": {
+      "name": "The Bloomish Eden",
+      "cat": "home-creative",
+      "source_set": "S3",
+      "source": "inputs-v3/HC02",
+      "case": "HC02-the",
+      "stem": "HC02",
+      "form_richness_chars": 556
+    },
+    "HB01-bob": {
+      "name": "Bob the Baker Boy",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB01",
+      "case": "HB01-bob",
+      "stem": "HB01",
+      "form_richness_chars": 640
+    },
+    "F1-boeing-airbus": {
+      "name": "Boeing Commercial Airplanes",
+      "cat": "aviation",
+      "source_set": "S1",
+      "source": "inputs/F1-boeing-airbus",
+      "case": "F1-boeing-airbus",
+      "stem": "F1-boeing-airbus",
+      "form_richness_chars": 1302
+    },
+    "E4-bonefirm-ip": {
+      "name": "Bonefirm",
+      "cat": "supplements",
+      "source_set": "S1",
+      "source": "inputs/E4-bonefirm-ip",
+      "case": "E4-bonefirm-ip",
+      "stem": "E4-bonefirm-ip",
+      "form_richness_chars": 1623
+    },
+    "BK01-breadtalk": {
+      "name": "BreadTalk",
+      "cat": "bakery",
+      "source_set": "S2",
+      "source": "inputs-v2/BK01",
+      "case": "BK01-breadtalk",
+      "stem": "BK01",
+      "form_richness_chars": 369
+    },
+    "HN04-bubd": {
+      "name": "Bubd Nails",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN04",
+      "case": "HN04-bubd",
+      "stem": "HN04",
+      "form_richness_chars": 440
+    },
+    "FF03-burger": {
+      "name": "Burger King Singapore",
+      "cat": "fast-food",
+      "source_set": "S2",
+      "source": "inputs-v2/FF03",
+      "case": "FF03-burger",
+      "stem": "FF03",
+      "form_richness_chars": 370
+    },
+    "FU02-castlery": {
+      "name": "Castlery",
+      "cat": "furniture",
+      "source_set": "S2",
+      "source": "inputs-v2/FU02",
+      "case": "FU02-castlery",
+      "stem": "FU02",
+      "form_richness_chars": 405
+    },
+    "FU04-cellini": {
+      "name": "Cellini",
+      "cat": "furniture",
+      "source_set": "S2",
+      "source": "inputs-v2/FU04",
+      "case": "FU04-cellini",
+      "stem": "FU04",
+      "form_richness_chars": 377
+    },
+    "BT07-chagee": {
+      "name": "CHAGEE Singapore",
+      "cat": "bubble-tea",
+      "source_set": "S2",
+      "source": "inputs-v2/BT07",
+      "case": "BT07-chagee",
+      "stem": "BT07",
+      "form_richness_chars": 373
+    },
+    "P2-chicha": {
+      "name": "CHICHA San Chen",
+      "cat": "bubble-tea",
+      "source_set": "S1",
+      "source": "inputs/P2-chicha",
+      "case": "P2-chicha",
+      "stem": "P2-chicha",
+      "form_richness_chars": 984
+    },
+    "KP04-chin": {
+      "name": "Chin Mee Chin",
+      "cat": "kopitiam",
+      "source_set": "S2",
+      "source": "inputs-v2/KP04",
+      "case": "KP04-chin",
+      "stem": "KP04",
+      "form_richness_chars": 385
+    },
+    "SM03-cold": {
+      "name": "Cold Storage",
+      "cat": "supermarket",
+      "source_set": "S2",
+      "source": "inputs-v2/SM03",
+      "case": "SM03-cold",
+      "stem": "SM03",
+      "form_richness_chars": 346
+    },
+    "E2-coupang-flywheel": {
+      "name": "Coupang",
+      "cat": "ecommerce",
+      "source_set": "S1",
+      "source": "inputs/E2-coupang-flywheel",
+      "case": "E2-coupang-flywheel",
+      "stem": "E2-coupang-flywheel",
+      "form_richness_chars": 1628
+    },
+    "EL01-courts": {
+      "name": "Courts Singapore",
+      "cat": "electronics",
+      "source_set": "S2",
+      "source": "inputs-v2/EL01",
+      "case": "EL01-courts",
+      "stem": "EL01",
+      "form_richness_chars": 519
+    },
+    "HN03-crybaby": {
+      "name": "Crybaby SG",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN03",
+      "case": "HN03-crybaby",
+      "stem": "HN03",
+      "form_richness_chars": 385
+    },
+    "HN02-cuteticle": {
+      "name": "Cuteticle SG",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN02",
+      "case": "HN02-cuteticle",
+      "stem": "HN02",
+      "form_richness_chars": 417
+    },
+    "HN14-dazzlingnails": {
+      "name": "DazzlingNails",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN14",
+      "case": "HN14-dazzlingnails",
+      "stem": "HN14",
+      "form_richness_chars": 398
+    },
+    "SM05-don": {
+      "name": "Don Don Donki",
+      "cat": "supermarket",
+      "source_set": "S2",
+      "source": "inputs-v2/SM05",
+      "case": "SM05-don",
+      "stem": "SM05",
+      "form_richness_chars": 446
+    },
+    "BT06-each-a-cup": {
+      "name": "Each-A-Cup",
+      "cat": "bubble-tea",
+      "source_set": "S2",
+      "source": "inputs-v2/BT06",
+      "case": "BT06-each-a-cup",
+      "stem": "BT06",
+      "form_richness_chars": 339
+    },
+    "HB04-the": {
+      "name": "The Egyptian Baker",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB04",
+      "case": "HB04-the",
+      "stem": "HB04",
+      "form_richness_chars": 545
+    },
+    "HN09-eleven": {
+      "name": "Eleven Pinks",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN09",
+      "case": "HN09-eleven",
+      "stem": "HN09",
+      "form_richness_chars": 471
+    },
+    "C6-euyansang": {
+      "name": "Eu Yan Sang",
+      "cat": "tcm",
+      "source_set": "S1",
+      "source": "inputs/C6-euyansang",
+      "case": "C6-euyansang",
+      "stem": "C6-euyansang",
+      "form_richness_chars": 1289
+    },
+    "HN12-euns": {
+      "name": "Euns Nails",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN12",
+      "case": "HN12-euns",
+      "stem": "HN12",
+      "form_richness_chars": 409
+    },
+    "HF02-facial": {
+      "name": "Facial Inc",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF02",
+      "case": "HF02-facial",
+      "stem": "HF02",
+      "form_richness_chars": 437
+    },
+    "GY03-fitness": {
+      "name": "Fitness First Singapore",
+      "cat": "gym",
+      "source_set": "S2",
+      "source": "inputs-v2/GY03",
+      "case": "GY03-fitness",
+      "stem": "GY03",
+      "form_richness_chars": 416
+    },
+    "HB07-flowermaker.sg": {
+      "name": "Flowermaker.sg",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB07",
+      "case": "HB07-flowermaker.sg",
+      "stem": "HB07",
+      "form_richness_chars": 536
+    },
+    "BK02-four": {
+      "name": "Four Leaves",
+      "cat": "bakery",
+      "source_set": "S2",
+      "source": "inputs-v2/BK02",
+      "case": "BK02-four",
+      "stem": "BK02",
+      "form_richness_chars": 370
+    },
+    "HN08-frisky": {
+      "name": "Frisky Nails",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN08",
+      "case": "HN08-frisky",
+      "stem": "HN08",
+      "form_richness_chars": 411
+    },
+    "EL04-gain": {
+      "name": "Gain City",
+      "cat": "electronics",
+      "source_set": "S2",
+      "source": "inputs-v2/EL04",
+      "case": "EL04-gain",
+      "stem": "EL04",
+      "form_richness_chars": 476
+    },
+    "HN05-get": {
+      "name": "Get Nailed SG",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN05",
+      "case": "HN05-get",
+      "stem": "HN05",
+      "form_richness_chars": 393
+    },
+    "SM04-giant": {
+      "name": "Giant",
+      "cat": "supermarket",
+      "source_set": "S2",
+      "source": "inputs-v2/SM04",
+      "case": "SM04-giant",
+      "stem": "SM04",
+      "form_richness_chars": 357
+    },
+    "HF05-glow": {
+      "name": "Glow Beauty",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF05",
+      "case": "HF05-glow",
+      "stem": "HF05",
+      "form_richness_chars": 457
+    },
+    "P5-gongcha": {
+      "name": "Gong Cha Singapore",
+      "cat": "bubble-tea",
+      "source_set": "S1",
+      "source": "inputs/P5-gongcha",
+      "case": "P5-gongcha",
+      "stem": "P5-gongcha",
+      "form_richness_chars": 949
+    },
+    "HB02-guardian": {
+      "name": "Guardian Singapore",
+      "cat": "health-beauty",
+      "source_set": "S2",
+      "source": "inputs-v2/HB02",
+      "case": "HB02-guardian",
+      "stem": "HB02",
+      "form_richness_chars": 414
+    },
+    "EL02-harvey": {
+      "name": "Harvey Norman Singapore",
+      "cat": "electronics",
+      "source_set": "S2",
+      "source": "inputs-v2/EL02",
+      "case": "EL02-harvey",
+      "stem": "EL02",
+      "form_richness_chars": 441
+    },
+    "P3-heytea": {
+      "name": "HEYTEA Singapore",
+      "cat": "bubble-tea",
+      "source_set": "S1",
+      "source": "inputs/P3-heytea",
+      "case": "P3-heytea",
+      "stem": "P3-heytea",
+      "form_richness_chars": 915
+    },
+    "C5-michelin-hawker": {
+      "name": "Hill Street Tai Hwa Pork Noodle",
+      "cat": "hawker",
+      "source_set": "S1",
+      "source": "inputs/C5-michelin-hawker",
+      "case": "C5-michelin-hawker",
+      "stem": "C5-michelin-hawker",
+      "form_richness_chars": 862
+    },
+    "HN07-i": {
+      "name": "I Nail For Fung",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN07",
+      "case": "HN07-i",
+      "stem": "HN07",
+      "form_richness_chars": 441
+    },
+    "FU01-ikea": {
+      "name": "IKEA Singapore",
+      "cat": "furniture",
+      "source_set": "S2",
+      "source": "inputs-v2/FU01",
+      "case": "FU01-ikea",
+      "stem": "FU01",
+      "form_richness_chars": 512
+    },
+    "HF07-ivy": {
+      "name": "Ivy HomeBeauty",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF07",
+      "case": "HF07-ivy",
+      "stem": "HF07",
+      "form_richness_chars": 428
+    },
+    "FF05-jollibee": {
+      "name": "Jollibee Singapore",
+      "cat": "fast-food",
+      "source_set": "S2",
+      "source": "inputs-v2/FF05",
+      "case": "FF05-jollibee",
+      "stem": "FF05",
+      "form_richness_chars": 332
+    },
+    "FF02-kfc": {
+      "name": "KFC Singapore",
+      "cat": "fast-food",
+      "source_set": "S2",
+      "source": "inputs-v2/FF02",
+      "case": "FF02-kfc",
+      "stem": "FF02",
+      "form_richness_chars": 391
+    },
+    "KP02-killiney": {
+      "name": "Killiney Kopitiam",
+      "cat": "kopitiam",
+      "source_set": "S2",
+      "source": "inputs-v2/KP02",
+      "case": "KP02-killiney",
+      "stem": "KP02",
+      "form_richness_chars": 438
+    },
+    "koi": {
+      "name": "KOI Th\u00e9 Singapore",
+      "cat": "bubble-tea",
+      "source_set": "S1",
+      "source": "inputs/09-koi",
+      "case": "koi",
+      "stem": "09-koi",
+      "form_richness_chars": 1463
+    },
+    "HL01-the": {
+      "name": "The Lash Fairy",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HL01",
+      "case": "HL01-the",
+      "stem": "HL01",
+      "form_richness_chars": 451
+    },
+    "EW03-lenskart": {
+      "name": "Lenskart Singapore",
+      "cat": "eyewear",
+      "source_set": "S2",
+      "source": "inputs-v2/EW03",
+      "case": "EW03-lenskart",
+      "stem": "EW03",
+      "form_richness_chars": 402
+    },
+    "BT08-liho": {
+      "name": "LiHO TEA",
+      "cat": "bubble-tea",
+      "source_set": "S2",
+      "source": "inputs-v2/BT08",
+      "case": "BT08-liho",
+      "stem": "BT08",
+      "form_richness_chars": 314
+    },
+    "HL02-lunalili": {
+      "name": "Lunalili Nails",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HL02",
+      "case": "HL02-lunalili",
+      "stem": "HL02",
+      "form_richness_chars": 530
+    },
+    "HN10-maniqure": {
+      "name": "Maniqure By Ling",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN10",
+      "case": "HN10-maniqure",
+      "stem": "HN10",
+      "form_richness_chars": 478
+    },
+    "FF01-mcdonalds": {
+      "name": "McDonald's Singapore",
+      "cat": "fast-food",
+      "source_set": "S2",
+      "source": "inputs-v2/FF01",
+      "case": "FF01-mcdonalds",
+      "stem": "FF01",
+      "form_richness_chars": 423
+    },
+    "P1-mixue": {
+      "name": "Mixue Singapore",
+      "cat": "bubble-tea",
+      "source_set": "S1",
+      "source": "inputs/P1-mixue",
+      "case": "P1-mixue",
+      "stem": "P1-mixue",
+      "form_richness_chars": 1173
+    },
+    "HB06-moncheri": {
+      "name": "Moncheri",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB06",
+      "case": "HB06-moncheri",
+      "stem": "HB06",
+      "form_richness_chars": 541
+    },
+    "HF06-mono": {
+      "name": "Mono Studio",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF06",
+      "case": "HF06-mono",
+      "stem": "HF06",
+      "form_richness_chars": 422
+    },
+    "PS02-my": {
+      "name": "My First Skool",
+      "cat": "preschool",
+      "source_set": "S2",
+      "source": "inputs-v2/PS02",
+      "case": "PS02-my",
+      "stem": "PS02",
+      "form_richness_chars": 487
+    },
+    "HF03-my": {
+      "name": "My Skin Diary",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF03",
+      "case": "HF03-my",
+      "stem": "HF03",
+      "form_richness_chars": 488
+    },
+    "HN11-nailnicorn": {
+      "name": "Nailnicorn",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN11",
+      "case": "HN11-nailnicorn",
+      "stem": "HN11",
+      "form_richness_chars": 409
+    },
+    "HN06-nails": {
+      "name": "Nails Of Society",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN06",
+      "case": "HN06-nails",
+      "stem": "HN06",
+      "form_richness_chars": 405
+    },
+    "SM01-ntuc": {
+      "name": "NTUC FairPrice",
+      "cat": "supermarket",
+      "source_set": "S2",
+      "source": "inputs-v2/SM01",
+      "case": "SM01-ntuc",
+      "stem": "SM01",
+      "form_richness_chars": 423
+    },
+    "observeco": {
+      "name": "ObserveCo",
+      "cat": "consulting",
+      "source_set": "S1",
+      "source": "inputs/07-observeco",
+      "case": "observeco",
+      "stem": "07-observeco",
+      "form_richness_chars": 1498
+    },
+    "HC01-operarose": {
+      "name": "Operarose Studio",
+      "cat": "home-creative",
+      "source_set": "S3",
+      "source": "inputs-v3/HC01",
+      "case": "HC01-operarose",
+      "stem": "HC01",
+      "form_richness_chars": 555
+    },
+    "EW01-owndays": {
+      "name": "OWNDAYS Singapore",
+      "cat": "eyewear",
+      "source_set": "S2",
+      "source": "inputs-v2/EW01",
+      "case": "EW01-owndays",
+      "stem": "EW01",
+      "form_richness_chars": 459
+    },
+    "BK03-paris": {
+      "name": "Paris Baguette",
+      "cat": "bakery",
+      "source_set": "S2",
+      "source": "inputs-v2/BK03",
+      "case": "BK03-paris",
+      "stem": "BK03",
+      "form_richness_chars": 374
+    },
+    "PS01-pcf": {
+      "name": "PCF Sparkletots",
+      "cat": "preschool",
+      "source_set": "S2",
+      "source": "inputs-v2/PS01",
+      "case": "PS01-pcf",
+      "stem": "PS01",
+      "form_richness_chars": 506
+    },
+    "HL03-perky": {
+      "name": "Perky Lash home-visit service",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HL03",
+      "case": "HL03-perky",
+      "stem": "HL03",
+      "form_richness_chars": 503
+    },
+    "D2-petlovers-cue": {
+      "name": "Pet Lovers Centre",
+      "cat": "pet-retail",
+      "source_set": "S1",
+      "source": "inputs/D2-petlovers-cue",
+      "case": "D2-petlovers-cue",
+      "stem": "D2-petlovers-cue",
+      "form_richness_chars": 1599
+    },
+    "HB02-pinch": {
+      "name": "Pinch Bakehouse",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB02",
+      "case": "HB02-pinch",
+      "stem": "HB02",
+      "form_richness_chars": 472
+    },
+    "BT09-playmade": {
+      "name": "Playmade",
+      "cat": "bubble-tea",
+      "source_set": "S2",
+      "source": "inputs-v2/BT09",
+      "case": "BT09-playmade",
+      "stem": "BT09",
+      "form_richness_chars": 363
+    },
+    "BK05-polar": {
+      "name": "Polar Puffs & Cakes",
+      "cat": "bakery",
+      "source_set": "S2",
+      "source": "inputs-v2/BK05",
+      "case": "BK05-polar",
+      "stem": "BK05",
+      "form_richness_chars": 361
+    },
+    "HF04-pretty": {
+      "name": "Pretty Please Beauty Studio",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF04",
+      "case": "HF04-pretty",
+      "stem": "HF04",
+      "form_richness_chars": 460
+    },
+    "GY04-pure": {
+      "name": "Pure Fitness Singapore",
+      "cat": "gym",
+      "source_set": "S2",
+      "source": "inputs-v2/GY04",
+      "case": "GY04-pure",
+      "stem": "GY04",
+      "form_richness_chars": 406
+    },
+    "P4-rbtea": {
+      "name": "R&B Tea Singapore",
+      "cat": "bubble-tea",
+      "source_set": "S1",
+      "source": "inputs/P4-rbtea",
+      "case": "P4-rbtea",
+      "stem": "P4-rbtea",
+      "form_richness_chars": 788
+    },
+    "HB05-roa": {
+      "name": "ROA",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB05",
+      "case": "HB05-roa",
+      "stem": "HB05",
+      "form_richness_chars": 639
+    },
+    "HB03-sanwichio": {
+      "name": "Sanwichio",
+      "cat": "home-baking",
+      "source_set": "S3",
+      "source": "inputs-v3/HB03",
+      "case": "HB03-sanwichio",
+      "stem": "HB03",
+      "form_richness_chars": 558
+    },
+    "FU03-scanteak": {
+      "name": "Scanteak",
+      "cat": "furniture",
+      "source_set": "S2",
+      "source": "inputs-v2/FU03",
+      "case": "FU03-scanteak",
+      "stem": "FU03",
+      "form_richness_chars": 366
+    },
+    "HF08-sebelle": {
+      "name": "Sebelle",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF08",
+      "case": "HF08-sebelle",
+      "stem": "HF08",
+      "form_richness_chars": 435
+    },
+    "HB04-sephora": {
+      "name": "Sephora Singapore",
+      "cat": "health-beauty",
+      "source_set": "S2",
+      "source": "inputs-v2/HB04",
+      "case": "HB04-sephora",
+      "stem": "HB04",
+      "form_richness_chars": 389
+    },
+    "FF06-shake": {
+      "name": "Shake Shack Singapore",
+      "cat": "fast-food",
+      "source_set": "S2",
+      "source": "inputs-v2/FF06",
+      "case": "FF06-shake",
+      "stem": "FF06",
+      "form_richness_chars": 411
+    },
+    "BT10-sharetea": {
+      "name": "Sharetea",
+      "cat": "bubble-tea",
+      "source_set": "S2",
+      "source": "inputs-v2/BT10",
+      "case": "BT10-sharetea",
+      "stem": "BT10",
+      "form_richness_chars": 321
+    },
+    "C4-sheng-siong": {
+      "name": "Sheng Siong Group",
+      "cat": "supermarket",
+      "source_set": "S1",
+      "source": "inputs/C4-sheng-siong",
+      "case": "C4-sheng-siong",
+      "stem": "C4-sheng-siong",
+      "form_richness_chars": 1166
+    },
+    "HF01-snow": {
+      "name": "Snow Beauty",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF01",
+      "case": "HF01-snow",
+      "stem": "HF01",
+      "form_richness_chars": 409
+    },
+    "EW04-spectacle": {
+      "name": "Spectacle Hut",
+      "cat": "eyewear",
+      "source_set": "S2",
+      "source": "inputs-v2/EW04",
+      "case": "EW04-spectacle",
+      "stem": "EW04",
+      "form_richness_chars": 410
+    },
+    "FF04-subway": {
+      "name": "Subway Singapore",
+      "cat": "fast-food",
+      "source_set": "S2",
+      "source": "inputs-v2/FF04",
+      "case": "FF04-subway",
+      "stem": "FF04",
+      "form_richness_chars": 435
+    },
+    "HN01-tee": {
+      "name": "Tee (DOT) Nail Bar",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN01",
+      "case": "HN01-tee",
+      "stem": "HN01",
+      "form_richness_chars": 454
+    },
+    "BK04-tiong": {
+      "name": "Tiong Bahru Bakery",
+      "cat": "bakery",
+      "source_set": "S2",
+      "source": "inputs-v2/BK04",
+      "case": "BK04-tiong",
+      "stem": "BK04",
+      "form_richness_chars": 417
+    },
+    "HF09-toa": {
+      "name": "Toa Payoh Home Facial",
+      "cat": "home-facial",
+      "source_set": "S3",
+      "source": "inputs-v3/HF09",
+      "case": "HF09-toa",
+      "stem": "HF09",
+      "form_richness_chars": 459
+    },
+    "KP03-toast": {
+      "name": "Toast Box",
+      "cat": "kopitiam",
+      "source_set": "S2",
+      "source": "inputs-v2/KP03",
+      "case": "KP03-toast",
+      "stem": "KP03",
+      "form_richness_chars": 426
+    },
+    "GY07-true": {
+      "name": "True Fitness Singapore",
+      "cat": "gym",
+      "source_set": "S2",
+      "source": "inputs-v2/GY07",
+      "case": "GY07-true",
+      "stem": "GY07",
+      "form_richness_chars": 446
+    },
+    "HB03-unity": {
+      "name": "Unity Pharmacy",
+      "cat": "health-beauty",
+      "source_set": "S2",
+      "source": "inputs-v2/HB03",
+      "case": "HB03-unity",
+      "stem": "HB03",
+      "form_richness_chars": 508
+    },
+    "F3-vicom": {
+      "name": "VICOM Ltd",
+      "cat": "inspection",
+      "source_set": "S1",
+      "source": "inputs/F3-vicom",
+      "case": "F3-vicom",
+      "stem": "F3-vicom",
+      "form_richness_chars": 1874
+    },
+    "GY05-virgin": {
+      "name": "Virgin Active Singapore",
+      "cat": "gym",
+      "source_set": "S2",
+      "source": "inputs-v2/GY05",
+      "case": "GY05-virgin",
+      "stem": "GY05",
+      "form_richness_chars": 444
+    },
+    "F2-watsons-guardian": {
+      "name": "Watsons Singapore",
+      "cat": "health-beauty",
+      "source_set": "S1",
+      "source": "inputs/F2-watsons-guardian",
+      "case": "F2-watsons-guardian",
+      "stem": "F2-watsons-guardian",
+      "form_richness_chars": 1397
+    },
+    "KP01-ya": {
+      "name": "Ya Kun Kaya Toast",
+      "cat": "kopitiam",
+      "source_set": "S2",
+      "source": "inputs-v2/KP01",
+      "case": "KP01-ya",
+      "stem": "KP01",
+      "form_richness_chars": 377
+    },
+    "HN13-yatonails": {
+      "name": "YatoNails",
+      "cat": "home-nails",
+      "source_set": "S3",
+      "source": "inputs-v3/HN13",
+      "case": "HN13-yatonails",
+      "stem": "HN13",
+      "form_richness_chars": 416
+    },
+    "EW02-zoff": {
+      "name": "Zoff Singapore",
+      "cat": "eyewear",
+      "source_set": "S2",
+      "source": "inputs-v2/EW02",
+      "case": "EW02-zoff",
+      "stem": "EW02",
+      "form_richness_chars": 442
+    }
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "case": "KP02-killiney",
+    "business": "Killiney Kopitiam",
+    "product_category": "Local coffee-shop breakfast: kaya toast and kopi",
+    "category_price_spread": "moderate (S$4.20-8+ per set)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "MID-HIGH mental_advantage expected (rival heritage claim, 1919)",
+    "LABEL_SOURCE": "Published: shophouse coffee-shop lineage dated 1919; 'two of Singapore's most storied Hainanese kopitiam chains'",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: shophouse coffee-shop lineage dated 1919; 'two of Singapore's most storied Hainanese kopitiam chains'"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "Killiney Kopitiam",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Local coffee-shop breakfast: kaya toast and kopi",
+    "positioning_sentence": "Our Killiney Road shophouse lineage goes back to 1919 - older than our rival's claim.",
+    "differentiator": "Our Killiney Road shophouse lineage goes back to 1919 - older than our rival's claim. Same kaya toast, more menu breadth.",
+    "undercut_on": "Ya Kun has far more outlets and stronger brand recall. We are the second heritage brand.",
+    "your_price_point": "sets from ~S$5",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Ya Kun Kaya Toast",
+    "Toast Box",
+    "Chin Mee Chin",
+    "Tong Ah"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "make coffee at home",
+        "skip breakfast",
+        "office pantry"
+      ],
+      "why": "Free or near-free."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "hawker kopi stall ~S$1.20-2.00",
+        "foodcourt breakfast set"
+      ],
+      "why": "Same product much cheaper, no branding.",
+      "price_floor": "~S$1.20"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Ya Kun Kaya Toast",
+        "Killiney Kopitiam",
+        "Toast Box",
+        "Chin Mee Chin",
+        "Tong Ah"
+      ],
+      "why": "Same product: kaya toast set with kopi. Heritage branding is the axis."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "Ya Kun - the 1926 heritage standard, largest chain",
+        "Killiney - the 1919 rival heritage claim",
+        "Toast Box - BreadTalk's modern mass-market version"
+      ],
+      "why": "Each owns a heritage/modern rung of the same mental ladder."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "cafe brunch",
+        "bakery breakfast",
+        "McDonald's breakfast"
+      ],
+      "why": "Same occasion, different product."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "WFH reducing commute breakfasts"
+      ],
+      "why": "Removes the occasion."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "specialty coffee chains",
+        "new heritage-themed cafes"
+      ],
+      "why": "Derived from new openings."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Local coffee-shop breakfast: kaya toast and kopi), not the owner's list. Price spread in this category: moderate (S$4.20-8+ per set). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "_meta": {
+    "case": "P2-chicha",
+    "business": "CHICHA San Chen",
+    "control_type": "GROUP P -- price position vs positioning. EXTERNAL LABEL.",
+    "pre_registered_prediction": "HIGH (premium craft end)",
+    "label_source": "Published Singapore menu/promo prices re-verified Sep 2026 (misslobang, drinkwhisper, menuzsg). External to me and unseen by the model.",
+    "hypothesis": "Positioning theory: a category supports a distinct VALUE position and a distinct PREMIUM position; both are defensible. The crowded MIDDLE with no distinct position is where businesses die. Price position is therefore NOT monotonically related to positioning strength -- it is U-shaped.",
+    "input_authorship_caveat": "These forms were RECONSTRUCTED by me from public sources, not self-reported by the business. For a live business that weakens the test; it is unavoidable for a dead one (Gong Cha). Noted, not hidden.",
+    "status": "control run"
+  },
+  "form": {
+    "business_name": "CHICHA San Chen",
+    "website": "chichasanchen.com.sg",
+    "role": "Founder / country operation",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bubble tea -- premium hand-brewed tea. 32 outlets in Singapore. Tea leaves grown on our own farms in Taiwan.",
+    "positioning_sentence": "Tea you would happily drink plain: single-origin leaves from our own farms, brewed to order cup by cup, with no need for sweetener or toppings.",
+    "differentiator": "We own the tea. Our leaves come from our own Taiwan farms, and every cup is brewed to order, one at a time. The drink you order is one you would drink unsweetened and without toppings -- that is the whole test, and very few chains can pass it. We deliberately do not run 1-for-1 promotions or promo codes, which is unusual in this category. Our slower service and the queue are the price of the product, and we treat that queue as part of the offer rather than a problem to solve.",
+    "undercut_on": "Nothing structurally. Cheaper chains are not the same product; we are not competing on price and do not discount.",
+    "your_price_point": "S$5.50-6.50; premium craft tier",
+    "their_price_point": "Mixue at the floor around S$1.50-3.50. KOI mid-tier. HEYTEA at our level or slightly above.",
+    "competitors_named_count": "5-8"
+  },
+  "competitors_named": [
+    "HEYTEA (premium)",
+    "KOI The",
+    "CHAGEE",
+    "LiHO TEA",
+    "Mixue (value floor)",
+    "R&B Tea",
+    "Each-A-Cup",
+    "Playmade and Sharetea",
+    "specialty coffee"
+  ],
+  "derived_competitive_set": {
+    "_note": "IDENTICAL across all bubble tea cases. Category and competitor evidence held constant so the business is the only variable.",
+    "tier_0_default": {
+      "members": [
+        "nothing / water",
+        "hawker kopi ~S$1.20-2.00",
+        "convenience-store bottled drinks ~S$1.50-2.50",
+        "home-brewed tea"
+      ],
+      "why": "Cheaper, no detour. Most drink occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Mixue (S$1.50-3.50, no membership, heartland and MRT outlets)",
+        "R&B Tea (Large from S$4.90)",
+        "Each-A-Cup (budget, 48 outlets)",
+        "hawker bubble tea stalls"
+      ],
+      "why": "Cheapest cup on the island, positioned where students and families pass.",
+      "price_floor": "S$1.50"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "LiHO TEA (~70-84 outlets)",
+        "CHAGEE (44 outlets)",
+        "Chicha San Chen (32 outlets)",
+        "Playmade",
+        "Sharetea",
+        "HEYTEA",
+        "KOI The (90 outlets)",
+        "R&B Tea",
+        "Each-A-Cup"
+      ],
+      "why": "Same product, same occasion. 62+ bubble tea brands in Singapore; ~953 businesses islandwide. Fragmented; largest single network ~90 outlets."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "KOI The -- widest network and longest trust",
+        "CHAGEE -- 'not a bubble tea brand, a tea expert'",
+        "LiHO -- 'No.1 homegrown'",
+        "Mixue -- holds the value floor"
+      ],
+      "why": "The buyer is shopping for a TREAT DRINK. Each incumbent holds a different rung."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "specialty coffee",
+        "dessert / shaved ice",
+        "convenience-store RTD tea"
+      ],
+      "why": "Takes the same treat-drink occasion with a different product."
+    }
+  },
+  "customer_description": "Tea enthusiasts and people willing to pay more and queue longer for a distinguishable cup. Skewed toward customers who care what the tea itself tastes like rather than the topping."
+}

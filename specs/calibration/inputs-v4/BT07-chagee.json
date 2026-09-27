@@ -1,0 +1,101 @@
+{
+  "_meta": {
+    "case": "BT07-chagee",
+    "business": "CHAGEE Singapore",
+    "product_category": "Bubble tea / flavoured tea beverage, drunk on the go",
+    "category_price_spread": "wide (S$1.50-5.50, 267%)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "HIGH mental_advantage expected (explicit anti-category position)",
+    "LABEL_SOURCE": "Published: 46 outlets in 24 months, fastest riser; 'We're not a bubble tea brand' - Business Times",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: 46 outlets in 24 months, fastest riser; 'We're not a bubble tea brand' - Business Times"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "CHAGEE Singapore",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bubble tea / flavoured tea beverage, drunk on the go",
+    "positioning_sentence": "We are not a bubble tea brand, we are a tea expert.",
+    "differentiator": "We are not a bubble tea brand, we are a tea expert. Original leaf fresh milk tea, whole leaves brewed fresh with fresh milk.",
+    "undercut_on": "We are the newest of the big chains and we are not cheap.",
+    "your_price_point": "mid-tier",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "koi",
+    "LiHO TEA",
+    "Chicha San Chen",
+    "Mixue"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "nothing / water",
+        "hawker kopi ~S$1.20-2.00",
+        "convenience-store bottled drinks ~S$1.50-2.50"
+      ],
+      "why": "Cheaper, no detour. Most drink occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Mixue S$1.50-3.50",
+        "hawker bubble tea stalls",
+        "Each-A-Cup budget line",
+        "R&B Tea from ~S$3.60"
+      ],
+      "why": "Cheapest cup on the island, positioned where students pass.",
+      "price_floor": "S$1.50"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "LiHO TEA (~84 outlets)",
+        "CHAGEE (46 outlets)",
+        "Chicha San Chen (32)",
+        "Playmade",
+        "Sharetea",
+        "HEYTEA",
+        "KOI The (90)"
+      ],
+      "why": "Same product, same occasion. 62+ brands, 953 businesses islandwide. Fragmented."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "KOI The - largest network, 90 outlets",
+        "CHAGEE - 'not a bubble tea brand, a tea expert'",
+        "LiHO - 'No.1 homegrown'"
+      ],
+      "why": "The buyer is shopping for a TREAT DRINK. Each holds a rung of the mental ladder."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "specialty coffee",
+        "dessert / shaved ice",
+        "convenience-store RTD tea"
+      ],
+      "why": "Takes the same treat-drink occasion with a different product."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "health messaging reducing treat frequency",
+        "home brewing"
+      ],
+      "why": "Dilutes the number of treat occasions."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "Molly Tea (Shenzhen, flagship Orchard Central Mar 2026)",
+        "Black Tree (Shanghai Thai-tea, 313@somerset)",
+        "Tealive (Malaysia, Changi T3)",
+        "Mr. Sun Tea (Taiwan, *SCAPE)"
+      ],
+      "why": "Derived from ACRA/new-opening records, not asked of the owner."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Bubble tea / flavoured tea beverage, drunk on the go), not the owner's list. Price spread in this category: wide (S$1.50-5.50, 267%). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

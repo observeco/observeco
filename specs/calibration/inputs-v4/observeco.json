@@ -1,0 +1,40 @@
+{
+  "_meta": {
+    "case": "observeco",
+    "business": "ObserveCo \u2014 differentiation strategy consulting for Singapore SMEs",
+    "reconstruction_of": "www.observeco.com, fetched 2026-09-23",
+    "form_fidelity": "Built from the live public website ONLY \u2014 the same thing a prospect's URL-mode submission would give us. This is the first case where the input is genuinely production-shaped rather than a hand reconstruction.",
+    "input_mode": "url (the three modes tested: free text, doc upload, url)",
+    "contamination_disclosure": "IMPORTANT. The scorer (me) has read specs/observeco-consulting-pivot-positioning.md, which contains a completed internal analysis of ObserveCo's own positioning. That is insider knowledge the production pipeline would not have. Any judgment below may be contaminated and Sean is the correct oracle for this case, not me.",
+    "status": "for Sean's adjudication",
+    "no_label_written": "No expected answer is recorded in this file. Sean judges correctness directly."
+  },
+  "form": {
+    "business_name": "ObserveCo",
+    "website": "https://www.observeco.com",
+    "role": "Founder",
+    "company_size_band": "0-9",
+    "city": "Singapore",
+    "category": "Strategy consulting for Singapore small businesses. We do competitive analysis and positioning work \u2014 the analysis a business needs before it spends on branding, packaging, a website or ads.",
+    "positioning_sentence": "We provide the clarity as to why your customer hasn't chosen you, because we observe what you can't see from the inside.",
+    "differentiator": "Three things. First, the method \u2014 we apply the positioning theory behind Airbnb's 'Belong Anywhere', Volvo's safety and Wang Lao Ji's '\u6015\u4e0a\u706b', systematically rather than as a course summary. Second, Singapore registry data \u2014 we compile datasets from SFA (20,000+ licensed F&B operators), ECDA (1,900+ childcare centres), ACRA and MOH. That data is not on the internet as a ready-made list; we build and maintain it, and generic tools cannot replicate it. Third, a person is accountable \u2014 AI runs the scan, but a person reviews and owns every recommendation. And we publish our prices, which is rare in consulting.",
+    "undercut_on": "Price and speed \u2014 but from below, not above. Free advice is the real competitor: Enterprise Singapore's SME Centres give free 1-to-1 advice to 25,000 enterprises a year, and ChatGPT gives a fluent answer for nothing. Agencies and the big firms come in at S$20K-200K and $500K respectively, so we are not competing with them on price.",
+    "your_price_point": "From S$500 one-shot for The Differentiation Strategy; S$300-400 per quarter for Differentiation Watch",
+    "their_price_point": "SME Centres are free. ChatGPT is free. AI strategy tools are around S$19-79 a month. Agencies are S$20K-200K. Big firms are $500K+.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Enterprise Singapore SME Centres (free 1-to-1 advice, 25,000 enterprises a year)",
+    "ChatGPT / a well-crafted prompt",
+    "Marketing and branding agencies (S$20K-200K brand overhauls)",
+    "The big strategy firms ($500K, 6-8 weeks)",
+    "RivalSense, Semrush, Xavier.ai (named on our Watch page as tools that show what changed but not what to do)"
+  ],
+  "customer_description": "Singapore small business owners. We segment them by what they are facing: validating an idea, starting out, a sales message that isn't landing, a struggling business, pivoting because competitors are taking their market, or considering buying a franchise. In practice that is mostly solo and micro businesses up to about 10 people, plus some established SMEs.",
+  "_notes_for_harness": {
+    "why_this_case_matters": "First production-shaped input. The URL mode worked \u2014 everything the form needs is on the live site, with no founder interview required.",
+    "richness_available_from_the_url": "The site alone supplied: the positioning claim, the full differentiator argument, all three price points, the competitor set the owner believes in, six customer segments, the guarantee, the method lineage, and the named tool competitors. That is materially richer than the Bonefirm form answers were.",
+    "what_the_owner_names_that_is_diagnostic": "The competitor list is dominated by FREE substitutes (SME Centres, ChatGPT) and DEEP substitutes (agencies, big firms). Notably absent: other paid strategy-analysis products at a similar price point, and the ex-MBB freelance marketplaces that an internal analysis identified as the real squeeze from above.",
+    "known_contamination": "See _meta.contamination_disclosure. The internal pivot analysis concluded: the slot is not empty, it is being squeezed from below (AI strategy tools) and from above (ex-MBB marketplaces), and the pivot has no client proof case yet. Do not treat any judgment here as an independent read."
+  }
+}

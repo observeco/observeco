@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "case": "GY06-24-7",
+    "business": "24/7 Fitness",
+    "product_category": "Fitness gym membership, recurring access to train",
+    "category_price_spread": "wide (S$15-400/mo, 26x)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "LOW-MID expected (undercuts the chains but no distinct position)",
+    "LABEL_SOURCE": "Published: S$98/mo on 12-month, S$178 rolling; positioned as the cheaper 24/7 alternative",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: S$98/mo on 12-month, S$178 rolling; positioned as the cheaper 24/7 alternative"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "24/7 Fitness",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Fitness gym membership, recurring access to train",
+    "positioning_sentence": "24-hour access at S$98 a month on a 12-month plan - cheaper than any other full-service chain.",
+    "differentiator": "24-hour access at S$98 a month on a 12-month plan - cheaper than any other full-service chain.",
+    "undercut_on": "Cheaper than the others, but Anytime Fitness has far more outlets and the same 24/7 promise.",
+    "your_price_point": "S$98-178/mo",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Anytime Fitness",
+    "ActiveSG",
+    "Fitness First",
+    "24/7 Fitness"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "no exercise",
+        "home workouts / free YouTube",
+        "running in the park",
+        "HDB fitness corner"
+      ],
+      "why": "Free. Most exercise intentions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "ActiveSG MyActiveGYM S$15-30/mo, ~30 sites",
+        "SAFRA EnergyOne S$45-54",
+        "condo gym (bundled)"
+      ],
+      "why": "Government-run price floor every commercial gym is judged against.",
+      "price_floor": "S$15/mo off-peak"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Anytime Fitness (100+ outlets, 24/7)",
+        "Fitness First (14 clubs)",
+        "Virgin Active (5 clubs)",
+        "Pure Fitness (2 clubs)",
+        "24/7 Fitness"
+      ],
+      "why": "Same product: a monthly membership to lift weights and take classes."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "ActiveSG - the default, cheapest, ubiquitous",
+        "Anytime Fitness - most outlets, 24/7 keycard",
+        "Fitness First - the established CBD chain"
+      ],
+      "why": "Each holds a clear rung: cheapest / most accessible / most established."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "boutique studios (F45, Ritual, yoga)",
+        "personal trainers",
+        "ClassPass"
+      ],
+      "why": "Same goal (get fit), different delivery model."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "sedentary lifestyle",
+        "work-hours creep"
+      ],
+      "why": "Reduces the number of training occasions."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "24/7 Fitness (growing)",
+        "boutique studio openings"
+      ],
+      "why": "Derived from new openings, not asked of the owner."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Fitness gym membership, recurring access to train), not the owner's list. Price spread in this category: wide (S$15-400/mo, 26x). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

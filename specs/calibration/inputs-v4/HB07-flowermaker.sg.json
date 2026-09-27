@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "case": "HB07-flowermaker.sg",
+    "business": "Flowermaker.sg",
+    "product_category": "Custom celebration cakes and bakes, ordered ahead for an occasion",
+    "category_price_spread": "wide (S$14 rolls to S$1,000+ custom sculpted cakes)",
+    "scale": "sole operator, operates from home",
+    "purpose": "HOME-BASED BUSINESS validity set (n=50). The actual lead-magnet population: thin public evidence, sole operators, statutory scale caps. Tests the 0.9.0 display_floor change on the population where evidence coverage is genuinely lowest.",
+    "PRE_REGISTERED_LABEL": "mid",
+    "LABEL_SOURCE": "PUBLISHED SITE: a home-based workshop selling flora-themed handicrafts as a husband-and-wife team; specialises in handcrafted soy wax flowers adorning scented candles, each made individually so no two are identical.",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "PUBLISHED SITE: a home-based workshop selling flora-themed handicrafts as a husband-and-wife team; specialises in handcrafted soy wax flowers adorning scented candles, each made individually so no two are identical."
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external (press coverage, published prices, or statute); the form is thinner than a real submission."
+  },
+  "form": {
+    "business_name": "Flowermaker.sg",
+    "role": "Owner-operator",
+    "company_size_band": "1",
+    "city": "Singapore",
+    "category": "Custom celebration cakes and bakes, ordered ahead for an occasion",
+    "positioning_sentence": "A husband-and-wife team making soy wax flowers set into scented candles.",
+    "differentiator": "A husband-and-wife team making soy wax flowers set into scented candles. Every flower is made by hand individually, so no two are the same - that is the point of buying from us rather than a factory.",
+    "undercut_on": "There are many candle sellers online, and at home we cannot produce at any real volume.",
+    "your_price_point": "handcrafted soy wax candles with flowers",
+    "their_price_point": "See the derived competitive set for the category ladder.",
+    "competitors_named_count": "2-4"
+  },
+  "competitors_named": [
+    "other home crafters",
+    "commercial candle brands",
+    "gift shops"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "supermarket celebration cake S$20-40",
+        "no cake / bake at home"
+      ],
+      "why": "Cheaper and instant. Many occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "neighbourhood bakery whole cake S$25-45",
+        "Polar Puffs & Cakes",
+        "Swee Heng",
+        "PrimaDeli"
+      ],
+      "why": "Same product much cheaper, walk-in, no lead time.",
+      "price_floor": "S$25"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "600+ other Singapore home bakers (directory count)",
+        "commercial custom-cake shops",
+        "BreadTalk celebration range",
+        "Tiong Bahru Bakery whole cakes"
+      ],
+      "why": "Same product, same occasion, same order-ahead model. The direct set is BOTH other home bakers and the commercial custom shops."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "top home bakers with waitlists and sell-out drops",
+        "BreadTalk - the mass celebration default",
+        "viral niche bakers (novelty/sculpted)"
+      ],
+      "why": "Each holds a rung: 'the one everyone knows', 'the safe mass choice', 'the one that does the weird thing'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "ice-cream and gelato cakes",
+        "dessert cafes",
+        "catering dessert tables"
+      ],
+      "why": "Takes the same celebration moment with a different product."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "health and sugar-reduction messaging",
+        "smaller gatherings"
+      ],
+      "why": "Reduces cake occasions."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "new home bakers entering monthly",
+        "halal-certified entrants",
+        "dietary-specific bakers (gluten-free, vegan)"
+      ],
+      "why": "Derived from the home-baker directories and new Instagram accounts, not asked of the owner."
+    },
+    "_rules": "HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work.",
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Custom celebration cakes and bakes, ordered ahead for an occasion), not the owner's list. Price spread in this category: wide (S$14 rolls to S$1,000+ custom sculpted cakes). Note the regulatory frame: HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work."
+  }
+}

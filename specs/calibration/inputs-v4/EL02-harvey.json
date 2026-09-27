@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "case": "EL02-harvey",
+    "business": "Harvey Norman Singapore",
+    "product_category": "Consumer electronics retail: TVs and appliances",
+    "category_price_spread": "CONVERGED (flagships within 3-8% across retailers)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "MID expected (no distinct position; price converged at 3-8%)",
+    "LABEL_SOURCE": "Published: same 3-8% price band as Courts and Best Denki; big-format showrooms",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: same 3-8% price band as Courts and Best Denki; big-format showrooms"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "Harvey Norman Singapore",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Consumer electronics retail: TVs and appliances",
+    "positioning_sentence": "Large-format showrooms where you can compare the whole range in one visit, with interest-free finance.",
+    "differentiator": "Large-format showrooms where you can compare the whole range in one visit, with interest-free finance.",
+    "undercut_on": "Our prices are within a few percent of every rival, so there is no price reason to choose us.",
+    "your_price_point": "converged",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Courts",
+    "Best Denki",
+    "Gain City",
+    "Challenger"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "keep the old appliance",
+        "don't buy",
+        "second-hand"
+      ],
+      "why": "Delays the purchase."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Shopee / Lazada online",
+        "Carousell",
+        "Mustafa",
+        "parallel imports"
+      ],
+      "why": "Lowest headline price, no showroom.",
+      "price_floor": "online marketplace"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Courts",
+        "Harvey Norman",
+        "Best Denki",
+        "Gain City",
+        "Challenger",
+        "Mega Discount Store"
+      ],
+      "why": "Same product: the same TV brands, on the same mall floor, at near-identical prices."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "Courts - the mass-market default, 1974",
+        "Harvey Norman - the big-format showroom",
+        "Best Denki - the Japanese-service claim"
+      ],
+      "why": "The diagnostic: NO incumbent holds a distinct position -- see the converged-price finding."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "brand-direct stores (Sony, Samsung)",
+        "telco bundles",
+        "online marketplaces"
+      ],
+      "why": "Same product, different route to the buyer."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "device longevity",
+        "streaming reducing TV upgrades"
+      ],
+      "why": "Reduces replacement frequency."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "online-first retailers",
+        "brand-direct D2C"
+      ],
+      "why": "Derived from market entries."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Consumer electronics retail: TVs and appliances), not the owner's list. Price spread in this category: CONVERGED (flagships within 3-8% across retailers). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

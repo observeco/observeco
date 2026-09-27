@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "case": "HN07-i",
+    "business": "I Nail For Fung",
+    "product_category": "Manicure and pedicure, gel and nail art",
+    "category_price_spread": "wide (S$15 express gel to S$80 unlimited design)",
+    "scale": "sole operator, operates from home",
+    "purpose": "HOME-BASED BUSINESS validity set (n=50). The actual lead-magnet population: thin public evidence, sole operators, statutory scale caps. Tests the 0.9.0 display_floor change on the population where evidence coverage is genuinely lowest.",
+    "PRE_REGISTERED_LABEL": "mid",
+    "LABEL_SOURCE": "PUBLIC LISTING: Katong/Marine Parade home studio; classic gel manicures from S$45; free gel removal; apr\u00e8s extensions from S$80; mystery design sets from S$65.",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "PUBLIC LISTING: Katong/Marine Parade home studio; classic gel manicures from S$45; free gel removal; apr\u00e8s extensions from S$80; mystery design sets from S$65."
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external (press coverage, published prices, or statute); the form is thinner than a real submission."
+  },
+  "form": {
+    "business_name": "I Nail For Fung",
+    "role": "Owner-operator",
+    "company_size_band": "1",
+    "city": "Singapore",
+    "category": "Manicure and pedicure, gel and nail art",
+    "positioning_sentence": "Vibrant, intricate nail art with free gel removal included in every appointment.",
+    "differentiator": "Vibrant, intricate nail art with free gel removal included in every appointment.",
+    "undercut_on": "We are priced at the higher end for a home studio, and free removal is a sweetener rather than something customers name us for.",
+    "your_price_point": "gel from S$45, apr\u00e8s extensions from S$80",
+    "their_price_point": "See the derived competitive set for the category ladder.",
+    "competitors_named_count": "2-4"
+  },
+  "competitors_named": [
+    "other home nail studios",
+    "Nasty Nails SG",
+    "mall nail chains"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "paint your own nails",
+        "skip it"
+      ],
+      "why": "Free. Most nail occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "neighbourhood nail shop express gel S$10-20",
+        "$15 budget home studios",
+        "JB nail salons"
+      ],
+      "why": "Cheapest gel set available, often walk-in.",
+      "price_floor": "S$10-15"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "600+ home-based nail studios listed by directory apps",
+        "mall nail chains",
+        "other home nail studios in the same estate"
+      ],
+      "why": "Same product, same occasion. The buyer is choosing between home studios and mall chains."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "home studios with a named signature style",
+        "mall chains with brand recall",
+        "studios with published reviews"
+      ],
+      "why": "Each holds a rung: 'the one whose art I recognise', 'the convenient chain'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "press-on nails",
+        "DIY gel kits",
+        "nail stickers"
+      ],
+      "why": "Same look, no appointment, no artist."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "nail damage from frequent gel",
+        "cost-cutting reducing treat frequency"
+      ],
+      "why": "Reduces appointment frequency."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "newly self-taught studios offering opening promotions",
+        "certified-academy graduates"
+      ],
+      "why": "Derived from new Instagram and Carousell listings."
+    },
+    "_rules": "HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work.",
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Manicure and pedicure, gel and nail art), not the owner's list. Price spread in this category: wide (S$15 express gel to S$80 unlimited design). Note the regulatory frame: HDB/URA Home-Based Business Scheme: small-scale only, operated by residents only, no non-resident employees, no signage or advertising at the premises, no large-scale storage. Permitted: small-scale food (SFA rules; CATERING IS FORBIDDEN), hairdressing/facial/manicure/pedicure/beauty EXCLUDING MASSAGE, private tuition for not more than three students at a time, sewing, freelance creative work."
+  }
+}

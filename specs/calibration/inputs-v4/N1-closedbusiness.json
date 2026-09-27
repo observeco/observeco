@@ -1,0 +1,86 @@
+{
+  "_meta": {
+    "case": "N1-closedbusiness",
+    "control_type": "NEGATIVE CONTROL \u2014 must FAIL",
+    "prediction": "Gate fires (defensibility <= 1). Band: GATE. No composite. If this scores mid-band, the gates are decorative and the rubric cannot detect failure.",
+    "purpose": "The gates have never fired on a Jev output (0/4 runs). CaiCa's G4 fired on a HAND-WRITTEN label, never on a real run. This tests whether a genuinely dead business triggers the gate.",
+    "source_of_truth": "Objectively closed: ceased trading, no website, no premises, deregistered",
+    "status": "control run"
+  },
+  "form": {
+    "business_name": "A closed bubble tea outlet",
+    "website": "(none \u2014 domain expired)",
+    "role": "Former owner",
+    "company_size_band": "0-9",
+    "city": "Singapore",
+    "category": "Bubble tea \u2014 a single outlet in a neighbourhood mall. Now closed.",
+    "positioning_sentence": "We were a bubble tea shop. We had quite a few flavours.",
+    "differentiator": "Not really sure we had one. We used the same supplier as a few other shops and the drinks were similar. We had a loyalty card.",
+    "undercut_on": "Everything. Cheaper shops, bigger chains with apps and promotions. We could not match the pricing or the marketing.",
+    "your_price_point": "S$4.50-6.00 per cup",
+    "their_price_point": "Under S$3.50 for the cheap chains. The big ones run constant promotions.",
+    "competitors_named_count": "1-2"
+  },
+  "competitors_named": [
+    "A big chain nearby",
+    "The shop two units down"
+  ],
+  "customer_description": "Whoever walked past the mall. We did not really have a particular customer.",
+  "derived_competitive_set": {
+    "_note": "Same category, same derived set as the bubble tea and KOI cases. Held constant deliberately.",
+    "tier_0_default": {
+      "members": [
+        "nothing / water",
+        "hawker kopi ~S$1.20-2.00",
+        "convenience-store bottled drinks",
+        "home-brewed tea"
+      ],
+      "why": "Cheaper, no detour."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Mixue (S$1.50-3.50, no membership)",
+        "R&B Tea",
+        "Each-A-Cup",
+        "hawker stalls"
+      ],
+      "price_floor": "S$1.50",
+      "why": "Cheapest cup on the island."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "KOI Th\u00e9 (90 outlets)",
+        "LiHO (~70-84)",
+        "CHAGEE (44)",
+        "Chicha San Chen (32)",
+        "Playmade",
+        "Sharetea",
+        "HEYTEA"
+      ],
+      "why": "Same product, same occasion. 62+ brands, 953 businesses islandwide. Fragmented but crowded \u2014 and the big chains have app-based loyalty and constant promotions."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "KOI Th\u00e9 \u2014 the brand credited with starting the modern wave",
+        "CHAGEE \u2014 'not a bubble tea brand, a tea expert'",
+        "LiHO \u2014 'No.1 homegrown'"
+      ],
+      "why": "The buyer shops for a treat drink; the top-of-mind brand wins. A single unnamed outlet is not in anyone's mind."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "specialty coffee",
+        "dessert",
+        "convenience-store RTD tea"
+      ],
+      "why": "Same treat-drink occasion, different product."
+    }
+  },
+  "_expected_reasoning": {
+    "market_headroom": "Should stay moderate \u2014 the CATEGORY is fine. This tests that the rubric does NOT confuse 'this business is dead' with 'this market is bad'. Expected 3-4.",
+    "competitive_room": "Crowded and price-contested with no differentiation. Expected 2.",
+    "position_availability": "No position claimed at all. Expected 1-2.",
+    "defensibility": "THE GATE TEST. No differentiator, same supplier as competitors, a loyalty card. 'Copyable now without any development' = level 0 = 1/5. Expected to FIRE G4.",
+    "demand_reach": "'Whoever walked past the mall' is not a segment. Expected 1-2."
+  }
+}

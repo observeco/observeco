@@ -421,9 +421,15 @@ def main() -> None:
     ap.add_argument("input")
     ap.add_argument("--dry-run", action="store_true",
                     help="print the state and questions, make no API call")
+    ap.add_argument("--rubric", default="rubric.json",
+                    help="rubric file to use (e.g. rubric-v1.0.0.json). Defaults to "
+                         "rubric.json. Never edit a rubric mid-run -- version is recorded "
+                         "in every run file and a mixed corpus is invalid.")
+    ap.add_argument("--outdir", default=None,
+                    help="directory for run files (default: runs/)")
     args = ap.parse_args()
 
-    rubric = json.loads((HERE / "rubric.json").read_text())
+    rubric = json.loads((HERE / args.rubric).read_text())
     payload = json.loads(Path(args.input).read_text())
     state = build_state(payload)
     questions = build_questions(rubric)
@@ -441,8 +447,8 @@ def main() -> None:
         sys.exit(2)
 
     out = score(payload, result, rubric)
-    run_dir = HERE / "runs"
-    run_dir.mkdir(exist_ok=True)
+    run_dir = (HERE / args.outdir) if args.outdir else (HERE / "runs")
+    run_dir.mkdir(parents=True, exist_ok=True)
     path = run_dir / f"jev-{out['case']}.json"
     path.write_text(json.dumps(out, indent=2) + "\n")
 

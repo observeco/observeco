@@ -1,0 +1,103 @@
+{
+  "_meta": {
+    "case": "FU03-scanteak",
+    "business": "Scanteak",
+    "product_category": "Furniture: home furnishing for a new flat",
+    "category_price_spread": "wide (flat-pack vs solid teak vs leather)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "HIGH defensibility expected (solid teak specialisation since 1974)",
+    "LABEL_SOURCE": "Published: 'has been selling teak furniture since 1974 and now runs more than 140 stores across Singapore, Japan and Taiwan'; solid teak that can be sanded and re-oiled",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: 'has been selling teak furniture since 1974 and now runs more than 140 stores across Singapore, Japan and Taiwan'; solid teak that can be sanded and re-oiled"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "Scanteak",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Furniture: home furnishing for a new flat",
+    "positioning_sentence": "Solid teak since 1974, plantation-sourced.",
+    "differentiator": "Solid teak since 1974, plantation-sourced. In this humidity, teak is the wood that lasts and can be re-oiled a decade later.",
+    "undercut_on": "Solid teak costs what it costs - several times flat-pack for the same item.",
+    "your_price_point": "mid-premium",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "IKEA",
+    "Castlery",
+    "Commune",
+    "Cellini"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "second-hand / hand-me-down",
+        "existing furniture",
+        "built-ins from the renovation"
+      ],
+      "why": "No new purchase."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "IKEA entry tier",
+        "FortyTwo",
+        "HipVan",
+        "Megafurniture",
+        "IMM clearance"
+      ],
+      "why": "Lowest total bill for a whole flat.",
+      "price_floor": "IKEA entry tier"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "IKEA",
+        "Courts",
+        "Harvey Norman",
+        "Castlery",
+        "HipVan",
+        "Scanteak",
+        "Commune",
+        "Cellini",
+        "FortyTwo"
+      ],
+      "why": "Same product: furniture for a home, competing on the same showroom floor."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "IKEA - the budget default, 3 stores",
+        "Castlery - mid-range design-led, founded 2013",
+        "Scanteak - solid teak specialist since 1974, 140+ stores"
+      ],
+      "why": "IKEA owns 'cheap whole-flat', Castlery 'design without designer prices', Scanteak 'solid teak'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "Taobao/Shopee direct imports",
+        "custom carpentry",
+        "rental furniture"
+      ],
+      "why": "Same need, different supply route."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "delaying the move-in",
+        "minimalism"
+      ],
+      "why": "Reduces the furnishing budget."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "BoConcept",
+        "King Living",
+        "Grey & Sanders"
+      ],
+      "why": "Derived from market entries in the premium band."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Furniture: home furnishing for a new flat), not the owner's list. Price spread in this category: wide (flat-pack vs solid teak vs leather). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "_meta": {
+    "case": "P4-rbtea",
+    "business": "R&B Tea Singapore",
+    "control_type": "GROUP P -- price position vs positioning. EXTERNAL LABEL.",
+    "pre_registered_prediction": "LOW (budget, no distinct position beyond price)",
+    "label_source": "Published Singapore menu/promo prices re-verified Sep 2026 (misslobang, drinkwhisper, menuzsg). External to me and unseen by the model.",
+    "hypothesis": "Positioning theory: a category supports a distinct VALUE position and a distinct PREMIUM position; both are defensible. The crowded MIDDLE with no distinct position is where businesses die. Price position is therefore NOT monotonically related to positioning strength -- it is U-shaped.",
+    "input_authorship_caveat": "These forms were RECONSTRUCTED by me from public sources, not self-reported by the business. For a live business that weakens the test; it is unavoidable for a dead one (Gong Cha). Noted, not hidden.",
+    "status": "control run"
+  },
+  "form": {
+    "business_name": "R&B Tea Singapore",
+    "website": "rbtea.sgmembers.com",
+    "role": "Franchise operator",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bubble tea -- budget to mid-tier. Brown sugar milk tea is the signature. Large fresh milk teas from S$4.90.",
+    "positioning_sentence": "Affordable bubble tea with a straightforward stamp-card rewards scheme.",
+    "differentiator": "We are one of the cheaper proper milk-tea chains -- large fresh milk teas from S$4.90 with no app or membership needed to get that price. We print the maths plainly: one stamp per S$4.50 spent and a free drink at six stamps, so about S$4.50 off every S$27 you spend. We are a Taiwanese brand and brown sugar milk tea is what we are known for.",
+    "undercut_on": "Mixue sits below us at S$1.50-3.50. We do not try to match it; we compete on a lower price than the premium chains rather than on a distinct product.",
+    "your_price_point": "S$3.60-4.90; budget to mid-tier",
+    "their_price_point": "Mixue the floor at S$1.50; KOI and the premium chains at S$5.50-7.50",
+    "competitors_named_count": "5-8"
+  },
+  "competitors_named": [
+    "Each-A-Cup (budget)",
+    "Sharetea",
+    "KOI The",
+    "CHAGEE",
+    "LiHO TEA",
+    "Mixue (value floor)",
+    "Chicha San Chen",
+    "HEYTEA",
+    "hawker bubble tea stalls"
+  ],
+  "derived_competitive_set": {
+    "_note": "IDENTICAL across all bubble tea cases. Category and competitor evidence held constant so the business is the only variable.",
+    "tier_0_default": {
+      "members": [
+        "nothing / water",
+        "hawker kopi ~S$1.20-2.00",
+        "convenience-store bottled drinks ~S$1.50-2.50",
+        "home-brewed tea"
+      ],
+      "why": "Cheaper, no detour. Most drink occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Mixue (S$1.50-3.50, no membership, heartland and MRT outlets)",
+        "R&B Tea (Large from S$4.90)",
+        "Each-A-Cup (budget, 48 outlets)",
+        "hawker bubble tea stalls"
+      ],
+      "why": "Cheapest cup on the island, positioned where students and families pass.",
+      "price_floor": "S$1.50"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "LiHO TEA (~70-84 outlets)",
+        "CHAGEE (44 outlets)",
+        "Chicha San Chen (32 outlets)",
+        "Playmade",
+        "Sharetea",
+        "HEYTEA",
+        "KOI The (90 outlets)",
+        "R&B Tea",
+        "Each-A-Cup"
+      ],
+      "why": "Same product, same occasion. 62+ bubble tea brands in Singapore; ~953 businesses islandwide. Fragmented; largest single network ~90 outlets."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "KOI The -- widest network and longest trust",
+        "CHAGEE -- 'not a bubble tea brand, a tea expert'",
+        "LiHO -- 'No.1 homegrown'",
+        "Mixue -- holds the value floor"
+      ],
+      "why": "The buyer is shopping for a TREAT DRINK. Each incumbent holds a different rung."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "specialty coffee",
+        "dessert / shaved ice",
+        "convenience-store RTD tea"
+      ],
+      "why": "Takes the same treat-drink occasion with a different product."
+    }
+  },
+  "customer_description": "Price-conscious students and heartland customers who want a milk tea rather than a particular brand's milk tea. Stamp-card regulars."
+}

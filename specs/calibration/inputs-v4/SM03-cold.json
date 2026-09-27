@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "case": "SM03-cold",
+    "business": "Cold Storage",
+    "product_category": "Supermarket grocery retail, weekly household shop",
+    "category_price_spread": "moderate (premium vs value shelf)",
+    "purpose": "FRESH-DATA VALIDITY TEST (n=50 across 11 categories). The competitive set is derived per PRODUCT CATEGORY and held constant across its members, so the business is the only variable.",
+    "PRE_REGISTERED_PREDICTION": "MID-MENTAL expected (premium claim now contested)",
+    "LABEL_SOURCE": "Published: 48 stores; DFI once held a near-monopoly in premium but FairPrice Finest expanded 9->39 stores; now owned by Macrovalue",
+    "label_is_external": true,
+    "sealed_before_run": true,
+    "sources": [
+      "Published: 48 stores; DFI once held a near-monopoly in premium but FairPrice Finest expanded 9->39 stores; now owned by Macrovalue"
+    ],
+    "authoring_note": "FORM DATA reconstructed by the analyst from public sources. The LABEL is external and published; the form is thinner than a real submission. This is the known weakness of the test."
+  },
+  "form": {
+    "business_name": "Cold Storage",
+    "role": "Founder / country management",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Supermarket grocery retail, weekly household shop",
+    "positioning_sentence": "The premium grocery shop.",
+    "differentiator": "The premium grocery shop. Imported and specialty lines you will not find at the value chains.",
+    "undercut_on": "We no longer own premium. FairPrice Finest has 39 stores against our 48 and is closing the gap.",
+    "your_price_point": "premium",
+    "their_price_point": "See the derived competitive set for the category price ladder.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "NTUC FairPrice",
+    "Sheng Siong",
+    "Giant",
+    "Don Don Donki"
+  ],
+  "derived_competitive_set": {
+    "tier_0_default": {
+      "members": [
+        "wet market",
+        "hawker meals instead of cooking",
+        "grow your own",
+        "skip the meal"
+      ],
+      "why": "Cheaper or no purchase at all."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Giant (40 stores, value)",
+        "Sheng Siong (77 stores, no-frills)",
+        "online grocery (RedMart, Shopee)"
+      ],
+      "why": "Lowest shelf price for the same basket.",
+      "price_floor": "value shelf"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "NTUC FairPrice (125 stores)",
+        "Sheng Siong (77)",
+        "Cold Storage (48)",
+        "Giant (40)",
+        "Don Don Donki"
+      ],
+      "why": "Same product: a weekly grocery basket. 691 stores islandwide."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "NTUC FairPrice - the national default, 125 stores",
+        "Sheng Siong - 'cheapest fresh', peer-leading margin",
+        "Cold Storage - the premium shop"
+      ],
+      "why": "FairPrice owns 'default', Sheng Siong owns 'value+fresh', Cold Storage owns 'premium'."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "convenience stores (Cheers, 7-Eleven)",
+        "food delivery replacing home cooking",
+        "specialty grocers (Little Farms)"
+      ],
+      "why": "Same need (feed the household) via a different channel."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "JB cross-border shopping",
+        "eating out instead of cooking"
+      ],
+      "why": "Removes the basket entirely."
+    },
+    "tier_7_new_entrants": {
+      "members": [
+        "Scarlett Supermarket (China-import, expanding)",
+        "Little Farms (premium)",
+        "Macrovalue's Cold Storage revamp"
+      ],
+      "why": "Derived from new openings and the DFI ownership change."
+    },
+    "_derivation_method": "Derived from the PRODUCT CATEGORY (Supermarket grocery retail, weekly household shop), not the owner's list. Price spread in this category: moderate (premium vs value shelf). Tiers follow the eight-tier frame: default/no-purchase, cheap substitute, direct set, category incumbent (the rungs of the customer's mental ladder), adjacent crossover, indirect, and new entrants derived from public opening records."
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "_meta": {
+    "case": "P3-heytea",
+    "business": "HEYTEA Singapore",
+    "control_type": "GROUP P -- price position vs positioning. EXTERNAL LABEL.",
+    "pre_registered_prediction": "HIGH (premium, distinct product signature)",
+    "label_source": "Published Singapore menu/promo prices re-verified Sep 2026 (misslobang, drinkwhisper, menuzsg). External to me and unseen by the model.",
+    "hypothesis": "Positioning theory: a category supports a distinct VALUE position and a distinct PREMIUM position; both are defensible. The crowded MIDDLE with no distinct position is where businesses die. Price position is therefore NOT monotonically related to positioning strength -- it is U-shaped.",
+    "input_authorship_caveat": "These forms were RECONSTRUCTED by me from public sources, not self-reported by the business. For a live business that weakens the test; it is unavoidable for a dead one (Gong Cha). Noted, not hidden.",
+    "status": "control run"
+  },
+  "form": {
+    "business_name": "HEYTEA Singapore",
+    "website": "HEYTEA app",
+    "role": "Country operation of a Chinese group",
+    "company_size_band": "10-500",
+    "city": "Singapore",
+    "category": "Bubble tea -- premium fresh-fruit tea. Known for the cheezo (salted cheese foam) topping.",
+    "positioning_sentence": "The cheese-foam tea: real fruit and a salted cheese foam that is the reason people buy the drink at all.",
+    "differentiator": "We invented and own the cheese-foam category -- the cheezo topping is the whole point of the purchase, and it is the thing people name us for. We use real fruit rather than syrup, and we skip artificial flavours and creamers. Our app is the most actively maintained of any chain here, and we run a registration voucher plus a birthday coupon. Competitors have copied the foam but have not taken the association -- people order the cheezo from us and something else elsewhere.",
+    "undercut_on": "Cost of real fruit versus syrup, and the labour in fresh preparation. We are not cheapest and do not try to be.",
+    "your_price_point": "S$5.50-7.00; premium tier",
+    "their_price_point": "Mixue floor S$1.50-3.50; KOI and most mid-tier chains below us; Chicha San Chen at our level",
+    "competitors_named_count": "5-8"
+  },
+  "competitors_named": [
+    "Chicha San Chen (premium craft)",
+    "KOI The",
+    "CHAGEE",
+    "LiHO TEA",
+    "Mixue (value floor)",
+    "R&B Tea",
+    "Each-A-Cup",
+    "Playmade",
+    "specialty coffee"
+  ],
+  "derived_competitive_set": {
+    "_note": "IDENTICAL across all bubble tea cases. Category and competitor evidence held constant so the business is the only variable.",
+    "tier_0_default": {
+      "members": [
+        "nothing / water",
+        "hawker kopi ~S$1.20-2.00",
+        "convenience-store bottled drinks ~S$1.50-2.50",
+        "home-brewed tea"
+      ],
+      "why": "Cheaper, no detour. Most drink occasions resolve here."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Mixue (S$1.50-3.50, no membership, heartland and MRT outlets)",
+        "R&B Tea (Large from S$4.90)",
+        "Each-A-Cup (budget, 48 outlets)",
+        "hawker bubble tea stalls"
+      ],
+      "why": "Cheapest cup on the island, positioned where students and families pass.",
+      "price_floor": "S$1.50"
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "LiHO TEA (~70-84 outlets)",
+        "CHAGEE (44 outlets)",
+        "Chicha San Chen (32 outlets)",
+        "Playmade",
+        "Sharetea",
+        "HEYTEA",
+        "KOI The (90 outlets)",
+        "R&B Tea",
+        "Each-A-Cup"
+      ],
+      "why": "Same product, same occasion. 62+ bubble tea brands in Singapore; ~953 businesses islandwide. Fragmented; largest single network ~90 outlets."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "KOI The -- widest network and longest trust",
+        "CHAGEE -- 'not a bubble tea brand, a tea expert'",
+        "LiHO -- 'No.1 homegrown'",
+        "Mixue -- holds the value floor"
+      ],
+      "why": "The buyer is shopping for a TREAT DRINK. Each incumbent holds a different rung."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "specialty coffee",
+        "dessert / shaved ice",
+        "convenience-store RTD tea"
+      ],
+      "why": "Takes the same treat-drink occasion with a different product."
+    }
+  },
+  "customer_description": "Younger urban customers buying a treat drink, specifically for the cheese-foam texture. Will pay a premium for the signature topping; heavy app/loyalty usage."
+}

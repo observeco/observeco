@@ -1,0 +1,97 @@
+{
+  "_meta": {
+    "case": "F1-boeing-airbus",
+    "control_type": "GROUP F \u2014 capacity elasticity. MARKET-INELASTIC duopoly. THE DISCRIMINATING TEST.",
+    "purpose": "The 17-case corpus is 12/17 MARKET-ELASTIC, so the elasticity hypothesis could not fail there. This case supplies the opposite prediction: a duopoly whose market supply is INELASTIC (physical tooling + certification ceiling), where unmet demand must therefore accumulate as an order book. Hypothesis predicts HIGH headroom. Watsons/Guardian (F2) is the same duopoly structure with ELASTIC supply and predicts LOW. Two opposite predictions = a test that can fail.",
+    "pre_registered_prediction": "market_headroom HIGH \u2014 display 4 or 5 (raw >= 2.5). If it returns ~2 (the elastic pack value), the elasticity hypothesis is FALSIFIED and must be abandoned.",
+    "elasticity_axis": "INELASTIC (market-level). Production is capped by physical tooling, skilled labour and certification \u2014 measured in years, not quarters. Deliveries cannot flex to meet orders.",
+    "ground_truth": "Airbus closed 2025 with 8,754 commercial aircraft backlog (largest in its history) and a \u20ac539.7B order book against 793 deliveries. Derived backlog cover: Airbus A320 family ~11.8 years; Boeing 737 ~9.9 years. Boeing company backlog $715B (Q2 2026). Global aerospace needs ~12-14 years to clear the outstanding passenger aircraft order book. Both manufacturers are supply-constrained, not demand-constrained \u2014 'Record aircraft orders keep climbing. Deliveries can't keep up.' 2025 net orders: Boeing 1,173 vs Airbus 889.",
+    "sources": [
+      "centreforaviation.com \u2014 aircraft order backlog eases to 12 years (2025)",
+      "globalair.com \u2014 Record aircraft orders keep climbing, deliveries can't keep up (Jul 2026)",
+      "selborneresearch.com \u2014 Boeing/Airbus duopoly economics (Aug 2026)",
+      "hdinresearch.com \u2014 asymmetrical growth and convergence (Mar 2026)"
+    ],
+    "why_this_case": "A duopoly with inelastic supply. If the hypothesis is about MARKET supply (not player count, not firm size), this must read HIGH despite being a duopoly \u2014 the exact case that broke the monopoly/duopoly/fragmented axis. It also tests whether a strong #2 (Boeing, recovering) reads differently from the #1.",
+    "note_on_ordering_convention": "Aircraft carry ~10-year backlogs as NORMAL practice; airlines order years ahead. Absolute backlog cover therefore does not transfer across categories (ASML's 1.19 yr is more extreme in category terms than Airbus's 11.8 yr). This case is a VALIDITY test of the elasticity hypothesis, and separately an argument that the ratio needs category normalisation.",
+    "status": "pre-registered, not yet run"
+  },
+  "form": {
+    "business_name": "Boeing Commercial Airplanes",
+    "website": "boeing.com",
+    "role": "Management",
+    "company_size_band": "500+",
+    "city": "Seattle / Arlington",
+    "category": "Large commercial aircraft manufacturing. Narrow-body and wide-body airliners sold to airlines and lessors worldwide. Sold in units per year, with deliveries scheduled years ahead of order.",
+    "positioning_sentence": "One of only two manufacturers in the world that can build a large commercial airliner at scale.",
+    "differentiator": "We are one of two companies on earth able to manufacture large commercial aircraft at scale, and the only Western alternative to Airbus. Our backlog is worth hundreds of billions of dollars and extends roughly a decade forward. Certification regimes (FAA/EASA) create a regulatory barrier no new entrant can cross quickly, and the capital, tooling and skilled-labour requirements are measured in decades. Airlines must order from one of two suppliers, and both order books are committed years ahead.",
+    "undercut_on": "Delivery reliability and quality reputation. Our recent safety and certification record has cost us orders to Airbus, and single-aisle ramp-up is slower than the market wants. Airlines who want a narrowbody that arrives sooner go to Airbus.",
+    "your_price_point": "List prices in the tens to hundreds of millions per aircraft, heavily discounted in negotiated fleet deals.",
+    "their_price_point": "Airbus prices competitively against us on every campaign; neither of us competes on price against a third party, because there is no third party.",
+    "competitors_named_count": "1"
+  },
+  "competitors_named": [
+    "Airbus \u2014 the only other large commercial aircraft manufacturer"
+  ],
+  "customer_description": "Commercial airlines and aircraft leasing companies worldwide. Trigger: fleet replacement and growth planning, typically decided 3-7 years before the aircraft is needed.",
+  "derived_competitive_set": {
+    "_note": "Derived for large commercial aircraft manufacturing. A true duopoly.",
+    "tier_0_default": {
+      "members": [
+        "not expanding the fleet",
+        "retiring routes",
+        "grounding aircraft"
+      ],
+      "why": "Avoids the purchase entirely. Real for marginal routes."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "used aircraft and the second-hand market",
+        "aircraft leasing rather than buying",
+        "extending the life of existing airframes"
+      ],
+      "why": "Lower capital outlay, but used aircraft are themselves mostly Boeing and Airbus and cannot add capacity the duopoly has not built."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Airbus"
+      ],
+      "why": "One competitor. A strict duopoly \u2014 the two hold effectively the entire large commercial aircraft market between them."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "Airbus \u2014 currently the market leader on narrowbody delivery and order momentum"
+      ],
+      "why": "Airbus has outsold Boeing on single-aisle and offers earlier delivery slots. The incumbent here is the rival, not a third party."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "regional aircraft (Embraer, ATR) for smaller routes",
+        "high-speed rail on short corridors",
+        "video conferencing suppressing business travel"
+      ],
+      "why": "Removes or shrinks the route a new aircraft would serve."
+    },
+    "tier_5_professional_route": {
+      "members": [],
+      "why": "n/a \u2014 airlines buy aircraft directly; no professional intermediary path."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "carbon and emissions regulation",
+        "SAF availability",
+        "airport slot constraints",
+        "pilot supply"
+      ],
+      "why": "Constrains how fast an airline can grow its fleet at all, regardless of manufacturer."
+    }
+  },
+  "_expected_reasoning": {
+    "market_headroom": "**THE TEST.** Supply is inelastic: production capped by physical tooling, skilled labour and certification over years. Both duopolists carry ~10-year order books; industry needs 12-14 years to clear backlog; deliveries cannot keep up with orders. Demand exceeds supply and accumulates as an order book. Expected 4-5 (raw >= 2.5). If this returns ~2, the elasticity hypothesis is falsified.",
+    "competitive_room": "Very tight \u2014 one credible rival, and Airbus currently leads on narrowbody. Not an open field. Expected 1-2.",
+    "mental_advantage": "Strong: 'one of only two companies that can build a large commercial airliner.' Not merely a brand the buyer recalls \u2014 a structural position in the buyer's mind that only one alternative shares. Expected 4-5.",
+    "defensibility": "Extreme. Certification regimes, capital intensity, decades of tooling and skilled labour, and a duopoly that has held for decades. Expected 5-6 (of 6).",
+    "demand_reach": "Airlines and lessors worldwide \u2014 a small, highly identifiable, heavily negotiated buyer set. Expected 4-5."
+  },
+  "_note_on_the_test": "This case and F2 (Watsons/Guardian) are the discriminating pair. Same structure \u2014 a duopoly \u2014 but opposite market-level supply elasticity. The hypothesis predicts HIGH here and LOW there. If the two do not separate, the elasticity hypothesis is wrong and the design reverts to a qualifier for all markets."
+}
