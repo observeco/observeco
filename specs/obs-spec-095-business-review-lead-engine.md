@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v12 — benchmark mechanics corrected against industry practice.
-**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12: 2026-09-28)
+**Status:** DRAFT v13 — confidentiality option space; sequencing corrected (D29).
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v13: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -47,7 +47,8 @@ tracks it. **D24 (enrichment provenance) and D25 (minimum cell size) are new and
 **D25's shape is corroborated** — Payscale publishes a floor of *"five or more"* **plus** geographic
 broadening, so both the floor and the widen-not-suppress step are real practice, not inference; but
 its 5 protects employees who are not each other's competitors, so ours needs to be higher.
-**A third path is added to §7.7's two-box retention table** — Levels.fyi licenses records carrying
+**§7.7's two-box retention table gains a third row, and §7.7.2 turns it into a five-option space** —
+Levels.fyi licenses records carrying
 employer/title/level/location under contractual anti-re-identification terms, which is *not*
 anonymisation and is what appears to work at scale (D26). **§7.9 is new**: Singapore already gives
 free business advisory to ~25,000 SMEs a year through 10 SME Centres and adds diagnostic toolkits
@@ -75,6 +76,24 @@ consulting engagements"* — **independently corroborates §7.8's reuse boundary
 as a judgement call; and **panel re-contact is legitimate** if permission was given at the previous
 contact and re-contact matches the original assurance (MRS B.11/B.12). **PDPC's Singapore
 k-anonymity guidance is 3–5 — below the industry floor of 5.**
+**v13 change — two corrections, both from Sean, both accepted.**
+*(1) **D26 was a narrow recommendation presented as a decision.** It offered a binary — anonymise, or
+license pseudonymously — and embedded a false premise: **anonymisation is a property of each RELEASED
+ARTEFACT, not of the stored record.** The same submission can be pseudonymous in the warehouse and
+anonymised in every published view, so the question is *where the boundary sits*, not which of two
+modes to choose. **§7.7.2 now sets out five options (A–E) with pros, cons, and a path to viability for
+each**, and the decisive criterion is **reversibility** — B and C are one-way doors, and E is the only
+option that keeps B reachable. Recommended: **E (consent-tiered), D as interim, B revisited when the
+dataset is worth the obligation.**
+*(2) **§7.10 added — the toolkit IS the test (D29).** Sean's point: if the riskiest assumption fails
+there is no viable business model, so why not make the toolkit the test, built properly, so the result
+is as conclusive as possible? **The earlier phasing was wrong.** Nothing else consumes the benchmark —
+the toolkit is its only consumer — so deferring it meant building something no one was waiting for.
+Worse, the risk was backwards: the benchmark is the *passing* part, and **a benchmark built after the
+demand test cannot answer the demand question**, because the demand test would have run without the
+comparison that is supposed to create the demand. **The toolkit is the instrument, not the subject,**
+with five measured funnel steps and decision rules pre-registered before launch. The honest limit is
+stated: a small N establishes whether the path exists, not its rate.
 
 ---
 
@@ -1067,7 +1086,11 @@ genuinely anonymised rather than merely pseudonymised. That distinction is the w
 | Pseudonymous, licensed, quasi-identifiers disclosed | Still personal data — **but the working commercial case** | **Contract-bound, not anonymised** |
 | Truly anonymised (no key exists, no re-identification path) | Not personal data | **Yes** |
 
-**⚠ A third path exists and it is what actually works at scale — read it before assuming the binary.**
+**⚠ Read §7.7.2 — the binary this table implies is FALSE.** Anonymisation is a property of each
+**released artefact**, not of the stored record: the same submission can be pseudonymous in the
+warehouse and anonymised in every published view. **§7.7.2 sets out five options (A–E) with pros,
+cons and a path to viability.** One of them is what actually works at scale, and it is not
+anonymisation.
 Levels.fyi publishes records carrying **employer, title, level and location**, stripped only of name,
 email and contact details, and warns contributors plainly to *"read what we can and cannot promise
 about anonymity."* It then **licenses that data for a fee**, which is what funds the free service
@@ -1175,6 +1198,118 @@ the k-anonymity floor. **D19 authorised the mechanism; it did not license the cl
 opt-in rate cannot support a public positioning line, so the rate is a **launch-tracked metric**,
 not an afterthought.
 
+### 7.7.2 Publication and confidentiality — the option space (D26) ⚠
+
+**Corrected framing.** An earlier version of this spec presented a **binary** — anonymise properly, or
+license pseudonymous data. **Sean's objection is correct: that was a narrow recommendation, not a
+decision-ready menu.** It also embedded a false premise. **Anonymisation is a property of each
+RELEASED ARTEFACT, not of the stored record.** The same submission can sit pseudonymous in the
+warehouse and be anonymised in every published view. The real question is not *whether* to have a
+boundary — it is **where the boundary sits, and what may cross it.** That gives a space of options,
+not two.
+
+**The five options, and what each one actually is.**
+
+---
+
+#### Option A — Strict anonymisation. Aggregate only; no key; never licensed.
+
+| | |
+|---|---|
+| **What it is** | On ingest, quasi-identifiers are stripped and generalised; only aggregates are retained; no re-identification key exists |
+| **Protects against** | Everything. Nothing to leak, nothing to subpoena, nothing to re-identify |
+| **Pros** | Strongest privacy statement; survives deletion cleanly (§7.5); GDPR/PDPA-cleanest; the *"your data never leaves"* claim stays true |
+| **Cons** | **Weakest asset.** Coarse aggregates only — no "businesses like yours" comparisons, which is the feature. Cannot be licensed. Cannot be audited back to source if a figure is challenged |
+| **Path to viability** | Requires the benchmark to work on **coarse** cells only. Viable if the comparison is *category-level* ("your category's median positioning score is Contested"), **not** *peer-level* ("businesses like you") |
+| **Verdict** | Possible but self-defeating: it discards the asset that makes reciprocity worth offering |
+
+---
+
+#### Option B — Pseudonymous records, disclosed quasi-identifiers, contract-bound. *(Levels.fyi)*
+
+| | |
+|---|---|
+| **What it is** | Contact details stripped; employer/title/level/location retained; recipients bound by anti-re-identification contract; contributors told plainly what is and is not promised. **Verified in practice** — this is how Levels.fyi funds a free service |
+| **Protects against** | Casual leakage and public exposure — **not** a determined recipient, and not a regulator's view of identifiability |
+| **Pros** | **The commercial model that actually works.** Enables fine-grained comparisons; licensable, so the dataset can fund the service; honest about its limits, which is itself a credibility asset |
+| **Cons** | **Legally still personal data** — a regulator can hold that the quasi-identifiers mean the data was never anonymised, so every deletion request must genuinely apply. Reputational exposure if a contributor is identified. Needs real contractual enforcement, not a clause |
+| **Path to viability** | Three things must be true: (1) the consent wording discloses quasi-identifiers **and** the licensing use *before* the box is ticked; (2) the licence terms are actually enforceable against recipients; (3) deletion works on pseudonymous records and the "strip and aggregate" job is built |
+| **Verdict** | **Highest ceiling, highest obligation.** Only adopt with the disclosure done honestly |
+
+---
+
+#### Option C — Named attribution / public contributor list. *(Mercer, APQC)*
+
+| | |
+|---|---|
+| **What it is** | Data is masked, but the **names of participants are published**. Mercer publishes a participant list; APQC states *"We will list your organization's name… We do not accept submissions without the name of the company"* |
+| **Protects against** | Almost nothing about participation. It protects the *numbers*, not the *fact of contributing* |
+| **Pros** | Credibility — a visible roster signals a real pool; contributors get public recognition, which is itself a reward and can lift participation |
+| **Cons** | **We are explicitly advised against this.** Agri Stats' 2026 judgment targets participant lists; APQC and Mercer can do it because their participants are large firms who *want* to be seen. An SG micro-SME in a 5-business category does not. Publishing participation plus a comparison is a re-identification path |
+| **Path to viability** | Only with opt-in naming, large cells, and a category where being seen is a benefit. **Not viable for weak-positioning micro-SMEs — the segment §D3 targets** |
+| **Verdict** | **Reject.** Wrong segment |
+
+---
+
+#### Option D — Aggregate research only; never licensed; the dataset is an internal moat.
+
+| | |
+|---|---|
+| **What it is** | Contributions feed ObserveCo's own analysis and the "SG industry datasets" positioning claim, and nothing is ever sold or licensed |
+| **Protects against** | Third-party exposure entirely — there is no recipient |
+| **Pros** | Simplest consent story; no counterparty risk; keeps the moat proprietary, which is arguably the point of a moat; lower legal surface |
+| **Cons** | **The dataset never generates revenue on its own** — it only supports the consulting sale. If the consulting sale is the riskiest assumption (Sean's point), this option **couples the dataset's value to the weakest link** |
+| **Path to viability** | Fine as an **interim** posture. Viable long-term only if consulting demand is proven — i.e. it inherits the same unresolved risk |
+| **Verdict** | **Sensible default for now; not a business model.** Compatible with A or B later |
+
+---
+
+#### Option E — Consent-tiered. Benchmark free to contributors; dataset use and licensing opted into separately.
+
+| | |
+|---|---|
+| **What it is** | Three separable permissions: **(1)** scored report — always; **(2)** aggregate research use (D19's trade — unlocks the benchmark); **(3)** licensing to third parties — a **separate, later, higher-bar** consent |
+| **Protects against** | Bundling. Each permission is evidenced on its own row and its own purpose |
+| **Pros** | **Lets the option space stay open.** Ship with (1)+(2) and defer (3) until the dataset is worth licensing — no commitment made before it needs to be. A contributor can grant research use without granting licensing, which is a materially easier ask and likely a **much higher opt-in rate** |
+| **Cons** | More consent surface to build and evidence; a lower licensing opt-in rate may make option B uneconomic later; risks the "we'll ask again" fatigue |
+| **Path to viability** | Already largely designed (D19's separate purpose + own row). The added work is **purpose 4 = licensing**, with its own wording, its own row, and the §7.5 retention rule |
+| **Verdict** | **Recommended.** It is the only option that does not force a one-way door now |
+
+---
+
+#### What the options actually differ on
+
+| | A | B | C | D | E |
+|---|---|---|---|---|---|
+| Benchmark possible | coarse only | **fine** | fine | n/a | **fine** |
+| Licensable | no | **yes** | yes | no | **later** |
+| Regulator-safe | **strongest** | weakest | weak | strong | strong (tiered) |
+| Deletion clean | **yes** | hard | hard | yes | hard for (3) |
+| Revenue from data | none | **direct** | direct | none | **deferred** |
+| Decision reversibility | reversible | **one-way** | one-way | reversible | **reversible** |
+| Fits D3's segment | yes | yes | **no** | yes | yes |
+
+**The decisive row is reversibility.** A, D and E can be changed later. **B and C are one-way doors** —
+once data is licensed, it cannot be un-licensed. **E is the only option that preserves the ability to
+reach B.**
+
+**So the recommendation is not "pick one".** It is: **adopt E (D19 + a separate licensing purpose),
+run D as the interim posture, and revisit B only when the dataset is large enough that licensing is
+worth the obligation.** A is available at any time for any *individual output* — that is the
+reframing that dissolves the binary.
+
+---
+
+#### The one thing all five options share
+
+**PDPA has no explicit k-anonymity safe harbour, and PDPC's guidance is 3–5** — below the industry
+floor of 5 that Mercer, Milliman, Empsight, Payscale, Pave and WorldatWork all publish. **A Singapore
+regulator applying the PDPC threshold could call a 5-business cell identifiable.** So no option here
+licenses a claim of legal safety on cell size alone. The controls in §7.7.1 — floor, dominance cap,
+secondary suppression, no absence flags — are what defend the position, and they are required under
+**every** option. **D26 chooses the ceiling; §7.7.1's controls are the floor, and they are not
+optional.**
+
 ### 7.8 Where the form data may and may not be used
 
 A boundary that keeps §7.7 lawful and the offer credible:
@@ -1230,6 +1365,88 @@ argues for **labelling coverage honestly from the start** (the emerging/standard
 presenting a 5-business comparison and a 1,200-business comparison in the same voice.
 
 ---
+
+### 7.10 The toolkit IS the test — sequencing accepted as D29 ⚠
+
+**Sean's challenge, verbatim:** *"If my riskiest assumption doesn't pay do you realise I do not have a
+viable business model to begin with? So why can't the diagnostic toolkit be my test with proper
+building of the benchmark, so that the results can be as conclusive as possible?"*
+
+**He is right, and the earlier phasing was wrong.** §7.7.1's "the benchmark is Phase 2" advice said:
+prove consulting demand in parallel first. **But nothing else in this system consumes the benchmark.**
+The engine has exactly one consumer — the free toolkit that shows a comparison — and there is no
+second user waiting for it. So "build the benchmark later" meant **building something no one was
+waiting for.** That is not sequencing; it is deferral.
+
+**And the phasing had the risk backwards.** It treated the benchmark as the risky build and the
+consulting demand as the known quantity. **The opposite is true.** §7.9 says the toolkit's edge has
+to be the comparative judgment — while the research says the segment that most needs positioning
+help is the one least likely to have ever bought professional services. **Those are two halves of one
+question, and they can only be answered together:**
+
+| Question | How it can be answered |
+|---|---|
+| Does the benchmark produce a credible comparison? | §10.6 canary — **already passing** |
+| **Do the people who receive it ever buy?** | **Only by running it against real prospects** |
+
+**A benchmark built after the demand test cannot answer the demand question** — because the demand
+test would have run without the comparison that is supposed to create the demand. That is the flaw
+in the original phasing: it tested the offer *minus its differentiator*.
+
+---
+
+#### The test design
+
+**The toolkit is the instrument, not the subject.** Five funnel steps, each measurable, each with a
+decision rule **stated in advance** — because a threshold chosen after the data arrives is not a
+threshold.
+
+| # | Step | Measured as | Failure looks like |
+|---|---|---|---|
+| 1 | **Reach** — the offer gets in front of the right segment | targeted approaches made | Cannot reach 0–9-employee firms at all |
+| 2 | **Submission** — they complete the form | submissions ÷ approaches | They won't invest 15 answers |
+| 3 | **Benchmark opt-in** — they take the comparison | opt-ins ÷ submissions | The trade is not worth it to them |
+| 4 | **Engagement** — they read it and respond | report opens, replies, questions asked | Report delivered and ignored |
+| 5 | **Conversion** — they book or buy | booked calls ÷ submissions, then paid ÷ booked | **The failure mode named in §7.9: unqualified leads** |
+
+**Steps 2, 3 and 5 are the load-bearing ones.** Step 5 is Sean's challenge stated as a number.
+
+**Pre-registered decision rule (to be fixed before launch, then not moved):**
+
+| Outcome | Reading | Action |
+|---|---|---|
+| Submissions arrive, **and** opt-in is reasonable, **and** calls get booked | The trade works and the segment buys | Continue; invest in the dataset (D26 decision becomes worth making) |
+| Submissions arrive, calls get booked, **opt-in is very low** | The report sells, the dataset does not | Benchmark claim comes down; sell the report, not the dataset |
+| Submissions arrive, **no calls** | **The §7.9 failure mode is real** | The lead magnet is wrong, or the segment is — **stop, do not build more** |
+| **No submissions at all** | Reach or offer failure | Do not read as demand failure until reach is proven |
+
+**The last row matters as much as the others.** "No submissions" and "submissions but no buyers" are
+different findings with opposite remedies, and collapsing them is how this kind of test fools its
+operator.
+
+---
+
+#### What makes it conclusive rather than decorative
+
+Four requirements, and the honest limit:
+
+1. **The benchmark must be real at launch, not mocked.** A fake comparison produces a fake opt-in
+   rate. **The two-tier disclosure (§7.7.1) is what makes this possible on day one** — 11 of 27
+   categories clear a floor of 5, so a genuine comparison exists immediately, labelled *emerging*.
+2. **Thresholds fixed in advance.** Recorded here before launch; published reasoning for any change.
+3. **Identical treatment of the control.** If §7.9's referral finding holds — 71% find a firm by
+   asking someone — the toolkit should be tested **both** as a cold-acquisition channel **and** as a
+   credibility artefact in a referral conversation. Those are different mechanisms with different
+   rates, and testing only the first would misread the second.
+4. **⚠ The honest limit: a small N cannot resolve a rate.** With a handful of submissions, a test
+   can establish whether the **path exists** (submissions → calls → a sale) but **not** the rate. A
+   2% and a 5% conversion are indistinguishable at that sample size. **So the decision rule must be
+   written against what N can actually resolve** — presence of the mechanism, not its magnitude —
+   and the sample-size figures to make that precise are being verified separately.
+
+**This is the strongest available defence against §7.9's failure mode, and it is also the cheapest** —
+because the instrument is the product under test. Building the benchmark properly is not a cost of
+the experiment; **it is the experimental condition.**
 
 ## 8. Accountability, operations, and asset protection
 
@@ -1741,7 +1958,8 @@ purchasing decision.
 | **D24** | **Enrichment provenance** (§7.7) — may enriched *public-source* material enter the dataset? | **OPEN — Sean to decide.** A dataset built only from consented form answers is thin; the enriched material is the valuable part. If enrichment cannot be used, the "SG industry datasets" claim rests on self-reported text alone. Needs a determination on whether aggregated public-source business data is personal data at all |
 | **D25** | **Minimum cell size, SG-adjusted** (§7.7.1) | **OPEN — recommendation REVISED.** A flat raised floor of 8 suppresses 19 of 27 categories and kills the reciprocity engine. **Recommended instead: a TWO-TIER disclosure, modelled on Culture Amp** — an **emerging** tier (floor 5, comparison shown and labelled as thin coverage) and a **standard** tier (floor 8+, full cut detail). This keeps the engine alive in the 11 categories that clear 5 while keeping the stricter guarantee where the data supports it (4 categories). **Both controls are needed in any case: a concentration cap (25% for a concentrated SG category) and secondary suppression if any total is shown.** Industry floor is 5 (Mercer, Milliman, Empsight, Payscale, Pave, WorldatWork); the two-tier structure is verified to exist at Culture Amp, its thresholds are not |
 | **D28** | **Submission identity/validation gate** (§7.7.1) | **OPEN — Sean to decide.** Fabrication is not detectable statistically — ISO 26362 catches it with an identity gate (*"validate the claimed identity of new panel members"*). Our form is anonymous and a self-report costs nothing to fake. **APQC's 80% completion minimum before any report issues is a cheap structural control** that pairs with the §3.10 input-quality floor. Does the free report require a verified business identity, or stay anonymous? |
-| **D26** | **The third path — contract-bound pseudonymous licensing** (§7.7) | **OPEN — Sean to decide.** Levels.fyi licenses records carrying employer/title/level/location, stripped of contact details, under contractual anti-re-identification terms — **not anonymisation, and it works at scale.** Adopting it yields a far stronger dataset than anonymisation-only, at the cost of a weaker privacy claim and continued PDPA deletion/withdrawal exposure. **This is the single decision that most determines whether the dataset is an asset or a curiosity** |
+| **D26** | **Publication and confidentiality posture** (§7.7.2) | **OPEN — Sean to decide. NOW A FIVE-OPTION SPACE, not a binary** (Sean's correction: the earlier version was a narrow recommendation, and it embedded a false premise — **anonymisation is a property of each released ARTEFACT, not of the stored record**, so the question is where the boundary sits, not which of two modes to pick). Options: **A** strict anonymisation (strongest claim, weakest asset, coarse cells only) · **B** pseudonymous + contract-bound licensing (Levels.fyi — highest ceiling, one-way door, legally still personal data) · **C** named participant list (reject — wrong segment) · **D** internal moat, never licensed (simplest, but ties the dataset's value to consulting demand) · **E** consent-tiered — report always, research use opted in, licensing a separate later permission. **Recommended: E, with D as the interim posture and B revisited only when the dataset is worth the obligation.** Decisive criterion is **reversibility** — A/D/E are reversible, B/C are one-way doors. **All five require §7.7.1's controls; PDPA has no k-anonymity safe harbour** |
+| **D29** | **Sequencing — the toolkit IS the test** (§7.10) | **ACCEPTED — Sean's challenge, and the earlier phasing was wrong.** §7.7.1 had advised proving consulting demand first and building the benchmark second. **Nothing else in the system consumes the benchmark** — the toolkit is its only consumer — so "build it later" meant building something no one was waiting for. **And the risk was backwards:** the benchmark is the *passing* part (§10.6 canary), while "do the people who receive it ever buy?" is the unproven part, and **a benchmark built after the demand test cannot answer the demand question** — the demand test would have run without the comparison that is supposed to create the demand. **The toolkit is the instrument, not the subject.** Five measured funnel steps with decision rules pre-registered before launch (§7.10); honest limit stated — a small N can establish whether the path exists, not its rate |
 | **D27** | **EDG certification (TR 43 / SS 680)** (§7.9) | **OPEN — Sean to decide.** Management-consultancy fees are EDG-subsidisable **only** through a certified consultant. Certification converts the S$500 price objection into a part-funded eligible cost, and is a checkable gate. Worth a cost/benefit look if the paid tier targets SMEs |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
