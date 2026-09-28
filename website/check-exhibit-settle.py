@@ -29,15 +29,27 @@ def _num(v):
 
 
 CHECKS = [
-    ("SUV car is parked and VISIBLE (was re-driving)",
-     "getComputedStyle(document.querySelector('.suv .suv-body')).opacity",
-     lambda v: _num(v) == 1),
-    ("SUV ground has stopped scrolling",
-     "getComputedStyle(document.querySelector('.suv .suv-ground')).animationIterationCount",
-     lambda v: v == "1"),
-    ("Volvo shield outline fully drawn (dashoffset 0)",
-     "getComputedStyle(document.querySelector('.volvo-shield-outline')).strokeDashoffset",
-     lambda v: abs(_num(v)) < 0.5),
+    # ── The two replacement marks must be DESIGNED GLYPHS, and the
+    #    literal cartoon drawings they replaced must be GONE. ──
+    ("Volvo mark is the designed shield-check glyph (present)",
+     "!!document.querySelector('.volvo-mark .volvo-shield-check')",
+     lambda v: v is True),
+    ("Volvo mark draws in brand green (not default black)",
+     "getComputedStyle(document.querySelector('.volvo-mark')).color",
+     lambda v: v == "rgb(14, 110, 92)"),
+    ("GONE: the literal shield-with-car pictogram is deleted",
+     "!!document.querySelector('.volvo-car-body') || !!document.querySelector('.volvo-wheel')",
+     lambda v: v is False),
+    ("GWM object is the pickup->SUV composition (both glyphs present)",
+     "!!document.querySelector('.suv .reposition-from') && !!document.querySelector('.suv .reposition-to')",
+     lambda v: v is True),
+    ("GWM past state reads muted, present state reads green (hierarchy)",
+     "getComputedStyle(document.querySelector('.suv .reposition-from')).color"
+     " + '|' + getComputedStyle(document.querySelector('.suv .reposition-to')).color",
+     lambda v: v == "rgb(107, 115, 126)|rgb(14, 110, 92)"),
+    ("GONE: the 13-path literal cartoon SUV is deleted",
+     "!!document.querySelector('.suv .suv-body') || !!document.querySelector('.suv .suv-wheel')",
+     lambda v: v is False),
     ("Avis gauge needle held its swept angle (not snapped back)",
      "getComputedStyle(document.querySelector('.gauge-needle')).transform",
      lambda v: "matrix" in v),
@@ -76,7 +88,12 @@ def main() -> int:
             page.evaluate("document.querySelectorAll('*').forEach(e => e.classList.add('in-view'))")
             page.wait_for_timeout(SETTLE_MS)
             for label, expr, pred in CHECKS:
-                val = page.evaluate(expr)
+                # A missing element must report FAIL, not crash the run and
+                # skip every later assertion (getComputedStyle(null) throws).
+                val = page.evaluate(
+                    "(e) => { try { return eval(e) } catch (err) { return '__MISSING__' } }",
+                    expr,
+                )
                 ok = pred(val)
                 print(f"  {'ok  ' if ok else 'FAIL'}  {label}\n        -> {val}")
                 if not ok:

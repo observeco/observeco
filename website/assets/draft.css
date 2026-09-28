@@ -1856,30 +1856,10 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* 4. Volvo — car in shield: shield outline draws in, then the car
-     drives up, in a continuous loop (dynamic). Shield stays white
-     throughout (no blinking). */
-  .volvo-mark.in-view .volvo-shield-outline {
-    stroke-dasharray: 300;
-    stroke-dashoffset: 300;
-    animation: volvo-draw-loop 5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s infinite;
-  }
-  .volvo-mark.in-view .volvo-car-body,
-  .volvo-mark.in-view .volvo-car-roof {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: volvo-car-in-loop 5s cubic-bezier(0.22, 1, 0.36, 1) 0.6s infinite;
-  }
-  @keyframes volvo-draw-loop {
-    0%   { stroke-dashoffset: 300; }
-    20%  { stroke-dashoffset: 0; }
-    100% { stroke-dashoffset: 0; }
-  }
-  @keyframes volvo-car-in-loop {
-    0%   { transform: translateY(10px); opacity: 0; }
-    20%  { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(0); opacity: 1; }
-  }
+  /* 4. Volvo — was a drawn-in shield containing a cartoon car. The mark is
+     now a designed glyph (Tabler shield-check) that reads at rest; its
+     draw-in loop and the car-drive keyframes are deleted with the shapes
+     they animated. No motion, so nothing to gate. */
 
   /* 5. Wanglaoji — ladder steps fill with overshoot (compounding climb).
      Each bar overshoots (scaleX 0 → 1.05 → 1); each step's label pops in
@@ -1910,37 +1890,11 @@ table.compare .generic { color: var(--yellow); }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  /* 6. Great Wall SUV — the SUV specialist. The car drives in from the
-     left, the wheels spin continuously (rotating) while it moves. */
-  .suv.in-view .suv-body,
-  .suv.in-view .suv-roof,
-  .suv.in-view .suv-window {
-    animation: suv-drive-in-loop 5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  }
-  .suv.in-view .suv-wheel, 
-  .suv.in-view .suv-wheel-spoke {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: suv-wheel-spin 1.5s linear infinite;
-  }
-  .suv.in-view .suv-ground {
-    stroke-dasharray: 4 4;
-    animation: suv-ground-move 1.5s linear infinite;
-  }
-  @keyframes suv-drive-in-loop {
-    0%   { transform: translateX(-30px); opacity: 0; }
-    12%  { transform: translateX(6px); opacity: 1; }
-    18%  { transform: translateX(0); opacity: 1; }
-    100% { transform: translateX(0); opacity: 1; }
-  }
-  @keyframes suv-wheel-spin {
-    0%   { transform: rotate(0); }
-    100% { transform: rotate(360deg); }
-  }
-  @keyframes suv-ground-move {
-    0%   { stroke-dashoffset: 0; }
-    100% { stroke-dashoffset: -40px; }
-  }
+  /* 6. Great Wall SUV — was a cartoon car that drove in on a scrolling
+     road with spinning wheels, looping forever. The mark is now a
+     designed glyph composition (pickup → SUV) that reads at rest; the
+     drive-in / wheel-spin / ground-scroll keyframes are deleted with the
+     shapes they animated. No motion, so nothing to gate. */
 
   /* ── SINGAPORE STAKES INFOGRAPHICS (one distinct treatment each) ── */
 
@@ -2169,7 +2123,29 @@ table.compare .generic { color: var(--yellow); }
 .usa-dot { fill: var(--green); opacity: 0; }
 .usa-dot.first { fill: var(--coral); }
 
-/* Volvo car-in-shield — safety symbol */
+/* ── DESIGNED OBJECT SPEC — Tabler 24-grid, 2px stroke, brand green ──
+   Both marks are glyphs from a professionally drawn family (Tabler,
+   MIT), fetched from the Iconify API and pasted inline: no runtime
+   dependency, no new files, no build step. They replace two
+   hand-drawn pictograms whose uniform stroke + flat single-hue fill
+   read as clip-art (the "kiddish" complaint).
+
+   What changed beyond taste: the OLD marks drew a thing and encoded
+   nothing. The new GWM mark draws the card's actual thesis —
+   "pickup-truck maker" → "SUV specialist" — so past/present are
+   distinguishable at a glance, which the single-weight cartoon
+   could not express.
+
+   ponytail: stock glyphs are recognisable AS stock — Tabler ships in
+   a thousand SaaS dashboards, and this is a positioning consultancy
+   whose whole pitch is differentiation. Fine at this mnemonic size;
+   the upgrade path is the same 24-grid / 2px contract, redrawn
+   bespoke, once the family's shape is settled. */
+
+/* Volvo — safety. A designed shield-check, not a shield containing a car.
+   Explicit box: an inline SVG with no width/height fills its container,
+   which at this card width means a 442px shield. Same 120px footprint the
+   old mark occupied, so the card's rhythm is unchanged. */
 .volvo-mark {
   width: 120px;
   height: 120px;
@@ -2177,7 +2153,31 @@ table.compare .generic { color: var(--yellow); }
   display: block;
   color: var(--green);
 }
+.volvo-mark .volvo-shield-check {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
+/* Great Wall Motors — pickup → SUV, the repositioning the card measures.
+   Past state recedes (muted grey); the present state carries the weight
+   (full-strength brand green). Colour IS the second weight here, which
+   is the hierarchy the old uniform-stroke cartoon lacked. */
+.suv { color: var(--fg-3); }
+.suv .reposition-from { color: var(--fg-3); }
+.suv .reposition-arrow { color: var(--fg-3); opacity: 0.55; }
+.suv .reposition-to { color: var(--green); }
+.suv g > path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Stat infographics */
 /* Wanglaoji ladder — ascending steps */
 .ladder { display: grid; gap: 8px; margin-top: var(--space-2); }
 .ladder-step { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; }
@@ -2185,21 +2185,10 @@ table.compare .generic { color: var(--yellow); }
 .ladder-bar { height: 18px; background: var(--surface-2); border-radius: 4px; width: var(--h, 100%); position: relative; overflow: hidden; }
 .ladder-bar::after { content: ""; position: absolute; inset: 0; background: var(--green); transform-origin: left; transform: scaleX(0); }
 
-/* Great Wall SUV — dynamic car with rotating wheels */
+/* Great Wall SUV — now the pickup→SUV glyph composition (see DESIGNED
+   OBJECT SPEC above). Only the box is styled here; per-glyph colour and
+   stroke live in the spec block. */
 .suv { width: 100%; max-width: 280px; height: auto; margin-top: var(--space-2); display: block; }
-.suv .suv-ground { stroke: var(--border); stroke-width: 2; }
-.suv .suv-body { fill: var(--green-dim); stroke: var(--green); stroke-width: 2.5; stroke-linejoin: round; }
-.suv .suv-roof { fill: var(--green); stroke: var(--green); stroke-width: 2.5; stroke-linejoin: round; }
-.suv .suv-window { fill: #ffffff; opacity: 0.15; }
-.suv .suv-arch { stroke: var(--green); stroke-width: 2.5; }
-.suv .suv-wheel {
-  fill: var(--surface);
-  stroke: var(--green);
-  stroke-width: 3;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-.suv .suv-wheel-spoke { stroke: var(--green); stroke-width: 2; }
 
 /* Stat infographics */
 .dot-row { display: flex; gap: 8px; margin-top: 10px; }
@@ -2350,12 +2339,6 @@ table.compare .generic { color: var(--yellow); }
   9%   { transform: scale(1.2); opacity: 1; }
   15%  { transform: scale(1); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes volvo-draw-loop {
-  0%   { stroke-dashoffset: 220; }
-  15%  { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: 0; }
 }
 
 @keyframes ladder-fill-loop {
@@ -2782,9 +2765,6 @@ table.compare .generic { color: var(--yellow); }
   .case-card:nth-child(1) .odometer.in-view .odo-final,
   .gauge.in-view .gauge-needle,
   .usa-map.in-view use[href="#domino-tile"],
-  .volvo-mark.in-view .volvo-shield-outline,
-  .volvo-mark.in-view .volvo-car-body,
-  .volvo-mark.in-view .volvo-car-roof,
   .ladder.in-view .ladder-label,
   .stat-card:nth-child(1) .cohort.in-view .cohort-shop.dark,
   .stat-card:nth-child(1) .cohort.in-view .cohort-shop.dark::after,
@@ -2797,17 +2777,9 @@ table.compare .generic { color: var(--yellow); }
     animation-fill-mode: forwards;
   }
 
-  /* C. The SUV — drives in once, parks. Wheels turn once and stop;
-     the road shifts once and stops. This was the "too kiddish" one. */
-  .suv.in-view .suv-body,
-  .suv.in-view .suv-roof,
-  .suv.in-view .suv-window,
-  .suv.in-view .suv-wheel,
-  .suv.in-view .suv-wheel-spoke,
-  .suv.in-view .suv-ground {
-    animation-iteration-count: 1;
-    animation-fill-mode: forwards;
-  }
+  /* C. Great Wall SUV — its drive-in / wheel-spin / road-scroll rules and
+     keyframes were deleted with the cartoon they animated. The replacement
+     mark is static, so it needs no settle gate (and no motion at all). */
 
   /* D. Process strip — the four step icons draw themselves once
      instead of redrawing their strokes every 5s. */
