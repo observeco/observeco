@@ -2822,3 +2822,79 @@ table.compare .generic { color: var(--yellow); }
      activity, which is true): .ticker-pulse ("~1 registration every
      7 min") and .step-icon (soft "process is alive" halo). */
 }
+
+/* ============================================================
+   INTERACTION LIFT — 28 Sep 2026
+   Why: 23 hover rules existed and 13 of them changed ONLY
+   border-color. Every interactive surface was static under the
+   pointer — the CTAs changed colour and nothing else, and
+   .fork-card even declared `transform 0.2s ease` in its
+   transition with no transform anywhere to animate (a dead
+   transition). That reads as inert, not restrained.
+
+   Fix: one shared lift. Cards rise 2px and take a teal-tinted
+   shadow; CTAs rise 2px; the nav CTA joins them. The site's own
+   easing curve (cubic-bezier(.22,1,.36,1)) throughout — no new
+   curve invented.
+
+   Two traps dodged here:
+   1. `.btn:active { transform: translateY(1px) }` (line 121) is
+      equal specificity to a plain `.btn-primary:hover` and
+      EARLIER in the file, so a plain :hover transform would have
+      silently killed the press feedback. Hence `:hover:not(:active)`.
+   2. Hover is gated behind `(hover: hover)` — on touch, hover
+      styles latch on tap and never release.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .fork-card,
+  .stat-card,
+  .card-item,
+  .offer-card,
+  .case-card {
+    transition: border-color 0.2s ease,
+                transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* .btn already transitions transform at 0.1s — too abrupt to read
+     as a lift. Give it the house curve, but let the press stay fast. */
+  .btn {
+    transition: background 0.2s ease, color 0.2s ease,
+                border-color 0.2s ease,
+                transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .btn:active { transition-duration: 0.06s; }
+
+  /* .nav-cta had no transition at all — this supplies its first. */
+  .nav-links a.nav-cta {
+    transition: background 0.2s ease, color 0.2s ease,
+                transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .fork-card:hover,
+  .stat-card:hover,
+  .card-item:hover,
+  .offer-card:hover,
+  .case-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--green);
+    box-shadow: 0 12px 32px rgba(14, 110, 92, 0.10);
+  }
+
+  /* :not(:active) so the press state below still wins. */
+  .btn-primary:hover:not(:active),
+  .btn-ghost:hover:not(:active) {
+    transform: translateY(-2px);
+  }
+
+  .nav-links a.nav-cta:hover { transform: translateY(-2px); }
+}
+/* ponytail: a flat -2px lift, not size-proportional — it reads as motion at
+   the card sizes on the site today (all ~300-500px). If a future card is
+   dramatically larger, drive it from a --lift token instead.
+   Ceiling 2: reduced-motion users get the border-color change only. That is
+   deliberate (WCAG) — the colour shift still confirms the target is live.
+   Ceiling 3: no hover on touch by design; the coarse-pointer block above
+   already gives those users 48px targets instead. */

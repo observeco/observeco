@@ -5,6 +5,7 @@ website/_check_links.py
 website/check-node-grid.py
 website/check-infographic-motion.py
 website/check-exhibit-settle.py
+website/check-interaction-lift.py
 website/_diag_pw.sh
 website/content-spec-v1.md
 website/.DS_Store
