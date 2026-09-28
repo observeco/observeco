@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v14 — D25–D31 decided; competitor scan promoted; staleness recorded.
-**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v14: 2026-09-28)
+**Status:** DRAFT v15 — the D29 test quantified, and its limit recorded (D32, D33).
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v15: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -127,6 +127,49 @@ labelling). **(5) D28 — yes but lightly** (verification must not become a conv
 *(7) **D31 — NEW, created by the scan.** Scoring a named competitor that never consented, cannot see
 the result and cannot dispute it is a different product with a different risk profile. Recommended:
 **anonymous pool only** — same insight to the submitter, no third-party exposure.
+**v15 change — the D29 test is now quantified, and its limit is recorded. ⚠ This is the least
+comfortable section in the spec and it matters most.**
+*(1) **What the test CAN establish (§7.12).** Three citable rules: the **rule of three** — zero paying
+engagements from N submissions bounds the true rate at **3/N** (100 → "<3%", 300 → "<1%"; unreliable
+below N=30); **precision** — ±5pp needs **n = 1/B² = 384**; and **two-arm comparison** at 80% power
+needs ~435/arm to distinguish 5%→10% and only ~199/arm for 10%→20%. **Practical floor: pre-commit to
+300 completed submissions before any go/no-go** (at ~100/arm you have ~52% power on a 10%→20% question
+— a coin flip). **Peeking destroys it:** continuous monitoring can inflate a nominal 5% error rate to
+**26.1%**; even ten looks means a reported **1.0%** is needed for a true 5%. And low power does not
+merely miss — below ~50% power a "significant" result is typically a large overestimate (Type M), below
+~10% it is often the wrong sign (Type S).
+*(2) **What it CANNOT establish — the identifiability limit.** A null cannot distinguish **a bad tool
+from a bad segment from a bad price from no distribution.** Four different problems, opposite remedies.
+A test that cannot separate them is not evidence for or against the business model.
+*(3) **⚠⚠ The base rate is already unfavourable, before any test runs.** UK LSBS 2023, **VERIFIED
+verbatim**: **24% of micro-businesses (1–9) sought external advice in the past 12 months, down from 31%
+in 2015** (small 34%, medium 45%, **no-employee firms 16%**). Worse inside that minority: only **32% of
+micro firms used a consultant or business adviser**, against 47% (small) and 51% (medium) —
+**accountants dominate.** So consultants are a minority channel even among the minority who buy advice.
+**The offer evidence is worse:** micro and small firms **offered consulting at 70–90% subsidy —
+having already signed a letter of interest — took it up only 53% of the time**, citing liquidity
+(Bruhn/Karlan/Schoar, World Bank Puebla Mexico RCT, n=432, **VERIFIED verbatim**). ILO: *"potential
+demand is high, but the effective demand is low"* (23%–65% would pay US$150 pre-experience, rising to
+53–100% after delivery).
+**This raises D32 — whether D3's target segment is the right COMMERCIAL target.** A segment can be the
+best *audience* and the worst *customer* at once.
+*(4) **The channel problem, and D33.** Referrals plus direct outreach supply **~two-thirds of new
+business even for high-growth firms** (n=495); **71% of buyers ask a person first, 11% search online**;
+and **51.9% of referred prospects rule a firm out before talking to it.** So **a cold-only test of a
+referral-led market will return a misleading null** — it would look like evidence against the toolkit
+when the real finding is that the wrong channel was measured. **§7.10's step 3 is promoted from
+preference to necessity: test cold acquisition AND the referral artefact, reported separately.**
+The 51.9% figure is also the strongest argument for the artefact itself — a credible positioning report
+is what survives that filter.
+*(5) **What can honestly be claimed:** *"With N submissions we can bound the conversion rate to within
+X. We cannot yet distinguish a weak tool from a weak segment"* — and **the second row of the fail branch
+is the one that saves the project:** a null at ≥300 with a working instrument is information about the
+MARKET, and the remedy is D32 (retarget), not a code rewrite.
+*(6) **No published figure exists for the exact funnel** free-diagnostic → paid consulting in a small
+professional-services firm. Near-total reliance on **vendor platform data** (Interact, Unbounce, Ruler,
+Chili Piper, Zuko, First Page Sage), plus Hinge Research Institute (self-serving but the closest to
+independent professional-services buyer data). **Any single-step number quoted from that literature is
+a vendor's marketing, not a measurement.**
 
 ---
 
@@ -1537,6 +1580,131 @@ argument.** A is also acceptable and costs little, since the fine-grained compar
 than assumed. **It protects contributors, not the asset.** In a category of five, a comparison shown to
 one of them still reveals the others, and that risk is unaffected by whether the data is licensable.
 
+### 7.12 What the test can and cannot conclude (D29, quantified) ⚠
+
+**Sean's question was whether the toolkit test can be made conclusive. The answer is: it can be made
+conclusive about a NARROW pre-specified thing, and it cannot be made conclusive about the business
+model.** Both halves matter, and the second half is the one that would have hurt.
+
+**What it CAN establish — three rules, all citable:**
+
+| Purpose | Rule | At our scale |
+|---|---|---|
+| **Zero-result bound** | If no paid engagement arrives from *N* submissions, the 95% upper bound on the true rate is **3/N** | 100 → *"<3%"*; 300 → *"<1%"*; 500 → *"<0.6%"*. **Unreliable below N=30** |
+| **Precision** | To estimate a rate within **±B**, `n = 1/B²` | ±5pp → **384**; ±3pp → **1,111**. Independent of population size |
+| **Comparing two versions** | 80% power, 5% alpha | 5%→10% needs **~435/arm**; 10%→20% needs **~199/arm**; 2%→5% needs **~588/arm** |
+
+**Practical floor: pre-commit to 300 completed submissions before any go/no-go.** At ~100 per arm on a
+comparative question you have **~52% power** to detect a 10%→20% difference — a coin flip. A result
+from that sample is not a finding.
+
+**⚠ Peeking destroys the result, and this is not a technicality.** Under continuous monitoring, a
+nominal 5% significance can become **26.1%** — more than five times what you think it is. Even ten
+looks means you need a reported **1.0%** to have a true 5%. **So the sample size and the decision rule
+must be fixed before launch** (§7.10's pre-registration), or read with a sequential method rather than a
+p-value.
+
+**And a low-powered result does not merely miss — it misleads.** Below ~50% power, a "significant"
+result is typically a large **overestimate** (Type M); below ~10% power it is often the **wrong sign**
+(Type S). This is the argument for the sample floor, not against testing.
+
+---
+
+#### ⚠ What it CANNOT establish — and this is where the design was vulnerable
+
+**A null result from this test cannot tell you *why* it is null.** The same empty outcome is consistent
+with four different problems, and they have opposite remedies:
+
+| If the result is empty, it could mean | Remedy |
+|---|---|
+| The tool is bad | Rebuild the tool |
+| **The segment is wrong** | **Change who is targeted** |
+| The offer or price is wrong | Reprice or repackage |
+| There is no distribution | Fix reach |
+
+**This is the identifiability problem, and it is the honest limit of §7.10.** A test that cannot
+distinguish these four is not evidence for or against the business model — it is evidence that
+something in a four-way chain failed.
+
+---
+
+#### The base rate is already unfavourable, before any test runs ⚠⚠
+
+**This is the finding that matters most, and it did not need a test to surface.**
+
+| Population | Sought external advice, past 12 months | Status |
+|---|---|---|
+| **Singapore — no employees** *(UK comparator)* | **16%** | REPORTED |
+| **Micro, 1–9 employees** | **24% (2023), down from 31% in 2015** | **VERIFIED verbatim** |
+| Small, 10–49 | 34% | VERIFIED |
+| Medium, 50–249 | 45% | VERIFIED |
+
+*Source: Enterprise Research Centre analysis of the UK Longitudinal Small Business Survey, 2023.*
+
+**And it is worse inside that minority:** among micro firms who seek advice at all, only **32% used a
+consultant or business adviser** — against **47% (small)** and **51% (medium)**. Accountants are the
+dominant paid source. **So consultants are a minority channel even among the minority who buy advice.**
+
+**⚠ D3's target may be the wrong commercial tier.** D3 names *weak-positioning SMEs* as the target, and
+§7.2 routes 0–9-employee firms to Bookend B (S$800–1,200). **But the evidence says this is the segment
+LEAST likely to buy any external advice, and the least likely to buy it from a consultant.** The
+positioning *symptom* may be most visible there while the *purchasing* propensity is lowest — **a
+segment can be the best audience and the worst customer simultaneously.** That is **D32**.
+
+**The offer evidence is worse than the survey evidence.** When micro and small firms were **offered**
+consulting at a **70–90% subsidy — having already signed a letter of interest** — **only 53% took it
+up**, with liquidity given as the reason. *(Bruhn, Karlan & Schoar, World Bank, Puebla Mexico RCT,
+n=432. **VERIFIED verbatim.**)* Firms that had *asked for* subsidised consulting, and *signed* for it,
+still declined half the time when it was offered. **Willingness to pay before experiencing advisory
+services is low (23%–65% would pay US$150) and rises only after delivery** — the ILO's conclusion is
+exactly ours: *"potential demand is high, but the effective demand is low."*
+
+---
+
+#### The channel problem: a web toolkit tests the minority channel
+
+**Referrals and direct human outreach supply nearly two-thirds of new business even for the
+fastest-growing professional-services firms** (n=495, ~$85bn revenue). And **71% of buyers ask another
+person first while only 11% search online.**
+
+**The consequence is sharp and it cuts both ways:**
+
+- **A web-acquisition test of a referral-led market will return a misleading null.** It would look like
+  evidence against the toolkit when the real finding is that **the instrument measured the wrong
+  channel.**
+- **§7.9 already said the toolkit's edge must be the comparative judgment, not the price.** This is now
+  quantified: the toolkit's *job* is a **credibility artefact in a referral conversation**, where
+  someone else has already opened the door — not a cold-traffic engine.
+
+**So §7.10's step 3 requirement is promoted from preference to necessity:** the toolkit must be tested
+**both** as cold acquisition **and** as a referral credibility artefact, and **reported separately.**
+Testing only the first would misread the second and misdiagnose the business.
+
+**A 51.9% figure sharpens why the artefact matters:** more than half of *referred* prospects rule a firm
+out before even talking to it. **A credible artefact is what survives that filter** — which is precisely
+what a specific, evidence-based positioning report is.
+
+---
+
+#### What can honestly be claimed, given all of the above
+
+**Ship the test, but claim only this:** *"With N submissions we can bound the conversion rate to within
+X. We cannot yet distinguish a weak tool from a weak segment, and the base rate for this segment is low,
+so the test's primary value is eliminating the worst outcome — a confident build on an unvalidated
+audience."*
+
+**And record the fail branch now, in one line each:**
+
+| Outcome | Reading | Action |
+|---|---|---|
+| ≥300 submissions, money received, rate above the pre-set floor | The path exists and converts | Invest further |
+| ≥300 submissions, **no money**, tool credible and reports read | **Not a tool problem** — segment, price or channel | Retarget (D32) or reprice. **Do not rebuild the tool** |
+| **<300 submissions** | **Inconclusive — do not conclude anything** | Extend, or fix reach first |
+| Submissions arrive, no reports opened | Reach or promise failure | Fix the offer |
+
+**The second row is the one that saves the project.** A null at ≥300 with an instrument that works is
+**information about the market**, not about the code — and the remedy is D32, not a rewrite.
+
 ### 7.8 Where the form data may and may not be used
 
 A boundary that keeps §7.7 lawful and the offer credible:
@@ -2182,7 +2350,9 @@ purchasing decision.
 | **D28** | **DECIDED — yes, but lightly.** | **Sean: yes but lightly.** Verification must not become a conversion barrier. §7.7.1's cheap structural control (require the form be completed properly before a report issues) is the shape |
 | **D27** | **DEFERRED — future.** | **Sean: "certification is for the future."** Not a now-item; revisit if the paid tier targets SMEs |
 | **D31** | **Do we score NAMED competitors, and show that to the submitter?** | **OPEN — new, created by the D25 scan.** The scan now finds and scores real competitors (§4.6). Scoring a business that never consented, cannot see the result and cannot dispute it is a **different product with a different risk profile** — and printing "Competitor X scores 43" is a claim about a third party. **Options:** score competitors only as an anonymous pool (submitter sees their own position vs the pool, never a named rival's score); or score named rivals and show it. Recommended: **anonymous pool only** — it delivers the same insight ("you're below your category's median") and creates no third-party exposure. Needs Sean's call because it changes what the report can say |
-| **D29** | **Should the toolkit itself be the test?** You asked why not make the diagnostic the test of the whole business model. | **DECIDED — yes, and my earlier phasing was wrong.** Nothing else uses the benchmark, so "build it later" meant building it for nobody. The toolkit is the instrument, not the subject (§7.10) |
+| **D32** | **⚠ Is D3's target segment the right COMMERCIAL target?** | **OPEN — raised by evidence, not by preference.** D3 targets *weak-positioning SMEs* and §7.2 routes 0–9-employee firms to Bookend B (S$800–1,200). **But this is the segment least likely to buy any external advice (24%, falling from 31%) and least likely to buy it from a consultant (32% vs 47%/51%).** The positioning symptom is most visible exactly where purchasing propensity is lowest. **A segment can be the best audience and the worst customer at once.** Options: keep 0–9 (best pain fit, worst buyer) · shift to 10–49 (better buyer, positioning pain less acute) · **both, with the toolkit qualifying which one converts** — the funnel already distinguishes them. Recommended: **keep the toolkit aimed at 0–9 but stop assuming it is the paying tier**; use the test to find where the paid tier actually sits |
+| **D33** | **Test the toolkit as cold acquisition, as a referral artefact, or both?** | **OPEN — but the evidence says both.** Referrals supply ~two-thirds of new business even for high-growth firms, and 71% of buyers ask a person first vs 11% searching. **A cold-only test of a referral-led market will return a misleading null** — it would look like evidence against the toolkit when the real finding is the wrong channel was measured. Recommended: **test both and report separately** — cold acquisition as one funnel, referral credibility as another. Cheap to do, and it removes the single largest way this test could misdiagnose the business |
+| **D29** | **Should the toolkit itself be the test?** You asked why not make the diagnostic the test of the whole business model. | **DECIDED — yes, and my earlier phasing was wrong.** Nothing else uses the benchmark, so "build it later" meant building it for nobody. The toolkit is the instrument, not the subject (§7.10). **NOW QUANTIFIED (§7.12):** pre-commit to **300 completed submissions** before any go/no-go (3/N gives "<1%" at 300; ±5pp precision needs 384); **peeking can inflate a 5% error rate to 26.1%**, so sample and rule must be fixed before launch; and **a null cannot distinguish a bad tool from a bad segment from a bad price from no distribution** — that four-way limit is the honest boundary of the test. **Money received is the only valid primary outcome** — intention converts to behaviour only about half the time |
 
 ---
 
