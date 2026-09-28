@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v9 — canary built, rubric live, D19 decided.
-**Date:** 2026-09-23 (v8: 2026-09-27; v9: 2026-09-28)
+**Status:** DRAFT v10 — research consent reframed as a trade; benchmark model adopted.
+**Date:** 2026-09-23 (v8/v9: 2026-09-27–28; v10: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -30,6 +30,17 @@ engagements rather than captured from intake forms. **D22 DONE:** `rubric.json` 
 "we maintain SG industry datasets" claim is **downgraded to conditional** on the measured opt-in
 rate *and* the k-anonymity floor. §10.6's gate table now shows the canary rows passing, leaving
 **negative controls** as the single open row.
+**v10 change — the research purpose is a TRADE, not a favour.** Modelled on benchmark reciprocity
+(salary surveys, benchmarking consortia): the consent **unlocks the benchmark**, so the checkbox is
+not "may we use your data" but "see how you compare". This replaces v9's "refusal costs nothing"
+with a sharper, load-bearing rule — *the withheld benefit must be the collective good, never the
+service*; the scored report is never gated, or the consent is coerced. **§7.7.1 is new** and records
+the finding that de-risks the whole premise: **the calibration corpus IS the seed dataset** — 120
+businesses across 27 categories, 11 of which already clear a minimum cell of 5 — so the reciprocity
+engine can work from day one without a cold-start problem. It also records the **Singapore-specific
+re-identification risk** that no generic k-anonymity floor addresses: our contributors are each
+other's direct competitors. §7.2 now carries the benchmark as a leading funnel metric and §8.2
+tracks it. **D24 (enrichment provenance) and D25 (minimum cell size) are new and open.**
 
 ---
 
@@ -859,6 +870,19 @@ Without it the report ends in a generic CTA and the qualification job fails.
 **The free report's success metric is not report quality. It is the fraction of recipients who
 book a call.** That number is the design target (§8.2), and it is currently unmeasured.
 
+**The benchmark adds a second metric, and it is the leading indicator for the first.** §7.7.1 makes
+the benchmark both the reciprocity engine *and* the dataset's growth mechanism — so the **benchmark
+opt-in rate** (§8.2) predicts whether the dataset compounds. **A low opt-in rate is not a
+compliance inconvenience; it is the asset failing to accumulate.** Track it as a funnel metric
+alongside call bookings, because it moves first and tells you why the dataset is or is not growing.
+
+**What the benchmark changes about the report itself.** The report was to withhold the substance and
+withhold the answer. The benchmark changes that: **the comparison is the reason to submit, so a
+report that contains no comparison has removed its own incentive.** The report must carry the
+**contributor's own position against the pool** — and the *comparison* is what is given away, while
+the *analysis of what to do about it* is what the paid engagement sells. That is a cleaner line than
+"withhold the substance", and it is the line §7.7.1's thin-cell rule protects.
+
 ### 7.3 The claimed-facts rule
 
 Every figure a submitter supplies is stored with `claimed_at` and marked `source: self_reported`.
@@ -926,15 +950,41 @@ Purpose 3 must be its own line and its own row. Absorbing research use into "we'
 report" is the same bundling failure §3.2 already forbids — and it is worse here, because the
 contributor receives nothing extra for it.
 
-**The control, concretely.** One checkbox, **unticked by default**, **not required** to submit,
-with its own consent row and its own timestamp. A submitter who declines still receives the full
-report. Three properties are load-bearing and each closes a specific failure:
+**This is a TRADE, not a request.** *(Revised — the first pass asked a favour, which is why its
+opt-in rate would have been poor. The benchmark model treats it as an exchange, and the exchange is
+what makes the rate real.)*
 
-| Property | Why it cannot be relaxed |
+| | They give | They get |
+|---|---|---|
+| **Purpose 1** — always | ~15 form answers | Their scored report. **Never conditional on anything** |
+| **Purpose 3** — opt-in | Consent to aggregate use | **The benchmark** — how they compare to the pool |
+
+**The checkbox is not "may we use your data for research". It is the unlock for the comparison
+itself.** Same consent, same unticked default, same own row — but a reason to tick that a favour
+does not supply. This is the model salary surveys and benchmarking consortia run, and it works
+because the thing withheld is *collective*, not *personal*.
+
+**⚠ The tension this creates, stated plainly, because it could make the design unlawful if blurred.**
+The earlier draft said *"refusal costs nothing."* Under reciprocity that is **no longer literally
+true** — declining loses the benchmark. Three rules reconcile it, and the third is the load-bearing
+one:
+
+| Rule | Why |
 |---|---|
 | **Unticked by default** | A pre-ticked box is not consent under the PDPA. Ticking must be an act |
-| **Refusal costs nothing** | If declining degrades the report, the consent is not free and the whole purpose is void. The report is identical either way |
-| **Own row, own timestamp** | Consent must be evidenced per purpose. A single "agreed to terms" row cannot prove *which* purposes were agreed |
+| **Own row, own timestamp** | Consent must be evidenced per purpose. One "agreed to terms" row cannot prove *which* purposes were agreed |
+| **The withheld benefit must be the COLLECTIVE GOOD, never the SERVICE** | The report is what they asked for and is never gated. The benchmark cannot exist without contributions, so giving it only to contributors is an honest exchange, not coercion. **If declining ever degrades the scored report, the consent is coerced and the purpose is void** |
+
+**A fourth source, with its own basis — do not fold it into purpose 3.** Purpose 3 covers what the
+submitter *tells us*. The report also enriches submissions from public sources (§4) — Places data,
+review text, registries. That material has **different provenance and different rules**, and §7.3's
+claimed/observed/not-checked split exists precisely to keep them apart.
+
+The commercial consequence is uncomfortable and worth stating: **a dataset built only from consented
+form answers is thin; the enriched material is the valuable part.** If enrichment cannot be used in
+the dataset, the "SG industry datasets" claim rests on self-reported text alone — which is a
+materially weaker asset than §7.7's premise assumes. **This needs its own determination** (is
+aggregated public-source business data personal data at all?) before the claim can lean on it.
 
 **A withheld consent is a data-loss decision, not just a compliance one.** Every submission whose
 box is unticked is permanently unavailable to the dataset — it can still be scored, but never
@@ -967,6 +1017,42 @@ genuinely anonymised rather than merely pseudonymised. That distinction is the w
 
 So the deletion job must **strip and aggregate before it deletes**, and the aggregate must be built
 so it cannot be re-associated. "We deleted the contact but kept the row" is not anonymisation.
+
+### 7.7.1 The cold start is not a cold start — the calibration corpus is the seed ⚠
+
+**This is the finding that de-risks the whole dataset premise, and it was sitting in the repository.**
+The benchmark model's hardest problem is the first contributor: *why submit to a pool with nothing
+in it?* **The pool already exists** — §10.7's 120 businesses across 27 categories **are** the
+research, collected as part of calibration.
+
+| | Calibration corpus (§10.7) | Measured |
+|---|---|---|
+| Businesses | 120 across 27 categories | — |
+| Categories clearing a **minimum cell of 5** | **11 of 27** | **88 of 120 businesses inside them** |
+| Categories clearing 8 | 4 | bubble-tea, home-baking, home-nails, home-facial |
+| Categories below 5 | 16 | 32 businesses — mostly n=1 |
+
+**Two consequences, and they point the same way:**
+
+1. **The reciprocity engine can be shown working on day one, honestly** — the first contributors get
+   a real comparison, not a placeholder, in the 11 thick categories.
+2. **The minimum cell is not a hypothetical threshold, it is a measured constraint.** With 16 of 27
+   categories below 5, most *first* submissions land in a cell too thin to compare. **So the design
+   must answer honestly at thin cells** — and the rule below applies from the first submission.
+
+**⚠ The Singapore-specific re-identification risk, which no generic k-anonymity floor addresses.**
+A salary survey's contributors are mostly not each other's direct competitors. **Ours are.** In a
+category with exactly 5 businesses in Singapore, a "5-business median price" may be identifiable by
+the five themselves — each knows four of the numbers. **A cell of 5 is defensible for a national
+salary curve and may not be defensible for a 5-outlier SG category.** Two mitigations, and both are
+needed:
+
+- **The floor does not apply to *their own* comparison at a thin cell** — a contributor may see how
+  they sit against the pool. What they may **not** see is the pool decomposed, because the
+  decomposition is the re-identification path.
+- **A thin category is widened, not suppressed, when the widening is honest** (category → adjacent
+  category; price band → band). Suppression alone would leave the thin-cell contributor with nothing,
+  which breaks the trade.
 
 **Two operational rules on the dataset:**
 
@@ -1037,6 +1123,9 @@ tune it. The minimum set:
 |---|---|
 | Submissions, by step | Where the form loses people |
 | Confirmation rate | The cost of the open-relay fix (§3.7) |
+| **Benchmark opt-in rate** | **The dataset's growth rate (§7.7.1). Moves before call bookings, and a low rate means the asset is not accumulating** |
+| **Benchmark shown vs withheld, by category** | Whether the thin-cell rule is suppressing most comparisons — if nearly everything is withheld, the reciprocity engine is not working and the opt-in rate will follow |
+| Contributors per category | Drives when a category clears the minimum cell (§7.7.1); the coverage map of the dataset |
 | Report delivered / opened / clicked | Whether the report lands and is read |
 | WhatsApp clicks → calls booked | **The actual success metric (§7.2)** |
 | Deals won, by company-size band | Whether the routing works |
@@ -1505,7 +1594,9 @@ purchasing decision.
 | **D16** | **Human baseline** (§10.5) | **FULFILLED — and exceeded.** Sean graded **120 businesses across 27 categories** blind, plus a composite regrade, not the six cases proposed here. Results in §10.7. Caveat carried: a second grader is absent |
 | **D17** | **Nurture cadence and exit rules** (D3) | Defer — low priority, architecture supports it |
 | **D18** | **The name** (D1) | KIV |
-| **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED — separate, unticked consent box; refusal costs nothing; own consent row. The dataset claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor — neither alone licenses it. Opt-in rate is a launch-tracked metric** |
+| **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED and REVISED — a TRADE, not a favour.** The consent unlocks the **benchmark** (their position vs the pool); the scored report is never gated. Unticked default, own consent row. The withheld benefit must be the **collective good**, never the service — if declining degrades the report the consent is coerced and void. Claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor |
+| **D24** | **Enrichment provenance** (§7.7) — may enriched *public-source* material enter the dataset? | **OPEN — Sean to decide.** A dataset built only from consented form answers is thin; the enriched material is the valuable part. If enrichment cannot be used, the "SG industry datasets" claim rests on self-reported text alone. Needs a determination on whether aggregated public-source business data is personal data at all |
+| **D25** | **Minimum cell size, SG-adjusted** (§7.7.1) | **OPEN — Sean to decide.** A generic floor of 5 is defensible for a national salary curve and may NOT be for a 5-outlier SG category where contributors are each other's direct competitors. Candidate: floor of 8, plus widen-rather-than-suppress. **11 of 27 categories already clear 5; 4 clear 8** |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
 | **D22** | **Rubric promotion** (§5.3.1) — which file is live | **DONE — `rubric.json` promoted 0.9.0 → 1.8.0 via `promote_rubric.py`**, which validates six conditions and refuses on any failure. Step 4 (the scorer must refuse a non-promoted rubric) remains a build item |
