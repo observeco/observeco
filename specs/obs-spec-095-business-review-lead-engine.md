@@ -1208,6 +1208,19 @@ warehouse and be anonymised in every published view. The real question is not *w
 boundary — it is **where the boundary sits, and what may cross it.** That gives a space of options,
 not two.
 
+**Plain-English glossary, because the jargon in this area is unusually bad.**
+
+| Term used below | What it actually means |
+|---|---|
+| **Personal data** | Information that can be traced back to a specific person or business. Singapore law applies as long as this is possible — *even if nobody has actually tried* |
+| **Anonymised** | The link is genuinely gone. No one — including us — can trace it back. Once true, the law stops applying |
+| **Pseudonymous** | **The name is removed but a link still exists** (we hold a key). The law treats this as personal data. This is the term most often confused with anonymous, and the difference is the whole game |
+| **Quasi-identifiers** | Details that aren't names but still give someone away — industry, size, location. In a small market these identify a business just as well as its name would |
+| **Licensing** | Selling or granting permission to use the data, as opposed to publishing it openly |
+| **One-way door** | A decision you cannot undo |
+| **Secondary suppression** | Hiding a *second* number so the first hidden one can't be worked out by subtracting what's shown from the total |
+| **k-anonymity** | A rule of thumb: only report a figure if at least *k* businesses are behind it. No agreement on what *k* should be |
+
 **The five options, and what each one actually is.**
 
 ---
@@ -1292,6 +1305,10 @@ not two.
 **The decisive row is reversibility.** A, D and E can be changed later. **B and C are one-way doors** —
 once data is licensed, it cannot be un-licensed. **E is the only option that preserves the ability to
 reach B.**
+
+**In plain English: E lets you decide later. B makes you decide now.** Since the dataset's value is
+unknown until the toolkit has run (D29), **paying a now-price for a later-unknown is the wrong trade** —
+that is the whole argument for E.
 
 **So the recommendation is not "pick one".** It is: **adopt E (D19 + a separate licensing purpose),
 run D as the interim posture, and revisit B only when the dataset is large enough that licensing is
@@ -1944,6 +1961,21 @@ purchasing decision.
 
 ## 13. Decisions required
 
+**Five things need your call. Here they are in plain English, with my recommendation for each.**
+The detail behind them is in the sections referenced; the jargon has been removed.
+
+| # | The question, in plain English | What I recommend |
+|---|---|---|
+| **D25** | **How many businesses do we need before we'll show someone a comparison?** Show it too early and one business's numbers are basically visible to the others. But set the bar too high and almost no one gets a comparison at all — so there's nothing to trade. | **Two levels of comparison.** *"Emerging"* from 5 businesses, clearly labelled as thin. *"Standard"* from 8, with full detail. This keeps comparisons alive in **11 of your 27 categories** instead of only 4 |
+| **D26** | **How much do we protect the data we collect?** This decides whether the data becomes something you can sell one day, or stays private forever. | **Ask permission in stages** — so you don't have to decide now. See the five options in §7.7.2 |
+| **D24** | **Can we use information we gather publicly about a business (its Google listing, reviews, registries) in the dataset?** | **Yes** — otherwise the dataset is only the thin text people type into a form |
+| **D28** | **Do we make sure a submission comes from a real business?** Right now anyone can fill the form in with made-up answers free of charge. | **Yes, but lightly** — require the form to be completed properly before we issue a report |
+| **D27** | **Should we get the government certification that lets your clients claim a subsidy on your fees?** | **Worth costing** — management consulting fees are only subsidisable through a certified consultant |
+
+---
+
+**The full register follows. Most rows are already settled.**
+
 | # | Decision | My recommendation |
 |---|---|---|
 | **D11** | **Email confirmation before send** (§3.7) | **ACCEPTED** — with Turnstile at submission |
@@ -1955,12 +1987,12 @@ purchasing decision.
 | **D17** | **Nurture cadence and exit rules** (D3) | Defer — low priority, architecture supports it |
 | **D18** | **The name** (D1) | KIV |
 | **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED and REVISED — a TRADE, not a favour.** The consent unlocks the **benchmark** (their position vs the pool); the scored report is never gated. Unticked default, own consent row. The withheld benefit must be the **collective good**, never the service — if declining degrades the report the consent is coerced and void. Claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor |
-| **D24** | **Enrichment provenance** (§7.7) — may enriched *public-source* material enter the dataset? | **OPEN — Sean to decide.** A dataset built only from consented form answers is thin; the enriched material is the valuable part. If enrichment cannot be used, the "SG industry datasets" claim rests on self-reported text alone. Needs a determination on whether aggregated public-source business data is personal data at all |
-| **D25** | **Minimum cell size, SG-adjusted** (§7.7.1) | **OPEN — recommendation REVISED.** A flat raised floor of 8 suppresses 19 of 27 categories and kills the reciprocity engine. **Recommended instead: a TWO-TIER disclosure, modelled on Culture Amp** — an **emerging** tier (floor 5, comparison shown and labelled as thin coverage) and a **standard** tier (floor 8+, full cut detail). This keeps the engine alive in the 11 categories that clear 5 while keeping the stricter guarantee where the data supports it (4 categories). **Both controls are needed in any case: a concentration cap (25% for a concentrated SG category) and secondary suppression if any total is shown.** Industry floor is 5 (Mercer, Milliman, Empsight, Payscale, Pave, WorldatWork); the two-tier structure is verified to exist at Culture Amp, its thresholds are not |
-| **D28** | **Submission identity/validation gate** (§7.7.1) | **OPEN — Sean to decide.** Fabrication is not detectable statistically — ISO 26362 catches it with an identity gate (*"validate the claimed identity of new panel members"*). Our form is anonymous and a self-report costs nothing to fake. **APQC's 80% completion minimum before any report issues is a cheap structural control** that pairs with the §3.10 input-quality floor. Does the free report require a verified business identity, or stay anonymous? |
-| **D26** | **Publication and confidentiality posture** (§7.7.2) | **OPEN — Sean to decide. NOW A FIVE-OPTION SPACE, not a binary** (Sean's correction: the earlier version was a narrow recommendation, and it embedded a false premise — **anonymisation is a property of each released ARTEFACT, not of the stored record**, so the question is where the boundary sits, not which of two modes to pick). Options: **A** strict anonymisation (strongest claim, weakest asset, coarse cells only) · **B** pseudonymous + contract-bound licensing (Levels.fyi — highest ceiling, one-way door, legally still personal data) · **C** named participant list (reject — wrong segment) · **D** internal moat, never licensed (simplest, but ties the dataset's value to consulting demand) · **E** consent-tiered — report always, research use opted in, licensing a separate later permission. **Recommended: E, with D as the interim posture and B revisited only when the dataset is worth the obligation.** Decisive criterion is **reversibility** — A/D/E are reversible, B/C are one-way doors. **All five require §7.7.1's controls; PDPA has no k-anonymity safe harbour** |
+| **D24** | **Using public information about a business** (§7.7) | **OPEN.** When someone submits the form we also look up their business from public sources — their Google listing, reviews, registry records. **The question: can that public material go into the dataset too?** The form answers alone are thin; the looked-up material is where the value is. If it can't be used, the whole "we maintain Singapore industry datasets" claim rests on whatever people typed. *Also needs a legal view: is publicly-sourced business data personal data at all?* |
+| **D25** | **How many businesses before we show a comparison** (§7.7.1) | **OPEN — recommendation revised.** You need a minimum number before a comparison is safe to show. Set it at 8 and **19 of your 27 categories get nothing** — the whole trade dies. **Recommended: two levels.** *Emerging* from 5, shown but clearly labelled as thin coverage. *Standard* from 8, with full detail. Keeps comparisons alive in **11 categories** while holding the stricter line in the **4** that support it. **Two rules apply at either level:** no single business may be more than **25%** of any figure (otherwise a "5-business average" is really just the big one), and **if we ever show a total we must hide a second number too** — otherwise the hidden one can be worked out by subtraction. *Industry minimum is 5 (Mercer, Milliman, Empsight, Payscale, Pave, WorldatWork). Culture Amp's two-level approach is confirmed; its exact numbers are not* |
+| **D28** | **Making sure a submission is real** (§7.7.1) | **OPEN.** Our form is anonymous, so anyone can submit invented answers at no cost — and **no amount of statistics catches that.** Benchmark firms stop it with an identity check instead (they verify who is submitting). **The question: do we require a verified business identity, or stay anonymous?** A cheap middle option that firms use: **require the form to be completed properly before we issue a report** (APQC uses an 80% completion rule). *A real trade-off: verification cuts fake entries but also cuts sign-ups* |
+| **D26** | **How much we protect the data** (§7.7.2) | **OPEN — five options now, not two.** My earlier version wrongly offered a simple either/or. **The truth is that "anonymous" is a property of what you PUBLISH, not of what you store** — the same submission can sit identifiable in your database and be anonymous in every report you send out. So the question is **where to draw the line**, which gives a range. **A** keep it strictly anonymous — safest, but you can barely compare anything and can never sell it · **B** strip names but keep the business recognisable, and sell under contract (this is how Levels.fyi funds itself) — best possible asset, but **a one-way door** · **C** publish who took part (Mercer, APQC do this) — **reject, wrong segment** · **D** keep it private forever as your own edge — simplest, but the data never earns · **E** ask permission in stages — the report always; research use opted into; **selling it as a separate permission later**. **Recommended: E.** It's the only one that keeps B available, so you don't have to decide now. **A, D and E can be changed later; B and C cannot** |
 | **D29** | **Sequencing — the toolkit IS the test** (§7.10) | **ACCEPTED — Sean's challenge, and the earlier phasing was wrong.** §7.7.1 had advised proving consulting demand first and building the benchmark second. **Nothing else in the system consumes the benchmark** — the toolkit is its only consumer — so "build it later" meant building something no one was waiting for. **And the risk was backwards:** the benchmark is the *passing* part (§10.6 canary), while "do the people who receive it ever buy?" is the unproven part, and **a benchmark built after the demand test cannot answer the demand question** — the demand test would have run without the comparison that is supposed to create the demand. **The toolkit is the instrument, not the subject.** Five measured funnel steps with decision rules pre-registered before launch (§7.10); honest limit stated — a small N can establish whether the path exists, not its rate |
-| **D27** | **EDG certification (TR 43 / SS 680)** (§7.9) | **OPEN — Sean to decide.** Management-consultancy fees are EDG-subsidisable **only** through a certified consultant. Certification converts the S$500 price objection into a part-funded eligible cost, and is a checkable gate. Worth a cost/benefit look if the paid tier targets SMEs |
+| **D27** | **Getting certified so clients can claim a subsidy** (§7.9) | **OPEN.** The government's EDG scheme subsidises management consulting fees — **but only if the consultant is certified** (TR 43 / SS 680). Being certified turns *"S$500 is too expensive"* into *"most of it is claimable."* Worth costing if your paid tier targets SMEs |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
 | **D22** | **Rubric promotion** (§5.3.1) — which file is live | **DONE — `rubric.json` promoted 0.9.0 → 1.8.0 via `promote_rubric.py`**, which validates six conditions and refuses on any failure. Step 4 (the scorer must refuse a non-promoted rubric) remains a build item |
