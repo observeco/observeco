@@ -3,6 +3,9 @@ website/draft/
 website/_old-root-backup-20260831/
 website/_check_links.py
 website/check-node-grid.py
+website/check-infographic-motion.py
+website/check-exhibit-settle.py
+website/_diag_pw.sh
 website/content-spec-v1.md
 website/.DS_Store
 website/draft/.DS_Store

@@ -1847,7 +1847,8 @@ table.compare .generic { color: var(--yellow); }
     0%   { opacity: 0; }
     6%   { opacity: 1; }
     88%  { opacity: 1; }
-    100% { opacity: 0; }
+    100% { opacity: 1; }  /* was 0: that frame only existed to reset the old
+                             infinite loop. One-shot now — tiles must stay. */
   }
   @keyframes map-dot-pop {
     0%   { transform: scale(0); opacity: 0; }
@@ -2734,3 +2735,90 @@ table.compare .generic { color: var(--yellow); }
 }
 /* ponytail: 48px min-height on coarse pointers only — desktop nav stays compact (68px bar).
    If a future design needs 48px on hover devices too, drop the media query scope. */
+
+/* ============================================================
+   ONE-SHOT EXHIBITS — 28 Sep 2026
+   Why: the case-grid and stats-grid reveals replayed on infinite
+   loops — bars re-grew, the odometer re-rolled, Domino's tiles
+   re-rippled, and the Great Wall SUV re-drove in every 5s with its
+   wheels spinning and the road scrolling forever. In a section that
+   has to read as EVIDENCE, a perpetual loop reads as a toy. The
+   site's own chart primitives (.bar / .scurve / .flat-line /
+   .pie-slice) were always one-shot — these exhibits were the
+   outlier, not the rule.
+
+   Fix: each exhibit plays its reveal once and SETTLES on its true
+   value. The *-loop keyframes already end on their settle frame, so
+   only the iteration count changes — no keyframe was rewritten.
+
+   Longhands only: the `animation` shorthand would wipe the per-element
+   animation-delay stagger set further up.
+   (Override block, kept append-only per site convention. If the
+   exhibit CSS is ever refactored, fold these two longhands into the
+   original declarations and delete this block.)
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  /* A. Bars / fills that grow — settle at their true value */
+  .case-bars.in-view .bar-fill.after,
+  .phase-bar.in-view .bar-fill.before,
+  .phase-bar.in-view .bar-fill.after,
+  .cost-scale.in-view .scale-fill,
+  .rank-bar.in-view .rank-fill,
+  .data-bar.in-view .data-fill,
+  .case-card:nth-child(1) .stock-chart.in-view .chart-line,
+  .case-card:nth-child(5) .stock-chart.in-view .chart-line,
+  .ladder.in-view .ladder-bar::after,
+  .stat-card:nth-child(3) .cmp-bars.in-view .cmp-fill.before,
+  .stat-card:nth-child(3) .cmp-bars.in-view .cmp-fill.after,
+  .stat-card:nth-child(4) .split.in-view .split-keep,
+  .stat-card:nth-child(6) .value-chart.in-view .vc-cost-fill,
+  .stat-card:nth-child(6) .value-chart.in-view .vc-value-fill {
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+  }
+
+  /* B. Pop / slide / draw reveals — land once and hold */
+  .case-card:nth-child(1) .odometer.in-view .odo-strip,
+  .case-card:nth-child(1) .odometer.in-view .odo-final,
+  .gauge.in-view .gauge-needle,
+  .usa-map.in-view use[href="#domino-tile"],
+  .volvo-mark.in-view .volvo-shield-outline,
+  .volvo-mark.in-view .volvo-car-body,
+  .volvo-mark.in-view .volvo-car-roof,
+  .ladder.in-view .ladder-label,
+  .stat-card:nth-child(1) .cohort.in-view .cohort-shop.dark,
+  .stat-card:nth-child(1) .cohort.in-view .cohort-shop.dark::after,
+  .stat-card:nth-child(2) .clicker.in-view .clicker-cell:nth-child(1) .clicker-strip,
+  .stat-card:nth-child(2) .clicker.in-view .clicker-cell:nth-child(2) .clicker-strip,
+  .stat-card:nth-child(2) .clicker.in-view .clicker-cell:nth-child(3) .clicker-strip,
+  .stat-card:nth-child(3) .trend-chip.in-view,
+  .stat-card:nth-child(5) .rank.in-view .rank-row.top {
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+  }
+
+  /* C. The SUV — drives in once, parks. Wheels turn once and stop;
+     the road shifts once and stops. This was the "too kiddish" one. */
+  .suv.in-view .suv-body,
+  .suv.in-view .suv-roof,
+  .suv.in-view .suv-window,
+  .suv.in-view .suv-wheel,
+  .suv.in-view .suv-wheel-spoke,
+  .suv.in-view .suv-ground {
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+  }
+
+  /* D. Process strip — the four step icons draw themselves once
+     instead of redrawing their strokes every 5s. */
+  .process-flow.in-view .step-icon .pi-a,
+  .process-flow.in-view .step-icon .pi-b,
+  .process-flow.in-view .step-icon .pi-c {
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+  }
+
+  /* Deliberately still looping (not reveals — they signal ONGOING
+     activity, which is true): .ticker-pulse ("~1 registration every
+     7 min") and .step-icon (soft "process is alive" halo). */
+}
