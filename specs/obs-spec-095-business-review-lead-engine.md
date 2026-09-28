@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v17 — D34 set (sole-proprietor line).
-**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v17: 2026-09-28)
+**Status:** DRAFT v18 — read-through pass: imported-framework audit (six findings fixed).
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v18: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -206,6 +206,40 @@ load-bearing. A wrong or generic free report does not merely fail to convert —
 sequence**, and everything after it is read by someone already given a reason to discount you. **So
 §7.10's "the benchmark must be real at launch, not mocked" is unchanged and now better justified: the
 first touchpoint is not a taster, it is the credibility position.**
+trading name may contain both.
+**v18 change — read-through pass for imported frameworks.** Sean asked for a pass that finds the
+places I imported a framework that does not fit, **rather than waiting for him to find them.** The
+method: define the error signature from the four corrections he made today (a consent/regulatory frame
+applied where it does not apply; a *direct-conversion* yardstick applied to one touchpoint in a
+sequence; an *enterprise/SaaS* register in a solo-operator product; a *statistical* claim of certainty
+not supported by n), then hunt the spec for the same shapes mechanically and by reading. **Six
+findings, all fixed:**
+*(1) **The D4 collision.** `D4` meant **two-stage ship** at §1 and §11, but **"refuse the five cases"**
+in §13's register. **Two different decisions under one label** — the worst kind of residue, because
+both readings are locally plausible. Disambiguated at both sites.
+*(2) **Option B contradicted §7.11.** §7.11 finds the public-source pool is **reproducible by anyone
+running the same protocol**, so there is little for a licensee to buy. **Option B's "licensable" pro
+was left standing as though intact** — a stale justification for an option whose premise was
+overtaken two sections later. Added the cross-reference and the reason D26's recommendation moved to
+D/E.
+*(3) **§8.2's benchmark-opt-in metric carried a dead justification.** It was described as *"the
+dataset's growth rate"* and *"the asset accumulating."* **After D26 (D/E) and §7.11 the dataset is not
+the commercial asset — the method is.** The metric survives as **feature health**, not asset growth.
+*(4) **§10.6's calibration figures had no uncertainty — the spec failed to apply its own §7.12
+reasoning.** Added Wilson 95% intervals: gross error 0% **[0-3.3%]** (clears the ≤5% bar); band
+agreement 100% **[96.7-100%]** (clears ≥90%); **dimension disputes 2.8% [0.9-7.5%] — the interval
+reaches past the ≤5% bar**; target-segment 85.0% **[73.9-91.9%]** on n=60. **So two bars clear on the
+interval and one clears only on the point estimate.** Cheap fix recorded: grade more cases blind to
+reach ~n=300, where the dispute interval clears.
+*(5) **Two sections titled "input quality floor"** (§3.8 and §3.10) — §3.8 was the earlier title.
+Marked superseded.
+*(6) **A literal text duplication in §7.6** (*"A backup that lives / A backup that lives in the same
+provider"*). Fixed.
+**Also flagged, deliberately NOT changed:** §9 (jurisdiction) is already explicit about scoping to SG;
+the §3.3 processor register is **correct** PDPA machinery, not an imported frame; the §3.6/§3.7 open
+relay is a genuine problem. **The four errors today were all the same error — a frame imported from a
+domain that did not fit — and three of the four would have been caught by checking Sean's OWN existing
+corpus before asserting.** That habit, not this list, is the durable fix.
 **v17 change — D34, the sole-proprietor line, confirmed.** Sean: *"Where a rival is one person,
 'analyse the business, never the person' is the line you want."* Recorded as **D34** with the
 distinction that keeps it from being over-applied: **it restrains ATTRIBUTION, not SCORING.**
@@ -257,7 +291,7 @@ so every later section can be checked against them.
 |---|---|
 | D2 | **Supabase** as the datastore, and the system of record for contacts and consent |
 | D3 | Nurture is **low priority now**; the architecture must support blasting later without re-scoping |
-| D4 | Ship the capture-only stage **before** calibration clears |
+| D4 | Ship the capture-only stage **before** calibration clears *(this is the **two-stage ship** of §11 — **not** the D4 that appears in §13's register, which is Sean's *"refuse them"* ruling. Same label, two different decisions: the §13 one is the five `home-not-permitted` cases)* |
 | D5 | Enrichment uses **the Hermes web-search-scraping-protocol** |
 | D6 | Weights are a hypothesis, refined by calibration |
 | D7 | A dimension that cannot clear is **dropped and stated**, not forced |
@@ -488,7 +522,7 @@ because it changes the data model: a quality submission is not only a report req
 from SG SMEs. That is the raw material behind the industry-dataset claim your consulting offer
 already makes as its moat (§7.7). It also has a consent consequence, which §7.7 sets out.
 
-### 3.8 Input quality floor
+### 3.8 Input quality floor — superseded, see §3.10
 
 The cannot-refuse contract says a report is always produced. Nothing may distinguish
 **comprehensive input** from **`asdf` in every field**. Garbage in produces a confident score
@@ -554,7 +588,7 @@ submission that fails the gate and is scanned anyway produces a report whose com
 rests on a category inferred from thin text. **The waste is the smaller problem; the confident wrong
 answer is the larger one.**
 
-### 3.10 The input-quality floor (D12, accepted)
+### 3.10 The input-quality floor (D12, accepted) — **the live floor; §3.8 was its earlier title**
 
 A report cannot always be produced, and refusing to score is a **feature**, not a failure: a
 confident score on unusable input is worse than an honest request for more detail.
@@ -1199,7 +1233,7 @@ consent evidence — the thing that makes the marketing lawful.
 Needs the same discipline as the existing `sqlite-durability` and drift-durability work:
 scheduled export, **verified restore** (not just a backup file that has never been opened), and
 **consent rows exported somewhere independent of the operational database**. A backup that lives
-A backup that lives in the same provider as the data is not a durability story.
+in the same provider as the data is not a durability story.
 
 ### 7.7 The data is research, and that needs its own consent purpose
 
@@ -1453,7 +1487,8 @@ not two.
 |---|---|
 | **What it is** | Contact details stripped; employer/title/level/location retained; recipients bound by anti-re-identification contract; contributors told plainly what is and is not promised. **Verified in practice** — this is how Levels.fyi funds a free service |
 | **Protects against** | Casual leakage and public exposure — **not** a determined recipient, and not a regulator's view of identifiability |
-| **Pros** | **The commercial model that actually works.** Enables fine-grained comparisons; licensable, so the dataset can fund the service; honest about its limits, which is itself a credibility asset |
+| **Pros** | **The commercial model that actually works** — verified at Levels.fyi. Enables fine-grained comparisons; licensable, so the dataset can fund the service; honest about its limits, which is itself a credibility asset |
+| **⚠ Now weakened by §7.11** | **The "licensable" pro assumed a proprietary dataset. §7.11 finds the public-source pool is REPRODUCIBLE by anyone running the same protocol — so there is little for a licensee to buy that they cannot rebuild.** B remains the option with the highest ceiling *if* a non-reproducible asset accumulates (history, calibration, judgments); **it is not the default**, and D26's recommendation moved to D/E for this reason. The row is kept because the **structure** of the option is sound and E preserves the ability to reach it later |
 | **Cons** | **Legally still personal data** — a regulator can hold that the quasi-identifiers mean the data was never anonymised, so every deletion request must genuinely apply. Reputational exposure if a contributor is identified. Needs real contractual enforcement, not a clause |
 | **Path to viability** | Three things must be true: (1) the consent wording discloses quasi-identifiers **and** the licensing use *before* the box is ticked; (2) the licence terms are actually enforceable against recipients; (3) deletion works on pseudonymous records and the "strip and aggregate" job is built |
 | **Verdict** | **Highest ceiling, highest obligation.** Only adopt with the disclosure done honestly |
@@ -2117,7 +2152,7 @@ tune it. The minimum set:
 |---|---|
 | Submissions, by step | Where the form loses people |
 | Confirmation rate | The cost of the open-relay fix (§3.7) |
-| **Benchmark opt-in rate** | **The dataset's growth rate (§7.7.1). Moves before call bookings, and a low rate means the asset is not accumulating** |
+| **Benchmark opt-in rate** | **The dataset's growth rate (§7.7.1). Moves before call bookings, and a low rate means the pool is not accumulating.** ⚠ **Re-scoped by §7.14:** the *justification* that this is "the dataset's growth rate" assumed the dataset was the asset. **After D26 (D/E) and §7.11, the dataset is not the commercial asset — the method is.** **Still worth measuring** (it tells you whether the benchmark feature is working and whether the pool clears the floor), **but it is not a leading indicator of revenue.** Track it as *feature health*, not as *asset growth* |
 | **Benchmark shown vs withheld, by category** | Whether the thin-cell rule is suppressing most comparisons — if nearly everything is withheld, the reciprocity engine is not working and the opt-in rate will follow |
 | Contributors per category | Drives when a category clears the minimum cell (§7.7.1); the coverage map of the dataset |
 | Report delivered / opened / clicked | Whether the report lands and is read |
@@ -2333,6 +2368,35 @@ This is the weakest part of the design, and it should not be oversold.
 | Canary agreement | Every canary within **one band** of its engagement conclusion | **6 of 6**; 4 of 6 exact (§10.8) |
 | Negative controls | Every control **fails**, each with its own predicted failure reason | **not built** — the one open row |
 
+**⚠ Every figure in the table above is a point estimate, and §7.12's own argument says it must not be
+read as one.** The same section that establishes *"±5pp needs n = 1/B² = 384"* and *"3/N bounds a zero
+result"* is exactly the reasoning that applies here — **the calibration was never given the interval
+treatment it demands.** At these sample sizes the bounds are wide, and two of them change what can
+honestly be claimed:
+
+| Claim | Point estimate | **95% CI (Wilson)** | What it means |
+|---|---|---|---|
+| Gross band error (two or more off) | 0% | **0% – 3.3%** | ✅ **Clears the ≤5% bar** — the interval sits under it |
+| Band agreement (within one band) | 100% | **96.7% – 100%** | ✅ clears ≥90% |
+| Dimension disputes (≥2 levels) | 2.8% | **0.9% – 7.5%** | ⚠ **the interval reaches past the ≤5% bar** — the point estimate passes, the uncertainty does not |
+| Same band, all cases | 69.3% | 60.3% – 77.0% | reported for completeness, not a bar |
+| Same band, target segment | 85.0% | 73.9% – 91.9% | **n=60 — a further 60 cases could move this ~±9pp** |
+
+**Three consequences, all of which belong in the launch decision:**
+
+1. **Two bars pass on the interval as well as the point estimate** (band agreement, gross error). **One
+   passes only on the point estimate** (disputes). So "all bars met" is true at the point estimate and
+   **one bar short of demonstrated** at the interval.
+2. **The 85% target-segment figure is load-bearing for D3 and rests on 60 cases.** It is the number
+   quoted when the instrument's strength is asserted; ±9pp is what it actually supports.
+3. **A cheap fix exists and should be taken:** **grade the remaining calibration businesses blind to
+   move n from 114 toward ~300**, where the dispute interval clears 5%. That is one afternoon of grading
+   and it converts a point-estimate pass into a demonstrated one.
+
+**This is the same error the spec records elsewhere and did not apply to itself** — §7.12 says a small
+N cannot resolve a rate, and §10.6's table then reports rates from n=114 without intervals. The
+numbers are honest; **the presentation was more certain than the measurement.**
+
 **Dimension-exact agreement is explicitly NOT the bar.** It sits at 56.5%, and requiring it would
 hold the product to a granularity a five-point human-judged scale does not support. **The client
 sees a band and a narrative, never a number (§5.8)** — so band agreement is the measure that
@@ -2524,7 +2588,7 @@ happens in production.
 
 ---
 
-## 11. Two-stage ship (per D4)
+## 11. Two-stage ship (per §12's D4 — **not** §13's D4, which is the refuse-ruling)
 
 Calibration gates the **scoring** layer only. Capture, payment and delivery do not depend on it.
 
