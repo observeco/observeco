@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v18 — read-through pass: imported-framework audit (six findings fixed).
-**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v18: 2026-09-28)
+**Status:** DRAFT v19 — Sean's hand-read of the DEF disputes; construct question raised (D35).
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v19: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -243,7 +243,35 @@ cost to a challenger.** This is a construct disagreement on large brands, not ra
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
-*(4b) **`measure_alignment.py` asserts a retired bar.** It still prints *"exact >=75%"* and reports
+**v19 change — Sean hand-read all eight defensibility disputes, and it reframes D35.**
+*(1) **Four of the eight "disputes" are SHEET errors, not instrument errors.** His rulings: Best Denki 4,
+Gain City 4, Burger King ~4, IKEA ~4, Scanteak 3–4, Toast Box 3–4, Gong Cha low, Each-A-Cup low.
+**IKEA, Scanteak and Toast Box land within one of the instrument; Burger King moves to ~4 against the
+instrument's 3.** So **`defensibility`'s true disagreement is materially lower than 7.0%.**
+*(2) **His sheet was internally inconsistent on the same construct** — **Burger King 1 vs KFC 4**, two
+directly comparable global QSR chains three points apart; Subway 2 and Jollibee 2 sit with Burger King.
+This is visible without any instrument, and it is the **second time this corpus has shown label noise
+being misread as instrument error** (§10.6's J1/J2/J3 triage exists for exactly this, and it says
+defaulting to "Jev is wrong" has been the wrong call before).
+*(3) **THE REAL FINDING — a construct split, and it is definitional, not numeric.** Sean's labels
+**cluster by category** (furniture flat 2 across IKEA, Scanteak, Cellini, Castlery; health-beauty flat 4
+across four firms; home-not-permitted flat 1 across five), while **the instrument scores each business
+on its own characteristics**. His Best Denki reasoning states it: *"the appliance market has consolidated
+to a few brand names only in Singapore… because they all have mental advantage, there is some
+defensibility because it's really concentrated at the top."* **That is a claim about the CATEGORY —
+consolidation and mutual deterrence — which §5.4's "challenger's cost per business" cannot see.**
+**And it explains the whole dispute table:** disputes cluster in **high-variance categories**
+(electronics 3/4, fast-food 1/5, furniture), and where the category is **homogeneous** the two readings
+agree. **D35 offers three options; C is recommended — keep business-level DEF and move consolidation
+into `competitive_room`, which already measures fragmentation and is where a structure signal belongs.**
+*(4) **A distribution finding that corrects an overstatement in this spec.** Measured over 606 cells:
+**gap 0 = 60.2%, gap 1 = 33.7%, gap 2+ = 5.0%.** So *"2.8% disputes"* quoted alone **overstates the
+agreement by a wide margin** — the honest headline is **60% exact, 95% within one level.** A third of
+cells sit exactly one level apart and are invisible to the bar. **An earlier pass of this section said
+"roughly half"; the measured figure is 33.7% and it is corrected rather than left as an impression.**
+*(5) **No further grading is possible** — all 120 businesses are graded; `inputs-v2`/`inputs-v3` are
+company-name subsets. Reaching a larger n requires **collecting new businesses**, which is research,
+not grading. **The earlier "one afternoon of grading" advice was wrong.** It still prints *"exact >=75%"* and reports
 **FAIL**, but **D20 retired dimension exactness** in favour of band agreement. The script is testing a
 criterion the spec no longer holds — either retire the target in the script or label it historical.
 *(5) **Two sections titled "input quality floor"** (§3.8 and §3.10) — §3.8 was the earlier title.
@@ -2433,6 +2461,119 @@ disputes sit in five categories, every one of them a **large, established brand*
 defined as *the challenger's cost*; both sub-patterns are consistent with the instrument reading
 **brand recognition** as a barrier when Sean is reading **structural cost to a challenger**.
 
+---
+
+#### ⚠⚠ Sean's hand-read of the eight — and it reframes D35 entirely
+
+**His rulings, verbatim:** *"Best denki and gain city have 4 defensibility because the appliance market
+has consolidated to a few brand names only in Singapore… I reason that because they all have mental
+advantage, there is some defensibility because it's really concentrated at the top with perhaps equal
+market share almost? I am happy to be corrected here. For burger king and ikea I think their
+defensibility is high circa 4. Toast box and scanteak are 3-4 with scanteak closer to 3. Gong cha, and
+each a cup are low."*
+
+| Business | Sheet | Instrument | **Sean's ruling** | Verdict |
+|---|---|---|---|---|
+| Best Denki | 4 | 2 | **4** | **instrument wrong** |
+| Gain City | 4 | 2 | **4** | **instrument wrong** |
+| Burger King | 1 | 3 | **~4** | **sheet wrong** — instrument closer |
+| IKEA | 2 | 4 | **~4** | **sheet wrong** — instrument right |
+| Scanteak | 2 | 4 | **3–4** | **sheet wrong** — instrument right |
+| Toast Box | 2 | 4 | **3–4** | **sheet wrong** — instrument right |
+| Gong Cha | 1 | 3 | **low** | sheet right, instrument too high |
+| Each-A-Cup | 2 | 4 | **low** | sheet right, instrument too high |
+
+**⚠ Four of the eight "disputes" were sheet errors, not instrument errors.** IKEA, Scanteak and Toast
+Box now land within one of the instrument; Burger King moves to ~4 against the instrument's 3.
+**So `defensibility`'s real disagreement rate is materially lower than 7.0%.**
+
+**And his own sheet was internally inconsistent on the same construct** — visible without any
+instrument: **Burger King 1 vs KFC 4.** Two directly comparable global QSR chains with decades in
+Singapore, scored three points apart. `Subway 2` and `Jollibee 2` sit with Burger King, not with KFC.
+**His regrade corrects the sheet toward coherence** — which is a finding about the *labels*, and it is
+the second time this corpus has shown label noise being read as instrument error.
+
+---
+
+#### ⚠ The construct split — category-anchored vs business-anchored
+
+**The deeper pattern, and it explains the whole table.** Sean's labels **cluster by category**:
+
+| Category | His DEF scores — every business |
+|---|---|
+| health-beauty | **4, 4, 4, 4** (Watsons, Guardian, Unity, Sephora) |
+| furniture | **2, 2, 2, 2** (IKEA, Castlery, Scanteak, Cellini) |
+| home-not-permitted | **1, 1, 1, 1, 1** |
+| electronics | 3, 3, 4, 4 |
+| fast-food | 1, 2, 2, 2, 4, 5 |
+
+**A flat 2 across IKEA, Scanteak, Cellini and Castlery is not a judgement about those businesses** —
+they differ enormously in footprint, tenure and capital. **It is a judgement about the category.**
+
+**So the two readings are measuring different constructs:**
+
+| | Reading |
+|---|---|
+| **The instrument** | Each business on **its own** characteristics — footprint, tenure, capital, brand |
+| **Sean** | The **category's** structure first (is it consolidated? capital-heavy?), then a small adjustment per business |
+
+**And that is exactly why disputes concentrate where they do.** Disputes cluster in categories with
+**high internal variance** — electronics (Courts 3 / Best Denki 4), fast-food (Burger King 1 /
+McDonald's 5), furniture. **Where the category is homogeneous** (home-nails: 1–3; health-beauty: all 4),
+the two readings agree, because the category anchor and the business characteristics point the same way.
+
+**His reasoning on Best Denki states the construct explicitly:** *"the appliance market has
+consolidated to a few brand names only in Singapore… because they all have mental advantage, there is
+some defensibility because it's really concentrated at the top."* **That is a defensibility claim about
+the CATEGORY — consolidation and mutual deterrence at the top — not about Best Denki's own moat.** The
+instrument cannot see it, because §5.4 defines DEF as *the challenger's cost* at the level of one
+business.
+
+**⚠ This is D35 restated, and it is a definitional question, not a numeric one.** Three positions:
+
+| Option | Means |
+|---|---|
+| **A — instrument is right; the construct is business-level** | Keep §5.4 as written; Sean's category reasoning is a separate dimension the rubric does not have |
+| **B — Sean is right; DEF is partly a category property** | Rewrite §5.4 so DEF reads **category concentration** as an input, not only the individual business |
+| **C — both, split the dimension** | Keep business-level DEF and add a **category-structure** input to `competitive_room`, which already measures fragmentation |
+
+**C is the closest fit to the evidence** — `competitive_room` already asks *"how fragmented is the
+landscape"*, which is precisely the consolidation signal Sean is reading into DEF. **If consolidation
+belongs anywhere, it belongs there, and DEF stays a property of the business.** But the call is his,
+and it changes the rubric, so it needs a ruling rather than my inference.
+
+#### ⚠ A metric that hides the common case
+
+**`disp>=2` counts only disagreements of two or more levels. Here is the actual distribution**, so the
+figure cannot be misread *(measured over 606 cells, all six dimensions)*:
+
+| Distance | Cells | Share |
+|---|---|---|
+| 0 — exact | 365 | **60.2%** |
+| 0.5 — half-level | 7 | 1.2% |
+| **1 — one level** | **204** | **33.7%** |
+| 2+ — the "dispute" bar | 30 | **5.0%** |
+
+**So a third of all cells sit exactly one level apart, and that is invisible to the bar.** The honest
+reading of *"2.8% disputes"* is **"60% exact, 95% within one level, 2.8% two or more apart"** — not
+"98% agreement". *(An earlier pass of this section said "roughly half"; the measured figure is 33.7%.
+Corrected here rather than left as an impression.)*
+
+**Per dimension, the same split:**
+
+| Dimension | Exact | ±1 | ±2 or more |
+|---|---|---|---|
+| `relative_strength` | 57.5% | 40.0% | **0.8%** |
+| `mental_advantage` | 50.8% | 37.5% | 7.5% |
+| `defensibility` | 54.2% | 39.2% | **6.7%** |
+| `market_headroom` | 85.7% | 14.3% | 0.0% *(n=7)* |
+| `demand_reach` | 61.7% | 34.2% | 4.2% |
+
+**Sean also reasons in ±1 bands himself** — *"Toast box and scanteak are 3-4 with scanteak closer to 3"*
+— so **on a 5-point human-judged scale ±1 may genuinely be within the noise, and that is a defensible
+bar.** But the spec should state it plainly, because *"2.8% disputes"* quoted alone overstates the
+agreement by a wide margin: **the honest headline is 60% exact, not 97%.**
+
 **⚠ The critical consequence for sample size: more businesses would NOT fix this.** Extra cases would
 measure the same disagreement more precisely. **The fix is to re-read these eight cases against §5.4's
 definition and decide — per case — whether the instrument or the definition is wrong.** That is a
@@ -2743,7 +2884,8 @@ purchasing decision.
 | **D18** | **The name** (D1) | KIV |
 | **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED and REVISED — a TRADE, not a favour.** The consent unlocks the **benchmark** (their position vs the pool); the scored report is never gated. Unticked default, own consent row. The withheld benefit must be the **collective good**, never the service — if declining degrades the report the consent is coerced and void. Claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at **56.5% [51.9–60.9%]** and is not achievable on a 5-point human-judged scale). **⚠ `measure_alignment.py` still asserts the retired ≥75% exact bar and prints FAIL against it — either retire the target in the script or label it historical** |
-| **D35** | **`defensibility` fails its bar on large brands — instrument or definition?** (§10.6) | **OPEN — the one substantive issue the uncertainty audit exposed.** DEF disputes are **7.0% [3.6–13.1%]**, above the ≤5% bar, and **all 8 sit in five categories of large established brands**, splitting into two coherent directions: **big-box retail I undervalue** (Best Denki, Gain City — me 2 vs him 4: physical footprint and tenure a challenger would find expensive) and **global/F&B brands I overvalue** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup — me 3–4 vs him 1–2). §5.4 defines DEF as **the challenger's cost**; both directions are consistent with the instrument reading **brand recognition** where Sean reads **structural cost to a challenger**. **More sample would not fix this** — it would measure the same disagreement more precisely. **The fix is hand-reading these 8 against §5.4's definition and deciding per case whether the instrument or the definition is wrong** (half a day, not a corpus expansion). A second independent corpus has already flagged `defensibility` twice (C6 Bonefirm), which argues this is systematic |
+| **D35** | **`defensibility` — is it a property of the BUSINESS or the CATEGORY?** (§10.6) | **OPEN — Sean hand-read all 8, and his ruling reframes it.** His scores: **Best Denki 4, Gain City 4, Burger King ~4, IKEA ~4, Scanteak 3–4, Toast Box 3–4, Gong Cha low, Each-A-Cup low.** **⚠ Four of the eight "disputes" turn out to be SHEET errors, not instrument errors** — IKEA, Scanteak and Toast Box land within one of the instrument, and Burger King moves to ~4 against the instrument's 3. **DEF's true disagreement is materially lower than 7.0%.** *(His sheet was also internally inconsistent on the same construct — **Burger King 1 vs KFC 4**, two directly comparable chains, three points apart; Subway 2 and Jollibee 2 sit with Burger King.)* **THE REAL QUESTION:** his labels cluster **by category** (furniture flat 2 across IKEA, Scanteak, Cellini, Castlery; health-beauty flat 4 across four firms), while the **instrument scores each business on its own characteristics**. His Best Denki reasoning states the construct explicitly — *"the appliance market has consolidated to a few brand names only in Singapore… because they all have mental advantage, there is some defensibility because it's really concentrated at the top."* **That is a claim about the CATEGORY, which §5.4's "challenger's cost per business" cannot see.** Options: **A** instrument is right, construct stays business-level · **B** DEF reads category concentration as an input · **C** split it — business-level DEF stays, consolidation moves to `competitive_room`, **which already measures fragmentation and is where consolidation naturally belongs**. **Recommended: C.** Disputes cluster in **high-variance categories** (electronics 3/4, fast-food 1/5); where the category is **homogeneous** the two readings agree — which is the pattern that makes C the fit |
+| **D35-old** | *Original framing, superseded by the hand-read above* | **⚠ The one substantive issue the uncertainty audit exposed.** DEF disputes are **7.0% [3.6–13.1%]**, above the ≤5% bar, and **all 8 sit in five categories of large established brands**, splitting into two coherent directions: **big-box retail I undervalue** (Best Denki, Gain City — me 2 vs him 4: physical footprint and tenure a challenger would find expensive) and **global/F&B brands I overvalue** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup — me 3–4 vs him 1–2). §5.4 defines DEF as **the challenger's cost**; both directions are consistent with the instrument reading **brand recognition** where Sean reads **structural cost to a challenger**. **More sample would not fix this** — it would measure the same disagreement more precisely. **The fix is hand-reading these 8 against §5.4's definition and deciding per case whether the instrument or the definition is wrong** (half a day, not a corpus expansion). A second independent corpus has already flagged `defensibility` twice (C6 Bonefirm), which argues this is systematic |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
 | **D22** | **Rubric promotion** (§5.3.1) — which file is live | **DONE — `rubric.json` promoted 0.9.0 → 1.8.0 via `promote_rubric.py`**, which validates six conditions and refuses on any failure. Step 4 (the scorer must refuse a non-promoted rubric) remains a build item |
 | **D23** | **Canary restoration** (§10.8) | **DONE — 6 of 6 present and baselined.** Fixtures authored from the six source engagement analyses; `run_canary.py` runs them. Result: 6 of 6 within one band, 4 of 6 exact, 0 gross errors. **Caveat: AUTHORED, not client-captured — the expected vectors are an assistant mapping, not a recorded client label. A blind regrade by Sean would make them a real gold set** |
