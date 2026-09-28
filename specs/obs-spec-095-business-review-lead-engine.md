@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v11 — benchmark model researched against practice; competitive constraint recorded.
-**Date:** 2026-09-23 (v8–v10: 2026-09-27–28; v11: 2026-09-28)
+**Status:** DRAFT v12 — benchmark mechanics corrected against industry practice.
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -57,6 +57,24 @@ limit** is required (reCAPTCHA fails open; ~$0.0024 per submission so volume, no
 risk). The §3.10 floor now **states the minimum threshold to the user** rather than only enforcing
 it. **EU AI Act Art 50 is a wording check, not a feature** — and its human-review exemption creates a
 tension with §8.1 that stays consistent only outside the EU.
+**v12 change — a fifth stream CONTRADICTED a decision made in v11, and the correction is recorded
+rather than quietly amended.** §7.7.1 had recommended *"widen rather than suppress"* on the reasoning
+that suppression strands the thin-cell contributor. **The industry norm is suppression**, and the
+formal discipline adds a rule we did not have: **secondary suppression**, so a withheld cell cannot
+be recovered by subtraction from published totals. **Three controls were missing entirely**, all now
+added: a **concentration cap** (a count floor of 5 does not stop a single dominant contributor being
+recoverable — in a concentrated SG category a "5-business median" is roughly that business's price;
+industry uses 25/50/70%). **Absence flags leak cell size** — the refusal message must not state the
+count, and we should not publish a participant list (Agri Stats 2026 expressly targets both).
+**The two-tier disclosure** (Culture Amp: *"emerging"* vs standard) replaces v11's flat floor of 8,
+because a flat 8 suppresses 19 of 27 categories while the two-tier keeps the engine alive at 5 and
+the stricter guarantee at 8. A **submission identity/validation gate** is added as D28 — fabrication
+is caught by identity, not statistics, and our anonymous self-report form has no gate. Two v11
+claims gained support: **Milliman's standing promise** — never to use a participant's data *"in other
+consulting engagements"* — **independently corroborates §7.8's reuse boundary**, which I had written
+as a judgement call; and **panel re-contact is legitimate** if permission was given at the previous
+contact and re-contact matches the original assurance (MRS B.11/B.12). **PDPC's Singapore
+k-anonymity guidance is 3–5 — below the industry floor of 5.**
 
 ---
 
@@ -1092,6 +1110,10 @@ research, collected as part of calibration.
 2. **The minimum cell is not a hypothetical threshold, it is a measured constraint.** With 16 of 27
    categories below 5, most *first* submissions land in a cell too thin to compare. **So the design
    must answer honestly at thin cells** — and the rule below applies from the first submission.
+   **The two-tier disclosure is the resolution (D25):** the 11 categories clearing 5 publish an
+   **emerging** comparison immediately and honestly, while the 4 clearing 8 carry the full standard
+   detail. A flat raised floor would have suppressed 19 categories and left the engine with nothing
+   to trade.
 
 **⚠ The Singapore-specific re-identification risk, which no generic k-anonymity floor addresses.**
 A salary survey's contributors are mostly not each other's direct competitors. **Ours are.** In a
@@ -1103,9 +1125,33 @@ needed:
 - **The floor does not apply to *their own* comparison at a thin cell** — a contributor may see how
   they sit against the pool. What they may **not** see is the pool decomposed, because the
   decomposition is the re-identification path.
-- **A thin category is widened, not suppressed, when the widening is honest** (category → adjacent
-  category; price band → band). Suppression alone would leave the thin-cell contributor with nothing,
-  which breaks the trade.
+- **⚠ CORRECTED (stream 5): the norm is SUPPRESSION, not widening.** An earlier version of this
+  section said "widen rather than suppress", reasoning that suppression leaves a thin-cell
+  contributor with nothing. **Practitioner rule sets do the opposite** — Mercer *"the data is
+  suppressed"*, Empsight *"suppressed and are not recorded in the report"*, WorldatWork *"does not
+  publish or otherwise make available"*, Effectory aggregates upward. **Widening survives as a
+  secondary technique** (Payscale *"pulling back from a local search to a broader geographic area"*;
+  Effectory aggregating to a parent level), not as the primary answer. See
+  `RESEARCH-benchmark-model.md` Appendix §2.
+- **Secondary suppression is mandatory if any total is ever shown.** The formal discipline is
+  statistical disclosure control: hide the unsafe cell, **and** hide others so the first cannot be
+  recovered by subtraction from published totals (Effectory states it: *"The sum of all non-reported
+  respondents within a level must be at least five"*). Reporting *"40 businesses, 6 sub-segments,
+  one withheld"* tells the reader the withheld cell is the remainder.
+- **A report emailed to ONE contributor is a one-to-one output**, and carries the same disclosure
+  checks as a published one. That is the cleaner statement of what the floor protects, and it
+  extends the discipline to every personalised output.
+- **A concentration cap is required IN ADDITION to the floor**, and this was missing. A count floor
+  does not stop a single contributor being recoverable: in an SG category of 5 where one business is
+  dominant, a "5-business median price" is approximately that business's price. The industry pairs
+  the two — **25%** (Milliman, Empsight), **50%** (Payscale Peer), **70%** (Agri Stats 2026). For a
+  concentrated SG category, **25% is the defensible end.**
+- **⚠ The refusal message must NOT state the cell size.** *"We cannot compare you because only 3
+  businesses like yours are in our data"* has disclosed the contributor count — and in a small
+  market, possibly the category's size. Agri Stats' 2026 judgment expressly targets *"Flags"* that
+  reveal contributor counts. **The same discipline applies to who took part: do not publish a
+  participant list.** APQC and Mercer do publish them (trading confidentiality for credibility);
+  we should not.
 
 **Two operational rules on the dataset:**
 
@@ -1174,9 +1220,14 @@ artefact that a referral-led sale converts on** — which is consistent with its
 
 **And the benchmark gap is now measurable:** Bain's free diagnostic is benchmarked on **250+
 companies** and its paid assessment on **~1,200**; BCG claims **10,000+**. **Ours is 120.** That is
-not a reason not to ship — §7.7.1's 11 categories can carry a real comparison today — but it is the
-number that decides when the *positioning* claim "we maintain SG industry datasets" starts to be
-true rather than aspirational.
+not a reason not to ship — §7.7.1's 11 categories can carry a real comparison today, under the
+**emerging** tier — but it is the number that decides when the *positioning* claim "we maintain SG
+industry datasets" starts to be true rather than aspirational.
+
+**The gap is a credibility problem, not a coverage problem.** The majors' free diagnostics are
+credible *because* the pool behind them is large; ours will be read as thin until it is not. That
+argues for **labelling coverage honestly from the start** (the emerging/standard split) rather than
+presenting a 5-business comparison and a 1,200-business comparison in the same voice.
 
 ---
 
@@ -1688,7 +1739,8 @@ purchasing decision.
 | **D18** | **The name** (D1) | KIV |
 | **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED and REVISED — a TRADE, not a favour.** The consent unlocks the **benchmark** (their position vs the pool); the scored report is never gated. Unticked default, own consent row. The withheld benefit must be the **collective good**, never the service — if declining degrades the report the consent is coerced and void. Claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor |
 | **D24** | **Enrichment provenance** (§7.7) — may enriched *public-source* material enter the dataset? | **OPEN — Sean to decide.** A dataset built only from consented form answers is thin; the enriched material is the valuable part. If enrichment cannot be used, the "SG industry datasets" claim rests on self-reported text alone. Needs a determination on whether aggregated public-source business data is personal data at all |
-| **D25** | **Minimum cell size, SG-adjusted** (§7.7.1) | **OPEN — Sean to decide. Now grounded in a verified practice.** Payscale publishes its own rule: *"limiting the base number of employers in any analysis to five or more"* **plus** *"pulling back from a local search to a broader geographic area"* — so both the floor and the widen-not-suppress step are corroborated. **But Payscale's 5 protects employees, who are not each other's competitors; ours are.** Recommended: **floor of 8 with widen-not-suppress**, because the re-identification risk here is strictly higher. Cost: **11 of 27 categories clear 5; only 4 clear 8** |
+| **D25** | **Minimum cell size, SG-adjusted** (§7.7.1) | **OPEN — recommendation REVISED.** A flat raised floor of 8 suppresses 19 of 27 categories and kills the reciprocity engine. **Recommended instead: a TWO-TIER disclosure, modelled on Culture Amp** — an **emerging** tier (floor 5, comparison shown and labelled as thin coverage) and a **standard** tier (floor 8+, full cut detail). This keeps the engine alive in the 11 categories that clear 5 while keeping the stricter guarantee where the data supports it (4 categories). **Both controls are needed in any case: a concentration cap (25% for a concentrated SG category) and secondary suppression if any total is shown.** Industry floor is 5 (Mercer, Milliman, Empsight, Payscale, Pave, WorldatWork); the two-tier structure is verified to exist at Culture Amp, its thresholds are not |
+| **D28** | **Submission identity/validation gate** (§7.7.1) | **OPEN — Sean to decide.** Fabrication is not detectable statistically — ISO 26362 catches it with an identity gate (*"validate the claimed identity of new panel members"*). Our form is anonymous and a self-report costs nothing to fake. **APQC's 80% completion minimum before any report issues is a cheap structural control** that pairs with the §3.10 input-quality floor. Does the free report require a verified business identity, or stay anonymous? |
 | **D26** | **The third path — contract-bound pseudonymous licensing** (§7.7) | **OPEN — Sean to decide.** Levels.fyi licenses records carrying employer/title/level/location, stripped of contact details, under contractual anti-re-identification terms — **not anonymisation, and it works at scale.** Adopting it yields a far stronger dataset than anonymisation-only, at the cost of a weaker privacy claim and continued PDPA deletion/withdrawal exposure. **This is the single decision that most determines whether the dataset is an asset or a curiosity** |
 | **D27** | **EDG certification (TR 43 / SS 680)** (§7.9) | **OPEN — Sean to decide.** Management-consultancy fees are EDG-subsidisable **only** through a certified consultant. Certification converts the S$500 price objection into a part-funded eligible cost, and is a checkable gate. Worth a cost/benefit look if the paid tier targets SMEs |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
