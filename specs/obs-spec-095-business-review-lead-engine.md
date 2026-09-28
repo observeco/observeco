@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v16 — D31–D33 answered; two of my framings corrected.
-**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v16: 2026-09-28)
+**Status:** DRAFT v17 — D34 set (sole-proprietor line).
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v17: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -206,6 +206,15 @@ load-bearing. A wrong or generic free report does not merely fail to convert —
 sequence**, and everything after it is read by someone already given a reason to discount you. **So
 §7.10's "the benchmark must be real at launch, not mocked" is unchanged and now better justified: the
 first touchpoint is not a taster, it is the credibility position.**
+**v17 change — D34, the sole-proprietor line, confirmed.** Sean: *"Where a rival is one person,
+'analyse the business, never the person' is the line you want."* Recorded as **D34** with the
+distinction that keeps it from being over-applied: **it restrains ATTRIBUTION, not SCORING.**
+A sole-proprietor rival is **still scored and still counted in the pool** — excluding them would gut
+the benchmark in exactly the categories D3 targets, since home-based businesses are overwhelmingly
+one-person operations. Describe such a rival **by category** (*"a home-based nail studio in the
+east"*), never by name, photo or personal detail. A sole proprietor's *price list* is a public
+business fact; their *name and likeness* are a different category of material, even though the
+trading name may contain both.
 
 ---
 
@@ -1659,7 +1668,29 @@ controls. The floor exists to protect *the pool*; naming a rival does not touch 
 |---|---|---|
 | **Accuracy** | We are publishing a judgment about a named third party. If it is wrong, they can object — and the objection would be *justified* | §4.3 already requires every enriched claim to carry a source and a fetch timestamp. §4.1's validity gate prevents a block page being scored as a competitor |
 | **Right of correction** | A named business has no other recourse | The report states the method, sources and date, and offers a correction route. Cheap, and it is also a credibility signal |
-| **⚠ Sole proprietors and sole traders** | **The one genuine personal-data edge.** For a one-person business, the trading name may resolve to an **individual**. D3 targets home-based businesses — so this case is not hypothetical | Where a competitor is a sole proprietor, treat the *individual* as personal data: analyse the **business** (price, category, offer), never the **person** (name, photo, personal details) |
+| **⚠ Sole proprietors and sole traders** | **The one genuine personal-data edge.** For a one-person business, the trading name may resolve to an **individual**. D3 targets home-based businesses — so this case is not hypothetical | **DECIDED (D34, Sean confirmed 2026-09-28): analyse the BUSINESS, never the PERSON.** Where a rival is one person, analyse the business — price, category, offer, footprint — and never the individual: no name, no photo, no personal details. Treat the sole proprietor's *identity* as personal data while treating their *business* as analysable |
+
+**⚠ What D34 does NOT do — stated because a build could over-apply it and silently break the
+benchmark.** The rule restrains **attribution**, not **scoring**. A sole-proprietor rival is
+**still scored and still counted in the pool**:
+
+| | Permitted? |
+|---|---|
+| Score the business and include it in the pool / median | **Yes — required.** Excluding sole proprietors would gut the benchmark in exactly the categories D3 targets (home-based businesses are overwhelmingly one-person) |
+| Compare the submitter against the pool anonymously | **Yes** |
+| Say *"your category's median is Contested, and you are below it"* | **Yes** |
+| Say *"Jane's Nails scores 43"* — a named individual | **No** |
+| Publish a photo, personal name, or personal details of a sole trader | **No** |
+
+**The distinction is the same one this section already draws for companies, applied one level down:
+the judgment about a business is fair comment; the identification of a private individual is a
+different act.** A sole proprietor's *price list* is a public business fact; their *name and likeness*
+are not the same category of material, even though the trading name may contain both.
+
+**How to apply it in practice:** where the rival is a registered company (Pte Ltd, LLP), name and score
+freely. Where the rival is a sole proprietor, **score it, count it, compare against it — and describe it
+by category** (*"a home-based nail studio in the east"*) rather than by identity. §4.3's sourced-and-
+timestamped claims apply unchanged.
 
 **The third row is the honest residue of the original concern, and it is the opposite of a blocker:**
 it says analyse the business, not the human behind it. **That is a sentence of style guidance, not a
@@ -2559,6 +2590,7 @@ purchasing decision.
 | **D27** | **DEFERRED — future.** | **Sean: "certification is for the future."** Not a now-item; revisit if the paid tier targets SMEs |
 | **D31** | **Do we score NAMED competitors, and show that to the submitter?** | **DECIDED — yes, name and score freely. Same answer as D25.** **Sean: *"Why is it a compliance issue where I have scored a company based on my own hardwork and due diligence based on publically available information?"* — and he is right; my framing was wrong.** A **company is not a data subject** and does not consent to being analysed. §7.13 records the correction: **"consent" was the wrong word** for three separate things (the submitter's consent — real, unaffected; the competitor's consent — **not required**; the contributor pool's protection — real, unaffected). Sean's own published work already does this *(verified)*: Book 1 names KOI, LiHo, Gong Cha, Tiger Sugar with outlet counts; the CaiCa deliverable rules *"Contested — CHAᴳEE owns it."* **Not a new risk — the established practice of the work.** Two narrow duties remain: accuracy (already §4.3's sourced claims) and correction route. **⚠ One genuine edge: sole proprietors** — where a rival is one person, analyse the **business**, never the **person** |
 | **D32** | **Is D3's target segment the right COMMERCIAL target?** | **DECIDED — keep 0–9, and my framing of the problem was wrong.** **Sean: *"I am trying to apply positioning theory here to build trust and credibility with any potential customer. The more touch points they have with me — my free tools, my social media content, my books — the more they will engage and convert with me."*** I had measured the toolkit against a **purchase-intent base rate** (24%, falling). **Wrong yardstick — the toolkit is not the ask; it is the first of several low-cost engagements that build the credibility the ask depends on.** The 76% who would not buy advice today are not a failure state but a **latent pool the sequence keeps warm**. This reframes the §7.12 evidence as **supportive**: micro firms have no written plan (~1/3), 13% use external finance — a population that has never been *shown* what structured thinking about their position does. **The ILO finding that willingness to pay rises from 23–65% before delivery to 53–100% after is the mechanism this strategy runs on.** Toolkit stays aimed at **0–9**; the paid tier is whatever the sequence produces, and the funnel's job is to reveal it, not assume it (§7.14) |
+| **D34** | **The sole-proprietor line** (§7.13) | **DECIDED — Sean: *"analyse the business, never the person"* is the line.** Where a rival is one person, the trading name may resolve to an individual, so the **identity** is personal data while the **business** is analysable. **⚠ Restrains ATTRIBUTION, not SCORING** — a sole-proprietor rival is still scored and still counted in the pool, because excluding them would gut the benchmark in exactly the categories D3 targets (home-based businesses are overwhelmingly one-person). Describe by category (*"a home-based nail studio in the east"*), never by name, photo or personal detail |
 | **D33** | **Test the toolkit as cold acquisition, as a referral artefact, or both?** | **DECIDED — neither, exactly: measure conversion by TOUCHPOINT COUNT.** Sean's answer to D32 makes this question smaller. **Every touchpoint is a referral substitute**, and Hinge's own finding — **visible expertise drives 37.3% of referrals, more than client relationships (23.1%)** — describes exactly what the content, toolkit and books manufacture. **So the toolkit's job is engagement and repeat contact, not immediate conversion**, and a funnel counting only booked calls would score a returning prospect as a failure. **§7.10 gains four metrics: return visits · touchpoint overlap · time from first touch to engagement · conversion by touchpoint count.** The last is the real experiment — it tests the strategy directly instead of proxying it. **Honest limit: at 300 submissions we can bound a rate but still cannot attribute a conversion to toolkit vs content vs book — which is exactly why touchpoint count must be recorded from submission one** |
 | **D29** | **Should the toolkit itself be the test?** You asked why not make the diagnostic the test of the whole business model. | **DECIDED — yes, and my earlier phasing was wrong.** Nothing else uses the benchmark, so "build it later" meant building it for nobody. The toolkit is the instrument, not the subject (§7.10). **NOW QUANTIFIED (§7.12):** pre-commit to **300 completed submissions** before any go/no-go (3/N gives "<1%" at 300; ±5pp precision needs 384); **peeking can inflate a 5% error rate to 26.1%**, so sample and rule must be fixed before launch; and **a null cannot distinguish a bad tool from a bad segment from a bad price from no distribution** — that four-way limit is the honest boundary of the test. **Money received is the only valid primary outcome** — intention converts to behaviour only about half the time |
 
