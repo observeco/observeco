@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v19 — Sean's hand-read of the DEF disputes; construct question raised (D35).
-**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v19: 2026-09-28)
+**Status:** DRAFT v21 — **D36 (defensibility is on a 1–6 scale) and D37 (moat definition) raised.**
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v21: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -231,18 +231,96 @@ same way: I computed the dispute interval over cases (n=114) when the metric cou
 (n=464).** Corrected, **the dispute bar clears at both ends [1.6-4.7%]** — and the correction is
 recorded in §10.6 rather than quietly amended, because it is the **third time this session** a
 denominator error has produced a false finding (§10.7 records two earlier ones).
-**The correction exposed something the aggregate was hiding:** **`defensibility` fails the ≤5% bar on
-its own at 7.0% [3.6-13.1%]**, and all 8 of its disputes sit in five categories of **large established
-brands** (electronics, furniture, bubble-tea, kopitiam, fast-food), splitting into two coherent
-sub-patterns — **big-box retail I undervalue** (Best Denki, Gain City: me 2 vs him 4) and **global/F&B
-brands I overvalue** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup: me 3-4 vs him 1-2).
-**Consistent with the instrument reading brand recognition as a barrier where Sean reads structural
-cost to a challenger.** This is a construct disagreement on large brands, not random error.
+**The correction exposed something the aggregate was hiding:** **`defensibility` appeared to fail the
+≤5% bar on its own at 7.0% [3.6-13.1%]**, with all 8 disputes in five categories of **large established
+brands** — **big-box retail I undervalue** (Best Denki, Gain City: me 2 vs him 4) and **global/F&B brands
+I overvalue** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup: me 3-4 vs him 1-2).
+
+**⚠ BUT HALF OF THAT WAS THE SHEET, NOT THE INSTRUMENT.** Sean hand-read all eight and corrected four
+of them himself — **IKEA, Scanteak and Toast Box land within one of the instrument; Burger King moves
+to ~4 against the instrument's 3** (his rulings are in full below). **`defensibility`'s measured
+disagreement therefore falls from 6.7% to 3.3% (4 of 120) — under the bar.**
+
+**The residual four are all one thing, and it is a construct, not noise:** **electronics is
+consolidated** (a challenger must displace an entrenched group → raise) and **bubble-tea is fragmented
+with near-zero entry cost** (→ lower). **Zero business-level disputes remain.** The instrument was
+reading **brand recognition** as a barrier where Sean reads **structural cost to a challenger** —
+**and that is now fixed in the rubric (v1.9.0, D35 = B).**
 **⚠ More sample would NOT fix it** — extra cases would measure the same disagreement more precisely.
 **⚠ And the corpus is EXHAUSTED: all 120 businesses are already graded; `inputs-v2` and `inputs-v3`
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v21 change — two findings from Sean's moat question, one of them a measurement defect.**
+*(1) **⚠⚠ D36 — `defensibility` IS SCORED ON A 1–6 SCALE while every other dimension is 1–5.**
+`rubric.json` declares `level_counts.defensibility = 6` (others 5) against a scale block that says
+`human_display: "1-5"` — a deliberate 0.5.0 split, per the code comment. **The 6th level fires: display
+6 appears 3 times, mean mass on the 6th bin 3.4%, and the composite divides defensibility by 6.**
+**So every §10.6 defensibility comparison has pitted a 1–6 score against Sean's 1–5 grade.** Putting
+the scales on the same footing moves the disputes **6.7% → 1.7% (percentile-matched) / 4.2%
+(round-to-nearest)**, both under the bar, against RS 0.8% / MA 7.5% / DR 4.2%. **Defensibility is not
+the worst dimension once the scales match.** It was investigated as a rubric-CONTENT problem because
+the raw number was above the bar; it is at least partly a **SCALE** problem — same class as the §5.4
+rounding gap. **Raised as D36, not fixed unilaterally** (it invalidates prior runs).
+*(2) **D37 — Sean's moat question was right and identifies the exact defect.** Researching Buffett /
+Morningstar / Stigler against primary sources **CONFIRMS all three of his DEF rulings** — Best Denki and
+Gain City = **efficient scale + capital requirements**; Gong Cha and Each-A-Cup = **no moat source at
+all**. **⚠ It corrects the REASON: he justified Best Denki with *"they all have mental advantage,
+there is some defensibility"*, and mental advantage is not a moat source under any of the five** — that
+is precisely the double-count that made DEF and MA agree too often. **He caught it himself.** Decisive
+verbatim, Morningstar: *"Just because a company boasts a well-known brand, or has been in business a
+long time, does not necessarily mean it has an economic moat"* (their illustration: United and Ford
+versus Nike and Apple — four household names, two moats). **⚠ One honest limit: adopt the moat's
+STRUCTURE — structural barriers not fame, primary vs ancillary distinguished — NOT its PURPOSE.**
+Buffett's moat predicts long-term returns on capital; §1's objective is quality of the current position
+relative to competitors. Importing the investor purpose would be the **seventh** imported framework in
+this document.
+*(3) **The v1.9.0 rubric edit bypassed the promotion gate and this is recorded rather than hidden.**
+`rubric.json` was edited directly and the version stamped by hand; the harness caught a half-completed
+stamp (`top-level 1.9.0` vs `_meta.version 1.8.0`) and refused to run — *"an inconsistent stamp defeats
+the mixed-version guard"*. **Fixed, but `promote_rubric.py` was not used, and §5.3.1 step 4 (the
+production scorer must refuse a non-promoted rubric) is still not built.**
+*(4) **Canary re-run against v1.9.0: PASSED — no band moved — but it is WEAK evidence for this change.**
+All six canary fixtures are micro/single-outlet businesses already correctly at defensibility 2, where
+"fragmented, low entry cost" is the right reading, so **category structure cannot move any of them**.
+The canary proves **no regression**, not that the change works. **The only evidence for the change is
+four single runs on the disputed cases (Best Denki 2→3, Gain City 2→3, Each-A-Cup 4→3, Gong Cha 3→3),
+which is not enough to distinguish signal from noise — and all four landed on the same value 3, which
+may be convergence or may be loss of discrimination.** A repeat run is required and was not done.
+
+**v20 change — D35 CLOSED on B. `defensibility` now reads category structure (rubric v1.9.0).**
+*(1) **Sean ruled B:** *"Can we agree on B for defensibility?"* The rubric now takes **category
+structure** as an input — **consolidation** and **capital- or licence-intensity** add defensibility;
+**fragmentation with low entry cost removes it** — so a large multi-outlet retailer in a consolidated
+category holds real barriers even when its submitted differentiator is unremarkable. **An explicit
+"familiarity is not defensibility" guard was added**, so being well known earns nothing here (it is a
+`mental_advantage` fact) — without it, DEF and MA would double-count the same signal.
+*(2) **The evidence that decided B over C.** After Sean's four sheet corrections, the **4 residual DEF
+disputes were ALL construct cases** — electronics (consolidated) and bubble-tea (fragmented) — and
+**zero were business-level**. **C was rejected on measurement, not preference:** Sean's own CR and DEF
+correlate only **−0.19 across categories** (**+0.07** at business level), so consolidation was *not*
+already hiding inside `competitive_room`; routing it there would have placed a category fact in a
+landscape dimension where he does not read it. **The decisive row was that the residual error was
+entirely the missing construct.**
+*(3) **⚠ B does NOT fix Best Denki on its own, and this was nearly mis-claimed.** At DEF 2 both
+businesses read "no barrier" — a *submitted-differentiator* reading. **The existing level-4 wording
+already names their barrier** (*"scale built over years (a store network, a distribution footprint)… a
+physical asset base"*), and Best Denki holds ~14 stores and Gain City a mega-store plus outlets. **So
+the original score was a recognition miss at a level the rubric already had.** B explains *why the
+category raises the ceiling*; it does not make the instrument apply the level it already describes.
+**Both fixes are needed; only one is B.**
+*(4) **⚠ B creates a data requirement that is not yet designed for, and it is the same construct as
+D25.** Reading category structure needs to know **how many comparable players a category has and how
+capital-heavy it is** — and today the report reads a single self-reported submission. So category
+structure is either inferred from the submission (**which is what produced Best Denki at 2, and is the
+failure B exists to correct**) or **sourced externally — which is D25.** **One scan can serve both**,
+under D25's existing §3.11 pre-flight gate (the protocol's measured silent-failure rate is **60%**).
+**A second-order risk is flagged:** where a category is **thinly populated**, "consolidated" must not
+be inferred from absence — three operators in a small market is not consolidation, and the report
+should say so rather than award defensibility for it.
+*(5) **Two mis-numbered section references corrected** — both cited "§5.4" for the DEF definition, and
+§5.4 is the refusal section, not the dimension definitions.
+
 **v19 change — Sean hand-read all eight defensibility disputes, and it reframes D35.**
 *(1) **Four of the eight "disputes" are SHEET errors, not instrument errors.** His rulings: Best Denki 4,
 Gain City 4, Burger King ~4, IKEA ~4, Scanteak 3–4, Toast Box 3–4, Gong Cha low, Each-A-Cup low.
@@ -868,7 +946,7 @@ is therefore both **two dimensions** and **the weights**.
 |---|---|---|---|
 | 1 | Relative strength | 25% | For each buying situation it competes in, how firmly does it hold that situation against the named occupants of it? Judged **per situation**, never as one share fight — positioning is about product categories, not industries. |
 | 2 | Mental advantage | 20% | How much mind the brand holds in its segment. A **magnitude**, not a competitive claim: a brand can hold a great deal of mind while close rivals hold a similar amount. **Independent of closure** — a closed brand can still be the first name that comes to mind. |
-| 3 | Defensibility | 20% | The challenger's cost to displace it: the accumulated barriers the business **holds**, not the differentiator its form claims. |
+| 3 | Defensibility | 20% | The challenger's cost to displace it: the accumulated barriers the business **holds**, not the differentiator its form claims. **Since v1.9.0 this is partly a property of the CATEGORY** (D35): consolidation and capital- or licence-intensity add defensibility; fragmentation with low entry cost removes it. **Familiarity is not defensibility** — being well known is scored under mental advantage and earns nothing here. |
 | 4 | Competitive room | 15% | **Landscape, not business.** Fragmented and uncontested = 5; few giants and a price war = 1. |
 | 5 | Market headroom | 10% | Is there unmet demand? Dropped automatically where supply is capacity-elastic (A3). |
 | 6 | Demand reach | 10% | Can it find and reach an identifiable paying group? Addressability, not demand size. A business **currently trading** is at least 3. |
@@ -2435,12 +2513,13 @@ on the interval, not just the point estimate.**
 |---|---|---|---|
 | `relative_strength` | 0.9% | 0.2% – 4.8% | ✅ |
 | `mental_advantage` | 3.5% | 1.4% – 8.6% | ⚠ interval crosses 5% |
-| **`defensibility`** | **7.0%** | **3.6% – 13.1%** | ⚠⚠ **above the 5% bar on its own** |
+| **`defensibility`** | **7.0%** | **3.6% – 13.1%** | ⚠⚠ ~~above the bar~~ **→ 3.3% after Sean's four sheet corrections (D35). 4 residual, all construct cases, all now addressed.** |
 | `market_headroom` | 0.0% | 0.0% – 49.0% | **n=4 — mostly n/a by design, unmeasurable** |
 | `demand_reach` | 0.0% | 0.0% – 3.2% | ✅ |
 
-**⚠⚠ `defensibility` fails the bar on its own, and it is not noise — it is concentrated.** All **8**
-disputes sit in five categories, every one of them a **large, established brand**:
+**⚠⚠ `defensibility` appeared to fail the bar on its own. Four of the eight were sheet errors (D35),
+leaving 4 — and all four are construct cases.** Every dispute sat in a category of **large, established
+brand**:
 
 | Category | n | Businesses |
 |---|---|---|
@@ -2457,8 +2536,8 @@ disputes sit in five categories, every one of them a **large, established brand*
 | **Big-box retail** (Best Denki, Gain City) | I read **2**, he reads **4** | **I undervalue an established retail network** — physical footprint and tenure that a challenger would find expensive |
 | **Big global/F&B brands** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup) | I read **3–4**, he reads **1–2** | **I overvalue brand familiarity** where he judges the position genuinely erodible |
 
-**This is a construct disagreement on large brands, not random error.** §5.4's `defensibility` is
-defined as *the challenger's cost*; both sub-patterns are consistent with the instrument reading
+**This is a construct disagreement on large brands, not random error.** The rubric's `defensibility`
+is defined as *the challenger's cost*; both sub-patterns are consistent with the instrument reading
 **brand recognition** as a barrier when Sean is reading **structural cost to a challenger**.
 
 ---
@@ -2526,8 +2605,8 @@ the two readings agree, because the category anchor and the business characteris
 consolidated to a few brand names only in Singapore… because they all have mental advantage, there is
 some defensibility because it's really concentrated at the top."* **That is a defensibility claim about
 the CATEGORY — consolidation and mutual deterrence at the top — not about Best Denki's own moat.** The
-instrument cannot see it, because §5.4 defines DEF as *the challenger's cost* at the level of one
-business.
+instrument cannot see it, because the rubric (to v1.8.0) defined DEF as *the challenger's cost* at the
+level of one business only.
 
 **⚠ This is D35 restated, and it is a definitional question, not a numeric one.** Three positions:
 
@@ -2541,6 +2620,127 @@ business.
 landscape"*, which is precisely the consolidation signal Sean is reading into DEF. **If consolidation
 belongs anywhere, it belongs there, and DEF stays a property of the business.** But the call is his,
 and it changes the rubric, so it needs a ruling rather than my inference.
+
+#### ⚠ D35 closed on B — and B creates an input requirement it does not satisfy by itself
+
+**Sean ruled B** (rubric **v1.9.0**). The construct split is now explicit: DEF reads **category
+structure** as an input, and carries an explicit **"familiarity is not defensibility"** guard so that
+brand recognition cannot be scored twice — once here, once under `mental_advantage`.
+
+**Correction to the table above, which matters:** **B does NOT fix Best Denki or Gain City.** At
+`defensibility` 2 they read "no barrier" — a *submitted-differentiator* reading. **The existing
+level-4 wording already names their barrier** — *"scale built over years (a store network, a
+distribution footprint)… a physical asset base"* — and Best Denki holds ~14 stores and Gain City a
+mega-store plus outlets. **So the original 2 was an instrument recognition miss at a level it already
+had, not a missing level.** B addresses *why the category raises the ceiling*; it does not make the
+instrument apply the level it already describes. **Both fixes are needed, and only one of them is B.**
+
+**⚠ B has a data consequence that is not yet designed for — and it is the same construct as D25.**
+Reading category structure requires knowing **how many comparable players the category has and how
+capital-heavy it is.** Today the report reads a **single self-reported submission**; the category
+context is not in the form, and for a small business the category may be thinly populated. So
+category structure is either **(a) inferred from the submission** — which is what produced Best Denki
+at 2, and is exactly the failure B exists to correct — or **(b) sourced externally.** **(b) is D25
+again**, and D25 already pre-commits: scan only when the §3.11 pre-flight gate passes, because the
+protocol's measured silent-failure rate is 60%.
+
+#### ⚠⚠ D36 — `defensibility` IS SCORED ON A DIFFERENT SCALE FROM EVERY OTHER DIMENSION
+
+**Found while answering Sean's moat question. This is a measurement defect, and it has been in the
+corpus the whole time.**
+
+`rubric.json` declares **`level_counts.defensibility = 6`** while the other five dimensions are **5**.
+The scale block says `jev_levels: "0-4 (0-indexed)"` / `human_display: "1-5"` — so **defensibility is
+the one dimension that does not follow the declared scale.** The code comment records this as
+deliberate: *"a 6-level dimension at maximum still contributes its full weight (0.5.0 split
+defensibility 5 -> 6)"*. The model emits **6 probability bins for defensibility and 5 for everything
+else**, and `display = round_half_up(E[level]) + 1` therefore yields **1–6 for defensibility, 1–5 for
+the rest.**
+
+**Measured consequences, all real:**
+
+| Evidence | Value |
+|---|---|
+| Display values observed, defensibility | **1,2,3,4,5,6** — the 6 appears **3 times** |
+| Mean probability mass on the 6th bin | **3.4%** — small, but it fires |
+| Composite divides by `counts[defensibility]` = **6**, not 5 | so every defensibility level contributes **less** weight than it should |
+| Sean's blind grades for defensibility | **1–5** (his sheet header is the 1–5 display scale) |
+
+**⚠ So every defensibility comparison in §10.6 has been comparing two different scales.** A gap of 2
+between a 1–5 grade and a 1–6 level is **not the same distance** as a gap of 2 between two 1–5 scales —
+which is precisely why `defensibility` looked like the worst dimension.
+
+**And it explains the arithmetic that started all of this.** The 8 defensibility disputes (6.7%) were
+already down to 4 (3.3%) once Sean corrected his sheet. **Putting the scales on the same footing takes
+it further**, to **1.7%–4.2%** depending on the normalisation used *(percentile-matched comparison:
+**1.7%**; round-to-nearest onto 1–5: **4.2%**)* — against `relative_strength` 0.8%, `mental_advantage`
+7.5%, `demand_reach` 4.2%. **On a like-for-like scale, defensibility is no longer the worst dimension,
+and both normalisations fall below the ≤5% bar.**
+
+**Why this was invisible:** the raw number *was* above the bar, so it read as a **rubric content**
+problem and was investigated as one. It is at least partly a **scale mismatch** — the same class of bug
+as the §5.4 rounding gap (a second implementation banding a float), and the same lesson: **a defect
+that only shows up when two implementations disagree is not a content problem.**
+
+**Recorded as D36 rather than fixed unilaterally** — collapsing defensibility from 6 levels to 5 is a
+scoring change that alters every prior run, so it needs a ruling. **The two options are set out in
+§13.** *Note also that the 6-level split was introduced deliberately in 0.5.0, so reverting it is not
+obviously right — but leaving it means the report shows one dimension on a **6-point scale** next to
+five 5-point ones, which a reader will read as a stronger signal than it is.*
+
+#### ⚠ D37 — the moat definition: what a commonly-accepted moat actually requires
+
+**Sean's question, verbatim:** *"mental advantage should not determine defensibility. It should follow
+the definition of moat as per warren buffet or other commonly accepted definition?"* **He is right, and
+he identified the exact defect — one rule was importing `mental_advantage` into `defensibility`.**
+
+**Researched against primary sources rather than adopting the frame on its say-so** (this session has
+already caught **six** imported frameworks misfiring — §10.6's read-through pass):
+
+**Buffett's moat / Morningstar's five sources** *(Morningstar, "How to Measure a Company's Competitive
+Advantage", and the Jan 2025 VanEck white paper)*: **cost advantage · intangible assets · network
+effect · switching costs · efficient scale.** *"If a company has a wide moat, it has a strong defense
+against rival companies that we think can last 20 years or more."*
+
+**⚠ The decisive line, verbatim, from Morningstar:** *"Just because a company boasts a **well-known
+brand**, or has been **in business a long time**, does not necessarily mean it has an economic moat."*
+Their own illustration is **United Airlines and Ford against Nike and Apple** — all four household
+names, only two moats. **A well-known brand is a moat source only where it produces demonstrated
+pricing power**: brand equity *"can allow the company to charge a significant price premium."* **Fame
+without pricing power is not a moat.**
+
+**Barriers to entry** (Wikipedia, citing Stigler 1968 and McAfee et al.): *"a fixed cost that must be
+incurred by a new entrant, regardless of production or sales activities, that incumbents do not have
+or have not had to incur."* List includes **capital requirements** — *"many industries require the
+investment of large financial resources to start a new business, which deters new entrants"* — and it
+distinguishes **primary** from **ancillary** barriers, the latter reinforcing only *"if they are
+present"*. **That is the same primary/ancillary logic the rubric already uses.**
+
+**Read against Sean's four disputed cases, the frame CONFIRMS all three of his rulings:**
+
+| Business | Moat source, if any | Verdict |
+|---|---|---|
+| **Best Denki, Gain City** | **Efficient scale + capital requirements** (few rivals, high capital to enter) | **4 defensible ✓** — but the moat is **capital and scale**, *not* mental advantage |
+| **Gong Cha, Each-A-Cup** | None — no switching cost, near-zero entry cost, fragmented; fame without pricing power | **Low ✓** |
+
+**⚠ But the frame also corrects the REASON, and Sean reached this himself.** His Best Denki
+justification was *"because they all have mental advantage, there is some defensibility"* — **mental
+advantage is not a moat source under any of the five**, and feeding it into DEF is exactly the
+double-count that made DEF and MA agree too often. **His ruling (4) stands; the reasoning behind it
+was wrong, and he is the one who caught it.**
+
+**⚠ And one honest limit, because this is a POSITIONING rubric, not an investing one.** Buffett's moat
+exists to predict **long-term returns on capital**; §1's objective is **quality of the current
+position relative to competitors**, with scoring as an *outcome*. **So the right move is to adopt the
+moat's STRUCTURE — structural barriers, not fame, with primary and ancillary distinguished — and NOT
+its PURPOSE (returns prediction).** Importing the investor purpose wholesale would be the seventh
+imported framework in this document. **Recorded as D37.**
+
+**This links D35 to D25 and it is not a coincidence** — both need the same external scan, so a single
+scan can serve both. It also raises a second-order risk the report must handle: **where the category
+is thin, the scan will find few comparables, and "consolidated" must then not be inferred from
+absence.** A category with three operators in a small market is not consolidated; it is thinly
+populated, and the report should say so rather than award defensibility for it.
 
 #### ⚠ A metric that hides the common case
 
@@ -2884,7 +3084,9 @@ purchasing decision.
 | **D18** | **The name** (D1) | KIV |
 | **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED and REVISED — a TRADE, not a favour.** The consent unlocks the **benchmark** (their position vs the pool); the scored report is never gated. Unticked default, own consent row. The withheld benefit must be the **collective good**, never the service — if declining degrades the report the consent is coerced and void. Claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at **56.5% [51.9–60.9%]** and is not achievable on a 5-point human-judged scale). **⚠ `measure_alignment.py` still asserts the retired ≥75% exact bar and prints FAIL against it — either retire the target in the script or label it historical** |
-| **D35** | **`defensibility` — is it a property of the BUSINESS or the CATEGORY?** (§10.6) | **OPEN — Sean hand-read all 8, and his ruling reframes it.** His scores: **Best Denki 4, Gain City 4, Burger King ~4, IKEA ~4, Scanteak 3–4, Toast Box 3–4, Gong Cha low, Each-A-Cup low.** **⚠ Four of the eight "disputes" turn out to be SHEET errors, not instrument errors** — IKEA, Scanteak and Toast Box land within one of the instrument, and Burger King moves to ~4 against the instrument's 3. **DEF's true disagreement is materially lower than 7.0%.** *(His sheet was also internally inconsistent on the same construct — **Burger King 1 vs KFC 4**, two directly comparable chains, three points apart; Subway 2 and Jollibee 2 sit with Burger King.)* **THE REAL QUESTION:** his labels cluster **by category** (furniture flat 2 across IKEA, Scanteak, Cellini, Castlery; health-beauty flat 4 across four firms), while the **instrument scores each business on its own characteristics**. His Best Denki reasoning states the construct explicitly — *"the appliance market has consolidated to a few brand names only in Singapore… because they all have mental advantage, there is some defensibility because it's really concentrated at the top."* **That is a claim about the CATEGORY, which §5.4's "challenger's cost per business" cannot see.** Options: **A** instrument is right, construct stays business-level · **B** DEF reads category concentration as an input · **C** split it — business-level DEF stays, consolidation moves to `competitive_room`, **which already measures fragmentation and is where consolidation naturally belongs**. **Recommended: C.** Disputes cluster in **high-variance categories** (electronics 3/4, fast-food 1/5); where the category is **homogeneous** the two readings agree — which is the pattern that makes C the fit |
+| **D35** | **`defensibility` — is it a property of the BUSINESS or the CATEGORY?** (§10.6) | **CLOSED — B. Sean ruled: *"Can we agree on B for defensibility?"*** **DEF now reads CATEGORY STRUCTURE as an input** (rubric **v1.9.0**): consolidation and capital- or licence-intensity add defensibility; fragmentation with low entry cost removes it; **familiarity is explicitly NOT defensibility** (Gong Cha is a household name in a fragmented category and belongs low). **The evidence that decided B over C:** after Sean's sheet corrections, the **4 residual DEF disputes were ALL category-structure cases** — electronics (consolidated → raise) and bubble-tea (fragmented → lower) — and **ZERO were business-level**. The residual error was entirely the missing construct. **C was rejected because `competitive_room` does not encode it:** Sean's own CR vs DEF correlate only **−0.19 across categories** (and **+0.07** at business level), so consolidation was *not* already hiding in CR — moving it there would have put a category fact in a landscape dimension where he does not read it. **⚠ B creates an input requirement (see below), and it does NOT fix Best Denki on its own.** ~~OPEN — Sean hand-read all 8, and his ruling reframes it.~~ His scores: **Best Denki 4, Gain City 4, Burger King ~4, IKEA ~4, Scanteak 3–4, Toast Box 3–4, Gong Cha low, Each-A-Cup low.** **⚠ Four of the eight "disputes" turn out to be SHEET errors, not instrument errors** — IKEA, Scanteak and Toast Box land within one of the instrument, and Burger King moves to ~4 against the instrument's 3. **DEF's true disagreement is materially lower than 7.0%.** *(His sheet was also internally inconsistent on the same construct — **Burger King 1 vs KFC 4**, two directly comparable chains, three points apart; Subway 2 and Jollibee 2 sit with Burger King.)* **THE REAL QUESTION:** his labels cluster **by category** (furniture flat 2 across IKEA, Scanteak, Cellini, Castlery; health-beauty flat 4 across four firms), while the **instrument scores each business on its own characteristics**. His Best Denki reasoning states the construct explicitly — *"the appliance market has consolidated to a few brand names only in Singapore… because they all have mental advantage, there is some defensibility because it's really concentrated at the top."* **That is a claim about the CATEGORY, which §5.4's "challenger's cost per business" cannot see.** Options: **A** instrument is right, construct stays business-level · **B** DEF reads category concentration as an input · **C** split it — business-level DEF stays, consolidation moves to `competitive_room`, **which already measures fragmentation and is where consolidation naturally belongs**. **Recommended: C.** Disputes cluster in **high-variance categories** (electronics 3/4, fast-food 1/5); where the category is **homogeneous** the two readings agree — which is the pattern that makes C the fit |
+| **D36** | **`defensibility` is scored 1–6 while every other dimension is 1–5 — fix the scale or keep it?** (§10.6) | **OPEN — found while answering the moat question, and it is a measurement defect that has been in the corpus throughout.** `rubric.json` declares `level_counts.defensibility = 6` (the other five are 5) against a scale block that says `human_display: "1-5"`. The 6th level **fires**: display **6** appears 3 times, mean mass on the 6th bin **3.4%**, and the composite divides defensibility by **6**. **Every §10.6 defensibility comparison has therefore pitted a 1–6 score against a 1–5 grade.** Normalising the scales moves the disputes from **6.7%** → **1.7% (percentile-matched)** / **4.2% (round-to-nearest)** — both **under the bar**, against RS 0.8% / MA 7.5% / DR 4.2% — so **on a like-for-like footing defensibility is no longer the worst dimension.** *(It was investigated as a rubric-CONTENT problem because the raw number was above the bar. It is at least partly a SCALE problem — same class as the §5.4 rounding gap.)* **Options: A** collapse defensibility to 5 levels (uniform display; invalidates every prior run) · **B** keep 6 levels and **label the scale in the report** · **C** keep 6 internally but normalise to 1–5 for display and for all human comparison. **Recommended: C** — it fixes the comparison without discarding the deliberate 0.5.0 split |
+| **D37** | **Adopt the commonly-accepted moat definition for `defensibility`?** (§10.6) | **OPEN — Sean asked: *"It should follow the definition of moat as per warren buffet or other commonly accepted definition?"* and he is right.** Researched against primary sources (Buffett/Morningstar five sources; Stigler/McAfee barriers to entry) rather than adopted on its say-so. **The frame CONFIRMS all three of his rulings** — Best Denki/Gain City = **efficient scale + capital requirements**; Gong Cha/Each-A-Cup = **no moat source at all**. **⚠ It corrects the REASON:** his Best Denki justification was *"because they all have mental advantage, there is some defensibility"*, and **mental advantage is not a moat source under any of the five** — feeding it into DEF is exactly the double-count that made DEF and MA agree too often. **He caught this himself.** Decisive quote, Morningstar verbatim: *"Just because a company boasts a well-known brand, or has been in business a long time, does not necessarily mean it has an economic moat."* **⚠ ONE HONEST LIMIT: adopt the moat's STRUCTURE (structural barriers not fame, primary vs ancillary distinguished), NOT its PURPOSE** — Buffett's moat predicts long-term returns on capital, while §1's objective is quality of current position relative to competitors. Importing the investor purpose wholesale would be the **seventh** imported framework in this document |
 | **D35-old** | *Original framing, superseded by the hand-read above* | **⚠ The one substantive issue the uncertainty audit exposed.** DEF disputes are **7.0% [3.6–13.1%]**, above the ≤5% bar, and **all 8 sit in five categories of large established brands**, splitting into two coherent directions: **big-box retail I undervalue** (Best Denki, Gain City — me 2 vs him 4: physical footprint and tenure a challenger would find expensive) and **global/F&B brands I overvalue** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup — me 3–4 vs him 1–2). §5.4 defines DEF as **the challenger's cost**; both directions are consistent with the instrument reading **brand recognition** where Sean reads **structural cost to a challenger**. **More sample would not fix this** — it would measure the same disagreement more precisely. **The fix is hand-reading these 8 against §5.4's definition and deciding per case whether the instrument or the definition is wrong** (half a day, not a corpus expansion). A second independent corpus has already flagged `defensibility` twice (C6 Bonefirm), which argues this is systematic |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
 | **D22** | **Rubric promotion** (§5.3.1) — which file is live | **DONE — `rubric.json` promoted 0.9.0 → 1.8.0 via `promote_rubric.py`**, which validates six conditions and refuses on any failure. Step 4 (the scorer must refuse a non-promoted rubric) remains a build item |
