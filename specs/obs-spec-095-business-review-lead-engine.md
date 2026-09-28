@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v15 — the D29 test quantified, and its limit recorded (D32, D33).
-**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v15: 2026-09-28)
+**Status:** DRAFT v16 — D31–D33 answered; two of my framings corrected.
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v16: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -170,6 +170,42 @@ professional-services firm. Near-total reliance on **vendor platform data** (Int
 Chili Piper, Zuko, First Page Sage), plus Hinge Research Institute (self-serving but the closest to
 independent professional-services buyer data). **Any single-step number quoted from that literature is
 a vendor's marketing, not a measurement.**
+**v16 change — Sean answered D31, D32 and D33, and TWO of my framings were wrong.**
+*(1) **D31 — I called naming and scoring competitors a compliance issue. It is not.** Sean: *"Why is it
+a compliance issue where I have scored a company based on my own hardwork and due diligence based on
+publically available information?"* **He is right.** I had imported a **consent framework that does not
+apply**: a **company is not a data subject**, and its consent is not required to analyse it — the same
+way Book 1 analyses KOI, LiHo, Gong Cha and Tiger Sugar, and the way the CaiCa deliverable rules
+*"Contested — CHAGEE owns it"* (**both verified in Sean's own published work — this is not a new risk,
+it is the established practice of the work**). §7.13 separates what "consent" was conflating: the
+**submitter's** consent (real, unaffected); the **competitor's** (not required); the **contributor
+pool's** protection (real, unaffected — and naming a rival consumes no contributor data, so it triggers
+none of §7.7.1's controls). **What remains is narrow:** accuracy (§4.3 already sources and timestamps
+every claim), a correction route, and **one genuine edge — sole proprietors**, where a rival is one
+person; there, analyse the **business**, never the **person**. **Why this correction matters beyond
+compliance:** the wrong framing would have produced a materially weaker product — an anonymous pool
+with no named comparisons, i.e. exactly the vague output that fails to build credibility. Naming a
+rival and ruling on the band is the specific checkable claim that makes the report worth reading.
+*(2) **D32/D33 — I measured the toolkit as a direct-conversion instrument. It is one touchpoint in a
+sequence.** Sean: *"I am trying to apply positioning theory here to build trust and credibility with
+any potential customer. The more touch points they have with me, my free tools, my social media
+content, my books, the more they will engage and convert with me."* **That is textbook positioning, and
+it makes my §7.12 base-rate argument the wrong yardstick:** the 24%-and-falling figure measures
+**purchase intent**, and the toolkit is not the ask. **So the low base rate is not a verdict on the
+strategy — it describes why the sequence exists.** The four-way identifiability limit becomes a
+**sequencing map**. **This also reframes the §7.12 evidence as supportive, not damning:** micro firms
+have no written plan (~1/3) and 13% use external finance — a population that has never been *shown*
+what structured thinking about their position does — and **the ILO finding that willingness to pay
+rises from 23–65% before delivery to 53–100% after is the mechanism this strategy runs on**, which I
+had recorded as an obstacle when it is the argument for the sequence. **D32: keep 0–9; the paid tier is
+whatever the sequence produces.** **D33 becomes "measure conversion by touchpoint count"** — §7.10
+gains four metrics (return visits, touchpoint overlap, time-to-engagement, **conversion by touchpoint
+count**), the last being the real experiment, and it must be recorded **from the first submission**.
+*(3) **One risk the model creates, stated in §7.14:** a trust sequence makes the **first** touchpoint
+load-bearing. A wrong or generic free report does not merely fail to convert — it **damages the
+sequence**, and everything after it is read by someone already given a reason to discount you. **So
+§7.10's "the benchmark must be real at launch, not mocked" is unchanged and now better justified: the
+first touchpoint is not a taster, it is the credibility position.**
 
 ---
 
@@ -1580,6 +1616,155 @@ argument.** A is also acceptable and costs little, since the fine-grained compar
 than assumed. **It protects contributors, not the asset.** In a category of five, a comparison shown to
 one of them still reveals the others, and that risk is unaffected by whether the data is licensable.
 
+### 7.13 Naming and scoring competitors is not a compliance question (D25/D31) ⚠
+
+**Sean's challenge, verbatim:** *"Why is it a compliance issue where I have scored a company based on
+my own hardwork and due diligence based on publically available information?"*
+
+**He is right, and the earlier framing was wrong.** I presented D31 as a compliance risk — *"scoring a
+business that never consented"* — which **imported a consent framework that does not apply.** The
+correction is a distinction I collapsed:
+
+| | What it is | What governs it |
+|---|---|---|
+| **Personal data** | Information about an **identified or identifiable individual** (a human) | PDPA — consent, purpose, deletion |
+| **A business's competitive position** | A judgment about a **company**, derived from **public sources** | Accuracy, sourcing, fair comment — **not consent** |
+
+**A company is not a data subject.** KOI does not consent to being analysed, and its consent is not
+required — the same way Book 1 analyses it, and the same way every competitive report has always
+worked. **Sean's own published work already does exactly this** *(verified)*: Book 1 names **KOI, LiHo,
+Gong Cha, Tiger Sugar** with outlet counts, and the CaiCa deliverable rules on named rivals —
+*"S$3.50–5.50 | **Contested** — LiHO/KOI own it"*, *"S$4.50–8.50 | **Contested** — CHAGEE owns it."*
+**So this is not a new risk being taken on; it is the established practice of the work itself.**
+
+**"Consent" was the wrong word for three separate things**, and separating them dissolves the concern:
+
+1. **The submitter's consent** (§7.7) — real, and about *their own* data. **Unaffected by any of this.**
+2. **The competitor's consent** — **not required.** The material is public, the judgment is ours.
+3. **The contributor pool's protection** (§7.7.1's floor, cap, suppression) — real, and about
+   *contributors to our dataset*. **Also unaffected**, because nothing a competitor's public record
+   contains came from our contributors.
+
+**The two are genuinely independent, and that is the clean resolution:** naming a competitor is derived
+from **public sources** and consumes **no contributor data**, so it triggers **none** of §7.7.1's
+controls. The floor exists to protect *the pool*; naming a rival does not touch the pool.
+
+---
+
+#### What does remain — narrow, real, and proportionate
+
+**Not a compliance regime. Three practical duties:**
+
+| Duty | Why | Control |
+|---|---|---|
+| **Accuracy** | We are publishing a judgment about a named third party. If it is wrong, they can object — and the objection would be *justified* | §4.3 already requires every enriched claim to carry a source and a fetch timestamp. §4.1's validity gate prevents a block page being scored as a competitor |
+| **Right of correction** | A named business has no other recourse | The report states the method, sources and date, and offers a correction route. Cheap, and it is also a credibility signal |
+| **⚠ Sole proprietors and sole traders** | **The one genuine personal-data edge.** For a one-person business, the trading name may resolve to an **individual**. D3 targets home-based businesses — so this case is not hypothetical | Where a competitor is a sole proprietor, treat the *individual* as personal data: analyse the **business** (price, category, offer), never the **person** (name, photo, personal details) |
+
+**The third row is the honest residue of the original concern, and it is the opposite of a blocker:**
+it says analyse the business, not the human behind it. **That is a sentence of style guidance, not a
+consent flow.**
+
+**Why the correction matters beyond the spec:** the wrong framing would have produced a **materially
+weaker product** — an anonymous pool with no named comparisons, which is exactly the vague, low-signal
+output that fails to build credibility. **Naming a rival and ruling on the band is the specific,
+checkable claim that makes the report worth reading.** The compliance framing would have removed the
+sharpest thing in it.
+
+### 7.14 The toolkit is one touchpoint in a trust sequence (D32, D33 answered) ⚠
+
+**Sean's answer, verbatim:** *"I hope you can see that I am trying to apply positioning theory here to
+build trust and credibility with any potential customer. The more touch points they have with me, my
+free tools, my social media content, my books, the more they will engage and convert with me."*
+
+**This answers D32 and D33 together, and it corrects a mistake in how I framed both.** I treated the
+toolkit as a **direct-conversion instrument** and then measured it against a base rate for *buying
+advice* — 24% of micro-businesses, and falling. **That was the wrong yardstick.** The base rate is
+for *purchase intent*, and the toolkit is not the ask. **It is the first of several low-cost
+engagements that build the credibility the eventual ask depends on.**
+
+**The strategy is sequential trust-building, and it is textbook positioning** — the brand is built
+through accumulated exposure and demonstrated expertise, not through a single conversion event. The
+touchpoint stack already exists:
+
+| Touchpoint | Cost to the prospect | What it demonstrates |
+|---|---|---|
+| Social content | Free, low attention | Point of view |
+| **Free diagnostic** | **15 answers** | **Method: "they can actually assess me"** |
+| The books | Time to read | Depth, published credibility |
+| Paid engagement | Money | — the ask |
+
+**So the four-way identifiability limit (§7.12) becomes a sequencing map rather than a dead end.**
+The toolkit only has to do **one job**: convert a stranger into someone who has seen the method work
+on their own business. **It is not the closer, and measuring it as one was my error.**
+
+---
+
+#### Why this rescues D32
+
+**D32's problem was that the target segment has a 24%-and-falling propensity to buy advice.** Under the
+touchpoint model **that is the wrong question** — the toolkit is not asking them to buy. It is a
+zero-marginal-cost credibility deposit into a segment that will need the service **when** something
+changes (a new competitor, a lease decision, a stall in growth). **The 76% who would not buy advice
+today are not a failure state; they are a latent pool the touchpoint sequence keeps warm.**
+
+**This also makes the earlier evidence supportive rather than damning.** Micro firms have **no written
+plan (only ~1/3)**, **13% use external finance**, and **16% with no employees seek any advice.** That is
+exactly a population that has never been *shown* what structured thinking about their position does for
+them. **The ILO finding that willingness to pay rises from 23–65% before delivery to 53–100% after is
+the mechanism this strategy runs on** — and I had recorded it as an obstacle when it is actually the
+argument for the sequence.
+
+**Consequence for D32:** the toolkit stays aimed at **0–9-employee businesses.** The paid tier is
+whatever the sequence produces — **and the funnel's job is to reveal it, not to assume it.** That was
+the recommendation; this is now the *reason* for it.
+
+---
+
+#### Why this answers D33
+
+D33 asked whether to test cold acquisition, the referral artefact, or both. **The touchpoint model makes
+the question smaller, not bigger.**
+
+- **Every touchpoint is a referral substitute.** Hinge's 71%-ask-a-person figure measures how buyers
+  *find* firms; but its own other finding — **visible expertise drives 37.3% of referrals, more than
+  client relationships (23.1%) or social relationships (17.7%)** — says what makes a referral *work*.
+  **That is what content, the toolkit and the books are manufacturing.**
+- **So the toolkit's measurable job is engagement and repeat contact, not immediate conversion.** A
+  prospect who submits, reads, and comes back after the third piece of content **is the success
+  case** — and a funnel that only counts booked calls would score that prospect as a failure.
+
+**What must therefore be measured — the change this makes to §7.10:**
+
+| Added metric | Why |
+|---|---|
+| **Return visits / repeat contact** | The sequence is the strategy; a single visit cannot show it |
+| **Touchpoint overlap** (submitted + reads content, or + has the book) | Whether the sequence is compounding |
+| **Time from first touchpoint to engagement** | Sales cycles here are long by design, not by dysfunction |
+| **Conversion by touchpoint count** | Tests the actual hypothesis: does more exposure convert better? |
+
+**The last one is the real experiment.** D33's "test both channels" becomes **"measure conversion as a
+function of touchpoint count"** — which is cheaper to run and tests the strategy directly rather than
+proxying it.
+
+**And the honest limit stays:** with 300 submissions we can bound a rate; **we still cannot attribute a
+conversion to the toolkit vs the content vs the book.** For that, the touchpoint count is the variable —
+which is why it must be recorded from the first submission.
+
+---
+
+#### ⚠ The one risk this model creates
+
+**A trust sequence makes the *first* touchpoint's quality load-bearing.** If the free report is wrong or
+generic, it does not merely fail to convert — **it damages the sequence**, and the content and books
+that follow are read by someone who has already been given a reason to discount you. **The 51.9% of
+referred prospects who rule a firm out before talking (n=523) are the cautionary case:** the filter is
+applied early and cheaply.
+
+**So §7.10's instrument requirement is unchanged and now better justified:** the benchmark must be
+**real at launch**, not mocked. In a trust sequence the first touchpoint is not a taster — **it is the
+credibility position, and everything after it inherits that verdict.**
+
 ### 7.12 What the test can and cannot conclude (D29, quantified) ⚠
 
 **Sean's question was whether the toolkit test can be made conclusive. The answer is: it can be made
@@ -1685,6 +1870,14 @@ out before even talking to it. **A credible artefact is what survives that filte
 what a specific, evidence-based positioning report is.
 
 ---
+
+#### ⚠ Read §7.14 before concluding from this section
+
+**This section measures the toolkit as a direct-conversion instrument, and that is the wrong
+yardstick.** Sean's answer to D32/D33 establishes the toolkit as **one touchpoint in a sequential
+trust-building strategy** (§7.14). The base rate below is for *purchase intent*; the toolkit is not
+the ask. **So the low base rate is not a verdict on the strategy — it is a description of why the
+sequence exists.** The four-way identifiability limit becomes a **sequencing map**, not a dead end.
 
 #### What can honestly be claimed, given all of the above
 
@@ -1805,6 +1998,21 @@ threshold.
 | 5 | **Conversion** — they book or buy | booked calls ÷ submissions, then paid ÷ booked | **The failure mode named in §7.9: unqualified leads** |
 
 **Steps 2, 3 and 5 are the load-bearing ones.** Step 5 is Sean's challenge stated as a number.
+
+**⚠ Four metrics added by D33 (§7.14) — the funnel alone undercounts the strategy.** The toolkit is one
+touchpoint in a sequence, so a funnel that counts only conversion scores a returning prospect as a
+failure:
+
+| Added metric | What it shows |
+|---|---|
+| **Return visits / repeat contact** | The sequence is the strategy; one visit cannot show it |
+| **Touchpoint overlap** — submitted + reads content, + has the book | Whether the sequence compounds |
+| **Time from first touchpoint to engagement** | Long cycles are by design, not dysfunction |
+| **Conversion by touchpoint count** | **The real experiment** — does more exposure convert better? |
+
+**Record the touchpoint count from the FIRST submission**, or the last metric cannot be reconstructed
+later. **Honest limit unchanged:** 300 submissions bounds a rate; attribution between toolkit, content
+and book needs the touchpoint count as the variable.
 
 **Pre-registered decision rule (to be fixed before launch, then not moved):**
 
@@ -2349,9 +2557,9 @@ purchasing decision.
 | **D24** | **DECIDED — yes.** | **Sean: yes.** Public-source material (listings, reviews, registries) may enter the dataset. §4.6's `observed` tier governs how it is labelled |
 | **D28** | **DECIDED — yes, but lightly.** | **Sean: yes but lightly.** Verification must not become a conversion barrier. §7.7.1's cheap structural control (require the form be completed properly before a report issues) is the shape |
 | **D27** | **DEFERRED — future.** | **Sean: "certification is for the future."** Not a now-item; revisit if the paid tier targets SMEs |
-| **D31** | **Do we score NAMED competitors, and show that to the submitter?** | **OPEN — new, created by the D25 scan.** The scan now finds and scores real competitors (§4.6). Scoring a business that never consented, cannot see the result and cannot dispute it is a **different product with a different risk profile** — and printing "Competitor X scores 43" is a claim about a third party. **Options:** score competitors only as an anonymous pool (submitter sees their own position vs the pool, never a named rival's score); or score named rivals and show it. Recommended: **anonymous pool only** — it delivers the same insight ("you're below your category's median") and creates no third-party exposure. Needs Sean's call because it changes what the report can say |
-| **D32** | **⚠ Is D3's target segment the right COMMERCIAL target?** | **OPEN — raised by evidence, not by preference.** D3 targets *weak-positioning SMEs* and §7.2 routes 0–9-employee firms to Bookend B (S$800–1,200). **But this is the segment least likely to buy any external advice (24%, falling from 31%) and least likely to buy it from a consultant (32% vs 47%/51%).** The positioning symptom is most visible exactly where purchasing propensity is lowest. **A segment can be the best audience and the worst customer at once.** Options: keep 0–9 (best pain fit, worst buyer) · shift to 10–49 (better buyer, positioning pain less acute) · **both, with the toolkit qualifying which one converts** — the funnel already distinguishes them. Recommended: **keep the toolkit aimed at 0–9 but stop assuming it is the paying tier**; use the test to find where the paid tier actually sits |
-| **D33** | **Test the toolkit as cold acquisition, as a referral artefact, or both?** | **OPEN — but the evidence says both.** Referrals supply ~two-thirds of new business even for high-growth firms, and 71% of buyers ask a person first vs 11% searching. **A cold-only test of a referral-led market will return a misleading null** — it would look like evidence against the toolkit when the real finding is the wrong channel was measured. Recommended: **test both and report separately** — cold acquisition as one funnel, referral credibility as another. Cheap to do, and it removes the single largest way this test could misdiagnose the business |
+| **D31** | **Do we score NAMED competitors, and show that to the submitter?** | **DECIDED — yes, name and score freely. Same answer as D25.** **Sean: *"Why is it a compliance issue where I have scored a company based on my own hardwork and due diligence based on publically available information?"* — and he is right; my framing was wrong.** A **company is not a data subject** and does not consent to being analysed. §7.13 records the correction: **"consent" was the wrong word** for three separate things (the submitter's consent — real, unaffected; the competitor's consent — **not required**; the contributor pool's protection — real, unaffected). Sean's own published work already does this *(verified)*: Book 1 names KOI, LiHo, Gong Cha, Tiger Sugar with outlet counts; the CaiCa deliverable rules *"Contested — CHAᴳEE owns it."* **Not a new risk — the established practice of the work.** Two narrow duties remain: accuracy (already §4.3's sourced claims) and correction route. **⚠ One genuine edge: sole proprietors** — where a rival is one person, analyse the **business**, never the **person** |
+| **D32** | **Is D3's target segment the right COMMERCIAL target?** | **DECIDED — keep 0–9, and my framing of the problem was wrong.** **Sean: *"I am trying to apply positioning theory here to build trust and credibility with any potential customer. The more touch points they have with me — my free tools, my social media content, my books — the more they will engage and convert with me."*** I had measured the toolkit against a **purchase-intent base rate** (24%, falling). **Wrong yardstick — the toolkit is not the ask; it is the first of several low-cost engagements that build the credibility the ask depends on.** The 76% who would not buy advice today are not a failure state but a **latent pool the sequence keeps warm**. This reframes the §7.12 evidence as **supportive**: micro firms have no written plan (~1/3), 13% use external finance — a population that has never been *shown* what structured thinking about their position does. **The ILO finding that willingness to pay rises from 23–65% before delivery to 53–100% after is the mechanism this strategy runs on.** Toolkit stays aimed at **0–9**; the paid tier is whatever the sequence produces, and the funnel's job is to reveal it, not assume it (§7.14) |
+| **D33** | **Test the toolkit as cold acquisition, as a referral artefact, or both?** | **DECIDED — neither, exactly: measure conversion by TOUCHPOINT COUNT.** Sean's answer to D32 makes this question smaller. **Every touchpoint is a referral substitute**, and Hinge's own finding — **visible expertise drives 37.3% of referrals, more than client relationships (23.1%)** — describes exactly what the content, toolkit and books manufacture. **So the toolkit's job is engagement and repeat contact, not immediate conversion**, and a funnel counting only booked calls would score a returning prospect as a failure. **§7.10 gains four metrics: return visits · touchpoint overlap · time from first touch to engagement · conversion by touchpoint count.** The last is the real experiment — it tests the strategy directly instead of proxying it. **Honest limit: at 300 submissions we can bound a rate but still cannot attribute a conversion to toolkit vs content vs book — which is exactly why touchpoint count must be recorded from submission one** |
 | **D29** | **Should the toolkit itself be the test?** You asked why not make the diagnostic the test of the whole business model. | **DECIDED — yes, and my earlier phasing was wrong.** Nothing else uses the benchmark, so "build it later" meant building it for nobody. The toolkit is the instrument, not the subject (§7.10). **NOW QUANTIFIED (§7.12):** pre-commit to **300 completed submissions** before any go/no-go (3/N gives "<1%" at 300; ±5pp precision needs 384); **peeking can inflate a 5% error rate to 26.1%**, so sample and rule must be fixed before launch; and **a null cannot distinguish a bad tool from a bad segment from a bad price from no distribution** — that four-way limit is the honest boundary of the test. **Money received is the only valid primary outcome** — intention converts to behaviour only about half the time |
 
 ---
