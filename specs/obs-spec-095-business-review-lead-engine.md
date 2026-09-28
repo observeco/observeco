@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v10 — research consent reframed as a trade; benchmark model adopted.
-**Date:** 2026-09-23 (v8/v9: 2026-09-27–28; v10: 2026-09-28)
+**Status:** DRAFT v11 — benchmark model researched against practice; competitive constraint recorded.
+**Date:** 2026-09-23 (v8–v10: 2026-09-27–28; v11: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -39,8 +39,24 @@ the finding that de-risks the whole premise: **the calibration corpus IS the see
 businesses across 27 categories, 11 of which already clear a minimum cell of 5 — so the reciprocity
 engine can work from day one without a cold-start problem. It also records the **Singapore-specific
 re-identification risk** that no generic k-anonymity floor addresses: our contributors are each
-other's direct competitors. §7.2 now carries the benchmark as a leading funnel metric and §8.2
+each other's direct competitors. §7.2 now carries the benchmark as a leading funnel metric and §8.2
 tracks it. **D24 (enrichment provenance) and D25 (minimum cell size) are new and open.**
+**v11 change — the design is checked against how comparable firms actually operate.** Research is in
+`specs/calibration/RESEARCH-benchmark-model.md`, with a verification status on every claim
+(VERIFIED / REPORTED / BLOCKED) because subagent output is a self-report. What changed:
+**D25's shape is corroborated** — Payscale publishes a floor of *"five or more"* **plus** geographic
+broadening, so both the floor and the widen-not-suppress step are real practice, not inference; but
+its 5 protects employees who are not each other's competitors, so ours needs to be higher.
+**A third path is added to §7.7's two-box retention table** — Levels.fyi licenses records carrying
+employer/title/level/location under contractual anti-re-identification terms, which is *not*
+anonymisation and is what appears to work at scale (D26). **§7.9 is new**: Singapore already gives
+free business advisory to ~25,000 SMEs a year through 10 SME Centres and adds diagnostic toolkits
+in 2027 — so "free" is not the differentiator — and EDG funds consultancy only through TR 43 / SS 680
+certified consultants (D27). Turnstile is confirmed and a **cost ceiling distinct from the rate
+limit** is required (reCAPTCHA fails open; ~$0.0024 per submission so volume, not unit cost, is the
+risk). The §3.10 floor now **states the minimum threshold to the user** rather than only enforcing
+it. **EU AI Act Art 50 is a wording check, not a feature** — and its human-review exemption creates a
+tension with §8.1 that stays consistent only outside the EU.
 
 ---
 
@@ -271,7 +287,18 @@ Consequences, worst first:
 
 **Captcha — Cloudflare Turnstile.** Free for unlimited challenge volume; Managed mode is free for
 everyone; 20 widgets per account; does **not** require the Cloudflare CDN, so it works on a Vercel
-site. You already run Cloudflare for DNS, so there is no new vendor.
+site. You already run Cloudflare for DNS, so there is no new vendor. **Research supports this
+choice** (`RESEARCH-benchmark-model.md` §5.3): Turnstile is free and unlimited, whereas reCAPTCHA
+**fails open** — it can return a static high score when over quota, silently — and **visible**
+captchas cost up to ~40% of form conversions.
+
+**A cost ceiling is needed ON TOP of the rate limit, and it is a different control.** The captcha
+stops a bot; a rate limit stops a burst; neither stops **slow volume from many addresses** or
+**adversarial drain** (services exist specifically to burn a competitor's API credits). Raw model
+cost is trivial — roughly **$0.0024 per submission, ~$24 per 10,000 assessments** — so the risk is
+not unit cost, it is unbounded volume: a documented case saw **one user trigger a $700 overnight
+bill**. **Add a hard spend ceiling that halts the queue**, distinct from the per-IP rate limit and
+consistent with the send-budget rule (§11).
 
 **⚠ But the captcha does not protect the thing you want protected, on its own.**
 
@@ -352,7 +379,13 @@ scoring nothing.
 | City + category for enrichment | All | Absent |
 
 **The floor refuses; it does not score low.** Below the floor the scorer returns
-`REFUSED_INPUT_QUALITY` naming the missing signals (§5.4). Reporting a low score for an
+`REFUSED_INPUT_QUALITY` naming the missing signals (§5.4).
+
+**State the minimum to the user, do not only enforce it silently.** The comparable tools that
+handle thin data well render an explicit `No Data` and say why (Google PageSpeed: *"does not have
+sufficient real-world speed data"*); the ones that handle it badly show nothing. Guidance emails
+should name **the minimum answer threshold** rather than simply reporting that the submission fell
+short — it converts a refusal into an instruction, which is what template C is for (D12). Reporting a low score for an
 unanswerable submission would attribute the submitter's brevity to their business — the same
 defect class as scoring the form instead of the business, which §10.7 records as the single most
 repeated error in calibration.
@@ -1013,7 +1046,27 @@ genuinely anonymised rather than merely pseudonymised. That distinction is the w
 |---|---|---|
 | Identifiable (name/email/company attached) | Personal data | **No** |
 | Pseudonymised (keyed back via an ID we hold) | **Still personal data** — re-identifiable | **No** |
+| Pseudonymous, licensed, quasi-identifiers disclosed | Still personal data — **but the working commercial case** | **Contract-bound, not anonymised** |
 | Truly anonymised (no key exists, no re-identification path) | Not personal data | **Yes** |
+
+**⚠ A third path exists and it is what actually works at scale — read it before assuming the binary.**
+Levels.fyi publishes records carrying **employer, title, level and location**, stripped only of name,
+email and contact details, and warns contributors plainly to *"read what we can and cannot promise
+about anonymity."* It then **licenses that data for a fee**, which is what funds the free service
+(verified, `RESEARCH-benchmark-model.md` §1). **That is not anonymisation** — it is pseudonymous data
+with disclosed quasi-identifiers, held together by **contractual anti-re-identification terms** on
+the recipient rather than by a technical guarantee.
+
+**Why this matters here:** §7.7's binary (identifiable → delete; anonymised → keep) implied the only
+compliant dataset is a fully anonymised one. The market suggests otherwise — the commercially viable
+asset is **contract-bound pseudonymous data**, which stays personal data and therefore stays subject
+to deletion and withdrawal. **Choosing this path is a decision, not a default**, and it trades
+stronger utility for weaker privacy claims. **It also means k-anonymity is not the only control
+available** — contract is the second.
+
+**D25's floor is affected either way:** a floor of 5 protects *employees*, who are not each other's
+competitors. Ours are. **Payscale's published floor of five — verified — is the right shape and the
+wrong number for a small, concentrated market.**
 
 So the deletion job must **strip and aggregate before it deletes**, and the aggregate must be built
 so it cannot be re-associated. "We deleted the contact but kept the row" is not anonymisation.
@@ -1085,6 +1138,45 @@ A boundary that keeps §7.7 lawful and the offer credible:
 - **May not** be used: as competitor intelligence in another client's paid engagement;
   in marketing copy in a way that identifies the submitter or their business; or to train a model
   without purpose 3 disclosed as including that.
+
+### 7.9 The competitive fact this design has to answer for ⚠
+
+**Singapore already provides the free thing, at state scale** (`RESEARCH-benchmark-model.md` §7):
+
+- **10 SME Centres give free business advisory to ~25,000 SMEs a year.**
+- **From 2027 they add "diagnostic toolkits" for capability gaps** — i.e. the state is moving into
+  free business diagnostics.
+- **EDG subsidises up to 50% of eligible costs, including third-party consultancy fees — but
+  management-consultancy costs require a TR 43 / SS 680 certified consultant.**
+
+**This is the sharpest strategic constraint on the free report, and it was absent from every prior
+version of this spec.** A free positioning report competes, in the target SME segment, with a free
+government advisory service that already reaches 25,000 SMEs a year.
+
+**Three consequences, and the third is the most actionable:**
+
+1. **"Free" is not the differentiator.** The alternative is free *and* state-backed. The free report
+   must be differentiated on what a SME Centre cannot do — **a specific, evidence-based, comparative
+   positioning judgment on their business**, not general advisory.
+2. **The 2027 diagnostic toolkits are a deadline, not a footnote.** If the state ships capability-gap
+   diagnostics in 2027, the window for this asset as a novelty closes.
+3. **EDG's certification requirement is simultaneously a barrier and an unlock.** Management-
+   consultancy fees are only subsidisable through a **TR 43 / SS 680 certified** consultant. That is
+   a checkable gate — and it converts a S$500 price objection into an eligible, part-funded one. **If
+   the paid tier is aimed at SMEs, certification is a commercial lever, not a compliance detail.**
+
+**A second structural finding, on channel.** Referral dominates professional-services buying —
+**71%** of buyers find a firm by asking someone against **11%** via online search, and **41%** of new
+clients at benchmarked consultancies come from referrals while only **12%** of firms have a referral
+strategy. **The free report is therefore not the primary acquisition channel. It is a credibility
+artefact that a referral-led sale converts on** — which is consistent with its stated job
+("qualification, not volume", §1) and is a reason not to over-invest in driving traffic to it.
+
+**And the benchmark gap is now measurable:** Bain's free diagnostic is benchmarked on **250+
+companies** and its paid assessment on **~1,200**; BCG claims **10,000+**. **Ours is 120.** That is
+not a reason not to ship — §7.7.1's 11 categories can carry a real comparison today — but it is the
+number that decides when the *positioning* claim "we maintain SG industry datasets" starts to be
+true rather than aspirational.
 
 ---
 
@@ -1596,7 +1688,9 @@ purchasing decision.
 | **D18** | **The name** (D1) | KIV |
 | **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED and REVISED — a TRADE, not a favour.** The consent unlocks the **benchmark** (their position vs the pool); the scored report is never gated. Unticked default, own consent row. The withheld benefit must be the **collective good**, never the service — if declining degrades the report the consent is coerced and void. Claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor |
 | **D24** | **Enrichment provenance** (§7.7) — may enriched *public-source* material enter the dataset? | **OPEN — Sean to decide.** A dataset built only from consented form answers is thin; the enriched material is the valuable part. If enrichment cannot be used, the "SG industry datasets" claim rests on self-reported text alone. Needs a determination on whether aggregated public-source business data is personal data at all |
-| **D25** | **Minimum cell size, SG-adjusted** (§7.7.1) | **OPEN — Sean to decide.** A generic floor of 5 is defensible for a national salary curve and may NOT be for a 5-outlier SG category where contributors are each other's direct competitors. Candidate: floor of 8, plus widen-rather-than-suppress. **11 of 27 categories already clear 5; 4 clear 8** |
+| **D25** | **Minimum cell size, SG-adjusted** (§7.7.1) | **OPEN — Sean to decide. Now grounded in a verified practice.** Payscale publishes its own rule: *"limiting the base number of employers in any analysis to five or more"* **plus** *"pulling back from a local search to a broader geographic area"* — so both the floor and the widen-not-suppress step are corroborated. **But Payscale's 5 protects employees, who are not each other's competitors; ours are.** Recommended: **floor of 8 with widen-not-suppress**, because the re-identification risk here is strictly higher. Cost: **11 of 27 categories clear 5; only 4 clear 8** |
+| **D26** | **The third path — contract-bound pseudonymous licensing** (§7.7) | **OPEN — Sean to decide.** Levels.fyi licenses records carrying employer/title/level/location, stripped of contact details, under contractual anti-re-identification terms — **not anonymisation, and it works at scale.** Adopting it yields a far stronger dataset than anonymisation-only, at the cost of a weaker privacy claim and continued PDPA deletion/withdrawal exposure. **This is the single decision that most determines whether the dataset is an asset or a curiosity** |
+| **D27** | **EDG certification (TR 43 / SS 680)** (§7.9) | **OPEN — Sean to decide.** Management-consultancy fees are EDG-subsidisable **only** through a certified consultant. Certification converts the S$500 price objection into a part-funded eligible cost, and is a checkable gate. Worth a cost/benefit look if the paid tier targets SMEs |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
 | **D22** | **Rubric promotion** (§5.3.1) — which file is live | **DONE — `rubric.json` promoted 0.9.0 → 1.8.0 via `promote_rubric.py`**, which validates six conditions and refuses on any failure. Step 4 (the scorer must refuse a non-promoted rubric) remains a build item |
