@@ -2870,3 +2870,86 @@ table.compare .generic { color: var(--yellow); }
    deliberate (WCAG) — the colour shift still confirms the target is live.
    Ceiling 3: no hover on touch by design; the coarse-pointer block above
    already gives those users 48px targets instead. */
+
+/* ============================================================
+   MARK REVEALS — 28 Sep 2026
+   Why: replacing the two clip-art pictograms with designed glyphs
+   removed their motion outright (the old ones re-drove / re-drew on
+   infinite loops). That killed the "too kiddish" axis but left these
+   two marks as the ONLY static objects in an otherwise animated
+   card grid — an inconsistency introduced by the mark swap.
+
+   Fix: give each mark the reveal every sibling object already has —
+   plays ONCE, settles on its final state. Same idiom as `fw-draw`
+   (the flywheel ring): finite duration, `both` fill, no iteration.
+
+   Durations are finite on purpose. Re-using the deleted `*-loop`
+   keyframes was not an option: their 100% frame existed only to
+   restart the cycle, so a one-shot version would have snapped the
+   mark back off.
+
+   Dasharray values are MEASURED path lengths (getTotalLength), not
+   guesses — volvo 53 / pickup 94 / arrow 26 / SUV 97 — rounded up so
+   no stroke is left partly undrawn.
+
+   ponytail: all of it lives inside `no-preference`, so a
+   reduced-motion user gets no dasharray at all and the marks render
+   fully drawn and static. Putting the dasharray outside this block
+   would leave them permanently invisible for those users.
+   Ceiling: one reveal per mark, no hover/replay — if a future pass
+   wants a mark to re-draw on hover, that is a new treatment, not a
+   tweak to this one.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  /* Volvo — the shield-check draws itself, then holds. */
+  .volvo-mark.in-view .volvo-shield-check {
+    stroke-dasharray: 56;
+    stroke-dashoffset: 56;
+    animation: volvo-mark-draw 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  }
+
+  /* Great Wall Motors — the repositioning plays in sequence: the past
+     state lands, the arrow carries the eye across, the SUV arrives.
+     Targets are the inner <path>s, never the <g>s: each <g> carries a
+     `transform` ATTRIBUTE for positioning, and a CSS transform on the
+     <g> would override that attribute and collapse the composition. */
+  .suv.in-view .reposition-from path {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: gwm-from-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  }
+  .suv.in-view .reposition-arrow path {
+    stroke-dasharray: 32;
+    stroke-dashoffset: 32;
+    animation: gwm-arrow-in 1s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+  }
+  .suv.in-view .reposition-to path {
+    stroke-dasharray: 104;
+    stroke-dashoffset: 104;
+    animation: gwm-to-in 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.75s both;
+  }
+}
+
+@keyframes volvo-mark-draw {
+  0%   { stroke-dashoffset: 56; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes gwm-from-in {
+  0%   { stroke-dashoffset: 100; opacity: 0; }
+  100% { stroke-dashoffset: 0;   opacity: 1; }
+}
+
+/* Settles at opacity 1 on the path — which MULTIPLIES with the <g>'s own
+   resting opacity of 0.55, giving the intended effective 0.55. Ending the
+   keyframe at 0.55 as well would have compounded to 0.30 and made the arrow
+   dimmer than the base stylesheet ever drew it. */
+@keyframes gwm-arrow-in {
+  0%   { stroke-dashoffset: 32; opacity: 0; }
+  100% { stroke-dashoffset: 0;  opacity: 1; }
+}
+
+@keyframes gwm-to-in {
+  0%   { stroke-dashoffset: 104; opacity: 0; }
+  100% { stroke-dashoffset: 0;   opacity: 1; }
+}

@@ -50,6 +50,24 @@ CHECKS = [
     ("GONE: the 13-path literal cartoon SUV is deleted",
      "!!document.querySelector('.suv .suv-body') || !!document.querySelector('.suv .suv-wheel')",
      lambda v: v is False),
+    # ── Both marks must still REVEAL (once), not sit dead static. When the
+    #    clip-art was replaced, the motion went with it and these became the
+    #    only static objects in an animated grid. A future pass stripping the
+    #    reveal must fail here. ──
+    ("Volvo mark has a reveal animation (not static)",
+     "getComputedStyle(document.querySelector('.volvo-shield-check')).animationName",
+     lambda v: v == "volvo-mark-draw"),
+    ("GWM mark reveals in sequence (3 staggered animations)",
+     "[...document.querySelectorAll('.suv path')].map(p => getComputedStyle(p).animationName)"
+     ".filter(n => n && n !== 'none').sort().join(',')",
+     lambda v: v == "gwm-arrow-in,gwm-from-in,gwm-to-in,gwm-to-in,gwm-to-in"),
+    ("GWM arrow settles MUTED (0.55), not full strength",
+     "getComputedStyle(document.querySelector('.suv .reposition-arrow')).opacity",
+     lambda v: abs(_num(v) - 0.55) < 0.01),
+    ("Neither mark reveal loops (both finite)",
+     "[...document.querySelectorAll('.volvo-shield-check, .suv path')]"
+     ".map(p => getComputedStyle(p).animationIterationCount).join('|')",
+     lambda v: "infinite" not in v),
     ("Avis gauge needle held its swept angle (not snapped back)",
      "getComputedStyle(document.querySelector('.gauge-needle')).transform",
      lambda v: "matrix" in v),
