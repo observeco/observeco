@@ -30,7 +30,9 @@ def comp(vals, renorm=True):
     for d, v in vals.items():
         if v is None:
             continue
-        acc += W[d] * ((v - 1) / (COUNTS[d] - 1)) * 100.0
+        # v/count matches run_jev.py:365; the old (v-1)/(n-1) was the bug this
+        # script was written to find, and it then carried the same bug itself
+        acc += W[d] * (v / COUNTS[d]) * 100.0
         tot += W[d]
     if renorm:
         return acc / tot if tot else None

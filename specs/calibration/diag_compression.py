@@ -49,7 +49,8 @@ def comp(vals):
     for d, v in vals.items():
         if v is None:
             continue
-        acc += W[d] * ((v - 1) / (COUNTS[d] - 1)) * 100.0
+        # v/count matches run_jev.py:365; (v-1)/(n-1) was the retracted mismatch
+        acc += W[d] * (v / COUNTS[d]) * 100.0
         tot += W[d]
     return acc / tot if tot else None
 
@@ -114,7 +115,8 @@ for d in W:
     mg = sum(a for a, _ in pairs) / len(pairs)
     hg = sum(b for _, b in pairs) / len(pairs)
     gap = hg - mg
-    pts = W[d] * gap / (COUNTS[d] - 1)
+    # /count matches run_jev.py:365; /(count-1) was the retracted mismatch
+    pts = W[d] * gap / COUNTS[d]
     tot_pts += pts
     print("  %-6s %5d %8.2f %8.2f %+9.2f %+10.2f"
           % (ABBR[d], len(pairs), mg, hg, gap, pts))
@@ -136,5 +138,5 @@ print("  THE COMPRESSION IS %s" % (
                     sum(a for a, _ in [(r['mdims'][d], r['hdims'][d]) for r in TARGET
                                        if r['mdims'][d] is not None and r['hdims'][d] is not None]) /
                     max(1, len([r for r in TARGET if r['mdims'][d] is not None
-                                and r['hdims'][d] is not None]))) / (COUNTS[d] - 1))
+                                and r['hdims'][d] is not None]))) / COUNTS[d])
         for d in W) > 0.6 * abs(tot_pts) else "SPREAD across dimensions"))

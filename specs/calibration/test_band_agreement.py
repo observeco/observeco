@@ -45,7 +45,18 @@ def num(x):
 
 
 def band_of(score):
-    # bands are stored as [name, min, max] lists, not dicts
+    """MUST round first, exactly as run_jev.py:365-366 does.
+
+    The band table is integer-only and the ranges do NOT tile the number line: there are gaps
+    at 37-38, 57-58 and 76-77. A fractional composite such as 37.037 or 57.407 matches no band,
+    and the old fallback returned "?" -- silently dropping the case from the agreement count.
+    Rounding is what the harness does, so rounding is what the measurement must do.
+
+    Bands are stored as [name, min, max] lists, not dicts.
+    """
+    if score is None:
+        return None
+    score = round(score)
     for b in BANDS:
         if isinstance(b, (list, tuple)) and len(b) >= 3:
             nm, lo, hi = b[0], b[1], b[2]
@@ -55,7 +66,9 @@ def band_of(score):
             continue
         if lo is not None and hi is not None and lo <= score <= hi:
             return nm
-    return "?"
+    # clamp to the extreme band rather than dropping the case
+    first = BANDS[0]
+    return first[0] if score < first[1] else BANDS[-1][0]
 
 
 def composite(vals):
@@ -67,7 +80,8 @@ def composite(vals):
             continue
         w = W.get(d, 0)
         n = COUNTS[d]
-        acc += w * ((v - 1) / (n - 1)) * 100.0
+        # v/n matches run_jev.py:365; (v-1)/(n-1) was the retracted mismatch
+        acc += w * (v / n) * 100.0
         tot_w += w
     return (acc / tot_w) if tot_w else None
 

@@ -141,9 +141,27 @@ belongs in the template layer.
 
 ### 3.4 `privacy.html` is a launch prerequisite
 
-Current text states: *"We don't run servers that store your data"*, *"There are no ObserveCo
-servers that process or store your data"*, *"We never share your data with third parties. No
-third-party data processors."* All three become false on launch. Blocking, not cleanup.
+**⚠ The served file is `website/privacy.html`, not the root `privacy.html`.** `vercel.json` sets
+`outputDirectory: "website"` — verified — and two near-duplicate copies exist (199 vs 205 lines,
+different content). **Edits must be made to `website/privacy.html` or they will not reach the
+live site.**
+
+Four statements in the served copy become false on launch, and the **meta description is one of
+them** — so the claim Google renders first is affected, not just body copy:
+
+| Location | Text | Why it becomes false |
+|---|---|---|
+| `<meta name="description">` | *"Local-first AI agent monitoring — your data never leaves your machine."* | Form submissions leave the submitter's machine into Supabase |
+| §1 "the short version" | *"We don't run servers that store your data. We don't have user accounts."* | The CRM stores contacts; leads are records |
+| §1 | *"We don't sell your data because we never see it."* | We see the submitted data |
+| §2.2 | *"This data never leaves your machine"* | False for the form path |
+| § | *"We never share your data with third parties. No third-party data processors."* | Supabase, Resend, Brevo, and the model vendor are all processors (§3.3) |
+
+**This is blocking, not cleanup**, and it is a *rewrite for two regimes* rather than an edit: the
+page currently describes a local-only product truthfully, and must describe a product with both a
+local path and a hosted data path. **The root `privacy.html` is not served and should be deleted
+or reduced to a pointer**, or the next person will edit the wrong file — as this spec's own
+finding came close to doing.
 
 ### 3.5 The phone number — a different regime
 
@@ -275,9 +293,10 @@ Needed: a measured **input-quality gate** — the minimum signal that must be pr
 score is produced — and a rule that a below-floor submission receives template C instead of a
 score. This is the input-side twin of the calibration gate, and it is currently unspecified.
 
-It is one of the gates in §5.4, deliberately, because a bad-input report and a category-trap
-report are the same class of failure: the system must be able to decline to score rather than
-produce a confident number.
+It is one of the two refusals in §5.4, deliberately, because a bad-input report and an
+unassessable business are the same class of failure: the system must be able to decline to score
+rather than produce a confident number. (It is **not** a score gate — those were removed; see
+§5.4. A low score is a finding, not a refusal.)
 
 ### 3.9 Untrusted input must be contained
 
@@ -291,7 +310,7 @@ Two vectors specific to this form:
   **data in a structured field**, never as instructions, and the enriched web text (§4) is
   equally untrusted.
 
-### 3.10 B2 working note — the input-quality floor (open, D12)
+### 3.10 The input-quality floor (D12, accepted)
 
 A report cannot always be produced, and refusing to score is a **feature**, not a failure: a
 confident score on unusable input is worse than an honest request for more detail.
@@ -333,6 +352,13 @@ honest: we refuse only when we genuinely have nothing, never merely because a fi
    sentence is not merely low-quality — **it is the finding.** The report should say so: *"You
    haven't defined what makes you different — that is the first thing to fix."* That is a real
    report, not a refusal, and it makes the "we don't have one" checkbox load-bearing.
+
+   **⚠ Trap 1 and trap 3 route in OPPOSITE directions, and the distinction is deliberate.** A
+   *placeholder* (`asdf`, `test`) is treated as **absent** — there is nothing to analyse, so it
+   goes to guidance. A *generic but genuine* sentence is treated as **present** — it is a real
+   answer that contains no position, so it is a reportable finding. The test is not fluency or
+   length; it is whether a human wrote something they meant. A rule that merged the two would
+   either refuse scorable submissions or score empty ones.
 
 **Decision (D12, accepted): an inadequate submission receives a polite guidance email, offered
 without limit.**
@@ -464,8 +490,10 @@ is best-effort behind a hard timeout. A failed fetch degrades depth, never exist
 
 ### 5.1 The six dimensions
 
-**Calibrated** (§10.7). The previous five-dimension set was 0.9.0 and two of its dimensions no
-longer exist under those names.
+**Calibrated** (§10.7). The previous set described here was **older than 0.9.0** — it named
+`Market headroom / Competitive pressure / Position availability / Defensibility / Demand reach`,
+whereas the live 0.9.0 file already carried `competitive_room` and `mental_advantage`. The change
+is therefore both **two dimensions** and **the weights**.
 
 | # | Dimension | Weight | What it measures |
 |---|---|---|---|
@@ -479,11 +507,12 @@ longer exist under those names.
 **Positioning carries 70%** (relative strength + mental advantage + defensibility), because the
 brief is *viability through differentiation*, not industry attractiveness.
 
-**Note the reversal from 0.9.0.** `competitive pressure` treated a crowded market as *bad*;
-`competitive_room` scores a **fragmented** market as **favourable**. The earlier polarity was
-backwards. `position availability` — whether a word was unclaimed — is replaced by
+**Two reversals to note.** `competitive pressure` treated a crowded market as *bad*;
+`competitive_room` scores a **fragmented** market as **favourable** — the earlier polarity was
+backwards. And `position availability` — whether a word was unclaimed — is replaced by
 `relative_strength`, which measures the position actually **held against the derived competitive
-set**, because an unclaimed word nobody buys is not a position.
+set**, because an unclaimed word nobody buys is not a position. This one is not a renaming: a
+business can occupy an unclaimed word and still lose to a rival that owns the buying situation.
 
 **Weights are no longer hypotheses.** D6 said they would be refined by calibration; that
 refinement is done (§10.7), against 120 human-graded businesses across 27 categories.
@@ -562,12 +591,39 @@ a reported "scale compression" defect turned out to be a replication error using
 **Bands (calibrated):** Fragile 5–37 · Contested 38–57 · Viable, conditional 58–76 · Strong
 77–100. Band edges are derived from level-means, so they do **not** move when weights move.
 
-**The compensating-flaw concern is real, and is handled by disclosure rather than gating.** A
-weighted sum does let strength in one dimension mask a flaw in another. Calibration established
-that gating is the wrong remedy, because refusing the report loses the finding entirely. The
-remedy is that the report **always names the weakest dimension and the single largest weighted
-shortfall** — the "one gate" of §5.5, computed as a predicate, never written by a model. A
+> **⚠ The band table is INTEGER and does not tile the number line.** There are **gaps at
+> 37–38, 57–58 and 76–77**. A composite must be **rounded to an integer before band lookup**.
+> This is not cosmetic: a *second implementation* that banded the unrounded float had 11 of 114
+> cases fall into a gap, match no band, and hit the fallback — which returned the **extreme**
+> band. A case at 37.037 read **"Strong"** instead of Fragile: **a three-band error, from a
+> rounding omission.** Three measurement scripts carried exactly this bug.
+>
+> **The rounding is part of the contract, not an implementation detail** — a production scorer
+> that bands a float will disagree with the harness on ~10% of cases, all of them near a
+> boundary. Either state rounding as required, or make the table contiguous (e.g. `5–37.99`,
+> `38–57.99`, …). **The second option is safer for a second implementation** and is recommended
+> as a small follow-up: an implementation cannot forget to round what does not need rounding.
+> The harness itself already guards against the general case by *raising* on an unmapped
+> composite (`run_jev.py:150`) rather than returning a fallback, which is why the defect
+> surfaced only in the re-implementations.
+
+**The compensating-flaw concern is real, and the calibrated weights made it WORSE.**
+Measured (F11, verified against the live file's own weights): a submission scoring **0 on Market
+headroom** — a textbook category trap — **and maximum on every other dimension** reaches
+**85/100, band "Strong"** under the original weights. **Under the calibrated weights it reaches
+90/100.** Dropping market headroom's weight to 10% *reduced the penalty for failing it*, exactly
+in the dimension a category trap shows up in.
+
+Calibration established that gating is the wrong remedy — refusing the report loses the finding
+entirely. **The remedy is disclosure: the report always names the weakest dimension and the
+single largest weighted shortfall**, computed as a predicate (§5.5), never written by a model. A
 compensating flaw is therefore *stated in the verdict* rather than averaged away or suppressed.
+
+**This is the most important open question in the scoring design.** Disclosure is a weaker
+control than a gate, and it is chosen here on the evidence that the gate refused 8 live
+businesses out of 10 firings. If disclosure proves insufficient in the canary, the alternative
+is **not** to restore the gates but to make the shortfall **structural** — e.g. a category trap
+caps the reported band — which is a display decision, not a scoring one.
 
 **Weight concentration is the second control.** Positioning carries 70% across three correlated
 dimensions, so a submission cannot reach the top band on market attractiveness alone.
@@ -1187,9 +1243,22 @@ disagreement was converted into *adjacent* disagreement: cells at gap 0 fell 319
 gap ≥2 fell **41 → 23**. **A wrong band misleads a client; an adjacent one does not.** Since the
 client sees a band, disputes are the measure matching the product.
 
-**Product-level result:** band agreement **100% within one band, 0% two or more off** (n=114), and
-**85% exact on the target segment** — businesses the grader placed in the lower two bands, which is
-the segment D3 names as the lead magnet's audience.
+**Product-level result.** Both composites computed on the harness formula (§5.4):
+
+| | n | same band | within one band | two or more off |
+|---|---|---|---|---|
+| all cases | 114 | **69.3%** | **100.0%** | **0.0%** |
+| target segment (grader's band = Fragile or Contested) | 60 | **85.0%** | **100.0%** | **0.0%** |
+
+**"Exact" here means an exact BAND match, not an exact dimension score** — the bar D1 set is band
+agreement, and dimension-exactness is explicitly not the bar (R5, §10.6). Dimension-cell
+exactness on the target segment is 68.3% (205/300 cells) and is reported for completeness only.
+
+**The target segment is where the instrument is strongest** (85.0% same-band versus 69.3% overall),
+which is the right way round: that is the segment D3 names as the lead magnet's audience.
+
+**No case is two or more bands out, on either the full set or the target segment.** If the
+instrument errs, it errs by one band — which is the failure mode a band-first design tolerates.
 
 **What calibration did NOT establish.**
 - **Agreement, not accuracy.** The reference labels are one human's; correlated error between the
@@ -1197,15 +1266,31 @@ the segment D3 names as the lead magnet's audience.
 - **A second grader is absent**, so calibrated-*to* versus calibrated-*against* is unresolved.
 - **The weakest region is the top end** — a −7.7 mean composite offset for businesses the grader
   rated 80+, which is off-target but real.
-- **The lowest band is a thin cell**; the extreme figures there rest on n=3.
-- **One defect I reported and then retracted.** I reported the composite as "compressed" (+13 at
-  the low end, −4.5 at the high end). It was **my own replication bug**: I used
-  `(level−1)/(count−1)` where the harness uses `level/count`, so I was comparing a floor-0 scale
-  against a floor-20 one. Verified against the harness's stored output and retracted. It is
-  recorded here because the corrected figures are what §5.4's formula note protects against.
+- **The lowest band is a thin cell.** The grader placed only **7** of 114 cases in Fragile (the
+  instrument placed 8), so any figure quoted for that band rests on seven cases, not thirty.
+- **One defect I reported and then retracted — and it propagated.** I reported the composite as
+  "compressed" (+13 at the low end, −4.5 at the high end). It was **my own replication bug**: I
+  used `(level−1)/(count−1)` where the harness uses `level/count`, so I was comparing a floor-0
+  scale against a floor-20 one. Verified against the harness's stored output and retracted.
 
-> **The single lesson worth carrying:** any re-implementation of a harness calculation must be
-> verified against the harness's own stored output **before** any finding is built on it. One
+  **The same bug had already spread into the band measurement.** Six analysis scripts carried it,
+  so they compared *my* harness composite against *the grader's* min-max composite — two different
+  scales. That is where the claim "26 of the 34 Fragile businesses are promoted to Contested"
+  came from, and it was **false**: on one consistent formula it is **1 of 7**, and the direction of
+  error reverses — the instrument is **harsher** than the grader on 23 cases and more generous on
+  12. The promotion problem does not exist.
+
+  **This is recorded because it reached a decision.** The false promotion finding was one of the
+  facts used to argue that the weak end needed re-targeting, and D3 was answered partly on that
+  basis. The conclusion (target weak-positioning SMEs) still stands on the band table above — the
+  target segment is 100% within one band — but it stands on **corrected** numbers, not on the
+  retracted one.
+
+> **The single lesson worth carrying, now twice-earned:** any re-implementation of a harness
+> calculation must be verified against the harness's own stored output **before** any finding is
+> built on it — and when the bug is found, **every script that shared the formula is a suspect
+> finding, not just the one that found it.** The first retraction covered the composite; the
+> second, six scripts and a claim that had already reached a decision. One
 > cheap call would have caught the retracted finding above.
 
 ---
@@ -1253,8 +1338,8 @@ Measured, not assumed.
 | F7 | `licenses_anon_select` is `USING (true)` | Do not clone this RLS policy (§7.4) |
 | F8 | `maxDuration: 30` on `api/**/*.js` | Forces the async queue (§6.8) |
 | F9 | **Zero `<form>` elements** across the live site | First-ever data collection |
-| F10 | `content-spec-v1.md` promised a free "positioning snapshot"; grep finds it on **no** live page | This feature is that promise, re-scoped |
-| F11 | A category trap (0 on Market headroom) reaches **85/100 — "Strong"** under the original weights | **The composite must be gated** (§5.4) |
+| F10 | `content-spec-v1.md` promised *"Get your free positioning snapshot"* — caption *"5 slides. Your market, mini competitive scan. No obligation."* — and it appears on **no live page** (verified: no `.html` in `website/` contains it) | This feature is that promise, re-scoped. **⚠ The promised artifact is 5 SLIDES; 095 builds a web report.** The hero and pricing page of `content-spec-v1.md` have never been published, so no promise is currently broken — but either 095 must emit a slide-shaped artifact or the promise must be reworded before those sections go live |
+| F11 | A category trap (0 on Market headroom) reaches **85/100 — "Strong"** under the original weights — **re-verified, and 90/100 under the calibrated weights** | ~~The composite must be gated~~ **Gates removed; the concern is now handled by disclosure and is the open question in §5.4** |
 
 **Backend note:** the pricing research in §6.1 ran on the keyless fallback because the configured
 ddgs backend failed that call. Re-verify figures against the providers' own pages before a

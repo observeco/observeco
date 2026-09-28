@@ -4,14 +4,24 @@ D1: band agreement is the bar (>=90% within one band, <=5% two or more off).
 D2: band + narrative, no number shown.
 D3: the target market is WEAK-POSITIONING SMEs.
 
-D3 is what makes this measurement necessary. My composite is compressed and the error is
-LARGEST at the weak end (+13.0 for Fragile businesses). A +13 uplift on a business whose
-true composite is 25 puts it at 38 -- which CROSSES the Fragile/Contested boundary at 37.
-So the compression may be systematically promoting fragile businesses out of the fragile
-band, in exactly the segment the product targets.
-
-The overall 96.6% is not the number that matters. The number that matters is band agreement
+The overall figure is not the number that matters; the number that matters is band agreement
 WITHIN THE TARGET SEGMENT. Measure it separately.
+
+RETRACTED PREMISE (kept so the history is not re-litigated). This script was written because a
+"composite compression" of +13.0 for Fragile businesses appeared to be promoting weak
+businesses out of the Fragile band. THAT FINDING WAS FALSE -- it came from a formula mismatch.
+This script and four others computed Sean's composite with (v-1)/(n-1); run_jev.py:365 computes
+level/count. Comparing the two produced a spurious gap.
+
+Corrected (specs/calibration/band_agreement_harness.py, both sides on the harness formula):
+  - band agreement, all        100.0% within one band, 0.0% two-or-more off (n=114)
+  - target segment             100.0% within one band, 0.0% two-or-more off (n=60)
+  - Fragile moved OUT of Fragile: 1 of 7  (NOT 26 of 34)
+  - direction of band error: MORE generous 12, HARSHER 23 -- the promotion problem does not
+    exist; if anything the instrument errs harsh.
+
+USE band_agreement_harness.py for band figures. The composite() below is kept for
+continuity but its Sean-side scaling does not match the harness.
 """
 import csv
 import json
@@ -43,15 +53,21 @@ def num(x):
 
 
 def band_of(s):
+    """MUST round first, exactly as run_jev.py:365-366 does.
+
+    The band table is INTEGER-only: [5,37], [38,57], [58,76], [77,100]. Those ranges do not
+    tile the number line -- there are gaps at 37-38, 57-58 and 76-77. A fractional composite
+    such as 37.037 falls INTO A GAP, matches no band, and lands on the fallback below, which
+    returns the EXTREME band ("Strong"). That is a three-band error produced by a rounding
+    omission, and it is why this function previously disagreed with band_agreement_harness.py.
+    """
+    s = round(s)
     for nm, lo, hi in BAND_LIST:
         if lo <= s <= hi:
             return nm
-    # scores can fall outside the declared band ranges (the lowest band starts at 5).
-    # Clamp to the nearest band rather than returning '?' -- an unbanded score would
-    # silently drop cases from the agreement count.
-    if s < min(b[1] for b in BAND_LIST):
-        return min(BAND_LIST, key=lambda b: b[1])[0]
-    return max(BAND_LIST, key=lambda b: b[2])[0]
+    if s < BAND_LIST[0][1]:
+        return BAND_LIST[0][0]
+    return BAND_LIST[-1][0]
 
 
 def comp(vals):
@@ -59,7 +75,8 @@ def comp(vals):
     for d, v in vals.items():
         if v is None:
             continue
-        acc += W[d] * ((v - 1) / (COUNTS[d] - 1)) * 100.0
+        # v/count matches run_jev.py:365; (v-1)/(n-1) was the retracted mismatch
+        acc += W[d] * (v / COUNTS[d]) * 100.0
         tot += W[d]
     return acc / tot if tot else None
 
@@ -73,6 +90,8 @@ for cid, e in idx["companies"].items():
     r = by.get(e["name"]) or {}
     his = {d: num(r.get("YOUR_" + ABBR[d])) for d in W}
     hc = comp(his)
+    if hc is not None:
+        hc = round(hc)
     if mine is None or hc is None:
         continue
     recs.append({"name": e["name"], "cat": e["cat"], "mine": mine, "his": hc,

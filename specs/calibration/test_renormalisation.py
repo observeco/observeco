@@ -56,7 +56,8 @@ def comp(vals, mode="renorm"):
         if v is None:
             continue
         n = COUNTS[d]
-        pts = ((v - 1) / (n - 1)) * 100.0
+        # v/n matches run_jev.py:365; (v-1)/(n-1) was the retracted mismatch
+        pts = (v / n) * 100.0
         acc += W[d] * pts
         tot += W[d]
     if mode == "renorm":
