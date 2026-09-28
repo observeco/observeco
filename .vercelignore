@@ -9,5 +9,44 @@ website/_diag_pw.sh
 website/content-spec-v1.md
 website/.DS_Store
 website/draft/.DS_Store
+
+# Repo-root dirs that are NOT the site. Vercel CLI uploads the whole project
+# (outputDirectory only selects what gets SERVED), so these rode along and
+# pushed the upload past the limit -> "Error: Upload aborted" on 28 Sep 2026.
+# content-writing/ was 6.0 GB of raw .mov reel recordings.
+# LEADING SLASH IS LOAD-BEARING: gitignore semantics match an unanchored
+# pattern at ANY depth, so a bare `references/` would also exclude
+# website/references/ (the live hosted book PDFs). Keep these root-anchored.
+/content-writing/
+/whitepapers/
+/specs/
+/tests/
+/test-plans/
+/plans/
+/mockups/
+/design/
+/docs/
+/logs/
+/patches/
+/migrations/
+/hooks/
+/cron/
+/issues/
+/references/
+/Formula/
+/mlruns/
+/scripts/
+/src/
+
+# /api/ is LIVE: serverless endpoints (stripe webhook, license validate,
+# telemetry) declared in vercel.json "functions". Never exclude it.
+# /node_modules/ at root is the api/ project's own install — leave it to the
+# platform's normal dependency handling rather than blanket-excluding.
+
+# Raw media is never a site asset (site images live in website/assets/img/).
+**/*.mov
+**/*.mp4
+**/*.m4a
+
 **/__pycache__/
 **/.DS_Store
