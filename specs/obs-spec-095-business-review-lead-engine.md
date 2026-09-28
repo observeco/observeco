@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v13 — confidentiality option space; sequencing corrected (D29).
-**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v13: 2026-09-28)
+**Status:** DRAFT v14 — D25–D31 decided; competitor scan promoted; staleness recorded.
+**Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v14: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -94,6 +94,39 @@ demand test cannot answer the demand question**, because the demand test would h
 comparison that is supposed to create the demand. **The toolkit is the instrument, not the subject,**
 with five measured funnel steps and decision rules pre-registered before launch. The honest limit is
 stated: a small N establishes whether the path exists, not its rate.
+**v14 change — Sean's five decisions, and one of them reverses a premise.**
+*(1) **D25 — the pool is built by WEB RESEARCH, not only the calibration corpus.** Sean: *"we should
+have exercised the web search protocol skill to find and score other competitors, just like what we
+did for our competitive analysis projects."* §4.4 had listed *"competitor set via search"* but as
+**best-effort enrichment behind a hard timeout**; §4.6 now makes it a **deliberate
+protocol-governed scan** (`web-search-scraping-protocol`: search → fetch → extract → escalate →
+grade), with §4.1's validity gate extended to every URL it touches — because the measured **60%
+silent-failure rate** (a block page returning as ordinary text) would otherwise hand Jev a
+Cloudflare challenge to score as a competitor's website.
+*(2) **D30 — the pre-flight gate (Sean's explicit condition).** *"It burns a lot of tokens so let's
+make sure before we run the analysis we assess the input quality first."* §3.11 fixes the ORDER:
+the deterministic quality check and categorisation fire on the **form answers alone, before a single
+search is issued.** The naive shape (scan → score → discover the input was unusable → refuse) burns
+the full research cost on a submission we will refuse anyway. **It reuses §3.10's existing floor, so
+it adds no new logic — only changes where it fires.** The trap it protects against is not the token
+cost but the **false confidence** of a comparison built on a category inferred from thin text.
+*(3) **D26 — Sean's objection is RIGHT and §7.11 records why.** *"I don't see how we can monetise this
+with credibility because accuracy due to time uncertainty is always a problem. I am ok with E or D."*
+A positioning dataset is not a financial one: a salary figure is *measured* at a time, but **a
+competitive position is a relationship that moves when any party moves** — so it decays from both
+ends, and **the submitter's half is not re-scannable at all.** Worse for monetisation: **if the
+competitor material is gathered from public sources by a repeatable protocol, the pool is
+reproducible by anyone** — a scrapeable dataset is not a proprietary asset. **What IS defensible is
+the rubric, the calibration (120 blind grades) and the scored judgments.** So D26 is largely moot
+for the *dataset* and live only for the *method*. **Recommendation revised to D as the posture with
+E's structure retained.** ⚠ **This also corrects v13's justification for the two-tier disclosure: it
+protects CONTRIBUTORS, not the asset.**
+*(4) **D24 — yes** (public-source material may enter the dataset; §4.6's `observed` tier governs
+labelling). **(5) D28 — yes but lightly** (verification must not become a conversion barrier).
+**(6) D27 — deferred to the future.**
+*(7) **D31 — NEW, created by the scan.** Scoring a named competitor that never consented, cannot see
+the result and cannot dispute it is a different product with a different risk profile. Recommended:
+**anonymous pool only** — same insight to the submitter, no third-party exposure.
 
 ---
 
@@ -394,6 +427,45 @@ Two vectors specific to this form:
   **data in a structured field**, never as instructions, and the enriched web text (§4) is
   equally untrusted.
 
+### 3.11 The pre-flight gate runs BEFORE the token spend (D30) ⚠
+
+Sean's condition on D25, verbatim: *"It burns a lot of tokens so let's make sure before we run the
+analysis we assess the input quality first, before deciding it is worth the token burn."*
+
+**This is a sequencing rule, and the naive implementation gets it backwards.** The obvious shape is
+*submit → run the competitor scan → score → discover the input was unusable → refuse.* That burns the
+full research cost on a submission we are going to refuse anyway. **The gate must fire on the form
+answers alone, before a single search is issued.**
+
+| Order | Step | Cost | Fails to |
+|---|---|---|---|
+| 1 | **Deterministic quality check** on the form answers (§3.10's slot table) | zero — code, not a model call | Refuse / guidance email. **No scan runs.** |
+| 2 | **Categorisation** — infer the category from the answers | one cheap model call | Ambiguous category → widen (§7.7.1) or refuse |
+| 3 | **Scan-cost estimate** — is this category scannable at all? | one search | Thin/ambiguous category → cap or skip the scan |
+| 4 | **The competitor scan** (§4.6) | **the token burn** | Best-effort; degrades depth, never existence |
+
+**Step 1 is the load-bearing one and it is already built.** §3.10's floor already decides whether every
+scored dimension has a form answer or a passing enrichment source. **Reusing it as the pre-flight gate
+means the gate adds no new logic — it changes only WHERE it fires.** That is the cheapest possible
+implementation and it is the whole point of Sean's rule.
+
+**Three consequences worth stating:**
+
+1. **A refused submission never triggers research.** The refusal is a *guidance* email naming the
+   minimum answer threshold (D12), which is a cheaper and more useful outcome than a report built on
+   guesses.
+2. **The scan is budgeted per submission, not per batch.** §8.5's cost ceiling applies here; a
+   single submission must not be able to consume an unbounded research budget. Cap pages fetched per
+   competitor and competitors per submission.
+3. **The check is deterministic.** Placeholder text, repetition inflation and the generic positioning
+   sentence (§3.10's three traps) are **not** judgment calls and must not be delegated to a model —
+   both because it is cheaper and because a model asked "is this good enough?" will be generous.
+
+**⚠ The trap this rule protects against is not the token cost — it is the false confidence.** A
+submission that fails the gate and is scanned anyway produces a report whose competitor comparison
+rests on a category inferred from thin text. **The waste is the smaller problem; the confident wrong
+answer is the larger one.**
+
 ### 3.10 The input-quality floor (D12, accepted)
 
 A report cannot always be produced, and refusing to score is a **feature**, not a failure: a
@@ -568,6 +640,48 @@ worse than a gap.
 | Competitor set via search | Relative strength |
 | Competitor messaging via fetch | Relative strength · Mental advantage |
 | Competitor size/tenure | Relative strength · Defensibility |
+
+### 4.6 The competitor scan is a scored pass, not best-effort (D25 direction) ⚠
+
+**Directed by Sean:** the same method the competitive-analysis projects use — *"exercise the web search
+protocol skill to find and score other competitors, just like what we did for our competitive analysis
+projects."* §4.4 already listed *"competitor set via search"*, but as **best-effort enrichment behind a
+hard timeout** (§4.5). **This escalates it: the competitor scan is a deliberate, protocol-governed pass,
+gated by §3.11.**
+
+**Protocol, not ad-hoc searching.** The scan follows `web-search-scraping-protocol`'s chain:
+`search → fetch → extract → escalate → grade`. Two of its rules are load-bearing here:
+
+- **The validity gate is mandatory** (§4.1) — measured at **60% silent failure** (6 of 10 mixed URLs
+  returned a Cloudflare challenge or CSS shell *as ordinary text, with no error*). A block page reaching
+  Jev means **Jev scores a Cloudflare challenge as though it were a competitor's website.** This is
+  already the highest-risk seam in the system and this section widens it — so the gate's coverage must
+  extend to every URL the scan touches, not only the enrichment URLs.
+- **The reward layer grades every capture** (§4.2) — grounding and coverage verdicts feed the *"what we
+  checked / what we couldn't check"* block. **A scan that silently captured nothing must say so**, not
+  produce an empty comparison that reads as "you have no competitors."
+
+**What the scan produces, and where each part goes:**
+
+| Captured | Becomes | Dimension |
+|---|---|---|
+| Named competitors in the category | The competitor set | Relative strength |
+| Their positioning / messaging | Differentiation contrast | Relative strength · Mental advantage |
+| Their size, tenure, footprint | Scale contrast | Defensibility |
+| Their pricing where public | Price-band context | Competitive room |
+| **Failed or blocked captures** | **The honest-limits block** | — |
+
+**Three rules that keep this honest:**
+
+1. **Observed ≠ claimed.** §7.3's split applies in full: scan-derived material is `observed`, form
+   answers are `claimed`, registries stay `not checked` (§4.3). **A competitor's marketing claim is
+   not evidence of their position** — it is evidence of what they say, which is a different and weaker
+   claim, and the report must not conflate them.
+2. **No score for a named competitor may be published to a third party.** The scan compares the
+   *submitter* to the pool. Printing "Competitor X scores 43" about a business that never consented,
+   never saw it and cannot dispute it is a different product with a different risk profile — see
+   **D31**.
+3. **The scan's result is perishable** (§7.11) and must carry a fetch timestamp.
 
 ### 4.5 Non-load-bearing by construction
 
@@ -1001,6 +1115,13 @@ A backup that lives in the same provider as the data is not a durability story.
 
 ### 7.7 The data is research, and that needs its own consent purpose
 
+**⚠ Revised by D25 — read §4.6 and §7.11 alongside this section.** The cold-start argument below
+assumed the calibration corpus was the *only* seed. **It is not: the competitor pool is built by the
+protocol-governed scan (§4.6), so the pool is not capped at 120 businesses and the day-one coverage
+figures in §7.7.1 are a floor, not a ceiling.** Two consequences: the *"11 of 27 categories"*
+measurement describes what can be compared **without a scan**; and the **reproducibility** of the scan
+weakens the dataset-as-asset argument (§7.11).
+
 Sean's point, and it is the more valuable half of the exchange: **a quality submission is not only
 a report request — it is primary research.** Self-reported price points, competitor counts and
 positioning sentences from SG SMEs are exactly the raw material behind the industry-dataset claim
@@ -1326,6 +1447,95 @@ licenses a claim of legal safety on cell size alone. The controls in §7.7.1 —
 secondary suppression, no absence flags — are what defend the position, and they are required under
 **every** option. **D26 chooses the ceiling; §7.7.1's controls are the floor, and they are not
 optional.**
+
+### 7.11 Nothing here stays true — the reliability problem (D26 direction) ⚠
+
+**Sean's objection, verbatim:** *"I think there are time and accuracy considerations to how long each
+company positioning and competitiveness data stays relevant. Frankly I don't see how we can monetise
+this with credibility because accuracy due to time uncertainty is always a problem."*
+
+**He is right, and the reason is structural rather than fixable.** A positioning dataset is not like a
+financial one. A salary figure is *measured* at a point in time and is a fact about that time. **A
+competitive position is not a quantity — it is a relationship, and relationships move when any party
+moves.** A competitor opening one outlet can change the submitter's relative strength without the
+submitter doing anything. **So the data does not merely age; it decays from both ends, and the second
+end is not ours.**
+
+| Data | Shelf life | Why | Refreshable by |
+|---|---|---|---|
+| **Category structure** | Long — years | Categories persist; entrants don't dissolve them | Nobody needs to |
+| **Competitor existence / count** | Medium — months | Openings and closures | **Re-scan** |
+| **Competitor positioning / messaging** | Medium — months | Copy changes with campaigns | **Re-scan** |
+| **Competitor footprint / scale** | Medium — quarters | Outlets, headcount | Re-scan |
+| **Price points** | **Short — weeks** | Promotions, inflation, repricing | Re-scan |
+| **The submitter's own position** | **Short — and only they know** | It moved, or their market moved | **A re-submission** |
+| **The submitter's mental-advantage claim** | Indeterminate | Brand recall decays on its own clock | Nothing cheap |
+
+**The asymmetry that makes this hard.** Everything scan-derived is **re-acquirable** — a re-scan is a
+cost, not a loss. But **the submitter's own position is not re-scannable at all**: only they can supply
+it, so the moment they drift, that record is stale **and cannot be fixed by us.** A database of
+positions where half the rows cannot be refreshed is not a durable asset.
+
+---
+
+#### The mitigation that actually exists
+
+**Sell the method, not the number.** The perishable parts are the *facts*; the durable part is the
+**frame** — the six dimensions, the rubric, and the judgment about what a defensible position looks
+like in a given category. **That does not decay, because it is not a claim about the world; it is a
+claim about how to read the world.** This is the same reason a consultancy's method outlives any
+particular engagement.
+
+**Make freshness explicit rather than implied.** Every figure carries its fetch date, and the report
+states its own currency (*"competitor data as of September 2026"*) instead of presenting a snapshot as
+a standing truth. **A dated figure is honest; an undated one is a liability.**
+
+**Offer paid refresh as the recurring product.** If the free report is a snapshot, the *refresh* is the
+subscription — and it is a genuinely recurring need, because the decay is perpetual. This turns the
+problem into the pricing model instead of an obstacle to it. *(Ties to §7.2's funnel: the comparison is
+given away; the refresh and the interpretation are what is sold.)*
+
+**Cap what we claim.** The *"we maintain SG industry datasets"* positioning line must not imply
+currency it cannot deliver. **"We maintain a method for reading competitive position, applied to current
+data"** is defensible; *"we maintain an up-to-date dataset"* is a promise that decays the day after it
+is made.
+
+---
+
+#### The consequence for D26 — and it points the same way Sean already chose
+
+**⚠ Monetising the data itself is weaker than it looks, for a reason that has nothing to do with
+time.** If the competitor material is gathered from public sources by a repeatable protocol (§4.6),
+then **the pool is reproducible by anyone with the same tools.** A scrapeable dataset is not a
+proprietary asset — the barrier to a competitor rebuilding it is a weekend of engineering, not a
+relationship.
+
+**What is actually defensible, in order:**
+
+| Asset | Defensible? | Why |
+|---|---|---|
+| **The rubric and calibration** | **Yes** | 120 blind human grades and a six-dimension construct — this took months and cannot be scraped |
+| **The scored judgments** | **Yes** | The mapping from evidence to a band is the product, and it is ours |
+| **Self-reported positioning by SG SMEs** | Partly | Not reproducible — but thin, and perishable (§7.11 above) |
+| **Public-sourced competitor data** | **No** | Reproducible by anyone; no moat |
+| **The accumulated history** | **Yes, eventually** | Only time creates it — and it is the one thing a re-scan cannot rebuild backwards |
+
+**This vindicates Sean's instinct and sharpens the choice.** His doubt was *"can we monetise this with
+credibility?"* — and the answer is **not as a data licence, and not as an up-to-date database.** The
+monetisable thing is the **method and its application**, which is exactly what the consulting engagement
+already sells. **So D26 is largely moot for the *dataset* and live only for the *method*:** the
+question is not how to protect a licensable asset, but **whether any public-sourced material may be
+stored at all** (§7.5 retention, D24's provenance question).
+
+**Recommendation, revised in light of this:** **D** (internal moat, never licensed) is the honest
+posture, with **E**'s consent-tiering retained as the structure so a future option stays open. **Not
+because D is attractive — because B's premise (a licensable dataset) does not survive the reproducibility
+argument.** A is also acceptable and costs little, since the fine-grained comparison lives in the
+*method*, not in the stored records.
+
+**What this does NOT change:** the two-tier disclosure (D25) still matters — but for a different reason
+than assumed. **It protects contributors, not the asset.** In a category of five, a comparison shown to
+one of them still reveals the others, and that risk is unaffected by whether the data is licensable.
 
 ### 7.8 Where the form data may and may not be used
 
@@ -1961,16 +2171,18 @@ purchasing decision.
 
 ## 13. Decisions required
 
-**Five things need your call. Here they are in plain English, with my recommendation for each.**
-The detail behind them is in the sections referenced; the jargon has been removed.
+**Six decisions this round — all ANSWERED, in plain English.** The detail behind each is in the section referenced.
 
 | # | The question, in plain English | What I recommend |
 |---|---|---|
-| **D25** | **How many businesses do we need before we'll show someone a comparison?** Show it too early and one business's numbers are basically visible to the others. But set the bar too high and almost no one gets a comparison at all — so there's nothing to trade. | **Two levels of comparison.** *"Emerging"* from 5 businesses, clearly labelled as thin. *"Standard"* from 8, with full detail. This keeps comparisons alive in **11 of your 27 categories** instead of only 4 |
-| **D26** | **How much do we protect the data we collect?** This decides whether the data becomes something you can sell one day, or stays private forever. | **Ask permission in stages** — so you don't have to decide now. See the five options in §7.7.2 |
-| **D24** | **Can we use information we gather publicly about a business (its Google listing, reviews, registries) in the dataset?** | **Yes** — otherwise the dataset is only the thin text people type into a form |
-| **D28** | **Do we make sure a submission comes from a real business?** Right now anyone can fill the form in with made-up answers free of charge. | **Yes, but lightly** — require the form to be completed properly before we issue a report |
-| **D27** | **Should we get the government certification that lets your clients claim a subsidy on your fees?** | **Worth costing** — management consulting fees are only subsidisable through a certified consultant |
+| **D25** | **DECIDED — the pool is built by web research, not just the calibration corpus** | **Sean:** *"we should have exercised the web search protocol skill to find and score other competitors, just like what we did for our competitive analysis projects."* The competitor set is now a **deliberate protocol-governed scan** (§4.6), not best-effort enrichment. **⚠ Gated by his condition: assess input quality FIRST, before the token burn** (§3.11). The two-tier disclosure (5 / 8) still stands — **but it now matters for the opposite reason than I originally gave: it protects the *contributors*, not the asset.** Because the scan is reproducible, there is no licensable asset (§7.11) |
+| **D30** | **The pre-flight gate — check input quality before spending tokens** | **DECIDED — Sean's condition.** The gate fires on the **form answers alone, before any scan is issued** (§3.11). Reuses §3.10's existing floor, so it adds no new logic — only changes *where* it fires. A refused submission never triggers research |
+| **D26** | **DECIDED — D or E. Not a data licence.** | **Sean:** *"I don't see how we can monetise this with credibility because accuracy due to time uncertainty is always an problem. I am ok with E or D."* **He is right, and §7.11 records why:** positions decay from both ends, the submitter's half is unrenewable, and **public-sourced data is reproducible by anyone — so there is no licensable asset to protect.** What is defensible is the **rubric, the calibration and the scored judgments**. Recommendation: **D as the posture, E's consent structure retained** so a future option stays open. A is also acceptable |
+| **D24** | **DECIDED — yes.** | **Sean: yes.** Public-source material (listings, reviews, registries) may enter the dataset. §4.6's `observed` tier governs how it is labelled |
+| **D28** | **DECIDED — yes, but lightly.** | **Sean: yes but lightly.** Verification must not become a conversion barrier. §7.7.1's cheap structural control (require the form be completed properly before a report issues) is the shape |
+| **D27** | **DEFERRED — future.** | **Sean: "certification is for the future."** Not a now-item; revisit if the paid tier targets SMEs |
+| **D31** | **Do we score NAMED competitors, and show that to the submitter?** | **OPEN — new, created by the D25 scan.** The scan now finds and scores real competitors (§4.6). Scoring a business that never consented, cannot see the result and cannot dispute it is a **different product with a different risk profile** — and printing "Competitor X scores 43" is a claim about a third party. **Options:** score competitors only as an anonymous pool (submitter sees their own position vs the pool, never a named rival's score); or score named rivals and show it. Recommended: **anonymous pool only** — it delivers the same insight ("you're below your category's median") and creates no third-party exposure. Needs Sean's call because it changes what the report can say |
+| **D29** | **Should the toolkit itself be the test?** You asked why not make the diagnostic the test of the whole business model. | **DECIDED — yes, and my earlier phasing was wrong.** Nothing else uses the benchmark, so "build it later" meant building it for nobody. The toolkit is the instrument, not the subject (§7.10) |
 
 ---
 
@@ -1987,12 +2199,6 @@ The detail behind them is in the sections referenced; the jargon has been remove
 | **D17** | **Nurture cadence and exit rules** (D3) | Defer — low priority, architecture supports it |
 | **D18** | **The name** (D1) | KIV |
 | **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED and REVISED — a TRADE, not a favour.** The consent unlocks the **benchmark** (their position vs the pool); the scored report is never gated. Unticked default, own consent row. The withheld benefit must be the **collective good**, never the service — if declining degrades the report the consent is coerced and void. Claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor |
-| **D24** | **Using public information about a business** (§7.7) | **OPEN.** When someone submits the form we also look up their business from public sources — their Google listing, reviews, registry records. **The question: can that public material go into the dataset too?** The form answers alone are thin; the looked-up material is where the value is. If it can't be used, the whole "we maintain Singapore industry datasets" claim rests on whatever people typed. *Also needs a legal view: is publicly-sourced business data personal data at all?* |
-| **D25** | **How many businesses before we show a comparison** (§7.7.1) | **OPEN — recommendation revised.** You need a minimum number before a comparison is safe to show. Set it at 8 and **19 of your 27 categories get nothing** — the whole trade dies. **Recommended: two levels.** *Emerging* from 5, shown but clearly labelled as thin coverage. *Standard* from 8, with full detail. Keeps comparisons alive in **11 categories** while holding the stricter line in the **4** that support it. **Two rules apply at either level:** no single business may be more than **25%** of any figure (otherwise a "5-business average" is really just the big one), and **if we ever show a total we must hide a second number too** — otherwise the hidden one can be worked out by subtraction. *Industry minimum is 5 (Mercer, Milliman, Empsight, Payscale, Pave, WorldatWork). Culture Amp's two-level approach is confirmed; its exact numbers are not* |
-| **D28** | **Making sure a submission is real** (§7.7.1) | **OPEN.** Our form is anonymous, so anyone can submit invented answers at no cost — and **no amount of statistics catches that.** Benchmark firms stop it with an identity check instead (they verify who is submitting). **The question: do we require a verified business identity, or stay anonymous?** A cheap middle option that firms use: **require the form to be completed properly before we issue a report** (APQC uses an 80% completion rule). *A real trade-off: verification cuts fake entries but also cuts sign-ups* |
-| **D26** | **How much we protect the data** (§7.7.2) | **OPEN — five options now, not two.** My earlier version wrongly offered a simple either/or. **The truth is that "anonymous" is a property of what you PUBLISH, not of what you store** — the same submission can sit identifiable in your database and be anonymous in every report you send out. So the question is **where to draw the line**, which gives a range. **A** keep it strictly anonymous — safest, but you can barely compare anything and can never sell it · **B** strip names but keep the business recognisable, and sell under contract (this is how Levels.fyi funds itself) — best possible asset, but **a one-way door** · **C** publish who took part (Mercer, APQC do this) — **reject, wrong segment** · **D** keep it private forever as your own edge — simplest, but the data never earns · **E** ask permission in stages — the report always; research use opted into; **selling it as a separate permission later**. **Recommended: E.** It's the only one that keeps B available, so you don't have to decide now. **A, D and E can be changed later; B and C cannot** |
-| **D29** | **Sequencing — the toolkit IS the test** (§7.10) | **ACCEPTED — Sean's challenge, and the earlier phasing was wrong.** §7.7.1 had advised proving consulting demand first and building the benchmark second. **Nothing else in the system consumes the benchmark** — the toolkit is its only consumer — so "build it later" meant building something no one was waiting for. **And the risk was backwards:** the benchmark is the *passing* part (§10.6 canary), while "do the people who receive it ever buy?" is the unproven part, and **a benchmark built after the demand test cannot answer the demand question** — the demand test would have run without the comparison that is supposed to create the demand. **The toolkit is the instrument, not the subject.** Five measured funnel steps with decision rules pre-registered before launch (§7.10); honest limit stated — a small N can establish whether the path exists, not its rate |
-| **D27** | **Getting certified so clients can claim a subsidy** (§7.9) | **OPEN.** The government's EDG scheme subsidises management consulting fees — **but only if the consultant is certified** (TR 43 / SS 680). Being certified turns *"S$500 is too expensive"* into *"most of it is claimable."* Worth costing if your paid tier targets SMEs |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
 | **D22** | **Rubric promotion** (§5.3.1) — which file is live | **DONE — `rubric.json` promoted 0.9.0 → 1.8.0 via `promote_rubric.py`**, which validates six conditions and refuses on any failure. Step 4 (the scorer must refuse a non-promoted rubric) remains a build item |
