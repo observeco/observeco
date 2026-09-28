@@ -226,11 +226,26 @@ D/E.
 dataset's growth rate"* and *"the asset accumulating."* **After D26 (D/E) and §7.11 the dataset is not
 the commercial asset — the method is.** The metric survives as **feature health**, not asset growth.
 *(4) **§10.6's calibration figures had no uncertainty — the spec failed to apply its own §7.12
-reasoning.** Added Wilson 95% intervals: gross error 0% **[0-3.3%]** (clears the ≤5% bar); band
-agreement 100% **[96.7-100%]** (clears ≥90%); **dimension disputes 2.8% [0.9-7.5%] — the interval
-reaches past the ≤5% bar**; target-segment 85.0% **[73.9-91.9%]** on n=60. **So two bars clear on the
-interval and one clears only on the point estimate.** Cheap fix recorded: grade more cases blind to
-reach ~n=300, where the dispute interval clears.
+reasoning.** Added Wilson 95% intervals. **⚠ And then I got the first version of this fix WRONG in the
+same way: I computed the dispute interval over cases (n=114) when the metric counts dimension CELLS
+(n=464).** Corrected, **the dispute bar clears at both ends [1.6-4.7%]** — and the correction is
+recorded in §10.6 rather than quietly amended, because it is the **third time this session** a
+denominator error has produced a false finding (§10.7 records two earlier ones).
+**The correction exposed something the aggregate was hiding:** **`defensibility` fails the ≤5% bar on
+its own at 7.0% [3.6-13.1%]**, and all 8 of its disputes sit in five categories of **large established
+brands** (electronics, furniture, bubble-tea, kopitiam, fast-food), splitting into two coherent
+sub-patterns — **big-box retail I undervalue** (Best Denki, Gain City: me 2 vs him 4) and **global/F&B
+brands I overvalue** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup: me 3-4 vs him 1-2).
+**Consistent with the instrument reading brand recognition as a barrier where Sean reads structural
+cost to a challenger.** This is a construct disagreement on large brands, not random error.
+**⚠ More sample would NOT fix it** — extra cases would measure the same disagreement more precisely.
+**⚠ And the corpus is EXHAUSTED: all 120 businesses are already graded; `inputs-v2` and `inputs-v3`
+are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
+first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
+availability of material.**
+*(4b) **`measure_alignment.py` asserts a retired bar.** It still prints *"exact >=75%"* and reports
+**FAIL**, but **D20 retired dimension exactness** in favour of band agreement. The script is testing a
+criterion the spec no longer holds — either retire the target in the script or label it historical.
 *(5) **Two sections titled "input quality floor"** (§3.8 and §3.10) — §3.8 was the earlier title.
 Marked superseded.
 *(6) **A literal text duplication in §7.6** (*"A backup that lives / A backup that lives in the same
@@ -2378,9 +2393,56 @@ honestly be claimed:
 |---|---|---|---|
 | Gross band error (two or more off) | 0% | **0% – 3.3%** | ✅ **Clears the ≤5% bar** — the interval sits under it |
 | Band agreement (within one band) | 100% | **96.7% – 100%** | ✅ clears ≥90% |
-| Dimension disputes (≥2 levels) | 2.8% | **0.9% – 7.5%** | ⚠ **the interval reaches past the ≤5% bar** — the point estimate passes, the uncertainty does not |
-| Same band, all cases | 69.3% | 60.3% – 77.0% | reported for completeness, not a bar |
-| Same band, target segment | 85.0% | 73.9% – 91.9% | **n=60 — a further 60 cases could move this ~±9pp** |
+| Dimension disputes (≥2 levels) — **over 464 cells** | 2.8% | **1.6% – 4.7%** | ✅ **clears the ≤5% bar at BOTH ends** |
+| Same band, target segment | 85.0% | 73.9% – 91.9% | n=60 — reported for completeness |
+
+**⚠ A denominator error in the first version of this table, corrected here.** The earlier version
+computed the dispute interval over **cases (n=114)** when the metric counts **dimension cells
+(n=464)** — the same class of error §10.7 already records twice. **Corrected, the dispute bar passes
+on the interval, not just the point estimate.**
+
+**But the aggregate hides the real finding, and this is the one that matters:**
+
+| Dimension | Disputes (≥2) | 95% CI | |
+|---|---|---|---|
+| `relative_strength` | 0.9% | 0.2% – 4.8% | ✅ |
+| `mental_advantage` | 3.5% | 1.4% – 8.6% | ⚠ interval crosses 5% |
+| **`defensibility`** | **7.0%** | **3.6% – 13.1%** | ⚠⚠ **above the 5% bar on its own** |
+| `market_headroom` | 0.0% | 0.0% – 49.0% | **n=4 — mostly n/a by design, unmeasurable** |
+| `demand_reach` | 0.0% | 0.0% – 3.2% | ✅ |
+
+**⚠⚠ `defensibility` fails the bar on its own, and it is not noise — it is concentrated.** All **8**
+disputes sit in five categories, every one of them a **large, established brand**:
+
+| Category | n | Businesses |
+|---|---|---|
+| electronics | 2 | Best Denki, Gain City |
+| furniture | 2 | IKEA, Scanteak |
+| bubble-tea | 2 | Gong Cha, Each-A-Cup |
+| kopitiam | 1 | Toast Box |
+| fast-food | 1 | Burger King |
+
+**And the direction splits into two coherent sub-patterns:**
+
+| Sub-pattern | Instrument vs Sean | Reading |
+|---|---|---|
+| **Big-box retail** (Best Denki, Gain City) | I read **2**, he reads **4** | **I undervalue an established retail network** — physical footprint and tenure that a challenger would find expensive |
+| **Big global/F&B brands** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup) | I read **3–4**, he reads **1–2** | **I overvalue brand familiarity** where he judges the position genuinely erodible |
+
+**This is a construct disagreement on large brands, not random error.** §5.4's `defensibility` is
+defined as *the challenger's cost*; both sub-patterns are consistent with the instrument reading
+**brand recognition** as a barrier when Sean is reading **structural cost to a challenger**.
+
+**⚠ The critical consequence for sample size: more businesses would NOT fix this.** Extra cases would
+measure the same disagreement more precisely. **The fix is to re-read these eight cases against §5.4's
+definition and decide — per case — whether the instrument or the definition is wrong.** That is a
+half-day of hand-reading, not a corpus expansion.
+
+**⚠ And the corpus is exhausted: all 120 businesses in `inputs-v4` are already graded (120 rows in
+`sean-regrade-raw.csv`, zero ungraded).** `inputs-v2` and `inputs-v3` are **subsets** by company name,
+not new businesses. **So "reaching n=300" requires collecting ~180 NEW businesses first** — research
+work, not a grading session. **The earlier advice to "grade more to reach 300" was wrong on two
+counts: the denominator, and the availability of material.**
 
 **Three consequences, all of which belong in the launch decision:**
 
@@ -2397,8 +2459,15 @@ honestly be claimed:
 N cannot resolve a rate, and §10.6's table then reports rates from n=114 without intervals. The
 numbers are honest; **the presentation was more certain than the measurement.**
 
-**Dimension-exact agreement is explicitly NOT the bar.** It sits at 56.5%, and requiring it would
-hold the product to a granularity a five-point human-judged scale does not support. **The client
+**Dimension-exact agreement is explicitly NOT the bar.** It sits at 56.5% — **and its interval is
+51.9%–60.9%, so it is a long way from 75% at either end.** `measure_alignment.py` still prints
+*"target >=75%"* and reports **FAIL** against it. **That target was retired by D20** — dimension
+exactness was replaced by band agreement — so **the script is asserting a bar the spec no longer
+holds.** Either retire the target in the script or label it historical; leaving it means every
+alignment run shows a FAIL that does not correspond to any live criterion.
+
+**The band-agreement replacement holds regardless:** requiring dimension exactness would hold the
+product to a granularity a five-point human-judged scale does not support. **The client
 sees a band and a narrative, never a number (§5.8)** — so band agreement is the measure that
 matches what can actually be wrong from the client's side. This supersedes the earlier "every
 dimension within ±1 level", which was never met and was replaced by decision D20.
@@ -2673,7 +2742,8 @@ purchasing decision.
 | **D17** | **Nurture cadence and exit rules** (D3) | Defer — low priority, architecture supports it |
 | **D18** | **The name** (D1) | KIV |
 | **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED and REVISED — a TRADE, not a favour.** The consent unlocks the **benchmark** (their position vs the pool); the scored report is never gated. Unticked default, own consent row. The withheld benefit must be the **collective good**, never the service — if declining degrades the report the consent is coerced and void. Claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor |
-| **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
+| **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at **56.5% [51.9–60.9%]** and is not achievable on a 5-point human-judged scale). **⚠ `measure_alignment.py` still asserts the retired ≥75% exact bar and prints FAIL against it — either retire the target in the script or label it historical** |
+| **D35** | **`defensibility` fails its bar on large brands — instrument or definition?** (§10.6) | **OPEN — the one substantive issue the uncertainty audit exposed.** DEF disputes are **7.0% [3.6–13.1%]**, above the ≤5% bar, and **all 8 sit in five categories of large established brands**, splitting into two coherent directions: **big-box retail I undervalue** (Best Denki, Gain City — me 2 vs him 4: physical footprint and tenure a challenger would find expensive) and **global/F&B brands I overvalue** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup — me 3–4 vs him 1–2). §5.4 defines DEF as **the challenger's cost**; both directions are consistent with the instrument reading **brand recognition** where Sean reads **structural cost to a challenger**. **More sample would not fix this** — it would measure the same disagreement more precisely. **The fix is hand-reading these 8 against §5.4's definition and deciding per case whether the instrument or the definition is wrong** (half a day, not a corpus expansion). A second independent corpus has already flagged `defensibility` twice (C6 Bonefirm), which argues this is systematic |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
 | **D22** | **Rubric promotion** (§5.3.1) — which file is live | **DONE — `rubric.json` promoted 0.9.0 → 1.8.0 via `promote_rubric.py`**, which validates six conditions and refuses on any failure. Step 4 (the scorer must refuse a non-promoted rubric) remains a build item |
 | **D23** | **Canary restoration** (§10.8) | **DONE — 6 of 6 present and baselined.** Fixtures authored from the six source engagement analyses; `run_canary.py` runs them. Result: 6 of 6 within one band, 4 of 6 exact, 0 gross errors. **Caveat: AUTHORED, not client-captured — the expected vectors are an assistant mapping, not a recorded client label. A blind regrade by Sean would make them a real gold set** |
