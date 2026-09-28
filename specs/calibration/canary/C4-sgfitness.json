@@ -1,0 +1,105 @@
+{
+  "_meta": {
+    "case": "C4-sgfitness",
+    "canary": true,
+    "source_document": "~/SGFitness/competitive-analysis/SGFitness_Competitive_Analysis_Summary.md + SGFitness_Competitive_Analysis_Comprehensive.md (2026-09-11)",
+    "authored": "AUTHORED from the engagement analysis, not captured from a client intake form. No raw intake form exists for this engagement. Form fields are reconstructed from statements in the source document; the derived competitive set and the expected conclusion are taken from it directly. The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions - they are not a recorded client label. The BAND, not the dimension vector, is the bar (spec 10.6).",
+    "expected_conclusion": "White space identified in a specific demographic (spec 10.1)",
+    "notes": "Saturated at every price tier. Top owned by Virgin Active / Pure Fitness / Fitness First (S$178-400+/mo); bottom owned by ActiveSG (29 gyms, S$2.50 entry) and the 24/7 value rung; the middle died - True Fitness wound up 10 Sep 2026 with S$69M+ net liabilities. White space: a contract-free, visibly clean, community gym - 'the gym that treats you like a person, not a contract'. Evidence base: 6,519 verified Google reviews across 78 places / 13 brands.",
+    "pre_launch_caveat": "PRE-LAUNCH CASE. This is a venture concept, not a trading business, so its conclusion ('white space identified in a specific demographic') is a statement about the MARKET, not about a position held. A band cannot express that conclusion: the band is Fragile because the business holds nothing, while the finding the engagement actually reached lives in competitive_room. Consequence for the canary: for this case the band is a weak signal and a failure here does NOT mean Jev missed the white space. Read it together with the competitive_room dimension. Flagged, not hidden.",
+    "known_sensitivity": "competitive_room 4 is the load-bearing dimension; market_headroom 3 is the second."
+  },
+  "form": {
+    "business_name": "A new fitness and gym venture",
+    "website": "",
+    "role": "Founder",
+    "company_size_band": "1-10",
+    "city": "Singapore",
+    "category": "Fitness and gym services in Singapore - full-facility gym membership, aimed at the mid-market rather than the premium or the value floor.",
+    "positioning_sentence": "The gym that treats you like a person, not a contract - month-to-month, visibly clean, community-based.",
+    "differentiator": "We will not lock anyone into a contract. Month-to-month, no joining fee, cancel any time, with a published refund policy and no commission-driven sales floor. We will make cleanliness inspectable - posted daily cleaning logs, an air-quality display, sanitised mats - rather than claiming it. Our staff are measured on member satisfaction, not on signups. The collapse of True Fitness created a pool of members who have been burned by prepayment and hard selling; our model is built for exactly them.",
+    "undercut_on": "Scale and facilities. The premium chains have more equipment, more clubs and more classes than we will, and ActiveSG undercuts everyone on price at S$2.50 a session. We cannot outspend either end of the market.",
+    "your_price_point": "Mid-market, below the S$178-400 premium full-facility tier and above the S$30 ActiveSG rung.",
+    "their_price_point": "ActiveSG is S$2.50 per entry and S$30 a month; the premium chains are S$178-400+ on 12-24 month contracts.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Virgin Active",
+    "Pure Fitness",
+    "Fitness First",
+    "ActiveSG",
+    "Anytime Fitness"
+  ],
+  "customer_description": "Singapore gym-goers who want a clean, no-pressure, month-to-month gym - especially the members displaced by the True Fitness collapse at Great World, Velocity, AMK, Tampines, Millenia and Funan, and members who resent contract and cancellation traps.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from the SG gym category: brand footprint, published pricing tiers, and the review-evidenced pain structure across 6,519 verified reviews.",
+    "tier_0_default": {
+      "members": [
+        "not exercising",
+        "home workouts and running"
+      ],
+      "why": "Most people who do not join a gym are not shopping for one."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "ActiveSG (29 gyms, S$2.50 per entry, S$30/month)",
+        "community centre gyms"
+      ],
+      "price_floor": "S$2.50 per entry undercuts every commercial gym in the market.",
+      "why": "Public gyms set the value floor and cannot be undercut."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "24/7 Fitness",
+        "Anytime Fitness (161 gyms)",
+        "Gymmboxx rollups"
+      ],
+      "why": "These occupy the same value-and-convenience rung a mid-market entrant would land on."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "Virgin Active",
+        "Pure Fitness",
+        "Fitness First"
+      ],
+      "diagnostic": "Premium full-facility is owned outright: Virgin ~6 clubs, Pure 12 locations, Fitness First 14 clubs, at S$178-400+ on 12-24 month contracts. They are structurally locked into contracts and cannot copy a no-contract promise without repricing their book.",
+      "why": "The premium rung is owned and defensible."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "F45",
+        "Barry's",
+        "Yoga Movement",
+        "Absolute",
+        "boutique class studios"
+      ],
+      "why": "A class-based studio substitutes for a gym membership at a similar monthly spend."
+    },
+    "tier_5_professional_route": {
+      "members": [
+        "personal trainers and physiotherapists recommending a facility"
+      ],
+      "why": "A professional recommendation decides where some members train."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "the True Fitness collapse (10 Sep 2026, S$69M+ net liabilities)",
+        "corporate wellness programmes"
+      ],
+      "why": "The collapse is not a competitor but it has changed what customers demand of every gym."
+    }
+  },
+  "_expected": {
+    "band": "Fragile",
+    "dimensions": {
+      "relative_strength": 1,
+      "mental_advantage": 1,
+      "defensibility": 2,
+      "competitive_room": 4,
+      "market_headroom": 3,
+      "demand_reach": 1
+    },
+    "why": "A pre-launch venture with no outlets and no customers. Fragile, because the composite is driven by what the business HOLDS and this business holds nothing. The white space the engagement identified is a fact about the LANDSCAPE, which the instrument records as competitive_room 4 - and that alone cannot lift a business that does not exist out of Fragile. See the pre-launch caveat in _meta.",
+    "fixed": true
+  }
+}

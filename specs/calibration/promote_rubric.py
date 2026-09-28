@@ -1,0 +1,99 @@
+"""promote_rubric.py — spec 095 section 5.3.1: the rubric promotion step.
+
+Why this is a script and not a copy command
+-------------------------------------------
+Spec 5.3 says: "The Python calibration harness and the production scorer must read the same
+rubric JSON. This is the most likely way to fool ourselves." It happened: the file a scorer
+would load (rubric.json) sat at 0.9.0 with no relative_strength, while calibration validated
+1.8.0 in a differently-named file. Nothing was serving the instrument that was validated.
+
+This script is the gate. It refuses to promote unless every condition holds, and it fails
+loudly rather than leaving a half-promoted file.
+"""
+import json
+import shutil
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+LIVE = HERE / "rubric.json"
+
+SIX = ["relative_strength", "mental_advantage", "defensibility",
+       "competitive_room", "market_headroom", "demand_reach"]
+
+
+def load(p):
+    return json.loads(Path(p).read_text())
+
+
+def main(src_name):
+    src = HERE / src_name
+    if not src.exists():
+        print("FATAL: %s does not exist" % src, file=sys.stderr)
+        return 2
+
+    V = load(src)
+    problems = []
+
+    # 1. version stamps must agree -- the bug that let two different files both claim 1.2.0
+    if V.get("version") != V["_meta"].get("version"):
+        problems.append("top-level version=%r but _meta.version=%r"
+                        % (V.get("version"), V["_meta"].get("version")))
+
+    # 2. the six calibrated dimensions must be present and scored
+    missing = [d for d in SIX if d not in V["questions"]]
+    if missing:
+        problems.append("missing dimensions: %s" % missing)
+
+    # 3. weights must sum to the documented 100
+    w = V["_meta"]["weights"]
+    if sum(w.values()) != 100:
+        problems.append("weights sum to %s, not 100" % sum(w.values()))
+
+    # 4. the relative_strength axis must exist -- its absence is what marked the old live file
+    if "relative_strength" not in w:
+        problems.append("relative_strength has no weight (the 0.9.0 defect)")
+
+    # 5. bands must be present and ordered
+    bands = V["_meta"]["bands"]
+    if len(bands) != 4 or [b[0] for b in bands][0] != "Fragile":
+        problems.append("unexpected band table: %s" % bands)
+
+    # 6. score gates must have been removed (they were, by calibration)
+    live_gates = {k: v for k, v in (V["_meta"].get("gates") or {}).items()
+                  if not k.startswith("_")}
+    if live_gates:
+        problems.append("score gates present %s -- calibration removed these (spec 5.4)"
+                        % live_gates)
+
+    if problems:
+        print("REFUSING TO PROMOTE %s:" % src_name, file=sys.stderr)
+        for p in problems:
+            print("  - %s" % p, file=sys.stderr)
+        return 1
+
+    before = load(LIVE) if LIVE.exists() else None
+    before_v = before["_meta"]["version"] if before else "none"
+    shutil.copyfile(src, LIVE)
+
+    after = load(LIVE)
+    if after["_meta"]["version"] != V["_meta"]["version"]:
+        print("FATAL: promotion produced a mismatched stamp", file=sys.stderr)
+        return 2
+
+    print("PROMOTED  %s -> rubric.json" % src_name)
+    print("  version   : %s  ->  %s" % (before_v, after["_meta"]["version"]))
+    print("  dimensions: %s" % ", ".join(d for d in SIX if d in after["questions"]))
+    print("  weights   : %s" % after["_meta"]["weights"])
+    print("  bands     : %s" % [b[0] for b in after["_meta"]["bands"]])
+    print("  gates     : %s (score gates removed by calibration)"
+          % ({k: v for k, v in (after["_meta"].get("gates") or {}).items()
+              if not k.startswith("_")} or "none"))
+    print()
+    print("  Both implementations now read the same rubric. Verify with:")
+    print("    python3 run_canary.py --rung check --rubric rubric.json")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else "rubric-v1.8.0.json"))

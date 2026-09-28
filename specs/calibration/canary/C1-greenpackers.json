@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "case": "C1-greenpackers",
+    "canary": true,
+    "source_document": "~/projects/Greenpackers/competitive-analysis/GreenPackers_Competitive_Analysis.md (v4.3b, 2026-08-11)",
+    "authored": "AUTHORED from the engagement analysis, not captured from a client intake form. No raw intake form exists for this engagement. The form fields are reconstructed from statements in the source document; the derived competitive set and expected conclusion are taken from it directly.",
+    "expected_conclusion": "Fringe, <1%; guerrilla warfare the only play (spec 10.1)",
+    "notes": "BiPak's moat is verified, not assumed: Deliveroo channel to 4,500 restaurants, global domain authority, 440-post SG resource hub, B Corp. The brand is a real Korean-sourced distributor but is a sub-1% fringe player against it. The defensible wedge is microplastic-free KTR verification, NOT 'BioPak cannot compost in SG' (BioPak has AS5810 home-compostable SKUs)."
+  },
+  "form": {
+    "business_name": "GreenPackers",
+    "website": "biogreenpackers.com",
+    "role": "Founder",
+    "company_size_band": "1-10",
+    "city": "Singapore",
+    "category": "Compostable and biodegradable food-service packaging, distributed in Singapore. Plant-based disposables sourced direct from a Korean manufacturer (Rewind Co., Ltd.).",
+    "positioning_sentence": "The only microplastic-tested, home-compostable disposables in Singapore, sourced direct from a real Korean manufacturer.",
+    "differentiator": "We hold KTR test reports on our materials - third-party lab evidence that our product does not shed microplastics. We buy direct from the Korean manufacturer rather than through a local distributor, so we can trace the material. Our home-compostable SKUs are certified home-compostable, not only industrial-compostable. We publish the test reports on request.",
+    "undercut_on": "Price. Conventional plastic packaging and additive-blended 'eco' PP are far cheaper than ours, and a cafe that is not being asked to prove anything buys the cheapest option. The largest supplier also has a distribution partnership that puts discount compostable packaging in front of 4,500 restaurants.",
+    "your_price_point": "Premium certified - materially above conventional plastic and above uncertified 'eco' alternatives.",
+    "their_price_point": "Conventional plastic and additive-blended PP sell at a fraction of our price and are available everywhere.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "BioPak",
+    "Greenpac",
+    "SKP EcoVue",
+    "N&E Innovations",
+    "S.E.A. Global"
+  ],
+  "customer_description": "Singapore F&B operators - cafes, restaurants, caterers and food-delivery kitchens - who have a stated sustainability commitment or a green-procurement requirement, plus event caterers.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from the SG food-service packaging category: published supplier coverage, verified certification stacks, and the procurement channel the owner does not see (the distributor the cafe already buys from).",
+    "tier_0_default": {
+      "members": [
+        "doing nothing - keep using conventional plastic"
+      ],
+      "why": "Most F&B operators have no compostability requirement and no buyer pressure."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "conventional plastic packaging",
+        "additive-blended 'eco' PP (SKP EcoVue, BIOGreen) - no third-party compostability certification",
+        "supermarket and wholesale own-brand disposables"
+      ],
+      "price_floor": "Conventional plastic sits an order of magnitude below certified compostable.",
+      "why": "The cheap route is indistinguishable to a buyer who is not verifying anything, and it is what the market mostly buys."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "BioPak",
+        "Greenpac",
+        "N&E Innovations",
+        "S.E.A. Global"
+      ],
+      "why": "These are the suppliers a cafe is actually quoted against when it asks for compostable packaging."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "BioPak"
+      ],
+      "diagnostic": "BioPak is the reference occupant of this category in Singapore. Verified: Deliveroo partnership across 4,500 restaurants at 20% discount; global domain authority; 440-post SG resource hub; B Corp, FSC, ISO 14001.",
+      "why": "A substantial share of SG cafes buying compostable packaging buy it through a channel BioPak already owns."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "event and facilities-management suppliers bundling packaging into a contract"
+      ],
+      "why": "Procurement is bundled, so packaging is often decided by whoever supplies the wider contract."
+    },
+    "tier_5_professional_route": {
+      "members": [
+        "sustainability consultants who specify a packaging standard"
+      ],
+      "why": "A consultant can mandate a certification that pre-selects a supplier."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "reusables - BYO container schemes",
+        "government EPR and Green Plan 2030 pressure changing the default"
+      ],
+      "why": "Regulation and reuse schemes can shrink the disposables category itself."
+    }
+  },
+  "_expected": {
+    "band": "Fragile",
+    "dimensions": {
+      "relative_strength": 1,
+      "mental_advantage": 1,
+      "defensibility": 2,
+      "competitive_room": 2,
+      "market_headroom": 4,
+      "demand_reach": 2
+    },
+    "why": "Fringe, sub-1% share against a verified structural incumbent. The category is real and growing (regulation is forcing adoption) but the position is not held: no recognition against BioPak, and the owner's own distribution is thin. Market headroom is genuinely present - that is the one favourable dimension - which is exactly the trap the report must not let mask the rest.",
+    "fixed": true
+  }
+}

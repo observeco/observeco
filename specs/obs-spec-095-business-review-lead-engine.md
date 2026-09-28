@@ -1,7 +1,7 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v8 — calibration integrated.
-**Date:** 2026-09-23 (v8: 2026-09-27)
+**Status:** DRAFT v9 — canary built, rubric live, D19 decided.
+**Date:** 2026-09-23 (v8: 2026-09-27; v9: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
 **v5 change:** Blind-spot appendix removed and its content integrated into the owning sections.
@@ -21,6 +21,15 @@ score gates**; both described 0.9.0 and were corrected against measured results 
 D13 superseded, D16 fulfilled, D20–D23 added. §10.6's launch criterion is now band agreement
 (D20), §5.3.1 records the rubric-promotion build gate, and §10.1.1 separates the canary from the
 calibration corpus.
+**v9 change — the three open build blockers cleared.** **D23 DONE:** the canary corpus is complete
+(6 of 6), baselined and running; **§10.8 is new** and records the build, the result (6 of 6 within
+one band, 4 of 6 exact, 0 gross errors) and the caveat that the fixtures are *authored from* the
+engagements rather than captured from intake forms. **D22 DONE:** `rubric.json` promoted 0.9.0 →
+1.8.0 through a gated script, so the instrument §10.7 validated is now the one in service.
+**D19 DECIDED:** a separate unticked research-consent box with a free refusal, and the
+"we maintain SG industry datasets" claim is **downgraded to conditional** on the measured opt-in
+rate *and* the k-anonymity floor. §10.6's gate table now shows the canary rows passing, leaving
+**negative controls** as the single open row.
 
 ---
 
@@ -534,25 +543,38 @@ The Python calibration harness and the production scorer must read **the same ru
 Otherwise calibration validates a scorer that is not the one shipped. This is the most likely way
 to fool ourselves.
 
-### 5.3.1 The rubric promotion step (a build gate, not a note)
+### 5.3.1 The rubric promotion step — DONE (`promote_rubric.py`)
 
-**This predicted failure has occurred.** There is currently **no production scorer** — the
-scorer exists only as the calibration harness — and the file a production scorer would load,
-`specs/calibration/rubric.json`, is **still 0.9.0, with `relative_strength` absent from it**. Every
-calibration result in §10.7 therefore describes a rubric that is not in service.
-
-Which file is live is a **build decision with a gate**, because the failure mode is silent: a
+**This predicted failure occurred, and closed on 2026-09-27.** `rubric.json` sat at **0.9.0 with
+`relative_strength` absent** while §10.7's results described 1.8.0 — so every calibration result
+described a rubric nothing served. It was the *silent* failure this section warns about: a
 calibrated rubric that nothing loads raises no error and produces no symptom until a client is
 shown a score from the retired model.
 
-| Step | Requirement |
-|---|---|
-| 1 | The chosen rubric is promoted to `specs/calibration/rubric.json` — the single path both implementations read |
-| 2 | The promoted file's `_meta.version` **must** equal its top-level `version`; the harness fails loudly on a mismatch |
-| 3 | Superseded rubrics are retained as `rubric-v<X>.json` for the audit trail, never left as the live file |
-| 4 | No report is served unless the loaded rubric's `_meta.version` is the promoted one |
+**Resolution: `rubric.json` is now 1.8.0**, promoted through a gated script.
 
-**Status: step 1 is NOT done.** Until it is, §10.7 describes a file nothing serves.
+| Step | Requirement | Status |
+|---|---|---|
+| 1 | The chosen rubric is promoted to `specs/calibration/rubric.json` — the single path both implementations read | **DONE** — 0.9.0 → 1.8.0 |
+| 2 | The promoted file's `_meta.version` **must** equal its top-level `version`; the harness fails loudly on a mismatch | enforced before promotion |
+| 3 | Superseded rubrics are retained as `rubric-v<X>.json` for the audit trail, never left as the live file | 1.0.0–1.8.0 retained |
+| 4 | No report is served unless the loaded rubric's `_meta.version` is the promoted one | **build — belongs to the scorer** |
+
+**The promotion is a script, not a copy, because a copy cannot refuse.** `promote_rubric.py`
+validates six conditions and exits non-zero rather than promoting a bad file:
+
+1. `version` and `_meta.version` agree — the mismatch that once let two different files both claim
+   `1.2.0` and defeated the harness's own mixed-version guard;
+2. all six calibrated dimensions are present;
+3. weights sum to 100;
+4. `relative_strength` **has** a weight — its absence is the 0.9.0 defect;
+5. the band table is present and starts at Fragile;
+6. **no score gates survive** — calibration removed them (§5.4), so a file carrying them is stale.
+
+**Step 4 is still open**, and it is the one that matters in production: the scorer must refuse to
+serve a report whose rubric version is not the promoted one. The promotion gate protects the
+*rubric*; step 4 protects the *report*. Until the scorer exists, a stale rubric can still be
+loaded by anything that reads the path directly.
 
 ### 5.4 Two refusals, and no score gates ⚠
 
@@ -891,7 +913,8 @@ positioning sentences from SG SMEs are exactly the raw material behind the indus
 your consulting offer already makes as its moat. Most consultancies buy that data or synthesise it.
 This collects it as a byproduct of a free service.
 
-**It is a third purpose, and it cannot ride on the other two (D19 — Sean to decide).**
+**It is a third purpose, and it cannot ride on the other two. DECIDED (D19): a separate, unticked
+consent box, and the dataset claim stays conditional on it.**
 
 | # | Purpose | Basis |
 |---|---|---|
@@ -902,6 +925,35 @@ This collects it as a byproduct of a free service.
 Purpose 3 must be its own line and its own row. Absorbing research use into "we'll send you a
 report" is the same bundling failure §3.2 already forbids — and it is worse here, because the
 contributor receives nothing extra for it.
+
+**The control, concretely.** One checkbox, **unticked by default**, **not required** to submit,
+with its own consent row and its own timestamp. A submitter who declines still receives the full
+report. Three properties are load-bearing and each closes a specific failure:
+
+| Property | Why it cannot be relaxed |
+|---|---|
+| **Unticked by default** | A pre-ticked box is not consent under the PDPA. Ticking must be an act |
+| **Refusal costs nothing** | If declining degrades the report, the consent is not free and the whole purpose is void. The report is identical either way |
+| **Own row, own timestamp** | Consent must be evidenced per purpose. A single "agreed to terms" row cannot prove *which* purposes were agreed |
+
+**A withheld consent is a data-loss decision, not just a compliance one.** Every submission whose
+box is unticked is permanently unavailable to the dataset — it can still be scored, but never
+aggregated. The dataset's coverage is therefore a direct function of how the checkbox is worded and
+placed, and the opt-in rate should be **tracked from day one**, because a rate of, say, 30% is a
+materially weaker asset than the design assumes — and a rate near 0% means the dataset claim must
+come down.
+
+**The claim stays conditional (this is the part that is easy to get wrong).** §7.7's commercial
+premise — that each submission compounds the "we maintain SG industry datasets" claim — holds
+**only while enough contributors consent.** So the claim is not licensed by shipping the checkbox;
+it is licensed by the measured opt-in rate combined with the k-anonymity floor below. Until both
+hold, the positioning line is aspirational and must not be presented as established. **Two
+independent gates, and neither one alone is sufficient.**
+
+**Withdrawal is not the same as non-consent.** A contributor who consented and later withdraws
+falls under §7.5 deletion plus the "strip and aggregate" rule below — but anything already
+**truly anonymised** cannot be un-mixed, and that must be disclosed in the consent wording before
+the box is ticked, not discovered afterwards.
 
 **The retention interplay is the interesting part.** §7.5 says contacts who never convert are
 deleted soonest. That is compatible with keeping the *research* — **if** the contribution is
@@ -929,9 +981,14 @@ so it cannot be re-associated. "We deleted the contact but kept the row" is not 
 
 **Why this matters commercially:** the dataset claim in your positioning
 (`observeco-consulting-pivot-positioning.md`) is *"we maintain SG industry datasets"* — currently
-maintained by hand. This turns each free submission into a contribution to that asset. It is the
-compounding reason to run the free report at all, beyond lead capture. And it is honest only while
-purpose 3 is consented to separately, which is what D19 decides.
+maintained by hand. Purpose 3 turns each consenting free submission into a contribution to that
+asset. It is the compounding reason to run the free report at all, beyond lead capture.
+
+**But the claim is now CONDITIONAL, and this is a deliberate downgrade from how it read before.**
+It holds only while (a) the measured opt-in rate supports it and (b) every surfaced figure clears
+the k-anonymity floor. **D19 authorised the mechanism; it did not license the claim.** An untracked
+opt-in rate cannot support a public positioning line, so the rate is a **launch-tracked metric**,
+not an afterthought.
 
 ### 7.8 Where the form data may and may not be used
 
@@ -1084,10 +1141,15 @@ and must not be merged.
 | Changes over time? | **Never.** A canary whose fixture moves detects nothing | Grows as coverage gaps close |
 | What a failure means | The model or the rubric moved | The instrument is not yet calibrated |
 
-**⚠ The canary corpus is incomplete, and the launch gate cannot run without it.** Five of the six
-cases — GreenPackers, CaiCa, PetDirectory, SGFitness, SaladShop — **do not exist in any corpus.**
-Only Bonefirm does. Restoring them as form-shaped inputs is a **build prerequisite for §10.6**,
-not a documentation item.
+**The corpus is complete and baselined (was: 1 of 6).** All six cases now exist as form-shaped
+fixtures in `specs/calibration/canary/`, and the launch gate can run. See §10.8 for the build, the
+result, and the caveat that governs how the fixtures may be interpreted.
+
+**They are AUTHORED from the engagement analyses, not captured from client intake forms.** No raw
+intake form exists for any of the six engagements, so the form fields were reconstructed from the
+analysis documents and the per-dimension expected vectors are an **assistant mapping** of each
+engagement's conclusion onto the six calibrated dimensions — not a recorded client label. **The
+band is the bar; the dimension vector is not** (§10.6). §10.8 states the consequence.
 
 **A caveat that survives from §10.5:** all six were authored by the same person, so they are not
 drawn from the population the free form actually sees. The 120-case corpus addresses that
@@ -1179,13 +1241,14 @@ This is the weakest part of the design, and it should not be oversold.
 **Ship the scored report when the instrument clears the following, on the corpora in §10.1 and
 §10.7.**
 
-| Criterion | Bar | Measured today |
+| Criterion | Bar | Measured |
 |---|---|---|
 | Band agreement | ≥90% of cases within **one band** of the reference label | **100%** (n=114) |
 | Gross band error | ≤5% of cases **two or more bands** off | **0%** |
 | Dimension disputes | ≤5% of dimension scores **≥2 levels** apart | **2.8%** |
-| Negative controls | Every control **fails**, each with its own predicted failure reason | **not built** |
-| Canary cases present | All six (§10.1) | **1 of 6 — gate cannot run** |
+| Canary cases present | All six (§10.1), running and baselined | **6 of 6 — gate RUNS** (§10.8) |
+| Canary agreement | Every canary within **one band** of its engagement conclusion | **6 of 6**; 4 of 6 exact (§10.8) |
+| Negative controls | Every control **fails**, each with its own predicted failure reason | **not built** — the one open row |
 
 **Dimension-exact agreement is explicitly NOT the bar.** It sits at 56.5%, and requiring it would
 hold the product to a granularity a five-point human-judged scale does not support. **The client
@@ -1208,7 +1271,8 @@ default to "Jev is wrong"; that has been the wrong call before.
 
 **Method.** 120 businesses across 27 categories, form-shaped inputs, scored under a rubric whose
 every change was isolated to **one dimension** with the other five asserted byte-identical as a
-control. Reference labels: Sean's blind dimension grades (§10.5 item 5).
+control. Reference labels: Sean's blind dimension grades (§10.5 item 5). The canary corpus of
+§10.1 is built and baselined separately (§10.8) and is **not** part of this measurement.
 
 **One defect class accounted for every improvement: the instrument was reading the SUBMISSION
 instead of the BUSINESS.**
@@ -1295,6 +1359,88 @@ instrument errs, it errs by one band — which is the failure mode a band-first 
 
 ---
 
+### 10.8 The canary — built, baselined, running
+
+**This section exists because the corpus did not.** §10.1.1 recorded that five of the six canary
+cases did not exist, which made §10.6's launch gate unrunnable. It now runs.
+
+**Where the fixtures came from.** The six source engagements still exist on disk as full
+competitive analyses, so the fixtures were **authored from them** rather than invented:
+
+| Case | Source analysis | Engagement conclusion | Fixture band |
+|---|---|---|---|
+| C1 GreenPackers | `~/projects/Greenpackers/…/GreenPackers_Competitive_Analysis.md` | Fringe, <1%; guerrilla warfare the only play | Fragile |
+| C2 CaiCa | `~/projects/CaiCa/…/CaiCa_Competitive_Analysis.md` | Reason-to-purchase not strong | Contested |
+| C3 PetDirectory | `~/projects/PetDirectory/…/PetDirectory_Competitive_Analysis.md` | Market real, position open, demand side unbuilt | Contested |
+| C4 SGFitness | `~/SGFitness/…/SGFitness_Competitive_Analysis_Summary.md` | White space in a specific demographic | Fragile |
+| C5 SaladShop | `~/SaladShop/…/SaladShop_Competitive_Analysis_Summary.md` | CBD saturated; white space outside it | Fragile |
+| C6 Bonefirm | `~/projects/Bonefirm/…/Bonefirm_Competitive_Analysis.md` | Feasible, with one condition (B1) | Viable, conditional |
+
+**⚠ They are AUTHORED, not captured.** No raw intake form exists for any of the six engagements, so
+the form fields are **reconstructed from the analyses**, and the per-dimension expected vectors are
+an **assistant mapping** of each conclusion onto the six dimensions — **not a recorded client
+label.** This is the corpus's principal weakness and it is stated rather than hidden. It does not
+stop the canary doing its job (the question it answers is *"has behaviour moved?"*, which needs no
+human label — see the two-rung design below), but it does mean the *expected* values are not
+independent evidence of correctness. **To make this a real gold set, the same move that produced
+§10.7 is needed: Sean grades the six cases blind.**
+
+**The runner: two rungs, and why.** `specs/calibration/run_canary.py`
+
+| Rung | Does | When |
+|---|---|---|
+| `--rung record` | Runs the corpus and writes `canary/_reference.json` | **Once.** Refuses to overwrite without `--force` |
+| `--rung check` | Runs and compares against the stored reference | The scheduled job |
+
+A canary cannot compare against itself. The first run has no reference, so it records one; every
+later run compares. **A `check` run with no reference exits 2 and fails loudly** — a canary that
+reports green because it has nothing to compare against is worse than no canary at all.
+
+**Drift is band-only.** Per D1 and §10.6, the comparison is the **band**. A dimension that moves
+without moving the band is **advisory** and printed as such, not a failure — dimension-exactness is
+explicitly not the bar. The report separates the **drift verdict** (against the frozen reference)
+from an **informational** comparison against the engagement conclusions, because conflating the two
+is how a canary gets tuned into a calibration set and stops detecting anything.
+
+**The result. The gate now passes:**
+
+| | Result |
+|---|---|
+| Canary cases present | **6 of 6** |
+| Within one band of the engagement conclusion | **6 of 6** |
+| Exact band | **4 of 6** |
+| Gross band error (two or more) | **0** |
+| Drift check against the reference | **PASS — no band moved** |
+
+**Two disagreements, both informative, and deliberately NOT tuned away:**
+
+- **C6 Bonefirm — instrument scored `defensibility` 2 where Sean's own blind grade was 4.** A
+  **second, independent corpus flagging the same dimension** §10.7 already identifies as the
+  largest remaining dispute source (7.0%). Convergence from an unrelated direction is the more
+  credible kind of evidence, and this is why the fixture was left alone.
+- **C1 GreenPackers — instrument read Contested where the engagement concluded Fragile** (it
+  scored `relative_strength` 3 against a sub-1% fringe business facing BioPak's verified moat).
+
+**Fixtures are frozen by design.** §10.1.1: *"a canary whose fixture moves detects nothing."*
+Adjusting an expected value so the instrument agrees would convert the canary into a
+self-fulfilling test that passes forever and detects nothing. **The disagreements are recorded as
+findings, not reconciled in the fixture.**
+
+**A pre-launch caveat that applies to C4 and C5.** Both are venture *concepts* rather than trading
+businesses, so their conclusions ("white space identified") are statements about the **market**, not
+about a position held. The instrument reads an unlaunched venture as **Fragile** — it holds nothing
+— while the finding the engagement actually reached lives in `competitive_room`. **For these two
+cases the band under-expresses the conclusion, and a failure there would not mean Jev missed the
+white space.** Recorded in each fixture's `_meta` so no future reader over-reads it.
+
+**A known sensitivity, recorded because it sits on a cliff.** C6's `defensibility` 3-vs-4 is the
+documented uncertainty (Sean's own 3.5–4 hedge). At 4 the case lands at composite 61 with margin; at
+3 it lands at **58 — exactly the Viable boundary.** The fixture uses the human label (4); the
+sensitivity is stated because a 1-point move flipping the band is a fact worth knowing before it
+happens in production.
+
+---
+
 ## 11. Two-stage ship (per D4)
 
 Calibration gates the **scoring** layer only. Capture, payment and delivery do not depend on it.
@@ -1359,27 +1505,35 @@ purchasing decision.
 | **D16** | **Human baseline** (§10.5) | **FULFILLED — and exceeded.** Sean graded **120 businesses across 27 categories** blind, plus a composite regrade, not the six cases proposed here. Results in §10.7. Caveat carried: a second grader is absent |
 | **D17** | **Nurture cadence and exit rules** (D3) | Defer — low priority, architecture supports it |
 | **D18** | **The name** (D1) | KIV |
-| **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **Open — Sean to decide** |
+| **D19** | **Research purpose** (§7.7) — consent to use submissions in aggregate research | **ACCEPTED — separate, unticked consent box; refusal costs nothing; own consent row. The dataset claim stays CONDITIONAL on the measured opt-in rate *and* the k-anonymity floor — neither alone licenses it. Opt-in rate is a launch-tracked metric** |
 | **D20** | **Launch criterion** (§10.6) — dimension exactness vs band agreement | **ACCEPTED — band agreement.** ≥90% within one band, ≤5% two-or-more off. Dimension-exact is explicitly not the bar (it sits at 56.5% and is not achievable on a 5-point human-judged scale) |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |
-| **D22** | **Rubric promotion** (§5.3.1) — which file is live | **ACCEPTED — promote to `specs/calibration/rubric.json` as a build gate.** Currently 0.9.0 with `relative_strength` absent; calibration has validated an instrument nothing serves |
-| **D23** | **Canary restoration** (§10.1.1) | **REQUIRED before §10.6 can run.** 5 of 6 cases absent (GreenPackers, CaiCa, PetDirectory, SGFitness, SaladShop) |
+| **D22** | **Rubric promotion** (§5.3.1) — which file is live | **DONE — `rubric.json` promoted 0.9.0 → 1.8.0 via `promote_rubric.py`**, which validates six conditions and refuses on any failure. Step 4 (the scorer must refuse a non-promoted rubric) remains a build item |
+| **D23** | **Canary restoration** (§10.8) | **DONE — 6 of 6 present and baselined.** Fixtures authored from the six source engagement analyses; `run_canary.py` runs them. Result: 6 of 6 within one band, 4 of 6 exact, 0 gross errors. **Caveat: AUTHORED, not client-captured — the expected vectors are an assistant mapping, not a recorded client label. A blind regrade by Sean would make them a real gold set** |
 
 ---
 
 ## 14. What this spec does not claim
 
-- That Jev will clear the gate. §10.6 exists because it may not — and **cannot run today**, since
-  5 of the 6 canary cases are absent (§10.1.1).
+- That Jev will clear the gate on the canary **as independent evidence**. The corpus now runs and
+  passes (§10.8), but its expected values are **authored from** the engagements rather than captured
+  from intake forms, so it evidences *"behaviour has not moved"* more strongly than it evidences
+  *"the behaviour is correct"*. A blind regrade by Sean would close that gap.
 - That clearing the gate proves accuracy. §10.5 — it proves **agreement**, against one grader.
 - That the weights are correct. They are **calibrated** (§10.7, D20), which is stronger than a
   hypothesis and weaker than accuracy: they track one human across 120 businesses, and a second
   grader would test whether that human was right.
-- That calibration has been deployed. **It has not** — §5.3.1: there is no production scorer, and
-  the live rubric is still 0.9.0 with `relative_strength` absent. §10.7 describes an instrument
-  nothing currently serves.
+- That calibration has been **deployed end to end**. Half of it has: `rubric.json` is promoted to
+  1.8.0 (§5.3.1), so the live file and the harness now read the same rubric. **But there is still no
+  production scorer** — `jev` exists only inside the calibration harness — so nothing serves a
+  report yet, and step 4 of §5.3.1 (the scorer must refuse a non-promoted rubric) is unbuilt.
 - That enrichment will be reliable — §4.5 makes it non-load-bearing.
 - That the current Stripe path works — F1 says it does not.
 - That any provider choice is permanent — §6.3 keeps it reversible.
 - That the free report can ship before calibration clears — §10.6 is a hard gate.
-- That the open-relay risk is closed — it is identified (§3.7) and needs D11.
+- That the open-relay risk is closed — it is identified (§3.7) and needs D11. It is **the most
+  serious gap in the design** (§3.7) and the largest item still standing between this spec and
+  MVP-0.
+- That the research-dataset claim is licensed. **It is conditional** (§7.7): permitted only while
+  the measured opt-in rate supports it *and* every surfaced figure clears the k-anonymity floor.
+  D19 authorised the mechanism, not the claim.

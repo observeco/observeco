@@ -21,8 +21,12 @@ _TEXT_COLOR = "#1e293b"
 _MUTED_COLOR = "#64748b"
 _BORDER_COLOR = "#e2e8f0"
 
+# The unsubscribe target carries a signed token (spec 6.6). A bare link with no token
+# would let anyone opt out any address, so the token is supplied per-recipient via the
+# {unsubscribe_url} variable. The fallback states the requirement rather than silently
+# emitting an unsigned link -- an unsigned link is worse than a visible defect.
 _UNSUBSCRIBE_LINK = (
-    '<a href="https://observeco.com/unsubscribe" '
+    '<a href="{unsubscribe_url}" '
     'style="color:{muted};text-decoration:underline;">Unsubscribe</a>'
 ).format(muted=_MUTED_COLOR)
 
@@ -63,7 +67,7 @@ def _wrapper(content: str) -> str:
         '{unsubscribe} &bull; '
         '<a href="https://observeco.com/privacy" style="color:{muted};'
         'text-decoration:underline;">Privacy Policy</a> &bull; '
-        '<a href="https://observeco.com/support" style="color:{muted};'
+        '<a href="mailto:support@observeco.com" style="color:{muted};'
         'text-decoration:underline;">Support</a>'
         "</td></tr>"
         "</table></td></tr></table>"

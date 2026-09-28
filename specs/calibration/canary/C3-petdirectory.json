@@ -1,0 +1,94 @@
+{
+  "_meta": {
+    "case": "C3-petdirectory",
+    "canary": true,
+    "source_document": "~/projects/PetDirectory/competitive-analysis/PetDirectory_Competitive_Analysis.md (2026-08-30)",
+    "authored": "AUTHORED from the engagement analysis, not captured from a client intake form. No raw intake form exists for this engagement. Form fields are reconstructed from statements in the source document; the derived competitive set and the expected conclusion are taken from it directly. The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions - they are not a recorded client label. The BAND, not the dimension vector, is the bar (spec 10.6).",
+    "expected_conclusion": "Market real, position open, but the demand side is unbuilt (spec 10.1)",
+    "notes": "534 listings, 18 categories, #1 on Google for 'pet directory singapore', transparent S$19-29/mo pricing. The supply side is built and the demand side is not: '534 listings x 0 visitors = 0 value delivered'. Market is SGD 412M and growing; nobody owns 'the trusted full-service pet directory'."
+  },
+  "form": {
+    "business_name": "PetDirectory",
+    "website": "petdirectory.com.sg",
+    "role": "Founder",
+    "company_size_band": "1-10",
+    "city": "Singapore",
+    "category": "Online business directory for pet services in Singapore - grooming, veterinary, boarding, retail, pet food and beverage, funeral services and more, across 18 categories.",
+    "positioning_sentence": "The trusted full-service directory of pet businesses in Singapore.",
+    "differentiator": "We have the largest verified database of pet businesses in Singapore - 534 listings across 18 categories - and we rank first on Google for the category's own search term. We publish our pricing openly at S$19-29 a month where competitors hide it behind a contact form. We also have features no competitor has: pet obituaries, a pet showcase, and an influencer programme. Every listing is checked before it goes live.",
+    "undercut_on": "Visitors. We have almost no traffic, so a business paying for a listing sees no return, and the paywall keeps the roughly 490 remaining licensed businesses out. A free classifieds group or a Google search does the same job at no cost.",
+    "your_price_point": "S$19-29 per month for a listing subscription.",
+    "their_price_point": "Google search, Facebook groups and free classifieds cost nothing.",
+    "competitors_named_count": "1-2"
+  },
+  "competitors_named": [
+    "Google search",
+    "Facebook pet groups",
+    "Yelp"
+  ],
+  "customer_description": "Singapore pet owners looking for a local pet service - grooming, vet, boarding or retail - usually searching on mobile in the moment of need. Also the pet businesses that would pay to be found.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from the SG pet-services discovery category: how pet owners actually find a business, and which intermediaries already own that moment.",
+    "tier_0_default": {
+      "members": [
+        "asking in a WhatsApp or Facebook group",
+        "asking a friend or the vet"
+      ],
+      "why": "Most pet-service discovery is word of mouth, not directory search."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "Google Maps and Google search",
+        "free Facebook groups and classifieds"
+      ],
+      "price_floor": "Free.",
+      "why": "The free route is fast, familiar and already in the customer's hand."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Yelp",
+        "other SG pet directories"
+      ],
+      "why": "The same job - a browsable list of pet businesses - is done by these."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "Google"
+      ],
+      "diagnostic": "Google Maps and search own the discovery moment outright. A directory competes for the customer's attention against an interface that is already open on their phone.",
+      "why": "The category's real incumbent is not another directory."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "AVS and government licensing registries",
+        "pet insurance and vet-chain websites"
+      ],
+      "why": "An authoritative registry answers 'is this business licensed' better than a directory can."
+    },
+    "tier_5_professional_route": {
+      "members": [
+        "vets and groomers recommending a business directly"
+      ],
+      "why": "A trusted professional's recommendation bypasses the directory entirely."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "social media accounts of individual pet businesses building their own audience"
+      ],
+      "why": "A business with its own following does not need a directory."
+    }
+  },
+  "_expected": {
+    "band": "Contested",
+    "dimensions": {
+      "relative_strength": 3,
+      "mental_advantage": 2,
+      "defensibility": 2,
+      "competitive_room": 4,
+      "market_headroom": 4,
+      "demand_reach": 1
+    },
+    "why": "The market is real and the position is genuinely open - competitive room is the strongest dimension, because no directory owns 'trusted full-service' and the incumbent is Google rather than a rival directory. But the demand side is unbuilt: demand reach is the weakest dimension at 1, since the database delivers no visitors. Defensibility is weak: a listings database is a stocked asset but it is rebuildable.",
+    "fixed": true
+  }
+}

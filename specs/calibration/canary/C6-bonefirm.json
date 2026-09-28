@@ -1,0 +1,107 @@
+{
+  "_meta": {
+    "case": "C6-bonefirm",
+    "canary": true,
+    "source_document": "~/projects/Bonefirm/competitive-analysis/Bonefirm_Competitive_Analysis.md (v4, 2026-08-20)",
+    "authored": "AUTHORED from the engagement analysis, not captured from a client intake form. No raw intake form exists for this engagement. Form fields are reconstructed from statements in the source document; the derived competitive set and the expected conclusion are taken from it directly. The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions - they are not a recorded client label. The BAND, not the dimension vector, is the bar (spec 10.6).",
+    "expected_conclusion": "Feasible, with one condition (B1) (spec 10.1)",
+    "notes": "A single-product premium supplement, feasible if one condition holds (B1). Note this is the ENGAGEMENT case; specs/calibration/inputs-v4/E4-bonefirm-ip.json is a separate BOUNDARY-TEST VARIANT of the same business that isolates IP depth as a single variable. The two must not be confused: E4 is a control, C6 is the canary.",
+    "expected_band_note": "Viable, conditional to Strong. The engagement concluded 'feasible with one condition', which is a conditional positive, not a fringe or contested verdict. The band bar is one band either side.",
+    "known_sensitivity": "Defensibility 3-vs-4 is the documented uncertainty (Sean's own 3.5-4 hedge, and the E4 boundary-test variant isolates it). At DEF 3 this case lands on composite 58 - exactly the Viable boundary, a 1-point move from Contested. DEF 4 (the human label) puts it at 61 with margin. The fixture uses the human label; the sensitivity is recorded because it is the case's known weak point."
+  },
+  "form": {
+    "business_name": "Bonefirm",
+    "website": "bonefirm.com",
+    "role": "Founder",
+    "company_size_band": "1-10",
+    "city": "Singapore",
+    "category": "Daily bone and joint support supplement for women going through menopause and perimenopause, in Singapore. Non-hormonal.",
+    "positioning_sentence": "Bones and joints, without hormones - built for Asian women going through menopause.",
+    "differentiator": "We combine a Western-validated ingredient, NEM (natural eggshell membrane), with a botanical blend from the East, plus Vitamin C, in one product - so a woman does not have to take four separate supplements. The market is built around the Western symptom, hot flushes, but the number one symptom for Asian women in the NUS/NUH study is joint pain at 32.9%, which is what we target. We are GMP-manufactured in Singapore and non-hormonal, which matters to women who cannot or will not take HRT. Compared with buying the whole stack separately - calcium, collagen, a joint supplement and mood support - we come in at the lower end of the range the customer is already paying.",
+    "undercut_on": "Price and shelf presence. Mass-market joint supplements from large brands sell for far less and sit on every pharmacy shelf and supermarket aisle where we are not. A customer who does not understand the East-West integration just buys the cheapest glucosamine.",
+    "your_price_point": "Premium - materially above mass-market joint supplements, but justified against the total stack a menopausal woman already buys.",
+    "their_price_point": "Mass-market glucosamine, calcium and collagen products sell at a fraction of our price on pharmacy shelves.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "Caltrate",
+    "Blackmores",
+    "Kinohimitsu",
+    "Kordel's",
+    "Nature's Way"
+  ],
+  "customer_description": "Asian women aged roughly 45 and over going through menopause or perimenopause who have joint and bone concerns, plus a meaningful share of younger women buying it for their mothers. Many are unwilling or unable to take hormone replacement therapy.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from the menopausal joint-and-bone supplement category: the branded shelf set, the pharmacy and supermarket coverage the owner does not see, and the wider wellness stack the same customer already buys.",
+    "tier_0_default": {
+      "members": [
+        "doing nothing about joint discomfort",
+        "accepting it as part of ageing"
+      ],
+      "why": "Most joint discomfort in this age group is managed without any branded supplement."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "generic glucosamine from a pharmacy",
+        "supermarket own-brand calcium and joint products",
+        "TCM dispensary joint blends"
+      ],
+      "price_floor": "Generic glucosamine and supermarket own-brand products sit far below the premium branded position.",
+      "why": "The cheap route is both cheaper and, for a TCM-oriented customer, closer to the tradition the brand invokes."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Caltrate",
+        "Blackmores",
+        "Kordel's",
+        "Nature's Way",
+        "Kinohimitsu"
+      ],
+      "why": "These are the products a customer is actually choosing between on the pharmacy shelf."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "Caltrate",
+        "Blackmores"
+      ],
+      "diagnostic": "The category is owned by mass-market brands with total pharmacy and supermarket distribution and decades of recognition. Bonefirm cannot win a shelf fight and must win a specified-demand fight instead.",
+      "why": "Distribution and recognition are held by brands that are not competing on the menopausal joint story at all."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "collagen powders and drinks",
+        "menopause multi-vitamins and HRT-adjacent supplements",
+        "mood and sleep supplements"
+      ],
+      "why": "These are the other products in the same customer's supplement stack, so they compete for the same monthly wallet."
+    },
+    "tier_5_professional_route": {
+      "members": [
+        "GPs and gynaecologists recommending calcium or HRT",
+        "pharmacists recommending a shelf product",
+        "TCM practitioners"
+      ],
+      "why": "A professional's recommendation shortlists the product before the customer shops."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "HRT itself",
+        "lifestyle and exercise changes"
+      ],
+      "why": "A woman who resolves the problem medically or through exercise does not buy any supplement."
+    }
+  },
+  "_expected": {
+    "band": "Viable, conditional",
+    "dimensions": {
+      "relative_strength": 3,
+      "mental_advantage": 3,
+      "defensibility": 4,
+      "competitive_room": 3,
+      "market_headroom": 4,
+      "demand_reach": 2
+    },
+    "why": "Genuinely feasible. This is a real, trading, GMP-manufactured product with a differentiated East-West formulation, so it holds a recognised position in a narrow situation (non-hormonal menopausal joint support) - relative_strength 3 and mental_advantage 3, not 2. DEF 4 follows Sean's own blind grade for this business ('Bonefirm defensibility 4 BLIND, revised to 3.5-4 depending on their IP depth'), not an assistant guess. The one condition the engagement attached is exactly demand_reach 2: the product is real but the route to the customer is not yet proven.",
+    "fixed": true
+  }
+}

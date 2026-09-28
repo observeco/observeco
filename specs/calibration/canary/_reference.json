@@ -1,0 +1,90 @@
+{
+  "rubric_version": "1.8.0",
+  "note": "REFERENCE SNAPSHOT for the canary. Fixed output for a fixed input. A canary whose fixture moves detects nothing (spec 10.1.1).",
+  "cases": {
+    "C1-greenpackers": {
+      "band": "Contested",
+      "composite": 46,
+      "dims": {
+        "relative_strength": 3,
+        "mental_advantage": 2,
+        "defensibility": 2,
+        "competitive_room": 2,
+        "market_headroom": 3,
+        "demand_reach": 3
+      },
+      "rubric_version": "1.8.0",
+      "model_id": "jev-1.13.0"
+    },
+    "C2-caica": {
+      "band": "Contested",
+      "composite": 41,
+      "dims": {
+        "relative_strength": 2,
+        "mental_advantage": 2,
+        "defensibility": 2,
+        "competitive_room": 2,
+        "market_headroom": 3,
+        "demand_reach": 3
+      },
+      "rubric_version": "1.8.0",
+      "model_id": "jev-1.13.0"
+    },
+    "C3-petdirectory": {
+      "band": "Contested",
+      "composite": 46,
+      "dims": {
+        "relative_strength": 3,
+        "mental_advantage": 2,
+        "defensibility": 2,
+        "competitive_room": 2,
+        "market_headroom": 3,
+        "demand_reach": 3
+      },
+      "rubric_version": "1.8.0",
+      "model_id": "jev-1.13.0"
+    },
+    "C4-sgfitness": {
+      "band": "Fragile",
+      "composite": 34,
+      "dims": {
+        "relative_strength": 2,
+        "mental_advantage": 1,
+        "defensibility": 2,
+        "competitive_room": 2,
+        "market_headroom": 3,
+        "demand_reach": 2
+      },
+      "rubric_version": "1.8.0",
+      "model_id": "jev-1.13.0"
+    },
+    "C5-saladshop": {
+      "band": "Fragile",
+      "composite": 34,
+      "dims": {
+        "relative_strength": 2,
+        "mental_advantage": 1,
+        "defensibility": 2,
+        "competitive_room": 2,
+        "market_headroom": 3,
+        "demand_reach": 2
+      },
+      "rubric_version": "1.8.0",
+      "model_id": "jev-1.13.0"
+    },
+    "C6-bonefirm": {
+      "band": "Contested",
+      "composite": 41,
+      "dims": {
+        "relative_strength": 2,
+        "mental_advantage": 2,
+        "defensibility": 2,
+        "competitive_room": 2,
+        "market_headroom": 3,
+        "demand_reach": 3
+      },
+      "rubric_version": "1.8.0",
+      "model_id": "jev-1.13.0"
+    }
+  }
+}

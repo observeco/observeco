@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "case": "C2-caica",
+    "canary": true,
+    "source_document": "~/projects/CaiCa/competitive-analysis/CaiCa_Competitive_Analysis.md (v2, 2026-08-23)",
+    "authored": "AUTHORED from the engagement analysis, not captured from a client intake form. No raw intake form exists for this engagement. Form fields are reconstructed from statements in the source document; the derived competitive set and the expected conclusion are taken from it directly. The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions - they are not a recorded client label. The BAND, not the dimension vector, is the bar (spec 10.6).",
+    "expected_conclusion": "Reason-to-purchase not strong; position must be earned first (spec 10.1)",
+    "notes": "Failing entrant, not a promising one. Launched from six former Gong Cha outlets; now three visible. The 'local + healthier' wedge is shared, copyable and contradicted by the product's own reviews. CHAGEE is the category's crown (~46 SG stores, 4.7-4.9 stars, 900-1600+ reviews per store)."
+  },
+  "form": {
+    "business_name": "Cai Ca",
+    "website": "",
+    "role": "Founder",
+    "company_size_band": "1-10",
+    "city": "Singapore",
+    "category": "Bubble tea and tea-based drinks, Singapore. Milk tea, fruit tea, pure tea, a soy-milk-tea line, and snack pairings. Drinks designed to land at HPB Nutri-Grade B or C.",
+    "positioning_sentence": "A tea brand that belongs to Singapore - local, and healthier than the imports.",
+    "differentiator": "We are founded by a Singaporean team and our story is local. Our drinks are formulated to be lower in sugar, landing at Nutri-Grade B or C, so a customer can drink them more often without the sugar they would get from an imported brand. We also do a soy-milk tea line that the big chains do not have.",
+    "undercut_on": "Taste and quality. Reviews say our drinks come across as watery and syrup-based rather than fresh, that the pearls are poorly textured, and that the price is not worth it. A customer who wants an indulgence buys from CHAGEE instead.",
+    "your_price_point": "Mid-market, comparable to other chains but below the premium tea-expert tier.",
+    "their_price_point": "CHAGEE and the premium chains sell at a similar or higher price with far stronger product reviews.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "CHAGEE",
+    "LiHO TEA",
+    "KOI The",
+    "Gong Cha"
+  ],
+  "customer_description": "Singapore bubble-tea drinkers, mostly under 35, buying in malls and near campuses. The indulgence-led drinker is the majority; a smaller health-conscious segment wants lower sugar.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from the SG bubble-tea category: store locators, review volume and ratings, and the outlet set the brand actually trades in.",
+    "tier_0_default": {
+      "members": [
+        "drinking nothing - water, kopi, or a canned drink"
+      ],
+      "why": "Most thirst occasions are not solved by bubble tea."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "hawker and foodcourt drinks (S$1.50-3)",
+        "supermarket ready-to-drink teas",
+        "Mixue"
+      ],
+      "price_floor": "Hawker drinks and Mixue sit far below a specialty bubble-tea cup.",
+      "why": "The cheap route solves the same thirst at a fraction of the price."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "LiHO TEA",
+        "KOI The",
+        "Each-a-Cup",
+        "Sharetea"
+      ],
+      "why": "These are the chains a customer is choosing between at the same price point."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "CHAGEE"
+      ],
+      "diagnostic": "CHAGEE is the reference occupant: ~46 SG stores opened within about two years, 4.7-4.9 stars with 900-1,600+ reviews per store, 200+ staff, targeting 70 stores; Nasdaq-listed (CHA) with 7,500+ stores globally. It positions as a tea expert rather than a bubble-tea brand.",
+      "why": "It owns the craft-premium tier and the cultural-premium story."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "specialty coffee chains",
+        "dessert and bakery chains with a drink line"
+      ],
+      "why": "A coffee or dessert purchase substitutes for the same treat occasion."
+    },
+    "tier_5_professional_route": {
+      "members": [
+        "none - no professional specifies a bubble-tea brand"
+      ],
+      "why": "There is no intermediary in this category."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "health trends reducing sugar intake",
+        "HPB Nutri-Grade regulation shifting formulation"
+      ],
+      "why": "A category-wide shift toward lower sugar can help or strand a brand depending on execution."
+    }
+  },
+  "_expected": {
+    "band": "Contested",
+    "dimensions": {
+      "relative_strength": 2,
+      "mental_advantage": 2,
+      "defensibility": 1,
+      "competitive_room": 2,
+      "market_headroom": 4,
+      "demand_reach": 3
+    },
+    "why": "A failing entrant with no durable reason-to-purchase. Defensibility is the weakest dimension: the local story is shared with LiHO and KOI and is time-limited, and the healthier story is copyable. Market headroom is favourable - tea demand is real and growing - which is precisely the dimension that must not be allowed to mask the rest. Demand reach sits at 3 because the three surviving outlets are trading and therefore demonstrably reach buyers.",
+    "fixed": true
+  }
+}

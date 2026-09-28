@@ -1,0 +1,102 @@
+{
+  "_meta": {
+    "case": "C5-saladshop",
+    "canary": true,
+    "source_document": "~/SaladShop/competitive-analysis/SaladShop_Competitive_Analysis_Summary.md + SaladShop_WhiteSpace_Report.md (2026-09-10)",
+    "authored": "AUTHORED from the engagement analysis, not captured from a client intake form. No raw intake form exists for this engagement. Form fields are reconstructed from statements in the source document; the derived competitive set and the expected conclusion are taken from it directly. The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions - they are not a recorded client label. The BAND, not the dimension vector, is the bar (spec 10.6).",
+    "expected_conclusion": "CBD saturated at every tier; white space outside it (spec 10.1)",
+    "notes": "CBD crowded at both the top and the value tier - ~45+ CBD locations fighting for the same white-collar lunch. SaladStop! owns health/wellness, Supergreen owns best value, Six Hands owns 'healthy that doesn't feel like a sacrifice', OMNIVORE owns Thai/SEA flavor; hawker stalls own S$5-9. Heartland is underserved at premium but owned at value by Stuff'd (36 branches, ~24k reviews, S$8-13, ~27 non-CBD malls). Evidence base: 12,523 verified Google reviews.",
+    "pre_launch_caveat": "PRE-LAUNCH CASE. As with C4, the engagement's conclusion is about the MARKET rather than a position held, so the band under-expresses it. The instrument's honest reading of an unlaunched venture is Fragile regardless of how good the untaken position looks - which is the behaviour this case is here to lock down."
+  },
+  "form": {
+    "business_name": "A new salad shop venture",
+    "website": "",
+    "role": "Founder",
+    "company_size_band": "1-10",
+    "city": "Singapore",
+    "category": "Salad and healthy-bowl quick-service restaurants in Singapore - lunch-led, CBD-first, then island-wide.",
+    "positioning_sentence": "A beautiful, protein-forward, filling healthy bowl - healthy that actually tastes like a treat.",
+    "differentiator": "We are building the bowl as an object of desire rather than a diet food. Visual presentation engineered to be striking, in the way Tokyo Salad Bowl does it, directly attacking the category's documented failure mode of the joyless watery salad. Protein-forward and genuinely filling, with published per-bowl macros synced to tracking apps, so it answers the 'not filling, small portion' complaint. We will operate in the heartland, where the premium healthy-bowl tier is genuinely thin, rather than fighting for CBD lunch traffic.",
+    "undercut_on": "Value and location. Stuff'd sells a filling bowl at S$8-13 across 36 branches, and hawker stalls do the same job for S$5-9. We are not the cheapest way to eat lunch, and ready-to-eat supermarket salads undercut us at about S$5.",
+    "your_price_point": "Premium healthy bowl, above the S$8-13 value tier.",
+    "their_price_point": "Hawker stalls S$5-9; Stuff'd S$8-13; supermarket ready-to-eat salads about S$5; meal-prep subscriptions S$8-15 per meal.",
+    "competitors_named_count": "3-5"
+  },
+  "competitors_named": [
+    "SaladStop!",
+    "Stuff'd",
+    "Supergreen",
+    "Six Hands",
+    "OMNIVORE"
+  ],
+  "customer_description": "CBD white-collar lunch buyers first, then heartland diners. Health-aware office workers who want a lunch that is both healthy and satisfying, and who currently choose between a joyless salad and something they actually want to eat.",
+  "derived_competitive_set": {
+    "derivation_method": "Derived from the SG salad and healthy-bowl category: outlet counts across CBD and non-CBD malls, published price tiers, and the pain/praise structure across 12,523 verified reviews.",
+    "tier_0_default": {
+      "members": [
+        "a non-salad lunch - rice, noodles, a sandwich",
+        "bringing lunch from home"
+      ],
+      "why": "Most lunches are not salads, and the category competes against the whole lunch set."
+    },
+    "tier_1_cheap_substitute": {
+      "members": [
+        "hawker stalls (S$5-9)",
+        "supermarket ready-to-eat salads (about S$5)",
+        "meal-prep subscriptions (S$8-15 per meal)"
+      ],
+      "price_floor": "S$5-9 for a full lunch undercuts any premium bowl.",
+      "why": "This rung is where the value buyer actually eats, and the online meal-prep trend competes for the same wallet."
+    },
+    "tier_2_direct_set": {
+      "members": [
+        "Supergreen",
+        "The Daily Cut",
+        "Super Simple"
+      ],
+      "why": "These compete for the same health-conscious lunch at a similar price."
+    },
+    "tier_3_category_incumbent": {
+      "members": [
+        "SaladStop!"
+      ],
+      "diagnostic": "SaladStop! owns 'health and wellness' in this category. It has only about 4 non-CBD stores and treats delivery as an add-on channel, which is the gap a heartland entrant can use.",
+      "why": "It is the reference occupant of the salad category in Singapore."
+    },
+    "tier_4_adjacent_crossover": {
+      "members": [
+        "Stuff'd (36 branches, ~24k reviews, S$8-13)",
+        "Poke and grain-bowl chains",
+        "Six Hands",
+        "OMNIVORE"
+      ],
+      "why": "A burrito, poke bowl or flavoured rice bowl solves the same lunch need and often more cheaply."
+    },
+    "tier_5_professional_route": {
+      "members": [
+        "none - no intermediary specifies a lunch venue"
+      ],
+      "why": "There is no professional gatekeeper in this category."
+    },
+    "tier_6_indirect": {
+      "members": [
+        "office catering and pantry programmes",
+        "HPB Healthier Dining grant shaping menus"
+      ],
+      "why": "A workplace catering contract can remove the individual lunch decision entirely."
+    }
+  },
+  "_expected": {
+    "band": "Fragile",
+    "dimensions": {
+      "relative_strength": 1,
+      "mental_advantage": 1,
+      "defensibility": 1,
+      "competitive_room": 3,
+      "market_headroom": 3,
+      "demand_reach": 1
+    },
+    "why": "A pre-launch venture with no name, no outlets and no customers. Fragile. Its conclusion ('CBD saturated at every tier; white space outside it') is a landscape statement, recorded here as competitive_room 3 - the CBD is saturated at both ends even though the specific beautiful-protein-bowl position is unclaimed. This case most directly tests whether the instrument rewards an unclaimed WORD over a held POSITION: the position is open, the business holds nothing.",
+    "fixed": true
+  }
+}
