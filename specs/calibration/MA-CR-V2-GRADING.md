@@ -52,8 +52,8 @@ Higher = more room. **Judge the MARKET, not the business** — ignore its own qu
 | 2   | Gong Cha Singapore         | bubble-tea         | 4                             | 3                             |                  |
 | 3   | Sephora Singapore          | health-beauty      | 5                             | 2                             |                  |
 | 4   | Watsons Singapore          | health-beauty      | 5                             | 2                             |                  |
-| 5   | Best Denki Singapore       | electronics        | 4                             | 1                             |                  |
-| 6   | Courts Singapore           | electronics        | 5                             | 1                             |                  |
+| 5   | Best Denki Singapore       | electronics        | 4                             | 3 *(corrected)*                              |                  |
+| 6   | Courts Singapore           | electronics        | 5                             | 3 *(corrected)*                              |                  |
 | 7   | KFC Singapore              | fast-food          | 5                             | 2                             |                  |
 | 8   | McDonald's Singapore       | fast-food          | 5                             | 2                             |                  |
 | 9   | Toast Box                  | kopitiam           | 4                             | 3                             |                  |
