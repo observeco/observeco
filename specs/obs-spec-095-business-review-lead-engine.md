@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v23 — **D38 answered by reasoning not form questions (rubric v1.11.1); noise floor larger than claimed.**
+**Status:** DRAFT v24 — **D39 operated-network rule applied (v1.11.2); D40 — Jev is NOT the process lever, the rubric is (it grew 46%).**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,26 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v24 change — D39 applied on Sean's authority; D40 answers the Jev question with measurements.**
+*(1) **D39 — the operated-network rule (v1.11.2).** Sean authorised the KFC/Ya Kun/Toast Box judgement.
+**Applied as a GENERAL rule, not three patches**, because a rule shaped around three businesses does not
+survive the next submission: **a chain that demonstrably operates many units holds efficient scale even
+where opening a single unit is cheap — the barrier is the NETWORK, not one more shop.** **All three land
+exactly on Sean's 4.** **⚠ Collateral: 13 cases moved (8 up, 5 down); CHAGEE and NTUC FairPrice improve,
+but Mixue, CHICHA San Chen and Each-A-Cup move the WRONG way and 24/7 Fitness and Chin Mee Chin drop.
+Corpus totals are a wash — DEF disputes 2.5% → 3.3%, back to v1.8.0's level.** *The three authorised
+corrections are exact; the aggregate did not improve.*
+*(2) **D40 — Sean asked: *"Are we using Jev to improve the speed and overall process?"* Measured answer:
+NO — Jev is not the constraint, the rubric is.** **Model latency 0.48 s/case; the whole 120-case corpus
+runs in 107 s; 300 cases projects to ~4.5 min.** **But 90% of every prompt is the rubric (20,472 of
+22,774 chars), and the rubric grew 46% this session (14,591 → 21,366 chars) with the defensibility
+instruction alone up 4.5× (1,204 → 5,426) — because of my own iteration.** **That bloat is a plausible
+contributor to the batch variance just measured.** **The process levers are: compress the rubric
+(smaller prompts are faster, cheaper AND more reproducible); parallelise the driver (process overhead
+~0.85 s/case exceeds the 0.48 s of inference and runs strictly sequentially); fix the noise floor before
+tuning further; and only then spend Jev's speed on the inline category reasoning and the D25 scan that
+the spec currently gates.**
+
 **v23 change — Sean rejected the form fix and was right; reasoning works; and my determinism claim was
 over-stated.**
 *(1) **Sean: *"It shouldn't be in the form. I much rather reasoning is used to make the judgement here
@@ -2824,6 +2844,83 @@ single batches, because the differences being chased are at the noise floor.
 forms with a known thinness bias, so nobody reads "100% band agreement" as validating real-submission
 performance.
 
+---
+
+#### ✅ D39 — the operated-network rule (Sean authorised), and what it cost elsewhere
+
+**Sean: *"I'm happy for you to apply the KFC, Ya Kun and Toast box judgement."*** **Applied as a GENERAL
+rule, not three case patches** (rubric **v1.11.2**), because a rule shaped around three businesses would
+not survive the next submission:
+
+> **SEPARATE VISIBILITY FROM OPERATED NETWORK.** A household name whose prominence rests on nothing but
+> visibility — advertising, footfall, habit — in a fragmented, low-entry-cost category is cheap to
+> displace and belongs LOW. **But a chain that demonstrably OPERATES MANY UNITS is a different case,
+> even in a fragmented category where opening a *single* unit is cheap:** the network itself — property,
+> supply chain, logistics, central purchasing, staffing and training, brand spend spread across many
+> outlets, and a decade or more of accumulated sites — is an asset a challenger cannot cheaply assemble,
+> and it is **efficient scale and a cost advantage.** **The barrier is the NETWORK, not the single site.**
+
+**Result — the three move to Sean's grade exactly:**
+
+| Business | v1.8.0 | v1.11.1 | **v1.11.2** | Sean |
+|---|---|---|---|---|
+| KFC | 4 | 3 | **4** | **4 ✅** |
+| Ya Kun Kaya Toast | 4 | 3 | **4** | **4 ✅** |
+| Toast Box | 4 | 3 | **4** | **4 ✅** |
+
+**⚠ BUT THE COLLATERAL IS MIXED AND MOST OF IT SITS AT THE NOISE FLOOR.** 13 cases moved: **8 up, 5 down.**
+
+- **Up:** the three above, plus **CHAGEE 3→4** (Sean 4 ✅), **NTUC FairPrice 4→5** (Sean 5 ✅),
+  **Mixue 3→4** (Sean 3 ✗), **CHICHA San Chen 3→4** (Sean 3 ✗), **Each-A-Cup 3→4** (Sean 2 ✗ — it
+  regressed back after v1.11.1 had moved it to 3).
+- **Down:** **24/7 Fitness 3→2**, **Chin Mee Chin 3→2**, Cuteticle SG 2→1, My Skin Diary 2→1,
+  a home-based food-photography business 2→1.
+
+**Corpus totals are a wash, and this is the honest reading: `defensibility` disputes 2.5% → 3.3%
+(back to where v1.8.0 was), within-one-level 51.7% → 48.3%, offset −0.07 → −0.05.** So **the three
+authorised corrections are exact, but they did not improve the aggregate** — and **Each-A-Cup moved the
+wrong way.** **That is what tuning to a handful of cases looks like from the inside**, and it is why the
+rule was written generally rather than case-specifically: at least the general rule can be judged on
+the corpus rather than on three names.
+
+#### ⚠⚠ D40 — IS JEV THE RIGHT LEVER FOR SPEED AND PROCESS? **NO, AND THE MEASUREMENTS ARE ONE-SIDED**
+
+**Sean asked: *"Are we using Jev to improve the speed and overall process?"*** **Measured, and the answer
+is that Jev is not the constraint — the rubric is.**
+
+| Measurement | Value |
+|---|---|
+| **Model latency, one case** | **0.48 s** |
+| Full 120-case corpus | **107 s** *(one subprocess per case, sequential)* |
+| Projected 300 cases | **~4.5 min** |
+| **Prompt per case** | **22,774 chars** — state **2,302**, **rubric 20,472** |
+| **Rubric's share of the prompt** | **90%** |
+
+**So 90% of every call is the rubric, not the business** — and **the rubric is what has grown**:
+
+| | questions block | `defensibility` instruction |
+|---|---|---|
+| v1.8.0 | 14,591 chars | 1,204 chars |
+| **v1.11.2** | **21,366 chars (+46%)** | **5,426 chars (4.5×)** |
+
+**⚠ I did that.** Every iteration in this session added clauses to a dimension's instruction. **And
+instruction bloat is a plausible contributor to the batch variance measured above** — the more rules
+stacked into one prompt, the more room for the model to weight them differently between runs.
+
+**THE PROCESS LEVER IS THEREFORE NOT JEV. It is:**
+**(1) COMPRESS the rubric** — the `defensibility` instruction is 5,426 chars where it was 1,204, and it
+now carries a moat definition, a fame guard, a visibility/network distinction and a category-reasoning
+pathway. **Those can be stated once, tersely, without losing the rules.** Smaller prompts are faster,
+cheaper and *more* reproducible, not less.
+**(2) PARALLELISE the driver** — the corpus runner spends **0.48 s of model time and ~0.85 s of process
+overhead per case**, and runs strictly sequentially. **The overhead is larger than the inference.**
+**(3) FIX THE NOISE FLOOR BEFORE TUNING FURTHER** — at ±1 batch variance, **most of the movement
+measured across v1.11.0→v1.11.2 is inside the noise**, so further single-batch tuning is not
+informative. **Either repeat each case and take a majority, or raise the reporting threshold to ±2.**
+**(4) Then Jev's speed becomes worth using for something real** — at 0.48 s it can run the **category
+reasoning and the external scan (D25/D35/D38) inline**, which is the token-burning work the spec
+currently gates. **The speed is there; the rubric is what makes the process slow and unstable.**
+
 **Superseded record of the withdrawn finding, kept because the reasoning error is instructive:**
 
 `rubric.json` declares **`level_counts.defensibility = 6`** while the other five dimensions are **5**.
@@ -3264,6 +3361,8 @@ purchasing decision.
 | **D35** | **`defensibility` — is it a property of the BUSINESS or the CATEGORY?** (§10.6) | **CLOSED — B. Sean ruled: *"Can we agree on B for defensibility?"*** **DEF now reads CATEGORY STRUCTURE as an input** (rubric **v1.9.0**): consolidation and capital- or licence-intensity add defensibility; fragmentation with low entry cost removes it; **familiarity is explicitly NOT defensibility** (Gong Cha is a household name in a fragmented category and belongs low). **The evidence that decided B over C:** after Sean's sheet corrections, the **4 residual DEF disputes were ALL category-structure cases** — electronics (consolidated → raise) and bubble-tea (fragmented → lower) — and **ZERO were business-level**. The residual error was entirely the missing construct. **C was rejected because `competitive_room` does not encode it:** Sean's own CR vs DEF correlate only **−0.19 across categories** (and **+0.07** at business level), so consolidation was *not* already hiding in CR — moving it there would have put a category fact in a landscape dimension where he does not read it. **⚠ B creates an input requirement (see below), and it does NOT fix Best Denki on its own.** ~~OPEN — Sean hand-read all 8, and his ruling reframes it.~~ His scores: **Best Denki 4, Gain City 4, Burger King ~4, IKEA ~4, Scanteak 3–4, Toast Box 3–4, Gong Cha low, Each-A-Cup low.** **⚠ Four of the eight "disputes" turn out to be SHEET errors, not instrument errors** — IKEA, Scanteak and Toast Box land within one of the instrument, and Burger King moves to ~4 against the instrument's 3. **DEF's true disagreement is materially lower than 7.0%.** *(His sheet was also internally inconsistent on the same construct — **Burger King 1 vs KFC 4**, two directly comparable chains, three points apart; Subway 2 and Jollibee 2 sit with Burger King.)* **THE REAL QUESTION:** his labels cluster **by category** (furniture flat 2 across IKEA, Scanteak, Cellini, Castlery; health-beauty flat 4 across four firms), while the **instrument scores each business on its own characteristics**. His Best Denki reasoning states the construct explicitly — *"the appliance market has consolidated to a few brand names only in Singapore… because they all have mental advantage, there is some defensibility because it's really concentrated at the top."* **That is a claim about the CATEGORY, which §5.4's "challenger's cost per business" cannot see.** Options: **A** instrument is right, construct stays business-level · **B** DEF reads category concentration as an input · **C** split it — business-level DEF stays, consolidation moves to `competitive_room`, **which already measures fragmentation and is where consolidation naturally belongs**. **Recommended: C.** Disputes cluster in **high-variance categories** (electronics 3/4, fast-food 1/5); where the category is **homogeneous** the two readings agree — which is the pattern that makes C the fit |
 | **D36** | ~~`defensibility` is scored 1–6 while every other dimension is 1–5~~ | **WITHDRAWN — MY FINDING WAS FALSE.** I assumed Sean's DEF grades were 1–5; **`build_regrade_sheet.py:183` told him 1–6 and his grades use the full range (max 6.0).** **The scales were matched; DEF's dispute rate is 3.3% (4/120), under the bar, before any fix.** The "6.7% → 1.7%" was an artefact of a conversion that should never have been applied. **Fourth frame error retracted this session.** *Making DEF 5 levels remains a coherent uniformity choice, but it fixes nothing.* **The REAL cause is §10.6's corpus finding below.** |
 | **D36-old** | *Original (withdrawn) framing* | Superseded. **See §10.6 "D36 WITHDRAWN" for the replacement finding: 99 of 120 corpus forms are analyst RECONSTRUCTIONS with a median payload of 725 characters, and the form carries none of the structural facts DEF needs.** |
+| **D39** | **Does an operated multi-outlet network count as a moat where category entry is cheap?** (§10.6) | **ANSWERED — YES, and Sean authorised it: *"I'm happy for you to apply the KFC, Ya Kun and Toast box judgement."*** Applied as a **GENERAL rule** (rubric **v1.11.2**), not three case patches: **SEPARATE VISIBILITY FROM OPERATED NETWORK** — a household name resting on visibility alone is cheap to displace and stays LOW, but **a chain that demonstrably operates many units holds efficient scale and a cost advantage even where opening a SINGLE unit is cheap**, because **the barrier is the NETWORK** (property, supply chain, central purchasing, staffing at scale, decades of sites), not one more shop. **KFC, Ya Kun and Toast Box move to 4, exact match.** **⚠ Collateral is mixed and mostly at the noise floor:** 13 cases moved (8 up, 5 down); **CHAGEE and NTUC improve, but Mixue, CHICHA San Chen and Each-A-Cup move the wrong way, and 24/7 Fitness and Chin Mee Chin drop.** **Corpus totals are a wash — DEF disputes 2.5% → 3.3%, i.e. back to v1.8.0's level.** *This is what tuning to a handful of cases looks like from the inside.* |
+| **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO. Jev is not the constraint; the rubric is.** Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
 | **D38** | **The calibration corpus is 82% thin reconstructed forms — does the calibration claim survive?** (§10.6) | **OPEN — the most important finding in this document, and it was found by chasing Sean's moat question.** **99 of 120 cases (82%) carry `label_is_external: true` and an `authoring_note` reading *"FORM DATA reconstructed by the analyst from public sources… the form is thinner than a real submission. This is the known weakness of the test."* Median form payload 725 chars.** **So the corpus measures agreement on analyst-reconstructed forms, NOT on real submissions** — and **defensibility is the dimension most damaged**, because barriers (outlet counts, tenure, owned assets, licences) are the facts least likely to appear in a positioning sentence and most likely to be known to the owner. **Best Denki proves it: Sean scores 4 from knowledge of ~14 stores and a national network; the form states only *"Japanese retail service standards"*; the instrument says 2 — correctly, on what it was given.** **⚠ Same class of gap Sean already flagged: *"You have blind gaps. You have to corroborate your answer against physical evidence."*** **Fix is in the FORM, not the rubric:** (a) the form must **ask** for structural facts (outlets, years, owned premises, licences, price premium); (b) if the form cannot supply them this is **the same external-scan dependency as D25/D35**; (c) the calibration claim must be **restated** so "100% band agreement" is not read as validating real-submission performance |
 | **D36-old-2** | *Superseded* | `rubric.json` declares `level_counts.defensibility = 6` (the other five are 5) against a scale block that says `human_display: "1-5"`. The 6th level **fires**: display **6** appears 3 times, mean mass on the 6th bin **3.4%**, and the composite divides defensibility by **6**. **Every §10.6 defensibility comparison has therefore pitted a 1–6 score against a 1–5 grade.** Normalising the scales moves the disputes from **6.7%** → **1.7% (percentile-matched)** / **4.2% (round-to-nearest)** — both **under the bar**, against RS 0.8% / MA 7.5% / DR 4.2% — so **on a like-for-like footing defensibility is no longer the worst dimension.** *(It was investigated as a rubric-CONTENT problem because the raw number was above the bar. It is at least partly a SCALE problem — same class as the §5.4 rounding gap.)* **Options: A** collapse defensibility to 5 levels (uniform display; invalidates every prior run) · **B** keep 6 levels and **label the scale in the report** · **C** keep 6 internally but normalise to 1–5 for display and for all human comparison. **Recommended: C** — it fixes the comparison without discarding the deliberate 0.5.0 split |
 | **D37** | **Adopt the commonly-accepted moat definition for `defensibility`?** (§10.6) | **CLOSED — YES, structure only. Implemented in rubric v1.10.0.** Sean: *"D37, moat rewrite based on the structure."* **DEF now requires evidence of at least one named moat source** — efficient scale · capital requirements · intangible assets (patent, licence, proprietary process, **price-premium brand**) · switching costs · cost advantage · network effect — with the **primary/ancillary** distinction, and **"fame is not a moat"** as an explicit guard (a brand counts only where it **demonstrably produces pricing power**). **Validated: 3 repeat runs per case show the instrument is DETERMINISTIC (spread 0), so its scores are reproducible and any movement is attributable.** **⚠ It did NOT move the four disputed cases (Best Denki 2, Gain City 2, Gong Cha 3, Each-A-Cup 3) — because the cause is the corpus, not the rubric (D38).** **One honest limit retained: adopt the moat's STRUCTURE, NOT its PURPOSE** — Buffett's moat predicts returns on capital; §1's objective is quality of the current position relative to competitors. **Sean asked:** *"It should follow the definition of moat as per warren buffet or other commonly accepted definition?"* and he is right.** Researched against primary sources (Buffett/Morningstar five sources; Stigler/McAfee barriers to entry) rather than adopted on its say-so. **The frame CONFIRMS all three of his rulings** — Best Denki/Gain City = **efficient scale + capital requirements**; Gong Cha/Each-A-Cup = **no moat source at all**. **⚠ It corrects the REASON:** his Best Denki justification was *"because they all have mental advantage, there is some defensibility"*, and **mental advantage is not a moat source under any of the five** — feeding it into DEF is exactly the double-count that made DEF and MA agree too often. **He caught this himself.** Decisive quote, Morningstar verbatim: *"Just because a company boasts a well-known brand, or has been in business a long time, does not necessarily mean it has an economic moat."* **⚠ ONE HONEST LIMIT: adopt the moat's STRUCTURE (structural barriers not fame, primary vs ancillary distinguished), NOT its PURPOSE** — Buffett's moat predicts long-term returns on capital, while §1's objective is quality of current position relative to competitors. Importing the investor purpose wholesale would be the **seventh** imported framework in this document |
