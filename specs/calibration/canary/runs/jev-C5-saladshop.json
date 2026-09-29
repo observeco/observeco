@@ -1,8 +1,8 @@
 {
   "case": "C5-saladshop",
   "model_id": "jev-1.13.0",
-  "rubric_version": "1.18.0",
-  "generated_at": "2026-09-29T11:45:36+00:00",
+  "rubric_version": "1.18.1",
+  "generated_at": "2026-09-29T11:50:13+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
@@ -12,11 +12,11 @@
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.96,
+    "confidence": 0.97,
     "probabilities": {
       "elastic": 0.98,
-      "inelastic": 0.0,
-      "ambiguous": 0.02
+      "ambiguous": 0.02,
+      "inelastic": 0.0
     },
     "rule_version": "A3"
   },
@@ -54,39 +54,39 @@
     "demand_reach": 2
   },
   "raw_jev_scores_0to4": {
-    "relative_strength": 2.48,
-    "mental_advantage": 0.22,
-    "defensibility": 0.87,
-    "competitive_room": 1.68,
-    "market_headroom": 2.02,
-    "demand_reach": 1.11
+    "relative_strength": 2.36,
+    "mental_advantage": 0.23,
+    "defensibility": 0.86,
+    "competitive_room": 1.7,
+    "market_headroom": 2.01,
+    "demand_reach": 1.08
   },
   "evidence_coverage": {
-    "relative_strength": 0.56,
+    "relative_strength": 0.46,
     "mental_advantage": 0.81,
-    "defensibility": 0.7,
-    "competitive_room": 0.62,
+    "defensibility": 0.69,
+    "competitive_room": 0.63,
     "market_headroom": 0.91,
-    "demand_reach": 0.84
+    "demand_reach": 0.85
   },
   "confidence": {
-    "relative_strength": 0.56,
+    "relative_strength": 0.46,
     "mental_advantage": 0.81,
-    "defensibility": 0.7,
-    "competitive_room": 0.62,
+    "defensibility": 0.69,
+    "competitive_room": 0.63,
     "market_headroom": 0.91,
-    "demand_reach": 0.84
+    "demand_reach": 0.85
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "relative_strength": {
-      "expected_jev_0to4": 2.47,
-      "expected_display_1to5": 3.47,
+      "expected_jev_0to4": 2.36,
+      "expected_display_1to5": 3.36,
       "band_80pct_display_1to5": [
         3,
         4
       ],
-      "mass_covered": 0.94
+      "mass_covered": 0.89
     },
     "mental_advantage": {
       "expected_jev_0to4": 0.23,
@@ -104,42 +104,42 @@
         1,
         2
       ],
-      "mass_covered": 0.85
+      "mass_covered": 0.84
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.68,
-      "expected_display_1to5": 2.68,
+      "expected_jev_0to4": 1.71,
+      "expected_display_1to5": 2.71,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.94
+      "mass_covered": 0.93
     },
     "market_headroom": {
-      "expected_jev_0to4": 2.02,
-      "expected_display_1to5": 3.02,
+      "expected_jev_0to4": 2.01,
+      "expected_display_1to5": 3.01,
       "band_80pct_display_1to5": [
         3,
         3
       ],
-      "mass_covered": 0.9
+      "mass_covered": 0.89
     },
     "demand_reach": {
-      "expected_jev_0to4": 1.12,
-      "expected_display_1to5": 2.12,
+      "expected_jev_0to4": 1.08,
+      "expected_display_1to5": 2.08,
       "band_80pct_display_1to5": [
         2,
         2
       ],
-      "mass_covered": 0.86
+      "mass_covered": 0.87
     }
   },
   "probabilities": {
     "relative_strength": {
       "0": 0.0,
-      "1": 0.06,
-      "2": 0.41,
-      "3": 0.53,
+      "1": 0.11,
+      "2": 0.42,
+      "3": 0.47,
       "4": 0.0
     },
     "mental_advantage": {
@@ -150,32 +150,32 @@
       "4": 0.01
     },
     "defensibility": {
-      "0": 0.29,
-      "1": 0.56,
-      "2": 0.15,
+      "0": 0.3,
+      "1": 0.54,
+      "2": 0.16,
       "3": 0.0,
       "4": 0.0,
       "5": 0.0
     },
     "competitive_room": {
       "0": 0.0,
-      "1": 0.38,
+      "1": 0.37,
       "2": 0.56,
       "3": 0.06,
-      "4": 0.0
+      "4": 0.01
     },
     "market_headroom": {
       "0": 0.0,
-      "1": 0.04,
-      "2": 0.9,
+      "1": 0.05,
+      "2": 0.89,
       "3": 0.06,
       "4": 0.0
     },
     "demand_reach": {
-      "0": 0.04,
-      "1": 0.86,
-      "2": 0.05,
-      "3": 0.04,
+      "0": 0.05,
+      "1": 0.87,
+      "2": 0.04,
+      "3": 0.03,
       "4": 0.01
     }
   },
