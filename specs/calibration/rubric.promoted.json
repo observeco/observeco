@@ -1,6 +1,6 @@
 {
  "version": "1.16.1",
  "sha256": "417f6b84cf73a91f6341f17cffe7cb64618aa01407642d3fd7c553298a469ee9",
- "promoted_at": "2026-09-29T19:28:25+08:00",
- "promoted_from": "rubric.json"
+ "promoted_at": "2026-09-29T19:36:04+08:00",
+ "promoted_from": "rubric-v1.16.1-restore.json"
 }
