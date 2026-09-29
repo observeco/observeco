@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v33.1 — **D47 CLOSED: Sean ruled the instrument right (Best Denki/Courts are 3, the sheet was wrong). Competitive room now 0/21 disputes, 100% within-one. All three regraded dimensions pass.**
+**Status:** DRAFT v34 — **D48: §5.3.1 step 4 BUILT (`rubric_gate.py`) — the scorer now refuses an unpromoted or post-promotion-modified rubric. Proved by 7 probes including two tamper tests.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,29 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v34 change — D48: §5.3.1 step 4 built. The promotion gate now protects the REPORT, not just the rubric.**
+*(1) **`rubric_gate.py` is new and is enforced in `run_jev.py`** — the path every calibration run and the
+eventual server-side scorer both use, **since no separate production scorer exists yet.** *Enforcing it in
+the shared path rather than waiting for a scorer to be written is what makes the gate real today instead
+of aspirational.*
+*(2) **⚠ THE CORE INSIGHT: A VERSION STRING PROVES NOTHING.** *It is set BY HAND when a rubric is edited
+directly — and that is precisely what happened: `rubric.json` was edited in place and the version bumped
+manually, so `promote_rubric.py` was never run and none of its six checks were applied.* **The file claimed
+a version; nothing had verified it.** **So promotion now writes a sidecar with the SHA-256 of the promoted
+BYTES, and a rubric whose hash does not match is refused whatever its version claims.**
+*(3) **Scope is deliberate: the LIVE rubric must be stamped, frozen references are exempt.** *Calibration
+legitimately scores against retired rubrics — the canary's frozen baseline is one — so gating those would
+break the harness it is meant to protect.* **Promoting the live file onto itself is allowed as the
+recovery path after an in-place edit, with the six checks still running.**
+*(4) **⚠ PROVED BY MAKING IT FAIL — 7 probes, each a real command:** *unstamped → refused; frozen reference
+→ allowed; stamped → allowed; **level-text tamper → refused with a sha mismatch**; **version-only tamper →
+refused, exit code 1**; restore + re-promote → allowed; **full 120-case corpus → 120/120, zero false
+refusals.*** **Canary passes.** *A gate that has only ever been observed passing is not evidence.*
+*(5) **Why this mattered enough to build now:** *the promotion gate was bypassed THREE times in this
+session — every rubric change (1.15.0 through 1.16.1) was an in-place edit.* **The harness's mixed-version
+guard caught two half-done stamps, but nothing stopped the bypass itself.** *This closes the loop §5.3.1
+predicted and that then recurred.*
+
 **v33.1 change — D47 closed: the instrument was right, the sheet was wrong.**
 *(1) **Sean: *"you are right it is a 3 for best denki and courts."*** **The two cases that appeared to be
 lost under the dominance reframe were never lost — the instrument read them correctly and the grading sheet
@@ -1378,7 +1401,7 @@ shown a score from the retired model.
 | 1 | The chosen rubric is promoted to `specs/calibration/rubric.json` — the single path both implementations read | **DONE** — 0.9.0 → 1.8.0 |
 | 2 | The promoted file's `_meta.version` **must** equal its top-level `version`; the harness fails loudly on a mismatch | enforced before promotion |
 | 3 | Superseded rubrics are retained as `rubric-v<X>.json` for the audit trail, never left as the live file | 1.0.0–1.8.0 retained |
-| 4 | No report is served unless the loaded rubric's `_meta.version` is the promoted one | **build — belongs to the scorer** |
+| 4 | No report is served unless the loaded rubric's `_meta.version` is the promoted one | **DONE — `rubric_gate.py`, enforced in `run_jev.py`** |
 
 **The promotion is a script, not a copy, because a copy cannot refuse.** `promote_rubric.py`
 validates six conditions and exits non-zero rather than promoting a bad file:
@@ -1391,10 +1414,42 @@ validates six conditions and exits non-zero rather than promoting a bad file:
 5. the band table is present and starts at Fragile;
 6. **no score gates survive** — calibration removed them (§5.4), so a file carrying them is stale.
 
-**Step 4 is still open**, and it is the one that matters in production: the scorer must refuse to
-serve a report whose rubric version is not the promoted one. The promotion gate protects the
-*rubric*; step 4 protects the *report*. Until the scorer exists, a stale rubric can still be
-loaded by anything that reads the path directly.
+**Step 4 was built on 2026-09-29 (`rubric_gate.py`).** It is the one that matters in production:
+the scorer must refuse to serve a report whose rubric was not promoted. **The promotion gate protects
+the *rubric*; step 4 protects the *report*.**
+
+#### Why a hash, and not the version string
+
+**A version string proves nothing, because it is set BY HAND when a rubric is edited directly — which
+is what happened repeatedly in this project.** `rubric.json` was edited in place and the version bumped
+manually, so `promote_rubric.py` was never run and none of its six checks were ever applied. The file
+*claimed* a version; nothing had verified it.
+
+**So promotion now writes a sidecar, `rubric.promoted.json`, containing the version and the SHA-256 of
+the promoted bytes — and only `promote_rubric.py` writes it.** A rubric whose hash does not match its
+sidecar has been edited since promotion and is refused, **whatever its version claims.**
+
+**Scope:** the LIVE rubric must be stamped; frozen references (`rubric-v<X>.json`) are exempt, because
+calibration legitimately scores against retired rubrics and the canary's baseline is one of them.
+**Promotion of the live file onto itself is allowed** — that is the recovery path after an in-place edit,
+and the six checks still run.
+
+#### The gate was proved by making it fail
+
+**Seven probes, each a real command, not an assertion:**
+
+| Probe | Expected | Result |
+|---|---|---|
+| Unstamped live rubric | refuse | **refused** — *"has NO promotion stamp"* |
+| Frozen `rubric-v1.8.0.json` | allow | **allowed**, scored normally |
+| Stamped live rubric | allow | **allowed** |
+| **Tamper: edit a level's text after promotion** | refuse | **refused** — *"MODIFIED after promotion"*, sha mismatch |
+| **Tamper: change only the version to 9.9.9** | refuse | **refused**, exit code 1 |
+| Restore + re-promote | allow | **allowed**, clean |
+| Full 120-case corpus run | no false refusals | **120/120, 0 failures** |
+
+**Canary passes against the stamped rubric.** **⚠ The gate closes the loop that §5.3.1 predicted and
+that then happened twice more in this session alone.**
 
 ### 5.4 Two refusals, and no score gates ⚠
 
@@ -4214,6 +4269,7 @@ purchasing decision.
 | **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
 | **D42** | **Sean rebuilt the DEF construct — two routes of attack. Does the weaker route SET or merely LIMIT the score?** (§10.6) | **CLOSED — Sean: *"I think let's focus on replicate then."* → option B, rubric v1.14.0. REPLICATION SETS THE LEVEL** (name the mechanism: IP · capital intensity · network control · scale economics · switching costs · accumulated asset); **the OUTFLANK is kept as a ONE-LEVEL DISCOUNT, not a floor** — an open route that could take significant share scores no higher than one level below the mechanism's level. *A strong barrier does not protect a position a rival can go around, but an open route does not erase the barrier either.* **Measured: level 4 recovers 4 → 15 and SD 0.82 → 0.96** (v1.12.0 single-route was 26/1.20; v1.13.1 weaker-route-SETS was 4/0.82). **It does not return to 26, which is CORRECT — the outflank discount is now genuinely applied, which v1.12.0 was blind to.** **4+ is now ASML 6 · Boeing 5 · Coupang 5 · NTUC FairPrice, Watsons, McDonald's, VICOM, KOI Thé, ActiveSG, Eu Yan Sang, IKEA, Anytime Fitness, Sheng Siong, Scanteak, Pet Lovers Centre 4** — reads correctly. **✅ Canary passes (C3 back to Contested).** **⚠ The canary header was MISREPORTING the reference version** (printed the current rubric twice; the comparison itself always read the frozen snapshot), **so v1.13.1's drift was real and v1.14.0 is a genuine restoration.** *Original framing below.* |
 | **D47** | **Best Denki & Courts — consolidated appliance retail: Sean 1, instrument 3** (§10.6c) | **✅ CLOSED — SEAN RULED THE INSTRUMENT RIGHT: *"you are right it is a 3 for best denki and courts."*** **So the "two cases lost" under the 1.16.0 dominance reframe were never lost — the INSTRUMENT was right and the grading SHEET was wrong.** **On the corrected labels COMPETITIVE ROOM is exact 14/21 (67%), within one 21/21 (100%), disputes 0/21 (0.0%), offset +0.33.** **⚠ I stopped at two wording attempts precisely because a third would have been fitting the rubric to what turned out to be a bad label — the stopping rule paid for itself.** *Third time in this session that a hand-read disagreement resolved the same way: the label was the first suspect and the label was the fault.* |
+| **D48** | **§5.3.1 step 4 — the scorer must refuse a non-promoted rubric** (§5.3.1) | **✅ BUILT — `rubric_gate.py`, enforced in `run_jev.py`.** **Promotion writes a sidecar (`rubric.promoted.json`) recording the version and the SHA-256 of the promoted bytes; only `promote_rubric.py` writes it.** **A rubric whose hash does not match its sidecar is REFUSED, whatever its version claims** — *because the version string is set by hand and proves nothing, which is exactly how `rubric.json` was edited in place repeatedly without the six promotion checks ever running.* **Frozen references stay exempt; promoting the live file onto itself is allowed as the recovery path.** **Proved by making it fail: 7 probes** *(unstamped → refused; frozen → allowed; stamped → allowed; text tamper → refused; version-only tamper → refused, exit 1; restore → allowed; **full 120-case corpus → 0 false refusals*). **Canary passes.** |
 | **D46** | **Regrade MA and CR blind — is the calibration alarm real or a label artifact?** (§10.6b) | **✅ ANSWERED — IT WAS MOSTLY THE LABELS.** 21 businesses × 2 columns, fresh definitions, from memory. **MENTAL ADVANTAGE: exact 14/20 (70.0%), within-one 20/20 (100%), disputes 0/20 (0.0%)** — against **7.5–8.3% on the old labels**. **COMPETITIVE ROOM: exact 8/21 (38.1%), within-one 21/21 (100%), disputes 0/21 (0.0%)** — against **8.4–9.2% on the old labels**. **⚠ THE RELABEL RATES EXPLAIN IT: MA 35%, CR 81%, defensibility 59%** — so every dispute rate quoted before §10.6b was measured against a reference carrying 35–81% noise. **Two of the three "failing" dimensions were failing against LABELS, not reality.** **⚠ CR carries a small systematic LOW bias (+0.43), and BOTH readings agree the top of the CR scale is unused** (instrument 61/120 at level 2, only 2 at 4, none at 5; Sean never grades 4 or 5) — **either no market in this corpus qualifies for level 5, or the descriptors are pitched too high: a definitional question, recorded not tuned.** **⚠ MY SHEET'S CLOSURE TRAP FAILED: "A closed bubble tea outlet" and "A dormant home baker" are ANONYMOUS fixtures**, so they score 1 on MA whether or not the closure rule is applied — **the trap did not fire because it was not a trap; a real test needs a NAMED closed business, and the corpus has none.** **⚠ Lenskart graded 3.5 — not a valid point on a 1–5 integer scale; queried, not silently rounded.** |
 | **D45** | **Second compression pass — does tighter wording cost accuracy?** (§10.6) | **✅ APPLIED (rubric v1.15.1) — and it is NEUTRAL, which makes compression repeatable.** `defensibility` **3,619 → 2,948 chars (−19%)**, all 25 rules kept and checked by name. **⚠ UNLIKE the first compression, NOT ONE of the 17 blind cases moved** — *exact 8/17 · within-one 16/17 · offset −0.24, identical to v1.15.0.* **So compression that only tightens wording can be verified neutral, whereas v1.14.0→v1.15.0 moved NTUC because it ADDED a mechanism (a content change, not a wording one).** **Distribution improved at the bottom: L1 13 → 17, L2 54 → 49, SD 1.01 → 1.05** — smaller prompt, same accuracy, marginally better spread. **⚠⚠ AND THE MICRO-DRIFT REVERSED: 4 businesses moved back 2 → 1 with no wording touching that behaviour, so it is NOISE and the decision not to tune against it was right** — the temptation to "fix" it would have been fitting to noise, the error that produced the v1.11.0 over-raise. **Noise floor re-measured: RS 4.2% · MA 5.0% · DEF 2.5% · CR 4.2% · MH 0.8% · DR 1.7% — defensibility is now the second-most stable dimension.** **Canary passes.** **⚠ Standing cost: the rubric keeps growing back — second compression in five revisions, each recovering roughly a third of what two content changes add. Compression is routine maintenance, not a one-off.** |
 | **D44** | **Make COMPOUNDING reachable; add POLICY/STATE BACKING as a mechanism** (§10.6) | **✅ APPLIED (rubric v1.15.0) — and the rubric found further cases on its own.** Sean: *"You may fix the compounding. NTUC fairprice is a cooperative with deep government hands and involvement."* **(1) POLICY OR STATE BACKING is now a named mechanism** — government ownership or involvement, cooperative or statutory mandate, a protected or subsidised position, licensing that favours incumbents, public-service obligations excluding rivals — *a challenger cannot buy political protection at any price*; the rubric had six mechanisms and none covered it, so NTUC was scored as though it were merely a big supermarket. **(2) COMPOUNDING is now reachable** — the instruction requires ENUMERATING every mechanism that applies and states two or more reinforcing is a 5 or 6, with a guard against reaching 5/6 without naming that many; **level 5 reworded to "two or more mechanisms reinforce each other"**, the clause that was missing. **⚠⚠ THE RUBRIC FOUND THE RIGHT CASES UNPROMPTED: VICOM 4→5, ActiveSG 4→5, PCF Sparkletots and My First Skool 3→4, Guardian 3→4 — VICOM, ActiveSG and the preschools were NOT named by Sean and NOT in the grading set**, so the mechanism is being *reasoned with*, not pattern-matched. **NTUC 4→5 (his 6). Within-one against his fresh grades 88.2% → 94.1%. Level 5 count 2 → 5. Canary passes.** **⚠ Costs: the micro-drift returned (5 cases 1→2 on businesses Sean scores 1 — 4th appearance, but within the 2.5% noise floor, so not chased); and I re-inflated the instruction 2,671 → 3,619 chars (+35%) within three rounds of compressing it — the D40 bloat, repeated.** |

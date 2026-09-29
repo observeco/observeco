@@ -439,6 +439,11 @@ def main() -> None:
                     help="directory for run files (default: runs/)")
     args = ap.parse_args()
 
+    # 5.3.1 step 4: the SCORER must refuse a rubric that was not promoted. Enforced here
+    # rather than only in the production scorer because no separate scorer exists yet -- this
+    # is the path every calibration run and the eventual server-side scorer both use.
+    from rubric_gate import require_promoted
+    require_promoted(HERE / args.rubric)
     rubric = json.loads((HERE / args.rubric).read_text())
     payload = json.loads(Path(args.input).read_text())
     state = build_state(payload)

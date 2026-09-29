@@ -74,12 +74,29 @@ def main(src_name):
 
     before = load(LIVE) if LIVE.exists() else None
     before_v = before["_meta"]["version"] if before else "none"
-    shutil.copyfile(src, LIVE)
+    if src.resolve() == LIVE.resolve():
+        # RECOVERY PATH. The candidate IS the live file -- e.g. after an in-place edit that
+        # bypassed this script, or after a stamp was lost. The six checks above have still
+        # run, and the stamp written below is what the scorer requires, so validating and
+        # stamping in place is the correct repair. Refusing here would leave the live rubric
+        # permanently unscorable and push the user back to hand-editing.
+        print("  note      : candidate is the live file -- validating and stamping in place")
+    else:
+        shutil.copyfile(src, LIVE)
 
     after = load(LIVE)
     if after["_meta"]["version"] != V["_meta"]["version"]:
         print("FATAL: promotion produced a mismatched stamp", file=sys.stderr)
         return 2
+
+    # 5.3.1 step 4 -- stamp the promoted bytes so the SCORER can refuse an unpromoted or
+    # post-promotion-modified live rubric. The checks above protect the rubric; the stamp is
+    # what protects the report.
+    import os
+    os.environ["PROMOTED_FROM"] = src_name
+    from rubric_gate import write_stamp
+    stamp = write_stamp(LIVE)
+    print("  stamped   : sha256 %s..." % stamp["sha256"][:16])
 
     print("PROMOTED  %s -> rubric.json" % src_name)
     print("  version   : %s  ->  %s" % (before_v, after["_meta"]["version"]))
