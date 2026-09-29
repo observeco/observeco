@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v32 — **D46: MA and CR regraded blind — BOTH 100% within one level, ZERO disputes. The calibration alarm was mostly the LABELS (35–81% relabel noise).**
+**Status:** DRAFT v33 — **D47: competitive room reframed CROWDING → DOMINANCE on Sean's hawker call. Level 5 was structurally unreachable and is now live; spread doubled; two cases lost and reported.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,34 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v33 change — D47: competitive room reframed crowding → dominance.**
+*(1) **Sean: *"hawker stalls would be 5."*** **That one line exposed a defect present since 0.6.0: level 5
+read "Uncontested, fragmented, with no dominant player and no established price floor" — and "uncontested"
+CONTRADICTS "fragmented".** **It is why level 5 was unreachable: 61 of 120 cases at level 2, only 2 at
+level 4, NONE at level 5 — and Sean never graded 4 or 5 either.**
+*(2) **The scale conflated the NUMBER of rivals with the ABSENCE of room.** **A hawker stall faces dozens
+of rivals and still leaves room, because no rival holds power over price; an appliance market held by a few
+big names leaves almost none.** **Room is removed by DOMINANCE, not by headcount.** **The question is now:
+how much power does any single player hold over price, shelf or demand?**
+*(3) **Measured effect (rubric 1.16.1): range 1–4 → 1–5; spread SD 0.58 → 1.00; level-2 pile-up 61 → 33;
+level 4 2 → 43; level 5 0 → 4; bias vs Sean +0.43 → +0.14; exact 8/21 → 12/21 (57%).** **68 of 120 cases
+moved — far above the 4.2% CR noise floor, so the change is real and attributable.** **The monopolists came
+out right unasked: ASML 3 → 1, Boeing 2 → 1.** **The hawker moved 3 → 4, which the old rubric could not
+reach.**
+*(4) **⚠ IT COST TWO CASES. Best Denki and Courts (Sean 1) moved the WRONG way, 2 → 3.** **I made two
+attempts — the reframe, then sharpening levels 1–3 to remove a "a small operator can still find a gap"
+escape hatch — and the reading did not budge from 3.** **A third attempt would be fitting wording to two
+cases, so I stopped and opened it as D47 instead.** *The disagreement may be genuine: level 3 requires that
+"small operators do establish themselves here", and in Singapore small electronics retailers do exist —
+Sean's 1 rests on them having no viable margin. That is his call, not wording's.*
+*(5) **⚠ Provenance, stated honestly: this change was NOT driven by the blind labels** *(those showed CR at
+100% within-one, zero disputes).* **It was driven by Sean's hawker judgement and by the structural
+contradiction in level 5.** **So it is a deliberate quality improvement that COST two previously-agreeing
+cases — net better, and the loss is reported rather than buried.**
+*(6) **⚠ The harness caught a half-done version stamp AGAIN** — top-level said 1.15.1 while `_meta` said
+1.16.0, and the mixed-version guard refused to run all 120 cases. **Fixed by stamping both.** *Second time
+this guard has caught the same class of error in this session.*
+
 **v32 change — D46: MA and CR regraded blind. The alarm was the ruler.**
 *(1) **Sean graded both columns of the fresh sheet** (21 businesses × 2, fresh definitions, from memory, no
 instrument answer shown). **MENTAL ADVANTAGE: exact 14/20 = 70.0%, within one 20/20 = 100%, disputes
@@ -2895,6 +2923,65 @@ within-one intervals reach down to ~84%. And two of three regrades agree unusual
 they were graded after the definitions were explained in the sheet.** *A stricter test would grade from
 the raw submission, not from a stated definition.*
 
+### 10.6c Competitive room reframed: CROWDING → DOMINANCE (Sean: *"hawker stalls would be 5"*)
+
+**Sean's one-line correction exposed a defect that had been in the rubric since 0.6.0:** **level 5 of
+`competitive_room` read *"Uncontested, fragmented, with no dominant player and no established price
+floor"*** — **and *"uncontested"* contradicts *"fragmented"*.** **A fragmented market is by definition
+contested by many rivals.** **The near-contradiction is why level 5 was unreachable:** *the instrument put
+61 of 120 cases at level 2, only 2 at level 4 and NONE at level 5 — and Sean never graded 4 or 5 either.*
+
+#### The defect: the scale conflated the NUMBER of rivals with the ABSENCE of room
+
+**A hawker stall faces dozens of rivals and still leaves room, because no rival holds power over price.
+An appliance market held by a few big names leaves almost none.** **Room is removed by DOMINANCE, not by
+headcount.** *The old scale could not express that — so it pushed every crowded market downward and left
+the top of the scale dead.*
+
+#### The fix (rubric 1.16.x)
+
+**The question is now: how much power does any single player hold over price, shelf or customer demand?**
+**Level 5 = atomised and dominated by nobody. Level 1 = consolidated into one or a few dominant players
+who control price or access, so a small operator cannot enter profitably.**
+
+| | v1.15.1 (crowding) | **v1.16.1 (dominance)** |
+|---|---|---|
+| **Range used** | 1–4 | **1–5** |
+| **Spread (SD)** | 0.58 | **1.00** |
+| **Level 2 pile-up** | **61** of 120 | **33** |
+| **Level 4** | 2 | **43** |
+| **Level 5** | **0** | **4** |
+| **Bias vs Sean** | +0.43 | **+0.14** |
+| **Exact** | 8/21 (38%) | **12/21 (57%)** |
+| **Within one** | 21/21 (100%) | **19/21 (90%)** |
+| **Disputes (≥2)** | 0 | **2/21 (9.5%)** |
+
+**⚠ 68 of 120 cases moved — a very large intervention, far above the 4.2% CR noise floor, so the change is
+real and attributable.** **The monopolists came out right without being asked:** **ASML 3 → 1 and Boeing
+2 → 1** — *level 1 is "no room for a small operator", which is the correct reading for both.* **The hawker
+moved 3 → 4**, which the old rubric could not reach at all.
+
+#### ⚠ TWO RESIDUAL DISPUTES — SAME DIRECTION, SAME CASE TYPE, AND I STOPPED
+
+**Best Denki and Courts — Sean grades both 1 (no room); the instrument now reads both 3.** *Both are
+consolidated Singapore appliance/electronics retail, and the instrument moved them the WRONG way (2 → 3)
+under the reframe.* **⚠ I made two levelling attempts — the reframe itself (1.16.0), then a sharpening of
+levels 1–3 that removed a *"a small operator can still find a gap"* escape hatch (1.16.1) — and the reading
+did not budge from 3.** **By the third attempt it would be fitting wording to two cases, so I stopped and
+record this as an open disagreement instead.**
+**The disagreement is genuine, not a defect:** *level 3 requires that "entry is normal and small operators
+do establish themselves here" — and in Singapore small electronics retailers do exist. Sean's 1 rests on
+them having no viable margin; the instrument sees them present.* **⚠ WHICH IS RIGHT IS A JUDGEMENT CALL
+FOR SEAN, not something wording should decide.** *Recorded as D47.*
+
+#### ⚠ NOTE ON THE REFRAME'S PROVENANCE
+
+**This change was NOT driven by the fresh blind labels alone** — *those showed CR at 100% within-one and
+zero disputes.* **It was driven by Sean's hawker judgement and by the structural contradiction in the old
+level 5.** **So it is a deliberate quality improvement that COST two previously-agreeing cases.** *Net
+position is better (range live, spread doubled, bias quartered, L5 reachable, monopolists correct) but the
+two lost cases are real and are reported rather than buried.*
+
 ### 10.6 Launch gate
 
 **Ship the scored report when the instrument clears the following, on the corpora in §10.1 and
@@ -4101,6 +4188,7 @@ purchasing decision.
 | **D39** | **Does an operated multi-outlet network count as a moat where category entry is cheap?** (§10.6) | **ANSWERED — YES, and Sean authorised it: *"I'm happy for you to apply the KFC, Ya Kun and Toast box judgement."*** Applied as a **GENERAL rule** (rubric **v1.11.2**), not three case patches: **SEPARATE VISIBILITY FROM OPERATED NETWORK** — a household name resting on visibility alone is cheap to displace and stays LOW, but **a chain that demonstrably operates many units holds efficient scale and a cost advantage even where opening a SINGLE unit is cheap**, because **the barrier is the NETWORK** (property, supply chain, central purchasing, staffing at scale, decades of sites), not one more shop. **KFC, Ya Kun and Toast Box move to 4, exact match.** **⚠ Collateral is mixed and mostly at the noise floor:** 13 cases moved (8 up, 5 down); **CHAGEE and NTUC improve, but Mixue, CHICHA San Chen and Each-A-Cup move the wrong way, and 24/7 Fitness and Chin Mee Chin drop.** **Corpus totals are a wash — DEF disputes 2.5% → 3.3%, i.e. back to v1.8.0's level.** *This is what tuning to a handful of cases looks like from the inside.* |
 | **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
 | **D42** | **Sean rebuilt the DEF construct — two routes of attack. Does the weaker route SET or merely LIMIT the score?** (§10.6) | **CLOSED — Sean: *"I think let's focus on replicate then."* → option B, rubric v1.14.0. REPLICATION SETS THE LEVEL** (name the mechanism: IP · capital intensity · network control · scale economics · switching costs · accumulated asset); **the OUTFLANK is kept as a ONE-LEVEL DISCOUNT, not a floor** — an open route that could take significant share scores no higher than one level below the mechanism's level. *A strong barrier does not protect a position a rival can go around, but an open route does not erase the barrier either.* **Measured: level 4 recovers 4 → 15 and SD 0.82 → 0.96** (v1.12.0 single-route was 26/1.20; v1.13.1 weaker-route-SETS was 4/0.82). **It does not return to 26, which is CORRECT — the outflank discount is now genuinely applied, which v1.12.0 was blind to.** **4+ is now ASML 6 · Boeing 5 · Coupang 5 · NTUC FairPrice, Watsons, McDonald's, VICOM, KOI Thé, ActiveSG, Eu Yan Sang, IKEA, Anytime Fitness, Sheng Siong, Scanteak, Pet Lovers Centre 4** — reads correctly. **✅ Canary passes (C3 back to Contested).** **⚠ The canary header was MISREPORTING the reference version** (printed the current rubric twice; the comparison itself always read the frozen snapshot), **so v1.13.1's drift was real and v1.14.0 is a genuine restoration.** *Original framing below.* |
+| **D47** | **Best Denki & Courts — consolidated appliance retail: Sean 1, instrument 3** (§10.6c) | **⚠ OPEN — a genuine judgement call, not a defect.** Both are consolidated Singapore appliance/electronics retail and **Sean grades both 1 (no room for a small operator).** The **1.16.0 dominance reframe moved both the WRONG way (2 → 3)**, and **1.16.1's sharpened levels 1–3 did not budge them.** **I stopped after two attempts rather than fitting wording to two cases.** **The disagreement is real:** *level 3 requires "entry is normal and small operators do establish themselves here" — and small electronics retailers DO exist in Singapore. Sean's 1 rests on them having no viable margin; the instrument sees them present.* **⚠ For Sean to adjudicate.** |
 | **D46** | **Regrade MA and CR blind — is the calibration alarm real or a label artifact?** (§10.6b) | **✅ ANSWERED — IT WAS MOSTLY THE LABELS.** 21 businesses × 2 columns, fresh definitions, from memory. **MENTAL ADVANTAGE: exact 14/20 (70.0%), within-one 20/20 (100%), disputes 0/20 (0.0%)** — against **7.5–8.3% on the old labels**. **COMPETITIVE ROOM: exact 8/21 (38.1%), within-one 21/21 (100%), disputes 0/21 (0.0%)** — against **8.4–9.2% on the old labels**. **⚠ THE RELABEL RATES EXPLAIN IT: MA 35%, CR 81%, defensibility 59%** — so every dispute rate quoted before §10.6b was measured against a reference carrying 35–81% noise. **Two of the three "failing" dimensions were failing against LABELS, not reality.** **⚠ CR carries a small systematic LOW bias (+0.43), and BOTH readings agree the top of the CR scale is unused** (instrument 61/120 at level 2, only 2 at 4, none at 5; Sean never grades 4 or 5) — **either no market in this corpus qualifies for level 5, or the descriptors are pitched too high: a definitional question, recorded not tuned.** **⚠ MY SHEET'S CLOSURE TRAP FAILED: "A closed bubble tea outlet" and "A dormant home baker" are ANONYMOUS fixtures**, so they score 1 on MA whether or not the closure rule is applied — **the trap did not fire because it was not a trap; a real test needs a NAMED closed business, and the corpus has none.** **⚠ Lenskart graded 3.5 — not a valid point on a 1–5 integer scale; queried, not silently rounded.** |
 | **D45** | **Second compression pass — does tighter wording cost accuracy?** (§10.6) | **✅ APPLIED (rubric v1.15.1) — and it is NEUTRAL, which makes compression repeatable.** `defensibility` **3,619 → 2,948 chars (−19%)**, all 25 rules kept and checked by name. **⚠ UNLIKE the first compression, NOT ONE of the 17 blind cases moved** — *exact 8/17 · within-one 16/17 · offset −0.24, identical to v1.15.0.* **So compression that only tightens wording can be verified neutral, whereas v1.14.0→v1.15.0 moved NTUC because it ADDED a mechanism (a content change, not a wording one).** **Distribution improved at the bottom: L1 13 → 17, L2 54 → 49, SD 1.01 → 1.05** — smaller prompt, same accuracy, marginally better spread. **⚠⚠ AND THE MICRO-DRIFT REVERSED: 4 businesses moved back 2 → 1 with no wording touching that behaviour, so it is NOISE and the decision not to tune against it was right** — the temptation to "fix" it would have been fitting to noise, the error that produced the v1.11.0 over-raise. **Noise floor re-measured: RS 4.2% · MA 5.0% · DEF 2.5% · CR 4.2% · MH 0.8% · DR 1.7% — defensibility is now the second-most stable dimension.** **Canary passes.** **⚠ Standing cost: the rubric keeps growing back — second compression in five revisions, each recovering roughly a third of what two content changes add. Compression is routine maintenance, not a one-off.** |
 | **D44** | **Make COMPOUNDING reachable; add POLICY/STATE BACKING as a mechanism** (§10.6) | **✅ APPLIED (rubric v1.15.0) — and the rubric found further cases on its own.** Sean: *"You may fix the compounding. NTUC fairprice is a cooperative with deep government hands and involvement."* **(1) POLICY OR STATE BACKING is now a named mechanism** — government ownership or involvement, cooperative or statutory mandate, a protected or subsidised position, licensing that favours incumbents, public-service obligations excluding rivals — *a challenger cannot buy political protection at any price*; the rubric had six mechanisms and none covered it, so NTUC was scored as though it were merely a big supermarket. **(2) COMPOUNDING is now reachable** — the instruction requires ENUMERATING every mechanism that applies and states two or more reinforcing is a 5 or 6, with a guard against reaching 5/6 without naming that many; **level 5 reworded to "two or more mechanisms reinforce each other"**, the clause that was missing. **⚠⚠ THE RUBRIC FOUND THE RIGHT CASES UNPROMPTED: VICOM 4→5, ActiveSG 4→5, PCF Sparkletots and My First Skool 3→4, Guardian 3→4 — VICOM, ActiveSG and the preschools were NOT named by Sean and NOT in the grading set**, so the mechanism is being *reasoned with*, not pattern-matched. **NTUC 4→5 (his 6). Within-one against his fresh grades 88.2% → 94.1%. Level 5 count 2 → 5. Canary passes.** **⚠ Costs: the micro-drift returned (5 cases 1→2 on businesses Sean scores 1 — 4th appearance, but within the 2.5% noise floor, so not chased); and I re-inflated the instruction 2,671 → 3,619 chars (+35%) within three rounds of compressing it — the D40 bloat, repeated.** |

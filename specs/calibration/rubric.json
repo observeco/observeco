@@ -1,7 +1,7 @@
 {
  "_meta": {
   "name": "obs-095 business viability rubric",
-  "version": "1.15.1",
+  "version": "1.16.1",
   "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) — otherwise calibration validates a scorer that is not the one shipped.",
   "model": "jev-latest",
   "scale": {
@@ -80,6 +80,18 @@
     "change": "market_headroom: CROWDING framing -> UNMET-DEMAND framing; levels rewritten to kind-distinct anchors",
     "reason": "Sean: 'the market is congested because ASML has the monopoly and can't expand beyond its current capacity.' Verified: ~50-60 EUV tools/yr, 10-20 per fab, ~EUR 38.8bn backlog (~1.5 yrs), 2027 output largely committed, buyers competing for allocation. The old question returned 3/5 for ASML and 4/5 for crowded bubble tea -- a saturated market outscored a supply-starved one. It also duplicated competitive_room.",
     "evidence": "experiment_headroom_reframe.py: ASML 1.95->3.33; bubbletea 2.84->1.88; gap vs best-other -0.89 -> +1.38"
+   },
+   {
+    "version": "1.16.0",
+    "change": "competitive_room reframed: CROWDING -> DOMINANCE (levels + instruction rewritten)",
+    "reason": "Sean: 'hawker stalls would be 5.' Under the old wording level 5 read 'UNCONTESTED, fragmented, with no dominant player and no established price floor' -- 'uncontested' contradicts 'fragmented', since a fragmented market is by definition contested by many rivals. That near-contradiction is why level 5 was never reached: the instrument put 61 of 120 cases at level 2, only 2 at 4 and NONE at 5, and Sean never graded 4 or 5 either. The old scale conflated the NUMBER of rivals with the ABSENCE of room. A hawker stall faces dozens of rivals and still leaves room, because no rival holds power over price; an appliance market held by a few big names leaves almost none. Room is removed by DOMINANCE, not by headcount. Verified against Sean's fresh blind labels: Best Denki and Courts at 1 (consolidated appliance market), NTUC/Sheng Siong at 2 (dominant grocer), bubble tea at 3 (brand tier plus price floor), hawker at 5 (atomised, nobody dominant).",
+    "evidence": "MA-CR-V2-GRADING.md (21 fresh blind grades); C5-michelin-hawker"
+   },
+   {
+    "version": "1.16.1",
+    "change": "competitive_room levels 1-2 sharpened on CONSOLIDATION; the 'find a gap' escape hatch removed from level 3",
+    "reason": "After the 1.16.0 dominance reframe, Best Denki and Courts (consolidated Singapore appliance retail, Sean grades both 1) moved 2 -> 3 -- the wrong way, and both in the same direction on the same case type. Cause: levels 2 and 3 both named 'a price floor', and level 3 offered 'a small operator can still find a gap and earn', which let the model rate a consolidated market generously. Level 1 now names consolidation explicitly and requires that a small operator CANNOT enter profitably; level 2 is the squeezed-but-survives case; level 3 requires entry to be NORMAL rather than merely possible.",
+    "evidence": "MA-CR-V2-GRADING.md; Best Denki and Courts at 1"
    }
   ],
   "_superseded": {
@@ -203,13 +215,13 @@
   },
   "competitive_room": {
    "type": "score",
-   "instructions": "Judge ONLY competitive room: how much space does competition leave for this business to operate and earn? Higher means MORE room — a fragmented, uncontested market. Lower means less room — concentrated incumbents, price-driven commoditisation, or a floor price set by a much larger player. Assess concentration, the strength of the named competitors, and whether the market competes primarily on price. Do not consider the business's own positioning or quality.",
+   "instructions": "Judge ONLY competitive room: how much space does the market structure leave for this business to operate and earn? Higher means MORE room. Room is removed by DOMINANCE, not by the NUMBER of rivals: a market with many equal rivals and no dominant player leaves plenty of room, while a market held by one or two powerful players leaves almost none. Ask how much power any single player holds over price, shelf or customer demand, and whether a small operator can enter and earn a living. Do not consider the business's own positioning or quality.",
    "levels": [
-    "No room. Dominated by concentrated incumbents, competing almost entirely on price, with no viable margin left.",
-    "Very little. A dominant player or a severe price floor; the business is structurally squeezed.",
-    "Some. Crowded and price-contested, but gaps exist for a small operator.",
-    "Good. Competitive but fragmented; several players coexist without a single dominant one crushing the rest.",
-    "Strong. Uncontested, fragmented, with no dominant player and no established price floor."
+    "No room. Consolidated into one or a few dominant players who set the price, control the shelf or control access; a SMALL operator has no viable margin and cannot enter profitably.",
+    "Very little. A dominant player, or a price floor set by much larger rivals, structurally squeezes everyone; a small operator survives only on the edges of the market.",
+    "Some. Several strong brands and a general price floor keep margins thin, but entry is normal and small operators do establish themselves here.",
+    "Good. Several players coexist and none dominates; a small operator can establish itself without being crushed.",
+    "Strong. Atomised, and dominated by nobody: many rivals, no player with power over price, and a small operator can enter and earn."
    ]
   },
   "defensibility": {
@@ -269,7 +281,7 @@
    "_added": "2026-09-27 (Sean): the axis the objective always required -- 'positioning and differentiation RELATIVE TO COMPETITION' -- and the instrument never had. Anchored on the derived competitive set, not on size expectation."
   }
  },
- "version": "1.15.1",
+ "version": "1.16.1",
  "_changelog": [
   "1.9.0 (2026-09-28) D35: defensibility gains category-structure input + familiarity guard; Best Denki / Gain City recognition fix. Rubric 1.8.0 preserved as rubric-v1.8.0.json.bak for re-run comparison.",
   {
