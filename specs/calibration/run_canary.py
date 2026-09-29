@@ -124,11 +124,25 @@ def main():
     # ---- run ---------------------------------------------------------------------
     rubric = json.loads((HERE / args.rubric).read_text())
     bands = rubric["_meta"]["bands"]
-    RUNS.mkdir(parents=True, exist_ok=True)
+
+    # ⚠ A CHECK RUN MUST NOT WRITE INTO canary/runs/.
+    # WHY THIS CHANGED: both rungs wrote into the COMMITTED `canary/runs/` directory, so
+    # every drift check rewrote the reference artifacts it was checking against. Two
+    # consequences, both bad: (1) the repo was left dirty after a read-only check, and
+    # (2) the checked-in run files silently drifted -- a review of "what the canary
+    # recorded" would read the LATEST run rather than the recorded one. A drift check that
+    # mutates the thing it measures is not a drift check.
+    # A record run still writes the real directory, because that IS its purpose.
+    if args.rung == "record":
+        RUNS.mkdir(parents=True, exist_ok=True)
+        run_dir = RUNS
+    else:
+        run_dir = CANARY_DIR / "runs-check"
+        run_dir.mkdir(parents=True, exist_ok=True)
 
     results, failures = {}, []
     for p, fx in fixtures:
-        out, err = run_case(p, args.rubric, RUNS, False)
+        out, err = run_case(p, args.rubric, run_dir, False)
         if out is None:
             failures.append((fx["_meta"]["case"], err))
             continue
