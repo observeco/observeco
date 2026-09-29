@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v25 — **D40 EXECUTED: rubric compressed 44% (v1.12.0), disputes 3.3% → 1.7%; noise floor MEASURED at 0–4.2%.**
+**Status:** DRAFT v26 — **D40 complete (driver 12× faster; noise floor settled at 4.2%); D41 bubble-tea hand-read — the instrument FLATTENS defensibility.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,35 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v26 change — D40 completed (parallel driver) and D41, the bubble-tea hand-read.**
+*(1) **The driver is now PARALLEL** (`run_corpus_parallel.py`, bounded at 8 workers, one subprocess per
+case): **120 cases in 9 s against 107 s sequential — 12× — with 0 failures and one rubric version.**
+**Output agrees with the sequential run within the noise floor**, so scheduling changed and results did
+not. *(Excludes underscore-prefixed meta/fixture files, so the deliberate `_refused.json` refusal test
+no longer registers as a failure.)*
+*(2) **⚠ THE NOISE FLOOR IS NOW SETTLED — three independent batches of the same rubric v1.12.0**,
+comparing all three pairs: **worst per-dimension noise 4.2%** (RS 4.2%, MA 4.2%, **DEF 2.5%**, CR 0.8%,
+MH 0.0%, DR 1.7%). **This settles two things at once:** the compression effect on defensibility
+(**16.7%**) is **well above its 2.5% noise and is therefore REAL**, and the D39 collateral moves at ±1
+are **inside noise and cannot be claimed.** **Rule going forward: a movement must exceed ~5% before it
+is worth interpreting.**
+*(3) **⚠⚠ D41 — the bubble-tea hand-read. THE INSTRUMENT FLATTENS DEFENSIBILITY.** Sean's bubble-tea
+grades spread **1–4**; the instrument's spread **2–4** and clusters at 3–4. **Both two-point gaps are
+the instrument reading HIGH** — Each-A-Cup 4 vs his 2, Gong Cha 3 vs his 1. **It does not go low enough
+on genuinely undefendable businesses.**
+*(4) **And the rule behind Sean's spread resists derivation — I checked.** Across the corpus his
+defensibility tracks **format capital intensity monotonically** (no premises **1.00** · home-based 1.74 ·
+kiosk **2.46** · small premises 2.56 · office 3.00 · restaurant **3.20** · large-format store **3.59** ·
+licensed premises **4.50**). **That explains KFC's kitchens-and-outlets against Gong Cha's kiosks. But
+bubble-tea breaks the rule: KOI runs the same counter format as Gong Cha yet gets 4 where Gong Cha gets
+1.** So **format is necessary but not sufficient**, and **the differentiator is knowledge Sean holds —
+tenure, outlet count, or his mental-ladder definition — not visible in the grades.**
+*(5) **Flattening is now the dominant remaining error in this dimension**, and it is the same defect
+every other finding in this section has pointed at: **the instrument systematically pulls defensibility
+toward the middle.** Addressing it is a construct question for Sean, not a tuning exercise — and at a
+4.2% noise floor, **only the two 2-point cases are outside noise, and both are the instrument reading
+high.**
+
 **v25 change — D40 executed. Rubric compressed; the noise floor is measured; accuracy did not suffer.**
 *(1) **Compression (rubric v1.12.0).** `defensibility` instruction **5,426 → 3,026 chars (−44%)**,
 questions block **21,366 → 19,405**. **All 13 distinct rules kept and explicitly checked for**; what came
@@ -2998,7 +3027,82 @@ one-file change and remains the cheapest remaining speed win.** *Not done in thi
 **(6) And `Each-A-Cup` at 4 against Sean's 2 and `Gong Cha` at 3 against his 1 remain the two clearest
 standing disagreements** — both bubble-tea, both cases where he sees near-zero defensibility and the
 instrument still sees something. **They are the best candidates for a hand-read next, ahead of any
-further rubric tuning.**
+further rubric tuning.** *(Hand-read done — see D41 below.)*
+
+#### ✅ D40 continued — the driver is now PARALLEL, and the noise floor is settled at 4.2%
+
+**Parallelised** (`run_corpus_parallel.py`, bounded at 8 workers, one subprocess per case):
+**120 cases in 9 s against 107 s sequential — a 12× speed-up — with 0 failures and a single rubric
+version.** **Output agrees with the sequential run within the measured noise floor** (see below), so
+**scheduling changed and results did not.**
+
+**⚠ AND THE NOISE FLOOR IS NOW SETTLED, because there are three independent batches of the same rubric
+v1.12.0.** Comparing all three pairs (A-B, A-C, B-C):
+
+| Dimension | A-B | A-C | B-C | **worst** |
+|---|---|---|---|---|
+| `relative_strength` | 4.2% | 4.2% | 3.3% | **4.2%** |
+| `mental_advantage` | 2.5% | 4.2% | 3.3% | **4.2%** |
+| **`defensibility`** | 1.7% | 2.5% | 2.5% | **2.5%** |
+| `competitive_room` | 0.0% | 0.8% | 0.8% | 0.8% |
+| `market_headroom` | 0.0% | 0.0% | 0.0% | 0.0% |
+| `demand_reach` | 1.7% | 1.7% | 0.0% | 1.7% |
+
+**Worst observed per-dimension batch noise is 4.2%; `defensibility`'s own is 2.5%.** **This settles two
+things at once:** the compression effect on `defensibility` (**16.7%**, from 5.4.2-era batches) is
+**well above its 2.5% noise and is therefore REAL**, and the D39 collateral moves at ±1 are **inside
+noise and cannot be claimed.** **Rule going forward: a movement must exceed ~5% (the 4.2% ceiling plus
+margin) before it is worth interpreting.**
+
+#### ⚠⚠ D41 — the bubble-tea hand-read: DEFENSIBILITY IS FLATTENING where the two readings should separate
+
+**Hand-read done as promised. It found a pattern that generalises beyond bubble-tea, and one case where
+Sean's own rule cannot be derived.**
+
+**Sean's bubble-tea grades spread across the full range; the instrument does not:**
+
+| Business | Instrument | **Sean** | Gap |
+|---|---|---|---|
+| KOI Thé | 4 | **4** | 0 |
+| CHAGEE | 4 | **4** | 0 |
+| HEYTEA | 3 | **3** | 0 |
+| CHICHA San Chen | 4 | 3 | 1 |
+| Mixue | 4 | 3 | 1 |
+| LiHO TEA | 4 | 3 | 1 |
+| Sharetea | 3 | 2 | 1 |
+| R&B Tea | 3 | 2 | 1 |
+| Playmade | 2 | 2 | 0 |
+| **Each-A-Cup** | **4** | **2** | **2** |
+| **Gong Cha** | **3** | **1** | **2** |
+
+**Sean's spread is 1–4. The instrument's is 2–4 and it clusters at 3–4.** **Every one of the two-point
+gaps is the instrument reading HIGH** — the instrument does not go low enough.
+
+**⚠ AND THE RULE BEHIND SEAN'S SPREAD IS NOT DERIVABLE FROM THE SCORES ALONE — I checked, and it
+resists.** Across the whole corpus his defensibility tracks **format capital intensity** monotonically:
+
+| Format | n | Sean's mean DEF |
+|---|---|---|
+| no premises | 5 | **1.00** |
+| home-based | 47 | 1.74 |
+| kiosk / small counter | 13 | **2.46** |
+| small premises | 9 | 2.56 |
+| office | 2 | 3.00 |
+| full restaurant premises | 10 | 3.20 |
+| large-format store | 17 | 3.59 |
+| premises / licensed premises | 4 | **4.50** |
+
+**That is a clean monotone, and it explains KFC (kitchens, many outlets = 4) against Gong Cha (kiosks =
+1).** **But bubble-tea breaks it: KOI, which runs the same counter format as Gong Cha, gets 4 where Gong
+Cha gets 1.** So the format rule is necessary but not sufficient, and **the differentiator between those
+two is not visible in the grades** — it is knowledge Sean holds (likely tenure, outlet count, or
+Singaporean mental-ladder position per his own MA definition).
+
+**⚠ This is the same defect as every other one in this section, stated once more: the instrument
+systematically FLATTENS defensibility toward the middle.** **It does not go low enough on genuinely
+undefendable businesses and it has moved to 3–4 for most chains.** **And it is now the dominant
+remaining error** — 10 of the 13 bubble-tea cases are within one level, but **the two 2-point cases are
+the only ones outside noise, and both are the instrument reading high.**
 
 **Superseded record of the withdrawn finding, kept because the reasoning error is instructive:**
 
@@ -3441,7 +3545,8 @@ purchasing decision.
 | **D36** | ~~`defensibility` is scored 1–6 while every other dimension is 1–5~~ | **WITHDRAWN — MY FINDING WAS FALSE.** I assumed Sean's DEF grades were 1–5; **`build_regrade_sheet.py:183` told him 1–6 and his grades use the full range (max 6.0).** **The scales were matched; DEF's dispute rate is 3.3% (4/120), under the bar, before any fix.** The "6.7% → 1.7%" was an artefact of a conversion that should never have been applied. **Fourth frame error retracted this session.** *Making DEF 5 levels remains a coherent uniformity choice, but it fixes nothing.* **The REAL cause is §10.6's corpus finding below.** |
 | **D36-old** | *Original (withdrawn) framing* | Superseded. **See §10.6 "D36 WITHDRAWN" for the replacement finding: 99 of 120 corpus forms are analyst RECONSTRUCTIONS with a median payload of 725 characters, and the form carries none of the structural facts DEF needs.** |
 | **D39** | **Does an operated multi-outlet network count as a moat where category entry is cheap?** (§10.6) | **ANSWERED — YES, and Sean authorised it: *"I'm happy for you to apply the KFC, Ya Kun and Toast box judgement."*** Applied as a **GENERAL rule** (rubric **v1.11.2**), not three case patches: **SEPARATE VISIBILITY FROM OPERATED NETWORK** — a household name resting on visibility alone is cheap to displace and stays LOW, but **a chain that demonstrably operates many units holds efficient scale and a cost advantage even where opening a SINGLE unit is cheap**, because **the barrier is the NETWORK** (property, supply chain, central purchasing, staffing at scale, decades of sites), not one more shop. **KFC, Ya Kun and Toast Box move to 4, exact match.** **⚠ Collateral is mixed and mostly at the noise floor:** 13 cases moved (8 up, 5 down); **CHAGEE and NTUC improve, but Mixue, CHICHA San Chen and Each-A-Cup move the wrong way, and 24/7 Fitness and Chin Mee Chin drop.** **Corpus totals are a wash — DEF disputes 2.5% → 3.3%, i.e. back to v1.8.0's level.** *This is what tuning to a handful of cases looks like from the inside.* |
-| **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **Remaining levers: parallelise the driver (0.48 s model vs ~0.85 s overhead per case, still sequential); and hand-read `Each-A-Cup` (instrument 4, Sean 2) and `Gong Cha` (3 vs 1).** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
+| **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
+| **D41** | **Bubble-tea hand-read — why does the instrument not go as low as Sean?** (§10.6) | **DONE. The instrument FLATTENS defensibility.** Sean's bubble-tea grades spread **1–4**; the instrument's spread **2–4** and clusters at 3–4. **Both two-point gaps (Each-A-Cup 4 vs 2, Gong Cha 3 vs 1) are the instrument reading HIGH** — it does not go low enough on genuinely undefendable businesses. **And the rule behind Sean's spread is NOT derivable from the grades: across the corpus his DEF tracks FORMAT CAPITAL INTENSITY monotonically** (no premises **1.00** → home-based 1.74 → kiosk **2.46** → restaurant **3.20** → large-format **3.59** → licensed premises **4.50**), **but bubble-tea breaks it — KOI runs the same counter format as Gong Cha and gets 4 where Gong Cha gets 1.** So format is necessary but not sufficient, and the differentiator between those two is knowledge Sean holds (tenure, outlet count, or his own mental-ladder definition), **NOT visible in the grades.** **Flattening is now the dominant remaining error in this dimension.** |
 | **D38** | **The calibration corpus is 82% thin reconstructed forms — does the calibration claim survive?** (§10.6) | **OPEN — the most important finding in this document, and it was found by chasing Sean's moat question.** **99 of 120 cases (82%) carry `label_is_external: true` and an `authoring_note` reading *"FORM DATA reconstructed by the analyst from public sources… the form is thinner than a real submission. This is the known weakness of the test."* Median form payload 725 chars.** **So the corpus measures agreement on analyst-reconstructed forms, NOT on real submissions** — and **defensibility is the dimension most damaged**, because barriers (outlet counts, tenure, owned assets, licences) are the facts least likely to appear in a positioning sentence and most likely to be known to the owner. **Best Denki proves it: Sean scores 4 from knowledge of ~14 stores and a national network; the form states only *"Japanese retail service standards"*; the instrument says 2 — correctly, on what it was given.** **⚠ Same class of gap Sean already flagged: *"You have blind gaps. You have to corroborate your answer against physical evidence."*** **Fix is in the FORM, not the rubric:** (a) the form must **ask** for structural facts (outlets, years, owned premises, licences, price premium); (b) if the form cannot supply them this is **the same external-scan dependency as D25/D35**; (c) the calibration claim must be **restated** so "100% band agreement" is not read as validating real-submission performance |
 | **D36-old-2** | *Superseded* | `rubric.json` declares `level_counts.defensibility = 6` (the other five are 5) against a scale block that says `human_display: "1-5"`. The 6th level **fires**: display **6** appears 3 times, mean mass on the 6th bin **3.4%**, and the composite divides defensibility by **6**. **Every §10.6 defensibility comparison has therefore pitted a 1–6 score against a 1–5 grade.** Normalising the scales moves the disputes from **6.7%** → **1.7% (percentile-matched)** / **4.2% (round-to-nearest)** — both **under the bar**, against RS 0.8% / MA 7.5% / DR 4.2% — so **on a like-for-like footing defensibility is no longer the worst dimension.** *(It was investigated as a rubric-CONTENT problem because the raw number was above the bar. It is at least partly a SCALE problem — same class as the §5.4 rounding gap.)* **Options: A** collapse defensibility to 5 levels (uniform display; invalidates every prior run) · **B** keep 6 levels and **label the scale in the report** · **C** keep 6 internally but normalise to 1–5 for display and for all human comparison. **Recommended: C** — it fixes the comparison without discarding the deliberate 0.5.0 split |
 | **D37** | **Adopt the commonly-accepted moat definition for `defensibility`?** (§10.6) | **CLOSED — YES, structure only. Implemented in rubric v1.10.0.** Sean: *"D37, moat rewrite based on the structure."* **DEF now requires evidence of at least one named moat source** — efficient scale · capital requirements · intangible assets (patent, licence, proprietary process, **price-premium brand**) · switching costs · cost advantage · network effect — with the **primary/ancillary** distinction, and **"fame is not a moat"** as an explicit guard (a brand counts only where it **demonstrably produces pricing power**). **Validated: 3 repeat runs per case show the instrument is DETERMINISTIC (spread 0), so its scores are reproducible and any movement is attributable.** **⚠ It did NOT move the four disputed cases (Best Denki 2, Gain City 2, Gong Cha 3, Each-A-Cup 3) — because the cause is the corpus, not the rubric (D38).** **One honest limit retained: adopt the moat's STRUCTURE, NOT its PURPOSE** — Buffett's moat predicts returns on capital; §1's objective is quality of the current position relative to competitors. **Sean asked:** *"It should follow the definition of moat as per warren buffet or other commonly accepted definition?"* and he is right.** Researched against primary sources (Buffett/Morningstar five sources; Stigler/McAfee barriers to entry) rather than adopted on its say-so. **The frame CONFIRMS all three of his rulings** — Best Denki/Gain City = **efficient scale + capital requirements**; Gong Cha/Each-A-Cup = **no moat source at all**. **⚠ It corrects the REASON:** his Best Denki justification was *"because they all have mental advantage, there is some defensibility"*, and **mental advantage is not a moat source under any of the five** — feeding it into DEF is exactly the double-count that made DEF and MA agree too often. **He caught this himself.** Decisive quote, Morningstar verbatim: *"Just because a company boasts a well-known brand, or has been in business a long time, does not necessarily mean it has an economic moat."* **⚠ ONE HONEST LIMIT: adopt the moat's STRUCTURE (structural barriers not fame, primary vs ancillary distinguished), NOT its PURPOSE** — Buffett's moat predicts long-term returns on capital, while §1's objective is quality of current position relative to competitors. Importing the investor purpose wholesale would be the **seventh** imported framework in this document |
