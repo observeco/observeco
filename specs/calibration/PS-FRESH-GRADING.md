@@ -10,6 +10,8 @@ Grade **one column, 1–5**, from memory. **Blind: no instrument scores are show
 
 ---
 
+
+
 ## What PS measures (rubric 1.20.0, verbatim in spirit)
 
 **How strong is this business's POSITION compared with the positions its competitors hold?**
@@ -35,54 +37,60 @@ is small overall.**
 
 ---
 
+
+
 ## Grade these
 
-| # | Business | Category | **PS (1–5)** | Notes (optional) |
-|---|---|---|---|---|
-| 1 | Sephora Singapore | health-beauty | | |
-| 2 | IKEA Singapore | furniture | | |
-| 3 | McDonald's Singapore | fast-food | | |
-| 4 | KFC Singapore | fast-food | | |
-| 5 | Shake Shack Singapore | fast-food | | |
-| 6 | Scanteak | furniture | | |
-| 7 | Castlery | furniture | | |
-| 8 | Zoff Singapore | eyewear | | |
-| 9 | Hill Street Tai Hwa Pork Noodle | hawker | | |
-| 10 | Eu Yan Sang | tcm | | |
-| 11 | KOI Thé Singapore | bubble-tea | | |
-| 12 | Playmade | bubble-tea | | |
-| 13 | Each-A-Cup | bubble-tea | | |
-| 14 | BreadTalk | bakery | | |
-| 15 | Toast Box | kopitiam | | |
-| 16 | Ya Kun Kaya Toast | kopitiam | | |
-| 17 | NTUC FairPrice | supermarket | | |
-| 18 | Sheng Siong Group | supermarket | | |
-| 19 | Don Don Donki | supermarket | | |
-| 20 | Best Denki Singapore | electronics | | |
-| 21 | Harvey Norman Singapore | electronics | | |
-| 22 | Anytime Fitness Singapore | gym | | |
-| 23 | 24/7 Fitness | gym | | |
-| 24 | Watsons Singapore | health-beauty | | |
-| 25 | Lenskart Singapore | eyewear | | |
-| 26 | ObserveCo | consulting | | |
-| 27 | Perky Lash home-visit service | home-nails | | |
-| 28 | Tee (DOT) Nail Bar | home-nails | | |
+
+| #   | Business                        | Category      | **PS (1–5)** | Notes (optional) |
+| --- | ------------------------------- | ------------- | ------------ | ---------------- |
+| 1   | Sephora Singapore               | health-beauty | 4            |                  |
+| 2   | IKEA Singapore                  | furniture     | 4-5          |                  |
+| 3   | McDonald's Singapore            | fast-food     | 5            |                  |
+| 4   | KFC Singapore                   | fast-food     | 4-5          |                  |
+| 5   | Shake Shack Singapore           | fast-food     | 4-5          |                  |
+| 6   | Scanteak                        | furniture     | 4-5          |                  |
+| 7   | Castlery                        | furniture     | 4            |                  |
+| 8   | Zoff Singapore                  | eyewear       | 3-4          |                  |
+| 9   | Hill Street Tai Hwa Pork Noodle | hawker        | 3-4          |                  |
+| 10  | Eu Yan Sang                     | tcm           | 4            |                  |
+| 11  | KOI Thé Singapore               | bubble-tea    | 3-4          |                  |
+| 12  | Playmade                        | bubble-tea    | 3            |                  |
+| 13  | Each-A-Cup                      | bubble-tea    | 3            |                  |
+| 14  | BreadTalk                       | bakery        | 4            |                  |
+| 15  | Toast Box                       | kopitiam      | 3-4          |                  |
+| 16  | Ya Kun Kaya Toast               | kopitiam      | 4-5          |                  |
+| 17  | NTUC FairPrice                  | supermarket   | 5            |                  |
+| 18  | Sheng Siong Group               | supermarket   | 4-5          |                  |
+| 19  | Don Don Donki                   | supermarket   | 4            |                  |
+| 20  | Best Denki Singapore            | electronics   | 3-4          |                  |
+| 21  | Harvey Norman Singapore         | electronics   | 3-4          |                  |
+| 22  | Anytime Fitness Singapore       | gym           | 3-4          |                  |
+| 23  | 24/7 Fitness                    | gym           | 3-4          |                  |
+| 24  | Watsons Singapore               | health-beauty | 4            |                  |
+| 25  | Lenskart Singapore              | eyewear       | 3-4          |                  |
+| 26  | ObserveCo                       | consulting    | 4            |                  |
+| 27  | Perky Lash home-visit service   | home-nails    | 3            |                  |
+| 28  | Tee (DOT) Nail Bar              | home-nails    | 3            |                  |
+
 
 ---
+
+
 
 ## Why these 28
 
 **Mixed on purpose, and deliberately including the profile PS was rebuilt to express:**
 
 - **Big brands (1–4, 14, 17, 24)** — where PS must NOT simply track fame. **If your PS scores here look
-  like a fame ranking, the instrument is failing at what it was rebuilt for, and so is the sheet.**
+like a fame ranking, the instrument is failing at what it was rebuilt for, and so is the sheet.**
 - **Small specialists holding a real flank (5–10, 12, 25)** — these should score WELL despite low
-  awareness. **A 4 or 5 here is the whole point of the construct.**
+awareness. **A 4 or 5 here is the whole point of the construct.**
 - **Interchangeable operators (13, 20, 21, 28)** — trading, plenty of awareness, **weak or unowned
-  claims. These should score LOW.**
+claims. These should score LOW.**
 - **Same-claim pairs (22 vs 23; 15 vs 16; 20 vs 21)** — if both members of a pair get the same score,
-  that is evidence the claim is owned by neither, or by both.
+that is evidence the claim is owned by neither, or by both.
 - **A new/emerging business (26)** — **the high-position / low-awareness profile you asked the tool to be
-  able to describe.** If PS cannot express this, the construct has failed.
+able to describe.** If PS cannot express this, the construct has failed.
 
 **Grade from memory, and contradicting an earlier reading is fine and useful.**

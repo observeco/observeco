@@ -1,6 +1,6 @@
 {
- "version": "1.20.0",
- "sha256": "81f71f32d07d641e94b573574f513acb5c5ce240376d96eaee6119cdf9ecc968",
- "promoted_at": "2026-09-30T06:08:43+08:00",
+ "version": "1.21.0",
+ "sha256": "99365bcb9bc86669fb479e88baef54f2959c029ab606eb1f43ed0620f110d208",
+ "promoted_at": "2026-09-30T07:16:10+08:00",
  "promoted_from": "rubric.json"
 }
