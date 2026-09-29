@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v46 — **Sean's five DEF grades land the instrument INSIDE every stated range (5/5); my "DEF reads high" claim is WITHDRAWN (7th stale-reference error). Disputes across ALL open dimensions: 2 cases, both DR. DR is the one real remaining defect — never tuned, 63.1% exact.**
+**Status:** DRAFT v48 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -440,6 +440,38 @@ corpus must be regraded before any further tuning — tuning against it would be
 error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ Limits: n=20–21 is a SHAPE
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
+
+**v48 change — Sean: the instrument is right and the regrade is wrong. The regrade is now retired as a reference.**
+*(1) **Sean, verbatim: *"Harvey norman and shake shack are 4 for DR. Instrument is correct. My regrade is
+wrong."*** *The two remaining DR disputes close in the instrument's favour. `sean-regrade-raw.csv` updated
+(`my_new_DR` 2 → 4 for both, verbatim note preserved).*
+*(2) **⚠ THAT IS NOW SEVEN CASES RE-EXAMINED, AND THE INSTRUMENT WAS RIGHT EVERY TIME.** *Five DEF
+(BreadTalk, IKEA, McDonald's, NTUC, Scanteak — instrument inside every stated range) and two DR (Harvey
+Norman, Shake Shack — confirmed correct).* **Not one case has gone the other way.** *A pattern this
+consistent is not a run of luck; it says the REFERENCE is the unreliable object.*
+*(3) **⚠ AND THE PS COLUMN OF THE REGRADE IS PROVABLY THE SUPERSEDED CONSTRUCT.** *Measured on his own
+120 rows:* ***r(regrade PS, regrade MA) = +0.82 with 67% numerically identical*** — *against the recorded
+signature of the old recall construct, `r = +0.74` and 58% identical.* **So his PS regrade column is even
+MORE MA-duplicative than the construct D49/D50 replaced**, which is why PS measures a catastrophic 27.4%
+exact against it: the instrument now asks a different question than the column answers.* **Same class as
+the invalid RS sheet (§10.6e) — the THIRD reference in a row found to be answering a superseded question.**
+*(4) **⚠ CONCLUSION: THE 120-CASE REGRADE IS RETIRED AS A REFERENCE.** *It was graded in one sitting on
+27 Sep, before the DEF compounding work (1.15.0), the CR dominance reframe (1.16.0), the PS reconstruction
+(1.18.0) and the PS naming (1.19.0).* **Every figure derived from it — including v45's "exact 80.8%, PS
+95.7%", which I withdrew in v47 — measures the instrument against a wrong answer sheet.** *It stays on
+disk as history and as a record of the first pass; it is no longer the thing the instrument is scored
+against.*
+*(5) **⚠ WHAT THE INSTRUMENT'S REAL STANDING IS, from references that ARE valid — cases graded carefully
+against the live scale:** ***PS 90% within one (his PS-DR sheet, 21 cases); DR 95% within one (same
+sheet); DEF 5 of 5 inside his stated ranges (today); DR 2 of 2 confirmed (today); CR 100% (closed).***
+*Every one of those is sound.* **Against the retired regrade the numbers are 50.8% exact — and that figure
+should now be read as a measurement of the REFERENCE, not of the instrument.**
+*(6) **⚠ WHAT THIS MEANS FOR THE PROJECT, stated plainly.** *Several months of "FAIL" verdicts, the
+bubble-tea flattening, the micro-drift chase, and my own DEF over-read report were ALL the same error:
+treating a stale or wrongly-constructed answer sheet as ground truth.* **The standing rule already written
+into this document now needs to be stronger: A HUMAN LABEL IS NOT EVIDENCE UNTIL IT IS CHECKED FOR
+CONSTRUCT AND DATE.** *Grading is cheap; grading the right question against the live scale is the whole
+cost.*
 
 **v46 change — Sean graded the five DEF disputes; the instrument was right and my defect report was wrong.**
 *(1) **Sean, verbatim: *"For defensibility breadtalk would be a 3-4. Ikea is a 3-4. Mac is 4-5. NTUC is
