@@ -20,9 +20,25 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DIMS = ["relative_strength", "mental_advantage", "defensibility",
+# 1.19.0 RENAME: relative_strength -> position_strength (D54).
+# BLAST RADIUS: frozen historical runs (runs-v*/) and the frozen canary baseline record the OLD key.
+# They are the RECORD and are never rewritten, so every live consumer reads BOTH keys, new first.
+DIMS = ["position_strength", "mental_advantage", "defensibility",
         "competitive_room", "market_headroom", "demand_reach"]
-ABBR = {"relative_strength": "RS", "mental_advantage": "MA", "defensibility": "DEF",
+LEGACY_DIM_ALIAS = {"position_strength": "relative_strength"}
+def dim_of(disp, dim):
+    """Read a dimension from a run file under either its current or its legacy name."""
+    if dim in disp: return disp[dim]
+    legacy = LEGACY_DIM_ALIAS.get(dim)
+    return disp.get(legacy) if legacy else None
+# CSV_COL: the suffix of the recorded human-grade column in sean-regrade-raw.csv. This is
+# HISTORY and must NOT follow a rename -- his grades were recorded in YOUR_RS and stay there.
+# Separating it from ABBR is what stops a rename from silently reading a non-existent column:
+# without this split, ABBR["position_strength"]="PS" made every lookup "YOUR_PS", which does not
+# exist, so `h` was None for every case and the whole dimension was SKIPPED with no error at all.
+CSV_COL = {"position_strength": "RS", "relative_strength": "RS"}
+ABBR = {"position_strength": "PS", "relative_strength": "PS",
+        "mental_advantage": "MA", "defensibility": "DEF",
         "competitive_room": "CR", "market_headroom": "MH", "demand_reach": "DR"}
 CLOSED = {"competitive_room"}
 
@@ -45,7 +61,8 @@ def load(run_dir):
         r = json.loads(p.read_text())
         disp = r.get("dimensions_display_1to5") or {}
         un = set(r.get("dimensions_unscored") or [])
-        out[r["case"]] = {k: (None if k in un else disp.get(k)) for k in DIMS}
+        # dim_of, not disp.get: a freeze may carry either the current or the legacy key
+        out[r["case"]] = {k: (None if k in un else dim_of(disp, k)) for k in DIMS}
     return out
 
 
@@ -101,7 +118,7 @@ def main(run_dir):
             if cid in refused:
                 continue
             m = (mine.get(cid) or {}).get(d)
-            h = num((by.get(e["name"]) or {}).get("YOUR_" + ABBR[d]))
+            h = num((by.get(e["name"]) or {}).get("YOUR_" + CSV_COL.get(d, ABBR[d])))
             if d in CLOSED and h is not None:
                 m = h                      # CR adopted: his number is the answer
             if m is not None and h is not None:
@@ -129,7 +146,7 @@ def main(run_dir):
     wdi = sum(s["disp"] * s["n"] for s in overall) / n
     wof = sum(s["off"] * s["n"] for s in overall) / n
     disp_total = sum(s["up"] + s["down"] for s in overall)
-    print("  OPEN DIMENSIONS (RS MA DEF MH DR):")
+    print("  OPEN DIMENSIONS (%s):" % " ".join(ABBR[d] for d in DIMS if d not in CLOSED))
     print("    exact agreement  %.1f%%   %s (target >=%.0f%%)"
           % (wex, "PASS" if wex >= T_EXACT else "FAIL", T_EXACT))
     print("    disputes (>=2)   %.1f%%   %s (target <=%.0f%%)"
@@ -150,7 +167,7 @@ def main(run_dir):
             continue
         for cid, e in idx["companies"].items():
             m = (mine.get(cid) or {}).get(d)
-            h = num((by.get(e["name"]) or {}).get("YOUR_" + ABBR[d]))
+            h = num((by.get(e["name"]) or {}).get("YOUR_" + CSV_COL.get(d, ABBR[d])))
             if m is None or h is None:
                 continue
             if abs(h - m) >= 2:

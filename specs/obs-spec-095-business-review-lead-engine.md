@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v39 — **⚠ RS regrade INVALID (the sheet asked the old recall question — 6th self-check failure). DR: 95% within-one, but 2 real defects — ObserveCo read 4 vs Sean's 1 (D52), and the ceased-business rule contradicted by his grading (D53).**
+**Status:** DRAFT v40 — **D54: `relative_strength` → `position_strength` (PS) renamed and shipped (rubric 1.19.0). Blast radius measured, live renamed, frozen history preserved. Doing it exposed a silent dimension drop AND a rollback hole in the promotion gate — both fixed.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -269,68 +269,68 @@ into the fixtures.*
 `_expected.band` derives from its `expected_conclusion` — a real engagement conclusion.* **v1.18.0 matches
 those bands 5 of 6 — IDENTICAL to the 1.8.0 baseline, so band agreement is unchanged.**
 *(4) **⚠ ONE REAL DISAGREEMENT REMAINS, and it is now visible BECAUSE of the construct change:** *C1
-GreenPackers — the only fixture whose dimension vector IS a recorded client label — reads **RS 4** where
-that label says **RS 1**.* **The old construct matched it (RS 1) largely because it was reading recall —
+GreenPackers — the only fixture whose dimension vector IS a recorded client label — reads **PS 4** where
+that label says **PS 1**.* **The old construct matched it (PS 1) largely because it was reading recall —
 which is exactly what made the duplication invisible.** *The one case with a genuine human label is the
 one the new construct gets wrong, and it is recorded rather than smoothed over.*
-*(5) **⚠ THE COST OF THIS RE-BASELINE: the reference is no longer an independent check of RS.** *It was
+*(5) **⚠ THE COST OF THIS RE-BASELINE: the reference is no longer an independent check of PS.** *It was
 recorded FROM the instrument at 1.18.0.* **It still catches model drift and any change to the other five
-dimensions, but a future RS revision now moves the reference with it instead of against it.** *That is
+dimensions, but a future PS revision now moves the reference with it instead of against it.** *That is
 the price of a construct change no existing reference could validate, recorded so the loss is visible.*
 
-**v36 change — D50: RS reconstructed as POSITION STRENGTH. The construct Sean specified is now implemented.**
+**v36 change — D50: PS reconstructed as POSITION STRENGTH. The construct Sean specified is now implemented.**
 *(1) **Sean defined the distinction and the product requirement in one message:** *"Mental advantage
-measures what the market and customers know of the brand. Relative strength measures the strength of the
+measures what the market and customers know of the brand. Position strength measures the strength of the
 said brand's positioning relative to competitors... I am expecting many new potential clients that have
 either business ideas or have just started out and wishing to test their business using our tool. So we
-should give hope to the high RS but low MA business that have just started out and have a good flank."*
-**MA is what the market KNOWS (present, backward-looking); RS is how strong the POSITION is against
+should give hope to the high PS but low MA business that have just started out and have a good flank."*
+**MA is what the market KNOWS (present, backward-looking); PS is how strong the POSITION is against
 competitors' positions (strategic, forward-looking), judged WITHOUT reference to awareness.**
-*(2) **⚠ CONFIRMED THE OLD CONSTRUCT COULD NOT EXPRESS IT: ZERO of 120 cases had RS ≥ MA+2.** *Every new or
-idea-stage business scored RS 2–3 with MA 1–2, because "would buyers reach for this business by name"
+*(2) **⚠ CONFIRMED THE OLD CONSTRUCT COULD NOT EXPRESS IT: ZERO of 120 cases had PS ≥ MA+2.** *Every new or
+idea-stage business scored PS 2–3 with MA 1–2, because "would buyers reach for this business by name"
 reads recall — which is `mental_advantage`. The lead engine's core prospect profile was unrepresentable.*
 *(3) **Rubric 1.18.0 implements it: duplication 69% → 29%, mean difference 0.32 → 0.87, the target profile
-appears (0 → 6 cases), and RS≥4 did NOT inflate (37% → 34%).** *The middle also spread properly — level 3
+appears (0 → 6 cases), and PS≥4 did NOT inflate (37% → 34%).** *The middle also spread properly — level 3
 went 25 → 59 cases, absorbing the old level-2 pile-up.* **Guards in place: fame/size/recognition must not
-drive RS; identical RS and MA scores are an error; copyability belongs to defensibility.**
-*(4) **⚠ TWO THINGS STILL WRONG, NOT GLOSSED.** **(a)** *C1 GreenPackers reads RS 4 where the engagement
+drive PS; identical PS and MA scores are an error; copyability belongs to defensibility.**
+*(4) **⚠ TWO THINGS STILL WRONG, NOT GLOSSED.** **(a)** *C1 GreenPackers reads PS 4 where the engagement
 reading is 1* — **the model still tracks recognition too closely, so the wording is over-generous on at
 least some micro cases even though the aggregate distribution is healthy.** **(b)** **The canary FAILS
 (C4, C5 flip Fragile → Contested), and it is not wrong to.** *Those two cases sit within ~5 points of a
-band boundary and RS carries 25% weight, so any one-level RS change flips them.* **⚠ The canary is
-therefore hypersensitive to RS revisions specifically — and its frozen reference is 10 revisions stale
-(rubric 1.8.0) with its RS column written under the recall construct being replaced.**
+band boundary and PS carries 25% weight, so any one-level PS change flips them.* **⚠ The canary is
+therefore hypersensitive to PS revisions specifically — and its frozen reference is 10 revisions stale
+(rubric 1.8.0) with its PS column written under the recall construct being replaced.**
 *(5) **⚠ DECISION REQUIRED (D50).** *A reference written under the old construct cannot validate a new
 one, **but re-baselining silently would destroy the drift check that has already caught four real
-regressions.*** **Options: re-baseline at 1.18.0, re-read only the RS column under the new construct first,
+regressions.*** **Options: re-baseline at 1.18.0, re-read only the PS column under the new construct first,
 or revert.** **Sean's call.**
 
-**v35 change — D49: relative_strength duplicates mental_advantage. Found on Sean's pointer.**
-*(1) **Sean: *"I think there is a problem with RS definition. It is not what we agreed on. Can you figure out
-what it is?"*** **He was right, and it is measurable: RS and MA return the IDENTICAL score in 83 of 120
+**v35 change — D49: position_strength duplicates mental_advantage. Found on Sean's pointer.**
+*(1) **Sean: *"I think there is a problem with PS definition. It is not what we agreed on. Can you figure out
+what it is?"*** **He was right, and it is measurable: PS and MA return the IDENTICAL score in 83 of 120
 cases (69%), within one level in 119 of 120 (99%), r = +0.89, mean difference 0.32.** **On the exact case
-RS was created to fix — McDonald's SG vs Jollibee, the wrong-way-round ordering RS was introduced to
+PS was created to fix — McDonald's SG vs Jollibee, the wrong-way-round ordering PS was introduced to
 correct — both dimensions return 5/5 and 3/3. Zero separation on the reason the dimension exists.**
 *(2) **⚠ The mechanism: the agreed construct is *"the position actually HELD against the derived
 competitive set"* (§5.1), but the INSTRUCTION asks *"would buyers reach for this business by name"* — and
 §5.1 defines `mental_advantage` as *"how much mind the brand holds in its segment."*** **Those are the same
 question; "reaching for a name" IS retrieval from memory. The construct says *held against*; the
 implementation says *recalled by*.** **So 25% of the composite measured a near-duplicate.**
-*(3) **⚠ AND IT EXPLAINS A NUMBER THAT LOOKED LIKE A STRENGTH.** **RS showed 0.8% disputes — the best of
+*(3) **⚠ AND IT EXPLAINS A NUMBER THAT LOOKED LIKE A STRENGTH.** **PS showed 0.8% disputes — the best of
 any dimension — and was reported here as evidence it was sound.** **It was evidence the two dimensions had
-merged:** *in Sean's own labels r(RS,MA)=+0.74 and **58% of his RS grades are numerically identical to his
+merged:** *in Sean's own labels r(PS,MA)=+0.74 and **58% of his PS grades are numerically identical to his
 MA grades**.* **Agreeing with a human who is also answering one question twice confirms the duplication.**
-*(4) **⚠ A FIX WAS BUILT AND THE CANARY REJECTED IT.** **v1.17.0 reframed RS explicitly as a CONTEST
+*(4) **⚠ A FIX WAS BUILT AND THE CANARY REJECTED IT.** **v1.17.0 reframed PS explicitly as a CONTEST
 (winning/losing each situation against the named occupants) with a guard that fame is not the input.**
 **It worked on its own terms — duplication 69% → 37%, mean difference 0.32 → 0.69, and the
-McDonald's/Jollibee inversion corrected (RS 4/4, no longer 5/3).** **Canary FAILED: C3 and C4 both moved
+McDonald's/Jollibee inversion corrected (PS 4/4, no longer 5/3).** **Canary FAILED: C3 and C4 both moved
 bands.** **⚠ And against the ENGAGEMENT CONCLUSIONS — Sean's real client readings, the independent
-reference — it went the WRONG way on two real cases:** *C3 RS engagement 3 → instrument 2; **C4 RS
+reference — it went the WRONG way on two real cases:** *C3 PS engagement 3 → instrument 2; **C4 PS
 engagement 1 → instrument 3**.* **Agreement with the engagement conclusions fell to 2 of 6.**
 *(5) **⚠ REVERTED to 1.16.1 through the gate** — *the first real use of `rubric_gate.py`, which performed
 exactly as designed.* **Canary PASSES again. The candidate is retained for the record.**
 *(6) **⚠ THE TENSION IS REAL AND UNRESOLVED.** **The structural evidence says the two dimensions should be
-one; the frozen canary AND Sean's old RS labels both prefer the old reading** — *but **both carry the very
+one; the frozen canary AND Sean's old PS labels both prefer the old reading** — *but **both carry the very
 defect being fixed** (the labels are 58% self-duplicated, and the frozen reference predates the defect
 being noticed).* **So today's evidence cannot distinguish "RS was never a second dimension" from "my
 contest wording is wrong."** **Recorded as D49 for Sean.** *His D38 ruling — "I much rather reasoning is
@@ -441,15 +441,41 @@ error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ L
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
 
+**v40 change — D54: the rename, shipped with the blast radius mapped.**
+*(1) **Sean: *"Ship it, can we change it to position strength PS instead of RS? you need to change all
+documentation with blast radius considerations."*** **Blast radius was MEASURED BEFORE ANY EDIT: 33,678
+occurrences of the identifier in FROZEN historical runs, 336 in the canary record and fixtures, 87 across
+40 code files, 35 in docs, plus the CSV columns.**
+*(2) **⚠ THE SPLIT THAT MATTERS: LIVE files are renamed; FROZEN history is NOT rewritten.** *The `runs-v*/`
+files, the canary record and the canary fixtures ARE the evidence base — rewriting them would destroy the
+record the whole calibration rests on.* **So every live consumer reads BOTH keys** (`LEGACY_DIM_ALIAS`,
+new first): *`measure_alignment.py`, `band_agreement_harness.py`, `promote_rubric.py`.* **Verified by
+running a NEW run against a FROZEN run — they align.** *Prose in the spec was swept too, **with quoted
+spans protected**: 135 bare `RS` became `PS`, but **8 quotations of Sean containing the old term were left
+verbatim**, because his words are the source of truth and rewriting them would falsify the record.*
+*(3) **⚠ DOING THE RENAME FOUND A SILENT DIMENSION DROP.** *The display abbreviation `PS` leaked into the
+CSV column lookup, so every lookup became `YOUR_PS` — **a column that does not exist.** `h` was then None
+for every case and **the whole dimension was skipped, printing nothing and raising nothing.*** **It was
+caught only because a row was MISSING from the output table, not because anything failed.** *Fixed by
+splitting the DISPLAY name from the RECORDED-COLUMN name (`CSV_COL`) in both consumers.* **⚠ A rename that
+silently deletes a dimension from the report is a worse outcome than one that crashes.**
+*(4) **⚠ AND IT FOUND A ROLLBACK HOLE IN THE PROMOTION GATE.** *`promote_rubric.py` had no version
+ordering, so promoting the retired `rubric-v1.8.0.json` **replaced the live 1.19.0** — and the next corpus
+run scored 120 cases against a ten-revision-old instrument while reporting success.* **That is the exact
+failure §5.3.1 exists to prevent, running in reverse.** *Found by triggering it during the gate's own
+verification; now refused unless `--allow-rollback` is passed deliberately.* **⚠ Note the naive fix would
+have been wrong too: string comparison rates `1.19.0 < 1.8.0`, so the guard uses numeric version tuples.**
+*(5) **Rubric 1.19.0 promoted through the gate. Full corpus 120/120. Canary PASSES.**
+
 **v39 change — D52/D53: the RS half of the regrade is INVALID, and DR reveals two real defects.**
-*(1) **⚠ THE RS HALF IS MY ERROR AND IT WASTED SEAN'S GRADING.** **The sheet asked the OLD question** —
+*(1) **⚠ THE PS HALF IS MY ERROR AND IT WASTED SEAN'S GRADING.** **The sheet asked the OLD question** —
 "does the market reach for this business by name? The test is RECOGNITION, not size", *level 2 = "nothing
 it is RECOGNISED for"* — **while the live rubric (1.18.1) asks the NEW one:** "how strong is this
 business's POSITION... **DO NOT score how well known the business is**", *level 2 = "the claim is already
 OWNED by a named occupant"*. **The sheet was committed before D49/D50 rebuilt the construct and was never
 rebuilt.** *I recorded at the time that "the RS half is moot until D49 is settled" — and then, after D50,
 asked him to grade it anyway.* **⚠ SIXTH INSTANCE OF THE SAME FAILURE THIS SESSION: I did not check the
-artefact I was about to use against the thing it was supposed to test.** *The RS readings are recorded but
+artefact I was about to use against the thing it was supposed to test.** *The PS readings are recorded but
 MUST NOT be used as a reference.*
 *(2) **✅ DEMAND REACH: exact 12/21 (57%), within one 20/21 (95%, CI 77–99%), disputes 1/21 (4.8%), offset
 −0.21.** *The dimension is sound; the one dispute is not.*
@@ -467,26 +493,26 @@ baker and the closed bubble tea outlet — *the same value for both, which makes
 a slip.* **His judgement implies a third case belongs at DR level 1: a business that has stopped
 trading.** **⚠ The instrument follows its own written rule correctly, so this is a definitional conflict
 for Sean, not a scoring bug.**
-*(5) **⚠ RS MAY HAVE OVER-CORRECTED — flagged, not concluded.** *Even with an invalid sheet the direction
-is informative:* **Sean's fresh RS spread wide {1:2, 2:3, 3:10, 4:4, 5:1}; the instrument at 1.18.1 is
+*(5) **⚠ PS MAY HAVE OVER-CORRECTED — flagged, not concluded.** *Even with an invalid sheet the direction
+is informative:* **Sean's fresh PS spread wide {1:2, 2:3, 3:10, 4:4, 5:1}; the instrument at 1.18.1 is
 compressed {1:1, 2:43, 3:66, 4:7, 5:3} — 66 of 120 cases at level 3.** *Because the "cap an unproven flank
 at ADEQUATE (3)" rule fires whenever the supplied set does not evidence what an occupant claims — which,
 without the scanner, is most of the time.* **So the basis restriction bought honesty at the cost of
 discrimination and depends entirely on the scanner shipping.** *D51's trade, now with a measurement
 behind it.*
 
-**v38 change — D51: RS's basis restricted to the supplied set (v1.18.1) AND the competitor scanner BUILT.**
-*(1) **Sean: *"RS needs to do online research on competitors, just like the saladshop project or caica
+**v38 change — D51: PS's basis restricted to the supplied set (v1.18.1) AND the competitor scanner BUILT.**
+*(1) **Sean: *"PS needs to do online research on competitors, just like the saladshop project or caica
 project. just wanted to make sure the rubric factored this in?"*** **FINDING: the rubric CONSUMED the
 derived competitive set, but the set holds only names, tiers and a price-floor label** — **§4.6's scan
 (capturing rivals' POSITIONING, size and pricing) was spec'd and D25-directed but NEVER BUILT.**
-*So RS was inferring whether an occupant "owns" a claim from the model's own CATEGORY MEMORY.*
-*(2) **⚠ THE MODEL'S OWN CONFIDENCE DOES NOT DETECT THIS — MEASURED:** *C4 SGFitness scored RS 4 at
-coverage **0.83**, C1 GreenPackers RS 4 at **0.72**.* **Confidence fires when the model FEELS UNSURE, not
+*So PS was inferring whether an occupant "owns" a claim from the model's own CATEGORY MEMORY.*
+*(2) **⚠ THE MODEL'S OWN CONFIDENCE DOES NOT DETECT THIS — MEASURED:** *C4 SGFitness scored PS 4 at
+coverage **0.83**, C1 GreenPackers PS 4 at **0.72**.* **Confidence fires when the model FEELS UNSURE, not
 when the BASIS IS ABSENT** — so no confidence threshold can substitute for the missing evidence.
-*(3) **Part 1 (rubric v1.18.1):** *RS now scores ONLY against the supplied set, must not import outside
+*(3) **Part 1 (rubric v1.18.1):** *PS now scores ONLY against the supplied set, must not import outside
 category knowledge, and caps an unproven flank at ADEQUATE (3) — because a flank is only PROVEN against a
-named rival.* **Unproven RS≥4 fell 19 → 10 cases; canary passes.**
+named rival.* **Unproven PS≥4 fell 19 → 10 cases; canary passes.**
 *(4) **Part 2 (§4.6.1): `competitor_scan.py` BUILT and RUN.** *It discovers candidates by search, fetches
 live, extracts each site's own claim, and records a per-URL `capture_status` through the validity gate.*
 **Proved by running it against live Singapore furniture retail:** *Scanteak graded **blocked** ("challenge
@@ -514,7 +540,7 @@ businesses moving 1 → 2 as *"the fourth appearance, not improving"*. **This pa
 with no wording change touching that behaviour, so it is NOISE and the decision not to tune against it
 was right.** *The temptation to "fix" it was real, and doing so would have been fitting to noise — the
 same error that produced the v1.11.0 over-raise.*
-*(5) **Noise floor re-measured at v1.15.1 (two full batches): RS 4.2% · MA 5.0% · DEF 2.5% · CR 4.2% ·
+*(5) **Noise floor re-measured at v1.15.1 (two full batches): PS 4.2% · MA 5.0% · DEF 2.5% · CR 4.2% ·
 MH 0.8% · DR 1.7%.** **Worst is 5.0%, and defensibility is the second-lowest — the dimension that caused
 the most trouble this session is now among the most stable.** Rule stands: clear ~5% to be interpretable.
 *(6) **⚠ Standing cost: the rubric keeps growing back.** This is the second compression in five revisions
@@ -653,7 +679,7 @@ case): **120 cases in 9 s against 107 s sequential — 12× — with 0 failures 
 not. *(Excludes underscore-prefixed meta/fixture files, so the deliberate `_refused.json` refusal test
 no longer registers as a failure.)*
 *(2) **⚠ THE NOISE FLOOR IS NOW SETTLED — three independent batches of the same rubric v1.12.0**,
-comparing all three pairs: **worst per-dimension noise 4.2%** (RS 4.2%, MA 4.2%, **DEF 2.5%**, CR 0.8%,
+comparing all three pairs: **worst per-dimension noise 4.2%** (PS 4.2%, MA 4.2%, **DEF 2.5%**, CR 0.8%,
 MH 0.0%, DR 1.7%). **This settles two things at once:** the compression effect on defensibility
 (**16.7%**) is **well above its 2.5% noise and is therefore REAL**, and the D39 collateral moves at ±1
 are **inside noise and cannot be claimed.** **Rule going forward: a movement must exceed ~5% before it
@@ -680,7 +706,7 @@ high.**
 questions block **21,366 → 19,405**. **All 13 distinct rules kept and explicitly checked for**; what came
 out was duplication (rule 5 appeared verbatim twice, and the fame/network rules restated each other).
 *(2) **⚠⚠ THE NOISE FLOOR IS NOW MEASURED — two independent full batches of the SAME rubric v1.12.0.**
-Cases changed between identical batches: **RS 4.2%, MA 2.5%, DEF 1.7%, CR 0.0%, MH 0.0%, DR 1.7%** —
+Cases changed between identical batches: **PS 4.2%, MA 2.5%, DEF 1.7%, CR 0.0%, MH 0.0%, DR 1.7%** —
 **every movement ±1 level.** **So batch noise runs 0–4.2% per dimension, and that is the threshold
 future tuning must clear.** *This is the measurement v22 should have had instead of three rapid
 repeats, and it is why the earlier "deterministic" claim was wrong.*
@@ -738,7 +764,7 @@ Toast Box, NTUC, Sheng Siong, Eu Yan Sang 4–5 → 3–4). **v1.11.1 separates 
 business DEMONSTRABLY OPERATES (a multi-outlet network is efficient scale and belongs at 4+, even for a
 famous brand) versus how EXPENSIVE ENTRY IS (trivially cheap ⇒ still 1, and fragmentation alone raises
 nobody).** **Net effect on the corpus: DEF disputes 3.3% → 2.5%, offset +0.03 → −0.07, within-one-level
-44.2% → 51.7%.** Note MA 8.3%→7.5%, CR 9.2%→8.4%, RS unchanged, MH and DR unchanged — **the
+44.2% → 51.7%.** Note MA 8.3%→7.5%, CR 9.2%→8.4%, PS unchanged, MH and DR unchanged — **the
 defensibility change did not damage the other dimensions**, which is what the canary could not tell us.
 *(3) **⚠⚠ MY DETERMINISM CLAIM WAS OVER-STATED AND THE FULL-CORPUS RUNS CAUGHT IT.** v22 reported the
 instrument deterministic on three repeat runs (spread 0). **Across two full batches, `mental_advantage`
@@ -805,7 +831,7 @@ validating real-submission performance.
 6 appears 3 times, mean mass on the 6th bin 3.4%, and the composite divides defensibility by 6.**
 **So every §10.6 defensibility comparison has pitted a 1–6 score against Sean's 1–5 grade.** Putting
 the scales on the same footing moves the disputes **6.7% → 1.7% (percentile-matched) / 4.2%
-(round-to-nearest)**, both under the bar, against RS 0.8% / MA 7.5% / DR 4.2%. **Defensibility is not
+(round-to-nearest)**, both under the bar, against PS 0.8% / MA 7.5% / DR 4.2%. **Defensibility is not
 the worst dimension once the scales match.** It was investigated as a rubric-CONTENT problem because
 the raw number was above the bar; it is at least partly a **SCALE** problem — same class as the §5.4
 rounding gap. **Raised as D36, not fixed unilaterally** (it invalidates prior runs).
@@ -1271,8 +1297,8 @@ scoring nothing.
 | Slot | Drives | Refused when |
 |---|---|---|
 | Category / what the business does and to whom | Market headroom · Competitive room | Absent or non-specific enough to place in a category |
-| A positioning or differentiator sentence | Relative strength · Mental advantage · Defensibility | Absent or a **non-position** — see below |
-| Competitors, named or counted | Relative strength | Zero, **and** enrichment finds none |
+| A positioning or differentiator sentence | Position strength · Mental advantage · Defensibility | Absent or a **non-position** — see below |
+| Competitors, named or counted | Position strength | Zero, **and** enrichment finds none |
 | A price point or price band | Competitive room | Absent, **and** unenrichable |
 | A customer description | Demand reach · Mental advantage | Absent |
 | City + category for enrichment | All | Absent |
@@ -1427,9 +1453,9 @@ worse than a gap.
 | Input | Feeds dimension |
 |---|---|
 | ACRA / data.gov.sg (open, SSIC-filterable) | Market headroom · Competitive room |
-| Competitor set via search | Relative strength |
-| Competitor messaging via fetch | Relative strength · Mental advantage |
-| Competitor size/tenure | Relative strength · Defensibility |
+| Competitor set via search | Position strength |
+| Competitor messaging via fetch | Position strength · Mental advantage |
+| Competitor size/tenure | Position strength · Defensibility |
 
 ### 4.6 The competitor scan is a scored pass, not best-effort (D25 direction) ⚠
 
@@ -1441,7 +1467,7 @@ worse than a gap.
 > 3 and 4 of the table below do not exist in production. **The corpus's `_derivation_method` string is a
 > TEMPLATE, not a research record** (identical shape for every case in a category).
 >
-> **⚠ AND THE RUBRIC WAS CONSUMING IT AS THOUGH IT WERE RESEARCH.** *RS's instruction asks "is that claim
+> **⚠ AND THE RUBRIC WAS CONSUMING IT AS THOUGH IT WERE RESEARCH.** *PS's instruction asks "is that claim
 > already owned by a named occupant of the derived competitive set?" — while the set supplies names, tiers
 > and a price-floor label and nothing about what any occupant HOLDS.* **So the model was inferring
 > "ownership" from its own category memory.** *Fixed at the rubric level in **v1.18.1** (see §10.6e) by
@@ -1470,8 +1496,8 @@ gated by §3.11.**
 
 | Captured | Becomes | Dimension |
 |---|---|---|
-| Named competitors in the category | The competitor set | Relative strength |
-| Their positioning / messaging | Differentiation contrast | Relative strength · Mental advantage |
+| Named competitors in the category | The competitor set | Position strength |
+| Their positioning / messaging | Differentiation contrast | Position strength · Mental advantage |
 | Their size, tenure, footprint | Scale contrast | Defensibility |
 | Their pricing where public | Price-band context | Competitive room |
 | **Failed or blocked captures** | **The honest-limits block** | — |
@@ -1541,20 +1567,20 @@ is therefore both **two dimensions** and **the weights**.
 
 | # | Dimension | Weight | What it measures |
 |---|---|---|---|
-| 1 | Relative strength | 25% | For each buying situation it competes in, how firmly does it hold that situation against the named occupants of it? Judged **per situation**, never as one share fight — positioning is about product categories, not industries. |
+| 1 | Position strength | 25% | For each buying situation it competes in, how firmly does it hold that situation against the named occupants of it? Judged **per situation**, never as one share fight — positioning is about product categories, not industries. |
 | 2 | Mental advantage | 20% | How much mind the brand holds in its segment. A **magnitude**, not a competitive claim: a brand can hold a great deal of mind while close rivals hold a similar amount. **Independent of closure** — a closed brand can still be the first name that comes to mind. |
 | 3 | Defensibility | 20% | The challenger's cost to displace it: the accumulated barriers the business **holds**, not the differentiator its form claims. **Since v1.9.0 this is partly a property of the CATEGORY** (D35): consolidation and capital- or licence-intensity add defensibility; fragmentation with low entry cost removes it. **Familiarity is not defensibility** — being well known is scored under mental advantage and earns nothing here. |
 | 4 | Competitive room | 15% | **Landscape, not business.** Fragmented and uncontested = 5; few giants and a price war = 1. |
 | 5 | Market headroom | 10% | Is there unmet demand? Dropped automatically where supply is capacity-elastic (A3). |
 | 6 | Demand reach | 10% | Can it find and reach an identifiable paying group? Addressability, not demand size. A business **currently trading** is at least 3. |
 
-**Positioning carries 70%** (relative strength + mental advantage + defensibility), because the
+**Positioning carries 70%** (position strength + mental advantage + defensibility), because the
 brief is *viability through differentiation*, not industry attractiveness.
 
 **Two reversals to note.** `competitive pressure` treated a crowded market as *bad*;
 `competitive_room` scores a **fragmented** market as **favourable** — the earlier polarity was
 backwards. And `position availability` — whether a word was unclaimed — is replaced by
-`relative_strength`, which measures the position actually **held against the derived competitive
+`position_strength`, which measures the position actually **held against the derived competitive
 set**, because an unclaimed word nobody buys is not a position. This one is not a renaming: a
 business can occupy an unclaimed word and still lose to a rival that owns the buying situation.
 
@@ -1581,7 +1607,7 @@ to fool ourselves.
 ### 5.3.1 The rubric promotion step — DONE (`promote_rubric.py`)
 
 **This predicted failure occurred, and closed on 2026-09-27.** `rubric.json` sat at **0.9.0 with
-`relative_strength` absent** while §10.7's results described 1.8.0 — so every calibration result
+`position_strength` absent** while §10.7's results described 1.8.0 — so every calibration result
 described a rubric nothing served. It was the *silent* failure this section warns about: a
 calibrated rubric that nothing loads raises no error and produces no symptom until a client is
 shown a score from the retired model.
@@ -1602,7 +1628,7 @@ validates six conditions and exits non-zero rather than promoting a bad file:
    `1.2.0` and defeated the harness's own mixed-version guard;
 2. all six calibrated dimensions are present;
 3. weights sum to 100;
-4. `relative_strength` **has** a weight — its absence is the 0.9.0 defect;
+4. `position_strength` **has** a weight — its absence is the 0.9.0 defect;
 5. the band table is present and starts at Fragile;
 6. **no score gates survive** — calibration removed them (§5.4), so a file carrying them is stale.
 
@@ -2330,7 +2356,7 @@ this with credibility because accuracy due to time uncertainty is always a probl
 **He is right, and the reason is structural rather than fixable.** A positioning dataset is not like a
 financial one. A salary figure is *measured* at a point in time and is a fact about that time. **A
 competitive position is not a quantity — it is a relationship, and relationships move when any party
-moves.** A competitor opening one outlet can change the submitter's relative strength without the
+moves.** A competitor opening one outlet can change the submitter's position strength without the
 submitter doing anything. **So the data does not merely age; it decays from both ends, and the second
 end is not ours.**
 
@@ -3254,25 +3280,25 @@ level 5.** **So it is a deliberate quality improvement that COST two previously-
 position is better (range live, spread doubled, bias quartered, L5 reachable, monopolists correct) but the
 two lost cases are real and are reported rather than buried.*
 
-### 10.6d ⚠ `relative_strength` COLLAPSED INTO `mental_advantage` — 25% of the composite was measuring an existing dimension
+### 10.6d ⚠ `position_strength` COLLAPSED INTO `mental_advantage` — 25% of the composite was measuring an existing dimension
 
-**⚠ FOUND ON SEAN'S POINTER, NOT BY ME:** *"I think there is a problem with RS definition. It is not what we
+**⚠ FOUND ON SEAN'S POINTER, NOT BY ME:** *"I think there is a problem with PS definition. It is not what we
 agreed on. Can you figure out what it is?"* **He was right, and the defect is measurable.**
 
 #### The finding
 
 | Measure (120 cases, v1.16.1) | Value |
 |---|---|
-| **RS and MA return the IDENTICAL score** | **83/120 = 69%** |
+| **PS and MA return the IDENTICAL score** | **83/120 = 69%** |
 | Within one level of each other | **119/120 = 99%** |
 | Mean absolute difference | **0.32** |
-| r(RS, MA) | **+0.89** |
-| r(RS, DEF) | +0.83 |
+| r(PS, MA) | **+0.89** |
+| r(PS, DEF) | +0.83 |
 
-**⚠ AND ON THE EXACT CASE THAT DIMENSION WAS CREATED TO FIX:** §5.1 records RS was introduced because
+**⚠ AND ON THE EXACT CASE THAT DIMENSION WAS CREATED TO FIX:** §5.1 records PS was introduced because
 *"McDonald's SG 150+ outlets scored 47 vs Jollibee 26 outlets 57"* — a **wrong way round** ordering that
-RS was meant to correct. **Under v1.16.1, McDonald's SG and Jollibee return RS 5 and MA 5 — and Jollibee
-RS 3 and MA 3.** *The two dimensions give the same answer on the very case the split was invented for.*
+PS was meant to correct. **Under v1.16.1, McDonald's SG and Jollibee return PS 5 and MA 5 — and Jollibee
+PS 3 and MA 3.** *The two dimensions give the same answer on the very case the split was invented for.*
 **Zero separation. The reason for the second dimension was not being delivered.**
 
 #### The mechanism, and why the 0.8% dispute rate was misleading
@@ -3287,25 +3313,25 @@ could any of dozens of similar operators substitute for it?"*** — **and §5.1'
 **"Reaching for a name" IS retrieval from memory. The construct was written as *held against*, and then
 implemented as *recalled by*.**
 
-**⚠ This explains something that looked like a strength.** *RS showed only **0.8% disputes** against Sean's
-labels — the best of any dimension, and it was reported here as evidence RS was sound.* **It was not: it
-was evidence the two dimensions had merged.** *In his own labels r(RS, MA) = **+0.74**, and **58% of his
-RS grades are numerically IDENTICAL to his MA grades.*** **An instrument that agrees with a human who is
+**⚠ This explains something that looked like a strength.** *PS showed only **0.8% disputes** against Sean's
+labels — the best of any dimension, and it was reported here as evidence PS was sound.* **It was not: it
+was evidence the two dimensions had merged.** *In his own labels r(PS, MA) = **+0.74**, and **58% of his
+PS grades are numerically IDENTICAL to his MA grades.*** **An instrument that agrees with a human who is
 also answering one question twice is confirming the duplication, not the dimension.**
 
 #### ⚠ The fix was attempted, appeared to work, and the CANARY REJECTED IT
 
-**Candidate v1.17.0** reframed RS explicitly as **a contest** — *winning or losing each situation against
+**Candidate v1.17.0** reframed PS explicitly as **a contest** — *winning or losing each situation against
 the named occupants* — with an added guard that **fame is not the input**, and that *"if your
-relative_strength score is always the same as your mental_advantage score, you are answering one question
+position_strength score is always the same as your mental_advantage score, you are answering one question
 twice."* **Promoted through the new gate, full 120-case run.**
 
 | | v1.16.1 | v1.17.0 |
 |---|---|---|
-| RS identical to MA | 83/120 (69%) | **44/120 (37%)** |
+| PS identical to MA | 83/120 (69%) | **44/120 (37%)** |
 | Mean absolute difference | 0.32 | **0.69** |
-| RS distribution | 2-dominant | 1→8, 2→14, 3→59, 4→28, 5→11 |
-| McDonald's SG / Jollibee | RS 5 / 3 | **RS 4 / 4** — no longer inverted |
+| PS distribution | 2-dominant | 1→8, 2→14, 3→59, 4→28, 5→11 |
+| McDonald's SG / Jollibee | PS 5 / 3 | **PS 4 / 4** — no longer inverted |
 | **Canary** | **PASSED** | **⚠ FAILED — C3 and C4 both moved bands** |
 
 **So the de-duplication WORKED** *(duplication halved; the McDonald's/Jollibee inversion corrected;
@@ -3318,8 +3344,8 @@ went the WRONG way on two real cases:*
 
 | Case | Engagement (Sean, real work) | v1.16.1 | **v1.17.0** |
 |---|---|---|---|
-| **C3 PetDirectory** | RS **3** | RS 3 ✅ | **RS 2** ❌ |
-| **C4 SGFitness** | RS **1** | RS 2 | **RS 3** ❌ *worse* |
+| **C3 PetDirectory** | PS **3** | PS 3 ✅ | **PS 2** ❌ |
+| **C4 SGFitness** | PS **1** | PS 2 | **PS 3** ❌ *worse* |
 
 **So the contest framing makes the instrument agree with Sean LESS on real businesses that were engaged.**
 *Agreement with the engagement conclusions fell to **2 of 6**.*
@@ -3331,57 +3357,57 @@ went the WRONG way on two real cases:*
 
 **Three references disagree, and I cannot adjudicate it:**
 
-1. **Structural:** RS and MA duplicate each other *by construction* (69% identity, r=+0.89). **Two of the
+1. **Structural:** PS and MA duplicate each other *by construction* (69% identity, r=+0.89). **Two of the
    six dimensions carrying 45% of the weight are effectively one dimension.**
 2. **The frozen canary** (`_reference.json`, rubric 1.8.0) **prefers the OLD reading** — under it, the new
-   RS moves *away* (C3 3→2, C4 2→3).
+   PS moves *away* (C3 3→2, C4 2→3).
 3. **The engagement conclusions** — Sean's real client work — **also prefer the old reading** (C4
-   engagement RS is **1**; the new rubric says **3**).
+   engagement PS is **1**; the new rubric says **3**).
 
-**⚠ BUT the canary's frozen reference and Sean's OLD RS labels BOTH carry the very defect being fixed**
+**⚠ BUT the canary's frozen reference and Sean's OLD PS labels BOTH carry the very defect being fixed**
 *(the labels are 58% self-duplicated; the frozen reference predates the defect being noticed).* **So the
 evidence available today cannot distinguish "RS was never a second dimension" from "my contest wording is
 wrong."** **Sean's D38 ruling — *"I much rather reasoning is used to make the judgement here"* — suggests
 the fix belongs in the reasoning, not in a new construct.**
 
-#### ✅ 1.18.0 — RS RECONSTRUCTED: POSITION STRENGTH, INDEPENDENT OF RECOGNITION (D50)
+#### ✅ 1.18.0 — PS RECONSTRUCTED: POSITION STRENGTH, INDEPENDENT OF RECOGNITION (D50)
 
 **Sean defined the distinction:** *"Mental advantage measures what the market and customers know of the
-brand. Relative strength measures the strength of the said brand's positioning relative to competitors."*
+brand. Position strength measures the strength of the said brand's positioning relative to competitors."*
 **And named the product requirement:** *"I am expecting many new potential clients that have either
-business ideas or have just started out... So we should give hope to the high RS but low MA business that
+business ideas or have just started out... So we should give hope to the high PS but low MA business that
 have just started out and have a good flank."*
 
 **⚠ THAT IS A CONSTRUCT CHANGE, NOT A WORDING ONE.** **MA is what the market KNOWS of the brand —
-present-tense and backward-looking. RS is how strong the POSITION is against competitors' positions —
+present-tense and backward-looking. PS is how strong the POSITION is against competitors' positions —
 strategic and forward-looking, judged WITHOUT reference to awareness.** **A business can hold a strong
 position while nobody has heard of it; that is precisely the profile the lead engine needs to serve, and
 the old wording could not produce it.**
 
-**⚠ CONFIRMED IMPOSSIBLE UNDER THE OLD CONSTRUCT: ZERO of 120 cases had RS ≥ MA+2.** *Every new or
-idea-stage business scored RS 2–3 with MA 1–2, because the old instruction — "would buyers reach for this
+**⚠ CONFIRMED IMPOSSIBLE UNDER THE OLD CONSTRUCT: ZERO of 120 cases had PS ≥ MA+2.** *Every new or
+idea-stage business scored PS 2–3 with MA 1–2, because the old instruction — "would buyers reach for this
 business by name" — reads recall, which is `mental_advantage`.*
 
 | Measure (120 cases) | 1.16.1 (old) | **1.18.0 (position strength)** |
 |---|---|---|
-| **RS identical to MA** | 83/120 (69%) | **35/120 (29%)** |
+| **PS identical to MA** | 83/120 (69%) | **35/120 (29%)** |
 | Mean absolute difference | 0.32 | **0.87** |
-| **Target profile (RS ≥ MA+2)** | **0 of 120** | **6 of 120** |
-| RS ≥ 4 (over-generosity check) | 44/120 (37%) | **41/120 (34%)** — *did NOT inflate* |
-| RS distribution | 2-dominant | 1→3, 2→39, 3→59, 4→16, 5→3 |
+| **Target profile (PS ≥ MA+2)** | **0 of 120** | **6 of 120** |
+| PS ≥ 4 (over-generosity check) | 44/120 (37%) | **41/120 (34%)** — *did NOT inflate* |
+| PS distribution | 2-dominant | 1→3, 2→39, 3→59, 4→16, 5→3 |
 | **Canary** | PASSED | **⚠ FAILED — C4, C5 flip Fragile → Contested** |
 
-**Guards written in:** fame, size and recognition must not drive RS; identical RS and MA scores are an
+**Guards written in:** fame, size and recognition must not drive PS; identical PS and MA scores are an
 error; and the position's COPYABILITY belongs to `defensibility`, not here.
 
 **⚠ TWO THINGS STILL WRONG, REPORTED RATHER THAN GLOSSED:**
-**(a)** *C1 GreenPackers reads **RS 4** where the engagement reading is **RS 1*** — the model still tracks
+**(a)** *C1 GreenPackers reads **PS 4** where the engagement reading is **PS 1*** — the model still tracks
 recognition too closely, so the new wording is over-generous on at least some micro cases despite the
 aggregate distribution being healthy.
 **(b)** **The canary rejects it, and the canary is not wrong to.** *C4 and C5 sit within ~5 points of a
-Fragile/Contested boundary, and RS carries 25% weight, so ANY one-level RS change flips them.* **⚠ That
-makes the canary hypersensitive to RS revisions specifically** — *and its frozen reference is **10
-revisions stale** (rubric 1.8.0, model jev-1.13.0) with its RS column written under the very recall
+Fragile/Contested boundary, and PS carries 25% weight, so ANY one-level PS change flips them.* **⚠ That
+makes the canary hypersensitive to PS revisions specifically** — *and its frozen reference is **10
+revisions stale** (rubric 1.8.0, model jev-1.13.0) with its PS column written under the very recall
 construct being replaced.* **A reference written under the old construct cannot validate a new one.**
 
 #### ✅ D50 CLOSED — Sean chose A. Re-baselined, and the re-baseline exposed an error in this spec
@@ -3409,8 +3435,8 @@ rubrics, so it is not attributable to this change.* **So band agreement with the
 is unchanged — not improved, not damaged.**
 
 **⚠ AND ONE REAL UNRESOLVED DISAGREEMENT REMAINS:** *C1 GreenPackers — the single fixture whose
-dimension vector **is** a recorded client label — reads **RS 4** where that label says **RS 1**.* **The
-old construct matched it (RS 1) largely BECAUSE it was reading recall, which is what made the duplication
+dimension vector **is** a recorded client label — reads **PS 4** where that label says **PS 1**.* **The
+old construct matched it (PS 1) largely BECAUSE it was reading recall, which is what made the duplication
 invisible.** *So the one case with a genuine human label is the one the new construct gets wrong.*
 
 #### The re-baseline
@@ -3424,20 +3450,20 @@ refuses to overwrite a reference without `--force`, so the act is explicit rathe
 | Canary passes against its new baseline | **PASSED, two consecutive runs** |
 | Band agreement with engagement conclusions | **5 of 6 — unchanged** |
 | Full corpus at 1.18.0 | **120/120, 0 failures, 8s** |
-| Duplication RS vs MA | **69% → 29%** |
+| Duplication PS vs MA | **69% → 29%** |
 | Mean absolute difference | 0.32 → **0.87** |
 
-**⚠ THE COST OF THIS RE-BASELINE, STATED PLAINLY: the reference is no longer an independent check of RS.**
+**⚠ THE COST OF THIS RE-BASELINE, STATED PLAINLY: the reference is no longer an independent check of PS.**
 *It was recorded FROM the instrument at 1.18.0.* **It still catches everything else** — model drift, and
-any future change to the other five dimensions — **but a future RS revision will now move the reference
+any future change to the other five dimensions — **but a future PS revision will now move the reference
 with it rather than against it.** *That sensitivity is the price of a construct change that no existing
 reference could validate; it is recorded here so the loss is visible rather than discovered later.*
 
-### 10.6e Fresh blind regrade: RS and DR — ONE INVALID, TWO REAL DEFECTS (D52, D53)
+### 10.6e Fresh blind regrade: PS and DR — ONE INVALID, TWO REAL DEFECTS (D52, D53)
 
-**Sean graded both columns of `RS-DR-V2-GRADING.md` (21 businesses × 2).**
+**Sean graded both columns of `PS-DR-V2-GRADING.md` (21 businesses × 2).**
 
-#### ⚠ THE RS HALF IS INVALID — MY ERROR, AND IT WASTED HIS GRADING
+#### ⚠ THE PS HALF IS INVALID — MY ERROR, AND IT WASTED HIS GRADING
 
 **The sheet asked the OLD question:** *"does the market reach for this business by name? The test is
 RECOGNITION, not size"* — **with level 2 defined as "nothing it is RECOGNISED for".**
@@ -3448,7 +3474,7 @@ the positions its competitors hold? DO NOT score how well known the business is"
 
 **⚠ The sheet was committed BEFORE D49 and D50 rebuilt the construct, and I never rebuilt it.** *I even
 recorded at the time that "the RS half is moot until D49 is settled" — and then, after D50, asked him to
-grade it anyway.* **So the RS readings measure a superseded definition. They are recorded here but MUST
+grade it anyway.* **So the PS readings measure a superseded definition. They are recorded here but MUST
 NOT be used as a reference.**
 
 **⚠ SIXTH INSTANCE OF THE SAME FAILURE THIS SESSION: I did not check the artefact I was about to use,
@@ -3485,16 +3511,16 @@ belongs at 1: a business that has stopped trading.** **⚠ That is a definitiona
 on — the instrument is following its own rule correctly, which is why this is a spec question, not a
 scoring bug.**
 
-#### ⚠ RS MAY HAVE OVER-CORRECTED — flagged, not concluded
+#### ⚠ PS MAY HAVE OVER-CORRECTED — flagged, not concluded
 
 **⚠ Even though the sheet is invalid, the comparison is still informative in one direction.** *Sean's
-fresh RS spread wide:* **{1:2, 2:3, 3:10, 4:4, 5:1}** — *he uses 4 and 5.* **The instrument at 1.18.1 is
+fresh PS spread wide:* **{1:2, 2:3, 3:10, 4:4, 5:1}** — *he uses 4 and 5.* **The instrument at 1.18.1 is
 heavily compressed:** **{1:1, 2:43, 3:66, 4:7, 5:3} — 66 of 120 cases sit at level 3**, because the
 *"cap an unproven flank at ADEQUATE (3)"* rule fires whenever the supplied set does not evidence what an
 occupant claims — **which, without the scanner, is most of the time.**
 
 **⚠ So the basis restriction has bought honesty at the cost of discrimination, and it depends entirely on
-the scanner shipping.** *If the scan is not wired in, RS cannot distinguish most businesses.* **That is
+the scanner shipping.** *If the scan is not wired in, PS cannot distinguish most businesses.* **That is
 the trade recorded in D51, now with a measurement behind it.**
 
 ### 10.6 Launch gate
@@ -3533,7 +3559,7 @@ on the interval, not just the point estimate.**
 
 | Dimension | Disputes (≥2) | 95% CI | |
 |---|---|---|---|
-| `relative_strength` | 0.9% | 0.2% – 4.8% | ✅ |
+| `position_strength` | 0.9% | 0.2% – 4.8% | ✅ |
 | `mental_advantage` | 3.5% | 1.4% – 8.6% | ⚠ interval crosses 5% |
 | **`defensibility`** | **7.0%** | **3.6% – 13.1%** | ⚠⚠ ~~above the bar~~ **→ 3.3% after Sean's four sheet corrections (D35). 4 residual, all construct cases, all now addressed.** |
 | `market_headroom` | 0.0% | 0.0% – 49.0% | **n=4 — mostly n/a by design, unmeasurable** |
@@ -3861,7 +3887,7 @@ independent full batches of the **same** rubric v1.12.0, 120 cases each:
 
 | Dimension | Cases changed between identical batches | Rate |
 |---|---|---|
-| `relative_strength` | 5 / 120 | **4.2%** |
+| `position_strength` | 5 / 120 | **4.2%** |
 | `mental_advantage` | 3 / 120 | 2.5% |
 | **`defensibility`** | **2 / 120** | **1.7%** |
 | `competitive_room` | 0 / 120 | **0.0%** |
@@ -3911,7 +3937,7 @@ v1.12.0.** Comparing all three pairs (A-B, A-C, B-C):
 
 | Dimension | A-B | A-C | B-C | **worst** |
 |---|---|---|---|---|
-| `relative_strength` | 4.2% | 4.2% | 3.3% | **4.2%** |
+| `position_strength` | 4.2% | 4.2% | 3.3% | **4.2%** |
 | `mental_advantage` | 2.5% | 4.2% | 3.3% | **4.2%** |
 | **`defensibility`** | 1.7% | 2.5% | 2.5% | **2.5%** |
 | `competitive_room` | 0.0% | 0.8% | 0.8% | 0.8% |
@@ -4114,7 +4140,7 @@ moving **1 → 2** as *"the fourth appearance, not improving"*. **This pass move
 not to tune against it was right.** *Recorded because the temptation to "fix" it was real and would have
 been fitting to noise — the same error that produced the v1.11.0 over-raise.*
 
-**(4) Noise floor re-measured at v1.15.1** — two full batches, same rubric: **RS 4.2% · MA 5.0% · DEF
+**(4) Noise floor re-measured at v1.15.1** — two full batches, same rubric: **PS 4.2% · MA 5.0% · DEF
 2.5% · CR 4.2% · MH 0.8% · DR 1.7%.** **Worst is now 5.0% (mental_advantage), and defensibility is the
 second-lowest at 2.5%** — so the dimension that caused the most trouble this session is now among the
 most stable. **The working rule stands: a movement must clear ~5% to be worth interpreting.**
@@ -4286,7 +4312,7 @@ which is precisely why `defensibility` looked like the worst dimension.
 **And it explains the arithmetic that started all of this.** The 8 defensibility disputes (6.7%) were
 already down to 4 (3.3%) once Sean corrected his sheet. **Putting the scales on the same footing takes
 it further**, to **1.7%–4.2%** depending on the normalisation used *(percentile-matched comparison:
-**1.7%**; round-to-nearest onto 1–5: **4.2%**)* — against `relative_strength` 0.8%, `mental_advantage`
+**1.7%**; round-to-nearest onto 1–5: **4.2%**)* — against `position_strength` 0.8%, `mental_advantage`
 7.5%, `demand_reach` 4.2%. **On a like-for-like scale, defensibility is no longer the worst dimension,
 and both normalisations fall below the ≤5% bar.**
 
@@ -4376,7 +4402,7 @@ Corrected here rather than left as an impression.)*
 
 | Dimension | Exact | ±1 | ±2 or more |
 |---|---|---|---|
-| `relative_strength` | 57.5% | 40.0% | **0.8%** |
+| `position_strength` | 57.5% | 40.0% | **0.8%** |
 | `mental_advantage` | 50.8% | 37.5% | 7.5% |
 | `defensibility` | 54.2% | 39.2% | **6.7%** |
 | `market_headroom` | 85.7% | 14.3% | 0.0% *(n=7)* |
@@ -4450,7 +4476,7 @@ instead of the BUSINESS.**
 | Dimension | What it read | What it must read |
 |---|---|---|
 | `demand_reach` | whether the form *named* a channel | whether the business demonstrably reaches buyers — currently trading sets a floor of 3 |
-| `relative_strength` | one share fight against every named competitor | the position held **per situation**, corroborated |
+| `position_strength` | one share fight against every named competitor | the position held **per situation**, corroborated |
 | `mental_advantage` | whether the *model* could articulate a retrieval occasion | whether the *segment* holds the brand in mind |
 | `defensibility` | the differentiator the form **claims** | the accumulated barriers the business **holds** |
 
@@ -4589,7 +4615,7 @@ is how a canary gets tuned into a calibration set and stops detecting anything.
   largest remaining dispute source (7.0%). Convergence from an unrelated direction is the more
   credible kind of evidence, and this is why the fixture was left alone.
 - **C1 GreenPackers — instrument read Contested where the engagement concluded Fragile** (it
-  scored `relative_strength` 3 against a sub-1% fringe business facing BioPak's verified moat).
+  scored `position_strength` 3 against a sub-1% fringe business facing BioPak's verified moat).
 
 **Fixtures are frozen by design.** §10.1.1: *"a canary whose fixture moves detects nothing."*
 Adjusting an expected value so the instrument agrees would convert the canary into a
@@ -4701,23 +4727,24 @@ purchasing decision.
 | **D36** | ~~`defensibility` is scored 1–6 while every other dimension is 1–5~~ | **WITHDRAWN — MY FINDING WAS FALSE.** I assumed Sean's DEF grades were 1–5; **`build_regrade_sheet.py:183` told him 1–6 and his grades use the full range (max 6.0).** **The scales were matched; DEF's dispute rate is 3.3% (4/120), under the bar, before any fix.** The "6.7% → 1.7%" was an artefact of a conversion that should never have been applied. **Fourth frame error retracted this session.** *Making DEF 5 levels remains a coherent uniformity choice, but it fixes nothing.* **The REAL cause is §10.6's corpus finding below.** |
 | **D36-old** | *Original (withdrawn) framing* | Superseded. **See §10.6 "D36 WITHDRAWN" for the replacement finding: 99 of 120 corpus forms are analyst RECONSTRUCTIONS with a median payload of 725 characters, and the form carries none of the structural facts DEF needs.** |
 | **D39** | **Does an operated multi-outlet network count as a moat where category entry is cheap?** (§10.6) | **ANSWERED — YES, and Sean authorised it: *"I'm happy for you to apply the KFC, Ya Kun and Toast box judgement."*** Applied as a **GENERAL rule** (rubric **v1.11.2**), not three case patches: **SEPARATE VISIBILITY FROM OPERATED NETWORK** — a household name resting on visibility alone is cheap to displace and stays LOW, but **a chain that demonstrably operates many units holds efficient scale and a cost advantage even where opening a SINGLE unit is cheap**, because **the barrier is the NETWORK** (property, supply chain, central purchasing, staffing at scale, decades of sites), not one more shop. **KFC, Ya Kun and Toast Box move to 4, exact match.** **⚠ Collateral is mixed and mostly at the noise floor:** 13 cases moved (8 up, 5 down); **CHAGEE and NTUC improve, but Mixue, CHICHA San Chen and Each-A-Cup move the wrong way, and 24/7 Fitness and Chin Mee Chin drop.** **Corpus totals are a wash — DEF disputes 2.5% → 3.3%, i.e. back to v1.8.0's level.** *This is what tuning to a handful of cases looks like from the inside.* |
-| **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
+| **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (PS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
 | **D42** | **Sean rebuilt the DEF construct — two routes of attack. Does the weaker route SET or merely LIMIT the score?** (§10.6) | **CLOSED — Sean: *"I think let's focus on replicate then."* → option B, rubric v1.14.0. REPLICATION SETS THE LEVEL** (name the mechanism: IP · capital intensity · network control · scale economics · switching costs · accumulated asset); **the OUTFLANK is kept as a ONE-LEVEL DISCOUNT, not a floor** — an open route that could take significant share scores no higher than one level below the mechanism's level. *A strong barrier does not protect a position a rival can go around, but an open route does not erase the barrier either.* **Measured: level 4 recovers 4 → 15 and SD 0.82 → 0.96** (v1.12.0 single-route was 26/1.20; v1.13.1 weaker-route-SETS was 4/0.82). **It does not return to 26, which is CORRECT — the outflank discount is now genuinely applied, which v1.12.0 was blind to.** **4+ is now ASML 6 · Boeing 5 · Coupang 5 · NTUC FairPrice, Watsons, McDonald's, VICOM, KOI Thé, ActiveSG, Eu Yan Sang, IKEA, Anytime Fitness, Sheng Siong, Scanteak, Pet Lovers Centre 4** — reads correctly. **✅ Canary passes (C3 back to Contested).** **⚠ The canary header was MISREPORTING the reference version** (printed the current rubric twice; the comparison itself always read the frozen snapshot), **so v1.13.1's drift was real and v1.14.0 is a genuine restoration.** *Original framing below.* |
 | **D47** | **Best Denki & Courts — consolidated appliance retail: Sean 1, instrument 3** (§10.6c) | **✅ CLOSED — SEAN RULED THE INSTRUMENT RIGHT: *"you are right it is a 3 for best denki and courts."*** **So the "two cases lost" under the 1.16.0 dominance reframe were never lost — the INSTRUMENT was right and the grading SHEET was wrong.** **On the corrected labels COMPETITIVE ROOM is exact 14/21 (67%), within one 21/21 (100%), disputes 0/21 (0.0%), offset +0.33.** **⚠ I stopped at two wording attempts precisely because a third would have been fitting the rubric to what turned out to be a bad label — the stopping rule paid for itself.** *Third time in this session that a hand-read disagreement resolved the same way: the label was the first suspect and the label was the fault.* |
+| **D54** | **Rename `relative_strength` → `position_strength` (PS) and ship it** (§5.1, §10.6f) | **✅ DONE — rubric 1.19.0, promoted through the gate, with the blast radius mapped and split.** *Sean: "Ship it, can we change it to position strength PS instead of RS? you need to change all documentation with blast radius considerations."* **BLAST RADIUS MEASURED FIRST: 33,678 occurrences in FROZEN historical runs, 336 in the canary record/fixtures, 87 in code, 35 in docs.** **⚠ SPLIT APPLIED: LIVE files renamed; FROZEN history NOT rewritten** — *the run files and the canary reference ARE the record, and rewriting them would destroy the evidence base.* **Every live consumer therefore reads BOTH keys** (`LEGACY_DIM_ALIAS`). **⚠ TWO REAL DEFECTS WERE FOUND BY DOING IT:** **(a) a silent drop** — the display tag `PS` leaked into the CSV column lookup, so every lookup became `YOUR_PS`, which does not exist; `h` was None for every case and **the whole dimension was SKIPPED with no error**. *Found only because a row was missing from the output.* **Fixed by splitting display name from recorded-column name (`CSV_COL`) in both consumers.** **(b) a ROLLBACK HOLE in the promotion gate** — *the guard against a non-promoted rubric had no version ordering, so promoting the retired `rubric-v1.8.0.json` replaced the live rubric and the next corpus run scored 120 cases against a ten-revision-old instrument while reporting success.* **Now refused unless `--allow-rollback`.** |
 | **D52** | **Demand reach rewards a well-written submission — ObserveCo read 4, Sean grades it 1** (§10.6e) | **⚠ OPEN — a live defect, the biggest single dispute in the project.** **Sean graded his own consulting business DR = 1 (no identifiable paying buyer yet); the instrument reads 4** *because the submission is detailed, coherent and names a segment.* **This is exactly the *"reading the SUBMISSION instead of the BUSINESS"* class §10.7 records as accounting for every prior improvement.** **The instrument has no account of whether a named segment has ever actually been SERVED.** *Note the rule that should have caught it — "any business currently trading is at least 3" — cannot: ObserveCo has no live outlets or price list, and the instrument is treating coherent intent as reach.* |
 | **D53** | **Ceased businesses: Sean grades 1, the rubric's rule says 2** (§10.6e) | **⚠ OPEN — a definitional conflict, not a scoring bug.** The sheet tested one rule: *a ceased business is a **2**, not a 1* (identifiable buyer, no current reach). **Sean graded BOTH ceased businesses 1 — the dormant home baker and the closed bubble tea outlet — applying the same value to both, which makes it considered rather than a slip.** **DR level 1 currently reads "no identifiable buyer, OR cannot legally serve the buyers it names."** **His judgement implies a third case belongs at 1: a business that has STOPPED TRADING.** **⚠ The instrument follows its own rule correctly — so the rule or the level-1 definition is what must change, and that is Sean's call.** |
-| **D51** | **RS needs online competitor research (saladshop/caica style) — is the rubric factoring it in?** (§4.6, §10.6e) | **✅ AMENDED + BUILT (option C).** **Sean: *"RS needs to do online research on competitors, just like the saladshop project or caica project. just wanted to make sure the rubric factored this in?"*** **FINDING: the rubric CONSUMES the derived competitive set, but the set holds only names, tiers and a price-floor label — §4.6's scan (capturing rivals' POSITIONING, size, pricing) was spec'd and D25-directed but NEVER BUILT.** *So RS was inferring whether an occupant "owns" a claim from the model's own CATEGORY MEMORY.* **⚠ AND THE MODEL'S OWN CONFIDENCE DOES NOT DETECT THIS: C4 SGFitness scored RS 4 at coverage 0.83, C1 GreenPackers RS 4 at 0.72 — confidence fires when the model feels unsure, not when the basis is absent.** **(part 1, rubric v1.18.1)** *RS now scores ONLY against the supplied set, must not import outside category knowledge, and caps an unproven flank at ADEQUATE (3); canary PASSES and unproven RS≥4 falls 19 → 10 cases.* **(part 2, §4.6.1)** *`competitor_scan.py` built — discovers competitors by search, fetches live through the validity gate, records per-URL capture status, and refuses to present a blocked capture as evidence.* **⚠ PROVED TO WORK, NOT PROVED ACCURATE: the corpus's sets were hand-written per category, so there is no record of what a scan would have returned for those 120 businesses. Re-deriving the corpus by scan and re-scoring is the unrun validation.** |
-| **D50** | **RS rebuilt as POSITION STRENGTH (independent of recognition) — canary re-baseline?** (§10.6d) | **✅ CLOSED — Sean chose A: re-baseline the canary.** **⚠ AND THE RE-BASELINE EXPOSED AN ERROR IN MY OWN REPORTING: the canary's per-dimension "engagement" values are NOT client labels.** *Five of six fixtures say verbatim: "The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions — they are not a recorded client label. **The BAND, not the dimension vector, is the bar (spec 10.6).**"* **So my argument that v1.18.0 "went the wrong way against the engagement conclusions" was WRONG — that column has no authority.** *Only C1 GreenPackers carries a recorded client label.* **The canary reference is now recorded at 1.18.0 through the deliberate `--rung record --force` path, and PASSES on two consecutive runs.** **⚠ What still stands: the canary's band check DOES have a human-blessed source — each fixture's `expected_conclusion` (`_expected.band`), and v1.18.0 matches it 5 of 6** *(unchanged from the 1.8.0 baseline; C6 Bonefirm differs either way)*. **⚠ And C1 GreenPackers still reads RS 4 against a recorded CLIENT label of 1 — that is the one real unresolved disagreement about the new construct.** **CONSTRUCT ANSWERED by Sean:** *"Mental advantage measures what the market and customers know of the brand. Relative strength measures the strength of the said brand's positioning relative to competitors... we should give hope to the high RS but low MA business that have just started out and have a good flank."* **So MA = what the market KNOWS (present, backward-looking); RS = how strong the POSITION is against competitors' positions (strategic, forward-looking) — judged WITHOUT reference to awareness.** **⚠ CONFIRMED the old instrument could not express it: ZERO of 120 cases had RS ≥ MA+2.** **Rubric 1.18.0 does: duplication 69% → 29%, mean difference 0.32 → 0.87, target profile 0 → 6 cases, and RS≥4 did NOT inflate (37% → 34%).** **⚠ But the canary FAILS (C4 and C5 flip Fragile → Contested), and the model still tracks recognition too closely — C1 GreenPackers reads RS 4 where the engagement reading is 1.** **⚠ The frozen reference is 10 revisions stale and its RS column was written under the OLD recall construct, so it cannot validate a position-strength reading.** **Decision needed: re-baseline, or re-read the canary's RS column under the new construct.** |
-| **D49** | **`relative_strength` duplicates `mental_advantage` — what should RS actually be?** (§10.6d) | **⚠ OPEN — FOUND ON SEAN'S POINTER.** *"There is a problem with RS definition. It is not what we agreed on."* **MEASURED: RS and MA return the IDENTICAL score in 83/120 cases (69%); within one level in 119/120 (99%); r=+0.89; mean difference 0.32.** **On the very case RS was created to fix, McDonald's SG vs Jollibee, both dimensions returned 5/5 and 3/3 — zero separation.** **The agreed construct is "the position actually HELD against the derived competitive set" (§5.1); the implemented instruction asks "would buyers reach for this business by name", which §5.1 defines as `mental_advantage`.** **⚠ The 0.8% dispute rate that looked like RS's strength was evidence of the MERGER — 58% of Sean's own RS grades are identical to his MA grades.** **A fix (v1.17.0, RS reframed as a contest with a fame guard) cut duplication 69% → 37% and corrected the McDonald's/Jollibee inversion, but the CANARY REJECTED IT and agreement with the engagement conclusions fell to 2/6** *(C3 engagement RS 3 → instrument 2; C4 engagement RS 1 → instrument 3)*. **⚠ REVERTED to 1.16.1.** **⚠ UNRESOLVED TENSION: the structural evidence says merge, the frozen canary and his old RS labels say the old reading is better — but BOTH references carry the defect being fixed (the labels are 58% self-duplicated).** **Evidence available today cannot distinguish "RS was never a second dimension" from "the contest wording is wrong".** **⚠ FOR SEAN: what should RS measure that MA does not?** |
+| **D51** | **PS needs online competitor research (saladshop/caica style) — is the rubric factoring it in?** (§4.6, §10.6e) | **✅ AMENDED + BUILT (option C).** **Sean: *"RS needs to do online research on competitors, just like the saladshop project or caica project. just wanted to make sure the rubric factored this in?"*** **FINDING: the rubric CONSUMES the derived competitive set, but the set holds only names, tiers and a price-floor label — §4.6's scan (capturing rivals' POSITIONING, size, pricing) was spec'd and D25-directed but NEVER BUILT.** *So PS was inferring whether an occupant "owns" a claim from the model's own CATEGORY MEMORY.* **⚠ AND THE MODEL'S OWN CONFIDENCE DOES NOT DETECT THIS: C4 SGFitness scored PS 4 at coverage 0.83, C1 GreenPackers PS 4 at 0.72 — confidence fires when the model feels unsure, not when the basis is absent.** **(part 1, rubric v1.18.1)** *PS now scores ONLY against the supplied set, must not import outside category knowledge, and caps an unproven flank at ADEQUATE (3); canary PASSES and unproven PS≥4 falls 19 → 10 cases.* **(part 2, §4.6.1)** *`competitor_scan.py` built — discovers competitors by search, fetches live through the validity gate, records per-URL capture status, and refuses to present a blocked capture as evidence.* **⚠ PROVED TO WORK, NOT PROVED ACCURATE: the corpus's sets were hand-written per category, so there is no record of what a scan would have returned for those 120 businesses. Re-deriving the corpus by scan and re-scoring is the unrun validation.** |
+| **D50** | **PS rebuilt as POSITION STRENGTH (independent of recognition) — canary re-baseline?** (§10.6d) | **✅ CLOSED — Sean chose A: re-baseline the canary.** **⚠ AND THE RE-BASELINE EXPOSED AN ERROR IN MY OWN REPORTING: the canary's per-dimension "engagement" values are NOT client labels.** *Five of six fixtures say verbatim: "The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions — they are not a recorded client label. **The BAND, not the dimension vector, is the bar (spec 10.6).**"* **So my argument that v1.18.0 "went the wrong way against the engagement conclusions" was WRONG — that column has no authority.** *Only C1 GreenPackers carries a recorded client label.* **The canary reference is now recorded at 1.18.0 through the deliberate `--rung record --force` path, and PASSES on two consecutive runs.** **⚠ What still stands: the canary's band check DOES have a human-blessed source — each fixture's `expected_conclusion` (`_expected.band`), and v1.18.0 matches it 5 of 6** *(unchanged from the 1.8.0 baseline; C6 Bonefirm differs either way)*. **⚠ And C1 GreenPackers still reads PS 4 against a recorded CLIENT label of 1 — that is the one real unresolved disagreement about the new construct.** **CONSTRUCT ANSWERED by Sean:** *"Mental advantage measures what the market and customers know of the brand. Relative strength measures the strength of the said brand's positioning relative to competitors... we should give hope to the high RS but low MA business that have just started out and have a good flank."* **So MA = what the market KNOWS (present, backward-looking); PS = how strong the POSITION is against competitors' positions (strategic, forward-looking) — judged WITHOUT reference to awareness.** **⚠ CONFIRMED the old instrument could not express it: ZERO of 120 cases had PS ≥ MA+2.** **Rubric 1.18.0 does: duplication 69% → 29%, mean difference 0.32 → 0.87, target profile 0 → 6 cases, and PS≥4 did NOT inflate (37% → 34%).** **⚠ But the canary FAILS (C4 and C5 flip Fragile → Contested), and the model still tracks recognition too closely — C1 GreenPackers reads PS 4 where the engagement reading is 1.** **⚠ The frozen reference is 10 revisions stale and its PS column was written under the OLD recall construct, so it cannot validate a position-strength reading.** **Decision needed: re-baseline, or re-read the canary's PS column under the new construct.** |
+| **D49** | **`position_strength` duplicates `mental_advantage` — what should PS actually be?** (§10.6d) | **⚠ OPEN — FOUND ON SEAN'S POINTER.** *"There is a problem with RS definition. It is not what we agreed on."* **MEASURED: PS and MA return the IDENTICAL score in 83/120 cases (69%); within one level in 119/120 (99%); r=+0.89; mean difference 0.32.** **On the very case PS was created to fix, McDonald's SG vs Jollibee, both dimensions returned 5/5 and 3/3 — zero separation.** **The agreed construct is "the position actually HELD against the derived competitive set" (§5.1); the implemented instruction asks "would buyers reach for this business by name", which §5.1 defines as `mental_advantage`.** **⚠ The 0.8% dispute rate that looked like PS's strength was evidence of the MERGER — 58% of Sean's own PS grades are identical to his MA grades.** **A fix (v1.17.0, PS reframed as a contest with a fame guard) cut duplication 69% → 37% and corrected the McDonald's/Jollibee inversion, but the CANARY REJECTED IT and agreement with the engagement conclusions fell to 2/6** *(C3 engagement PS 3 → instrument 2; C4 engagement PS 1 → instrument 3)*. **⚠ REVERTED to 1.16.1.** **⚠ UNRESOLVED TENSION: the structural evidence says merge, the frozen canary and his old PS labels say the old reading is better — but BOTH references carry the defect being fixed (the labels are 58% self-duplicated).** **Evidence available today cannot distinguish "RS was never a second dimension" from "the contest wording is wrong".** **⚠ FOR SEAN: what should PS measure that MA does not?** |
 | **D48** | **§5.3.1 step 4 — the scorer must refuse a non-promoted rubric** (§5.3.1) | **✅ BUILT — `rubric_gate.py`, enforced in `run_jev.py`.** **Promotion writes a sidecar (`rubric.promoted.json`) recording the version and the SHA-256 of the promoted bytes; only `promote_rubric.py` writes it.** **A rubric whose hash does not match its sidecar is REFUSED, whatever its version claims** — *because the version string is set by hand and proves nothing, which is exactly how `rubric.json` was edited in place repeatedly without the six promotion checks ever running.* **Frozen references stay exempt; promoting the live file onto itself is allowed as the recovery path.** **Proved by making it fail: 7 probes** *(unstamped → refused; frozen → allowed; stamped → allowed; text tamper → refused; version-only tamper → refused, exit 1; restore → allowed; **full 120-case corpus → 0 false refusals*). **Canary passes.** |
 | **D46** | **Regrade MA and CR blind — is the calibration alarm real or a label artifact?** (§10.6b) | **✅ ANSWERED — IT WAS MOSTLY THE LABELS.** 21 businesses × 2 columns, fresh definitions, from memory. **MENTAL ADVANTAGE: exact 14/20 (70.0%), within-one 20/20 (100%), disputes 0/20 (0.0%)** — against **7.5–8.3% on the old labels**. **COMPETITIVE ROOM: exact 8/21 (38.1%), within-one 21/21 (100%), disputes 0/21 (0.0%)** — against **8.4–9.2% on the old labels**. **⚠ THE RELABEL RATES EXPLAIN IT: MA 35%, CR 81%, defensibility 59%** — so every dispute rate quoted before §10.6b was measured against a reference carrying 35–81% noise. **Two of the three "failing" dimensions were failing against LABELS, not reality.** **⚠ CR carries a small systematic LOW bias (+0.43), and BOTH readings agree the top of the CR scale is unused** (instrument 61/120 at level 2, only 2 at 4, none at 5; Sean never grades 4 or 5) — **either no market in this corpus qualifies for level 5, or the descriptors are pitched too high: a definitional question, recorded not tuned.** **⚠ MY SHEET'S CLOSURE TRAP FAILED: "A closed bubble tea outlet" and "A dormant home baker" are ANONYMOUS fixtures**, so they score 1 on MA whether or not the closure rule is applied — **the trap did not fire because it was not a trap; a real test needs a NAMED closed business, and the corpus has none.** **⚠ Lenskart graded 3.5 — not a valid point on a 1–5 integer scale; queried, not silently rounded.** |
-| **D45** | **Second compression pass — does tighter wording cost accuracy?** (§10.6) | **✅ APPLIED (rubric v1.15.1) — and it is NEUTRAL, which makes compression repeatable.** `defensibility` **3,619 → 2,948 chars (−19%)**, all 25 rules kept and checked by name. **⚠ UNLIKE the first compression, NOT ONE of the 17 blind cases moved** — *exact 8/17 · within-one 16/17 · offset −0.24, identical to v1.15.0.* **So compression that only tightens wording can be verified neutral, whereas v1.14.0→v1.15.0 moved NTUC because it ADDED a mechanism (a content change, not a wording one).** **Distribution improved at the bottom: L1 13 → 17, L2 54 → 49, SD 1.01 → 1.05** — smaller prompt, same accuracy, marginally better spread. **⚠⚠ AND THE MICRO-DRIFT REVERSED: 4 businesses moved back 2 → 1 with no wording touching that behaviour, so it is NOISE and the decision not to tune against it was right** — the temptation to "fix" it would have been fitting to noise, the error that produced the v1.11.0 over-raise. **Noise floor re-measured: RS 4.2% · MA 5.0% · DEF 2.5% · CR 4.2% · MH 0.8% · DR 1.7% — defensibility is now the second-most stable dimension.** **Canary passes.** **⚠ Standing cost: the rubric keeps growing back — second compression in five revisions, each recovering roughly a third of what two content changes add. Compression is routine maintenance, not a one-off.** |
+| **D45** | **Second compression pass — does tighter wording cost accuracy?** (§10.6) | **✅ APPLIED (rubric v1.15.1) — and it is NEUTRAL, which makes compression repeatable.** `defensibility` **3,619 → 2,948 chars (−19%)**, all 25 rules kept and checked by name. **⚠ UNLIKE the first compression, NOT ONE of the 17 blind cases moved** — *exact 8/17 · within-one 16/17 · offset −0.24, identical to v1.15.0.* **So compression that only tightens wording can be verified neutral, whereas v1.14.0→v1.15.0 moved NTUC because it ADDED a mechanism (a content change, not a wording one).** **Distribution improved at the bottom: L1 13 → 17, L2 54 → 49, SD 1.01 → 1.05** — smaller prompt, same accuracy, marginally better spread. **⚠⚠ AND THE MICRO-DRIFT REVERSED: 4 businesses moved back 2 → 1 with no wording touching that behaviour, so it is NOISE and the decision not to tune against it was right** — the temptation to "fix" it would have been fitting to noise, the error that produced the v1.11.0 over-raise. **Noise floor re-measured: PS 4.2% · MA 5.0% · DEF 2.5% · CR 4.2% · MH 0.8% · DR 1.7% — defensibility is now the second-most stable dimension.** **Canary passes.** **⚠ Standing cost: the rubric keeps growing back — second compression in five revisions, each recovering roughly a third of what two content changes add. Compression is routine maintenance, not a one-off.** |
 | **D44** | **Make COMPOUNDING reachable; add POLICY/STATE BACKING as a mechanism** (§10.6) | **✅ APPLIED (rubric v1.15.0) — and the rubric found further cases on its own.** Sean: *"You may fix the compounding. NTUC fairprice is a cooperative with deep government hands and involvement."* **(1) POLICY OR STATE BACKING is now a named mechanism** — government ownership or involvement, cooperative or statutory mandate, a protected or subsidised position, licensing that favours incumbents, public-service obligations excluding rivals — *a challenger cannot buy political protection at any price*; the rubric had six mechanisms and none covered it, so NTUC was scored as though it were merely a big supermarket. **(2) COMPOUNDING is now reachable** — the instruction requires ENUMERATING every mechanism that applies and states two or more reinforcing is a 5 or 6, with a guard against reaching 5/6 without naming that many; **level 5 reworded to "two or more mechanisms reinforce each other"**, the clause that was missing. **⚠⚠ THE RUBRIC FOUND THE RIGHT CASES UNPROMPTED: VICOM 4→5, ActiveSG 4→5, PCF Sparkletots and My First Skool 3→4, Guardian 3→4 — VICOM, ActiveSG and the preschools were NOT named by Sean and NOT in the grading set**, so the mechanism is being *reasoned with*, not pattern-matched. **NTUC 4→5 (his 6). Within-one against his fresh grades 88.2% → 94.1%. Level 5 count 2 → 5. Canary passes.** **⚠ Costs: the micro-drift returned (5 cases 1→2 on businesses Sean scores 1 — 4th appearance, but within the 2.5% noise floor, so not chased); and I re-inflated the instruction 2,671 → 3,619 chars (+35%) within three rounds of compressing it — the D40 bloat, repeated.** |
 | **D43** | **`defensibility` is UNCALIBRATED now that the old grades are withdrawn — how does it get a reference?** (§10.6) | **✅ ANSWERED — Sean graded the fresh blind set and it CORRECTS D41.** 17 businesses, 1–6, new definition, from memory, no answer shown. **Exact 8/17 = 47.1%, within one 15/17 = 88.2%, mean offset −0.18** *(n=17 → wide intervals; a SHAPE reading, not an accuracy claim)*. **✅ The shape is healthy: both readings use the full 1–6 range, there is NO systematic bias (−0.18), and the two disputes sit in OPPOSITE directions** (KOI instrument HIGH by 2, NTUC instrument LOW by 2) **— a flattened dimension would show one-directional gaps and a compressed range; neither is present.** **⚠⚠ Overturns D41: 10 of 17 grades CHANGED from his old numbers (KOI moved two whole levels, old 4 → fresh 2) — he was right that *"a lot of them are wrong."* On bubble tea his fresh grades are FLAT (2·2·2·2) and the INSTRUMENT now holds the spread the old analysis credited to him.** **D41 is withdrawn.** **TWO OPEN DISPUTES: KOI Thé (instrument 4, Sean 2 — it credits a 161-outlet network as a barrier, he reads it replicable); NTUC FairPrice (instrument 4, Sean 6 — he reads it COMPOUNDING; the instrument will not go above a single mechanism, the likelier defect since "compounding" needs category knowledge the form lacks).** **⚠ Also: D39's operated-network rule is no longer needed — fresh grades put KFC and Toast Box at 3, and v1.14.0 already returns 3, exact.** *Original framing below.* With the 120 old grades withdrawn, **DEF has no human reference**: agreement cannot be measured, so the only remaining test is "is this reasonable", **which I can satisfy by construction because I wrote the rubric — I cannot grade this dimension against myself.** **A fresh blind set is written: `specs/calibration/DEFENSIBILITY-V2-GRADING.md` — 17 businesses, 1–6, new definition, from memory, no instrument answer shown**, deliberately mixed (some previously graded, some far from Sean's usual market, some with no obvious barrier). **The range is the point** — a flattened dimension cannot be told from a working one by looking only at the middle. **⚠ 17 cases detects a 2-level systematic bias and calibrates the SHAPE of the distribution, but cannot move an agreement statistic — it is a diagnostic, not a re-calibration.** |
 | **D42-old** | *Original framing, superseded by the ruling above* | **OPEN — and this is now the most consequential question in the spec.** Sean: *"Don't worry about my prior readings on defensibility. You should not converge to my old numbers because I suspect a lot of them are wrong. The rubric however should answer the question on how hard it is to replicate (IP, capital intensive, network control etc), or for an outflank to steal significant market share."* **⚠ THE OLD DEF GRADES ARE WITHDRAWN AS THE CALIBRATION TARGET**, so every DEF agreement statistic in §10.6 (including the 1.7% "best on record") **now measures agreement with a reference Sean has disowned** — retained as history, not as evidence the dimension works. **DEF momentarily has NO agreed gold standard.** **Rebuilt (v1.13.1) around REPLICATE (IP · capital intensity · network control · scale economics · switching costs · accumulated asset) and OUTFLANK (take SIGNIFICANT MARKET SHARE by another route).** **⚠ Measured: "score the weaker route" overshoots.** DEF distribution — v1.12.0 single-route: 25·35·29·**26**·3·2, mean 2.61, **SD 1.20**, 26 cases at 4+. v1.13.0 two-route: 25·**59**·32·**2**·2·0, SD 0.82, 4 at 4+. v1.13.1 (+significant-share bar): 20·**59**·37·**1**·3·0, SD 0.82, **4 at 4+ (ASML, Boeing, Coupang, VICOM)**. **Discrimination halves, and 49% pools at level 2.** My own examples (*"a second location next door"*) undercut Sean's significant-share bar; fixing that barely moved it, so the model genuinely reads this corpus as contestable. **⚠ THE CANARY NOW FAILS — C3-petdirectory drifts Contested → Fragile (DEF 2→1); one case in six is within the 2.5% noise but cannot be waved away; repeat run required.** **THE CHOICE: A — weaker route SETS the score (as written: harsh, weak discrimination) vs B — weaker route LIMITS the score, replication drives it (keeps the spread).** *Framing is Sean's and worth keeping; only SET-vs-LIMIT is open. Not tuning further — with the grades withdrawn there is no reference to tune against.* |
 | **D41** | **Bubble-tea hand-read — why does the instrument not go as low as Sean?** (§10.6) | **DONE. The instrument FLATTENS defensibility.** Sean's bubble-tea grades spread **1–4**; the instrument's spread **2–4** and clusters at 3–4. **Both two-point gaps (Each-A-Cup 4 vs 2, Gong Cha 3 vs 1) are the instrument reading HIGH** — it does not go low enough on genuinely undefendable businesses. **And the rule behind Sean's spread is NOT derivable from the grades: across the corpus his DEF tracks FORMAT CAPITAL INTENSITY monotonically** (no premises **1.00** → home-based 1.74 → kiosk **2.46** → restaurant **3.20** → large-format **3.59** → licensed premises **4.50**), **but bubble-tea breaks it — KOI runs the same counter format as Gong Cha and gets 4 where Gong Cha gets 1.** So format is necessary but not sufficient, and the differentiator between those two is knowledge Sean holds (tenure, outlet count, or his own mental-ladder definition), **NOT visible in the grades.** **Flattening is now the dominant remaining error in this dimension.** |
 | **D38** | **The calibration corpus is 82% thin reconstructed forms — does the calibration claim survive?** (§10.6) | **OPEN — the most important finding in this document, and it was found by chasing Sean's moat question.** **99 of 120 cases (82%) carry `label_is_external: true` and an `authoring_note` reading *"FORM DATA reconstructed by the analyst from public sources… the form is thinner than a real submission. This is the known weakness of the test."* Median form payload 725 chars.** **So the corpus measures agreement on analyst-reconstructed forms, NOT on real submissions** — and **defensibility is the dimension most damaged**, because barriers (outlet counts, tenure, owned assets, licences) are the facts least likely to appear in a positioning sentence and most likely to be known to the owner. **Best Denki proves it: Sean scores 4 from knowledge of ~14 stores and a national network; the form states only *"Japanese retail service standards"*; the instrument says 2 — correctly, on what it was given.** **⚠ Same class of gap Sean already flagged: *"You have blind gaps. You have to corroborate your answer against physical evidence."*** **Fix is in the FORM, not the rubric:** (a) the form must **ask** for structural facts (outlets, years, owned premises, licences, price premium); (b) if the form cannot supply them this is **the same external-scan dependency as D25/D35**; (c) the calibration claim must be **restated** so "100% band agreement" is not read as validating real-submission performance |
-| **D36-old-2** | *Superseded* | `rubric.json` declares `level_counts.defensibility = 6` (the other five are 5) against a scale block that says `human_display: "1-5"`. The 6th level **fires**: display **6** appears 3 times, mean mass on the 6th bin **3.4%**, and the composite divides defensibility by **6**. **Every §10.6 defensibility comparison has therefore pitted a 1–6 score against a 1–5 grade.** Normalising the scales moves the disputes from **6.7%** → **1.7% (percentile-matched)** / **4.2% (round-to-nearest)** — both **under the bar**, against RS 0.8% / MA 7.5% / DR 4.2% — so **on a like-for-like footing defensibility is no longer the worst dimension.** *(It was investigated as a rubric-CONTENT problem because the raw number was above the bar. It is at least partly a SCALE problem — same class as the §5.4 rounding gap.)* **Options: A** collapse defensibility to 5 levels (uniform display; invalidates every prior run) · **B** keep 6 levels and **label the scale in the report** · **C** keep 6 internally but normalise to 1–5 for display and for all human comparison. **Recommended: C** — it fixes the comparison without discarding the deliberate 0.5.0 split |
+| **D36-old-2** | *Superseded* | `rubric.json` declares `level_counts.defensibility = 6` (the other five are 5) against a scale block that says `human_display: "1-5"`. The 6th level **fires**: display **6** appears 3 times, mean mass on the 6th bin **3.4%**, and the composite divides defensibility by **6**. **Every §10.6 defensibility comparison has therefore pitted a 1–6 score against a 1–5 grade.** Normalising the scales moves the disputes from **6.7%** → **1.7% (percentile-matched)** / **4.2% (round-to-nearest)** — both **under the bar**, against PS 0.8% / MA 7.5% / DR 4.2% — so **on a like-for-like footing defensibility is no longer the worst dimension.** *(It was investigated as a rubric-CONTENT problem because the raw number was above the bar. It is at least partly a SCALE problem — same class as the §5.4 rounding gap.)* **Options: A** collapse defensibility to 5 levels (uniform display; invalidates every prior run) · **B** keep 6 levels and **label the scale in the report** · **C** keep 6 internally but normalise to 1–5 for display and for all human comparison. **Recommended: C** — it fixes the comparison without discarding the deliberate 0.5.0 split |
 | **D37** | **Adopt the commonly-accepted moat definition for `defensibility`?** (§10.6) | **CLOSED — YES, structure only. Implemented in rubric v1.10.0.** Sean: *"D37, moat rewrite based on the structure."* **DEF now requires evidence of at least one named moat source** — efficient scale · capital requirements · intangible assets (patent, licence, proprietary process, **price-premium brand**) · switching costs · cost advantage · network effect — with the **primary/ancillary** distinction, and **"fame is not a moat"** as an explicit guard (a brand counts only where it **demonstrably produces pricing power**). **Validated: 3 repeat runs per case show the instrument is DETERMINISTIC (spread 0), so its scores are reproducible and any movement is attributable.** **⚠ It did NOT move the four disputed cases (Best Denki 2, Gain City 2, Gong Cha 3, Each-A-Cup 3) — because the cause is the corpus, not the rubric (D38).** **One honest limit retained: adopt the moat's STRUCTURE, NOT its PURPOSE** — Buffett's moat predicts returns on capital; §1's objective is quality of the current position relative to competitors. **Sean asked:** *"It should follow the definition of moat as per warren buffet or other commonly accepted definition?"* and he is right.** Researched against primary sources (Buffett/Morningstar five sources; Stigler/McAfee barriers to entry) rather than adopted on its say-so. **The frame CONFIRMS all three of his rulings** — Best Denki/Gain City = **efficient scale + capital requirements**; Gong Cha/Each-A-Cup = **no moat source at all**. **⚠ It corrects the REASON:** his Best Denki justification was *"because they all have mental advantage, there is some defensibility"*, and **mental advantage is not a moat source under any of the five** — feeding it into DEF is exactly the double-count that made DEF and MA agree too often. **He caught this himself.** Decisive quote, Morningstar verbatim: *"Just because a company boasts a well-known brand, or has been in business a long time, does not necessarily mean it has an economic moat."* **⚠ ONE HONEST LIMIT: adopt the moat's STRUCTURE (structural barriers not fame, primary vs ancillary distinguished), NOT its PURPOSE** — Buffett's moat predicts long-term returns on capital, while §1's objective is quality of current position relative to competitors. Importing the investor purpose wholesale would be the **seventh** imported framework in this document |
 | **D35-old** | *Original framing, superseded by the hand-read above* | **⚠ The one substantive issue the uncertainty audit exposed.** DEF disputes are **7.0% [3.6–13.1%]**, above the ≤5% bar, and **all 8 sit in five categories of large established brands**, splitting into two coherent directions: **big-box retail I undervalue** (Best Denki, Gain City — me 2 vs him 4: physical footprint and tenure a challenger would find expensive) and **global/F&B brands I overvalue** (Gong Cha, Burger King, IKEA, Scanteak, Toast Box, Each-A-Cup — me 3–4 vs him 1–2). §5.4 defines DEF as **the challenger's cost**; both directions are consistent with the instrument reading **brand recognition** where Sean reads **structural cost to a challenger**. **More sample would not fix this** — it would measure the same disagreement more precisely. **The fix is hand-reading these 8 against §5.4's definition and deciding per case whether the instrument or the definition is wrong** (half a day, not a corpus expansion). A second independent corpus has already flagged `defensibility` twice (C6 Bonefirm), which argues this is systematic |
 | **D21** | **No score gates** (§5.4) — keep, or remove as calibration measured | **ACCEPTED — removed.** The `defensibility ≥ 2` gate produced 8 false refusals out of 10 firings on live, large businesses. Low scores are findings, not refusals. Only assessability and input-quality refusals remain |

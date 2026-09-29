@@ -1,6 +1,6 @@
 {
- "version": "1.18.1",
- "sha256": "b6b890a3c2d3597b63b657e711389da4c396026dc21e91f7dea85d3f37cb63d6",
- "promoted_at": "2026-09-29T19:50:11+08:00",
+ "version": "1.19.0",
+ "sha256": "bc3613e0439234d8b6cc32da383185661152030db68ef6b65cc5f420589c2d8c",
+ "promoted_at": "2026-09-29T21:17:49+08:00",
  "promoted_from": "rubric-v1.18.1-candidate.json"
 }

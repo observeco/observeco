@@ -21,7 +21,11 @@ W = V["_meta"]["weights"]
 BANDS = V["_meta"]["bands"]
 ORDER = [b[0] for b in BANDS]
 COUNTS = {d: len(V["questions"][d]["levels"]) for d in W}
-ABBR = {"relative_strength": "RS", "mental_advantage": "MA", "defensibility": "DEF",
+# 1.19.0 rename (D54): live key is position_strength; frozen runs keep the legacy key.
+LEGACY_DIM_ALIAS = {"position_strength": "relative_strength"}
+CSV_COL = {"position_strength": "RS", "relative_strength": "RS"}  # recorded history; do not rename
+ABBR = {"position_strength": "PS", "relative_strength": "PS",
+        "mental_advantage": "MA", "defensibility": "DEF",
         "competitive_room": "CR", "market_headroom": "MH", "demand_reach": "DR"}
 
 idx = json.loads((HERE / "inputs-v4" / "_index.json").read_text())
@@ -69,7 +73,9 @@ for cid, e in idx["companies"].items():
     if mine is None:
         continue
     r = by.get(e["name"]) or {}
-    his_dims = {d: num(r.get("YOUR_" + ABBR[d])) for d in W}
+    # CSV_COL, not ABBR: the recorded human-grade columns keep their original names (YOUR_RS)
+    # and must not follow a dimension rename. Same bug as measure_alignment.py had.
+    his_dims = {d: num(r.get("YOUR_" + CSV_COL.get(d, ABBR[d]))) for d in W}
     # CR is CLOSED and ADOPTED: his number is the answer, so use it on both sides.
     if his_dims.get("competitive_room") is not None:
         mine_dims = run.get("dimensions_display_1to5") or {}

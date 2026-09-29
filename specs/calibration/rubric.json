@@ -1,7 +1,7 @@
 {
  "_meta": {
   "name": "obs-095 business viability rubric",
-  "version": "1.18.1",
+  "version": "1.19.0",
   "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) — otherwise calibration validates a scorer that is not the one shipped.",
   "model": "jev-latest",
   "scale": {
@@ -13,12 +13,12 @@
   },
   "direction_warning": "Every dimension is named so that HIGHER IS MORE FAVOURABLE. 'Competitive pressure' was renamed 'Competitive room' because the original name invites an inverted score — a scorer reading 'pressure' as high-when-bad would invert one dimension against the other four and the composite would be meaningless.",
   "weights": {
-   "relative_strength": 25,
    "mental_advantage": 20,
    "defensibility": 20,
    "competitive_room": 15,
    "market_headroom": 10,
-   "demand_reach": 10
+   "demand_reach": 10,
+   "position_strength": 25
   },
   "gates": {
    "_note": "0.9.0: NO SCORE GATES. They did the wrong job. `defensibility` floor 2 fired on 10 of 75 cases and 8 of those were LIVE, LARGE businesses -- KFC, Burger King, Zoff, Harvey Norman, Spectacle Hut, Pure Fitness, Virgin Active, R&B Tea. The model is not wrong about them: a generic fried-chicken chain genuinely has no moat. The defect is that the gate turned 'this business has no moat' into 'we cannot assess this business'. Those are different statements. A no-moat business is eminently assessable, and refusing it throws away exactly the negative signal the report exists to deliver. Measured: the gate does NOT separate dead from alive (defensibility=1 covers 2 dead and 8 alive), it separates 'has a moat' from 'has no moat'. This also contradicted the gate principle already established here -- gates should say 'cannot assess', not 'is this business bad'. Removing them eliminates 8 false refusals, makes the previously-unreachable 'Fragile' band reachable (5 cases, correctly the closed and position-less ones), and leaves ONE gate doing ONE job. A no-moat business now scores LOW instead of refusing. See FINDING-score-gates-wrong-job.md.",
@@ -104,6 +104,12 @@
     "change": "relative_strength: basis restricted to the SUPPLIED competitive set; no outside category knowledge; unproven flanks capped at 3",
     "reason": "Sean: 'RS needs to do online research on competitors, just like the saladshop project or caica project. just wanted to make sure the rubric factored this in?' The rubric CONSUMES the derived competitive set but the set contains only names, tiers and a price-floor label -- spec 4.6's scan (which captures rivals' POSITIONING, size and pricing) is spec'd and directed by D25 but NOT BUILT. So RS was inferring whether a named occupant 'owns' a claim from the model's own category memory. MEASURED: the model's self-reported coverage does NOT detect this -- C4 SGFitness scored RS 4 with coverage 0.83 (high confidence, wrong answer), and C1 GreenPackers scored RS 4 with coverage 0.72. Confidence fires when the model feels uncertain, not when the basis is absent, so a confidence threshold cannot substitute for the missing evidence. This amendment makes the rubric honest about what it has today and stops the model substituting memory for evidence. The scan remains the real fix (option C, part 2).",
     "evidence": "runs-v1180a; canary/runs/jev-C4-sgfitness.json coverage 0.83"
+   },
+   {
+    "version": "1.19.0",
+    "change": "relative_strength RENAMED to position_strength (dimension key, weight key)",
+    "reason": "Sean: 'can we change it to position strength PS instead of RS?' The construct was rebuilt in 1.18.0 as POSITION STRENGTH independent of recognition; the old name kept implying the superseded reading and the abbreviation RS collided with the spec's own vocabulary. Renamed and promoted through the gate. Frozen historical runs and the frozen canary baseline keep the OLD key and are NOT rewritten -- every live consumer tolerates both, so the history stays valid.",
+    "evidence": "D54"
    }
   ],
   "_superseded": {
@@ -280,7 +286,7 @@
    ],
    "_amended": "2026-09-27 (Sean D1): anchor changed from 'what a business of its size would be expected to own' (an undefined benchmark) to 'the ADDRESSABLE SEGMENT'. His construct."
   },
-  "relative_strength": {
+  "position_strength": {
    "type": "score",
    "instructions": "Judge ONLY relative_strength: how strong is this business's POSITION compared with the positions its competitors hold? DO NOT score how well known the business is. That is mental_advantage, scored separately, and the two numbers must NOT be the same. A business that is new, unknown, or not yet reaching customers can still hold a STRONG position; an established, famous business can hold a WEAK one. Judge the position, never the fame, and never the size. Ask: what does this business claim? Is that claim already owned by a named occupant of the derived competitive set? If buyers encountered it, would they have a reason to prefer it there? A position is STRONG when it is distinct from what the named occupants hold AND buyers would prefer it for something specific -- a genuine flank. It is WEAK when the claim is generic, already owned, or matched by everyone in the category. Judge per situation, never as one share fight across the whole named set: positioning is about product categories, not industries, so businesses serving different situations are not head-on rivals even when they share an industry. A specialist taking a distinct flank in a narrow situation is strong there even if small overall. The form's `undercut_on` field is the business declaring its own weakness -- treat it as context, not as the verdict; candid honesty is not evidence of a weak position. Do NOT score how hard the position is to COPY -- that is defensibility, scored separately. SCORE ONLY AGAINST THE SUPPLIED COMPETITIVE SET, using what is STATED about each occupant. Do NOT import outside knowledge of the category to decide what a named occupant holds -- if the supplied set names no occupant for the situation, the strongest claim available is ADEQUATE (3), never Strong or Dominant, because a flank is only proven against a named rival. Where the set names occupants but says nothing about what they claim, the reading is PROVISIONAL and the report must say so.",
    "levels": [
@@ -293,7 +299,7 @@
    "_added": "2026-09-27 (Sean): the axis the objective always required -- 'positioning and differentiation RELATIVE TO COMPETITION' -- and the instrument never had. Anchored on the derived competitive set, not on size expectation."
   }
  },
- "version": "1.18.1",
+ "version": "1.19.0",
  "_changelog": [
   "1.9.0 (2026-09-28) D35: defensibility gains category-structure input + familiarity guard; Best Denki / Gain City recognition fix. Rubric 1.8.0 preserved as rubric-v1.8.0.json.bak for re-run comparison.",
   {
