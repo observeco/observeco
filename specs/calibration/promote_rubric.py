@@ -4,7 +4,7 @@ Why this is a script and not a copy command
 -------------------------------------------
 Spec 5.3 says: "The Python calibration harness and the production scorer must read the same
 rubric JSON. This is the most likely way to fool ourselves." It happened: the file a scorer
-would load (rubric.json) sat at 0.9.0 with no relative_strength, while calibration validated
+would load (rubric.json) sat at 0.9.0 with no position_strength, while calibration validated
 1.8.0 in a differently-named file. Nothing was serving the instrument that was validated.
 
 This script is the gate. It refuses to promote unless every condition holds, and it fails
@@ -19,7 +19,7 @@ HERE = Path(__file__).resolve().parent
 LIVE = HERE / "rubric.json"
 
 # 1.19.0: position_strength is the current name for the dimension formerly called
-# relative_strength. The gate must accept a file carrying EITHER -- every frozen historical
+# position_strength. The gate must accept a file carrying EITHER -- every frozen historical
 # rubric uses the old name.
 SIX = ["position_strength", "mental_advantage", "defensibility",
        "competitive_room", "market_headroom", "demand_reach"]
@@ -68,7 +68,7 @@ def main(src_name, allow_rollback=False):
     if sum(w.values()) != 100:
         problems.append("weights sum to %s, not 100" % sum(w.values()))
 
-    # 4. the relative_strength axis must exist -- its absence is what marked the old live file
+    # 4. the position_strength axis must exist -- its absence is what marked the old live file
     if not _has("position_strength", w):
         problems.append("position_strength has no weight (the 0.9.0 defect, under its old name "
                         "relative_strength)")

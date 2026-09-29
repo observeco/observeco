@@ -6,7 +6,7 @@ represent half the composite.
 
 WHY IT WAS REWRITTEN (three defects in the previous version, all found by inspecting it)
   1. STALE DIMENSION KEY. It keyed the 25%-weight dimension `position_availability`,
-     a name the rubric stopped emitting when it became `relative_strength` and then
+     a name the rubric stopped emitting when it became `position_strength` and then
      `position_strength`. The artifact carries `position_strength`, so `c[k]` raised
      KeyError and the script CRASHED.
   2. WRONG WEIGHTS. Its hardcoded WEIGHT table disagreed with the rubric's own
@@ -27,7 +27,7 @@ THE RULES THIS VERSION FOLLOWS
     model (spec 5.5). Identical submissions must produce byte-identical reports.
   - THE ONE THING is an argmin over weighted contribution, tie-broken by confidence,
     then by dimension order (spec 5.5). Unscored dimensions cannot be the gate.
-  - Artifacts that still say `position_availability` or `relative_strength` are ACCEPTED
+  - Artifacts that still say `position_availability` or `position_strength` are ACCEPTED
     via alias, so frozen runs stay readable.
   - An artifact missing a dimension it claims to have is REFUSED, not rendered short.
 

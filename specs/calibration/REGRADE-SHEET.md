@@ -4,7 +4,7 @@
 
 ## What changed since you last graded
 
-**1. A sixth dimension was added — `relative_strength` (25%).** Your feedback: the
+**1. A sixth dimension was added — `position_strength` (25%).** Your feedback: the
 instrument had no measure of a business's strength *relative to its actual
 competitors*. Every old dimension was anchored to size, a hypothetical copycat, the
 market, or the business's own buyers — never to the named rivals. It is here now,
@@ -40,14 +40,14 @@ pairs identically, so the redundancy was mine, not yours.
 
 | Dim | Wt | 'Strong…' compared with WHAT? |
 |---|---|---|
-| **RS** relative_strength | 25% | **the named occupants of the derived competitive set** |
+| **RS** position_strength | 25% | **the named occupants of the derived competitive set** |
 | **MA** mental_advantage | 20% | **retrieval among the buyers you can actually serve** |
 | **DEF** defensibility | 20% | **a well-resourced copycat arriving tomorrow** (1–6) |
 | **CR** competitive_room | 15% | **the shape of the market** — not the business |
 | **MH** market_headroom | 10% | **whether buyers go unserved** — not the business |
 | **DR** demand_reach | 10% | **whether you have identified your buyer and a route to them** |
 
-### RELATIVE_STRENGTH — relative_strength
+### RELATIVE_STRENGTH — position_strength
 
 > Judge ONLY relative strength: how strong is this business's CURRENT POSITION against the competitors in its DERIVED COMPETITIVE SET? The yardstick is the NAMED occupants of that set -- not the market in general, not a hypothetical rival, and not a business of the same size. First establish the buying situations in the category and the derived competitive set. Then, for each, ask where this business ACTUALLY STANDS against those specific occupants: share of the occasions, footprint (outlets, coverage, catchment), price position, and any documented buyer preference. Judge the OBSERVED standing on published or stated evidence -- never the business's own claim about itself, and never size alone, since a large occupant can still be losing position to a smaller one. 3 = parity with the median occupant of the set. Above 3 = it holds more than the median occupant. Below 3 = it holds less.
 

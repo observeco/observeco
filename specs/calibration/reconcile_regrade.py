@@ -6,7 +6,7 @@ Four things:
      If yes, that is INDEPENDENT agreement on when the dimension does not apply -- the
      strongest validation of the A3 elasticity gate available.
   2. Every dimension's >=2-apart cases, with his and my numbers.
-  3. relative_strength's disagreements specifically (the new dimension).
+  3. position_strength's disagreements specifically (the new dimension).
   4. The 11 rows where his own SCORE contradicts his own dimension entries.
 """
 import csv

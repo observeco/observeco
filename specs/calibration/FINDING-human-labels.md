@@ -100,7 +100,7 @@ Sean's decisions (D1–D3) plus the new dimension resolve the conflict cleanly:
   addressable market is its estate) but removes the undocumented "expected of a business its
   size" benchmark that I flagged as a defect. It is now anchored on a *definable* denominator.
 
-- **`relative_strength` — NEW.** *"Quality of the current position relative to competitors."*
+- **`position_strength` — NEW.** *"Quality of the current position relative to competitors."*
   The yardstick is the **named occupants of the derived competitive set**. This is the axis
   the objective always required and the instrument never had.
 
@@ -109,10 +109,10 @@ Sean's decisions (D1–D3) plus the new dimension resolve the conflict cleanly:
 | | answers | reads |
 |---|---|---|
 | `mental_advantage` | do you over-index **for your size**? | the *opportunity* — the position you could take |
-| `relative_strength` | how strong is your **actual standing** vs the set? | the *fact* — where you really are |
+| `position_strength` | how strong is your **actual standing** vs the set? | the *fact* — where you really are |
 
 **Testable prediction:** his MA grades, being an absolute reading of standing, should
-correlate better with the new `relative_strength` than with the amended size-relative
+correlate better with the new `position_strength` than with the amended size-relative
 `mental_advantage`. If that holds on the regrade, it confirms the two scales are genuinely
 distinct and that the new dimension has absorbed his construct rather than duplicating it.
 

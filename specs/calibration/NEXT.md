@@ -15,7 +15,7 @@ scorer must read the same file or calibration validates something that never shi
 second implementation does not exist.**
 
 **2. THE RUBRIC A SCORER WOULD LOAD IS STILL 0.9.0.** `specs/calibration/rubric.json` is the
-five-dimension 0.9.0 file. **`relative_strength` is absent from it.** So none of the v1.1–v1.8
+five-dimension 0.9.0 file. **`position_strength` is absent from it.** So none of the v1.1–v1.8
 work is deployed anywhere: the dimensions are calibrated in files that nothing serves from.
 
 **3. THE SPEC'S OWN CANARY CORPUS IS 5 OF 6 MISSING.** §10.1 names six real engagements

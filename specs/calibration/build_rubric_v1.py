@@ -4,7 +4,7 @@ Sean's decisions (D1-D3 + new dimension):
   D1  mental_advantage AMENDED to his construct: size-anchored on the ADDRESSABLE SEGMENT.
   D2  demand_reach UNCHANGED (his explicit preference for my definition).
   D3  competitive_room + market_headroom stay in the score.
-  NEW relative_strength: quality of the current position relative to competitors.
+  NEW position_strength: quality of the current position relative to competitors.
 
 Written as a NEW file so 0.9.0 survives as the baseline for comparison after his regrade.
 """
@@ -43,7 +43,7 @@ MA_LEVELS = [
     "more valuable occasions, and rivals are not close on those occasions.",
 ]
 
-# ------------------------------------------------- NEW: relative_strength
+# ------------------------------------------------- NEW: position_strength
 RS_INSTR = (
     "Judge ONLY relative strength: how strong is this business's CURRENT POSITION against "
     "the competitors in its DERIVED COMPETITIVE SET? The yardstick is the NAMED occupants of "

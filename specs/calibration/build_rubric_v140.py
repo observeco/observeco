@@ -1,4 +1,4 @@
-"""Build rubric v1.4.0 — fix relative_strength (25% weight, the largest dispute cluster).
+"""Build rubric v1.4.0 — fix position_strength (25% weight, the largest dispute cluster).
 
 THE DEFECT, visible in the output rather than inferred:
 

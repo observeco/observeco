@@ -25,7 +25,7 @@ the current 1,095-line draft (v5).
 **Problem.** This is **0.9.0**, and it is not what calibration produced. Three of the five
 weights have moved and two dimensions have changed meaning:
 
-- `position availability` (25%) **no longer exists** — it was replaced by `relative_strength`,
+- `position availability` (25%) **no longer exists** — it was replaced by `position_strength`,
   which measures the position *held against the derived competitive set* rather than whether a
   word is unclaimed.
 - `competitive pressure` **is now `competitive_room`** and its meaning **reversed**. 0.9.0
@@ -206,7 +206,7 @@ read the same rubric JSON... This is the most likely way to fool ourselves."*
 **Problem.** The spec predicted the failure and it has occurred. **There is no production
 scorer** — `jev` appears only inside `specs/calibration/`. All 120 calibration runs were made
 by the harness. And the file a scorer *would* load, `specs/calibration/rubric.json`, is still
-**0.9.0 — five dimensions, and `relative_strength` absent.** So calibration has validated an
+**0.9.0 — five dimensions, and `position_strength` absent.** So calibration has validated an
 instrument that nothing serves.
 
 **Add after §5.3:**
@@ -315,7 +315,7 @@ re-litigate settled questions — or worse, re-add the gates.
 > | Dimension | What it read | What it must read |
 > |---|---|---|
 > | `demand_reach` | whether the form *named* a channel | whether the business demonstrably reaches buyers — currently trading sets a floor of 3 |
-> | `relative_strength` | one share fight against every named competitor | the position held **per situation**, corroborated |
+> | `position_strength` | one share fight against every named competitor | the position held **per situation**, corroborated |
 > | `mental_advantage` | whether the *model* could articulate a retrieval occasion | whether the *segment* holds the brand in mind |
 > | `defensibility` | the differentiator the form **claims** | the accumulated barriers the business **holds** |
 >

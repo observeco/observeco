@@ -1,4 +1,4 @@
-"""Is the NEW relative_strength dimension doing independent work, or is it redundant?
+"""Is the NEW position_strength dimension doing independent work, or is it redundant?
 
 Two questions:
   Q1. Within HIS grades, are RS and MA the same number? If he graded them almost

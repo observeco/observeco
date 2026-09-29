@@ -58,11 +58,11 @@ DR    116   3.62    3.28    +0.34     69%     10%
 ```
 
 **Exact agreement 66–80%.** Under the OLD definitions (his first grading) exact agreement
-was 41–71%. The re-anchoring of `mental_advantage` and the addition of `relative_strength`
+was 41–71%. The re-anchoring of `mental_advantage` and the addition of `position_strength`
 both improved it: MA exact 41% → 66%, and RS — the brand-new dimension — reaches **75%
 exact, 4% ≥2 apart**, the second-best agreement of any dimension.
 
-## relative_strength is NOT redundant with mental_advantage
+## position_strength is NOT redundant with mental_advantage
 
 The risk with the new dimension was that it double-counted MA. Tested two ways:
 

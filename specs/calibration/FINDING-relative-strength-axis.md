@@ -93,17 +93,17 @@ in its segment? That requires the composite to be a **comparison**, not an absol
 
 ### The two constructs the redesign needs
 
-**A. relative_strength — NEW, and the axis that is missing.**
+**A. position_strength — NEW, and the axis that is missing.**
 For each buying situation in the **derived** competitive set: what does this business hold
 against the named occupants, and is the gap widening or closing? Anchored on published
 facts — outlet counts, share, awards, price points. 3 = parity with the set median, 5 =
 dominant, 1 = absent. This is the first dimension that can produce *"you sit 4th of 6 in
 your category"*.
 
-**B. The GAP between relative_strength and mental_advantage is the product's core message.**
+**B. The GAP between position_strength and mental_advantage is the product's core message.**
 This is why MA should NOT simply be re-anchored to the set:
 
-- `relative_strength` = where you actually stand vs the set (honest; low for small
+- `position_strength` = where you actually stand vs the set (honest; low for small
   businesses — and this is the gap the report names)
 - `mental_advantage` (size-relative, unchanged) = whether you outperform what your size
   predicts (actionable; the ceiling you could grow into)
@@ -120,7 +120,7 @@ share is measured, not argued: it describes the **landscape**, not the occupant.
 
 - **C1 — demote to a landscape modifier.** Keep the judgment, remove it from the composite;
   use it to set the scale of the verdict ("in a brutal landscape, a 60 is excellent"). Frees
-  20% for relative_strength without growing the instrument.
+  20% for position_strength without growing the instrument.
 - **C2 — keep it scored, relabel honestly** as `competition_intensity`, and accept that it
   contributes only a per-category constant.
 - **C3 — leave it.** Cheapest; 20% of weight stays decorative for ranking.
@@ -141,7 +141,7 @@ PREDICTIVE claim, and this instrument has already failed one test of that kind.*
 
 We measured that it does **not** separate a live business from a dead one on positioning
 grounds: **Harvey Norman (live major retailer) 32 vs a closed bubble-tea outlet 31** — a
-1-point gap. Adding relative_strength makes the *state* description sharper. It does **not**
+1-point gap. Adding position_strength makes the *state* description sharper. It does **not**
 by itself establish that a high score predicts penetration *success*, which is a forward-
 looking outcome claim needing outcome labels we do not have.
 

@@ -83,7 +83,7 @@ All above +/-2 dispute cases, so all real:
 | dimension | what it read | what it should read |
 |---|---|---|
 | `demand_reach` | whether the FORM named a channel | whether the business demonstrably reaches buyers |
-| `relative_strength` | one share fight vs the whole named set + the form's own `undercut_on` confession | the position held per situation, corroborated |
+| `position_strength` | one share fight vs the whole named set + the form's own `undercut_on` confession | the position held per situation, corroborated |
 | `mental_advantage` | whether the MODEL could articulate a retrieval occasion | whether the SEGMENT retrieves it |
 | `defensibility` | the differentiator the form CLAIMS | the accumulated barriers the business HOLDS |
 

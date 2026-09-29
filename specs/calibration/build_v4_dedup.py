@@ -5,7 +5,7 @@ Sean's decisions:
   D2  demand_reach UNCHANGED (my definition -- it measures how well a business has
       described itself and identified its customer group).
   D3  competitive_room + market_headroom stay in the score.
-  NEW relative_strength -- quality of the current position relative to competitors.
+  NEW position_strength -- quality of the current position relative to competitors.
   D4  rebuild the corpus, dedupe, add the dimension, let him regrade.
 
 Dedup rule: one canonical entry per BUSINESS. Where duplicates exist across sets, keep the

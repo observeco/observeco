@@ -7,7 +7,7 @@ So each row carries, in this order:
   1. the context he needs to judge
   2. the NEW v1.0.0 scores (the definitions he is now grading against)
   3. his OLD grades (to overwrite) and my OLD 0.9.0 scores (for reference)
-  4. blank YOUR_ columns, six of them now including relative_strength
+  4. blank YOUR_ columns, six of them now including position_strength
 
 The 0.9.0 comparison and his old grades are REFERENCE ONLY and are visually separated
 from the live columns so he does not grade against a stale anchor.

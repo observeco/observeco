@@ -554,7 +554,7 @@ silently omits 45% of the composite is worse than no report at all.**
 **Rewritten so weights come from the artifact, no dimension can be dropped silently, an unscored dimension
 shows an actionable sentence rather than "N/A", THE ONE THING is the §5.5 argmin with the confidence
 tie-break the old code lacked, and an artifact missing a dimension is REFUSED, not rendered short.**
-*Verified by running it: six dimensions render, two runs are byte-identical, frozen `relative_strength`
+*Verified by running it: six dimensions render, two runs are byte-identical, frozen `position_strength`
 artifacts render via alias, and stripped-dimension input is refused.*
 *(3) **✅ §10.10 ITEM 3 NARROWED — the §3.11 pre-flight gate is now BUILT AND WIRED.** *It fires in
 `run_jev.py` **before `call_jev`**, so the token spend is now genuinely gated — previously the function

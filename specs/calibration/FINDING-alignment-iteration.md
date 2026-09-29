@@ -35,7 +35,7 @@ Every fix that worked was the SAME fix. The instrument reads the **submission**,
 | dimension | what it was reading | what it should read |
 |---|---|---|
 | `demand_reach` | whether the FORM named a channel | whether the business demonstrably reaches buyers (trading = floor 3) |
-| `relative_strength` | one share fight vs the whole named set + the form's own `undercut_on` confession | the position held **per situation**, corroborated |
+| `position_strength` | one share fight vs the whole named set + the form's own `undercut_on` confession | the position held **per situation**, corroborated |
 | `defensibility` (next) | the differentiator the form CLAIMS | the accumulated barriers the business **actually holds** |
 
 **Two mechanical causes, both in the same class:**
@@ -50,7 +50,7 @@ never evidence about the business. Corroborate against physical facts, then scor
 
 ## What each fix was worth, per dimension
 
-**`relative_strength` (25% weight) — the biggest win.**
+**`position_strength` (25% weight) — the biggest win.**
 - Sephora 2 → 4 (Sean 5): 7% share, but it OWNS the premium destination — the international
   brands list there first. My ladder anchored on "the median occupant of the set", so a
   specialist dominating a distinct situation was scored as losing a head-on fight it never

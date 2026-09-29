@@ -2,7 +2,7 @@
 
 1. Re-derive band edges from the level-mean convention under the NEW weights.
 2. Verify the McDonald's/Jollibee inversion is fixed.
-3. Check relative_strength separates rivals within a landscape (the whole point).
+3. Check position_strength separates rivals within a landscape (the whole point).
 4. Check the other known labels still hold.
 """
 import glob

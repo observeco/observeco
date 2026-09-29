@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-# 1.19.0 RENAME: relative_strength -> position_strength (D54).
+# 1.19.0 RENAME: position_strength -> position_strength (D54).
 # BLAST RADIUS: frozen historical runs (runs-v*/) and the frozen canary baseline record the OLD key.
 # They are the RECORD and are never rewritten, so every live consumer reads BOTH keys, new first.
 DIMS = ["position_strength", "mental_advantage", "defensibility",

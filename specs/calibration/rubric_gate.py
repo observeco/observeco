@@ -33,7 +33,7 @@ import tempfile
 from pathlib import Path
 
 LIVE_NAME = "rubric.json"
-# 1.19.0 (D54): the dimension formerly relative_strength is now position_strength. This module
+# 1.19.0 (D54): the dimension formerly position_strength is now position_strength. This module
 # reads only version/hash and does not touch dimension keys, so no alias handling is needed here --
 # noted so a future reader does not assume the rename was missed.
 SIDECAR_NAME = "rubric.promoted.json"
