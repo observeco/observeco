@@ -1,22 +1,22 @@
 {
   "case": "HN03-crybaby",
   "model_id": "jev-1.13.0",
-  "rubric_version": "1.19.0",
-  "generated_at": "2026-09-29T14:02:56+00:00",
+  "rubric_version": "1.20.0",
+  "generated_at": "2026-09-29T14:21:27+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
     "assessability_probabilities": {
-      "no_competitive_market": 0.0,
-      "competitive_market": 1.0
+      "competitive_market": 1.0,
+      "no_competitive_market": 0.0
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.95,
+    "confidence": 0.96,
     "probabilities": {
-      "inelastic": 0.01,
+      "ambiguous": 0.02,
       "elastic": 0.97,
-      "ambiguous": 0.02
+      "inelastic": 0.01
     },
     "rule_version": "A3"
   },
@@ -31,7 +31,7 @@
       "Contested"
     ],
     "reliable": true,
-    "distance_to_boundary": 10,
+    "distance_to_boundary": 4,
     "noise_used": 3.0
   },
   "dimensions_display_1to5": {
@@ -40,7 +40,7 @@
     "competitive_room": 4,
     "market_headroom": 3,
     "demand_reach": 3,
-    "position_strength": 2
+    "position_strength": 3
   },
   "dimensions_unscored": [
     "market_headroom"
@@ -51,37 +51,37 @@
     "competitive_room": 4,
     "market_headroom": "Demand in your market is served and contested.",
     "demand_reach": 3,
-    "position_strength": 2
+    "position_strength": 3
   },
   "raw_jev_scores_0to4": {
-    "mental_advantage": 1.05,
+    "mental_advantage": 1.03,
     "defensibility": 0.53,
-    "competitive_room": 3.47,
-    "market_headroom": 1.9,
-    "demand_reach": 2.03,
-    "position_strength": 1.46
+    "competitive_room": 3.43,
+    "market_headroom": 1.89,
+    "demand_reach": 1.84,
+    "position_strength": 1.52
   },
   "evidence_coverage": {
     "mental_advantage": 0.53,
     "defensibility": 0.65,
-    "competitive_room": 0.56,
-    "market_headroom": 0.91,
-    "demand_reach": 0.68,
-    "position_strength": 0.48
+    "competitive_room": 0.53,
+    "market_headroom": 0.9,
+    "demand_reach": 0.55,
+    "position_strength": 0.53
   },
   "confidence": {
     "mental_advantage": 0.53,
     "defensibility": 0.65,
-    "competitive_room": 0.56,
-    "market_headroom": 0.91,
-    "demand_reach": 0.68,
-    "position_strength": 0.48
+    "competitive_room": 0.53,
+    "market_headroom": 0.9,
+    "demand_reach": 0.55,
+    "position_strength": 0.53
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "mental_advantage": {
-      "expected_jev_0to4": 1.05,
-      "expected_display_1to5": 2.05,
+      "expected_jev_0to4": 1.03,
+      "expected_display_1to5": 2.03,
       "band_80pct_display_1to5": [
         1,
         3
@@ -98,35 +98,35 @@
       "mass_covered": 0.97
     },
     "competitive_room": {
-      "expected_jev_0to4": 3.46,
-      "expected_display_1to5": 4.46,
+      "expected_jev_0to4": 3.42,
+      "expected_display_1to5": 4.42,
       "band_80pct_display_1to5": [
         4,
         5
       ],
-      "mass_covered": 0.86
+      "mass_covered": 0.84
     },
     "market_headroom": {
-      "expected_jev_0to4": 1.89,
-      "expected_display_1to5": 2.89,
+      "expected_jev_0to4": 1.88,
+      "expected_display_1to5": 2.88,
       "band_80pct_display_1to5": [
         3,
         3
       ],
-      "mass_covered": 0.89
+      "mass_covered": 0.88
     },
     "demand_reach": {
-      "expected_jev_0to4": 2.02,
-      "expected_display_1to5": 3.02,
+      "expected_jev_0to4": 1.84,
+      "expected_display_1to5": 2.84,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.82
+      "mass_covered": 0.8
     },
     "position_strength": {
-      "expected_jev_0to4": 1.46,
-      "expected_display_1to5": 2.46,
+      "expected_jev_0to4": 1.51,
+      "expected_display_1to5": 2.51,
       "band_80pct_display_1to5": [
         2,
         3
@@ -136,9 +136,9 @@
   },
   "probabilities": {
     "mental_advantage": {
-      "0": 0.25,
+      "0": 0.26,
       "1": 0.45,
-      "2": 0.3,
+      "2": 0.29,
       "3": 0.0,
       "4": 0.0
     },
@@ -153,28 +153,28 @@
     "competitive_room": {
       "0": 0.0,
       "1": 0.01,
-      "2": 0.13,
+      "2": 0.15,
       "3": 0.25,
-      "4": 0.61
+      "4": 0.59
     },
     "market_headroom": {
       "0": 0.0,
-      "1": 0.11,
-      "2": 0.89,
+      "1": 0.12,
+      "2": 0.88,
       "3": 0.0,
       "4": 0.0
     },
     "demand_reach": {
-      "0": 0.01,
-      "1": 0.17,
-      "2": 0.65,
-      "3": 0.13,
-      "4": 0.04
+      "0": 0.02,
+      "1": 0.31,
+      "2": 0.49,
+      "3": 0.17,
+      "4": 0.01
     },
     "position_strength": {
       "0": 0.08,
-      "1": 0.42,
-      "2": 0.46,
+      "1": 0.37,
+      "2": 0.51,
       "3": 0.04,
       "4": 0.0
     }
@@ -196,7 +196,7 @@
     "position_strength": 27.78
   },
   "gates_firing": [],
-  "composite": 47,
+  "composite": 53,
   "band": "Contested",
   "computed_by": "code, from jev judgments (spec 1)",
   "_caveat": "evidence_coverage measures how much competitor evidence was retrievable, NOT the probability the judgment is correct. No human-labelled calibration set exists, so no calibrated confidence interval can be reported.",

@@ -1,22 +1,22 @@
 {
   "case": "F1-boeing-airbus",
   "model_id": "jev-1.13.0",
-  "rubric_version": "1.19.0",
-  "generated_at": "2026-09-29T14:02:52+00:00",
+  "rubric_version": "1.20.0",
+  "generated_at": "2026-09-29T14:21:23+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 0.97,
     "assessability_probabilities": {
-      "no_competitive_market": 0.01,
-      "competitive_market": 0.99
+      "competitive_market": 0.99,
+      "no_competitive_market": 0.01
     },
     "refuses": false,
     "elasticity": "inelastic",
     "confidence": 1.0,
     "probabilities": {
-      "inelastic": 1.0,
+      "ambiguous": 0.0,
       "elastic": 0.0,
-      "ambiguous": 0.0
+      "inelastic": 1.0
     },
     "rule_version": "A3"
   },
@@ -52,28 +52,28 @@
     "position_strength": 2
   },
   "raw_jev_scores_0to4": {
-    "mental_advantage": 3.49,
-    "defensibility": 4.21,
+    "mental_advantage": 3.48,
+    "defensibility": 4.2,
     "competitive_room": 0.0,
-    "market_headroom": 3.07,
-    "demand_reach": 3.57,
-    "position_strength": 1.24
+    "market_headroom": 3.08,
+    "demand_reach": 3.59,
+    "position_strength": 1.26
   },
   "evidence_coverage": {
     "mental_advantage": 0.59,
-    "defensibility": 0.75,
+    "defensibility": 0.76,
     "competitive_room": 1.0,
     "market_headroom": 0.69,
-    "demand_reach": 0.64,
-    "position_strength": 0.77
+    "demand_reach": 0.65,
+    "position_strength": 0.76
   },
   "confidence": {
     "mental_advantage": 0.59,
-    "defensibility": 0.75,
+    "defensibility": 0.76,
     "competitive_room": 1.0,
     "market_headroom": 0.69,
-    "demand_reach": 0.64,
-    "position_strength": 0.77
+    "demand_reach": 0.65,
+    "position_strength": 0.76
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
@@ -87,13 +87,13 @@
       "mass_covered": 1.0
     },
     "defensibility": {
-      "expected_jev_0to4": 4.24,
-      "expected_display_1to5": 5.24,
+      "expected_jev_0to4": 4.18,
+      "expected_display_1to5": 5.18,
       "band_80pct_display_1to5": [
         5,
         6
       ],
-      "mass_covered": 0.96
+      "mass_covered": 0.95
     },
     "competitive_room": {
       "expected_jev_0to4": 0.0,
@@ -105,13 +105,13 @@
       "mass_covered": 1.0
     },
     "market_headroom": {
-      "expected_jev_0to4": 3.07,
-      "expected_display_1to5": 4.07,
+      "expected_jev_0to4": 3.09,
+      "expected_display_1to5": 4.09,
       "band_80pct_display_1to5": [
         4,
         5
       ],
-      "mass_covered": 0.85
+      "mass_covered": 0.86
     },
     "demand_reach": {
       "expected_jev_0to4": 3.59,
@@ -123,13 +123,13 @@
       "mass_covered": 0.99
     },
     "position_strength": {
-      "expected_jev_0to4": 1.23,
-      "expected_display_1to5": 2.23,
+      "expected_jev_0to4": 1.25,
+      "expected_display_1to5": 2.25,
       "band_80pct_display_1to5": [
-        2,
+        1,
         2
       ],
-      "mass_covered": 0.81
+      "mass_covered": 0.8
     }
   },
   "probabilities": {
@@ -145,8 +145,8 @@
       "1": 0.01,
       "2": 0.0,
       "3": 0.03,
-      "4": 0.66,
-      "5": 0.3
+      "4": 0.67,
+      "5": 0.28
     },
     "competitive_room": {
       "0": 1.0,
@@ -158,9 +158,9 @@
     "market_headroom": {
       "0": 0.0,
       "1": 0.0,
-      "2": 0.15,
+      "2": 0.14,
       "3": 0.63,
-      "4": 0.22
+      "4": 0.23
     },
     "demand_reach": {
       "0": 0.0,
@@ -171,9 +171,9 @@
     },
     "position_strength": {
       "0": 0.02,
-      "1": 0.81,
-      "2": 0.11,
-      "3": 0.04,
+      "1": 0.78,
+      "2": 0.15,
+      "3": 0.03,
       "4": 0.02
     }
   },

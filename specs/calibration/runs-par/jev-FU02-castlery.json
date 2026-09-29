@@ -1,8 +1,8 @@
 {
   "case": "FU02-castlery",
   "model_id": "jev-1.13.0",
-  "rubric_version": "1.19.0",
-  "generated_at": "2026-09-29T14:02:52+00:00",
+  "rubric_version": "1.20.0",
+  "generated_at": "2026-09-29T14:21:24+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
@@ -12,11 +12,11 @@
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.86,
+    "confidence": 0.85,
     "probabilities": {
-      "elastic": 0.91,
       "inelastic": 0.01,
-      "ambiguous": 0.08
+      "elastic": 0.9,
+      "ambiguous": 0.09
     },
     "rule_version": "A3"
   },
@@ -55,34 +55,34 @@
     "position_strength": "insufficient evidence to score"
   },
   "raw_jev_scores_0to4": {
-    "mental_advantage": 2.72,
-    "defensibility": 1.75,
-    "competitive_room": 1.7,
+    "mental_advantage": 2.7,
+    "defensibility": 1.77,
+    "competitive_room": 1.67,
     "market_headroom": 1.97,
     "demand_reach": 2.93,
-    "position_strength": 2.42
+    "position_strength": 2.45
   },
   "evidence_coverage": {
-    "mental_advantage": 0.76,
+    "mental_advantage": 0.74,
     "defensibility": 0.62,
-    "competitive_room": 0.7,
+    "competitive_room": 0.68,
     "market_headroom": 0.96,
-    "demand_reach": 0.73,
+    "demand_reach": 0.8,
     "position_strength": 0.0
   },
   "confidence": {
-    "mental_advantage": 0.76,
+    "mental_advantage": 0.74,
     "defensibility": 0.62,
-    "competitive_room": 0.7,
+    "competitive_room": 0.68,
     "market_headroom": 0.96,
-    "demand_reach": 0.73,
+    "demand_reach": 0.8,
     "position_strength": 0.0
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "mental_advantage": {
-      "expected_jev_0to4": 2.72,
-      "expected_display_1to5": 3.72,
+      "expected_jev_0to4": 2.7,
+      "expected_display_1to5": 3.7,
       "band_80pct_display_1to5": [
         3,
         4
@@ -90,8 +90,8 @@
       "mass_covered": 1.0
     },
     "defensibility": {
-      "expected_jev_0to4": 1.76,
-      "expected_display_1to5": 2.76,
+      "expected_jev_0to4": 1.78,
+      "expected_display_1to5": 2.78,
       "band_80pct_display_1to5": [
         2,
         3
@@ -99,8 +99,8 @@
       "mass_covered": 0.81
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.69,
-      "expected_display_1to5": 2.69,
+      "expected_jev_0to4": 1.66,
+      "expected_display_1to5": 2.66,
       "band_80pct_display_1to5": [
         2,
         3
@@ -120,41 +120,41 @@
       "expected_jev_0to4": 2.95,
       "expected_display_1to5": 3.95,
       "band_80pct_display_1to5": [
-        3,
+        4,
         4
       ],
-      "mass_covered": 0.82
+      "mass_covered": 0.8
     },
     "position_strength": {
-      "expected_jev_0to4": 2.41,
-      "expected_display_1to5": 3.41,
+      "expected_jev_0to4": 2.44,
+      "expected_display_1to5": 3.44,
       "band_80pct_display_1to5": [
         2,
         5
       ],
-      "mass_covered": 0.99
+      "mass_covered": 0.98
     }
   },
   "probabilities": {
     "mental_advantage": {
       "0": 0.0,
       "1": 0.0,
-      "2": 0.28,
-      "3": 0.72,
+      "2": 0.3,
+      "3": 0.7,
       "4": 0.0
     },
     "defensibility": {
-      "0": 0.04,
-      "1": 0.32,
-      "2": 0.49,
-      "3": 0.14,
+      "0": 0.03,
+      "1": 0.33,
+      "2": 0.48,
+      "3": 0.15,
       "4": 0.01,
       "5": 0.0
     },
     "competitive_room": {
       "0": 0.01,
-      "1": 0.32,
-      "2": 0.64,
+      "1": 0.35,
+      "2": 0.61,
       "3": 0.03,
       "4": 0.0
     },
@@ -167,17 +167,17 @@
     },
     "demand_reach": {
       "0": 0.0,
-      "1": 0.05,
+      "1": 0.03,
       "2": 0.08,
-      "3": 0.74,
-      "4": 0.13
+      "3": 0.8,
+      "4": 0.09
     },
     "position_strength": {
-      "0": 0.01,
-      "1": 0.43,
+      "0": 0.02,
+      "1": 0.41,
       "2": 0.09,
-      "3": 0.08,
-      "4": 0.39
+      "3": 0.07,
+      "4": 0.41
     }
   },
   "input_sufficiency": "sufficient",

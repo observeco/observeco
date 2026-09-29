@@ -1,8 +1,8 @@
 {
  "_meta": {
   "name": "obs-095 business viability rubric",
-  "version": "1.19.0",
-  "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) — otherwise calibration validates a scorer that is not the one shipped.",
+  "version": "1.20.0",
+  "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) \u2014 otherwise calibration validates a scorer that is not the one shipped.",
   "model": "jev-latest",
   "scale": {
    "type": "score",
@@ -11,7 +11,7 @@
    "conversion": "display = jev_score + 1",
    "warning": "The API returns an EXPECTED LEVEL, so a perfect score is 4.0, not 5.0. Off-by-one here silently shifts every dimension down one."
   },
-  "direction_warning": "Every dimension is named so that HIGHER IS MORE FAVOURABLE. 'Competitive pressure' was renamed 'Competitive room' because the original name invites an inverted score — a scorer reading 'pressure' as high-when-bad would invert one dimension against the other four and the composite would be meaningless.",
+  "direction_warning": "Every dimension is named so that HIGHER IS MORE FAVOURABLE. 'Competitive pressure' was renamed 'Competitive room' because the original name invites an inverted score \u2014 a scorer reading 'pressure' as high-when-bad would invert one dimension against the other four and the composite would be meaningless.",
   "weights": {
    "mental_advantage": 20,
    "defensibility": 20,
@@ -110,6 +110,11 @@
     "change": "relative_strength RENAMED to position_strength (dimension key, weight key)",
     "reason": "Sean: 'can we change it to position strength PS instead of RS?' The construct was rebuilt in 1.18.0 as POSITION STRENGTH independent of recognition; the old name kept implying the superseded reading and the abbreviation RS collided with the spec's own vocabulary. Renamed and promoted through the gate. Frozen historical runs and the frozen canary baseline keep the OLD key and are NOT rewritten -- every live consumer tolerates both, so the history stays valid.",
     "evidence": "D54"
+   },
+   {
+    "version": "1.20.0",
+    "change": "demand_reach: the LITMUS TEST made explicit and the emerging-business route added",
+    "reason": "Sean, 2026-09-29, verbatim: 'I think the litmus test is if it is clear the company is demonstratebly able to generate revenue sustainably, it has a DR with the question can you reach them. For newer companies that are emerging, they must at least have their customer profiles properly mapped out.' The scale previously leaned on 'a tightly defined, concentrated, paying segment' at 5 and put the emphasis on segment narrowness; his ruling moves the emphasis to SUSTAINED REVENUE as the proof, and asks only whether the business can reach them. It also adds the route a trading floor cannot cover: an emerging business whose customer profiles are properly mapped out IS reachable (3+), and one without a worked-out profile has a claim, not reach (2)."
    }
   ],
   "_superseded": {
@@ -257,13 +262,13 @@
   },
   "demand_reach": {
    "type": "score",
-   "instructions": "Judge ONLY demand reach: is there an identifiable, reachable group of buyers who would pay for this, and can this business find them? Higher means more reachable. A demographic such as an age band is NOT a reachable segment on its own. Do not consider whether the market is large. CORROBORATE AGAINST PHYSICAL EVIDENCE. Judge the BUSINESS, not the quality of the submission. A business that is CURRENTLY trading -- charging a stated price now, with live outlets, a current price list, or recent trade -- has demonstrably reached paying customers. A business that has CEASED trading (closed, dormant, or with no live price) does NOT get this floor: having reached buyers in the past is not reaching them now. Absence of detail in the submission is an INPUT-QUALITY problem, not evidence that no buyer exists, and such a business MUST NOT be scored 1 or 2. The question for a trading business is HOW WELL it reaches them: concentrated or scattered, deliberately or incidentally, directly or through costly intermediaries. The one case where trading does not establish reach is where the business cannot legally serve the buyers at all. A business that has ceased trading does not qualify for the trading floor: it has an identifiable buyer group but no longer reaches it, which is level 2, not level 1. Level 1 is reserved for a business with NO identifiable buyer, or one that cannot legally serve the buyers it names.",
+   "instructions": "Judge ONLY demand reach: is there an identifiable, reachable group of buyers who would pay for this, and can this business find them? Higher means more reachable. A demographic such as an age band is NOT a reachable segment on its own. Do not consider whether the market is large. CORROBORATE AGAINST PHYSICAL EVIDENCE. Judge the BUSINESS, not the quality of the submission. THE LITMUS TEST (Sean, 2026-09-29): if it is clear the company is DEMONSTRABLY ABLE TO GENERATE REVENUE SUSTAINABLY, it has reach -- the question is then simply CAN YOU REACH THEM. Sustained revenue is the proof that a buyer group exists, is findable, and pays. Judge that, not how narrow or upmarket the segment is. A business that is CURRENTLY trading -- charging a stated price now, with live outlets, a current price list, or recent trade -- has demonstrably reached paying customers. A business that has CEASED trading (closed, dormant, or with no live price) does NOT get this floor: having reached buyers in the past is not reaching them now. FOR AN EMERGING OR NEWLY-STARTED BUSINESS, the trading floor does not apply -- but it MUST have its CUSTOMER PROFILES PROPERLY MAPPED OUT: who exactly they are, where they are found, and why they would pay. A new business with a properly mapped buyer group is therefore reachable (3 or above). A new business with no worked-out customer profile has a claim, not reach, and scores 2. Absence of detail in the submission is an INPUT-QUALITY problem, not evidence that no buyer exists, and such a business MUST NOT be scored 1 or 2. The question for a trading business is HOW WELL it reaches them: concentrated or scattered, deliberately or incidentally, directly or through costly intermediaries. The one case where trading does not establish reach is where the business cannot legally serve the buyers at all. A business that has ceased trading does not qualify for the trading floor: it has an identifiable buyer group but no longer reaches it, which is level 2, not level 1. Level 1 is reserved for a business with NO identifiable buyer, or one that cannot legally serve the buyers it names.",
    "levels": [
     "No identifiable buyer. The customer is undefined, OR the business cannot legally serve the buyers it names (for example a use not permitted at that premises).",
-    "Weak. EITHER a buyer group is named only as a demographic or category with no evidence of current reach, OR the business has ceased or gone dormant so that it no longer reaches the buyers it once served. A ceased business belongs here, not at 1: its buyer group is identifiable, it simply cannot reach them. Any business CURRENTLY trading is at least 3.",
+    "Weak. EITHER a buyer group is named only as a demographic or category with no evidence of current reach and no worked-out customer profile (see the emerging-business rule), OR the business has ceased or gone dormant so that it no longer reaches the buyers it names.",
     "Moderate. A describable segment that the business demonstrably reaches, but the route is generic or incidental -- no deliberate, targeted channel is in evidence.",
-    "Good. A clearly identified segment, demonstrably reached, with at least one credible and deliberate channel.",
-    "Strong. A tightly defined, concentrated, paying segment that the business reaches directly and cheaply."
+    "Good. The business demonstrably generates revenue sustainably, so the buyer group exists and pays; it is clearly identified, and it is reached through at least one credible and deliberate channel.",
+    "Strong. A tightly defined, concentrated, paying segment whose revenue is demonstrably sustained, reached directly and cheaply through deliberate channels."
    ]
   },
   "input_sufficiency": {
@@ -299,7 +304,7 @@
    "_added": "2026-09-27 (Sean): the axis the objective always required -- 'positioning and differentiation RELATIVE TO COMPETITION' -- and the instrument never had. Anchored on the derived competitive set, not on size expectation."
   }
  },
- "version": "1.19.0",
+ "version": "1.20.0",
  "_changelog": [
   "1.9.0 (2026-09-28) D35: defensibility gains category-structure input + familiarity guard; Best Denki / Gain City recognition fix. Rubric 1.8.0 preserved as rubric-v1.8.0.json.bak for re-run comparison.",
   {
