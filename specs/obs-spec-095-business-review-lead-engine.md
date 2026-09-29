@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v22 — **D37 CLOSED (moat rewrite, rubric v1.10.0); D36 WITHDRAWN (my error); D38 opened — the corpus is 82% thin reconstructions.**
+**Status:** DRAFT v23 — **D38 answered by reasoning not form questions (rubric v1.11.1); noise floor larger than claimed.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,43 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v23 change — Sean rejected the form fix and was right; reasoning works; and my determinism claim was
+over-stated.**
+*(1) **Sean: *"It shouldn't be in the form. I much rather reasoning is used to make the judgement here
+and I know this is possible."* Correct, and the evidence supports him.** The derived competitive set
+**already names six big-box incumbents for Best Denki** (*Courts, Harvey Norman, Best Denki, Gain City,
+Challenger, Mega Discount Store*) with the diagnostic *"the same TV brands, on the same mall floor, at
+near-identical prices"*. **The state held the consolidation signal; the rubric was not asking for it.**
+So this is a **prompt defect, not a data defect** — fixable without touching the form, which matters
+because **adding form fields would ask the founder to do work the instrument can already do**, against
+§1's rule against asking the founder to do analyst work.
+*(2) **✅ THE REASONING PATHWAY WORKS — rubric v1.11.1**, after a first cut (v1.11.0) that was too blunt.
+**Best Denki and Gain City move 2 → 3–4 against Sean's 4 — a two-point move, beyond the noise floor —
+and the canary does not move, so the pathway discriminates rather than inflating everything.**
+**v1.11.0's failure:** *"must not default to the lowest levels"* **lifted 10 micro nail/facial
+businesses 1 → 2 that Sean scores 1**, and a blunt fame guard demoted genuine networks (KFC, Ya Kun,
+Toast Box, NTUC, Sheng Siong, Eu Yan Sang 4–5 → 3–4). **v1.11.1 separates the two questions — what the
+business DEMONSTRABLY OPERATES (a multi-outlet network is efficient scale and belongs at 4+, even for a
+famous brand) versus how EXPENSIVE ENTRY IS (trivially cheap ⇒ still 1, and fragmentation alone raises
+nobody).** **Net effect on the corpus: DEF disputes 3.3% → 2.5%, offset +0.03 → −0.07, within-one-level
+44.2% → 51.7%.** Note MA 8.3%→7.5%, CR 9.2%→8.4%, RS unchanged, MH and DR unchanged — **the
+defensibility change did not damage the other dimensions**, which is what the canary could not tell us.
+*(3) **⚠⚠ MY DETERMINISM CLAIM WAS OVER-STATED AND THE FULL-CORPUS RUNS CAUGHT IT.** v22 reported the
+instrument deterministic on three repeat runs (spread 0). **Across two full batches, `mental_advantage`
+changed in 7 of 120 cases and `competitive_room` in 2 — with instructions I never touched.** So **the
+instrument has roughly ±1-level batch variance at around a 5% rate**, and **any single-batch comparison
+of a 1-level difference is inside the noise floor.** *Consequence: the within-one-level improvement
+(44% → 52%) cannot be claimed, and neither can the chains' 1-point movements.* **Only the 2-point moves
+survive.** *Lesson: three rapid repeats measure within-session repeatability, not batch stability, and I
+generalised from them without testing the general claim.*
+*(4) **⚠ OPEN — three chains still sit one below Sean: KFC, Ya Kun, Toast Box at 3 against his 4.** Their
+moat is a large outlet network, which **is** efficient scale, but the **"fame is not a moat"** guard is
+reading their brand and discounting it. **The counter-argument is real: anyone can open a fried-chicken
+or kopitiam outlet, so entry is individually cheap, while the incumbents' networks took decades.** **The
+construct question — does a national F&B network count as efficient scale when category entry is cheap?
+— is Sean's to settle, and I am deliberately NOT tuning it further on single batches**, because the
+remaining differences are at the measured noise floor.
+
 **v22 change — D37 implemented; D36 withdrawn as MY error; D38 raised and it is the most important
 finding in this document.**
 *(1) **D37 CLOSED — the moat rewrite is in (rubric v1.10.0).** Sean: *"D37, moat rewrite based on the
@@ -281,10 +318,17 @@ known to the owner. **Best Denki is the proof: Sean scores 4 from knowing it hol
 national network; the form states only *"Japanese retail service standards"*; the instrument says 2 —
 correctly, on what it was given, and it still says 2 under v1.10.0.** **The instrument is not wrong;
 the input is thin.** *This is the same class of gap Sean already flagged — "You have blind gaps. You
-have to corroborate your answer against physical evidence."* **Fix is in the FORM, not the rubric:** the
-form must ASK for the structural facts; where it cannot supply them this is the same external-scan
-dependency as D25/D35; and the calibration claim must be restated so that "100% band agreement" is not
-read as validating real-submission performance.
+have to corroborate your answer against physical evidence."* **FIX IS IN THE RUBRIC, NOT THE FORM — Sean ruled: *"It shouldn't be in the form. I much rather
+reasoning is used to make the judgement here and I know this is possible."* He was right.** The derived
+competitive set **already names six big-box incumbents for Best Denki**, so the state holds the
+consolidation signal and the rubric simply was not asking for it — **a prompt defect, not a data one.**
+**rubric v1.11.1 adds a REASON-ABOUT-THE-CATEGORY pathway; Best Denki and Gain City move 2 → 3–4 (Sean
+4); canary does not move.** Two open items: **the three chains at 3-vs-4** (KFC, Ya Kun, Toast Box — a
+construct call, and the "fame is not a moat" guard discounts their networks); and **the noise floor,
+which is larger than v22 claimed** — `mental_advantage` moved 7/120 and `competitive_room` 2/120 across
+full batches with unchanged instructions, so **the instrument is NOT deterministic and ±1 differences
+are inside the noise.** The calibration claim must be restated so "100% band agreement" is not read as
+validating real-submission performance.
 
 **v21 change — two findings from Sean's moat question, one of them a measurement defect.**
 *(1) **⚠⚠ D36 — `defensibility` IS SCORED ON A 1–6 SCALE while every other dimension is 1–5.**
@@ -2721,14 +2765,64 @@ positioning sentence and most likely to be known to the owner.
 corroborate your answer against physical evidence."* **Best Denki, 24/7 Fitness and Zoff were the
 physical-evidence anchors then; Best Denki is the anchor again now, and for the same reason.**
 
-**THE FIX IS IN THE FORM, NOT THE RUBRIC. Three parts:**
-**(a) The form must ASK for the structural facts** — outlets or locations, years operating, premises
-owned vs leased, licences or approvals held, whether customers pay a premium for the brand. **A
-positioning sentence cannot carry them, and DEF cannot be scored without them.**
-**(b) This is the same external-scan dependency as D25 and D35** — if the form cannot supply the facts,
-someone must look them up, which is the token-burning scan D25 already gates.
-**(c) The calibration claim must be restated** to say it was measured on reconstructed forms with a
-known thinness bias, so nobody reads "100% band agreement" as validating real-submission performance.
+**⚠ MY PROPOSED FIX WAS THE LAZY ONE, AND SEAN REJECTED IT.** I proposed adding structural questions to
+the form. **Sean: *"It shouldn't be in the form. I much rather reasoning is used to make the judgement
+here and I know this is possible."*** **He is right, and the evidence says so.**
+
+**The instrument ALREADY HAS the category knowledge — it simply was not told to use it.** The derived
+competitive set for Best Denki **already names six big-box incumbents** (*Courts, Harvey Norman, Best
+Denki, Gain City, Challenger, Mega Discount Store*) with the diagnostic *"the same TV brands, on the
+same mall floor, at near-identical prices"*. **So the state contains the consolidation signal, and the
+rubric was not asking for it.** That is a **prompt defect, not a data defect** — and it is fixable in
+the rubric, without touching the form. **Adding form fields would have asked the founder to do work the
+instrument can already do, and §1's rule against asking the founder to do analyst work forbids it.**
+
+**✅ SEAN'S APPROACH WORKS — rubric v1.11.1 adds a REASON-ABOUT-THE-CATEGORY pathway.** Measured on the
+full 120-case corpus, the four disputed cases move toward his grades:
+
+| Business | v1.8.0 | **v1.11.1** | Sean |
+|---|---|---|---|
+| Best Denki | 2 | **3–4** | 4 |
+| Gain City | 2 | **3–4** | 4 |
+| Each-A-Cup | 4 | **3** | 2 |
+| Gong Cha | 3 | 3 | 1 |
+
+**Best Denki and Gain City close the whole gap from 2 to 3–4 — a two-point move, well outside noise.**
+The canary does **not** move (no band changed), so the pathway **discriminates rather than inflating
+everything** — which was the failure mode of my first attempt.
+
+**⚠ THE FIRST CUT WAS TOO BLUNT AND I HAD TO SHARPEN IT.** v1.11.0 told the model it *"must not default
+to the lowest levels"*, and it **lifted 10 micro nail and facial businesses from 1 to 2 that Sean scores
+1** — reading a fragmented, trivially-cheap-entry category as having efficient scale. **A blunt "fame is
+not a moat" guard also demoted genuine networks** (KFC, Ya Kun, Toast Box, NTUC, Sheng Siong, Eu Yan
+Sang, all 4–5 → 3–4). **v1.11.1 splits the question in two:** *(1) what does the business **demonstrably
+operate** — a multi-outlet network, fleet, factory or licence is a barrier and belongs at 4+ **even if
+the business is famous**; and (2) how **expensive is entry** — where it is trivially cheap the category
+is contestable and a small operator still belongs at 1.* **The micro categories returned to 1–2; the
+chains remain the open item below.**
+
+**⚠⚠ AND A CORRECTION I HAVE TO MAKE ABOUT MY OWN VALIDATION.** I reported in v22 that the instrument is
+**deterministic** — three repeat runs, spread 0. **That is OVER-CLAIMED, and the full-corpus runs caught
+it.** Comparing two full batches, **`mental_advantage` changed in 7 of 120 cases and
+`competitive_room` in 2 — and I did not touch either instruction.** So **the instrument is NOT
+deterministic across separate batches; it has roughly ±1-level variance at around a 5% rate.** The
+three rapid repeats happened to agree, and I drew a general conclusion from them. **Consequence: any
+single-batch comparison of a 1-level difference is inside the noise floor, and the defensibility
+improvements at the ±1 level (44% → 52% within one) cannot be claimed as real.** *Only the 2-point
+moves — Best Denki and Gain City from 2 to 3–4 — are large enough to survive it.*
+
+**⚠ THE REMAINING GAP, AND IT IS A CONSTRUCT CALL RATHER THAN A BUG.** Three chains still sit one below
+Sean: **KFC, Ya Kun, Toast Box all at 3 where he scores 4.** **Their moat is a large outlet network,
+which IS efficient scale — but the "fame is not a moat" guard is reading their brand and discounting
+it.** *Counter-argument, and it is real: anyone can open a fried chicken or kopitiam outlet, so the
+category's entry cost is genuinely low, while the incumbents' networks took decades.* **The line is:
+does a national F&B network count as efficient scale when entry to the category is individually cheap?
+That is Sean's construct to settle, not mine to tune** — and I am deliberately not tuning it further on
+single batches, because the differences being chased are at the noise floor.
+
+**(c) The calibration claim must still be restated** to say it was measured on analyst-reconstructed
+forms with a known thinness bias, so nobody reads "100% band agreement" as validating real-submission
+performance.
 
 **Superseded record of the withdrawn finding, kept because the reasoning error is instructive:**
 
