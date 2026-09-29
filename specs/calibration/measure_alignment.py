@@ -41,6 +41,7 @@ ABBR = {"position_strength": "PS", "relative_strength": "PS",
         "mental_advantage": "MA", "defensibility": "DEF",
         "competitive_room": "CR", "market_headroom": "MH", "demand_reach": "DR"}
 CLOSED = {"competitive_room"}
+GRADE_PREFIX = "YOUR_"   # overridden by --regrade; see below
 
 T_EXACT, T_DISP, T_OFF = 75.0, 5.0, 0.25
 
@@ -96,7 +97,10 @@ def stats(pairs):
     }
 
 
-def main(run_dir):
+def main(run_dir, prefix=None):
+    global GRADE_PREFIX
+    if prefix:
+        GRADE_PREFIX = prefix
     idx = json.loads((HERE / "inputs-v4" / "_index.json").read_text())
     rows = list(csv.DictReader(open(HERE / "sean-regrade-raw.csv")))
     by = {r["company"]: r for r in rows}
@@ -118,7 +122,7 @@ def main(run_dir):
             if cid in refused:
                 continue
             m = (mine.get(cid) or {}).get(d)
-            h = num((by.get(e["name"]) or {}).get("YOUR_" + CSV_COL.get(d, ABBR[d])))
+            h = num((by.get(e["name"]) or {}).get(GRADE_PREFIX + CSV_COL.get(d, ABBR[d])))
             if d in CLOSED and h is not None:
                 m = h                      # CR adopted: his number is the answer
             if m is not None and h is not None:
@@ -167,7 +171,7 @@ def main(run_dir):
             continue
         for cid, e in idx["companies"].items():
             m = (mine.get(cid) or {}).get(d)
-            h = num((by.get(e["name"]) or {}).get("YOUR_" + CSV_COL.get(d, ABBR[d])))
+            h = num((by.get(e["name"]) or {}).get(GRADE_PREFIX + CSV_COL.get(d, ABBR[d])))
             if m is None or h is None:
                 continue
             if abs(h - m) >= 2:
@@ -183,4 +187,12 @@ def main(run_dir):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "runs-v132")
+    # --regrade measures against his REGRADE (my_new_*) instead of the original
+    # YOUR_* labels. Opt-in on purpose: the default path must not change, because
+    # every figure recorded in the spec was measured with YOUR_*.
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    use_regrade = "--regrade" in sys.argv
+    run = args[0] if args else "runs-v132"
+    prefix = "my_new_" if use_regrade else "YOUR_"
+    print("  [grades: %s]" % ("REGRADE (my_new_*)" if use_regrade else "ORIGINAL (YOUR_*)"))
+    main(run, prefix)

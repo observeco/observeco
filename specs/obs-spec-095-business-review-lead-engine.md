@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v44 — **The report path and the pre-flight gate are BUILT and WIRED. §10.10 item 4 (production scorer) CLOSED; item 3 narrowed to the scanner alone. Found and fixed: a report generator that silently omitted 45% of the composite, and a §3.11 claim that was half untrue. Two items remain — both need grading time, not code.**
+**Status:** DRAFT v45 — **FOUND: the corpus regrade ALREADY EXISTS and no tool had ever read it. Measured against it, the instrument PASSES every target (exact 80.8%, disputes 1.5%, offset −0.07) — every recorded FAIL was the LABELS. ⚠ Real remaining defects now visible for the first time: DEF 69.9% exact (reads high) and DR 63.1% exact. One item left: the scanner.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -440,6 +440,40 @@ corpus must be regraded before any further tuning — tuning against it would be
 error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ Limits: n=20–21 is a SHAPE
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
+
+**v45 change — THE CORPUS REGRADE ALREADY EXISTED AND NOTHING HAD EVER READ IT. Every FAIL was the labels.**
+*(1) **Looking for what Sean should grade next, I checked the corpus instead of generating another sheet —
+and found `sean-regrade-raw.csv` already holds a complete 120-row regrade in its `my_new_*` columns.**
+***`measure_alignment.py` read only the original `YOUR_*` columns.*** **Eight other scripts reference
+`my_new_*`; the one that computes the headline figures never did.**
+*(2) **⚠ MEASURED AGAINST THE REGRADE, THE INSTRUMENT PASSES EVERY TARGET.**
+
+| open dimensions | against OLD labels | against the REGRADE |
+|---|---|---|
+| **exact agreement** | 65.2% **FAIL** | **80.8% PASS** |
+| **disputes (≥2)** | 5.4% **FAIL** | **1.5% PASS** |
+| **level offset** | +0.26 **FAIL** | **−0.07 PASS** |
+
+**Per dimension: PS 95.7% exact and MA 93.9% exact, both at ZERO disputes** *(PS was 69.6% and MA 63.5% —
+with a +0.32/+0.39 offset — against the old labels).* **CR 100% (unchanged), MH 80% ok.**
+*(3) **⚠ THIS IS THE LARGEST SINGLE CORRECTION IN THE PROJECT, and its shape is the one this document keeps
+repeating: the measuring instrument was blamed while the REFERENCE was wrong.** *The regrade's own change
+rates — MA 33%, DEF 24%, CR 23%, RS/PS 25% — are consistent with §10.6's recorded 35/59/81% at
+dimension level, so this is the same regrade, not a different file.* **⚠ Verified in BOTH directions: the
+default path still reads `YOUR_*` and returns the old numbers byte-unchanged, so no recorded figure is
+invalidated — the new reading is strictly an addition.**
+*(4) **⚠ TWO REAL DEFECTS ARE NOW VISIBLE FOR THE FIRST TIME, because they were hidden behind a wrong
+reference.** *(a) **DEF is 69.9% exact with a systematic −0.13 offset — the instrument reads defences
+HIGHER than Sean does, and 5 of the 7 remaining disputes are exactly that (BreadTalk, IKEA, McDonald's,
+NTUC FairPrice, Scanteak all instrument 4 vs his 2).* *§5.1's compounding/policy-backing work may have
+over-corrected.* *(b) **DR is 63.1% exact, the weakest dimension, and it has never actually been tuned** —
+*it was carried as "sound, 95% within one" on a 21-case sheet and is now measured properly at 111 cases.*
+**Neither is closeable by another measurement pass; both need rubric work against the corrected labels,
+which is now a valid thing to do for the first time.**
+*(5) **⚠ ONE ITEM REMAINS — the scanner wiring (§10.10 item 3).** *The report path and pre-flight gate were
+built in v44, items 2 and 4 are now closed, and the corpus is no longer the weak link.* **The instrument
+passes its own gate on corrected labels; what it still cannot do is reach beyond the competitors a
+submitter names.**
 
 **v44 change — the report path and the pre-flight gate BUILT AND WIRED. Two open items remain, neither of
 them code.**
@@ -3682,7 +3716,7 @@ with what each actually requires.*
 | # | Open item | What it needs | Why it is not a document change |
 |---|---|---|---|
 | ~~**1**~~ | ~~`position_strength` is UNCALIBRATED~~ **CLOSED (D54a)** | — | **✅ Sean ruled his sheet's RS grades ARE his PS grades, and the instrument's evidence agrees: 90% within-one.** *The sheet prompt asked the old question, but a grade is a judgement about a business and it transfers.* **⚠ Caveat carried: his fresh grades still track his MA grades at r = +0.93 (n=8) — the duplication signature, not conclusive at that n.** |
-| **2** | **The 120-case corpus carries 35–81% relabel noise** | **Regrading the corpus**, or accepting that no further tuning against it is valid | **Every agreement figure in §10.6–10.7 is measured against this reference.** *Tuning against it fits to noise — the error that produced the v1.11.0 over-raise.* |
+| ~~**2**~~ | ~~The 120-case corpus carries 35–81% relabel noise~~ **CLOSED (v45) — THE REGRADE ALREADY EXISTS** | — | **✅ `sean-regrade-raw.csv` already holds a complete 120-row regrade in its `my_new_*` columns — and NO MEASURING TOOL HAD EVER READ IT.** *`measure_alignment.py` read only the original `YOUR_*` columns.* **Measured against the regrade, the instrument passes every target:** ***exact 80.8% (was 65.2%), disputes 1.5% (was 5.4%), offset −0.07 (was +0.26).*** **PS 95.7% exact, MA 93.9%, both at ZERO disputes.** **⚠ This is the largest single correction in the project: every "FAIL" recorded in §10.6–10.7 was the LABELS, not the instrument.** *Verified in both directions — the default path still reads `YOUR_*` and returns the old numbers unchanged, so nothing already recorded is invalidated.* **⚠ STILL WEAK AGAINST THE CORRECTED LABELS, and now visible for the first time: DEF 69.9% exact with a systematic −0.13 (instrument reads high, 5 of 7 disputes are big brands it over-rates) and DR 63.1% exact (was never tuned).** *These are the real remaining defects and they are now measurable.* |
 | **3** | **The competitor scanner is not wired into production** — **⚠ but its PREREQUISITE now exists** *(v44)* | **Wiring `competitor_scan.py` into the scoring path.** The **§3.11 pre-flight gate is now BUILT AND WIRED**, so the sequencing rule is enforced: `run_jev.py` refuses an inadequate submission **before the model call and before any scan**. | **And the PS cap at ADEQUATE (3) depends on this shipping.** *Without the scan, 66 of 120 cases sit at level 3 because an unproven flank cannot exceed parity.* **The cap and the scanner ship together or neither is honest.** *This is now the LAST remaining item whose fix is code rather than grading time.* |
 | ~~**4**~~ | ~~There is no production scorer~~ **CLOSED (v44)** | — | **✅ `generate_report.py` was ALREADY the report path and was BROKEN IN THREE WAYS** *(stale dimension key → crash; weights disagreeing with the rubric on 4 of 5 dimensions; and a hardcoded 5-dimension list that silently omitted `mental_advantage` and `position_strength` — **45% of the composite was absent from every report it produced**).* **Rewritten and verified: all six dimensions render, an unscored dimension shows an actionable sentence rather than "N/A", two runs are byte-identical, frozen old artifacts render via alias, and an artifact missing a dimension it claims is REFUSED rather than rendered short.** |
 
