@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v36 — **D50: RS rebuilt as POSITION STRENGTH, independent of recognition (per Sean). Duplication 69%→29%; the target profile RS≥MA+2 appears (0→6 cases). ⚠ Canary fails — re-baseline decision open.**
+**Status:** DRAFT v37 — **D50 CLOSED: RS is now POSITION STRENGTH (independent of recognition). Duplication 69%→29%. ⚠ The re-baseline exposed that the canary's dimension column was never a client label — my earlier argument against the fix was unfounded. Band agreement unchanged at 5/6.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,33 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v37 change — D50 closed on A. Re-baselined — and the re-baseline exposed an error in this spec's own reasoning.**
+*(1) **Sean chose A: re-baseline the canary at 1.18.0.** **Done deliberately through
+`--rung record --rubric rubric.json --force`** — *the tool refuses to overwrite without `--force`, so the
+act is explicit.* **Reference is now 1.18.0; canary PASSES on two consecutive runs.**
+*(2) **⚠⚠ THE DECISION STEP EXPOSED THAT MY OWN REPORTING HAD BEEN WRONG.** **§10.6d argued that v1.18.0
+"went the wrong way against the engagement conclusions" — but the canary's per-dimension "engagement"
+values are NOT client labels.** *Five of six fixtures say verbatim: "The per-dimension expected levels are
+an **ASSISTANT MAPPING** of that conclusion onto the six calibrated dimensions — **they are not a recorded
+client label**. **The BAND, not the dimension vector, is the bar (spec 10.6)."*** **And `run_canary.py`
+prints that column under its own "INFORMATIONAL ONLY — NOT the drift check, NOT a launch gate" warning.**
+**So the column had no authority to reject anything, and my argument against the fix was unfounded.**
+**⚠ This is the same failure shape as the five earlier retractions this session: I did not check the
+reference I was comparing against.** *Here the reference was an assistant mapping I had myself written
+into the fixtures.*
+*(3) **⚠ WHAT STILL STANDS: the canary's BAND check does rest on a human-blessed source.** *Each fixture's
+`_expected.band` derives from its `expected_conclusion` — a real engagement conclusion.* **v1.18.0 matches
+those bands 5 of 6 — IDENTICAL to the 1.8.0 baseline, so band agreement is unchanged.**
+*(4) **⚠ ONE REAL DISAGREEMENT REMAINS, and it is now visible BECAUSE of the construct change:** *C1
+GreenPackers — the only fixture whose dimension vector IS a recorded client label — reads **RS 4** where
+that label says **RS 1**.* **The old construct matched it (RS 1) largely because it was reading recall —
+which is exactly what made the duplication invisible.** *The one case with a genuine human label is the
+one the new construct gets wrong, and it is recorded rather than smoothed over.*
+*(5) **⚠ THE COST OF THIS RE-BASELINE: the reference is no longer an independent check of RS.** *It was
+recorded FROM the instrument at 1.18.0.* **It still catches model drift and any change to the other five
+dimensions, but a future RS revision now moves the reference with it instead of against it.** *That is
+the price of a construct change no existing reference could validate, recorded so the loss is visible.*
+
 **v36 change — D50: RS reconstructed as POSITION STRENGTH. The construct Sean specified is now implemented.**
 *(1) **Sean defined the distinction and the product requirement in one message:** *"Mental advantage
 measures what the market and customers know of the brand. Relative strength measures the strength of the
@@ -3250,10 +3277,54 @@ makes the canary hypersensitive to RS revisions specifically** — *and its froz
 revisions stale** (rubric 1.8.0, model jev-1.13.0) with its RS column written under the very recall
 construct being replaced.* **A reference written under the old construct cannot validate a new one.**
 
-**⚠ DECISION REQUIRED — see D50.** *Re-baseline the canary at 1.18.0 (deliberate), or re-read only its RS
-column under the new construct before re-baselining. Re-baselining silently would destroy the drift check
-that has already caught four real regressions; re-baselining with the old RS column intact would anchor
-the new instrument to the old construct's expectations.*
+#### ✅ D50 CLOSED — Sean chose A. Re-baselined, and the re-baseline exposed an error in this spec
+
+**Sean: *"A"*** — re-baseline the canary at 1.18.0.
+
+**⚠ THE DECISION STEP EXPOSED THAT MY OWN REPORTING HAD BEEN WRONG.** **The canary's per-dimension
+"engagement" values — which §10.6d used to argue that v1.18.0 "went the wrong way against the engagement
+conclusions" — are NOT client labels.** *Five of the six fixtures say verbatim:*
+
+> *"The per-dimension expected levels are an **ASSISTANT MAPPING** of that conclusion onto the six
+> calibrated dimensions — **they are not a recorded client label**. **The BAND, not the dimension vector,
+> is the bar (spec 10.6)."*
+
+**And `run_canary.py` prints that column under its own warning:** *"INFORMATIONAL ONLY — NOT the drift
+check, NOT a launch gate; the expected vectors for cases without a recorded human label are assistant
+mappings — see each `_meta`."* **⚠ So the argument that the canary "rejected" the new construct because
+its dimension column disagreed was unfounded: that column has no authority, and the band is the bar.**
+
+**⚠ WHAT STILL STANDS, AND IT IS THE PART THAT MATTERS: the canary's BAND check has a human-blessed
+source.** *Each fixture carries `_expected.band` derived from its `expected_conclusion` — a real
+engagement conclusion, e.g. C1 "Fringe, <1%; guerrilla warfare the only play."* **⚠ v1.18.0 matches those
+bands on 5 of 6 cases — IDENTICAL to the 1.8.0 baseline's 5 of 6.** *C6 Bonefirm differs under both
+rubrics, so it is not attributable to this change.* **So band agreement with the engagement conclusions
+is unchanged — not improved, not damaged.**
+
+**⚠ AND ONE REAL UNRESOLVED DISAGREEMENT REMAINS:** *C1 GreenPackers — the single fixture whose
+dimension vector **is** a recorded client label — reads **RS 4** where that label says **RS 1**.* **The
+old construct matched it (RS 1) largely BECAUSE it was reading recall, which is what made the duplication
+invisible.** *So the one case with a genuine human label is the one the new construct gets wrong.*
+
+#### The re-baseline
+
+**Recorded deliberately through `run_canary.py --rung record --rubric rubric.json --force`** — *the tool
+refuses to overwrite a reference without `--force`, so the act is explicit rather than incidental.*
+**Reference is now rubric 1.18.0.**
+
+| Check | Result |
+|---|---|
+| Canary passes against its new baseline | **PASSED, two consecutive runs** |
+| Band agreement with engagement conclusions | **5 of 6 — unchanged** |
+| Full corpus at 1.18.0 | **120/120, 0 failures, 8s** |
+| Duplication RS vs MA | **69% → 29%** |
+| Mean absolute difference | 0.32 → **0.87** |
+
+**⚠ THE COST OF THIS RE-BASELINE, STATED PLAINLY: the reference is no longer an independent check of RS.**
+*It was recorded FROM the instrument at 1.18.0.* **It still catches everything else** — model drift, and
+any future change to the other five dimensions — **but a future RS revision will now move the reference
+with it rather than against it.** *That sensitivity is the price of a construct change that no existing
+reference could validate; it is recorded here so the loss is visible rather than discovered later.*
 
 ### 10.6 Launch gate
 
@@ -4462,7 +4533,7 @@ purchasing decision.
 | **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
 | **D42** | **Sean rebuilt the DEF construct — two routes of attack. Does the weaker route SET or merely LIMIT the score?** (§10.6) | **CLOSED — Sean: *"I think let's focus on replicate then."* → option B, rubric v1.14.0. REPLICATION SETS THE LEVEL** (name the mechanism: IP · capital intensity · network control · scale economics · switching costs · accumulated asset); **the OUTFLANK is kept as a ONE-LEVEL DISCOUNT, not a floor** — an open route that could take significant share scores no higher than one level below the mechanism's level. *A strong barrier does not protect a position a rival can go around, but an open route does not erase the barrier either.* **Measured: level 4 recovers 4 → 15 and SD 0.82 → 0.96** (v1.12.0 single-route was 26/1.20; v1.13.1 weaker-route-SETS was 4/0.82). **It does not return to 26, which is CORRECT — the outflank discount is now genuinely applied, which v1.12.0 was blind to.** **4+ is now ASML 6 · Boeing 5 · Coupang 5 · NTUC FairPrice, Watsons, McDonald's, VICOM, KOI Thé, ActiveSG, Eu Yan Sang, IKEA, Anytime Fitness, Sheng Siong, Scanteak, Pet Lovers Centre 4** — reads correctly. **✅ Canary passes (C3 back to Contested).** **⚠ The canary header was MISREPORTING the reference version** (printed the current rubric twice; the comparison itself always read the frozen snapshot), **so v1.13.1's drift was real and v1.14.0 is a genuine restoration.** *Original framing below.* |
 | **D47** | **Best Denki & Courts — consolidated appliance retail: Sean 1, instrument 3** (§10.6c) | **✅ CLOSED — SEAN RULED THE INSTRUMENT RIGHT: *"you are right it is a 3 for best denki and courts."*** **So the "two cases lost" under the 1.16.0 dominance reframe were never lost — the INSTRUMENT was right and the grading SHEET was wrong.** **On the corrected labels COMPETITIVE ROOM is exact 14/21 (67%), within one 21/21 (100%), disputes 0/21 (0.0%), offset +0.33.** **⚠ I stopped at two wording attempts precisely because a third would have been fitting the rubric to what turned out to be a bad label — the stopping rule paid for itself.** *Third time in this session that a hand-read disagreement resolved the same way: the label was the first suspect and the label was the fault.* |
-| **D50** | **RS rebuilt as POSITION STRENGTH (independent of recognition) — canary re-baseline?** (§10.6d) | **✅ CONSTRUCT ANSWERED by Sean, ⚠ CANARY DECISION OPEN.** *"Mental advantage measures what the market and customers know of the brand. Relative strength measures the strength of the said brand's positioning relative to competitors... we should give hope to the high RS but low MA business that have just started out and have a good flank."* **So MA = what the market KNOWS (present, backward-looking); RS = how strong the POSITION is against competitors' positions (strategic, forward-looking) — judged WITHOUT reference to awareness.** **⚠ CONFIRMED the old instrument could not express it: ZERO of 120 cases had RS ≥ MA+2.** **Rubric 1.18.0 does: duplication 69% → 29%, mean difference 0.32 → 0.87, target profile 0 → 6 cases, and RS≥4 did NOT inflate (37% → 34%).** **⚠ But the canary FAILS (C4 and C5 flip Fragile → Contested), and the model still tracks recognition too closely — C1 GreenPackers reads RS 4 where the engagement reading is 1.** **⚠ The frozen reference is 10 revisions stale and its RS column was written under the OLD recall construct, so it cannot validate a position-strength reading.** **Decision needed: re-baseline, or re-read the canary's RS column under the new construct.** |
+| **D50** | **RS rebuilt as POSITION STRENGTH (independent of recognition) — canary re-baseline?** (§10.6d) | **✅ CLOSED — Sean chose A: re-baseline the canary.** **⚠ AND THE RE-BASELINE EXPOSED AN ERROR IN MY OWN REPORTING: the canary's per-dimension "engagement" values are NOT client labels.** *Five of six fixtures say verbatim: "The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions — they are not a recorded client label. **The BAND, not the dimension vector, is the bar (spec 10.6).**"* **So my argument that v1.18.0 "went the wrong way against the engagement conclusions" was WRONG — that column has no authority.** *Only C1 GreenPackers carries a recorded client label.* **The canary reference is now recorded at 1.18.0 through the deliberate `--rung record --force` path, and PASSES on two consecutive runs.** **⚠ What still stands: the canary's band check DOES have a human-blessed source — each fixture's `expected_conclusion` (`_expected.band`), and v1.18.0 matches it 5 of 6** *(unchanged from the 1.8.0 baseline; C6 Bonefirm differs either way)*. **⚠ And C1 GreenPackers still reads RS 4 against a recorded CLIENT label of 1 — that is the one real unresolved disagreement about the new construct.** **CONSTRUCT ANSWERED by Sean:** *"Mental advantage measures what the market and customers know of the brand. Relative strength measures the strength of the said brand's positioning relative to competitors... we should give hope to the high RS but low MA business that have just started out and have a good flank."* **So MA = what the market KNOWS (present, backward-looking); RS = how strong the POSITION is against competitors' positions (strategic, forward-looking) — judged WITHOUT reference to awareness.** **⚠ CONFIRMED the old instrument could not express it: ZERO of 120 cases had RS ≥ MA+2.** **Rubric 1.18.0 does: duplication 69% → 29%, mean difference 0.32 → 0.87, target profile 0 → 6 cases, and RS≥4 did NOT inflate (37% → 34%).** **⚠ But the canary FAILS (C4 and C5 flip Fragile → Contested), and the model still tracks recognition too closely — C1 GreenPackers reads RS 4 where the engagement reading is 1.** **⚠ The frozen reference is 10 revisions stale and its RS column was written under the OLD recall construct, so it cannot validate a position-strength reading.** **Decision needed: re-baseline, or re-read the canary's RS column under the new construct.** |
 | **D49** | **`relative_strength` duplicates `mental_advantage` — what should RS actually be?** (§10.6d) | **⚠ OPEN — FOUND ON SEAN'S POINTER.** *"There is a problem with RS definition. It is not what we agreed on."* **MEASURED: RS and MA return the IDENTICAL score in 83/120 cases (69%); within one level in 119/120 (99%); r=+0.89; mean difference 0.32.** **On the very case RS was created to fix, McDonald's SG vs Jollibee, both dimensions returned 5/5 and 3/3 — zero separation.** **The agreed construct is "the position actually HELD against the derived competitive set" (§5.1); the implemented instruction asks "would buyers reach for this business by name", which §5.1 defines as `mental_advantage`.** **⚠ The 0.8% dispute rate that looked like RS's strength was evidence of the MERGER — 58% of Sean's own RS grades are identical to his MA grades.** **A fix (v1.17.0, RS reframed as a contest with a fame guard) cut duplication 69% → 37% and corrected the McDonald's/Jollibee inversion, but the CANARY REJECTED IT and agreement with the engagement conclusions fell to 2/6** *(C3 engagement RS 3 → instrument 2; C4 engagement RS 1 → instrument 3)*. **⚠ REVERTED to 1.16.1.** **⚠ UNRESOLVED TENSION: the structural evidence says merge, the frozen canary and his old RS labels say the old reading is better — but BOTH references carry the defect being fixed (the labels are 58% self-duplicated).** **Evidence available today cannot distinguish "RS was never a second dimension" from "the contest wording is wrong".** **⚠ FOR SEAN: what should RS measure that MA does not?** |
 | **D48** | **§5.3.1 step 4 — the scorer must refuse a non-promoted rubric** (§5.3.1) | **✅ BUILT — `rubric_gate.py`, enforced in `run_jev.py`.** **Promotion writes a sidecar (`rubric.promoted.json`) recording the version and the SHA-256 of the promoted bytes; only `promote_rubric.py` writes it.** **A rubric whose hash does not match its sidecar is REFUSED, whatever its version claims** — *because the version string is set by hand and proves nothing, which is exactly how `rubric.json` was edited in place repeatedly without the six promotion checks ever running.* **Frozen references stay exempt; promoting the live file onto itself is allowed as the recovery path.** **Proved by making it fail: 7 probes** *(unstamped → refused; frozen → allowed; stamped → allowed; text tamper → refused; version-only tamper → refused, exit 1; restore → allowed; **full 120-case corpus → 0 false refusals*). **Canary passes.** |
 | **D46** | **Regrade MA and CR blind — is the calibration alarm real or a label artifact?** (§10.6b) | **✅ ANSWERED — IT WAS MOSTLY THE LABELS.** 21 businesses × 2 columns, fresh definitions, from memory. **MENTAL ADVANTAGE: exact 14/20 (70.0%), within-one 20/20 (100%), disputes 0/20 (0.0%)** — against **7.5–8.3% on the old labels**. **COMPETITIVE ROOM: exact 8/21 (38.1%), within-one 21/21 (100%), disputes 0/21 (0.0%)** — against **8.4–9.2% on the old labels**. **⚠ THE RELABEL RATES EXPLAIN IT: MA 35%, CR 81%, defensibility 59%** — so every dispute rate quoted before §10.6b was measured against a reference carrying 35–81% noise. **Two of the three "failing" dimensions were failing against LABELS, not reality.** **⚠ CR carries a small systematic LOW bias (+0.43), and BOTH readings agree the top of the CR scale is unused** (instrument 61/120 at level 2, only 2 at 4, none at 5; Sean never grades 4 or 5) — **either no market in this corpus qualifies for level 5, or the descriptors are pitched too high: a definitional question, recorded not tuned.** **⚠ MY SHEET'S CLOSURE TRAP FAILED: "A closed bubble tea outlet" and "A dormant home baker" are ANONYMOUS fixtures**, so they score 1 on MA whether or not the closure rule is applied — **the trap did not fire because it was not a trap; a real test needs a NAMED closed business, and the corpus has none.** **⚠ Lenskart graded 3.5 — not a valid point on a 1–5 integer scale; queried, not silently rounded.** |
