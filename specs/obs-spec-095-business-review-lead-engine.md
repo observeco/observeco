@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v28 — **D42 CLOSED (Sean chose REPLICATE; outflank = one-level discount, v1.14.0); D43 DEF is uncalibrated — fresh 17-case blind sheet written.**
+**Status:** DRAFT v29 — **D43 ANSWERED: fresh blind grades received; D41 WITHDRAWN (the flattening was noise in the old grades); two open disputes, opposite in sign.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,32 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v29 change — the fresh blind regrade is in, and it corrects a finding from two rounds ago.**
+*(1) **Sean graded the 17-business blind set** (new definition, from memory, no instrument answer shown).
+**Exact 8/17 = 47.1%, within one 15/17 = 88.2%, mean offset −0.18.** *n=17 means wide intervals — a
+shape reading, not an accuracy claim.*
+*(2) **✅ THE SHAPE IS HEALTHY, which is what grading blind was for.** **Both readings use the full 1–6
+range; there is no systematic bias; and the two disputes sit in OPPOSITE directions** (KOI instrument
+HIGH by 2, NTUC instrument LOW by 2). **A dimension that had flattened would show one-directional gaps
+and a compressed range — neither is present.**
+*(3) **⚠⚠ IT OVERTURNS D41.** **Ten of the seventeen grades CHANGED from his old numbers** (mean shift
+−0.18; **KOI moved two whole levels, old 4 → fresh 2**). **He was right that *"a lot of them are wrong."*
+Under the new definition his bubble-tea grades are FLAT — 2·2·2·2 — and the INSTRUMENT now holds the
+spread (2, 3, 4, 2).** **So the 1-to-4 spread that D41 analysed — the KOI-vs-Gong-Cha outflank story, the
+format-capital-intensity ladder, "flattening is the dominant remaining error" — was an artefact of noise
+in the old grades. D41 is WITHDRAWN, not revised.** *This is the third time this session a finding built
+on the old grades failed to survive a check, and it is the strongest vindication yet of Sean's
+instruction not to converge on them.*
+*(4) **Two open disputes, both 2 levels, opposite in sign — and they are now the whole gap:** **KOI Thé**
+(instrument 4, Sean 2 — it credits a 161-outlet network as a capital/network barrier; he reads it
+replicable) and **NTUC FairPrice** (instrument 4, Sean 6 — he reads it **COMPOUNDING**; **the instrument
+will not go above a single mechanism, which is the likelier defect because "compounding" requires seeing
+several mechanisms at once, and that needs category knowledge the form does not carry**).
+*(5) **D39's operated-network rule is no longer needed.** Fresh grades put **KFC and Toast Box at 3**, and
+**v1.14.0 already returns 3 for both — exact matches.** **v1.11.2 had pushed them to 4 to satisfy the OLD
+grades, which the fresh grading shows were too high.** The network is now correctly handled as an
+*accumulated asset* among the named mechanisms rather than as a special clause.
+
 **v28 change — D42 closed on REPLICATE; the outflank becomes a discount; and DEF is now openly uncalibrated.**
 *(1) **Sean: *"I think let's focus on replicate then."* → option B. Rubric v1.14.0: replication SETS the
 level** (mechanism must be named and evidenced — IP · capital intensity · network control · scale
@@ -3218,7 +3244,70 @@ that drift was real, and the v1.14.0 pass is a genuine restoration rather than a
 loosened reference.** **Fixed to read `rubric_version` from the snapshot**; it now reports
 *"reference rubric: 1.8.0 (frozen snapshot)"*.
 
-#### ⚠ D43 — the dimension is UNCALIBRATED, and the fix needs Sean's eyes not the instrument's
+#### ✅✅ D43 ANSWERED — Sean graded the fresh blind set, and the result CORRECTS D41
+
+**Sean filled in `DEFENSIBILITY-V2-GRADING.md` — 17 businesses, 1–6, new definition, from memory, no
+instrument answer shown.** **This is the first defensibility reference that reflects the construct he
+actually wants, and it changes two conclusions.**
+
+| | Sean (fresh, blind) | Instrument v1.14.0 | Gap |
+|---|---|---|---|
+| Gong Cha | 2 | 2 | 0 |
+| Each-A-Cup | 2 | 3 | −1 |
+| **KOI Thé** | **2** | **4** | **−2 ⚠** |
+| Best Denki | 3 | 2 | +1 |
+| Gain City | 3 | 2 | +1 |
+| KFC | 3 | 3 | 0 |
+| Toast Box | 3 | 3 | 0 |
+| IKEA | 3 | 4 | −1 |
+| **NTUC FairPrice** | **6** | **4** | **+2 ⚠** |
+| Anytime Fitness | 3 | 4 | −1 |
+| Watsons | 3 | 4 | −1 |
+| McDonald's | 4 | 4 | 0 |
+| Playmade | 2 | 2 | 0 |
+| A home massage service | **1** | 2 | −1 |
+| Zoff | 2 | 2 | 0 |
+| Coupang | 5 | 5 | 0 |
+| ASML | 6 | 6 | 0 |
+
+**Exact 8/17 = 47.1% · within one level 15/17 = 88.2% · mean offset −0.18.** **⚠ At n=17 the intervals are
+wide (within-one 65.7–96.7%; disputes 3.3–34.3%), so this is a SHAPE reading, not an accuracy claim.**
+
+**✅ AND THE SHAPE IS HEALTHY — which is the point of grading blind.** **Both readings use the full 1–6
+range.** **There is NO systematic bias**: the mean offset is −0.18, **and the two disputes sit in
+OPPOSITE directions** — KOI has the instrument **HIGH** by 2, NTUC has it **LOW** by 2. **A dimension that
+flattened toward the middle would show one-directional gaps and a compressed range; neither is present.**
+
+**⚠⚠ BUT IT OVERTURNS D41, AND I HAVE TO SAY SO CLEARLY.** **Ten of the seventeen grades CHANGED from
+Sean's old numbers — mean shift −0.18, with KOI moving two whole levels (old 4 → fresh 2).** **He was
+right that *"a lot of them are wrong."*** The consequence:
+
+> **Under the new definition, Sean's bubble-tea grades are 2 · 2 · 2 · 2 — essentially FLAT.**
+> **The 1-to-4 spread I spent an entire round analysing (D41: *"the instrument flattens where the two
+> readings should separate"*, the KOI-vs-Gong-Cha outflank story, the format-capital-intensity ladder)
+> was an artefact of noise in the OLD grades.**
+
+**And it inverts the direction of the complaint.** **On bubble tea the INSTRUMENT now holds the spread
+(2, 3, 4, 2) where Sean is flat (2, 2, 2, 2)** — **the single dispute is the instrument reading KOI two
+levels too high.** **D41's finding is therefore SUPERSEDED, not merely revised**, and the earlier
+"flattening is the dominant remaining error" statement is withdrawn. **The old-grades withdrawal (D42)
+was the right call, and it took a blind regrade to show it.**
+
+**THE ONLY TWO OPEN DISPUTES, both 2 levels and opposite in sign:**
+- **KOI Thé — instrument 4, Sean 2.** *The instrument credits a 161-outlet national network as a
+  capital/network barrier; Sean, who knows the bubble-tea market, reads it as replicable.*
+- **NTUC FairPrice — instrument 4, Sean 6.** *Sean reads Singapore's dominant grocery chain as
+  COMPOUNDING — several mechanisms reinforcing. The instrument will not go above a single mechanism,
+  which is the more likely defect of the two: **"compounding" requires seeing multiple mechanisms at
+  once, and that needs category knowledge the form does not carry.***
+
+**⚠ AND A CONSEQUENCE FOR EARLIER WORK: the D39 "operated network" rule is no longer needed to fix KFC
+and Toast Box.** Under fresh grades both are **3**, and **v1.14.0 already returns 3 for both — exact
+matches.** **v1.11.2 had pushed them to 4 to satisfy the OLD grades, which the fresh grading shows were
+too high.** The network is now covered correctly as an *accumulated asset* among the named mechanisms,
+rather than as a special clause.
+
+#### ⚠ D43 (original framing, superseded by the grading above)
 
 **With the 120 old grades withdrawn, `defensibility` has no human reference at all.** Agreement can no
 longer be measured, so **the only remaining test is whether the output is reasonable — which is weaker,
@@ -3237,7 +3326,16 @@ agreement statistic.** **It is a diagnostic, not a re-calibration.** *A re-calib
 count from earlier — and this time the sheet would have to be authored from the new definition, since the
 old labels are void.*
 
-#### ⚠⚠ D41 — the bubble-tea hand-read: DEFENSIBILITY IS FLATTENING where the two readings should separate
+#### ⚠⚠ D41 — SUPERSEDED by D43's blind regrade. READ THE CORRECTION BELOW BEFORE THIS SECTION.
+
+> **⚠⚠ THIS SECTION IS WITHDRAWN.** Its finding — *"the instrument flattens defensibility where the two
+> readings should separate"* — **was derived from Sean's OLD grades, which he later withdrew as unreliable
+> (D42). When he regraded blind under the new definition, his bubble-tea scores came back FLAT (2·2·2·2)
+> and the KOI-vs-Gong-Cha "spread" disappeared.** **The instrument was not flattening; the reference was
+> noisy.** *The historical text is kept below because the reasoning error is instructive, and because it
+> is the third time this session that a finding derived from the old grades failed to survive a check.*
+
+#### ⚠⚠ D41 (WITHDRAWN) — the bubble-tea hand-read: the apparent flattening
 
 **Hand-read done as promised. It found a pattern that generalises beyond bubble-tea, and one case where
 Sean's own rule cannot be derived.**
@@ -3730,7 +3828,7 @@ purchasing decision.
 | **D39** | **Does an operated multi-outlet network count as a moat where category entry is cheap?** (§10.6) | **ANSWERED — YES, and Sean authorised it: *"I'm happy for you to apply the KFC, Ya Kun and Toast box judgement."*** Applied as a **GENERAL rule** (rubric **v1.11.2**), not three case patches: **SEPARATE VISIBILITY FROM OPERATED NETWORK** — a household name resting on visibility alone is cheap to displace and stays LOW, but **a chain that demonstrably operates many units holds efficient scale and a cost advantage even where opening a SINGLE unit is cheap**, because **the barrier is the NETWORK** (property, supply chain, central purchasing, staffing at scale, decades of sites), not one more shop. **KFC, Ya Kun and Toast Box move to 4, exact match.** **⚠ Collateral is mixed and mostly at the noise floor:** 13 cases moved (8 up, 5 down); **CHAGEE and NTUC improve, but Mixue, CHICHA San Chen and Each-A-Cup move the wrong way, and 24/7 Fitness and Chin Mee Chin drop.** **Corpus totals are a wash — DEF disputes 2.5% → 3.3%, i.e. back to v1.8.0's level.** *This is what tuning to a handful of cases looks like from the inside.* |
 | **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
 | **D42** | **Sean rebuilt the DEF construct — two routes of attack. Does the weaker route SET or merely LIMIT the score?** (§10.6) | **CLOSED — Sean: *"I think let's focus on replicate then."* → option B, rubric v1.14.0. REPLICATION SETS THE LEVEL** (name the mechanism: IP · capital intensity · network control · scale economics · switching costs · accumulated asset); **the OUTFLANK is kept as a ONE-LEVEL DISCOUNT, not a floor** — an open route that could take significant share scores no higher than one level below the mechanism's level. *A strong barrier does not protect a position a rival can go around, but an open route does not erase the barrier either.* **Measured: level 4 recovers 4 → 15 and SD 0.82 → 0.96** (v1.12.0 single-route was 26/1.20; v1.13.1 weaker-route-SETS was 4/0.82). **It does not return to 26, which is CORRECT — the outflank discount is now genuinely applied, which v1.12.0 was blind to.** **4+ is now ASML 6 · Boeing 5 · Coupang 5 · NTUC FairPrice, Watsons, McDonald's, VICOM, KOI Thé, ActiveSG, Eu Yan Sang, IKEA, Anytime Fitness, Sheng Siong, Scanteak, Pet Lovers Centre 4** — reads correctly. **✅ Canary passes (C3 back to Contested).** **⚠ The canary header was MISREPORTING the reference version** (printed the current rubric twice; the comparison itself always read the frozen snapshot), **so v1.13.1's drift was real and v1.14.0 is a genuine restoration.** *Original framing below.* |
-| **D43** | **`defensibility` is UNCALIBRATED now that the old grades are withdrawn — how does it get a reference?** (§10.6) | **OPEN — needs Sean's eyes, not the instrument's.** With the 120 old grades withdrawn, **DEF has no human reference**: agreement cannot be measured, so the only remaining test is "is this reasonable", **which I can satisfy by construction because I wrote the rubric — I cannot grade this dimension against myself.** **A fresh blind set is written: `specs/calibration/DEFENSIBILITY-V2-GRADING.md` — 17 businesses, 1–6, new definition, from memory, no instrument answer shown**, deliberately mixed (some previously graded, some far from Sean's usual market, some with no obvious barrier). **The range is the point** — a flattened dimension cannot be told from a working one by looking only at the middle. **⚠ 17 cases detects a 2-level systematic bias and calibrates the SHAPE of the distribution, but cannot move an agreement statistic — it is a diagnostic, not a re-calibration.** |
+| **D43** | **`defensibility` is UNCALIBRATED now that the old grades are withdrawn — how does it get a reference?** (§10.6) | **✅ ANSWERED — Sean graded the fresh blind set and it CORRECTS D41.** 17 businesses, 1–6, new definition, from memory, no answer shown. **Exact 8/17 = 47.1%, within one 15/17 = 88.2%, mean offset −0.18** *(n=17 → wide intervals; a SHAPE reading, not an accuracy claim)*. **✅ The shape is healthy: both readings use the full 1–6 range, there is NO systematic bias (−0.18), and the two disputes sit in OPPOSITE directions** (KOI instrument HIGH by 2, NTUC instrument LOW by 2) **— a flattened dimension would show one-directional gaps and a compressed range; neither is present.** **⚠⚠ Overturns D41: 10 of 17 grades CHANGED from his old numbers (KOI moved two whole levels, old 4 → fresh 2) — he was right that *"a lot of them are wrong."* On bubble tea his fresh grades are FLAT (2·2·2·2) and the INSTRUMENT now holds the spread the old analysis credited to him.** **D41 is withdrawn.** **TWO OPEN DISPUTES: KOI Thé (instrument 4, Sean 2 — it credits a 161-outlet network as a barrier, he reads it replicable); NTUC FairPrice (instrument 4, Sean 6 — he reads it COMPOUNDING; the instrument will not go above a single mechanism, the likelier defect since "compounding" needs category knowledge the form lacks).** **⚠ Also: D39's operated-network rule is no longer needed — fresh grades put KFC and Toast Box at 3, and v1.14.0 already returns 3, exact.** *Original framing below.* With the 120 old grades withdrawn, **DEF has no human reference**: agreement cannot be measured, so the only remaining test is "is this reasonable", **which I can satisfy by construction because I wrote the rubric — I cannot grade this dimension against myself.** **A fresh blind set is written: `specs/calibration/DEFENSIBILITY-V2-GRADING.md` — 17 businesses, 1–6, new definition, from memory, no instrument answer shown**, deliberately mixed (some previously graded, some far from Sean's usual market, some with no obvious barrier). **The range is the point** — a flattened dimension cannot be told from a working one by looking only at the middle. **⚠ 17 cases detects a 2-level systematic bias and calibrates the SHAPE of the distribution, but cannot move an agreement statistic — it is a diagnostic, not a re-calibration.** |
 | **D42-old** | *Original framing, superseded by the ruling above* | **OPEN — and this is now the most consequential question in the spec.** Sean: *"Don't worry about my prior readings on defensibility. You should not converge to my old numbers because I suspect a lot of them are wrong. The rubric however should answer the question on how hard it is to replicate (IP, capital intensive, network control etc), or for an outflank to steal significant market share."* **⚠ THE OLD DEF GRADES ARE WITHDRAWN AS THE CALIBRATION TARGET**, so every DEF agreement statistic in §10.6 (including the 1.7% "best on record") **now measures agreement with a reference Sean has disowned** — retained as history, not as evidence the dimension works. **DEF momentarily has NO agreed gold standard.** **Rebuilt (v1.13.1) around REPLICATE (IP · capital intensity · network control · scale economics · switching costs · accumulated asset) and OUTFLANK (take SIGNIFICANT MARKET SHARE by another route).** **⚠ Measured: "score the weaker route" overshoots.** DEF distribution — v1.12.0 single-route: 25·35·29·**26**·3·2, mean 2.61, **SD 1.20**, 26 cases at 4+. v1.13.0 two-route: 25·**59**·32·**2**·2·0, SD 0.82, 4 at 4+. v1.13.1 (+significant-share bar): 20·**59**·37·**1**·3·0, SD 0.82, **4 at 4+ (ASML, Boeing, Coupang, VICOM)**. **Discrimination halves, and 49% pools at level 2.** My own examples (*"a second location next door"*) undercut Sean's significant-share bar; fixing that barely moved it, so the model genuinely reads this corpus as contestable. **⚠ THE CANARY NOW FAILS — C3-petdirectory drifts Contested → Fragile (DEF 2→1); one case in six is within the 2.5% noise but cannot be waved away; repeat run required.** **THE CHOICE: A — weaker route SETS the score (as written: harsh, weak discrimination) vs B — weaker route LIMITS the score, replication drives it (keeps the spread).** *Framing is Sean's and worth keeping; only SET-vs-LIMIT is open. Not tuning further — with the grades withdrawn there is no reference to tune against.* |
 | **D41** | **Bubble-tea hand-read — why does the instrument not go as low as Sean?** (§10.6) | **DONE. The instrument FLATTENS defensibility.** Sean's bubble-tea grades spread **1–4**; the instrument's spread **2–4** and clusters at 3–4. **Both two-point gaps (Each-A-Cup 4 vs 2, Gong Cha 3 vs 1) are the instrument reading HIGH** — it does not go low enough on genuinely undefendable businesses. **And the rule behind Sean's spread is NOT derivable from the grades: across the corpus his DEF tracks FORMAT CAPITAL INTENSITY monotonically** (no premises **1.00** → home-based 1.74 → kiosk **2.46** → restaurant **3.20** → large-format **3.59** → licensed premises **4.50**), **but bubble-tea breaks it — KOI runs the same counter format as Gong Cha and gets 4 where Gong Cha gets 1.** So format is necessary but not sufficient, and the differentiator between those two is knowledge Sean holds (tenure, outlet count, or his own mental-ladder definition), **NOT visible in the grades.** **Flattening is now the dominant remaining error in this dimension.** |
 | **D38** | **The calibration corpus is 82% thin reconstructed forms — does the calibration claim survive?** (§10.6) | **OPEN — the most important finding in this document, and it was found by chasing Sean's moat question.** **99 of 120 cases (82%) carry `label_is_external: true` and an `authoring_note` reading *"FORM DATA reconstructed by the analyst from public sources… the form is thinner than a real submission. This is the known weakness of the test."* Median form payload 725 chars.** **So the corpus measures agreement on analyst-reconstructed forms, NOT on real submissions** — and **defensibility is the dimension most damaged**, because barriers (outlet counts, tenure, owned assets, licences) are the facts least likely to appear in a positioning sentence and most likely to be known to the owner. **Best Denki proves it: Sean scores 4 from knowledge of ~14 stores and a national network; the form states only *"Japanese retail service standards"*; the instrument says 2 — correctly, on what it was given.** **⚠ Same class of gap Sean already flagged: *"You have blind gaps. You have to corroborate your answer against physical evidence."*** **Fix is in the FORM, not the rubric:** (a) the form must **ask** for structural facts (outlets, years, owned premises, licences, price premium); (b) if the form cannot supply them this is **the same external-scan dependency as D25/D35**; (c) the calibration claim must be **restated** so "100% band agreement" is not read as validating real-submission performance |
