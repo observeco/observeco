@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v29 — **D43 ANSWERED: fresh blind grades received; D41 WITHDRAWN (the flattening was noise in the old grades); two open disputes, opposite in sign.**
+**Status:** DRAFT v30 — **D44 applied: COMPOUNDING reachable + POLICY/STATE BACKING added (v1.15.0); NTUC 4→5; within-one 94.1%.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,40 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v30 change — D44: compounding fixed, policy backing added, and the rubric corrected cases it was not asked about.**
+*(1) **Sean: *"You may fix the compounding. NTUC fairprice is a cooperative with deep government hands and
+involvement."*** **Two changes (rubric v1.15.0).**
+*(2) **POLICY OR STATE BACKING is now a named mechanism.** The rubric had six and **none covered political
+protection**, so NTUC was being scored as though it were merely a big supermarket. **Government ownership
+or involvement, a cooperative or statutory mandate, a protected or subsidised position, licensing that
+favours incumbents, or public-service obligations that keep rivals out — a challenger cannot buy
+political protection at any price.**
+*(3) **COMPOUNDING is now reachable.** The instrument would not go above a single mechanism, **which is
+exactly why NTUC graded 4 against Sean's 6.** The instruction now **requires enumerating every mechanism
+that applies and states that two or more reinforcing each other is a 5 or 6** (they need not be
+independent: scale economics + network control; capital intensity + policy backing; IP + distribution).
+**Level 5 was reworded to "two or more mechanisms reinforce each other"** — the specific missing clause —
+with a guard against reaching 5/6 without naming that many mechanisms.
+*(4) **⚠⚠ THE RUBRIC FOUND THE RIGHT CASES WITHOUT BEING TOLD, and this is the strongest evidence yet
+that the category-reasoning pathway is doing real work.** **VICOM 4→5** (national vehicle-inspection
+monopoly), **ActiveSG 4→5** (statutory-board gym), **PCF Sparkletots 3→4 and My First Skool 3→4**
+(government-linked, subsidised preschools) — **VICOM, ActiveSG and the preschools were NOT named by Sean
+and were NOT in the grading set.** The mechanism is being **reasoned with, not pattern-matched to the
+NTUC example.** Guardian also 3→4, and ASML/Boeing/Coupang held.
+*(5) **Result: NTUC 4 → 5 against his 6; within-one-level against his fresh grades 88.2% → 94.1% (15/17 →
+16/17); level 5 count 2 → 5; SD 0.96 → 1.01; canary passes.**
+*(6) **⚠ Two costs, both recorded rather than smoothed over. (a) The recurring micro-drift returned** — 5
+cases moved 1 → 2 on businesses Sean scores 1 (nail bars, a home facial, a mobile hairdresser), while
+Nails Of Society moved 2 → 1. **This is the fourth appearance of the pattern; at 5/120 = 4.2% it sits at
+the dimension's noise floor, so it cannot be cleanly attributed — but it is not improving either.** *Not
+chased, precisely because tuning against a 4.2% floor is tuning against noise.* **(b) I re-inflated the
+instruction immediately after compressing it** — **`defensibility` 2,671 → 3,619 chars (+35%) in two
+revisions, undoing a third of the v1.12.0 compression within three rounds of adopting the discipline that
+produced it.** That is exactly the bloat D40 flagged as a plausible contributor to batch variance.
+**Conclusion: "compress once" does not hold — compression has to be a RECURRING step, and the next pass
+should fold the outflank discount and the mechanism list into tighter wording rather than appending
+clauses.**
+
 **v29 change — the fresh blind regrade is in, and it corrects a finding from two rounds ago.**
 *(1) **Sean graded the 17-business blind set** (new definition, from memory, no instrument answer shown).
 **Exact 8/17 = 47.1%, within one 15/17 = 88.2%, mean offset −0.18.** *n=17 means wide intervals — a
@@ -3307,6 +3341,62 @@ matches.** **v1.11.2 had pushed them to 4 to satisfy the OLD grades, which the f
 too high.** The network is now covered correctly as an *accumulated asset* among the named mechanisms,
 rather than as a special clause.
 
+#### ✅ D44 — COMPOUNDING MADE REACHABLE, AND POLICY BACKING ADDED (rubric v1.15.0)
+
+**Sean: *"You may fix the compounding. NTUC fairprice is a cooperative with deep government hands and
+involvement."*** **Two changes, and the second is a mechanism the rubric did not have at all.**
+
+**(1) POLICY OR STATE BACKING is now a named mechanism.** *"Deep government hands and involvement"* is a
+barrier **a challenger cannot buy at any price** — government ownership or involvement, a cooperative or
+statutory mandate, a protected or subsidised position, a licensing regime favouring incumbents,
+public-service obligations that keep rivals out. **The rubric had six mechanisms and none of them covered
+political protection, so NTUC was being scored as though it were merely a big supermarket.**
+
+**(2) COMPOUNDING is now reachable.** The instrument would not go above a single mechanism, which is
+exactly why NTUC graded 4 against Sean's 6. **The instruction now requires ENUMERATING every mechanism
+that genuinely applies, and states that two or more reinforcing each other is a 5 or 6** — they need not
+be independent (scale economics + network control; capital intensity + policy backing; IP + distribution).
+**Level 5 was reworded to *"two or more mechanisms reinforce each other"*, which is the specific clause
+that was missing.** A guard was added: **do not reach 5 or 6 without naming at least that many mechanisms.**
+
+**RESULT — both intended effects, plus corrections the rubric found on its own:**
+
+| Business | Sean | v1.14.0 | **v1.15.0** |
+|---|---|---|---|
+| **NTUC FairPrice** | **6** | 4 | **5** ✅ *now within one* |
+| **VICOM Ltd** | — | 4 | **5** ✅ *national vehicle-inspection monopoly — policy backing* |
+| **ActiveSG** | — | 4 | **5** ✅ *statutory-board gym — policy backing* |
+| **PCF Sparkletots / My First Skool** | — | 3 | **4** ✅ *government-linked preschools — licensed + subsidised* |
+| Guardian Singapore | — | 3 | **4** |
+| ASML · Boeing · Coupang | 6 · — · 5 | 6 · 5 · 5 | 6 · 5 · 5 *(held)* |
+
+**⚠⚠ THE RUBRIC FOUND THE RIGHT CASES WITHOUT BEING TOLD.** **VICOM, ActiveSG and the government-linked
+preschools were not named by Sean and were not in the grading set** — the model **applied policy backing
+on its own to businesses that genuinely have it.** That is evidence the mechanism is being *reasoned
+with* rather than pattern-matched to the NTUC example, and it is the strongest sign yet that the
+category-reasoning pathway is doing real work.
+
+**Corpus effect: within-one-level against Sean's fresh grades improves 88.2% → 94.1% (15/17 → 16/17),
+which is the only 2-level dispute left resolved. Distribution SD 0.96 → 1.01 and level 5 goes 2 → 5. The
+canary passes.**
+
+**⚠ BUT TWO COSTS, AND BOTH ARE MINE:**
+
+**(a) The recurring micro-drift returned — 5 cases moved 1 → 2 again** (Euns Nails, YatoNails,
+DazzlingNails, Toa Payoh Home Facial, a home-based mobile hairdresser), while Nails Of Society moved
+2 → 1. **This is within-one-level movement on cases Sean scores 1, and it is the fourth time this
+pattern has appeared.** It sits close to the 2.5% noise floor for this dimension (5/120 = 4.2%), so **it
+cannot be cleanly attributed — but it is also not improving, and it has now survived four rubric
+revisions.** *Not chased further in this pass: at a 4.2% noise ceiling, tuning against it would be
+tuning against noise.*
+
+**(b) I re-inflated the instruction, immediately after compressing it.** **`defensibility` went 2,671 →
+3,619 chars (+35%)** in two revisions (v1.14.0 then v1.15.0), undoing a third of the v1.12.0 compression
+**within three rounds of adopting the discipline that produced it.** **That is exactly the bloat that
+D40 identified as a plausible contributor to batch variance.** *The honest conclusion is that
+"compress once" does not hold: compression has to be a recurring step, and the next pass should fold the
+outflank discount and the mechanism list into tighter wording rather than appending further clauses.*
+
 #### ⚠ D43 (original framing, superseded by the grading above)
 
 **With the 120 old grades withdrawn, `defensibility` has no human reference at all.** Agreement can no
@@ -3828,6 +3918,7 @@ purchasing decision.
 | **D39** | **Does an operated multi-outlet network count as a moat where category entry is cheap?** (§10.6) | **ANSWERED — YES, and Sean authorised it: *"I'm happy for you to apply the KFC, Ya Kun and Toast box judgement."*** Applied as a **GENERAL rule** (rubric **v1.11.2**), not three case patches: **SEPARATE VISIBILITY FROM OPERATED NETWORK** — a household name resting on visibility alone is cheap to displace and stays LOW, but **a chain that demonstrably operates many units holds efficient scale and a cost advantage even where opening a SINGLE unit is cheap**, because **the barrier is the NETWORK** (property, supply chain, central purchasing, staffing at scale, decades of sites), not one more shop. **KFC, Ya Kun and Toast Box move to 4, exact match.** **⚠ Collateral is mixed and mostly at the noise floor:** 13 cases moved (8 up, 5 down); **CHAGEE and NTUC improve, but Mixue, CHICHA San Chen and Each-A-Cup move the wrong way, and 24/7 Fitness and Chin Mee Chin drop.** **Corpus totals are a wash — DEF disputes 2.5% → 3.3%, i.e. back to v1.8.0's level.** *This is what tuning to a handful of cases looks like from the inside.* |
 | **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
 | **D42** | **Sean rebuilt the DEF construct — two routes of attack. Does the weaker route SET or merely LIMIT the score?** (§10.6) | **CLOSED — Sean: *"I think let's focus on replicate then."* → option B, rubric v1.14.0. REPLICATION SETS THE LEVEL** (name the mechanism: IP · capital intensity · network control · scale economics · switching costs · accumulated asset); **the OUTFLANK is kept as a ONE-LEVEL DISCOUNT, not a floor** — an open route that could take significant share scores no higher than one level below the mechanism's level. *A strong barrier does not protect a position a rival can go around, but an open route does not erase the barrier either.* **Measured: level 4 recovers 4 → 15 and SD 0.82 → 0.96** (v1.12.0 single-route was 26/1.20; v1.13.1 weaker-route-SETS was 4/0.82). **It does not return to 26, which is CORRECT — the outflank discount is now genuinely applied, which v1.12.0 was blind to.** **4+ is now ASML 6 · Boeing 5 · Coupang 5 · NTUC FairPrice, Watsons, McDonald's, VICOM, KOI Thé, ActiveSG, Eu Yan Sang, IKEA, Anytime Fitness, Sheng Siong, Scanteak, Pet Lovers Centre 4** — reads correctly. **✅ Canary passes (C3 back to Contested).** **⚠ The canary header was MISREPORTING the reference version** (printed the current rubric twice; the comparison itself always read the frozen snapshot), **so v1.13.1's drift was real and v1.14.0 is a genuine restoration.** *Original framing below.* |
+| **D44** | **Make COMPOUNDING reachable; add POLICY/STATE BACKING as a mechanism** (§10.6) | **✅ APPLIED (rubric v1.15.0) — and the rubric found further cases on its own.** Sean: *"You may fix the compounding. NTUC fairprice is a cooperative with deep government hands and involvement."* **(1) POLICY OR STATE BACKING is now a named mechanism** — government ownership or involvement, cooperative or statutory mandate, a protected or subsidised position, licensing that favours incumbents, public-service obligations excluding rivals — *a challenger cannot buy political protection at any price*; the rubric had six mechanisms and none covered it, so NTUC was scored as though it were merely a big supermarket. **(2) COMPOUNDING is now reachable** — the instruction requires ENUMERATING every mechanism that applies and states two or more reinforcing is a 5 or 6, with a guard against reaching 5/6 without naming that many; **level 5 reworded to "two or more mechanisms reinforce each other"**, the clause that was missing. **⚠⚠ THE RUBRIC FOUND THE RIGHT CASES UNPROMPTED: VICOM 4→5, ActiveSG 4→5, PCF Sparkletots and My First Skool 3→4, Guardian 3→4 — VICOM, ActiveSG and the preschools were NOT named by Sean and NOT in the grading set**, so the mechanism is being *reasoned with*, not pattern-matched. **NTUC 4→5 (his 6). Within-one against his fresh grades 88.2% → 94.1%. Level 5 count 2 → 5. Canary passes.** **⚠ Costs: the micro-drift returned (5 cases 1→2 on businesses Sean scores 1 — 4th appearance, but within the 2.5% noise floor, so not chased); and I re-inflated the instruction 2,671 → 3,619 chars (+35%) within three rounds of compressing it — the D40 bloat, repeated.** |
 | **D43** | **`defensibility` is UNCALIBRATED now that the old grades are withdrawn — how does it get a reference?** (§10.6) | **✅ ANSWERED — Sean graded the fresh blind set and it CORRECTS D41.** 17 businesses, 1–6, new definition, from memory, no answer shown. **Exact 8/17 = 47.1%, within one 15/17 = 88.2%, mean offset −0.18** *(n=17 → wide intervals; a SHAPE reading, not an accuracy claim)*. **✅ The shape is healthy: both readings use the full 1–6 range, there is NO systematic bias (−0.18), and the two disputes sit in OPPOSITE directions** (KOI instrument HIGH by 2, NTUC instrument LOW by 2) **— a flattened dimension would show one-directional gaps and a compressed range; neither is present.** **⚠⚠ Overturns D41: 10 of 17 grades CHANGED from his old numbers (KOI moved two whole levels, old 4 → fresh 2) — he was right that *"a lot of them are wrong."* On bubble tea his fresh grades are FLAT (2·2·2·2) and the INSTRUMENT now holds the spread the old analysis credited to him.** **D41 is withdrawn.** **TWO OPEN DISPUTES: KOI Thé (instrument 4, Sean 2 — it credits a 161-outlet network as a barrier, he reads it replicable); NTUC FairPrice (instrument 4, Sean 6 — he reads it COMPOUNDING; the instrument will not go above a single mechanism, the likelier defect since "compounding" needs category knowledge the form lacks).** **⚠ Also: D39's operated-network rule is no longer needed — fresh grades put KFC and Toast Box at 3, and v1.14.0 already returns 3, exact.** *Original framing below.* With the 120 old grades withdrawn, **DEF has no human reference**: agreement cannot be measured, so the only remaining test is "is this reasonable", **which I can satisfy by construction because I wrote the rubric — I cannot grade this dimension against myself.** **A fresh blind set is written: `specs/calibration/DEFENSIBILITY-V2-GRADING.md` — 17 businesses, 1–6, new definition, from memory, no instrument answer shown**, deliberately mixed (some previously graded, some far from Sean's usual market, some with no obvious barrier). **The range is the point** — a flattened dimension cannot be told from a working one by looking only at the middle. **⚠ 17 cases detects a 2-level systematic bias and calibrates the SHAPE of the distribution, but cannot move an agreement statistic — it is a diagnostic, not a re-calibration.** |
 | **D42-old** | *Original framing, superseded by the ruling above* | **OPEN — and this is now the most consequential question in the spec.** Sean: *"Don't worry about my prior readings on defensibility. You should not converge to my old numbers because I suspect a lot of them are wrong. The rubric however should answer the question on how hard it is to replicate (IP, capital intensive, network control etc), or for an outflank to steal significant market share."* **⚠ THE OLD DEF GRADES ARE WITHDRAWN AS THE CALIBRATION TARGET**, so every DEF agreement statistic in §10.6 (including the 1.7% "best on record") **now measures agreement with a reference Sean has disowned** — retained as history, not as evidence the dimension works. **DEF momentarily has NO agreed gold standard.** **Rebuilt (v1.13.1) around REPLICATE (IP · capital intensity · network control · scale economics · switching costs · accumulated asset) and OUTFLANK (take SIGNIFICANT MARKET SHARE by another route).** **⚠ Measured: "score the weaker route" overshoots.** DEF distribution — v1.12.0 single-route: 25·35·29·**26**·3·2, mean 2.61, **SD 1.20**, 26 cases at 4+. v1.13.0 two-route: 25·**59**·32·**2**·2·0, SD 0.82, 4 at 4+. v1.13.1 (+significant-share bar): 20·**59**·37·**1**·3·0, SD 0.82, **4 at 4+ (ASML, Boeing, Coupang, VICOM)**. **Discrimination halves, and 49% pools at level 2.** My own examples (*"a second location next door"*) undercut Sean's significant-share bar; fixing that barely moved it, so the model genuinely reads this corpus as contestable. **⚠ THE CANARY NOW FAILS — C3-petdirectory drifts Contested → Fragile (DEF 2→1); one case in six is within the 2.5% noise but cannot be waved away; repeat run required.** **THE CHOICE: A — weaker route SETS the score (as written: harsh, weak discrimination) vs B — weaker route LIMITS the score, replication drives it (keeps the spread).** *Framing is Sean's and worth keeping; only SET-vs-LIMIT is open. Not tuning further — with the grades withdrawn there is no reference to tune against.* |
 | **D41** | **Bubble-tea hand-read — why does the instrument not go as low as Sean?** (§10.6) | **DONE. The instrument FLATTENS defensibility.** Sean's bubble-tea grades spread **1–4**; the instrument's spread **2–4** and clusters at 3–4. **Both two-point gaps (Each-A-Cup 4 vs 2, Gong Cha 3 vs 1) are the instrument reading HIGH** — it does not go low enough on genuinely undefendable businesses. **And the rule behind Sean's spread is NOT derivable from the grades: across the corpus his DEF tracks FORMAT CAPITAL INTENSITY monotonically** (no premises **1.00** → home-based 1.74 → kiosk **2.46** → restaurant **3.20** → large-format **3.59** → licensed premises **4.50**), **but bubble-tea breaks it — KOI runs the same counter format as Gong Cha and gets 4 where Gong Cha gets 1.** So format is necessary but not sufficient, and the differentiator between those two is knowledge Sean holds (tenure, outlet count, or his own mental-ladder definition), **NOT visible in the grades.** **Flattening is now the dominant remaining error in this dimension.** |
