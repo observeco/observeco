@@ -20,10 +20,13 @@ The share of mind it occupies in its segment — *not* how good it is, and *not*
 | 5 | Deeply held — the defining name for the category or the occasion |
 
 **⚠ Two traps to watch, both deliberate:**
+
 1. **Mental presence survives closure.** A business that has stopped trading can still hold the mental ladder. Do not lower the score because it closed.
 2. **Candour is not weakness.** If a business names its own weakness, that is context, not evidence about what the market thinks.
 
 ---
+
+
 
 ## Column B — Competitive Room (1–5)
 
@@ -38,31 +41,35 @@ Higher = more room. **Judge the MARKET, not the business** — ignore its own qu
 
 ---
 
+
+
 ## Grade these
 
-| # | Business | Category | **A: Mental Advantage (1-5)** | **B: Competitive Room (1-5)** | Notes (optional) |
-|---|---|---|---|---|---|
-| 1 | KOI Thé Singapore | bubble-tea |  |  |  |
-| 2 | Gong Cha Singapore | bubble-tea |  |  |  |
-| 3 | Sephora Singapore | health-beauty |  |  |  |
-| 4 | Watsons Singapore | health-beauty |  |  |  |
-| 5 | Best Denki Singapore | electronics |  |  |  |
-| 6 | Courts Singapore | electronics |  |  |  |
-| 7 | KFC Singapore | fast-food |  |  |  |
-| 8 | McDonald's Singapore | fast-food |  |  |  |
-| 9 | Toast Box | kopitiam |  |  |  |
-| 10 | Ya Kun Kaya Toast | kopitiam |  |  |  |
-| 11 | NTUC FairPrice | supermarket |  |  |  |
-| 12 | IKEA Singapore | furniture |  |  |  |
-| 13 | Zoff Singapore | eyewear |  |  |  |
-| 14 | Lenskart Singapore | eyewear |  |  |  |
-| 15 | Playmade | bubble-tea |  |  |  |
-| 16 | A closed bubble tea outlet | bubble-tea |  |  |  |
-| 17 | A dormant home baker | home-baking |  |  |  |
-| 18 | A home massage service | home-not-permitted |  |  |  |
-| 19 | Eu Yan Sang | tcm |  |  |  |
-| 20 | Sheng Siong Group | supermarket |  |  |  |
-| 21 | Anytime Fitness Singapore | gym |  |  |  |
+
+| #   | Business                   | Category           | **A: Mental Advantage (1-5)** | **B: Competitive Room (1-5)** | Notes (optional) |
+| --- | -------------------------- | ------------------ | ----------------------------- | ----------------------------- | ---------------- |
+| 1   | KOI Thé Singapore          | bubble-tea         | 4                             | 3                             |                  |
+| 2   | Gong Cha Singapore         | bubble-tea         | 4                             | 3                             |                  |
+| 3   | Sephora Singapore          | health-beauty      | 5                             | 2                             |                  |
+| 4   | Watsons Singapore          | health-beauty      | 5                             | 2                             |                  |
+| 5   | Best Denki Singapore       | electronics        | 4                             | 1                             |                  |
+| 6   | Courts Singapore           | electronics        | 5                             | 1                             |                  |
+| 7   | KFC Singapore              | fast-food          | 5                             | 2                             |                  |
+| 8   | McDonald's Singapore       | fast-food          | 5                             | 2                             |                  |
+| 9   | Toast Box                  | kopitiam           | 4                             | 3                             |                  |
+| 10  | Ya Kun Kaya Toast          | kopitiam           | 5                             | 3                             |                  |
+| 11  | NTUC FairPrice             | supermarket        | 5                             | 2                             |                  |
+| 12  | IKEA Singapore             | furniture          | 5                             | 3                             |                  |
+| 13  | Zoff Singapore             | eyewear            | 3                             | 3                             |                  |
+| 14  | Lenskart Singapore         | eyewear            | 3.5                           | 3                             |                  |
+| 15  | Playmade                   | bubble-tea         | 3                             | 3                             |                  |
+| 16  | A closed bubble tea outlet | bubble-tea         | ?                             | 3                             |                  |
+| 17  | A dormant home baker       | home-baking        | 1                             | 3                             |                  |
+| 18  | A home massage service     | home-not-permitted | 1                             | 3                             |                  |
+| 19  | Eu Yan Sang                | tcm                | 5                             | 3                             |                  |
+| 20  | Sheng Siong Group          | supermarket        | 4                             | 2                             |                  |
+| 21  | Anytime Fitness Singapore  | gym                | 4                             | 3                             |                  |
+
 
 *(Mixed on purpose: household names, near-unknowns, a closed business, a dormant one, and a range of
 market structures from monopolised to fragmented. Answer all of them — the spread is what makes this useful.)*
