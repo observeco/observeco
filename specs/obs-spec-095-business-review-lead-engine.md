@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v38 — **D51: RS's basis restricted to the supplied competitive set (v1.18.1, honest about the missing research) AND the competitor scanner BUILT (§4.6.1). ⚠ The scanner is proved to work, NOT proved accurate — unvalidated against the corpus.**
+**Status:** DRAFT v39 — **⚠ RS regrade INVALID (the sheet asked the old recall question — 6th self-check failure). DR: 95% within-one, but 2 real defects — ObserveCo read 4 vs Sean's 1 (D52), and the ceased-business rule contradicted by his grading (D53).**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -440,6 +440,63 @@ corpus must be regraded before any further tuning — tuning against it would be
 error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ Limits: n=20–21 is a SHAPE
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
+
+**v39 change — D52/D53: the RS half of the regrade is INVALID, and DR reveals two real defects.**
+*(1) **⚠ THE RS HALF IS MY ERROR AND IT WASTED SEAN'S GRADING.** **The sheet asked the OLD question** —
+"does the market reach for this business by name? The test is RECOGNITION, not size", *level 2 = "nothing
+it is RECOGNISED for"* — **while the live rubric (1.18.1) asks the NEW one:** "how strong is this
+business's POSITION... **DO NOT score how well known the business is**", *level 2 = "the claim is already
+OWNED by a named occupant"*. **The sheet was committed before D49/D50 rebuilt the construct and was never
+rebuilt.** *I recorded at the time that "the RS half is moot until D49 is settled" — and then, after D50,
+asked him to grade it anyway.* **⚠ SIXTH INSTANCE OF THE SAME FAILURE THIS SESSION: I did not check the
+artefact I was about to use against the thing it was supposed to test.** *The RS readings are recorded but
+MUST NOT be used as a reference.*
+*(2) **✅ DEMAND REACH: exact 12/21 (57%), within one 20/21 (95%, CI 77–99%), disputes 1/21 (4.8%), offset
+−0.21.** *The dimension is sound; the one dispute is not.*
+*(3) **⚠⚠ THE ONE DISPUTE IS THE BIGGEST IN THE PROJECT (D52): `ObserveCo` — Sean 1, instrument 4.**
+*Sean graded his own consulting business 1: no identifiable paying buyer yet.* **The instrument reads 4
+because the submission is detailed, coherent and names a segment — i.e. it is rewarding a well-written
+SUBMISSION.** **That is precisely the *"reading the SUBMISSION instead of the BUSINESS"* defect class
+§10.7 records as accounting for every prior improvement.** **The instrument has no account of whether a
+named segment has ever actually been SERVED.** *And the "currently trading is at least 3" floor cannot
+catch it, because ObserveCo has no live outlets or price list — the instrument is treating coherent
+intent as reach.*
+*(4) **⚠⚠ THE CEASED-BUSINESS RULE IS CONTRADICTED (D53).** *The sheet was built to test exactly one
+rule: a ceased business is a **2**, not a 1.* **Sean graded BOTH ceased businesses 1** — the dormant home
+baker and the closed bubble tea outlet — *the same value for both, which makes it considered rather than
+a slip.* **His judgement implies a third case belongs at DR level 1: a business that has stopped
+trading.** **⚠ The instrument follows its own written rule correctly, so this is a definitional conflict
+for Sean, not a scoring bug.**
+*(5) **⚠ RS MAY HAVE OVER-CORRECTED — flagged, not concluded.** *Even with an invalid sheet the direction
+is informative:* **Sean's fresh RS spread wide {1:2, 2:3, 3:10, 4:4, 5:1}; the instrument at 1.18.1 is
+compressed {1:1, 2:43, 3:66, 4:7, 5:3} — 66 of 120 cases at level 3.** *Because the "cap an unproven flank
+at ADEQUATE (3)" rule fires whenever the supplied set does not evidence what an occupant claims — which,
+without the scanner, is most of the time.* **So the basis restriction bought honesty at the cost of
+discrimination and depends entirely on the scanner shipping.** *D51's trade, now with a measurement
+behind it.*
+
+**v38 change — D51: RS's basis restricted to the supplied set (v1.18.1) AND the competitor scanner BUILT.**
+*(1) **Sean: *"RS needs to do online research on competitors, just like the saladshop project or caica
+project. just wanted to make sure the rubric factored this in?"*** **FINDING: the rubric CONSUMED the
+derived competitive set, but the set holds only names, tiers and a price-floor label** — **§4.6's scan
+(capturing rivals' POSITIONING, size and pricing) was spec'd and D25-directed but NEVER BUILT.**
+*So RS was inferring whether an occupant "owns" a claim from the model's own CATEGORY MEMORY.*
+*(2) **⚠ THE MODEL'S OWN CONFIDENCE DOES NOT DETECT THIS — MEASURED:** *C4 SGFitness scored RS 4 at
+coverage **0.83**, C1 GreenPackers RS 4 at **0.72**.* **Confidence fires when the model FEELS UNSURE, not
+when the BASIS IS ABSENT** — so no confidence threshold can substitute for the missing evidence.
+*(3) **Part 1 (rubric v1.18.1):** *RS now scores ONLY against the supplied set, must not import outside
+category knowledge, and caps an unproven flank at ADEQUATE (3) — because a flank is only PROVEN against a
+named rival.* **Unproven RS≥4 fell 19 → 10 cases; canary passes.**
+*(4) **Part 2 (§4.6.1): `competitor_scan.py` BUILT and RUN.** *It discovers candidates by search, fetches
+live, extracts each site's own claim, and records a per-URL `capture_status` through the validity gate.*
+**Proved by running it against live Singapore furniture retail:** *Scanteak graded **blocked** ("challenge
+marker: 'captcha'") rather than passing through as evidence; IKEA captured with its own claim.* **The
+zero-capture path reports "SCAN FAILED — this is NOT evidence the category has no competitors."**
+**⚠ THE GATE CAUGHT A REAL BOTWALL — exactly the 60%-silent-failure class §4.1 measures.**
+*(5) **⚠ WHAT IT IS NOT: NOT VALIDATED AGAINST THE CORPUS.** *The corpus's sets were hand-written per
+category, so there is no record of what a scan would have returned for those 120 businesses.* **The
+scanner is PROVED TO WORK, NOT PROVED ACCURATE.** *Re-deriving the corpus by scan and re-scoring is the
+unrun validation.*
 
 **v31 change — D45: second compression, verified neutral, and it settles the micro-drift question.**
 *(1) **Sean: *"another compression pass then test again."*** **`defensibility` compressed 3,619 → 2,948
@@ -3376,6 +3433,70 @@ any future change to the other five dimensions — **but a future RS revision wi
 with it rather than against it.** *That sensitivity is the price of a construct change that no existing
 reference could validate; it is recorded here so the loss is visible rather than discovered later.*
 
+### 10.6e Fresh blind regrade: RS and DR — ONE INVALID, TWO REAL DEFECTS (D52, D53)
+
+**Sean graded both columns of `RS-DR-V2-GRADING.md` (21 businesses × 2).**
+
+#### ⚠ THE RS HALF IS INVALID — MY ERROR, AND IT WASTED HIS GRADING
+
+**The sheet asked the OLD question:** *"does the market reach for this business by name? The test is
+RECOGNITION, not size"* — **with level 2 defined as "nothing it is RECOGNISED for".**
+
+**The live rubric (1.18.1) asks the NEW question:** *"how strong is this business's POSITION compared with
+the positions its competitors hold? DO NOT score how well known the business is"* — **with level 2 as
+"the claim is already OWNED by a named occupant".**
+
+**⚠ The sheet was committed BEFORE D49 and D50 rebuilt the construct, and I never rebuilt it.** *I even
+recorded at the time that "the RS half is moot until D49 is settled" — and then, after D50, asked him to
+grade it anyway.* **So the RS readings measure a superseded definition. They are recorded here but MUST
+NOT be used as a reference.**
+
+**⚠ SIXTH INSTANCE OF THE SAME FAILURE THIS SESSION: I did not check the artefact I was about to use,
+against the thing it was supposed to test.**
+
+#### ✅ DEMAND REACH — 95% within one level, and ONE real dispute
+
+| | Sean (fresh) | Instrument 1.18.1 |
+|---|---|---|
+| **Exact** | **12/21 = 57%** | |
+| **Within one** | **20/21 = 95%** | *(95% CI 77–99%)* |
+| **Disputes (≥2)** | **1/21 = 4.8%** | *(95% CI 0.8–22.7%)* |
+| Mean offset | **−0.21** | |
+
+**⚠ THE ONE DISPUTE IS THE BIGGEST IN THE PROJECT: `ObserveCo` — Sean 1, instrument 4.** *Sean graded his
+own consulting business at **1**: no identifiable paying buyer yet.* **The instrument reads 4** because
+the submission is detailed, coherent and names a segment. **⚠ This is the instrument rewarding a
+well-written submission — precisely the *"reading the SUBMISSION instead of the BUSINESS"* defect class
+§10.7 records as the one that accounted for every prior improvement.** **It is recorded as D52 and it is
+a live defect, not a label error:** *the instrument has no account of whether a named segment has ever
+actually been served.*
+
+#### ⚠⚠ THE CEASED-BUSINESS RULE CONTRADICTS SEAN'S JUDGEMENT (D53)
+
+**The sheet was built to test one rule:** *a business that has CEASED trading has an identifiable buyer
+but no longer reaches them, so it is a **2, not a 1**.*
+
+**⚠ Sean graded BOTH ceased businesses 1 — the dormant home baker and the closed bubble tea outlet.** *He
+applied the SAME value to both, which makes it a considered reading rather than a slip.*
+
+**So the rule is wrong or the level-1 definition is.** *DR level 1 currently reads "no identifiable buyer,
+OR the business cannot legally serve the buyers it names."* **Sean's judgement implies a third case
+belongs at 1: a business that has stopped trading.** **⚠ That is a definitional conflict for him to rule
+on — the instrument is following its own rule correctly, which is why this is a spec question, not a
+scoring bug.**
+
+#### ⚠ RS MAY HAVE OVER-CORRECTED — flagged, not concluded
+
+**⚠ Even though the sheet is invalid, the comparison is still informative in one direction.** *Sean's
+fresh RS spread wide:* **{1:2, 2:3, 3:10, 4:4, 5:1}** — *he uses 4 and 5.* **The instrument at 1.18.1 is
+heavily compressed:** **{1:1, 2:43, 3:66, 4:7, 5:3} — 66 of 120 cases sit at level 3**, because the
+*"cap an unproven flank at ADEQUATE (3)"* rule fires whenever the supplied set does not evidence what an
+occupant claims — **which, without the scanner, is most of the time.**
+
+**⚠ So the basis restriction has bought honesty at the cost of discrimination, and it depends entirely on
+the scanner shipping.** *If the scan is not wired in, RS cannot distinguish most businesses.* **That is
+the trade recorded in D51, now with a measurement behind it.**
+
 ### 10.6 Launch gate
 
 **Ship the scored report when the instrument clears the following, on the corpora in §10.1 and
@@ -4583,6 +4704,8 @@ purchasing decision.
 | **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
 | **D42** | **Sean rebuilt the DEF construct — two routes of attack. Does the weaker route SET or merely LIMIT the score?** (§10.6) | **CLOSED — Sean: *"I think let's focus on replicate then."* → option B, rubric v1.14.0. REPLICATION SETS THE LEVEL** (name the mechanism: IP · capital intensity · network control · scale economics · switching costs · accumulated asset); **the OUTFLANK is kept as a ONE-LEVEL DISCOUNT, not a floor** — an open route that could take significant share scores no higher than one level below the mechanism's level. *A strong barrier does not protect a position a rival can go around, but an open route does not erase the barrier either.* **Measured: level 4 recovers 4 → 15 and SD 0.82 → 0.96** (v1.12.0 single-route was 26/1.20; v1.13.1 weaker-route-SETS was 4/0.82). **It does not return to 26, which is CORRECT — the outflank discount is now genuinely applied, which v1.12.0 was blind to.** **4+ is now ASML 6 · Boeing 5 · Coupang 5 · NTUC FairPrice, Watsons, McDonald's, VICOM, KOI Thé, ActiveSG, Eu Yan Sang, IKEA, Anytime Fitness, Sheng Siong, Scanteak, Pet Lovers Centre 4** — reads correctly. **✅ Canary passes (C3 back to Contested).** **⚠ The canary header was MISREPORTING the reference version** (printed the current rubric twice; the comparison itself always read the frozen snapshot), **so v1.13.1's drift was real and v1.14.0 is a genuine restoration.** *Original framing below.* |
 | **D47** | **Best Denki & Courts — consolidated appliance retail: Sean 1, instrument 3** (§10.6c) | **✅ CLOSED — SEAN RULED THE INSTRUMENT RIGHT: *"you are right it is a 3 for best denki and courts."*** **So the "two cases lost" under the 1.16.0 dominance reframe were never lost — the INSTRUMENT was right and the grading SHEET was wrong.** **On the corrected labels COMPETITIVE ROOM is exact 14/21 (67%), within one 21/21 (100%), disputes 0/21 (0.0%), offset +0.33.** **⚠ I stopped at two wording attempts precisely because a third would have been fitting the rubric to what turned out to be a bad label — the stopping rule paid for itself.** *Third time in this session that a hand-read disagreement resolved the same way: the label was the first suspect and the label was the fault.* |
+| **D52** | **Demand reach rewards a well-written submission — ObserveCo read 4, Sean grades it 1** (§10.6e) | **⚠ OPEN — a live defect, the biggest single dispute in the project.** **Sean graded his own consulting business DR = 1 (no identifiable paying buyer yet); the instrument reads 4** *because the submission is detailed, coherent and names a segment.* **This is exactly the *"reading the SUBMISSION instead of the BUSINESS"* class §10.7 records as accounting for every prior improvement.** **The instrument has no account of whether a named segment has ever actually been SERVED.** *Note the rule that should have caught it — "any business currently trading is at least 3" — cannot: ObserveCo has no live outlets or price list, and the instrument is treating coherent intent as reach.* |
+| **D53** | **Ceased businesses: Sean grades 1, the rubric's rule says 2** (§10.6e) | **⚠ OPEN — a definitional conflict, not a scoring bug.** The sheet tested one rule: *a ceased business is a **2**, not a 1* (identifiable buyer, no current reach). **Sean graded BOTH ceased businesses 1 — the dormant home baker and the closed bubble tea outlet — applying the same value to both, which makes it considered rather than a slip.** **DR level 1 currently reads "no identifiable buyer, OR cannot legally serve the buyers it names."** **His judgement implies a third case belongs at 1: a business that has STOPPED TRADING.** **⚠ The instrument follows its own rule correctly — so the rule or the level-1 definition is what must change, and that is Sean's call.** |
 | **D51** | **RS needs online competitor research (saladshop/caica style) — is the rubric factoring it in?** (§4.6, §10.6e) | **✅ AMENDED + BUILT (option C).** **Sean: *"RS needs to do online research on competitors, just like the saladshop project or caica project. just wanted to make sure the rubric factored this in?"*** **FINDING: the rubric CONSUMES the derived competitive set, but the set holds only names, tiers and a price-floor label — §4.6's scan (capturing rivals' POSITIONING, size, pricing) was spec'd and D25-directed but NEVER BUILT.** *So RS was inferring whether an occupant "owns" a claim from the model's own CATEGORY MEMORY.* **⚠ AND THE MODEL'S OWN CONFIDENCE DOES NOT DETECT THIS: C4 SGFitness scored RS 4 at coverage 0.83, C1 GreenPackers RS 4 at 0.72 — confidence fires when the model feels unsure, not when the basis is absent.** **(part 1, rubric v1.18.1)** *RS now scores ONLY against the supplied set, must not import outside category knowledge, and caps an unproven flank at ADEQUATE (3); canary PASSES and unproven RS≥4 falls 19 → 10 cases.* **(part 2, §4.6.1)** *`competitor_scan.py` built — discovers competitors by search, fetches live through the validity gate, records per-URL capture status, and refuses to present a blocked capture as evidence.* **⚠ PROVED TO WORK, NOT PROVED ACCURATE: the corpus's sets were hand-written per category, so there is no record of what a scan would have returned for those 120 businesses. Re-deriving the corpus by scan and re-scoring is the unrun validation.** |
 | **D50** | **RS rebuilt as POSITION STRENGTH (independent of recognition) — canary re-baseline?** (§10.6d) | **✅ CLOSED — Sean chose A: re-baseline the canary.** **⚠ AND THE RE-BASELINE EXPOSED AN ERROR IN MY OWN REPORTING: the canary's per-dimension "engagement" values are NOT client labels.** *Five of six fixtures say verbatim: "The per-dimension expected levels are an ASSISTANT MAPPING of that conclusion onto the six calibrated dimensions — they are not a recorded client label. **The BAND, not the dimension vector, is the bar (spec 10.6).**"* **So my argument that v1.18.0 "went the wrong way against the engagement conclusions" was WRONG — that column has no authority.** *Only C1 GreenPackers carries a recorded client label.* **The canary reference is now recorded at 1.18.0 through the deliberate `--rung record --force` path, and PASSES on two consecutive runs.** **⚠ What still stands: the canary's band check DOES have a human-blessed source — each fixture's `expected_conclusion` (`_expected.band`), and v1.18.0 matches it 5 of 6** *(unchanged from the 1.8.0 baseline; C6 Bonefirm differs either way)*. **⚠ And C1 GreenPackers still reads RS 4 against a recorded CLIENT label of 1 — that is the one real unresolved disagreement about the new construct.** **CONSTRUCT ANSWERED by Sean:** *"Mental advantage measures what the market and customers know of the brand. Relative strength measures the strength of the said brand's positioning relative to competitors... we should give hope to the high RS but low MA business that have just started out and have a good flank."* **So MA = what the market KNOWS (present, backward-looking); RS = how strong the POSITION is against competitors' positions (strategic, forward-looking) — judged WITHOUT reference to awareness.** **⚠ CONFIRMED the old instrument could not express it: ZERO of 120 cases had RS ≥ MA+2.** **Rubric 1.18.0 does: duplication 69% → 29%, mean difference 0.32 → 0.87, target profile 0 → 6 cases, and RS≥4 did NOT inflate (37% → 34%).** **⚠ But the canary FAILS (C4 and C5 flip Fragile → Contested), and the model still tracks recognition too closely — C1 GreenPackers reads RS 4 where the engagement reading is 1.** **⚠ The frozen reference is 10 revisions stale and its RS column was written under the OLD recall construct, so it cannot validate a position-strength reading.** **Decision needed: re-baseline, or re-read the canary's RS column under the new construct.** |
 | **D49** | **`relative_strength` duplicates `mental_advantage` — what should RS actually be?** (§10.6d) | **⚠ OPEN — FOUND ON SEAN'S POINTER.** *"There is a problem with RS definition. It is not what we agreed on."* **MEASURED: RS and MA return the IDENTICAL score in 83/120 cases (69%); within one level in 119/120 (99%); r=+0.89; mean difference 0.32.** **On the very case RS was created to fix, McDonald's SG vs Jollibee, both dimensions returned 5/5 and 3/3 — zero separation.** **The agreed construct is "the position actually HELD against the derived competitive set" (§5.1); the implemented instruction asks "would buyers reach for this business by name", which §5.1 defines as `mental_advantage`.** **⚠ The 0.8% dispute rate that looked like RS's strength was evidence of the MERGER — 58% of Sean's own RS grades are identical to his MA grades.** **A fix (v1.17.0, RS reframed as a contest with a fame guard) cut duplication 69% → 37% and corrected the McDonald's/Jollibee inversion, but the CANARY REJECTED IT and agreement with the engagement conclusions fell to 2/6** *(C3 engagement RS 3 → instrument 2; C4 engagement RS 1 → instrument 3)*. **⚠ REVERTED to 1.16.1.** **⚠ UNRESOLVED TENSION: the structural evidence says merge, the frozen canary and his old RS labels say the old reading is better — but BOTH references carry the defect being fixed (the labels are 58% self-duplicated).** **Evidence available today cannot distinguish "RS was never a second dimension" from "the contest wording is wrong".** **⚠ FOR SEAN: what should RS measure that MA does not?** |
