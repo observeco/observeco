@@ -130,18 +130,67 @@ def strip_tags(html: str) -> str:
 
 
 # --- search (delegates to the protocol's chain; degrades loudly) ------------
+class SearchUnavailable(RuntimeError):
+    """Raised when NO search backend could be reached. Never silently return []."""
+
+
 def search(query: str, limit: int = 8) -> list[str]:
-    """Discover candidate URLs. Uses the local extract stack's search when importable; otherwise
-    returns nothing and says so -- never invents URLs."""
+    """Discover candidate URLs.
+
+    TWO BACKENDS, and the fallback is load-bearing.
+        (1) `hermes_tools.web_search` when running INSIDE a Hermes process.
+        (2) `ddgs` directly when running standalone.
+
+    WHY (2) EXISTS: the first version had only (1) and returned [] on failure. Run from a
+    plain shell -- which is how a cron job or the production scorer would run it -- the
+    import failed, every query returned nothing, and the scan then reported
+    "0 of 0 candidate URLs were blocked". It LOOKED like a botwall had defeated it. The
+    truth was that no search had been attempted at all. That is the same silent-failure
+    class section 4.6 exists to catch, one layer further up: a search outage masquerading
+    as a scan result.
+
+    So a total search failure now RAISES, and the caller reports SEARCH UNAVAILABLE --
+    distinct from SCAN FAILED (search worked, pages could not be read).
+    """
     try:
         from hermes_tools import web_search  # noqa
-    except Exception:
-        return []
-    try:
         res = web_search(query, limit=limit)
-        return [r["url"] for r in (res.get("data", {}).get("web") or [])]
+        urls = [r["url"] for r in (res.get("data", {}).get("web") or [])]
+        if urls:
+            return urls
     except Exception:
-        return []
+        pass
+
+    try:
+        from ddgs import DDGS
+    except Exception as exc:
+        raise SearchUnavailable(
+            "no search backend available: hermes_tools not importable and ddgs is not "
+            "installed (%s)" % type(exc).__name__)
+
+    # RETRY, because the failure is INTERMITTENT AND ENVIRONMENT-DEPENDENT.
+    # Measured root cause: ddgs picks a RANDOM ssl context per client, one variant forcing
+    # TLS 1.3. On macOS system Python 3.9 (LibreSSL 2.8.3) that raises
+    #   ValueError: Unsupported protocol version 0x304
+    # on roughly half of attempts. The Hermes venv python (3.14, OpenSSL 3.6.4) does not
+    # hit it at all. Retrying rides out the unlucky draw instead of reporting a search
+    # outage that is not real -- and the caller still gets SearchUnavailable if every
+    # attempt fails, so a genuine outage is never hidden.
+    last = None
+    for attempt in range(3):
+        try:
+            with DDGS() as d:
+                hits = list(d.text(query, max_results=limit))
+            urls = [h.get("href") or h.get("url") for h in hits
+                    if (h.get("href") or h.get("url"))]
+            if urls:
+                return urls
+            last = "no results returned"
+        except Exception as exc:
+            last = "%s: %s" % (type(exc).__name__, exc)
+        if attempt < 2:
+            time.sleep(1.5)
+    raise SearchUnavailable("ddgs search failed after 3 attempts (%s)" % last)
 
 
 def scan(category: str, market: str, seed_urls: list[str], per_url_timeout: int = 20) -> dict:
@@ -151,11 +200,38 @@ def scan(category: str, market: str, seed_urls: list[str], per_url_timeout: int 
         "best %s %s" % (category, market),
         "%s %s brands" % (category, market),
     ]
-    discovered, per_query = [], {}
+    discovered, per_query, search_errors = [], {}, []
     for q in queries:
-        urls = search(q)
+        try:
+            urls = search(q)
+        except SearchUnavailable as exc:
+            urls = []
+            search_errors.append("%s -> %s" % (q, exc))
         per_query[q] = urls
         discovered.extend(urls)
+
+    # SEARCH UNAVAILABLE is its own verdict. It must never be reported as a scan that ran
+    # and was defeated -- those are different facts and they imply different next actions.
+    if not discovered:
+        return {
+            "_meta": {
+                "kind": "competitor_scan",
+                "category": category,
+                "market": market,
+                "scanned_at": started,
+                "queries": queries,
+                "urls_discovered": per_query,
+                "search_errors": search_errors,
+                "capture_summary": {"ok": 0, "not_readable": 0, "candidates": 0},
+                "verdict": ("SEARCH UNAVAILABLE -- no search backend responded, so NO "
+                            "candidate was ever discovered. This is NOT a botwall and NOT "
+                            "evidence the category is empty; no scan was performed. "
+                            "Position strength stays capped at ADEQUATE (3)."),
+                "honest_limits": [],
+                "ordering": "MUST run after the input-quality gate (spec 3.11), never before.",
+            },
+            "captures": [],
+        }
     # dedupe, preserve order, drop obvious non-candidate hosts
     seen, candidates = set(), []
     for u in list(seed_urls) + discovered:
@@ -217,6 +293,193 @@ def scan(category: str, market: str, seed_urls: list[str], per_url_timeout: int 
         },
         "captures": captures,
     }
+
+
+# Words that appear in listicle prose and are never brand names.
+NOT_A_BRAND = {
+    "the", "best", "top", "singapore", "bubble", "tea", "shop", "shops", "brand", "brands",
+    "outlets", "outlet", "price", "prices", "review", "reviews", "guide", "list", "ranking",
+    "ranked", "flavour", "flavor", "texture", "value", "quality", "access", "toppings",
+    "brown", "sugar", "milk", "pearls", "healthy", "kombucha", "drink", "drinks", "read",
+    "reddit", "timeout", "yahoo", "finance", "google", "facebook", "instagram", "tiktok",
+    "more", "most", "reliable", "legwork", "found", "enjoy", "singaporean", "factors",
+    "contributing", "increase", "find", "here", "are", "and", "with", "from", "for",
+    "these", "those", "what", "which", "when", "where", "that", "this", "your", "you",
+    "our", "their", "they", "it", "its", "was", "were", "been", "has", "have", "had",
+    "new", "year", "2026", "2025", "per", "area", "pick", "pick:", "including", "plus",
+    "also", "but", "not", "all", "any", "can", "will", "just", "only", "over", "under",
+    # Observed as fragments in the live run: sentence-starts and page furniture that are
+    # capitalised and recurring but are not occupants.
+    "updated", "read", "written", "posted", "published", "share", "menu", "order",
+    "delivery", "promo", "promotion", "deal", "deals", "photo", "photos", "video",
+    "article", "blog", "site", "website", "page", "home", "about", "contact",
+    # Generic nouns that recur in listicle prose and pass the capitalisation test.
+    "business", "businesses", "company", "companies", "customer", "customers",
+    "industry", "market", "markets", "product", "products", "service", "services",
+    "location", "locations", "branch", "branches", "store", "stores", "island",
+    "islandwide", "nationwide", "delivery", "dining", "drinks", "cafe", "restaurant",
+}
+
+# Words that suggest a fragment is part of a brand phrase (keep the phrase together).
+BRAND_CONTINUATION = {"tea", "town", "box", "san", "chen", "cha", "kuan", "kun", "yan",
+                      "sang", "fresh", "fitness", "denki", "norman", "harvey", "price",
+                      "fair", "fairprice", "don", "donki", "shake", "shack", "ya", "the",
+                      "baker", "boy", "lenskart", "watsons", "sephora", "ikea", "koi",
+                      "playmade", "each", "cup", "chagee", "liho", "mixue", "heytea",
+                      "xing", "fu", "tang", "chicha", "chen", "store", "shops"}
+
+
+def extract_occupants(ok_captures: list[dict]) -> list[tuple[str, int]]:
+    """Mine occupant NAMES out of the readable sources.
+
+    A name qualifies only if it appears in more than one independent source. Returns
+    [(name, source_count)] sorted by source count then name.
+    """
+    counts: dict[str, set[str]] = {}
+    for c in ok_captures:
+        text = "%s %s" % (c.get("claim") or "", c.get("excerpt") or "")
+        host = urllib.parse.urlparse(c["url"]).netloc.lower()
+        # 1- and 2-word capitalised phrases, including ALL-CAPS chains (CHAGEE, HEYTEA)
+        # HYPHENS ARE PART OF A BRAND NAME. Without them "Each-A-Cup" splits into
+        # "Each" and "Cup", and the set names two occupants that do not exist instead of
+        # the one that does. Both were observed in the first live run.
+        for m in re.finditer(
+                r"\b([A-Z][A-Za-z&'\-]{2,}(?:\s+(?:[A-Z][A-Za-z&'\-]{2,}|of|de))*)\b",
+                text):
+            phrase = m.group(1).strip()
+            parts = phrase.split()
+            if not parts:
+                continue
+            if len(parts) > 3:
+                phrase = " ".join(parts[:2])
+            low = phrase.lower()
+            head = low.split()[0]
+            if head in NOT_A_BRAND or low in NOT_A_BRAND:
+                continue
+            if len(low) < 3:
+                continue
+            # CASE IS NOT AN IDENTITY. The live run produced "KOI" (2 sources) and
+            # "Koi" (2 sources) as two separate occupants of the same category -- the same
+            # business counted twice, which would read to the rubric as two rivals holding
+            # the same claim. Group by lowercase and keep the most common casing.
+            key = low
+            counts.setdefault(key, {})  # type: ignore[arg-type]
+            counts[key].setdefault("sources", set()).add(host)  # type: ignore[union-attr]
+            casing = counts[key].setdefault("casing", {})       # type: ignore[union-attr]
+            casing[phrase] = casing.get(phrase, 0) + 1
+
+    ranked = []
+    for key, v in counts.items():
+        sources = v["sources"]                    # type: ignore[index]
+        if len(sources) < 2:
+            continue
+        # prefer the spelling seen most often, then an all-caps or title form
+        best = sorted(v["casing"].items(),                       # type: ignore[index]
+                      key=lambda kv: (-kv[1], not kv[0].isupper(), kv[0]))[0][0]
+        ranked.append((best, len(sources)))
+    ranked.sort(key=lambda x: (-x[1], x[0].lower()))
+    return ranked
+
+
+def to_competitive_set(result: dict) -> dict:
+    """Convert a scan result into the `derived_competitive_set` the rubric consumes.
+
+    WHY THIS EXISTS (spec 4.6 wiring)
+        The rubric's position_strength instruction says: "SCORE ONLY AGAINST THE SUPPLIED
+        COMPETITIVE SET, using what is STATED about each occupant... if the supplied set
+        names no occupant for the situation, the strongest claim available is ADEQUATE (3),
+        never Strong or Dominant, because a flank is only proven against a named rival."
+
+        So the cap lifts only when the set NAMES occupants AND STATES what they claim.
+        That is precisely what a successful scan produces, and precisely what the corpus's
+        hand-written sets lacked -- which is why the model was answering "who owns this
+        claim?" from its own category memory.
+
+    THE HONEST-LIMITS RULE, CARRIED THROUGH
+        A failed scan must NOT produce a set that reads as "this category has no
+        competitors". It produces NO members and a caveat that says the scan failed, so
+        the cap stays in place and the report can say why. An empty-looking comparison is
+        a confident wrong report -- the failure class section 4.6 exists to prevent.
+
+    SHAPE (from run_jev.build_state)
+        {"<TIER>": {"members": [...], "why": ..., "caveat": ...},
+         "_derivation_method": "..."}   # underscore keys are skipped by build_state
+    """
+    meta = result.get("_meta") or {}
+    ok = [c for c in (result.get("captures") or []) if c.get("capture_status") == "ok"]
+    blocked = [c for c in (result.get("captures") or []) if c.get("capture_status") != "ok"]
+
+    # ⚠ THE OCCUPANT-EXTRACTION STEP, and it is the whole difference between a useful set
+    # and a useless one. The FIRST version treated each readable URL as an occupant. Run
+    # live, that populated the set with timeOut.com, reddit.com and a Yahoo Finance page --
+    # LISTICLES ABOUT the category, not members OF it. The rubric asks "is this claim
+    # already owned by a NAMED RIVAL?", and answering "timeout.com" would be nonsense.
+    #
+    # The listicles are the right SOURCE and the wrong OCCUPANTS. Their text names the real
+    # occupants ("Koi (90 outlets), Each-A-Cup (48), CHAGEE (44), LiHO, Mixue and HEYTEA"),
+    # so the names are mined out of them instead.
+    #
+    # THE RULE: a name is an occupant only if it appears in MORE THAN ONE independent
+    # source. One listicle mentioning a brand is one person's opinion; the same brand
+    # surfacing across several sources is evidence it occupies the category. That rule is
+    # deliberately conservative -- it would rather name four real occupants than twenty
+    # guesses, because a wrong occupant corrupts the position reading that consumes it.
+    occupants = extract_occupants(ok)
+
+    members = []
+    for name, sources in occupants[:12]:
+        members.append("%s — named as an occupant of this category in %d independent "
+                       "source(s)" % (name, sources))
+    if not members:
+        # No agreed occupant. Still useful: say what the sources were, without claiming
+        # any of them occupies the category.
+        members.append("NO OCCUPANT COULD BE ESTABLISHED — no name appeared in more than "
+                       "one independent source. Position strength stays capped at "
+                       "ADEQUATE (3).")
+    if ok:
+        srcs = ", ".join(sorted({urllib.parse.urlparse(c["url"]).netloc.lower()
+                                 for c in ok})[:6])
+        members.append("_sources read: %s" % srcs)
+
+    out = {}
+    if members:
+        out["SCANNED OCCUPANTS OF THE CATEGORY"] = {
+            "members": members,
+            "why": ("Each entry is a named occupant of this category, discovered by search "
+                    "and read from its own live site. The claim quoted is what that occupant "
+                    "STATES, not what is assumed about it."),
+            "caveat": (meta.get("verdict") or ""),
+        }
+    else:
+        # NO members, and the caveat MUST distinguish WHY. "No search ran" and "search ran
+        # but pages were unreadable" are different facts with different next actions.
+        verdict_txt = meta.get("verdict") or ""
+        if "SEARCH UNAVAILABLE" in verdict_txt:
+            why = ("No search backend responded, so no candidate was ever discovered. "
+                   "NO SCAN WAS PERFORMED.")
+            caveat = ("SEARCH UNAVAILABLE -- this is NOT evidence the category has no "
+                      "competitors, and it is not a botwall either. Nothing was searched. "
+                      "Position strength stays capped at ADEQUATE (3): a flank cannot be "
+                      "proved against a rival that was never looked for.")
+        else:
+            why = ("The scan could not read any competitor page, so NO occupant could be "
+                   "named or characterised.")
+            caveat = ("SCAN FAILED. This is NOT evidence that the category has no "
+                      "competitors; it is evidence the scan did not work. Position strength "
+                      "therefore stays capped at ADEQUATE (3): a flank cannot be proved "
+                      "against a rival the scan could not read.")
+        out["SCANNED OCCUPANTS OF THE CATEGORY"] = {
+            "members": [], "why": why, "caveat": caveat,
+        }
+
+    out["_derivation_method"] = (
+        "competitor_scan.py (spec 4.6): discovered by search, fetched live, each capture "
+        "graded for validity. verdict: %s" % (meta.get("verdict") or "unknown"))
+    if blocked:
+        out["_not_readable"] = [
+            {"url": b["url"], "capture_status": b["capture_status"], "why": b.get("why")}
+            for b in blocked]
+    return out
 
 
 def main() -> int:

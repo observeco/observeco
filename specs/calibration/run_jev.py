@@ -441,6 +441,13 @@ def main() -> None:
                     help="BYPASS the section 3.11 pre-flight gate. For calibration "
                          "only -- it lets a deliberately-bad fixture be scored. Never "
                          "use it on a real submission.")
+    ap.add_argument("--scan", action="store_true",
+                    help="run the 4.6 competitor scan to fill derived_competitive_set when "
+                         "the submission does not already carry one. Runs AFTER the "
+                         "pre-flight gate. Without it, position strength stays capped at "
+                         "ADEQUATE (3) whenever the submission names no competitors.")
+    ap.add_argument("--scan-timeout", type=int, default=20,
+                    help="per-URL timeout for the scan (seconds)")
     ap.add_argument("--scan-available", action="store_true",
                     help="tell the pre-flight gate that the section 4.6 scanner is "
                          "wired in, so a missing competitor count can be filled")
@@ -474,6 +481,44 @@ def main() -> None:
         for flag in pf["flags"]:
             if not flag.startswith("FORM GAP"):
                 print(f"  pre-flight finding: {flag}", file=sys.stderr)
+
+    # 4.6: THE COMPETITOR SCAN, wired in. It runs HERE -- after the pre-flight gate and
+    # before the model call -- which is the ordering spec 3.11 demands: never burn the
+    # research cost on a submission that will be refused. The gate above has already
+    # returned by this point if the input was inadequate.
+    #
+    # It fills the `derived_competitive_set` ONLY when the submission does not already
+    # carry one, and ONLY when the gate said the scan is worth running. The rubric's
+    # position_strength instruction caps a flank at ADEQUATE (3) unless the set NAMES
+    # occupants AND STATES what they claim -- which is exactly what a successful scan
+    # supplies, and what the corpus's hand-written sets lacked.
+    if args.scan and not payload.get("derived_competitive_set"):
+        from preflight_gate import evaluate as _pf
+        from competitor_scan import scan as _scan, to_competitive_set as _tocs
+        _gate = _pf(payload, scan_available=True)
+        if not _gate["run_scan"]:
+            print("  scan skipped: the pre-flight gate says it is not worth the token burn",
+                  file=sys.stderr)
+        else:
+            form = payload.get("form") or {}
+            cat = (form.get("category") or "").strip()
+            mkt = (form.get("city") or "Singapore").strip() or "Singapore"
+            print(f"  scanning: {cat!r} in {mkt} ...", file=sys.stderr)
+            try:
+                res = _scan(cat, mkt, [], per_url_timeout=args.scan_timeout)
+                verdict = (res.get("_meta") or {}).get("verdict", "")
+                payload["derived_competitive_set"] = _tocs(res)
+                payload["_scan"] = res.get("_meta")
+                print(f"  scan verdict: {verdict}", file=sys.stderr)
+                # A FAILED scan must not silently proceed as though the category were empty.
+                if "SCAN FAILED" in verdict:
+                    print("  ⚠ the scan read nothing. Position strength will stay capped at "
+                          "ADEQUATE (3), and the report must say the flank is unproven.",
+                          file=sys.stderr)
+            except Exception as exc:                      # fail loud, never silently
+                payload["_scan"] = {"verdict": "SCAN ERROR: %s" % exc}
+                print(f"  SCAN ERROR: {exc} — proceeding with NO competitive set, so "
+                      f"position strength stays capped at ADEQUATE (3).", file=sys.stderr)
 
     state = build_state(payload)
     questions = build_questions(rubric)

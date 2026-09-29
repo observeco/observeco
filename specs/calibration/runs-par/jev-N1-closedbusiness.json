@@ -2,21 +2,21 @@
   "case": "N1-closedbusiness",
   "model_id": "jev-1.13.0",
   "rubric_version": "1.20.0",
-  "generated_at": "2026-09-29T14:21:28+00:00",
+  "generated_at": "2026-09-29T22:09:10+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
     "assessability_probabilities": {
-      "competitive_market": 1.0,
-      "no_competitive_market": 0.0
+      "no_competitive_market": 0.0,
+      "competitive_market": 1.0
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.97,
+    "confidence": 0.98,
     "probabilities": {
-      "ambiguous": 0.01,
-      "elastic": 0.98,
-      "inelastic": 0.01
+      "inelastic": 0.0,
+      "elastic": 0.99,
+      "ambiguous": 0.01
     },
     "rule_version": "A3"
   },
@@ -54,52 +54,52 @@
     "position_strength": 1
   },
   "raw_jev_scores_0to4": {
-    "mental_advantage": 0.61,
-    "defensibility": 0.35,
+    "mental_advantage": 0.57,
+    "defensibility": 0.37,
     "competitive_room": 1.38,
-    "market_headroom": 1.75,
+    "market_headroom": 1.76,
     "demand_reach": 0.99,
-    "position_strength": 0.49
+    "position_strength": 0.46
   },
   "evidence_coverage": {
-    "mental_advantage": 0.49,
-    "defensibility": 0.77,
+    "mental_advantage": 0.53,
+    "defensibility": 0.76,
     "competitive_room": 0.65,
-    "market_headroom": 0.79,
+    "market_headroom": 0.8,
     "demand_reach": 0.98,
-    "position_strength": 0.59
+    "position_strength": 0.62
   },
   "confidence": {
-    "mental_advantage": 0.49,
-    "defensibility": 0.77,
+    "mental_advantage": 0.53,
+    "defensibility": 0.76,
     "competitive_room": 0.65,
-    "market_headroom": 0.79,
+    "market_headroom": 0.8,
     "demand_reach": 0.98,
-    "position_strength": 0.59
+    "position_strength": 0.62
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "mental_advantage": {
-      "expected_jev_0to4": 0.61,
-      "expected_display_1to5": 1.61,
+      "expected_jev_0to4": 0.56,
+      "expected_display_1to5": 1.56,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.9
+      "mass_covered": 0.93
     },
     "defensibility": {
-      "expected_jev_0to4": 0.35,
-      "expected_display_1to5": 1.35,
+      "expected_jev_0to4": 0.36,
+      "expected_display_1to5": 1.36,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.89
+      "mass_covered": 0.88
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.38,
-      "expected_display_1to5": 2.38,
+      "expected_jev_0to4": 1.39,
+      "expected_display_1to5": 2.39,
       "band_80pct_display_1to5": [
         2,
         3
@@ -107,8 +107,8 @@
       "mass_covered": 0.94
     },
     "market_headroom": {
-      "expected_jev_0to4": 1.75,
-      "expected_display_1to5": 2.75,
+      "expected_jev_0to4": 1.76,
+      "expected_display_1to5": 2.76,
       "band_80pct_display_1to5": [
         2,
         3
@@ -125,8 +125,8 @@
       "mass_covered": 0.98
     },
     "position_strength": {
-      "expected_jev_0to4": 0.49,
-      "expected_display_1to5": 1.49,
+      "expected_jev_0to4": 0.46,
+      "expected_display_1to5": 1.46,
       "band_80pct_display_1to5": [
         1,
         2
@@ -136,31 +136,31 @@
   },
   "probabilities": {
     "mental_advantage": {
-      "0": 0.49,
-      "1": 0.41,
-      "2": 0.1,
+      "0": 0.51,
+      "1": 0.42,
+      "2": 0.07,
       "3": 0.0,
       "4": 0.0
     },
     "defensibility": {
       "0": 0.76,
-      "1": 0.13,
-      "2": 0.11,
+      "1": 0.12,
+      "2": 0.12,
       "3": 0.0,
       "4": 0.0,
       "5": 0.0
     },
     "competitive_room": {
       "0": 0.02,
-      "1": 0.63,
-      "2": 0.31,
+      "1": 0.62,
+      "2": 0.32,
       "3": 0.03,
       "4": 0.01
     },
     "market_headroom": {
       "0": 0.0,
-      "1": 0.25,
-      "2": 0.75,
+      "1": 0.24,
+      "2": 0.76,
       "3": 0.0,
       "4": 0.0
     },
@@ -172,8 +172,8 @@
       "4": 0.0
     },
     "position_strength": {
-      "0": 0.51,
-      "1": 0.49,
+      "0": 0.54,
+      "1": 0.46,
       "2": 0.0,
       "3": 0.0,
       "4": 0.0
