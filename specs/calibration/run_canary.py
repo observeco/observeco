@@ -173,8 +173,10 @@ def main():
     print("=" * 92)
     print("CANARY — drift check")
     print("=" * 92)
-    print("  reference rubric: %s    current rubric: %s"
-          % (json.loads((HERE / args.rubric).read_text())["_meta"]["version"],
+    # NOTE: this printed the CURRENT rubric twice (HERE/args.rubric), so the "reference"
+    # version shown was always wrong. The snapshot carries its own version -- use it.
+    print("  reference rubric: %s (frozen snapshot)    current rubric: %s"
+          % (json.loads(SNAP.read_text()).get("rubric_version", "?"),
              rubric["_meta"]["version"]))
     print()
     drift = []
