@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v45 — **FOUND: the corpus regrade ALREADY EXISTS and no tool had ever read it. Measured against it, the instrument PASSES every target (exact 80.8%, disputes 1.5%, offset −0.07) — every recorded FAIL was the LABELS. ⚠ Real remaining defects now visible for the first time: DEF 69.9% exact (reads high) and DR 63.1% exact. One item left: the scanner.**
+**Status:** DRAFT v46 — **Sean's five DEF grades land the instrument INSIDE every stated range (5/5); my "DEF reads high" claim is WITHDRAWN (7th stale-reference error). Disputes across ALL open dimensions: 2 cases, both DR. DR is the one real remaining defect — never tuned, 63.1% exact.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -441,6 +441,28 @@ error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ L
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
 
+**v46 change — Sean graded the five DEF disputes; the instrument was right and my defect report was wrong.**
+*(1) **Sean, verbatim: *"For defensibility breadtalk would be a 3-4. Ikea is a 3-4. Mac is 4-5. NTUC is
+5. Scanteak is 3-4".*** **Against those, the instrument scores 4, 4, 4, 5, 4 — INSIDE every stated range,
+5 of 5.** *His regrade's 2/2/2/3/2 were the outliers.*
+*(2) **⚠ MY "DEF READS HIGH" DEFECT REPORT IS WITHDRAWN. It was the seventh time this session I diagnosed
+a defect against a reference I had not checked** — *the reference being his own regrade, which for those
+five cases was superseded.* **The correction is recorded in place rather than deleted, because the failure
+shape matters more than the individual error.**
+*(3) **DEF after the five: disputes 4.4% → 0.0%, offset −0.13 → −0.05, slope/r 0.79/0.82 → 0.92/0.90.**
+*Recorded on the honest containment test (instrument inside the stated answer): **73.7%**, against 70.2%
+on midpoint-exact.* **His "3-4" is a RANGE; the midpoint is a measurement convention and the verbatim range
+is preserved in `my_new_DEF_verbatim`.**
+*(4) **⚠ ACROSS ALL OPEN DIMENSIONS there are now exactly TWO disputed cases, both DR** *(Harvey Norman and
+Shake Shack, instrument 4 vs his 2).* **PS 95.7% exact / 0 disputes; MA 93.9% exact / 0 disputes; CR 100%
+closed; DEF 0 disputes; MH ok.** **DR is the only dimension still failing its target and the only real
+remaining defect — 63.1% exact, never tuned.**
+*(5) **⚠ WHAT THIS SEQUENCE SHOWS, and it is the through-line of the whole project: the instrument has now
+been "corrected" toward a wrong reference FOUR times** *(the bubble-tea flattening, the micro-drift, the DEF
+over-read, and the original FAIL verdicts).* **In every case the reference was at fault and the instrument
+was right. The standing rule this document should carry: BEFORE PROPOSING A RUBRIC CHANGE, VERIFY THAT THE
+REFERENCE IS CURRENT AND THAT THE DISPUTED CASES WERE GRADED AGAINST THE LIVE SCALE.**
+
 **v45 change — THE CORPUS REGRADE ALREADY EXISTED AND NOTHING HAD EVER READ IT. Every FAIL was the labels.**
 *(1) **Looking for what Sean should grade next, I checked the corpus instead of generating another sheet —
 and found `sean-regrade-raw.csv` already holds a complete 120-row regrade in its `my_new_*` columns.**
@@ -462,14 +484,25 @@ rates — MA 33%, DEF 24%, CR 23%, RS/PS 25% — are consistent with §10.6's re
 dimension level, so this is the same regrade, not a different file.* **⚠ Verified in BOTH directions: the
 default path still reads `YOUR_*` and returns the old numbers byte-unchanged, so no recorded figure is
 invalidated — the new reading is strictly an addition.**
-*(4) **⚠ TWO REAL DEFECTS ARE NOW VISIBLE FOR THE FIRST TIME, because they were hidden behind a wrong
-reference.** *(a) **DEF is 69.9% exact with a systematic −0.13 offset — the instrument reads defences
-HIGHER than Sean does, and 5 of the 7 remaining disputes are exactly that (BreadTalk, IKEA, McDonald's,
-NTUC FairPrice, Scanteak all instrument 4 vs his 2).* *§5.1's compounding/policy-backing work may have
-over-corrected.* *(b) **DR is 63.1% exact, the weakest dimension, and it has never actually been tuned** —
-*it was carried as "sound, 95% within one" on a 21-case sheet and is now measured properly at 111 cases.*
-**Neither is closeable by another measurement pass; both need rubric work against the corrected labels,
-which is now a valid thing to do for the first time.**
+*(4) **⚠ I REPORTED TWO DEFECTS HERE. ONE WAS REAL AND ONE WAS MINE.**
+**(a) ⚠ WITHDRAWN — "DEF reads defences HIGHER than Sean does" was WRONG.** *I read five disputes
+(BreadTalk, IKEA, McDonald's, NTUC, Scanteak — instrument 4/4/4/5/4 vs his regrade 2/2/2/3/2) as a
+systematic over-read and proposed rubric work to correct it.* **Sean then graded the same five directly
+(2026-09-29):** ***BreadTalk "3-4", IKEA "3-4", McDonald's "4-5", NTUC "5", Scanteak "3-4"*** — **and the
+instrument's scores sit INSIDE every one of those ranges (5 of 5).** *His regrade's 2/2/2/3/2 were the
+outliers, not the instrument.* **So the "defect" was a stale reference, and it is the SEVENTH time this
+session I have diagnosed a defect against a reference I had not checked.** *The claim is withdrawn in
+place, not deleted.* **⚠ A second methodological point: his "3-4" is a RANGE, not the grade 3.5.** *The
+midpoint is a measurement convention; his answer is recorded verbatim in `my_new_DEF_verbatim` so the
+range is never mistaken for a point.*
+**(b) **The measurement after those five grades: DEF disputes `4.4% → 0.0%`, offset `−0.13 → −0.05`,
+slope/r `0.79/0.82 → 0.92/0.90`.** *Exact stays ~70–74% only because he gives ranges — on the honest test
+(the instrument must land INSIDE the stated answer) it is **73.7%** and on midpoint-exact **70.2%**.*
+**(c) ✅ DR IS THE ONE REAL REMAINING DEFECT — 63.1% exact, the weakest dimension, and it has NEVER been
+tuned.** *It was carried as "sound, 95% within one" on a 21-case sheet; at 111 cases it is not sound.* **After
+his five DEF grades it is the ONLY dimension still failing, and only two cases dispute (Harvey Norman and
+Shake Shack, both instrument 4 vs his 2).** **That is the real remaining work, and it is now the only
+thing standing between the instrument and its own gate.**
 *(5) **⚠ ONE ITEM REMAINS — the scanner wiring (§10.10 item 3).** *The report path and pre-flight gate were
 built in v44, items 2 and 4 are now closed, and the corpus is no longer the weak link.* **The instrument
 passes its own gate on corrected labels; what it still cannot do is reach beyond the competitors a
