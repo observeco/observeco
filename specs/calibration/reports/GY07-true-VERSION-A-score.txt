@@ -1,0 +1,21 @@
+OBSERVECO — POSITIONING SCORECARD
+====================================================
+
+  37/100    FRAGILE
+  Band interval: Fragile  (unreliable — near a boundary, 0 from the boundary)
+
+  DIMENSION            SCORE
+  --------------------------------------------------
+  Position strength   [#....]   1/5  (conf 0.71)
+  Mental advantage    [###..]   3/5  (conf 0.55)
+  Defensibility       [##...]   2/5  low confidence (0.39)
+  Competitive room    [##...]   2/5  (conf 0.79)
+  Market headroom     —
+      Demand in your market is served and contested.
+  Demand reach        [##...]   2/5  (conf 0.93)
+
+  Input sufficiency : sufficient
+  Weights used      : Position strength 25%, Mental advantage 20%, Defensibility 20%, Competitive room 15%, Market headroom 10%, Demand reach 10%
+  Model             : jev-1.13.0
+  Rubric            : 1.16.1
+  Generated         : 2026-09-29T09:49:34+00:00

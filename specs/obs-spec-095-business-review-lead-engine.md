@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v43 — **D54a: Sean's sheet grades ARE valid PS grades, so PS is CALIBRATED (instrument agrees, 90% within-one). §10.10 open items reduce to three: corpus regrade, scanner wiring, and the production scorer.**
+**Status:** DRAFT v44 — **The report path and the pre-flight gate are BUILT and WIRED. §10.10 item 4 (production scorer) CLOSED; item 3 narrowed to the scanner alone. Found and fixed: a report generator that silently omitted 45% of the composite, and a §3.11 claim that was half untrue. Two items remain — both need grading time, not code.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -440,6 +440,47 @@ corpus must be regraded before any further tuning — tuning against it would be
 error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ Limits: n=20–21 is a SHAPE
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
+
+**v44 change — the report path and the pre-flight gate BUILT AND WIRED. Two open items remain, neither of
+them code.**
+*(1) **Sean: *"just persistently work through your to do and resolving the issues along the way. Just make
+sure things work and you are thorough on considering blast radius."***
+*(2) **✅ §10.10 ITEM 4 CLOSED — the report path existed and was BROKEN THREE WAYS.** *`generate_report.py`
+was already there, unused and unusable:* **(a)** *it keyed the 25%-weight dimension `position_availability`,
+a name the rubric stopped emitting two renames ago, so it **crashed** on every real artifact;* **(b)** *its
+hardcoded weights disagreed with the rubric's own on **four of five** dimensions;* **(c)** *it rendered
+**five** dimensions from a hardcoded list while the rubric scores **six** — **`mental_advantage` (20%) and
+`position_strength` (25%) were absent from every report it ever produced.*** **A report generator that
+silently omits 45% of the composite is worse than no report at all.**
+**Rewritten so weights come from the artifact, no dimension can be dropped silently, an unscored dimension
+shows an actionable sentence rather than "N/A", THE ONE THING is the §5.5 argmin with the confidence
+tie-break the old code lacked, and an artifact missing a dimension is REFUSED, not rendered short.**
+*Verified by running it: six dimensions render, two runs are byte-identical, frozen `relative_strength`
+artifacts render via alias, and stripped-dimension input is refused.*
+*(3) **✅ §10.10 ITEM 3 NARROWED — the §3.11 pre-flight gate is now BUILT AND WIRED.** *It fires in
+`run_jev.py` **before `call_jev`**, so the token spend is now genuinely gated — previously the function
+went straight to the model and the gate could not have stopped anything.* **⚠ AND §3.11's OWN CLAIM THAT
+STEP 1 WAS "ALREADY BUILT" WAS HALF UNTRUE, and the untrue half mattered:** *§3.10's floor was implemented
+**post-hoc**, computed from the model's own `input_sufficiency` answer AFTER the call — so the old path
+paid for the model call and then discovered the input was unusable. That is exactly the naive shape §3.11
+names. Corrected in place.*
+*(4) **⚠ THREE DEFECTS FOUND IN THE GATE BY RUNNING IT — every one the same class as the defect it fixed.**
+*(a) One global 12-character floor refused **100% of the corpus and all 5 controls**; legitimate answers
+include `'value'`, `'3-5'`, `'Bubble tea'`. Floors are per slot, set from the corpus.* *(b) Requiring a
+letter in every slot marked `'3-5'` absent for every case.* *(c) Judging specificity from the first
+populated field only flagged **Coupang**, whose terse positioning sentence sits beside a full flywheel
+explanation.* **None was found by reading the code — all three by running it against real data.**
+*(5) **⚠ BLAST RADIUS, MEASURED BEFORE WIRING:** *all **120** corpus cases return `REPORT`, so no existing
+calibration result changes; the driver's full run stays **120/120, failed 0, 9s** afterwards; the refusal
+path exits **3**; `--skip-preflight` preserves the old behaviour for calibration fixtures.*
+*(6) **⚠ WHAT THE GATE FOUND THAT IS NOT MINE TO FIX: no form field collects a customer description**,
+*though §3.10 requires that slot to drive `demand_reach` and `mental_advantage`. Every submission —
+including all 120 calibration cases — fails it. It is reported as a FORM GAP flag, **not** treated as a
+refusal, and it needs a form change.*
+*(7) **⚠ STILL OPEN, and both need GRADING TIME rather than code:** **(a)** *the 120-case corpus's 35–81%
+relabel noise (§10.10 item 2);* **(b)** *wiring `competitor_scan.py` into the scoring path (item 3), whose
+prerequisite the pre-flight gate now is.* **The report path is built and the instrument is calibrated on
+five of six dimensions — and the corpus is still the weakest link.**
 
 **v43 change — PS is calibrated (D54a), and the open list is down to three items that need building.**
 *(1) **Sean: *"My last grading of RS is the same grade I would give PS."*** **Accepted, and the instrument's
@@ -926,7 +967,10 @@ this document.
 `rubric.json` was edited directly and the version stamped by hand; the harness caught a half-completed
 stamp (`top-level 1.9.0` vs `_meta.version 1.8.0`) and refused to run — *"an inconsistent stamp defeats
 the mixed-version guard"*. **Fixed, but `promote_rubric.py` was not used, and §5.3.1 step 4 (the
-production scorer must refuse a non-promoted rubric) is still not built.**
+production scorer must refuse a non-promoted rubric) is still not built.** ***⚠ SUPERSEDED (v34, then
+v44): step 4 is now BUILT (`rubric_gate.py`, enforced in `run_jev.py`) and the production report path
+now exists and enforces it (`generate_report.py`). The original note is kept so the sequence is visible:
+this was recorded as an open hole, then closed.***
 *(4) **Canary re-run against v1.9.0: PASSED — no band moved — but it is WEAK evidence for this change.**
 All six canary fixtures are micro/single-outlet businesses already correctly at defensibility 2, where
 "fragmented, low entry cost" is the right reading, so **category structure cannot move any of them**.
@@ -1345,10 +1389,31 @@ answers alone, before a single search is issued.**
 | 3 | **Scan-cost estimate** — is this category scannable at all? | one search | Thin/ambiguous category → cap or skip the scan |
 | 4 | **The competitor scan** (§4.6) | **the token burn** | Best-effort; degrades depth, never existence |
 
-**Step 1 is the load-bearing one and it is already built.** §3.10's floor already decides whether every
-scored dimension has a form answer or a passing enrichment source. **Reusing it as the pre-flight gate
-means the gate adds no new logic — it changes only WHERE it fires.** That is the cheapest possible
-implementation and it is the whole point of Sean's rule.
+**⚠ THIS SECTION PREVIOUSLY CLAIMED STEP 1 WAS "ALREADY BUILT". THAT WAS HALF TRUE, AND THE UNTRUE HALF
+MATTERED.** *§3.10's floor was implemented as a **post-hoc** check: `run_jev.py` computed
+`input_sufficiency` from the model's own answer **after** the model call. So the floor existed, but
+nothing fired it before the spend — which is precisely the thing this section exists to prevent.* **The
+distinction is not academic: the old path paid for the model call and THEN discovered the input was
+unusable.** *That is the naive shape the table above names.*
+
+**Step 1 is now BUILT (v44) as a true pre-flight check: `preflight_gate.py`, wired into `run_jev.py`
+before `call_jev`.** *It is deterministic code — no model call, no search — and it decides whether either
+is worth doing.* **Two facts made the wiring safe, and both were measured rather than assumed:**
+*all **120** corpus cases return `REPORT` (so no existing calibration result changes), and the driver's
+full run stays **120/120 in 9s** afterwards.*
+
+**It refuses on §3.6's Required column only — business name, category, position.** *A missing price or
+competitor count is a **depth shortfall**, never a refusal: the spec says those "drive depth" and are
+enrichable, so refusing on them would break the cannot-refuse contract.* **And it never refuses on §3.10's
+trap 3 — a generic-but-genuine position is a reportable FINDING, not a refusal.**
+
+**⚠ THREE DEFECTS WERE FOUND IN THE GATE BY RUNNING IT, AND EACH IS THE SAME CLASS AS THE ONE IT FIXED.**
+*(1) One global 12-character floor refused **100% of the corpus and all five controls** — real answers
+include `'value'` (5 chars), `'3-5'` (3) and `'Bubble tea'` (10). Floors are now per slot, set from the
+corpus.* *(2) Demanding a letter in every slot marked `'3-5'` a placeholder — the corpus's own vocabulary
+(`'3-5'` ×57, `'2-4'` ×52) settled it.* *(3) Judging specificity from the **first** populated field only
+flagged Coupang, whose terse positioning sentence sits beside a full flywheel explanation.* **Every one
+was found by running the gate against real data, not by reading it.**
 
 **Three consequences worth stating:**
 
@@ -3618,8 +3683,8 @@ with what each actually requires.*
 |---|---|---|---|
 | ~~**1**~~ | ~~`position_strength` is UNCALIBRATED~~ **CLOSED (D54a)** | — | **✅ Sean ruled his sheet's RS grades ARE his PS grades, and the instrument's evidence agrees: 90% within-one.** *The sheet prompt asked the old question, but a grade is a judgement about a business and it transfers.* **⚠ Caveat carried: his fresh grades still track his MA grades at r = +0.93 (n=8) — the duplication signature, not conclusive at that n.** |
 | **2** | **The 120-case corpus carries 35–81% relabel noise** | **Regrading the corpus**, or accepting that no further tuning against it is valid | **Every agreement figure in §10.6–10.7 is measured against this reference.** *Tuning against it fits to noise — the error that produced the v1.11.0 over-raise.* |
-| **3** | **The competitor scanner is not wired into production** | **Wiring `competitor_scan.py` into the scoring path**, which needs the §3.11 pre-flight gate to exist first *(scan must run AFTER input quality, never before)* | **And the PS cap at ADEQUATE (3) depends on this shipping.** *Without the scan, 66 of 120 cases sit at level 3 because an unproven flank cannot exceed parity.* **The cap and the scanner ship together or neither is honest.** |
-| **4** | **There is no production scorer** | **The report-serving path itself** — *`run_jev.py` is a calibration harness; nothing serves a report* | **§5.3.1 step 4 is enforced in `run_jev.py` today, and `rubric_gate.py` exists precisely so the scorer can refuse an unpromoted rubric when it is written.** *The guard is ready and unused.* |
+| **3** | **The competitor scanner is not wired into production** — **⚠ but its PREREQUISITE now exists** *(v44)* | **Wiring `competitor_scan.py` into the scoring path.** The **§3.11 pre-flight gate is now BUILT AND WIRED**, so the sequencing rule is enforced: `run_jev.py` refuses an inadequate submission **before the model call and before any scan**. | **And the PS cap at ADEQUATE (3) depends on this shipping.** *Without the scan, 66 of 120 cases sit at level 3 because an unproven flank cannot exceed parity.* **The cap and the scanner ship together or neither is honest.** *This is now the LAST remaining item whose fix is code rather than grading time.* |
+| ~~**4**~~ | ~~There is no production scorer~~ **CLOSED (v44)** | — | **✅ `generate_report.py` was ALREADY the report path and was BROKEN IN THREE WAYS** *(stale dimension key → crash; weights disagreeing with the rubric on 4 of 5 dimensions; and a hardcoded 5-dimension list that silently omitted `mental_advantage` and `position_strength` — **45% of the composite was absent from every report it produced**).* **Rewritten and verified: all six dimensions render, an unscored dimension shows an actionable sentence rather than "N/A", two runs are byte-identical, frozen old artifacts render via alias, and an artifact missing a dimension it claims is REFUSED rather than rendered short.** |
 
 **⚠ STATED PLAINLY: the instrument is internally consistent, the launch gate passes, and the report is NOT
 ready to serve.** *No real submission has ever been scored, no real report has ever been produced, and the

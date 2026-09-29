@@ -437,6 +437,13 @@ def main() -> None:
                          "in every run file and a mixed corpus is invalid.")
     ap.add_argument("--outdir", default=None,
                     help="directory for run files (default: runs/)")
+    ap.add_argument("--skip-preflight", action="store_true",
+                    help="BYPASS the section 3.11 pre-flight gate. For calibration "
+                         "only -- it lets a deliberately-bad fixture be scored. Never "
+                         "use it on a real submission.")
+    ap.add_argument("--scan-available", action="store_true",
+                    help="tell the pre-flight gate that the section 4.6 scanner is "
+                         "wired in, so a missing competitor count can be filled")
     args = ap.parse_args()
 
     # 5.3.1 step 4: the SCORER must refuse a rubric that was not promoted. Enforced here
@@ -446,6 +453,28 @@ def main() -> None:
     require_promoted(HERE / args.rubric)
     rubric = json.loads((HERE / args.rubric).read_text())
     payload = json.loads(Path(args.input).read_text())
+
+    # 3.11 (D30): the pre-flight gate fires BEFORE the token spend. Sean's condition,
+    # verbatim: "It burns a lot of tokens so let's make sure before we run the analysis
+    # we assess the input quality first, before deciding it is worth the token burn."
+    # Wiring it HERE is what makes that rule real -- previously this function went
+    # straight to call_jev, so the gate existed but nothing enforced it.
+    # Measured before wiring: all 120 corpus cases return REPORT, so this changes no
+    # existing calibration result. That measurement is why wiring it in is safe.
+    if not args.skip_preflight:
+        from preflight_gate import evaluate as preflight
+        pf = preflight(payload, scan_available=args.scan_available)
+        if pf["outcome"] != "REPORT":
+            print(f"PRE-FLIGHT REFUSED: {args.input}", file=sys.stderr)
+            print(f"  missing required slots: {', '.join(pf['missing_slots'])}",
+                  file=sys.stderr)
+            print("  -> guidance email (template C). No model call, no scan, no token "
+                  "spend.", file=sys.stderr)
+            sys.exit(3)
+        for flag in pf["flags"]:
+            if not flag.startswith("FORM GAP"):
+                print(f"  pre-flight finding: {flag}", file=sys.stderr)
+
     state = build_state(payload)
     questions = build_questions(rubric)
 

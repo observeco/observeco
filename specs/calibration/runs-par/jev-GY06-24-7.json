@@ -1,22 +1,22 @@
 {
   "case": "GY06-24-7",
   "model_id": "jev-1.13.0",
-  "rubric_version": "1.12.0",
-  "generated_at": "2026-09-29T06:27:21+00:00",
+  "rubric_version": "1.19.0",
+  "generated_at": "2026-09-29T14:02:53+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
     "assessability_probabilities": {
-      "competitive_market": 1.0,
-      "no_competitive_market": 0.0
+      "no_competitive_market": 0.0,
+      "competitive_market": 1.0
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.83,
+    "confidence": 0.77,
     "probabilities": {
-      "inelastic": 0.06,
-      "ambiguous": 0.05,
-      "elastic": 0.89
+      "elastic": 0.84,
+      "inelastic": 0.09,
+      "ambiguous": 0.07
     },
     "rule_version": "A3"
   },
@@ -35,59 +35,50 @@
     "noise_used": 3.0
   },
   "dimensions_display_1to5": {
-    "relative_strength": 2,
     "mental_advantage": 3,
     "defensibility": 2,
     "competitive_room": 2,
     "market_headroom": 3,
-    "demand_reach": 3
+    "demand_reach": 3,
+    "position_strength": 2
   },
   "dimensions_unscored": [
     "market_headroom"
   ],
   "display_for_client": {
-    "relative_strength": 2,
     "mental_advantage": 3,
     "defensibility": 2,
     "competitive_room": 2,
     "market_headroom": "Demand in your market is served and contested.",
-    "demand_reach": 3
+    "demand_reach": 3,
+    "position_strength": 2
   },
   "raw_jev_scores_0to4": {
-    "relative_strength": 1.36,
     "mental_advantage": 2.34,
-    "defensibility": 1.42,
-    "competitive_room": 1.01,
-    "market_headroom": 1.95,
-    "demand_reach": 2.25
+    "defensibility": 1.28,
+    "competitive_room": 1.49,
+    "market_headroom": 1.96,
+    "demand_reach": 2.29,
+    "position_strength": 0.99
   },
   "evidence_coverage": {
-    "relative_strength": 0.68,
-    "mental_advantage": 0.66,
-    "defensibility": 0.57,
-    "competitive_room": 0.93,
-    "market_headroom": 0.92,
-    "demand_reach": 0.63
+    "mental_advantage": 0.67,
+    "defensibility": 0.64,
+    "competitive_room": 0.58,
+    "market_headroom": 0.94,
+    "demand_reach": 0.62,
+    "position_strength": 0.86
   },
   "confidence": {
-    "relative_strength": 0.68,
-    "mental_advantage": 0.66,
-    "defensibility": 0.57,
-    "competitive_room": 0.93,
-    "market_headroom": 0.92,
-    "demand_reach": 0.63
+    "mental_advantage": 0.67,
+    "defensibility": 0.64,
+    "competitive_room": 0.58,
+    "market_headroom": 0.94,
+    "demand_reach": 0.62,
+    "position_strength": 0.86
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
-    "relative_strength": {
-      "expected_jev_0to4": 1.36,
-      "expected_display_1to5": 2.36,
-      "band_80pct_display_1to5": [
-        2,
-        3
-      ],
-      "mass_covered": 0.95
-    },
     "mental_advantage": {
       "expected_jev_0to4": 2.34,
       "expected_display_1to5": 3.34,
@@ -98,50 +89,52 @@
       "mass_covered": 0.95
     },
     "defensibility": {
-      "expected_jev_0to4": 1.42,
-      "expected_display_1to5": 2.42,
+      "expected_jev_0to4": 1.27,
+      "expected_display_1to5": 2.27,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.81
+      "mass_covered": 0.85
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.02,
-      "expected_display_1to5": 2.02,
+      "expected_jev_0to4": 1.49,
+      "expected_display_1to5": 2.49,
       "band_80pct_display_1to5": [
         2,
-        2
+        3
       ],
-      "mass_covered": 0.92
+      "mass_covered": 0.98
     },
     "market_headroom": {
-      "expected_jev_0to4": 1.95,
-      "expected_display_1to5": 2.95,
+      "expected_jev_0to4": 1.96,
+      "expected_display_1to5": 2.96,
       "band_80pct_display_1to5": [
         3,
         3
       ],
-      "mass_covered": 0.91
+      "mass_covered": 0.92
     },
     "demand_reach": {
-      "expected_jev_0to4": 2.26,
-      "expected_display_1to5": 3.26,
+      "expected_jev_0to4": 2.29,
+      "expected_display_1to5": 3.29,
       "band_80pct_display_1to5": [
         3,
         4
       ],
-      "mass_covered": 0.87
+      "mass_covered": 0.88
+    },
+    "position_strength": {
+      "expected_jev_0to4": 1.0,
+      "expected_display_1to5": 2.0,
+      "band_80pct_display_1to5": [
+        2,
+        2
+      ],
+      "mass_covered": 0.86
     }
   },
   "probabilities": {
-    "relative_strength": {
-      "0": 0.01,
-      "1": 0.66,
-      "2": 0.29,
-      "3": 0.04,
-      "4": 0.0
-    },
     "mental_advantage": {
       "0": 0.0,
       "1": 0.03,
@@ -150,50 +143,57 @@
       "4": 0.02
     },
     "defensibility": {
-      "0": 0.11,
-      "1": 0.44,
-      "2": 0.37,
-      "3": 0.08,
+      "0": 0.13,
+      "1": 0.49,
+      "2": 0.36,
+      "3": 0.02,
       "4": 0.0,
       "5": 0.0
     },
     "competitive_room": {
-      "0": 0.03,
-      "1": 0.92,
-      "2": 0.05,
-      "3": 0.0,
+      "0": 0.01,
+      "1": 0.5,
+      "2": 0.48,
+      "3": 0.01,
       "4": 0.0
     },
     "market_headroom": {
       "0": 0.0,
-      "1": 0.07,
-      "2": 0.91,
+      "1": 0.06,
+      "2": 0.92,
       "3": 0.02,
       "4": 0.0
     },
     "demand_reach": {
       "0": 0.0,
-      "1": 0.09,
-      "2": 0.6,
-      "3": 0.27,
+      "1": 0.08,
+      "2": 0.59,
+      "3": 0.29,
       "4": 0.04
+    },
+    "position_strength": {
+      "0": 0.08,
+      "1": 0.86,
+      "2": 0.04,
+      "3": 0.02,
+      "4": 0.0
     }
   },
   "input_sufficiency": "sufficient",
   "weights_declared": {
-    "relative_strength": 25,
     "mental_advantage": 20,
     "defensibility": 20,
     "competitive_room": 15,
     "market_headroom": 10,
-    "demand_reach": 10
+    "demand_reach": 10,
+    "position_strength": 25
   },
   "weights_used_renormalised": {
-    "relative_strength": 27.78,
     "mental_advantage": 22.22,
     "defensibility": 22.22,
     "competitive_room": 16.67,
-    "demand_reach": 11.11
+    "demand_reach": 11.11,
+    "position_strength": 27.78
   },
   "gates_firing": [],
   "composite": 45,

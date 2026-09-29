@@ -1,0 +1,21 @@
+OBSERVECO — POSITIONING SCORECARD
+====================================================
+
+  64/100    VIABLE, CONDITIONAL
+  Band interval: Viable, conditional  (reliable, 7 from the boundary)
+
+  DIMENSION            SCORE
+  --------------------------------------------------
+  Mental advantage    [#####]   5/5  (conf 0.63)
+  Defensibility       [####.]   4/5  (conf 0.52)
+  Competitive room    [##...]   2/5  (conf 0.67)
+  Market headroom     —
+      Demand in your market is served and contested.
+  Demand reach        [####.]   4/5  (conf 0.73)
+  Position strength   [##...]   2/5  (conf 0.58)
+
+  Input sufficiency : sufficient
+  Weights used      : Mental advantage 20%, Defensibility 20%, Competitive room 15%, Market headroom 10%, Demand reach 10%, Position strength 25%
+  Model             : jev-1.13.0
+  Rubric            : 1.19.0
+  Generated         : 2026-09-29T13:17:49+00:00
