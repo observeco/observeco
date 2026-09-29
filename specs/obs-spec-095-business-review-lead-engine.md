@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v26 — **D40 complete (driver 12× faster; noise floor settled at 4.2%); D41 bubble-tea hand-read — the instrument FLATTENS defensibility.**
+**Status:** DRAFT v27 — **D42: Sean rebuilt the DEF construct (two routes); old DEF grades WITHDRAWN as the calibration target; "score the weaker route" overshoots — SET vs LIMIT is open.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -251,6 +251,40 @@ reading **brand recognition** as a barrier where Sean reads **structural cost to
 are company-name subsets, not new businesses. So "reach n=300" demands ~180 NEW businesses collected
 first.** The advice to "grade more to reach 300" was **wrong on two counts — the denominator and the
 availability of material.**
+**v27 change — D42. Sean rebuilt the defensibility construct, and it withdraws the calibration target.**
+*(1) **Sean: *"Don't worry about my prior readings on defensibility. You should not converge to my old
+numbers because I suspect a lot of them are wrong. The rubric however should answer the question on how
+hard it is to replicate (IP, capital intensive, network control etc), or for an outflank to steal
+significant market share."*** **So the 120 old DEF grades are WITHDRAWN as truth.** **Consequence: every
+DEF agreement statistic in §10.6 — including the 1.7% "best on record" — now measures agreement with a
+reference he has disowned.** They are retained as history but **must not be quoted as evidence the
+dimension works. DEF currently has NO agreed gold standard**, which is a real loosening of the only
+external check it had.
+*(2) **The dimension is rebuilt around TWO ROUTES OF ATTACK (v1.13.1): REPLICATE** — name the mechanism
+(IP · capital intensity · network control · scale economics · switching costs · accumulated asset) — and
+**OUTFLANK** — take **significant market share** by a different route to the customer. **The outflank is
+the route replication-barrier thinking misses, and it is Sean's addition.**
+*(3) **⚠⚠ "Score the weaker route" OVERSHOOTS, and the measurement says so.** DEF distribution:
+**single-route v1.12.0 — 25·35·29·26·3·2, SD 1.20, 26 cases at 4+; two-route v1.13.0 — 25·59·32·2·2·0,
+SD 0.82, 4 at 4+; v1.13.1 (+significant-share bar) — 20·59·37·1·3·0, SD 0.82, 4 at 4+.** **Level 4
+collapses 26 → 4, 49% pools at level 2, and discrimination halves.** The survivors are **ASML, Boeing,
+Coupang, VICOM** — arguably correct, but the cost is real.
+*(4) **My own wording caused most of it.** v1.13.0 listed *"a second location next door"* and generic
+*"delivery, online, D2C"* as outflanks — **which undercuts Sean's stated bar of SIGNIFICANT MARKET
+SHARE**, since nearly every SME can be "outflanked" by one of those. **v1.13.1 restates the bar and adds
+that marginal-share routes leave the position holding — and the distribution barely moved**, which means
+the model reads this corpus as genuinely contestable rather than that the wording is still wrong.
+*(5) **⚠ THE CANARY NOW FAILS: C3-petdirectory drifts Contested → Fragile on DEF 2 → 1** — a band change
+on a launch-gate artefact. **The canary runs once per change with no repeats and DEF's batch noise is
+2.5%, so one case in six cannot be distinguished from noise — but it cannot be waved away either.
+A repeat run is required before this version is treated as settled.**
+*(6) **THE OPEN CHOICE — A: the weaker route SETS the score** (as written: most positions contestable,
+DEF low for nearly every SME, weak discrimination) **versus B: the weaker route LIMITS the score while
+replication drives it** (keeps the spread the single-route version had). **The two-route framing is right
+either way; only SET-vs-LIMIT is open.** **Not tuning further to decide it — with the old grades
+withdrawn there is no reference to tune against, and the difference is a judgment about how harsh the
+instrument should be, which is Sean's.**
+
 **v26 change — D40 completed (parallel driver) and D41, the bubble-tea hand-read.**
 *(1) **The driver is now PARALLEL** (`run_corpus_parallel.py`, bounded at 8 workers, one subprocess per
 case): **120 cases in 9 s against 107 s sequential — 12× — with 0 failures and one rubric version.**
@@ -3054,6 +3088,70 @@ things at once:** the compression effect on `defensibility` (**16.7%**, from 5.4
 noise and cannot be claimed.** **Rule going forward: a movement must exceed ~5% (the 4.2% ceiling plus
 margin) before it is worth interpreting.**
 
+#### ⚠⚠⚠ D42 — SEAN REBUILT THE DIMENSION'S CONSTRUCT, AND IT CHANGES THE CALIBRATION TARGET
+
+**Sean, verbatim:** *"Don't worry about my prior readings on defensibility. You should not converge to my
+old numbers because I suspect a lot of them are wrong. The rubric however should answer the question on
+how hard it is to replicate (IP, capital intensive, network control etc), or for an outflank to steal
+significant market share."*
+
+**Three consequences, and the first is a standing-rule change:**
+
+**(1) THE OLD DEF GRADES ARE NO LONGER THE CALIBRATION TARGET.** Sean has withdrawn them as truth for
+this dimension (*"I suspect a lot of them are wrong"*). **So every DEF agreement statistic in §10.6 —
+including the 1.7% "best on record" — now measures agreement with a reference he has disowned.** *That
+statistic is retained as history, but it must not be quoted as evidence the dimension works. The
+dimension is now judged against the CONSTRUCT, not against the 120 old grades. This is a significant
+loosening of the only external check this dimension had, and it is recorded as such: DEF currently has
+NO agreed gold standard.*
+
+**(2) THE DIMENSION IS REBUILT AROUND TWO ROUTES OF ATTACK (rubric v1.13.1).**
+
+> **REPLICATE** — build the same thing and win on execution. The mechanism must be NAMED: **intellectual
+> property · capital intensity · network control · scale economics · switching costs · accumulated
+> asset.**
+> **OUTFLANK** — bypass the position and take **significant market share** by a different route to the
+> customer. **This is the route that replication-barrier thinking misses.**
+
+**(3) ⚠⚠ AND "SCORE THE WEAKER ROUTE" OVERSHOOTS. Measured, and it is the honest result:**
+
+| Version | DEF distribution (L1…L6) | Mean | SD | Cases at 4+ |
+|---|---|---|---|---|
+| v1.12.0 *(single route)* | 25 · 35 · 29 · **26** · 3 · 2 | 2.61 | **1.20** | 26 |
+| v1.13.0 *(two routes, weaker cap)* | 25 · **59** · 32 · **2** · 2 · 0 | 2.14 | 0.82 | 4 |
+| v1.13.1 *(+ significant-share bar)* | 20 · **59** · 37 · **1** · 3 · 0 | 2.23 | **0.82** | 4 |
+
+**Level 4 collapses from 26 cases to 4, and 49% of the corpus pools at level 2.** The only businesses
+still reaching 4+ are **ASML, Boeing, Coupang and VICOM** — *which is arguably correct: they are the most
+genuinely protected in the corpus.* **But discrimination halves (SD 1.20 → 0.82), and that is the real
+cost.**
+
+**⚠ MY OWN WORDING CAUSED MOST OF IT, AND THE FIRST ATTEMPT WAS WORSE.** v1.13.0's outflank examples —
+*"a second location next door"*, generic *"delivery, online, D2C"* — **undercut Sean's own bar, which was
+SIGNIFICANT MARKET SHARE.** Near enough every SME can be "outflanked" by one of those, so the weaker
+route was always open and level 4 became unreachable. **v1.13.1 restates the bar explicitly and adds
+that marginal-share routes leave the position holding — and it barely moved the distribution**, which
+tells me the model genuinely reads most of this corpus as contestable rather than that the wording is
+still wrong.
+
+**⚠ AND THE CANARY NOW FAILS: C3-petdirectory drifts Contested → Fragile on `defensibility` 2 → 1.**
+**That is a band change on a launch-gate artefact.** The canary runs once per change with no repeats, and
+DEF's own batch noise is 2.5%, so **one case in six moving cannot be distinguished from noise — but it
+cannot be waved away either.** **A repeat run is required before this version is treated as settled.**
+
+**⚠⚠ THE BRACKET, STATED PLAINLY, BECAUSE THE CHOICE IS A CONSTRUCT CALL AND NOT A TUNING ONE:**
+
+| | Reading | Consequence |
+|---|---|---|
+| **A** | **"Score the weaker route" (as written)** | Most positions are contestable ⇒ DEF is low for nearly every SME, 4+ is reserved for the genuinely protected, and **the dimension discriminates weakly** |
+| **B** | **"The weaker route CAPS the score but replication drives it"** | Keeps the outflank as a discount rather than an absolute floor, preserving the spread the single-route version had |
+
+**The two-route framing is right and worth keeping either way — it is what Sean asked for and it catches
+the failure replication-thinking misses. The open question is only whether the weaker route SETS the
+score or merely LIMITS it.** **I am not tuning further to decide it:** with the old grades withdrawn
+there is no longer a reference to tune against, and the difference between A and B is a judgment about
+how harsh the instrument should be, which is Sean's to make.
+
 #### ⚠⚠ D41 — the bubble-tea hand-read: DEFENSIBILITY IS FLATTENING where the two readings should separate
 
 **Hand-read done as promised. It found a pattern that generalises beyond bubble-tea, and one case where
@@ -3546,6 +3644,7 @@ purchasing decision.
 | **D36-old** | *Original (withdrawn) framing* | Superseded. **See §10.6 "D36 WITHDRAWN" for the replacement finding: 99 of 120 corpus forms are analyst RECONSTRUCTIONS with a median payload of 725 characters, and the form carries none of the structural facts DEF needs.** |
 | **D39** | **Does an operated multi-outlet network count as a moat where category entry is cheap?** (§10.6) | **ANSWERED — YES, and Sean authorised it: *"I'm happy for you to apply the KFC, Ya Kun and Toast box judgement."*** Applied as a **GENERAL rule** (rubric **v1.11.2**), not three case patches: **SEPARATE VISIBILITY FROM OPERATED NETWORK** — a household name resting on visibility alone is cheap to displace and stays LOW, but **a chain that demonstrably operates many units holds efficient scale and a cost advantage even where opening a SINGLE unit is cheap**, because **the barrier is the NETWORK** (property, supply chain, central purchasing, staffing at scale, decades of sites), not one more shop. **KFC, Ya Kun and Toast Box move to 4, exact match.** **⚠ Collateral is mixed and mostly at the noise floor:** 13 cases moved (8 up, 5 down); **CHAGEE and NTUC improve, but Mixue, CHICHA San Chen and Each-A-Cup move the wrong way, and 24/7 Fitness and Chin Mee Chin drop.** **Corpus totals are a wash — DEF disputes 2.5% → 3.3%, i.e. back to v1.8.0's level.** *This is what tuning to a handful of cases looks like from the inside.* |
 | **D40** | **Is Jev the right lever for speed and overall process?** (§10.6) | **ANSWERED — NO, AND EXECUTED. Jev is not the constraint; the rubric was.** **Rubric compressed v1.12.0: `defensibility` instruction 5,426 → 3,026 chars (−44%), questions block 21,366 → 19,405, all 13 rules retained and checked.** **Defensibility disputes improved to 1.7% [0.5–5.9%] — best on record, clearing the ≤5% bar — and the authorised KFC/Ya Kun/Toast Box fixes held.** **⚠ And the NOISE FLOOR is now measured: two full batches of the SAME rubric moved 0–4.2% of cases per dimension, always ±1 level** (RS 4.2%, MA 2.5%, **DEF 1.7%**, CR 0.0%, MH 0.0%, DR 1.7%) — **this is the threshold any future tuning must clear.** *But compression raised 17 cases and only 10 were improvements, concentrated in micro categories; NTUC FairPrice dropped 5→4 against Sean's 5. Aggregate better, a minority of cases worse.* **✅ Both remaining levers now executed: the driver is PARALLEL (120 cases in 9 s vs 107 s sequential — 12×, 0 failures, output within the noise floor), and the bubble-tea hand-read is done (D41).** **Noise floor settled with THREE independent same-rubric batches: worst 4.2% per dimension, `defensibility` 2.5%.** *Original framing below.* Measured: **model latency 0.48 s/case; whole 120-case corpus 107 s; ~4.5 min projected for 300.** But **the prompt per case is 22,774 chars, of which the RUBRIC is 20,472 — 90%.** And the rubric is what grew: questions **14,591 → 21,366 chars (+46%)**, `defensibility` instruction **1,204 → 5,426 chars (4.5×)** — **because of my own iteration this session, and instruction bloat is a plausible contributor to the measured batch variance.** **The real process levers, in order: (1) COMPRESS the rubric** — state each rule once, tersely; smaller prompts are faster, cheaper AND more reproducible. **(2) PARALLELISE the driver** — 0.48 s model vs ~0.85 s process overhead per case, run sequentially; **the overhead is larger than the inference.** **(3) FIX THE NOISE FLOOR BEFORE TUNING** — at ±1 batch variance most v1.11.0→v1.11.2 movement is noise; repeat each case or raise the reporting threshold to ±2. **(4) Then Jev's 0.48 s is worth spending on the work the spec currently gates** — inline category reasoning and the D25 external scan. |
+| **D42** | **Sean rebuilt the DEF construct — two routes of attack. Does the weaker route SET or merely LIMIT the score?** (§10.6) | **OPEN — and this is now the most consequential question in the spec.** Sean: *"Don't worry about my prior readings on defensibility. You should not converge to my old numbers because I suspect a lot of them are wrong. The rubric however should answer the question on how hard it is to replicate (IP, capital intensive, network control etc), or for an outflank to steal significant market share."* **⚠ THE OLD DEF GRADES ARE WITHDRAWN AS THE CALIBRATION TARGET**, so every DEF agreement statistic in §10.6 (including the 1.7% "best on record") **now measures agreement with a reference Sean has disowned** — retained as history, not as evidence the dimension works. **DEF momentarily has NO agreed gold standard.** **Rebuilt (v1.13.1) around REPLICATE (IP · capital intensity · network control · scale economics · switching costs · accumulated asset) and OUTFLANK (take SIGNIFICANT MARKET SHARE by another route).** **⚠ Measured: "score the weaker route" overshoots.** DEF distribution — v1.12.0 single-route: 25·35·29·**26**·3·2, mean 2.61, **SD 1.20**, 26 cases at 4+. v1.13.0 two-route: 25·**59**·32·**2**·2·0, SD 0.82, 4 at 4+. v1.13.1 (+significant-share bar): 20·**59**·37·**1**·3·0, SD 0.82, **4 at 4+ (ASML, Boeing, Coupang, VICOM)**. **Discrimination halves, and 49% pools at level 2.** My own examples (*"a second location next door"*) undercut Sean's significant-share bar; fixing that barely moved it, so the model genuinely reads this corpus as contestable. **⚠ THE CANARY NOW FAILS — C3-petdirectory drifts Contested → Fragile (DEF 2→1); one case in six is within the 2.5% noise but cannot be waved away; repeat run required.** **THE CHOICE: A — weaker route SETS the score (as written: harsh, weak discrimination) vs B — weaker route LIMITS the score, replication drives it (keeps the spread).** *Framing is Sean's and worth keeping; only SET-vs-LIMIT is open. Not tuning further — with the grades withdrawn there is no reference to tune against.* |
 | **D41** | **Bubble-tea hand-read — why does the instrument not go as low as Sean?** (§10.6) | **DONE. The instrument FLATTENS defensibility.** Sean's bubble-tea grades spread **1–4**; the instrument's spread **2–4** and clusters at 3–4. **Both two-point gaps (Each-A-Cup 4 vs 2, Gong Cha 3 vs 1) are the instrument reading HIGH** — it does not go low enough on genuinely undefendable businesses. **And the rule behind Sean's spread is NOT derivable from the grades: across the corpus his DEF tracks FORMAT CAPITAL INTENSITY monotonically** (no premises **1.00** → home-based 1.74 → kiosk **2.46** → restaurant **3.20** → large-format **3.59** → licensed premises **4.50**), **but bubble-tea breaks it — KOI runs the same counter format as Gong Cha and gets 4 where Gong Cha gets 1.** So format is necessary but not sufficient, and the differentiator between those two is knowledge Sean holds (tenure, outlet count, or his own mental-ladder definition), **NOT visible in the grades.** **Flattening is now the dominant remaining error in this dimension.** |
 | **D38** | **The calibration corpus is 82% thin reconstructed forms — does the calibration claim survive?** (§10.6) | **OPEN — the most important finding in this document, and it was found by chasing Sean's moat question.** **99 of 120 cases (82%) carry `label_is_external: true` and an `authoring_note` reading *"FORM DATA reconstructed by the analyst from public sources… the form is thinner than a real submission. This is the known weakness of the test."* Median form payload 725 chars.** **So the corpus measures agreement on analyst-reconstructed forms, NOT on real submissions** — and **defensibility is the dimension most damaged**, because barriers (outlet counts, tenure, owned assets, licences) are the facts least likely to appear in a positioning sentence and most likely to be known to the owner. **Best Denki proves it: Sean scores 4 from knowledge of ~14 stores and a national network; the form states only *"Japanese retail service standards"*; the instrument says 2 — correctly, on what it was given.** **⚠ Same class of gap Sean already flagged: *"You have blind gaps. You have to corroborate your answer against physical evidence."*** **Fix is in the FORM, not the rubric:** (a) the form must **ask** for structural facts (outlets, years, owned premises, licences, price premium); (b) if the form cannot supply them this is **the same external-scan dependency as D25/D35**; (c) the calibration claim must be **restated** so "100% band agreement" is not read as validating real-submission performance |
 | **D36-old-2** | *Superseded* | `rubric.json` declares `level_counts.defensibility = 6` (the other five are 5) against a scale block that says `human_display: "1-5"`. The 6th level **fires**: display **6** appears 3 times, mean mass on the 6th bin **3.4%**, and the composite divides defensibility by **6**. **Every §10.6 defensibility comparison has therefore pitted a 1–6 score against a 1–5 grade.** Normalising the scales moves the disputes from **6.7%** → **1.7% (percentile-matched)** / **4.2% (round-to-nearest)** — both **under the bar**, against RS 0.8% / MA 7.5% / DR 4.2% — so **on a like-for-like footing defensibility is no longer the worst dimension.** *(It was investigated as a rubric-CONTENT problem because the raw number was above the bar. It is at least partly a SCALE problem — same class as the §5.4 rounding gap.)* **Options: A** collapse defensibility to 5 levels (uniform display; invalidates every prior run) · **B** keep 6 levels and **label the scale in the report** · **C** keep 6 internally but normalise to 1–5 for display and for all human comparison. **Recommended: C** — it fixes the comparison without discarding the deliberate 0.5.0 split |

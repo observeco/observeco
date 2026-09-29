@@ -1,8 +1,8 @@
 {
   "case": "C5-saladshop",
   "model_id": "jev-1.13.0",
-  "rubric_version": "1.8.0",
-  "generated_at": "2026-09-28T08:19:26+00:00",
+  "rubric_version": "1.13.1",
+  "generated_at": "2026-09-29T06:35:27+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
@@ -12,11 +12,11 @@
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.97,
+    "confidence": 0.96,
     "probabilities": {
-      "ambiguous": 0.01,
+      "ambiguous": 0.02,
       "inelastic": 0.0,
-      "elastic": 0.99
+      "elastic": 0.98
     },
     "rule_version": "A3"
   },
@@ -54,75 +54,75 @@
     "demand_reach": 2
   },
   "raw_jev_scores_0to4": {
-    "relative_strength": 0.68,
-    "mental_advantage": 0.25,
-    "defensibility": 0.55,
+    "relative_strength": 0.63,
+    "mental_advantage": 0.24,
+    "defensibility": 0.81,
     "competitive_room": 1.34,
-    "market_headroom": 2.02,
-    "demand_reach": 1.1
+    "market_headroom": 2.01,
+    "demand_reach": 1.09
   },
   "evidence_coverage": {
-    "relative_strength": 0.65,
-    "mental_advantage": 0.79,
-    "defensibility": 0.63,
+    "relative_strength": 0.64,
+    "mental_advantage": 0.8,
+    "defensibility": 0.68,
     "competitive_room": 0.71,
     "market_headroom": 0.91,
-    "demand_reach": 0.85
+    "demand_reach": 0.86
   },
   "confidence": {
-    "relative_strength": 0.65,
-    "mental_advantage": 0.79,
-    "defensibility": 0.63,
+    "relative_strength": 0.64,
+    "mental_advantage": 0.8,
+    "defensibility": 0.68,
     "competitive_room": 0.71,
     "market_headroom": 0.91,
-    "demand_reach": 0.85
+    "demand_reach": 0.86
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "relative_strength": {
-      "expected_jev_0to4": 0.68,
-      "expected_display_1to5": 1.68,
+      "expected_jev_0to4": 0.64,
+      "expected_display_1to5": 1.64,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.96
+      "mass_covered": 0.97
     },
     "mental_advantage": {
-      "expected_jev_0to4": 0.23,
-      "expected_display_1to5": 1.23,
+      "expected_jev_0to4": 0.26,
+      "expected_display_1to5": 1.26,
       "band_80pct_display_1to5": [
         1,
         1
       ],
-      "mass_covered": 0.88
+      "mass_covered": 0.87
     },
     "defensibility": {
-      "expected_jev_0to4": 0.55,
-      "expected_display_1to5": 1.55,
+      "expected_jev_0to4": 0.8,
+      "expected_display_1to5": 1.8,
       "band_80pct_display_1to5": [
         1,
         2
       ],
-      "mass_covered": 0.95
+      "mass_covered": 0.86
     },
     "competitive_room": {
-      "expected_jev_0to4": 1.35,
-      "expected_display_1to5": 2.35,
+      "expected_jev_0to4": 1.34,
+      "expected_display_1to5": 2.34,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.99
+      "mass_covered": 1.0
     },
     "market_headroom": {
-      "expected_jev_0to4": 2.02,
-      "expected_display_1to5": 3.02,
+      "expected_jev_0to4": 2.01,
+      "expected_display_1to5": 3.01,
       "band_80pct_display_1to5": [
         3,
         3
       ],
-      "mass_covered": 0.9
+      "mass_covered": 0.89
     },
     "demand_reach": {
       "expected_jev_0to4": 1.09,
@@ -136,38 +136,38 @@
   },
   "probabilities": {
     "relative_strength": {
-      "0": 0.37,
-      "1": 0.59,
-      "2": 0.03,
+      "0": 0.4,
+      "1": 0.57,
+      "2": 0.02,
       "3": 0.01,
       "4": 0.0
     },
     "mental_advantage": {
-      "0": 0.88,
+      "0": 0.87,
       "1": 0.04,
       "2": 0.06,
-      "3": 0.01,
+      "3": 0.02,
       "4": 0.01
     },
     "defensibility": {
-      "0": 0.52,
-      "1": 0.43,
-      "2": 0.03,
-      "3": 0.02,
+      "0": 0.34,
+      "1": 0.52,
+      "2": 0.14,
+      "3": 0.0,
       "4": 0.0,
       "5": 0.0
     },
     "competitive_room": {
       "0": 0.0,
       "1": 0.66,
-      "2": 0.33,
-      "3": 0.01,
+      "2": 0.34,
+      "3": 0.0,
       "4": 0.0
     },
     "market_headroom": {
       "0": 0.0,
-      "1": 0.04,
-      "2": 0.9,
+      "1": 0.05,
+      "2": 0.89,
       "3": 0.06,
       "4": 0.0
     },

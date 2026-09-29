@@ -1,8 +1,8 @@
 {
   "case": "C1-greenpackers",
   "model_id": "jev-1.13.0",
-  "rubric_version": "1.8.0",
-  "generated_at": "2026-09-28T08:19:24+00:00",
+  "rubric_version": "1.13.1",
+  "generated_at": "2026-09-29T06:35:24+00:00",
   "classification": {
     "assessability": "competitive_market",
     "assessability_confidence": 1.0,
@@ -12,10 +12,10 @@
     },
     "refuses": false,
     "elasticity": "elastic",
-    "confidence": 0.74,
+    "confidence": 0.75,
     "probabilities": {
-      "inelastic": 0.05,
-      "ambiguous": 0.12,
+      "inelastic": 0.06,
+      "ambiguous": 0.11,
       "elastic": 0.83
     },
     "rule_version": "A3"
@@ -54,34 +54,34 @@
     "demand_reach": 3
   },
   "raw_jev_scores_0to4": {
-    "relative_strength": 1.8,
-    "mental_advantage": 1.24,
-    "defensibility": 1.14,
+    "relative_strength": 1.78,
+    "mental_advantage": 1.26,
+    "defensibility": 1.11,
     "competitive_room": 1.01,
     "market_headroom": 1.96,
-    "demand_reach": 1.92
+    "demand_reach": 1.97
   },
   "evidence_coverage": {
-    "relative_strength": 0.3,
-    "mental_advantage": 0.63,
-    "defensibility": 0.85,
+    "relative_strength": 0.32,
+    "mental_advantage": 0.64,
+    "defensibility": 0.8,
     "competitive_room": 0.97,
-    "market_headroom": 0.93,
-    "demand_reach": 0.23
+    "market_headroom": 0.92,
+    "demand_reach": 0.18
   },
   "confidence": {
-    "relative_strength": 0.3,
-    "mental_advantage": 0.63,
-    "defensibility": 0.85,
+    "relative_strength": 0.32,
+    "mental_advantage": 0.64,
+    "defensibility": 0.8,
     "competitive_room": 0.97,
-    "market_headroom": 0.93,
-    "demand_reach": 0.23
+    "market_headroom": 0.92,
+    "demand_reach": 0.18
   },
   "coverage_floor": 0.0,
   "judgment_intervals": {
     "relative_strength": {
-      "expected_jev_0to4": 1.79,
-      "expected_display_1to5": 2.79,
+      "expected_jev_0to4": 1.77,
+      "expected_display_1to5": 2.77,
       "band_80pct_display_1to5": [
         2,
         4
@@ -89,22 +89,22 @@
       "mass_covered": 0.98
     },
     "mental_advantage": {
-      "expected_jev_0to4": 1.23,
-      "expected_display_1to5": 2.23,
+      "expected_jev_0to4": 1.25,
+      "expected_display_1to5": 2.25,
       "band_80pct_display_1to5": [
         2,
         3
       ],
-      "mass_covered": 0.89
+      "mass_covered": 0.9
     },
     "defensibility": {
-      "expected_jev_0to4": 1.14,
-      "expected_display_1to5": 2.14,
+      "expected_jev_0to4": 1.1,
+      "expected_display_1to5": 2.1,
       "band_80pct_display_1to5": [
-        1,
-        2
+        2,
+        3
       ],
-      "mass_covered": 0.83
+      "mass_covered": 0.9
     },
     "competitive_room": {
       "expected_jev_0to4": 1.01,
@@ -116,17 +116,17 @@
       "mass_covered": 0.97
     },
     "market_headroom": {
-      "expected_jev_0to4": 1.96,
-      "expected_display_1to5": 2.96,
+      "expected_jev_0to4": 1.95,
+      "expected_display_1to5": 2.95,
       "band_80pct_display_1to5": [
         3,
         3
       ],
-      "mass_covered": 0.92
+      "mass_covered": 0.91
     },
     "demand_reach": {
-      "expected_jev_0to4": 1.92,
-      "expected_display_1to5": 2.92,
+      "expected_jev_0to4": 1.98,
+      "expected_display_1to5": 2.98,
       "band_80pct_display_1to5": [
         2,
         4
@@ -138,22 +138,22 @@
     "relative_strength": {
       "0": 0.02,
       "1": 0.46,
-      "2": 0.23,
-      "3": 0.29,
+      "2": 0.25,
+      "3": 0.27,
       "4": 0.0
     },
     "mental_advantage": {
-      "0": 0.1,
+      "0": 0.09,
       "1": 0.58,
-      "2": 0.31,
+      "2": 0.32,
       "3": 0.01,
       "4": 0.0
     },
     "defensibility": {
-      "0": 0.04,
-      "1": 0.79,
-      "2": 0.16,
-      "3": 0.01,
+      "0": 0.1,
+      "1": 0.7,
+      "2": 0.2,
+      "3": 0.0,
       "4": 0.0,
       "5": 0.0
     },
@@ -166,16 +166,16 @@
     },
     "market_headroom": {
       "0": 0.0,
-      "1": 0.06,
-      "2": 0.92,
+      "1": 0.07,
+      "2": 0.91,
       "3": 0.02,
       "4": 0.0
     },
     "demand_reach": {
       "0": 0.0,
-      "1": 0.42,
-      "2": 0.28,
-      "3": 0.26,
+      "1": 0.4,
+      "2": 0.26,
+      "3": 0.3,
       "4": 0.04
     }
   },
