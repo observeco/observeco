@@ -1,0 +1,23 @@
+{
+ "_meta": {
+  "case": "NC03-generic",
+  "business": "A generic submission",
+  "purpose": "NEGATIVE CONTROL (spec 10.6, 8.6, 4.6). Each control MUST FAIL, and must fail FOR THE PREDICTED REASON, recorded here BEFORE the run. A control that passes is a finding.",
+  "is_control": true,
+  "predicted_failure": "position_strength <= 2 AND mental_advantage <= 2. Every sentence is interchangeable with any business in any category.",
+  "why": "This is the control for the defect that produced the duplication in the first place: fluent text that SOUNDS like a position but does not name one. It must not score mid. If it scores 3+ on position_strength, the instrument is reading fluency."
+ },
+ "form": {
+  "business_name": "A generic submission",
+  "role": "owner",
+  "company_size_band": "1-4",
+  "city": "Singapore",
+  "category": "Services",
+  "positioning_sentence": "We are passionate about what we do and we put customers first. Our team is dedicated to quality and service, and we constantly improve to deliver the best experience. What sets us apart is our commitment to excellence and our customer-centric approach.",
+  "differentiator": "We are passionate about what we do and we put customers first. Our team is dedicated to quality and service, and we constantly improve to deliver the best experience. What sets us apart is our commitment to excellence and our customer-centric approach.",
+  "undercut_on": "Nothing, we compete on quality and service.",
+  "your_price_point": "competitive",
+  "their_price_point": "similar",
+  "competitors_named_count": "3-5"
+ }
+}

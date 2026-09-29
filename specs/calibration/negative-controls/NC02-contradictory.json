@@ -1,0 +1,23 @@
+{
+ "_meta": {
+  "case": "NC02-contradictory",
+  "business": "A contradictory submission",
+  "purpose": "NEGATIVE CONTROL (spec 10.6, 8.6, 4.6). Each control MUST FAIL, and must fail FOR THE PREDICTED REASON, recorded here BEFORE the run. A control that passes is a finding.",
+  "is_control": true,
+  "predicted_failure": "input_sufficiency = insufficient, OR competitive_room = 1. The claim is premium AND the stated reason customers choose it is being the CHEAPEST OPERATOR AGAINST A FLOOR IT SETS ITSELF AT.",
+  "why": "A submission that says it is both the most refined artisan producer and the lowest-price operator is internally contradictory. The scorer must not average the two into a bland middle score -- that would be the failure this control detects."
+ },
+ "form": {
+  "business_name": "A contradictory submission",
+  "role": "owner",
+  "company_size_band": "1-4",
+  "city": "Singapore",
+  "category": "Specialty bakery",
+  "positioning_sentence": "We are the premium artisan destination for hand-laminated pastry, the most refined in the country.",
+  "differentiator": "Hand-laminated with imported French butter, made in small batches by trained pastry chefs.",
+  "undercut_on": "We are cheaper than every supermarket and we undercut the chains on price. Customers choose us because we are the lowest price in the market.",
+  "your_price_point": "S$1.20 per item",
+  "their_price_point": "S$1.20 per item",
+  "competitors_named_count": "3-5"
+ }
+}

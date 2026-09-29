@@ -1,0 +1,23 @@
+{
+ "_meta": {
+  "case": "NC05-unevidenced",
+  "business": "An asserted-position submission",
+  "purpose": "NEGATIVE CONTROL (spec 10.6, 8.6, 4.6). Each control MUST FAIL, and must fail FOR THE PREDICTED REASON, recorded here BEFORE the run. A control that passes is a finding.",
+  "is_control": true,
+  "predicted_failure": "position_strength <= 3 (capped). The position is ASSERTED with no evidence, so no flank is PROVEN -- which is the rule that caps an unproven flank at ADEQUATE under the supplied set.",
+  "why": "Adjectives ('most awarded', 'unmatched', 'trusted by thousands') with no named award, no evidence and no corroboration. It is the contrast case for N4: N4 claims something REAL that is OWNED by someone else; N5 claims something that may be unique but is UNPROVEN. Both must fail, for different reasons."
+ },
+ "form": {
+  "business_name": "An asserted-position submission",
+  "role": "owner",
+  "company_size_band": "1-4",
+  "city": "Singapore",
+  "category": "Furniture",
+  "positioning_sentence": "We are the most awarded furniture brand in Singapore and the first choice for discerning homeowners.",
+  "differentiator": "Award-winning design quality trusted by thousands, unmatched in the market.",
+  "undercut_on": "We cost more than imported flat-pack.",
+  "your_price_point": "S$2,500 average order",
+  "their_price_point": "S$900 average order",
+  "competitors_named_count": "3-5"
+ }
+}

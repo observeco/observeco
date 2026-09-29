@@ -1,0 +1,25 @@
+{
+ "_meta": {
+  "case": "NC01-empty",
+  "business": "An empty submission",
+  "purpose": "NEGATIVE CONTROL (spec 10.6, 8.6, 4.6). Each control MUST FAIL, and must fail FOR THE PREDICTED REASON, recorded here BEFORE the run. A control that passes is a finding.",
+  "is_control": true,
+  "predicted_failure": "input_sufficiency = insufficient",
+  "why": "Every field blank. Nothing identifies a category, a differentiator, a competitor or a customer. If the scorer returns a scored report rather than refusing, it is fabricating a judgement from nothing."
+ },
+ "form": {
+  "form": {
+   "business_name": "An empty submission",
+   "role": "",
+   "company_size_band": "",
+   "city": "",
+   "category": "",
+   "positioning_sentence": "",
+   "differentiator": "",
+   "undercut_on": "",
+   "your_price_point": "",
+   "their_price_point": "",
+   "competitors_named_count": ""
+  }
+ }
+}

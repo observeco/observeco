@@ -1,0 +1,23 @@
+{
+ "_meta": {
+  "case": "NC04-owned",
+  "business": "A claim already owned by a rival",
+  "purpose": "NEGATIVE CONTROL (spec 10.6, 8.6, 4.6). Each control MUST FAIL, and must fail FOR THE PREDICTED REASON, recorded here BEFORE the run. A control that passes is a finding.",
+  "is_control": true,
+  "predicted_failure": "position_strength <= 2. The claim is the one a named occupant already holds, so it is not an available position.",
+  "why": "'Freshly brewed, no powder' is KOI's and Playmade's long-held position in Singapore. A new entrant claiming it holds nothing NEW -- the flank is occupied. This control tests the exact question the position-strength construct exists to answer, and it is the one the rubric's own level 2 defines as 'the claim is already OWNED by a named occupant'."
+ },
+ "form": {
+  "business_name": "A claim already owned by a rival",
+  "role": "owner",
+  "company_size_band": "1-4",
+  "city": "Singapore",
+  "category": "Bubble tea",
+  "positioning_sentence": "We are Singapore's fresh bubble tea brand, brewing fresh tea daily and shunning artificial powders.",
+  "differentiator": "Freshly brewed tea daily, no artificial powder, natural ingredients.",
+  "undercut_on": "We are more expensive than the powder-based chains.",
+  "your_price_point": "S$4.50",
+  "their_price_point": "S$3.00",
+  "competitors_named_count": "3-5"
+ }
+}
