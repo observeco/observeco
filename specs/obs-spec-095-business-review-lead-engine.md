@@ -2649,6 +2649,37 @@ and different).* **⚠ The 100% and the 80% above come from different, small sam
 treat both as indicative, and re-measure on the full corpus before committing engineering to
 either.**
 
+**⚠ AND THE CALL-COUNT QUESTION IS STILL OPEN — a probe was run and is INCONCLUSIVE.** *I claimed
+"5 calls is enough", admitted 3 might do it, and then measured it. **The measurement does not
+support any number, and the reason is methodological:***
+
+*Design: 8 calls per case; for each k, compare the band of the **mean of the first k** against the
+**mean of the last k**. Result table:*
+
+| case | k=2 | k=3 | k=4 |
+|---|---|---|---|
+| **`KP01-ya`** | **Y** | **N** | **N** |
+| `HB03-unity` | Y | N | Y |
+| `HT04-a`, `FF02-kfc`, `KP04-chin` | Y | Y | Y |
+| `FU04-cellini`, `GY04-pure`, `HN08-frisky` | N | Y | Y |
+
+**⚠ THE SEQUENCE IS NON-MONOTONE, AND THAT INVALIDATES THE HEADLINE.** *`KP01-ya` reads **Y at k=2
+then N at k=3 and k=4**; `HB03-unity` reads **Y, N, Y**.* **A stability threshold must be a point
+after which agreement holds — a lone `Y` followed by `N`s is an artefact of where the draws landed,
+not evidence of stability.** *Reading "median 2 calls" off this table would be the same error as
+the last two: taking the first flattering number.*
+
+**⚠ AND k≥5 WAS NOT MEASURABLE AT ALL** *— the split-half design needs **2k ≤ 8** draws, so the
+table is blank above k=4.* **So the probe cannot speak to 5-call stability, which was the actual
+claim.** *It is also a **split-half** check (overlapping draws), not independent blocks, so it is
+a lower bound at best.*
+
+**⚠ CONCLUSION: THE COST OF OPTION (A) IS NOT YET KNOWN.** *Settling it needs a proper design —
+**independent blocks of k** (not split halves), **k up to at least 8–10**, and enough cases to
+clear the corpus noise floor.* **Until then, do not commit engineering to a call count.** *The
+honest summary of the whole of §6.7.5 is: **the instrument samples (proven), the amplifier is
+quantisation (proven), and the cost of fixing it is unmeasured (open).***
+
 **⚠ AND (A) HAS NOW BEEN TESTED RATHER THAN ASSERTED** — *because §6.7.5's own lesson is that a
 plausible fix is not evidence.* **The experiment:** six cases, **two independent blocks of 5 calls
 each**; compare the band of a *single* call against the band of the *block mean*, across the two
