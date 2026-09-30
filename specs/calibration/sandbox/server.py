@@ -1,0 +1,456 @@
+#!/usr/bin/env python3
+"""OBSERVECO SANDBOX — a place to submit a business and read the real report.
+
+WHY THIS EXISTS
+    Sean: "Let's do something like a sandbox where it is available in the sandbox
+    website for me to test? We still need a CRM to get email addresses as well."
+
+    Before this, the only way to see a report was to run scripts by hand against a
+    hand-built corpus file. Nothing clicked end-to-end. This is the click.
+
+WHAT IT IS — AND WHAT IT IS NOT
+    NOT a mock. Every submission goes through the REAL pipeline, in the REAL order:
+        pre-flight gate  ->  (optional) competitor scan  ->  Jev model call
+        ->  composite computed IN CODE  ->  report renderer
+    It imports run_jev / preflight_gate / generate_report directly, so a sandbox
+    result and a production result cannot drift: there is one implementation.
+
+    It IS a sandbox in three specific senses, each of which must be removed before
+    this is a product:
+      1. NO captcha, NO confirmation gate, NO spend ceiling. Section 3.7's open relay
+         is fully present here. It binds to loopback and is single-user by design.
+      2. It runs on the operator's machine, synchronously, with no queue.
+      3. The CRM is a local SQLite file, not the system of record (spec 7.x).
+
+THE CRM — the second thing Sean asked for
+    Every submission stores the email address, the business, the band and the full
+    report text in `sandbox.db`. That is the minimum a lead engine needs to prove it
+    can capture a lead, and it is deliberately the ONLY thing the CRM does — no
+    sequences, no scoring of leads, no vendor. It answers one question: does an
+    address actually arrive, attached to a report that actually exists?
+
+⚠ THE EGRESS RULE IS HONOURED. run_jev.build_state already excludes name/email/phone
+from the model payload (spec 5.7), so the address is captured here and never leaves.
+"""
+from __future__ import annotations
+
+import json
+import sqlite3
+import sys
+import traceback
+from datetime import datetime, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+CAL = HERE.parent                      # specs/calibration — the real pipeline
+sys.path.insert(0, str(CAL))
+
+from fastapi import FastAPI, Form, Request                    # noqa: E402
+from fastapi.responses import HTMLResponse, RedirectResponse   # noqa: E402
+
+DB = HERE / "sandbox.db"
+RUNS = HERE / "runs"
+
+# ── the real pipeline, imported not reimplemented ────────────────────────────
+import run_jev                                                # noqa: E402
+from preflight_gate import evaluate as preflight              # noqa: E402
+from generate_report import render as render_report           # noqa: E402
+from rubric_gate import require_promoted                      # noqa: E402
+
+RUBRIC = CAL / "rubric.json"
+app = FastAPI(title="ObserveCo sandbox")
+
+
+# ── CRM ──────────────────────────────────────────────────────────────────────
+def db() -> sqlite3.Connection:
+    c = sqlite3.connect(DB)
+    c.execute("""CREATE TABLE IF NOT EXISTS submissions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at TEXT, email TEXT, business_name TEXT, category TEXT,
+        band TEXT, composite REAL, rubric_version TEXT, model_id TEXT,
+        outcome TEXT, report TEXT, payload TEXT)""")
+    return c
+
+
+def save(**kw) -> int:
+    c = db()
+    cur = c.execute(
+        "INSERT INTO submissions (created_at,email,business_name,category,band,"
+        "composite,rubric_version,model_id,outcome,report,payload) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        (datetime.now(timezone.utc).isoformat(timespec="seconds"),
+         kw.get("email"), kw.get("business_name"), kw.get("category"),
+         kw.get("band"), kw.get("composite"), kw.get("rubric_version"),
+         kw.get("model_id"), kw.get("outcome"), kw.get("report"),
+         json.dumps(kw.get("payload") or {})))
+    c.commit()
+    i = cur.lastrowid or 0
+    c.close()
+    return int(i)
+
+
+# ── what a submission from the form looks like ───────────────────────────────
+def payload_from_form(f: dict) -> dict:
+    """Build the pipeline payload from the sandbox form.
+
+    Field names match the real corpus contract, so a sandbox submission and a
+    corpus case are the SAME shape. `customer_description` is the one addition:
+    section 3.10 needs a customer description to drive demand reach and mental
+    advantage, and NO field collects it — so it is collected here, flagged, so the
+    consequence can be seen rather than described.
+    """
+    comps = [c.strip() for c in (f.get("competitors_named") or "").split(",") if c.strip()]
+    form = {
+        "business_name": f.get("business_name", ""),
+        "role": f.get("role", ""),
+        "company_size_band": f.get("company_size_band", "10-500"),
+        "city": f.get("city") or "Singapore",
+        "category": f.get("category", ""),
+        "positioning_sentence": f.get("positioning_sentence", ""),
+        "differentiator": f.get("differentiator", "") or f.get("positioning_sentence", ""),
+        "undercut_on": f.get("undercut_on", ""),
+        "your_price_point": f.get("your_price_point", ""),
+        "their_price_point": f.get("their_price_point", ""),
+        "competitors_named_count": str(len(comps)) if comps else "",
+    }
+    # ⚠ collected but NOT scored by the current rubric — flagged in the UI.
+    if f.get("customer_description"):
+        form["customer_description"] = f["customer_description"]
+    p = {"_meta": {"case": f.get("case_key") or f.get("business_name", "submission").lower(),
+                   "business": f.get("business_name", ""),
+                   "purpose": "SANDBOX submission"},
+         "form": form,
+         "competitors_named": comps}
+    if comps:
+        p["derived_competitive_set"] = build_set_from_named(comps)
+    return p
+
+
+def build_set_from_named(comps: list[str]) -> dict:
+    """Turn the SUBMITTER'S OWN competitor list into the set the rubric consumes.
+
+    ⚠ THIS IS THE PRODUCTION GAP, FILLED FOR THE SANDBOX. `competitor_scan.to_
+    competitive_set()` only accepts a WEB SCAN, which is the part that returns an
+    unstable 5/2/0 occupants. Production will hold the owner's list and nothing
+    converts it, so PS stays capped at 3 for no good reason.
+
+    The honest caveat is carried INSIDE the set: an owner-named rival is
+    EVIDENCE-UNEQUAL to a researched one, and the tier says so rather than
+    pretending the two are the same.
+    """
+    return {
+        "_derivation_method": "SUBMITTER-NAMED competitors (sandbox). Not independently researched.",
+        "tier_1_direct": {
+            "members": comps,
+            "why": "Named by the business itself as direct rivals.",
+            "caveat": ("⚠ These occupants were NAMED BY THE SUBMITTER, not independently "
+                       "researched. Treat each as a rival whose claim you may reason about, "
+                       "but do not assume the list is complete or that any rival's claim is "
+                       "verified — the owner names who they compete with, not what those "
+                       "rivals own."),
+        },
+    }
+
+
+# ── the pipeline, in the real order ──────────────────────────────────────────
+def run_submission(payload: dict, do_scan: bool) -> dict:
+    require_promoted(RUBRIC)
+    rubric = json.loads(RUBRIC.read_text())
+    out = {"scan_verdict": None, "flags": []}
+
+    # 1. PRE-FLIGHT — before any token spend (spec 3.11)
+    pf = preflight(payload, scan_available=do_scan)
+    out["flags"] = [f for f in pf.get("flags", []) if not f.startswith("FORM GAP")]
+    if pf["outcome"] != "REPORT":
+        out["outcome"] = "REFUSED"
+        out["refusal"] = pf
+        return out
+
+    # 2. SCAN — only when the submission carries no set (spec 4.6)
+    if do_scan and not payload.get("derived_competitive_set"):
+        try:
+            from competitor_scan import scan as _scan, to_competitive_set as _tocs
+            form = payload.get("form") or {}
+            res = _scan((form.get("category") or "").strip(),
+                        (form.get("city") or "Singapore").strip(), [], per_url_timeout=20)
+            payload["derived_competitive_set"] = _tocs(res)
+            out["scan_verdict"] = (res.get("_meta") or {}).get("verdict")
+        except Exception as exc:
+            out["scan_verdict"] = f"SCAN ERROR: {exc}"
+    elif payload.get("derived_competitive_set"):
+        out["scan_verdict"] = "skipped — the submission already names competitors"
+
+    # 3. MODEL CALL
+    state = run_jev.build_state(payload)
+    questions = run_jev.build_questions(rubric)
+    result = run_jev.call_jev(state, questions, rubric["_meta"]["model"])
+    if result is None:
+        out["outcome"] = "MODEL_UNAVAILABLE"
+        return out
+
+    # 4. COMPOSITE IN CODE (never in the model)
+    scored = run_jev.score(payload, result, rubric)
+    RUNS.mkdir(parents=True, exist_ok=True)
+    (RUNS / f"jev-{scored['case']}.json").write_text(json.dumps(scored, indent=2) + "\n")
+
+    # 5. REPORT
+    a, b = render_report(scored, RUBRIC)
+    out.update(outcome="SCORED", run=scored, report=b, report_a=a)
+    return out
+
+
+# ── HTML ─────────────────────────────────────────────────────────────────────
+CSS = """
+:root{color-scheme:dark}
+body{font:15px/1.55 ui-sans-serif,-apple-system,Segoe UI,Roboto,sans-serif;
+     background:#0e1116;color:#e6e9ef;margin:0;padding:32px;max-width:940px}
+h1{font-size:21px;margin:0 0 4px}h2{font-size:15px;margin:26px 0 8px;color:#9fb0c8;
+     text-transform:uppercase;letter-spacing:.07em}
+.sub{color:#8b97a8;font-size:13px;margin-bottom:22px}
+label{display:block;margin:14px 0 4px;font-size:13px;color:#a9b6c8}
+input,textarea,select{width:100%;box-sizing:border-box;background:#161b23;
+     border:1px solid #2a3340;color:#e6e9ef;border-radius:6px;padding:9px 11px;font:inherit}
+textarea{min-height:64px;resize:vertical}
+button{background:#2f6fed;color:#fff;border:0;border-radius:6px;padding:11px 22px;
+     font:600 15px inherit;cursor:pointer;margin-top:22px}
+button:hover{background:#3b7cf7}
+.row{display:flex;gap:14px}.row>div{flex:1}
+.note{background:#1b2230;border-left:3px solid #2f6fed;padding:11px 14px;
+     border-radius:5px;font-size:13px;color:#b9c6d8;margin:16px 0}
+.warn{background:#241c14;border-left:3px solid #d08c2c;padding:11px 14px;
+     border-radius:5px;font-size:13px;color:#e0c9a2;margin:16px 0}
+.err{background:#2a1717;border-left:3px solid #d04a4a;padding:11px 14px;
+     border-radius:5px;font-size:13px;color:#f0b9b9;margin:16px 0}
+pre{background:#11151c;border:1px solid #232c38;border-radius:6px;padding:18px;
+     white-space:pre-wrap;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #232c38}
+th{color:#9fb0c8;font-weight:600}
+a{color:#6fa8ff}
+.badge{display:inline-block;padding:2px 9px;border-radius:11px;font-size:12px;font-weight:600}
+.b-ok{background:#16321f;color:#6ddc9a}.b-ref{background:#332020;color:#e88}
+"""
+PAGE = """<!doctype html><meta charset=utf-8><title>{title}</title>
+<style>{css}</style>{body}"""
+
+
+def shell(title: str, body: str) -> str:
+    return PAGE.format(title=title, css=CSS, body=f"<body>{body}</body>")
+
+
+@app.get("/", response_class=HTMLResponse)
+def index():
+    cases = sorted(p.stem for p in (CAL / "inputs-v4").glob("*.json")
+                   if not p.stem.startswith("_"))
+    opts = "".join(f"<option value='{c}'>{c}</option>" for c in cases)
+    return shell("ObserveCo sandbox", f"""
+<h1>ObserveCo — sandbox</h1>
+<div class=sub>Submit a business and read the real report. <a href=/crm>CRM →</a></div>
+
+<div class=note><b>This runs the real pipeline</b> — pre-flight gate → competitor
+set → Jev model call → composite computed in code → report. The sandbox is the
+<i>front door</i>, not a simulation of the scorer.</div>
+
+<div class=warn><b>⚠ Sandbox only.</b> No captcha, no confirmation gate, no spend
+ceiling — section 3.7's open relay is fully present here. Loopback and single-user
+by design; none of this is safe to expose.</div>
+
+<form method=post action=/submit>
+  <h2>Load a real case (optional)</h2>
+  <label>Prefill from the calibration corpus — then edit anything</label>
+  <div class=row>
+    <div><select name=prefill_case><option value="">— none —</option>{opts}</select></div>
+    <div style="flex:0 0 130px"><button type=submit formaction=/prefill
+         style="margin:0;width:100%;padding:10px">Prefill</button></div>
+  </div>
+
+  <h2>Your business</h2>
+  <div class=row>
+    <div><label>Business name *</label><input name=business_name required></div>
+    <div><label>Email * (goes to the CRM)</label><input name=email type=email required></div>
+  </div>
+  <div class=row>
+    <div><label>Category / what you sell *</label><input name=category required></div>
+    <div><label>City</label><input name=city value="Singapore"></div>
+  </div>
+  <div class=row>
+    <div><label>Your role</label><input name=role placeholder="Founder / owner"></div>
+    <div><label>Company size</label>
+      <select name=company_size_band>
+        <option>1-9</option><option>10-500</option><option>500+</option>
+      </select></div>
+  </div>
+
+  <h2>Your position</h2>
+  <label>Your positioning sentence (or "we don't have one") *</label>
+  <textarea name=positioning_sentence required></textarea>
+  <label>What makes you different</label>
+  <textarea name=differentiator></textarea>
+  <label>What competitors undercut you on</label>
+  <textarea name=undercut_on></textarea>
+
+  <h2>Price and rivals</h2>
+  <div class=row>
+    <div><label>Your price point</label><input name=your_price_point
+         placeholder="premium / mid / cheap, or a number"></div>
+    <div><label>Their price point</label><input name=their_price_point></div>
+  </div>
+  <label>Who you compete with — comma separated</label>
+  <input name=competitors_named placeholder="Courts, Best Denki, Gain City">
+
+  <h2>⚠ The gap the spec flags</h2>
+  <div class=warn>Section 3.10 needs a <b>customer description</b> to drive DEMAND
+  REACH and MENTAL ADVANTAGE. <b>No field collects it</b> — so every real
+  submission degrades 2 of 6 dimensions. It is collected here, <b>flagged rather
+  than silently scored</b>, so you can see what filling the gap would buy.</div>
+  <label>Who is your customer?</label>
+  <textarea name=customer_description
+    placeholder="e.g. home cooks in their 30s-40s in the east, shopping weekly"></textarea>
+
+  <label><input type=checkbox name=do_scan value=1 style="width:auto">
+     run the web competitor scan when no rivals are named (slow; unstable yield)</label>
+
+  <button type=submit>Generate the report →</button>
+</form>""")
+
+
+@app.post("/prefill", response_class=HTMLResponse)
+def prefill(prefill_case: str = Form("")):
+    if not prefill_case:
+        return RedirectResponse("/", status_code=303)
+    d = json.loads((CAL / "inputs-v4" / f"{prefill_case}.json").read_text())
+    f = d.get("form") or {}
+    e = lambda v: (v or "").replace("&", "&amp;").replace("<", "&lt;").replace('"', "&quot;")  # noqa: E731
+    comps = ", ".join(d.get("competitors_named") or [])
+    return RedirectResponse("/", status_code=303) if not f else shell(
+        f"prefilled {prefill_case}", f"""
+<h1>Prefilled: {f.get('business_name','')}</h1>
+<div class=sub>Adjust anything, then generate.</div>
+<form method=post action=/submit>
+  <input type=hidden name=case_key value="{e(prefill_case)}">
+  <h2>Your business</h2>
+  <div class=row>
+    <div><label>Business name *</label><input name=business_name value="{e(f.get('business_name'))}" required></div>
+    <div><label>Email * (goes to the CRM)</label><input name=email type=email
+         value="sean@observeco.com" required></div>
+  </div>
+  <div class=row>
+    <div><label>Category *</label><input name=category value="{e(f.get('category'))}" required></div>
+    <div><label>City</label><input name=city value="{e(f.get('city')) or 'Singapore'}"></div>
+  </div>
+  <div class=row>
+    <div><label>Your role</label><input name=role value="{e(f.get('role'))}"></div>
+    <div><label>Company size</label><input name=company_size_band value="{e(f.get('company_size_band'))}"></div>
+  </div>
+  <h2>Your position</h2>
+  <label>Positioning sentence *</label>
+  <textarea name=positioning_sentence required>{e(f.get('positioning_sentence'))}</textarea>
+  <label>What makes you different</label>
+  <textarea name=differentiator>{e(f.get('differentiator'))}</textarea>
+  <label>What competitors undercut you on</label>
+  <textarea name=undercut_on>{e(f.get('undercut_on'))}</textarea>
+  <h2>Price and rivals</h2>
+  <div class=row>
+    <div><label>Your price point</label><input name=your_price_point value="{e(f.get('your_price_point'))}"></div>
+    <div><label>Their price point</label><input name=their_price_point value="{e(f.get('their_price_point'))}"></div>
+  </div>
+  <label>Who you compete with — comma separated</label>
+  <input name=competitors_named value="{e(comps)}">
+  <h2>⚠ The gap the spec flags</h2>
+  <div class=warn>Section 3.10 needs a <b>customer description</b> for DEMAND REACH
+  and MENTAL ADVANTAGE. No field collects it — the corpus does not carry one either.
+  It is collected here and flagged rather than silently scored.</div>
+  <label>Who is your customer?</label>
+  <textarea name=customer_description></textarea>
+  <button type=submit>Generate the report →</button>
+</form>""")
+
+
+@app.post("/submit", response_class=HTMLResponse)
+def submit(request: Request, business_name: str = Form(""), email: str = Form(""),
+           category: str = Form(""), city: str = Form("Singapore"), role: str = Form(""),
+           company_size_band: str = Form("10-500"), positioning_sentence: str = Form(""),
+           differentiator: str = Form(""), undercut_on: str = Form(""),
+           your_price_point: str = Form(""), their_price_point: str = Form(""),
+           competitors_named: str = Form(""), customer_description: str = Form(""),
+           case_key: str = Form(""), do_scan: str = Form("")):
+    f = dict(business_name=business_name, email=email, category=category, city=city,
+             role=role, company_size_band=company_size_band,
+             positioning_sentence=positioning_sentence, differentiator=differentiator,
+             undercut_on=undercut_on, your_price_point=your_price_point,
+             their_price_point=their_price_point, competitors_named=competitors_named,
+             customer_description=customer_description, case_key=case_key)
+    payload = payload_from_form(f)
+    try:
+        r = run_submission(payload, bool(do_scan))
+    except Exception:
+        return HTMLResponse(shell("error", f"<h1>Failed</h1><div class=err><pre>"
+                                  f"{traceback.format_exc()}</pre></div>"
+                                  f"<p><a href=/>← back</a></p>"), status_code=500)
+
+    if r["outcome"] == "REFUSED":
+        i = save(email=email, business_name=business_name, category=category,
+                 outcome="REFUSED", payload=payload,
+                 report="missing: " + ", ".join(r["refusal"]["missing_slots"]))
+        return HTMLResponse(shell("refused", f"""
+<h1>Refused before any model call</h1>
+<div class=sub>Submission #{i} — the address IS in the CRM</div>
+<div class=note>The pre-flight gate stopped this <b>before the token spend</b> —
+the ordering section 3.11 demands.</div>
+<div class=err><b>Missing required slots:</b>
+ {", ".join(r["refusal"]["missing_slots"]) or "(none)"}</div>
+<p>Guidance email (template C) would send here — no score, no scan, no cost.</p>
+<p><a href=/>← back</a> &nbsp; <a href=/crm>CRM →</a></p>"""))
+    if r["outcome"] == "MODEL_UNAVAILABLE":
+        save(email=email, business_name=business_name, category=category,
+             outcome="MODEL_UNAVAILABLE", payload=payload, report="(no report)")
+        return HTMLResponse(shell("unavailable",
+            "<h1>Jev unavailable</h1><p>No output written.</p><p><a href=/>← back</a></p>"))
+
+    run = r["run"]
+    i = save(email=email, business_name=business_name, category=category,
+             band=run.get("band"), composite=run.get("composite"),
+             rubric_version=run.get("rubric_version"), model_id=run.get("model_id"),
+             outcome="SCORED", report=r["report"], payload=payload)
+    dims = run.get("dimensions_display_1to5") or {}
+    rows = "".join(f"<tr><td>{k}</td><td>{v}/5</td></tr>" for k, v in dims.items())
+    scan = r.get("scan_verdict") or "—"
+    return HTMLResponse(shell(f"report {i}", f"""
+<h1>{business_name}</h1>
+<div class=sub>submission #{i} · {email} → CRM · rubric {run.get('rubric_version')}
+ · {run.get('model_id')}</div>
+<p><span class="badge b-ok">{run.get('composite')}/100 — {run.get('band')}</span></p>
+<h2>Scores</h2><table><tr><th>dimension</th><th>level</th></tr>{rows}</table>
+<div class=note><b>competitor set:</b> {scan}</div>
+<h2>The report the client receives</h2>
+<pre>{r["report"].replace("<", "&lt;")}</pre>
+<p><a href=/>← back</a> &nbsp; <a href=/crm>CRM →</a></p>"""))
+
+
+@app.get("/crm", response_class=HTMLResponse)
+def crm():
+    c = db()
+    rows = c.execute("SELECT id,created_at,email,business_name,band,composite,outcome "
+                     "FROM submissions ORDER BY id DESC").fetchall()
+    c.close()
+    body = "".join(
+        "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>"
+        "<td>{}</td></tr>".format(
+            i, (t or "")[:19], e or "", (b or "")[:34], band if band is not None else "—",
+            comp if comp is not None else "—", o)
+        for i, t, e, b, band, comp, o in rows) or "<tr><td colspan=7>(empty)</td></tr>"
+    return shell("CRM", f"""
+<h1>CRM — captured addresses</h1>
+<div class=sub>{len(rows)} submission(s). The minimum a lead engine must do: prove an
+address arrives attached to a report that exists.</div>
+<div class=note><b>⚠ A local SQLite file</b> (<code>sandbox.db</code>), NOT the system
+of record (spec 7.x). No sequences, no lead scoring, no vendor — deliberately.</div>
+<table><tr><th>#</th><th>when (UTC)</th><th>email</th><th>business</th><th>band</th>
+<th>score</th><th>outcome</th></tr>{body}</table>
+<p><a href=/>← back</a></p>""")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    print("ObserveCo sandbox → http://127.0.0.1:8765", file=sys.stderr)
+    uvicorn.run(app, host="127.0.0.1", port=8765, log_level="warning")

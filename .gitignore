@@ -79,3 +79,6 @@ node_modules/
 # Regenerable scrape cache (rewritten every collector run)
 .title_age_cache.json
 specs/calibration/canary/runs-check/
+specs/calibration/sandbox/sandbox.db
+specs/calibration/sandbox/runs/
+specs/calibration/sandbox/__pycache__/
