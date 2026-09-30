@@ -687,11 +687,23 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None) -> di
 
     out = {}
     if members:
+        # ⚠ THE `why` MUST MATCH WHICH PATH PRODUCED THE SET. Measured: after owner-named rivals
+        # became the primary set, this line still read "discovered by search and read from its
+        # own live site" and "the claim quoted is what that occupant STATES" -- describing
+        # research that did NOT happen. The model reads `why` as provenance, so a fixed string
+        # here laundered the owner's self-report back into an independent finding, which is the
+        # exact claim 4.6.0c exists to prevent.
+        if owner:
+            why = ("The rivals the BUSINESS ITSELF named. They are NOT independently verified "
+                   "occupants of this category, and nothing here states what any of them "
+                   "claims -- take them as the owner's view of who they compete with.")
+        else:
+            why = ("Each entry is a named occupant of this category, discovered by search "
+                   "and read from its own live site. The claim quoted is what that occupant "
+                   "STATES, not what is assumed about it.")
         out["SCANNED OCCUPANTS OF THE CATEGORY"] = {
             "members": members,
-            "why": ("Each entry is a named occupant of this category, discovered by search "
-                    "and read from its own live site. The claim quoted is what that occupant "
-                    "STATES, not what is assumed about it."),
+            "why": why,
             "caveat": (meta.get("verdict") or ""),
         }
     else:

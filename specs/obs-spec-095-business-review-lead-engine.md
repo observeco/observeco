@@ -2590,9 +2590,53 @@ on that first answer.* **So the gate is evaluating the submission the research a
 | **B** | **Refuse only when there is no website and no evidence** | *Simplest, but a thin submission with an unreadable site is refused while a thin one with a readable site is not — the difference is luck, not quality.* |
 | **C** | **Abandon the refusal; score everything and caveat** | *Restores the original defect: "NOT VIABLE" printed over an instrument's own note that it could not judge.* |
 
-**⚠ RECORDED, NOT SILENTLY FIXED.** *The wiring is correct and the measurement stands; which of
-A/B/C is right changes what the instrument means, so it is Sean's call.* **Until he rules, the
-behaviour is as documented here: research runs, and a `insufficient` verdict refuses regardless.**
+**✅ RESOLVED (30 Sep) — AND MY RECOMMENDATION WAS WRONG.** *I recommended **(A) re-ask
+sufficiency after enrichment**, twice, without testing it.* **Tested before building, and it would
+NOT have helped.**
+
+**⚠ THE DECISIVE TEST — same enriched state, ONE preamble line different:**
+
+| arm | `input_sufficiency`, 3 calls |
+|---|---|
+| **control (the state as it is today)** | `insufficient, insufficient, insufficient` |
+| **+ "treat the TIER 0 content as the business's own answer about its customers"** | **`sufficient, sufficient, sufficient`** |
+
+**⚠ SO THE REFUSAL WAS AN ARTIFACT OF THE QUESTION'S STRICTNESS, NOT A JUDGEMENT THAT THE BUSINESS
+COULD NOT BE ASSESSED.** *The model **had already seen** the submitter's own site — 6,059 chars,
+including all four of its customer segments — and **the `input_sufficiency` question was simply
+never told that counts.*** *It requires "some sense of its customer" and "something that could
+constitute a differentiator"; the site content plainly contains both, but the question only ever
+looked at the form.*
+**⚠ RE-ASKING WITH THE SAME QUESTION WOULD HAVE RETURNED THE SAME ANSWER.** *The fix is a **prompt**
+change, not a re-call — and I would have shipped the wrong one had I not measured.*
+
+**THE FIX.** *`build_state` now emits a **HOW TO READ THE ABOVE** block **only when a `TIER 0`
+block is present** — i.e. only when the business's own site was actually read:*
+
+> ***The form answers may look thin because the business gave its WEBSITE instead of writing
+> sentences. That is a legitimate answer, and the tool then READ that site. … When judging whether
+> there is ENOUGH to identify the customer and the claim, treat the TIER 0 content as the
+> business's own answer about its customers and positioning.***
+
+**⚠ TWO THINGS IT MUST NOT BECOME, BOTH STATED IN THE INSTRUCTION ITSELF:**
+1. **NOT a licence to infer.** *It says use what is in TIER 0, never "assume a customer exists".*
+   **If the site was not read, TIER 0 is absent and a thin form is still insufficient** — *the
+   refusal keeps its full force exactly where it should. Verified: the note is emitted only when
+   the tier exists.*
+2. **NOT an instruction about the SCORE.** *It speaks only to whether there is enough to ASSESS,
+   never to how the business should be judged.*
+
+**✅ VERIFIED END-TO-END:** *the same Aurora submission that was **refused** now returns
+**49/100 — Contested** (refused? **False**), with research intact, the four owner-named rivals in
+the set, and the report specific to the business.* **⚠ This is the §13 target segment finally
+getting a report instead of a refusal.**
+
+**⚠ AND ONE MORE SILENT-NO-OP CAUGHT HERE.** *The first version of the guard tested for `"TIER 0"`
+with a **space**, but the key is `tier_0_own_stated_position` with **underscores** — so it never
+matched, the note was never emitted, **and the end-to-end test still refused the submission while
+the fix looked applied.** *A guard that silently never fires is indistinguishable from a guard that
+fires and does nothing; **the only way it was caught was running the pipeline end-to-end rather
+than unit-checking the helper.***
 
 ### 6.7.5 ⚠⚠ THE MODEL IS NOT DETERMINISTIC, AND THE PROJECT HAS BEEN TREATING IT AS IF IT WERE
 
