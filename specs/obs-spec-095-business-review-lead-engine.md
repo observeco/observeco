@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v50.4 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
+**Status:** DRAFT v50.5 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -440,6 +440,8 @@ corpus must be regraded before any further tuning — tuning against it would be
 error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ Limits: n=20–21 is a SHAPE
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
+
+**v50.5 — D58: THE REPORT NOW USES THE SUBMITTER'S OWN WORDS (§6.7.3). The report was generic because the renderer read only the SCORE ARTIFACT — the submitter's claim, rivals and customer live in the SUBMISSION, which was never passed to it. A read that never quotes the reader back to themselves cannot feel like it is about their business, however good the band copy is. Fixed; verified byte-identical, so §5.5's computed-not-written rule still holds.
 
 **v50.4 — ⚠ THREE OPEN DEFECTS FOUND BY SUBMITTING A REAL BUSINESS (§6.7.2). Recorded, NOT fixed — each needs Sean's steering.** *Submitting `steegeXP` surfaced them; the submission pasted `https://steegexp.com/` as its positioning answer and `"I want you to find out"` as its undercut answer, and the instrument returned **`34/100 — Fragile`**.* **A:** *the model's own `input_sufficiency` said **`insufficient`** and the pipeline recorded it, then ignored it — **20 of 120 corpus cases are `insufficient` and 18 still get a confident band.*** *§5.4 already specifies the `REFUSED_INPUT_QUALITY` refusal and this is its natural trigger, but wiring it changes 17% of the corpus, so it is a behaviour change and not a silent fix.* **B:** *dimensions with coverage as low as **0.18** print as clean numbers and drive the band, because the display floor is 0.0 — including the two heaviest dimensions, which is what made a `1/5` mental advantage look like a finding rather than an absence of evidence.* **C:** *§5.4 states the composite floor is ~20 while the band table in the same document says `Fragile 5-37` — **5-19 is unreachable**, verified: the true minimum is **19.3**. The spec already documented the floor; the band table was simply never made to agree. **Fourth instance of the "two numbers that should be one" class in this document.*** **⚠ And the design question that is probably most important: nothing fetches the SUBMITTER'S OWN SITE** — *verified, `website` appears nowhere in `run_jev.py` or `preflight_gate.py` — even though §4.6's scan already has the capability. A business with no positioning statement, which is exactly D3's target segment, will paste its URL; reading it would convert "we cannot assess this" into an assessment.*
 
@@ -2361,7 +2363,47 @@ one fetch away.** *The capability already exists (§4.6's scan fetches and extra
 never pointed at the submitter.* **Reading the submitted site would convert "we cannot assess this"
 into an assessment — and it is worth deciding deliberately rather than by omission.**
 
-### 6.8 The 30s wall
+### 6.7.3 ⚠ THE REPORT MUST USE THE SUBMITTER'S OWN WORDS (D58 — Sean's ruling, 30 Sep)
+
+> **Sean:** *"The report is very generic. I would expect some specific details relating to the info
+> provided in the form? You need to be maximally helpful without giving away everything, just enough
+> to the point where it is compelling and clear they need observeco.com to help them with their
+> business."*
+
+**WHY IT WAS GENERIC — a real architectural cause, not tone.** *The renderer read the **score
+artifact** only. The submitter's own words — their claim, their named rivals, their customer — live
+in the **submission**, which was never passed to the renderer at all.* **A read that never quotes
+the reader back to themselves cannot feel like it is about their business**, however good the band
+copy is. *Fixed: `render()` now takes the submission, and `specifics()` extracts the business, its
+category, its claim, its rivals, its customer and its website.*
+
+**THE RULES:**
+
+1. **Open with THEIR words, and say what those words imply.** *"You said you are different because:
+   '…'" followed by the read on it* — **rather than a verdict floating free of what they typed.**
+   *A submission that pasted a URL instead of a claim gets told that directly: it is a normal answer,
+   **and it is itself the finding** — the claim lives on their site rather than in a sentence they
+   can say.*
+2. **Name their rivals back to them, by name.** *It is the single most concrete thing the report
+   holds, and it makes the read auditable: the reader can see exactly which competitors the
+   judgement was made against.*
+3. **⚠ IT USES THEIR WORDS — IT DOES NOT WRITE NEW PROSE.** *This is deliberately **not** a second
+   model call.* **The report remains a COMPUTED artifact (§5.5), verified byte-identical across two
+   renders.** *The specificity comes from quoting them, never from generating claims about them.*
+   *A model writing bespoke findings would make the report unfalsifiable and untestable, and would
+   let two identical submissions receive different verdicts.*
+4. **⚠ THE COMPELLING PART IS A PRECISE UNANSWERED QUESTION, NOT AN UPSELL.** *Sean's line —
+   "just enough to the point where it is compelling and clear they need observeco.com" — is met by
+   naming, in their own words, the **single question their score turns on**, and stopping exactly
+   there.* **For a submission naming rivals: "does Charles Taylor already own the claim you are
+   making — and if one does, what is genuinely left that is yours? … We cannot answer it from a
+   form."** *The self-diagnosis is complete and free; the resolution is the engagement.*
+   **⚠ The mechanism must never become a vague promise of more.** *A report that withholds
+   something the reader earned reads as a sales pitch; a report that hands over the whole
+   diagnosis and names the one thing it cannot do reads as an expert.* **§7.14's trust sequence
+   depends on that difference.**
+5. **⚠ A PASTED URL IS NOT A STATED CLAIM, and must never be quoted as one.** *Checked by
+   predicate, so the report cannot put words in a business's mouth that it never said.*
 
 `vercel.json` caps `api/**/*.js` at `maxDuration: 30`. Jev + enrichment + email exceeds this. **The
 report is queued and worked asynchronously** — the request path only validates, records, and

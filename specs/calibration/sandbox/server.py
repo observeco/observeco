@@ -293,7 +293,7 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
     (RUNS / f"jev-{scored['case']}.json").write_text(json.dumps(scored, indent=2) + "\n")
 
     # 5. REPORT
-    a, b = render_report(scored, RUBRIC)
+    a, b = render_report(scored, RUBRIC, payload)
     out.update(outcome="SCORED", run=scored, report=b, report_a=a)
     return out
 

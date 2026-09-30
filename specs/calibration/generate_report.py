@@ -306,6 +306,51 @@ def recommendations(run: dict, counts: dict, weights: dict) -> list:
     return out
 
 
+def specifics(submission: dict | None) -> dict:
+    """Pull the submitter's OWN words out of the submission.
+
+    ⚠ WHY THIS EXISTS. Sean: "The report is very generic. I would expect some specific
+    details relating to the info provided in the form? You need to be maximally helpful
+    without giving away everything, just enough to the point where it is compelling and
+    clear they need observeco.com to help them with their business."
+
+    The report could not be specific because it only ever read the SCORES. The words the
+    business typed -- its claim, its rivals, its customer -- live in the submission, and
+    were never passed to the renderer. A read that never quotes the reader back to
+    themselves cannot feel like it is about their business.
+
+    ⚠ IT USES THEIR WORDS, IT DOES NOT WRITE NEW ONES. This is deliberately NOT a model
+    call: the report is a computed artifact (spec 5.5), and the specificity comes from
+    quoting them, not from generating fresh prose about them.
+    """
+    if not submission:
+        return {}
+    form = submission.get("form") or {}
+    def clean(k):
+        v = (form.get(k) or "").strip()
+        return v if v and len(v) < 400 else ""
+    return {
+        "business": clean("business_name"),
+        "category": clean("category"),
+        "city": clean("city"),
+        "claim": clean("positioning_sentence"),
+        "different": clean("differentiator"),
+        "undercut": clean("undercut_on"),
+        "customer": clean("customer_description"),
+        "website": clean("website"),
+        "price_ours": clean("your_price_point"),
+        "price_theirs": clean("their_price_point"),
+        "rivals": [r for r in (submission.get("competitors_named") or []) if r][:12],
+    }
+
+
+def is_url(s: str) -> bool:
+    """A pasted URL is not a stated claim, and must not be quoted AS one."""
+    return bool(s) and (s.strip().startswith(("http://", "https://", "www."))
+                        or (" " not in s.strip() and "." in s.strip()
+                            and "/" not in s.strip()[:1]))
+
+
 def norm(name: str) -> str:
     return ALIAS.get(name, name)
 
@@ -428,7 +473,8 @@ def version_a(run: dict, counts: dict, weights: dict) -> str:
     return "\n".join(out)
 
 
-def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None) -> str:
+def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None,
+              sp: dict | None = None) -> str:
     dims = run["dimensions_display_1to5"]
     conf = run["confidence"]
     band = run.get("band")
@@ -437,10 +483,70 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
     unresolved = [k for k in weights
                   if k not in unscored and conf.get(k) is not None
                   and conf[k] < CONF_FLAG]
+    sp = sp or {}
     out = []
-    out.append("OBSERVECO — YOUR POSITIONING READ")
+    who = sp.get("business") or ""
+    out.append(f"OBSERVECO — YOUR POSITIONING READ")
+    if who:
+        out.append(f"Prepared for: {who}" + (f" · {sp['category']}" if sp.get("category") else ""))
     out.append("=" * 52)
     out.append("")
+
+    # ── THEIR SITUATION, IN THEIR OWN WORDS ──────────────────────────────────
+    # This section is what makes the report about THEIR business rather than about
+    # businesses in general. It quotes what they typed and says what it implies —
+    # it does not invent findings, and it does not tell them what to do about it.
+    if who or sp.get("claim") or sp.get("rivals"):
+        out.append("WHAT YOU TOLD US, AND WHAT IT IMPLIES")
+        out.append("")
+        if sp.get("claim") and not is_url(sp.get("claim")):
+            out.append(f"  You said you are different because:")
+            for line in wrap(f'"{sp["claim"]}"', 60):
+                out.append(f"      {line}")
+            ps = dims.get("position_strength")
+            if ps is not None and ps <= 2:
+                out.append("")
+                out.append("      Read literally, that is a claim several of your rivals could")
+                out.append("      also make. A customer choosing between you and them")
+                out.append("      would have no reason to pick you on this — which is what")
+                out.append("      the position strength score reflects.")
+            elif ps is not None and ps >= 4:
+                out.append("")
+                out.append("      That is a genuine distinction, and it is doing real")
+                out.append("      work for you.")
+            out.append("")
+        elif sp.get("website"):
+            out.append(f"  You pointed us at {sp['website']} rather than writing a")
+            out.append("  positioning statement. That is a perfectly normal answer —")
+            out.append("      and it is also the finding: the claim your business makes")
+            out.append("      lives on your site, not in something you can say in a")
+            out.append("      sentence. We read the site and used it.")
+            out.append("")
+        if sp.get("rivals"):
+            rv = ", ".join(sp["rivals"][:6])
+            out.append(f"  The rivals you named:")
+            for line in wrap(rv, 60):
+                out.append(f"      {line}")
+            ps = dims.get("position_strength")
+            if ps is not None and ps <= 2:
+                out.append("")
+                out.append("      The read can say whether a claim is yours only by")
+                out.append("      checking it against what THEY say. Naming them was the")
+                out.append("      right move — what was missing was a claim none of them")
+                out.append("      already owns.")
+            out.append("")
+        if sp.get("customer"):
+            out.append(f"  Your customer, as you describe them:")
+            for line in wrap(f'"{sp["customer"]}"', 60):
+                out.append(f"      {line}")
+            dr = dims.get("demand_reach")
+            if dr is not None and dr <= 2:
+                out.append("")
+                out.append("      That is a buyer group, and a sensible one. What it does")
+                out.append("      not yet say is how you reach them deliberately — which")
+                out.append("      is what the demand reach score is picking up.")
+            out.append("")
+
     out.append("THE SHORT VERSION")
     out.append("")
     if run.get("gates_firing"):
@@ -509,6 +615,24 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
     out.append("  competitors' claims against public registries, verify their pricing,")
     out.append("  or map who owns which word in your category. That is the paid")
     out.append("  analysis.")
+    # ⚠ SEAN'S LINE, HELD: "maximally helpful without giving away everything, just enough
+    # to the point where it is compelling and clear they need observeco.com to help them."
+    # The mechanism is NOT a vague upsell. It is to name, concretely and in THEIR words,
+    # the specific question their score turns on -- and then stop exactly there. The
+    # self-diagnosis is free and complete; the resolution is the engagement.
+    if sp.get("rivals"):
+        out.append("")
+        rivals_txt = ", ".join(sp["rivals"][:4])
+        out.append(f"  Concretely, for you: does {rivals_txt} already own the claim")
+        for line in wrap("you are making — and if one does, what is genuinely left that "
+                         "is yours? That is the question your position strength score "
+                         "turns on, and it is a question about THEIR position. We cannot "
+                         "answer it from a form.", 62):
+            out.append(f"  {line}")
+        out.append("")
+        out.append("  Answering it needs someone to read what your rivals publish, map")
+        out.append("  which words each one owns, and tell you which claim is still open.")
+        out.append("  That is the work behind the score you just read.")
     if unresolved:
         out.append("  We also could not settle: "
                    + ", ".join(str(LABEL.get(k, k)) for k in unresolved) + ".")
@@ -521,7 +645,8 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
     return "\n".join(out)
 
 
-def render(run: dict, rubric_path: Path | None) -> tuple[str, str]:
+def render(run: dict, rubric_path: Path | None,
+           submission: dict | None = None) -> tuple[str, str]:
     r = normalise(run)
     rubric = load_rubric(rubric_path)
     dims = r.get("dimensions_display_1to5") or {}
@@ -538,7 +663,8 @@ def render(run: dict, rubric_path: Path | None) -> tuple[str, str]:
             f"REFUSED: artifact is missing dimensions {missing}. Refusing to render a "
             "report that silently omits part of the composite.")
     return (version_a(r, counts, weights),
-            version_b(r, counts, weights, load_rubric(rubric_path)))
+            version_b(r, counts, weights, load_rubric(rubric_path),
+                      specifics(submission)))
 
 
 def main() -> None:
@@ -561,7 +687,15 @@ def main() -> None:
         raise SystemExit(f"no such run artifact: {runpath}")
 
     run = json.loads(runpath.read_text())
-    a, b = render(run, Path(args.rubric) if args.rubric else None)
+    # the submission, when it sits beside the run file -- so the CLI is as specific as
+    # the sandbox. Absent, the report simply has less to quote.
+    sub = None
+    for cand in (runpath.with_suffix(".submission.json"),
+                 runpath.parent / f"{runpath.stem}.payload.json"):
+        if cand.exists():
+            sub = json.loads(cand.read_text())
+            break
+    a, b = render(run, Path(args.rubric) if args.rubric else None, sub)
 
     if args.check:
         print(f"OK  {runpath.name} -> rendered {len(a)} + {len(b)} chars")
