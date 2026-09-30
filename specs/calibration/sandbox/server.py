@@ -99,6 +99,26 @@ def save(**kw) -> int:
 
 
 # ── what a submission from the form looks like ───────────────────────────────
+def extract_url(*texts: str) -> str:
+    """Pull a URL out of free-text answers.
+
+    ⚠ WHY THIS EXISTS. A small business that has NOT formulated a positioning statement --
+    exactly the target segment D3 names -- will reasonably answer "why should I choose
+    you?" with its own website. Measured on a real submission: steegeXP answered
+    `https://steegexp.com/` and `"I want you to find out"`. Treating that as prose throws
+    away the single most useful input the submission contains.
+    """
+    import re
+    for t in texts:
+        if not t:
+            continue
+        m = re.search(r"(?:https?://)?((?:[\w-]+\.)+[a-z]{2,}(?:/[^\s]*)?)", t, re.I)
+        if m and "." in m.group(1):
+            host = m.group(1)
+            return host if host.startswith("http") else "https://" + host
+    return ""
+
+
 def payload_from_form(f: dict) -> dict:
     """Build the pipeline payload from the sandbox form.
 
@@ -122,6 +142,13 @@ def payload_from_form(f: dict) -> dict:
         "their_price_point": f.get("their_price_point", ""),
         "competitors_named_count": str(len(comps)) if comps else "",
     }
+    # the submitter's own site, if the free text carries one. This is ENRICHMENT and is
+    # not the same thing as a positioning claim -- build_state sends it to the model as
+    # supplied evidence, and the scan uses it as a seed.
+    site = f.get("website") or extract_url(f.get("positioning_sentence", ""),
+                                           f.get("differentiator", ""))
+    if site:
+        form["website"] = site
     # ⚠ collected but NOT scored by the current rubric — flagged in the UI.
     if f.get("customer_description"):
         form["customer_description"] = f["customer_description"]
@@ -175,19 +202,76 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
         out["refusal"] = pf
         return out
 
-    # 2. SCAN — only when the submission carries no set (spec 4.6)
-    if do_scan and not payload.get("derived_competitive_set"):
+    # 2. THE WEB RESEARCH PASS (spec 4.6, via the web-search-scraping-protocol).
+    #
+    # ⚠ WHAT WAS WRONG BEFORE THIS. The scan ran ONLY when the submission named no
+    # competitors, and it was seeded with NOTHING (run_jev passes `[]`). So:
+    #   - a submission that named even one rival SKIPPED research entirely and scored
+    #     against the owner's own list, which build_state itself labels "the OWNER'S
+    #     PERCEPTION, which is expected to be incomplete";
+    #   - and `scan(seed_urls=...)` — ALREADY BUILT — was always handed an empty list,
+    #     so the submitter's own website, the richest input in the submission, was never
+    #     fetched.
+    # Measured on a real submission: steegeXP pasted its URL as its positioning answer,
+    # named one rival, and the tool skipped research, ignored the site, and returned a
+    # confident "NOT VIABLE" off a URL and a one-name competitor list.
+    #
+    # Sean: "you did not execute the web search protocol at all. Didn't we spec out that
+    # if a website is provided, we would search the web and do a competitive analysis?"
+    # He is right, and the fix is not new capability — it is pointing the existing
+    # capability at the submitter.
+    do_research = do_scan or bool((payload.get("form") or {}).get("website"))
+    if do_research:
         try:
             from competitor_scan import scan as _scan, to_competitive_set as _tocs
             form = payload.get("form") or {}
+            seeds = [form["website"]] if form.get("website") else []
             res = _scan((form.get("category") or "").strip(),
-                        (form.get("city") or "Singapore").strip(), [], per_url_timeout=20)
-            payload["derived_competitive_set"] = _tocs(res)
-            out["scan_verdict"] = (res.get("_meta") or {}).get("verdict")
+                        (form.get("city") or "Singapore").strip(),
+                        seeds, per_url_timeout=20)
+            verdict = (res.get("_meta") or {}).get("verdict", "")
+            # Only ADOPT a researched set over the owner's list when the research actually
+            # produced something. A failed scan must not replace a real (if thin) list with
+            # an empty one -- §4.6's honest-failure rule.
+            if "SCAN FAILED" not in verdict and "SEARCH UNAVAILABLE" not in verdict:
+                cs = _tocs(res)
+                # ⚠ THE SUBMITTER'S OWN SITE IS EVIDENCE, AND IT WAS BEING THROWN AWAY.
+                # The scan fetches the seed URL and stores `claim` and `excerpt` on the
+                # capture — then to_competitive_set() keeps only the derived OCCUPANT
+                # names and drops the page content. Measured: steegexp.com captured OK
+                # and its content never reached the model.
+                # When the seed IS the submitter's own site, that page is the single most
+                # relevant evidence in the whole submission, so it is carried into the
+                # set explicitly and labelled as the business's OWN stated position —
+                # evidence-unequal to a researched rival, and said so.
+                if seeds:
+                    mine = next((c for c in (res.get("captures") or [])
+                                 if c.get("capture_status") == "ok"
+                                 and seeds[0].split("//")[-1].split("/")[0]
+                                     in (c.get("url") or "")), None)
+                    if mine:
+                        cs["tier_0_own_stated_position"] = {
+                            "members": [mine.get("url") or seeds[0]],
+                            "why": ("THE BUSINESS'S OWN SITE, read directly. This is what "
+                                    "they say about themselves in public."),
+                            "claim": mine.get("claim"),
+                            "excerpt": mine.get("excerpt"),
+                            "caveat": ("⚠ This is the business's OWN public claim, not an "
+                                       "independent finding. Treat it as evidence of what "
+                                       "they SAY, and judge whether a rival could say the "
+                                       "same thing."),
+                        }
+                payload["derived_competitive_set"] = cs
+                payload["_research"] = {"seeded_with": seeds, "verdict": verdict}
+                out["scan_verdict"] = (f"researched the web"
+                                       + (f", starting from {seeds[0]}" if seeds else "")
+                                       + f" — {verdict}")
+            else:
+                payload["_research"] = {"seeded_with": seeds, "verdict": verdict}
+                out["scan_verdict"] = (f"the web research did not complete ({verdict}) — "
+                                       "your position is scored against the rivals you named")
         except Exception as exc:
-            out["scan_verdict"] = f"SCAN ERROR: {exc}"
-    elif payload.get("derived_competitive_set"):
-        out["scan_verdict"] = "skipped — the submission already names competitors"
+            out["scan_verdict"] = f"research error: {exc} — scored against the rivals you named"
 
     # 3. MODEL CALL
     state = run_jev.build_state(payload)

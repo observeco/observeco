@@ -83,7 +83,11 @@ def build_state(payload: dict) -> str:
             members = tier.get("members") or []
             if members:
                 lines.append(f"  members: {'; '.join(members)}")
-            for field in ("why", "price_floor", "diagnostic", "caveat"):
+            # ⚠ `claim` and `excerpt` were MISSING from this list, so the one thing the
+            # research actually extracted -- what a page SAYS -- was fetched, stored, and
+            # then never shown to the model. The set carried names and a rationale while
+            # the evidence behind them was dropped.
+            for field in ("why", "claim", "excerpt", "price_floor", "diagnostic", "caveat"):
                 if tier.get(field):
                     lines.append(f"  {field}: {tier[field]}")
             lines.append("")
