@@ -79,9 +79,36 @@ def evaluate(fixture, out):
     insufficient = str(suff_verdict).lower().startswith("insufficient")
     refused = bool(out.get("refused")) or out.get("band") is None
 
+    # ⚠⚠ A GATE THAT FIRES FOR AN UNPREDICTED REASON MUST BE A FINDING, NOT A PASS.
+    # Measured trap: with exit 3 mapped to `refused`, a fixture that fails the PRE-FLIGHT GATE
+    # never reaches scoring -- so it has no dimension scores at all. A control whose prediction is
+    # about a SCORED dimension (e.g. "position_strength <= 2") would therefore match the
+    # refusal branch instead, and be reported as PASS with the reason
+    # "refused/insufficient as predicted" -- which the fixture never predicted.
+    #
+    # That is a FALSE PASS on a control whose subject was never exercised, and it is exactly the
+    # failure mode a negative-control gate exists to prevent. Currently latent: every refusal-
+    # predicting control is NC01/NC02, and NC03/NC04/NC05 do get past the gate. It would bite the
+    # moment a control's fixture is thin enough to be refused -- e.g. if the pre-flight floor were
+    # raised, or a new control reused a minimal fixture.
+    #
+    # So: if the gate refused the submission, the ONLY predictions that can be honoured are ones
+    # that anticipated a refusal. Anything else is inconclusive and reported as such.
+    if out.get("__preflight_refused__") or (refused and not dims):
+        pred_l = str(predicted).lower()
+        anticipates_refusal = ("insufficient" in pred_l or "refus" in pred_l
+                               or "band" in pred_l or "gate" in pred_l)
+        if not anticipates_refusal:
+            return False, ("INCONCLUSIVE, NOT A PASS — the pre-flight gate refused this fixture, "
+                           "so the dimension this control predicts (%s) was NEVER SCORED. The "
+                           "control's subject was not exercised. Give the fixture enough input to "
+                           "clear the gate, or state the refusal in predicted_failure."
+                           % predicted[:90])
+
     # Control 1 -- empty input: must refuse, or at minimum flag insufficiency
     if "input_sufficiency" in predicted and "insufficient" in predicted and "OR" not in predicted:
         ok = insufficient or refused
+        # (see the refusal guard above for why an unanticipated gate refusal can never pass)
         if ok and out.get("__preflight_refused__"):
             # ⚠ SAY WHICH DOOR IT FAILED AT. "insufficient" and "refused before sufficiency was
             # asked" are different mechanisms; collapsing them would hide that the gate stopped
@@ -170,10 +197,27 @@ def main():
     print("\n" + "=" * 96)
     print("  %d of %d controls failed as predicted." % (len(passed), len(fixtures)))
     if failed:
-        print("\n  ⚠ CONTROLS THAT DID NOT FAIL AS PREDICTED — each is a finding about the INSTRUMENT,")
-        print("    not about the control:")
-        for cid, reason in failed:
-            print("    - %-20s %s" % (cid, reason[:170]))
+        # ⚠⚠ SPLIT THE TWO KINDS OF NON-PASS — THEY HAVE DIFFERENT OWNERS AND DIFFERENT ACTIONS.
+        # The old block said every non-pass "is a finding about the INSTRUMENT, not about the
+        # control". That is true of a control whose prediction was actually exercised and did not
+        # hold. It is FALSE of an INCONCLUSIVE control, where the fixture never reached the
+        # behaviour under test — that is a defect in the CONTROL, and sending the reader to
+        # investigate the instrument would waste the search and could "find" a regression that
+        # does not exist.
+        inconclusive = [(c, r) for c, r in failed if r.startswith("INCONCLUSIVE")]
+        genuine = [(c, r) for c, r in failed if not r.startswith("INCONCLUSIVE")]
+        if genuine:
+            print("\n  ⚠ CONTROLS THAT DID NOT FAIL AS PREDICTED — each is a finding about the "
+                  "INSTRUMENT,")
+            print("    not about the control:")
+            for cid, reason in genuine:
+                print("    - %-20s %s" % (cid, reason[:170]))
+        if inconclusive:
+            print("\n  ⚠ INCONCLUSIVE CONTROLS — a finding about the CONTROL, NOT the instrument.")
+            print("    The fixture never reached the behaviour it was written to test, so it")
+            print("    proves nothing either way. Fix the fixture before reading anything into it:")
+            for cid, reason in inconclusive:
+                print("    - %-20s %s" % (cid, reason[:170]))
     print("=" * 96)
     return 0 if not failed else 1
 

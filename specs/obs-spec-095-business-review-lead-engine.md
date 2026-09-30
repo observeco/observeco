@@ -2947,6 +2947,56 @@ to work, and a gate that is always red is worse than no gate: it trains its read
 
 ---
 
+
+**✅ 6.7.7c CLOSED THE TRAP THE EXIT-3 FIX OPENED — A GATE REFUSAL CAN NO LONGER PASS A CONTROL
+WHOSE PREDICTION WAS NEVER EXERCISED (BUILT).**
+
+**⚠ FIXING 6.7.7b CREATED A NEW FALSE-PASS PATH, AND IT WAS CAUGHT BY TESTING THE FIX RATHER THAN
+TRUSTING IT.** *Once **exit 3** was mapped to `refused`, a fixture that fails the **pre-flight gate**
+never reaches scoring — **so it has no dimension scores at all.** A control whose prediction is about
+a **scored dimension** (e.g. "`position_strength <= 2`") would then match the **refusal** branch
+instead, and be reported as **PASS · "refused/insufficient as predicted"** — ***a pass on a control
+whose subject was never exercised, and a reason the fixture never predicted.*** **That is precisely
+the failure mode a negative-control gate exists to prevent, and the fix had introduced it.**
+
+**⚠ IT WAS LATENT, WHICH IS WHY IT NEEDED A TEST RATHER THAN AN ARGUMENT.** *Every refusal-predicting
+control is NC01/NC02; NC03/NC04/NC05 do clear the gate, so **no current control is affected**. It
+would bite the moment a control's fixture became thin enough to be refused — **if the pre-flight
+floor were raised, or a new control reused a minimal fixture.***
+
+**✅ FALSIFICATION TEST PASSED.** *A **throwaway** fixture predicting a scored dimension
+(`position_strength <= 2`) was written with empty required slots so the gate would refuse it. Expected:
+**INCONCLUSIVE, NOT A PASS.** Observed, verbatim:*
+
+    NC99-temptrap        FAIL
+      predicted : position_strength <= 2. The claim is the one a named occupant already holds.
+      observed  : INCONCLUSIVE, NOT A PASS — the pre-flight gate refused this fixture, so the
+                  dimension this control predicts ... was NEVER SCORED.
+      band      : None   composite: None
+
+**⚠ THE GUARD: if the gate refused the submission, only a prediction that anticipated a refusal can
+be honoured. Anything else is INCONCLUSIVE and reported as such** — *with the instruction to fix the
+fixture or state the refusal in `predicted_failure`.* ***The throwaway fixture was removed and the
+absence verified — five fixtures remain, as before.***
+
+**⚠ AND THE TEST EXPOSED A SECOND, OLDER DEFECT IN THE SUMMARY IT PRODUCED.** *The non-pass block
+said **"each is a finding about the INSTRUMENT, not about the control"** — **which is false for an
+INCONCLUSIVE control**, where the fixture never reached the behaviour under test. **That is a defect
+in the CONTROL**, and sending the reader to hunt the instrument would waste the search and could
+**"find" a regression that does not exist.** The block now splits the two: **genuine prediction
+failures point at the instrument; inconclusive ones point at the fixture.***
+
+**✅ VERIFIED — 5 of 5 controls fail as predicted, exit 0** *(rubric 1.21.0; five fixtures, no residue
+from the test).*
+
+**⚠ ONE HONEST OBSERVATION FROM THIS RUN, NOT A DEFECT.** *NC05 read **`position_strength = 2`** here
+against a prediction of **≤ 3**, where the previous run read **3**. **Both satisfy the prediction**,
+so the control passes either way — *but the movement is the instrument's **known ~8% dimension
+wobble** (§6.7.5) showing on a single dimension. **It does not threaten this control because the
+prediction is a bound rather than an equality** — which is a reason to keep predictions as bounds.*
+
+---
+
 **⚠⚠ 6.7.6a THE SECOND SECTOR EXPOSED THAT RESOLUTION IS NOT QUALITY (BUILT — 30 Sep).**
 
 **⚠ THE FIRST SECTOR PASSED AND HID A REAL DEFECT. That is the whole argument for testing a second
