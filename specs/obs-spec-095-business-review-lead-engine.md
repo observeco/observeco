@@ -2727,11 +2727,12 @@ CANARY WERE RE-RUN — NOT ASSUMED.**
 **unchanged** from the pre-change baseline, so the rival-reading work and the claim gate did not
 disturb scoring. **Controls: 4 of 5 failed as predicted.***
 
-**⚠ THE 5TH IS A STALE FIXTURE, NOT A REGRESSION.** *`NC01-empty` now **RUN FAILS** with
-**"PRE-FLIGHT REFUSED: missing required slots: positioning, category"**.* **The control is meant to
-exercise a downstream rule, but the pre-flight gate now refuses the fixture at the door** — so it can
-no longer reach the behaviour it tests. **A negative control that cannot run is not a passing
-control.** *It needs a fixture that gets past the gate.* **Recorded, not silenced.***
+**⚠ THE 5TH IS A HARNESS DEFECT, NOT A REGRESSION — AND NOT A STALE FIXTURE EITHER.** *`NC01-empty`
+reported **"RUN FAILED: PRE-FLIGHT REFUSED: missing required slots: positioning, category"**.* ***My
+first reading — "the fixture is stale, the control can no longer reach the behaviour it tests" — WAS
+WRONG.*** *The harness counted the gate's `sys.exit(3)` as a crash; **`preflight_gate.py` documents
+that code as "guidance, not failure"**, and refusing an empty submission **IS** the control's
+predicted outcome. **See 6.7.7b.***
 
 **⚠⚠ AND THE CANARY FAILED — ON ITS OWN STALE DEFAULT, NOT ON THE CODE.**
 
@@ -2889,6 +2890,60 @@ changes what the launch condition is, and §10.6 is Sean's to change.**
 real defect: it compared against an instrument 13 versions old. **Both are true — the default was
 wrong AND the alarm rate is too high to trust either way.*** **Fixing only the first would have
 produced a gate that passes today and fails ~2 runs in 5 tomorrow.**
+
+---
+
+
+**✅ 6.7.7b RESOLVED — `NC01-empty` WAS A HARNESS DEFECT, NOT A STALE FIXTURE. THE CONTROL WAS RIGHT.**
+
+**⚠ I RECORDED THIS EARLIER AS "A STALE FIXTURE... A CONTROL THAT CANNOT RUN IS NOT A PASSING CONTROL."
+THAT DIAGNOSIS WAS WRONG, AND THE FIXTURE WAS FINE.** *The defect was in the HARNESS, and the
+control had been **failing correctly the whole time**.*
+
+**THE DEFECT.** *`run_negative_controls.py` treated **any non-zero child return code** as
+**"RUN FAILED"**. But `preflight_gate.py` documents its own exit code explicitly:*
+
+    if res["outcome"] == "REFUSED_INPUT_QUALITY":
+        sys.exit(3)      # guidance, not failure
+
+***`NC01-empty` predicts `input_sufficiency = insufficient`. An empty submission is refused at the
+pre-flight gate BEFORE sufficiency can even be asked — so refusing at the door IS the predicted
+failure, arriving one stage earlier. The harness scored that correct refusal as its own inability to
+measure anything.***
+
+**⚠ THE GENERAL FORM, AND WHY THIS IS WORTH FIXING RATHER THAN DOCUMENTING.** ***A harness that counts
+a CORRECT refusal as a measurement failure reports failure exactly when the instrument behaves
+properly.*** *So the gate can never be green, and **a real regression becomes indistinguishable from
+this known noise** — the same class as `run_canary.py`'s stale rubric default (§6.7.7): a gate
+failing for a reason unrelated to what it tests.*
+
+**BUILT — TWO FIXES:**
+1. **Exit 3 is now read as the gate firing, not as a broken run** — *it is mapped to `refused`, which
+   is what every control's prediction is checked against.*
+2. **Each control now names the branch that actually fired.** *Measured: NC02 printed
+   **"insufficient/refused, or competitive_room=3"** — and **3 does not satisfy its predicted
+   `competitive_room <= 1`**, so a PASS reported a number that **contradicted** the condition beside
+   it, with no way to tell which branch carried it. It now reads: **"REFUSED (sufficiency
+   'insufficient', band 'GATE') — the refusal branch fired; competitive_room=3 did not need to."***
+
+**✅ VERIFIED — 5 of 5 controls fail as predicted, exit 0** *(rubric 1.21.0):*
+
+| control | predicted | observed |
+|---|---|---|
+| NC01-empty | `input_sufficiency = insufficient` | **refused at the pre-flight gate** |
+| NC02-contradictory | insufficient OR `competitive_room = 1` | **refused** (room=3; refusal branch) |
+| NC03-generic | PS ≤ 2 AND MA ≤ 2 | **PS 2, MA 2** |
+| NC04-owned | PS ≤ 2 | **PS 2** |
+| NC05-unevidenced | PS ≤ 3 (capped) | **PS 3** |
+
+***The negative-control gate is GREEN and meaningful for the first time — it now reports a failure
+exactly when the instrument misbehaves, and nothing else.***
+
+**⚠ AND THE SAME LESSON TWICE IN ONE SESSION, WHICH IS WHY IT IS WRITTEN HERE.** *Both launch gates
+(`run_canary.py`, `run_negative_controls.py`) were **failing for reasons unrelated to what they
+test** — a stale rubric default and a refusal misread as a crash. ***Neither had been run before this
+session's blast-radius check.*** **A gate that has never been observed to fail correctly is not known
+to work, and a gate that is always red is worse than no gate: it trains its reader to ignore it.***
 
 ---
 

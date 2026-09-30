@@ -38,6 +38,28 @@ def run_case(path, rubric, outdir):
     r = subprocess.run([sys.executable, str(HERE / "run_jev.py"), str(path),
                         "--rubric", rubric, "--outdir", outdir],
                        capture_output=True, text=True, cwd=HERE)
+    # ⚠⚠ EXIT 3 IS NOT A BROKEN RUN — IT IS THE GATE FIRING, WHICH IS WHAT THE CONTROL WANTS.
+    # `preflight_gate.py` documents it explicitly: "sys.exit(3)  # guidance, not failure". A
+    # submission that fails the pre-flight gate never reaches scoring, so there is no run
+    # artifact -- and the harness treated any non-zero return as COULD NOT RUN.
+    #
+    # Measured: NC01-empty was reported as "RUN FAILED: PRE-FLIGHT REFUSED ... missing required
+    # slots: positioning, category" -- i.e. the control's PREDICTED failure being counted as the
+    # harness being unable to measure it. NC01 predicts "input_sufficiency = insufficient"; the
+    # gate refused it before sufficiency could even be asked. Refusing at the door IS the
+    # predicted failure mode for an empty submission.
+    #
+    # ⚠ THE GENERAL FORM, AND WHY THIS IS WORTH FIXING RATHER THAN DOCUMENTING: a harness that
+    # counts a CORRECT refusal as a measurement failure will report failure exactly when the
+    # instrument behaves properly -- so the gate can never be green, and a real regression
+    # becomes indistinguishable from this known noise. That is the same class as the stale
+    # rubric default in run_canary.py (6.7.7): the gate failing for a reason unrelated to what
+    # it tests.
+    if r.returncode == 3:
+        return {"__preflight_refused__": True,
+                "refused": True, "band": None,
+                "input_sufficiency": {"answer": "insufficient"},
+                "refusal_text": (r.stderr or r.stdout)[-400:]}, ""
     if r.returncode != 0:
         return None, (r.stderr or r.stdout)[-400:]
     for p in sorted((HERE / outdir).glob("jev-*.json")):
@@ -60,6 +82,12 @@ def evaluate(fixture, out):
     # Control 1 -- empty input: must refuse, or at minimum flag insufficiency
     if "input_sufficiency" in predicted and "insufficient" in predicted and "OR" not in predicted:
         ok = insufficient or refused
+        if ok and out.get("__preflight_refused__"):
+            # ⚠ SAY WHICH DOOR IT FAILED AT. "insufficient" and "refused before sufficiency was
+            # asked" are different mechanisms; collapsing them would hide that the gate stopped
+            # this submission earlier than the control's text anticipated.
+            return True, ("REFUSED AT THE PRE-FLIGHT GATE — the empty submission never reached "
+                          "scoring, which is the predicted outcome")
         return ok, ("refused/insufficient as predicted" if ok else
                     "SCORED AN EMPTY SUBMISSION (sufficiency=%r, band=%r)"
                     % (suff_verdict, out.get("band")))
@@ -68,9 +96,19 @@ def evaluate(fixture, out):
     if "OR" in predicted:
         cr = dims.get("competitive_room")
         ok = insufficient or refused or (cr is not None and cr <= 1)
-        return ok, ("insufficient/refused, or competitive_room=%s" % cr if ok else
-                    "NEITHER fired: sufficiency=%r competitive_room=%s band=%r"
-                    % (suff_verdict, cr, out.get("band")))
+        if not ok:
+            return False, ("NEITHER fired: sufficiency=%r competitive_room=%s band=%r"
+                           % (suff_verdict, cr, out.get("band")))
+        # ⚠ NAME THE BRANCH THAT ACTUALLY FIRED. The old line printed the competitive_room value
+        # unconditionally -- "insufficient/refused, or competitive_room=3" -- so a PASS reported
+        # a number (3) that does NOT satisfy the predicted <= 1, and a reader cannot tell which
+        # of the two conditions carried it. Measured on NC02: it passed on the refusal branch
+        # while printing competitive_room=3, which reads as a contradiction.
+        if refused or insufficient:
+            return True, ("REFUSED (sufficiency=%r, band=%r) — the refusal branch fired; "
+                          "competitive_room=%s did not need to." % (suff_verdict,
+                                                                    out.get("band"), cr))
+        return True, "competitive_room=%s satisfied the <= 1 branch" % cr
 
     # Control 3 -- generic filler: must not score mid on position_strength or mental_advantage
     if "position_strength <= 2" in predicted and "mental_advantage" in predicted:
