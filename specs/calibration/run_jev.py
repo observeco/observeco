@@ -357,6 +357,21 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
 
     scored = [k for k in weights if k not in unscored]
 
+    # ── INPUT SUFFICIENCY IS A REFUSAL, NOT A FOOTNOTE ────────────────────────
+    # ⚠ THIS WAS COMPUTED, RECORDED, AND THEN IGNORED. The model answers whether it could
+    # assess the business; the pipeline wrote the answer into a field and acted on it
+    # nowhere. Measured: 20 of 120 corpus cases return "insufficient" and 18 still got a
+    # confident band. A real submission was told "NOT VIABLE as it stands" while the
+    # instrument's own note said it could not assess the business -- the report
+    # contradicted itself, and the reader only saw the confident half.
+    #
+    # Spec 5.4 already specifies REFUSED_INPUT_QUALITY: "we cannot answer" -- never "the
+    # answer is bad". This wires the model's own insufficiency signal to that existing
+    # rule. It is NOT a new gate and NOT a third score gate: 5.4 forbids gating on a LOW
+    # SCORE, and this gates on INADEQUATE INPUT, which is exactly what the rule is for.
+    suff = ((answers.get("input_sufficiency") or {}).get("choice") or "").strip().lower()
+    suff_refuses = suff in ("insufficient", "cannot_assess", "no")
+
     if scored:
         total_w = sum(weights[k] for k in scored)
         weights_used = {k: round(weights[k] / total_w * 100, 2) for k in scored}
@@ -365,6 +380,8 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         # analyse this business' vs 'we analysed it and it is not viable'
         if assess_refuses:
             fires = ["assessability"] + [f for f in fires if f != "assessability"]
+        if suff_refuses:
+            fires = ["input_sufficiency"] + [f for f in fires if f != "input_sufficiency"]
         composite = None if fires else round(
             sum(dims[k] / counts[k] * weights_used[k] for k in scored))
         band = "GATE" if fires else band_of(composite, bands)
@@ -374,7 +391,7 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         fires = ["assessability"] if assess_refuses else []
         composite, band = None, "GATE" if fires else "UNSCORED"
 
-    suff = (answers.get("input_sufficiency") or {}).get("choice")
+    # (suff is read above -- the refusal depends on it, so it cannot be read here)
 
     # A3: when market_headroom is not applicable, the client gets a QUALIFIER SENTENCE
     # in its place. Without this the dimension would silently vanish from the report --
@@ -416,6 +433,14 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         "judgment_intervals": {k: _interval(dist[k], cov[k]) for k in weights},
         "probabilities": dist,
         "input_sufficiency": suff,
+        # ⚠ A REFUSAL MUST NAME WHAT IS MISSING, not merely decline (spec 5.4: the refusal
+        # output names the missing signals). The pre-flight gate's own slot list is the
+        # authority on which answers the instrument needs, so both refusals report it.
+        "missing_signals": (
+            sorted((payload.get("_preflight") or {}).get("missing_slots") or [])
+            or ["the submission does not describe the customer well enough, "
+                "or say enough about what the business claims, for the instrument to "
+                "judge its position"]),
         "weights_declared": weights,
         "weights_used_renormalised": weights_used,
         "gates_firing": fires,

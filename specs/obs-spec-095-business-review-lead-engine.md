@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v50.5 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
+**Status:** DRAFT v50.6 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -440,6 +440,8 @@ corpus must be regraded before any further tuning — tuning against it would be
 error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ Limits: n=20–21 is a SHAPE
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
+
+**v50.6 — D59: THE INSUFFICIENCY REFUSAL IS WIRED (§6.7.4) — and the bigger finding, §6.7.5: THE INSTRUMENT IS NOT DETERMINISTIC. Two runs of identical code shift 8% of bands; call_jev sends no temperature and no seed. The noise floor is 8%, not the ~5% assumed, and a single run is not evidence. Also: the refusal now swallows steegeXP (band=GATE) — the case the website-research fix rescued — documented as an OPEN TENSION needing a ruling.
 
 **v50.5 — D58: THE REPORT NOW USES THE SUBMITTER'S OWN WORDS (§6.7.3). The report was generic because the renderer read only the SCORE ARTIFACT — the submitter's claim, rivals and customer live in the SUBMISSION, which was never passed to it. A read that never quotes the reader back to themselves cannot feel like it is about their business, however good the band copy is. Fixed; verified byte-identical, so §5.5's computed-not-written rule still holds.
 
@@ -2404,6 +2406,81 @@ category, its claim, its rivals, its customer and its website.*
    depends on that difference.**
 5. **⚠ A PASTED URL IS NOT A STATED CLAIM, and must never be quoted as one.** *Checked by
    predicate, so the report cannot put words in a business's mouth that it never said.*
+
+### 6.7.4 ⚠ THE INSUFFICIENCY REFUSAL IS NOW WIRED (D59 — 30 Sep)
+
+> **Sean:** *"wire it. Update specs so that it is documented."* **The reason it needed wiring:**
+> *a real prospect gets told his business is not viable by a tool that privately admitted it
+> could not judge.*
+
+**WHAT WAS WRONG.** *The model answers a question the pipeline never acts on — **"could I assess
+this business?"** That answer was written into the run artifact as `input_sufficiency` and then
+**read by nothing.*** **Measured on the corpus: 20 of 120 cases return `insufficient` and 18 of
+those still received a confident band.** *The live `steegeXP` submission was told **"34/100 —
+Fragile, NOT VIABLE as it stands"** while the instrument's own note said it could not assess the
+business.* **The report contradicted itself and the reader only saw the confident half.**
+
+**THE RULE — and it is an EXISTING rule, not a new gate.** *§5.4 already specifies
+`REFUSED_INPUT_QUALITY` for submissions failing the §3.10 floor and already requires the refusal
+to **name the missing signals**; the defect was that neither refusal fired.* **Now: if the model
+answers `insufficient`, the same gate fires as for `assessability`.**
+**⚠ §5.4 still forbids gating on a LOW SCORE.** *This gates on **INADEQUATE INPUT** — a different
+thing — and does not weaken that prohibition.*
+
+**⚠ THREE REQUIREMENTS ON THE REFUSAL OUTPUT:**
+
+1. **It must name what is missing.** *"We could not score this" alone leaves the reader with
+   nothing to do.* **Missing signals come from the pre-flight gate's own slot list**, so the two
+   refusals cannot drift apart.
+2. **It must read as a limit on the SUBMISSION, never a verdict on the BUSINESS.** *Refusing
+   someone must not feel like being judged — first line: **"This is a limit on what we received,
+   not a verdict on your business."***
+3. **No score table under the refusal, and no recommendations.** *The dimension table is relabelled
+   **"WHAT WE COULD SEE ANYWAY"** — as the reason for the refusal, not as a verdict we just said we
+   were not giving.* **Recommendations are suppressed entirely: advice on raising a score that was
+   never given is incoherent.**
+
+**MEASURED EFFECT.** *Corpus refusals rise **3 → 23 of 120**; Fragile falls **6 → 2**. The 20 cases
+the instrument already privately judged unassessable now say so instead of printing a band.*
+**⚠ And the refusals are themselves unstable — 21 of 23 reproduce, 2 differ run to run.** *See
+§6.7.5. **That is a reason to treat a refusal as a signal, not a verdict.***
+
+### 6.7.5 ⚠⚠ THE MODEL IS NOT DETERMINISTIC, AND THE PROJECT HAS BEEN TREATING IT AS IF IT WERE
+
+> **Found while checking the refusal wiring. A bigger finding than the wiring.**
+
+**⚠ THE MEASUREMENT.** *Two runs of the **identical code** over the **identical corpus** with the
+**identical rubric** (1.21.0):*
+
+| | run-to-run, same code |
+|---|---|
+| **band changed** | **10 of 120 = 8%** |
+| **at least one dimension changed** | **23 of 120 = 19%** |
+| **mean composite shift** | **0.9 points** |
+| **max composite shift** | **8 points** |
+| refusals | 23 both runs, but **only 21 shared** |
+
+**⚠ WHY — a real architectural cause.** *`call_jev()` posts to the TypeSafe endpoint with
+`{"model", "state", "questions"}` and **no temperature and no seed.*** **The host samples freely,
+so the same submission can receive a different band on a re-run.** *Every confidence value shifts
+between runs (e.g. `mental_advantage` 0.61 → 0.58), which is the signature of sampling rather than
+of a computation.*
+
+**⚠ THE CONSEQUENCE THE PROJECT MUST STOP IGNORING.** ***The noise floor on BANDS is 8%, not the
+~5% previously assumed*** — *and the band is the exact quantity §6.4's bar is defined on.*
+**Therefore:**
+
+1. **⚠ A single run is not evidence.** *A change moving fewer than ~10% of bands has not been shown
+   to do anything, because the instrument does that on its own.*
+2. **⚠ "Verified byte-identical" applies to the RENDERER, not the INSTRUMENT.** *§5.5's determinism
+   guarantee is that the report is **computed rather than written**, and that still holds; it never
+   guaranteed the scores.* **Prior stability claims were measuring the wrong thing.**
+3. **⚠ Any rubric A/B must run N≥3 per arm and compare the DISTRIBUTION, not one pass.** *The
+   `fame test` and the `r(PS,MA)` figures were single runs and should be re-measured before being
+   relied on again.*
+4. **⚠ The fix is not simply "set temperature 0"** *— the endpoint must support it, that must be
+   verified rather than assumed, and every published number would need re-validating.*
+   **Recorded as the next instrument-integrity task, not silently patched.**
 
 `vercel.json` caps `api/**/*.js` at `maxDuration: 30`. Jev + enrichment + email exceeds this. **The
 report is queued and worked asynchronously** — the request path only validates, records, and

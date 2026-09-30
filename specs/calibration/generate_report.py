@@ -550,14 +550,35 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
     out.append("THE SHORT VERSION")
     out.append("")
     if run.get("gates_firing"):
-        out.append("  We could not produce a score for this submission.")
-        out.append("  That is a limit on what you told us, not a verdict on the")
-        out.append("  business. Reply with more detail and we will run it again.")
+        # ⚠ A REFUSAL MUST SAY WHAT IS MISSING (spec 5.4 + 6.7.4). "We could not score
+        # this" alone leaves the reader with nothing to do; the missing signals give
+        # them the next move. And the framing matters as much as the content: this is a
+        # limit on the SUBMISSION, never a verdict on the business -- refusing someone
+        # must not read as judging them.
+        out.append("  We have not given you a score — and that is deliberate.")
+        out.append("")
+        out.append("  The read needs a few things from you that were not in your")
+        out.append("  answers. This is a limit on what we received, not a verdict on")
+        out.append("  your business.")
+        missing = run.get("missing_signals") or []
+        if missing:
+            out.append("")
+            out.append("  What is missing:")
+            for m in missing[:4]:
+                for line in wrap(f"- {m}", 62):
+                    out.append(f"      {line}")
+        out.append("")
+        out.append("  Add those and the read will run — a fuller answer here is")
+        out.append("  worth more than any other change you could make.")
     else:
         out.append(f"  {run['composite']}/100 — {band}.")
         out.append(f"  {VERDICT.get(band, VERDICT['Contested'])}")
     out.append("")
-    out.append("WHAT THE SCORES SAY")
+    # ⚠ TONE: when we have refused, the same table means something different. Labelled
+    # "the scores" it reads as a verdict we just said we were not giving; labelled "what we
+    # could see anyway" it reads as the reason for the refusal, which is what it is.
+    out.append("WHAT WE COULD SEE ANYWAY" if run.get("gates_firing")
+               else "WHAT THE SCORES SAY")
     out.append("")
     for k in weights:
         if k in unscored:
