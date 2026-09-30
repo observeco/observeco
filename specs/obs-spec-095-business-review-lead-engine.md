@@ -1847,6 +1847,89 @@ gated by §3.11.**
    **D31**.
 3. **The scan's result is perishable** (§7.11) and must carry a fetch timestamp.
 
+### 4.6.0a ⚠⚠ THE SCAN COULD NOT READ THE PAGES — and reported the wrong reason (30 Sep)
+
+**FOUND BY SEAN SUBMITTING A REAL BUSINESS** *(Aurora Energy Research — a strong, well-qualified
+prospect: real category, four named rivals, a live site).* **Its report said "NO OCCUPANT COULD BE
+ESTABLISHED" and refused the submission. Three verified defects, all in the scan.**
+
+**1. ⚠ A GRADING BUG SILENTLY DISCARDED SUCCESSFULLY-READ PAGES.** *`grade_capture` scanned for the
+literal string **`"noscript"` in the RAW HTML**, and did so **before** checking how much text it
+had received.* **Aurora's page carries a `<noscript>` tag in its source — so a fully-read page was
+graded `"shell", 0 usable content`.** *That single ordering error is why a populated category
+reported **"NO OCCUPANT COULD BE ESTABLISHED"**.*
+**⚠ THE RULE: substantial text beats every marker.** *Check the **visible** length first, scan
+markers against **visible text only**, and treat the markers as a **diagnosis of a failure rather
+than a test in their own right** — **a page that yielded something needs no explanation.**
+⚠ *A challenge marker is the one exception and still wins outright, since a denial is a denial
+however much text accompanies it.*
+
+**2. ⚠ THERE WAS NO BROWSER RUNG — urllib cannot read most modern business sites.** *Measured on
+the same URL: **urllib → 0 chars. Playwright → 6,059 chars in 2.8s**, including all four of
+Aurora's own customer segments (Financial Sector, Utilities, Developers, Energy Consumers).*
+**So the scanner was not failing to FIND competitors — it was failing to READ the pages,
+including the submitter's own — and its verdict named the wrong cause.**
+*Fixed: `fetch()` escalates to Playwright **only when the plain fetch yielded nothing usable**,
+with one lazily-created browser per scan and an explicit `close_browser()`. Sites serving static
+HTML keep the fast path and pay nothing.*
+**⚠ IT DOES NOT DEFEAT INTENTIONAL GATES.** *A bot wall, captcha or paywall is the publisher's
+decision and stays unread; the browser recovers content that was **mis-served to a non-browser
+client**, never content that was withheld. The distinction is the same one the honest UA protects.*
+
+**3. ⚠ ONE PUBLISHER WAS COUNTED AS TWO INDEPENDENT SOURCES.** *`www.auroraer.com` and
+`auroraer.com/global-presence/singapore` were treated as independent, so **Aurora's own navigation
+text corroborated itself** and passed the two-source rule.*
+*Fixed: `publisher()` reduces a URL to its **registrable domain** for independence counting —
+**independence is about who is speaking, and subdomains of one organisation are one speaker**.*
+
+**MEASURED EFFECT: readability 1 of 12 candidates → 7 → 10 of 12.** **⚠ But this is READABILITY,
+not analysis — see §4.6.0b.**
+
+### 4.6.0b ⚠⚠ OCCUPANT MINING IS A NEGATIVE RESULT — DO NOT RETRY THE HEURISTICS (30 Sep)
+
+**⚠ THE COMPETITIVE ANALYSIS STILL DOES NOT WORK, AND THIS IS THE REASON.** *With **10 readable
+pages**, the occupant miner returned **"Create", "Energy", "Manage", "USD"** as the rivals of a
+power-market analytics firm — **navigation furniture and currency codes presented as competitors**.*
+
+**⚠ FIVE FIXES HAVE BEEN ATTEMPTED AND FIVE HAVE FAILED:**
+
+| # | defect found | status |
+|---|---|---|
+| 1 | hyphen splitting — `"Each-A-Cup"` → `"Each"` + `"Cup"` | fixed |
+| 2 | stray single words — `"Updated"`, `"Business"` | fixed |
+| 3 | case duplicates — `"KOI"` and `"Koi"` as two occupants | fixed |
+| 4 | **navigation labels** — `"Discover"`, `"Know"`, `"Global Presence"`, `"Who"` | **STILL BROKEN** |
+| 5 | **currency / UI tokens** — `"USD"`, `"Create"`, `"Energy"`, `"Manage"` | **STILL BROKEN** |
+
+**⚠ THE PATTERN IS THE FINDING: every fix reveals a NEW class of capitalised non-brand text.**
+*That is the signature of **a mechanism that cannot be patched**, not one that needs another rule.*
+**⚠ AND TWO-SOURCE CORROBORATION CANNOT SAVE IT** — *navigation labels and currency codes appear on
+every site in every category, so they are **the most corroborated strings on the web**.*
+**⚠ A sixth tuning attempt was deliberately NOT made** *(§10.6e's rule against fitting a rule to
+the case that motivated it).* **The negative result is recorded in `competitor_scan.py` at the
+function a future agent would edit, listing all five failed attempts.**
+
+**⚠⚠ AND THE OUTPUT IS DANGEROUS, NOT MERELY USELESS.** *`position_strength` is scored **AGAINST
+the supplied set**.* **An empty set caps at ADEQUATE (3) and says why; a junk set produces a
+confident judgement about rivals that do not exist.** *That is strictly worse than finding none —
+the §4.6 honest-limits rule protects the empty case and is defeated by a plausible-looking wrong one.*
+
+**⚠ WHAT TO DO INSTEAD — NOT YET BUILT, NEEDS A STEER:**
+
+1. **USE THE OWNER'S OWN NAMED RIVALS.** *The form already collects them and they are **reliable** —
+   the live case that exposed this named **"wood mac, afry, baringa, modo"**, all real competitors
+   of a firm in that category.* **⚠ And §3.6 already says the owner's list is "expected to be
+   incomplete" — incomplete and CORRECT beats complete and INVENTED.**
+2. **USE `tier_0_own_stated_position`.** *Reading the submitter's own site now works (§4.6.0a) and
+   is rich — 6,059 chars on that case, naming four customer segments.* **For a category where the
+   tool cannot name rivals, the submitter's own stated position is still real evidence.**
+3. **Only accept a scraped name when a source STATES an occupancy relationship in the same
+   sentence** — *a comparison table, a "competitors" page. `_says_occupant` approximates this and
+   does not achieve it, because its window test also passes navigation text.*
+   **⚠ It would need a structural test (table position, page type), not a keyword window.**
+
+**⚠ UNTIL THAT IS BUILT, THE SCRAPED OCCUPANT LIST MUST NOT BE TRUSTED AS A COMPETITIVE SET.**
+
 ### 4.6.1 The scan, built (v38) — and what it is NOT
 
 **`competitor_scan.py` runs the protocol-governed pass this section specifies**, producing the
