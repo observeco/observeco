@@ -76,7 +76,20 @@ def run_case(path, rubric, outdir, dry):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--rung", choices=["check", "record"], default="check")
-    ap.add_argument("--rubric", default="rubric-v1.8.0.json")
+    # ⚠⚠ THIS DEFAULT WAS A LAUNCH-GATE DEFECT. It pointed at `rubric-v1.8.0.json` -- a stale
+    # file 13 versions behind the promoted rubric -- so a BARE `run_canary.py --rung check`
+    # compared the frozen 1.18.0 snapshot against 1.8.0 and reported:
+    #
+    #     CANARY FAILED -- the model or the rubric moved:
+    #       C4-sgfitness: band moved (Contested -> Fragile)
+    #       C5-saladshop: band moved (Contested -> Fragile)
+    #
+    # Those two bands DID NOT MOVE. Re-run against the canonical rubric the canary PASSES with
+    # no band moved across 6 cases. A gate that fails against an instrument nobody uses trains
+    # its reader to ignore it -- which is worse than having no gate, because it is counted on.
+    #
+    # The default is now the canonical rubric; a non-default must be asked for explicitly.
+    ap.add_argument("--rubric", default="rubric.json")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--fixture", action="store_true",
                     help="verify the fixture corpus only; no API call")
@@ -189,8 +202,22 @@ def main():
     print("=" * 92)
     # NOTE: this printed the CURRENT rubric twice (HERE/args.rubric), so the "reference"
     # version shown was always wrong. The snapshot carries its own version -- use it.
+    # ⚠ AND SAY WHEN THEY DIFFER, LOUDLY. A comparison across a rubric change is not a drift
+    # check -- it is two different instruments disagreeing, and its verdict is void either way.
+    # The old line printed both versions side by side with no warning, so 1.18.0-vs-1.8.0 read
+    # as an ordinary result.
+    _ref_v = json.loads(SNAP.read_text()).get("rubric_version", "?")
+    _cur_v = rubric["_meta"]["version"]
+    if _ref_v != _cur_v:
+        print()
+        print("  ⚠⚠ RUBRIC VERSIONS DIFFER — this comparison is NOT a drift check.")
+        print("     The snapshot was recorded on rubric %s and this run used %s." % (_ref_v, _cur_v))
+        print("     Two instruments disagreeing is expected across a rubric change; a PASS or")
+        print("     FAIL here says nothing about drift. Re-record the snapshot on the current")
+        print("     rubric before treating any verdict from this run as a gate.")
+        print()
     print("  reference rubric: %s (frozen snapshot)    current rubric: %s"
-          % (json.loads(SNAP.read_text()).get("rubric_version", "?"),
+          % (_ref_v,
              rubric["_meta"]["version"]))
     print()
     drift = []
@@ -248,6 +275,20 @@ def main():
         for c, why, a, b in drift:
             print("    %s: %s (%s -> %s)" % (c, why, a, b))
         return 1
+    # ⚠⚠ A VERDICT MUST NOT CONTRADICT THE WARNING ABOVE IT. Measured: with the versions
+    # differing, the run printed "this comparison is NOT a drift check" at the top and
+    # "CANARY PASSED" at the bottom -- a gate that asserts a pass it has just declared void.
+    # That is how a green light gets trusted across a rubric change it cannot see. When the
+    # versions differ, the honest outcome is "could not run" (exit 2), which the header
+    # already reserves for exactly this: a comparison that was not validly performed.
+    if _ref_v != _cur_v:
+        print()
+        print("  CANARY NOT RUN — inconclusive, NOT a pass.")
+        print("     No band moved, but the snapshot was recorded on rubric %s and this run used"
+              % _ref_v)
+        print("     %s, so this says nothing about drift." % _cur_v)
+        print("     Re-record: run_canary.py --rung record --rubric rubric.json")
+        return 2
     print("  CANARY PASSED — no band moved across %d cases." % len(results))
     return 0
 
