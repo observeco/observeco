@@ -2674,9 +2674,44 @@ table is blank above k=4.* **So the probe cannot speak to 5-call stability, whic
 claim.** *It is also a **split-half** check (overlapping draws), not independent blocks, so it is
 a lower bound at best.*
 
-**⚠ CONCLUSION: THE COST OF OPTION (A) IS NOT YET KNOWN.** *Settling it needs a proper design —
-**independent blocks of k** (not split halves), **k up to at least 8–10**, and enough cases to
-clear the corpus noise floor.* **Until then, do not commit engineering to a call count.** *The
+**⚠ THE PROPER DESIGN WAS THEN RUN — AND IT STILL DOES NOT LICENCE A CALL COUNT.** *Rebuilt with
+**disjoint blocks** (`draws[0:k]` vs `draws[k:2k]` — no shared draws), **16 calls per case so k up
+to 8 is reachable**, and a threshold accepted **only if agreement holds from there onward**.*
+
+| case | k=2 | k=3 | k=4 | k=5 | k=6 | k=7 | k=8 | valid threshold |
+|---|---|---|---|---|---|---|---|---|
+| `KP01-ya` | N | Y | Y | Y | Y | Y | Y | 3 |
+| **`GY04-pure`** | Y | N | N | N | Y | Y | **N** | **never holds** |
+| `HN08-frisky` | Y | N | N | Y | Y | Y | Y | 5 |
+| `HT04-a`, `FF02-kfc`, `FU04-cellini`, `HB03-unity`, `KP04-chin`, `HC01-operarose` | Y | Y | Y | Y | Y | Y | Y | 2 |
+| **aggregate agreement** | **89%** | **78%** | **78%** | **89%** | **100%** | **100%** | **89%** | |
+
+**⚠ THREE REASONS THE "MEDIAN 2 CALLS" IS STILL NOT QUOTABLE:**
+
+1. **⚠ The aggregate is NON-MONOTONE** — *89%, 78%, 78%, 89%, **100%, 100%, 89%***. *Agreement
+   **falls again at k=8 after reaching 100%**.* **A quantity that goes up, down and up is measuring
+   where the draws landed, not a converged property.** *The `Y` at k=2 is the same artefact as before.*
+2. **⚠ "Median 2" is driven entirely by cases that were never unstable.** *The six cases reading
+   `2` agree at **every** k — they are stable at one call too, so they cost the median nothing and
+   prove nothing.* **The cases with a real problem needed 3 and 5, and one never stabilised.**
+3. **⚠ One case never stabilises through k=8 at all** (`GY04-pure`) — *so averaging cannot be
+   claimed to fix the instability universally, at any k tested.*
+
+**⚠ AND 5 OF 14 CASES COULD NOT BE MEASURED — a defect in the probe, recorded so it is not
+mistaken for a result.** *Running 8 concurrent calls per case caused **call failures**: `HN01-tee`
+0/16, `HN11-nailnicorn` 0/16, `GY07-true` 2/16, `HB04-the` 7/16, `HN07-i` 14/16 succeeded.*
+**The cases that dropped out are disproportionately the `GATE`/refusing ones** — *i.e. the hardest
+cases are exactly the ones with no data.* **A probe that silently loses its hardest subjects and
+then reports a median has measured the easy half.**
+
+**⚠ CONCLUSION, FINAL: THE COST OF OPTION (A) REMAINS UNKNOWN, AND THE EVIDENCE NOW SUGGESTS
+AVERAGING MAY NOT FIX THIS AT ALL.** *Two proper designs have now been run.* **The first was
+methodologically invalid; the second shows non-monotone convergence, one case that never
+stabilises, and a median carried by subjects that needed no help.** *The honest position:*
+**quantisation is the proven amplifier, and no tested remedy has been shown to remove it.** *A
+third design — sequential calls to a fixed point, or a **band-distance** criterion instead of
+band-equality — is the next thing to try, **and it should be tried before any engineering is
+committed**.* *The
 honest summary of the whole of §6.7.5 is: **the instrument samples (proven), the amplifier is
 quantisation (proven), and the cost of fixing it is unmeasured (open).***
 
