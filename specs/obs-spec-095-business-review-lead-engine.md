@@ -2631,6 +2631,56 @@ block is present** — i.e. only when the business's own site was actually read:
 the set, and the report specific to the business.* **⚠ This is the §13 target segment finally
 getting a report instead of a refusal.**
 
+**⚠⚠ 6.7.4b THE REFUSAL DOES NOT COVER THE BOT-WALLED CASE, AND IT NAMES THE WRONG CAUSE (open).**
+
+**⚠ THE GENERALITY CHECK FAILED — and the reason is a real defect, not the fix.** *Aurora motivated
+the fix, so Aurora proving it works is the weakest possible evidence. A second business
+(Park Bench Deli, verified-real domain, same shape: URL instead of a sentence, named rivals) was
+submitted and **still REFUSED**.* **Diagnosed: its site came back `blocked — challenge marker:
+'captcha'`.** *No `TIER 0` block was built, so the §6.7.4 note **correctly** did not fire and the
+submission was **correctly** refused on the thin form.*
+
+**⚠ BUT THAT IS THE WRONG SENTENCE TO SHOW A QUALIFIED PROSPECT.** *The report said:*
+
+> **"the submission does not describe the customer well enough, or say enough about what the
+> business claims, for the instrument to judge its position"**
+
+***The truth was: "we could not read your website."*** **Those are different facts with different
+next actions** — *and telling a business it under-described itself when it gave you a URL and you
+were blocked is both wrong and insulting.* **⚠ It is the same defect class §4.6's honest-limits
+rule exists to prevent: a failure of the TOOL reported as a failure of the INPUT.**
+
+**⚠ AND §4.6 ALREADY HAS THE RIGHT PATTERN — it is not applied to the sufficiency refusal.**
+*The scan's own verdicts distinguish `SEARCH UNAVAILABLE` from `SCAN FAILED` from "read but
+nothing found", precisely so a tool failure never reads as absence.* **The sufficiency refusal has
+no equivalent: it reports one cause for at least three different situations.**
+
+**THE THREE CASES THAT CURRENTLY READ IDENTICALLY:**
+
+| what actually happened | what the owner is told today | what they should be told |
+|---|---|---|
+| site read, still too thin | *"describe the customer better"* | **correct as-is** |
+| **site exists but was BLOCKED** | *"describe the customer better"* | **"we could not read your site — here is what we need instead"** |
+| **no site given, form thin** | *"describe the customer better"* | **correct as-is** |
+
+**⚠ NEEDS A RULING, AND IT IS THE LAST THING BLOCKING THE §13 SEGMENT.** *The D3 audience has two
+common shapes: a business with **no claim and a readable site** (Aurora — now **fixed, 49/100**),
+and a business with **no claim and a site behind Cloudflare or a captcha** (Park Bench Deli —
+**still refused, and told the wrong reason**).* **The second is arguably MORE common among small
+Singapore F&B and retail, which is exactly the target segment.**
+
+***Options: (a) distinguish the refusal message by cause — cheapest and purely additive;
+(b) let a blocked site fall through to a scored report with a caveat; (c) leave it.***
+**My recommendation is (a):** *it is truthful, it is additive, and (b) risks scoring a business on
+evidence the tool explicitly could not obtain.* **⚠ Not built — it changes what the user is told,
+which is Sean's call, not a bug fix.**
+
+**⚠ AND THE FIRST VERSION OF THIS TEST WAS INVALID: I INVENTED THE DOMAIN.** *`twomenbagelhouse.com`
+has **no DNS**, so both fetchers returned "transport failure", no `TIER 0` was built, and the
+submission was **correctly** refused — which read as my fix failing to generalise when it was my
+test that was broken.* **⚠ Verify a URL RESOLVES before using it to test a fetch path: a broken
+input produces a correct output that reads as a defect.**
+
 **⚠ AND ONE MORE SILENT-NO-OP CAUGHT HERE.** *The first version of the guard tested for `"TIER 0"`
 with a **space**, but the key is `tier_0_own_stated_position` with **underscores** — so it never
 matched, the note was never emitted, **and the end-to-end test still refused the submission while
