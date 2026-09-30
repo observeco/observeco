@@ -1480,6 +1480,39 @@ because it changes the data model: a quality submission is not only a report req
 from SG SMEs. That is the raw material behind the industry-dataset claim your consulting offer
 already makes as its moat (§7.7). It also has a consent consequence, which §7.7 sets out.
 
+
+**⚠ 3.7 VERIFIED SAFE **AS RUN** — THE OPEN RELAY IS A PRODUCTION GAP, NOT A LIVE EXPOSURE.**
+*Checked 30 Sep, because the warning above reads as though the thing currently running is dangerous.
+It is not:*
+
+| what the open relay needs | verified state of the sandbox |
+|---|---|
+| ability to email an arbitrary address | **NO SENDING CODE AT ALL** — no SMTP, no provider SDK, no mail client anywhere in `sandbox/server.py`. The address is written to the local SQLite CRM and nothing else. |
+| network exposure | **bound to `127.0.0.1` only** — `uvicorn.run(app, host="127.0.0.1", port=8765)`. Not reachable off the machine. |
+| model spend at scale | **local, single-user, manual.** No queue, no schedule, no public endpoint. |
+
+**⚠ SO §3.7's four consequences CANNOT OCCUR AS CONFIGURED** — *there is no send path to poison a
+domain with, and no listener for a stranger to hit. **The risk is entirely in the DEPLOY, not the
+build.***
+
+**⚠ AND THAT IS EXACTLY WHY THE SANDBOX IS LABELLED UNSAFE IN ITS OWN UI** *(line 511: "No captcha, no
+confirmation gate, no spend ceiling — section 3.7's open relay is fully present here")*. ***The label
+is correct about the DESIGN and deliberately silent about the RUNTIME, because the point of a sandbox
+is to be the thing that must not ship.*** **⚠ Read the two together or the warning will be taken as a
+false alarm and then ignored when it matters.**
+
+**⚠ WHAT ACTUALLY BLOCKS GOING LIVE — ALL UNBUILT, ALL PRE-DEPLOY:**
+1. **Cloudflare Turnstile** at submission *(not started — needs a real site key)*.
+2. **The confirmation gate** — *§3.7 names this, not the captcha, as the control that protects the
+   model budget: "a captcha stops automated submission, it does not stop LLM spend", because the model
+   calls happen in the worker and a bot that solves one challenge still triggers a full run.*
+   **Unbuilt.**
+3. **A hard spend ceiling that halts the queue** — *distinct from the per-IP rate limit; the
+   documented failure mode is ~$700 overnight from one user.* **Unbuilt.**
+4. **Migration `003`, the privacy page rewrite, `UNSUBSCRIBE_SECRET`.**
+
+---
+
 ### 3.8 Input quality floor — superseded, see §3.10
 
 The cannot-refuse contract says a report is always produced. Nothing may distinguish
