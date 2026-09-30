@@ -607,6 +607,57 @@ def extract_occupants(ok_captures: list[dict]) -> list[tuple[str, int]]:
 OWNER_TIER = "COMPETITORS THE BUSINESS NAMED ITSELF"
 
 
+def _clean_claim(raw: str) -> str:
+    """Accept only text that actually reads as a POSITIONING CLAIM. Otherwise return "".
+
+    ⚠⚠ MEASURED ON THE SECOND SECTOR (salad, not bubble tea) — resolution is not quality.
+
+    Resolving a name to a page works; what comes BACK is often not a claim at all:
+
+      OMNIVORE  -> thesaladaddict.com (a food BLOG), "claim" = a reviewer's own order:
+                   "-My Order- Regular Bowl ($13.90, 1 base, 1 protein, 3 sides...)"
+      The Daily Cut -> thedailycut.sg, "claim" = the page TITLE, "Menu &#8211; The Daily Cut"
+
+    Rendering those under "This is what they say about themselves" is FALSE in the first case
+    (a customer's receipt, not the brand's words) and useless in the second (a title is not a
+    claim). The first sector passed, so this only surfaced on a second, different one -- which
+    is exactly why the generality test exists.
+
+    THE RULE: unescape entities, then require a real sentence -- long enough to say something,
+    containing an actual verb-ish flow, and NOT looking like a menu, an order, a price list or
+    a bare title. Failing that, the caller says "read but states no single claim", which is
+    true and still honest about having read the page.
+    """
+    if not raw:
+        return ""
+    import html as _html
+    t = _html.unescape(raw)
+    t = re.sub(r"\s+", " ", t).strip()
+    t = re.sub(r"^[\-\u2013\u2022\*\s]+", "", t)          # leading bullets/dashes
+    if len(t) < 40 or len(t) > 400:
+        return ""
+    low = t.lower()
+    # a menu / an order / a price list / a basket is not a positioning claim
+    bad = ("my order", "your order", "add to cart", "add to bag", "order now", "menu",
+           "checkout", "sign in", "log in", "subscribe", "newsletter", "cookie",
+           "privacy policy", "terms", "all rights reserved", "shopping cart", "delivery")
+    if any(b in low for b in bad):
+        return ""
+    if t.count("$") >= 2:                                      # a price list, not a claim
+        return ""
+    # a bare title: title-case fragments with no sentence flow
+    # ⚠ MATCH VERB STEMS, NOT WHOLE WORDS. Measured: `\bfocus\b` REJECTED CHAGEE's real claim
+    # ("...focusing on original leaf fresh milk tea...") because "focusing" has no word
+    # boundary after "focus" -- so a correct claim was thrown away as if it were junk.
+    # Stems cover focus/focusing, provide/providing, know/known, integrate/integrating.
+    if not re.search(r"\b(is|are|was|we|our|you|your|the brand|provid|offer|help|mak|bring|"
+                     r"deliver|specialis|specializ|focus|trust|lead|design|build|built|know|"
+                     r"integrat|cover|includ|serv|creat|develop|support|enabl|since|because|"
+                     r"so that|aim|seek|strive|mission|vision|commit|dedicat)", low):
+        return ""
+    return t
+
+
 def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
                 max_rivals: int = 6) -> list[dict]:
     """Read the OWNER-NAMED rivals' OWN sites, and quote what each one claims.
@@ -653,7 +704,8 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
         cstat, why = grade_capture(status, html)
         entry.update({"url": target, "capture_status": cstat, "why": why})
         if cstat == "ok":
-            entry["claim"] = extract_claim(html)
+            # ⚠ VALIDATED, because resolution is not quality -- see _clean_claim above.
+            entry["claim"] = _clean_claim(extract_claim(html))
             entry["excerpt"] = strip_tags(html)[:600]
         reads.append(entry)
     return reads
@@ -726,9 +778,15 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None,
             # The wording therefore says only what is true: a page was found FOR that rival,
             # and the domain is shown so the reader can judge what it is.
             if r.get("claim"):
+                # ⚠ CUT ON A WORD BOUNDARY AT THE SOURCE. The report-side trim never saw this
+                # string -- the 220-slice here ran FIRST and produced "...tea inheritance a",
+                # text ending mid-word, shown to a business owner as a quotation.
+                _q = r["claim"]
+                if len(_q) > 220:
+                    _q = _q[:220].rsplit(" ", 1)[0].rstrip(",;:") + "…"
                 members.append(
                     "%s. A page found for them (%s) states: \"%s\""
-                    % (base, publisher(r["url"]), r["claim"][:220]))
+                    % (base, publisher(r["url"]), _q))
             elif r.get("capture_status") == "ok":
                 members.append("%s. A page found for them (%s) was read but states no single "
                                "claim." % (base, publisher(r["url"])))

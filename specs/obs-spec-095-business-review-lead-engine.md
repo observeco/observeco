@@ -2717,6 +2717,58 @@ fires and does nothing; **the only way it was caught was running the pipeline en
 than unit-checking the helper.***
 
 
+
+**⚠⚠ 6.7.6a THE SECOND SECTOR EXPOSED THAT RESOLUTION IS NOT QUALITY (BUILT — 30 Sep).**
+
+**⚠ THE FIRST SECTOR PASSED AND HID A REAL DEFECT. That is the whole argument for testing a second
+one.** *On bubble tea, `rival_reads` returned four genuine claims. On **salad**, the same code
+returned:*
+
+| rival | page found | the "claim" we were about to print |
+|---|---|---|
+| **OMNIVORE** | thesaladaddict.com — **a food blog** | ***"-My Order- Regular Bowl ($13.90, 1 base, 1 protein, 3 sides…)"*** — **a reviewer's own order receipt** |
+| **The Daily Cut** | thedailycut.sg | **"Menu &#8211; The Daily Cut"** — a page **title** |
+
+***Rendering those under "This is what they say about themselves" is FALSE in the first case — a
+customer's receipt is not the brand's words — and useless in the second. The first sector passed;
+only a second, different one surfaced it.***
+
+**BUILT — `_clean_claim()` gates every extracted claim before it can be shown:** *unescape HTML
+entities, strip leading bullets, then require text that actually reads as a claim — a length window,
+**no menu/order/cart/cookie vocabulary**, **not a price list (two or more `$`)**, and **at least one
+verb stem**. Failing that, the caller says **"read but states no single claim"** — which is true, and
+still honest that the page was read.*
+
+**⚠ AND THE FIRST VERSION OF THE GATE THREW AWAY A CORRECT CLAIM.** *`\bfocus\b` **rejected CHAGEE's
+real claim** ("…focusing on original leaf fresh milk tea…") **because "focusing" has no word boundary
+after "focus"**. Caught by a **distinguishing test** — five must-rejects and two must-accepts, drawn
+from the real outputs — not by eyeballing. The rule was changed to **verb stems** (`focus`, `provid`,
+`know`, `integrat`…). **A filter that rejects a good answer is worse than no filter, because it fails
+silently in the direction that looks tidy.***
+
+**⚠ AND THE SECTION HEADER STILL PROMISED SELF-DESCRIPTION.** *With the junk filtered, Six Hands
+resolved to a **lemon8 blog post** and the quote was **a third party writing ABOUT the brand**
+("This innovative salad bar … is gaining attention for …"). The per-line copy said "A page found for
+them", but the **section header still read "This is what they say about themselves"** — **the same
+misattribution, one level up, in the text that frames every quote.** The header now says the tool
+**has NOT verified that any page belongs to the rival named.***
+
+**⚠ AND THE MID-WORD CUT WAS FIXED AT THE WRONG LAYER FIRST.** *A 220-character slice in
+`competitor_scan` ran **before** the report's word-boundary trim, so "…tea inheritance a" still
+reached the page. **Two independent truncation sites, one of them invisible from the other.** Fixed
+at the source.*
+
+**✅ VERIFIED AFTER THE FIX — BOTH SECTORS, NO REGRESSION:**
+
+| sector | result |
+|---|---|
+| **salad** | **54/100 Contested** — OMNIVORE's receipt and the Daily Cut title **no longer printed**; Six Hands reported as read with a third-party quote, correctly attributed |
+| **bubble tea** | **47/100 Contested** — CHAGEE, Mixue, LiHO's real claims **all survived the gate**; HEYTEA (a menu-guide site) **correctly demoted to "could not read"** |
+
+***The gate removed the junk and kept the real claims — tested on both, not assumed.***
+
+---
+
 ### 6.7.6 ⚠⚠ THE COMPETITIVE SECTION WAS EMPTY BECAUSE THE RIVALS' SITES WERE NEVER READ (BUILT)
 
 **⚠⚠ SEAN, ON A REAL SUBMISSION: *"This is not useful at all to another business owner. It hardly

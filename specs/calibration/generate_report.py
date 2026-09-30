@@ -687,8 +687,15 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
     if _read:
         out.append("WHAT WE READ ABOUT YOUR RIVALS")
         out.append("")
-        out.append("  We looked for a page belonging to each rival you named, and read what")
-        out.append("  it publishes. This is what they say about themselves:")
+        # ⚠⚠ THE HEADER MUST NOT PROMISE SELF-DESCRIPTION. Measured on the SECOND sector:
+        # Six Hands resolved to a lemon8 blog post, and the quote was a THIRD PARTY writing
+        # ABOUT the brand ("This innovative salad bar ... is gaining attention for ...").
+        # Printing that under "This is what they say about themselves" is the same
+        # misattribution as "their own site says", one level up -- the per-line copy was fixed
+        # but the section header still asserted provenance the tool cannot verify.
+        out.append("  We looked for a page for each rival you named and read what it says.")
+        out.append("  The domain is shown so you can see what kind of page it was; we have")
+        out.append("  NOT verified that any page belongs to the rival named.")
         out.append("")
         for r in _read[:5]:
             out.append(f"    {r['name']} ({r['domain']}):")
