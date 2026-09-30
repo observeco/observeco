@@ -44,8 +44,25 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 
-BANDS = [("Fragile", 5, 39), ("Contested", 40, 59),
-         ("Viable, conditional", 60, 74), ("Strong", 75, 95)]
+# ⚠ BANDS ARE READ FROM THE RUBRIC, NEVER HARDCODED.
+# This constant used to be `[("Fragile",5,39),("Contested",40,59),...]` while the rubric
+# says Fragile 5-37, Contested 38-57, Viable 58-76, Strong 77-100. A report whose idea of
+# a band disagrees with the instrument that produced the score is the same defect class as
+# the hardcoded weights this file already fixed once. Kept only as a last-resort default
+# when no rubric can be read at all.
+BANDS_FALLBACK = [("Fragile", 5, 37), ("Contested", 38, 57),
+                  ("Viable, conditional", 58, 76), ("Strong", 77, 100)]
+
+
+def bands_from(rubric: dict) -> list:
+    """The rubric's own band ladder. Falls back only if the rubric is unreadable."""
+    b = ((rubric or {}).get("_meta") or {}).get("bands")
+    if not b:
+        return BANDS_FALLBACK
+    try:
+        return [(str(name), int(lo), int(hi)) for name, lo, hi in b]
+    except Exception:
+        return BANDS_FALLBACK
 
 CONF_ACT = 0.50   # below this, a dimension is not shown as a trusted number
 CONF_FLAG = 0.30  # below this, the dimension is materially unresolved
@@ -64,6 +81,46 @@ LABEL = {
     "defensibility": "Defensibility",
     "demand_reach": "Demand reach",
 }
+
+# ── WRITTEN FOR THE SUBMITTER, NOT FOR US ────────────────────────────────────
+# Sean: "the form feels like it is written for someone internal and not front facing.
+# A new user would get turned off. The report should provide definitions and explain
+# the results to be useful to the user."
+# So every term the report uses is defined where it is used, and the band ladder says
+# what each band means for the BUSINESS rather than what number it is.
+DIM_MEANING = {
+    "position_strength": "How clearly you own a claim your rivals do not. Your single "
+                         "biggest driver.",
+    "mental_advantage": "Whether people think of YOU unprompted when they need what "
+                        "you sell.",
+    "defensibility": "How hard it would be for a rival to copy what makes you different.",
+    "competitive_room": "How much margin is left for you after the big players set the "
+                        "price.",
+    "market_headroom": "Whether demand in your category is growing, already met, or "
+                       "shrinking.",
+    "demand_reach": "Whether the customers you describe can actually be found, and do pay.",
+}
+
+# What each band means for the business — the viability ladder.
+BAND_MEANING = {
+    "GATE": "Something has to be resolved before your position matters at all. The "
+            "scores below describe what you told us, not what your business is worth.",
+    "Fragile": "NOT VIABLE as it stands. Something structural is in the way — this is "
+               "not an effort problem. Fix the blocked thing before spending on growth.",
+    "Contested": "VIABLE, but not on this plan. There is a real business here; the way "
+                 "you are differentiating is not yet doing the work. This is the "
+                 "commonest place for a good operator with an undefined position — and "
+                 "it is the cheapest band to move out of.",
+    "Viable, conditional": "VIABLE, subject to one check. Your position can hold; the "
+                           "single thing named below decides whether it does.",
+    "Strong": "VIABLE AND DEFENSIBLE. Your position is distinct, and copying it would "
+              "be slow or expensive for a rival.",
+}
+
+# ⚠ WHAT THE BAND IS NOT: it is not a probability of success, and not a credit score.
+# It describes the POSITION, not the business's worth or its founder's ability.
+BAND_CAVEAT = ("This band describes your POSITION, not your business's worth or your "
+               "ability as an operator. It is not a probability of success.")
 
 # Verdict sentence, selected by predicate. No model writes this (spec 5.5).
 VERDICT = {
@@ -90,8 +147,173 @@ GATE_TEXT = {
 }
 
 
+# ── RECOMMENDATIONS ──────────────────────────────────────────────────────────
+# ⚠ GROUNDED IN THE RUBRIC, NOT INVENTED. Each entry says what the NEXT LEVEL of that
+# dimension requires, taken from the rubric's own level language. A recommendation that
+# names a move the instrument does not actually reward would be worse than none: it sends
+# the user to spend effort on something that cannot move their score.
+#
+# Sean: "For recommendations, be specific about which areas they could explore to get the
+# score up." So each one names the area AND the observable change that would register.
+NEXT_LEVEL = {
+    "position_strength": {
+        1: ("You make no claim a buyer could prefer — you compete on price or availability "
+            "alone. START HERE: write down one sentence a rival could not honestly say. If "
+            "you cannot, that is the finding.",
+            "Pick the situation you want to own — a product, an occasion, a buyer — and "
+            "decide what you will be the answer to."),
+        2: ("Your claim is either already owned by a named rival, or so generic that "
+            "everyone in your category says it. Start by listing the words your "
+            "rivals already use — anything they say, you cannot own.",
+            "Find a claim that is true of you, matters to the buyer, and that the rivals "
+            "you named do NOT make."),
+        3: ("You hold a real claim, but several rivals make it or could match it easily. "
+            "It is a place held, not an advantage.",
+            "Narrow it until it is yours alone — a specific situation, ingredient, "
+            "process or buyer the others cannot follow you into."),
+        4: ("You have a genuine flank: a distinct claim the rivals you named do not own. "
+            "What is missing is being the REFERENCE — the one others are defined against.",
+            "Get the claim into the market's language: repeat it until buyers use your "
+            "words to describe the category, not just to describe you."),
+        5: ("You ARE the reference occupant — rivals are defined against you. Guard it "
+            "rather than change it.",
+            "Defend the position: keep the claim consistent and do not extend the brand "
+            "into categories that dilute it."),
+    },
+    "mental_advantage": {
+        1: ("No one could name you if asked. This is a reach problem before it is a "
+            "positioning problem.",
+            "Get in front of your buyer repeatedly in one place before widening."),
+        2: ("People recognise your name when they see it, but do not think of you "
+            "unprompted.",
+            "Attach your name to one occasion or need, and be present at that moment "
+            "every time."),
+        3: ("You surface when someone is considering your category — the ordinary "
+            "position of an established local business.",
+            "Become one of the first names for a SPECIFIC occasion, not just a known "
+            "option in the category."),
+        4: ("You come to mind unprompted and are among the first names for your "
+            "occasions.",
+            "Make the association total — own the occasion itself, so the buyer thinks "
+            "of you before they think of the category."),
+        5: ("You are the defining association for the category or occasion.",
+            "Protect it: consistency beats novelty at this level."),
+    },
+    "defensibility": {
+        1: ("Nothing obstructs a challenger at all — no asset, no licence, no network.",
+            "Build ONE asset that takes time to assemble: a licence, a system, a "
+            "supply relationship, a data set."),
+        2: ("The only thing you hold is a claimed difference anyone can copy in weeks "
+            "by buying the same thing.",
+            "Turn the message into an ASSET: something accumulated rather than said — "
+            "a process, a contract, a proprietary method."),
+        3: ("Real work is required to copy you, but nothing OBSTRUCTS a challenger "
+            "beyond the cost of doing it.",
+            "Add a mechanism that cannot be bought: a licence, a network, scale "
+            "economics, or switching costs."),
+        4: ("A genuine accumulated barrier exists that a challenger cannot cheaply "
+            "assemble.",
+            "Reinforce it with a second mechanism so the two protect each other."),
+        5: ("Two or more mechanisms reinforce each other — replication would take a "
+            "well-resourced rival a decade.",
+            "Keep the mechanisms aligned; do not let one degrade while you grow the "
+            "other."),
+    },
+    "competitive_room": {
+        1: ("The category is consolidated: one or a few players set price or control "
+            "access, and a small operator structurally cannot earn.",
+            "Consider whether you are fighting in the right category at all — this is "
+            "a structural read, not an effort problem."),
+        2: ("A dominant player or a price floor set by much larger rivals squeezes "
+            "everyone.",
+            "Move where the dominant player's price does not set yours — a segment, "
+            "service or format they cannot follow into."),
+        3: ("Several strong brands and a general price floor keep margins thin, but "
+            "small operators do establish themselves.",
+            "Compete on something the price floor does not cover — service, "
+            "specialisation, or a buyer who is not price-shopping."),
+        4: ("Several players coexist and none dominates.",
+            "Establish yourself deliberately before a larger player notices the gap."),
+        5: ("Atomised and dominated by nobody — entry is open and margin exists.",
+            "Grow fast enough to matter before the structure consolidates."),
+    },
+    "market_headroom": {
+        1: ("There is no identifiable buying demand for this category.",
+            "Re-examine whether the category you named is the one your buyer "
+            "actually spends in."),
+        2: ("Demand is already served — supply meets or exceeds what is wanted.",
+            "Serve an unmet SLICE of the category rather than the category as "
+            "a whole."),
+        3: ("Demand is real and steady but already satisfied — a new entrant must "
+            "take share rather than serve unmet need.",
+            "Target an underserved buyer inside the category, or a need that is "
+            "currently unmet by how existing sellers work."),
+        4: ("Demand exceeds supply and the shortfall is growing.",
+            "Add capacity deliberately — the constraint is supply, not demand."),
+        5: ("The category cannot serve the demand that exists.",
+            "Capacity is the binding constraint on the whole market — expand "
+            "before rivals do."),
+    },
+    "demand_reach": {
+        1: ("The customer is undefined, or you cannot legally serve the buyers you "
+            "name.",
+            "Name a specific buyer you CAN serve, then work out how to reach them."),
+        2: ("A buyer group is named, but only as a demographic — no evidence you "
+            "currently reach them.",
+            "Describe the buyer concretely enough to find them, and name the channel "
+            "you would use."),
+        3: ("You reach a describable segment, but the route is generic or "
+            "incidental rather than deliberate.",
+            "Make one channel deliberate and targeted — chosen for that buyer "
+            "rather than whoever happens to arrive."),
+        4: ("You demonstrably generate revenue from an identified buyer through at "
+            "least one credible channel.",
+            "Deepen the concentration: own a segment completely rather than "
+            "serving many thinly."),
+        5: ("A tightly defined, paying segment you reach directly and cheaply.",
+            "Sustain it and protect the channel's economics."),
+    },
+}
+
+
+def recommendations(run: dict, counts: dict, weights: dict) -> list:
+    """The moves most likely to raise the score, biggest weighted gap first.
+
+    Ordered by WEIGHTED GAP (how many composite points are recoverable), so the user is
+    told what matters most rather than what scores lowest. A dimension at 1/5 carrying
+    25% is worth more attention than one at 2/5 carrying 10%.
+    """
+    dims = run.get("dimensions_display_1to5") or {}
+    unscored = set(run.get("dimensions_unscored") or [])
+    out = []
+    for k, w in weights.items():
+        if k in unscored:
+            continue
+        lvl = dims.get(k)
+        if lvl is None:
+            continue
+        n = counts.get(k, 5)
+        # recoverable composite points if this dimension reached its top level
+        recoverable = (n - lvl) / max(n - 1, 1) * w
+        block = NEXT_LEVEL.get(k, {}).get(int(lvl))
+        if not block:
+            continue
+        what, todo = block
+        out.append({"dim": k, "level": int(lvl), "of": n, "weight": w,
+                    "recoverable": round(recoverable, 1),
+                    "what": what, "todo": todo})
+    out.sort(key=lambda d: -d["recoverable"])
+    return out
+
+
 def norm(name: str) -> str:
     return ALIAS.get(name, name)
+
+
+def wrap(text: str, width: int) -> list:
+    """Wrap plain prose for terminal output. Textwrap, not hand-rolled string math."""
+    import textwrap
+    return textwrap.wrap(text, width=width) or [""]
 
 
 def load_rubric(path: Path | None) -> dict:
@@ -206,7 +428,7 @@ def version_a(run: dict, counts: dict, weights: dict) -> str:
     return "\n".join(out)
 
 
-def version_b(run: dict, counts: dict, weights: dict) -> str:
+def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None) -> str:
     dims = run["dimensions_display_1to5"]
     conf = run["confidence"]
     band = run.get("band")
@@ -249,6 +471,38 @@ def version_b(run: dict, counts: dict, weights: dict) -> str:
         out.append("")
         out.append(f"  {GATE_TEXT.get(gate, '').capitalize()}.")
         out.append("")
+        out.append("WHAT THE BANDS MEAN")
+        out.append("")
+        for name, lo, hi in bands_from(rubric or {}):
+            here = "  <- YOU ARE HERE" if name == band else ""
+            out.append(f"  {name.upper():22}{lo}-{hi}{here}")
+            for line in wrap(BAND_MEANING.get(name, ""), 62):
+                out.append(f"      {line}")
+            out.append("")
+        out.append(f"  {BAND_CAVEAT}")
+        out.append("")
+        out.append("WHAT EACH SCORE MEANS")
+        out.append("")
+        for k in weights:
+            out.append(f"  {LABEL.get(k, k):20}{str(dims.get(k, '—')) + '/5' if k not in unscored else 'not scored'}")
+            for line in wrap(DIM_MEANING.get(k, ""), 62):
+                out.append(f"      {line}")
+        out.append("")
+        recs = recommendations(run, counts, weights)
+        if recs:
+            out.append("WHERE TO GET THE SCORE UP")
+            out.append("")
+            out.append("  Ordered by how much of your score is recoverable, largest first.")
+            out.append("")
+            for i, d in enumerate(recs[:4], 1):
+                out.append(f"  {i}. {LABEL.get(d['dim'], d['dim'])} "
+                           f"({d['level']}/{d['of']}) — worth about "
+                           f"{d['recoverable']} points")
+                for line in wrap("Why it is where it is: " + d["what"], 62):
+                    out.append(f"      {line}")
+                for line in wrap("Explore: " + d["todo"], 62):
+                    out.append(f"      {line}")
+                out.append("")
     out.append("WHAT WE DID NOT CHECK")
     out.append("")
     out.append("  We scored what your submission claims. We did NOT cross-check your")
@@ -283,7 +537,8 @@ def render(run: dict, rubric_path: Path | None) -> tuple[str, str]:
         raise SystemExit(
             f"REFUSED: artifact is missing dimensions {missing}. Refusing to render a "
             "report that silently omits part of the composite.")
-    return version_a(r, counts, weights), version_b(r, counts, weights)
+    return (version_a(r, counts, weights),
+            version_b(r, counts, weights, load_rubric(rubric_path)))
 
 
 def main() -> None:

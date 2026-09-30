@@ -46,6 +46,7 @@ CAL = HERE.parent                      # specs/calibration — the real pipeline
 sys.path.insert(0, str(CAL))
 
 from fastapi import FastAPI, Form, Request                    # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware             # noqa: E402
 from fastapi.responses import HTMLResponse, RedirectResponse   # noqa: E402
 
 DB = HERE / "sandbox.db"
@@ -59,6 +60,14 @@ from rubric_gate import require_promoted                      # noqa: E402
 
 RUBRIC = CAL / "rubric.json"
 app = FastAPI(title="ObserveCo sandbox")
+# ⚠ CORS IS LOAD-BEARING, NOT DECORATION. When this page is embedded, the parent may
+# sandbox the iframe WITHOUT `allow-same-origin`, which gives the document an opaque
+# origin — every request is then treated as cross-origin and fails without these
+# headers. See the submit-page note below for the whole story.
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_credentials=False,
+    allow_methods=["*"], allow_headers=["*"],
+)
 
 
 # ── CRM ──────────────────────────────────────────────────────────────────────
@@ -234,8 +243,60 @@ PAGE = """<!doctype html><meta charset=utf-8><title>{title}</title>
 <style>{css}</style>{body}"""
 
 
+# ⚠ THE SUBMIT SCRIPT IS THE FIX FOR "the button does nothing".
+# A native <form> POST requires the embedder to grant `allow-forms`. When a frame is
+# sandboxed with only `allow-scripts`, the browser blocks form submission outright —
+# the click is inert, with no error and no navigation, which is exactly the symptom.
+# fetch() needs only `allow-scripts`, so the form is wired through JS instead, and the
+# result document replaces this one. If JS is unavailable the page falls back to a real
+# form POST (which works in a normal browser tab).
+SUBMIT_JS = """
+<script>
+(function(){
+  // ⚠ DO NOT WIRE THIS TO A FORM 'submit' EVENT.
+  // Measured: when a frame is sandboxed with only `allow-scripts`, the browser
+  // refuses form submission outright and the submit event NEVER FIRES -- so a
+  // listener on 'submit' is dead code and the button looks inert. That is the
+  // exact symptom reported ("clicking Generate does nothing").
+  // A click on a `type=button` never initiates a form submission, so no sandbox
+  // permission can block it. We read the fields ourselves and send them with fetch,
+  // which needs only `allow-scripts`.
+  window.__observSubmit = function(btn){
+    var f = btn.closest('form') || document.querySelector('form');
+    var out = document.getElementById('msg');
+    var params = new URLSearchParams();
+    f.querySelectorAll('input,textarea,select').forEach(function(el){
+      if(!el.name) return;
+      if((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
+      params.append(el.name, el.value);
+    });
+    btn.disabled = true;
+    var original = btn.textContent;
+    btn.textContent = 'Working...';
+    if(out){ out.style.display='block'; out.className='note';
+             out.textContent = 'Running the pipeline — pre-flight gate, model call, report. 10-30s.'; }
+    fetch('/submit', {method:'POST',
+                      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+                      body: params.toString()})
+      .then(function(r){ return r.text(); })
+      .then(function(html){ document.open(); document.write(html); document.close(); })
+      .catch(function(err){
+        if(out){ out.className='err'; out.textContent = 'Request failed: ' + err; }
+        btn.disabled = false; btn.textContent = original;
+      });
+  };
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest ? ev.target.closest('button[data-submit]') : null;
+    if(b){ ev.preventDefault(); window.__observSubmit(b); }
+  });
+})();
+</script>
+"""
+
+
 def shell(title: str, body: str) -> str:
-    return PAGE.format(title=title, css=CSS, body=f"<body>{body}</body>")
+    return PAGE.format(title=title, css=CSS,
+                       body=f"<body>{body}{SUBMIT_JS}</body>")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -255,14 +316,22 @@ set → Jev model call → composite computed in code → report. The sandbox is
 ceiling — section 3.7's open relay is fully present here. Loopback and single-user
 by design; none of this is safe to expose.</div>
 
-<form method=post action=/submit>
+<div id=msg style="display:none"></div>
+<noscript><div class=warn>JavaScript is off, so the button will post the form normally.
+If nothing happens when you click it, the frame blocked form submission — open
+<a href=http://127.0.0.1:8765/>127.0.0.1:8765</a> in a normal tab.</div></noscript>
+<form id=submitform>
   <h2>Load a real case (optional)</h2>
   <label>Prefill from the calibration corpus — then edit anything</label>
+</form>
+<form method=post action=/prefill>
   <div class=row>
     <div><select name=prefill_case><option value="">— none —</option>{opts}</select></div>
-    <div style="flex:0 0 130px"><button type=submit formaction=/prefill
+    <div style="flex:0 0 130px"><button type=submit
          style="margin:0;width:100%;padding:10px">Prefill</button></div>
   </div>
+</form>
+<form id=submitform2 style="margin-top:-8px">
 
   <h2>Your business</h2>
   <div class=row>
@@ -310,7 +379,7 @@ by design; none of this is safe to expose.</div>
   <label><input type=checkbox name=do_scan value=1 style="width:auto">
      run the web competitor scan when no rivals are named (slow; unstable yield)</label>
 
-  <button type=submit>Generate the report →</button>
+  <button type=button data-submit>Generate the report →</button>
 </form>""")
 
 
@@ -326,7 +395,8 @@ def prefill(prefill_case: str = Form("")):
         f"prefilled {prefill_case}", f"""
 <h1>Prefilled: {f.get('business_name','')}</h1>
 <div class=sub>Adjust anything, then generate.</div>
-<form method=post action=/submit>
+<div id=msg style="display:none"></div>
+<form id=submitform>
   <input type=hidden name=case_key value="{e(prefill_case)}">
   <h2>Your business</h2>
   <div class=row>
@@ -362,7 +432,7 @@ def prefill(prefill_case: str = Form("")):
   It is collected here and flagged rather than silently scored.</div>
   <label>Who is your customer?</label>
   <textarea name=customer_description></textarea>
-  <button type=submit>Generate the report →</button>
+  <button type=button data-submit>Generate the report →</button>
 </form>""")
 
 
@@ -412,19 +482,45 @@ the ordering section 3.11 demands.</div>
              band=run.get("band"), composite=run.get("composite"),
              rubric_version=run.get("rubric_version"), model_id=run.get("model_id"),
              outcome="SCORED", report=r["report"], payload=payload)
+    return HTMLResponse(report_page(business_name, email, i, run, r["report"],
+                                    r.get("scan_verdict")))
+
+
+def report_page(business_name, email, i, run, report, scan) -> str:
+    """A result page that REPLACES THE DOCUMENT, so it works inside any iframe.
+
+    ⚠ WHY THIS IS A SEPARATE FUNCTION AND WHY IT MATTERS.
+    The first version returned the report as the POST response. That is the normal
+    thing to do, and it worked in a plain browser — but it FAILED in an embedded
+    frame, and the failure looked like "the button does nothing":
+
+        sandbox="allow-scripts"  (no allow-forms)  ->  the browser blocks the form
+        submission entirely. The button is inert. No navigation, no error the user
+        can see. Measured across five iframe variants: every variant WITHOUT
+        allow-forms produced NO POST; every variant WITH it submitted normally.
+
+    Rather than depend on the embedder granting `allow-forms`, the form now posts
+    through `fetch()` (which needs only `allow-scripts`) and the response HTML
+    replaces the document via document.write. `allow-scripts` is the one permission
+    a live app is essentially always given.
+
+    ⚠ AND THE SECOND TRAP THIS CLOSES: a frame sandboxed WITHOUT
+    `allow-same-origin` runs at an OPAQUE origin, so the fetch is cross-origin and
+    fails silently unless the server sends CORS headers. That is why the CORS
+    middleware above exists — it is load-bearing, not decoration.
+    """
     dims = run.get("dimensions_display_1to5") or {}
     rows = "".join(f"<tr><td>{k}</td><td>{v}/5</td></tr>" for k, v in dims.items())
-    scan = r.get("scan_verdict") or "—"
-    return HTMLResponse(shell(f"report {i}", f"""
+    return shell(f"report {i}", f"""
 <h1>{business_name}</h1>
 <div class=sub>submission #{i} · {email} → CRM · rubric {run.get('rubric_version')}
  · {run.get('model_id')}</div>
 <p><span class="badge b-ok">{run.get('composite')}/100 — {run.get('band')}</span></p>
 <h2>Scores</h2><table><tr><th>dimension</th><th>level</th></tr>{rows}</table>
-<div class=note><b>competitor set:</b> {scan}</div>
+<div class=note><b>competitor set:</b> {scan or "—"}</div>
 <h2>The report the client receives</h2>
-<pre>{r["report"].replace("<", "&lt;")}</pre>
-<p><a href=/>← back</a> &nbsp; <a href=/crm>CRM →</a></p>"""))
+<pre>{report.replace("<", "&lt;")}</pre>
+<p><a href=/>← back</a> &nbsp; <a href=/crm>CRM →</a></p>""")
 
 
 @app.get("/crm", response_class=HTMLResponse)
