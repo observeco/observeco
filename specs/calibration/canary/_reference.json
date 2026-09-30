@@ -1,89 +1,89 @@
 {
-  "rubric_version": "1.18.0",
+  "rubric_version": "1.21.0",
   "note": "REFERENCE SNAPSHOT for the canary. Fixed output for a fixed input. A canary whose fixture moves detects nothing (spec 10.1.1).",
   "cases": {
     "C1-greenpackers": {
       "band": "Contested",
       "composite": 52,
       "dims": {
-        "relative_strength": 4,
         "mental_advantage": 2,
         "defensibility": 2,
         "competitive_room": 2,
         "market_headroom": 3,
-        "demand_reach": 3
+        "demand_reach": 3,
+        "position_strength": 4
       },
-      "rubric_version": "1.18.0",
+      "rubric_version": "1.21.0",
       "model_id": "jev-1.13.0"
     },
     "C2-caica": {
       "band": "Contested",
       "composite": 46,
       "dims": {
-        "relative_strength": 3,
         "mental_advantage": 2,
         "defensibility": 2,
         "competitive_room": 2,
         "market_headroom": 3,
-        "demand_reach": 3
+        "demand_reach": 3,
+        "position_strength": 3
       },
-      "rubric_version": "1.18.0",
+      "rubric_version": "1.21.0",
       "model_id": "jev-1.13.0"
     },
     "C3-petdirectory": {
       "band": "Contested",
-      "composite": 46,
+      "composite": 43,
       "dims": {
-        "relative_strength": 3,
         "mental_advantage": 2,
         "defensibility": 2,
-        "competitive_room": 2,
+        "competitive_room": 1,
         "market_headroom": 3,
-        "demand_reach": 3
+        "demand_reach": 3,
+        "position_strength": 3
       },
-      "rubric_version": "1.18.0",
+      "rubric_version": "1.21.0",
       "model_id": "jev-1.13.0"
     },
     "C4-sgfitness": {
       "band": "Contested",
       "composite": 49,
       "dims": {
-        "relative_strength": 4,
         "mental_advantage": 1,
         "defensibility": 2,
         "competitive_room": 3,
         "market_headroom": 3,
-        "demand_reach": 2
+        "demand_reach": 2,
+        "position_strength": 4
       },
-      "rubric_version": "1.18.0",
+      "rubric_version": "1.21.0",
       "model_id": "jev-1.13.0"
     },
     "C5-saladshop": {
       "band": "Contested",
-      "composite": 49,
+      "composite": 43,
       "dims": {
-        "relative_strength": 4,
         "mental_advantage": 1,
         "defensibility": 2,
         "competitive_room": 3,
         "market_headroom": 3,
-        "demand_reach": 2
+        "demand_reach": 2,
+        "position_strength": 3
       },
-      "rubric_version": "1.18.0",
+      "rubric_version": "1.21.0",
       "model_id": "jev-1.13.0"
     },
     "C6-bonefirm": {
       "band": "Contested",
       "composite": 52,
       "dims": {
-        "relative_strength": 4,
         "mental_advantage": 2,
         "defensibility": 2,
         "competitive_room": 2,
         "market_headroom": 3,
-        "demand_reach": 3
+        "demand_reach": 3,
+        "position_strength": 4
       },
-      "rubric_version": "1.18.0",
+      "rubric_version": "1.21.0",
       "model_id": "jev-1.13.0"
     }
   }

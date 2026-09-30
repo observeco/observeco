@@ -2771,10 +2771,26 @@ by **reading the rendered output**. The canary is the thing meant to catch what 
 **It had been unusable as a gate — and running it, rather than trusting it was green, is what
 surfaced that.***
 
-**⚠ OPEN: `_reference.json` still records rubric 1.18.0.** *Until it is re-recorded on 1.21.0, every
-canary run correctly returns **"inconclusive" (exit 2)** rather than a pass. **That is the honest
-state, and it is a deliberate consequence of fix 3** — but it means the canary is **not currently
-gating anything**, and re-recording is the next step.*
+**✅ RESOLVED — THE SNAPSHOT IS RE-BASED ON 1.21.0 AND THE GATE IS LIVE AGAIN.**
+
+*Re-baselining was done **deliberately and in the right order**, because the recorder refuses to
+overwrite an existing snapshot ("a canary cannot compare against itself"):*
+
+1. **Confirmed the fixtures do not need to move.** *All six bands in the 1.18.0 reference already
+   agreed with a 1.21.0 run — **only the version stamp was stale, not the expected outputs.***
+2. **Backed up** the old snapshot to `_reference.json.1180.bak` — *so the pre-re-baseline state is
+   recoverable, and the re-baseline is auditable rather than destructive.*
+3. **Re-recorded and re-checked:*
+
+**✅ CANARY PASSED — no band moved across 6 cases** *(reference 1.21.0, current 1.21.0, exit 0).*
+
+***The gate is green again, with no version warning, and it is now meaningful: it is comparing
+1.21.0 against 1.21.0 rather than against an instrument 13 versions old.***
+
+**⚠ AND THE RE-BASE IS DEFENSIBLE BECAUSE OF §6.7.7a's MEASUREMENT, NOT IN SPITE OF IT.** *The six
+fixtures were shown **band-stable across 120 runs**, so re-recording fixed a **stale stamp** rather
+than **baking in a wobbly baseline**. **Had they been noisy, re-baselining would have frozen
+noise — and that is precisely the danger the recorder's overwrite guard exists to make deliberate.***
 
 ---
 
