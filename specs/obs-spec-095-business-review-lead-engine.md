@@ -2779,9 +2779,64 @@ gating anything**, and re-recording is the next step.*
 ---
 
 
-**⚠⚠ 6.7.7a THE CANARY'S FALSE-ALARM RATE IS ~41% — AND THAT IS WHY ITS FAILURE LOOKED REAL.**
+**⚠⚠ 6.7.7a ⚠ CORRECTED — MY 41% FALSE-ALARM FIGURE WAS WRONG. MEASURED, THE CANARY IS STABLE.**
 
-**⚠ RE-RECORDING THE REFERENCE WOULD NOT HAVE FIXED THE GATE, AND THIS IS THE REASON.**
+**⚠ THE ERROR.** *I computed the canary's false-alarm rate as **41%** by applying the **120-case
+corpus** flip rate (**8.3% per case**, §6.7.5) to the canary's **6 cases**. **That was an
+assumption dressed as a measurement: the canary's fixtures were deliberately chosen and frozen, and
+a purpose-picked stable set is not a random corpus draw.** I did not measure the quantity my
+recommendation rested on.*
+
+**✅ MEASURED DIRECTLY — the canary's OWN six cases, run repeatedly through the real `run_jev` path:**
+
+| run | cases × repeats | band moved |
+|---|---|---|
+| first pass | 6 × 6 = **36 runs** | **0 of 6 cases** |
+| confirmation | 6 × 20 = **120 runs** | **0 of 6 cases** |
+
+***Across 120 runs of the identical code, not one canary band moved. By the rule of three,
+`p ≤ 3/120 = 2.5%` per case (95% one-sided).***
+
+    P(canary reports false drift)  point estimate  0%
+                                   95% upper bound  1-(1-0.025)^6  =  14%
+
+***Not 41%. My figure overstated the canary's alarm rate by roughly 3× on the point estimate, and the
+observed rate is zero.***
+
+**⚠ AND 36 RUNS WAS NOT ENOUGH TO SETTLE IT — WHICH I HAD TO CATCH MYSELF.** *At 6 repeats, **0
+observed flips is fully consistent with an 8.3% rate** (P = 0.59), so that pass was **too weak to
+distinguish "stable" from "as noisy as the corpus".** **I ran the confirmation rather than reporting
+the first null result as if it were a finding.** The 20-repeat pass is what separates them — at 120
+runs, an 8.3% rate would have produced ~10 flips with probability ≈ 1.*
+
+**⚠ SO WHAT IS ACTUALLY TRUE ABOUT THE 6.7.7 FAILURE?** ***The earlier `CANARY FAILED` was entirely
+the stale `--rubric` default — not noise.*** *C4-sgfitness and C5-saladshop both read `Contested →
+Fragile` **because the run used rubric 1.8.0 against a 1.18.0 snapshot**; on 1.21.0 they sit at
+Contested in every one of 20 repeats each. **The stale default was the whole cause. The noise
+hypothesis was wrong, and it would have sent the fix in the wrong direction — toward re-engineering
+§10.6 around averaging, for a variance problem the canary does not have.***
+
+**⚠ WHAT THE CORRECTED FINDING CHANGES:**
+1. **No averaging is needed in the canary.** *The `k`-call fix I recommended is **not** justified: it
+   would have paid `k×` model calls to suppress variance that is not there.* **Withdrawn.**
+2. **Re-recording `_reference.json` on 1.21.0 is the correct and sufficient fix** — *and it is now
+   well supported, because the six fixtures are demonstrably band-stable across 120 runs.*
+3. **The stale-default and verdict-contradiction fixes from §6.7.7 stand unchanged** — *they were the
+   real defects, and they were found by **running the gate**, not by reasoning about its noise.*
+
+**⚠ THE LESSON, AND IT IS THE SAME ONE AS §6.7.5a.** *A rate measured on one population does not
+transfer to another: **8.3% was measured on the 120-case calibration corpus; the canary is 6
+hand-picked stable fixtures.** Extrapolating it produced a confident, quantified, **wrong**
+recommendation — the exact failure mode §6.7.5a already recorded from the instrument side. **Measure
+the population you are actually making a claim about.***
+
+---
+
+
+
+**⚠ ⚠ SUPERSEDED BY THE CORRECTION ABOVE — THE REASONING BELOW IS THE WITHDRAWN ONE, KEPT SO THE
+ERROR IS VISIBLE.** *It extrapolated the 120-case corpus rate to the 6 canary fixtures without
+measuring them.*
 
 *The instrument's own measured band noise floor is **10 of 120 bands flipping between two runs of
 identical code = 8.3% per case** (§6.7.5). The canary has **6 cases** and compares **a single run**
