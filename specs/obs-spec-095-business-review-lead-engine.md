@@ -1928,7 +1928,31 @@ the §4.6 honest-limits rule protects the empty case and is defeated by a plausi
    does not achieve it, because its window test also passes navigation text.*
    **⚠ It would need a structural test (table position, page type), not a keyword window.**
 
-**⚠ UNTIL THAT IS BUILT, THE SCRAPED OCCUPANT LIST MUST NOT BE TRUSTED AS A COMPETITIVE SET.**
+**⚠ UNTIL THEN, THE SCRAPED OCCUPANT LIST MUST NOT BE TRUSTED AS A COMPETITIVE SET.**
+
+**✅ 4.6.0c BUILT (30 Sep): THE OWNER'S NAMED RIVALS NOW TAKE PRECEDENCE.** *Option 1 above is
+implemented, because it needs no new capability — §3.6 already collects the names.*
+
+*`to_competitive_set(result, owner_named=[...])` now puts the **business's own named rivals** in
+the set, and consults the scraped miner **only when the owner named nobody**.*
+
+**⚠ AN INVENTED RIVAL IS WORSE THAN A MISSING ONE, AND THAT IS WHY THE ORDER IS NOT A PREFERENCE.**
+*`position_strength` is scored **AGAINST the supplied set**, and there is already a cap for the
+**incomplete** case (the owner's list is "expected to be incomplete", §3.6) and **no cap for the
+INVENTED case**.* **So the two error directions are not symmetric: an incomplete set caps honestly,
+an invented set produces a confident judgement about rivals that do not exist.**
+
+**⚠ AND IT IS MARKED, NOT LAUNDERED.** *The set carries an explicit line:*
+*"these are the rivals the business named. The scan did NOT independently verify who occupies
+this category (see §4.6.0b) — so treat the set as the owner's view of who they compete with, not
+as a discovered landscape."* **⚠ An owner's list is still SELF-REPORTED, so it is used for NAMING
+only, never as evidence of what a rival CLAIMS.** *Naming who to look at is the owner's expertise;
+characterising them is the tool's job* — *the same subject-vs-object discipline as §4.4.1's
+heritage rule.*
+
+**VERIFIED:** *with the Aurora submission, the set now reads `wood mac / afry / baringa / modo —
+named as a competitor by the business itself` plus the honesty line; with no owner names it falls
+back to the honest empty set rather than scraped junk* (both paths exercised directly).
 
 ### 4.6.1 The scan, built (v38) — and what it is NOT
 

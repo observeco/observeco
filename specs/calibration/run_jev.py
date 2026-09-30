@@ -536,7 +536,8 @@ def main() -> None:
             try:
                 res = _scan(cat, mkt, [], per_url_timeout=args.scan_timeout)
                 verdict = (res.get("_meta") or {}).get("verdict", "")
-                payload["derived_competitive_set"] = _tocs(res)
+                payload["derived_competitive_set"] = _tocs(
+                    res, owner_named=payload.get("competitors_named"))
                 payload["_scan"] = res.get("_meta")
                 print(f"  scan verdict: {verdict}", file=sys.stderr)
                 # A FAILED scan must not silently proceed as though the category were empty.

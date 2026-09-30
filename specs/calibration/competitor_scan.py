@@ -588,8 +588,31 @@ def extract_occupants(ok_captures: list[dict]) -> list[tuple[str, int]]:
     return ranked
 
 
-def to_competitive_set(result: dict) -> dict:
+# ⚠⚠ THE OWNER'S NAMED RIVALS ARE THE PRIMARY SET -- because the scraped names are a
+# PROVEN NEGATIVE RESULT (see extract_occupants). Measured: with 10 pages successfully read,
+# the miner returned "Create", "Energy", "Manage", "USD" for a power-market analytics firm --
+# navigation furniture and currency codes asserted as competitors. Feeding those to
+# position_strength, which scores AGAINST the supplied set, would produce a confident judgement
+# about rivals that do not exist.
+#
+# The owner's list has the opposite property: it is INCOMPLETE and CORRECT. Spec 3.6 already
+# says the owner's list "is expected to be incomplete" -- and the tool's own cap already exists
+# for the incomplete case. There is no cap for the INVENTED case, which is why this ordering
+# matters. The live case that exposed all of this named "wood mac, afry, baringa, modo" -- all
+# genuinely competitors of a firm in that category.
+#
+# ⚠ AN OWNER'S LIST IS STILL SELF-REPORTED, so it is used for NAMING only, never as evidence of
+# what a rival CLAIMS. That distinction is where the value is: naming who to look at is the
+# owner's expertise; characterising them is the tool's job.
+OWNER_TIER = "COMPETITORS THE BUSINESS NAMED ITSELF"
+
+
+def to_competitive_set(result: dict, owner_named: list[str] | None = None) -> dict:
     """Convert a scan result into the `derived_competitive_set` the rubric consumes.
+
+    ⚠ `owner_named` is the PRIMARY set and takes precedence over anything scraped, for the
+    reason documented at OWNER_TIER above. Scraped occupants are included only when there are
+    no owner-named rivals at all, and they are marked so the consumer can tell them apart.
 
     WHY THIS EXISTS (spec 4.6 wiring)
         The rubric's position_strength instruction says: "SCORE ONLY AGAINST THE SUPPLIED
@@ -631,12 +654,27 @@ def to_competitive_set(result: dict) -> dict:
     # surfacing across several sources is evidence it occupies the category. That rule is
     # deliberately conservative -- it would rather name four real occupants than twenty
     # guesses, because a wrong occupant corrupts the position reading that consumes it.
-    occupants = extract_occupants(ok)
-
+    # ⚠ ORDER MATTERS, AND IT IS NOT A PREFERENCE. The owner's names win outright -- see
+    # OWNER_TIER. Scraped names are consulted ONLY when the owner named nobody, because an
+    # INVENTED rival is worse than a missing one (position_strength scores AGAINST the set,
+    # while an empty set trips the cap and says why).
+    owner = [n.strip() for n in (owner_named or []) if n and n.strip()][:12]
     members = []
-    for name, sources in occupants[:12]:
-        members.append("%s — named as an occupant of this category in %d independent "
-                       "source(s)" % (name, sources))
+    if owner:
+        for name in owner:
+            members.append("%s — named as a competitor by the business itself" % name)
+        # ⚠ SAY WHAT THE SET IS AND IS NOT. The consumer must know these are the owner's names,
+        # not the tool's own research, so the reading cannot be over-claimed.
+        members.append(
+            "_these are the rivals the business named. The scan did NOT independently verify "
+            "who occupies this category (see 4.6.0b) — so treat the set as the owner's view "
+            "of who they compete with, not as a discovered landscape.")
+        occupants = []
+    else:
+        occupants = extract_occupants(ok)
+        for name, sources in occupants[:12]:
+            members.append("%s — named as an occupant of this category in %d independent "
+                           "source(s)" % (name, sources))
     if not members:
         # No agreed occupant. Still useful: say what the sources were, without claiming
         # any of them occupies the category.

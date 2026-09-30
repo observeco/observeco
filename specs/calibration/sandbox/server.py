@@ -240,7 +240,10 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
             # produced something. A failed scan must not replace a real (if thin) list with
             # an empty one -- §4.6's honest-failure rule.
             if "SCAN FAILED" not in verdict and "SEARCH UNAVAILABLE" not in verdict:
-                cs = _tocs(res)
+                # ⚠ PASS THE OWNER'S NAMED RIVALS IN. They are the PRIMARY set -- the scraped
+                # occupant list is a proven negative result (see extract_occupants in
+                # competitor_scan.py), while the owner's names are incomplete but CORRECT.
+                cs = _tocs(res, owner_named=payload.get("competitors_named"))
                 # ⚠ THE SUBMITTER'S OWN SITE IS EVIDENCE, AND IT WAS BEING THROWN AWAY.
                 # The scan fetches the seed URL and stores `claim` and `excerpt` on the
                 # capture — then to_competitive_set() keeps only the derived OCCUPANT
