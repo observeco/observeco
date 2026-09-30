@@ -1354,6 +1354,18 @@ wanted it needs a fourth consent purpose, an evidential consent record, a DNC ch
 21-day stamp, and an in-message opt-out — none built speculatively.
 
 ### 3.6 The input contract
+> **D57 — THE WEBSITE IS NOW AN EXPLICIT FORM FIELD (30 Sep).** *Added because submitting a real
+> business exposed the gap: `steegeXP` had no positioning statement, so it pasted
+> `https://steegexp.com/` into the positioning answer — which is what a real prospect does.*
+> **The field is optional and sits with the business details, labelled "If you have a website, what
+> is it?"** *with the reason stated at the point of asking: reading the site improves the read more
+> than any other single answer.* **Three behaviours this carries:** *(a) the explicit field wins, and
+> a URL pasted into free text is ALSO picked up, so the realistic case is covered; (b) a bare domain
+> (`yourbusiness.com`) is normalised to `https://` — it would otherwise not fetch; (c) naming a site
+> **triggers the §4.6 research pass** even when competitors are named, and the page becomes
+> `tier_0_own_stated_position` in the set, labelled as the business's **own public claim** rather
+> than an independent finding.* ⚠ *Optional by the cannot-refuse contract — a blank field is a
+> normal submission and must never be treated as a gap.*
 > **⚠ D55 — WHAT THIS FORM DELIBERATELY DOES *NOT* ASK (Sean's ruling, 30 Sep): HERITAGE / YEARS
 > TRADING.** *D38a put FOUR structural facts in step 4 — **years trading · owned vs leased premises ·
 > licences held · price premium vs the category**. **D55 REMOVES ONE OF THEM: `years trading` is

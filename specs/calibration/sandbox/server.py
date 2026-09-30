@@ -145,9 +145,15 @@ def payload_from_form(f: dict) -> dict:
     # the submitter's own site, if the free text carries one. This is ENRICHMENT and is
     # not the same thing as a positioning claim -- build_state sends it to the model as
     # supplied evidence, and the scan uses it as a seed.
+    # the explicit field wins; otherwise look for a URL pasted into free text, which is
+    # what a business without a positioning statement actually does. Then NORMALISE —
+    # a bare "yourbusiness.com" typed into the field has no scheme and would not fetch.
     site = f.get("website") or extract_url(f.get("positioning_sentence", ""),
                                            f.get("differentiator", ""))
     if site:
+        site = site.strip()
+        if not site.startswith(("http://", "https://")):
+            site = "https://" + site.lstrip("/")
         form["website"] = site
     # ⚠ collected but NOT scored by the current rubric — flagged in the UI.
     if f.get("customer_description"):
@@ -427,6 +433,11 @@ If nothing happens when you click it, the frame blocked form submission — open
         <option value="500+">More than 500</option>
       </select></div>
   </div>
+  <label>If you have a website, what is it?</label>
+  <input name=website placeholder="yourbusiness.com — leave blank if you don't have one">
+  <div class=note>We'll read your site so we don't have to rely only on what you
+  type here. <b>This improves your read more than any other single answer</b> —
+  and it's completely optional.</div>
 
   <h2>How you stand out</h2>
   <div class=note>Answer these in your own words. <b>If you don't have a positioning
@@ -515,6 +526,8 @@ generate your read.</div>
     <div><label>Your role</label><input name=role value="{e(f.get('role'))}"></div>
     <div><label>How many people work in the business?</label><input name=company_size_band value="{e(f.get('company_size_band'))}"></div>
   </div>
+  <label>If you have a website, what is it?</label>
+  <input name=website value="{e(f.get('website'))}" placeholder="yourbusiness.com">
   <h2>How you stand out</h2>
   <label>If a customer asked "why should I choose you?", what would you say? *</label>
   <textarea name=positioning_sentence required>{e(f.get('positioning_sentence'))}</textarea>
@@ -546,13 +559,15 @@ def submit(request: Request, business_name: str = Form(""), email: str = Form(""
            differentiator: str = Form(""), undercut_on: str = Form(""),
            your_price_point: str = Form(""), their_price_point: str = Form(""),
            competitors_named: str = Form(""), customer_description: str = Form(""),
+           website: str = Form(""),
            case_key: str = Form(""), do_scan: str = Form("")):
     f = dict(business_name=business_name, email=email, category=category, city=city,
              role=role, company_size_band=company_size_band,
              positioning_sentence=positioning_sentence, differentiator=differentiator,
              undercut_on=undercut_on, your_price_point=your_price_point,
              their_price_point=their_price_point, competitors_named=competitors_named,
-             customer_description=customer_description, case_key=case_key)
+             customer_description=customer_description, website=website,
+             case_key=case_key)
     payload = payload_from_form(f)
     try:
         r = run_submission(payload, bool(do_scan))
