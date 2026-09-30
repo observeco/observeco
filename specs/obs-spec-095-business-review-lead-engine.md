@@ -2778,6 +2778,49 @@ gating anything**, and re-recording is the next step.*
 
 ---
 
+
+**⚠⚠ 6.7.7a THE CANARY'S FALSE-ALARM RATE IS ~41% — AND THAT IS WHY ITS FAILURE LOOKED REAL.**
+
+**⚠ RE-RECORDING THE REFERENCE WOULD NOT HAVE FIXED THE GATE, AND THIS IS THE REASON.**
+
+*The instrument's own measured band noise floor is **10 of 120 bands flipping between two runs of
+identical code = 8.3% per case** (§6.7.5). The canary has **6 cases** and compares **a single run**
+against a frozen snapshot, band-only. So:*
+
+    P(no case flips by chance)      = (1 - 0.083)^6 = 0.593
+    P(canary reports FALSE DRIFT)   = 1 - 0.593     = 0.407
+
+***≈ 2 runs in 5.*** **The canary alarms from noise alone about 41% of the time — and it did exactly
+that on the run that started §6.7.7, reporting C4-sgfitness and C5-saladshop as "band moved
+(Contested → Fragile)".** *The stale-default bug made that particular failure spurious; **the
+underlying alarm rate means a spurious-looking failure is the normal case, not the exception.***
+
+**⚠ THIS IS ALSO THE MOST LIKELY EXPLANATION FOR WHY THE STALE DEFAULT WENT UNNOTICED.** *A gate
+that fails roughly half the time for no reason teaches its reader to discount it — and the
+distinction between "failed because the rubric was stale" and "failed because of noise" was
+invisible, because **neither the version warning nor any noise framing existed.***
+
+**⚠ THE FIX IS NOT A NEW REFERENCE — IT IS REDUCING THE VARIANCE THE GATE COMPARES AGAINST.**
+*§6.7.5b already established that **averaging k calls per case converges to 100% band agreement**
+(single-call 4/6 = 67%, averaged 6/6 = 100% in a 6-case probe).* ***A canary that averages k calls
+before comparing bands is testing DRIFT; a canary that compares single calls is testing the
+instrument's own dice.***
+
+***Options: (a) average k calls per case in the canary (directly measured to reduce flips; costs
+k× the canary's model calls); (b) widen the tolerance — treat a band move as drift only if it
+persists across repeats; (c) leave it and document the 41%.***
+**My recommendation is (a):** *the averaging evidence already exists from §6.7.5b, the canary is
+small (6 cases), and a gate is the one place where paying k× for reproducibility is obviously
+worth it — **a launch gate that is wrong 41% of the time is not a gate.*** **⚠ NOT BUILT — it
+changes what the launch condition is, and §10.6 is Sean's to change.**
+
+**⚠ AND NOTE WHAT THIS DOES *NOT* SAY.** ***It does not excuse the stale default.*** *That was a
+real defect: it compared against an instrument 13 versions old. **Both are true — the default was
+wrong AND the alarm rate is too high to trust either way.*** **Fixing only the first would have
+produced a gate that passes today and fails ~2 runs in 5 tomorrow.**
+
+---
+
 **⚠⚠ 6.7.6a THE SECOND SECTOR EXPOSED THAT RESOLUTION IS NOT QUALITY (BUILT — 30 Sep).**
 
 **⚠ THE FIRST SECTOR PASSED AND HID A REAL DEFECT. That is the whole argument for testing a second
