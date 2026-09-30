@@ -70,24 +70,42 @@ def grade_capture(status: int, text: str) -> tuple[str, str]:
     shell    -- loaded but no readable content (JS-rendered skeleton)
     thin     -- loaded, readable, but too little to characterise a position
     error    -- transport failure
+
+    ⚠ SUBSTANTIAL TEXT BEATS EVERY MARKER -- CHECK THE LENGTH FIRST.
+    ⚠ The markers are scanned against VISIBLE TEXT, never raw HTML.
+
+    WHY (measured, and it silently broke a whole category): the marker check ran BEFORE the
+    length check and scanned the RAW HTML. A browser returns the complete DOM, `<noscript>` tag
+    included -- so the literal string "noscript" was present in the source of a fully-rendered
+    page. auroraer.com came back with **6,059 characters of real content** and was still graded
+    **"shell", 0 usable content**, because its HTML happens to carry a `<noscript>` element.
+    The scan then reported "NO OCCUPANT COULD BE ESTABLISHED" for a well-populated category --
+    naming the wrong cause, since the page had been read perfectly well.
+
+    The markers are a DIAGNOSIS OF A FAILURE, not a test in their own right: they explain WHY a
+    page yielded nothing. A page that yielded something needs no explanation.
     """
     if status == 0:
         return "error", "transport failure"
     if status in (401, 403, 407, 429, 503):
         return "blocked", "HTTP %d" % status
-    low = (text or "").lower()
+    visible = strip_tags(text or "")
+    # a challenge is a denial regardless of how much text came with it
+    low_all = (text or "").lower()
     for m in BLOCK_MARKERS:
-        if m in low:
+        if m in low_all:
             return "blocked", "challenge marker: %r" % m
+    if len(visible) >= MIN_USEFUL_CHARS:
+        return "ok", ""
+    # thin -- NOW the shell markers say why, against visible text only
+    low = visible.lower()
     for m in SHELL_MARKERS:
         if m in low:
             return "shell", "javascript shell: %r" % m
-    if len((text or "").strip()) < MIN_USEFUL_CHARS:
-        return "thin", "only %d chars of readable text" % len((text or "").strip())
-    return "ok", ""
+    return "thin", "only %d chars of readable text" % len(visible)
 
 
-def fetch(url: str, timeout: int = 20) -> tuple[int, str]:
+def fetch_plain(url: str, timeout: int = 20) -> tuple[int, str]:
     req = urllib.request.Request(url, headers={
         # A plain, honest UA. The point is not to defeat the gate -- it is to detect it.
         "User-Agent": "Mozilla/5.0 (compatible; ObserveCo-competitor-scan/1.0)",
@@ -101,6 +119,93 @@ def fetch(url: str, timeout: int = 20) -> tuple[int, str]:
         return e.code, ""
     except Exception:
         return 0, ""
+
+
+# --- the browser rung -------------------------------------------------------
+# ⚠ WHY THIS EXISTS. urllib alone CANNOT READ MOST MODERN BUSINESS SITES, so the scan was
+# reporting "NO OCCUPANT COULD BE ESTABLISHED" for categories that are perfectly well populated.
+# MEASURED on the real submission that exposed this:
+#     urllib    -> capture_status "shell", 0 usable content, "javascript shell: noscript"
+#     Playwright-> 6,059 chars in 2.8s, containing all four of the business's own customer
+#                  segments (Financial Sector, Utilities, Developers, Energy Consumers)
+# The scanner was not failing to find competitors; it was failing to READ the pages -- including
+# the submitter's own. Its verdict named the wrong cause.
+#
+# ⚠ IT IS A FALLBACK, NOT A REPLACEMENT. A browser costs seconds and a real process, so it runs
+# ONLY when the plain fetch produced nothing usable. Sites that serve static HTML keep the fast
+# path, and the common case pays nothing.
+#
+# ⚠ IT DOES NOT DEFEAT INTENTIONAL GATES. A bot wall, a captcha or a paywall is a decision by the
+# publisher and stays unread -- this recovers content that was never withheld, only mis-served to
+# a non-browser client. The distinction matters for the same reason the honest UA does.
+_BROWSER_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+               "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
+_BROWSER = {"playwright": None, "browser": None}
+
+
+def _browser_page():
+    """One lazily-created browser for the whole scan. Starting Chromium per URL would cost
+    more than the scan itself."""
+    if _BROWSER["browser"] is not None:
+        return _BROWSER["browser"]
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception:
+        return None
+    try:
+        pw = sync_playwright().start()
+        _BROWSER["playwright"] = pw
+        _BROWSER["browser"] = pw.chromium.launch(headless=True)
+        return _BROWSER["browser"]
+    except Exception:
+        return None
+
+
+def close_browser() -> None:
+    """Release Chromium. Call this when the scan finishes -- a leaked browser process outlives
+    the run and silently accumulates across submissions."""
+    try:
+        if _BROWSER["browser"] is not None:
+            _BROWSER["browser"].close()
+        if _BROWSER["playwright"] is not None:
+            _BROWSER["playwright"].stop()
+    except Exception:
+        pass
+    finally:
+        _BROWSER["browser"] = None
+        _BROWSER["playwright"] = None
+
+
+def fetch_browser(url: str, timeout: int = 30) -> tuple[int, str]:
+    br = _browser_page()
+    if br is None:
+        return 0, ""
+    try:
+        ctx = br.new_context(user_agent=_BROWSER_UA)
+        page = ctx.new_page()
+        try:
+            resp = page.goto(url, timeout=timeout * 1000, wait_until="domcontentloaded")
+            # client-rendered sites finish after domcontentloaded; a short settle is enough to
+            # get the copy, and waiting longer costs every URL for little gain.
+            page.wait_for_timeout(2500)
+            html = page.content()
+            status = resp.status if resp else 200
+            return status, html
+        finally:
+            ctx.close()
+    except Exception:
+        return 0, ""
+
+
+def fetch(url: str, timeout: int = 20) -> tuple[int, str]:
+    """Plain fetch, escalating to the browser ONLY when the plain one yielded nothing."""
+    status, html = fetch_plain(url, timeout)
+    if len(strip_tags(html)) >= 200:
+        return status, html
+    bstatus, bhtml = fetch_browser(url, timeout=max(timeout, 30))
+    if len(strip_tags(bhtml)) > len(strip_tags(html)):
+        return bstatus or status, bhtml
+    return status, html
 
 
 # --- reading a competitor out of a page -------------------------------------
@@ -329,16 +434,107 @@ BRAND_CONTINUATION = {"tea", "town", "box", "san", "chen", "cha", "kuan", "kun",
                       "xing", "fu", "tang", "chicha", "chen", "store", "shops"}
 
 
+def publisher(url: str) -> str:
+    """The PUBLISHING ORGANISATION behind a URL, for independence counting.
+
+    ⚠ TWO PAGES FROM ONE PUBLISHER ARE ONE SOURCE, NOT TWO. A company's own site and its
+    /global-presence/ page are the same voice -- and if both count, that company's own menu
+    labels get "corroborated" by itself and pass the two-source rule as occupants.
+    Measured: `www.auroraer.com` and `auroraer.com/global-presence/singapore` were counted as
+    independent sources, so Aurora's own navigation text ("Global Presence", "Manage") was
+    reported as a competitive set.
+    Independence is about WHO IS SPEAKING, and subdomains of one organisation are one speaker.
+    """
+    host = urllib.parse.urlparse(url).netloc.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    parts = host.split(".")
+    # keep the registrable domain: the last two labels, or three for common 2-level TLDs
+    if len(parts) >= 3 and parts[-2] in ("co", "com", "org", "net", "gov", "edu", "ac"):
+        return ".".join(parts[-3:])
+    return ".".join(parts[-2:]) if len(parts) >= 2 else host
+
+
+# A capitalised phrase counts as an occupant only when the text around it is TALKING about
+# players in a market. Deliberately generic -- it must work for any category, not just the one
+# that motivated it, and it must not name any specific business.
+_OCCUPANCY_SIGNALS = (
+    "competitor", "competing", "rival", "market leader", "leading", "provider", "supplier",
+    "vendor", "company", "companies", "firm", "consultancy", "solution", "platform",
+    "alternative", "versus", " vs ", "compared", "landscape", "players", "incumbent",
+    "analytics", "advisory", "service", "agency", "operator", "manufacturer", "brand",
+)
+# Words that are pure interface furniture. They are not a market signal even when they appear
+# next to each other, and they were observed as false occupants in a live run.
+_UI_WORDS = frozenset("""
+discover know learn more read view all see explore about contact careers news blog events
+search login register sign menu home privacy cookies accept reject consent subscribe
+share follow linkedin twitter facebook instagram youtube terms legal sitemap
+""".split())
+
+
+def _says_occupant(text: str, phrase: str) -> bool:
+    """Is `phrase` mentioned in a sentence that is talking about market occupants?
+
+    Takes a window of text around the FIRST occurrence and requires an occupancy signal in it.
+    A window, not the whole page: a page about a market mentions "competitor" somewhere, so a
+    whole-page test would pass everything.
+    """
+    low_phrase = phrase.lower()
+    if low_phrase in _UI_WORDS or low_phrase.split()[0] in _UI_WORDS:
+        return False
+    low = (text or "").lower()
+    start = 0
+    while True:
+        i = low.find(low_phrase, start)
+        if i < 0:
+            return False
+        window = low[max(0, i - 140): i + len(low_phrase) + 140]
+        if any(sig in window for sig in _OCCUPANCY_SIGNALS):
+            return True
+        start = i + len(low_phrase)
+
+
 def extract_occupants(ok_captures: list[dict]) -> list[tuple[str, int]]:
     """Mine occupant NAMES out of the readable sources.
 
     A name qualifies only if it appears in more than one independent source. Returns
     [(name, source_count)] sorted by source count then name.
+
+    ⚠⚠ NEGATIVE RESULT — THIS MECHANISM IS NOT WORKING, AND FOUR FIXES HAVE FAILED.
+    Do NOT retry these; each was measured and each exposed a new class of junk.
+
+        1. hyphen splitting      -- "Each-A-Cup" became "Each" + "Cup"          [fixed]
+        2. stray single words    -- "Updated", "Business"                        [fixed]
+        3. case duplicates       -- "KOI" and "Koi" counted as two occupants     [fixed]
+        4. navigation labels     -- "Discover", "Know", "Global Presence", "Who" [STILL BROKEN]
+        5. currency/UI tokens    -- "USD", "Create", "Energy", "Manage"          [STILL BROKEN]
+
+    ⚠ The pattern: every fix reveals a NEW class of capitalised non-brand text. That is the
+    signature of a mechanism that cannot be patched, not a mechanism that needs one more rule.
+    Two-source corroboration does NOT save it -- navigation labels and currency codes appear on
+    every site in every category, so they are the MOST corroborated strings on the web.
+
+    ⚠ AND THE OUTPUT IS DANGEROUS, NOT MERELY USELESS. Feeding invented rivals to the rubric
+    asserts a competitive set that does not exist, and position_strength is scored AGAINST the
+    supplied set. A wrong set is worse than an empty one: the empty set caps at ADEQUATE (3) and
+    says why, while a junk set produces a confident judgement about rivals that are not real.
+
+    ⚠ WHAT TO DO INSTEAD (not yet built, needs a steer):
+      - USE THE OWNER'S OWN NAMED RIVALS. The form already collects them and they are reliable.
+        On the live case that exposed this, the owner named "wood mac, afry, baringa, modo".
+      - USE tier_0_own_stated_position. Reading the submitter's OWN site now works (see the
+        browser rung), and it is rich: 6,059 chars on that case, naming four customer segments.
+      - Only accept a scraped name when a SOURCE STATES an occupancy relationship in the same
+        sentence (e.g. a comparison table, a "competitors" page) -- which _says_occupant
+        approximates but does not achieve, because the window test passes nav text too.
+
+    ⚠ UNTIL THEN, THIS FUNCTION'S OUTPUT MUST NOT BE TRUSTED AS A COMPETITIVE SET. See 4.6.
     """
     counts: dict[str, set[str]] = {}
     for c in ok_captures:
         text = "%s %s" % (c.get("claim") or "", c.get("excerpt") or "")
-        host = urllib.parse.urlparse(c["url"]).netloc.lower()
+        host = publisher(c["url"])
         # 1- and 2-word capitalised phrases, including ALL-CAPS chains (CHAGEE, HEYTEA)
         # HYPHENS ARE PART OF A BRAND NAME. Without them "Each-A-Cup" splits into
         # "Each" and "Cup", and the set names two occupants that do not exist instead of
@@ -357,6 +553,17 @@ def extract_occupants(ok_captures: list[dict]) -> list[tuple[str, int]]:
             if head in NOT_A_BRAND or low in NOT_A_BRAND:
                 continue
             if len(low) < 3:
+                continue
+            # ⚠ THE NAME MUST BE MENTIONED AS AN OCCUPANT, NOT MERELY CAPITALISED.
+            # ⚠ Without this the extractor mined NAVIGATION LABELS as competitors. Measured once
+            # the browser rung made 7 sources readable: the "occupants" of power-market analytics
+            # came back as "Discover", "Know", "Global Presence", "Who", "France Who" -- menu text
+            # that happens to be capitalised and to appear on many sites, so it passed the
+            # two-source rule. Feeding those to the rubric as rivals would be worse than finding
+            # none: it asserts a competitive set that does not exist.
+            # The test is the same principle as tier_0: the SOURCE must state it. A capitalised
+            # word needs a surrounding signal that this text is naming a player in a market.
+            if not _says_occupant(text, phrase):
                 continue
             # CASE IS NOT AN IDENTITY. The live run produced "KOI" (2 sources) and
             # "Koi" (2 sources) as two separate occupants of the same category -- the same
@@ -437,8 +644,7 @@ def to_competitive_set(result: dict) -> dict:
                        "one independent source. Position strength stays capped at "
                        "ADEQUATE (3).")
     if ok:
-        srcs = ", ".join(sorted({urllib.parse.urlparse(c["url"]).netloc.lower()
-                                 for c in ok})[:6])
+        srcs = ", ".join(sorted({publisher(c["url"]) for c in ok})[:6])
         members.append("_sources read: %s" % srcs)
 
     out = {}
