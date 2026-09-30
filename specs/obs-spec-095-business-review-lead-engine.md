@@ -1,6 +1,6 @@
 # OBS-SPEC-095 — Business Review Lead Engine
 
-**Status:** DRAFT v50.3 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
+**Status:** DRAFT v50.4 — **⚠ THE 120-CASE REGRADE IS NOT A RELIABLE REFERENCE, and Sean has now confirmed this himself: every case re-examined (7 so far, across DEF, DR and PS) has confirmed the INSTRUMENT and contradicted his 27-Sep regrade. His PS regrade column is additionally the SUPERSEDED RECALL CONSTRUCT (r=+0.82, 67% identical to MA). Measured against properly-graded references the instrument is sound; against the quick regrade it reads 50.8% exact, and the regrade is the wrong number.**
 **Date:** 2026-09-23 (v8–v11: 2026-09-27–28; v12–v22: 2026-09-28)
 **Owner:** Sean
 **Name:** KIV (D1)
@@ -440,6 +440,8 @@ corpus must be regraded before any further tuning — tuning against it would be
 error as the v1.11.0 over-raise, caught this time before it did damage.* **⚠ Limits: n=20–21 is a SHAPE
 reading, not accuracy — the within-one intervals reach down to ~84%, and two of three regrades agree
 unusually well partly because the definitions were stated in the sheet.**
+
+**v50.4 — ⚠ THREE OPEN DEFECTS FOUND BY SUBMITTING A REAL BUSINESS (§6.7.2). Recorded, NOT fixed — each needs Sean's steering.** *Submitting `steegeXP` surfaced them; the submission pasted `https://steegexp.com/` as its positioning answer and `"I want you to find out"` as its undercut answer, and the instrument returned **`34/100 — Fragile`**.* **A:** *the model's own `input_sufficiency` said **`insufficient`** and the pipeline recorded it, then ignored it — **20 of 120 corpus cases are `insufficient` and 18 still get a confident band.*** *§5.4 already specifies the `REFUSED_INPUT_QUALITY` refusal and this is its natural trigger, but wiring it changes 17% of the corpus, so it is a behaviour change and not a silent fix.* **B:** *dimensions with coverage as low as **0.18** print as clean numbers and drive the band, because the display floor is 0.0 — including the two heaviest dimensions, which is what made a `1/5` mental advantage look like a finding rather than an absence of evidence.* **C:** *§5.4 states the composite floor is ~20 while the band table in the same document says `Fragile 5-37` — **5-19 is unreachable**, verified: the true minimum is **19.3**. The spec already documented the floor; the band table was simply never made to agree. **Fourth instance of the "two numbers that should be one" class in this document.*** **⚠ And the design question that is probably most important: nothing fetches the SUBMITTER'S OWN SITE** — *verified, `website` appears nowhere in `run_jev.py` or `preflight_gate.py` — even though §4.6's scan already has the capability. A business with no positioning statement, which is exactly D3's target segment, will paste its URL; reading it would convert "we cannot assess this" into an assessment.*
 
 **v50.3 — D56: THE REPORT AND THE FORM MUST BE WRITTEN FOR THE SUBMITTER. Sean's ruling; the report half is built, the form half is not.** *Sean: "The scoring is good after 1 test. However the form feels like it is written for someone internal and not front facing. A new user would get turned off. The report should provide definitions and explain the results to be useful to the user. Is it also possible to band the aggregated score whereby what band is good, viable, not viable etc, and recommendations? For recommendations, be specific about which areas they could explore to get the score up."* **A report can be internally perfect — correct composite, correct bands, correct provenance — and still fail, because the reader is a small-business owner with five minutes and no reason to trust a number they cannot interpret. So INTERPRETABILITY IS A PRODUCT REQUIREMENT, not a polish item.** **BUILT (report half):** *§6.7.1's six rules, in `generate_report.py`* — **(1)** the band ladder now carries **viability** (*Fragile = NOT VIABLE as it stands, something structural; Contested = VIABLE but not on this plan; Viable-conditional = subject to one check; Strong = viable and defensible*), **with the caveat that ships beside it** — *the band describes the POSITION, not the business's worth or the founder's ability, and is not a probability of success*; **(2)** every dimension is **defined in the reader's words beside its score** (*"whether people think of YOU unprompted when they need what you sell"*); **(3)** **recommendations are ranked by recoverable points**, not by lowest score, with the recoverable figure **shown** so the ordering is checkable; **(4)** **30 recommendation entries grounded in the rubric's own level language** — *because a recommendation naming a move the instrument does not actually reward is WORSE THAN NONE: it sends the reader to spend effort on something that cannot move their score.* **⚠ AND A THIRD INSTANCE OF THE SAME DEFECT CLASS, FOUND WHILE DOING IT:** *`generate_report.py` hardcoded **`BANDS = [("Fragile",5,39),("Contested",40,59),…]`** while the rubric says **5-37 / 38-57 / 58-76 / 77-100** — **the report's idea of a band DISAGREED with the instrument that produced the score**, the same class as the hardcoded weights this file had already fixed, **in the same file, and it survived that rewrite.*** *Bands are now READ FROM THE RUBRIC.* **⚠ NOT DONE, AND NOT CLAIMED: THE FORM IS STILL WRITTEN IN INTERNAL LANGUAGE** — *slot names, "the section 3.10 gap", corpus case keys.* *That is the other half of his note and it remains open.* **Verified:** *three frozen runs render; output is **byte-identical** across two renders of the same run, so §5.5's computed-not-written rule holds.*
 
@@ -2290,6 +2292,62 @@ where the instrument's limits must be **stated rather than smoothed over.** A di
 instrument did not score shows an actionable sentence, never a bare "N/A"; and the report already
 names what it did **not** check. Interpretability means explaining the result **including its
 gaps** — not presenting a confident report over a thin one.*
+
+### 6.7.2 ⚠ OPEN DEFECTS FOUND BY SUBMITTING A REAL BUSINESS (30 Sep — NOT FIXED, NEEDS A RULING)
+
+> **Found by submitting `steegeXP` through the sandbox: `https://steegexp.com/` pasted as the
+> positioning answer, `"I want you to find out"` as the undercut answer, one named rival.**
+> **The instrument returned `34/100 — Fragile` with `band_interval.reliable: true`, and the model's
+> own `input_sufficiency` field said `"insufficient"`.** *The report therefore told the submitter
+> **"NOT VIABLE as it stands"** — on the strength of a URL.* **⚠ These are recorded rather than
+> fixed because each needs a steering decision, and the standing rule is that thresholds are
+> Sean's to set.**
+
+**DEFECT A — `input_sufficiency: "insufficient"` IS COMPUTED, RECORDED, AND THEN IGNORED. ⚠ HIGHEST HARM.**
+*The model returns a plain-language verdict on whether it could assess the business at all. The
+pipeline records it as a field and **nothing acts on it**: no gate fires, no band is withheld, and
+the report leads with a confident negative band.* **Measured across the corpus: 20 of 120 cases are
+`insufficient`, and 18 of those still receive a confident band** (14 Contested, 4 Fragile, 2 GATE).
+§5.4 already specifies **two** refusals and both mean *"we cannot answer"* — **Assessability**
+(classifier `refuse_when`) and **Input quality** (the §3.10 floor). *On this submission the
+assessability classifier returned `competitive_market` at 0.97 confidence and the §3.10 preflight
+passed, so **neither refusal fires and the insufficiency signal has no route to the output at
+all**.* **⚠ THIS IS THE DEFECT THAT WOULD HARM A STRANGER:** *a real lead receives "your business
+is not viable" when the instrument's own words were "I cannot assess this".* **Two candidate rules,
+and the choice is Sean's:** *(a) map it onto §5.4's existing `REFUSED_INPUT_QUALITY` (no composite,
+name the missing signals) — spec-conformant, but it changes **17% of the corpus**, so it is a real
+behaviour change; or (b) keep scoring but suppress the band and lead the report with the input
+limitation.* **⚠ (a) is the recommended default** *because §5.4's rule is already written and this
+is its natural trigger.*
+
+**DEFECT B — LOW-EVIDENCE DIMENSIONS ARE PRESENTED AS CLEAN NUMBERS.**
+*Evidence coverage on this submission: **competitive_room 0.18**, position_strength 0.52,
+**mental_advantage 0.63**. Only `market_headroom` was reported unscored.* *The display floor is
+`0.0`, so nothing is suppressed, and `CONF_ACT = 0.50` means **mental_advantage's 1/5 and
+position_strength's 2/5 print as clean numbers with no caveat at all** — and those are the two
+heaviest dimensions (20% and 25%), i.e. **the ones driving the Fragile band.*** **A 1/5 for mental
+advantage, on a business with no market evidence, asserts something the input cannot support; "we
+could not tell" is the honest reading.** *The machinery exists (§5.4's unscored path) — the
+thresholds are the open question.*
+
+**DEFECT C — THE STATED BAND LADDER CONTAINS SCORES NO SUBMISSION CAN REACH.**
+*§5.4 states the composite formula `level/count` and notes the floor is **≈20, not 0**. The band
+table, in the same document, states **`Fragile 5–37`**.* **So 5–19 is unreachable, and 34/100 is
+not distinguishable from a business scoring the absolute floor on every dimension.** *Verified by
+recomputation: the minimum possible composite is **19.3**; this run's 34.0 reproduces exactly under
+`level/count × renormalised weight` (an earlier candidate mapping, `(level−1)/(count−1)`, gives 18.06
+and is wrong).* **⚠ Note the spec ALREADY documents that floor — the band table simply was not
+updated to agree with it.** *This is the fourth instance of the same "two numbers that should be
+one" class in this document.*
+
+**⚠ AND A DESIGN QUESTION THE SUBMISSION RAISES, WHICH IS NOT A DEFECT BUT IS PROBABLY THE MOST
+IMPORTANT THING HERE.** *A small business that has not formulated a positioning statement — the
+target segment D3 names — will reasonably paste **their own website** instead. **Nothing in the
+tool fetches the submitter's own site** (verified: `website` appears nowhere in `run_jev.py` or
+`preflight_gate.py`).* **So the one input that would most help the hardest submissions is sitting
+one fetch away.** *The capability already exists (§4.6's scan fetches and extracts); it is simply
+never pointed at the submitter.* **Reading the submitted site would convert "we cannot assess this"
+into an assessment — and it is worth deciding deliberately rather than by omission.**
 
 ### 6.8 The 30s wall
 
