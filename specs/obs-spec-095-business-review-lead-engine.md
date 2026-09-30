@@ -2520,9 +2520,68 @@ of a computation.*
 3. **⚠ Any rubric A/B must run N≥3 per arm and compare the DISTRIBUTION, not one pass.** *The
    `fame test` and the `r(PS,MA)` figures were single runs and should be re-measured before being
    relied on again.*
-4. **⚠ The fix is not simply "set temperature 0"** *— the endpoint must support it, that must be
-   verified rather than assumed, and every published number would need re-validating.*
-   **Recorded as the next instrument-integrity task, not silently patched.**
+4. **⚠ The fix is not simply "set temperature 0"** *— and that is now **PROVEN, not assumed**:
+   see §6.7.5a.*
+
+### 6.7.5a WHAT THE INSTABILITY ACTUALLY IS — measured, and not what was assumed
+
+**⚠ 1. THE ENDPOINT REJECTS PINNING.** *Probed directly: `temperature: 0` + `seed: 42` in the
+request body returns **HTTP 400 `api_usage_error / Invalid request`** — three times, cleanly.*
+**So "just set temperature 0" is NOT AVAILABLE at the call site.** *The fix is not a one-line
+change and must not be assumed to be one.*
+
+**⚠ 2. THE VARIANCE IS PROVEN, NOT INFERRED.** *Five **identical** calls, same case, same state,
+same questions: **five distinct answer-sets** (sha256 of the full `answers` object, all five
+different).* **The instrument samples on every call.** *`HT04-a` — a case that changed band
+between two identical corpus runs — is the case used.*
+
+**⚠ 3. ⚠ A DIMENSION RETURNS A CONFIDENT-LOOKING NUMBER WITH **ZERO** CONFIDENCE.**
+*`competitive_room` on `HT04-a` returns:*
+
+| field | value |
+|---|---|
+| `score` | **2.75 / 5** — reads as a solid mid judgement |
+| `confidence` | **0.00** — the instrument has no idea |
+| `spread over 6 calls` | 0.11 |
+
+**⚠ `confidence: 0.00` IS THE "NOTHING TO GO ON" SIGNAL** *(the same value §6.7.2 defect B found
+on `steegeXP`: `competitive_room` 0.18 coverage; `position_strength` 0.52; `mental_advantage`
+0.63).* **A score of 2.75 carrying confidence 0.00 is a guess presented in the same format as a
+judgement** — *and the report prints it as `3/5` with no marker.*
+**⚠ And 6.7.2 defect B already identified this** — *the two findings are the same defect seen from
+two directions.*
+
+**⚠ 4. ⚠ MY FIRST HYPOTHESIS WAS WRONG, AND THE MEASUREMENT KILLED IT.** *I predicted the variance
+would be **concentrated** on low-evidence dimensions.* **Measured: mean spread where the instrument
+is unsure 0.11, where it is sure 0.05 — only ~2×, and both far too small to move a band alone.**
+*So per-dimension sampling is **not** sufficient to explain a 5–8 point composite swing.*
+**The script printed "✓ CONFIRMED" — and it was wrong to.** ⚠ *A 2× ratio on spreads of 0.02–0.11
+is not a confirmation; the threshold in the probe was arbitrary and the conclusion outran the
+evidence.* **Recorded because the probe's own verdict was the error, not the data.**
+
+**⚠ 5. THE BAND MOVES FOR THREE DISTINCT REASONS — not one.** *From the 10 band-flips between two
+identical corpus runs:*
+
+| mechanism | cases | evidence |
+|---|---|---|
+| **`input_sufficiency` flips `sufficient`↔`insufficient`** → scored vs **GATE** | **3 of 10** | `HN07-i` 44→None, `HB04-the` None→50, `HC03-a` 53→None |
+| **a dimension's coverage flickers across the 0.20 floor** → in/out of the composite | 1+ | `HT04-a`: unscored `[competitive_room, market_headroom]` → 31; unscored `[market_headroom]` → **39**. *One dimension crossing the floor moved the band.* |
+| **plain score movement**, no coverage or gate change | ~6 of 10 | `KP01-ya` 77→72, `FU04-cellini` 58→54, `HN08-frisky` 60→55, `FF02-kfc` 56→61 |
+
+**⚠ THE THIRD MECHANISM IS THE LEAST UNDERSTOOD AND THE MOST IMPORTANT.** *Per-dimension spreads of
+0.02–0.11 cannot produce a 5–8 point composite change, yet the composite does move that far.*
+**Something is amplifying small score differences into whole bands — and it is not yet identified.**
+*That is now the highest-value instrument question, ahead of the refusal ruling.*
+
+**⚠ WHY THE FLOOR-CLIFF MECHANISM MATTERS MOST FOR THE PRODUCT.** *`steegeXP`'s `competitive_room`
+sits at **coverage 0.18** against a **0.20** floor.* **A dimension the instrument cannot assess is
+therefore being included or excluded by a rounding-level difference — and whichever way it falls
+changes the band the customer is shown.** *The `REFUSED_INPUT_QUALITY` work (§6.7.4) removes the
+worst case of this; it does not remove the mechanism.*
+
+**⚠ NOTHING HERE HAS BEEN PATCHED.** *All four items are measurements. The endpoint rejection means
+the fix is an unknown-size job, and the third mechanism is unidentified — so patching now would be
+guessing.* **Recorded as the next instrument-integrity task.**
 
 `vercel.json` caps `api/**/*.js` at `maxDuration: 30`. Jev + enrichment + email exceeds this. **The
 report is queued and worked asynchronously** — the request path only validates, records, and
