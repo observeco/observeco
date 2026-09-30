@@ -2669,11 +2669,39 @@ and a business with **no claim and a site behind Cloudflare or a captcha** (Park
 **still refused, and told the wrong reason**).* **The second is arguably MORE common among small
 Singapore F&B and retail, which is exactly the target segment.**
 
-***Options: (a) distinguish the refusal message by cause — cheapest and purely additive;
-(b) let a blocked site fall through to a scored report with a caveat; (c) leave it.***
-**My recommendation is (a):** *it is truthful, it is additive, and (b) risks scoring a business on
-evidence the tool explicitly could not obtain.* **⚠ Not built — it changes what the user is told,
-which is Sean's call, not a bug fix.**
+**✅ BUILT (30 Sep) — option (a). THIS IS NOT A COPY DECISION: THE MESSAGE WAS FALSE.** *The refusal
+asserted the submitter had under-described their business, which was **not what happened**. §4.6
+already requires naming the true cause so a tool failure never reads as absence — **this applies
+that existing rule, it does not add a new behaviour. Whether we refuse is unchanged; only what we
+say is.***
+
+*`_refusal_reason(payload)` in `run_jev.py` now derives the message from what actually occurred:*
+
+| situation | message |
+|---|---|
+| pre-flight gate fired | **the gate's own `missing_slots`** *(unchanged — it is the authority)* |
+| site supplied, capture `blocked` | ***"we could not read your website — it is behind a bot wall, a CAPTCHA or a similar gate, so the tool never saw the page that describes your business. Nothing was wrong with your answers, and nothing is wrong with your business: we simply could not open the door."*** |
+| site supplied, capture `error`/`thin`/`shell` | ***"we could not read your website — the page did not load in a form we could use… That is our limitation, not a problem with your answers."*** |
+| no site, or site read and still thin | **the original message** *(correct here, and kept)* |
+
+**⚠ AND EACH SITE-BLAMED MESSAGE CARRIES THE ACTION THAT ACTUALLY HELPS** — *the two sentences that
+would let the tool assess without the site: one on the customer, one on the differentiator.*
+
+**⚠ THREE THINGS THE COPY IS DELIBERATELY DOING:**
+1. **It says "we", not "you".** *"We could not open the door" — the failure is named as ours, which
+   is what is true. The original message's grammar was accusatory about a limitation that was not
+   the submitter's.*
+2. **It says explicitly that nothing is wrong with the business.** *A refusal is the highest-risk
+   moment for a lead magnet — the reader is one sentence away from "this tool says I'm no good".
+   Saying the limitation out loud is what stops a tool failure reading as a verdict.*
+3. **It gives a route to a report anyway.** *A blocked site is common among exactly the §13 target
+   (small F&B and retail behind Cloudflare). Leaving them at a dead end wastes the lead the refusal
+   just created.*
+
+**✅ VERIFIED END-TO-END** *on the Park Bench Deli submission: the rendered report now shows
+**"we could not read your website — it is behind a bot wall, a CAPTCHA or a similar gate…"** where
+it previously said the submitter had not described their customer. The readable-site case (Aurora)
+still gets the original message, unregressed — both branches exercised.*
 
 **⚠ AND THE FIRST VERSION OF THIS TEST WAS INVALID: I INVENTED THE DOMAIN.** *`twomenbagelhouse.com`
 has **no DNS**, so both fetchers returned "transport failure", no `TIER 0` was built, and the

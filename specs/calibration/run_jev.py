@@ -296,6 +296,60 @@ def _interval(dist: dict | None, conf: float | None) -> dict | None:
     }
 
 
+def _refusal_reason(payload: dict) -> list[str]:
+    """WHAT to tell the submitter when we refuse — and it must be the TRUE cause.
+
+    ⚠⚠ MEASURED DEFECT THIS FIXES (spec 6.7.4b). The refusal had ONE message for at least three
+    different situations, and two of them it described wrongly:
+
+        site read, still too thin     -> "describe the customer better"   [correct]
+        site exists but was BLOCKED   -> "describe the customer better"   [WRONG]
+        no site given, form thin      -> "describe the customer better"   [correct]
+
+    Telling a business it under-described itself, when it supplied a URL and the tool was blocked
+    by a bot wall, is a TOOL failure reported as an INPUT failure. §4.6's honest-limits rule
+    exists precisely against that, and its own scan verdicts already separate
+    SEARCH UNAVAILABLE / SCAN FAILED / "read but nothing found" — this is the same distinction,
+    applied to the sufficiency refusal.
+
+    ⚠ IT CHANGES NOTHING ABOUT WHETHER WE REFUSE. Only what we say. A blocked site genuinely
+    cannot be assessed, so the refusal stands; the submitter is simply told the real reason and
+    given the action that would actually help.
+    """
+    # the pre-flight gate's own slot list is the authority when it fired
+    slots = sorted((payload.get("_preflight") or {}).get("missing_slots") or [])
+    if slots:
+        return slots
+
+    # did the submitter offer a site, and could we read it?
+    site = ((payload.get("form") or {}).get("website") or "").strip()
+    derived = payload.get("derived_competitive_set") or {}
+    if site:
+        host = site.split("//")[-1].split("/")[0].lower()
+        unreadable = [e for e in (derived.get("_not_readable") or [])
+                      if host and host in (e.get("url") or "").lower()]
+        status = (unreadable[0].get("capture_status") if unreadable else "")
+        if status == "blocked":
+            return ["we could not read your website — it is behind a bot wall, a CAPTCHA or a "
+                    "similar gate, so the tool never saw the page that describes your business. "
+                    "Nothing was wrong with your answers, and nothing is wrong with your "
+                    "business: we simply could not open the door.",
+                    "In the meantime, the two things that would let us assess you without the "
+                    "site: one sentence describing your customer, and one sentence on what makes "
+                    "you different from the rivals you named."]
+        if status in ("error", "thin", "shell") or unreadable:
+            return ["we could not read your website — the page did not load in a form we could "
+                    "use, so the tool never saw the description of your business it was looking "
+                    "for. That is our limitation, not a problem with your answers.",
+                    "The two things that would let us assess you without the site: one sentence "
+                    "describing your customer, and one sentence on what makes you different "
+                    "from the rivals you named."]
+    # no site, or the site was read and the form is still too thin — the original message holds
+    return ["the submission does not describe the customer well enough, "
+            "or say enough about what the business claims, for the instrument to "
+            "judge its position"]
+
+
 def score(payload: dict, result: dict, rubric: dict) -> dict:
     """Compute gates + composite IN CODE from Jev's judgments.
 
@@ -488,11 +542,7 @@ def score(payload: dict, result: dict, rubric: dict) -> dict:
         # ⚠ A REFUSAL MUST NAME WHAT IS MISSING, not merely decline (spec 5.4: the refusal
         # output names the missing signals). The pre-flight gate's own slot list is the
         # authority on which answers the instrument needs, so both refusals report it.
-        "missing_signals": (
-            sorted((payload.get("_preflight") or {}).get("missing_slots") or [])
-            or ["the submission does not describe the customer well enough, "
-                "or say enough about what the business claims, for the instrument to "
-                "judge its position"]),
+        "missing_signals": _refusal_reason(payload),
         "weights_declared": weights,
         "weights_used_renormalised": weights_used,
         "gates_firing": fires,
