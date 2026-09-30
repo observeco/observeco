@@ -2568,10 +2568,97 @@ identical corpus runs:*
 | **a dimension's coverage flickers across the 0.20 floor** → in/out of the composite | 1+ | `HT04-a`: unscored `[competitive_room, market_headroom]` → 31; unscored `[market_headroom]` → **39**. *One dimension crossing the floor moved the band.* |
 | **plain score movement**, no coverage or gate change | ~6 of 10 | `KP01-ya` 77→72, `FU04-cellini` 58→54, `HN08-frisky` 60→55, `FF02-kfc` 56→61 |
 
-**⚠ THE THIRD MECHANISM IS THE LEAST UNDERSTOOD AND THE MOST IMPORTANT.** *Per-dimension spreads of
-0.02–0.11 cannot produce a 5–8 point composite change, yet the composite does move that far.*
-**Something is amplifying small score differences into whole bands — and it is not yet identified.**
-*That is now the highest-value instrument question, ahead of the refusal ruling.*
+**⚠ THE THIRD MECHANISM — RESOLVED (§6.7.5b).** *It is **quantisation**, proven directly.*
+
+### 6.7.5b ⚠⚠ THE AMPLIFIER IS QUANTISATION — PROVEN, and it is THE finding
+
+**⚠ THE MECHANISM.** *The dimension **raw score is continuous**, but what carries the weight is the
+**whole-number display level (1–5)**. Sub-noise movement in the raw score crosses a **quantisation
+boundary**, the **level flips by a full 1.0 step**, and one step on a heavy dimension is worth
+**4.4–5.6 composite points** — because the renormalised weights are large.*
+
+**⚠ THE PROOF** — `KP01-ya`, **8 identical calls**, same state, same questions:
+
+| | `mental_advantage` | `position_strength` |
+|---|---|---|
+| **raw score range** | **3.490 – 3.540** *(spread **0.050**)* | 3.440 – 3.660 *(spread 0.22)* |
+| **levels returned** | `5,5,5,5,5,5,5,`**`4`** | `4,5,4,5,5,5,4,5` |
+| **renormalised weight** | **22.22%** | **27.78%** |
+| **one flip is worth** | **4.4 composite points** | **5.6 composite points** |
+
+**⚠ A RAW-SCORE SPREAD OF 0.05 FLIPS A LEVEL.** *Two flips = ~10 composite points = **an entire
+band**, because bands are ~10 points wide.* **Observed composites: `71, 77, 80, 77, 77, 77, 71,
+72` — and the bands printed were BOTH `Strong` and `Viable, conditional`, from identical input.**
+
+**⚠ THERE IS NO ARITHMETIC BUG AND NO MYSTERY TERM.** *The earlier per-dimension probe measured the
+**raw** score (spread 0.02–0.11) and correctly found it too small to move a band — **because it was
+measuring the wrong quantity.** The raw score is not what moves the composite; **the quantised level
+is.** Both measurements were right; they were measuring the two ends of the same chain:*
+
+```
+raw-score noise 0.02-0.11
+  -> crosses a quantisation boundary      (boundary observed at exactly 3.50)
+  -> LEVEL flips by 1.0
+  -> 4.4-5.6 composite points
+  -> an entire band (bands are ~10 points wide)
+```
+
+**⚠⚠ AND THE CORPUS SITS ON THE CLIFF EDGE.** *The boundary is at **raw ≈ 3.50**, and the corpus
+scores cluster around **3.5** — which is why the band instability measures as **8%** across the
+corpus rather than being uniform.* **The instrument is least stable exactly where most real
+businesses land.** *This also reframes the corpus's U-shape: the population is piled up against a
+discontinuity.*
+
+**⚠ WHY THIS MATTERS COMMERCIALLY — more than any other open item.** *A single-call band that lands
+near a boundary is **close to a coin flip, however good the rubric is**.* **For a lead magnet whose
+entire promise is a considered judgement, that is the difference between an expert and a
+novice with a stopped clock** — *and it is invisible from the outside, because the report prints a
+confident band either way.*
+
+**⚠ IT IS A DESIGN DECISION, NOT A BUG FIX — Sean's call.** *Three options, none of them obviously
+right:*
+
+| | option | cost / risk |
+|---|---|---|
+| **A** | **Average N calls per submission** and report the mean | *3× the model cost and 3× the latency for every lead. **Directly fixes the cliff**, because averaging shrinks the raw spread before quantisation.* |
+| **B** | **Finer levels** (e.g. 0–20 raw, or report the raw score) | *Removes the cliff in the display, but a finer scale is **harder for a reader to interpret** and may reintroduce variance as visible jitter.* |
+| **C** | **Widen the bands** so a ±5-point swing rarely changes one | *Cheapest, no extra calls. **But this is cosmetic** — it hides the instability rather than removing it, and §6.4's bar gets easier to pass as a side effect.* |
+
+***My recommendation: (A), but only on the band, not the dimension table.*** **Two calls, compare
+bands; if they agree, report; if they disagree, take a third and report the majority.** *That buys
+most of the stability at ~2× cost on the cases that need it, and **the extra calls are only spent
+where the answer is genuinely close** — which is the case worth spending on.*
+
+**⚠ AND (A) HAS NOW BEEN TESTED RATHER THAN ASSERTED** — *because §6.7.5's own lesson is that a
+plausible fix is not evidence.* **The experiment:** six cases, **two independent blocks of 5 calls
+each**; compare the band of a *single* call against the band of the *block mean*, across the two
+blocks.*
+
+| case | single-call band agrees? | averaged band agrees? |
+|---|---|---|
+| `KP01-ya` | yes | yes |
+| **`HT04-a`** | **NO** (Contested / Fragile) | **yes** |
+| `FF02-kfc` | yes | yes |
+| `FU04-cellini` | yes | yes |
+| `GY04-pure` | yes | yes |
+| **`HN08-frisky`** | **NO** (Contested / Viable) | **yes** |
+| **TOTAL** | **4/6 = 67%** | **6/6 = 100%** |
+
+**✓ (A) SURVIVES THE TEST.** *Single-call bands reproduce only **67%** of the time across
+independent blocks; the averaged band reproduced **100%** — **and both failures (the two flipping
+cases) were fixed by averaging**, which is the direct evidence that matters.*
+**⚠ COST STATED HONESTLY: 5× the model calls per lead in this probe**, *so the real implementation
+should use the cheapest variant that keeps the stability (two calls, escalate to three on
+disagreement) — **and that cheaper variant is NOT what was measured here.*** **⚠ Do not claim the
+2-call version works until it is run; what is proven is that averaging removes the flip.**
+
+**⚠⚠ AND IT DOES NOT FIX CORRECTNESS — only reproducibility.** *Averaging converges on the **mean of
+a sampled distribution**.* **Where that mean sits on a band boundary, the averaged band is
+STABLY WRONG rather than randomly wrong.** *`KP01-ya` shows the effect: its single call returns
+`Strong` in both blocks, while the averaged band returns `Viable, conditional` in both — **stable,
+and different.** Averaging did not find a truer answer; it found a **stable** one.*
+**⚠ Stability is not accuracy, and a lead magnet needs both.** *Correctness requires the
+**measurement** work (§6.4's agreement bar, on averaged runs) — not this fix.*
 
 **⚠ WHY THE FLOOR-CLIFF MECHANISM MATTERS MOST FOR THE PRODUCT.** *`steegeXP`'s `competitive_room`
 sits at **coverage 0.18** against a **0.20** floor.* **A dimension the instrument cannot assess is
