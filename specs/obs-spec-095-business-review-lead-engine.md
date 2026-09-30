@@ -2443,7 +2443,49 @@ thing — and does not weaken that prohibition.*
 **MEASURED EFFECT.** *Corpus refusals rise **3 → 23 of 120**; Fragile falls **6 → 2**. The 20 cases
 the instrument already privately judged unassessable now say so instead of printing a band.*
 **⚠ And the refusals are themselves unstable — 21 of 23 reproduce, 2 differ run to run.** *See
-§6.7.5. **That is a reason to treat a refusal as a signal, not a verdict.***
+§6.7.5. **That is a reason to treat the refusal as a signal, not a verdict.***
+
+#### ⚠⚠ 6.7.4a THE REFUSAL NOW SWALLOWS THE CASE THE RESEARCH FIX RESCUED — OPEN TENSION, NEEDS A RULING
+
+**MEASURED end-to-end through the sandbox** *(the real path: pre-flight gate → §4.6 scan → Jev →
+composite → report)*, on the identical `steegeXP` submission:
+
+| | |
+|---|---|
+| **refused** | **YES — `band=GATE`, no score shown** |
+| **the research pass** | **RAN SUCCESSFULLY — "starting from https://steegexp.com — OK, 6 of 12 candidates readable"** |
+
+**⚠ THE TOOL DID THE WORK AND THEN DECLINED TO USE IT.** *Before D59 this submission scored
+**51/100 Contested**; the research fix is what lifted it from **34 Fragile**. The refusal now
+discards that.*
+
+**⚠ AND IT FALLS ON THE TARGET SEGMENT.** *The D3 audience is **weak-positioning SMEs** — and the
+most common real submission in that group is **a business with no positioning statement that
+pastes its URL instead** (exactly what `steegeXP` did).* **A refusal calibrated on
+`input_sufficiency` turns away a large share of the audience §13 names as the target.**
+
+**⚠ THERE IS A DOCTRINE CONFLICT, NOT JUST A TUNING QUESTION.** *§4.4 states **"observed beats
+asserted"** — enrichment is the preferred way to fill a gap, and *§4.4.1* already says absence in
+the form is **not** failure.* **If the research pass observed real evidence about the business,
+then by §4.4's own rule the insufficiency should be CURED by that evidence — not refused in spite
+of it.** *The current behaviour contradicts §4.4.*
+
+**⚠ WHY IT STILL HAPPENS.** *`input_sufficiency` is the model's judgement of **the text it was
+given**. When the research pass adds a `tier_0_own_stated_position` claim and evidence about
+rivals, the model is never re-asked — it answers on the thinner text, and the refusal is decided
+on that first answer.* **So the gate is evaluating the submission the research already fixed.**
+
+**THE OPTIONS — a real decision, not a default (Sean's call):**
+
+| | approach | effect |
+|---|---|---|
+| **A** | **Re-ask sufficiency AFTER enrichment** — refuse only if the model still cannot assess it once the site evidence is in | *The refusal keeps its meaning and stops discarding evidence. Costs one extra model call on borderline cases. **My recommendation.*** |
+| **B** | **Refuse only when there is no website and no evidence** | *Simplest, but a thin submission with an unreadable site is refused while a thin one with a readable site is not — the difference is luck, not quality.* |
+| **C** | **Abandon the refusal; score everything and caveat** | *Restores the original defect: "NOT VIABLE" printed over an instrument's own note that it could not judge.* |
+
+**⚠ RECORDED, NOT SILENTLY FIXED.** *The wiring is correct and the measurement stands; which of
+A/B/C is right changes what the instrument means, so it is Sean's call.* **Until he rules, the
+behaviour is as documented here: research runs, and a `insufficient` verdict refuses regardless.**
 
 ### 6.7.5 ⚠⚠ THE MODEL IS NOT DETERMINISTIC, AND THE PROJECT HAS BEEN TREATING IT AS IF IT WERE
 
