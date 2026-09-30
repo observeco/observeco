@@ -274,7 +274,7 @@ SUBMIT_JS = """
     var original = btn.textContent;
     btn.textContent = 'Working...';
     if(out){ out.style.display='block'; out.className='note';
-             out.textContent = 'Running the pipeline — pre-flight gate, model call, report. 10-30s.'; }
+             out.textContent = 'Working out your read — this takes 10 to 30 seconds.'; }
     fetch('/submit', {method:'POST',
                       headers:{'Content-Type':'application/x-www-form-urlencoded'},
                       body: params.toString()})
@@ -304,83 +304,101 @@ def index():
     cases = sorted(p.stem for p in (CAL / "inputs-v4").glob("*.json")
                    if not p.stem.startswith("_"))
     opts = "".join(f"<option value='{c}'>{c}</option>" for c in cases)
-    return shell("ObserveCo sandbox", f"""
-<h1>ObserveCo — sandbox</h1>
-<div class=sub>Submit a business and read the real report. <a href=/crm>CRM →</a></div>
+    return shell("Your positioning read", f"""
+<h1>Find out how strong your position really is</h1>
+<div class=sub>Answer a few questions about your business. You'll get a free,
+plain-language read on how clearly you own a position your competitors don't —
+and what to work on next.</div>
 
-<div class=note><b>This runs the real pipeline</b> — pre-flight gate → competitor
-set → Jev model call → composite computed in code → report. The sandbox is the
-<i>front door</i>, not a simulation of the scorer.</div>
-
-<div class=warn><b>⚠ Sandbox only.</b> No captcha, no confirmation gate, no spend
-ceiling — section 3.7's open relay is fully present here. Loopback and single-user
-by design; none of this is safe to expose.</div>
+<div class=note><b>It takes about 3 minutes</b> and there's nothing to prepare.
+Answer in your own words — short answers are fine, and "we don't have one yet"
+is a perfectly good answer to the positioning question. <b>The more honestly you
+answer, the more useful your read.</b></div>
 
 <div id=msg style="display:none"></div>
 <noscript><div class=warn>JavaScript is off, so the button will post the form normally.
 If nothing happens when you click it, the frame blocked form submission — open
 <a href=http://127.0.0.1:8765/>127.0.0.1:8765</a> in a normal tab.</div></noscript>
-<form id=submitform>
-  <h2>Load a real case (optional)</h2>
-  <label>Prefill from the calibration corpus — then edit anything</label>
-</form>
-<form method=post action=/prefill>
-  <div class=row>
-    <div><select name=prefill_case><option value="">— none —</option>{opts}</select></div>
-    <div style="flex:0 0 130px"><button type=submit
-         style="margin:0;width:100%;padding:10px">Prefill</button></div>
-  </div>
-</form>
-<form id=submitform2 style="margin-top:-8px">
 
+<form id=submitform>
   <h2>Your business</h2>
   <div class=row>
-    <div><label>Business name *</label><input name=business_name required></div>
-    <div><label>Email * (goes to the CRM)</label><input name=email type=email required></div>
+    <div><label>What is your business called? *</label>
+      <input name=business_name required placeholder="e.g. Two Men Bagel House"></div>
+    <div><label>Where should we send your read? *</label>
+      <input name=email type=email required placeholder="you@yourbusiness.com"></div>
   </div>
   <div class=row>
-    <div><label>Category / what you sell *</label><input name=category required></div>
-    <div><label>City</label><input name=city value="Singapore"></div>
+    <div><label>What do you sell, in your own words? *</label>
+      <input name=category required
+        placeholder="e.g. Fresh bagels and coffee, made in-store"></div>
+    <div><label>Where do you sell it?</label><input name=city value="Singapore"></div>
   </div>
   <div class=row>
-    <div><label>Your role</label><input name=role placeholder="Founder / owner"></div>
-    <div><label>Company size</label>
+    <div><label>Your role</label><input name=role placeholder="Owner / founder"></div>
+    <div><label>How many people work in the business?</label>
       <select name=company_size_band>
-        <option>1-9</option><option>10-500</option><option>500+</option>
+        <option value="1-9">Just me, or a small team (1-9)</option>
+        <option value="10-500">10 to 500 people</option>
+        <option value="500+">More than 500</option>
       </select></div>
   </div>
 
-  <h2>Your position</h2>
-  <label>Your positioning sentence (or "we don't have one") *</label>
-  <textarea name=positioning_sentence required></textarea>
-  <label>What makes you different</label>
-  <textarea name=differentiator></textarea>
-  <label>What competitors undercut you on</label>
-  <textarea name=undercut_on></textarea>
+  <h2>How you stand out</h2>
+  <div class=note>Answer these in your own words. <b>If you don't have a positioning
+  statement yet, just say so</b> — that's a useful answer, not a wrong one.</div>
+  <label>If a customer asked "why should I choose you?", what would you say? *</label>
+  <textarea name=positioning_sentence required placeholder="e.g. We bake fresh every
+morning, so ours are never shipped in frozen the way the chains do it."></textarea>
+  <label>What do you believe makes you different from the others?</label>
+  <textarea name=differentiator placeholder="What could you honestly say about your
+business that a competitor couldn't say about theirs?"></textarea>
+  <label>What do competitors beat you on?</label>
+  <textarea name=undercut_on placeholder="e.g. They're cheaper, they're open later,
+they have more outlets."></textarea>
 
-  <h2>Price and rivals</h2>
+  <h2>Price and competitors</h2>
   <div class=row>
-    <div><label>Your price point</label><input name=your_price_point
-         placeholder="premium / mid / cheap, or a number"></div>
-    <div><label>Their price point</label><input name=their_price_point></div>
+    <div><label>How would you describe your pricing?</label>
+      <input name=your_price_point placeholder="e.g. a bit above the chains"></div>
+    <div><label>And theirs?</label>
+      <input name=their_price_point placeholder="e.g. similar, or a bit cheaper"></div>
   </div>
-  <label>Who you compete with — comma separated</label>
-  <input name=competitors_named placeholder="Courts, Best Denki, Gain City">
+  <label>Who do you compete with, day to day?</label>
+  <input name=competitors_named placeholder="Who do your customers choose between?">
+  <div class=note>Naming them <b>helps your position score a lot</b>. The read can only
+  tell you whether a claim is yours if it knows who else might hold it.</div>
 
-  <h2>⚠ The gap the spec flags</h2>
-  <div class=warn>Section 3.10 needs a <b>customer description</b> to drive DEMAND
-  REACH and MENTAL ADVANTAGE. <b>No field collects it</b> — so every real
-  submission degrades 2 of 6 dimensions. It is collected here, <b>flagged rather
-  than silently scored</b>, so you can see what filling the gap would buy.</div>
-  <label>Who is your customer?</label>
-  <textarea name=customer_description
-    placeholder="e.g. home cooks in their 30s-40s in the east, shopping weekly"></textarea>
+  <h2>Your customers</h2>
+  <label>Who is your customer, specifically?</label>
+  <textarea name=customer_description placeholder="e.g. office workers within 10 minutes
+of us who buy lunch on weekdays, and families on weekend mornings."></textarea>
+  <div class=note>Being specific here — who they are, and when they buy — is the single
+  thing that most improves the read on whether you can actually reach them.</div>
 
-  <label><input type=checkbox name=do_scan value=1 style="width:auto">
-     run the web competitor scan when no rivals are named (slow; unstable yield)</label>
+  <label style="margin-top:22px"><input type=checkbox name=do_scan value=1
+     style="width:auto"> <span style="color:#8b97a8;font-size:12px">Also search the web
+     for competitors (takes longer, and doesn't always find them)</span></label>
 
-  <button type=button data-submit>Generate the report →</button>
-</form>""")
+  <button type=button data-submit>Show me my read →</button>
+</form>
+
+<details style="margin-top:36px">
+  <summary style="color:#8b97a8;font-size:13px;cursor:pointer">Sandbox tools — start
+  from a known business, or view the CRM</summary>
+  <form method=post action=/prefill style="margin-top:14px">
+    <label>Start from a known business, then edit anything</label>
+    <div class=row>
+      <div><select name=prefill_case><option value="">— none —</option>{opts}</select></div>
+      <div style="flex:0 0 130px"><button type=submit
+           style="margin:0;width:100%;padding:10px">Prefill</button></div>
+    </div>
+  </form>
+  <div class=warn style="margin-top:16px"><b>⚠ Sandbox build.</b> No captcha, no
+  confirmation gate, no spend ceiling — section 3.7's open relay is fully present here.
+  Loopback and single-user by design; not safe to expose.
+  <a href=/crm>View the CRM →</a></div>
+</details>""")
 
 
 @app.post("/prefill", response_class=HTMLResponse)
@@ -394,45 +412,46 @@ def prefill(prefill_case: str = Form("")):
     return RedirectResponse("/", status_code=303) if not f else shell(
         f"prefilled {prefill_case}", f"""
 <h1>Prefilled: {f.get('business_name','')}</h1>
-<div class=sub>Adjust anything, then generate.</div>
+<div class=sub>This is a real business from the test set. Edit any answer, then
+generate your read.</div>
 <div id=msg style="display:none"></div>
 <form id=submitform>
   <input type=hidden name=case_key value="{e(prefill_case)}">
   <h2>Your business</h2>
   <div class=row>
-    <div><label>Business name *</label><input name=business_name value="{e(f.get('business_name'))}" required></div>
-    <div><label>Email * (goes to the CRM)</label><input name=email type=email
+    <div><label>What is your business called? *</label><input name=business_name value="{e(f.get('business_name'))}" required></div>
+    <div><label>Where should we send your read? *</label><input name=email type=email
          value="sean@observeco.com" required></div>
   </div>
   <div class=row>
-    <div><label>Category *</label><input name=category value="{e(f.get('category'))}" required></div>
-    <div><label>City</label><input name=city value="{e(f.get('city')) or 'Singapore'}"></div>
+    <div><label>What do you sell? *</label><input name=category value="{e(f.get('category'))}" required></div>
+    <div><label>Where do you sell it?</label><input name=city value="{e(f.get('city')) or 'Singapore'}"></div>
   </div>
   <div class=row>
     <div><label>Your role</label><input name=role value="{e(f.get('role'))}"></div>
-    <div><label>Company size</label><input name=company_size_band value="{e(f.get('company_size_band'))}"></div>
+    <div><label>How many people work in the business?</label><input name=company_size_band value="{e(f.get('company_size_band'))}"></div>
   </div>
-  <h2>Your position</h2>
-  <label>Positioning sentence *</label>
+  <h2>How you stand out</h2>
+  <label>If a customer asked "why should I choose you?", what would you say? *</label>
   <textarea name=positioning_sentence required>{e(f.get('positioning_sentence'))}</textarea>
-  <label>What makes you different</label>
+  <label>What makes you different from the others?</label>
   <textarea name=differentiator>{e(f.get('differentiator'))}</textarea>
-  <label>What competitors undercut you on</label>
+  <label>What do competitors beat you on?</label>
   <textarea name=undercut_on>{e(f.get('undercut_on'))}</textarea>
-  <h2>Price and rivals</h2>
+  <h2>Price and competitors</h2>
   <div class=row>
-    <div><label>Your price point</label><input name=your_price_point value="{e(f.get('your_price_point'))}"></div>
-    <div><label>Their price point</label><input name=their_price_point value="{e(f.get('their_price_point'))}"></div>
+    <div><label>How would you describe your pricing?</label><input name=your_price_point value="{e(f.get('your_price_point'))}"></div>
+    <div><label>And theirs?</label><input name=their_price_point value="{e(f.get('their_price_point'))}"></div>
   </div>
-  <label>Who you compete with — comma separated</label>
+  <label>Who do you compete with, day to day?</label>
   <input name=competitors_named value="{e(comps)}">
-  <h2>⚠ The gap the spec flags</h2>
+  <h2>Your customers</h2>
   <div class=warn>Section 3.10 needs a <b>customer description</b> for DEMAND REACH
   and MENTAL ADVANTAGE. No field collects it — the corpus does not carry one either.
   It is collected here and flagged rather than silently scored.</div>
-  <label>Who is your customer?</label>
+  <label>Who is your customer, specifically?</label>
   <textarea name=customer_description></textarea>
-  <button type=button data-submit>Generate the report →</button>
+  <button type=button data-submit>Show me my read →</button>
 </form>""")
 
 
@@ -511,16 +530,18 @@ def report_page(business_name, email, i, run, report, scan) -> str:
     """
     dims = run.get("dimensions_display_1to5") or {}
     rows = "".join(f"<tr><td>{k}</td><td>{v}/5</td></tr>" for k, v in dims.items())
-    return shell(f"report {i}", f"""
+    return shell(f"Your read — {business_name}", f"""
 <h1>{business_name}</h1>
-<div class=sub>submission #{i} · {email} → CRM · rubric {run.get('rubric_version')}
- · {run.get('model_id')}</div>
+<div class=sub>A copy is on its way to {email}.</div>
 <p><span class="badge b-ok">{run.get('composite')}/100 — {run.get('band')}</span></p>
-<h2>Scores</h2><table><tr><th>dimension</th><th>level</th></tr>{rows}</table>
-<div class=note><b>competitor set:</b> {scan or "—"}</div>
-<h2>The report the client receives</h2>
+<h2>Your scores at a glance</h2><table><tr><th>what we looked at</th><th>your level</th></tr>{rows}</table>
+<div class=note><b>How we judged your competitors:</b> {scan or "—"}</div>
+<h2>Your full read</h2>
 <pre>{report.replace("<", "&lt;")}</pre>
-<p><a href=/>← back</a> &nbsp; <a href=/crm>CRM →</a></p>""")
+<details style="margin-top:26px"><summary style="color:#8b97a8;font-size:12px;cursor:pointer">
+  Sandbox details</summary>
+<div class=note>submission #{i} · rubric {run.get('rubric_version')} · {run.get('model_id')}
+ · <a href=/>submit another</a> · <a href=/crm>CRM →</a></div></details>""")
 
 
 @app.get("/crm", response_class=HTMLResponse)
