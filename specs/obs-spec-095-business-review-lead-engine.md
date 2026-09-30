@@ -2718,6 +2718,66 @@ than unit-checking the helper.***
 
 
 
+### 6.7.7 BLAST RADIUS — RUN, AND IT FOUND A LAUNCH-GATE DEFECT IN THE CANARY (BUILT)
+
+**⚠ CHANGING `competitor_scan.py` AND `run_jev.py` TOUCHES THE SCORING PATH, SO THE CORPUS AND THE
+CANARY WERE RE-RUN — NOT ASSUMED.**
+
+**✅ CORPUS AND CONTROLS INTACT.** *120 cases, **0 failed**, rubric **1.21.0**, 8s parallel —
+**unchanged** from the pre-change baseline, so the rival-reading work and the claim gate did not
+disturb scoring. **Controls: 4 of 5 failed as predicted.***
+
+**⚠ THE 5TH IS A STALE FIXTURE, NOT A REGRESSION.** *`NC01-empty` now **RUN FAILS** with
+**"PRE-FLIGHT REFUSED: missing required slots: positioning, category"**.* **The control is meant to
+exercise a downstream rule, but the pre-flight gate now refuses the fixture at the door** — so it can
+no longer reach the behaviour it tests. **A negative control that cannot run is not a passing
+control.** *It needs a fixture that gets past the gate.* **Recorded, not silenced.***
+
+**⚠⚠ AND THE CANARY FAILED — ON ITS OWN STALE DEFAULT, NOT ON THE CODE.**
+
+*`run_canary.py` defaulted `--rubric` to **`rubric-v1.8.0.json`**, a file **13 versions behind** the
+promoted rubric. A bare `run_canary.py --rung check` therefore compared the **frozen 1.18.0
+snapshot** against **1.8.0** and reported:*
+
+    CANARY FAILED — the model or the rubric moved:
+      C4-sgfitness: band moved (Contested -> Fragile)
+      C5-saladshop: band moved (Contested -> Fragile)
+
+***Those two bands did not move.*** *Re-run against the canonical rubric:*
+
+**✅ CANARY PASSED — no band moved across 6 cases** *(rubric 1.21.0).*
+
+**The launch gate was failing against an instrument nobody uses.** *That is worse than having no
+gate: a gate that cries wolf trains its reader to wave it through — and this one is a stated launch
+condition.*
+
+**⚠ AND IT COMPARED ACROSS A RUBRIC CHANGE WITHOUT SAYING SO.** *The header printed both versions
+side by side with no warning, so **1.18.0-vs-1.8.0 read as an ordinary drift result** — when a
+comparison across a rubric change is **two different instruments disagreeing**, and its verdict is
+void whichever way it lands.*
+
+**BUILT — THREE FIXES, EACH THE GENERAL FORM OF THE DEFECT:**
+1. **The default is now the canonical `rubric.json`** — a non-default must be asked for explicitly.
+2. **Differing versions print a loud warning** saying the comparison is not a drift check, and
+   naming the re-record command.
+3. **⚠⚠ THE VERDICT CAN NO LONGER CONTRADICT THE WARNING.** *The first version of this fix printed
+   **"this comparison is NOT a drift check"** at the top and **"CANARY PASSED"** at the bottom —
+   **asserting a pass it had just declared void.** It now exits **2 ("NOT RUN — inconclusive, NOT a
+   pass")**, the code the header already reserves for a comparison **not validly performed**. **A
+   green light across an incomparable version pair is how a launch gate stops meaning anything.***
+
+**⚠ WHY THIS MATTERED MORE THAN THE SCAN WORK.** *The rival-reading fix (6.7.6/6.7.6a) was verified
+by **reading the rendered output**. The canary is the thing meant to catch what reading does not.
+**It had been unusable as a gate — and running it, rather than trusting it was green, is what
+surfaced that.***
+
+**⚠ OPEN: `_reference.json` still records rubric 1.18.0.** *Until it is re-recorded on 1.21.0, every
+canary run correctly returns **"inconclusive" (exit 2)** rather than a pass. **That is the honest
+state, and it is a deliberate consequence of fix 3** — but it means the canary is **not currently
+gating anything**, and re-recording is the next step.*
+
+---
+
 **⚠⚠ 6.7.6a THE SECOND SECTOR EXPOSED THAT RESOLUTION IS NOT QUALITY (BUILT — 30 Sep).**
 
 **⚠ THE FIRST SECTOR PASSED AND HID A REAL DEFECT. That is the whole argument for testing a second
