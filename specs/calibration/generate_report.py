@@ -341,7 +341,48 @@ def specifics(submission: dict | None) -> dict:
         "price_ours": clean("your_price_point"),
         "price_theirs": clean("their_price_point"),
         "rivals": [r for r in (submission.get("competitors_named") or []) if r][:12],
+        # ⚠ 6.7.6 -- WHAT WE ACTUALLY READ ABOUT THE RIVALS. Kept as a separate field from
+        # "rivals" because the two are different facts: "rivals" is what the OWNER ASSERTED,
+        # this is what the tool OBSERVED. Collapsing them would let the report describe a
+        # fetched page as the owner's claim, or vice versa.
+        "rivals_read": _rivals_read(submission),
     }
+
+
+def _rivals_read(submission: dict | None) -> list[dict]:
+    """The rival pages the tool actually read, and what each said — for the report to USE.
+
+    ⚠ WHY: with the rival sites now being fetched (6.7.6), the report was still printing a
+    hardcoded "we cannot answer it from a form" while HOLDING the answer to part of it. On the
+    CaiCa submission the tool had CHAGEE's own published claim in hand and the report told the
+    reader it could not check. A report that understates what the tool did is as wrong as one
+    that overstates it — it just fails in the flattering direction. This gives the renderer the
+    real evidence so it can say what WAS read and reserve "we could not" for what genuinely
+    was not.
+    """
+    if not submission:
+        return []
+    members = (((submission.get("derived_competitive_set") or {})
+                .get("SCANNED OCCUPANTS OF THE CATEGORY") or {}).get("members") or [])
+    out = []
+    for m in members:
+        if not isinstance(m, str) or m.startswith("_"):
+            continue
+        # only the lines built from a rival read carry a domain in parentheses
+        if "(" not in m or ")" not in m:
+            continue
+        name = m.split("—")[0].strip()
+        dom = m.split("(")[1].split(")")[0].strip()
+        quoted = m.split("states: \"", 1)[1].rsplit("\"", 1)[0] if "states: \"" in m else ""
+        # ⚠ CUT ON A WORD BOUNDARY. Measured: a hard [:220] slice rendered "...oriental
+        # culture and tea inheritance a" -- text that ends mid-word reads as a broken page,
+        # not as an excerpt, and it was shown to a business owner in the section that proves
+        # the tool read the rival. Trim to the last whole word and mark the truncation.
+        if len(quoted) > 220:
+            quoted = quoted[:220].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+        out.append({"name": name, "domain": dom, "claim": quoted,
+                    "read": bool(quoted)})
+    return out
 
 
 def is_url(s: str) -> bool:
@@ -623,19 +664,55 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
             out.append("")
             for i, d in enumerate(recs[:4], 1):
                 out.append(f"  {i}. {LABEL.get(d['dim'], d['dim'])} "
-                           f"({d['level']}/{d['of']}) — worth about "
+                           # ⚠ `d['of']` is `counts.get(k, 5)` -- the number of LEVELS the
+                           # dimension is scored on, NOT the denominator of the current level.
+                           # Printing the level over the level-count rendered "Defensibility
+                           # (2/6)" for a dimension scored out of 5: a number that is simply
+                           # wrong, shown to a business owner, in the section that tells them
+                           # where their score comes from. The level's own scale is 5.
+                           f"({d['level']}/5) — worth about "
                            f"{d['recoverable']} points")
                 for line in wrap("Why it is where it is: " + d["what"], 62):
                     out.append(f"      {line}")
                 for line in wrap("Explore: " + d["todo"], 62):
                     out.append(f"      {line}")
                 out.append("")
+    # ⚠ 6.7.6 -- SAY WHAT WAS READ BEFORE SAYING WHAT WAS NOT. The tool now fetches a page
+    # for each named rival (rival_reads, 6.7.6). Printing the old hardcoded "we cannot answer
+    # it from a form" while holding CHAGEE's own published sentence understated the work and
+    # undercut the one concrete proof of capability this report has. The reader should see the
+    # rival's OWN words attributed to the DOMAIN it came from, then see precisely what is
+    # still unresolved. Ownership of the page is NOT asserted -- see the attribution note.
+    _read = [r for r in (sp.get("rivals_read") or []) if r.get("read")]
+    if _read:
+        out.append("WHAT WE READ ABOUT YOUR RIVALS")
+        out.append("")
+        out.append("  We looked for a page belonging to each rival you named, and read what")
+        out.append("  it publishes. This is what they say about themselves:")
+        out.append("")
+        for r in _read[:5]:
+            out.append(f"    {r['name']} ({r['domain']}):")
+            for line in wrap('"' + r["claim"] + '"', 60):
+                out.append(f"      {line}")
+            out.append("")
+        _missed = [r for r in (sp.get("rivals_read") or []) if not r.get("read")]
+        if _missed:
+            out.append("  For " + ", ".join(r["name"] for r in _missed[:5])
+                       + " we found a page but could not read it, so nothing here says")
+            out.append("  what they claim.")
+            out.append("")
     out.append("WHAT WE DID NOT CHECK")
     out.append("")
-    out.append("  We scored what your submission claims. We did NOT cross-check your")
-    out.append("  competitors' claims against public registries, verify their pricing,")
-    out.append("  or map who owns which word in your category. That is the paid")
-    out.append("  analysis.")
+    if _read:
+        out.append("  We read what your rivals PUBLISH. We did NOT verify that a page")
+        out.append("  belongs to the rival named, check their pricing, consult company")
+        out.append("  registries, or map who owns which word in your category. That is")
+        out.append("  the paid analysis.")
+    else:
+        out.append("  We scored what your submission claims. We did NOT cross-check your")
+        out.append("  competitors' claims against public registries, verify their pricing,")
+        out.append("  or map who owns which word in your category. That is the paid")
+        out.append("  analysis.")
     # ⚠ SEAN'S LINE, HELD: "maximally helpful without giving away everything, just enough
     # to the point where it is compelling and clear they need observeco.com to help them."
     # The mechanism is NOT a vague upsell. It is to name, concretely and in THEIR words,
@@ -645,15 +722,24 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
         out.append("")
         rivals_txt = ", ".join(sp["rivals"][:4])
         out.append(f"  Concretely, for you: does {rivals_txt} already own the claim")
-        for line in wrap("you are making — and if one does, what is genuinely left that "
-                         "is yours? That is the question your position strength score "
-                         "turns on, and it is a question about THEIR position. We cannot "
-                         "answer it from a form.", 62):
-            out.append(f"  {line}")
-        out.append("")
-        out.append("  Answering it needs someone to read what your rivals publish, map")
-        out.append("  which words each one owns, and tell you which claim is still open.")
-        out.append("  That is the work behind the score you just read.")
+        if _read:
+            for line in wrap("you are making — and if one does, what is genuinely left that "
+                             "is yours? That is the question your position strength score "
+                             "turns on. We have quoted what they publish above, but a quote "
+                             "is not an answer: deciding WHICH claim is still open means "
+                             "mapping who owns which word across the whole category, and "
+                             "that is the work behind the score you just read.", 62):
+                out.append(f"  {line}")
+        else:
+            for line in wrap("you are making — and if one does, what is genuinely left that "
+                             "is yours? That is the question your position strength score "
+                             "turns on, and it is a question about THEIR position. We cannot "
+                             "answer it from a form.", 62):
+                out.append(f"  {line}")
+            out.append("")
+            out.append("  Answering it needs someone to read what your rivals publish, map")
+            out.append("  which words each one owns, and tell you which claim is still open.")
+            out.append("  That is the work behind the score you just read.")
     if unresolved:
         out.append("  We also could not settle: "
                    + ", ".join(str(LABEL.get(k, k)) for k in unresolved) + ".")

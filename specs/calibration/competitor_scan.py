@@ -607,7 +607,60 @@ def extract_occupants(ok_captures: list[dict]) -> list[tuple[str, int]]:
 OWNER_TIER = "COMPETITORS THE BUSINESS NAMED ITSELF"
 
 
-def to_competitive_set(result: dict, owner_named: list[str] | None = None) -> dict:
+def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
+                max_rivals: int = 6) -> list[dict]:
+    """Read the OWNER-NAMED rivals' OWN sites, and quote what each one claims.
+
+    ⚠⚠ WHY THIS EXISTS (spec 6.7.6 — MEASURED ON A REAL CLIENT SUBMISSION).
+
+    The scan searched generic CATEGORY queries only ("bubble tea Singapore competitors"). It
+    never resolved the owner's own rival names to their websites. So the report's central,
+    paid-analysis-preview question --
+
+        "does CHAGEE already own the claim you are making?"
+
+    -- COULD NOT BE ANSWERED, even though (a) the tool held the names and (b) the tool can
+    read pages. The one piece of analysis a business owner most wants from a positioning read
+    was structurally impossible. Sean, on the live output: "No competitive analysis was done."
+
+    ⚠ THE OPPOSITE RISK IS ALSO REAL, AND THIS FUNCTION IS BUILT AROUND IT: do NOT let a
+    failed search produce a confident sentence about a rival. Every entry records what
+    ACTUALLY happened -- read and quoted, read with no claim, or could-not-be-read -- so a
+    tool failure is never rendered as a finding about the rival (section 4.6).
+
+    ⚠ THIS IS STILL NOT A LANDSCAPE SCAN. It reads the NAMES THE OWNER GAVE US. It does not
+    discover who else occupies the category; that remains section 4.6.0b's open gap.
+    """
+    reads = []
+    for name in [n.strip() for n in owner_names if n and n.strip()][:max_rivals]:
+        entry = {"name": name, "url": "", "capture_status": "not_found", "why": "",
+                 "claim": "", "excerpt": ""}
+        try:
+            urls = search("%s %s" % (name, market), limit=4)
+        except SearchUnavailable as exc:
+            entry["why"] = "search unavailable: %s" % exc
+            reads.append(entry)
+            continue
+        # prefer the rival's OWN site over a listicle or a social page about it
+        first = name.split()[0].lower()
+        own = [u for u in urls if first and first in publisher(u).lower()]
+        target = (own or urls or [None])[0]
+        if not target:
+            entry["why"] = "no candidate URL found"
+            reads.append(entry)
+            continue
+        status, html = fetch(target, timeout=per_url_timeout)
+        cstat, why = grade_capture(status, html)
+        entry.update({"url": target, "capture_status": cstat, "why": why})
+        if cstat == "ok":
+            entry["claim"] = extract_claim(html)
+            entry["excerpt"] = strip_tags(html)[:600]
+        reads.append(entry)
+    return reads
+
+
+def to_competitive_set(result: dict, owner_named: list[str] | None = None,
+                       rival_pages: list[dict] | None = None) -> dict:
     """Convert a scan result into the `derived_competitive_set` the rubric consumes.
 
     ⚠ `owner_named` is the PRIMARY set and takes precedence over anything scraped, for the
@@ -661,8 +714,32 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None) -> di
     owner = [n.strip() for n in (owner_named or []) if n and n.strip()][:12]
     members = []
     if owner:
+        by_name = {(p.get("name") or "").lower(): p for p in (rival_pages or [])}
         for name in owner:
-            members.append("%s — named as a competitor by the business itself" % name)
+            r = by_name.get(name.lower()) or {}
+            base = "%s — named as a competitor by the business itself" % name
+            # ⚠⚠ NEVER ASSERT THAT THE PAGE IS THE RIVAL'S OWN. WE CANNOT VERIFY IT, AND
+            # MEASURED IT IS OFTEN FALSE: resolving CaiCa's real rivals, HEYTEA matched
+            # heyteas.com -- a menu-GUIDE site, not HEYTEA's own -- and LiHO and KOI matched
+            # Wikipedia pages. Printing "Their own site states: ..." would attribute a THIRD
+            # PARTY's words to the rival, which is the misattribution §4.6 exists to prevent.
+            # The wording therefore says only what is true: a page was found FOR that rival,
+            # and the domain is shown so the reader can judge what it is.
+            if r.get("claim"):
+                members.append(
+                    "%s. A page found for them (%s) states: \"%s\""
+                    % (base, publisher(r["url"]), r["claim"][:220]))
+            elif r.get("capture_status") == "ok":
+                members.append("%s. A page found for them (%s) was read but states no single "
+                               "claim." % (base, publisher(r["url"])))
+            elif r.get("capture_status") == "not_found":
+                members.append("%s. No site for them could be found." % base)
+            elif r.get("url"):
+                members.append("%s. A page found for them (%s) could NOT be read (%s) — so "
+                               "nothing here says what they claim."
+                               % (base, publisher(r["url"]), r.get("why") or "unreadable"))
+            else:
+                members.append(base)
         # ⚠ SAY WHAT THE SET IS AND IS NOT. The consumer must know these are the owner's names,
         # not the tool's own research, so the reading cannot be over-claimed.
         members.append(
@@ -694,9 +771,14 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None) -> di
         # here laundered the owner's self-report back into an independent finding, which is the
         # exact claim 4.6.0c exists to prevent.
         if owner:
-            why = ("The rivals the BUSINESS ITSELF named. They are NOT independently verified "
-                   "occupants of this category, and nothing here states what any of them "
-                   "claims -- take them as the owner's view of who they compete with.")
+            read_n = sum(1 for p in (rival_pages or []) if p.get("claim"))
+            why = ("The rivals the BUSINESS ITSELF named. Where a page could be found and "
+                   "read for one of them, the claim quoted is what that page says — the DOMAIN "
+                   "IS SHOWN so the reader can see what kind of page it was; the tool does NOT "
+                   "verify the page belongs to the rival (%d of %d had a readable page quoting "
+                   "a claim). They are still NOT independently verified occupants of this "
+                   "category — take the NAMING as the owner's view of who they compete with."
+                   % (read_n, len(owner)))
         else:
             why = ("Each entry is a named occupant of this category, discovered by search "
                    "and read from its own live site. The claim quoted is what that occupant "

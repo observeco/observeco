@@ -2716,6 +2716,94 @@ the fix looked applied.** *A guard that silently never fires is indistinguishabl
 fires and does nothing; **the only way it was caught was running the pipeline end-to-end rather
 than unit-checking the helper.***
 
+
+### 6.7.6 ⚠⚠ THE COMPETITIVE SECTION WAS EMPTY BECAUSE THE RIVALS' SITES WERE NEVER READ (BUILT)
+
+**⚠⚠ SEAN, ON A REAL SUBMISSION: *"This is not useful at all to another business owner. It hardly
+provides any value at the final output stage. No competitive analysis was done."* — AND HE WAS
+LITERALLY CORRECT.**
+
+**THE ROOT CAUSE WAS STRUCTURAL, NOT A BUG.** *`scan()` queried only generic CATEGORY searches --
+"bubble tea Singapore competitors", "best bubble tea Singapore", "... brands".* ***The owner's OWN
+named rivals were never resolved to their websites.*** **So the report's central,
+paid-analysis-preview question -- *"does CHAGEE already own the claim you are making?"* -- was
+UNANSWERABLE BY CONSTRUCTION**, *even though the tool (a) held the names in `competitors_named` and
+(b) demonstrably could read pages. The §3.6 owner-named list was being used as the competitive set
+and simultaneously treated as something we could say nothing about.*
+
+**⚠ §4.6's OWN SCANNER ALREADY HAD THE ANSWER PATTERN.** *`extract_occupants()` mines names OUT of
+listicles -- it READS PAGES to find NAMES. Nobody applied it in the other direction: **given names,
+read the pages.** That is the whole fix.*
+
+**BUILT -- `rival_reads(names, market, per_url_timeout, max_rivals=6)` in `competitor_scan.py`:**
+*for each name given, one search, prefer the rival's OWN domain over a listicle, fetch through the
+SAME two-rung fetcher (`fetch_plain` -> `fetch_browser`), grade with the SAME `grade_capture`, quote
+via the SAME `extract_claim`. **No new machinery -- the existing one, applied to names instead of
+queries.***
+
+**⚠ MEASURED ON CaiCa'S REAL RIVALS (6 names, one pass):**
+
+| rival | page found | outcome |
+|---|---|---|
+| **CHAGEE** | chagee.com.sg | **claim quoted** |
+| **HEYTEA** | heyteas.com | claim quoted |
+| **Mixue** | mixuesg.org | claim quoted |
+| **LiHO** | lihoteasg.org | **claim quoted -- "84 outlets in Singapore"** |
+| CHICHA San Chen | chichasanchen.com.sg | captcha -- not readable |
+| KOI | wikipedia.org | not readable |
+
+**3-4 of 6 resolved with a quoted claim in ONE pass, no tuning. The mechanism works.** *Verified
+end-to-end on submission #39 (50/100 Contested): the report now shows a **"WHAT WE READ ABOUT YOUR
+RIVALS"** section quoting CHAGEE, HEYTEA, Mixue and LiHO's own published words.*
+
+**⚠⚠ FOUR THINGS THE COPY DELIBERATELY DOES -- EACH A MEASURED DEFECT AVOIDED:**
+
+**1. ⚠ IT NEVER ASSERTS THE PAGE IS THE RIVAL'S OWN.** *We cannot verify that, and **measured it is
+often false**: HEYTEA resolved to `heyteas.com` -- **a menu-GUIDE site, not HEYTEA's own** -- and
+LiHO/KOI to **Wikipedia pages**. The first wording said **"Their own site states: ..."**, which would
+have **attributed a third party's words to the rival** -- the exact misattribution §4.6 exists to
+prevent, arriving through the front door. The copy now says **"A page found for them (domain)"** and
+**prints the domain**, so the reader can judge what kind of page it was. **The domain is not
+decoration; it is the disclosure.***
+
+**2. ⚠ AN UNREADABLE RIVAL IS REPORTED AS UNREADABLE -- NOT OMITTED, NOT GUESSED.** *CHICHA San
+Chen's own site is captcha-walled. The report says so, and says explicitly that **nothing here says
+what they claim** -- §4.6's rule that a tool failure must never render as a finding about the rival.*
+
+**3. ⚠ "WHAT WE DID NOT CHECK" NO LONGER DENIES WHAT WE DID.** *It was a hardcoded string asserting
+**"We cannot answer it from a form"** -- and it kept printing that **while the tool held CHAGEE's own
+published sentence.** A report that **understates** the tool's work is as wrong as one that
+overstates it; it merely fails in the flattering direction, and it **withheld the single concrete
+proof of capability the report has.** The section now leads with what was READ and reserves "we could
+not" for what genuinely was not, naming what is still unresolved (page ownership, pricing,
+registries, word-ownership).*
+
+**4. ⚠ A QUOTE IS CUT ON A WORD BOUNDARY.** *A hard slice rendered **"...oriental culture and tea
+inheritance a"** -- text ending mid-word reads as a broken page, not an excerpt, in the very section
+that exists to prove the tool read the rival.*
+
+**⚠ WHAT THIS IS NOT.** *It reads **the names the owner gave us**. It does **NOT** discover who else
+occupies the category -- **§4.6.0b's scraped-occupant gap stays open.** The provenance line says so:
+the NAMING is the owner's view of who they compete with; only the QUOTES come from research.*
+
+**⚠ COST / BLAST RADIUS.** *One search + up to 6 fetches, **only when the owner named rivals**,
+wrapped so a failure cannot break a submission. Same fetcher as the scan, so the Cloudflare/browser
+rung (§4.6.0a) applies to rival pages too.*
+
+**⚠ ONE SILENT-NO-OP CAUGHT WHILE WIRING -- SAME CLASS AS §4.6.0c AND §6.7.4a.** *The sandbox call
+passed `market`, but **`market` is not a name in that scope** (the scan builds it inline from
+`city`). It would have raised `NameError`, been **swallowed by the surrounding `except`, and silently
+skipped the rival read** -- leaving the report unchanged while the fix looked applied. **Caught by
+reading the enclosing scope, not by a test.***
+
+**⚠ AND THE FIRST END-TO-END RUN LOOKED LIKE A FAILURE FOR A DIFFERENT REASON.** *The report still
+printed the old hardcoded line **even though the evidence was already reaching the model** -- the
+rendered output under-reported a pipeline that had worked. **The renderer's copy and the pipeline's
+capability are separate things; checking the payload proved the evidence arrived and only the copy
+was stale.***
+
+---
+
 ### 6.7.5 ⚠⚠ THE MODEL IS NOT DETERMINISTIC, AND THE PROJECT HAS BEEN TREATING IT AS IF IT WERE
 
 > **Found while checking the refusal wiring. A bigger finding than the wiring.**

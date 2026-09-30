@@ -243,7 +243,23 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
                 # ⚠ PASS THE OWNER'S NAMED RIVALS IN. They are the PRIMARY set -- the scraped
                 # occupant list is a proven negative result (see extract_occupants in
                 # competitor_scan.py), while the owner's names are incomplete but CORRECT.
-                cs = _tocs(res, owner_named=payload.get("competitors_named"))
+                # 6.7.6: read the OWNER-NAMED rivals' own sites, so the report can answer
+                # "does a named rival already own your claim?" instead of asserting it cannot.
+                # Costs one search + up to 6 fetches, and ONLY when the owner named rivals.
+                _rr = []
+                _names = payload.get("competitors_named") or []
+                if _names:
+                    try:
+                        from competitor_scan import rival_reads as _rrf
+                        # ⚠ use the SAME market string the scan used -- `market` is not a
+                        # name in this scope (the scan call builds it inline from city), and a
+                        # NameError here would be swallowed by the except below and silently
+                        # skip the rival read entirely.
+                        _mk = (form.get("city") or "Singapore").strip()
+                        _rr = _rrf(_names, _mk, per_url_timeout=15)
+                    except Exception as _e:      # never let this break a submission
+                        print("rival_reads failed:", _e)
+                cs = _tocs(res, owner_named=_names, rival_pages=_rr)
                 # ⚠ THE SUBMITTER'S OWN SITE IS EVIDENCE, AND IT WAS BEING THROWN AWAY.
                 # The scan fetches the seed URL and stores `claim` and `excerpt` on the
                 # capture — then to_competitive_set() keeps only the derived OCCUPANT

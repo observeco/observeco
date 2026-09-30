@@ -625,7 +625,8 @@ def main() -> None:
     # supplies, and what the corpus's hand-written sets lacked.
     if args.scan and not payload.get("derived_competitive_set"):
         from preflight_gate import evaluate as _pf
-        from competitor_scan import scan as _scan, to_competitive_set as _tocs
+        from competitor_scan import (scan as _scan, to_competitive_set as _tocs,
+                                     rival_reads as _rrf)
         _gate = _pf(payload, scan_available=True)
         if not _gate["run_scan"]:
             print("  scan skipped: the pre-flight gate says it is not worth the token burn",
