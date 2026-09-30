@@ -2624,10 +2624,30 @@ right:*
 | **B** | **Finer levels** (e.g. 0–20 raw, or report the raw score) | *Removes the cliff in the display, but a finer scale is **harder for a reader to interpret** and may reintroduce variance as visible jitter.* |
 | **C** | **Widen the bands** so a ±5-point swing rarely changes one | *Cheapest, no extra calls. **But this is cosmetic** — it hides the instability rather than removing it, and §6.4's bar gets easier to pass as a side effect.* |
 
-***My recommendation: (A), but only on the band, not the dimension table.*** **Two calls, compare
-bands; if they agree, report; if they disagree, take a third and report the majority.** *That buys
-most of the stability at ~2× cost on the cases that need it, and **the extra calls are only spent
-where the answer is genuinely close** — which is the case worth spending on.*
+**⚠ MY FIRST RECOMMENDATION HERE WAS THE 2-CALL-ESCALATE-TO-3 POLICY — AND IT FAILED ITS OWN TEST.
+Corrected in place rather than left standing:**
+
+| policy | reproducible across two independent applications | avg calls/submission |
+|---|---|---|
+| **single call (today)** | **8/10 = 80%** | 1.0 |
+| **⚠ 2 calls, escalate to 3 on disagreement** | **8/10 = 80% — NO IMPROVEMENT** | **2.2** |
+| **5-call mean** | **6/6 = 100%** *(measured earlier, different sample)* | 5.0 |
+
+**⚠ THE CHEAP VARIANT DOES NOT WORK, AND THE REASON IS THE MECHANISM ITSELF.** *When two calls
+disagree, the submission is **sitting on the quantisation boundary — where the underlying
+distribution is near 50/50.** So a third call is a **coin toss, not a tiebreak**, and
+majority-of-3 resolves nothing.* **The 2.2× cost bought exactly zero stability.**
+**⚠ NEVER INFER THAT A CHEAPER VARIANT OF A WORKING FIX ALSO WORKS** — *the working variant was
+the **mean over many draws**, which reduces the variance; the majority vote **cannot**, because it
+never averages anything.*
+
+***What this leaves: option (A) means the FULL 5-call mean, at 5× the model cost per lead — or the
+instability stays.*** **⚠ And even the mean only stabilises *reproducibility*: a business on the
+boundary gets the same band every time, and it may be the same *wrong* band every time** *(measured
+on `KP01-ya`: single call `Strong` in both blocks, averaged `Viable, conditional` in both — stable,
+and different).* **⚠ The 100% and the 80% above come from different, small samples (6 and 10 cases);
+treat both as indicative, and re-measure on the full corpus before committing engineering to
+either.**
 
 **⚠ AND (A) HAS NOW BEEN TESTED RATHER THAN ASSERTED** — *because §6.7.5's own lesson is that a
 plausible fix is not evidence.* **The experiment:** six cases, **two independent blocks of 5 calls
