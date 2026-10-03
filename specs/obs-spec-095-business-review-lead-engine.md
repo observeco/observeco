@@ -3586,6 +3586,53 @@ conditional on the same resolved set the section body now uses.*
 
 ---
 
+
+**✅ 6.7.11e THE TWO REMAINING TEXT DEFECTS FIXED — AND BOTH PATHS VERIFIED (BUILT — 1 Oct).**
+
+**⚠ THE HEADER NOW FOLLOWS THE EVIDENCE.** *It promised "we looked for a page for each rival you named
+and read what it says. The domain is shown…" **while no page had been sought and no domain could be
+shown.*** **It is now conditional:** *the read-branch keeps that wording; the no-read branch says
+**"We did not get as far as comparing your claim with a rival's. Here is exactly where that stopped,
+because the reason changes what it means."***
+
+**⚠ AND THE CLOSING QUESTION CAN NO LONGER BE ASKED OF A SEARCH ENGINE.** *It asked "does Google
+search, Facebook pet groups, Yelp already own the claim you are making?" — **built from the raw
+`competitors_named` list without consulting what RESOLVED.*** **It is now filtered against the resolved
+set**, and when **nothing** is askable the report says so usefully instead:
+
+> ***"Concretely, for you: the names you gave are channels and search terms, not businesses, so there
+> is no rival claim to test yours against yet. Name the two or three businesses you actually lose
+> customers to and we can run the comparison properly."***
+
+***That turns a nonsense question into an actionable one, and it is true.***
+
+**✅ C3 (CHANNELS) — CORRECT ON ALL SIX COUNTS, VERIFIED END-TO-END:**
+
+    header does not promise a read/domain it did not do     absent
+    asks a channel to own a claim                          absent
+    asks the honest fallback question                      PRESENT
+    explains it did not get that far                       PRESENT
+    stranger's homepage (google.com)                        absent
+    the old false "found a page but could not read"         absent
+
+**✅ AURORA (REAL B2B RIVALS) — NOT REGRESSED:** *all four rivals resolved again
+(`modoenergy.com`, `woodmac.com`, `afry.com`, `baringa.com`), `bankable` cited from both sides,
+**49/100 Contested**.*
+
+**⚠ AND THAT SETTLES A QUESTION CARRIED SINCE §6.7.11a.** *The resolver-change run had shown 44/100
+against an earlier 49/100, and it was recorded as **not attributable** because 5 points sits inside
+the 8-point band-noise envelope.* **This run returns 49/100 with the identical resolver and fixtures —
+so the 44 was the noise, not the change.** *The earlier caution was correct and is now discharged by
+measurement rather than left as an open worry.* *(Two runs still is not a noise study; it is enough to
+decline to call it a regression, which is all that was claimed.)*
+
+**⚠ ONE COSMETIC ODDITY NOTED, NOT FIXED.** *On C3 the fallback question is printed **directly beneath**
+the line "We tried to read what your rivals publish and did not establish a claim for any of them" —
+both are true, but they read as two versions of the same paragraph.* **Harmless; recorded for a copy
+pass rather than treated as a defect.** *Sean owns copy.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 

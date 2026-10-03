@@ -933,9 +933,19 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
         # It now puts the business's OWN public claim beside each rival's, and names the territory
         # BOTH of them are claiming. Same numbers, same band, same reproducibility (5.5) -- but the
         # reader can see the work.
-        out.append("  We looked for a page for each rival you named and read what it says.")
-        out.append("  The domain is shown so you can see what kind of page it was; we have")
-        out.append("  NOT verified that any page belongs to the rival named.")
+        # ⚠⚠ THE HEADER MUST DESCRIBE THE BRANCH IT IS PRINTING ABOVE. Measured on C3: the gate was
+        # widened so the section renders even when NO claim was read -- and the header kept saying
+        # "We looked for a page for each rival you named and read what it says. The domain is shown..."
+        # while NO PAGE HAD BEEN SOUGHT (all three names were refused as channels before any fetch)
+        # and NO DOMAIN COULD BE SHOWN. A wrong reason, in the section's own voice, in the paragraph
+        # that exists to demonstrate rigour. The header now follows the evidence.
+        if _read:
+            out.append("  We looked for a page for each rival you named and read what it says.")
+            out.append("  The domain is shown so you can see what kind of page it was; we have")
+            out.append("  NOT verified that any page belongs to the rival named.")
+        else:
+            out.append("  We did not get as far as comparing your claim with a rival's. Here is")
+            out.append("  exactly where that stopped, because the reason changes what it means.")
         out.append("")
 
         _own = sp.get("own_site_claim") or {}
@@ -1065,9 +1075,17 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
     # The mechanism is NOT a vague upsell. It is to name, concretely and in THEIR words,
     # the specific question their score turns on -- and then stop exactly there. The
     # self-diagnosis is free and complete; the resolution is the engagement.
-    if sp.get("rivals"):
+    # ⚠⚠ ONLY ASK THE QUESTION ABOUT NAMES THAT CAN ACTUALLY OWN A CLAIM. Measured on C3, whose
+    # rivals are ['Google search', 'Facebook pet groups', 'Yelp']: the report asked "does Google
+    # search, Facebook pet groups, Yelp already own the claim you are making?" -- A SEARCH ENGINE AND
+    # TWO SOCIAL CHANNELS CANNOT OWN A POSITIONING CLAIM. The line was built from the raw
+    # `competitors_named` list without consulting what actually RESOLVED, so it treated every string
+    # the owner typed as a rival that publishes a claim -- undercutting the report in the one
+    # paragraph meant to show its rigour. Filtered against the resolved set.
+    _askable = [r["name"] for r in _rivals_all if r.get("status") != "not_a_company"]
+    if _askable:
         out.append("")
-        rivals_txt = ", ".join(sp["rivals"][:4])
+        rivals_txt = ", ".join(_askable[:4])
         out.append(f"  Concretely, for you: does {rivals_txt} already own the claim")
         if _read:
             for line in wrap("you are making — and if one does, what is genuinely left that "
@@ -1087,6 +1105,16 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
             out.append("  Answering it needs someone to read what your rivals publish, map")
             out.append("  which words each one owns, and tell you which claim is still open.")
             out.append("  That is the work behind the score you just read.")
+    # ⚠ AND WHEN NO NAME GIVEN IS A COMPANY, THE HONEST MOVE IS TO SAY THE QUESTION CANNOT BE ASKED
+    # YET -- not to ask it about a search engine. The tool has a real finding here: the submission
+    # named channels, so no competitive read was possible, and the fix is for the owner to name
+    # actual businesses. That is useful, actionable, and true.
+    if _rivals_all and not _askable:
+        out.append("")
+        out.append("  Concretely, for you: the names you gave are channels and search terms, not")
+        out.append("  businesses, so there is no rival claim to test yours against yet. Name the")
+        out.append("  two or three businesses you actually lose customers to and we can run the")
+        out.append("  comparison properly.")
     if unresolved:
         out.append("  We also could not settle: "
                    + ", ".join(str(LABEL.get(k, k)) for k in unresolved) + ".")
