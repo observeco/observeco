@@ -3239,6 +3239,60 @@ works outside Aurora's sector.*
 
 ---
 
+
+**⚠⚠ 6.7.10b DIAGNOSING THE FOUR FAILURES — TWO ARE HARD LIMITS, ONE IS THE GATE WORKING, ONE IS
+REAL (MEASURED — 1 Oct).**
+
+**⚠ WHY DIAGNOSE BEFORE WRITING A FOURTH RULE.** *Three fixes had already gone wrong at this
+junction (permissive host → strict host → category content check). Before proposing a fourth, each
+built candidate was classified: **does it not exist (a), fail to read (b), get wrongly rejected by the
+gate (c), or pass (d)?** Only (c) is a defect in the gate.*
+
+| brand | constructed candidate | what actually happened |
+|---|---|---|
+| **HEYTEA** | `heytea.com` | **200, but 37 chars — effectively an empty page.** `heytea.com.sg` / `.sg` / `.co` **do not resolve.** |
+| **Mixue** | `mixue.com` | **no DNS.** `mixue.com.sg` **404**; `mixue.co` 636 chars `blocked`. |
+| **KOI** | `koi.com.sg` | **995 chars, REJECTED BY THE GATE — CORRECTLY.** *The text reads "SingKoi Corner… Koi Collection… Koi Owner of many award winning Ko…" — ***an ornamental KOI FISH business***, not KOI Thé.* |
+| **CHICHA San Chen** | `chichasanchen.com` | **no DNS.** `chichasanchen.com.sg` 9,720 chars `blocked`. |
+
+**⚠⚠ TWO CORRECTIONS TO §6.7.10a, IN BOTH DIRECTIONS.**
+
+1. **THE CONSTRUCTION FAILURES ARE MOSTLY HARD LIMITS, NOT A FIXABLE DEFECT.** ***`heytea.com`
+   resolves to a 37-character stub; `mixue.com` and `chichasanchen.com` do not resolve at all.***
+   *No gate rule can rescue a domain that serves nothing.* **§6.7.10a implied the gate was the
+   blocker on this sector; on three of the four it is not — the brands' own domains are simply not
+   there under the constructed forms.** *The real domains are `lihoteasg.org`, `koithe.com`,
+   `mixuesg.org`, `heyteas.com` — none guessable from the name.*
+
+2. **THE GATE IS NOT SIMPLY WEAK — IT CAUGHT A KOI-FISH BUSINESS.** ***`koi.com.sg` scored `ok` at 995
+   characters and the category check REJECTED it, because an ornamental-koi site shares no
+   `bubble tea` content word with a bubble-tea brand.*** *That is the gate doing exactly its job on a
+   same-name-different-industry case — **and it is the case the gate was designed for.*** **So the
+   gate is NOT uniformly weak on generic categories; it is weak specifically against pages that
+   ALREADY SHARE THE CATEGORY (`heyteas.com`), which is the harder problem.**
+
+**⚠⚠ SO THE GATE'S REAL FAILURE MODE IS NOW PRECISELY NAMED.** *It rejects **wrong-industry**
+same-name pages reliably (`koi.com.sg` the fish farm, `modo.com.sg` the optician).* **It accepts
+same-name pages that are ABOUT the same category but not owned by the brand** — *`heyteas.com`, a
+menu-guide site. **Those are the only pages that can survive it, and they are exactly the pages whose
+words a reader would misread as the rival's own.***
+
+**⚠⚠ AND THE HONEST PRODUCT CONCLUSION FOR §D3's TARGET SEGMENT.** ***On bubble tea — F&B, the segment
+this product is aimed at — the tool resolved 2 of 6 rivals, and one of those came from the search
+fallback rather than construction.*** **For Aurora (B2B analytics, distinctive domain and category)
+it resolved 4 of 4.** *The difference is not the resolver's cleverness; it is that **B2B firms have
+domain names derived from their names and F&B brands have short stylised names whose domains are
+something else.*** ***§6.7.10's 100% must be read as an Aurora measurement and nothing more.***
+
+**⚠ WHAT WOULD ACTUALLY MOVE THE F&B CASE.** *Not another host rule. **The submitter would have to
+supply the rival's WEBSITE, or the tool must ask the model once for a URL — either of which trades
+away the "no second model call / fully deterministic" property that has been defended all along.***
+**That is a genuine product decision and it is Sean's, not mine: buy reliability in this segment at
+the cost of determinism, or accept 2-of-6 and say so in the report.** *Recorded as an open decision
+rather than resolved by another heuristic.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
