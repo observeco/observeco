@@ -276,7 +276,12 @@ NEXT_LEVEL = {
 }
 
 
-def recommendations(run: dict, counts: dict, weights: dict) -> list:
+def _rivals_read_for(submission: dict | None) -> list:
+    return _rivals_read(submission)
+
+
+def recommendations(run: dict, counts: dict, weights: dict,
+                    submission: dict | None = None) -> list:
     """The moves most likely to raise the score, biggest weighted gap first.
 
     Ordered by WEIGHTED GAP (how many composite points are recoverable), so the user is
@@ -299,6 +304,37 @@ def recommendations(run: dict, counts: dict, weights: dict) -> list:
         if not block:
             continue
         what, todo = block
+        # ⚠⚠ THE GENERIC LINE MUST NOT CONTRADICT THE EVIDENCE THE REPORT NOW PRINTS.
+        #
+        # Sean's report said, under position strength 2/5: "Your claim is either already owned by a
+        # named rival, or so generic that everyone in your category says it. **Start by listing the
+        # words your rivals already use** — anything they say, you cannot own."
+        #
+        # ⚠ THE REPORT SAID THAT WHILE PRINTING THE WORDS THE RIVALS USE, eleven lines further up.
+        # So the specific guidance ("list their words") was stale, generic, and told the reader to
+        # do work the tool had ALREADY DONE AND SHOWN THEM. A report that instructs you to find
+        # something it just handed you reads as though it is not reading itself -- which is exactly
+        # the "cursory" judgement Sean made.
+        #
+        # The fix is NOT to rewrite every dimension's copy (that is a content decision, Sean's).
+        # It is to SUPPRESS the one instruction that the evidence has made obsolete, and replace it
+        # with the specific fact we actually found. Nothing else in NEXT_LEVEL changes.
+        if k == "position_strength" and submission:
+            _own = _own_site_claim(submission)
+            _coll = collision(_own, _rivals_read(submission))
+            if _coll:
+                c = _coll[0]
+                _names = ", ".join(x["name"] for x in _coll[:3])
+                _shared = "; ".join(
+                    "%s (you: %s / them: %s)" % (s["concept"].lower(),
+                                                ", ".join(s["mine"]), ", ".join(s["theirs"]))
+                    for s in c["shared"][:2])
+                what = ("We did that check for you. Against %s, your claim and theirs use the same "
+                        "language: %s. That overlap is what holds this score down — see the "
+                        "comparison above." % (_names, _shared))
+                todo = ("Choose the ground in that overlap you are willing to give up, and make the "
+                        "claim specific enough that they could not truthfully copy it. Re-run this "
+                        "read afterwards; this score is the one that should move.")
         out.append({"dim": k, "level": int(lvl), "of": n, "weight": w,
                     "recoverable": round(recoverable, 1),
                     "what": what, "todo": todo})
@@ -679,7 +715,7 @@ def version_a(run: dict, counts: dict, weights: dict) -> str:
 
 
 def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None,
-              sp: dict | None = None) -> str:
+              sp: dict | None = None, submission: dict | None = None) -> str:
     dims = run["dimensions_display_1to5"]
     conf = run["confidence"]
     band = run.get("band")
@@ -820,7 +856,7 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
             for line in wrap(DIM_MEANING.get(k, ""), 62):
                 out.append(f"      {line}")
         out.append("")
-        recs = recommendations(run, counts, weights)
+        recs = recommendations(run, counts, weights, submission)
         if recs:
             out.append("WHERE TO GET THE SCORE UP")
             out.append("")
@@ -922,9 +958,26 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
             out.append("  category mapped, and it is the paid analysis.")
             out.append("")
         elif _own.get("claim") and _read:
-            out.append("  ⚠ We read your claim and your rivals' pages, and found NO shared")
-            out.append("  positioning language. Take that as a starting point, not a clean bill:")
-            out.append("  a claim can be contested without using the same words.")
+            # ⚠⚠ THIS BRANCH IS REACHED FOR TWO COMPLETELY DIFFERENT REASONS, AND THEY MUST NOT
+            # READ THE SAME. Measured on the SAME Aurora submission run twice: run A found three
+            # shared concepts with Wood Mac; run B read only Baringa (Wood Mac's page did not come
+            # back), so _read held a page whose text is a careers-page intro -- and the report
+            # announced "we found NO shared positioning language".
+            #
+            # ⚠ A FETCH FAILURE ON A RIVAL'S PAGE SILENTLY TURNS A FOUND COLLISION INTO A
+            # NON-FINDING. That is the same defect class as 6.7.4b (a tool failure rendered as a
+            # fact about the subject) and it is worse here, because the non-finding is FLATTERING
+            # and arrives as a clean bill of health.
+            #
+            # The fix is not to retry -- it is to say WHICH rivals were actually compared against,
+            # so a reader can see the check was run on a partial set.
+            _compared = ", ".join(r["name"] for r in _read)
+            out.append("  ⚠ NO shared positioning language came back between your claim and "
+                       "theirs.")
+            out.append(f"  But read that carefully: this only compared you against {_compared}.")
+            out.append("  Any rival whose page could not be read was NOT part of the check, so")
+            out.append("  this is a statement about what we could read, not a clean bill of health.")
+            out.append("  A claim can also be contested without using the same words.")
             out.append("")
 
         for r in _read[:5]:
@@ -1008,7 +1061,7 @@ def render(run: dict, rubric_path: Path | None,
             "report that silently omits part of the composite.")
     return (version_a(r, counts, weights),
             version_b(r, counts, weights, load_rubric(rubric_path),
-                      specifics(submission)))
+                      specifics(submission), submission))
 
 
 def main() -> None:

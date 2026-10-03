@@ -2982,6 +2982,67 @@ to work, and a gate that is always red is worse than no gate: it trains its read
 
 
 
+
+**✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
+CLEAN BILL (BUILT — 1 Oct).**
+
+**⚠⚠ THE REPORT WAS CONTRADICTING ITSELF ELEVEN LINES APART.** *Under **position strength 2/5** the
+report said:*
+
+> ***"Your claim is either already owned by a named rival, or so generic that everyone in your
+> category says it. **Start by listing the words your rivals already use** — anything they say, you
+> cannot own."***
+
+**— while printing the words the rivals use, eleven lines further up.** *So the guidance was **stale,
+generic, and instructed the reader to do work the tool had already done and shown them.** **A report
+that tells you to find something it just handed you reads as though it is not reading itself — which
+is exactly the "cursory" judgement.***
+
+**BUILT — AND DELIBERATELY NARROW.** *This is **not** a rewrite of every dimension's copy; that is a
+content decision and it is Sean's.* **It suppresses the one instruction the evidence has made
+obsolete, for the one dimension whose text is provably contradicted, and replaces it with the
+specific fact actually found:**
+
+   1. Position strength (2/5) — worth about 18.8 points
+    Why it is where it is: We did that check for you. Against Wood Mac, your
+    claim and theirs use the same language: data, analysis and intelligence
+    (you: insights / them: insights, analysis); trust and reliability
+    (you: bankable / them: quality). That overlap is what holds this score
+    down — see the comparison above.
+    Explore: Choose the ground in that overlap you are willing to give up,
+    and make the claim specific enough that they could not truthfully copy
+    it.
+
+***Every other dimension's copy is unchanged. The other five still carry lookup-table text, and that
+remains open.***
+
+**⚠⚠ AND THE BUILD EXPOSED A WORSE DEFECT, FOUND BY RUNNING THE SAME SUBMISSION TWICE.**
+
+*Run A found **three shared concepts** with Wood Mac. Run B **found none**, and printed **"we found
+NO shared positioning language"** — because **Wood Mac's page did not come back that time**, so the
+only readable rival left was Baringa, whose page text is a careers-page intro.*
+
+***A FETCH FAILURE ON A RIVAL'S PAGE SILENTLY TURNED A FOUND COLLISION INTO A NON-FINDING.*** **That is
+the same class as §6.7.4b — a tool failure rendered as a fact about the subject — and it is WORSE
+here, because the non-finding is FLATTERING: it arrives as a clean bill of health, and the user has no
+way to know the flagship finding was one failed fetch away.**
+
+**⚠ THE FIX IS NOT A RETRY.** *Retrying would hide the variance rather than disclose it. The report
+now says which rivals the check actually ran against:*
+
+> ***"⚠ NO shared positioning language came back between your claim and theirs. But read that
+> carefully: this only compared you against Baringa. Any rival whose page could not be read was NOT
+> part of the check, so this is a statement about what we could read, not a clean bill of health."***
+
+**⚠ WHAT THIS MEANS FOR THE PRODUCT, STATED PLAINLY.** ***The best part of the report is
+non-deterministic***: *the same submission yields the flagship finding **or its absence** depending on
+whether one page fetch succeeds.* **§5.5's reproducibility guarantee holds for the TEXT (identical
+inputs still render identical output) but NOT for the FETCH — and the fetch decides whether the
+report's most valuable section has anything in it.** *That is a property of the data-acquisition
+layer, not the renderer, and it is recorded rather than papered over.*
+
+---
+
 **⚠⚠ 6.7.8 THE REPORT NOW USES THE RESEARCH IT ALREADY HAD (BUILT — Sean's ruling, 1 Oct).**
 
 **SEAN, READING A REAL AURORA REPORT:** ***"It feels like a very cursory analysis. Reading this type
