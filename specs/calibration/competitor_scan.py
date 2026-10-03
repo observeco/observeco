@@ -710,6 +710,35 @@ def _domain_matches(name: str, url: str) -> bool:
     return any(lbl == first or lbl.startswith(first) for lbl in labels)
 
 
+def _page_names_the_rival(text: str, name: str) -> bool:
+    """Does the page actually NAME the rival? The check the category gate cannot make.
+
+    ⚠⚠ MEASURED — A BRAND NAME THAT IS ALSO A COMMON PHRASE RESOLVES TO A DIFFERENT COMPANY.
+    On C5-saladshop (the sector this product targets) construction returned:
+        "Six Hands"  -> sixhands.io   a WEB/GAME DEVELOPMENT agency
+        "OMNIVORE"   -> omnivore.io   a RESTAURANT-TECH company
+    Both are real companies, both passed the host match, and BOTH PASSED THE CATEGORY GATE because an
+    F&B category shares generic hospitality vocabulary with them. The report would have printed a
+    stranger's homepage as the rival's published claim -- the §4.6 failure, in the target sector.
+
+    ⚠ WHY THIS WORKS WHERE THE CATEGORY CHECK CANNOT: a real rival's own site almost always says its
+    own name. A DIFFERENT company that merely shares a string does not. So the name itself is a
+    stronger and more specific discriminator than the category, and it is already in hand.
+
+    ⚠ DELIBERATELY LENIENT on form: tokens are compared case-insensitively and non-alphanumerics are
+    stripped, so "SaladStop!" matches "SaladStop" and "Stuff'd" matches "Stuffd"/"Stuff'd". And a
+    single distinctive token is enough ("OMNIVORE" matching "omnivore") -- requiring the full string
+    would reject real sites that write their name differently from the owner.
+    """
+    import re as _re
+    page = " ".join(_re.findall(r"[a-z0-9]+", (text or "").lower()))
+    toks = [t for t in _re.findall(r"[a-z0-9]+", (name or "").lower()) if len(t) > 2]
+    if not toks:
+        return False
+    # every distinctive token of the name must appear somewhere in the page text
+    return all(t in page for t in toks)
+
+
 def _category_corroborates(text: str, category: str) -> bool:
     """Does this page's own text show signs of the submitter's category? THE identity discriminator.
 
@@ -909,7 +938,14 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
             if _cs != "ok":
                 probe_notes.append("%s: %s" % (cand, _cs))
                 continue
-            if not _category_corroborates(strip_tags(_html), category):
+            _page_text = strip_tags(_html)
+            # ⚠⚠ THE NAME CHECK RUNS FIRST. It is the stronger discriminator: measured on C5,
+            # "Six Hands" and "OMNIVORE" both satisfied the category gate while being the wrong
+            # companies entirely. A page that never names the rival is not the rival.
+            if not _page_names_the_rival(_page_text, name):
+                probe_notes.append("%s: page does not name the rival" % cand)
+                continue
+            if not _category_corroborates(_page_text, category):
                 probe_notes.append("%s: unverified_identity" % cand)
                 continue
             target = cand                                # first corroborated candidate wins

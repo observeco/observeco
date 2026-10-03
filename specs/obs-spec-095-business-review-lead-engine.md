@@ -3633,6 +3633,74 @@ pass rather than treated as a defect.** *Sean owns copy.*
 
 ---
 
+
+**⚠⚠ 6.7.12 TESTING THE PATH NOBODY RAN — A NO-WEBSITE SUBMISSION NEVER READ ANY RIVAL AT ALL, AND
+THE TARGET SECTOR RESOLVED STRANGERS (BUILT — 1 Oct).**
+
+**⚠ WHY THIS PATH.** ***Every defect this stretch came from a path I had not run.*** *The canary
+fixtures C4 and C5 have **no website field** — a shape the live form allows and nothing had exercised
+end to end. C5 was run.*
+
+**⚠⚠ DEFECT 1: A SUBMISSION THAT NAMED FIVE RIVALS AND GAVE NO WEBSITE HAD NONE OF THEM READ.**
+
+    do_research = do_scan or bool(form.get("website"))
+
+*With the "also search the web" box **unticked** (the default) and **no website**, `do_research` was
+**False**. **No `rival_reads` call, no section, no explanation.*** ***The report never mentioned
+SaladStop!, Stuff'd, Supergreen, Six Hands or OMNIVORE — five names the owner had just typed.*** **The
+section was absent and the reader was given no way to know a lookup had been skipped.**
+
+**⚠ THE SWITCH CONTROLS THE WRONG THING.** *Its label reads "Also search the web for competitors
+(takes longer, and doesn't always find them)" — **that is the expensive CATEGORY scan.*** ***Reading the
+owner's OWN names is one fetch each and is the cheapest evidence this product has.*** **It must not be
+gated behind an expensive-scan switch.** *Fixed in **both** callers — `sandbox/server.py` and
+`run_jev.py` (the CLI had the same defect) — so a named rival is always read.*
+
+**✅ VERIFIED: `do_research=True` for C5 with `do_scan=False` and no website.**
+
+**⚠⚠ DEFECT 2 — WORSE, AND IN THE TARGET SECTOR: CONSTRUCTION RESOLVED THESE NAMES TO STRANGERS.**
+
+| owner named | construction resolved | what that site actually is |
+|---|---|---|
+| **Six Hands** | `sixhands.io` | ***a WEB/GAME DEVELOPMENT AGENCY*** |
+| **OMNIVORE** | `omnivore.io` | ***a RESTAURANT-TECH company*** |
+| **SaladStop!** | `saladstop.com` | *"World's leading nutrition, health and wellness company"* — **not the chain** |
+| Stuff'd | `stuffd.com/sg` | *captcha* |
+| Supergreen | `supergreen.sg` | *caption* |
+
+***AND ALL THREE STRANGERS PASSED THE §6.7.9 CATEGORY GATE.*** *C5's category is "...quick-service
+restaurants in Singapore" — **generic F&B vocabulary that these pages share.*** **The report would
+have printed a game studio's and a restaurant-software company's homepages as "the rival's claim."**
+
+**⚠⚠ THE CATEGORY CANNOT BE THE DISCRIMINATOR HERE, AND THAT WAS ALREADY ESTABLISHED.** *§6.7.10a
+found the gate "scales inversely with how generic the category is" and named the fix: **use something
+specific to the rival, not the category.*** *This build applies it.*
+
+**⚠ THE FIX: THE PAGE MUST NAME THE RIVAL.** *`_page_names_the_rival(text, name)` requires every
+distinctive token of the rival's name to appear in the page text.* ***A real rival's own site almost
+always says its own name; a DIFFERENT company that merely shares a string does not.*** **The name is
+already in hand, it is more specific than the category, and it is exactly what a common-phrase brand
+name needs.** *Lenient on form (case-insensitive, punctuation stripped, so "SaladStop!" matches
+"SaladStop"), so it does not reject real sites that style their name differently.*
+
+**✅ VERIFIED IN BOTH DIRECTIONS — the check that rejects strangers must not reject real rivals:**
+
+    Six Hands -> sixhands.io (game studio)      REJECTED  ✔
+    OMNIVORE  -> omnivore.io (restaurant tech)  REJECTED  ✔
+    SaladStop! -> saladstop.com                 ACCEPTED  ✔
+    Modo -> modoenergy.com                      ACCEPTED  ✔
+    Afry -> afry.com                            ACCEPTED  ✔
+    Wood Mac -> woodmac.com                     ACCEPTED  ✔
+
+**⚠ WHAT THIS DOES NOT FIX, STATED PLAINLY.** *Stuff'd and Supergreen are **captcha-walled**, so they
+remain unread. **And a brand whose own site never prints its name would now be wrongly rejected** —
+*recorded as the cost of the check, and the report says "could not establish which site is theirs"
+rather than asserting anything.* ***Sean's open decision on the F&B segment (accept the resolution rate
+and disclose, or let submitters supply rival URLs) is unchanged by this — it only stops the tool
+printing the WRONG business, which is a different and more serious failure.***
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 

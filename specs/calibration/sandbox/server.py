@@ -226,7 +226,15 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
     # if a website is provided, we would search the web and do a competitive analysis?"
     # He is right, and the fix is not new capability — it is pointing the existing
     # capability at the submitter.
-    do_research = do_scan or bool((payload.get("form") or {}).get("website"))
+    # ⚠⚠ OWNER-NAMED RIVALS ARE ALWAYS WORTH READING, INDEPENDENT OF THE SCAN SWITCH.
+    # Measured on C5-saladshop, which has NO website field: with `do_scan` off and no website,
+    # `do_research` was False -- so the tool NEVER LOOKED AT THE FIVE RIVALS THE OWNER NAMED.
+    # No rival_reads call, no section in the report explaining it, nothing. The submission named
+    # SaladStop!, Stuff'd, Supergreen, Six Hands and OMNIVORE and the report never mentioned them.
+    # The switch controls the expensive CATEGORY scan; reading the owner's own names is one fetch
+    # each and is the cheapest evidence this product has. It must not be gated behind it.
+    _named = payload.get("competitors_named") or []
+    do_research = do_scan or bool((payload.get("form") or {}).get("website")) or bool(_named)
     if do_research:
         try:
             from competitor_scan import scan as _scan, to_competitive_set as _tocs

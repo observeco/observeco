@@ -623,7 +623,10 @@ def main() -> None:
     # position_strength instruction caps a flank at ADEQUATE (3) unless the set NAMES
     # occupants AND STATES what they claim -- which is exactly what a successful scan
     # supplies, and what the corpus's hand-written sets lacked.
-    if args.scan and not payload.get("derived_competitive_set"):
+    # ⚠⚠ the same defect as sandbox/server.py: a submission that named rivals but gave no website
+    # and did not pass --scan never had its rivals read. Reading the OWNER'S NAMES is cheap and is
+    # the core evidence; it must not depend on the category-scan switch.
+    if (args.scan or payload.get("competitors_named")) and not payload.get("derived_competitive_set"):
         from preflight_gate import evaluate as _pf
         from competitor_scan import (scan as _scan, to_competitive_set as _tocs,
                                      rival_reads as _rrf)
