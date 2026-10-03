@@ -3701,6 +3701,90 @@ printing the WRONG business, which is a different and more serious failure.***
 
 ---
 
+
+**⚠⚠ 6.7.13 THE IDENTITY CHECK: FIVE RULES, ALL FIVE MEASURED WRONG — THE HONEST STOPPING POINT
+(MEASURED — 1 Oct).**
+
+**⚠ WHY THIS SECTION EXISTS.** *§6.7.12 added `_page_names_the_rival` and verified it on **six names —
+two strangers and four clean full-name matches, i.e. the easy cases.*** **A full sweep of all six
+canary fixtures (~25 real rival names, the target segments) was then run, and it showed the check was
+failing in both directions.** *Five rules were written; all five were measured wrong.*
+
+| # | rule | what the measurement said |
+|---|---|---|
+| 1 | **token substring** in joined page text | accepted `global.com` for **"S.E.A. Global"** — *`sea` matches inside **re·SEA·rch*** |
+| 2 | **token set** membership | accepted `koi.com.sg` and `omnivore.io`; **rejected `woodmac.com`** for "Wood Mac" |
+| 3 | **contiguous phrase**, last token may extend | fixed those, still accepted single tokens |
+| 4 | **refuse single-token names** | **rejected `afry.com`, `modoenergy.com`, `saladstop.com`** — all correct |
+| 5 | **category-overlap threshold** | **NO SEPARATION — see below** |
+
+**⚠⚠ AND THE MEASUREMENT THAT ENDED IT.** *Shared content words between the page and the submitter's
+category — **the one signal the existing check already computes:***
+
+| | correct match | | wrong match | |
+|---|---|---|---|---|
+| `afry.com` | **4** | *analytics, data, market, power* | `sixhands.io` | **1** *restaurants* |
+| `modoenergy.com` | **1** | *market* | `omnivore.io` | **1** *restaurants* |
+| `saladstop.com` | **0** | | `koi.com.sg` | **0** |
+| | | | `nature.com` | **0** |
+
+***THE DISTRIBUTIONS OVERLAP COMPLETELY.*** *A correct match scores **0** and a wrong one scores **1**;
+a correct one scores **4** and a wrong one scores **1**.* **There is no threshold that separates them,
+so every rule I could write is a coin-flip dressed as a check.** *That is the finding, and it is why
+this stops here rather than at a sixth attempt.*
+
+**⚠⚠ THE BEHAVIOUR ADOPTED — THE HONEST ONE, NOT THE CLEVER ONE.** ***A single-token name is NOT
+confirmed, so nothing is quoted for it.*** *The rival is reported as "we could not establish which site
+is theirs."*
+
+**⚠ MEASURED EFFECT OF THE WHOLE SWEEP, BEFORE → AFTER:**
+
+| outcome | before (strangers quoted) | **after** |
+|---|---|---|
+| **CLAIM quoted** | **13** | **3** — *and all three are correct rivals* |
+| unverified_identity | 0 | 5 |
+| blocked | 7 | 13 |
+| not_a_company / not_found / ok | 7 | 6 |
+
+***BEFORE: `sixhands.io` (a game studio), `omnivore.io` (restaurant tech), `koi.com.sg` (an ornamental
+koi-fish business), `global.com`, `nature.com`, `fitness.co` were all being quoted as named rivals'
+published claims.*** **AFTER: none of them are quoted, and the three that are (LiHO, Pure Fitness,
+Anytime Fitness) are genuine.**
+
+**⚠⚠ AND THE COST, STATED WITHOUT SOFTENING IT.** ***This is a LARGE capability reduction on the
+target segment.*** *Bubble tea and F&B rivals are overwhelmingly single-token names — **CHAGEE, Mixue,
+HEYTEA, KOI, Zoff, Supergreen, OMNIVORE** — and they now go unquoted.* **Before this pass the resolver
+"worked" on Aurora (four full multi-token names: Afry, Baringa, Modo Energy, Wood Mac) and now it
+mostly does not on the sectors the product is aimed at.**
+
+**⚠ ONE DEFECT FOUND IN THE MIDDLE OF IT, WORTH KEEPING.** *"CHAGEE" resolved to **`global.chagee.com`**
+and was refused by the name check — even though **`chagee.com.sg`, the right domain, resolved in an
+earlier pass.*** **So the sweep is not deterministic across runs here**: the same name reached
+different domains on different runs. *Recorded because it means the "after" tally above is a snapshot,
+not a stable rate.*
+
+**⚠⚠ THE DECISION THIS HANDS TO SEAN, IN PLAIN TERMS.** *There are exactly two ways to confirm that a
+single-word-brand's page is really theirs:*
+
+1. **Ask the owner for the rival's website** (or ask them to write the name as the business does —
+   *"KOI The"*, *"Modo Energy"*). **Free, deterministic, adds one optional form field.**
+2. **Permit one model call** to map name → domain. **Accurate, but breaks the no-second-call
+   determinism defended throughout.**
+
+**⚠ THE REPORT NOW TELLS THE OWNER THE REMEDY ITSELF** — *where a rival went unconfirmed and its name
+is a single word, the member line adds: "Write the name the way the business does — for example 'Modo
+Energy' rather than 'Modo' — and we can tell their page apart from a same-name business."* ***So the
+free report is honest AND actionable rather than merely limited.***
+
+**⚠ AND THE LESSON, WHICH IS THE POINT OF RECORDING FIVE FAILED RULES.** ***Four of the five were
+written confidently and verified on the cases that motivated them; only the FULL-CORPUS sweep exposed
+over-rejection.*** *The check was verified "in both directions" twice and was still wrong in both
+directions, because the sample was chosen by me and the failure modes were not.* **Generalise from
+the corpus, not from the case in hand — the same rule that was written after the earlier false
+negatives and was broken again here.**
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 

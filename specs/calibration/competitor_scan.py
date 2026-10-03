@@ -710,6 +710,12 @@ def _domain_matches(name: str, url: str) -> bool:
     return any(lbl == first or lbl.startswith(first) for lbl in labels)
 
 
+# ⚠ tokens that carry no identity: they appear on almost every page, so treating them as evidence
+# of a match is how koi.com.sg was accepted for "KOI The" (via "the") in an earlier attempt.
+_NAME_STOP = {"the", "and", "for", "with", "group", "holdings", "company", "co", "inc", "ltd",
+              "pte", "global", "international", "singapore", "asia", "pacific"}
+
+
 def _page_names_the_rival(text: str, name: str) -> bool:
     """Does the page actually NAME the rival? The check the category gate cannot make.
 
@@ -731,12 +737,59 @@ def _page_names_the_rival(text: str, name: str) -> bool:
     would reject real sites that write their name differently from the owner.
     """
     import re as _re
-    page = " ".join(_re.findall(r"[a-z0-9]+", (text or "").lower()))
-    toks = [t for t in _re.findall(r"[a-z0-9]+", (name or "").lower()) if len(t) > 2]
-    if not toks:
+    # ⚠⚠⚠ FOURTH ATTEMPT AT THIS CHECK, AND EACH EARLIER ONE WAS WRONG IN A MEASURED WAY.
+    #   1. token-in-joined-text (SUBSTRING): "sea" from "S.E.A. Global" matched inside "reSEArch",
+    #      so global.com was accepted. Same bug as the renderer reading "noTHINg" as "thin".
+    #   2. token-set membership: still accepted omnivore.io, koi.com.sg (the token "the" is a
+    #      stopword present on every page) and nature.com, and REJECTED woodmac.com for "Wood Mac"
+    #      because the brand writes "Wood Mackenzie".
+    #   3. (this one) CONTIGUOUS PHRASE, with the LAST token allowed to extend.
+    # ⚠ WHY A PHRASE AND NOT A SET: a rival's own site writes its name as a NAME -- "Modo Energy",
+    # "Six Hands", "Nature's Way" -- it does not scatter the words across a page. Requiring them
+    # adjacent is what separates a company from a page that merely contains the same words.
+    # ⚠ WHY THE LAST TOKEN MAY EXTEND: "Wood Mac" must match "Wood Mackenzie", and "SaladStop!"
+    # must match "SaladStop". Without this the check over-rejects real rivals, which is the
+    # failure direction that destroys the product's value rather than merely limiting it.
+    # ⚠ SINGLE-TOKEN NAMES ARE DELIBERATELY TRUSTED LESS: there is no phrase to test, so a single
+    # common word cannot discriminate. Those fall through to the category check alone.
+    norm = " ".join(_re.findall(r"[a-z0-9]+", (text or "").lower()))
+    toks = [t for t in _re.findall(r"[a-z0-9]+", (name or "").lower())
+            if len(t) > 2 and t not in _NAME_STOP]
+    # ⚠⚠⚠ MEASURED CONCLUSION: FOR A SINGLE-TOKEN NAME, NO AVAILABLE DETERMINISTIC SIGNAL CONFIRMS
+    # IDENTITY. FIVE RULES WERE WRITTEN AND ALL FIVE WERE MEASURED WRONG, IN BOTH DIRECTIONS.
+    #
+    #   attempt 1  token substring in joined text   accepted global.com for "S.E.A. Global"
+    #                                                ("sea" inside "reSEArch")
+    #   attempt 2  token set membership             accepted koi.com.sg + omnivore.io, rejected
+    #                                                woodmac.com for "Wood Mac"
+    #   attempt 3  contiguous phrase, last extends  fixed the above, still accepted single tokens
+    #   attempt 4  refuse single tokens             REJECTED afry.com, modoenergy.com, saladstop.com
+    #   attempt 5  category-overlap threshold       NO SEPARATION -- see the measurement below
+    #
+    # ⚠ AND THE MEASUREMENT THAT ENDS IT (shared content words between page and the submitter's
+    # category), the one signal the existing check already computes:
+    #
+    #     CORRECT single-token matches   afry.com 4   modoenergy.com 1   saladstop.com 0
+    #     WRONG   single-token matches   koi.com.sg 0  omnivore.io 1    sixhands.io 1  nature.com 0
+    #
+    # ***THE DISTRIBUTIONS OVERLAP COMPLETELY.*** A correct match scores 0 and a wrong one scores 1;
+    # a correct one scores 4 and a wrong one scores 1. **There is no threshold that separates them,
+    # so any rule I write is a coin-flip dressed as a check.**
+    #
+    # ⚠ SO THE BEHAVIOUR IS THE HONEST ONE, NOT THE CLEVER ONE: A SINGLE-TOKEN NAME IS NOT CONFIRMED.
+    # The rival is reported as "we could not establish which site is theirs" and NOTHING IS QUOTED.
+    #   * this COSTS a real rival being quoted (Afry, Modo, SaladStop! are all single-token)
+    #   * it PREVENTS a stranger's homepage being printed as the rival's published claim
+    # ⚠ A MISSING RIVAL LIMITS THE REPORT; A MISATTRIBUTED ONE MAKES IT CONFIDENTLY WRONG. Given a
+    # free report aimed at weak-positioning SMEs, the second failure is the one that destroys trust.
+    # ⚠ THE OWNER CONTROLS THE REMEDY, and the report now says so: give the rival's name as the
+    # business writes it ("KOI The", "Modo Energy", "Wood Mackenzie") and the phrase test applies.
+    # ⚠ THIS IS AN ESCALATION, NOT A SOLUTION. §6.7.13 records the measurement and hands the decision
+    # to Sean: accept single-token rivals unquoted, or buy confirmation by asking the model once.
+    if len(toks) < 2:
         return False
-    # every distinctive token of the name must appear somewhere in the page text
-    return all(t in page for t in toks)
+    pat = r"\b" + r"\s+".join(_re.escape(t) for t in toks[:-1]) + r"\s+" + _re.escape(toks[-1])
+    return _re.search(pat, norm) is not None
 
 
 def _category_corroborates(text: str, category: str) -> bool:
@@ -976,7 +1029,19 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
         # (an optician) and `afry.com` (the rival) are indistinguishable by hostname, and both grade
         # `ok`. The page's own words are what separate them. A page that reads fine but shows NO
         # sign of the submitter's category is NOT accepted as the rival's claim.
-        if cstat == "ok" and not _category_corroborates(strip_tags(html), category):
+        # ⚠⚠ THE NAME CHECK MUST BE HERE TOO, NOT ONLY ON THE CONSTRUCTED-DOMAIN PATH.
+        # Measured by a full sweep of the six-fixture corpus: this SEARCH-FALLBACK path accepted
+        # `sixhands.io` (a game studio) for "Six Hands", `omnivore.io` (restaurant tech) for
+        # "OMNIVORE", and `koi.com.sg` (an ORNAMENTAL KOI FISH business) for "KOI The". All three are
+        # DIFFERENT COMPANIES quoted as the rival's published claim. The name check added last pass
+        # only ran on the construct-first branch, so the fallback branch -- which is the branch that
+        # produces these -- was left unguarded. A guard on one of two paths is not a guard.
+        _pt = strip_tags(html)
+        if cstat == "ok" and not _page_names_the_rival(_pt, name):
+            cstat, why = "unverified_identity", (
+                "the page does not name this rival, so it is most likely a different business "
+                "that shares the name")
+        if cstat == "ok" and not _category_corroborates(_pt, category):
             cstat, why = "unverified_identity", (
                 "the page could not be confirmed as this rival's — its text shows no sign "
                 "of the %s category, so it may be a different business with a similar name"
@@ -1097,9 +1162,19 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None,
                                "gave us a page we could attribute to them. That is a limit of our "
                                "lookup, not a statement that they have no site.%s" % (base, _marker))
             elif r.get("capture_status") == "unverified_identity":
+                # ⚠⚠ THE REMEDY IS IN THE OWNER'S HANDS, SO SAY IT. Measured (§6.7.13): a single-word
+                # rival name cannot be confirmed by any deterministic signal available, so those
+                # rivals go unquoted. Naming the business the way it writes itself gives the check a
+                # phrase to test and is a one-line fix the reader can act on.
+                _n = len([t for t in (r["name"] or "").split() if len(t) > 2])
+                _tip = (" Write the name the way the business does — for example \"Modo Energy\" "
+                        "rather than \"Modo\" — and we can tell their page apart from a "
+                        "same-name business."
+                        if _n < 2 else "")
                 members.append("%s. A page was found (%s) but we could NOT confirm it belongs to "
                                "them (%s) — so we will not quote it. Nothing here says what they "
-                               "claim.%s" % (base, publisher(r["url"]), r.get("why") or "unconfirmed", _marker))
+                               "claim.%s%s" % (base, publisher(r["url"]), r.get("why") or "unconfirmed",
+                                              _tip, _marker))
             elif r.get("url"):
                 members.append("%s. A page found for them (%s) could NOT be read (%s) — so "
                                "nothing here says what they claim."
