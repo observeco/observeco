@@ -3034,12 +3034,46 @@ now says which rivals the check actually ran against:*
 > carefully: this only compared you against Baringa. Any rival whose page could not be read was NOT
 > part of the check, so this is a statement about what we could read, not a clean bill of health."***
 
+**⚠⚠ MEASURED — THE FLICKER, AND A BIGGER PROBLEM UNDERNEATH IT (5 runs, same submission).**
+
+*Resolve + fetch Aurora's four named rivals, five times:*
+
+| rival | readable with a claim | rate | status |
+|---|---|---|---|
+| **Wood Mac** | 4 of 5 | **80%** | *flickers — and it carries the collision* |
+| **Baringa** | 4 of 5 | **80%** | *flickers; its page is a careers intro* |
+| **Afry** | **0 of 5** | **0%** | **blocked every time** |
+| **Modo** | **0 of 5** | **0%** | **blocked every time** |
+| **any claim read** | **8 of 20** | **40%** | |
+
+**⚠ SO THE COLLISION SECTION FLICKERS AT ROUGHLY 20%** — *the chance Wood Mac fails while Baringa
+does not yield one either.* **That is the measured rate behind §6.7.8a's disclosure, and it is why
+the report says which rivals the check actually ran against rather than implying a completed sweep.**
+
+**⚠⚠ BUT THE LARGER FACT IS WORSE THAN THE FLICKER: HALF THE NAMED RIVALS NEVER READ AT ALL.**
+***Afry and Modo returned `blocked` on 5 of 5 attempts — a captcha wall, deterministically.*** **So for
+Aurora, the tool can speak to two of the four rivals the owner named, and one of those two yields only
+a careers-page intro.** *The section is not "sometimes incomplete"; it is **structurally** working from
+a subset, and the flicker is on top of that.*
+
+**⚠ AND ONE MORE DISTINCTION WORTH KEEPING: `not_found` IS NOT `blocked`.** *Wood Mac returned
+**`not_found`** on the run that lost the collision — **the search found no candidate URL at all**,
+which is a **discovery** failure and a different repair from a bot wall.* **§4.6's verdict vocabulary
+already separates these and this build preserved the separation** — *the reader is told which.*
+
 **⚠ WHAT THIS MEANS FOR THE PRODUCT, STATED PLAINLY.** ***The best part of the report is
 non-deterministic***: *the same submission yields the flagship finding **or its absence** depending on
 whether one page fetch succeeds.* **§5.5's reproducibility guarantee holds for the TEXT (identical
 inputs still render identical output) but NOT for the FETCH — and the fetch decides whether the
 report's most valuable section has anything in it.** *That is a property of the data-acquisition
 layer, not the renderer, and it is recorded rather than papered over.*
+
+**⚠ AND IT SETS THE REAL CEILING ON "QUALITY RESEARCH" AS A MARKETING CLAIM.** *The free report can
+honestly say "here is what we could read."* **It cannot promise a complete competitive read, because
+captcha-walled rivals are common — Afry and Modo are both large firms with bot protection, and they
+are not the exception.** ***That limitation is exactly what the paid engagement sells against: a
+person can read what a scraper cannot.*** **The report should keep saying so, and should not be tuned
+to hide it.**
 
 ---
 
