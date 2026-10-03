@@ -256,7 +256,17 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
                         # NameError here would be swallowed by the except below and silently
                         # skip the rival read entirely.
                         _mk = (form.get("city") or "Singapore").strip()
-                        _rr = _rrf(_names, _mk, per_url_timeout=15)
+                        # ⚠⚠ PASS THE CATEGORY -- WITHOUT IT THE IDENTITY GATE IS DEAD CODE.
+                        # `category` was defaulted to "" and never supplied, so:
+                        #   (a) `_category_corroborates` returned True for EVERY page (nothing to
+                        #       check against), i.e. the §6.7.9 optician guard never ran in the
+                        #       product despite being built and tested; and
+                        #   (b) the category-augmented search query never fired either.
+                        # Found by grepping the production call site after measuring the fixes on a
+                        # path the product does not take. Same failure class as the guard that
+                        # silently never fired (underscores vs space) recorded in 6.7.4.
+                        _cat = (form.get("category") or "").strip()
+                        _rr = _rrf(_names, _mk, per_url_timeout=15, category=_cat)
                     except Exception as _e:      # never let this break a submission
                         print("rival_reads failed:", _e)
                 cs = _tocs(res, owner_named=_names, rival_pages=_rr)

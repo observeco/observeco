@@ -3293,6 +3293,69 @@ rather than resolved by another heuristic.*
 
 ---
 
+
+**⚠⚠ 6.7.11 THE IDENTITY GATE WAS DEAD CODE IN PRODUCTION — SECOND TIME AT THIS JUNCTION
+(BUILT — 1 Oct).**
+
+**⚠⚠ ALL OF §6.7.9's AND §6.7.10's MEASUREMENTS WERE ON A PATH THE PRODUCT DOES NOT TAKE.**
+*`rival_reads()` gained a `category` parameter, the gate `_category_corroborates()` was built and
+tested against it — **and neither production caller ever passed it.*** **`category` defaulted to
+`""`, and `_category_corroborates()` returns `True` immediately when there is nothing to check
+against.** *So:*
+
+***THE OPTICIAN GUARD NEVER RAN IN THE PRODUCT, DESPITE BEING BUILT AND VERIFIED.*** *The gate behaved
+exactly as designed in a test harness and did nothing at all in the sandbox. **`modo.com.sg` would
+still have been accepted and quoted.***
+
+**⚠ AND THE CATEGORY-AUGMENTED SEARCH QUERY NEVER FIRED EITHER** — *the §6.7.9 disambiguation fix was
+likewise inert, because the hint was always the empty string and the fallback was `market`.*
+
+**⚠⚠ FOUND BY GREPPING THE PRODUCTION CALL SITE *AFTER* MEASURING THE FIXES.** *Nothing in the test
+output would have revealed it: the tests call `rival_reads(..., category=...)` directly, so they
+exercise the parameter the product omits.* ***A test that supplies a parameter the caller never
+supplies cannot detect that the caller omits it.***
+
+**⚠⚠ AND IT IS THE SECOND OCCURRENCE OF THIS EXACT CLASS AT THIS EXACT JUNCTION.** *§6.7.4 recorded a
+guard that tested for `"TIER 0"` (space) while the key was `tier_0_own_stated_position` (underscores) —
+**the fix never ran and the first end-to-end test still refused while the fix LOOKED applied.*** ***This
+is the same thing with the same shape: a guard that is correct in isolation and inert in situ.***
+**The recorded lesson — "a guard that silently never fires is indistinguishable from one that fires
+and does nothing" — did not prevent the recurrence, because the first instance was fixed as a STRING
+and this one as a PLUMBING problem. The general form is what matters: after adding a guard, grep its
+CALL SITES for the argument it needs, and prove it fires on the real path.**
+
+**⚠ BOTH CALL SITES FIXED.**
+
+- **`sandbox/server.py`** — *now passes `category=form["category"]`.*
+- **`run_jev.py` (the CLI)** — *had **two** defects: it never passed `category`, **and it never called
+  `rival_reads` at all** — so the report's competitive section was empty for **every CLI run**,
+  irrespective of the gate. *Both fixed; `rival_pages` is now passed to `to_competitive_set`.*
+
+**⚠⚠ PROVEN LIVE, NOT INFERRED.** *The gate was exercised with and without the argument, on the page
+it exists to reject:*
+
+    modo.com.sg (the optician)  WITH category    -> False  (gate fires — correct)
+    modo.com.sg                 WITHOUT category -> True   (the dead-code state the product was in)
+    afry.com/en (a real rival)  WITH category    -> True   (no over-rejection)
+
+***THE TWO RESULTS DIFFER, WHICH IS THE ONLY PROOF THAT THE PARAMETER MATTERS.*** *A guard whose
+behaviour is identical with and without its input is not a guard.*
+
+**⚠ CORRECTED CLAIM ABOUT WHAT IS NOW TRUE.** *With the gate live, the §6.7.10a bubble-tea result
+changes in one respect and not in another:*
+- ***THE OPTICIAN/STRANGER CASES ARE NOW ACTUALLY BLOCKED IN THE PRODUCT*** — *this was previously
+  only true in testing.*
+- ***THE 2-OF-6 RESOLUTION RATE DOES NOT CHANGE.*** *The failures there were domain-construction hard
+  limits (`mixue.com`, `chichasanchen.com` do not resolve; `heytea.com` is a 37-character stub), which
+  the gate cannot influence.* **So the F&B limitation stands exactly as §6.7.10b measured it.**
+
+**⚠ OPEN, AND SEAN'S TO DECIDE (restated because it is now the only thing standing between this and a
+trustworthy competitive section for the target segment):** *accept 2-of-6 on F&B and disclose it, or
+buy reliability by letting the submitter supply rival URLs / permitting one model call to find them
+— which trades away the no-second-call determinism.* **Not resolved by another heuristic.**
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 

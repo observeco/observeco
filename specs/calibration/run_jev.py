@@ -639,8 +639,19 @@ def main() -> None:
             try:
                 res = _scan(cat, mkt, [], per_url_timeout=args.scan_timeout)
                 verdict = (res.get("_meta") or {}).get("verdict", "")
+                # ⚠⚠ the CLI path never read the owner's named rivals at all, so the report's
+                # competitive section was empty for every CLI run -- and `category` was never
+                # passed, which silently disabled the §6.7.9 identity gate. Both fixed here.
+                _rr = []
+                _names = payload.get("competitors_named") or []
+                if _names:
+                    try:
+                        _rr = _rrf(_names, mkt, per_url_timeout=min(20, args.scan_timeout),
+                                   category=cat)
+                    except Exception as _e:      # never let this break a run
+                        print(f"  rival_reads failed: {_e}", file=sys.stderr)
                 payload["derived_competitive_set"] = _tocs(
-                    res, owner_named=payload.get("competitors_named"))
+                    res, owner_named=payload.get("competitors_named"), rival_pages=_rr)
                 payload["_scan"] = res.get("_meta")
                 print(f"  scan verdict: {verdict}", file=sys.stderr)
                 # A FAILED scan must not silently proceed as though the category were empty.
