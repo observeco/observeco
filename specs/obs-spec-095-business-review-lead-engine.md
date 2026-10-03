@@ -2981,6 +2981,95 @@ to work, and a gate that is always red is worse than no gate: it trains its read
 ---
 
 
+
+**⚠⚠ 6.7.8 THE REPORT NOW USES THE RESEARCH IT ALREADY HAD (BUILT — Sean's ruling, 1 Oct).**
+
+**SEAN, READING A REAL AURORA REPORT:** ***"It feels like a very cursory analysis. Reading this type
+of quality report makes me feel you don't understand my business because you did not research
+properly. If I can sum up the main reason, it is the lack of quality research."***
+
+**⚠ THE DIAGNOSIS WAS NOT "NOT ENOUGH RESEARCH" — IT WAS THAT THE RESEARCH WAS DISCARDED.** *The tool
+had already read Aurora's site (**6,059 chars** — Chronos, EOS, the forecasts, the advisory work) and
+fetched Wood Mac's and Baringa's pages, and **the scores were computed FROM that evidence.** But the
+report is a computed artifact (§5.5) that only ever read **the submission and the numbers**, so it
+wrote generic prose while the evidence sat unused one layer down.*
+
+***The proof was inside his own report: it instructed him to "start by listing the words your rivals
+already use" — while the tool held Wood Mac's and Baringa's published sentences.***
+
+**⚠ AND A SECOND, INDEPENDENT CAUSE OF "CURSORY": EVERY "WHY" WAS A LOOKUP TABLE.** *`NEXT_LEVEL` maps
+a level to fixed text, so **position strength 2/5 always produces the same paragraph** — identical
+for every business that scores 2. **That is not an analysis of the business; it is an analysis of the
+number.** (Still true below — see the open item.)*
+
+**BUILT — THE COLLISION SECTION.** *The report now prints the submitter's **own public claim** beside
+each readable rival's, and names the **territory both are claiming**, quoting the triggering word from
+**each side**.*
+
+**✅ VERIFIED ON THE LIVE AURORA SUBMISSION (49/100 Contested, submission #44/#45):**
+
+    WHAT YOU PUBLISH ABOUT YOURSELF
+      www.auroraer.com:
+      "Bankable insights powering energy investments globally."
+
+    WHERE YOU AND A RIVAL ARE CLAIMING THE SAME GROUND
+
+      Wood Mac (woodmac.com)
+      their claim: "Empower strategic decision-making in global natural resources
+      with quality data, analysis and advice. Discover the latest insights..."
+
+      both of you use the language of:
+      - DATA, ANALYSIS AND INTELLIGENCE
+          you:  insights        them: insights, analysis
+      - TRUST AND RELIABILITY
+          you:  bankable        them: quality
+      - GLOBAL SCALE OR LEADERSHIP
+          you:  globally        them: global
+
+***That is a real, checkable finding about Aurora — and it is computed from two fetched pages, not
+generated.*** **Same numbers, same band, same reproducibility.**
+
+**⚠⚠ FOUR THINGS THIS DELIBERATELY DOES NOT DO, EACH ONE A LINE THAT MUST NOT MOVE:**
+
+**1. ⚠ IT NEVER SAYS WHO OWNS THE TERRITORY.** *The section states plainly: **"That is a fact about
+two public pages, not a finding about the market — it does NOT say who claimed the ground first, or
+who owns it."** **Ownership is the paid analysis (§3.3) and is never asserted.** Over-claiming it
+would destroy the very thing the free report is bait for.*
+
+**2. ⚠ EXACT-WORD MATCHING WAS TRIED FIRST AND FOUND **ZERO** COLLISIONS — the honest failure is
+recorded.** *The first implementation matched **identical content words** between two claims. Tested
+on all three real submissions: **zero collisions every time.** Aurora says "insights"; Wood Mac says
+"data, analysis". **Real claims share CONCEPTS, not strings.** The mechanism was therefore changed to
+a **fixed, published word-to-concept map applied mechanically** — **not a model's judgement, and not
+invented per business.** **⚠ The map is a heuristic and is the user's to tune (steering).***
+
+**3. ⚠ EVERY MATCH CARRIES THE WORD FROM BOTH SIDES SO IT CAN BE AUDITED AND REJECTED.** *Not "you
+both value trust" but **"you: bankable / them: quality"**. **A match a reader cannot check is an
+assertion.***
+
+**4. ⚠ AND A NO-COLLISION RESULT IS NOT REPORTED AS A CLEAN BILL.** *If the two claims share no
+language the report says **"We found NO shared positioning language. Take that as a starting point,
+not a clean bill: a claim can be contested without using the same words."** **A negative result from
+a heuristic must never read as a pass.***
+
+**⚠ TWO DEFECTS FOUND IN THIS BUILD ITSELF, BOTH BY LOOKING AT THE OUTPUT RATHER THAN THE CODE:**
+
+| defect | what it did |
+|---|---|
+| **read `_own["domain"]`; the key is `url`** | *the domain **silently never printed** — every submission said the generic "your site:" — a key that never exists reads as a working feature* |
+| **the section VANISHED when no own-site claim was read** | *measured on a fixture whose website field pointed elsewhere: **the whole section silently disappeared with no explanation.** A reader cannot tell **"we found nothing to compare"** from **"we never looked"**, and those imply opposite conclusions — **the same class as §6.7.4b naming the wrong refusal cause: a tool failure rendering as an absence of fact** |
+
+*Both fixed: the domain prints, and the section now explicitly says **either** "we could not read a
+claim from the site you gave us — a limit on what we could read, not a finding about your position"
+**or** "no website was given, so there was no public claim to compare."*
+
+**⚠ STILL OPEN, AND IT IS THE OTHER HALF OF "CURSORY": THE PER-SCORE "WHY" TEXT IS STILL A LOOKUP
+TABLE.** *"Position strength 2/5" produces **the same paragraph for every business that scores 2**
+(`NEXT_LEVEL`). This section now carries the specificity; **that one does not.** **⚠ Needs a ruling —
+it is the difference between "here is your number" and "here is what we found about YOUR claim".***
+
+---
+
 **✅ 6.7.7c CLOSED THE TRAP THE EXIT-3 FIX OPENED — A GATE REFUSAL CAN NO LONGER PASS A CONTROL
 WHOSE PREDICTION WAS NEVER EXERCISED (BUILT).**
 

@@ -346,7 +346,171 @@ def specifics(submission: dict | None) -> dict:
         # this is what the tool OBSERVED. Collapsing them would let the report describe a
         # fetched page as the owner's claim, or vice versa.
         "rivals_read": _rivals_read(submission),
+        # ⚠ THE SUBMITTER'S OWN PUBLIC CLAIM. Read from their site, this is what THEY say about
+        # themselves -- the other half of any comparison. Distinct from "claim" above, which is
+        # what they TYPED. Measured on Aurora: they typed a URL, so "claim" is empty while their
+        # site states "Bankable insights powering energy investments globally." Without this the
+        # report had nothing to compare a rival against.
+        "own_site_claim": _own_site_claim(submission),
     }
+
+
+def _own_site_claim(submission: dict | None) -> dict:
+    """The claim on the submitter's OWN site, read by the scan (tier_0)."""
+    if not submission:
+        return {}
+    t0 = (submission.get("derived_competitive_set") or {}).get("tier_0_own_stated_position") or {}
+    claim = (t0.get("claim") or "").strip()
+    if not claim:
+        return {}
+    mem = t0.get("members") or []
+    return {"claim": claim, "url": mem[0] if mem else ""}
+
+
+# ⚠⚠ THE COLLISION TEST -- deterministic, no model call, no invented words.
+#
+# WHY THIS EXISTS. Sean, reading a real report: "It feels like a very cursory analysis... it makes
+# me feel you don't understand my business because you did not research properly."
+#
+# ⚠ THE DIAGNOSIS WAS NOT "NOT ENOUGH RESEARCH" -- IT WAS THAT THE RESEARCH WAS DISCARDED. The
+# tool had already read his site AND his rivals' sites, and the scores were computed FROM that
+# evidence. But the report is a computed artifact (5.5) that only ever read the SUBMISSION and the
+# NUMBERS, so it wrote generic paragraphs while the evidence sat unused one layer down.
+#
+# ⚠ THE PROOF WAS IN HIS OWN REPORT: it told him to "start by listing the words your rivals already
+# use" -- while the tool held Wood Mac's and Baringa's published sentences.
+#
+# THE RULE: compare the business's OWN public claim against each rival's PUBLIC claim by SHARED
+# CONTENT WORDS, and quote both. Nothing is generated; the collision is computed. Two identical
+# submissions still produce identical text, so the 5.5 guarantee is preserved.
+
+# Words that carry no positioning signal -- matching on these says nothing.
+_STOP = set("""
+a an the and or of to in for with on at by from as is are was were be been being we our us you
+your they their it its this that these those who whom which what when where why how all any both
+each few more most other some such no nor not only own same so than too very can will just should
+now about into over after before under above between during through because while if then else
+new latest more most best find out learn see discover explore read more online people company
+services service solutions solution global world worldwide leading trusted quality data analysis
+advice insights report reports business businesses market markets energy power provide provides
+providing help helps helping enable enables enabling empower empowers empowering make makes
+making support supports supporting deliver delivers delivering offer offers offering
+""".split())
+
+
+def _sig_words(text: str) -> list[str]:
+    """Content words that carry positioning signal, lowercased, order-preserving, deduped."""
+    import re as _re
+    words = _re.findall(r"[a-z][a-z\-]{2,}", (text or "").lower())
+    out = []
+    for w in words:
+        if w in _STOP or w in out:
+            continue
+        out.append(w)
+    return out
+
+
+# ⚠⚠ THE CONCEPT MAP — MEASURED NECESSITY, NOT A GUESS.
+#
+# The first version of the collision test matched EXACT CONTENT WORDS between the two claims.
+# Tested on three real submissions, it found ZERO collisions every time:
+#
+#   Aurora  "Bankable insights powering energy investments globally"
+#   vs Wood Mac "quality data, analysis and advice for global natural resources"
+#
+#   Both are plainly claiming the same territory -- trusted data and analysis about energy --
+#   and they share no exact word, because "insights" is not "data" and "analysis" is not "insight".
+#   Real marketing claims share CONCEPTS, not strings.
+#
+# ⚠ SO THE MAP IS A HEURISTIC, AND IS DISCLOSED AS ONE. It is a fixed, published word-to-concept
+# lookup applied mechanically -- NOT a model's judgement, and not invented per business. Every
+# match shows the word from each side, so the reader can audit it and reject it.
+#
+# ⚠ WHAT A MATCH DOES AND DOES NOT MEAN. It means: both claims use language from the same
+# territory. It does NOT mean the rival "owns" that word -- establishing ownership is the paid
+# analysis (spec 3.3). The report must never upgrade "you both say this" into "they own it".
+_CONCEPTS = {
+    "DATA, ANALYSIS AND INTELLIGENCE": [
+        "data", "insight", "insights", "analytics", "analysis", "analyse", "analyze",
+        "intelligence", "research", "modelling", "modeling", "forecast", "forecasts",
+        "information", "benchmark", "benchmarks", "valuation", "valuations"],
+    "TRUST AND RELIABILITY": [
+        "trusted", "trust", "bankable", "reliable", "dependable", "credible", "rigour",
+        "rigor", "precise", "precision", "accurate", "accuracy", "quality", "proven",
+        "authoritative", "independent"],
+    "GLOBAL SCALE OR LEADERSHIP": [
+        "global", "globally", "worldwide", "international", "world", "leader", "leading",
+        "largest", "biggest", "number", "foremost", "premier"],
+    "LOCAL PRESENCE AND PROXIMITY": [
+        "local", "locally", "singapore", "asia", "asian", "regional", "community",
+        "neighbourhood", "neighborhood", "islandwide", "heartland"],
+    "VALUE AND AFFORDABILITY": [
+        "affordable", "cheap", "cheapest", "value", "budget", "low-cost", "inexpensive",
+        "economical", "wallet", "discount"],
+    "CRAFT, AUTHENTICITY AND QUALITY": [
+        "premium", "craft", "crafted", "artisan", "artisanal", "authentic", "handcrafted",
+        "original", "fresh", "natural", "pure", "traditional", "heritage"],
+    "EXPERTISE AND ADVISORY": [
+        "expert", "expertise", "advisory", "advice", "consulting", "consultancy",
+        "consultant", "specialist", "specialised", "specialized", "bespoke", "tailored",
+        "strategic", "strategy"],
+    "TECHNOLOGY AND SOFTWARE": [
+        "software", "platform", "tool", "tools", "digital", "technology", "automated",
+        "automation", "app", "algorithm", "saas", "dashboard"],
+    "SUSTAINABILITY AND TRANSITION": [
+        "sustainable", "sustainability", "green", "renewable", "renewables", "climate",
+        "carbon", "transition", "net", "emissions", "decarbonisation", "decarbonization"],
+    "SPEED AND CONVENIENCE": [
+        "fast", "quick", "quickly", "convenient", "convenience", "easy", "instant",
+        "same-day", "express", "speedy"],
+    "PEOPLE, SERVICE AND EXPERIENCE": [
+        "people", "team", "staff", "service", "friendly", "welcome", "experience",
+        "community", "care", "personal"],
+}
+
+
+def _concepts_of(text: str) -> dict:
+    """Which disclosed concepts a claim's language touches, and with which of its words.
+
+    Returns {concept: [words that triggered it]}. Deterministic; no model call.
+    """
+    have = set(_sig_words(text))
+    have |= set(w for w in (text or "").lower().replace("-", " ").split() if len(w) > 2)
+    out = {}
+    for label, words in _CONCEPTS.items():
+        hits = [w for w in words if w in have]
+        if hits:
+            out[label] = hits
+    return out
+
+
+def collision(own: dict, rivals: list[dict], max_rivals: int = 3) -> list[dict]:
+    """Per readable rival: the DISCLOSED concepts both claims' language falls into.
+
+    ⚠ COMPUTED AND AUDITABLE, NEVER GENERATED. Each match carries the triggering word from BOTH
+    sides, so the reader can see exactly why it fired and reject it if wrong.
+    ⚠ IT DOES NOT SAY WHO OWNS THE TERRITORY. "You both say this" is a fact about two fetched
+    pages; "they own it" is the paid analysis (3.3) and is never asserted here.
+    """
+    mine = _concepts_of(own.get("claim") or "")
+    if not mine:
+        return []
+    out = []
+    for r in rivals:
+        if not r.get("read") or not r.get("claim"):
+            continue
+        theirs = _concepts_of(r["claim"])
+        shared = []
+        for label, my_words in mine.items():
+            if label in theirs:
+                shared.append({"concept": label,
+                               "mine": my_words[:3],
+                               "theirs": theirs[label][:3]})
+        if shared:
+            out.append({"name": r["name"], "domain": r["domain"],
+                        "claim": r["claim"], "shared": shared[:3]})
+    return out[:max_rivals]
+
 
 
 def _rivals_read(submission: dict | None) -> list[dict]:
@@ -693,10 +857,76 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
         # Printing that under "This is what they say about themselves" is the same
         # misattribution as "their own site says", one level up -- the per-line copy was fixed
         # but the section header still asserted provenance the tool cannot verify.
+        # ⚠⚠ THIS SECTION IS THE ANSWER TO "IT FEELS CURSORY -- YOU DID NOT RESEARCH PROPERLY".
+        # The research WAS done and used to compute the scores; the report simply never showed it.
+        # It now puts the business's OWN public claim beside each rival's, and names the territory
+        # BOTH of them are claiming. Same numbers, same band, same reproducibility (5.5) -- but the
+        # reader can see the work.
         out.append("  We looked for a page for each rival you named and read what it says.")
         out.append("  The domain is shown so you can see what kind of page it was; we have")
         out.append("  NOT verified that any page belongs to the rival named.")
         out.append("")
+
+        _own = sp.get("own_site_claim") or {}
+        if _own.get("claim"):
+            out.append("  WHAT YOU PUBLISH ABOUT YOURSELF")
+            out.append("")
+            # ⚠ the key is `url`, not `domain` -- reading a key that never exists meant every
+            # submission printed the generic "your site:" and the actual domain was never shown.
+            _dom = (_own.get("url") or "").split("//")[-1].split("/")[0]
+            out.append(f"    {_dom}:" if _dom else "    your site:")
+            for line in wrap('"' + _own["claim"] + '"', 60):
+                out.append(f"      {line}")
+            out.append("")
+        elif sp.get("website"):
+            # ⚠⚠ DO NOT GO SILENT. Measured on the CaiCa fixture: the site field pointed at a
+            # different business's domain, so no own-site claim was read and this whole section
+            # simply DID NOT APPEAR -- with no explanation. A reader cannot tell "we found nothing
+            # to compare" from "we never looked", and those imply opposite conclusions. Same
+            # defect class as the suff-refusal naming the wrong cause (6.7.4b): a tool failure
+            # rendering as an absence of fact.
+            out.append("  WHAT WE COULD NOT COMPARE")
+            out.append("")
+            out.append(f"  You gave us {sp['website']}, but we could not read a claim from it,")
+            out.append("  so there is nothing to set against your rivals' claims here.")
+            out.append("  That is a limit on what we could read, not a finding about your")
+            out.append("  position.")
+            out.append("")
+        elif not sp.get("website"):
+            out.append("  WHAT WE COULD NOT COMPARE")
+            out.append("")
+            out.append("  No website was given, so we had no public claim of yours to set")
+            out.append("  against your rivals' claims. Add one and this section fills in.")
+            out.append("")
+
+        _coll = collision(_own, _read)
+        if _coll:
+            out.append("  WHERE YOU AND A RIVAL ARE CLAIMING THE SAME GROUND")
+            out.append("")
+            out.append("  The words below appear in BOTH your claim and theirs. That is a")
+            out.append("  fact about two public pages, not a finding about the market --")
+            out.append("  it does NOT say who claimed the ground first, or who owns it.")
+            out.append("")
+            for c in _coll:
+                out.append(f"    {c['name']} ({c['domain']})")
+                for line in wrap('their claim: "' + c["claim"] + '"', 58):
+                    out.append(f"      {line}")
+                out.append("      both of you use the language of:")
+                for s in c["shared"]:
+                    out.append(f"        - {s['concept']}")
+                    out.append(f"            you:    {', '.join(s['mine'])}")
+                    out.append(f"            them:   {', '.join(s['theirs'])}")
+                out.append("")
+            out.append("  ⚠ This is the collision your position strength score turns on. What we")
+            out.append("  have NOT done is decide which of you holds it -- that needs the whole")
+            out.append("  category mapped, and it is the paid analysis.")
+            out.append("")
+        elif _own.get("claim") and _read:
+            out.append("  ⚠ We read your claim and your rivals' pages, and found NO shared")
+            out.append("  positioning language. Take that as a starting point, not a clean bill:")
+            out.append("  a claim can be contested without using the same words.")
+            out.append("")
+
         for r in _read[:5]:
             out.append(f"    {r['name']} ({r['domain']}):")
             for line in wrap('"' + r["claim"] + '"', 60):
