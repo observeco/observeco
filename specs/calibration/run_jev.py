@@ -626,7 +626,9 @@ def main() -> None:
     # ⚠⚠ the same defect as sandbox/server.py: a submission that named rivals but gave no website
     # and did not pass --scan never had its rivals read. Reading the OWNER'S NAMES is cheap and is
     # the core evidence; it must not depend on the category-scan switch.
-    if (args.scan or payload.get("competitors_named")) and not payload.get("derived_competitive_set"):
+    if ((args.scan or payload.get("competitors_named")
+         or payload.get("competitor_urls") or (payload.get("form") or {}).get("competitor_urls"))
+            and not payload.get("derived_competitive_set")):
         from preflight_gate import evaluate as _pf
         from competitor_scan import (scan as _scan, to_competitive_set as _tocs,
                                      rival_reads as _rrf)
@@ -647,10 +649,27 @@ def main() -> None:
                 # passed, which silently disabled the §6.7.9 identity gate. Both fixed here.
                 _rr = []
                 _names = payload.get("competitors_named") or []
+                # ⚠⚠ CARRY THE OWNER-SUPPLIED RIVAL URLS THROUGH THE CLI TOO (spec 6.7.14).
+                # The sandbox form collects them; this path read neither the field nor the parameter,
+                # which is the SAME omission §6.7.11 recorded for `category` — a parameter built and
+                # never populated. Verified by grepping this call site, not by reading the diff.
+                _kurls = {}
+                try:
+                    import re as _re
+                    _raw = (payload.get("competitor_urls")
+                            or (payload.get("form") or {}).get("competitor_urls") or "")
+                    for _tok in [t.strip() for t in _re.split(r"[,\n;]+", _raw) if t.strip()]:
+                        if "." not in _tok:
+                            continue
+                        if not _tok.lower().startswith("http"):
+                            _tok = "https://" + _tok.lstrip("/")
+                        _kurls[_tok.split("//")[-1].split("/")[0].split(".")[0].lower()] = _tok
+                except Exception:
+                    _kurls = {}
                 if _names:
                     try:
                         _rr = _rrf(_names, mkt, per_url_timeout=min(20, args.scan_timeout),
-                                   category=cat)
+                                   category=cat, known=_kurls)
                     except Exception as _e:      # never let this break a run
                         print(f"  rival_reads failed: {_e}", file=sys.stderr)
                 payload["derived_competitive_set"] = _tocs(

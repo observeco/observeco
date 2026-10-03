@@ -935,6 +935,28 @@ def _domain_candidates(name: str) -> list[str]:
     return uniq
 
 
+def _owner_url_for(known: dict | None, name: str) -> str:
+    """The URL the OWNER supplied for this rival, or "". ONE definition, used by every gate.
+
+    ⚠⚠ MEASURED BUG THIS PREVENTS (spec 6.7.14a). The lookup was written inline in TWO places and the
+    gates used an EXACT key match while the construct loop used a prefix fallback. The owner named the
+    rival "Modo" and pasted "modoenergy.com" -- the dict is keyed on the URL's first label
+    ("modoenergy") -- so the construct loop FOUND the URL and fetched modoenergy.com, but the
+    owner-supplied flag evaluated False, the name gate then ran, "Modo" is a single token, and the
+    rival was REFUSED. **The page was read and thrown away because two copies of one lookup disagreed.**
+    ⚠ Same class as every other defect this stretch: two paths that must agree, drifting apart.
+    """
+    if not known:
+        return ""
+    nk = (name or "").strip().lower()
+    direct = known.get(nk) or known.get((name or "").strip())
+    if direct:
+        return direct
+    # the URL's label often carries MORE of the name than the owner typed ("Modo" -> "modoenergy")
+    cands = sorted({v for k, v in known.items() if k.startswith(nk) or nk.startswith(k)})
+    return cands[0] if len(cands) == 1 else ""
+
+
 def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
                 max_rivals: int = 6, category: str = "",
                 known: dict | None = None) -> list[dict]:
@@ -983,10 +1005,11 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
         # corroborated by its own text; only if none does, fall back to the search.
         target, probe_notes = None, []
         # ⚠ OWNER-SUPPLIED URL WINS OUTRIGHT -- checked before any construction or search.
-        _known_url = ""
-        if known:
-            _known_url = ((known or {}).get(name.strip().lower())
-                          or (known or {}).get(name.strip()) or "")
+        # ⚠ ONE definition of "the URL the owner gave us for this rival" (_owner_url_for), used by
+        # the construct loop AND by both gate-bypass flags. The earlier version had the logic inline
+        # in two places, the gates used an exact key match while the loop used a prefix fallback, and
+        # "Modo" (single token) was fetched correctly and then REFUSED because the two disagreed.
+        _known_url = _owner_url_for(known, name)
         for cand in ([_known_url] if _known_url else []) + _domain_candidates(name):
             try:
                 _st, _html = fetch(cand, timeout=min(12, per_url_timeout))
@@ -1060,10 +1083,7 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
         # only ran on the construct-first branch, so the fallback branch -- which is the branch that
         # produces these -- was left unguarded. A guard on one of two paths is not a guard.
         _pt = strip_tags(html)
-        _owner_supplied = bool(known and ((known or {}).get(name.strip().lower())
-                                          or (known or {}).get(name.strip()))
-                                and target == ((known or {}).get(name.strip().lower())
-                                               or (known or {}).get(name.strip())))
+        _owner_supplied = bool(_known_url) and target == _known_url
         if _owner_supplied and cstat == "ok":
             entry.update({"url": target, "capture_status": cstat, "why":
                           "the website was given by the business, so its identity is asserted "
@@ -1083,7 +1103,10 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
                 cstat, why = "unverified_identity", (
                     "the page does not name this rival, so it is most likely a different business "
                     "that shares the name")
-        if cstat == "ok" and not _category_corroborates(_pt, category):
+        # ⚠⚠ THE CATEGORY GATE MUST STAND DOWN FOR AN OWNER-SUPPLIED URL TOO. It was guarded on the
+        # name check only, so an owner-supplied page could still be rejected by the category test --
+        # re-introducing the very inference the field exists to replace.
+        if cstat == "ok" and not _owner_supplied and not _category_corroborates(_pt, category):
             cstat, why = "unverified_identity", (
                 "the page could not be confirmed as this rival's — its text shows no sign "
                 "of the %s category, so it may be a different business with a similar name"

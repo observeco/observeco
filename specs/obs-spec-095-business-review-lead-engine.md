@@ -3921,6 +3921,67 @@ only afterwards.* ***Re-run the case that motivated a change BEFORE declaring th
 
 ---
 
+
+**✅ 6.7.14a THE FIELD WORKS END-TO-END — ALL FOUR RIVALS QUOTED THROUGH THE LIVE FORM (VERIFIED —
+1 Oct).**
+
+**⚠⚠ THE DECISIVE RUN.** *Aurora submitted with the four rival URLs an owner would paste:*
+
+| site named by the owner | quoted? |
+|---|---|
+| `afry.com` | **✅** |
+| `baringa.com` | **✅** |
+| `modoenergy.com` | **✅** |
+| `woodmac.com` | **✅** |
+
+***4 OF 4 THROUGH THE RENDERED REPORT, WHERE §6.7.13 HAD LEFT 1 OF 4.*** **And the collision section now
+carries Modo's LITERAL overlap, not just a conceptual one:**
+
+> ***Modo (modoenergy.com)** — "Regulated benchmarks, **bankable** forecasts, and analyst research for
+> energy investors, lenders, and **developers**."*
+> **- TRUST AND RELIABILITY** *you: **bankable**  them: **bankable***
+
+**⚠⚠ THREE DEFECTS FOUND AND FIXED WHILE VERIFYING IT — ALL THE SAME CLASS, ALL MINE.**
+
+1. **THE CLI NEVER CARRIED THE NEW FIELD.** *`run_jev.py` read neither `competitor_urls` nor the
+   `known` parameter.* ***The same omission §6.7.11 recorded for `category` — a parameter built and
+   never populated — committed again two hours later.*** **Found by grepping the call sites, which is
+   the only method that has ever caught this.**
+
+2. **ONE LOOKUP, WRITTEN TWICE, AND THE COPIES DISAGREED.** *The construct loop looked up the
+   owner's URL with a **prefix fallback** ("Modo" → `modoenergy.com`), while the gate-bypass flag used
+   an **exact match**. So Modo's page **was fetched and then thrown away**, because one copy knew the
+   URL and the other did not.* ***A single-token rival was refused for the sole reason that two
+   implementations of "the URL the owner gave us" had drifted.*** **Fixed by extracting
+   `_owner_url_for()` — one definition, used by the loop and by both gate flags.**
+
+3. **THE CATEGORY GATE WAS STILL ARMED FOR AN OWNER-SUPPLIED URL.** *It was guarded on the name check
+   but not on owner-supply, so a page the owner had named could still be rejected by the category
+   inference the field exists to replace.* **Both gates now stand down for an owner-supplied URL, and
+   the `why` field records the provenance: "the website was given by the business, so its identity is
+   asserted by them rather than inferred by us."**
+
+**⚠⚠ AND ONE PROCESS FAILURE WORTH RECORDING, BECAUSE IT ALMOST SHIPPED A BROKEN MODULE.** *The
+patch that replaced the inline lookup left **an orphaned `if not _known_url:` block at the wrong
+indent level** — a **syntax error in `competitor_scan.py`, the core scanner.*** *The `py_compile` that
+would have caught it ran against the file **before** that edit, so the check reported "compiles" for a
+state that no longer existed.* ***The next run failed with `IndentationError` and the whole module was
+unimportable.*** **The rule: after a patch that removes a block, re-compile THAT FILE, and treat a
+previous compile as stale evidence — the same staleness rule that produced the "sandbox serves stale
+code" defect earlier in this spec.**
+
+**⚠ WHAT REMAINS OPEN.**
+- *The **field is empty for the CLI corpus** — the canary fixtures and `run_jev` inputs carry no
+  `competitor_urls`, so CLI runs still get the honest-refusal behaviour. **That is correct but means
+  the restored capability is currently measured only on the sandbox path.***
+- *`Wood Mackenzie` still resolves to a captcha wall while `Wood Mac` did not (§6.7.13a) — even a
+  correct fuller name can fail. **The URL field sidesteps this, which is the strongest argument for
+  it.***
+- *The canary has **not** been re-run since the resolver changed **four times** (§6.7.10, §6.7.13,
+  §6.7.14, §6.7.14a). Recorded as owed.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
