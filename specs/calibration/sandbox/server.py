@@ -163,6 +163,11 @@ def payload_from_form(f: dict) -> dict:
                    "purpose": "SANDBOX submission"},
          "form": form,
          "competitors_named": comps}
+    # ⚠⚠ THE OWNER'S OWN RIVAL WEBSITES, if they supplied them (6.7.13a/6.7.14). Passed straight
+    # through: matched to rivals by name in rival_reads(), and taken on the OWNER'S assertion rather
+    # than re-derived, because re-deriving is exactly what five failed rules tried to do.
+    if f.get("competitor_urls"):
+        p["competitor_urls"] = f["competitor_urls"]
     if comps:
         p["derived_competitive_set"] = build_set_from_named(comps)
     return p
@@ -234,6 +239,21 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
     # The switch controls the expensive CATEGORY scan; reading the owner's own names is one fetch
     # each and is the cheapest evidence this product has. It must not be gated behind it.
     _named = payload.get("competitors_named") or []
+    # ⚠⚠ OWNER-SUPPLIED RIVAL URLS (spec 6.7.13a/6.7.14). A dict name -> url, matched case-insensitively.
+    # This is the fix that restores the competitive read WITHOUT a model call: measured 1/4 -> 4/4 on
+    # Aurora. It asks the owner for a FACT they already hold, not a judgement.
+    _kurls = {}
+    try:
+        import re as _re
+        _u = (payload.get("competitor_urls") or "").strip()
+        for _tok in [t.strip() for t in _re.split(r"[,\n;]+", _u) if t.strip()]:
+            if "." not in _tok:
+                continue
+            if not _tok.lower().startswith("http"):
+                _tok = "https://" + _tok.lstrip("/")
+            _kurls[_tok.split("//")[-1].split("/")[0].split(".")[0].lower()] = _tok
+    except Exception:
+        _kurls = {}
     do_research = do_scan or bool((payload.get("form") or {}).get("website")) or bool(_named)
     if do_research:
         try:
@@ -274,7 +294,8 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
                         # path the product does not take. Same failure class as the guard that
                         # silently never fired (underscores vs space) recorded in 6.7.4.
                         _cat = (form.get("category") or "").strip()
-                        _rr = _rrf(_names, _mk, per_url_timeout=15, category=_cat)
+                        _rr = _rrf(_names, _mk, per_url_timeout=15, category=_cat,
+                                   known=_kurls)
                     except Exception as _e:      # never let this break a submission
                         print("rival_reads failed:", _e)
                 cs = _tocs(res, owner_named=_names, rival_pages=_rr)
@@ -500,6 +521,14 @@ they have more outlets."></textarea>
   <input name=competitors_named placeholder="Who do your customers choose between?">
   <div class=note>Naming them <b>helps your position score a lot</b>. The read can only
   tell you whether a claim is yours if it knows who else might hold it.</div>
+  <label>Their websites, if you know them <span style="color:#8b97a8">(optional, but it makes the
+    rival comparison reliable)</span></label>
+  <input name=competitor_urls placeholder="e.g. rivalA.com, rivalB.com.sg — in the same order as above">
+  <div class=note>This is the single biggest improvement you can make to your read. Our tool can
+  usually find a rival's website from its name, but when a name is a common word — <i>KOI</i>,
+  <i>Modo</i>, <i>Six Hands</i> — it cannot tell their site apart from a different business with the
+  same name, so it stays silent rather than quote the wrong company. <b>If you paste their web
+  addresses, we read exactly the pages you mean.</b></div>
 
   <h2>Your customers</h2>
   <label>Who is your customer, specifically?</label>
@@ -596,6 +625,7 @@ def submit(request: Request, business_name: str = Form(""), email: str = Form(""
            differentiator: str = Form(""), undercut_on: str = Form(""),
            your_price_point: str = Form(""), their_price_point: str = Form(""),
            competitors_named: str = Form(""), customer_description: str = Form(""),
+           competitor_urls: str = Form(""),
            website: str = Form(""),
            case_key: str = Form(""), do_scan: str = Form("")):
     f = dict(business_name=business_name, email=email, category=category, city=city,
@@ -604,7 +634,7 @@ def submit(request: Request, business_name: str = Form(""), email: str = Form(""
              undercut_on=undercut_on, your_price_point=your_price_point,
              their_price_point=their_price_point, competitors_named=competitors_named,
              customer_description=customer_description, website=website,
-             case_key=case_key)
+             competitor_urls=competitor_urls, case_key=case_key)
     payload = payload_from_form(f)
     try:
         r = run_submission(payload, bool(do_scan))

@@ -936,7 +936,8 @@ def _domain_candidates(name: str) -> list[str]:
 
 
 def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
-                max_rivals: int = 6, category: str = "") -> list[dict]:
+                max_rivals: int = 6, category: str = "",
+                known: dict | None = None) -> list[dict]:
     """Read the OWNER-NAMED rivals' OWN sites, and quote what each one claims.
 
     ⚠⚠ WHY THIS EXISTS (spec 6.7.6 — MEASURED ON A REAL CLIENT SUBMISSION).
@@ -981,7 +982,12 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
         # the name. Probe the built candidates CHEAPLY and stop at the first that reads ok AND is
         # corroborated by its own text; only if none does, fall back to the search.
         target, probe_notes = None, []
-        for cand in _domain_candidates(name):
+        # ⚠ OWNER-SUPPLIED URL WINS OUTRIGHT -- checked before any construction or search.
+        _known_url = ""
+        if known:
+            _known_url = ((known or {}).get(name.strip().lower())
+                          or (known or {}).get(name.strip()) or "")
+        for cand in ([_known_url] if _known_url else []) + _domain_candidates(name):
             try:
                 _st, _html = fetch(cand, timeout=min(12, per_url_timeout))
             except Exception as exc:                       # noqa: BLE001 - any transport failure
@@ -992,6 +998,10 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
                 probe_notes.append("%s: %s" % (cand, _cs))
                 continue
             _page_text = strip_tags(_html)
+            # ⚠⚠ AN OWNER-SUPPLIED URL IS TAKEN ON THEIR ASSERTION, NOT RE-DERIVED. See below.
+            if _known_url and cand == _known_url:
+                target = cand
+                break
             # ⚠⚠ THE NAME CHECK RUNS FIRST. It is the stronger discriminator: measured on C5,
             # "Six Hands" and "OMNIVORE" both satisfied the category gate while being the wrong
             # companies entirely. A page that never names the rival is not the rival.
@@ -1004,6 +1014,19 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
             target = cand                                # first corroborated candidate wins
             break
 
+        # ⚠⚠ AN OWNER-SUPPLIED URL ENDS THE IDENTITY PROBLEM BY CONSTRUCTION (spec 6.7.13a).
+        # Measured: five deterministic rules failed to tell a real rival's site from a same-name
+        # stranger's, and the honest rule then refused THREE of Aurora's four rivals. The owner knows
+        # which business they mean -- that is a FACT only they hold, not a judgement we should ask
+        # them to make. So when they give a URL we use it directly.
+        # ⚠ AND WE DO NOT RUN THE NAME OR CATEGORY GATE ON IT. The owner has asserted the identity;
+        # re-deriving it would re-introduce the very failure that made this field necessary. The
+        # report still prints the domain so the reader can see what was read, and still refuses to
+        # claim the page is authoritative -- the §6.7.9 attribution discipline is unchanged.
+        if not target and known:
+            _k = (known or {}).get(name.strip().lower()) or (known or {}).get(name.strip())
+            if _k:
+                target = _k
         if not target:
             _hint = (category or market or "").strip()
             try:
@@ -1037,10 +1060,29 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
         # only ran on the construct-first branch, so the fallback branch -- which is the branch that
         # produces these -- was left unguarded. A guard on one of two paths is not a guard.
         _pt = strip_tags(html)
-        if cstat == "ok" and not _page_names_the_rival(_pt, name):
-            cstat, why = "unverified_identity", (
-                "the page does not name this rival, so it is most likely a different business "
-                "that shares the name")
+        _owner_supplied = bool(known and ((known or {}).get(name.strip().lower())
+                                          or (known or {}).get(name.strip()))
+                                and target == ((known or {}).get(name.strip().lower())
+                                               or (known or {}).get(name.strip())))
+        if _owner_supplied and cstat == "ok":
+            entry.update({"url": target, "capture_status": cstat, "why":
+                          "the website was given by the business, so its identity is asserted "
+                          "by them rather than inferred by us"})
+        if cstat == "ok" and not _owner_supplied and not _page_names_the_rival(_pt, name):
+            # ⚠⚠ NAME THE TRUE CAUSE. Measured: "Afry" was refused and the report told the reader
+            # "the page does not name this rival" — WHICH IS FALSE. afry.com names itself; the actual
+            # reason is that a ONE-WORD name cannot be confirmed by any deterministic signal we have
+            # (6.7.13), so the check declines. §4.6 forbids rendering a limit of OURS as a fact about
+            # the page, and this was doing exactly that, in the message shown to a business owner.
+            _tk = [t for t in (name or "").split() if len(t) > 2]
+            if len(_tk) < 2:
+                cstat, why = "unverified_identity", (
+                    "we cannot confirm a single-word name — a page could be a different business "
+                    "that happens to share the word, and nothing in the page distinguishes them")
+            else:
+                cstat, why = "unverified_identity", (
+                    "the page does not name this rival, so it is most likely a different business "
+                    "that shares the name")
         if cstat == "ok" and not _category_corroborates(_pt, category):
             cstat, why = "unverified_identity", (
                 "the page could not be confirmed as this rival's — its text shows no sign "
@@ -1167,8 +1209,13 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None,
                 # rivals go unquoted. Naming the business the way it writes itself gives the check a
                 # phrase to test and is a one-line fix the reader can act on.
                 _n = len([t for t in (r["name"] or "").split() if len(t) > 2])
+                # ⚠ the remedy is only offered where it is genuinely the fix (a one-word name) AND
+                # where it was measured to work ("Modo" -> "Modo Energy" restored the quote). It is
+                # NOT offered for a multi-word name, and 6.7.13a records that for "Wood Mac" the
+                # fuller "Wood Mackenzie" actually reached a captcha wall — so the tip is honest
+                # about being a try, not a guarantee.
                 _tip = (" Write the name the way the business does — for example \"Modo Energy\" "
-                        "rather than \"Modo\" — and we can tell their page apart from a "
+                        "rather than \"Modo\" — and we can usually tell their page apart from a "
                         "same-name business."
                         if _n < 2 else "")
                 members.append("%s. A page was found (%s) but we could NOT confirm it belongs to "

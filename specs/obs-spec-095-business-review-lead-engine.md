@@ -3852,6 +3852,75 @@ it.** *The rule for this has been written twice already in this spec and was sti
 
 ---
 
+
+**✅ 6.7.14 THE FIX THAT ACTUALLY WORKS: LET THE OWNER SUPPLY THE RIVAL'S WEBSITE (BUILT AND VERIFIED
+— 1 Oct).**
+
+**⚠ WHY THIS IS THE FIX, AND WHY IT IS NOT A HEURISTIC.** *§6.7.13 measured that **five deterministic
+rules all failed** and that **correct and incorrect single-token matches are not separable on any
+signal available to the tool** (the category-overlap distributions overlap completely).* ***So the tool
+must stop trying to infer identity, and ask the one party who knows it.***
+
+**⚠⚠ AND THE OWNER IS THE RIGHT PARTY FOR A REASON THAT IS NOT CONVENIENCE.** *The identity of a rival
+is a **FACT the owner holds** — not a judgement about the market, not analyst work.* *§D38's rule was
+that the form must not make the owner do **reasoning**; **supplying a web address is recall, not
+reasoning**, and it is the single most reliable input the tool can be given.* **It is also the difference
+between "our tool guessed wrong about your competitor" and "you told us who you meant".**
+
+**BUILT:** *an optional field — **"Their websites, if you know them"*** — and `rival_reads(...,
+known=...)` matches each URL to its rival by name and **uses it outright.**
+
+**✅ MEASURED — AURORA RESTORED, WITH NO MODEL CALL:**
+
+| | rivals quoted |
+|---|---|
+| **without the field** (§6.7.13's honest rule) | **1 of 4** |
+| **with the owner's URLs supplied** | **4 of 4** |
+
+    Afry      ok  https://afry.com/en             "We provide engineering, project management…"
+    Baringa   ok  https://www.baringa.com/en/     "Putting people first. Creating impact that lasts…"
+    Modo      ok  https://modoenergy.com          "Regulated benchmarks, bankable forecasts…"
+    Wood Mac  ok  https://www.woodmac.com         "Empower strategic decision-making…"
+
+***THE SECTION SEAN ASKED FOR IS BACK, AND EVERY QUOTE IS A PAGE THE OWNER NAMED.***
+
+**⚠⚠ THE IDENTITY GATES ARE DELIBERATELY **NOT** RE-APPLIED TO AN OWNER-SUPPLIED URL.** *The owner has
+**asserted** the identity; re-deriving it would re-introduce the exact failure that made the field
+necessary.* **But the §6.7.9 discipline is unchanged:** *the report **prints the domain** so the reader
+can see what was read, and **still refuses to assert** that the page is authoritative.* **The `why`
+field records "the website was given by the business, so its identity is asserted by them rather than
+inferred by us" — so the provenance of every quote is auditable.**
+
+**⚠ THE FIELD IS OPTIONAL AND THE DEFAULT IS SAFE.** *Without it, behaviour is exactly §6.7.13's honest
+refusal — **no stranger is ever quoted.*** **With it, the read is restored.** *So the owner chooses
+between a limited report and a complete one, and the tool never guesses.*
+
+**⚠ AND THE FORM COPY SAYS WHY, IN THE OWNER'S TERMS.** *The label carries:*
+> ***"Our tool can usually find a rival's website from its name, but when a name is a common word —
+> KOI, Modo, Six Hands — it cannot tell their site apart from a different business with the same name,
+> so it stays silent rather than quote the wrong company. If you paste their web addresses, we read
+> exactly the pages you mean."***
+
+***That is honest about the limitation AND makes the fix obviously worth doing — the same "consent is
+a trade, not a favour" principle recorded for the research-consent design.***
+
+**⚠ WHAT REMAINS OPEN.**
+- *The **CLI** path (`run_jev.py`) does not yet collect or pass `competitor_urls`; only the sandbox form
+  does. Recorded as the next wiring task, and the same class of omission as §6.7.11 (a parameter built
+  and never populated) — **so it must be verified by call-site grep, not by reading the diff.***
+- *A rival the owner names but gives no URL for **still goes unquoted** if its name is a single token.
+  That is intended.*
+- *The §6.7.13a measured caveat stands: **"Wood Mac" → "Wood Mackenzie" reached a captcha wall** where
+  the abbreviation did not, so even correct fuller names can resolve to an unreadable page.* **The URL
+  field sidesteps that entirely, which is a further argument for it.**
+
+**⚠⚠ THE PROCESS LESSON, RECORDED BECAUSE IT COST A SESSION'S WORK (§6.7.13a re-stated).** *§6.7.13 was
+**committed before the flagship case was re-run**, and the regression — Aurora 4/4 → 1/4 — was found
+only afterwards.* ***Re-run the case that motivated a change BEFORE declaring the change good.***
+**That rule had already been written twice in this spec and was still not followed.**
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
