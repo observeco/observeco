@@ -2983,6 +2983,92 @@ to work, and a gate that is always red is worse than no gate: it trains its read
 
 
 
+
+**⚠⚠ 6.7.9 THE "BLOCKED" VERDICT WAS A LIE, AND THE WRONG PAGE WAS ONE FETCH FROM BEING QUOTED
+(BUILT — 1 Oct).**
+
+**⚠⚠ THE MEASUREMENT THAT BROKE IT.** *§6.7.8a recorded that **Afry and Modo were `blocked` on 5 of 5
+attempts** and concluded "half the named rivals never read at all." **Before reporting that as a
+property of those firms, I called both fetchers directly on their own domains:***
+
+| rival | plain fetch | browser fetch | verdict |
+|---|---|---|---|
+| **Afry** | **151,226 chars, `ok`** | 158,628 chars, `ok` | *"engineering, project management and advisory services…"* |
+| **Modo Energy** | **399,996 chars, `ok`** | 1,110,999 chars, `ok` | *"Regulated benchmarks, bankable forecasts, and analyst research…"* |
+| **Wood Mac** | 146,427 chars, `ok` | 351,115 chars, `ok` | *"quality data, analysis and advice…"* |
+
+***NOTHING WAS BLOCKED.*** **Afry and Modo served 151KB and 400KB to a plain fetcher. The `blocked`
+verdict was produced by the RESOLVER, not the wall — the search was handing back a URL that was
+either wrong or unreadable, and the failure was reported as though the rival's site had refused.**
+
+**⚠⚠ AND THE WRONG URL WAS DANGEROUS, NOT MERELY USELESS.** *Resolving **"Modo"** — meaning **Modo
+Energy**, an energy-analytics firm — the query was `"Modo Singapore"`, and the search returned
+**`modo.com.sg`, a Singapore OPTICAL SHOP.*** **Its 17KB of copy graded `ok`, so the pipeline would
+have PRINTED AN OPTICIAN'S WEBSITE AS MODO ENERGY'S PUBLISHED CLAIM**, *under a heading that says "a
+page found for them."*
+
+***The disclosure that was supposed to cover this — "we have not verified the page belongs to the
+rival" — does not rescue it. It flags doubt while still printing the quote.*** **A reader skimming
+"Modo Energy says: …" does not audit the domain.**
+
+**⚠ AND THE TOOL WAS MISSING A REAL COLLISION WHILE THAT HAPPENED.** *Modo Energy's actual site reads:*
+
+> ***"Regulated benchmarks, **bankable** forecasts, and analyst research for energy investors,
+> lenders, and **developers**."***
+
+**Aurora's own claim is *"**Bankable** insights powering energy investments globally"*, and its four
+customer sectors include **Developers**.** *So Modo collides with Aurora on **both** the word
+`bankable` and the customer — **the strongest collision in the set, sitting behind a resolution
+failure that was reported as a bot wall.***
+
+**⚠⚠ THREE FIXES, AND THE FIRST TWO WERE BOTH WRONG — MEASURED, NOT REASONED.**
+
+1. **(WRONG — too permissive)** *The original heuristic accepted a URL if the rival's first token
+   appeared anywhere in the host. `modo` in `modo.com.sg` passed; **the optician was accepted.***
+2. **(WRONG — too strict)** *Requiring the token to be the registrable host label **correctly
+   rejected the optician AND wrongly rejected `afry.com`, `baringa.com` and `chagee.com.sg`** —
+   real rivals whose legitimate domains look identical in shape to the wrong one.* **The lesson is
+   recorded because it generalises: `modo.com.sg`-wrong and `afry.com`-right are the SAME SHAPE.
+   No hostname rule separates them, and two attempts to write one both failed.**
+3. **(CORRECT)** *Host matching is **necessary but not sufficient**; identity is confirmed on the
+   **fetched page's own text** against the submitter's category.*
+
+**⚠⚠ AND THE THRESHOLD WAS CHOSEN FROM DATA, NOT GUESSED.** *A single shared word accepted the
+optician. Rather than pick another number, the overlap was measured:*
+
+| page | shared words with the category | |
+|---|---|---|
+| **optician (STRANGER)** | **1 — `["and"]`** | **only a stopword** |
+| Modo Energy (REAL) | 2 — `["and", "market"]` | **1 content word** |
+| Afry / Wood Mac / Baringa (REAL) | **6 each** | *analytics, data, market, power, solutions* |
+
+***COUNTING "and" AS EVIDENCE OF IDENTITY IS THE ENTIRE FAILURE.*** **It is the one word that made a
+Singapore optician look like an energy-analytics firm.** *With stopwords excluded the stranger scores
+**0** and every real rival scores **1 to 5** — a separation that needs no tuned threshold at all.*
+
+**⚠ VERIFIED THROUGH THE FULL FETCH PATH, ON THE EXACT CASE THAT WAS DANGEROUS:**
+
+    Modo optician via full fetch  -> old code would quote it: YES  |  new check: REJECT  CORRECT
+    Modo Energy  via full fetch  -> old code would quote it: YES  |  new check: accept  CORRECT
+    Afry         via full fetch  -> old code would quote it: YES  |  new check: accept  CORRECT
+
+**⚠ A FOURTH DEFECT, CAUGHT BY THE FIRST VERSION RUNNING.** *`_category_corroborates()` called
+`_sig_words()`, which lives in `generate_report.py`, not in the scanner — **`NameError`**, and the
+surrounding `except` would have **swallowed it into a silent "no rival read."** *Fixed by inlining;
+recorded because it is the fourth silent-swallow found at this one junction (§6.7.4b, §6.7.8a and its
+guard, §6.7.9).*
+
+**⚠ AND THE VERDICT VOCABULARY NOW CARRIES A FOURTH STATE.** *`unverified_identity` is **not**
+`blocked`: the page read fine but could not be confirmed as the rival's.* *The report prints it
+separately and refuses to quote — the reader is told **which** of "we could not read it" and "we
+could not confirm it is them" happened, because they are different facts about the world.*
+
+**⚠⚠ RESIDUAL RISK, STATED RATHER THAN HIDDEN.** *A same-named business **in the same category** would
+still pass the content check.* **That is why the report prints the **domain** and refuses to assert
+the page is the rival's.** *The reader sees what was read and can reject it.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
