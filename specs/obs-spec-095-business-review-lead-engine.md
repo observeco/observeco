@@ -3982,6 +3982,74 @@ code" defect earlier in this spec.**
 
 ---
 
+
+**✅ 6.7.15 CANARY RE-RUN AFTER FOUR RESOLVER CHANGES — PASSED, NO BAND MOVED (VERIFIED — 1 Oct).**
+
+**⚠ WHY THIS WAS OWED.** *The rival resolver changed **four times** in one session (§6.7.10
+construct-first; §6.7.13 the honest single-token refusal; §6.7.14 owner-supplied URLs; §6.7.14a the
+single-definition lookup fix).* ***And the rival set is an INPUT to `position_strength` (§3.6: an
+incomplete set caps the score honestly) — so a resolver change can move a score, and a resolver
+REGRESSION would move it SILENTLY.*** **The canary is the only instrument that would catch that.**
+
+**✅ RESULT:**
+
+    reference rubric: 1.21.0 (frozen snapshot)    current rubric: 1.21.0
+    C1-greenpackers  ref Contested  cur Contested  OK
+    C2-caica         ref Contested  cur Contested  OK
+    C3-petdirectory  ref Contested  cur Contested  OK
+    C4-sgfitness     ref Contested  cur Contested  OK
+    C5-saladshop     ref Contested  cur Contested  OK
+    C6-bonefirm      ref Contested  cur Contested  OK
+    CANARY PASSED — no band moved across 6 cases.   (exit 0)
+
+**⚠ SO THE RESOLVER WORK DID NOT MOVE THE INSTRUMENT.** *All six bands are identical to the frozen
+1.21.0 reference.* **Combined with §6.7.11a's 44-vs-49 question being discharged by re-measurement
+(the identical configuration returned 49, so the 44 was band noise), the instrument is stable across
+this entire front.**
+
+**⚠⚠ AND THE INFORMATIONAL SECTION RE-CONFIRMS A FINDING THAT IS NOT THIS SESSION'S TO FIX.** *The
+canary prints the instrument against the engagement's own recorded conclusion, and **only 2 of 6
+agree**:*
+
+| fixture | engagement | instrument | |
+|---|---|---|---|
+| C2-caica | Contested | Contested | *match* |
+| C3-petdirectory | Contested | Contested | *match* |
+| C1-greenpackers | **Fragile** | Contested | *differs* |
+| C4-sgfitness | **Fragile** | Contested | *differs* |
+| C5-saladshop | **Fragile** | Contested | *differs* |
+| C6-bonefirm | **Viable, conditional** | Contested | *differs* |
+
+**⚠ AND THIS IS THE §D1 CALIBRATION QUESTION, NOT A DRIFT QUESTION.** *The drift check exists to
+detect CHANGE; this compares the instrument against a human reading and finds **systematic
+disagreement on four of six.*** *All four disagreements are the instrument scoring **higher** than the
+engagement did.* **Recorded because it is a standing property of the instrument that the canary
+surfaces on every run and that no resolver work addresses** — *it needs Sean's own read, and the
+`_meta` notes already flag that some expected vectors are assistant mappings rather than recorded
+human labels.*
+
+**⚠ STATUS OF THE FRONT, HONESTLY.** *The report-quality complaint that opened this stretch —
+"it feels cursory, you did not research properly" — has been addressed at the mechanical level:*
+- *the report **quotes and compares** the evidence it fetches, with the triggering word shown from both
+  sides (§6.7.8);*
+- *rivals **resolve** and are read (§6.7.10, §6.7.14);*
+- *strangers are **refused** rather than quoted (§6.7.13);*
+- *the owner can **supply URLs** to restore the read where inference fails (§6.7.14a).*
+
+**⚠ WHAT IS STILL NOT FIXED, IN ONE PLACE:**
+1. *Five of six score explanations remain **lookup text keyed to the number** (§6.7.8 fixed only
+   position strength).*
+2. *The **F&B segment**: single-token brand names go unquoted unless the owner supplies URLs — **and
+   whether owners will is untested.***
+3. *The **§D1 calibration gap** above: the instrument scores **higher than the engagement on four of
+   six fixtures**, systematically.*
+4. *The **§4.6.0b discovery gap**: the tool reads the names it is given and **still cannot discover who
+   else occupies a category.***
+5. *The **§3.7 go-live blockers** (Turnstile, confirmation gate, spend ceiling, migration 003) remain
+   unbuilt.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
