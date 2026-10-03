@@ -3067,6 +3067,45 @@ could not confirm it is them" happened, because they are different facts about t
 still pass the content check.* **That is why the report prints the **domain** and refuses to assert
 the page is the rival's.** *The reader sees what was read and can reject it.*
 
+**⚠⚠ THE RE-MEASUREMENT RETURNED, AND THE FIX IS ONLY PARTIAL — REPORTED AS PARTIAL, NOT AS A WIN.**
+
+*Same submission, same probe, **3 runs with the category-query fix in place**, against the 5 runs
+before it:*
+
+| rival | before the fix | **after the fix** | |
+|---|---|---|---|
+| Wood Mac | 4/5 (80%) | **3/3 (100%)** | *improved* |
+| Baringa | 4/5 (80%) | **3/3 (100%)** | *improved* |
+| **Modo** | **0/5 (0%)** | **1/3 read `ok` — still no claim** | **improved but still silent** |
+| **Afry** | **0/5 (0%)** | **0/3 — still `blocked`** | **NOT FIXED** |
+| any claim | 40% | **50%** | *marginal* |
+
+**⚠⚠ THE HONEST READING: TWO OF THE FOUR ARE NOW SOLID, ONE IMPROVED BUT STILL YIELDS NOTHING, AND
+ONE IS UNCHANGED.**
+
+***Afry is STILL `blocked` 0/3 — and this is the finding that matters, because `afry.com/en` reads
+151,226 characters with a real claim when fetched directly.*** **So the search is STILL not returning
+Afry's own site for the category-augmented query, and it is still fetching something else that is
+walled.** *The category hint improved the query but did not fix the resolution.*
+
+**⚠⚠ SO THE DIAGNOSIS IS NOW SHARPER THAN THE FIX.** ***The weak link is RESOLUTION — not fetching,
+and not the walls.*** *Fetching works (151KB–400KB from a plain client). Identity checking now works
+(it rejects the optician). **But "what URL is this rival's homepage?" is answered by a general web
+search that does not reliably return a company's own domain from its name** — even when the name is
+augmented with the category.*
+
+**⚠ THE OBVIOUS NEXT STEP, NOT YET TAKEN: TRY THE NAME AS A DOMAIN DIRECTLY.** *`afry.com`,
+`modoenergy.com`, `woodmac.com`, `baringa.com` were all correct — and all guessable from the name
+alone.* **A deterministic step that constructs `<name>.com`, `<name>.co`, `<token>.com` and probes
+them would likely beat the search for exactly the firms that have a clean domain and a poor search
+footprint.** ***That is a build, not a tweak, and it is the next front.***
+
+**⚠ WHAT THIS CHANGES ABOUT §6.7.8a.** *That section concluded the report is "structurally working
+from a subset." **That still stands — but the cause is now located precisely: it is the resolver.***
+**The `blocked` label was NOT a property of Afry's or Modo's websites — those serve content freely —
+it was a property of how the tool FINDS them.** *Recorded because the first reading blamed the
+rivals, and the truth is the tool.*
+
 ---
 
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
