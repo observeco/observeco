@@ -3785,6 +3785,73 @@ negatives and was broken again here.**
 
 ---
 
+
+**⚠⚠⚠ 6.7.13a THE HONEST RULE BROKE THE FLAGSHIP CASE — AURORA 4/4 → 1/4 (MEASURED — 1 Oct).**
+
+**⚠⚠ THE MEASUREMENT, RUN IMMEDIATELY AFTER ADOPTING THE RULE, ON THE EXACT SUBMISSION SEAN READ AND
+COMPLAINED ABOUT:**
+
+| | rival | outcome |
+|---|---|---|
+| **AS SUBMITTED** | Afry | **`unverified_identity` — refused** |
+| | Baringa | *blocked (captcha)* |
+| | **Modo** | **`unverified_identity` — refused** |
+| | Wood Mac | *quoted (the only one left)* |
+| | | ***1 of 4 quoted — was 4 of 4 before §6.7.13*** |
+
+**⚠⚠ AND THE REMEDY THE REPORT NOW TELLS THE OWNER TO USE DOES NOT FULLY FIX IT EITHER:**
+
+| | rival as the owner would rewrite it | outcome |
+|---|---|---|
+| **AS THE REMEDY SUGGESTS** | Afry | **still refused** — *Afry's page never spells its own name in a way this matches* |
+| | Baringa | *blocked* |
+| | **Modo Energy** | **✅ QUOTED** — *"Regulated benchmarks, bankable forecasts…"* |
+| | Wood Mackenzie | **blocked (captcha)** — *where "Wood Mac" previously read fine* |
+
+**⚠⚠ SO THE TRADE IS EXPLICIT, AND BOTH SIDES OF IT ARE REAL.**
+
+- **"Modo" → "Modo Energy" WORKS.** *The remedy is not empty: it converts a refusal into a quote.*
+- **"Wood Mac" → "Wood Mackenzie" BREAKS.** *The fuller name reaches a domain that is captcha-walled, where the abbreviation reached a readable one.* **So following the report's own advice can LOSE a rival that was previously quoted.**
+- **"Afry" fails either way** — *a four-letter brand whose page apparently does not use the string as a standalone word.*
+
+***NET: ADOPTING THE HONEST RULE TOOK THE COMPETITIVE SECTION FROM 4 OF 4 RIVALS ON THE FLAGSHIP CASE TO 1 OF 4, AND THE REPORT'S OWN REMEDY RECOVERS ONLY ONE OF THE THREE LOST.***
+
+**⚠⚠ WHAT THIS MEANS, STATED WITHOUT ANY SOFTENING.** *The section Sean asked me to build — the one
+answer to "it feels cursory, you did not research properly" — is now **substantially empty on the very
+case that prompted it.*** **The tool no longer prints a stranger's homepage, which was a real defect.
+But it also no longer prints most of the right ones.**
+
+**⚠ AND THE COMPARISON THAT MATTERS IS NOT "BEFORE vs AFTER" BUT "WRONG vs LIMITED":**
+- *BEFORE:* **13 quoted across the corpus, at least 6 of them strangers.** *Confidently wrong.*
+- *AFTER:* **3 quoted across the corpus, all genuine.** *Honestly limited, and on the flagship case almost silent.*
+
+**⚠⚠ THIS IS NOW A PRODUCT DECISION THAT CANNOT BE SETTLED BY ANOTHER HEURISTIC, AND IT IS SEAN'S.**
+*Five rules were measured wrong (§6.7.13). The measurement shows the correct and incorrect cases are
+**not separable on any deterministic signal available.*** **The only remaining options both cost
+something:**
+
+1. **ASK THE OWNER.** *Add an optional "rival website" field, or require the name as the business
+   writes it.* **Free and deterministic — but it asks the owner to do work, and §D38 already recorded
+   Sean's position that the FORM should not be doing the reasoning.**
+2. **ONE MODEL CALL** *to map name → domain.* **Accurate; breaks the no-second-call determinism
+   defended since D58.**
+3. **RE-EXAMINE THE PREMISE.** *The product could scope the free report to **NOT quote rivals at all**,
+   and say plainly that the competitive read is the paid engagement — which is what the report
+   asserted before §6.7.6 and what Sean originally read and rejected.*
+
+**⚠ RECOMMENDATION, OFFERED AS A DECISION NOT A VERDICT: OPTION 1, WITH THE FIELD OPTIONAL.** *It is the
+only one that is both deterministic and does not ask the owner to reason — it asks for a **URL**, which
+is a fact, not a judgement.* **And the refusal path already exists: a rival with no URL given simply
+goes unquoted, exactly as now.** *Option 3 is the fallback if Sean prefers no new field; option 2
+should be rejected on the determinism grounds already established unless Sean overrides.*
+
+**⚠ AND THE META-LESSON, RECORDED BECAUSE IT COST A SESSION'S WORK.** *§6.7.13 was committed and only
+THEN was the flagship case re-run.* **The regression check was written after the commit, not before
+it.** *The rule for this has been written twice already in this spec and was still not followed:
+**re-run the case that motivated the change BEFORE declaring the change good.***
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
