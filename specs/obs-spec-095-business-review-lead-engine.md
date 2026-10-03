@@ -3176,6 +3176,69 @@ is measured, not projected.* **It does NOT close:**
 
 ---
 
+
+**⚠⚠ 6.7.10a GENERALISATION TEST — A DIFFERENT SECTOR BREAKS THE FIX (MEASURED — 1 Oct).**
+
+**⚠⚠ §6.7.10's 100% WAS ONE SECTOR, AND IT DOES NOT TRANSFER.** *The same construct-first resolver
+was run on **CaiCa's six bubble-tea rivals** — the **hard-name** case, and the sector that matters
+most, because §D3's target is **weak-positioning SMEs** (bubble tea, F&B, salons), not energy
+analytics.*
+
+**⚠⚠ RESULT: 2 OF 6 RIVALS YIELDED A CLAIM — against 4 of 4 on Aurora.**
+
+| rival | url used | how | claim |
+|---|---|---|---|
+| **CHAGEE** | `chagee.com.sg` | **constructed** ✔ | *quoted* |
+| **LiHO** | `lihoteasg.org` | *search fallback* | *quoted* |
+| Mixue | `mixue.asia/mixue-bubble-tea/` | **not Mixue's own site** | **none** |
+| HEYTEA | `heyteas.com/singapore/` | **not HEYTEA's own site** | **none** |
+| CHICHA San Chen | `chichasanchen.com/en/menu/index.php` | *a menu page* | **none** |
+| KOI | `koithe.com/en/menu.php` | *search fallback* | **`blocked` (captcha)** |
+
+***CONSTRUCTION WORKED FOR TWO AND FAILED FOR FOUR.*** *CHAGEE and LiHO resolved correctly —
+**and note that LiHO came from the SEARCH FALLBACK, not from construction** (`liho.com` is not the
+brand; the brand is `lihoteasg.org`). **KOI built `koi.com`, which is not the brand — the brand is
+`koithe.com`, and that is captcha-walled.** **So on this sector the unreliable fallback §6.7.9
+condemned is still carrying the load, and the one constructed domain that was right was the one
+whose name matched its domain exactly.***
+
+**⚠⚠ AND WORSE THAN THE MISSES — THE IDENTITY GATE PASSED A KNOWN THIRD-PARTY DOMAIN.** ***`heyteas.com`
+is NOT HEYTEA's own site; it is a menu-guide site, identified as such in §6.7.6.*** **The §6.7.9
+content check — which I described as "the only real discriminator available" — ACCEPTED IT, because
+its category `"bubble tea"` overlaps trivially with any page about tea.** *`heyteas` also satisfies the
+permissive host rule (`heyteas`.startswith(`heytea`)).*
+
+**⚠⚠ THE ROOT CAUSE, STATED PLAINLY: THE CONTENT CHECK SCALES INVERSELY WITH HOW GENERIC THE CATEGORY
+IS.** *On Aurora's sector the category was **"power market data analytics"** — a vocabulary almost
+nothing else uses, so overlap was real evidence.* **On bubble tea the distinguishing word is `tea`,
+which every tea-adjacent page contains.** ***So the gate is strong exactly where the SMEs are not, and
+weak exactly where ObserveCo's market is.***
+
+**⚠⚠ AND THIS IS THE LIMIT THAT MUST NOT BE PAPERED OVER.** *The 2-of-6 outcome is **not** a
+misattribution — **no stranger's claim was printed**, because `_clean_claim()` rejected what those
+pages contained.* ***But the RESOLUTION was wrong, and the report would render "we found a page for
+them (heyteas.com) but it states no single claim" — which reads as a fact about HEYTEA while being a
+fact about a third party.*** **That is the §4.6 failure class again, one layer down: not a quoted
+falsehood, but a false implied source.**
+
+**⚠ WHAT IS CLAIMED AND WHAT IS NOT.**
+- ***CLAIMED:*** *construction resolves a rival whose **name matches its domain** (`chagee`,
+  `afry`, `modoenergy`, `woodmac`, `baringa`) — measured across two sectors.*
+- ***NOT CLAIMED:*** *that the resolver works on SMES GENERALLY.* **Measured: it does not.** *Six
+  bubble-tea rivals → 2 claims. **§6.7.10's 100% is an Aurora figure and must never be quoted as a
+  product-wide reliability number.***
+- ***NOT CLOSED:*** *the identity gate's weakness on generic categories; the abbreviation gap
+  (§6.7.10); the §4.6.0b discovery gap.*
+
+**⚠ THE NEXT FRONT, IDENTIFIED AND NOT YET BUILT: THE GATE NEEDS THE SUBMITTER'S OWN DIFFERENTIATORS,
+NOT THE CATEGORY.** *A generic category cannot be the identity test, because generic words are
+everywhere.* **The discriminator has to come from something specific to the rival or to the
+submitter's own claim — a brand token in the host (`koithe`, `lihoteasg`), or the presence of the
+rival's name in the page's own text.** *That is a build, and it is the prerequisite for claiming this
+works outside Aurora's sector.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
