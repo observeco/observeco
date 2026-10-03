@@ -757,6 +757,59 @@ def _category_corroborates(text: str, category: str) -> bool:
     return bool(want & have)
 
 
+# ⚠⚠ NON-COMPANY NAMES OWNERS ACTUALLY TYPE, MEASURED ON A REAL SUBMISSION (spec 6.7.11b).
+#
+# Fixture C3-petdirectory answers "who are your competitors?" with:
+#     ['Google search', 'Facebook pet groups', 'Yelp']
+# That is how a real business owner answers -- they name a CHANNEL, not a company. And
+# `_domain_candidates("Google search")` builds `google.com` from the bare first token, which FETCHES
+# FINE and whose page is corroborated by almost ANY category, so the identity gate cannot stop it.
+# Measured: it was ACCEPTED as the rival "Google search". The report would have printed Google's
+# homepage as "the rival's claim" for a business that named no rival at all.
+#
+# ⚠ THIS IS A BOUNDED STOPLIST, NOT A GENERAL SOLUTION, AND THAT IS STATED DELIBERATELY.
+# The general problem -- "is this string a company at all?" -- is not solvable by a word list, and
+# four fixes at this junction have already gone wrong. A stoplist is chosen because it is auditable,
+# it fails in the SAFE direction (a real rival named "Yelp" would be skipped rather than
+# misattributed), and its limits are visible. The general form is recorded as OPEN in the spec.
+_NON_COMPANY_TOKENS = {
+    # search / directories
+    "search", "google", "bing", "directory", "listings", "listing", "yellowpages",
+    # social / channels
+    "facebook", "instagram", "tiktok", "twitter", "youtube", "whatsapp", "telegram", "linkedin",
+    "yelp", "xiaohongshu", "rednote", "lemon8", "carousell",
+    # marketplaces
+    "amazon", "shopee", "lazada", "taobao", "etsy", "ebay", "grab", "foodpanda", "deliveroo",
+    # generic descriptors owners use instead of a name
+    "groups", "group", "forums", "forum", "reviews", "blogs", "blog", "online", "website",
+    "word", "mouth", "referral", "referrals", "social", "media", "marketplace", "platform",
+    "communities", "community", "others", "competitors", "everyone", "nobody", "none",
+}
+
+
+def _is_company_name(name: str) -> bool:
+    """Does this look like a COMPANY the owner named, or a CHANNEL/generic term?
+
+    ⚠⚠ MEASURED FAILURE THIS PREVENTS. C3-petdirectory names its competitors as
+    ['Google search', 'Facebook pet groups', 'Yelp'] -- a channel list, not a rival list.
+    Construction built `google.com` from "google", it fetched fine, and the identity gate passed it
+    (a giant's homepage shares words with every category). It was accepted as the rival "Google
+    search", so the report would print GOOGLE'S HOMEPAGE as a rival's published claim.
+
+    ⚠ THE RULE: if ANY token of the name is a known channel/generic term, do not treat the string as
+    a company. This deliberately errs toward skipping, because a skipped rival is reported as
+    "could not be read" while a misattributed one prints a stranger's words as the rival's own.
+    """
+    import re as _re
+    toks = [t for t in _re.findall(r"[a-z0-9]+", (name or "").lower()) if t]
+    if not toks:
+        return False
+    if any(t in _NON_COMPANY_TOKENS for t in toks):
+        return False
+    # a pure generic like "others" or "none" is caught above; anything else is treated as a company
+    return True
+
+
 def _domain_candidates(name: str) -> list[str]:
     """Deterministic candidate homepages for a rival's NAME, most-likely first.
 
@@ -828,6 +881,15 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
     for name in [n.strip() for n in owner_names if n and n.strip()][:max_rivals]:
         entry = {"name": name, "url": "", "capture_status": "not_found", "why": "",
                  "claim": "", "excerpt": ""}
+        # ⚠⚠ REFUSE CHANNELS AND GENERIC TERMS BEFORE RESOLVING ANYTHING. See _is_company_name:
+        # "Google search" resolved to google.com and was ACCEPTED as a rival. Nothing is fetched for
+        # these, so no stranger's homepage can be printed as a rival's claim.
+        if not _is_company_name(name):
+            entry["capture_status"] = "not_a_company"
+            entry["why"] = ("this does not look like a company name -- it reads as a channel or a "
+                            "generic term, so we did not treat it as a competitor")
+            reads.append(entry)
+            continue
         # ⚠ QUERY WITH THE CATEGORY, NOT THE MARKET. "Modo Singapore" is ambiguous and returned a
         # Singapore optical shop; "Modo energy market analytics" returns the actual firm. The
         # category is the disambiguator the market name never was. Falls back to market when the

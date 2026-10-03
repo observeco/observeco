@@ -3403,6 +3403,71 @@ against the frozen fixtures after any resolver change.** *Not yet re-run.*
 
 ---
 
+
+**⚠⚠ 6.7.11b CONSTRUCTION MADE A NEW DEFECT POSSIBLE: IT RESOLVED `GOOGLE.COM` AS A RIVAL
+(BUILT — 1 Oct).**
+
+**⚠⚠ THE CANARY PASSED AND THE DEFECT WAS STILL THERE — BECAUSE A BAND CHECK CANNOT SEE CONTENT.**
+*After the resolver change, `run_canary.py` reported **CANARY PASSED — no band moved across 6 cases**
+(spec §6.7.11a's owed regression check).* **But it checks BANDS, not what the report says.** *Looking at
+the fixture inputs instead of the outputs exposed this:*
+
+> ***C3-petdirectory names its competitors as `['Google search', 'Facebook pet groups', 'Yelp']`.***
+> ***That is how a real business owner answers — they name a CHANNEL, not a company.***
+
+**⚠⚠ AND CONSTRUCTION BUILT A WORKING URL FROM IT.**
+
+    "Google search"        -> built google.com        -> FETCHES FINE  -> **ACCEPTED AS THE RIVAL**
+    "Yelp"                 -> built yelp.com          -> 403, not resolved
+    "Facebook pet groups"  -> built facebookpetgroups.com -> captcha, not resolved
+
+***`_domain_candidates("Google search")` takes the bare first token `google` and builds `google.com`.
+Google's homepage fetches fine, and its text shares words with virtually ANY category — so the §6.7.9
+identity gate CANNOT stop it.*** **`_is_company_name` did not exist; the report would have printed
+GOOGLE'S HOMEPAGE as "the rival's claim" for a pet directory that named no rival at all.**
+
+**⚠ AND THE §6.7.10 FALSIFICATION TEST DID NOT CATCH IT.** *That test used invented names
+("Twomen Bagel House", "Zzzq Corp") that have **no DNS** — so it proved construction cannot invent a
+rival **out of nothing**.* ***It did not test a name that points at a REAL but WRONG company, which is
+the more dangerous case and the one a channel name produces.*** **Generalising last, again: the
+negative test was built from the case that motivated the fix, not from the failure modes the fix
+invites.**
+
+**⚠⚠ THE FIX: A CHANNEL/GENERIC STOPLIST, APPLIED BEFORE ANY FETCH.**
+
+*`_is_company_name(name)` refuses a name if **any** token is a known channel or generic term —
+search engines and directories, social platforms, marketplaces, and the descriptors owners use instead
+of a name (`others`, `word of mouth`, `online`, `none`).* **Refused names produce a new
+`not_a_company` status: nothing is fetched, so no stranger's homepage can be printed, and the report
+says the string did not read as a company rather than pretending it was read.**
+
+**⚠ VERIFIED IN BOTH DIRECTIONS — a filter that rejects a good answer is worse than no filter.**
+
+    MUST REFUSE:  Google search, Facebook pet groups, Yelp, others, word of mouth, online, Shopee,
+                  Google Maps, Xiaohongshu, foodpanda, none          -> ALL 11 refused  ✔
+    MUST ACCEPT:  Afry, Baringa, Modo, Wood Mac, CHAGEE, LiHO TEA, KOI The, Gong Cha, Virgin Active,
+                  Pure Fitness, Fitness First, ActiveSG, SaladStop!, Stuff'd, Supergreen, Six Hands,
+                  Caltrate, Blackmores, Kinohimitsu, Kordel's, BioPak, Greenpac, SKP EcoVue,
+                  N&E Innovations                                        -> ALL 24 accepted ✔
+
+    Across all 6 canary fixtures, exactly 3 names are refused — Facebook pet groups, Google search,
+    Yelp — and all 3 are C3's channels. No real rival anywhere is skipped.
+
+**⚠⚠ AND THE LIMIT OF THIS FIX, STATED PLAINLY RATHER THAN PAPERED OVER.** ***A STOPLIST IS NOT A
+SOLUTION TO "IS THIS A COMPANY AT ALL", AND IT MUST NOT BE SOLD AS ONE.*** *It is chosen because it is
+**auditable**, it **fails in the safe direction** (a real rival awkwardly named "Yelp" would be skipped
+and reported as unreadable rather than misattributed), and **its limits are visible in a list anyone
+can read**.* **The general problem — deciding companyhood structurally — is recorded as OPEN.** *Five
+fixes have now been written at this junction and the first four were all wrong; a bounded, inspectable
+stoplist is the honest stopping point rather than a sixth clever rule.*
+
+**⚠ NOTE ALSO: THE CANARY'S BLIND SPOT IS NOW DOCUMENTED.** ***It validates BANDS. It does not validate
+CONTENT.*** *A change that leaves every band identical can still print a stranger's website, and this
+one did.* **The canary is a drift gate, not a content gate, and should not be read as evidence that the
+report says the right thing.**
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
