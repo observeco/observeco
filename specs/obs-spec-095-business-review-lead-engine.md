@@ -3356,6 +3356,53 @@ buy reliability by letting the submitter supply rival URLs / permitting one mode
 
 ---
 
+
+**✅ 6.7.11a END-TO-END ON THE LIVE PATH — ALL FOUR RIVALS RESOLVED, GATE ACTIVE (VERIFIED — 1 Oct).**
+
+**⚠⚠ EVERYTHING BEFORE THIS WAS MEASURED ON A PATH THE PRODUCT DOES NOT TAKE (§6.7.11).** *This is the
+first end-to-end run through the **sandbox itself**, after both call sites were fixed and the server
+restarted. Aurora submission, four named rivals.*
+
+**⚠ RESULT — EVERY RIVAL RESOLVED TO ITS OWN REAL DOMAIN:**
+
+    Modo      (modoenergy.com)     Afry     (afry.com)
+    Wood Mac  (woodmac.com)        Baringa  (baringa.com)
+
+***AFRY RESOLVED — the rival that the search-driven resolver returned `blocked` for on 8 of 8
+attempts across §6.7.9 and §6.7.10.*** *Construction found it on the first candidate.*
+
+**⚠⚠ AND IT FOUND A LITERAL COLLISION, NOT A CONCEPTUAL ONE.** *The strongest kind, because it needs no
+concept map to be believed:*
+
+> ***Modo (modoenergy.com)*** — *their claim: "Regulated benchmarks, **bankable** forecasts, and analyst
+> research for energy investors, lenders, and **developers**."*
+> *both of you use the language of:*
+> **- DATA, ANALYSIS AND INTELLIGENCE**   *you: insights          them: research, forecasts, benchmarks*
+> **- TRUST AND RELIABILITY**             *you: **bankable**      them: **bankable***
+
+***The word `bankable` appears in BOTH claims.*** *That is a fact about two public pages, verifiable by
+the reader, and it is exactly the "quality research" the report was criticised for lacking.*
+
+**⚠ AND THE GATE DISCLOSURE IS PRESENT AND HONEST:** *"The domain is shown so you can see what kind of
+page it was; we have **NOT verified** that any page belongs to the rival named."* **The §6.7.9 residual
+risk is stated in the report rather than hidden (§6.7.10a/§6.7.10b).**
+
+**⚠⚠ ONE OBSERVATION TO WATCH, NOT A RESOLVED QUESTION.** *The report ran on a **44/100 Contested**
+where the previous run gave **49/100**, with the rival set now complete.* **That is a 5-point move,
+which is within the §6.7.5 band-noise envelope (max composite shift 8 points) — so it is NOT
+attributable to the resolver change on this evidence alone, and must not be claimed as one.** *It may
+also be genuine: a newly-read Modo collision with `bankable` could legitimately depress position
+strength.* **Distinguishing the two needs repeated runs on both configurations, which has not been
+done. Recorded as open.**
+
+**⚠ AND NOTE THE REGRESSION-RISK THIS CREATES.** *The rival set is an INPUT to `position_strength`
+(§3.6: an incomplete set caps the score honestly).* ***So a resolver improvement can move a score — and
+a resolver REGRESSION would too, silently.*** **That is why the §6.7.8a canary and the corpus run
+matter more now than before: the resolver now feeds a number, and the number must be re-checked
+against the frozen fixtures after any resolver change.** *Not yet re-run.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
