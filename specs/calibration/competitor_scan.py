@@ -757,6 +757,49 @@ def _category_corroborates(text: str, category: str) -> bool:
     return bool(want & have)
 
 
+def _domain_candidates(name: str) -> list[str]:
+    """Deterministic candidate homepages for a rival's NAME, most-likely first.
+
+    ⚠⚠ WHY THIS EXISTS — MEASURED, AND IT IS THE FIX FOR THE REAL WEAK LINK (spec 6.7.9).
+
+    §6.7.9 measured that the failure was RESOLUTION, not fetching and not bot walls: `afry.com/en`
+    serves 151,226 characters with a real claim to a plain fetcher, yet the search-driven resolver
+    reported Afry `blocked` 0/3 because it never returned Afry's own site. **A general web search
+    does not reliably map a company NAME to its own DOMAIN** — not even augmented with the category.
+
+    ⚠⚠ AND THE NAMES GIVE THEMSELVES AWAY. Every rival that resolved correctly in testing did so at
+    a domain that was GUESSABLE FROM THE NAME ALONE: afry -> afry.com, modoenergy -> modoenergy.com,
+    woodmac -> woodmac.com, baringa -> baringa.com, chagee -> chagee.com.sg, liho -> lihoteasg.org.
+    So for the firms that have a clean domain and a poor search footprint — which is most real
+    businesses — construction beats search.
+
+    ⚠ THIS IS A PROBE, NOT AN ASSUMPTION. Building a URL proves nothing; the caller must FETCH it and
+    the identity check must pass. A wrong guess simply wastes one cheap request and falls through to
+    the next candidate. Nothing is accepted on the strength of the name matching the domain.
+
+    ⚠ ORDER MATTERS AND IS DELIBERATE. The joined full name ("modoenergy") is tried before the bare
+    first token ("modo"): "modoenergy.com" is the firm, "modo.com" is somebody else — and the same
+    shape of mistake (`modo.com.sg`, an optician) is exactly what §6.7.9 was about. Trying the
+    specific form first means the ambiguous one is only reached if the specific one fails.
+    """
+    import re as _re
+    toks = [t for t in _re.findall(r"[a-z0-9]+", (name or "").lower()) if len(t) > 2]
+    if not toks:
+        return []
+    joined = "".join(toks)
+    out = []
+    for stem in ([joined] if len(toks) > 1 else []) + [toks[0]]:
+        for tld in (".com", ".com.sg", ".sg", ".co", ".io", ".net", ".org", ".com.au"):
+            out.append("https://%s%s" % (stem, tld))
+    # ⚠ de-duplicate while preserving order; the first hit wins so order is the whole game
+    seen, uniq = set(), []
+    for u in out:
+        if u not in seen:
+            seen.add(u)
+            uniq.append(u)
+    return uniq
+
+
 def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
                 max_rivals: int = 6, category: str = "") -> list[dict]:
     """Read the OWNER-NAMED rivals' OWN sites, and quote what each one claims.
@@ -789,19 +832,42 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
         # Singapore optical shop; "Modo energy market analytics" returns the actual firm. The
         # category is the disambiguator the market name never was. Falls back to market when the
         # submitter gave no category.
-        _hint = (category or market or "").strip()
-        try:
-            urls = search("%s %s" % (name, _hint), limit=4)
-        except SearchUnavailable as exc:
-            entry["why"] = "search unavailable: %s" % exc
-            reads.append(entry)
-            continue
-        # prefer the rival's OWN site over a listicle or a social page about it
-        # ⚠ STRICT identity check (see _domain_matches). A page that fails it is NOT used as the
-        # rival's claim, because quoting a stranger's site as this rival's words is worse than
-        # reporting the rival as unreadable.
-        own = [u for u in urls if _domain_matches(name, u)]
-        target = (own or [None])[0]
+        # ⚠⚠ CONSTRUCT FIRST, SEARCH SECOND (spec 6.7.9). Construction beat search on every rival
+        # that resolved: afry.com, modoenergy.com, woodmac.com, baringa.com were all guessable from
+        # the name. Probe the built candidates CHEAPLY and stop at the first that reads ok AND is
+        # corroborated by its own text; only if none does, fall back to the search.
+        target, probe_notes = None, []
+        for cand in _domain_candidates(name):
+            try:
+                _st, _html = fetch(cand, timeout=min(12, per_url_timeout))
+            except Exception as exc:                       # noqa: BLE001 - any transport failure
+                probe_notes.append("%s: %s" % (cand, type(exc).__name__))
+                continue
+            _cs, _why = grade_capture(_st, _html)
+            if _cs != "ok":
+                probe_notes.append("%s: %s" % (cand, _cs))
+                continue
+            if not _category_corroborates(strip_tags(_html), category):
+                probe_notes.append("%s: unverified_identity" % cand)
+                continue
+            target = cand                                # first corroborated candidate wins
+            break
+
+        if not target:
+            _hint = (category or market or "").strip()
+            try:
+                urls = search("%s %s" % (name, _hint), limit=4)
+            except SearchUnavailable as exc:
+                entry["why"] = ("no homepage found by construction (%s) and search unavailable: %s"
+                                % ("; ".join(probe_notes[-3:]) or "no candidates", exc))
+                reads.append(entry)
+                continue
+            # prefer the rival's OWN site over a listicle or a social page about it
+            # ⚠ STRICT identity check (see _domain_matches). A page that fails it is NOT used as the
+            # rival's claim, because quoting a stranger's site as this rival's words is worse than
+            # reporting the rival as unreadable.
+            own = [u for u in urls if _domain_matches(name, u)]
+            target = (own or [None])[0]
         if not target:
             entry["why"] = "no candidate URL found"
             reads.append(entry)

@@ -3108,6 +3108,74 @@ rivals, and the truth is the tool.*
 
 ---
 
+
+**⚠⚠ 6.7.10 THE RESOLVER IS REBUILT: CONSTRUCT THE DOMAIN, SEARCH ONLY AS FALLBACK (BUILT — 1 Oct).**
+
+**⚠⚠ §6.7.9 LOCATED THE REAL WEAK LINK: RESOLUTION, NOT FETCHING AND NOT BOT WALLS.** *`afry.com/en`
+serves **151,226 characters with a real claim** to a plain fetcher, yet the search-driven resolver
+reported Afry **`blocked` 0/3** because it never returned Afry's own site.* ***A general web search
+does not reliably map a company NAME to its own DOMAIN — not even with the category added.***
+
+**⚠⚠ AND THE FIX WAS VISIBLE IN THE DATA ALL ALONG.** *Every rival that resolved correctly did so at
+a domain **guessable from the name alone**: `afry` → `afry.com`, `modoenergy` → `modoenergy.com`,
+`woodmac` → `woodmac.com`, `baringa` → `baringa.com`, `chagee` → `chagee.com.sg`, `liho` →
+`lihoteasg.org`.* ***For firms with a clean domain and a poor search footprint — which is most real
+businesses — construction beats search.***
+
+**BUILT:** *`_domain_candidates(name)` builds candidate homepages (joined full name first, then the
+bare first token; `.com`, `.com.sg`, `.sg`, `.co`, `.io`, `.net`, `.org`, `.com.au`), and
+`rival_reads()` **probes them cheaply, accepting the FIRST that both reads `ok` AND passes the
+§6.7.9 content check.*** **Search runs only if no built candidate survives — so it is a fallback, not
+the primary path.** *A wrong guess costs one cheap request and falls through.*
+
+**⚠⚠ MEASURED RESULT — 3 RUNS, SAME SUBMISSION, DIRECTLY COMPARABLE TO §6.7.9:**
+
+| rival | search only (before) | **construct-first (after)** |
+|---|---|---|
+| **Afry** | **0/5, then 0/3** | **3/3 ✔** |
+| **Modo** | **0/5, then 0/3** | **3/3 ✔** |
+| Wood Mac | 4/5 → 3/3 | **3/3 ✔** |
+| Baringa | 4/5 → 3/3 | **3/3 ✔** |
+| **any claim read** | **40% → 50%** | **12/12 = 100%** |
+
+***AND IT IS NOW DETERMINISTIC.*** *All three runs returned the **identical** four claims — because
+construction does not depend on search luck.* **The §6.7.8a flicker was a property of the search; the
+resolver no longer has it.**
+
+**⚠⚠ THE FALSIFICATION TEST — CAN CONSTRUCTION MANUFACTURE A RIVAL THAT DOES NOT EXIST?** *This is the
+failure mode the fix invites: an eager builder resolves a made-up name to somebody else's site, and
+the report quotes a stranger as the rival — **the precise defect §6.7.9 was about**.* **Tested on
+invented names that have no DNS:**
+
+    "Twomen Bagel House"  -> built twomenbagelhouse.com / .com.sg / .sg / .co   -> NOT resolved  ✔
+    "Zzzq Corp"           -> built zzzqcorp.com / .com.sg / .sg / .co           -> NOT resolved  ✔
+    "Afry"  (real control)-> afry.com                                          -> resolved      ✔
+    modo.com.sg           -> REJECTED under the real category AND under "optician eyewear frames"
+
+***ZERO FALSE RESOLUTIONS.*** **Nothing is accepted on the strength of a name matching a domain — the
+page must read `ok` AND corroborate the submitter's category.** *The optician is refused even when
+the category is changed to match its own industry, because its 574 characters share no content word
+with either.*
+
+**⚠⚠ ONE REAL LIMITATION, FOUND AND STATED RATHER THAN HIDDEN.** ***AN ABBREVIATED NAME STILL FAILS
+CONSTRUCTION.*** *The owner may name a rival **"Modo"** when the firm is **"Modo Energy"** — and
+`_domain_candidates("Modo")` builds **`modo.com`**, which is **not** the firm.* **In isolation that
+would leave Modo unresolved.** *In the live path it does not, because the **search fallback** catches
+it — and indeed `rival_reads` returned Modo's claim 3/3.* ***But the fallback is the very component
+§6.7.9 proved unreliable, so the abbreviation case inherits a weaker guarantee than the full-name
+case.*** **Recorded as the next known gap: construction cannot infer that "Modo" means "Modo Energy",
+and nothing in the free-form form tells it so.**
+
+**⚠ WHAT THIS CLOSES AND WHAT IT DOES NOT.** ***It closes the resolution failure*** — *the 100% figure
+is measured, not projected.* **It does NOT close:**
+- *the abbreviation gap above;*
+- *the §4.6.0b discovery gap — the tool reads the rival NAMES IT IS GIVEN and still cannot discover who
+  else occupies the category;*
+- *the §6.7.6a misattribution residual — a same-named business **in the same category** would still
+  pass the content check, which is why the report prints the domain and refuses to assert ownership.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
