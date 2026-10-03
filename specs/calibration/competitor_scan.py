@@ -1020,6 +1020,14 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None,
             # PARTY's words to the rival, which is the misattribution §4.6 exists to prevent.
             # The wording therefore says only what is true: a page was found FOR that rival,
             # and the domain is shown so the reader can judge what it is.
+            # ⚠⚠ AN EXPLICIT MACHINE-READABLE STATUS, BECAUSE PROSE PARSING FAILS SILENTLY.
+            # The renderer needs to know WHICH of the four unread causes applies, so it can say the
+            # right sentence. The first attempt inferred it by substring-scanning the sentence -- and
+            # the test caught it reporting `thin` for a "Nothing here says..." line, because
+            # "noTHINg" contains "thin". Substring matching on prose is exactly the class of bug that
+            # produced the never-firing `"TIER 0"` guard. An exact marker removes the guess.
+            _st = r.get("capture_status") or ("ok" if r.get("claim") else "not_found")
+            _marker = " [status=%s]" % _st
             if r.get("claim"):
                 # ⚠ CUT ON A WORD BOUNDARY AT THE SOURCE. The report-side trim never saw this
                 # string -- the 220-slice here ran FIRST and produced "...tea inheritance a",
@@ -1028,23 +1036,40 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None,
                 if len(_q) > 220:
                     _q = _q[:220].rsplit(" ", 1)[0].rstrip(",;:") + "…"
                 members.append(
-                    "%s. A page found for them (%s) states: \"%s\""
-                    % (base, publisher(r["url"]), _q))
+                    "%s. A page found for them (%s) states: \"%s\"%s"
+                    % (base, publisher(r["url"]), _q, _marker))
             elif r.get("capture_status") == "ok":
                 members.append("%s. A page found for them (%s) was read but states no single "
-                               "claim." % (base, publisher(r["url"])))
+                               "claim.%s" % (base, publisher(r["url"]), _marker))
+            elif r.get("capture_status") == "not_a_company":
+                # ⚠⚠ A FOURTH HONEST STATE. Measured on C3-petdirectory, whose rival list is
+                # ['Google search', 'Facebook pet groups', 'Yelp'] -- CHANNELS, not companies.
+                # Previously this fell through to the bare `base` (a name with no explanation at
+                # all), and before the §6.7.11b stoplist it resolved to GOOGLE.COM and was quoted.
+                members.append("%s. We did not treat this as a competitor: it reads as a channel "
+                               "or a search term, not a business that publishes a claim. If you "
+                               "meant a specific company, name it and we will read it.%s" % (base, _marker))
             elif r.get("capture_status") == "not_found":
-                members.append("%s. No site for them could be found." % base)
+                # ⚠⚠ THIS SENTENCE WAS FALSE AND THE RESOLVER CHANGE MADE IT SO. It said "No site
+                # for them could be found" -- a claim about the RIVAL. But construction now probes
+                # built domains FIRST and a not_found means NO BUILT CANDIDATE WORKED AND THE SEARCH
+                # FELL BACK AND FAILED TOO. That is a fact about OUR resolution, not about whether
+                # the rival has a website. §4.6 forbids rendering a tool failure as a finding about
+                # the subject; this is that rule applied to the resolver instead of the fetcher.
+                members.append("%s. We could not WORK OUT which site is theirs — we tried the "
+                               "obvious domains built from the name and a search, and neither "
+                               "gave us a page we could attribute to them. That is a limit of our "
+                               "lookup, not a statement that they have no site.%s" % (base, _marker))
             elif r.get("capture_status") == "unverified_identity":
                 members.append("%s. A page was found (%s) but we could NOT confirm it belongs to "
                                "them (%s) — so we will not quote it. Nothing here says what they "
-                               "claim." % (base, publisher(r["url"]), r.get("why") or "unconfirmed"))
+                               "claim.%s" % (base, publisher(r["url"]), r.get("why") or "unconfirmed", _marker))
             elif r.get("url"):
                 members.append("%s. A page found for them (%s) could NOT be read (%s) — so "
                                "nothing here says what they claim."
-                               % (base, publisher(r["url"]), r.get("why") or "unreadable"))
+                               % (base, publisher(r["url"]), r.get("why") or "unreadable", _marker))
             else:
-                members.append(base)
+                members.append(base + _marker)
         # ⚠ SAY WHAT THE SET IS AND IS NOT. The consumer must know these are the owner's names,
         # not the tool's own research, so the reading cannot be over-claimed.
         members.append(

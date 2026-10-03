@@ -3468,6 +3468,65 @@ report says the right thing.**
 
 ---
 
+
+**⚠⚠ 6.7.11c THE REPORT SAID THE WRONG REASON FOR AN UNREAD RIVAL — FOUR STATES COLLAPSED INTO ONE
+SENTENCE (BUILT — 1 Oct).**
+
+**⚠⚠ THE REPORT HAD ONE SENTENCE FOR EVERY UNREAD RIVAL:** *"For X we found a page but could not read
+it, so nothing here says what they claim."* **Measured on C3-petdirectory, whose rival list is
+`['Google search', 'Facebook pet groups', 'Yelp']`: NO PAGE WAS EVER SOUGHT for those names.** *The
+sentence asserted we found and failed to read pages that do not exist — **the §4.6 failure class again:
+a tool failure rendered as a fact about the world, and in the direction that reads as an excuse.***
+
+**⚠⚠ AND A SECOND, NEWER FALSEHOOD: `not_found` SAID "No site for them could be found."** *That was
+written when resolution WAS the search.* **Construction now probes built domains first, so `not_found`
+means *no built candidate worked and the search fallback failed too* — a fact about **our lookup**, not
+about whether the rival has a website.** *The resolver change made the old sentence false without
+touching it.*
+
+**⚠ FOUR STATES, EACH A DIFFERENT FACT ABOUT THE WORLD, NOW SAID SEPARATELY:**
+
+| status | what the report now says |
+|---|---|
+| **`not_a_company`** | *"We did not treat this as a competitor: it reads as a channel or a search term, not a business that publishes a claim."* |
+| **`unverified_identity`** | *"A page was found (domain) but we could NOT confirm it belongs to them — so we will not quote it."* |
+| **`not_found`** | *"We could not WORK OUT which site is theirs… That is a limit of our lookup, not a statement that they have no site."* |
+| **`blocked`** | *"A page found for them (domain) could NOT be read (captcha) — so nothing here says what they claim."* |
+
+**⚠⚠ AND THREE TESTS OF MY OWN FIX FAILED BEFORE IT WORKED — EACH CAUGHT BY RUNNING IT, NOT BY
+READING IT.**
+
+1. **SUBSTRING PARSING FAILED.** *The renderer inferred the status by scanning the sentence text —
+   and the test caught it reporting **`thin`** for a "Nothing here says…" line, **because
+   `noTHINg` contains `thin`**.* ***Exactly the class that produced the never-firing `"TIER 0"` guard.***
+   **Replaced with an explicit `[status=…]` marker appended by the producer, and a marker strip so it
+   can never reach the reader inside a quotation.**
+
+2. **THE MARKER WAS READ BUT THE LINES WERE STILL SKIPPED.** *`_rivals_read()` identified rival lines by
+   "carries a domain in parentheses" — **true when every rival had a URL, false for `not_a_company` and
+   `not_found`, which have none.*** ***Those two were silently dropped, produced no entry, and the
+   report fell through to the very sentence the fix existed to remove. The fix that was meant to remove
+   the wrong sentence would not have run.*** **Detection is now on the marker, which every rival line
+   carries and no note carries.**
+
+3. **A `write_file` SYNTAX ERROR** *in the test harness — a stray expression caught by the linter,
+   fixed and re-run.*
+
+**⚠ VERIFIED: ALL SIX STATES PARSE CORRECTLY, AND THE MARKER NEVER LEAKS INTO A QUOTED CLAIM.**
+
+    not_a_company / unverified_identity / not_found / blocked / thin / ok   -> all parsed correctly
+    quoted claim delivered intact: "We make the best tea."   marker leaked: no
+
+***THE PATTERN, STATED PLAINLY, BECAUSE IT HAS NOW HAPPENED FIVE TIMES AT THIS ONE JUNCTION: a guard or
+a fix that is CORRECT IN ISOLATION and INERT OR INVERTED IN SITU.*** *The `"TIER 0"` key mismatch, the
+unpassed `category` parameter, the parenthesis rule, the substring match, and the stoplist's missing
+member line were all invisible to inspection and only surfaced when the pipeline was actually run end
+to end.* **The rule this session keeps re-learning: after changing how a value is written, run the
+reader; after changing how it is read, run the writer. A producer/consumer round-trip test is the
+cheapest way to catch this class and it should be written at the same time as the change.**
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 

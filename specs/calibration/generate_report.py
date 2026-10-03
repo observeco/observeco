@@ -568,20 +568,44 @@ def _rivals_read(submission: dict | None) -> list[dict]:
     for m in members:
         if not isinstance(m, str) or m.startswith("_"):
             continue
-        # only the lines built from a rival read carry a domain in parentheses
-        if "(" not in m or ")" not in m:
+        # ⚠⚠ IDENTIFY RIVAL LINES BY THE STATUS MARKER, NOT BY PARENTHESES.
+        # The previous rule was "only lines from a rival read carry a domain in parentheses" -- true
+        # when every rival line had a URL. It is FALSE for `not_a_company` (no URL: we never looked)
+        # and for `not_found` (no URL: we could not work one out). Those two lines have no
+        # parentheses, so they were SILENTLY SKIPPED, produced no entry, and the report fell through
+        # to the old single sentence -- "we found a page but could not read it" -- for a rival we
+        # never looked for. The fix that was meant to remove that sentence would not have run.
+        # The marker is present on EVERY rival line and absent from the markers/notes, so it is the
+        # precise discriminator. Caught by the producer->consumer test, not by inspection.
+        if "[status=" not in m:
             continue
-        name = m.split("—")[0].strip()
-        dom = m.split("(")[1].split(")")[0].strip()
+        name = m.split("—")[0].split(". ")[0].strip()
+        dom = m.split("(")[1].split(")")[0].strip() if "(" in m and ")" in m else ""
         quoted = m.split("states: \"", 1)[1].rsplit("\"", 1)[0] if "states: \"" in m else ""
+        # the [status=...] marker must never reach the reader inside a quotation
+        if "[status=" in quoted:
+            quoted = quoted.split("[status=")[0].rstrip()
         # ⚠ CUT ON A WORD BOUNDARY. Measured: a hard [:220] slice rendered "...oriental
         # culture and tea inheritance a" -- text that ends mid-word reads as a broken page,
         # not as an excerpt, and it was shown to a business owner in the section that proves
         # the tool read the rival. Trim to the last whole word and mark the truncation.
         if len(quoted) > 220:
             quoted = quoted[:220].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+        # ⚠⚠ CARRY THE STATUS, OR THE RENDERER CANNOT TELL THE TWO UNREAD CAUSES APART.
+        # The report now says "we did not treat X as a competitor" for a CHANNEL name and
+        # "we could not establish which site is theirs" for a real rival we failed to resolve.
+        # Without `status` here, every unread rival looks like the second case -- so a pet directory
+        # that named "Google search" would be told we tried to read a page we never looked for.
+        # ⚠⚠ READ THE EXPLICIT MARKER -- DO NOT SUBSTRING-SCAN THE PROSE. The first version of this
+        # scanned for words and the test caught it reporting `thin` for a "Nothing here says..."
+        # sentence, because "noTHINg" contains "thin". Markers are exact and cannot collide with
+        # wording, which is the same reason the §6.7.4 guard failed when it tested for a string that
+        # never appeared.
+        _status = ""
+        if "[status=" in m:
+            _status = m.rsplit("[status=", 1)[1].split("]", 1)[0].strip()
         out.append({"name": name, "domain": dom, "claim": quoted,
-                    "read": bool(quoted)})
+                    "read": bool(quoted), "status": _status})
     return out
 
 
@@ -986,9 +1010,22 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
                 out.append(f"      {line}")
             out.append("")
         _missed = [r for r in (sp.get("rivals_read") or []) if not r.get("read")]
-        if _missed:
-            out.append("  For " + ", ".join(r["name"] for r in _missed[:5])
-                       + " we found a page but could not read it, so nothing here says")
+        _nonco = [r for r in _missed if r.get("status") == "not_a_company"]
+        _tried = [r for r in _missed if r.get("status") != "not_a_company"]
+        # ⚠⚠ SAY WHICH OF THE TWO THINGS ACTUALLY HAPPENED. This was ONE sentence for every unread
+        # rival -- "we found a page but could not read it". Measured on C3-petdirectory, whose
+        # rivals are the channels ['Google search', 'Facebook pet groups', 'Yelp']: NO PAGE WAS EVER
+        # SOUGHT for those, so that sentence asserted we found and failed to read pages that do not
+        # exist. A wrong reason is the §4.6 failure class, and it reads as an excuse rather than a
+        # limit. The two states are different facts about the world and are now said separately.
+        if _nonco:
+            out.append("  We did not treat " + ", ".join(r["name"] for r in _nonco[:5])
+                       + " as competitors: " + ("it reads" if len(_nonco) == 1 else "they read")
+                       + " as a channel or a search term, not a business that publishes a claim.")
+            out.append("")
+        if _tried:
+            out.append("  For " + ", ".join(r["name"] for r in _tried[:5])
+                       + " we could not establish which site is theirs, so nothing here says")
             out.append("  what they claim.")
             out.append("")
     out.append("WHAT WE DID NOT CHECK")
