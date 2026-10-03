@@ -658,8 +658,107 @@ def _clean_claim(raw: str) -> str:
     return t
 
 
+def _domain_matches(name: str, url: str) -> bool:
+    """Does this URL plausibly belong to the named rival? Deliberately strict.
+
+    ⚠⚠ MEASURED — A WRONG-COMPANY SUBSTITUTION WAS SILENT AND DANGEROUS.
+    Resolving "Modo" (meaning Modo Energy, an energy-analytics firm) for an Aurora submission, the
+    search returned **`modo.com.sg` — a Singapore OPTICAL SHOP** — and the previous heuristic
+    accepted it because the first token "modo" appeared in the host. Its 17KB of text graded `ok`,
+    so the report would have quoted **a stranger's website as the rival's published claim**, under a
+    heading that says "a page found for them". The disclosure "we have not verified the page belongs
+    to the rival" does not rescue that: it flags doubt while still printing the quote.
+
+    ⚠ THE RULE: a short token appearing anywhere in a host is not evidence of identity. Require the
+    rival's name to appear as a HOST LABEL (a dot-delimited component, or the registrable part),
+    not merely as a substring. "Modo Energy" resolves to `modoenergy.com` -- label match. It does
+    NOT resolve to `modo.com.sg` -- that is a different company that happens to share four letters.
+    """
+    import re as _re
+    host = (url or "").lower().split("//")[-1].split("/")[0].split(":")[0]
+    if not host:
+        return False
+    toks = [t for t in _re.findall(r"[a-z0-9]+", (name or "").lower()) if len(t) > 2]
+    if not toks:
+        return False
+    labels = [l for l in host.split(".") if l and l not in ("www", "en")]
+    if not labels:
+        return False
+    # ⚠⚠ A BARE LABEL MATCH IS NOT IDENTITY, AND THIS WAS MEASURED THE HARD WAY.
+    # `modo.com.sg` (a Singapore OPTICAL SHOP) has "modo" as a host label -- so a label check alone
+    # accepted it as the rival "Modo" and would have PRINTED ITS WORDS as Modo Energy's claim.
+    # The tell is the PUBLIC SUFFIX: under `.com.sg` the registrable label is "modo", which any
+    # business may register. Under `.com` the registrable label is "modoenergy" -- which is the name.
+    # So the match is scored on WHERE the token lands, not just that it appears.
+    first = toks[0]
+    rest = toks[1:]
+    # ⚠⚠ HOST MATCHING ALONE CANNOT DECIDE THIS, AND BOTH OVER- AND UNDER-CORRECTIONS WERE
+    # MEASURED. `modo.com.sg` (an optician) and `modoenergy.com` (the rival) are BOTH "a host label
+    # equal to the name". `afry.com` and `baringa.com` are legitimate and look identical in shape.
+    # No hostname rule separates them, which is why an earlier strict version of this function
+    # correctly rejected the optician AND wrongly rejected Afry, Baringa and CHAGEE.
+    #
+    # So the host is used as a NECESSARY BUT NOT SUFFICIENT condition. Identity is then confirmed
+    # on the FETCHED CONTENT, against the submitter's category (see _category_corroborates).
+    # ⚠ The residual risk is stated rather than hidden: a same-named business IN THE SAME CATEGORY
+    # would still pass. That is why the report prints the domain and refuses to assert the page is
+    # the rival's -- the reader sees what was read and can reject it.
+    if rest:
+        joined = "".join(rest)
+        if any(first + joined in l or (first in l and all(rt in l for rt in rest)) for l in labels):
+            return True
+    return any(lbl == first or lbl.startswith(first) for lbl in labels)
+
+
+def _category_corroborates(text: str, category: str) -> bool:
+    """Does this page's own text show signs of the submitter's category? THE identity discriminator.
+
+    ⚠⚠ WHY CONTENT AND NOT THE HOSTNAME. Measured: resolving "Modo" for an Aurora submission, the
+    search returned `modo.com.sg` -- a Singapore OPTICAL SHOP -- and 17KB of its copy graded `ok`.
+    It would have been quoted as the rival's published claim. No hostname rule can separate that
+    from `afry.com`, which is the real firm. The page's own words can: an energy-analytics rival
+    talks about energy, markets, power, data; an optician talks about lenses, frames, prescriptions.
+
+    ⚠ THIS IS A HEURISTIC AND IT IS DELIBERATELY LOOSE. It rejects only when a page shows NO sign of
+    the category at all. A single shared content word is enough to accept, because the cost of
+    wrongly rejecting a real rival (reporting "could not verify") is lower than the cost of quoting
+    a stranger as the rival -- but both are real, and the report discloses which happened.
+    """
+    if not category:
+        return True                      # nothing to check against; the host match must stand alone
+    # ⚠ `_sig_words` lives in generate_report.py, not here -- the first version of this function
+    # called it and raised NameError, which the surrounding `except` would have swallowed into a
+    # silent "no rival read". Imported lazily so this module does not depend on the renderer at
+    # import time (competitor_scan must stay runnable standalone, e.g. from a cron shell).
+    # ⚠⚠ MEASURED OVERLAP, WHICH IS WHY STOPWORDS ARE EXCLUDED (not a stylistic choice).
+    #    category: "Power market data analytics and software solutions"
+    #      optician (STRANGER, modo.com.sg)  shared = 1  -> ["and"]      ONLY a stopword
+    #      Modo Energy (REAL)                shared = 2  -> ["and","market"]
+    #      Afry / Wood Mac / Baringa (REAL)  shared = 6  -> analytics, data, market, power, solutions
+    # ⚠ Counting "and" as evidence of identity is the whole failure: it is the single word that made
+    # a Singapore optician look like an energy-analytics firm. Excluding stopwords separates the
+    # stranger (0 content words) from every real rival (1 to 5), and needs no threshold to be tuned.
+    try:
+        import re as _re
+        _STOP = {
+            "and", "the", "for", "with", "that", "this", "from", "your", "you", "our", "are", "was",
+            "can", "will", "all", "any", "not", "but", "has", "have", "who", "how", "why", "what",
+            "when", "more", "most", "other", "into", "over", "than", "then", "them", "they", "its",
+            "it's", "we're", "business", "businesses", "company", "companies", "services", "service",
+            "solutions", "solution", "and/or", "etc", "new", "get", "see", "read", "about",
+        }
+        pat = _re.compile(r"[a-z][a-z\-]{2,}")
+        want = {w for w in pat.findall((category or "").lower()) if w not in _STOP}
+        have = {w for w in pat.findall((text or "").lower()) if w not in _STOP}
+    except Exception:
+        return True
+    if not want:
+        return True
+    return bool(want & have)
+
+
 def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
-                max_rivals: int = 6) -> list[dict]:
+                max_rivals: int = 6, category: str = "") -> list[dict]:
     """Read the OWNER-NAMED rivals' OWN sites, and quote what each one claims.
 
     ⚠⚠ WHY THIS EXISTS (spec 6.7.6 — MEASURED ON A REAL CLIENT SUBMISSION).
@@ -686,22 +785,38 @@ def rival_reads(owner_names: list[str], market: str, per_url_timeout: int = 20,
     for name in [n.strip() for n in owner_names if n and n.strip()][:max_rivals]:
         entry = {"name": name, "url": "", "capture_status": "not_found", "why": "",
                  "claim": "", "excerpt": ""}
+        # ⚠ QUERY WITH THE CATEGORY, NOT THE MARKET. "Modo Singapore" is ambiguous and returned a
+        # Singapore optical shop; "Modo energy market analytics" returns the actual firm. The
+        # category is the disambiguator the market name never was. Falls back to market when the
+        # submitter gave no category.
+        _hint = (category or market or "").strip()
         try:
-            urls = search("%s %s" % (name, market), limit=4)
+            urls = search("%s %s" % (name, _hint), limit=4)
         except SearchUnavailable as exc:
             entry["why"] = "search unavailable: %s" % exc
             reads.append(entry)
             continue
         # prefer the rival's OWN site over a listicle or a social page about it
-        first = name.split()[0].lower()
-        own = [u for u in urls if first and first in publisher(u).lower()]
-        target = (own or urls or [None])[0]
+        # ⚠ STRICT identity check (see _domain_matches). A page that fails it is NOT used as the
+        # rival's claim, because quoting a stranger's site as this rival's words is worse than
+        # reporting the rival as unreadable.
+        own = [u for u in urls if _domain_matches(name, u)]
+        target = (own or [None])[0]
         if not target:
             entry["why"] = "no candidate URL found"
             reads.append(entry)
             continue
         status, html = fetch(target, timeout=per_url_timeout)
         cstat, why = grade_capture(status, html)
+        # ⚠⚠ THE CONTENT CHECK -- the only real discriminator available. Measured: `modo.com.sg`
+        # (an optician) and `afry.com` (the rival) are indistinguishable by hostname, and both grade
+        # `ok`. The page's own words are what separate them. A page that reads fine but shows NO
+        # sign of the submitter's category is NOT accepted as the rival's claim.
+        if cstat == "ok" and not _category_corroborates(strip_tags(html), category):
+            cstat, why = "unverified_identity", (
+                "the page could not be confirmed as this rival's — its text shows no sign "
+                "of the %s category, so it may be a different business with a similar name"
+                % (category or "stated"))
         entry.update({"url": target, "capture_status": cstat, "why": why})
         if cstat == "ok":
             # ⚠ VALIDATED, because resolution is not quality -- see _clean_claim above.
@@ -792,6 +907,10 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None,
                                "claim." % (base, publisher(r["url"])))
             elif r.get("capture_status") == "not_found":
                 members.append("%s. No site for them could be found." % base)
+            elif r.get("capture_status") == "unverified_identity":
+                members.append("%s. A page was found (%s) but we could NOT confirm it belongs to "
+                               "them (%s) — so we will not quote it. Nothing here says what they "
+                               "claim." % (base, publisher(r["url"]), r.get("why") or "unconfirmed"))
             elif r.get("url"):
                 members.append("%s. A page found for them (%s) could NOT be read (%s) — so "
                                "nothing here says what they claim."
