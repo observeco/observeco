@@ -3527,6 +3527,65 @@ cheapest way to catch this class and it should be written at the same time as th
 
 ---
 
+
+**⚠⚠ 6.7.11d THE RIVALS SECTION WAS DELETED ENTIRELY WHEN NO CLAIM WAS READ (BUILT — 1 Oct).**
+
+**⚠⚠ THE 6.7.11c FIX NEVER RENDERED — BECAUSE THE SECTION IT LIVES IN DID NOT PRINT.** *End-to-end on
+the real C3 fixture, the report contained **no rivals section at all**:* **`WHAT WE READ` absent, the
+three channel names appearing only in the form echo.**
+
+**⚠ THE GATE WAS `if _read:` — "at least one rival's claim was read".** *C3's rivals are the channels
+`['Google search', 'Facebook pet groups', 'Yelp']`, all three now `not_a_company`, so `_read` is empty
+— **and the entire block was skipped.***
+
+***AND THE FALLBACKS WRITTEN INSIDE THAT BLOCK SPECIFICALLY TO STOP IT GOING SILENT WERE ALSO SKIPPED,
+BECAUSE THEY WERE NESTED INSIDE IT.*** *"WHAT WE COULD NOT COMPARE", with its careful "that is a limit
+on what we could read, not a finding about your position" — **all dead code precisely when it was
+needed.*** ***This is the same failure as the `"TIER 0"` guard that never fired (§6.7.4): A SAFETY
+BRANCH UNREACHABLE ON THE PATH THAT REQUIRES IT.*** **That is now the SIXTH instance at this junction.**
+
+**⚠ FIXED — THE GATE IS NOW "IS THERE ANYTHING TO SAY", and the heading no longer promises a read that
+did not happen:**
+
+    if _rivals_all or own_site_claim or website:
+        heading = "WHAT WE READ ABOUT YOUR RIVALS"        if _read
+                  else "YOUR RIVALS, AND WHAT WE COULD ESTABLISH"
+
+**✅ VERIFIED END-TO-END ON THE REAL FIXTURE — and this is the first time the C3 path has rendered
+correctly:**
+
+    heading present:                  "YOUR RIVALS, AND WHAT WE COULD ESTABLISH"
+    "found a page but could not read"  ABSENT   (it was never true)
+    "google.com"                       ABSENT   (no stranger's homepage is printed)
+    "did not treat Google search, Facebook pet groups, Yelp as competitors: they read as a
+     channel or a search term, not a business that publishes a claim."     PRESENT
+    "We tried to read what your rivals publish and did not establish a claim for any of them,
+     so every score below is based on your submission alone."              PRESENT
+
+**⚠⚠ AND THE OUTPUT EXPOSED TWO FURTHER DEFECTS, NOT YET FIXED — RECORDED SO THEY ARE NOT LOST.**
+
+1. **THE SECTION HEADER IS NOW FALSE, TWICE OVER.** *It still prints:*
+   > ***"We looked for a page for each rival you named and read what it says. The domain is shown so
+   > you can see what kind of page it was; we have NOT verified that any page belongs to the rival
+   > named."***
+   ***But NO PAGE WAS LOOKED FOR — all three were refused as channels before any fetch.*** **And no
+   domain is shown, because there is none.** *The header was written for the `_read` branch and is now
+   printed above a branch it does not describe. **A wrong reason, in the section's own voice.***
+
+2. **AND IT ASKS THE READER A NONSENSE QUESTION.** *The closing line is:*
+   > ***"Concretely, for you: does Google search, Facebook pet groups, Yelp already own the claim you
+   > are making — and if one does, what is genuinely left that is yours?"***
+   ***A search engine and two social channels cannot own a positioning claim.*** *The line is generated
+   from the raw `competitors_named` list without checking it against the resolved set, so it treats
+   every name the owner typed as a rival that publishes a claim.* **It undercuts the report's
+   credibility in the one paragraph meant to demonstrate its rigour.**
+
+**⚠ BOTH ARE THE SAME ROOT CAUSE AS EVERYTHING ELSE THIS STRETCH: a branch written for one state,
+left in place when the state changed.** *The next pass must make the header and the closing question
+conditional on the same resolved set the section body now uses.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 

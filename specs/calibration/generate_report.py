@@ -907,9 +907,20 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
     # undercut the one concrete proof of capability this report has. The reader should see the
     # rival's OWN words attributed to the DOMAIN it came from, then see precisely what is
     # still unresolved. Ownership of the page is NOT asserted -- see the attribution note.
-    _read = [r for r in (sp.get("rivals_read") or []) if r.get("read")]
-    if _read:
-        out.append("WHAT WE READ ABOUT YOUR RIVALS")
+    _rivals_all = sp.get("rivals_read") or []
+    _read = [r for r in _rivals_all if r.get("read")]
+    # ⚠⚠ THE GATE WAS `if _read:` -- AND THAT DELETED THE WHOLE SECTION WHEN NO RIVAL CLAIM WAS READ.
+    # Measured on C3-petdirectory, whose rivals are the channels ['Google search', 'Facebook pet
+    # groups', 'Yelp']: all three come back `not_a_company`, so _read is empty -- and then the heading
+    # never printed AND the "WHAT WE COULD NOT COMPARE" fallbacks INSIDE this block, written
+    # explicitly to stop the section going silent, never ran either. The reader was shown NOTHING
+    # about the three names they typed. The fallbacks were dead code exactly when they were needed.
+    # ⚠ This is the same failure as the guard that never fired (6.7.4): a safety branch unreachable on
+    # the path that needs it. The gate is now "is there anything to say", and each branch says its own
+    # thing -- including a heading that does not promise a read that did not happen.
+    if _rivals_all or sp.get("own_site_claim") or sp.get("website"):
+        out.append("WHAT WE READ ABOUT YOUR RIVALS" if _read
+                   else "YOUR RIVALS, AND WHAT WE COULD ESTABLISH")
         out.append("")
         # ⚠⚠ THE HEADER MUST NOT PROMISE SELF-DESCRIPTION. Measured on the SECOND sector:
         # Six Hands resolved to a lemon8 blog post, and the quote was a THIRD PARTY writing
@@ -1035,6 +1046,15 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
         out.append("  belongs to the rival named, check their pricing, consult company")
         out.append("  registries, or map who owns which word in your category. That is")
         out.append("  the paid analysis.")
+    elif _rivals_all:
+        # ⚠⚠ WE TRIED AND ESTABLISHED NOTHING -- SAY THAT, DO NOT SAY WE SCORED THE SUBMISSION ALONE.
+        # Measured on C3: three names given, no rival claim read. The previous else-branch said
+        # "We scored what your submission claims", which omits that the tool went looking. A reader
+        # is entitled to know the lookup ran and why it produced nothing.
+        out.append("  We tried to read what your rivals publish and did not establish a")
+        out.append("  claim for any of them, so every score below is based on your")
+        out.append("  submission alone. We did NOT verify who owns which word in your")
+        out.append("  category. That is the paid analysis.")
     else:
         out.append("  We scored what your submission claims. We did NOT cross-check your")
         out.append("  competitors' claims against public registries, verify their pricing,")
