@@ -1044,10 +1044,29 @@ def version_b(run: dict, counts: dict, weights: dict, rubric: dict | None = None
                        + " as competitors: " + ("it reads" if len(_nonco) == 1 else "they read")
                        + " as a channel or a search term, not a business that publishes a claim.")
             out.append("")
-        if _tried:
-            out.append("  For " + ", ".join(r["name"] for r in _tried[:5])
-                       + " we could not establish which site is theirs, so nothing here says")
+        # ⚠⚠ SAY WHICH CAUSE, PER RIVAL -- NOT ONE SENTENCE FOR BOTH (spec 6.7.16a).
+        # This line said "we could not establish which site is theirs" for EVERY unread rival.
+        # Measured on C5 with owner-supplied URLs: three URLs were pasted, and the one that failed was
+        # reported as UNESTABLISHED -- i.e. the report blamed the one thing it had not done, and hid
+        # the thing that actually stopped it (the site refused to be read).
+        # ⚠⚠ THE KEY IS `domain`, NOT `url` (spec 6.7.16b). _rivals_read exposes
+        # {name, domain, claim, status, read}. Reading r.get("url") returned None for EVERY entry,
+        # so every unread rival fell into the "we could not establish which site is theirs" bucket --
+        # the report asserted the wrong cause for rivals whose URL the owner had supplied, and my
+        # split of this sentence was a NO-OP that still printed the old combined line.
+        # ⚠ SAME CLASS AS `_own["domain"]` EARLIER THE SAME DAY: a consumer written against an assumed
+        # key. Verify the producer's key set before reading it.
+        _nosrc = [r for r in _tried if not (r.get("domain") or r.get("url"))]
+        _unread = [r for r in _tried if (r.get("domain") or r.get("url"))]
+        if _nosrc:
+            out.append("  For " + ", ".join(r["name"] for r in _nosrc[:5])
+                       + ": we could not establish which site is theirs, so nothing here says")
             out.append("  what they claim.")
+            out.append("")
+        if _unread:
+            out.append("  For " + ", ".join(r["name"] for r in _unread[:5])
+                       + ": we found their site, but it would not let us read it, so nothing")
+            out.append("  here says what they claim.")
             out.append("")
     out.append("WHAT WE DID NOT CHECK")
     out.append("")

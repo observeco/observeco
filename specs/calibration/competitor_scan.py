@@ -917,8 +917,16 @@ def _domain_candidates(name: str) -> list[str]:
     shape of mistake (`modo.com.sg`, an optician) is exactly what §6.7.9 was about. Trying the
     specific form first means the ambiguous one is only reached if the specific one fails.
     """
+    # ⚠⚠ AN APOSTROPHE MUST BE DELETED, NOT TREATED AS A SEPARATOR (spec 6.7.16a).
+    # `findall(r"[a-z0-9]+", "stuff'd")` returns ["stuff", "d"] -- it SPLITS on the apostrophe, so the
+    # domain built was `stuff.com`, and the owner-supplied `stuffd.com.sg` could never be matched.
+    # Measured on C5-saladshop: the owner pasted three rival URLs and Stuff'd was still resolved to
+    # the wrong domain. "Stuff'd" is how the brand writes itself; its domain is stuffd.com.sg.
+    # Deleting the apostrophe first recovers the intended stem. Same class as 6.7.16: one character
+    # silently discarding the owner's own input.
     import re as _re
-    toks = [t for t in _re.findall(r"[a-z0-9]+", (name or "").lower()) if len(t) > 2]
+    _clean = (name or "").lower().replace("'", "").replace("\u2019", "")
+    toks = [t for t in _re.findall(r"[a-z0-9]+", _clean) if len(t) > 2]
     if not toks:
         return []
     joined = "".join(toks)
@@ -948,12 +956,21 @@ def _owner_url_for(known: dict | None, name: str) -> str:
     """
     if not known:
         return ""
-    nk = (name or "").strip().lower()
-    direct = known.get(nk) or known.get((name or "").strip())
+    # ⚠⚠ NORMALISE BOTH SIDES IDENTICALLY, OR AN APOSTROPHE BREAKS THE MATCH (spec 6.7.16a).
+    # The dict is keyed on the URL's first label ("stuffd"); the name is "Stuff'd". A raw compare
+    # fails, "Stuff'd" is then treated as an UNRELIABLE single-token name, and the owner's own URL
+    # is discarded. Measured: three URLs pasted, one used.
+    def _n(s: str) -> str:
+        return "".join(ch for ch in (s or "").lower() if ch.isalnum())
+    nk = _n(name)
+    if not nk:
+        return ""
+    _norm = {_n(k): v for k, v in known.items()}
+    direct = _norm.get(nk)
     if direct:
         return direct
     # the URL's label often carries MORE of the name than the owner typed ("Modo" -> "modoenergy")
-    cands = sorted({v for k, v in known.items() if k.startswith(nk) or nk.startswith(k)})
+    cands = sorted({v for k, v in _norm.items() if k.startswith(nk) or nk.startswith(k)})
     return cands[0] if len(cands) == 1 else ""
 
 
@@ -1246,9 +1263,23 @@ def to_competitive_set(result: dict, owner_named: list[str] | None = None,
                                "claim.%s%s" % (base, publisher(r["url"]), r.get("why") or "unconfirmed",
                                               _tip, _marker))
             elif r.get("url"):
+                # ⚠⚠ FOUR ARGUMENTS, THREE PLACEHOLDERS (spec 6.7.16). THIS ONE LINE SILENTLY
+                # DELETED THE WHOLE RIVALS SECTION FOR EVERY UNREADABLE RIVAL.
+                # `_marker` was passed as a 4th %-argument to a string with 3 `%s`, raising
+                # "TypeError: not all arguments converted during string formatting". The caller's
+                # broad `except` caught it and reported a soft "research error -- scored against the
+                # rivals you named", member list empty, section gone. NO CRASH REACHED THE READER:
+                # the report simply looked as though it had found nothing.
+                # ⚠ Aurora never hit this branch -- its four pages all read cleanly. It fires on the
+                # UNREADABLE path: captcha walls, single-token names, i.e. the F&B sector this
+                # product is aimed at. Measured on C5-saladshop with owner-supplied URLs: three URLs
+                # supplied, none quoted, section absent.
+                # ⚠ The marker is CONCATENATED, not formatted -- it belongs at the end of the line
+                # where its sibling branches put it.
                 members.append("%s. A page found for them (%s) could NOT be read (%s) — so "
                                "nothing here says what they claim."
-                               % (base, publisher(r["url"]), r.get("why") or "unreadable", _marker))
+                               % (base, publisher(r["url"]), r.get("why") or "unreadable")
+                               + _marker)
             else:
                 members.append(base + _marker)
         # ⚠ SAY WHAT THE SET IS AND IS NOT. The consumer must know these are the owner's names,
