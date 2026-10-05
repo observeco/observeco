@@ -4146,6 +4146,39 @@ same class as supplying a parameter the caller never passes.***
 
 ---
 
+
+**✅ 6.7.16d THE CLASS IS CLOSED — VERIFIED, NOT ASSUMED (3 Oct).**
+
+**⚠ WHY THIS NEEDED CHECKING.** *§6.7.16c fixed the ONE marker check I had proved wrong
+(`grade_capture`'s `BLOCK_MARKERS`) and explicitly declined to claim the class. The same defect — a
+marker or phrase test scanning RAW HTML instead of VISIBLE text — could have been live in the identity
+gates, which are the checks this whole front has been fighting.*
+
+**✅ METHOD.** *Grepped every marker/lowercase test and traced each one's SUBJECT back to its caller —
+the consumer's parameter name proves nothing about what the caller passes.*
+
+| check | subject passed in | scans |
+|---|---|---|
+| `grade_capture` `BLOCK_MARKERS` (was raw HTML) | `visible = strip_tags(text)` | **✅ visible text** *(after 6.7.16c)* |
+| `grade_capture` `SHELL_MARKERS` | `visible` | **✅ visible text** |
+| `_page_names_the_rival` @1069 | `_page_text = strip_tags(_html)` @1061 | **✅ visible text** |
+| `_category_corroborates` @1072 | `_page_text = strip_tags(_html)` @1061 | **✅ visible text** |
+| `_page_names_the_rival` @1129 | `_pt = strip_tags(html)` @1123 | **✅ visible text** |
+| `_category_corroborates` @1147 | `_pt = strip_tags(html)` @1123 | **✅ visible text** |
+| `_clean_claim` "menu / add to cart" filter | already operates on extracted claim text | **✅ visible text** |
+
+**⚠ AND CONFIRMED `strip_tags` DROPS SCRIPT/STYLE CONTENTS, not just the tags** — measured:
+`strip_tags("<p>Hello world</p><script>var x={'captcha':'Captcha'};</script><style>.a{color:red}</style><p>More text</p>")`
+returns `'Hello world More text'`. **So script-borne strings like `"captcha":"Captcha"` cannot leak into
+any of the gates above** — which is exactly why they were the *only* false positive at `grade_capture`,
+where the subject was the raw HTML.
+
+**✅ CONCLUSION: `grade_capture`'s block-marker check was the ONLY raw-HTML marker test in the scanner.**
+*The class has no other live instance.* **Both identity gates were already correct** — the faults they
+carried were over-rejection (single-token names) and key mismatch (§6.7.16b), not the raw-HTML mistake.
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
