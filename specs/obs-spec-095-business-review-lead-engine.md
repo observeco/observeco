@@ -4179,6 +4179,63 @@ carried were over-rejection (single-token names) and key mismatch (§6.7.16b), n
 
 ---
 
+
+**✅ 6.7.16e A BUG NO LONGER WEARS A NETWORK FAILURE'S MASK — TWO SWALLOWS CLOSED, FALSIFIED BOTH
+DIRECTIONS (VERIFIED — 3 Oct).**
+
+**⚠ THE ROOT OF THIS WHOLE SECTION.** *Three one-character bugs (§6.7.16, §6.7.16a, §6.7.16b) each
+**silently deleted the rivals section** and each was invisible to the reader, the fixtures and the
+canary. Every one survived because a broad `except` reported a **programming error** with the same soft
+sentence it uses for a **timeout**:*
+
+    except Exception as exc:
+        out["scan_verdict"] = f"research error: {exc} — scored against the rivals you named"
+
+*That sentence is **true** for a dead host and **false** for a `TypeError`. The reader cannot tell them
+apart, so a broken tool looks like a working tool that found nothing.*
+
+**⚠⚠ AND FALSIFYING THE FIRST SWALLOW FOUND A SECOND.** *While re-injecting the §6.7.16 `TypeError`, the
+error was caught **before** the outer handler could classify it — by an inner `except` around the
+`rival_reads` call that printed to **stdout** (which nobody reads) and continued with an empty list:*
+
+    except Exception as _e:      # never let this break a submission
+        print("rival_reads failed:", _e)        # ⚠ stdout, invisible, continue silently
+
+***The same defect one level down.*** **A swallowed error nested inside a swallowed error.**
+
+**✅ THE FIX — CLASSIFY THE EXCEPTION, BOTH PLACES.** *A structural error means the CODE is wrong; a
+transport error is EXPECTED and degrades honestly.*
+
+    _BUGS = (TypeError, KeyError, IndexError, NameError, AttributeError,
+             UnboundLocalError, SyntaxError, IndentationError, ValueError)
+    if isinstance(exc, _BUGS):
+        traceback.print_exc()                       # to STDERR
+        out["scan_verdict"] = f"⚠ INTERNAL BUG: {type(exc).__name__}: {exc} — ..."
+        out["flags"] += [f"INTERNAL BUG ..."]        # surfaces on the submission
+        out["internal_bug"] = f"{type(exc).__name__}: {exc}"
+    else:
+        out["scan_verdict"] = f"research error: {exc} — scored against the rivals you named"
+
+**✅ FALSIFICATION (`test_except_fix.py`, both directions — PASSES):**
+
+| case | before | after |
+|---|---|---|
+| re-injected `TypeError` (*the original bug*) | *soft "research error" — section vanished* | **✅ `⚠ INTERNAL BUG: TypeError: ...`, flag set, traceback printed** |
+| genuine `TimeoutError` | soft | **✅ still soft — no crying wolf** |
+
+**⚠ THE TEST ITSELF HAD TO BE CORRECTED TWICE, AND THAT IS THE POINT.** *First it patched
+`server.rival_reads`, but the original bug came from `to_competitive_set` — a different function — so the
+injection never reached the handler under test. Then it patched the wrong module: `server.py` does
+`from competitor_scan import ... to_competitive_set` **inside** the function, so the module attribute
+must be patched, not the caller's binding.* ***A falsification test that does not reach the code path
+under test proves nothing — the same "tested a path the product does not take" error as §6.7.11.***
+
+**⚠ WHAT THIS DOES NOT DO.** *It does not make the report fail loudly to the READER — the submission
+still renders. It makes the failure **named and non-ignorable in the verdict and flags**, so the next
+such bug is caught at the first run instead of the fourth commit.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 

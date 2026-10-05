@@ -297,7 +297,24 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
                         _rr = _rrf(_names, _mk, per_url_timeout=15, category=_cat,
                                    known=_kurls)
                     except Exception as _e:      # never let this break a submission
-                        print("rival_reads failed:", _e)
+                        # ⚠⚠ A SECOND SILENT SWALLOW, FOUND BY FALSIFYING THE FIRST (spec 6.7.16e).
+                        # This handler printed to STDOUT -- which nobody reads -- and continued with an
+                        # empty rival list, so the report looked as though it had found nothing. It is
+                        # the same defect as the outer handler, one level down: measured while
+                        # re-injecting the §6.7.16 TypeError, which this branch caught before the
+                        # outer one could classify it.
+                        # ⚠ A code error is named and surfaced; a transport error degrades honestly.
+                        import traceback as _tb
+                        _BUGS = (TypeError, KeyError, IndexError, NameError, AttributeError,
+                                 UnboundLocalError, SyntaxError, IndentationError, ValueError)
+                        if isinstance(_e, _BUGS):
+                            print("⚠⚠ INTERNAL BUG in rival_reads (NOT a limit):", file=sys.stderr)
+                            _tb.print_exc()
+                            out["flags"] = (out.get("flags") or []) + [
+                                f"INTERNAL BUG in rival_reads: {type(_e).__name__}: {_e}"]
+                            out["internal_bug"] = f"{type(_e).__name__}: {_e}"
+                        else:
+                            print("rival_reads failed:", _e, file=sys.stderr)
                 cs = _tocs(res, owner_named=_names, rival_pages=_rr)
                 # ⚠ THE SUBMITTER'S OWN SITE IS EVIDENCE, AND IT WAS BEING THROWN AWAY.
                 # The scan fetches the seed URL and stores `claim` and `excerpt` on the
@@ -335,7 +352,35 @@ def run_submission(payload: dict, do_scan: bool) -> dict:
                 out["scan_verdict"] = (f"the web research did not complete ({verdict}) — "
                                        "your position is scored against the rivals you named")
         except Exception as exc:
-            out["scan_verdict"] = f"research error: {exc} — scored against the rivals you named"
+            # ⚠⚠ A BUG MUST NOT WEAR THE SAME MASK AS A NETWORK FAILURE (spec 6.7.16e).
+            #
+            # WHAT WENT WRONG. This handler reported EVERY exception as the same soft line:
+            #   "research error: <msg> — scored against the rivals you named"
+            # That sentence is TRUE for a timeout or a dead host and FALSE for a programming error.
+            # Measured on C5-saladshop: a one-character bug (four %-arguments to a three-placeholder
+            # string, §6.7.16) raised TypeError, was caught HERE, and the ENTIRE rivals section
+            # silently disappeared — member list empty, section gone. The report did not crash and
+            # did not warn; it simply looked as though it had found nothing. That is how three
+            # one-character bugs survived to production in one session.
+            #
+            # ⚠ THE DISTINCTION IS THE WHOLE POINT. A transport/parse failure is EXPECTED and
+            # degrades honestly. A TypeError/KeyError/IndexError/NameError/AttributeError means the
+            # CODE is wrong, and no fixture, canary or human read will catch it if it is reported as
+            # a normal result. Those are named, printed to stderr with a traceback, and surfaced in
+            # the verdict as a BUG rather than as a limit.
+            import traceback as _tb
+            _BUGS = (TypeError, KeyError, IndexError, NameError, AttributeError,
+                     UnboundLocalError, SyntaxError, IndentationError, ValueError)
+            if isinstance(exc, _BUGS):
+                print("⚠⚠ INTERNAL BUG in the research pass (this is NOT a limit):", file=sys.stderr)
+                _tb.print_exc()
+                out["scan_verdict"] = (f"⚠ INTERNAL BUG: {type(exc).__name__}: {exc} — the rival "
+                                       "research pass failed on a code error, not on a limit")
+                out["flags"] = (out.get("flags") or []) + [
+                    f"INTERNAL BUG in research pass: {type(exc).__name__}: {exc}"]
+                out["internal_bug"] = f"{type(exc).__name__}: {exc}"
+            else:
+                out["scan_verdict"] = (f"research error: {exc} — scored against the rivals you named")
 
     # 3. MODEL CALL
     state = run_jev.build_state(payload)
