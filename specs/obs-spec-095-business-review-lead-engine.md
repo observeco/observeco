@@ -4313,6 +4313,77 @@ refutation is the deliverable — see §6.7.17a for the validation set that IS a
 
 ---
 
+
+**⚠ 6.7.18 THE REVISED `position_strength` LADDER: 2 of 6 → 4 of 6 — AN IMPROVEMENT, NOT A FIX. NOT
+APPLIED (3 Oct).**
+
+***Sean: "draft the revised position_strength levels — specifically, tighten the anchor so a claim with
+no held position scores 1–2 rather than 3–4 — and test it against all six the same way." ***
+**Done, tested live against all six on the real model. The change is drafted and measured but
+**deliberately NOT written into the rubric**, because it reaches 4 of 6, not 6 of 6.**
+
+**✅ THE DIAGNOSIS THE DRAFT TARGETS.** *The old level 3 read "A real claim, but one that several
+occupants also make or can easily match -- a place held, not an advantage".* **Measured against the
+fixtures, the model was satisfying "a place held" with a claim that merely EXISTS** — the engagement's own
+notes say it directly:*
+- *C4/C5: "the white space the engagement identified is a fact about the LANDSCAPE, which the instrument
+  records as `competitive_room` 4 — and that alone cannot lift a business that does not exist out of
+  Fragile."*
+- *C3: `position_strength` 3 awarded for "the position is open".*
+***So `position_strength` was RE-AWARDING the market openness that `competitive_room` and
+`market_headroom` already score.***
+
+**✅ THE DRAFT (v2).** *Two changes, both about the word "held":*
+1. *Levels 1–4 rewritten so "held" means **evidenced by what the business does or has** — a product it
+   makes, a method it runs, a delivery it performs — and level 1 says outright that **an unclaimed gap
+   is not a position: spotting white space is not holding it.***
+2. *An appended discriminator: **"THE HELD-vs-UNCLAIMED TEST"** — a claim that exists only in a plan and
+   has displaced no occupant scores 1–2 and **never** 3–4; openness is recorded in `competitive_room`,
+   so it must not be re-awarded here.*
+
+**✅ MEASURED — LIVE MODEL, ALL SIX FIXTURES, UNCHANGED FORMULA AND UNCHANGED BOUNDARIES:**
+
+| case | ps raw | ps now | engagement | delta | band | expected | |
+|---|---|---|---|---|---|---|---|
+| C1-greenpackers | 2.05 | **3** | 1 | +2 | Contested | Fragile | *differ* |
+| C2-caica | 0.92 | **2** | 2 | **0** | Contested | Contested | **✅ MATCH** |
+| C3-petdirectory | 1.54 | **3** | 3 | **0** | Contested | Contested | **✅ MATCH** |
+| C4-sgfitness | 0.08 | **1** | 1 | **0** | Fragile | Fragile | **✅ MATCH** |
+| C5-saladshop | 0.06 | **1** | 1 | **0** | Fragile | Fragile | **✅ MATCH** |
+| C6-bonefirm | 0.77 | 2 | 3 | −1 | Contested | Viable, conditional | *differ* |
+
+***BAND AGREEMENT 2 of 6 → 4 of 6. MEAN `position_strength` ERROR +1.7 → +0.17 LEVELS.***
+
+**⚠ TWO REMAINING FAILURES, WITH **DIFFERENT** CAUSES — AND ONE IS NOT THIS QUESTION'S FAULT:**
+
+1. **C1 Greenpackers — `position_strength` still over-scored (+2).** *The model reads their
+   sustainability claim as held; the engagement reads it as not held at all, because there is no
+   recognition against BioPak and distribution is thin (`mental_advantage` is 1 here).* **This is the
+   fame-vs-position boundary the question already warns about and the model keeps crossing.** *This is
+   the genuine remaining target.*
+2. **C6 Bonefirm — `position_strength` is now EXACTLY right (3 = 3) and the band still misses.**
+   *Composite 46 versus the 61 the engagement's own grades produce.* **C6's failure is under-scoring in
+   the OTHER dimensions** — *the instrument returned `mental_advantage` 2 vs 3 and `defensibility` 2 vs 4,
+   both weight 20.* ***No wording change to this question can fix C6.***
+
+**⚠ A THIRD DRAFT (v3) WAS ALSO TESTED** — *it added an explicit "do not confuse holding a position with
+proving the route to scale" clause to stop the draft under-scoring Bonefirm.* **It also reached 4 of 6,
+fixed C6's dimension exactly (3 = 3), but pushed C1 and C2 back up (mean error +0.67).** *The two drafts
+trade one failure for another; **neither is a fix**, and the difference between them is inside model
+variance for a single run.*
+
+**⚠ WHAT WAS NOT DONE, AND WHY.** ***Sean's condition was "only commit and update the documentation if it
+works". 4 of 6 is an improvement, not a fix, so the rubric is UNCHANGED and `rubric.json` remains
+1.21.0.*** **The draft is recorded here for his edit; applying it would move five of six fixtures and
+must not be done on a 4-of-6 measurement.**
+
+**⚠ AND ONE STRUCTURAL FINDING THAT SURVIVES REGARDLESS: `position_strength` IS THE ONLY DIMENSION WITH
+NO `level_counts` ENTRY IN THE RUBRIC.** *Its level count is inferred at runtime from the question's own
+levels, in `score()`. A dimension that is **over-scored**, **structurally unlike the others**, and
+**supplied verbatim to the model as free text** is the least constrained input in the instrument.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
