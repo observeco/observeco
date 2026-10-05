@@ -4459,6 +4459,78 @@ other data set refutes it.* ***That instruction was the most valuable thing in t
 
 ---
 
+
+**✅ 6.7.20 THE LEVEL SHIFT IS NOT A SHIFT — IT IS A CEILING. THE INSTRUMENT ALMOST NEVER AWARDS THE
+TOP ANCHOR (VERIFIED, 120 HUMAN-GRADED CASES — 3 Oct).**
+
+**⚠ WHY THIS MATTERS MORE THAN THE EARLIER FINDINGS.** *§6.7.19 established that the instrument
+under-scores you on every dimension but one. The natural reading — "shift everything up by a third of a
+level" — would be **wrong**, and this measurement says why.* ***The gap is NOT uniform. It is
+near-zero at the bottom of the scale and grows to a whole level at the top.***
+
+**✅ A. THE SPREAD IS THE SAME — SO IT IS NOT A SCALE PROBLEM.**
+
+| dimension | n | your sd | instrument sd | ratio | mean diff |
+|---|---|---|---|---|---|
+| position_strength | 120 | 1.10 | 1.00 | 1.10 | +0.28 |
+| mental_advantage | 120 | 1.13 | 1.05 | 1.08 | +0.44 |
+| defensibility | 119 | 1.19 | 1.14 | 1.04 | +0.26 |
+| competitive_room | 119 | 0.60 | 0.55 | 1.11 | +0.21 |
+| demand_reach | 116 | 0.80 | 0.67 | 1.20 | +0.30 |
+
+**✅ B. THE DECISIVE TEST — THE GAP GROWS WITH YOUR LEVEL.** ***If this were a level shift the gap would
+be the same at every level. It is not:***
+
+| your level | **position_strength** | mental_advantage | demand_reach |
+|---|---|---|---|
+| 1 | **+0.00** *(n=9)* | −0.25 *(n=4)* | — |
+| 2 | **+0.07** *(n=27)* | **+0.00** *(n=35)* | −0.40 *(n=5)* |
+| 3 | +0.16 *(n=44)* | +0.58 *(n=26)* | +0.04 *(n=52)* |
+| 4 | **+0.50** *(n=26)* | +0.65 *(n=36)* | +0.20 *(n=41)* |
+| 5 | **+0.86** *(n=14)* | **+0.79** *(n=19)* | **+1.50** *(n=18)* |
+
+*(`competitive_room` at your level 4: **+2.00**, n=6.)*
+
+**⚠⚠ AT LEVELS 1–2 THE INSTRUMENT AGREES WITH YOU ALMOST EXACTLY. AT LEVEL 5 IT IS UP TO **1.5 LEVELS**
+LOW.** *That is not a shift — it is a **CEILING**.*
+
+**✅ C. AND THE COUNT OF TOP-LEVEL AWARDS SHOWS IT DIRECTLY — THE INSTRUMENT ALMOST NEVER GOES TO THE
+TOP:**
+
+| dimension | **YOU award the top level** | **instrument awards it** | ratio |
+|---|---|---|---|
+| `position_strength` (5) | **14** | **4** | 3.5× fewer |
+| `mental_advantage` (5) | **19** | **8** | 2.4× fewer |
+| `demand_reach` (5) | **22** | **3** | **7× fewer** |
+| `competitive_room` (4) | **6** | **0** | ***never once*** |
+
+***THE INSTRUMENT HAS EFFECTIVELY NO TOP ANCHOR. `competitive_room` level 4 was never awarded in 119
+cases; `demand_reach` level 5 was awarded 3 times where you awarded it 22.***
+
+**⚠⚠ SO THE FIX IS NOT A BAND CHANGE (6.7.17), NOT A `position_strength` LADDER CHANGE (6.7.18), AND NOT
+A UNIFORM RESCALE.** *It is the **TOP LEVEL DESCRIPTION of every dimension** — the anchor text for 4 and
+5. Those levels are written so demandingly that the model will not reach them, so every strong business
+is compressed into the middle. That is exactly why the largest errors are the famous businesses (McDonald's
+SG, Watsons, True Fitness — §6.7.19).*
+
+**⚠ AND IT EXPLAINS THE BOTTOM-END AGREEMENT FOR FREE.** *Levels 1–2 agree almost perfectly, so **the
+low-anchor wording is correct and must not be touched.** A change that shifts the whole scale up would
+break the bottom half — which is currently the most accurate part of the instrument.*
+
+**⚠⚠ THE PRIOR NOTES WERE HALF RIGHT.** *`FINDING-regrade-v1.md` concluded "a level shift means specific
+level WORDING is anchored differently and should be re-worded, not rescaled".* **Correct that it is
+wording, not scale — but it is not a SHIFT, it is a CEILING, and the wording to fix is the top anchors
+only.** ***"Re-word the levels uniformly" would have been the same class of error as "tighten the
+bands": a plausible fix aimed one level too coarse.***
+
+**⚠ COST AND METHOD.** *Read-only analysis of the existing 120-case CSV — **no model calls, no rubric
+change, nothing applied.** Reproduce with `measure_level_shift.py`.*
+
+**⚠ WHAT IS NOT YET SHOWN.** *That re-wording the top anchors actually moves the scores up. That needs the
+same live test as §6.7.18 — **but this time judged against the 120-case regrade, not the six fixtures.**
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
