@@ -90,15 +90,36 @@ def grade_capture(status: int, text: str) -> tuple[str, str]:
     if status in (401, 403, 407, 429, 503):
         return "blocked", "HTTP %d" % status
     visible = strip_tags(text or "")
-    # a challenge is a denial regardless of how much text came with it
-    low_all = (text or "").lower()
-    for m in BLOCK_MARKERS:
-        if m in low_all:
-            return "blocked", "challenge marker: %r" % m
+    # ⚠⚠ SUBSTANTIAL TEXT BEATS EVERY MARKER -- INCLUDING THE BLOCK MARKERS (spec 6.7.16c).
+    #
+    # ⚠ WHAT WAS WRONG. `low_all = text.lower()` scanned the RAW HTML for BLOCK_MARKERS, and ran
+    # BEFORE the length check. So a page that came back with plenty of readable content was still
+    # graded "blocked" if the string "captcha" appeared anywhere in its source.
+    #
+    # ⚠ MEASURED ON stuffd.com (Stuffs'D, Singapore) -- a REAL, fully readable WordPress homepage:
+    #   - HTTP 200, 81,592 bytes fetched
+    #   - "captcha" appeared 21 times in the raw HTML and ZERO times in the visible text
+    #   - every hit was a JavaScript config string ("captcha":"Captcha", "wrong_captcha":...) or a
+    #     <script src="google.com/recaptcha/api.js"> tag -- i.e. an ordinary contact-form widget
+    #   - visible text: "WELCOME TO STUFF'D", the menu, Find Us, franchise -- a perfect capture
+    # The tool reported `blocked / challenge marker: 'captcha'` and quoted NOTHING.
+    #
+    # ⚠ SO THE BARE WORD "captcha" WAS A FALSE-POSITIVE MACHINE. Any WordPress site with a captcha
+    # on its contact form -- which is most of them -- was graded blocked. This is the F&B sector the
+    # product is aimed at, and it is the SAME failure as the auroraer.com <noscript> bug the
+    # docstring above already describes: a marker test running against raw HTML instead of visible
+    # text, before the length check. That fix was applied to SHELL_MARKERS and never to BLOCK_MARKERS.
+    #
+    # ⚠ THE ORDER IS NOW: length first (substantial text = a usable capture, whatever else the page
+    # contains), then the block markers against VISIBLE text only, so a genuine challenge page -- one
+    # whose visible text says "just a moment" or "are you a robot" -- is still caught.
     if len(visible) >= MIN_USEFUL_CHARS:
         return "ok", ""
-    # thin -- NOW the shell markers say why, against visible text only
+    # thin -- NOW the markers explain WHY, against visible text only
     low = visible.lower()
+    for m in BLOCK_MARKERS:
+        if m in low:
+            return "blocked", "challenge marker: %r" % m
     for m in SHELL_MARKERS:
         if m in low:
             return "shell", "javascript shell: %r" % m

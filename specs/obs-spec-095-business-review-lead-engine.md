@@ -4050,6 +4050,102 @@ human labels.*
 
 ---
 
+
+**✅ 6.7.16c THE "CAPTCHA" VERDICT WAS A FALSE-POSITIVE MACHINE — THE BARE WORD IN RAW HTML (VERIFIED
+— 3 Oct).**
+
+**⚠⚠ WHAT WAS WRONG.** *`grade_capture()` scanned `BLOCK_MARKERS` against **RAW HTML**, and did so
+**before** the length check:*
+
+    visible = strip_tags(text or "")
+    low_all = (text or "").lower()          # ⚠ RAW HTML, not visible text
+    for m in BLOCK_MARKERS:
+        if m in low_all:
+            return "blocked", ...
+
+**⚠ AND `BLOCK_MARKERS` CONTAINS THE BARE WORD `"captcha"`.** *So **any page whose source mentions a
+captcha — a contact-form widget, a reCAPTCHA `<script>` tag, a JS config string — was graded
+`blocked`**, no matter how much readable content it carried.*
+
+**⚠⚠ MEASURED ON `stuffd.com` (STUFF'D, Singapore) — A PERFECTLY READABLE HOMEPAGE:**
+
+| | |
+|---|---|
+| HTTP | **200** |
+| bytes fetched | **81,592** |
+| `"captcha"` in raw HTML | **21** |
+| `"captcha"` in **visible text** | **0** |
+| where the hits were | a JS config string `"captcha":"Captcha"` + a `<script src="google.com/recaptcha/api.js">` tag |
+| visible content | *"WELCOME TO STUFF'D"*, the menu, Find Us, franchise |
+| **the tool's verdict** | **`blocked / challenge marker: 'captcha'` — quoted NOTHING** |
+
+**⚠ SO THE BARE WORD WAS A FALSE-POSITIVE MACHINE FOR THE SECTOR THIS PRODUCT TARGETS.** *A WordPress
+site with a captcha on its contact form is the NORM for an F&B SME, and every one of them was being
+thrown away as a bot wall.*
+
+**⚠⚠ AND THIS IS THE SAME BUG THE FUNCTION'S OWN DOCSTRING ALREADY DESCRIBES.** *The `<noscript>`
+false positive on `auroraer.com` (6,059 chars of content graded `shell`) was fixed **for
+`SHELL_MARKERS`** — *and the identical defect in `BLOCK_MARKERS`, four lines above, was left in place.*
+***A fix applied to one marker list and not its neighbour.***
+
+**⚠ THE ORDER IS NOW: LENGTH FIRST, THEN MARKERS AGAINST VISIBLE TEXT ONLY.**
+
+    if len(visible) >= MIN_USEFUL_CHARS:
+        return "ok", ""                      # substantial text beats every marker
+    low = visible.lower()                    # visible text only
+    for m in BLOCK_MARKERS:
+        if m in low:
+            return "blocked", ...
+
+***A marker is a DIAGNOSIS OF A FAILURE, not a test in its own right — a page that yielded something
+needs no explanation.*** **And a genuine challenge is still caught: `"just a moment"` and `"are you a
+robot"` appear in the VISIBLE text of a real bot wall.**
+
+**✅ FALSIFICATION TEST (`test_grade_fix.py`, 9 cases, both directions — 9/9 CORRECT):**
+
+| case | expected | got |
+|---|---|---|
+| real page + reCAPTCHA in `<script>` | `ok` | **✅ ok** |
+| real page + `<noscript>` | `ok` | **✅ ok** |
+| genuine challenge (*"Just a moment..."*, visible) | `blocked` | **✅ blocked** |
+| genuine challenge (*"are you a human"*, visible) | `blocked` | **✅ blocked** |
+| HTTP 403 | `blocked` | **✅ blocked** |
+| HTTP 429 | `blocked` | **✅ blocked** |
+| `<noscript>` shell, no real text | `shell` | **✅ shell** |
+| thin page, no markers | `thin` | **✅ thin** |
+| transport failure | `error` | **✅ error** |
+
+**⚠ THE REAL CHALLENGE PAGE AND THE HTTP CODES ARE STILL BLOCKED — the fix does not open the gate, it
+stops mis-labelling readable pages.**
+
+**✅ END-TO-END PAYOFF ON C5-saladshop (F&B) — QUOTED RIVALS 1 → 3:**
+
+| rival | before | after |
+|---|---|---|
+| SaladStop! | quoted | **quoted** |
+| Supergreen | *falsely `blocked`* | **✅ QUOTED** — *"Dedicated to delivering quality salads made from carefully selected and fresh ingredients…"* |
+| Six Hands | *falsely `blocked`* | **✅ QUOTED** — *"Six Hands is a Japanese-Australian salad shop redefining healthy eating…"* |
+| Stuff'd | *falsely `blocked`* | *now refuses on the KNOWN single-token limit (6.7.13a), not a false captcha* |
+| OMNIVORE | *unverified identity* | *unchanged — single-token* |
+
+**✅ CANARY PASSED — no band moved across 6 cases (exit 0).**
+
+**⚠ AND ONE TEST-DATA ERROR OF MINE, WORTH RECORDING.** *I pasted `stuffd.com.sg` as an "owner-supplied
+rival URL" in verification. **It has NO DNS RECORD AT ALL** (`dig` returns nothing; curl gives `000`),
+while `stuffd.com` returns 200 and redirects to `/sg/`.* **So my own test URL was dead, and I briefly
+recorded "the field is not honoured for Stuff'd" as an open defect when the tool had correctly fallen
+through a dead host to the live one.** ***Verify the test input resolves before blaming the code —
+same class as supplying a parameter the caller never passes.***
+
+**⚠ STILL OPEN, NOT CLAIMED FIXED:**
+1. *The sandbox `except` still degrades a hard failure into a soft "research error" line — **the design
+   flaw behind the whole silent-deletion class** (§6.7.16).*
+2. *Single-token rivals (Stuff'd, OMNIVORE) refuse even when the page names them — **over-rejection on
+   the page that literally says "WELCOME TO STUFF'D"**. Measured, unresolved.*
+3. *The §D1 calibration gap: instrument vs engagement agreement is **2 of 6** (unchanged).*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
