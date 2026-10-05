@@ -4826,6 +4826,57 @@ before it stamps the new one — so a rollback target always exists in-repo and 
 
 ---
 
+
+**✅✅ 6.7.24 THE CLOSE CONDITION, MEASURED ON THE REAL 120 CASES: THE BAR IS MET (3 Oct).**
+
+**⚠ WHY THIS HAD NOT BEEN MEASURED BEFORE.** *Every calibration number reported so far was
+**per-dimension** agreement (23–59% exact). But the recorded close condition is **BAND agreement** — D1
+verbatim: "band". **The bar: >=90% within one band, <=5% two-or-more bands off.** Nobody had computed it on
+the 120 real grades.* ***This section does exactly that, using the instrument's own formula: same weights,
+same level counts, same bands, `round(sum(grade/count*weight_used))` — only the INPUTS differ (Sean's six
+grades vs the instrument's six scores).***
+
+**✅ MEASURED — n=120:**
+
+| | result | bar | |
+|---|---|---|---|
+| **within ONE band** | **119 (99%)** | >=90% | ***✅ MET*** |
+| **two or more bands off** | **1 (1%)** | <=5% | ***✅ MET*** |
+| *(exact band match, not part of the bar)* | *85 (71%)* | — | *for reference* |
+
+**Mean composite: Sean 57.5, instrument 55.8 — gap -1.8.** Band distributions: Sean
+{Fragile 12, Contested 53, Viable 38, Strong 17}; instrument {Fragile 7, Contested 67, Viable 41, Strong 5}.
+
+**✅ THE ONE CASE THAT FAILS THE BAR, AND IT IS EXACTLY ONE CASE.** *`FF02-kfc` — **Sean 89 (Strong),
+instrument 56 (Contested)**, a 33-point, two-band miss. Every other case is within one band.* ***KFC is a
+classic positioning case (D47: "classical and historical brands have some sort of natural moat and
+positioning"), so this is the single most interesting disagreement in the set — it is the instrument
+failing to read an iconic brand's position, which is the same failure class as the earlier McDonald's
+finding.***
+
+**⚠⚠ THREE CAVEATS, STATED UP FRONT.**
+1. ***This is NOT a held-out set.*** *The 120 cases are the same ones the re-anchoring work observed. 99%
+within one band is an **optimistic** estimate; a true held-out test needs cases the instrument has not been
+tuned against.*
+2. ***It gives the instrument the benefit of the doubt on the composite.*** *It feeds the instrument's
+DIMENSION scores through the same formula. It does not test whether the instrument produces those
+dimension scores reliably — the measured run-to-run noise floor is +-4 composite points, and bands are
+~20–40 points wide, so band agreement is inherently coarser than dimension agreement. **A high band figure
+can coexist with mediocre dimension figures, and here it does.***
+3. ***`market_headroom` is unscored on the 15% of cases where the A3 classifier calls the market elastic**
+*(composite renormalises over the rest), so the effective comparison varies slightly by case.*
+
+**⚠ WHAT THIS MEANS FOR THE DECISION.** *The remaining ladder work — the `competitive_room` level-4
+residual, `demand_reach`, `market_headroom` — **was framed as necessary. It is not necessary to meet the
+stated bar.** It is polish. **The case for continuing to tune weakens materially when the acceptance
+criterion is already satisfied.*** *The honest framing: the instrument meets its bar on the population and
+is wrong on one identifiable tail case.*
+
+**⚠ REPRODUCE:** *the band-agreement join in this section's source script; `rubric-v1.21.0.json` freezes
+the prior instrument.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
