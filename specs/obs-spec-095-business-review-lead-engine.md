@@ -4794,6 +4794,38 @@ movement; the level distribution and the L4 residual come from the join in `test
 
 ---
 
+
+**⚠ 6.7.23b ROLLBACK DURABILITY: THE `.bak` FILES ARE GITIGNORED — FROZEN VERSION FILES ARE THE DURABLE
+PATH (3 Oct).**
+
+**⚠⚠ THE PROBLEM, FOUND BY CHECKING MY OWN CLAIM.** *§6.7.23 recorded the rollback path as
+`rubric.json.1210.bak` and `canary/_reference.json.1210.bak`. **Both are GITIGNORED** — `.gitignore:73` is
+`*.bak`. **They exist only on the machine that wrote them.** A clone, a fresh checkout, or a lost working
+tree would leave 1.21.0 with no recorded rollback and no diff against it.* ***That is the "completed work
+can be lost" failure, and the claim in §6.7.23 was therefore only locally true.***
+
+**✅ THE DURABLE PATH EXISTS AND IS NOW EXPLICIT.** *1.21.0 is recoverable from git — `git show
+853dbf0^:specs/calibration/rubric.json` returns the exact prior instrument (verified: `_meta.version`
+1.21.0, `competitive_room` level 4 reading "Several players coexist and none dominates; a small operator
+can establish...").* ***But that depends on knowing the commit SHA, which is not a rollback path anyone
+should have to reconstruct.***
+
+**✅ AND THE REPO ALREADY HAS A CONVENTION FOR THIS THAT WAS NOT BEING FOLLOWED.** *Frozen rubric versions
+are tracked as `rubric-v<version>.json` — 1.0.0 through 1.8.0, plus `-candidate` files for 1.17/1.18 and
+`-restore` for 1.16.1. **There is NO frozen file for 1.19.0, 1.20.0 or 1.21.0** — three consecutive
+revisions with no in-repo snapshot.* ***1.21.0 is now frozen as `rubric-v1.21.0.json` (59,629 bytes,
+tracked), matching the existing naming convention.***
+
+**⚠ FOR THE FUTURE.** ***Freezing the outgoing version must be part of the promotion step, not a thing
+remembered afterwards.*** *Suggested: `promote_rubric.py` writes `rubric-v<old>.json` from the live file
+before it stamps the new one — so a rollback target always exists in-repo and is never gitignored.*
+*Until that is added, freeze by hand at each promotion.*
+
+**⚠ REPRODUCE:** *`git ls-files specs/calibration/ | grep rubric` shows the frozen set; `git check-ignore
+-v` on any `.bak` shows the ignore rule.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
