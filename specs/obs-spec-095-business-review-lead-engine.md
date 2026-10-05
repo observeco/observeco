@@ -4752,6 +4752,48 @@ grades is likely to produce noise dressed as progress.***
 
 ---
 
+
+**⚠ 6.7.23a THE `competitive_room` FIX IS A NET WIN BUT DOES NOT SETTLE LEVEL 4 — AND THE CANARY'S
+"NO BAND MOVED" IS COARSER THAN "NOTHING MOVED" (3 Oct).**
+
+**⚠⚠ FIRST, A CORRECTION TO HOW THE CANARY PASS WAS REPORTED.** *The canary prints "PASSED — no band moved
+across 6 cases", which is a **bands-only** gate. **It is NOT a claim that no dimension moved.** Diffing the
+1.21.0 reference snapshot (`_reference.json.1210.bak`) against the 1.22.0 one shows **`C4-sgfitness` DID
+move: `competitive_room` 3 → 2, composite 49 → 45.*** *Both sit inside Contested (38–57), so no band moved
+and the gate correctly passed — but a reader taking "no band moved" as "nothing changed" would be wrong.*
+***This is the same limitation recorded for the canary earlier: it validates BANDS, not CONTENT.***
+
+**✅ THE NET EFFECT IS A CLEAR IMPROVEMENT AT EVERY LEVEL EXCEPT ONE. `competitive_room` level distribution,
+n=119:**
+
+| level | **SEAN** | instrument 1.21.0 | **instrument 1.22.0** |
+|---|---|---|---|
+| 1 | 2 | 6 | **3** |
+| 2 | **44** | 32 | **43** |
+| 3 | **67** | 33 | **48** |
+| 4 | **6** | **45** | **25** |
+| 5 | 0 | 3 | **0** |
+
+***Levels 1, 2, 3 and 5 all move toward Sean; level 4's over-award is roughly halved (45 → 25). The
+dimension is genuinely better calibrated.***
+
+**⚠⚠ BUT LEVEL 4 IS NOT SETTLED, AND THE RESIDUAL IS THE OPPOSITE ERROR.** *On the **6 cases where Sean
+scores `competitive_room` 4, the 1.22.0 instrument now reads 2 or lower on ALL SIX** (mean error −2.00 at
+his level 4).* ***So the rewrite did not fix level 4 — it converted a broad over-award into a failure to
+recognise the specific cases Sean calls 4. The instrument still awards level 4 twenty-five times, but to
+different cases than his.*** *The level-4 bar was raised as far as the evidence supported, and it now sits
+too high for the very cases it was meant to capture.*
+
+**⚠ WHAT THIS MEANS, STATED PLAINLY.** *`competitive_room` is better on the population and still wrong on
+the tail. **Net +18–20 points of exact agreement is a real gain and the commit stands; the level-4
+residual is recorded here as the next target for this dimension, not as a reason to revert.*** *The same
+shape applies to the other four: the instrument agrees in the middle and diverges at the extremes.*
+
+**⚠ REPRODUCE:** *diff `canary/_reference.json.1210.bak` against `canary/_reference.json` for the fixture
+movement; the level distribution and the L4 residual come from the join in `test_cr_isolated.py`.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
