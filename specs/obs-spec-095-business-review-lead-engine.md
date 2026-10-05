@@ -4531,6 +4531,73 @@ same live test as §6.7.18 — **but this time judged against the 120-case regra
 
 ---
 
+
+**⚠⚠ 6.7.21 THE REWRITTEN TOP ANCHORS FAIL — ALL THREE DIMENSIONS WORSENED. NOT APPLIED. AND THE
+LEVEL-SHIFT READING OF §6.7.20 IS PARTLY AN ARTEFACT (3 Oct).**
+
+***Sean: "draft the five top anchors, then test live against the 120-case regrade. When I award a 5, I
+am saying this is the default in its product category for the market the brand serves in." ***
+
+**⚠ THE DRAFT.** *Three top anchors rewritten to his definition — `mental_advantage` 5 ("the default for
+the market this brand serves, judged against the served market not the island"), `demand_reach` 5
+("direct deliberate controlled route; scale is not the test"), and `competitive_room` 5 — plus an
+appended "default test" per dimension. **`position_strength` and `defensibility` were left alone** (the
+fixtures already showed position_strength over-scored, and defensibility's 6 levels have no measured
+ceiling problem).*
+
+**⚠⚠ AND DRAFTING SURFACED A REAL WRITING DEFECT WORTH KEEPING.** ***`competitive_room`'s levels 1–3 are
+written from the SMALL OPERATOR'S point of view — "a SMALL operator has no viable margin", "a small
+operator survives only on the edges of the market". A large incumbent reading those anchors concludes the
+low levels do not apply to it either, so the dimension becomes unanswerable at the top.*** *Recorded
+regardless of this draft's failure — it is a genuine defect in the question's construction.*
+
+**✅ MEASURED — LIVE MODEL, ALL 120 CASES, JOIN 120/120, 359 PAIRED ROWS (SAME MODEL, SAME CORPUS):**
+
+| dimension | | n | Sean mean | instrument mean | diff | exact | top-level: Sean → instrument |
+|---|---|---|---|---|---|---|---|
+| `mental_advantage` | **ORIGINAL** | 120 | 3.24 | 2.89 | +0.35 | **52%** | 19 → 10 |
+| | **NEW DRAFT** | 120 | 3.24 | 2.84 | +0.40 | **52%** | 19 → **7** |
+| `demand_reach` | **ORIGINAL** | 120 | 3.67 | 3.42 | +0.25 | **59%** | 22 → 2 |
+| | **NEW DRAFT** | 120 | 3.67 | 4.13 | **−0.47** | **39%** | 22 → **56** |
+| `competitive_room` | **ORIGINAL** | 119 | 2.65 | 3.06 | −0.41 | **23%** | 6 → 48 |
+| | **NEW DRAFT** | 119 | 2.65 | 3.21 | −0.56 | **20%** | 6 → **51** |
+
+***ALL THREE WORSENED. The draft OVERSHOT in two directions at once:***
+- *`demand_reach` — the instrument now awards its top level **56 times** where Sean awards it 22, and mean
+  agreement fell 59% → 39%. **The rewritten anchor opened the gate far wider than his own judgement.***
+- *`mental_advantage` — the top level got **rarer** (10 → 7) despite the anchor being loosened, i.e. **the
+  change moved the model in the opposite direction to the one intended.***
+- *`competitive_room` — top-level awards were already 48 (original) vs Sean's 6, so **the original was
+  ALREADY over-awarding the top level.*** ***The §6.7.20 claim that "the instrument has effectively no top
+  anchor" is therefore TRUE OF THE SIX FIXTURES AND THE 120-CASE SET ON DISK, BUT FALSE OF A FRESH RUN:
+  the stored runs over-award `competitive_room`'s top level 8×.***
+
+**⚠⚠ SO THE §6.7.20 LEVEL-SHIFT FINDING IS PARTLY AN ARTEFACT, AND MUST BE QUALIFIED.** *The
+"gap grows with level" pattern was computed by joining `my_new_RS`-style columns in
+`sean-regrade-raw.csv` — **assistant grades recorded at authoring time** — to Sean's grades.* **Compared
+against a FRESH instrument run on the same corpus, the picture differs materially:**
+- *the fresh run's `competitive_room` mean is **3.06**, not the 2.44 in the CSV;*
+- *it awards the top level **48** times, not 0.*
+***The stored CSV column and a live run are NOT the same instrument output. Any conclusion drawn from the
+CSV column describes the authored grades, not the current model.***
+
+**⚠⚠ THE HONEST CONCLUSION.** ***Two candidate fixes have now failed against the human data: tightening
+the boundaries (§6.7.17) and rewriting the top anchors (§6.7.21). Both were refuted by testing, not by
+argument — which is exactly what the instruction to validate against other data sets was for.***
+**Nothing is applied. `rubric.json` remains 1.21.0.**
+
+**⚠ WHAT THE FAILURE NAMES AS THE REAL PROBLEM.** *The instrument's agreement with Sean is **52–59% exact
+on the three dimensions with usable data**, and it **awards the top level far more often than he does on
+`competitive_room` (48 vs 6) while far less often on `demand_reach` (2 vs 22).*** *Those are **not the
+same error and do not have the same fix**: one dimension is over-generous at the top, another is
+under-generous, and **a single "raise the ceiling" lever cannot move them in opposite directions.***
+***The next step is per-dimension diagnosis against a FRESH run, not another global anchor edit.***
+
+**⚠ REPRODUCE:** *`test_top_anchors.py` (live test) and the per-dimension join above. Both read-only
+against the corpus; the draft was held in memory and never written to the rubric.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
