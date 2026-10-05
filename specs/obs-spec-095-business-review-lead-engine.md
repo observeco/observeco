@@ -4236,6 +4236,83 @@ such bug is caught at the first run instead of the fourth commit.*
 
 ---
 
+
+**⚠⚠ 6.7.17 "TIGHTEN THE BAND BOUNDARIES" IS THE WRONG FIX — PROVED, NOT ARGUED (3 Oct).**
+
+***Sean's call: "tighten the band boundaries so the tool matches your reads. But test this first and
+only commit and update the documentation if it works and tested against other data sets." ***
+**The instruction was to TEST FIRST. The test kills the premise, so nothing was committed.**
+
+**⚠⚠ METHOD — NO MODEL CALL, NO OPINION.** *Six frozen fixtures each carry **both**:*
+- *`_reference.json` — the **dimension values the INSTRUMENT returned**, and the composite they produce;*
+- *`C*.json → _expected` — the **dimension values the ENGAGEMENT holds** (hand-authored, `fixed: true`),
+  and the band the engagement concluded.*
+
+*So the SAME composite formula and the SAME band boundaries can be applied to both, and the question
+"are the bands wrong or are the scores wrong?" becomes arithmetic.*
+
+**✅ THE DECISIVE RESULT:**
+
+| case | engagement's own dims → composite → band | instrument's dims → composite → band | expected |
+|---|---|---|---|
+| C1-greenpackers | **34 → Fragile** | 53 → Contested | Fragile |
+| C2-caica | **41 → Contested** | 48 → Contested | Contested |
+| C3-petdirectory | **52 → Contested** | 45 → Contested | Contested |
+| C4-sgfitness | **36 → Fragile** | 50 → Contested | Fragile |
+| C5-saladshop | **29 → Fragile** | 45 → Contested | Fragile |
+| C6-bonefirm | **61 → Viable, conditional** | 53 → Contested | Viable, conditional |
+
+***THE ENGAGEMENT'S OWN DIMENSION VALUES, RUN THROUGH THE PRODUCTION FORMULA AND THE CURRENT
+BOUNDARIES, REPRODUCE THE ENGAGEMENT'S BAND **6 OF 6**.*** *(The instrument's own values reproduce only
+2 of 6.)*
+
+**⚠⚠ SO THE BOUNDARIES ARE CORRECT AND THE SCORES ARE TOO HIGH.** *Tightening the boundaries to drag the
+instrument's composites down would have been **fitting the ruler to a broken thermometer** — and it
+would have broken the six cases that are already right.*
+
+**⚠⚠ AND NO BOUNDARY SET COULD HAVE DONE IT ANYWAY.** *A band function is **monotonic**, so two cases with
+the same composite MUST get the same band. But the instrument puts **C3-petdirectory and C5-saladshop
+both at composite 43** — and the expected bands are **Contested and Fragile respectively**. **C1 and C6
+are both at 52** — expected **Fragile and Viable**. ***Two direct contradictions: no set of boundaries
+can satisfy all six, regardless of where they are drawn.***
+
+**✅ WHERE THE FAULT ACTUALLY IS — PER DIMENSION (instrument minus engagement, in levels):**
+
+| case | position | mental | defens | compet | market | demand | sum |
+|---|---|---|---|---|---|---|---|
+| C1-greenpackers | **+3** | +1 | 0 | 0 | -1 | +1 | +4 |
+| C2-caica | +1 | 0 | +1 | 0 | -1 | 0 | +1 |
+| C3-petdirectory | 0 | 0 | 0 | -3 | -1 | +2 | -2 |
+| C4-sgfitness | **+3** | 0 | 0 | -1 | 0 | +1 | +3 |
+| C5-saladshop | **+2** | 0 | +1 | 0 | 0 | +1 | +4 |
+| C6-bonefirm | +1 | -1 | -2 | -1 | -1 | +1 | -3 |
+| **MEAN** | **+1.7** | +0.0 | +0.0 | -0.8 | -0.7 | +1.0 | |
+
+**⚠⚠ `position_strength` IS THE CULPRIT — mean **+1.7 levels**, AND it carries **weight 25**, the largest
+single weight in the composite.** *Every other dimension is within ±1.0. On the three cases the
+instrument gets wrong by a whole band (C1, C4, C5), **position_strength is over-scored by +3, +3 and +2**
+— and in each the engagement's own grade is **1**, the floor.*
+
+**⚠ `demand_reach` runs the other way (+1.0) but carries weight 10, and `competitive_room`/`market_headroom`
+are UNDER-scored (-0.8/-0.7) — the instrument is, if anything, slightly harsh there.**
+
+**⚠⚠ THE FIX THAT FOLLOWS FROM THIS IS NOT A BAND CHANGE.** *It is: **the instrument over-credits
+position_strength**, most of all for businesses that hold almost nothing (the engagement grades all
+three failures at 1). That is a **rubric question-anchor** problem — what the levels of
+`position_strength` mean and where the model places a business that has a claim but no held
+position — **not a boundary problem, and not a weight problem** (raising the weight of an
+already-over-scored dimension would make it worse).*
+
+**⚠ AND `position_strength` IS THE DIMENSION THAT HAS NO `level_counts` ENTRY IN THE RUBRIC** — its count
+is inferred at runtime from the question's own levels (`§run_jev.score`). *A dimension that is both
+**over-scored** and **structurally unusual** is where the next investigation goes.*
+
+**⚠ WHAT WAS NOT DONE, AND WHY.** *Nothing was changed. **The tests Sean asked for (boundary tuning,
+then validation against other data sets) were run, and they refuted the change.** Recording the
+refutation is the deliverable — see §6.7.17a for the validation set that IS available.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
