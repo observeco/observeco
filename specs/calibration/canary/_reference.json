@@ -1,5 +1,5 @@
 {
-  "rubric_version": "1.21.0",
+  "rubric_version": "1.22.0",
   "note": "REFERENCE SNAPSHOT for the canary. Fixed output for a fixed input. A canary whose fixture moves detects nothing (spec 10.1.1).",
   "cases": {
     "C1-greenpackers": {
@@ -13,7 +13,7 @@
         "demand_reach": 3,
         "position_strength": 4
       },
-      "rubric_version": "1.21.0",
+      "rubric_version": "1.22.0",
       "model_id": "jev-1.13.0"
     },
     "C2-caica": {
@@ -27,7 +27,7 @@
         "demand_reach": 3,
         "position_strength": 3
       },
-      "rubric_version": "1.21.0",
+      "rubric_version": "1.22.0",
       "model_id": "jev-1.13.0"
     },
     "C3-petdirectory": {
@@ -41,21 +41,21 @@
         "demand_reach": 3,
         "position_strength": 3
       },
-      "rubric_version": "1.21.0",
+      "rubric_version": "1.22.0",
       "model_id": "jev-1.13.0"
     },
     "C4-sgfitness": {
       "band": "Contested",
-      "composite": 49,
+      "composite": 45,
       "dims": {
         "mental_advantage": 1,
         "defensibility": 2,
-        "competitive_room": 3,
+        "competitive_room": 2,
         "market_headroom": 3,
         "demand_reach": 2,
         "position_strength": 4
       },
-      "rubric_version": "1.21.0",
+      "rubric_version": "1.22.0",
       "model_id": "jev-1.13.0"
     },
     "C5-saladshop": {
@@ -69,7 +69,7 @@
         "demand_reach": 2,
         "position_strength": 3
       },
-      "rubric_version": "1.21.0",
+      "rubric_version": "1.22.0",
       "model_id": "jev-1.13.0"
     },
     "C6-bonefirm": {
@@ -83,7 +83,7 @@
         "demand_reach": 3,
         "position_strength": 4
       },
-      "rubric_version": "1.21.0",
+      "rubric_version": "1.22.0",
       "model_id": "jev-1.13.0"
     }
   }

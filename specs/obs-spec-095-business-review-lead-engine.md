@@ -4663,6 +4663,95 @@ artefact" is corrected here.*
 
 ---
 
+
+**✅ 6.7.23 THE COMPLETE RE-ANCHORING: ONE LADDER SURVIVED OF FIVE, AND THE NOISE FLOOR IS +-4 POINTS
+(3 Oct). `rubric.json` 1.21.0 -> 1.22.0.**
+
+***Sean: "complete re-anchoring of all five ladders."** Done for four of the five (the fifth,
+`market_headroom`, was not in the measured set). **Result: ONE rewrite survived measurement and was
+applied; FOUR were refuted and reverted.***
+
+**⚠ THE DIAGNOSIS THAT PRECEDED THE DRAFT.** *Three prose fixes had already failed, so before drafting I
+measured the confusion matrix per dimension from the fresh 120 runs. **The instrument COMPRESSES toward
+the middle: it pulls UP at Sean's low levels and DOWN at his high ones.** `position_strength`
+L1 −0.89 → L5 +1.43; `demand_reach` L2 −0.40 → L5 +0.91; `competitive_room` L2 −0.57 → L4 +2.00.*
+***This is a level-description problem at BOTH ends, which is why a top-anchor-only fix could not work.***
+
+**✅ AND A HYPOTHESIS WAS KILLED BEFORE IT COST ANYTHING.** *The compression could have been an artefact of
+the display mapping — `int(round(E[level]))+1` averages a probability distribution, and averaging always
+shrinks toward the middle. **Tested directly from the stored per-dimension probabilities (120 runs) by
+re-reading the SAME distributions three ways: probability-weighted mean (current), argmax (the model's own
+pick), and median.** Exact agreement: `position_strength` 31/32/31%, `mental_advantage` 52/44/48%,
+`defensibility` 56/55/58%, `competitive_room` 23/30/27%, `demand_reach` 59/54/58%. **No reading is
+materially better than the current one, so the compression is the MODEL'S ACTUAL BELIEF, not a rounding
+artefact — a prose fix was genuinely required.*** *(A free check that removed a whole class of wrong fix.)*
+
+**⚠ MEASURED — all five ladders rewritten, live, 120 cases, joined 120/120, same model and corpus:**
+
+| dimension | BEFORE exact | AFTER exact | mean err before → after | verdict |
+|---|---|---|---|---|
+| `competitive_room` | **23%** | **41%** | +0.41 → +0.15 | ***✅ WIN — APPLIED*** |
+| `position_strength` | 32% | 35% | −0.32 → −0.25 | *within noise* |
+| `mental_advantage` | 52% | 49% | −0.35 → −0.40 | *within noise* |
+| `defensibility` | 54% | 54% | +0.04 → +0.08 | *no change* |
+| `demand_reach` | **59%** | **40%** | −0.25 → **+0.48** | ***❌ REGRESSION — REVERTED*** |
+
+**⚠⚠ THE NOISE FLOOR IS THE FINDING THAT MATTERS MOST HERE, AND IT WAS MEASURED, NOT ASSUMED.** *The
+`competitive_room` rewrite was re-run IN ISOLATION, twice, with the other four ladders untouched. **The
+two runs agree with each other to 97% per dimension (position_strength 97, mental_advantage 98,
+defensibility 99, competitive_room 97, demand_reach 99)**, and **neither moved any other dimension beyond
+±4 points.*** ***So ±4 is the run-to-run noise floor. ONLY the +20 on `competitive_room` clears it.***
+**⚠ AND THIS RETROACTIVELY UNDERMINES EARLIER RESULTS: `position_strength` scored 35% with its ladder
+REWRITTEN and 35–36% with its ladder UNCHANGED in the isolated runs — the rewrite contributed NOTHING, yet
+had it been run once it would have been reported as a 3-point gain.** ***The `2/6 → 4/6` fixture result
+(§6.7.18) and parts of §6.7.20 likewise sit inside this floor.***
+
+**✅ WHY `competitive_room` WORKED WHEN THE OTHERS DID NOT — a real construction defect, now fixed.**
+***The old levels 1–3 were written from the SMALL OPERATOR'S point of view: every one said "a SMALL
+operator ...". A large incumbent being scored read those low anchors as directed at someone else, so the
+instrument OVER-awarded the top — it gave level 4 to 48 cases where Sean gave it 6, and its top-level
+error ran to −2.00.*** *The rewrite restates the ladder in MARKET-STRUCTURE terms ("is there a player with
+power over price, shelf or access?") and raises level 4's bar explicitly.* **Measured: exact 23% → 41–43%,
+mean error +0.41 → +0.15/+0.17, over-award at the top sharply reduced, and the dimension's mean is now
+2.80 against Sean's 2.65 — close, and no longer flattering.**
+
+**⚠ WHY `demand_reach` FAILED — the rewrite overshot, the mirror error.** *Its top level is now awarded 56
+times where Sean awards it 22, and exact agreement fell 59% → 40%. **That is the same over-generosity
+that `competitive_room` had before its fix, introduced into a dimension that did not have it.*** ***The fix
+for one dimension is the defect of the other; a single global "raise the ceiling" lever cannot serve
+both.***
+
+**⚠ PROCESS DEFECT, CAUGHT BY THE GUARD.** ***The 1.22.0 edit was first made by hand-editing `rubric.json`
+in place, bypassing `promote_rubric.py`.*** *The scorer refused every case: "FATAL: refusing to score --
+the live rubric was MODIFIED after promotion." **The §5.3.1 promotion gate exists precisely so a scorer
+cannot read an unvalidated instrument, and it worked.*** *Repaired with `promote_rubric.py rubric.json`
+(the script's own recovery path: candidate IS the live file → re-run the six checks → stamp in place).
+**Both implementations now read the same stamped rubric; the canary passes with no band moved across 6
+cases.*** **LESSON: never hand-edit the live rubric — promote it.**
+
+**⚠ TEST-HARNESS DEFECT, ALSO CAUGHT.** ***The first five-ladder run reported a SILENT ZERO-ROW JOIN and
+produced a "BEFORE-only" table that looked like a result.*** *Cause: the corpus filenames are mixed-case
+(`BK01-breadtalk`) while the human grade IDs are lowercase — **the same key-mismatch class as the earlier
+`url`/`domain` bug.*** *Fixed, and a loud guard added: a join under 50 rows now raises rather than
+reporting nothing.*
+
+**⚠ STATE.** ***APPLIED: `competitive_room` only, at 1.22.0, backed up as `rubric.json.1210.bak`.***
+*REVERTED: `position_strength`, `mental_advantage`, `defensibility`, `demand_reach` — **the other four
+rewrites are NOT in the rubric.*** **Canary re-baselined deliberately (`_reference.json.1210.bak` holds
+the 1.21.0 snapshot); CANARY PASSES.***
+
+**⚠ STILL OPEN.** *`demand_reach` needs a real fix (its rewrite is the right idea applied too loosely).
+`market_headroom` was not re-anchored. **And four attempts have now failed against the human data —
+tightening boundaries (§6.7.17), the `position_strength` ladder (§6.7.18), the top anchors (§6.7.21), and
+four of five ladders here. One clean +20 is a real result; chasing the rest on ±4 noise without more human
+grades is likely to produce noise dressed as progress.***
+
+**⚠ REPRODUCE:** *`confusion_matrix.py` (diagnosis), `test_reading.py` (the mapping-artefact test),
+`test_five_ladders.py` (all five), `test_cr_isolated.py` (isolation + the noise floor). All in
+`specs/calibration/`.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 

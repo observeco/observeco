@@ -1,7 +1,7 @@
 {
  "_meta": {
   "name": "obs-095 business viability rubric",
-  "version": "1.21.0",
+  "version": "1.22.0",
   "purpose": "Single source of truth for the OBS-SPEC-095 scorer. The calibration harness and the production scorer MUST both read this file (spec 5.3) \u2014 otherwise calibration validates a scorer that is not the one shipped.",
   "model": "jev-latest",
   "scale": {
@@ -120,6 +120,12 @@
     "version": "1.21.0",
     "change": "position_strength: prevalence is no longer treated as weakness; DOMINANCE added to level 5 (no brand cited in the rule text: measured identical with and without the citation, so the principle does the work)",
     "reason": "Sean's fresh PS sheet exposed a precise defect. Against his 28 fresh grades the instrument sat inside his stated range only 39% of the time with a -0.88 offset, and the gap concentrated ENTIRELY on big, omnipresent brands (mean gap -1.57) while distinct specialists read fine (-0.39) and the duplication with mental_advantage was GONE (r=+0.10, 18% identical, against 67-69% for the old recall construct). The cause was one sentence: 'It is WEAK when the claim is generic, already owned, or matched by everyone in the category.' That last clause reads PREVALENCE as weakness, so McDonald's (his 5) scored 3, NTUC (his 5) scored 4, IKEA (his 4-5) scored 3, KFC (his 4-5) scored 2. THIS IS THE SAME ERROR D47 ALREADY CORRECTED IN competitive_room, where 'room is removed by DOMINANCE, not by the NUMBER of rivals' -- the position dimension never received that lesson. The fix makes SETS-THE-REFERENCE vs FOLLOWS-IT the discriminator, so two businesses can say the same thing with opposite scores. MEASURED: removing the unproven-flank cap instead moves only 1 of 28 cases, so the cap is NOT the cause and was left in place."
+   },
+   {
+    "version": "1.22.0",
+    "change": "competitive_room: the ladder is restated in MARKET-STRUCTURE terms and level 4's bar is raised. Levels 1-3 no longer say 'a SMALL operator'; 4 now REQUIRES that no player has power over price, shelf or access and that entry is genuinely open; 5 states explicitly that a large business does not make its own market consolidated.",
+    "reason": "This is the ONE ladder of five whose rewrite survived measurement; the other four were refuted and NOT applied (see 6.7.23). The old levels were written from the small operator's point of view: levels 1-3 all read 'a small operator ...', so a large incumbent being scored saw the low anchors as directed at someone else. Measured against Sean's 120 grades, the instrument OVER-awarded competitive_room at the top (it gave level 4 to 48 cases where Sean gave it 6, and its top-level error ran -2.00), and the dimension's exact agreement was the worst of the five at 23%. MEASURED AFTER: exact agreement 23% -> 41-43% on the 120; mean error +0.41 -> +0.15/+0.17; over-award at the top sharply reduced. ISOLATED: run alone with the other four ladders untouched, twice, both runs agree to 97% and neither moves any other dimension beyond noise (+-4).",
+    "audit": "rubric.json.1210.bak holds 1.21.0. Test scripts test_cr_isolated.py / test_five_ladders.py in specs/calibration/."
    }
   ],
   "_superseded": {
@@ -243,13 +249,13 @@
   },
   "competitive_room": {
    "type": "score",
-   "instructions": "Judge ONLY competitive room: how much space does the market structure leave for this business to operate and earn? Higher means MORE room. Room is removed by DOMINANCE, not by the NUMBER of rivals: a market with many equal rivals and no dominant player leaves plenty of room, while a market held by one or two powerful players leaves almost none. Ask how much power any single player holds over price, shelf or customer demand, and whether a small operator can enter and earn a living. Do not consider the business's own positioning or quality.",
+   "instructions": "Judge ONLY competitive room: how much space does the market structure leave for this business to operate and earn? Higher means MORE room. Room is removed by DOMINANCE, not by the NUMBER of rivals: a market with many equal rivals and no dominant player leaves plenty of room, while a market held by one or two powerful players leaves almost none. Ask how much power any single player holds over price, shelf or customer demand, and whether a small operator can enter and earn a living. Do not consider the business's own positioning or quality.\n\n\u26a0 THIS DIMENSION DESCRIBES THE MARKET'S STRUCTURE, NOT THE BUSINESS BEING SCORED. Levels 1-3 were previously written around a small operator and are restated in market terms. \u26a0 DO NOT OVER-AWARD LEVEL 4: it requires that NO player has power over price, shelf or access and that entry is genuinely open. A market with several strong brands, a price floor, or a recognised leader is level 3. Ask only: is there a barrier to entry, or a player with power? If either exists, the room is 3 or lower.",
    "levels": [
-    "No room. Consolidated into one or a few dominant players who set the price, control the shelf or control access; a SMALL operator has no viable margin and cannot enter profitably.",
-    "Very little. A dominant player, or a price floor set by much larger rivals, structurally squeezes everyone; a small operator survives only on the edges of the market.",
-    "Some. Several strong brands and a general price floor keep margins thin, but entry is normal and small operators do establish themselves here.",
-    "Good. Several players coexist and none dominates; a small operator can establish itself without being crushed.",
-    "Strong. Atomised, and dominated by nobody: many rivals, no player with power over price, and a small operator can enter and earn."
+    "No room. The market is consolidated into one or a few dominant players who set the price, control the shelf or control access, and a new entrant cannot enter profitably. Judge the STRUCTURE OF THE MARKET, not the size of the business being scored: a market genuinely ruled by one player is this level even if the business being scored is not small.",
+    "Very little. A dominant player, or a price floor set by much larger rivals, structurally squeezes everyone, and a new entrant survives only on the edges. Judge the structure of the market, not the size of the business being scored.",
+    "Some. Several strong brands and a general price floor keep margins thin, but entry is normal and new operators do establish themselves here. Use this level for a market that is genuinely contested with real pressure on price or shelf.",
+    "Good. There are several players and none dominates, and a new operator can establish itself without being crushed. \u26a0 SCORE THIS ONLY WHERE NO PLAYER HAS REAL POWER OVER PRICE, SHELF OR ACCESS AND ENTRY IS GENUINELY OPEN. Several strong brands keeping margins thin is level 3, not 4. If the market has a clear leader, a price floor set by big rivals, or material barriers to entry, it is 3 or lower.",
+    "Strong. Atomised and dominated by nobody: many rivals coexist, no single player has power over price, shelf or access, and there is no barrier to entering and earning. \u26a0 JUDGE THE STRUCTURE OF THE MARKET, NOT THE SIZE OF THE BUSINESS BEING SCORED, and do not withhold this because the business being scored is large -- a large business does not make its own market consolidated."
    ]
   },
   "defensibility": {
@@ -309,7 +315,7 @@
    "_added": "2026-09-27 (Sean): the axis the objective always required -- 'positioning and differentiation RELATIVE TO COMPETITION' -- and the instrument never had. Anchored on the derived competitive set, not on size expectation."
   }
  },
- "version": "1.21.0",
+ "version": "1.22.0",
  "_changelog": [
   "1.9.0 (2026-09-28) D35: defensibility gains category-structure input + familiarity guard; Best Denki / Gain City recognition fix. Rubric 1.8.0 preserved as rubric-v1.8.0.json.bak for re-run comparison.",
   {
