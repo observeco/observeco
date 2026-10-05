@@ -4384,6 +4384,81 @@ levels, in `score()`. A dimension that is **over-scored**, **structurally unlike
 
 ---
 
+
+**⚠⚠⚠ 6.7.19 THE REAL VALIDATION SET INVERTS THE PREMISE — THE INSTRUMENT IS NOT TOO GENEROUS, IT IS
+TOO HARSH (VERIFIED ON 120 OF YOUR OWN GRADES — 3 Oct).**
+
+***Sean's instruction was "only commit and update the documentation if it works and tested against OTHER
+DATA SETS." The other data set exists, it is far larger than the canary, and it says the opposite of
+what the six fixtures say.***
+
+**⚠⚠ THE DATA SET.** *`sean-regrade-raw.csv` — **120 businesses, every dimension graded BY SEAN**
+(extracted from `~/Downloads/regrade-sheet.numbers` via `numbers-parser`; see
+`FINDING-regrade-v1.md`).* **This is the only INDEPENDENT human judgement the project has ever had.** *The
+six canary fixtures, by contrast, are authored from engagement documents and their expected bands are
+themselves assistant mappings (§6.7.8a).*
+
+**⚠⚠ RE-VERIFIED FROM THE RAW CSV, NOT TAKEN FROM THE NOTES (per-dimension, paired):**
+
+| dim | n | **YOUR mean** | instrument mean | **diff (yours − instrument)** | exact |
+|---|---|---|---|---|---|
+| RS (`position_strength`) | 120 | **3.07** | **2.78** | **+0.28** | 75% |
+| MA | 120 | 3.24 | 2.80 | **+0.44** | 67% |
+| DEF | 119 | 2.45 | 2.19 | **+0.26** | 75% |
+| CR | 119 | 2.65 | 2.44 | **+0.21** | 77% |
+| MH | 5 | 3.20 | 3.40 | −0.20 | 80% |
+| DR | 116 | 3.62 | 3.32 | **+0.30** | 70% |
+
+***ON EVERY DIMENSION EXCEPT `market_headroom`, YOU SCORE HIGHER THAN THE INSTRUMENT.*** **And
+`FINDING-regrade-v1.md` records the same asymmetry at the case level: **52 cases where your grade is ≥2
+above the instrument's, and ZERO cases in the other direction.*** ***A one-directional disagreement with
+no cases on one side is not noise — it is a level shift.***
+
+**⚠⚠ SO THE PREMISE I REPORTED TO SEAN AN HOUR AGO (6.7.17) IS WRONG ON THIS DATA.** *From the six
+fixtures I reported "the instrument over-credits `position_strength` by +1.7 levels".* **On the 120
+human-graded cases the instrument UNDER-scores `position_strength` by 0.28 levels, and the mismatch is
+concentrated on large, famous businesses** *(`FINDING-human-labels.md`: McDonald's SG 47 vs 87, True
+Fitness 27 vs 59, Watsons 47 vs 78 — **the gaps are the instrument scoring LOWER**).*
+
+**⚠⚠ THE TWO DATA SETS DISAGREE, AND THE HUMAN ONE WINS.** *The six fixtures are **six** cases, authored
+by me, whose expected bands I transcribed.* **The regrade is 120 cases graded by Sean.** *When n=120 of
+independent human judgement contradicts n=6 of assistant-authored fixtures, **the 6 are the outlier.***
+
+**⚠⚠ WHICH MEANS: BOTH THE DRAFT LADDER (6.7.18) AND THE BOUNDARY TIGHTENING (6.7.17) PUSH IN THE WRONG
+DIRECTION.** *Tightening `position_strength` so that claims score **lower** would widen a gap that the
+human data says is already **too wide in the other direction** on the cases that matter most.*
+
+**⚠ AND ONE METHODOLOGICAL FINDING THAT MUST BE CARRIED.** *`FINDING-regrade-v1.md` records an artefact
+**caught before it was reported**: the apparent composite agreement (`|diff| = 0.2`) was **not agreement
+at all** — **Sean's `YOUR_SCORE` column exactly equals the instrument's score in 59 of 61 filled rows
+(97%), because he copied it.** *Only 2 rows carry a genuine holistic judgement.* ***A metric that looked
+like the strongest convergence in the project was an artefact of the answer sheet.*** **The per-dimension
+numbers above are unaffected — those are his own and independently distributed — but any composite-level
+agreement claim from that file must be rejected.**
+
+**⚠ AND THE RELIABILITY CONTRAST, WHICH IS ITS OWN FINDING.** *Sean graded 6 of 7 duplicate pairs
+(identical businesses re-presented) **identically**. The instrument scored the same businesses
+differently from different forms: **Mixue 65 vs 72, Sheng Siong 65 vs 69, Chicha 57 vs 63, Watsons
+46/51/57.*** ***His repeatability 6/7; the instrument's roughly 0/10 exact.*** **Duplicate pairs measure
+the instrument's input sensitivity, not the business.**
+
+**⚠⚠ WHAT FOLLOWS, AND WHAT MUST NOT HAPPEN.**
+1. **Do NOT apply the §6.7.18 ladder, and do NOT tighten the boundaries (§6.7.17).** *Both are measured
+   against the wrong 6 cases.*
+2. *The real target is the **level-shift**: the notes say **"a level shift means specific level WORDING
+   is anchored differently and should be re-worded, not rescaled"** — **and the standard deviations are
+   nearly equal (his RS sd 1.10 vs instrument 1.00), so it is wording, not scale.***
+3. **Any candidate change must be tested against the 120-case regrade**, not the six fixtures. *Band-level
+   claims from the six are not supportable at n=6 and are now contradicted at n=120.*
+4. *`FINDING-regrade-v1.md` limits: MH n/a in 106 of 120 (both agreed on applicability 98%), 59 rows of
+   `YOUR_SCORE` blank, notes in only 2 rows.*
+
+**⚠ THE HONEST STATEMENT.** *I reported the six-fixture result as a finding and recommended applying a
+change on it. **The instruction to validate against other data sets is what stopped that** — and the
+other data set refutes it.* ***That instruction was the most valuable thing in the exchange.***
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
