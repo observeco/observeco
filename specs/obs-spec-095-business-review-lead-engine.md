@@ -4598,6 +4598,71 @@ against the corpus; the draft was held in memory and never written to the rubric
 
 ---
 
+
+**✅ 6.7.22 THE CEILING SURVIVES A FRESH RUN — AND §6.7.21'S CORRECTION WAS ITSELF TOO BROAD (3 Oct).**
+
+**⚠ WHY THIS WAS RECHECKED.** *§6.7.20 claimed the instrument has almost no top anchor, computed from the
+stored assistant grade columns (`my_new_*`) in `sean-regrade-raw.csv`. §6.7.21 showed those columns are
+**not** a live run and qualified the whole finding as "partly an artefact".* ***That qualification was
+itself too broad — recomputing the same analysis against the fresh 120 runs on disk shows most of the
+finding stands.***
+
+**✅ A. WHICH DIMENSIONS THE STALE COLUMNS ACTUALLY MISREPRESENTED:**
+
+| dimension | CSV mean | **FRESH run mean** | Sean's mean | CSV→fresh |
+|---|---|---|---|---|
+| `position_strength` | 2.78 | 2.75 | 3.07 | −0.03 |
+| `mental_advantage` | 2.80 | 2.89 | 3.24 | +0.09 |
+| `demand_reach` | 3.32 | **3.42** | 3.67 | +0.10 |
+| `defensibility` | 2.19 | **2.52** | 2.48 | **+0.32** |
+| `competitive_room` | 2.44 | **3.06** | 2.65 | **+0.62** |
+
+***ONLY TWO DIMENSIONS DRIFTED MATERIALLY: `defensibility` (+0.32) and `competitive_room` (+0.62). The
+other three are within 0.10.***
+
+**✅ B. THE CEILING SURVIVES ON FOUR OF FIVE DIMENSIONS:**
+
+| dimension | top level | **SEAN awards** | stored CSV | **FRESH run** | verdict |
+|---|---|---|---|---|---|
+| `position_strength` | 5 | **14** | 4 | **4** | ***ceiling holds — 3.5× fewer*** |
+| `mental_advantage` | 5 | **19** | 8 | **10** | ***ceiling holds — 1.9× fewer*** |
+| `demand_reach` | 5 | **22** | 3 | **2** | ***ceiling holds — 11× fewer*** |
+| `defensibility` | 6 | 1 | 1 | 1 | *n too small to judge* |
+| `competitive_room` | 4 | **6** | 0 | **48** | ***⚠ OVERSHOOTS — 8× more*** |
+
+***FOUR OF FIVE DIMENSIONS GENUINELY UNDER-AWARD THE TOP LEVEL. `competitive_room` IS THE EXCEPTION AND
+OVERSHOOTS.*** **The only claim §6.7.21 correctly refuted was the specific one that `competitive_room`'s
+top level is "never awarded" — fresh runs award it 48 times. **The general ceiling finding stands.**
+
+**✅ C. AND THE GAP STILL GROWS WITH SEAN'S LEVEL — ON ALL FIVE, FROM FRESH RUNS:**
+
+| dimension | gap at his low level | gap at his high level | |
+|---|---|---|---|
+| `position_strength` | L1 **−0.89** | L5 **+1.43** | ***RISING*** |
+| `mental_advantage` | L1 −0.75 | L5 +0.63 | *rising* |
+| `defensibility` | L1 −0.44 | L4 +0.72 | *rising* |
+| `demand_reach` | L2 −0.40 | L5 +0.91 | *rising* |
+| `competitive_room` | L2 −0.57 | L4 +2.00 | *rising* |
+
+**⚠⚠ AND THIS IS THE SHARPEST STATEMENT OF THE REAL PROBLEM YET.** *The instrument agrees with Sean at
+the BOTTOM of the scale and diverges at the TOP — **and at levels 1–2 it now scores him LOWER than he
+scores himself** (`position_strength` −0.89 at level 1).* ***So it is not simply "too harsh": it is
+COMPRESSING. It under-awards the bottom AND over-awards nothing — it pulls everything toward the middle.***
+**That is consistent with a level-description problem at BOTH ends, and it is why a top-anchor-only fix
+(§6.7.21) could not work: it moved one end and left the compression intact.**
+
+**⚠ AND IT EXPLAINS §6.7.21's FAILURE MECHANICALLY.** *The top-anchor rewrite made `demand_reach` award 56
+top levels (vs Sean's 22) while making `mental_advantage`'s top level RARER (10 → 7). **Two dimensions moved
+in opposite directions from the same kind of edit** — which is what happens when the instruction is
+appended to a level description whose neighbouring levels still pull the other way.*
+
+**⚠ COST AND METHOD.** *Read-only. No model calls, no rubric change. Reproduce with
+`verify_ceiling_fresh.py`. **This supersedes the blanket qualification in §6.7.21** — that section's
+measured live-test failure remains exactly as recorded; only its generalisation to "the ceiling is an
+artefact" is corrected here.*
+
+---
+
 **✅ 6.7.8a THE PER-SCORE TEXT NOW USES THE EVIDENCE — AND A FETCH FAILURE CAN NO LONGER PASS AS A
 CLEAN BILL (BUILT — 1 Oct).**
 
