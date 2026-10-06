@@ -900,7 +900,22 @@ if __name__ == "__main__":
         _os.environ["TURNSTILE_SITE_KEY"] = gate.TEST_SITEKEY
         _os.environ["TURNSTILE_SECRET_KEY"] = gate.TEST_SECRET
     _port = int(_os.environ.get("SANDBOX_PORT", "8765"))
+    # ⚠⚠ THE NOT-LIVE GUARD. The sandbox has NO captcha bypass in production terms: no spend
+    # ceiling, and the confirmation link is DISPLAYED rather than emailed because no mail client
+    # is wired. Exposing it would publish a tool that mails nothing and can be drained.
+    # So it refuses any non-loopback bind unless the operator explicitly overrides. Sean:
+    # "Just don't make it go live yet." This is that instruction as code, not as a note.
+    if _os.environ.get("SANDBOX_ALLOW_PUBLIC") != "1":
+        _host = "127.0.0.1"
+    else:
+        _host = _os.environ.get("SANDBOX_HOST", "0.0.0.0")
+        print("⚠⚠ SANDBOX_ALLOW_PUBLIC=1 — BINDING TO %s. This is NOT launch-ready: no spend "
+              "ceiling, and confirmation links are displayed rather than emailed." % _host,
+              file=sys.stderr)
     _test = _os.environ.get("TURNSTILE_TEST_KEYS") == "1"
-    print("ObserveCo sandbox → http://127.0.0.1:%d%s" % (
-        _port, "   ⚠ TEST KEYS — the captcha always passes" if _test else ""), file=sys.stderr)
-    uvicorn.run(app, host="127.0.0.1", port=_port, log_level="warning")
+    print("ObserveCo sandbox → http://%s:%d%s%s" % (
+        _host, _port,
+        "   ⚠ TEST KEYS — the captcha always passes" if _test else "",
+        "   ⚠ NOT LIVE: loopback only, nothing on the website points here" if _host == "127.0.0.1"
+        else "   ⚠⚠ PUBLIC BIND — NOT launch-ready"), file=sys.stderr)
+    uvicorn.run(app, host=_host, port=_port, log_level="warning")

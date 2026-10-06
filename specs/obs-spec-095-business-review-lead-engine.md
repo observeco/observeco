@@ -1602,6 +1602,63 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.3 HOW TO TEST IT WITHOUT GOING LIVE — AND THE ANSWER ON THE CRM (6 Oct).**
+
+***Sean: "How can I test the tool first before it shows up on the website? You can commit. Just don't make
+it go live yet. Also the CRM is not built yet?"***
+
+**✅ A. NOTHING ON THE WEBSITE POINTS AT THE TOOL — VERIFIED, NOT ASSUMED.** *Grepped `website/index.html`
+for `127.0.0.1`, `8765`, `localhost`, `typesafe`, `turnstile`, `/confirm`, `run_jev`, `sandbox.db`, both in
+prose and raw HTML with `<svg>` blocks stripped: **zero hits.*** *(An earlier naive grep DID hit — it was
+matching a coordinate inside a 290 KB inline SVG map. **A substring hit inside artwork is not a reference**, which
+is why the check was redone with the SVG stripped.)* ***So testing the tool CANNOT put anything on the
+website: there is no link, no embed, no form action, no script tag pointing at it.***
+
+**✅ B. THE GUARD IS NOW EXPLICIT RATHER THAN RELIED UPON.** *`server.py` now **refuses to bind to anything
+but loopback** unless `SANDBOX_ALLOW_PUBLIC=1` is set, and prints `⚠ NOT LIVE: loopback only, nothing on the
+website points here` on startup.* ***Sean's "just don't make it go live yet" is now code rather than a
+convention.***
+
+**✅ C. HOW TO TEST — THREE LEVELS, NONE OF WHICH SHIP ANYTHING.**
+1. **The pipeline, no UI:** *`python3 run_jev.py inputs-v4/<case>.json` — scores one case and writes
+   `runs/`. No captcha, no gate, no email. This is the existing calibration path.*
+2. **The full journey, locally:** *open `http://127.0.0.1:8765/`, fill the form, click through the captcha,
+   confirm, read the report. **This is the real thing end-to-end**, against the real rubric and the real
+   model — it just runs on Sean's machine and nothing else can reach it.*
+3. **The gate's refusal paths, without a browser:** *`python3 test_gate_real.py` (13 checks) and
+   `python3 test_confirmation_gate.py` (26 checks).*
+
+**⚠ D. THE CRM *IS* BUILT — AND IT IS SHOWING REAL DATA.** *`/crm` renders from `sandbox.db`. **Checked live:
+71 table rows, newest first.*** **Sample:**
+
+| # | when (UTC) | email | business | band | score | outcome |
+|---|---|---|---|---|---|---|
+| 70 | 2026-10-06T08:17 | real-gate@observeco.test | Real Gate Test | — | — | *(captcha refused)* |
+| 68 | 2026-10-06T08:14 | *(blank)* | Gate Test Co | Contested | 44.0 | SCORED |
+| 65 | 2026-10-06T08:09 | gate-test@observeco.test | Gate Test Co | — | — | *(captcha refused)* |
+
+***So the CRM works: it captures the address, the business, the band, the composite, the rubric version,
+the model id, the outcome, and the full payload — and it distinguishes a REFUSED submission from a SCORED
+one. Row #70 with an empty band is the captcha refusal, which is exactly what §3.7.2 asked for: an abuse
+attempt is visible rather than silent.***
+
+**⚠⚠ E. BUT "THE CRM" MEANS TWO DIFFERENT THINGS, AND ONLY ONE IS BUILT.** *What exists is a **local SQLite
+table with a read-only HTML view**. What is NOT built, and is what §7.x describes:*
+- **the system of record** *(Supabase — contacts, consent, reports)*
+- **the consent rows** *— per-purpose, own timestamp (§3.2/§7.7). **Currently NO consent is recorded at
+  all**, so a submission cannot be lawfully aggregated for the dataset claim.*
+- **sequences, lead scoring, a vendor** *— deliberately absent, the spec says so*
+- **and the email that is supposed to accompany it** — *nothing sends; there is no mail client.*
+
+***So: the CRM view is real and useful for testing; the CRM as a system is not built. Those are the same
+name for two different things and should not be conflated.***
+
+**⚠ REPRODUCE:** *`curl -s http://127.0.0.1:8765/crm` for the view; `sqlite3 specs/calibration/sandbox/sandbox.db
+'SELECT COUNT(*) FROM submissions'` for the count.*
+
+---
+
 **✅ 3.7.2 THE CONFIRMATION GATE IS BUILT, WIRED AND PROVEN (6 Oct). Blockers 1 and 2 CLOSED.**
 
 ***Sean: "4. build the four blockers -> then launch."*** *Blockers **1 (Cloudflare Turnstile)** and **2
