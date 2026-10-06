@@ -1501,6 +1501,106 @@ is correct about the DESIGN and deliberately silent about the RUNTIME, because t
 is to be the thing that must not ship.*** **⚠ Read the two together or the warning will be taken as a
 false alarm and then ignored when it matters.**
 
+
+**⚠ 3.7.1 THE CONFIRMATION-GATE WORDING — DRAFT FOR SEAN'S EDIT (3 Oct). NOT BUILT.**
+
+***Everything below is wording only. Sean edits it; the build follows the approved text.*** *Register:
+plain English, because the audience is a small-business owner, not an analyst.* **Constraints it must
+satisfy, and each line below is placed deliberately:** *§3.2 — the first email carries purpose 1 (report
+delivery) and **must not carry marketing**; §3.7 — **nothing costs model spend until the address is
+proven**; §3.7's own point that the person receiving an UNSOLICITED report is the innocent party, so the
+email must tell them plainly that nothing happened.*
+
+**⚠⚠ A. THE CONFIRMATION EMAIL (transactional, purpose 1 only).**
+
+*Subject — three options, pick one:*
+1. `Confirm your business review`  ← *recommended: plain, no urgency theatre*
+2. `One click to run your business review`
+3. `Please confirm: your {business_name} review`
+
+*Body:*
+
+    Hi {first_name},
+
+    You asked us to review the market position of {business_name}.
+
+    Click below and we'll get started.
+
+        [ Confirm and run my review ]
+
+    That's the only step. Nothing runs until you click — it's how we make
+    sure nobody can use this form to send a report about a business to
+    someone who never asked for it.
+
+    If this wasn't you, ignore this email. Nothing has been run, and nothing
+    will be. We'll delete your details within 30 days.
+
+    This link works for 24 hours.
+
+    — ObserveCo
+      observeco.com
+
+*⚠ Design notes on specific lines:*
+- ***"Nothing runs until you click"*** *— this is the load-bearing sentence. It is simultaneously the spend
+  control (§3.7: an unconfirmed submission costs one row and one email) and the honest disclosure to
+  someone who did not ask for this.*
+- ***"If this wasn't you..."*** *— the unsolicited case. Without it, a stranger's first contact with
+  observeco.com is an unexplained email, which is a spam complaint and a domain-reputation risk (§3.7
+  consequence 2).*
+- ***"We'll delete your details within 30 days"*** *— a retention commitment. **⚠ Decision: confirm 30
+  days is the retention you want**, or substitute another period.*
+- *No marketing, no "our services", no PS in this email — per §3.2.*
+
+**⚠⚠ B. THE OPTIONAL NUDGE (24 hours later, purpose 1, sent ONCE — a decision).**
+
+*Subject:* `Your review of {business_name} hasn't started`
+
+    Hi {first_name},
+
+    You asked us to review {business_name}. The email wasn't confirmed, so
+    nothing has been run yet.
+
+    If you still want it:
+
+        [ Confirm and run my review ]
+
+    If you've changed your mind, ignore this and we'll delete your details.
+
+*⚠ §3.2 explicitly permits one nudge under purpose 1 ("it completes the requested action") provided it
+carries no marketing content. **Decision: send the nudge, or drop it?** My recommendation: send it once —
+abandoned-but-interested submitters are the highest-intent group, and one reminder is standard practice.*
+
+**⚠⚠ C. WHAT THE FORM PAGE MUST SAY, BEFORE SUBMIT (adjacent to the button).**
+
+    We'll email you a link to confirm. Nothing is run until you click it.
+
+*⚠ This sets the expectation so the confirmation email is not a surprise. **It is also the place a submitter
+learns the report is not instant** — silence here would read as a broken form.*
+
+**⚠⚠ D. THE AFTER-CONFIRMATION PAGE.**
+
+    Confirmed — we're running your review now.
+
+    It takes a few minutes. We'll email the report to {email} when it's ready.
+
+    While you wait: {benchmark unlock line, if purpose 3 was ticked}
+
+**⚠⚠ E. DECISIONS THIS DRAFT NEEDS FROM SEAN.**
+1. **Subject line** — which of the three.
+2. **Link expiry** — 24 hours is the draft; longer is friendlier, shorter is safer.
+3. **Nudge** — send once, or not at all.
+4. **Retention sentence** — confirm "30 days" or substitute.
+5. **Sign-off** — "— ObserveCo / observeco.com" vs a named person. *A named sender reads warmer and
+   typically improves confirmation rates; an unnamed sender reads corporate.*
+
+**⚠ WHAT IS NOT IN THIS DRAFT, DELIBERATELY.** *No captcha copy (that is Turnstile's own widget), no
+unsubscribe-link copy (that belongs to purpose 2's marketing stream, not this transactional gate), and no
+benchmark copy beyond the placeholder in D (that is §7.7's withheld-collective-good wording, which is a
+separate consent surface and must not be bundled here).*
+
+---
+
+
 **⚠ WHAT ACTUALLY BLOCKS GOING LIVE — ALL UNBUILT, ALL PRE-DEPLOY:**
 1. **Cloudflare Turnstile** at submission *(not started — needs a real site key)*.
 2. **The confirmation gate** — *§3.7 names this, not the captcha, as the control that protects the
