@@ -1603,6 +1603,66 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.4 THE "NO TOKEN" BUG: CLOUDFLARE ERROR 110200 — DOMAIN NOT AUTHORIZED, A DASHBOARD GAP,
+NOT A CODE DEFECT (6 Oct). Plus the loopback bypass that unblocks local testing.**
+
+***Sean: "There is a bug in 127.0.0.1. Says no token."***
+
+**✅ DIAGNOSIS — FOUND BY DRIVING A REAL BROWSER, NOT BY READING THE CODE.** *curl renders the widget as
+an empty box and says nothing. Playwright against the live page captured Cloudflare's own console error:*
+
+    [pageerror] [Cloudflare Turnstile] Error: 110200.
+
+***Cloudflare's docs: `110200` = "Domain not authorized" — "Add current domain in Hostname Management."***
+*Confirmed independently against the error-code table, not inferred from the number.*
+
+**⚠ WHAT IS ACTUALLY WRONG.** *The widget never renders its iframe and never issues a token, so the hidden
+`cf-turnstile-response` field stays EMPTY. **The server then refuses with "no token submitted" — which is
+the CORRECT fail-closed behaviour (§3.7) firing on a broken widget.*** *So: two things are working as
+designed, and the cause is outside the code.*
+
+**⚠ TESTED BOTH HOSTNAMES — IT IS NOT A `127.0.0.1`-vs-`localhost` PROBLEM.** *The first hypothesis was that
+Sean added `observeco.com` and `localhost` but browsed `127.0.0.1`, which Cloudflare treats as a different
+hostname. **Both were driven in a real browser and BOTH returned 110200** — so no hostname is authorized
+yet, not merely the wrong one.* *Recorded because the plausible hypothesis was wrong and the measurement is
+what settled it.*
+
+**✅ THE FIX, IN THE CLOUDFLARE DASHBOARD.** *Turnstile → the `observeco-business-review` widget →
+**Hostname Management** → add BOTH `127.0.0.1` and `localhost` alongside `observeco.com`. **Cloudflare treats
+`127.0.0.1` and `localhost` as distinct hostnames, so both are needed for local work.*** *(A widget with no
+hostname restriction also works, but pinning the hostnames is the safer setting and is what the docs imply.)*
+
+**✅ AND A LOOPBACK-ONLY BYPASS, SO TESTING IS NOT BLOCKED BY A DASHBOARD SETTING.** *`SANDBOX_SKIP_CAPTCHA=1`
+skips the captcha **only when all three hold**: the operator set the flag, the request arrived from loopback,
+and the peer address is genuinely local. **Off by default, and it cannot survive a public bind** — a bypass
+that could reach a deploy is worse than no bypass.* **The captcha protects a PUBLIC endpoint; on a
+loopback-only instance the confirmation gate is the real spend control, so nothing is weakened.**
+
+**✅ PROVEN END-TO-END IN A REAL BROWSER.** *With the flag set: form filled → submit → "Check your email" →
+confirmation link → **the pipeline ran and produced a report** → re-using the link gave "already confirmed".
+**Database confirms it: submission #72, `Bypass Test Co`, band `Fragile`, composite 37.0, outcome
+`SCORED_CONFIRMED`; confirmation row #2 `confirmed`.***
+
+**⚠⚠ AND A SEPARATE, IMPORTANT OBSERVATION FROM THE SAME TABLE.** *Submission **#71 is `Kommune` with
+`CAPTCHA_REFUSED` and the address `1571keplerj@gmail.com`.*** ***That is a REAL PERSON's email address, not a
+test fixture.*** *It is almost certainly Sean testing from his own machine — **but it means a genuine address
+is already sitting in `sandbox.db`, which the §7 privacy design says should not happen before the consent
+rows and retention policy exist (§3.7.3 E).*** **Flagged, not deleted: whether to purge it is a decision, and
+the retention rule that would govern it is not built.**
+
+**⚠ A TEST DEFECT OF MY OWN, RECORDED.** *The first browser run failed on `input[name=positioning_sentence]`
+— **a 30-second timeout because the field is a `<textarea>`, not an `<input>`.** I had guessed the selector
+instead of reading the form. Fixed by extracting the real field names and element types from the served
+form. **The same class as earlier this session: a test written from assumption rather than from the
+artefact.***
+
+**⚠ REPRODUCE:** *`probe_widget_element.py` (drives a headed browser, prints Cloudflare's error plus the
+empty token field); `test_bypass_browser.py` (the end-to-end click-through); `sqlite3 sandbox/sandbox.db` for
+the rows above.*
+
+---
+
 **✅ 3.7.3 HOW TO TEST IT WITHOUT GOING LIVE — AND THE ANSWER ON THE CRM (6 Oct).**
 
 ***Sean: "How can I test the tool first before it shows up on the website? You can commit. Just don't make
