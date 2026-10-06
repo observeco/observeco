@@ -1604,6 +1604,53 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.5 THE RESULT-PAGE UX IS NOW VERIFIED IN A REAL BROWSER — AND IT EXPOSED A PRODUCTION GAP (6 Oct).**
+
+**⚠ WHY THIS WAS STILL OPEN.** *§3.7.4 proved the pipeline ran by reading the DATABASE (row #72
+`SCORED_CONFIRMED`). **That is not the same as proving the user SEES the report** — and this code has a
+documented history of exactly that failure mode ("the button does nothing", `report_page`'s own docstring).*
+***So the browser-level verification was still outstanding after §3.7.4, and is closed here.***
+
+**✅ MEASURED IN A REAL BROWSER (headed Chromium, loopback, captcha bypassed):**
+
+| step | what a human sees | verdict |
+|---|---|---|
+| submit | *"Check your email"* + *"Nothing has been run yet"*, **and NO score** | ***✅ correct — no spend, no leak*** |
+| confirm | **`34/100 — Fragile`**, per-dimension table rendered, no internal bug | ***✅ the report renders*** |
+| re-use link | *"already under way"* | ***✅ nothing runs twice*** |
+
+**⚠⚠ AND THE GAP: CLICKING THE CONFIRMATION LINK BLOCKS WITH NO FEEDBACK FOR MINUTES.** *The sandbox runs
+the pipeline **inline** inside the `/confirm` request, so the browser sits on a loading page for the full
+model + research duration — **~4 minutes here.*** ***For a consumer-facing tool that is unacceptable, and it
+is a real architectural difference, not a sandbox quirk:*** *§3.7's own design says the model calls happen
+**in the worker**, and the confirmation email is supposed to be followed by an immediate acknowledgement,
+with the report arriving by email later.*
+
+**⚠ SO THE PRODUCTION SHAPE MUST BE:** *`/confirm` returns **immediately** with "Confirmed — we're running
+your review; we'll email it to you", enqueues the job, and the worker does the enrichment + Jev + render and
+sends the report. **The inline run is a testing convenience and must not ship.*** *Recorded as a build item,
+not a defect in what exists — the sandbox is behaving as designed, and the design only works locally.*
+
+**⚠ TWO TEST DEFECTS OF MINE, BOTH FIXED, BOTH THE SAME CLASS.**
+1. **`inner_text("body")` timed out** right after the submit click. *The result page **replaces the document
+   via `document.write`** (`report_page`'s docstring explains why), so reading `body` at the wrong moment
+   finds nothing. Fixed by reading `document.body.innerText` via `evaluate`, which tolerates the swap.*
+2. **The confirmation token came out MANGLED** — I regexed the link out of **rendered text**, which inserts a
+   line break into a long URL. *The confirm page said "couldn't confirm" and **the row stayed `pending`** —
+   which is how the bug was found: the gate table still showed `pending` when the test claimed to have
+   confirmed.* **Fixed by reading the anchor's `href` attribute**, which is exact. **Then proven: `confirmed`,
+   and a report rendered.**
+
+***Both are the same failure as earlier this session: a test written from assumption about the artefact
+instead of from the artefact. The DB staying `pending` is what caught the second one — the assertion, not the
+tool, was wrong.***
+
+**⚠ REPRODUCE:** *`test_ux_result_page.py` against a `SANDBOX_SKIP_CAPTCHA=1` instance; check
+`confirmations.status` in `sandbox.db` to confirm the row flipped.*
+
+---
+
 **✅ 3.7.4 THE "NO TOKEN" BUG: CLOUDFLARE ERROR 110200 — DOMAIN NOT AUTHORIZED, A DASHBOARD GAP,
 NOT A CODE DEFECT (6 Oct). Plus the loopback bypass that unblocks local testing.**
 
