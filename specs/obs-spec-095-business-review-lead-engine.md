@@ -1601,6 +1601,67 @@ separate consent surface and must not be bundled here).*
 ---
 
 
+
+**✅ 3.7.2 THE CONFIRMATION GATE IS BUILT, WIRED AND PROVEN (6 Oct). Blockers 1 and 2 CLOSED.**
+
+***Sean: "4. build the four blockers -> then launch."*** *Blockers **1 (Cloudflare Turnstile)** and **2
+(the confirmation gate)** are now BUILT and TESTED. **Blocker 3 (spend ceiling) is deliberately NOT built
+— Sean: "spend ceiling - let's monitor for now."** Blocker 4 (migration 003 / privacy rewrite /
+`UNSUBSCRIBE_SECRET`) is not started.*
+
+**⚠ THE DESIGN, AS BUILT.** *`sandbox/confirmation_gate.py` (new) + the gate wired into
+`sandbox/server.py`. **`/submit` can no longer reach the model at all**; `/confirm` is the only door to
+model spend, and it opens only on a signed, unexpired token.*
+
+    /submit  (captcha)  ->  store as `pending` + issue the confirmation link   [ZERO MODEL COST]
+    /confirm (valid token) -> run the pipeline -> report
+
+**✅ MEASURED — 39 CHECKS, BOTH DIRECTIONS, THREE TEST LAYERS:**
+1. **`test_confirmation_gate.py` — 26 of 26.** *Token forging, expiry, wrong-address re-pointing,
+   idempotent re-confirm, the 30-day retention purge, and captcha fail-closed.*
+2. **`test_gate_live.py` — 16 of 16** *(against a TEST-KEY instance on port 8799, `TURNSTILE_TEST_KEYS=1`).*
+   *Proves the whole journey: no token → 400; valid token → **pending with NO score, NO band, NO scored
+   row**; forged link → 400; real link → **the pipeline runs and returns a report**; re-using the link →
+   **"already confirmed", so nothing runs twice.***
+3. **`test_gate_real.py` — 13 of 13** *(against the real instance, Sean's real keys, port 8765).*
+
+**⚠ WHAT THE LIVE TESTS PROVE THAT THE UNIT TESTS COULD NOT.** ***A valid-looking token against the REAL
+secret is REFUSED (400) — so the real keys are genuinely enforced, not bypassed.*** *A submission with no
+token is refused. A forged confirmation link is refused. And every captcha refusal leaves a row in the CRM,
+**so an abuse attempt is visible rather than silent.***
+
+**⚠⚠ FOUR DEFECTS FOUND WHILE BUILDING, ALL BY CHECKING RATHER THAN ASSUMING.**
+1. **The `except` swallow again, in the new code path?** *No — but the first live run showed 3 "failures"
+   that were CORRECT: the always-pass test token is rejected by the real secret. **A green-looking failure
+   that is actually the control working.** Distinguishing the two is the whole point of the two-instance
+   design.*
+2. **The widget rendered into the WRONG FORM.** *The edit matched `</form>` in the `/prefill` helper, not
+   the owner-facing form. **Caught by curling the live page and grepping for the widget — it count 0.***
+3. **`{turnstile_widget}` was interpolated as a FUNCTION OBJECT.** *The form body is an f-string, so the
+   placeholder became `<function turnstile_widget at 0x...>` in the served HTML and the `.replace()` could
+   never match. **Caught by printing the served region around the button rather than trusting the
+   `grep -c` that reported 0 and looked like an absence.***
+4. **A test that grepped raw text for an import name and failed on a DOCSTRING.** *`"run_jev" not in src`
+   matched the module's own comment "Mirrors `run_jev.read_env_key`". **A substring check cannot tell prose
+   from code; replaced with an AST import check.***
+
+**⚠ ONE LIMITATION, STATED PLAINLY.** ***In the sandbox the confirmation link is DISPLAYED because there is
+no mail client. In production it is emailed and never shown.*** *That difference is stated on the page
+itself, in a `⚠ Sandbox` block, rather than left silent — **a gate that looks real but is not is worse than
+no gate.*** **The link is also only emailed once a provider is wired; none exists yet (`Resend` is in the
+processor register).**
+
+**⚠ AND A SECURITY NOTE THAT IS NOT THE CODE'S FAULT.** ***Sean pasted the Turnstile SECRET KEY into chat.
+The keys were verified working (`invalid-input-response` = Cloudflare accepted the secret), but the secret
+is now in the transcript and should be ROTATED in the Cloudflare dashboard once verified.*** *The key pair
+itself is correct and `.env` is gitignored; only the exposure needs handling.*
+
+**⚠ REPRODUCE:** *`python3 test_confirmation_gate.py` (no network); `TURNSTILE_TEST_KEYS=1 SANDBOX_PORT=8799
+python3 server.py` then `SANDBOX_PORT=8799 python3 test_gate_live.py` (happy path); `python3
+test_gate_real.py` (real keys).*
+
+---
+
 **⚠ WHAT ACTUALLY BLOCKS GOING LIVE — ALL UNBUILT, ALL PRE-DEPLOY:**
 1. **Cloudflare Turnstile** at submission *(not started — needs a real site key)*.
 2. **The confirmation gate** — *§3.7 names this, not the captcha, as the control that protects the

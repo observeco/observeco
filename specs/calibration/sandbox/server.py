@@ -57,6 +57,8 @@ import run_jev                                                # noqa: E402
 from preflight_gate import evaluate as preflight              # noqa: E402
 from generate_report import render as render_report           # noqa: E402
 from rubric_gate import require_promoted                      # noqa: E402
+import confirmation_gate as gate                              # noqa: E402  (spec 3.7)
+from fastapi import Query                                     # noqa: E402
 
 RUBRIC = CAL / "rubric.json"
 app = FastAPI(title="ObserveCo sandbox")
@@ -492,6 +494,85 @@ def shell(title: str, body: str) -> str:
                        body=f"<body>{body}{SUBMIT_JS}</body>")
 
 
+def turnstile_widget() -> str:
+    """The Cloudflare Turnstile widget, plus a LOUD warning when it is running on test keys.
+
+    A page protected by a captcha that silently falls back to the always-pass test key would
+    look protected and not be -- so the fallback is stated on the page rather than buried.
+    """
+    warn = ""
+    if not gate.turnstile_configured():
+        warn = ('<div class=warn style="margin-top:10px">⚠ TURNSTILE IS RUNNING ON ITS PUBLIC '
+                'TEST KEYS — this widget always passes and is NOT protecting anything. Set '
+                'TURNSTILE_SITE_KEY / TURNSTILE_SECRET_KEY before this form faces the public.</div>')
+    return (f'<div class="cf-turnstile" data-sitekey="{gate.site_key()}" '
+            f'style="margin-top:14px"></div>'
+            f'<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer>'
+            f'</script>{warn}')
+
+
+@app.get("/confirm", response_class=HTMLResponse)
+def confirm_page(token: str = Query("")):
+    """The confirmation link target. ⚠ THIS IS THE DOOR TO MODEL SPEND (spec 3.7).
+
+    A valid token flips the row to `confirmed` and reports that the worker may now run. It does
+    NOT run the pipeline here -- the ordering rule is that nothing reaches enrichment or Jev
+    until the address is proven, and this page proves it.
+    """
+    res = gate.confirm(DB, token)
+    if not res.get("ok"):
+        return HTMLResponse(shell("Confirmation failed", f"""
+<h1>We couldn't confirm this link</h1>
+<div class=err><b>{res.get('reason', 'invalid link')}</b></div>
+<div class=note>Confirmation links work for 24 hours. If yours has expired, submit the form
+again and we'll send a fresh one. Nothing was run, and nothing will be.</div>
+<p><a href=/>← start again</a></p>"""), status_code=400)
+
+    payload = res.get("payload") or {}
+    form = payload.get("form") or {}
+    name = form.get("business_name") or "your business"
+
+    # ⚠ THIS IS THE ONLY PLACE THE PIPELINE RUNS. It sits AFTER the address is proven, which is
+    # the whole ordering rule of spec 3.7. In production this is a queue worker; here it runs
+    # inline so the flow is end-to-end testable.
+    if res.get("already"):
+        return HTMLResponse(shell("Already confirmed", f"""
+<h1>This review is already under way</h1>
+<div class=sub>{name}</div>
+<div class=note>This link was already used, so <b>nothing was run twice</b> — no second model
+call, no second report. If you need another, submit the form again.</div>
+<p><a href=/>← submit another</a></p>"""))
+
+    do_scan = bool(payload.pop("_do_scan", False))
+    try:
+        r = run_submission(payload, do_scan)
+    except Exception:
+        return HTMLResponse(shell("error", f"<h1>Failed after confirmation</h1><div class=err><pre>"
+                                   f"{traceback.format_exc()}</pre></div>"
+                                   f"<p><a href=/>← back</a></p>"), status_code=500)
+
+    if r["outcome"] == "REFUSED":
+        i = save(email=form.get("email"), business_name=name, category=form.get("category"),
+                 outcome="REFUSED_CONFIRMED", payload=payload,
+                 report="missing: " + ", ".join(r["refusal"]["missing_slots"]))
+        return HTMLResponse(shell("Refused", f"""
+<h1>Refused before any model call</h1>
+<div class=sub>Submission #{i} — you confirmed, and the pre-flight gate still stopped it</div>
+<div class=note>Being confirmed earns the <b>right</b> to a run, not a run that is worth making.
+The pre-flight gate fires on the form answers before any token is spent (spec 3.11).</div>
+<div class=err><b>Missing required slots:</b>
+ {", ".join(r["refusal"]["missing_slots"]) or "(none)"}</div>
+<p><a href=/>← back</a></p>"""))
+
+    run = r["run"]
+    i = save(email=form.get("email"), business_name=name, category=form.get("category"),
+             band=run.get("band"), composite=run.get("composite"),
+             rubric_version=run.get("rubric_version"), model_id=run.get("model_id"),
+             outcome="SCORED_CONFIRMED", report=r["report"], payload=payload)
+    return HTMLResponse(report_page(name, form.get("email"), i, run, r["report"],
+                                    r.get("scan_verdict")))
+
+
 @app.get("/", response_class=HTMLResponse)
 def index():
     cases = sorted(p.stem for p in (CAL / "inputs-v4").glob("*.json")
@@ -586,6 +667,10 @@ of us who buy lunch on weekdays, and families on weekend mornings."></textarea>
      style="width:auto"> <span style="color:#8b97a8;font-size:12px">Also search the web
      for competitors (takes longer, and doesn't always find them)</span></label>
 
+  <div class=note style="margin-top:18px">We'll email you a link to confirm.
+  <b>Nothing is run until you click it.</b> That's how we make sure nobody can use this
+  form to send a report about a business to someone who never asked for it.</div>
+  {turnstile_widget()}
   <button type=button data-submit>Show me my read →</button>
 </form>
 
@@ -600,9 +685,9 @@ of us who buy lunch on weekdays, and families on weekend mornings."></textarea>
            style="margin:0;width:100%;padding:10px">Prefill</button></div>
     </div>
   </form>
-  <div class=warn style="margin-top:16px"><b>⚠ Sandbox build.</b> No captcha, no
-  confirmation gate, no spend ceiling — section 3.7's open relay is fully present here.
-  Loopback and single-user by design; not safe to expose.
+  <div class=warn style="margin-top:16px"><b>⚠ Sandbox build.</b> The captcha and the
+  confirmation gate are now WIRED (§3.7) — but this instance runs on loopback, single-user,
+  with no spend ceiling. Not safe to expose.
   <a href=/crm>View the CRM →</a></div>
 </details>""")
 
@@ -672,7 +757,18 @@ def submit(request: Request, business_name: str = Form(""), email: str = Form(""
            competitors_named: str = Form(""), customer_description: str = Form(""),
            competitor_urls: str = Form(""),
            website: str = Form(""),
-           case_key: str = Form(""), do_scan: str = Form("")):
+           case_key: str = Form(""), do_scan: str = Form(""),
+           cf_turnstile_response: str = Form("")):
+    """⚠ SPEC 3.7: THIS HANDLER MUST NOT REACH THE MODEL.
+
+    Order of operations, and the order is the design:
+        1. captcha  -- stops a bot filling the form at machine speed
+        2. store as `pending` + show/send the confirmation link   [ZERO MODEL COST]
+        3. stop. Nothing else runs here.
+
+    All model work happens on /confirm, behind a proven address. That is what protects the
+    budget: a captcha stops automated SUBMISSION, it does not stop LLM SPEND.
+    """
     f = dict(business_name=business_name, email=email, category=category, city=city,
              role=role, company_size_band=company_size_band,
              positioning_sentence=positioning_sentence, differentiator=differentiator,
@@ -680,26 +776,40 @@ def submit(request: Request, business_name: str = Form(""), email: str = Form(""
              their_price_point=their_price_point, competitors_named=competitors_named,
              customer_description=customer_description, website=website,
              competitor_urls=competitor_urls, case_key=case_key)
-    payload = payload_from_form(f)
-    try:
-        r = run_submission(payload, bool(do_scan))
-    except Exception:
-        return HTMLResponse(shell("error", f"<h1>Failed</h1><div class=err><pre>"
-                                  f"{traceback.format_exc()}</pre></div>"
-                                  f"<p><a href=/>← back</a></p>"), status_code=500)
 
-    if r["outcome"] == "REFUSED":
-        i = save(email=email, business_name=business_name, category=category,
-                 outcome="REFUSED", payload=payload,
-                 report="missing: " + ", ".join(r["refusal"]["missing_slots"]))
-        return HTMLResponse(shell("refused", f"""
-<h1>Refused before any model call</h1>
-<div class=sub>Submission #{i} — the address IS in the CRM</div>
-<div class=note>The pre-flight gate stopped this <b>before the token spend</b> —
-the ordering section 3.11 demands.</div>
-<div class=err><b>Missing required slots:</b>
- {", ".join(r["refusal"]["missing_slots"]) or "(none)"}</div>
-<p>Guidance email (template C) would send here — no score, no scan, no cost.</p>
+    # ── 1. THE CAPTCHA. Fails closed: an unreachable verifier refuses rather than admits.
+    captcha = gate.verify_turnstile(cf_turnstile_response,
+                                    remote_ip=(request.client.host if request.client else ""))
+    if not captcha["ok"]:
+        save(email=email, business_name=business_name, category=category,
+             outcome="CAPTCHA_REFUSED", payload=payload_from_form(f),
+             report="blocked at the captcha: " + captcha["reason"])
+        return HTMLResponse(shell("Check failed", f"""
+<h1>We couldn't verify that you're a person</h1>
+<div class=err><b>{captcha["reason"]}</b></div>
+<div class=note>Nothing was run and nothing was sent — this submission stopped at the captcha,
+before any research or scoring.</div>
+<p><a href=/>← try again</a></p>"""), status_code=400)
+
+    # ── 2. STORE AS PENDING AND ASK FOR CONFIRMATION. Still zero model cost.
+    payload = payload_from_form(f)
+    payload["_do_scan"] = bool(do_scan)
+    pending = gate.submit_pending(DB, email, business_name, payload, captcha_ok=True)
+
+    # In production this link is EMAILED and never shown. The sandbox has no mail client, so it
+    # displays the link and says so -- showing it silently would make the gate look like
+    # theatre when it is the load-bearing control.
+    link = f"/confirm?token={pending['token']}"
+    return HTMLResponse(shell("Confirm your email", f"""
+<h1>Check your email to confirm</h1>
+<div class=sub>{business_name} · submission #{pending["id"]}</div>
+<div class=note><b>Nothing has been run yet.</b> No research, no scoring, no cost — the
+submission is stored and waiting. We would now email
+<b>{email or "(no address given)"}</b> a link that looks like this:</div>
+<div class=note style="border-left-color:#2f6fed"><a href="{link}">{link}</a></div>
+<div class=warn><b>⚠ Sandbox:</b> there is no mail client here, so the link is shown instead
+of emailed. <b>In production this link is emailed and never displayed</b> — that is what stops
+a stranger's submission from spending our model budget (spec 3.7).</div>
 <p><a href=/>← back</a> &nbsp; <a href=/crm>CRM →</a></p>"""))
     if r["outcome"] == "MODEL_UNAVAILABLE":
         save(email=email, business_name=business_name, category=category,
@@ -780,5 +890,17 @@ of record (spec 7.x). No sequences, no lead scoring, no vendor — deliberately.
 
 if __name__ == "__main__":
     import uvicorn
-    print("ObserveCo sandbox → http://127.0.0.1:8765", file=sys.stderr)
-    uvicorn.run(app, host="127.0.0.1", port=8765, log_level="warning")
+    # ⚠ THE TEST-KEY INSTANCE RUNS ON A DIFFERENT PORT ON PURPOSE. Cloudflare's always-pass test
+    # secret is only accepted BY the test sitekey pair, so a happy-path test needs an instance
+    # configured with the test keys -- and that instance must never be the one the public sees.
+    # `SANDBOX_PORT` lets a proof instance run alongside the real one; `TURNSTILE_TEST_KEYS=1`
+    # pins it to the documented test pair and announces that it verifies nothing.
+    import os as _os
+    if _os.environ.get("TURNSTILE_TEST_KEYS") == "1":
+        _os.environ["TURNSTILE_SITE_KEY"] = gate.TEST_SITEKEY
+        _os.environ["TURNSTILE_SECRET_KEY"] = gate.TEST_SECRET
+    _port = int(_os.environ.get("SANDBOX_PORT", "8765"))
+    _test = _os.environ.get("TURNSTILE_TEST_KEYS") == "1"
+    print("ObserveCo sandbox → http://127.0.0.1:%d%s" % (
+        _port, "   ⚠ TEST KEYS — the captcha always passes" if _test else ""), file=sys.stderr)
+    uvicorn.run(app, host="127.0.0.1", port=_port, log_level="warning")
