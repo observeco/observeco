@@ -82,3 +82,6 @@ specs/calibration/canary/runs-check/
 specs/calibration/sandbox/sandbox.db
 specs/calibration/sandbox/runs/
 specs/calibration/sandbox/__pycache__/
+
+# spec 095 section 3.7 -- the confirmation-token signing fallback secret (never commit)
+specs/calibration/sandbox/.confirm_secret
