@@ -1606,6 +1606,44 @@ separate consent surface and must not be bundled here).*
 
 
 
+**✅ 3.7.7 THE PRIVACY REWRITE IS DRAFTED — AND §3.4 ALREADY NAMED THE FIVE FALSE STATEMENTS (6 Oct).**
+
+***Sean's "build the four blockers" makes the privacy page a launch prerequisite. §3.4 was already right about
+why, and the draft now exists at `specs/calibration/privacy_rewrite_draft.md`. Nothing is applied.***
+
+**⚠ WHAT WAS ALREADY KNOWN, CONFIRMED AGAINST THE LIVE FILE.** *§3.4 predicted five statements would become
+false on launch. **All five are present verbatim in the served `website/privacy.html`, including the meta
+description** — so the claim Google renders first is affected, not just body copy.* **The grep was the check,
+not the assumption.**
+
+**⚠ IT IS A REWRITE, NOT AN EDIT — and §3.4 already said so.** *The live page truthfully describes a product
+that runs only on the machine. The business review form changes that: an address and a business description
+now leave the submitter's machine into Supabase. **So the page must describe two paths — the local product
+(still true, unchanged) and the report (new).** A page that says "your data never leaves your machine" and
+then collects a form is exactly the kind of false claim §3.4 flags as blocking rather than cleanup.*
+
+**✅ THE DRAFT COVERS FOUR PARTS:** *(A) the five now-false statements with drop-in replacements — **including
+the meta description**; (B) a new "business review report" section stating plainly what is collected, the
+**three unbundled choices** (report / follow-up / benchmark — matching `004_consent_records.sql`), how to
+withdraw, and the 30-day deletion; (C) a **named processor table** (Supabase, Turnstile, Resend, Brevo,
+TypeSafe) replacing the "no third-party processors" claim; (D) deleting the unserved root `privacy.html`,
+which §3.4 flags as the trap that catches the next person editing the wrong file.*
+
+**⚠ DELIBERATELY NOT APPLIED, ON THE STANDING RULE.** *"Steering (thresholds, sentences, copy) is his, before
+code."* **The privacy page is copy, and it is legal-adjacent copy.** *So it is drafted for approval, with six
+numbered sign-off items (P1–P6) — **P5 is a genuine gap: the Supabase region is not knowable from here and
+must be filled by Sean.***
+
+**⚠ ORDERING CONSTRAINT WORTH RECORDING.** *The consent checkboxes in the form and the wording on this page
+describe the same three purposes. **If they ship apart they can disagree, and a disagreement between the
+notice and the checkbox is precisely what §7.7 says destroys the evidential value.** So the page and the
+consent wiring ship together, after the copy is settled.*
+
+**⚠ REPRODUCE:** *`specs/calibration/privacy_rewrite_draft.md` for the wording; grep `website/privacy.html`
+for the five statements; `vercel.json` for `outputDirectory`.*
+
+---
+
 **⚠⚠ 3.7.6 BLOCKER 4 IS HALF-BUILT AND THE SPEC SAYS "NOT STARTED" — AND THE REAL GAP IS THE CONSENT
 STORE (6 Oct).**
 
