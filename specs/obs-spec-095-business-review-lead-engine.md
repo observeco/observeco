@@ -1605,6 +1605,56 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**⚠⚠ 3.7.6 BLOCKER 4 IS HALF-BUILT AND THE SPEC SAYS "NOT STARTED" — AND THE REAL GAP IS THE CONSENT
+STORE (6 Oct).**
+
+**⚠ THE SPEC WAS STALE, FOUND BY GREPPING BEFORE BUILDING.** *§3.7's blocker list says blocker 4
+("migration `003`, the privacy page rewrite, `UNSUBSCRIBE_SECRET`") is **unbuilt**. **Two of the three
+already exist, and they are for THIS feature:***
+
+| item | claimed | **actual** |
+|---|---|---|
+| migration `003` | *unbuilt* | **`migrations/003_email_suppressions.sql` EXISTS** — *its own header cites "spec 095 s6.6 and s3.7", and it builds an append-only `email_suppressions` table with the correct rationale: an unsubscribe must survive a re-import, so updating a contact row is not enough* |
+| `UNSUBSCRIBE_SECRET` | *unbuilt* | **`api/unsubscribe.js` EXISTS and is properly built** — *a real opt-out, not decoration* |
+| privacy page | *unbuilt* | **⚠ GENUINELY OUTSTANDING** — *`website/privacy.html` (served; `vercel.json` sets `outputDirectory: website`) does **not mention this product at all**: no "report", no "positioning", no "benchmark", no processor list for TypeSafe/Supabase/Resend/Turnstile. It predates the lead engine.* |
+
+**✅ AND `api/unsubscribe.js` IS BUILT CORRECTLY — worth recording because it is the kind of thing that gets
+half-done.** *It satisfies §6.6/§6.9 on four counts: **no login required** (the recipient may have no
+account); **a signed HMAC-SHA256 token** over the lowercased address so a third party cannot unsubscribe
+someone else; **it FAILS LOUD (500) when `UNSUBSCRIBE_SECRET` is unset** rather than minting tokens from a
+silent default ("an unsigned unsubscribe link would let anyone opt out anyone"); and **it returns an
+identical message for a bad token and a non-member**, so the endpoint cannot be used to enumerate the list.
+`timingSafeEqual` is used for the comparison. **That is a correct implementation of a control that is
+usually faked.***
+
+**⚠⚠ THE REAL GAP: THERE IS NO CONSENT STORE, AND REAL ADDRESSES ARE ALREADY ARRIVING.** *§3.2 and §7.7
+require **per-purpose consent rows** — "one 'agreed to terms' row cannot prove WHICH purposes were agreed" —
+and §7.7 makes the dataset claim **conditional** on purpose 3.* ***Nothing records consent anywhere: the
+sandbox writes a `submissions` row with an address and no permission, and `1571keplerj@gmail.com` is sitting
+in `sandbox.db` right now.*** **So every submission arriving today cannot lawfully be aggregated, and the
+consent that would have permitted it was never captured — it cannot be reconstructed after the fact.**
+
+**✅ BUILT THIS SESSION: `migrations/004_consent_records.sql` (Supabase, the shape §7.x describes).**
+*Append-only, per-purpose, with three deliberate properties:*
+1. **`granted` has NO DEFAULT** — *a caller that forgets to pass it fails rather than silently recording
+   agreement. A pre-ticked box is not consent (§7.7 rule 1).*
+2. **The notice VERSION and HASH are recorded** — *if the wording changes, the old consent was given to
+   different words, and the row says which words were shown.*
+3. **Purpose 1 is recorded as an ACKNOWLEDGEMENT, not a "consent"** — *it is the act the person asked for, not
+   a permission they granted; calling it consent would blur the distinction §7.7 draws.*
+
+**⚠⚠ AND THE WIRING IS DELIBERATELY NOT DONE, BECAUSE THE COPY IS SEAN'S.** *His standing rule: **steering
+(thresholds, sentences, copy) is his, before code.*** *The three checkbox labels and the purpose-3 unlock
+sentence are copy, and §7.7 calls the exact wording load-bearing ("the opt-in rate should be tracked from day
+one ... a rate near 0% means the dataset claim must come down").* ***So the schema is built and the form
+wiring waits for his words.***
+
+**⚠ REPRODUCE:** *`ls migrations/ api/` for what exists; `git log -1 -- website/privacy.html` shows it
+predates this work; `sqlite3 specs/calibration/sandbox/sandbox.db` for the arriving addresses.*
+
+---
+
 **✅ 3.7.5 THE RESULT-PAGE UX IS NOW VERIFIED IN A REAL BROWSER — AND IT EXPOSED A PRODUCTION GAP (6 Oct).**
 
 **⚠ WHY THIS WAS STILL OPEN.** *§3.7.4 proved the pipeline ran by reading the DATABASE (row #72
