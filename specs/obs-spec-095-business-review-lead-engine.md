@@ -3309,6 +3309,106 @@ so.** *The principle is now recorded; the threshold is his.*
 
 **⚠ REPRODUCE:** *`python3 -c "import json;d=json.load(open('/Users/seanfzc/projects/observeco-main/specs/calibration/inputs-v4/BK01-breadtalk.json'));print(d['derived_competitive_set']['tier_3_category_incumbent'])"` (a hand-built set that STATES what each occupant claims — the standard the production path must meet); `sed -n '/### 4.5 /,/^---/p'` vs `sed -n '/### 5.1 /,/^---/p'` for the §4.5/§5.1 contradiction.*
 
+
+---
+
+**✅ 3.7.22 THE FULL CORPUS RE-LOOK — ALL SIX DIMENSIONS, NOT JUST PS AND CR (7 Oct).**
+
+**SEAN'S DIRECTIVE, VERBATIM.** ***"I think you need to relook into the entire corpus instead of PS and CR. I
+much rather we have a full set of capabilities and then maybe for the free version it is a lite version of the
+entire thing."***
+
+**⚠ THE CRITICISM IS FAIR AND IT DESCRIBES MY ACTUAL HABIT.** *The recent work audited `position_strength` and
+`competitive_room` — the two dimensions that were *being changed*.* **That is auditing the parts you are
+already touching.** *A capability review has to be run over all six against the same 120 grades, or it is not a
+capability review.* **Below is the whole instrument.**
+
+**✅ THE FULL PICTURE — every dimension, on the cases where BOTH sides have a number.**
+
+| dimension | you graded | tool scored | **both (n)** | **exact** | **within-1** | **two+ off** | mean you | mean tool | **gap** |
+|---|---|---|---|---|---|---|---|---|---|
+| **position_strength** | 120 | 116 | **116** | 37% | **95%** | 5.2% | 3.05 | 2.93 | **−0.12** |
+| **mental_advantage** | 120 | 120 | **120** | **52%** | 93% | 6.7% | 3.24 | 2.77 | **−0.46** |
+| **defensibility** | 120 | 120 | **120** | **57%** | **96%** | 4.2% | 2.48 | 2.50 | **+0.02** |
+| **competitive_room** | 119 | 120 | **119** | 42% | 93% | **6.7%** | 2.65 | 2.81 | **+0.16** |
+| **market_headroom** | **7** | **6** | **5** | 80% | 100% | 0% | 3.20 | 3.40 | +0.20 |
+| **demand_reach** | 120 | 120 | **120** | 58% | 96% | 4.2% | 3.67 | 3.44 | −0.22 |
+
+**⚠⚠ FINDING 1 — THE INSTRUMENT COMPRESSES YOUR RANGE BY ABOUT A THIRD, AND THIS IS THE HEADLINE.**
+*Pooled over **all 600 (case, dimension) pairs** where both sides have a number:*
+
+> **tool = 0.648 × you + 0.94**  *(r = +0.705)*
+>
+> *A perfect reproduction would have slope **1.0**. This captures **65%** of the range you can see.*
+> ***So ~35% of every score gap you perceive is invisible to the tool.***
+
+*What that looks like, dimension-agnostically:*
+
+| you say | tool averages | error |
+|---|---|---|
+| **1** | 1.59 | **+0.59** *(too generous)* |
+| 2 | 2.24 | +0.24 |
+| 3 | 2.88 | −0.12 |
+| 4 | 3.53 | −0.47 |
+| **5** | 4.18 | **−0.82** *(too harsh)* |
+
+***⚠ THIS IS COMPRESSION, NOT A CEILING — AND THE DISTINCTION CHANGES THE FIX.*** *An earlier reading called this
+"the tool under-scores Sean." It does not. **It under-scores the top AND over-scores the bottom** — everything
+is pulled toward 2.9.* *That single behaviour explains the "ceiling" finding, the "tool is harsher" finding,
+and the under-awarding of 1s **as one defect, not three.*** **A ceiling would need a rubric re-anchor at the
+top; compression is a *measurement-resolution* problem, and re-anchoring the top ladder cannot fix it — which is
+consistent with the top-anchor rewrite having already FAILED (§6.7.x). The failed fix was aimed at the wrong
+shape.**
+
+**⚠⚠ FINDING 2 — `market_headroom` IS EFFECTIVELY INERT, AND IT IS A REAL CAPABILITY GAP.**
+*The tool returns **"not applicable — demand is served, contested"** for **114 of 120** cases; it scored **6**.
+**I first read this as the tool refusing to grade something Sean grades everywhere — that was WRONG, and the
+error is instructive:** *Sean graded market_headroom only **7 times**, and the tool's 6 scored cases are almost
+exactly the same seven (ASML, Boeing, Vicom, PCF, MY, NP02 — the supply-constrained manufacturers).* **Both
+sides are silent on the same 113, so there is no disagreement to fix.**
+
+***The real finding is different and it matters more: market_headroom is a dimension that can essentially never
+fire for the market this product is aimed at.*** *The corpus is retail / F&B / services, where **"demand is
+served" is the honest and almost-always-true answer**.* **The dimension only comes alive in supply-constrained
+categories (semiconductors, aerospace, vehicle inspection).** *So it is not broken — **it is inert for D3's
+weak-positioning SMEs**, and it carries **10% of the composite weight** regardless.* ***That is a capability
+question, not a bug: either the dimension is re-scoped for SME markets, or its weight moves, or its inertness is
+labelled. Sean's call.***
+
+**⚠ FINDING 3 — THE REFUSAL GATE FIRES IN 17 OF 120 (14%), AND THAT IS THE CAPABILITY COST WORKING.** *All 17
+land in `band=GATE` with **no composite** — the `input_sufficiency` refusal, correctly wired (§6.7.4).*
+**They cluster in the home-based / personal-service categories (`NP*`, `HC*`, `HF*`, `HB*`) — which is D3's own
+segment.** *So the refusal is honest, and it is also **the single largest source of "no report" in the target
+market**: about one in seven.*
+
+**⚠ FINDING 4 — TWO INPUTS DO ALMOST NO WORK.** *Across all 120 corpus cases, `website` is populated **18%** of
+the time (21/120) and `competitors_named_count` is a **band** ("3-5"), never a list.* **The instrument's
+richest potential input — the submitter's OWN site — is absent in 4 of 5 submissions, even though §4.6.0a proved
+reading it works (6,059 chars on the case that exposed the gap).** *This is the cheapest capability recovery
+available: **a field that is already on the form, already readable, and almost always empty.***
+
+**⚠⚠ FINDING 5 — THE FREE TIER SHOULD BE A LITE VERSION OF THE WHOLE INSTRUMENT (Sean's framing, adopted).**
+***A reduced grid or a dropped dimension is not a lite version — it is a different instrument.*** *The six
+dimensions are a set: PS is the comparison, MA is recall, DEF is copyability, CR is the price floor, MH is unmet
+demand, DR is reach.* **Dropping one, or measuring one against a thinner yardstick, changes what the band
+means** — and the band is what the whole product communicates.
+**So the lite tier is defined as the SAME six dimensions, each at lower RESOLUTION, with the resolution stated:**
+- **Same dimensions, same rubric, same computation** — the free report is not a different reading.
+- **Lite = fewer rivals verified** (so PS/CR cap and say so) and **less depth in the narrative** (no review-corpus
+  themes, no white-space analysis).
+- **⚠ THE LINE: the free tier may know LESS, but it must never say MORE than it knows.** *That is §7.7's rule
+  restated for a tier boundary, and it is what keeps the free report honest and the paid upgrade desirable
+  rather than necessary-to-be-trusted.*
+
+**⚠ WHAT THIS SECTION DOES NOT DO.** *It does not change the rubric, the weights, or the close condition.*
+**The close condition holds on the terms it was measured (band agreement, 99% within one band).** *These findings
+are about **where the instrument is inert, compressed, or un-fed** — the next round of judgment calls, not
+errors in the current numbers.*
+
+**⚠ REPRODUCE:** *the six-dimension table and the compression regression are computed from
+`runs-1220-control` joined to `sean-regrade-raw.csv` on company name; `market_headroom_qualifier.disposition`
+gives the 114/120 inertness; `gates_firing` gives the 17 refusals.*
+
 ---
 
 **⚠ ORDERING IS LOAD-BEARING.** *The naive shape — scan → score → discover the input was unusable →
