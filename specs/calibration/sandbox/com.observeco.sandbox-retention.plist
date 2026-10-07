@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.observeco.sandbox-retention</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/seanfzc/.hermes/installs/8df6cff6461ddb19/environments/e77ae68b7e9f413da76ed7aea407372a/venv/bin/python3</string>
+    <string>/Users/seanfzc/projects/observeco-main/specs/calibration/sandbox/retention.py</string>
+  </array>
+  <key>WorkingDirectory</key><string>/Users/seanfzc/projects/observeco-main/specs/calibration/sandbox</string>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>4</integer><key>Minute</key><integer>15</integer></dict>
+  <key>StandardOutPath</key><string>/tmp/observeco-retention.log</string>
+  <key>StandardErrorPath</key><string>/tmp/observeco-retention.log</string>
+</dict>
+</plist>

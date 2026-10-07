@@ -1616,6 +1616,57 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.18 THE RETENTION PROMISES NOW RUN. THE 30-DAY DELETION WAS A REAL, UNSCHEDULED PROMISE — AND BOTH
+HALVES ARE BUILT, SCHEDULED, AND PROVEN IN BOTH DIRECTIONS (7 Oct).**
+
+**⚠ FIRST, THE DEFECT WAS REPRODUCED RATHER THAN DESCRIBED.** *A row was planted aged 45 days with
+`status='pending'` — exactly what the confirmation email promises to delete — and it **sat there
+indefinitely**, because `purge_expired()` had no caller. **The promise was made to a stranger who may never
+have asked for a report, and nothing enforced it.***
+
+**✅ BUILT: `sandbox/retention.py`.** *Both retentions, on a schedule, with the two cases kept strictly apart
+because they are different promises:*
+
+| case | period | behaviour |
+|---|---|---|
+| **unconfirmed** — the email's *"we'll delete your details within 30 days"* | 30 days | **deletes** the `pending` row and the never-scored submission beside it |
+| **confirmed** — Sean's decision to keep | **730 days (two years)** | **deletes nothing.** It *counts* what is past the period, so "two years" is a number we can defend rather than a slogan |
+
+**⚠⚠ AND THE SWEEP IS DELIBERATELY BUILT SO THE DANGEROUS DIRECTION CANNOT HAPPEN.** *The obvious version
+deletes whatever is old enough. **This one will not delete a row unless its status says it is safe to** — a
+`pending` row is a stranger, a `confirmed` row is a customer who asked for a report.* **So a schema change or a
+bad query cannot turn "expire a stale row" into "erase a customer's report".** *The `WHERE status='pending'` is
+the §3.7 ordering rule expressed as SQL.*
+
+**✅ PROVEN IN BOTH DIRECTIONS — AND THE SECOND DIRECTION IS THE ONE THAT MATTERS.** *From
+`test_retention.py`, on a throwaway db (the real one is never mutated by the test):*
+
+| row | age | expected | measured |
+|---|---|---|---|
+| `pending` (stranger) | 45d | **remove** | ✅ removed |
+| `CAPTCHA_REFUSED` (never scored) | 45d | **remove** | ✅ removed |
+| `pending` | 5d | keep | ✅ survives |
+| **`confirmed` (customer)** | 45d | **keep** | ✅ **survives** |
+| **`SCORED_CONFIRMED` (customer)** | 45d | **keep** | ✅ **survives** |
+| **`SCORED_CONFIRMED`, 3 YEARS old** | 1095d | **keep** | ✅ **survives — keeping is deliberate, not an oversight** |
+
+*And **dry-run was tested first**: it reported 1+1 candidates and **removed nothing**, so the reporting mode
+cannot be mistaken for the acting one.*
+
+**✅ SCHEDULED, AND THE SCHEDULE WAS VERIFIED TO BE LIVE — a plist on disk is not a running job.** *A launchd
+job writes the sweep daily at **04:15** (`com.observeco.sandbox-retention`). **Verified registered, not assumed:
+`launchctl list | grep observeco` returns the job with exit status 0.*** *Daily rather than continuous because a
+retention promise is measured in days — an hourly job would burn battery to move nothing.*
+
+**✅ AND RUN FOR REAL ON THE LIVE DATABASE.** *The planted 45-day rows were **removed**; **all 5 confirmed
+reports were kept**, which is the decision working as intended rather than as an accident.*
+
+**⚠ REPRODUCE:** *`retention.py --dry-run` (reports, deletes nothing), `retention.py` (sweeps),
+`launchctl list | grep observeco` (the schedule), `test_retention.py` (the six-row two-direction proof).*
+
+---
+
 **⚠⚠ 3.7.17 CORRECTED — SEAN WILL KEEP THE DATA. AND THE ERROR WAS MINE, NOT THE CODE'S (7 Oct).**
 
 ***Sean: "Promise 2 — I want to be able to keep the data."***
