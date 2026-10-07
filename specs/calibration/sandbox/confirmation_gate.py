@@ -166,8 +166,9 @@ QUEUE_SCHEMA = """CREATE TABLE IF NOT EXISTS confirmations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     created_at TEXT, email TEXT, business_name TEXT,
     payload TEXT, status TEXT, token_hash TEXT,
-    confirmed_at TEXT, turnstile_ok INTEGER,
-    unsubscribed_at TEXT)"""
+    confirmed_at TEXT, turnstile_ok    INTEGER,
+            unsubscribed_at TEXT,
+            job_status     TEXT)"""
 
 
 def connect(db_path) -> sqlite3.Connection:

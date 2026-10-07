@@ -1607,6 +1607,61 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.9 `/confirm` IS NOW ASYNCHRONOUS — 240s BLOCKING FIXED TO 0.02s — AND IT EXPOSED A REAL BUG:
+THE GATE PATH NEVER SAVED THE ADDRESS (7 Oct).**
+
+**✅ THE BLOCKING DEFECT (§3.7.5) IS FIXED AND MEASURED.** *`/confirm` ran the whole pipeline **inside the
+request**, so the browser sat on a blank page for the full model + research run. **It now enqueues the job and
+returns at once**; a daemon worker (`run_job`) does the work and records the result. Measured in a real
+browser:*
+
+| | before | after |
+|---|---|---|
+| `/confirm` response | **~240s** | **0.02–0.04s** ✅ |
+| acknowledgement | *none — blank wait* | *"Confirmed — we're running your review now"* ✅ |
+| result reachable | only inside that one request | `GET /status/{id}` ✅ |
+| report arrives | — | **110s later** ✅ |
+
+**⚠ THE SPEND ORDERING IS UNCHANGED, and that is the point.** *The row is flipped to `confirmed` **before**
+anything is enqueued; only the confirmation handler can enqueue; nothing else in the file reaches the
+pipeline. **The gate is the same gate — only the waiting moved.** §3.7's design always said the model calls
+belong in the worker; this makes the sandbox match it.*
+
+**⚠⚠ AND IT EXPOSED A REAL BUG, WORSE THAN THE ONE IT FIXED: `submissions.email` WAS NULL ON EVERY
+GATE-CONFIRMED REPORT.** *All four `SCORED_CONFIRMED` rows had no address. **The cause:
+`payload_from_form` rebuilds the corpus form contract, which has NO email field** — so `form.get("email")`
+was **always `None`** on that path, and every report that went through the gate was stored with no address
+attached.* ***That is the one thing a lead engine must never do — "prove an address arrives attached to a
+report that exists".***
+
+**⚠ SCOPE, MEASURED NOT GUESSED.** *`SCORED` (direct path) 60/60 have an address; `CAPTCHA_REFUSED` 6/6;
+`REFUSED` 4/4; **`SCORED_CONFIRMED` 0/4.*** *So the defect was confined to the gate path — and that is
+exactly the path the whole launch is built around.*
+
+**✅ FIXED, AND PROVEN.** *The address now comes from the **`confirmations` row** — which is where it genuinely
+lives, since that is the address the link was sent to. **Re-ran end-to-end: confirmation #6 → submission #75
+with `async@observeco.test` recorded** (rows #72–74 keep their NULLs as historical record rather than being
+backfilled).*
+
+**✅ TWO MORE DEFECTS FIXED IN THE SAME PASS, BOTH FOUND BY CHECKING RATHER THAN ASSUMING.**
+1. **`/status` was GUESSING which submission to show** — matching on business name + email. *Two submissions
+   sharing either would silently show the **wrong person's report**. The worker now records
+   `result_submission_id`, so it is a direct lookup.*
+2. **The CRM could display a scored report with no address** on that path. *It now LEFT JOINs the
+   confirmation row.*
+
+**⚠ A TEST OF MINE LIED, AND IT WAS CAUGHT.** *The harness printed **`0/100 — Fragile`** and I nearly chased
+it as a second bug. **It was not real: my regex `\d+/100` matched the `0/100` inside `37.0/100`.** The page
+renders `37.0/100 — Fragile` correctly. **Fourth instance this session of a test written from expectation
+rather than from the artefact** — and the reason the rule is "read the artefact, not your assertion about
+it".*
+
+**⚠ REPRODUCE:** *`test_async_confirm.py` (times `/confirm`, then polls `/status/{id}`); `curl -s
+http://127.0.0.1:8765/status/6`; `sqlite3 sandbox/sandbox.db` for the per-outcome email counts.*
+
+---
+
 **✅ 3.7.8 SEAN'S TURNSTILE FIX VERIFIED — 110200 IS GONE ON `127.0.0.1` — AND THE EMPTY TOKEN IS THE
 CAPTCHA WORKING, NOT A BUG (7 Oct). Plus the three consent labels, drafted.**
 

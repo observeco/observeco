@@ -38,6 +38,7 @@ import json
 import os
 import sqlite3
 import sys
+import threading
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
@@ -512,6 +513,84 @@ def turnstile_widget() -> str:
             f'</script>{warn}')
 
 
+# ── the worker ───────────────────────────────────────────────────────────────
+# ⚠⚠ WHY THIS EXISTS (spec 3.7). The first working version ran the whole pipeline
+# INSIDE the /confirm request. It worked, and it was wrong twice over:
+#
+#   1. THE USER STALLS. The browser sits on a loading page for the full model +
+#      research run -- ~4 minutes measured. A confirmation link that appears to do
+#      nothing for four minutes gets clicked again, or abandoned.
+#   2. IT IS NOT THE DESIGN. Spec 3.7 puts the model calls in the WORKER: the
+#      confirmation is acknowledged immediately and the report is delivered when
+#      it is ready.
+#
+# So /confirm now enqueues and returns at once. The work happens here.
+#
+# ⚠ THE SPEND ORDERING IS UNCHANGED, and that is the point. A run still requires a
+# row that `/confirm` flipped to `confirmed` -- the enqueue happens AFTER that flip,
+# and only the confirmation handler can enqueue. Nothing else in this file reaches
+# the pipeline. The gate is the same gate; only the waiting moved.
+def run_job(cid: int, payload: dict, do_scan: bool) -> None:
+    """Do the work for a confirmed row, then record it. Runs on a daemon thread."""
+    form = payload.get("form") or {}
+    # ⚠⚠ THE ADDRESS COMES FROM THE CONFIRMATIONS ROW, NOT FROM THE PAYLOAD. `payload_from_form`
+    # rebuilds the corpus form contract, which has no email field -- so `form.get("email")` was
+    # ALWAYS None here, and every report that went through the gate was saved WITHOUT an address.
+    # The confirmations row is where the address actually lives (it is what the link was sent to),
+    # so read it there. This is the lead engine's entire purpose: an address attached to a report.
+    c0 = sqlite3.connect(DB)
+    row = c0.execute("SELECT email,business_name FROM confirmations WHERE id=?", (cid,)).fetchone()
+    c0.close()
+    email = (row[0] if row else None) or form.get("email")
+    name = (row[1] if row else None) or form.get("business_name") or "your business"
+    try:
+        r = run_submission(payload, do_scan)
+        if r["outcome"] == "REFUSED":
+            save(email=email, business_name=name, category=form.get("category"),
+                 outcome="REFUSED_CONFIRMED", payload=payload,
+                 report="missing: " + ", ".join(r["refusal"]["missing_slots"]))
+            _finish(cid, "refused")
+            return
+        run = r["run"]
+        i = save(email=email, business_name=name, category=form.get("category"),
+                 band=run.get("band"), composite=run.get("composite"),
+                 rubric_version=run.get("rubric_version"), model_id=run.get("model_id"),
+                 outcome="SCORED_CONFIRMED", report=r["report"], payload=payload)
+        # ⚠ record WHICH submission this confirmation produced, so /status is a lookup rather
+        # than a guess. Matching on a name or an address can silently pick the wrong row.
+        _finish(cid, "done", i)
+    except Exception:                                          # noqa: BLE001
+        # ⚠ LOUD. A silent failure here is a person who confirmed and never heard back.
+        with open(os.path.join(os.path.dirname(DB), "worker-errors.log"), "a") as fh:
+            fh.write("\n=== confirmation #%s ===\n%s\n" % (cid, traceback.format_exc()))
+        _finish(cid, "failed")
+
+
+def _finish(cid: int, job_status: str, submission_id: int | None = None) -> None:
+    """Record the worker's outcome on the confirmation row (own connection: another thread)."""
+    c = sqlite3.connect(DB)
+    try:
+        c.execute("SELECT result_submission_id FROM confirmations WHERE id=?", (cid,)).fetchone()
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE confirmations ADD COLUMN result_submission_id INTEGER")
+    c.execute("UPDATE confirmations SET job_status=?, result_submission_id=? WHERE id=?",
+              (job_status, submission_id, cid))
+    c.commit()
+    c.close()
+
+
+def _worker_page(name: str, cid: int) -> str:
+    """The acknowledgement. Returned IMMEDIATELY -- no model has run yet."""
+    return shell("Confirmed — running", f'''
+<h1>Confirmed — we're running your review now</h1>
+<div class=sub>{name}</div>
+<div class=note>You can close this tab. The report takes a minute or two — in the live
+product it arrives by email.</div>
+<p style="margin-top:18px"><a href="/status/{cid}">Check on it →</a></p>
+<div class=note style="margin-top:22px">⚠ <b>Sandbox only:</b> because no mail client is wired
+here, this page is how the result reaches you. In production you would not need to come back.</div>''')
+
+
 @app.get("/confirm", response_class=HTMLResponse)
 def confirm_page(token: str = Query("")):
     """The confirmation link target. ⚠ THIS IS THE DOOR TO MODEL SPEND (spec 3.7).
@@ -544,34 +623,65 @@ again and we'll send a fresh one. Nothing was run, and nothing will be.</div>
 call, no second report. If you need another, submit the form again.</div>
 <p><a href=/>← submit another</a></p>"""))
 
+    # ⚠ ENQUEUE AND RETURN. The row is ALREADY `confirmed` at this point (gate.confirm did
+    # that above), so the spend permission exists before any work is scheduled -- the ordering
+    # rule holds. What changed is only WHERE we wait: the pipeline moved to run_job() on a
+    # daemon thread, because blocking here meant a four-minute blank page for the user.
+    cid = res.get("id")
     do_scan = bool(payload.pop("_do_scan", False))
+    threading.Thread(target=run_job, args=(cid, payload, do_scan), daemon=True).start()
+    return HTMLResponse(_worker_page(name, cid))
+
+
+@app.get("/status/{cid}", response_class=HTMLResponse)
+def status_page(cid: int):
+    """The result lands here once the worker finishes -- the sandbox stand-in for delivery.
+
+    ⚠ In production the report ARRIVES BY EMAIL and this page would not be needed. It exists
+    because no mail client is wired yet, and without it a confirmed submission is unreadable.
+    It is also the honest local equivalent of a queue: the state lives in the database, not in
+    the browser's memory.
+    """
+    c = sqlite3.connect(DB)
+    # ⚠ a column added to an existing db needs the ALTER; CREATE TABLE IF NOT EXISTS does not do it
     try:
-        r = run_submission(payload, do_scan)
-    except Exception:
-        return HTMLResponse(shell("error", f"<h1>Failed after confirmation</h1><div class=err><pre>"
-                                   f"{traceback.format_exc()}</pre></div>"
-                                   f"<p><a href=/>← back</a></p>"), status_code=500)
-
-    if r["outcome"] == "REFUSED":
-        i = save(email=form.get("email"), business_name=name, category=form.get("category"),
-                 outcome="REFUSED_CONFIRMED", payload=payload,
-                 report="missing: " + ", ".join(r["refusal"]["missing_slots"]))
-        return HTMLResponse(shell("Refused", f"""
-<h1>Refused before any model call</h1>
-<div class=sub>Submission #{i} — you confirmed, and the pre-flight gate still stopped it</div>
-<div class=note>Being confirmed earns the <b>right</b> to a run, not a run that is worth making.
-The pre-flight gate fires on the form answers before any token is spent (spec 3.11).</div>
-<div class=err><b>Missing required slots:</b>
- {", ".join(r["refusal"]["missing_slots"]) or "(none)"}</div>
-<p><a href=/>← back</a></p>"""))
-
-    run = r["run"]
-    i = save(email=form.get("email"), business_name=name, category=form.get("category"),
-             band=run.get("band"), composite=run.get("composite"),
-             rubric_version=run.get("rubric_version"), model_id=run.get("model_id"),
-             outcome="SCORED_CONFIRMED", report=r["report"], payload=payload)
-    return HTMLResponse(report_page(name, form.get("email"), i, run, r["report"],
-                                    r.get("scan_verdict")))
+        c.execute("SELECT job_status,result_submission_id FROM confirmations WHERE id=?",
+                  (cid,)).fetchone()
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE confirmations ADD COLUMN job_status TEXT")
+        c.execute("ALTER TABLE confirmations ADD COLUMN result_submission_id INTEGER")
+        c.commit()
+    row = c.execute("SELECT email,business_name,status,job_status,result_submission_id "
+                    "FROM confirmations WHERE id=?", (cid,)).fetchone()
+    c.close()
+    if not row:
+        return HTMLResponse(shell("Unknown", "<h1>No such review</h1><p><a href=/>← back</a></p>"),
+                            status_code=404)
+    email, bname, st, job, sid = row
+    if job == "done" and sid:
+        # ⚠ A DIRECT LOOKUP, NOT A GUESS. The worker records which submission it produced, so
+        # this cannot silently show the WRONG person's report -- which is what a name/email
+        # match would risk the moment two submissions share either.
+        c = sqlite3.connect(DB)
+        s = c.execute("SELECT band,composite,report,model_id,rubric_version FROM submissions "
+                      "WHERE id=?", (sid,)).fetchone()
+        c.close()
+        if s:
+            band, comp, report, model_id, rver = s
+            run = {"band": band, "composite": comp, "model_id": model_id, "rubric_version": rver}
+            return HTMLResponse(report_page(bname, email, sid, run, report or "", None))
+        job = "running"          # finished but the row is gone; do not claim a result we cannot show
+    if job in ("refused", "failed"):
+        return HTMLResponse(shell("Stopped", f"""
+<h1>We could not produce a report</h1>
+<div class=sub>{bname or "your business"}</div>
+<div class=note>Confirmation succeeded, but the run stopped before a report existed. Nothing
+further will be charged or run.</div>
+<p><a href=/>← start again</a></p>"""))
+    return HTMLResponse(shell("Running", f"""
+<h1>Still running — {bname or "your review"}</h1>
+<div class=note>This page does not update by itself. Reload it in a moment.</div>
+<p><a href="/status/{cid}">Reload</a> · <a href=/>← back</a></p>"""))
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -881,8 +991,14 @@ def report_page(business_name, email, i, run, report, scan) -> str:
 @app.get("/crm", response_class=HTMLResponse)
 def crm():
     c = db()
-    rows = c.execute("SELECT id,created_at,email,business_name,band,composite,outcome "
-                     "FROM submissions ORDER BY id DESC").fetchall()
+    # ⚠ LEFT JOIN, because the address for a gate-confirmed row lives on the CONFIRMATIONS row
+    # (that is what the link was sent to). Without the join the CRM shows a scored report with no
+    # address -- which is the one thing a lead engine must never do silently.
+    rows = c.execute(
+        "SELECT s.id, s.created_at, COALESCE(NULLIF(s.email,''), c.email), s.business_name, "
+        "s.band, s.composite, s.outcome "
+        "FROM submissions s LEFT JOIN confirmations c ON c.result_submission_id = s.id "
+        "ORDER BY s.id DESC").fetchall()
     c.close()
     body = "".join(
         "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>"
