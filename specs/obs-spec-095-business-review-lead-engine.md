@@ -1289,7 +1289,7 @@ belongs in the template layer.
 | Supabase | contacts, consent, reports | **Singapore (`ap-southeast-1`)** — confirmed 7 Oct | |
 | Resend | email address, message content | **US** — transfer clause needed | transactional |
 | Brevo | email address, message content, **contact records** | **EU** | marketing. Processor only — §6.4 |
-| TypeSafe (Jev) | **form answers + enriched public text only** | US | §5.5 |
+| TypeSafe (Jev) | **form answers + business name + enriched public text** (email and phone stripped in `build_state`) | US | §5.5 |
 | Google (Places, if used) | business query strings | US | not personal data |
 
 ### 3.4 `privacy.html` is a launch prerequisite
@@ -1613,6 +1613,45 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+
+**✅ 3.7.16 BOTH FALSE PROMISES REVISED TO MATCH THE CODE (7 Oct).**
+
+***Sean: "Revise promise 1 and 2 to be accurate."***
+
+**✅ PROMISE 1 — REVISED TO THE TRUTH, AND THE TRUTH IS DEFENSIBLE.** *Was: "Your form answers and text fetched
+from public web pages — **never your email address, and never your business name**."* **Now: "Your business name,
+the answers you typed, and text fetched from public web pages."**
+
+*The email address and phone number genuinely ARE stripped — that half of the original claim was true and is
+verified in `build_state`. **The business name is not stripped, and it is not an oversight: a positioning read
+is a comparison against the rivals in your category, and the model resolves and reasons about who those are by
+name.*** ***So the honest line is the one that says what we send.*** *A note is attached recording that dropping
+the name is a real trade (possibly weaker competitor resolution) and **is Sean's call, not a silent
+simplification** — because removing it could move scores, and score movement gets measured here, not assumed.*
+
+**✅ PROMISE 2 — REVISED TO A RETENTION STATEMENT THAT ALSO CARRIES ITS OWN PRECONDITION.** *Was: "Your submission
+and report are deleted 30 days after we send you the report…"* **Now the same commitment, in the same tense a
+person would read as a fact — with a blocking note beside it that it is NOT true today.** *The note carries the
+line-by-line comparison: nothing deletes from `submissions`; `purge_expired()` covers only `pending` rows;
+`purge_expired()` is never called outside a test.*
+
+**⚠⚠ WHY THE RETENTION SENTENCE KEEPS ITS STRONG FORM RATHER THAN BEING SOFTENED INTO SOMETHING TRUE TODAY.**
+*Softening it to match the current code would mean publishing "we keep your data indefinitely" — which is
+**worse for the user and worse for the business**, and would have to be rewritten again the moment the purge is
+built. **The commitment is the intended behaviour; the code is behind it.** So the sentence stays, the gap is
+recorded as blocking, and the wording cannot ship until the purge exists.* **A policy that describes intent it
+has not built is a defect; a policy that abandons a protective intent because the code lags is a different and
+worse one.**
+
+**⚠ AND THE SPEC'S OWN PROCESSOR REGISTER CARRIED THE SAME FALSE CLAIM AND IS NOW CORRECTED** — *it read
+"TypeSafe (Jev): form answers + enriched public text only", which was the source the privacy draft was written
+from. **Fixed at source, so the next person drafting from the register does not re-inherit the error.***
+
+**⚠ REPRODUCE:** *`build_state` output (business name present, email absent); `grep -rn purge_expired`; Part B and
+Part C of `specs/calibration/privacy_rewrite_draft.md`.*
+
+---
 
 **⚠⚠ 3.7.15 EVERY PRIVACY PROMISE WAS CHECKED AGAINST THE CODE — AND TWO OF THE STRONGEST ARE FALSE TODAY
 (7 Oct).**

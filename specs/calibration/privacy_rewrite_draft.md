@@ -99,9 +99,24 @@ model provider. They can only use it to provide that service. They're named belo
 > **You can withdraw any of these at any time**, and withdrawing one does not affect the others. Every
 > email we send has a working unsubscribe link, and it works whether or not you have an account with us.
 >
-> **How long we keep it.** Your submission and report are deleted **30 days** after we send you the
-> report, unless you asked to be followed up — in which case we keep your contact details until you
-> unsubscribe. You can ask us to delete it sooner and we will.
+> **How long we keep it.** We keep your submission and your report for **30 days** after we email it to
+> you, then delete them. If you asked to be followed up, we keep your contact details for longer — until you
+> unsubscribe or ask us to stop. You can ask us to delete everything sooner and we will.
+
+**⚠⚠ DO NOT SHIP THIS SENTENCE UNTIL THE CODE MATCHES IT — IT DOES NOT TODAY.** *Checked line by line against
+the code rather than reviewed for tone:*
+
+| the sentence requires | what the code does now |
+|---|---|
+| delete the submission **and the report** after 30 days | **nothing ever deletes from `submissions`** — the address, score, band and full report text all live there permanently |
+| a confirmed submission is covered | *`purge_expired()` deletes only `status='pending'` rows; a **confirmed** submission is never expired* |
+| the deletion actually happens | *`purge_expired()` is **never called** outside a test — no scheduler, no hook, no cron* |
+
+***So this is a promise the product cannot keep, and it is the same promise the confirmation email makes.***
+*Three things are needed first: a purge that covers confirmed rows, a purge that runs on a schedule, and a
+decision on whether the report **text** is deleted or only the contact details. **Until then, either build it
+or say less** — a written statement of a practice that does not exist is the failure mode this whole check
+exists to prevent.*
 
 ---
 
@@ -119,7 +134,17 @@ model provider. They can only use it to provide that service. They're named belo
 > | **Cloudflare Turnstile** | A bot check when you submit the form — no profile of you | Global |
 > | **Resend** | Your email address and the message we send | United States |
 > | **Brevo** | Your email address, if and only if you opted into follow-up | European Union |
-> | **The model provider (TypeSafe)** | Your form answers and text fetched from public web pages — **never your email address, and never your business name** | United States |
+> | **The model provider (TypeSafe)** | Your business name, the answers you typed, and text fetched from public web pages | United States |
+
+**⚠ WHAT WE DO *NOT* SEND, AND WHY THAT IS THE HONEST VERSION OF THIS LINE.** *Your **email address** and
+**phone number** are stripped before anything is sent — verified in the code that builds the request, not
+assumed. **Your business name is not stripped, because the scoring needs it**: a positioning read is a
+comparison against the rivals in your category, and the model resolves and reasons about who those are by
+name. So the earlier draft of this line — *"never your email address, and never your business name"* — was
+**false**, and promising it would have been a written statement of something the product does not do.
+
+*If you would rather not send the business name, say so — it is a real trade (possibly weaker competitor
+resolution) and it is your call, not mine.*
 >
 > **We don't sell your data, and we don't share it with anyone else.** These providers are contracted to
 > us and can only use your data to provide their service to us.
@@ -141,7 +166,7 @@ copy (199 lines, *different* content) is dead weight and a trap — the next per
 | **P1** | A1 meta description wording | *as above* | ✅ / edit |
 | **P2** | A2–A4 replacements | *as above* | ✅ / edit |
 | **P3** | The three consent labels (matches `004_consent_records.sql`) | *Your report / Follow-up / Benchmark* | ✅ / edit |
-| **P4** | Retention: 30 days post-report; contact kept until unsubscribe | *as above* | ✅ / edit |
+| **P4** | Retention wording | *as above* — **⚠ gated on the purge being built; it is not true today** | ✅ / edit |
 | **P5** | Supabase region | ✅ **`ap-southeast-1` (Singapore)** — supplied 7 Oct | done |
 | **P6** | Delete the root `privacy.html`? | *yes* | ✅ / edit |
 
