@@ -3215,6 +3215,12 @@ free/paid line is not a separate rule bolted on — it falls out of the method:*
 | **Depth** | *what each rival **claims**, read from its own page (Pass D's readability fix)* | *the full review-text corpus, theme saturation, white-space analysis* |
 | **The number** | *"we identified **X**; here are **Y**"* | *the complete set, analysed* |
 
+**⚠⚠ HOWEVER — SEE §4.6.2a, WHICH NARROWS THE FIRST ROW.** *This table is right about **X** (the count) and
+wrong if read as licence to cut the set behind **`position_strength`**.* **The competitive set is the yardstick
+for PS, not enrichment — so the free tier's reduced grid may honestly reduce the COUNT while PS must still be
+capped-and-labelled when the set cannot state what each occupant claims.** *A free report that projects a proven
+flank off a thin set is the one failure this design cannot afford.*
+
 ***⚠ THE RULE FROM §7.7 STILL GOVERNS: withhold the ANALYSIS, never the ACCURACY of what is shown.*** *The
 free report's Y must be **correct as far as it goes** — a reduced grid may undercount X, but it must never
 mispresent what it did show.*
@@ -3239,16 +3245,97 @@ the grid is switched on.*
 **⚠ REPRODUCE:** *`cat ~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/SKILL.md` (the five
 passes); `python3 -c "import json;d=json.load(open('/Users/seanfzc/SaladShop/output/competitors.json'));print(d['competitor_count'], d['competitors'][0]['name'])"` (X=26); `ls ~/SaladShop/output/` (the gosom + Camoufox corpora).*
 
+**⚠⚠⚠ 4.6.2a THE COMPETITIVE SET IS NOT ENRICHMENT — IT IS THE YARDSTICK, AND THE SPEC CURRENTLY WEAKENS THE
+CORE TO PROTECT THE EDGE (Sean's principle, 7 Oct).**
+
+**SEAN'S RULING, VERBATIM.** ***"The answer is obvious which is why positioning theory even exists, which is to
+do detailed competitive analysis."***
+
+**⚠ THE IMPLIED QUESTION, AND WHY IT MATTERS.** *(Asked of §4.6.2: "how might you determine position strength if
+you use a smaller grid?")* *The instinct was to design a graceful fallback for a thin set.* **That instinct was
+wrong, and the reason is in the rubric's own definition of the dimension:**
+
+> *`position_strength` — "SCORE ONLY AGAINST THE SUPPLIED COMPETITIVE SET… **if the supplied set names no
+> occupant for the situation, the strongest claim available is ADEQUATE (3), never Strong or Dominant, because
+> a flank is only proven against a named rival.**"*
+
+***Position strength is not a property the tool measures about a business. It IS the comparison.*** *"Detailed
+competitive analysis" is not an **input** to the positioning judgment — **it is the positioning judgment.**
+So a thin set does not degrade the richness of a PS score; **it replaces the score with a different, easier
+question.*** **A reduced grid is therefore not a cheaper way to do the same analysis. It is a decision not to
+do the analysis.**
+
+**⚠⚠ AND THE SPEC CONTRADICTS ITSELF ON EXACTLY THIS POINT — §4.5 vs §5.1.** *§4.5 ("Non-load-bearing by
+construction") says: **"the form answers alone must carry all six scores. Enrichment is best-effort behind a
+hard timeout."*** *That rule was written for **genuine enrichment** — Places data, registries, review text —
+where §4.5 is right: a failed fetch should degrade depth, never existence.*
+***But `position_strength` is not enriched by the competitive set. It is `position_strength`.*** **Filed under
+"enrichment," the set inherits a best-effort contract that is correct for its neighbours and wrong for it.**
+*A failed fetch cannot be allowed to lower a score elsewhere; **here a missing rival does not merely lower the
+score — it makes the score meaningless, in the flattering direction.***
+
+**⚠ THE MEASUREMENT THAT SHARPENS IT — and it is the corpus, not a theory.** *In the 120-case corpus,
+**119 of 120 cases carry an analyst-authored `derived_competitive_set`** (a hand-built eight-tier frame that
+**explicitly states what each occupant claims** — e.g. *"BreadTalk owns 'iconic local', Four Leaves
+'everyday', TBB 'artisan'"*).* **The corpus's own ground truth was built the expensive way: by hand, per
+category.** *No corpus case was ever scored against a scan-derived set.* **Which means:**
+- **The close condition (99% within one band, D1) was measured against HAND-BUILT sets.** *It validates the
+  **rubric** — that the instrument reproduces Sean's judgment **given a correct set.***
+- ⚠ **It does NOT validate the PRODUCTION path**, which supplies a **machine-derived** set (§4.6.1, limit 1:
+  *"NOT validated against the corpus… proved to WORK, not proved ACCURATE"*).*
+- ***Both facts must be held at once: the rubric is validated, and the production data path is not.*** **A 99%
+  close condition and an unvalidated set-derivation step are not in tension — they are simply different claims,
+  and the second one is the one a live submission depends on.**
+
+**⚠⚠ WHAT THIS IMPLIES FOR THE FREE/PAID LINE — THE PREVIOUS SECTION'S TABLE IS TOO GENEROUS TO THE FREE SIDE.**
+*§4.6.2 proposed "a reduced grid, enough to produce an honest count" for the free report.* **That is defensible
+for X (the count) and NOT for PS (the score).** *The corrected position:*
+
+| | free report | paid engagement |
+|---|---|---|
+| **The count (X)** | *reduced grid — an undercount is honest if labelled* | *full grid* |
+| **Position strength** | ⚠ **must not be projected from an unverified set.** *If the set cannot name occupants **and state what they claim**, PS is capped at ADEQUATE by the rubric's own rule — and the report must say so rather than imply a measured flank* | *the full sweep, which is what makes a PS above ADEQUATE provable at all* |
+| **What that means commercially** | *the free tier can honestly show the **shape**; it cannot honestly sell a **proven flank*** | *proving the flank IS the product* |
+
+***⚠⚠ THE STRATEGIC CONSEQUENCE, STATED PLAINLY BECAUSE IT INVERTS THE OBVIOUS COST SAVING: "detailed
+competitive analysis" is the product, not an input to it.*** *The temptation is to make the free report
+cheaper by scanning less.* **But scanning less removes the thing that makes the free read worth anything —
+its central dimension — while still costing the whole pipeline.** *A free report that is cheap because it
+measured against a thin set is not a cheap version of the product; **it is a different and weaker product
+aimed at the exact prospect the paid engagement needs to convert.***
+
+**⚠ STILL SEAN'S CALL: how thin the free set may be, and whether the free tier caps PS at ADEQUATE and says
+so.** *The principle is now recorded; the threshold is his.*
+
+**⚠ REPRODUCE:** *`python3 -c "import json;d=json.load(open('/Users/seanfzc/projects/observeco-main/specs/calibration/inputs-v4/BK01-breadtalk.json'));print(d['derived_competitive_set']['tier_3_category_incumbent'])"` (a hand-built set that STATES what each occupant claims — the standard the production path must meet); `sed -n '/### 4.5 /,/^---/p'` vs `sed -n '/### 5.1 /,/^---/p'` for the §4.5/§5.1 contradiction.*
+
 ---
 
 **⚠ ORDERING IS LOAD-BEARING.** *The naive shape — scan → score → discover the input was unusable →
 refuse — burns the full research cost on a submission that will be refused anyway.* **The scanner is
 therefore designed to be called AFTER the deterministic quality check, never before.**
 
-### 4.5 Non-load-bearing by construction
+### 4.5 Non-load-bearing by construction — ⚠ EXCEPT `position_strength`, WHICH IS THE COMPARISON
 
 Per the cannot-refuse contract: **the form answers alone must carry all six scores.** Enrichment
 is best-effort behind a hard timeout. A failed fetch degrades depth, never existence.
+
+**⚠⚠ ONE DIMENSION IS EXEMPT FROM THIS RULE, AND FILING IT HERE WAS A CATEGORY ERROR (Sean's ruling, 7 Oct —
+see §4.6.2a).** *This section was written for **genuine enrichment** — Places data, registries, review text —
+where "degrades depth, never existence" is exactly right.* ***But `position_strength` is not enriched by the
+competitive set; `position_strength` IS the comparison*** *— the rubric scores it "ONLY AGAINST THE SUPPLIED
+COMPETITIVE SET", and caps at ADEQUATE (3) when the set names no occupant.*
+**So for this one dimension the rule inverts, and the failure direction is the dangerous one:** *elsewhere a
+missing fetch lowers a score, which is visible; **here a missing rival raises it, by making an owned claim look
+unowned** — a confident judgment about a flank that was never checked.* **The correct behaviour for
+`position_strength` when the set is thin is therefore to CAP AND SAY SO, never to project a measured flank.**
+*This is not a licence to refuse a report — the report still issues; what changes is that the one score resting
+on unread evidence states its ceiling instead of borrowing confidence from the form answers.*
+
+**⚠ WHY THE 99% CLOSE CONDITION DOES NOT COVER THIS.** *119 of the 120 corpus cases carry **analyst-authored**
+sets that state what each occupant claims; the close condition therefore validates the **rubric given a correct
+set**, and says nothing about the **machine-derived** set a live submission would receive (§4.6.1). Both claims
+must be held at once — see §4.6.2a.*
 
 ---
 
