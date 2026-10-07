@@ -1611,6 +1611,51 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.13 THE DRIFT GUARD WAS TOO NARROW — IT READ ONE SURFACE OF FOUR — AND WIDENING IT FOUND A REAL BUG
+ON THE SURFACE THAT MATTERS MOST (7 Oct).**
+
+**⚠⚠ THE GUARD HAD THE SAME DEFECT IT EXISTS TO CATCH.** *§3.7.12 built it to read `DIM_MEANING`. **But the
+reader-facing prose lives on four surfaces, not one** — and the guard's own construction error is the same
+class as the four drifted definitions: **fix the site, miss the class.** It would have passed happily while
+`GATE_TEXT`, `NEXT_LEVEL` and `BAND_MEANING` described a different measurement:*
+
+| surface | where the submitter sees it |
+|---|---|
+| `DIM_MEANING` | *"WHAT EACH SCORE MEANS"* |
+| **`GATE_TEXT`** | ***"THE ONE THING THAT DECIDES IT" — read ALONE, no context to correct it*** |
+| `NEXT_LEVEL` | *the "Explore:" line of every recommendation* |
+| `BAND_MEANING` | *the viability ladder* |
+
+**✅ AND WIDENING IT IMMEDIATELY CAUGHT A REAL BUG I HAD MISSED — ON THE MOST IMPORTANT SURFACE.**
+*`GATE_TEXT["defensibility"]` **still said "whether what makes you different survives a competitor deciding to
+copy it."** *That is the **exact** thing the rubric says the mechanism **NEVER** is.* **`DIM_MEANING` had been
+fixed in §3.7.11; this copy was missed** — and it is printed under *"THE ONE THING THAT DECIDES IT"*, so a reader
+sees it **as the single deciding factor, with nothing around it to qualify it.** Fixed to *"whether what
+protects you survives a rival deciding to copy it."*
+
+**⚠⚠ AND THE WIDENED GUARD THEN PRODUCED A FALSE POSITIVE, WHICH NEEDED THE OPPOSITE FIX.** *It flagged
+`market_headroom` for the word **"growing" — inside "Demand exceeds supply and the shortfall is growing", which
+is the RUBRIC'S OWN LEVEL-4 WORDING.*** *The forbidden thing is not the word "growing"; it is **describing the
+dimension as the category's growth trend.** So the pattern was narrowed to require the growth to be predicated
+of the category or the demand itself.* **This is the second time the guard has fired on correct prose, and both
+times the fix was to sharpen the check rather than weaken its coverage — a guard that cannot be trusted to be
+quiet on correct code is a guard that gets deleted.**
+
+**✅ RE-PROVEN IN BOTH DIRECTIONS, WITH THE NEW CASE ADDED.** *Five cases now:*
+
+| case | expected | measured |
+|---|---|---|
+| current code (all four surfaces) | pass | **exit 0** ✅ |
+| OLD `competitive_room` | refuse | **exit 1** ✅ |
+| OLD `defensibility` (DIM_MEANING) | refuse | **exit 1** ✅ |
+| CURRENT `defensibility` (negation-aware) | pass | **exit 0** ✅ |
+| **drift in `GATE_TEXT` — the surface the narrow guard missed** | **refuse** | **exit 1** ✅ |
+
+**⚠ REPRODUCE:** *`check_report_drift.py`; `test_drift_guard.py` (five cases, both directions).*
+
+---
+
 **✅ 3.7.12 THE DRIFT GUARD IS BUILT AND WIRED INTO THE PROMUTION GATE — A RUBRIC CAN NO LONGER BE PROMOTED
 WHILE THE REPORT DESCRIBES A DIFFERENT ONE (7 Oct).**
 

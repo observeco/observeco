@@ -161,8 +161,12 @@ GATE_TEXT = {
     "position_strength": "whether the claim you make is one your competitors "
                          "already make",
     "mental_advantage": "whether anyone thinks of you when they need what you sell",
-    "defensibility": "whether what makes you different survives a competitor "
-                     "deciding to copy it",
+    # ⚠⚠ FOUND BY WIDENING THE DRIFT GUARD TO GATE_TEXT, AND IT IS THE SURFACE THAT MATTERS MOST.
+    # This string is printed under "THE ONE THING THAT DECIDES IT" and is read ALONE, with no
+    # surrounding context to correct it. It still said "what makes you different" -- the exact
+    # thing the rubric says the mechanism NEVER is. The DIM_MEANING copy was fixed; this one was
+    # missed, which is why the guard now reads all four surfaces rather than one.
+    "defensibility": "whether what protects you survives a rival deciding to copy it",
     "demand_reach": "whether the customer you've described can actually be found "
                     "and will pay your price",
 }

@@ -70,4 +70,19 @@ code, out = with_def("defensibility", cur_df)
 clean = (code == 0) and ("DRIFT DETECTED" not in out)
 print("   exit", code, "->", "✅ clean (expected)" if clean else "✗ FALSE POSITIVE")
 
-print("\nALL TWO-SIDED CHECKS PASS:", a_ok and fired and fired2 and clean)
+# E. ⚠ THE CASE THAT PROVED THE GUARD WAS TOO NARROW: drift in GATE_TEXT, not DIM_MEANING.
+# The first guard read DIM_MEANING only, so it passed while GATE_TEXT carried the same
+# contradiction. GATE_TEXT is read ALONE under "THE ONE THING THAT DECIDES IT", so this is the
+# surface where the defect matters most.
+print("\nE. drift in GATE_TEXT (the surface read alone) -- must FIRE")
+import generate_report as _gr
+_orig_gate = _gr.GATE_TEXT["defensibility"]
+_gr.GATE_TEXT["defensibility"] = "whether what makes you different survives a competitor deciding to copy it"
+try:
+    code, out = run_guard()
+finally:
+    _gr.GATE_TEXT["defensibility"] = _orig_gate
+fired3 = (code == 1) and ("defensibility" in out)
+print("   exit", code, "->", "✅ FIRES (expected)" if fired3 else "✗ DID NOT FIRE")
+
+print("\nALL TWO-SIDED CHECKS PASS:", a_ok and fired and fired2 and clean and fired3)

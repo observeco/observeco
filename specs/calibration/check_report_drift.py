@@ -32,14 +32,30 @@ def _flat(s: str) -> str:
 
 
 def reader_definitions() -> dict[str, str]:
-    """The submitter-facing definitions, read OUT of the module rather than duplicated here.
+    """The submitter-facing prose for each dimension, read OUT of the module rather than duplicated.
 
-    Duplicating them would be its own drift: the guard would pass while the report said something
-    else. Importing the real object is the only version that cannot go stale.
+    Duplicating would be its own drift: the guard would pass while the report said something else.
+    Importing the real objects is the only version that cannot go stale.
+
+    ⚠⚠ FOUR SURFACES, NOT ONE — and this was found by checking the CLASS, the same lesson as the
+    four drifted definitions themselves. The first version of this guard only read DIM_MEANING, so
+    it would have passed while GATE_TEXT, NEXT_LEVEL and BAND_MEANING described a different
+    measurement. Those are all rendered to the submitter: GATE_TEXT is printed under "THE ONE THING
+    THAT DECIDES IT" where it is read ALONE as the deciding factor, NEXT_LEVEL supplies the
+    "explore" line of every recommendation, and BAND_MEANING is the viability ladder.
     """
     sys.path.insert(0, str(HERE))
     import generate_report as gr
-    return {k: _flat(v) for k, v in gr.DIM_MEANING.items()}
+    out: dict[str, str] = {}
+    for dim in gr.DIM_MEANING:
+        parts = [gr.DIM_MEANING.get(dim, ""), gr.GATE_TEXT.get(dim, "")]
+        for lvl in (gr.NEXT_LEVEL.get(dim) or {}).values():
+            # each entry is (what_it_is, what_to_do)
+            parts.extend(str(x) for x in (lvl if isinstance(lvl, (tuple, list)) else [lvl]))
+        if dim in gr.BAND_MEANING:
+            parts.append(gr.BAND_MEANING[dim])
+        out[dim] = _flat(" ".join(p for p in parts if p))
+    return out
 
 
 def content_words(text: str) -> set[str]:
@@ -70,7 +86,12 @@ FORBIDDEN = {
          "the rubric says the mechanism is NEVER the business's stated differentiator"),
     ],
     "market_headroom": [
-        (r"growing|shrinking",
+        # ⚠⚠ NARROWED AFTER A FALSE POSITIVE. The bare pattern `growing|shrinking` fired on the
+        # recommendation "Demand exceeds supply and the shortfall is growing" -- which is the
+        # RUBRIC'S OWN L4 wording ("the shortfall is growing"). The forbidden thing is not the word
+        # "growing"; it is describing the DIMENSION as the category's growth trend. So the pattern
+        # now requires the growth to be predicated of the category or the demand itself.
+        (r"(category|demand)[^.]{0,30}(growing|shrinking|flat)",
          "the rubric measures UNMET vs SERVED demand, not the category's growth trend"),
     ],
     "mental_advantage": [
