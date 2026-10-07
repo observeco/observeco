@@ -1615,6 +1615,53 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**⚠⚠ 3.7.17 CORRECTED — SEAN WILL KEEP THE DATA. AND THE ERROR WAS MINE, NOT THE CODE'S (7 Oct).**
+
+***Sean: "Promise 2 — I want to be able to keep the data."***
+
+**⚠⚠ WHAT I GOT WRONG, STATED PLAINLY.** *§3.7.15 and §3.7.16 treated the 30-day post-report deletion as **"the
+intended behaviour" and the code as "behind it"**, and I wrote that **"softening it to match the current code
+would mean publishing 'we keep your data indefinitely' — which is worse for the user and worse for the
+business."* ***That was backwards. The KEEP policy is the intended behaviour, it is already in his own spec, and
+the 30-day sentence was the defect.***
+
+**✅ §7.5 ALREADY SPECIFIED A KEEP POLICY.** *"Retention must name a period" defines retention **per category**,
+and never says delete-everything: consent records **kept longest** ("they are the evidence that made processing
+lawful"), reports **medium — 24 months** ("defensible if a prospect disputes a score"), contacts who never
+converted **shortest**, enrichment cache **days**. **So the decision Sean just made is the one his spec already
+recorded; my draft contradicted it.***
+
+**⚠⚠ AND THE ROOT CAUSE WAS A CONFLATED PROMISE — TWO DIFFERENT CASES, ONE SENTENCE.** *The **confirmation
+email** says: "If this wasn't you, ignore this email … **We'll delete your details within 30 days.**" That is about
+the **UNCONFIRMED** case — a stranger who never asked for a report. **`purge_expired()` implements exactly that:
+`DELETE FROM confirmations WHERE status='pending'`.*** *The **page** must describe the **confirmed** case, where
+the customer asked for the report. **Different case, different period, different obligation.*** ***I read the
+email's retention sentence and carried it into the page — so the false promise was mine, and the code was closer
+to right than I said.***
+
+**✅ SO THE SPLIT IS NOW EXPLICIT, AND EACH HALF IS JUDGED ON ITS OWN.**
+| case | promise | code today |
+|---|---|---|
+| **unconfirmed** (email) | *"we'll delete your details within 30 days"* | ✅ **already implemented** — `purge_expired()` deletes `pending` rows. **Needs a scheduler; the function is currently never called.** |
+| **confirmed** (page) | *keep the report and the answers behind it* | ⚠ **nothing to build for deletion — but §7.5's periods and a per-category purge still need to exist** |
+
+**⚠ WHAT REMAINS IS ENGINEERING AND ONE SET OF PERIODS, NOT THIS SENTENCE.** *(1) §7.5's table still offers its
+periods as a choice — the page above uses its **24 months** for reports, said as "two years". (2) The email path
+needs `purge_expired()` **actually scheduled**; a retention rule nothing calls is not a retention rule. (3) The
+confirmed path needs a retention sweep only if periods are to be enforced — and **enforcing them is now a
+choice, not an implied obligation.***
+
+**⚠ AND THE LESSON IS THE ONE THIS SESSION KEEPS RE-TEACHING.** *I checked the promise **against the code** and
+found the code wanting — but I never checked it **against the spec's own retention design**, which is where the
+answer actually was.* ***A claim can be wrong in two directions: the code can fail the promise, OR the promise
+can fail the specification. I only looked for the first.***
+
+**⚠ REPRODUCE:** *§7.5's table in this spec; `purge_expired()` in `sandbox/confirmation_gate.py`; Part B of
+`specs/calibration/privacy_rewrite_draft.md`.*
+
+---
+
 **✅ 3.7.16 BOTH FALSE PROMISES REVISED TO MATCH THE CODE (7 Oct).**
 
 ***Sean: "Revise promise 1 and 2 to be accurate."***

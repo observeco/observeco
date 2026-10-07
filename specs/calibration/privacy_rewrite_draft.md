@@ -99,24 +99,35 @@ model provider. They can only use it to provide that service. They're named belo
 > **You can withdraw any of these at any time**, and withdrawing one does not affect the others. Every
 > email we send has a working unsubscribe link, and it works whether or not you have an account with us.
 >
-> **How long we keep it.** We keep your submission and your report for **30 days** after we email it to
-> you, then delete them. If you asked to be followed up, we keep your contact details for longer — until you
-> unsubscribe or ask us to stop. You can ask us to delete everything sooner and we will.
+> **How long we keep it.** We keep your report and the answers behind it for **two years**, so we can stand
+> behind a score if you come back to it later. If you asked us to keep in touch, we keep your contact details
+> until you unsubscribe or ask us to stop. You can ask us to delete everything at any time and we will.
 
-**⚠⚠ DO NOT SHIP THIS SENTENCE UNTIL THE CODE MATCHES IT — IT DOES NOT TODAY.** *Checked line by line against
-the code rather than reviewed for tone:*
+**✅ CORRECTED — DECIDED BY SEAN (7 Oct): WE KEEP THE DATA.** *The previous version of this line promised
+deletion 30 days after the report was sent. **That was wrong twice over: it contradicted his own §7.5, and it
+contradicted what he actually wants.***
 
-| the sentence requires | what the code does now |
-|---|---|
-| delete the submission **and the report** after 30 days | **nothing ever deletes from `submissions`** — the address, score, band and full report text all live there permanently |
-| a confirmed submission is covered | *`purge_expired()` deletes only `status='pending'` rows; a **confirmed** submission is never expired* |
-| the deletion actually happens | *`purge_expired()` is **never called** outside a test — no scheduler, no hook, no cron* |
+**⚠ §7.5 ALREADY SPECIFIED A KEEP POLICY — the 30-day sentence was the error, not the code.** *§7.5 ("Retention
+must name a period") defines retention **per category** and never says "delete everything": consent records kept
+longest (they are the evidence that made processing lawful), **reports medium — 24 months — "defensible if a
+prospect disputes a score"**, contacts who never converted shortest, enrichment cache days. **The 30-day
+sentence came from the confirmation-email draft, where it applies to a DIFFERENT case, and I carried it into the
+page by mistake.***
 
-***So this is a promise the product cannot keep, and it is the same promise the confirmation email makes.***
-*Three things are needed first: a purge that covers confirmed rows, a purge that runs on a schedule, and a
-decision on whether the report **text** is deleted or only the contact details. **Until then, either build it
-or say less** — a written statement of a practice that does not exist is the failure mode this whole check
-exists to prevent.*
+**⚠⚠ AND THE TWO PROMISES ARE GENUINELY DIFFERENT — SEPARATING THEM IS THE FIX.** *The confirmation email says
+**"If this wasn't you, ignore this email … We'll delete your details within 30 days."** That is about the
+**unconfirmed** case — someone who never asked for a report. **`purge_expired()` implements exactly that**:
+`DELETE FROM confirmations WHERE status='pending'`.* ***So the email's promise is the RIGHT promise and needs one
+thing only — a scheduler, since the function is currently never called.*** *The page describes the **confirmed**
+case, where the customer asked for the report and may want it later. **Different case, different period, different
+obligation. They were never the same sentence.***
+
+**⚠ STILL REQUIRED BEFORE THIS SHIPS — and it is engineering, not wording:**
+1. **A retention decision per category** — §7.5's table still carries provisional periods as a choice for Sean;
+   the sentence above uses its report figure (**24 months**), stated in plain English as "two years".
+2. **A purge that covers confirmed rows** — `purge_expired()` handles `pending` only, which is correct for the
+   email promise and **insufficient** for this one.
+3. **A scheduler** — no function runs unless something calls it, and nothing does today.
 
 ---
 
@@ -166,7 +177,8 @@ copy (199 lines, *different* content) is dead weight and a trap — the next per
 | **P1** | A1 meta description wording | *as above* | ✅ / edit |
 | **P2** | A2–A4 replacements | *as above* | ✅ / edit |
 | **P3** | The three consent labels (matches `004_consent_records.sql`) | *Your report / Follow-up / Benchmark* | ✅ / edit |
-| **P4** | Retention wording | *as above* — **⚠ gated on the purge being built; it is not true today** | ✅ / edit |
+| **P4** | Retention wording | ✅ **DECIDED — keep the data** (two years for the report; see above) | period: ✅ / edit |
+| **P4b** | §7.5's other periods — consent (longest), unconverted contacts (shortest), enrichment cache (days) | *provisional in §7.5* | ✅ / edit |
 | **P5** | Supabase region | ✅ **`ap-southeast-1` (Singapore)** — supplied 7 Oct | done |
 | **P6** | Delete the root `privacy.html`? | *yes* | ✅ / edit |
 
