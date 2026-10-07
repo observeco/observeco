@@ -8,7 +8,8 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-URL = "http://localhost:8765/"
+import os
+URL = "http://%s:%s/" % (os.environ.get("PROBE_HOST", "127.0.0.1"), os.environ.get("PROBE_PORT", "8765"))
 reqs, logs = [], []
 
 with sync_playwright() as p:

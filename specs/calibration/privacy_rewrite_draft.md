@@ -115,7 +115,7 @@ model provider. They can only use it to provide that service. They're named belo
 >
 > | Provider | What they hold | Where |
 > |---|---|---|
-> | **Supabase** | Your contact record, your consent record, your report | *Region to be confirmed* |
+> | **Supabase** | Your contact record, your consent record, your report | **Singapore** (`ap-southeast-1`) |
 > | **Cloudflare Turnstile** | A bot check when you submit the form — no profile of you | Global |
 > | **Resend** | Your email address and the message we send | United States |
 > | **Brevo** | Your email address, if and only if you opted into follow-up | European Union |
@@ -142,8 +142,71 @@ copy (199 lines, *different* content) is dead weight and a trap — the next per
 | **P2** | A2–A4 replacements | *as above* | ✅ / edit |
 | **P3** | The three consent labels (matches `004_consent_records.sql`) | *Your report / Follow-up / Benchmark* | ✅ / edit |
 | **P4** | Retention: 30 days post-report; contact kept until unsubscribe | *as above* | ✅ / edit |
-| **P5** | Supabase region — **needs to be filled in; I don't know it** | — | **you** |
+| **P5** | Supabase region | ✅ **`ap-southeast-1` (Singapore)** — supplied 7 Oct | done |
 | **P6** | Delete the root `privacy.html`? | *yes* | ✅ / edit |
 
 *Once P1–P6 are settled: drop A1–A4 in place, append Parts B and C, delete the root copy, then the page
 and the consent wiring go in together so the wording and the checkboxes can never disagree.*
+
+
+---
+
+## PART E — the consent block on the form (DRAFT for approval)
+
+**⚠ These must ship with Parts A–C above.** The notice and the checkboxes describe the same three
+purposes; if they disagree, the evidential value is gone (§7.7).
+
+**The spec's governing rule (§7.7):** *"The checkbox is not 'may we use your data for research'. It is the
+**unlock for the comparison itself**."* And the hard constraint beside it: *"the withheld benefit must be
+the COLLECTIVE GOOD, never the SERVICE"* — **the report is never gated**, or the consent is coerced.
+
+**So there are TWO checkboxes, not three** — purpose 1 is the thing they asked for, not a permission they
+grant. **Giving it a checkbox would blur exactly the distinction §7.7 draws.** It gets a line of text.
+
+---
+
+### The block, as it would appear
+
+> **We'll produce your report and email it to you.** Two optional extras below — both unticked. Tick only
+> what you want.
+>
+> ☐ **Keep me posted** — occasional emails about ObserveCo's services, and what we're learning from these
+> reviews.
+>
+> ☐ **Show me how I compare.** My answers — with no business name, no email address and no personal names —
+> can go into Singapore industry benchmarks, and I get the comparison back.
+>
+> *The report itself is what you asked for. It is never conditional on the boxes above.*
+
+---
+
+### Why each line is worded that way
+
+| Element | Why |
+|---|---|
+| **"Show me how I compare"** as the label | *It names the BENEFIT, not the permission.* The spec is explicit that the research checkbox must read as the unlock for the comparison — a request framed as "may we use your data" is what produces a near-zero rate, and a near-zero rate forces the dataset claim down |
+| **"and I get the comparison back"** | *Makes the exchange explicit: they give aggregation rights, they get the benchmark. The spec calls this a TRADE, and says the first draft's "favour" framing is why its rate would have been poor* |
+| **"with no business name, no email address and no personal names"** | *The spec's k-anonymity promise, stated where the decision is made rather than buried in the policy. D34's rule — "analyse the business, never the person" — is the same line* |
+| **"Keep me posted"** | *Separate purpose, separate row, plain English. Bundling follow-up with the report is the §3.2 failure* |
+| **"both unticked"** | *A pre-ticked box is not consent under the PDPA. Stating it plainly also raises the rate, because it removes the suspicion of a trick* |
+| **"never conditional on the boxes above"** | *The coercion guard. If declining ever degrades the scored report, the consent is void and the purpose with it* |
+
+---
+
+### Two open points I could not settle from here
+
+**E1 — enriched public-source material is a SEPARATE question, and the label must not overpromise.**
+§7.7 says purpose 3 covers **what the submitter tells us**. The report *also* enriches from public sources
+(Places data, review text, registries) — different provenance, different rules, and the spec flags it as
+needing **its own determination** before the dataset claim leans on it. **So the label deliberately says
+"my answers", not "my report" or "everything we find".** *If it said "everything", it would promise a use
+the spec has not yet justified.*
+
+**E2 — the k-anonymity FLOOR is not set.** *"No business name" is a promise; **how many** businesses must be
+in a cell before a comparison may be shown is a number, and it is not in the spec.* Too low (say 3) and a
+reader can re-identify; too high and the benchmark never renders, so the unlock becomes a promise the tool
+cannot keep. **This is a threshold, and thresholds are Sean's call.**
+
+**E3 — where this block sits on the form.** *Below the submit button reads as an afterthought and the rate
+will show it; above the submit button, next to the report they are asking for, is where the trade is
+legible.* **Recommend: directly above the submit button, in the same visual block as the button.**

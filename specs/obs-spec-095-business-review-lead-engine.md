@@ -1286,7 +1286,7 @@ belongs in the template layer.
 
 | Processor | Holds | Location | Note |
 |---|---|---|---|
-| Supabase | contacts, consent, reports | confirm region | |
+| Supabase | contacts, consent, reports | **Singapore (`ap-southeast-1`)** — confirmed 7 Oct | |
 | Resend | email address, message content | **US** — transfer clause needed | transactional |
 | Brevo | email address, message content, **contact records** | **EU** | marketing. Processor only — §6.4 |
 | TypeSafe (Jev) | **form answers + enriched public text only** | US | §5.5 |
@@ -1605,6 +1605,66 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+
+**✅ 3.7.8 SEAN'S TURNSTILE FIX VERIFIED — 110200 IS GONE ON `127.0.0.1` — AND THE EMPTY TOKEN IS THE
+CAPTCHA WORKING, NOT A BUG (7 Oct). Plus the three consent labels, drafted.**
+
+***Sean: "127.0.0.1 added to turnstile. supabase is ap-souteast-1. What are the 3 checkbox labels?"***
+
+**✅ THE HOSTNAME FIX WORKED — MEASURED, NOT ASSUMED.** *Re-ran the headed-browser probe against the real
+(non-bypass) instance on **both** hostnames:*
+
+| hostname | `110200` | widget renders | token |
+|---|---|---|---|
+| **`127.0.0.1`** | **✅ GONE** | ✅ checkbox + *"Verify you are human"* + Cloudflare mark | ✗ empty *(see below)* |
+| `localhost` | ⚠ **still 110200** | ✗ | ✗ |
+
+***So `127.0.0.1` is now authorized and `localhost` is not.*** *Cloudflare treats them as distinct hostnames,
+so if Sean ever browses via `localhost` he will see the error again — **worth adding `localhost` too, or
+simply always using `127.0.0.1`.***
+
+**⚠⚠ AND A CORRECTION TO MY OWN EARLIER WORK — THE PROBE WAS TESTING THE WRONG HOSTNAME.** *`probe_widget_element.py`
+had `URL = "http://localhost:8765/"` **hardcoded**. So the §3.7.4 finding *"both hostnames returned 110200"*
+was **not** a test of `127.0.0.1` at all — **it tested `localhost` twice.** *The conclusion happened to
+survive (neither was authorized *then*), but the evidence for it did not.* **Fixed: the probe now takes
+`PROBE_HOST`/`PROBE_PORT`.** *Second instance this session of a test written from an assumption about the
+artefact — the same class as the `<textarea>` selector and the mangled token.*
+
+**✅ AND THE EMPTY TOKEN IS THE CONTROL WORKING.** *After a real click by coordinates inside the widget —
+and clicking is the only way to get a token, since **Playwright cannot even see Cloudflare's frame**
+(`frames: []`, because it is deliberately isolated) — **no token appeared.** That is **Turnstile correctly
+refusing an automated browser on a Managed challenge**, which is the entire point of the widget.*
+***An automated harness CANNOT prove this path; only a real human click in a real browser can.*** *The
+screenshot confirms the widget is healthy — checkbox present, no error, form intact — so **the chain is
+sound and the last link needs Sean's finger, not more code.***
+
+**✅ THE THREE CONSENT LABELS — DRAFTED AT `specs/calibration/privacy_rewrite_draft.md` PART E.** *Grounded in
+§7.7's own doctrine rather than invented:*
+- **⚠ THERE ARE TWO CHECKBOXES, NOT THREE.** *§7.7 makes purpose 1 ("deliver the requested report") **required
+  to perform what was asked** — it is the service, not a permission. **A checkbox on it would blur the exact
+  distinction §7.7 draws.** Purpose 1 gets a line of text instead: "The report itself is what you asked for.
+  It is never conditional on the boxes above."*
+- **Purpose 2 — "Keep me posted"** — *occasional emails about ObserveCo's services.*
+- **Purpose 3 — "Show me how I compare"** — *the spec's load-bearing line: **"the checkbox is not 'may we use
+  your data for research'; it is the unlock for the comparison itself."** So the label names the BENEFIT and
+  states the exchange ("and I get the comparison back"), **and carries the k-anonymity promise where the
+  decision is made**, not buried in the policy.*
+
+**⚠⚠ TWO OPEN POINTS THE LABELS DELIBERATELY DO NOT SETTLE.** *(E1) Purpose 3 covers **what the submitter
+tells us** — the enriched public-source material is a separate provenance question §7.7 says needs **its own
+determination**, so the label says **"my answers"**, not "everything we find"; promising more would promise a
+use the spec has not yet justified. (E2) **The k-anonymity floor is a number and it is not in the spec** —
+too low and a reader can re-identify, too high and the benchmark never renders, making the unlock a promise
+the tool cannot keep. **Thresholds are Sean's call.***
+
+**✅ P5 FILLED — Supabase region is `ap-southeast-1` (Singapore).** *Now recorded in the processor register.
+
+**⚠ REPRODUCE:** *`PROBE_HOST=127.0.0.1 python3 probe_widget_element.py` (widget healthy, no 110200);
+`probe_turnstile_click2.py` (no token from an automated click — expected); Part E of the draft for the
+labels.*
+
+---
 
 **✅ 3.7.7 THE PRIVACY REWRITE IS DRAFTED — AND §3.4 ALREADY NAMED THE FIVE FALSE STATEMENTS (6 Oct).**
 
