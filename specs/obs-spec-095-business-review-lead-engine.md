@@ -1608,6 +1608,41 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.10 THE "FIVE EXPLANATIONS" (ITEM 3) WERE ALREADY MOSTLY BUILT — AND CHECKING THEM FOUND A REAL
+FIDELITY DEFECT: THE REPORT DESCRIBED `competitive_room` THE WAY THE RUBRIC HAD JUST REMOVED (7 Oct).**
+
+**⚠ FIRST, THE NEGATIVE, VERIFIED RATHER THAN ASSUMED.** *Item 3 — *"Draft all 5 and I edit the wording"* —
+**was substantially already built.** *Grounded in `generate_report.py`, not inferred: `DIM_MEANING`,
+`BAND_MEANING`, `BAND_CAVEAT` all exist, and a live report renders **four** explanatory sections —
+`WHAT THE BANDS MEAN` (with *"<- YOU ARE HERE"*), `WHAT EACH SCORE MEANS`, `THE ONE THING THAT DECIDES IT`,
+and `WHERE TO GET THE SCORE UP` with per-dimension recommendations. **The bands were already explained too**,
+which was half of what Sean asked for. So item 3 was mostly done and the spec never said so.*
+
+**⚠⚠ BUT CHECKING THE WORDING AGAINST THE RUBRIC FOUND A REAL DEFECT, AND IT IS FIDELITY RATHER THAN STYLE.**
+***The report defined `competitive_room` to the reader as "How much margin is left for YOU after the big
+players set the price."*** *The **1.22.0 rewrite** re-anchored that dimension to the market's structure and
+says so in the rubric's own words: **"Judge the STRUCTURE OF THE MARKET, not the size of the business being
+scored"** and **"Room is removed by DOMINANCE, not by the NUMBER of rivals."*** **The old wording is precisely
+the small-operator framing the rewrite existed to remove.** *So the report was explaining the dimension in
+terms the instrument no longer scores on — and `generate_report.py` is **computed, not model-written**, so the
+prose did not follow the rubric when the rubric moved.*
+
+**⚠⚠ AND THE WORST INSTANCE WAS READ ALONE: `GATE_TEXT["competitive_]room"]`** — *"whether there is any margin
+left after the price floor your competitors set".* **That string is printed under `THE ONE THING THAT DECIDES
+IT`, so it is read as the single deciding factor, with no surrounding context to correct it.**
+
+**✅ FOUR SITES FIXED, ALL TOWARD THE RUBRIC'S OWN LANGUAGE.** *`DIM_MEANING["competitive_room"]` restated as
+structure ("removed by one or two players having power over price, shelf or access — not by how many rivals
+there are"); `GATE_TEXT` restated to name control of price/shelf/access; and `NEXT_LEVEL` L1 and L3 brought
+back to the rubric's own level text. **Nothing was invented — every replacement is the rubric's own phrasing**,
+which is the whole point: the report and the instrument must describe the same thing.*
+
+**⚠ REPRODUCE:** *`grep -n 'competitive_room' generate_report.py`; the rubric's own instruction string in
+`rubric.json`; and a live report showing the old sentence under `WHAT EACH SCORE MEANS`.*
+
+---
+
 **✅ 3.7.9 `/confirm` IS NOW ASYNCHRONOUS — 240s BLOCKING FIXED TO 0.02s — AND IT EXPOSED A REAL BUG:
 THE GATE PATH NEVER SAVED THE ADDRESS (7 Oct).**
 

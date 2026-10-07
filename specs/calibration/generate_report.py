@@ -94,8 +94,15 @@ DIM_MEANING = {
     "mental_advantage": "Whether people think of YOU unprompted when they need what "
                         "you sell.",
     "defensibility": "How hard it would be for a rival to copy what makes you different.",
-    "competitive_room": "How much margin is left for you after the big players set the "
-                        "price.",
+    # ⚠ FIDELITY, NOT COPY. The 1.22.0 rewrite re-anchored this dimension to the MARKET'S
+    # STRUCTURE and says so explicitly: "Judge the STRUCTURE OF THE MARKET, not the size of
+    # the business being scored", and "Room is removed by DOMINANCE, not by the NUMBER of
+    # rivals". The previous wording ("how much margin is left for YOU after the big players
+    # set the price") was the small-operator framing the rewrite existed to remove -- so the
+    # report was describing the dimension differently from the thing that scores it.
+    "competitive_room": "How much space the market leaves you to earn. Room is removed by one "
+                        "or two players having power over price, shelf or access — not by how "
+                        "many rivals there are.",
     "market_headroom": "Whether demand in your category is growing, already met, or "
                        "shrinking.",
     "demand_reach": "Whether the customers you describe can actually be found, and do pay.",
@@ -135,8 +142,8 @@ VERDICT = {
 GATE_TEXT = {
     "market_headroom": "whether the category you've named is the one your buyer "
                        "actually shops in",
-    "competitive_room": "whether there is any margin left after the price floor "
-                        "your competitors set",
+    "competitive_room": "whether one or two players control the price, the shelf or access "
+                        "in your category",
     "position_strength": "whether the claim you make is one your competitors "
                          "already make",
     "mental_advantage": "whether anyone thinks of you when they need what you sell",
@@ -221,7 +228,7 @@ NEXT_LEVEL = {
     },
     "competitive_room": {
         1: ("The category is consolidated: one or a few players set price or control "
-            "access, and a small operator structurally cannot earn.",
+            "access, and a new entrant cannot enter profitably.",
             "Consider whether you are fighting in the right category at all — this is "
             "a structural read, not an effort problem."),
         2: ("A dominant player or a price floor set by much larger rivals squeezes "
@@ -229,7 +236,7 @@ NEXT_LEVEL = {
             "Move where the dominant player's price does not set yours — a segment, "
             "service or format they cannot follow into."),
         3: ("Several strong brands and a general price floor keep margins thin, but "
-            "small operators do establish themselves.",
+            "entry is normal and new operators do establish themselves here.",
             "Compete on something the price floor does not cover — service, "
             "specialisation, or a buyer who is not price-shopping."),
         4: ("Several players coexist and none dominates.",
