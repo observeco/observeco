@@ -219,7 +219,7 @@ grant. **Giving it a checkbox would blur exactly the distinction §7.7 draws.** 
 > reviews.
 >
 > ☐ **Show me how I compare.** My answers — with no business name, no email address and no personal names —
-> can go into Singapore industry benchmarks, and I get the comparison back.
+> can go into Singapore industry benchmarks, and I get the comparison back **on a best-endeavours basis**.
 >
 > *The report itself is what you asked for. It is never conditional on the boxes above.*
 
@@ -229,6 +229,7 @@ grant. **Giving it a checkbox would blur exactly the distinction §7.7 draws.** 
 
 | Element | Why |
 |---|---|
+| **"on a best-endeavours basis"** *(Sean's phrase, 7 Oct)* | **The honest qualifier, and it resolves E2's cold-start problem.** *A comparison **cannot be guaranteed**: the category pool may be too thin to render one, and rival pages may not be readable (§4.6.0a). **It promises the attempt, not the outcome** — which is exactly what the trade requires. Note it makes **any total-count claim** in the same breath impossible: a count reads as verified, and best-endeavours is explicitly not* |
 | **"Show me how I compare"** as the label | *It names the BENEFIT, not the permission.* The spec is explicit that the research checkbox must read as the unlock for the comparison — a request framed as "may we use your data" is what produces a near-zero rate, and a near-zero rate forces the dataset claim down |
 | **"and I get the comparison back"** | *Makes the exchange explicit: they give aggregation rights, they get the benchmark. The spec calls this a TRADE, and says the first draft's "favour" framing is why its rate would have been poor* |
 | **"with no business name, no email address and no personal names"** | *The spec's k-anonymity promise, stated where the decision is made rather than buried in the policy. D34's rule — "analyse the business, never the person" — is the same line* |
@@ -246,6 +247,22 @@ grant. **Giving it a checkbox would blur exactly the distinction §7.7 draws.** 
 needing **its own determination** before the dataset claim leans on it. **So the label deliberately says
 "my answers", not "my report" or "everything we find".** *If it said "everything", it would promise a use
 the spec has not yet justified.*
+
+**✅ E3 — SEAN'S X/Y COMPETITOR-REVEAL (7 Oct): the DIRECTION is adopted, the number is BLOCKED.**
+*Sean: "we have identified a total of X number of competitors, but since it is a free report we are only
+showing you Y. To unlock the remaining competitors, please consider using our full services."*
+**The boundary is sound and already exists** — the free report already says ownership is "the paid analysis".
+**But X has no honest denominator today**, and I reproduced why (§3.7.20): the occupant miner is a documented
+negative result (four fixes failed) and on a live bakery scan it returned **`"Number of"` as a competitor**;
+the category search returns articles *about* the category, not members *of* it; and the free path **never runs
+the scan at all** (`server.py:261`, off by default). **So the honest sentence today would read "we identified 0
+competitors and are showing you 2".** *The unlock that fixes it is in-hand: the scan's **capture** layer works
+(11 of 12 readable) — only the name-extraction is broken — and fixing it also fixes the live report's
+"it would not let us read it".*
+**⚠ THE ONE RULE THAT KEEPS THIS LEGAL:** *withhold the **analysis**, never the **accuracy** of what is already
+shown. A free report deliberately made thinner is coerced consent wearing a product name (§7.7).*
+**⚠ And "best endeavours" contradicts "a total of X" in one sentence** — resolution: **the count is stated
+only when measured; otherwise no number.**
 
 **E2 — the k-anonymity FLOOR is not set.** *"No business name" is a promise; **how many** businesses must be
 in a cell before a comparison may be shown is a number, and it is not in the spec.* Too low (say 3) and a

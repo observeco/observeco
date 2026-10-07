@@ -1584,6 +1584,10 @@ learns the report is not instant** — silence here would read as a broken form.
     It takes a few minutes. We'll email the report to {email} when it's ready.
 
     While you wait: {benchmark unlock line, if purpose 3 was ticked}
+                    ⚠ the line MUST carry "on a best-endeavours basis" — the comparison
+                    cannot be guaranteed (thin pool, §4.6.0a readability), so the promise
+                    is the attempt. See §7.7's three binding consequences, incl. the ban on
+                    stating a competitor COUNT in the same breath.
 
 **⚠⚠ E. DECISIONS THIS DRAFT NEEDS FROM SEAN.**
 1. **Subject line** — which of the three.
@@ -1726,6 +1730,100 @@ tool-vs-Sean's-expectation, so no convergence to his old numbers is possible.*
 
 **⚠ REPRODUCE:** *`SANDBOX_STRIP_BUSINESS_NAME=1 python3 run_corpus_parallel.py rubric.json runs-nostrip 8`,
 then compare against `runs-1220-control` on the harness formula (`band_agreement_harness.py`).*
+
+---
+
+**✅ 3.7.20 SEAN'S X/Y COMPETITOR-REVEAL MECHANIC — ACCEPTED AS THE PRODUCT DIRECTION, AND BLOCKED BY A DEFECT
+I REPRODUCED LIVE (7 Oct).**
+
+**SEAN'S DIRECTIVE, VERBATIM.** ***"For box 2, please use the phrase 'on a best endeavours basis'. I think for a
+free report we have to make it clear we have identified a total of X number of competitors, but since it is a
+free report we are only showing you Y. To unlock the remaining competitors, please consider using our full
+services to get a comprehensive competitive analysis."***
+
+**✅ AND THE SHAPE IS ALREADY BUILT.** *The free/paid boundary this rests on is not a new idea: the free report
+already carries a section that says the ownership question is **"the paid analysis"**, and §3.3 already draws
+the engagement line.* **The mechanic is a stronger, more concrete version of a boundary that exists.**
+
+**⚠⚠ BUT X CANNOT CURRENTLY BE STATED, AND THE REASON IS NOT "NOT BUILT YET" — IT IS THAT THE COMPONENT IS A
+DOCUMENTED NEGATIVE RESULT AND IT EMITS JUNK.** *Three findings, in order of seriousness:*
+
+**⚠ (1) THE OCCUPANT MINER IS BROKEN — REPRODUCED, NOT INHERITED.** *`competitor_scan.py` DOES run live: a real
+run for `"Bakery: packaged bread and buns for home consumption" / Singapore` discovered 12 candidate URLs and
+reported **"OK — 11 of 12 candidates readable"**, one transport failure.* **So the fetch layer works.** *But the
+step that turns captures into NAMES is `extract_occupants()`, which carries this in its own docstring:*
+
+> *"**NEGATIVE RESULT — THIS MECHANISM IS NOT WORKING, AND FOUR FIXES HAVE FAILED.** Do NOT retry these; each was
+> measured and each exposed a new class of junk. ⚠ And the output is **DANGEROUS, NOT MERELY USELESS** … a junk
+> set produces a confident judgement about rivals that are not real."* (§4.6.0b)
+
+**⚠ REPRODUCED ON THE LIVE RUN, AND IT IS WORSE THAN "USELESS":** *the derived set returned **two "members", one
+of which was the string `"Number of"`** (a fragment of *"Number of outlets"* mined from an article), and the
+other a `_sources read:` note.* **So the honest X from this mechanism is not a small number — it is zero real
+competitors plus one piece of noise.** *An X built on this would be a fabricated count, which §4.6.0b says is
+**worse than an empty one**.*
+
+**⚠ (2) X HAS NO DEFINED DENOMINATOR, AND ON HONEST EVIDENCE TODAY IT IS ZERO.** *The category search returns
+**articles ABOUT the category, not members OF it** — for bakery it returned `nexdigm.com`, `euromonitor.com`,
+`researchandmarkets.com`, `indexbox.io`, `lifestyleasia.com`, `eatbook.sg`, `littlefarms.com`, `sgmagazine.com`,
+`oishipan.sg`. **The miner is supposed to mine brand names out of those listicles, and that is exactly the part
+that does not work.** So:*
+
+| candidate source for **X** | honest value | problem |
+|---|---|---|
+| The occupant miner | **0 real occupants** | broken (§4.6.0b); emitted `"Number of"` on the live run |
+| Category lists / market-research portals | **a number, but not ours** | *Euromonitor and friends **sell** the competitor count — it is their product. Licensable, but **a licensed number, not a measured one*** |
+| The **owner's own named rivals** | **2 on the live case** | *This is **Y, not X** — self-reported, and §4.6.0c already says it is "the owner's view … not a discovered landscape"* |
+
+*So the honest sentence today reads **"we identified 0 competitors and are showing you 2"** — which is absurd, and
+is the proof that X is not yet a real quantity.*
+
+**⚠ (3) THE FREE PATH NEVER RUNS THE SCAN AT ALL.** *`server.py:261` — `do_scan` is **off by default**; research
+runs only when a website or named rivals are supplied.* **So today there is no X *and* no independently verified
+Y.** *The live case (`submission #75`) demonstrates the consequence: it named **SaladStop! and Supergreen**, and
+the report had to say **"we found their site, but it would not let us read it, so nothing here says what they
+claim."*** *Neither named rival was readable. **That is not a lead magnet — it is a report that concedes there is
+nothing to show and then points at the paid engagement.***
+
+**⚠⚠ AND "BEST ENDEAVOURS" CONTRADICTS "WE IDENTIFIED A TOTAL OF X".** *A **count** reads as verified; a
+**best-endeavours** claim is explicitly not verified. The two cannot sit in one sentence.* **The resolution: the
+COMPARISON is best-endeavours; the COUNT is stated only when it is a measured count.** *If X is not measured, the
+sentence must not contain a number.*
+
+**⚠ THE ONE RULE THIS MECHANIC MUST OBEY, OR IT BREAKS §7.7.** *§7.7's coercion guard is that **declining**
+consent must never degrade the scored report.* *Sean's mechanic withholds a **different** benefit — the complete
+competitive analysis — which is legitimate and is exactly §3.3's paid line.* **But it only stays legitimate if the
+free report remains a complete, uncrippled read on the position.** ***Withhold the ANALYSIS. Never the ACCURACY
+of what is already shown.*** *A free report that is deliberately made thinner is coerced consent wearing a
+product name.*
+
+**✅ THE UNLOCK IS IN-HAND, AND IT KILLS TWO DEFECTS AT ONCE.** *The scan's **capture layer works** (11 of 12
+readable, with a validity gate and an honest-limits block already built).* **Only `extract_occupants()` is
+broken.** *So deriving a real competitive set would (a) turn **X** from un-computable into measured, and (b) fix
+the §4.6.0a defect where the submitter's **named rivals' own pages cannot be read** — which is the reason the
+live report says "it would not let us read it".* **Those are the same project.** *Note the browser rung already
+solved readability for the submitter's OWN site (6,059 chars on the case that exposed it) — the gap is applying
+that same rung to the rival pages.*
+
+**⚠ WHAT DOES NOT NEED TO CHANGE.** *The free/paid boundary, the "that is the paid analysis" section, and §3.3's
+line are already built and already say the right thing. **The mechanic needs X to become real, not a new
+boundary.***
+
+**⚠⚠ SEAN'S CALL, ONE QUESTION: WHERE DOES X COME FROM?**
+1. **Rebuild the competitive-set derivation** (fix `extract_occupants()` + apply the browser rung to rival pages)
+   — **the only option where X is measured.** Largest piece of work; fixes §4.6.0a and §4.6.0b together.
+2. **License a market-research count** — fastest to a real number, but **a licensed number in a free report**,
+   with cost and attribution, and it is a third party's definition of the category.
+3. **State the owner-named count and no X** — *"you named N rivals, here are Y of them"*. **Cheapest and fully
+   honest today**, but it is a weaker hook than a total, because the total is what implies there is more.
+
+**⚠ RECORDED AS THE DIRECTION, NOT AS BUILT.** *Nothing in this section is implemented.* **The "best endeavours"
+phrase IS adopted in the consent label (above).** **The X/Y reveal waits on a denominator.***
+
+**⚠ REPRODUCE:** *`python3 competitor_scan.py --category "Bakery: packaged bread and buns for home consumption"
+--market "Singapore" --out /tmp/scan-bakery.json` (11/12 readable, and zero real occupants), then
+`to_competitive_set()` on it to see the `"Number of"` artefact. `grep -n 'do_scan' sandbox/server.py` for the
+off-by-default research path.*
 
 ---
 
@@ -2159,6 +2257,12 @@ sound and the last link needs Sean's finger, not more code.***
   your data for research'; it is the unlock for the comparison itself."** So the label names the BENEFIT and
   states the exchange ("and I get the comparison back"), **and carries the k-anonymity promise where the
   decision is made**, not buried in the policy.*
+  - **✅ SEAN'S PHRASE (7 Oct, verbatim): the comparison is offered "on a best endeavours basis."** *This is
+    the honest qualifier for the §4.6.0b limitation and it resolves E2's cold-start worry below: the tool
+    **cannot guarantee** a comparison, because (a) the category pool may be too thin to render one, and (b)
+    the rival pages may not be readable (§4.6.0a). **"Best endeavours" says the tool will try, without
+    promising a thing it cannot always deliver** — which is exactly what §7.7's trade requires. **Use it in
+    the label and in the report's benchmark line, not only in the policy.***
 
 **⚠⚠ TWO OPEN POINTS THE LABELS DELIBERATELY DO NOT SETTLE.** *(E1) Purpose 3 covers **what the submitter
 tells us** — the enriched public-source material is a separate provenance question §7.7 says needs **its own
@@ -6631,6 +6735,22 @@ what makes the rate real.)*
 itself.** Same consent, same unticked default, same own row — but a reason to tick that a favour
 does not supply. This is the model salary surveys and benchmarking consortia run, and it works
 because the thing withheld is *collective*, not *personal*.
+
+**✅ THE COMPARISON IS OFFERED ON A BEST-ENDEAVOURS BASIS (Sean's phrase, 7 Oct).** *The benchmark
+cannot be guaranteed: the category pool may be too thin to render a comparison, and rival pages may
+not be readable (§4.6.0a). **So the promise is the attempt, not the outcome.*** **Three consequences,
+and they are binding on every place the benchmark is described:**
+1. **"Best endeavours" is the honest qualifier, and it is required wherever the benchmark is
+   offered** — the consent label, the after-confirmation line, and the report itself. *It is not
+   policy-only copy.*
+2. **⚠ It makes a total-count claim impossible in the same sentence.** *A count ("we identified X
+   competitors") reads as **verified**; best-endeavours is **explicitly not verified**.* **So no
+   number may be stated unless it is a measured count** (§3.7.20).
+3. **⚠⚠ The withheld benefit must remain the DEPTH of analysis, never the accuracy of what is
+   shown.** *Sean's X/Y reveal withholds "the remaining competitors" and points at the paid
+   engagement — legitimate, and exactly Rule 3 above, because that is the paid engagement's product
+   (§3.3).* **But a free report deliberately made thinner is coerced consent wearing a product name.**
+   ***Withhold the ANALYSIS. Never the ACCURACY.***
 
 **⚠ The tension this creates, stated plainly, because it could make the design unlawful if blurred.**
 The earlier draft said *"refusal costs nothing."* Under reciprocity that is **no longer literally
