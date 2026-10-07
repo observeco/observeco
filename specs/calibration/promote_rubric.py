@@ -10,6 +10,7 @@ would load (rubric.json) sat at 0.9.0 with no position_strength, while calibrati
 This script is the gate. It refuses to promote unless every condition holds, and it fails
 loudly rather than leaving a half-promoted file.
 """
+import importlib
 import json
 import shutil
 import sys
@@ -84,6 +85,33 @@ def main(src_name, allow_rollback=False):
     if live_gates:
         problems.append("score gates present %s -- calibration removed these (spec 5.4)"
                         % live_gates)
+
+    # 7. ⚠ THE REPORT MUST STILL DESCRIBE THIS RUBRIC. generate_report.py is COMPUTED, not
+    # model-written (spec 5.5), so when a rubric moves the reader-facing prose does NOT follow it.
+    # That is not theoretical: the 1.22.0 re-anchor of competitive_room left the report telling the
+    # reader it measured the operator's margin -- the framing the rewrite existed to remove -- and
+    # three more dimensions had drifted the same way, found only because someone read the prose.
+    # A drift that can only be caught by reading is a drift that will be missed, so it is a
+    # promotion condition: promote the rubric and the report must still agree.
+    try:
+        import check_report_drift as _drift
+        importlib.reload(_drift)
+        import io as _io
+        from contextlib import redirect_stdout as _ro
+        _buf = _io.StringIO()
+        with _ro(_buf):
+            _rc = _drift.main()
+        if _rc != 0:
+            problems.append("report drift: the reader-facing definitions no longer describe this "
+                            "rubric. Run `python3 check_report_drift.py` for the list." +
+                            "".join("\n      " + ln.strip()
+                                    for ln in _buf.getvalue().splitlines()
+                                    if ln.strip().startswith("-")))
+    except Exception as _e:                                        # noqa: BLE001
+        # ⚠ LOUD, not silent. A guard that cannot run is not a guard that passed -- and this is
+        # exactly the swallow that hid the competitor_scan TypeError earlier in this work.
+        problems.append("report drift check could not run (%s: %s) -- fix it rather than "
+                        "promoting past it" % (type(_e).__name__, _e))
 
     if problems:
         print("REFUSING TO PROMOTE %s:" % src_name, file=sys.stderr)

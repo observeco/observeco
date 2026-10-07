@@ -1610,6 +1610,60 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.12 THE DRIFT GUARD IS BUILT AND WIRED INTO THE PROMUTION GATE — A RUBRIC CAN NO LONGER BE PROMOTED
+WHILE THE REPORT DESCRIBES A DIFFERENT ONE (7 Oct).**
+
+**⚠ WHY IT IS A GUARD AND NOT A NOTE.** *§3.7.11 found four dimensions whose reader-facing prose had drifted
+from the rubric that scores them — **and found them only because someone happened to read the prose.***
+***A drift that can only be caught by reading is a drift that will be missed.*** *The cause is structural:
+`generate_report.py` is **computed, not model-written** (spec 5.5, no second model call), **so when the rubric
+moves, the prose does not follow it.** *That recurs on every future rubric revision, so it is now a condition
+rather than a caution.*
+
+**✅ BUILT: `check_report_drift.py`. MECHANICAL, NOT CLEVER.** *For each dimension it requires the reader-facing
+definition to **actually share vocabulary with the rubric that scores it** — a definition written against an
+older rubric shares none. **It reads the definitions OUT of `generate_report.py` rather than duplicating them**,
+because a duplicate would itself drift and the guard would pass while the report said something else. It also
+carries **explicit exclusion checks** for the framings the rubric names as forbidden, since those are the
+failures that matter most.*
+
+**✅ AND IT WAS PROVEN IN BOTH DIRECTIONS, WHICH IS THE ONLY PROOF THAT COUNTS.** *A guard that only ever says
+PASS is worthless, so it was shown to **fail on the real defect it exists to catch**:*
+
+| case | expected | measured |
+|---|---|---|
+| current code | pass | **exit 0** ✅ |
+| the OLD `competitive_room` wording | **refuse** | **exit 1, naming the framing** ✅ |
+| the OLD `defensibility` wording | **refuse** | **exit 1** ✅ |
+| the CURRENT (negation-aware) `defensibility` wording | pass | **exit 0** ✅ |
+
+**⚠⚠ AND RUNNING IT FOUND A BUG IN THE GUARD ITSELF — A GUARD THAT FIRES ON CORRECT CODE GETS SWITCHED OFF.**
+*The first version flagged the **fixed** `defensibility` definition, because that text says "not by the
+difference you claim" — **a disclaimer that NAMES the forbidden framing in order to exclude it.** So the check
+was made **negation-aware**: a match sitting inside a negative clause is discarded. **Without this, the guard
+would have blocked every future promotion while pointing at prose that is correct** — and the reasonable
+response to that is to delete the guard, which is strictly worse than never having written it.*
+
+**✅ WIRED INTO `promote_rubric.py` AS CHECK 7 — SO IT CANNOT BE FORGOTTEN.** *Promotion now **refuses** when the
+report no longer describes the rubric, and names the offending dimension. **Verified live: the gate runs, does
+not block the current 1.22.0 (exit 0), and refuses when `DIM_MEANING` is sabotaged in-process** — tested without
+writing to the live rubric. **The check also fails LOUD if it cannot run at all**, rather than passing by
+default: a guard that silently cannot execute is the same swallow that hid the earlier `competitor_scan`
+`TypeError`.*
+
+**⚠⚠ AND THE TALLY THAT MATTERS, STATED PLAINLY.** *This session produced **six probe defects of my own** (the
+`<textarea>` selector, the mangled token, the `localhost` hardcode, the `0/100` regex, the wrapped-phrase
+whitespace, and now the non-negation-aware guard) **and not one product defect was found by a probe reading its
+own expectation.** *Every real defect — the NULL address on the gate path, the four drifted definitions, the
+240-second confirm — was found by **comparing against the artefact**: the database row, the rendered report, the
+live browser. **That is the working rule, and it is now written down because it keeps being right.***
+
+**⚠ REPRODUCE:** *`check_report_drift.py` (exit 0/1); `test_drift_guard.py` (the four two-sided cases);
+`test_gate_check7.py` (proves promotion is refused on drift, live rubric untouched).*
+
+---
+
 **✅ 3.7.11 THE DRIFT WAS THREE MORE SITES, NOT ONE — FOUND BY CHECKING THE CLASS — AND ALL SIX NOW RENDER
 CORRECTLY (7 Oct).**
 
