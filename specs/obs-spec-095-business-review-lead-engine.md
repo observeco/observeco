@@ -1827,6 +1827,78 @@ off-by-default research path.*
 
 ---
 
+---
+
+**✅ 3.7.21 X IS SOLVED — THE COMPETITOR SET COMES FROM THE PROVEN `sg-competitor-scan` METHOD, WHICH IS HOW
+CaiCa AND SALADSHOP WERE BUILT (7 Oct).**
+
+**SEAN'S DIRECTIVE, VERBATIM.** ***"Review caica and sgsaladshop folders. How we found competitors for these
+projects is how we would find it for this tool as well. Please document the process in the spec."***
+
+**⚠⚠ FIRST, A CORRECTION TO §3.7.20 — AND IT MATTERS MORE THAN THE SECTION IT CORRECTS.** *§3.7.20 asked "where
+does X come from?" and listed three options as though the capability did not exist.* **It does exist, it is
+already built, already documented as a skill, and already proven twice in production.** *What §3.7.20 found
+broken — `competitor_scan.py`'s `extract_occupants()` "mine brand names out of listicles" heuristic — **is a
+dead end that the proven method does not use at all.*** *So the answer was never "build occupant mining"; it
+was **"stop mining names out of articles and enumerate them from the source that actually indexes businesses."***
+
+**THE PROVEN METHOD: `sg-competitor-scan` (skill, v1.0.0, author Gladwell, at
+`~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/`).** *Five passes, each catching what the
+previous one misses:*
+
+| pass | what it does | why it exists (the measured gap it closes) |
+|---|---|---|
+| **A — the Google Maps grid** | *CBD areas × search terms* (20 areas × 9 terms = **180 cells**), scrape every Maps result: name, category, address, rating, review count. Plus **explicit hawker-centre checks** and delivery/meal-prep brands | *The v1 SaladShop analysis used a single Maps pass and **missed Six Hands, Supergreen, Super Simple, In Grams, Meraki, The Harvest, Salad Story, Stuff'd** and multiple hawker stalls* |
+| **B — the review-corpus sweep** | *`ddgs` queries across the major players + generic "best X Singapore review reddit" terms; extract review blogs by `curl`; **mine them for named competitors you have not seen*** | *Maps only indexes **physical, listing-visible** shops. Small, delivery-only, and shop-within-a-shop concepts do not appear.* **Caught a further 7** (OMNIVORE, Superfood Kitchen, Toss & Turn, Nico Salad, Habit, Crunch, Shake Salad) **that the grid never indexed** |
+| **C — gosom verified counts** | *`gosom/google-maps-scraper` (Go, 5,609★) — real branch counts, review totals, ratings, per-rating distributions, place_id* | *Maps-grid counts are estimates.* **It corrected Stuff'd from ~10 to 36 branches and Grains & Co. from ~8 to 10** |
+| **D — Camoufox full review text** | *Anti-detect Firefox carrying a **signed-in Google session** defeats both the bot wall and the "limited view" gate* | *Un-signed-in Maps shows ~5–8 results and **zero** reviews.* **Unlocked 12,523 full review texts across 142 places** (from 1,102) |
+| **E — the saturation test** | *A deterministic theme classifier, run before and after adding marginal data; measure whether ranks move* | *Decides when to STOP paying for volume.* **Result: 0/12 theme ranks moved (max +0.35 pts, 0 new themes) → the 12,523-text corpus was decision-complete; the unscraped ~68% was pure volume** |
+
+**✅ MEASURED X — THIS METHOD PRODUCES A REAL COUNT, WHICH IS WHAT §3.7.20 SAID WAS MISSING.**
+*From `SaladShop/output/competitors.json`, the Pass-A grid alone:*
+
+| | value |
+|---|---|
+| **Unique competitors found** | **26** |
+| **Largest by review volume** | *Stuff'd 1,298 · Poke Theory 874 · Grains & Co. 805 · SaladStop! 401 · The Salad Shop 387 · Supergreen 339* |
+| **Coverage after Pass E** | ***decision-complete*** — *a saturation test proved more scraping changes no conclusion* |
+
+***26 is a defensible X.*** *The corpus also supplies the **Y** side: which of those 26 the free report shows,
+and which the paid engagement unlocks.*
+
+**⚠⚠ AND PASS D IS THE SAME FIX §3.7.20 IDENTIFIED AS NEEDED, ALREADY BUILT.** *§3.7.20 found the live report
+conceding **"we found their site, but it would not let us read it"** — neither named rival readable — and
+proposed "apply the browser rung to the rival pages."* **Pass D is exactly that**: *Camoufox with a signed-in
+session, which defeated the same class of wall (Six Hands went from "limited view, 0 reviews" → 300 full
+cards).* **The capability is not missing; it is unconnected.**
+
+**⚠ THE TWO METHODS ARE NOT COMPETING — THE EXISTING SCANNER IS PASS A, DONE WORSE.** *`competitor_scan.py`
+already does the right thing at the fetch layer (a real bakey run discovered 12 candidates, read **11 of
+12**, and graded every capture through a validity gate).* **What it lacks is the enumeration breadth (one
+category query, not a geography × term grid) and the passes that catch what Maps misses.** *So this is a
+**rewire, not a rewrite** — and the junk `extract_occupants()` heuristic should be **retired rather than
+fixed**, because the proven method never needed a name-miner.*
+
+**✅ THE COST MODEL IS ZERO-MARGINAL, WHICH IS WHAT MAKES IT VIABLE BEHIND A FREE REPORT.** *The documented
+free stack: `ddgs` (primary search, no key) → **Brave Search API** (audit-only, ~1,000 req/mo free) → `curl`
+(static extraction) → **Camoufox** (JS pages + Google reviews). **Firecrawl is the relief valve only** (rate-
+limited ~12 req/min, billable).* *Passes C/D cost compute, not money.*
+
+**⚠⚠ WHAT THIS DOES **NOT** SETTLE — STATED SO IT IS NOT DISCOVERED LATE.** *(1) **The free path still does not
+run research at all** (`server.py:261`, `do_scan` off by default) — so **X exists as a method but not yet in
+the product.** (2) **Where X sits on the free/paid line is a product decision, not a technical one**: the
+proven method's full grid is a **paid-engagement-grade** sweep (180 Maps cells + gosom + a Camoufox
+full-text scrape). *Running all of it for every free submission is not the same product.* ***The lead-magnet
+version almost certainly needs a REDUCED grid (fewer areas/terms) that still yields an honest X — and the
+difference between the reduced and full sweep is precisely the paid/consulting boundary Sean's X/Y reveal
+describes.*** (3) **The k-anonymity floor** (§7.7 E2) is still unset.*
+
+**⚠ REPRODUCE:** *`ls ~/projects/CaiCa/competitive-analysis/ ~/SaladShop/` (the corpus and method notes);
+`python3 -c "import json;d=json.load(open('/Users/seanfzc/SaladShop/output/competitors.json'));print(d)"
+(X=26); `cat ~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/SKILL.md` (the five passes).*
+
+---
+
 **⚠⚠ 3.7.17 CORRECTED — SEAN WILL KEEP THE DATA. AND THE ERROR WAS MINE, NOT THE CODE'S (7 Oct).**
 
 ***Sean: "Promise 2 — I want to be able to keep the data."***
@@ -3103,6 +3175,71 @@ reason.** *Sean's condition, verbatim: "It burns a lot of tokens so let's make s
 analysis we assess the input quality first."* **A scan is ~N searches + ~N fetches per submission.** *At
 the measured 0.48 s/case for scoring, the scan is orders of magnitude more expensive than the score itself
 — so it must fire ONLY after the input-quality gate passes, and only for submissions worth the spend.*
+
+### 4.6.2 ✅ THE COMPETITOR-SET METHOD — the proven five-pass sweep, and what the free report uses ⚠
+
+**SOURCE.** *Sean, 7 Oct: **"Review caica and sgsaladshop folders. How we found competitors for these projects
+is how we would find it for this tool as well."*** *Both folders are real worked examples:*
+`~/projects/CaiCa/competitive-analysis/` **and** `~/SaladShop/` *(with `output/competitors.json` plus the
+Camoufox/gosom scrapes).* **This section is that method, adopted as the spec's method for deriving the
+competitive set — and therefore for the X in §7.7's X/Y reveal.**
+
+**✅ THE METHOD IS ALREADY A DOCUMENTED SKILL, NOT FOLKLORE.** *`sg-competitor-scan` v1.0.0, author Gladwell,
+at `~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/`.* **Five passes, each closing a gap the
+previous one measurably missed:**
+
+| pass | what it does | the measured gap it closes |
+|---|---|---|
+| **A — Google Maps grid** | *Geography × term grid* (the SaladShop grid was **20 CBD areas × 9 terms = 180 cells**), scraping every Maps result: name, category, address, rating, review count. **Plus explicit hawker-centre checks**, and delivery/meal-prep brands as a separate adjacent set | *The v1 analysis used a single Maps pass and **missed 8 named players plus multiple hawker stalls*** |
+| **B — review-corpus sweep** | *`ddgs` across the known players + generic "best X Singapore review reddit" terms; extract review blogs via `curl`; **mine the prose for players you have not seen*** | *Maps indexes only **physical, listing-visible** shops.* **Small, delivery-only and shop-within-shop concepts are invisible to it** — *this pass caught **7 more** the grid never indexed* |
+| **C — verified counts** | *`gosom/google-maps-scraper` (Go) → real branch counts, review totals, ratings, per-rating distributions* | *Grid counts are estimates.* **It corrected the leader from ~10 branches to 36**, and another from ~8 to 10 |
+| **D — full review text** | *Anti-detect browser carrying a **signed-in session** clears the bot wall and the "limited view" gate* | *Un-signed-in Maps shows ~5–8 results and **zero** reviews.* **Took the corpus from ~1,100 to 12,523 texts** |
+| **E — saturation test** | *Deterministic classifier run before/after adding marginal data; measure whether conclusions move* | *Decides when to STOP buying volume.* **0/12 ranks moved → the corpus was decision-complete** |
+
+**✅ THE METHOD'S OUTPUT SHAPE — AND IT IS WHAT MAKES X POSSIBLE.** *`output/competitors.json`: a deduped list
+with, per brand, its locations, total reviews, average rating and the areas it was found in — so the set is
+**enumerable**, and each entry traces to a Maps listing or a citable review source.* **The SaladShop run
+yielded 26 unique competitors from Pass A alone**, with per-brand review volume (leader ~1,300; long tail
+under 50). *The corpus is auditable in both directions: a known brand missing from the output means the scan
+was incomplete.*
+
+**⚠⚠ THE FREE REPORT MUST NOT RUN THE FULL SWEEP — AND THE DIFFERENCE **IS** THE PAID BOUNDARY.**
+*The full five-pass sweep is a **consulting-grade** engagement: 180 Maps cells, a gosom scrape, a Camoufox
+full-text pull, a saturation experiment.* **That is the product §3.3 sells, not a free report.** *So the
+free/paid line is not a separate rule bolted on — it falls out of the method:*
+
+| | free report | paid engagement |
+|---|---|---|
+| **Enumeration** | *a **reduced** geography × term grid, enough to produce an honest count* | *the full grid + adjacent categories + hawker checks* |
+| **Verification** | *Pass C on the named rivals, to make Y trustworthy* | *Pass C on the whole set* |
+| **Depth** | *what each rival **claims**, read from its own page (Pass D's readability fix)* | *the full review-text corpus, theme saturation, white-space analysis* |
+| **The number** | *"we identified **X**; here are **Y**"* | *the complete set, analysed* |
+
+***⚠ THE RULE FROM §7.7 STILL GOVERNS: withhold the ANALYSIS, never the ACCURACY of what is shown.*** *The
+free report's Y must be **correct as far as it goes** — a reduced grid may undercount X, but it must never
+mispresent what it did show.*
+
+**⚠⚠ WHAT THE EXISTING SCANNER IS, IN THESE TERMS — and why this is a REWIRE, not a rewrite.**
+*`competitor_scan.py` already does the right thing at the **fetch** layer: it discovers candidates by search,
+fetches them live, and grades every capture through the §4.1 validity gate.* **A live run read 11 of 12
+captures and reported the one failure honestly.** *What it lacks is (a) **enumeration breadth** — it issues
+one category query where the method uses a geography × term grid, and (b) **Passes B–E**.*
+**⚠ AND §4.6.0b's `extract_occupants()` name-miner should be RETIRED, NOT FIXED** — *the proven method never
+needs to mine brand names out of articles, because **Pass A enumerates them from the source that indexes
+businesses directly**.* *Four fixes to the miner already failed; the fifth is not the answer, and the method
+does not ask the question.*
+
+**⚠ WHERE THIS IS NOT YET WIRED — stated so it is not discovered late.** *(1) **The free path runs no research
+at all** (`server.py:261`, `do_scan` off by default) — **the method is documented and proven but not connected
+to a submission.** (2) **The reduced free grid is not defined** — how many areas × terms is a product/threshold
+decision (**Sean's**), not a technical one. (3) **The free-path spend ceiling** (blocker 3) interacts with
+this: a grid sweep multiplies search and fetch calls per submission, so the cost model must be settled before
+the grid is switched on.*
+
+**⚠ REPRODUCE:** *`cat ~/.hermes/profiles/gladwell/skills/research/sg-competitor-scan/SKILL.md` (the five
+passes); `python3 -c "import json;d=json.load(open('/Users/seanfzc/SaladShop/output/competitors.json'));print(d['competitor_count'], d['competitors'][0]['name'])"` (X=26); `ls ~/SaladShop/output/` (the gosom + Camoufox corpora).*
+
+---
 
 **⚠ ORDERING IS LOAD-BEARING.** *The naive shape — scan → score → discover the input was unusable →
 refuse — burns the full research cost on a submission that will be refused anyway.* **The scanner is
