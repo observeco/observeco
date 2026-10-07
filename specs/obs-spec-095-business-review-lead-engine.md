@@ -1613,6 +1613,59 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**⚠⚠ 3.7.15 EVERY PRIVACY PROMISE WAS CHECKED AGAINST THE CODE — AND TWO OF THE STRONGEST ARE FALSE TODAY
+(7 Oct).**
+
+**⚠ WHY THIS WAS DONE.** *The privacy draft (§3.7.7) makes promises. **A policy that promises something the
+code does not do is worse than no policy** — it is a written, dated statement of a practice that does not
+exist. So each promise was traced to the code that would have to honour it, rather than reviewed for tone.*
+
+**⚠⚠ FALSE CLAIM 1 — "The model provider (TypeSafe) receives your form answers … NEVER your email address, and
+never your business name."**
+*Verified by BUILDING THE ACTUAL MODEL STATE and reading it, not by reading the filter:*
+
+```
+$ python3 -c "import run_jev; print(run_jev.build_state(payload))"
+  business_name: BreadTalk        <-- sent to the model
+```
+
+**`build_state` skips `first_name`, `last_name`, `email` and `phone` — but NOT `business_name`.** *So the
+address is genuinely protected (the filter works, spec 5.7), **but the business name is not: it is the first
+line of the submitted block on every single call.*** **The privacy draft would promise something measurably
+untrue.**
+
+**⚠⚠ FALSE CLAIM 2 — "Your submission and report are deleted 30 days after we send you the report."**
+*Two independent defects, either of which alone makes it false:*
+1. **`purge_expired()` deletes only `status='pending'` rows — never a confirmed submission.** *Its own docstring
+   says "Deletes rows that were never confirmed and are older than the window."* **So a confirmed submission —
+   the address and the report — is never expired by it.**
+2. **`purge_expired()` IS NEVER CALLED except from a test.** *No scheduler, no startup hook, no cron. **A
+   retention rule that never runs is not a retention rule.***
+3. **And nothing anywhere deletes from `submissions` at all** — the table holding the address, the composite,
+   the band, and the full report text.
+
+***So the promise is false three times over, and it is the promise the confirmation email also makes ("we'll
+delete your details within 30 days").***
+
+**⚠ WHAT THIS MEANS, PLAINLY.** *Neither is a crash; both are **written commitments the product cannot keep**
+— and the second is the kind a regulator asks about, because the deletion was stated as fact to the person who
+submitted. **The draft's wording is therefore not the problem; the code is.*** *Three things are needed before
+that sentence can ship: a purge that covers CONFIRMED rows, a purge that actually RUNS on a schedule, and a
+decision on whether the report text itself is deleted or only the contact details.*
+
+**⚠⚠ AND THE FIRST IS A DECISION FOR SEAN, NOT A BUG TO QUIETLY FIX.** *Excluding `business_name` from the model
+state would make the claim true — **but the model may genuinely need it.** *The report names competitors and
+speaks about the business; whether the scoring degrades without the brand name is **an empirical question that
+has not been measured.*** *Changing it silently could move scores, and this work has already established that
+score movement is exactly what must be measured rather than assumed. **So: measure the effect first, then
+decide, and only then make the claim.***
+
+**⚠ REPRODUCE:** *`build_state` on any corpus case (business_name present); `grep -rn purge_expired` (called
+only in `test_confirmation_gate.py`); `grep -rn 'DELETE FROM submissions'` (no hits).*
+
+---
+
 **✅ 3.7.14 DECIDED — `competitive_room` KEEPS THE STRUCTURAL WORDING; THE WORD "MARGIN" IS DROPPED (7 Oct).**
 
 ***Sean: "Keep it structural as it is now — drop the word 'margin'."***
