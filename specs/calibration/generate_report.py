@@ -93,7 +93,12 @@ DIM_MEANING = {
                          "biggest driver.",
     "mental_advantage": "Whether people think of YOU unprompted when they need what "
                         "you sell.",
-    "defensibility": "How hard it would be for a rival to copy what makes you different.",
+    # ⚠ SAME CLASS AS competitive_room, FOUND BY CHECKING THE OTHER FIVE RATHER THAN ONE. The rubric
+    # says the mechanism "must be NAMED and EVIDENCED, and it is NEVER the business's stated
+    # differentiator, which is usually the copyable thing." The old wording told the reader we
+    # measure exactly the thing the instrument explicitly excludes -- a direct contradiction.
+    "defensibility": "How hard it would be for a rival to copy your position — judged by what they "
+                      "would have to assemble, not by the difference you claim.",
     # ⚠ FIDELITY, NOT COPY. The 1.22.0 rewrite re-anchored this dimension to the MARKET'S
     # STRUCTURE and says so explicitly: "Judge the STRUCTURE OF THE MARKET, not the size of
     # the business being scored", and "Room is removed by DOMINANCE, not by the NUMBER of
@@ -103,9 +108,18 @@ DIM_MEANING = {
     "competitive_room": "How much space the market leaves you to earn. Room is removed by one "
                         "or two players having power over price, shelf or access — not by how "
                         "many rivals there are.",
-    "market_headroom": "Whether demand in your category is growing, already met, or "
-                       "shrinking.",
-    "demand_reach": "Whether the customers you describe can actually be found, and do pay.",
+    # ⚠ WRONG AXIS, SAME CLASS. The rubric measures UNMET vs SERVED demand and says "Do NOT judge
+    # how crowded the category is". "Growing/ shrinking" reads the demand-side trend, which is a
+    # different thing: a booming category where supply keeps up scores LOW. The old wording pointed
+    # the reader at the wrong quantity.
+    "market_headroom": "Whether buyers in your category can get what they need. Unmet demand "
+                       "scores high; a category simply being popular does not.",
+    # ⚠ INCOMPLETE, SAME CLASS. The rubric's litmus test (Sean, 2026-09-29) is "DEMONSTRABLY ABLE
+    # TO GENERATE REVENUE SUSTAINABLY" -- sustained revenue is the PROOF the buyer group exists. The
+    # old wording asked only whether they "can be found and do pay", which drops the evidence bar the
+    # dimension actually applies.
+    "demand_reach": "Whether the customers you describe can actually be found and pay — shown by "
+                    "revenue you demonstrably sustain, not by the profile you describe.",
 }
 
 # What each band means for the business — the viability ladder.

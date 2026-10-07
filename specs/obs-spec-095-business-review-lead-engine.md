@@ -1609,6 +1609,46 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.11 THE DRIFT WAS THREE MORE SITES, NOT ONE — FOUND BY CHECKING THE CLASS — AND ALL SIX NOW RENDER
+CORRECTLY (7 Oct).**
+
+**⚠ WHY THIS EXISTS: §3.7.10 FIXED ONE SITE, AND ONE SITE IS NOT A CLASS.** *The `competitive_room` drift was
+found by reading a single definition. **The obvious next question was whether the other five had drifted the
+same way** — and **three of them had**, each a different kind of error:*
+
+| dimension | what the report said | what the rubric actually scores |
+|---|---|---|
+| **`defensibility`** | *"How hard it would be for a rival to copy **what makes you different**."* | **⚠ A DIRECT CONTRADICTION.** *The rubric says the mechanism "must be NAMED and EVIDENCED, and it is **NEVER the business's stated differentiator**, which is usually the copyable thing."* **The report told the reader we measure exactly what the instrument excludes.** |
+| **`market_headroom`** | *"Whether demand in your category is **growing**, already met, or **shrinking**."* | **⚠ THE WRONG AXIS.** *The rubric measures **unmet vs served** demand and says "Do NOT judge how crowded the category is".* **A booming category whose supply keeps up scores LOW** — so the old wording pointed the reader at a different quantity entirely. |
+| **`demand_reach`** | *"Whether the customers you describe can actually be found, and do pay."* | **⚠ INCOMPLETE.** *It dropped the **litmus test** the dimension now turns on — "DEMONSTRABLY ABLE TO GENERATE REVENUE SUSTAINABLY" — which is the evidence bar, not a description of the customer.* |
+
+**⚠⚠ AND THE SYSTEMIC REASON, WHICH IS THE REAL FINDING.** *`generate_report.py` is **computed, not
+model-written** (spec 5.5 — no second model call). **So when the rubric moves, the prose does not follow it.**
+The 1.22.0 rewrite re-anchored `competitive_room`; the definitions were written against an earlier rubric and
+stayed put. **This is a standing hazard, not a one-off: every future rubric revision can silently desynchronise
+the report from the instrument that scores it.** *A drift check belongs with the rubric, not with whoever
+happens to read the prose — noted as a build item.*
+
+**✅ VERIFIED BY RENDERING REAL OUTPUT, NOT BY READING THE DIFF.** *This is the part §3.7.10 skipped: it
+committed four wording changes and never rendered them. **A string change that is syntactically fine can still
+crash the report or print nothing.** So the fix was exercised through `generate_report.render()` against a real
+run artifact (`runs/jev-BK01-breadtalk.json`, no model call) and **the output was read as a reader**: all four
+sections present, all six definitions rendering the new wording, and **7 of 7 fidelity assertions passing** on
+the rendered text.*
+
+**⚠ AND ANOTHER ASSERTION OF MINE WAS WRONG — THE FIFTH THIS SESSION.** *The check for "unmet demand" reported
+**FAIL** while the report plainly said **"Unmet demand scores high"**. The renderer **wraps lines**, so the
+phrase arrived as `Unmet\n      demand`; **my regex demanded a literal space.** The fix was to normalise
+whitespace before asserting — **again the assertion was wrong, not the code.*** *Recorded because the pattern
+is now unmistakable: this session produced five probe defects and zero product defects found by a probe
+reading its own expectation.*
+
+**⚠ REPRODUCE:** *`render_and_read.py` (renders BK01 and asserts the seven fidelity checks); the definitions at
+`generate_report.py` `DIM_MEANING`; the rubric's own `instructions` string in `rubric.json`.*
+
+---
+
 **✅ 3.7.10 THE "FIVE EXPLANATIONS" (ITEM 3) WERE ALREADY MOSTLY BUILT — AND CHECKING THEM FOUND A REAL
 FIDELITY DEFECT: THE REPORT DESCRIBED `competitive_room` THE WAY THE RUBRIC HAD JUST REMOVED (7 Oct).**
 
