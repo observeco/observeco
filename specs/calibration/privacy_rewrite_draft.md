@@ -154,8 +154,16 @@ comparison against the rivals in your category, and the model resolves and reaso
 name. So the earlier draft of this line — *"never your email address, and never your business name"* — was
 **false**, and promising it would have been a written statement of something the product does not do.
 
-*If you would rather not send the business name, say so — it is a real trade (possibly weaker competitor
-resolution) and it is your call, not mine.*
+**✅ MEASURED 7 Oct — the trade is no longer a guess (spec §3.7.19).** *Both arms of the 120-case corpus were
+run on rubric 1.22.0, differing only in whether `business_name` was sent.* **Without the name: band agreement
+with your 120 grades fell from 100% within-1 to 96%, and the cases that changed went DOWN in 53 of 58 — a mean
+loss of 5.32 points, above the ±4-point noise floor. The damage concentrates on famous brands (MA 4–5: −8.7 to
+−8.9; MA 1–2: −2.0), because the name is how the model recognises who the rivals are.***
+
+**So the name is not a label, it is brand recognition — and dropping it would make the instrument measurably
+worse. On D3 though (weak-positioning SMEs, the actual market) both arms are identical, so the name is
+insurance against brands we are not targeting.** *Decision: the name stays, and the promise keeps the honest
+form above.* **Reproduce:** `SANDBOX_STRIP_BUSINESS_NAME=1` on `run_corpus_parallel.py`.
 >
 > **We don't sell your data, and we don't share it with anyone else.** These providers are contracted to
 > us and can only use your data to provide their service to us.

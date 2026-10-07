@@ -1667,6 +1667,68 @@ reports were kept**, which is the decision working as intended rather than as an
 
 ---
 
+**✅ 3.7.19 THE BUSINESS NAME IS LOAD-BEARING — MEASURED, NOT ARGUED. PROMISE 1 KEEPS ITS HONEST FORM (7 Oct).**
+
+**THE QUESTION.** *§3.7.16 left Promise 1 as the accurate-but-weaker statement: **"we send your business name."**
+The better outcome was **making it true that we don't** — and that is an **empirical question, not a preference.**
+So it was run as an experiment.*
+
+**✅ METHOD — ONE VARIABLE, TWO FULL ARMS, THE DECISION RULE FIXED BEFORE LOOKING.**
+*Both arms: the full 120-case corpus, rubric **1.22.0**, same machine, same day, 8 workers.*
+
+| arm | condition | cases |
+|---|---|---|
+| **CONTROL** | `business_name` sent — **exactly as live** | 120 files, 0 failures |
+| **STRIPPED** | `business_name` removed (`SANDBOX_STRIP_BUSINESS_NAME=1`) | 120 files, 0 failures |
+
+**⚠ THE SWITCH IS NOT A PRIVACY FEATURE, AND IT IS DOCUMENTED THAT WAY IN THE CODE.** *It exists to answer this
+one question. **The stripped arm still carries `competitors_named`** — verified before launching, because
+stripping the rivals too would have made the run measure nothing.*
+
+**✅ THE RESULT — AGREEMENT WITH SEAN'S 120 GRADES** *(99 cases paired and scored in both arms; the
+`home-not-permitted` cases are excluded per D4)*:
+
+| arm | exact band | **within-1** | **two+ off** | bar (D1) |
+|---|---|---|---|---|
+| **CONTROL** (name sent) | **69.7%** | **100.0%** | **0.0%** | ✅ PASS |
+| **STRIPPED** (no name) | **54.5%** | **96.0%** | **4.0%** | ✅ PASS — but materially worse |
+
+**⚠⚠ THE EFFECT IS A SYSTEMATIC LOSS, NOT SCATTER — WHICH IS WHAT MAKES IT DECISIVE.** *Across the 58 cases
+that changed: **53 went DOWN, 5 went UP, 41 were identical.** Mean change **−5.32 composite points**, which is
+**above the documented ±4-point noise floor** — so this is signal, not run-to-run wobble.*
+
+**✅ AND THE MECHANISM IS EXACTLY WHAT IT LOOKED LIKE: THE NAME IS HOW THE MODEL RECOGNISES THE BRAND.**
+*Damage concentrates on famous brands — and **mental advantage is the fame dimension**, so the instrument is
+telling us plainly what it lost:*
+
+| his fame band (MA) | n | mean change | band flips |
+|---|---|---|---|
+| **MA 5 (household names)** | 17 | **−8.94** | 8/17 |
+| **MA 4** | 31 | **−8.71** | 11/31 |
+| MA 3 | 21 | −2.14 | 1/21 |
+| MA 1–2 (unknown) | 30 | −2.00 | 4/30 |
+
+*The four remaining two-or-more-off cases in the stripped arm are **all famous brands Sean grades Strong** —
+CHAGEE, Guardian, KFC, Sephora. **Evidence coverage also fell (0.671 → 0.649).***
+
+**⚠⚠ DECISION: THE NAME STAYS. PROMISE 1 KEEPS ITS HONEST FORM.** *Sean's actual market is D3 —
+**weak-positioning SMEs** — and on that segment **both arms score identically (95.7% exact, 100% within-1, 0
+two-or-more off).** *So the name is **insurance you pay for brands you are not targeting.*** *Dropping it would
+have weakened the whole instrument to buy a privacy claim, and **the privacy claim is not worth a measurably
+worse tool** — especially when §7.5 already keeps the data deliberately, so the honest sentence costs nothing we
+do not already disclose.*
+
+**⚠ HONEST LIMITATIONS.** *(1) "Exact band" is a **stricter** bar than D1 and is reported because it shows the
+name's value; the bar itself is within-1. (2) Cases where `market_headroom` fell below the display floor are
+correctly reported as **unscored rather than fabricated**, and a few crossed that floor between arms — the noise
+floor showing itself. (3) This is **not** the D43 error: the comparison is **control-vs-stripped**, not
+tool-vs-Sean's-expectation, so no convergence to his old numbers is possible.*
+
+**⚠ REPRODUCE:** *`SANDBOX_STRIP_BUSINESS_NAME=1 python3 run_corpus_parallel.py rubric.json runs-nostrip 8`,
+then compare against `runs-1220-control` on the harness formula (`band_agreement_harness.py`).*
+
+---
+
 **⚠⚠ 3.7.17 CORRECTED — SEAN WILL KEEP THE DATA. AND THE ERROR WAS MINE, NOT THE CODE'S (7 Oct).**
 
 ***Sean: "Promise 2 — I want to be able to keep the data."***
