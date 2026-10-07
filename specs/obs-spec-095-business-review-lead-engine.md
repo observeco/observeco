@@ -1612,6 +1612,34 @@ separate consent surface and must not be bundled here).*
 
 
 
+
+**✅ 3.7.14 DECIDED — `competitive_room` KEEPS THE STRUCTURAL WORDING; THE WORD "MARGIN" IS DROPPED (7 Oct).**
+
+***Sean: "Keep it structural as it is now — drop the word 'margin'."***
+
+**THE SHIPPED TEXT.** *"How much space the market leaves you to earn. Room is removed by one or two players
+having power over price, shelf or access — not by how many rivals there are."*
+
+**⚠ WHY THE OLD WORDING WAS NOT MERELY IMPRECISE — IT DESCRIBED ONLY THE BOTTOM OF THE SCALE.** *The rubric's
+**top** anchor is "Atomised and dominated by nobody: many rivals coexist, no single player has power over price,
+shelf or access."* ***Under "how much margin is left for you after the big players set the price" there ARE no
+big players at the top*** *— so the definition never described the best case at all. A reader at L5 had no way
+to know what the definition was measuring, and **"margin" is a finance word for a dimension that measures
+whether the market lets you hold one, not what your margin is.** Naming the mechanism is what tells a reader
+which lever to move; naming the outcome does not.*
+
+**✅ AND IT IS THE RUBRIC'S OWN LANGUAGE.** *The rubric instruction reads "how much space does the market
+structure leave for this business to operate and earn" — the shipped definition is that sentence, aimed at the
+submitter. **Which is why the drift guard stays green: the report and the instrument cannot disagree when the
+report is quoting the instrument.***
+
+**✅ AND THE SETTLED DECISION IS NOW ENFORCED RATHER THAN REMEMBERED.** *`check_report_drift.py` carries
+`"margin is left for you"` as a forbidden framing for this dimension, so **any future revision that
+reintroduces it is refused at promotion** (§3.7.12 check 7). A decision recorded only in prose gets
+re-litigated; a decision wired to the gate does not.*
+
+---
+
 **✅ 3.7.13 THE DRIFT GUARD WAS TOO NARROW — IT READ ONE SURFACE OF FOUR — AND WIDENING IT FOUND A REAL BUG
 ON THE SURFACE THAT MATTERS MOST (7 Oct).**
 
