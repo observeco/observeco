@@ -3387,7 +3387,11 @@ richest potential input — the submitter's OWN site — is absent in 4 of 5 sub
 reading it works (6,059 chars on the case that exposed the gap).** *This is the cheapest capability recovery
 available: **a field that is already on the form, already readable, and almost always empty.***
 
-**⚠⚠ FINDING 5 — THE FREE TIER SHOULD BE A LITE VERSION OF THE WHOLE INSTRUMENT (Sean's framing, adopted).**
+**⚠⚠ FINDING 5 — THE FREE TIER SHOULD BE A LITE VERSION OF THE WHOLE INSTRUMENT (Sean's framing, adopted).
+⚠ SUPERSEDED IN PART BY §5.10 — Sean's sharper cut (open only the non-onerous dimensions) was **tested and the
+cost split does not survive it**: withholding the scan-needing dimensions renormalises half to two-thirds of the
+free band onto FAME and disagrees with the full reading in 1 case in 4. The cost boundary is kept, but drawn at
+**how much of the sweep is bought**, not at which dimensions. See §5.10.**
 ***A reduced grid or a dropped dimension is not a lite version — it is a different instrument.*** *The six
 dimensions are a set: PS is the comparison, MA is recall, DEF is copyability, CR is the price floor, MH is unmet
 demand, DR is reach.* **Dropping one, or measuring one against a thinner yardstick, changes what the band
@@ -3408,6 +3412,97 @@ errors in the current numbers.*
 **⚠ REPRODUCE:** *the six-dimension table and the compression regression are computed from
 `runs-1220-control` joined to `sean-regrade-raw.csv` on company name; `market_headroom_qualifier.disposition`
 gives the 114/120 inertness; `gates_firing` gives the 17 refusals.*
+
+
+---
+
+## 5.10 ⚠⚠ THE LITE TIER — WHAT THE FREE REPORT OPENS UP, AND THE COST CUT THAT CANNOT BE TAKEN (Sean's design, measured)
+
+**SEAN'S DESIGN, VERBATIM.** ***"Conceptually what needs to happen for the lite version is we only open up the
+results for the free report to dimensions that are not token/compute/workload onerous. The paid version does all
+dimensions."***
+
+**✅ THE INSIGHT IS RIGHT, AND IT IS BETTER THAN "LOWER RESOLUTION."** *The earlier framing (§3.7.22, finding 5)
+proposed a lite tier at **lower resolution** — same dimensions, less depth.* **Sean's cut is sharper and more
+defensible: the free tier opens only the dimensions that do not require the expensive pass, and the paid tier
+does all six.** *It draws the boundary at a **cost** the business actually incurs, rather than at a quality knob
+someone has to tune.*
+
+**✅ AND THE COST BOUNDARY IS REAL AND MEASURABLE — the dimensions do split.** *Reading each dimension's own
+instruction, the split is:*
+
+| dimension | weight | needs the competitor sweep? | why |
+|---|---|---|---|
+| **position_strength** | **25%** | ⚠ **YES — it IS the comparison** | *"SCORE ONLY AGAINST THE SUPPLIED COMPETITIVE SET… if the supplied set names no occupant, the strongest claim available is ADEQUATE (3)"* |
+| **mental_advantage** | 20% | ✅ **no** | *"It is NOT a competitive measure… never require the business to be uncontested"* — **ubiquity and longevity, and it survives closure** |
+| **defensibility** | 20% | ⚠ **yes** | *"never the business's stated differentiator"* — the mechanism is named from **what the rival would have to assemble** |
+| **competitive_room** | 15% | ⚠ **yes** | *"Room is removed by DOMINANCE… the market's structure, not the business being scored"* — **a market fact** |
+| **market_headroom** | 10% | ✅ no | *form + category alone* |
+| **demand_reach** | 10% | ✅ no | *"CORROBORATE AGAINST PHYSICAL EVIDENCE… a business CURRENTLY trading has demonstrably reached paying customers"* — **a trading floor** |
+
+**⚠⚠ BUT THE OBVIOUS APPLICATION OF THAT SPLIT BREAKS THE BAND, AND THE MEASUREMENT IS DECISIVE.**
+*Recomputing each case's band from a subset of dimensions, then comparing against the full six on the same 102
+cases with a composite:*
+
+| dimensions used | same band as the full read | 2+ bands off |
+|---|---|---|
+| **ALL SIX** *(the full instrument)* | — *(reference)* | 0.0% |
+| **cheap only: MA + DR + MH** *(the cost cut, as directed)* | **74%** | 0.0% |
+| **cheap only: MA + DR** | **54%** | **12.7%** |
+| **scan only: PS + CR + DEF** | **80%** | 0.0% |
+
+***So the free tier limited to the non-onerous dimensions would disagree with the full reading in 1 case in 4
+— and 12.7% of the time by two or more bands once market_headroom's inertness is removed from the set.***
+**A quarter of reports would carry a band the instrument itself does not support.** *That is not a lite
+version; it is a different product wearing the same face.*
+
+**⚠⚠ AND THE REASON IS STRUCTURAL, NOT NUMERICAL — WHICH IS WHY IT CANNOT BE TUNED AWAY.**
+*When the expensive dimensions are withheld, the weights **renormalise** onto what is left:*
+
+| subset | effective weighting |
+|---|---|
+| **the cost cut (MA+DR+MH)** | **mental_advantage 50%** · demand_reach 25% · market_headroom 25% |
+| the cost cut (MA+DR) | **mental_advantage 67%** · demand_reach 33% |
+| the paid core (PS+CR+DEF) | *position_strength 42%* · defensibility 33% · competitive_room 25% |
+
+***The free tier's band would become a fame score, half to two-thirds weighted on mental advantage.***
+**And fame is the one thing this product's objective explicitly is NOT** — §5.1's own instruction is
+*"Judge the position, never the fame, and never the size."* *Worst of all, the three cheap dimensions are the
+three weakest-measured: mental_advantage carries the **largest** compression gap of any dimension (**−0.46**),
+demand_reach the second (**−0.22**), and market_headroom is **inert in 114 of 120 cases**.*
+**So the cost cut selects precisely the dimensions that measure worst, weights them most heavily, and produces a
+band that tracks the market's most visible brands.** *An unknown SME and McDonald's would converge.*
+
+**⚠ THE SECOND, HARDER PROBLEM — AND IT IS A CONTRACT, NOT A PREFERENCE.** *The free report's opening line
+claims the judgement is of **"POSITIONING AND DIFFERENTIATION RELATIVE TO COMPETITION."*** *If the free tier
+omits position_strength and competitive_room, **it omits competition entirely** and scores fame and reach
+instead.* ***That is not a lite version of the positioning read. It is a different instrument claiming the same
+name*** *— and it is the exact failure §7.7 forbids in the other direction: a report that says more than it
+knows.*
+
+**✅ SO HOW DOES THE COST BOUNDARY SURVIVE? THE SET IS WHAT IS LITE, NOT THE DIMENSIONS.**
+*Sean's instinct — draw the line at cost — is right. The error is drawing it at **which dimensions** rather than
+at **how much of the expensive artifact is bought**.*
+- **The same six dimensions, always.** *The band keeps its meaning, the objective keeps its claim, and the free
+  and paid readings are the same reading at different depth.*
+- **Lite = a reduced sweep**, so **position_strength and competitive_room** are computed against a smaller,
+  cheaper set — **and capped and labelled when that set cannot state what each occupant claims** (§4.5,
+  §4.6.2a). *The rubric already supplies the honest behaviour: ADEQUATE (3) and a reason.*
+- ***The paid tier buys the full sweep — which is what makes a score above ADEQUATE provable at all.***
+  *So the upgrade is not "more dimensions"; it is **the evidence that turns a capped claim into a proven one** —
+  **which is exactly what positioning theory exists to do (§4.6.2a).***
+
+**⚠ AND THIS IS TESTABLE, WHICH IS WHY IT IS SAFE TO ADOPT.** *The claim above — that a reduced sweep caps PS/CR
+rather than corrupting the band — is a prediction.* **When §4.6.2's reduced grid is defined, the same
+subset-band comparison used here will measure it directly.** *Until then, the cost cut is recorded as **rejected
+with evidence**, not as a preference.*
+
+**⚠ OPEN, AND SEAN'S:** *how reduced the free sweep may be, and whether the free tier caps PS/CR at ADEQUATE and
+says so in the report's own words.*
+
+**⚠ REPRODUCE:** *recompute `composite` from `dimensions_display_1to5` over each subset above, using
+`rubric.json`'s weights renormalised over the scored dimensions, and compare `band_of()` against the full-six
+band on the 102 cases that carry a composite in `runs-1220-control`.*
 
 ---
 
