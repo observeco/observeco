@@ -3414,6 +3414,93 @@ errors in the current numbers.*
 gives the 114/120 inertness; `gates_firing` gives the 17 refusals.*
 
 
+**⚠⚠⚠ 3.7.23 C1 DIAGNOSED — THE COMPRESSION IS **NOT** A CALIBRATION PROBLEM, AND IT CANNOT BE RESCALED AWAY
+(7 Oct). This corrects the reading in §3.7.22 finding 1.**
+
+**⚠ WHAT WAS WRONG IN §3.7.22.** *That section reported the compression as "a measurement-resolution problem,"
+contrasted with "a ceiling," and implied the distinction told us which fix to apply.* **The distinction was
+right; the implication was not.** *"Resolution" sounds like something a transform or a scale change can repair.*
+**It cannot, and the tests below show that in three independent ways.**
+
+**✅ TEST 1 — IT IS NOT OUR ROUNDING.** *Comparing the model's **raw 0–4** score against the **rounded 1–5**
+display we publish, each regressed on Sean's grade:*
+
+| reading | slope | intercept | r |
+|---|---|---|---|
+| **RAW (0–4, continuous)** | **0.645** | −0.07 | +0.741 |
+| **DISPLAY (1–5, rounded)** | **0.648** | +0.94 | +0.705 |
+
+***Identical.*** *The quantisation step (§6.7.5b's amplifier) is **not** where the range is lost.*
+
+**✅ TEST 2 — AVERAGING OVER PROBABILITIES COSTS ONLY A FIFTH OF IT.** *The model returns a probability per
+level; we publish the **probability-weighted expectation**. Its own **argmax** — the single level it would
+pick if forced — has a higher slope:*
+
+| reading | slope |
+|---|---|
+| **expected value** *(what we publish)* | 0.648 |
+| **argmax** *(its single best answer)* | **0.721** |
+
+*So averaging flattens the signal by about **0.07 of slope**, roughly a fifth of the total shortfall.* **The
+rest is the model's own judgment being genuinely less dispersed than Sean's** — *mean top-probability is
+**0.617**, i.e. the model is reasonably decisive, so it is not hedging its way to the middle.*
+
+**⚠⚠ TEST 3 — THE DECISIVE ONE: A RECALIBRATION FITTED HERE LOSES ON HELD-OUT DATA.**
+*Fit an affine rescaling on a random half of the 599 pairs and test it on the other half — **the honest way**,
+rather than fitting and scoring on the same data:*
+
+| | test-half MAE |
+|---|---|
+| **as-is** | **0.552 levels** |
+| **recalibrated** | **0.616 levels** *(+0.064 — WORSE)* |
+
+***A rescaling makes it worse, not better.*** **And the headroom is real: the within-grade scatter (SD of the
+tool score at a fixed human grade) is 0.601 levels, while as-is MAE is 0.552 — the instrument is already
+performing slightly BETTER than a perfect monotone rescaler could be expected to reach on this data.**
+*There is nothing here for a transform to recover.*
+
+**⚠ AND IT IS NOT AN ARTEFACT OF THE FAMOUS BRANDS OR ONE CATEGORY.** *Dropping the global megabrands barely
+moves it (slope 0.642 → 0.619).* *It varies by category — home-nails 0.80, home-facial 0.74, home-baking 0.50,
+fast-food 0.35 — which is consistent with **a real property of how much dispersion each category admits**, not
+with a systematic bug.* **⚠ `home-not-permitted` returns a slope of −0.16 (n=26) — the one genuinely anomalous
+group, and it is the group D4 already refuses.**
+
+**⚠⚠⚠ THE CONCLUSIONS, IN ORDER OF IMPORTANCE.**
+
+**(1) DO NOT BUILD A RECALIBRATION.** *It is the obvious fix and it fails its own held-out test.* **This is
+recorded as a measured negative result so it cannot be retried later.**
+
+**(2) THE COMPRESSION IS THE MODEL'S DISPERSION, NOT A BUG** — *and the fix is therefore **rubric wording that
+demands more dispersion**, not arithmetic.* *That is a rubric change, and §5.3.1's promotion gate is the only
+correct path for it.*
+
+**(3) ⚠⚠ BUT IT CANNOT BE CALIBRATED YET, BECAUSE THE TARGET IS IN DOUBT — AND THAT IS THE REAL BLOCKER.**
+*§3.7.22 measured this against `sean-regrade-raw.csv`. That corpus carries **35–81% relabel noise**, and Sean's
+own standing instruction is: **"do not converge to my old numbers, because I suspect a lot of them are wrong."***
+***A rubric tuned to demand more dispersion would be fitted to the corpus's errors.*** *The close condition
+(99% within one band) still holds **on the terms it was measured** — but "the instrument is compressed relative
+to Sean" **cannot be closed by any change made today**, because the thing being matched is not trustworthy.*
+
+**⚠ SO THIS IS NOT A DEFECT TO FIX. IT IS A DEPENDENCY, AND IT IS NOW NAMED:**
+| what would close it | who | state |
+|---|---|---|
+| **Re-grade the corpus** *(a fresh, construct-correct PS sheet — §660 item (a)/(b): "his grades predate the position-strength construct and the sheet that asked the old question was invalid")* | **Sean** | **not done** |
+| Then, and only then, re-measure the compression against a trusted target | *engineering* | *blocked on the above* |
+| If dispersion is still short, change the rubric's level wording to demand it | *engineering, via `promote_rubric.py`* | *blocked on the above* |
+
+**⚠ WHAT HAPPENS IF NOTHING IS DONE — stated plainly, because "leave it" is a legitimate answer.** *The band is
+the product's headline, and band agreement is **99% within one band** — so the compression does **not** break
+the product as shipped.* *What it does mean is that **the fine differences an expert can see between two
+similar businesses are not reliably recoverable from the tool**, and the report should not pretend otherwise
+anywhere it ranks or compares.*
+
+**⚠ REPRODUCE:** *raw-vs-display slopes and the argmax comparison from `runs-1220-control`
+(`raw_jev_scores_0to4`, `dimensions_display_1to5`, `probabilities`); the split-half affine test by fitting
+`human ≈ b·tool + a` on a random half (seed 7) and scoring MAE on the other half — **note the regression must be
+run in the direction tool→human, since a forward fit applied backwards is what made the first attempt look
+catastrophic (+0.607); the correct figure is +0.064 and still negative.***
+
+
 ---
 
 ## 5.10 ⚠⚠ THE LITE TIER — WHAT THE FREE REPORT OPENS UP, AND THE COST CUT THAT CANNOT BE TAKEN (Sean's design, measured)
