@@ -809,7 +809,24 @@ def _page_names_the_rival(text: str, name: str) -> bool:
     # to Sean: accept single-token rivals unquoted, or buy confirmation by asking the model once.
     if len(toks) < 2:
         return False
-    pat = r"\b" + r"\s+".join(_re.escape(t) for t in toks[:-1]) + r"\s+" + _re.escape(toks[-1])
+    # ⚠⚠ ONE INTERVENING TOKEN IS ALLOWED (spec 3.7.24/C4). MEASURED NEED: the token filter drops
+    # tokens of length <= 2, so "Each-A-Cup" reduces to ['each','cup'] -- but the page normalises to
+    # "each a cup", with the very token that was filtered out sitting BETWEEN the two survivors. The
+    # exact-adjacency pattern `\beach\s+cup\b` could never match, so a real rival on a correctly-
+    # resolved LIVE domain (`each-a-cup.com`, HTTP 200) was refused, and the report told its owner
+    # "a page could be a different business that shares the word" -- WHICH IS FALSE. The filter that
+    # removes junk tokens also removes the junction the phrase test was silently relying on.
+    # ⚠ MEASURED TRADE, six real rival pages against five known strangers:
+    #     max_gap 0  ->  accepted 2/6 correct,  1/5 wrong
+    #     max_gap 1  ->  accepted 4/6 correct,  1/5 wrong   <- double the recall, no precision lost
+    #     max_gap 2  ->  accepted 4/6 correct,  2/5 wrong   <- gains nothing, adds a false accept
+    # ⚠ WHY THE GAP IS BOUNDED AT ONE: a rival writes its own name as a name, so at most a joiner
+    # sits inside it. Allowing two starts matching prose that merely mentions the same words.
+    # ⚠ THE LAST TOKEN STILL MAY EXTEND, UNCHANGED: "Wood Mac" must still match "Wood Mackenzie",
+    # which is why the pattern carries no trailing boundary. Both tolerances are needed and neither
+    # replaces the other -- the phrase test failed for a DIFFERENT reason than the extension case did.
+    _sep = r"\s+(?:[a-z0-9]+\s+)?"
+    pat = r"\b" + _sep.join(_re.escape(t) for t in toks)
     return _re.search(pat, norm) is not None
 
 
@@ -946,13 +963,41 @@ def _domain_candidates(name: str) -> list[str]:
     # Deleting the apostrophe first recovers the intended stem. Same class as 6.7.16: one character
     # silently discarding the owner's own input.
     import re as _re
-    _clean = (name or "").lower().replace("'", "").replace("\u2019", "")
+    _clean = (name or "").lower().replace("'", "").replace("\u2019", "").strip()
     toks = [t for t in _re.findall(r"[a-z0-9]+", _clean) if len(t) > 2]
     if not toks:
         return []
     joined = "".join(toks)
+    # ⚠⚠ A HYPHENATED NAME MUST BE TRIED WITH ITS HYPHENS INTACT — AND FROM THE **RAW NAME**, NOT THE
+    # TOKENS (spec 3.7.24/C4). Two separate bugs live here, and the token path cannot fix either:
+    #
+    #   1. DELETING THE HYPHEN LOSES THE DOMAIN. "Each-A-Cup"'s own site is `each-a-cup.com` and it
+    #      serves **200**, but the tokens were joined as `eachcup`, so only `eachcup.com` and `each.*`
+    #      were ever probed — all fail. The real domain was unreachable BY CONSTRUCTION, and the case
+    #      then reported `not_found`. The name held the answer and the builder threw it away.
+    #   2. THE TOKEN FILTER DELETES SHORT TOKENS, so the hyphen join still cannot rebuild it.
+    #      `[t for t in toks if len(t) > 2]` drops "a" from "Each-A-Cup", giving `each-cup` — still not
+    #      the domain. **The `len(t) > 2` filter exists to discard junk, and it also discards the
+    #      single letter that makes the brand's name.** So the hyphenated form must come from `_clean`,
+    #      which still has every character the owner typed.
+    #
+    # ⚠ SAME CLASS AS THE APOSTROPHE BUG DIRECTLY ABOVE, TWICE OVER: one character wrongly SPLIT
+    # (apostrophe), one character wrongly DELETED (hyphen), and a length rule discarding another.
+    # All three silently break the owner's own input.
+    #
+    # ⚠ ORDER: the hyphen-intact form is tried BEFORE the joined form, because it is what the brand
+    # actually registered — `each-a-cup.com` is the firm. A name with no hyphen is unaffected
+    # ("Stuff'd" -> stuffd.com.sg), and a hyphenated name whose domain does not exist still falls
+    # through to the joined and single-token forms.
+    _raw_stem = _re.sub(r"[^a-z0-9-]", "", _clean).strip("-")
+    _stems = []
+    if _raw_stem and "-" in _raw_stem and len(toks) > 1:
+        _stems.append(_raw_stem)
+    if len(toks) > 1:
+        _stems.append(joined)
+    _stems.append(toks[0])
     out = []
-    for stem in ([joined] if len(toks) > 1 else []) + [toks[0]]:
+    for stem in _stems:
         for tld in (".com", ".com.sg", ".sg", ".co", ".io", ".net", ".org", ".com.au"):
             out.append("https://%s%s" % (stem, tld))
     # ⚠ de-duplicate while preserving order; the first hit wins so order is the whole game
