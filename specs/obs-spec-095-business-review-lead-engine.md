@@ -3730,6 +3730,102 @@ Canvas assessment).* **READ IN PART:** *koira.ai (review velocity benchmarks), g
 benchmarks), flento.io (industry review benchmarks).* ⚠ **NOT READ (extraction failed — CRAWL_NOT_FOUND, no
 fabrication attempted):** *summcore.com's business health check.*
 
+
+---
+
+## 5.12 EMBA FRAMEWORKS — WHAT CAN ACTUALLY BE USED, AND WHAT TO REFUSE (7 Oct)
+
+**THE QUESTION (Sean's).** ***"What stuff from standard EMBA courses can be used?"***
+
+**⚠⚠ THE HEADLINE, AND IT IS A MARKETING ASSET RATHER THAN A FEATURE GAP: THE SIX DIMENSIONS ALREADY *ARE* THE
+STANDARD FRAMEWORKS — THEY ARE SIMPLY UNLABELLED.** *The instrument was derived from positioning theory and
+tuned against 120 of Sean's grades, so it never announced its academic parentage.* **But almost every dimension
+is a recognised framework, applied with evidence instead of judgement:**
+
+| our dimension | the standard framework it already is | the mapping is exact, not loose |
+|---|---|---|
+| **position_strength** | **Positioning** (Trout & Ries / Gu Junhui); **mental ownership** | *"a claim a named occupant does not own"* **is the positioning statement test** |
+| **mental_advantage** | **Mental availability & Category Entry Points** (Ehrenberg-Bass Institute) | *"the mental ladder", "the one people name when the category comes up", "independent of closure"* — **this is Ehrenberg-Bass, near-verbatim** |
+| **defensibility** | **Resource-Based View / VRIO's "I" (Imitability)**; isolating mechanisms | *our mechanisms — IP, capital intensity, network control, scale economics, switching costs, accumulated asset, policy backing — **are the RBV's isolating mechanisms*** |
+| **competitive_room** | **Porter's Five Forces** — *structure, barriers, power over price* | *"Room is removed by DOMINANCE… a market held by one or two powerful players leaves almost none"* — **this is the Five Forces structure test** |
+| **market_headroom** | **Industry demand–supply / life-cycle analysis** | *unmet demand vs served demand* |
+| **demand_reach** | **Segmentation — the "reachable segment" criterion** (STP) | *"a demographic such as an age band is NOT a reachable segment on its own"* — **this is textbook STP rigour** |
+| *(the situation framing)* | **Jobs-to-be-Done** (Christensen) | *"positioning is about product categories, not industries… judge per situation, never as one share fight"* — **that is JTBD's core move** |
+| *(the ranked output)* | **The single binding constraint** | *see the validation below — this is the one thing the research says DOES transfer* |
+
+**✅ AND THE RESEARCH INDEPENDENTLY VALIDATES THE PRODUCT'S SHAPE — this is the strongest external evidence
+found so far.** *An SMB-strategy consultancy (Vee Group) asked exactly this question — "what transfers from
+McKinsey-style analysis to a small business" — and answered:*
+
+> *"**Keep the parts that matter — a defined problem, evidence over opinion, one ranked constraint — and replace
+> the benchmarking step with a structured diagnostic that compares your business against real structural
+> peers.** That turns a McKinsey-style ambition into an answer a small business can act on: **the single thing
+> capping growth, ranked by impact.**"*
+
+***That is a description of this product, written by someone who has never seen it.*** *The three habits it says
+transfer — **define the problem, demand evidence per claim, force ONE prioritised answer instead of a list of
+ten** — are exactly: the six dimensions, the "ONLY AGAINST THE SUPPLIED SET" rule, and the report's
+`WHERE TO GET THE SCORE UP`, ordered by weighted gap.*
+
+**⚠ AND THE SAME SOURCE NAMES THE REASON THE APPARATUS DOES NOT TRANSFER, WHICH IS WHERE THIS PRODUCT'S MOAT
+IS.** *"The classic method compares you against named competitors with published financials. **Most small
+businesses have no such comparison set — private rivals, no filed data, no clean peer group. Without a structural
+benchmark, the analysis falls back on internal opinion, the exact bias the method was meant to remove.**"*
+***Our answer to that is §4.6.2's sweep: rivals are read from their published pages, not from filed accounts.***
+*That is the differentiator, and it is the one structural advantage the big frameworks cannot copy at SME
+scale.*
+
+**✅ WHAT IS GENUINELY ADOPTABLE — FOUR ITEMS, RANKED, AND ONLY THE FIRST IS FREE.**
+1. **Name the academic basis of each dimension in the report.** *The research literature says the value of a
+   framework is **shared language** and **perspective**.* ***Naming them costs nothing and buys credibility*** —
+   *and it is precisely what Sean asked for in §5.10.2: "what their definitions are, **as well as how special
+   they are**."* **"This is the Five Forces structure test" is a different sentence from "competitive room 2/5."**
+2. **Category Entry Points as a form question** *(Ehrenberg-Bass)* — *"when would a buyer think of you?"* *Cheap
+   to ask, and it feeds **mental_advantage**, the lite tier's heaviest dimension and its worst-measured
+   (§3.7.22: gap −0.46).* ⚠ **A form change alters the corpus and needs measurement before adoption.**
+3. **Substitutes as the lite tier's honest substitute for the rival sweep** *(Porter's fifth force)* — *the lite
+   report cannot read rivals, but it **can** ask "what would your customer do instead of buying from you?" —
+   *a question the owner can answer with no research at all.* ⚠ **Speculative; untested.**
+4. **The single-ranked-constraint framing, made explicit.** *Already built. Labelling it as the disciplined
+   output (rather than as a list) **is the point the research says separates rigour from sticky notes.***
+
+**⚠⚠ WHAT TO REFUSE, AND WHY — because "EMBA" is not a quality filter.**
+*The SMB-strategy literature is unusually blunt that these fail small firms **by design**:*
+- **SWOT** — *the most-cited and most-contested. Our own research found practitioners calling it a "waste of
+  time"; the recurring criticisms are that **it oversimplifies and generates lists rather than decisions.**
+  **It is also the exact shape §5.10.2 rejects** — a list, not a ranked constraint.*
+- **BCG matrix, Balanced Scorecard, OKR cascade, Ansoff, full PESTLE** — *"built for organizations with dedicated
+  strategy functions and full-time analysts. Applied to a $5M–$25M company with a four-person leadership team,
+  they produce **overhead without outcomes**."* **The BCG matrix needs a market-share number an SME does not
+  have.**
+- **Business Model Canvas (10 areas)** — *off-thesis by §5.11's filter: it scores the business's own operations
+  and says nothing about rivals. **It is also exactly what the free SME-diagnostic tools already do**, so it is
+  the most crowded ground available.*
+- **Blue Ocean's strategy canvas** — *attractive, but it **requires plotting rivals on the value curve**, i.e.
+  it needs the sweep. **That makes it a full-tier method, not a lite-tier one** — and the paid engagement
+  already does the equivalent work more rigorously.*
+
+**⚠ THE HONEST LIMITS OF THIS SECTION.**
+1. **The framework mapping is my analysis, not a sourced claim.** *It is a structural argument — the dimensions
+   really do restate these frameworks — **but no EMBA syllabus was read to confirm which frameworks are core to
+   a "standard" EMBA.*** *Programme pages (Kellogg, Wharton, NUS, Berkeley, Rotman) appeared in search results
+   **but were not opened**, so "standard EMBA" here means **the frameworks the SMB-strategy literature treats as
+   standard**, which is a slightly different set.*
+2. **One validation is a single consultancy's blog**, not a study. *It is quoted because it converges with our
+   own measured design, **not because it is authoritative**.*
+3. **⚠ THE RISK OF NAMING FRAMEWORKS: it invites the reader to grade us against them.** *If the report says "this
+   is the Five Forces test", a reader who knows the framework may ask why supplier power and buyer power are
+   absent.* ***Answer: they are inside competitive_room's structure question, and the report must say so rather
+   than leave the omission to look like an oversight.***
+
+**⚠ SOURCES.** ***READ IN FULL:*** *veegrp.com (what transfers from McKinsey-style analysis to an SMB — the
+validation); orr-consulting.com (why big-consultant frameworks fail $5–50M firms);*
+*businessconsultant.micro.blog (frameworks fail SMBs by design); competitiveintelligencealliance.io (its own
+"State of SWOT" survey, 50%+ of respondents had run a SWOT in the prior two months, 58% rated it successful —
+**the finding is contested, not damning, and is reported as such**).*
+***SEARCH-ONLY, NOT OPENED:*** *Kellogg / Wharton / NUS / Berkeley / Rotman EMBA curriculum pages; Coursera and
+framework-listing pages.*
+
 **⚠ REPRODUCE:** *recompute `composite` from `dimensions_display_1to5` over each subset above, using
 `rubric.json`'s weights renormalised over the scored dimensions, and compare `band_of()` against the full-six
 band on the 102 cases that carry a composite in `runs-1220-control`.*
