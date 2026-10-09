@@ -3655,6 +3655,81 @@ what that dimension is for.*
 **⚠ REPRODUCE:** *`grep -n 'dimensions_unscored\|REFUSED: artifact is missing' generate_report.py` for the
 guard that a lite tier must not defeat; §3.7.22 for the per-dimension compression table.*
 
+
+---
+
+## 5.11 CANDIDATE LITE-TIER METRICS — RESEARCHED, WITH A RECOMMENDATION (7 Oct)
+
+**THE QUESTION (Sean's).** ***"Find out what other business metrics might be useful for SMEs to assess that we
+can incorporate to make Lite report more appealing?"***
+
+**⚠ THE FILTER ANY CANDIDATE MUST PASS — set by §5.10.2, not by taste.** *A candidate qualifies only if it is:*
+**(1) cheap** — *no intensive competitor sweep*; **(2) honest at band level** — *produced from evidence actually
+held, never invented*; **(3) on-thesis** — *the product's claim is **positioning relative to competition**, and
+anything that turns it into a generic business-health scorecard is a **different product** competing on
+different ground.*
+
+**✅ WHAT THE MARKET ACTUALLY OFFERS — and it splits into three distinct plays.**
+
+| play | examples read | what they score | relevance |
+|---|---|---|---|
+| **Generic business health** | *SummCore (foundations, finance, marketing, ops, CX, innovation); BusinessPulseOS (4 areas); `smediagnostic.com` (Business Model Canvas × 10: value prop, customers, channels, revenue, cost, partners…); ABS Scorecard (7 dims: capture, recover, qualify, route, nurture, automate, measure)* | ***the business's own operations*** — *nothing about rivals; no market position at all* | ⚠ **Off-thesis.** *Adding these makes the report a health check, not a positioning read.* |
+| **Website / conversion graders** | *Expertise.ai pipeline grader; LeadLens; Wizara; RF Studio Growth Intelligence Score; GrowthPigeon positioning grader* | *a live crawl of the submitter's own site* | ⚠ 18% of corpus submissions give a website (§3.7.22, finding 4) — *thin* |
+| **Local visibility (GBP)** | *prospectaudits 12-point GBP audit; KOIRA review velocity; Get-Kandid response rate; Flento industry benchmarks* | *the submitter's own Google listing, **benchmarked against the local market*** | ✅ **On-thesis, cheap, and concrete — see below** |
+
+**⚠⚠ THE CLOSEST COMPETITOR FOUND, AND IT IS WORTH KNOWING.** *Crandall Consulting's **C² Strategy Engine**
+offers **"a free, consulting-grade 30+ page strategic report across 8 business dimensions, named ICP, revenue
+leakage modeling, unit economics, tiered competitor analysis, a 12-month quarterly roadmap, and a phased 90-day
+execution plan"** — 30–45 minutes of input, then a booked walkthrough.* ***That is the same lead-magnet play, at
+the same ambition, with "tiered competitor analysis" already inside it.*** *It confirms the model works and that
+the free-report-as-consulting-funnel space is occupied.* **Its weakness is depth of evidence — a 30-minute form
+produces stated facts, not a measured competitive set.** *That is exactly where §4.6.2's sweep is defensible.*
+
+**✅✅ THE RECOMMENDATION — FOUR LOCAL-VISIBILITY METRICS, ALL OF WHICH ARE CHEAP AND ON-THESIS.**
+*These are the only candidates that clear all three filters. **They are also the same epistemic shape as the
+existing six: each is a comparison against a market, not an absolute score.***
+
+| metric | what it costs | the benchmark it compares against | why it lands with an SME |
+|---|---|---|---|
+| **Review count vs the local median** | *one lookup of the business's own Google listing* | *the median of the businesses ranking in its category* | ***"needs 84 more reviews to reach the local median"*** *— a concrete number is actable; **"get more reviews" is not** (prospectaudits, verbatim)* |
+| **Review velocity (last 90 days)** | *same single lookup* | *published industry norms* | *Median local business earns **1–3 new reviews/month**; top quartile **8–15**. **"If you're at 1–3 and pack leaders are at 20+, you're not in the same race"** (KOIRA). **Velocity, not total, is the signal** — *a review 18 months old carries roughly **one-quarter** the ranking weight of one from the past 30 days* |
+| **Owner response rate** | *same single lookup* | *published norms* | *In a 14,000-review validation set, **9 of 10 businesses replied to under 21%**; median in the **low teens**. **Above 80% is rare outside corporate chains.*** *This is the one metric where a small operator can beat the big brands — **appealing, and true** (Get Kandid)* |
+| **Rating vs the local market** | *same single lookup* | *rivals' ratings* | *"4.6 is strong where rivals average 4.3, weak where they average 4.9"* — **under 4.0 suppresses clicks regardless of rank** (prospectaudits) |
+
+**⚠⚠ WHY THIS IS CHEAP WHEN THE COMPETITOR SET IS NOT — AND THIS IS THE WHOLE ARGUMENT.**
+*§5.10.2 established that PS/DEF/CR need the **grid sweep** because they require knowing **what each rival
+claims**.* **These four need one lookup of the business's OWN listing, compared against a PUBLISHED BENCHMARK.**
+*Nothing is crawled per rival; no occupant mining; no set derivation.* ***So they buy the "how do I compare?"
+benefit — the thing that makes a free report worth reading — without paying for the sweep that makes it
+expensive.*** *That is precisely the lite/full boundary §5.10.2 requires.*
+
+**⚠ THE HONEST LIMITS OF THIS RECOMMENDATION.**
+1. **Appeal is UNMEASURED.** *Nothing here ran an A/B test. The claim that these raise the free report's pull
+   rests on the sources' own reporting of what owners act on, **not on our own data.***
+2. **The benchmarks are third-party and dated.** *The velocity and response-rate figures come from vendor blogs
+   (KOIRA, Get Kandid, Flento, prospectaudits) — **commercially interested parties**, useful but not neutral.*
+   **Before publishing any benchmark number in a client report, it needs a second independent source or it gets
+   labelled "industry-reported".**
+3. **Three of the four need the business's Google listing to exist and be findable.** *A home-based business with
+   no listing gets nothing from them* — *and that is D3's own segment, where the sufficiency gate already refuses
+   14% of submissions (§3.7.22, finding 3).* ⚠ **So these metrics may help most where the tool already works,
+   and least where it is aimed.**
+4. **⚠ OFF-THESIS DRIFT IS THE REAL RISK.** *The strongest candidates are local-SEO metrics, and local SEO is not
+   positioning.* **Four visibility metrics added to a positioning report can quietly become the headline** —
+   *because they are concrete and the positioning scores are not.* **Recommendation: they enter as a clearly
+   bounded section — "how findable you are" — never folded into the composite, and never the first thing the
+   report says.**
+
+**⚠ SEAN'S CALL, TWO DECISIONS.** *(1) Adopt all four, or a subset?* *(2) Do they appear in the **lite tier only**,
+or in both?* *Putting them in the full report too is defensible — **but it dilutes the six-dimension positioning
+thesis the paid engagement rests on**, so my recommendation is **lite only**.*
+
+**⚠ SOURCES READ IN FULL:** *prospectaudits.com (12-point GBP audit), redhub.ai (ABS 7-dimension scorecard),
+crandall.consulting (C² Strategy Engine — the closest competitor), smediagnostic.com (10-area Business Model
+Canvas assessment).* **READ IN PART:** *koira.ai (review velocity benchmarks), get-kandid.com (response-rate
+benchmarks), flento.io (industry review benchmarks).* ⚠ **NOT READ (extraction failed — CRAWL_NOT_FOUND, no
+fabrication attempted):** *summcore.com's business health check.*
+
 **⚠ REPRODUCE:** *recompute `composite` from `dimensions_display_1to5` over each subset above, using
 `rubric.json`'s weights renormalised over the scored dimensions, and compare `band_of()` against the full-six
 band on the 102 cases that carry a composite in `runs-1220-control`.*
