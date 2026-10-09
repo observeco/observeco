@@ -3497,8 +3497,87 @@ rather than corrupting the band — is a prediction.* **When §4.6.2's reduced g
 subset-band comparison used here will measure it directly.** *Until then, the cost cut is recorded as **rejected
 with evidence**, not as a preference.*
 
-**⚠ OPEN, AND SEAN'S:** *how reduced the free sweep may be, and whether the free tier caps PS/CR at ADEQUATE and
-says so in the report's own words.*
+**✅✅ 5.10.1 SEAN'S REFINEMENT, ADOPTED — AND THE MEASUREMENT THAT DECIDES HOW TO APPLY IT (7 Oct).**
+
+**SEAN'S REFINEMENT, VERBATIM.** ***"I think we should offer in the lite free report to highlight there are 6
+dimensions and what are they all about. But only assess for lite those that do not require a full intensive web
+search against competitors."***
+
+**✅ THREE PARTS, AND THE FIRST TWO ARE UNAMBIGUOUSLY RIGHT.**
+1. **Name all six dimensions and explain what each one is about.** *This is better than hiding them.* **The
+   report becomes legible as a system** — the reader learns there are six questions, what they are, and which
+   ones the free read answers. *It also makes the upgrade concrete: not "more report," but "these three, read."*
+2. **Assess only the three that need no competitor sweep** — *mental_advantage (ubiquity, survives closure),
+   market_headroom (form + category), demand_reach (the trading floor).* **This is the cost boundary, correctly
+   placed: no intensive search, no search budget.**
+3. ⚠ **THE THIRD PART IS THE ONE THAT NEEDS A DECISION, AND IT IS NOW MEASURED: does the lite read produce the
+   HEADLINE (the band), or just the three scores?**
+
+**⚠⚠ MEASURED — AND IT SETTLES IT. Deriving the headline from the three assessed dimensions alone hands the same
+verdict to every famous brand in the corpus.**
+
+*Method: recompute each case's composite from the non-search dimensions only, renormalising the weights across
+just those three (MA 50% / MH 25% / DR 25%), then read the band. On the 102 cases with a composite:*
+
+| case | full read | lite (3 dims, renormalised) |
+|---|---|---|
+| **IKEA Singapore** | 80 — Strong | **85 — Strong** |
+| **McDonald's Singapore** | 80 — Strong | **85 — Strong** |
+| **NTUC FairPrice** | 84 — Strong | **85 — Strong** |
+| **Ya Kun Kaya Toast** | 71 — Viable | **85 — Strong** |
+| **Eu Yan Sang** | 80 — Strong | **85 — Strong** |
+| **Coupang** | 84 — Strong | **85 — Strong** |
+| **Boeing Commercial Airplanes** | 69 — Viable | **85 — Strong** |
+| **Hill Street Tai Hwa Pork Noodle** *(a hawker stall)* | 80 — Strong | **85 — Strong** |
+
+***EVERY ONE OF THEM LANDS ON EXACTLY 85.*** *Not similar — **identical**, to the point.* **Because the three
+cheap dimensions are precisely the ones that measure fame and reach, and every household name scores the same
+on them.** *So the lite headline would tell IKEA, McDonald's, a local coffee-shop chain, an aerospace
+manufacturer and a hawker noodle stall **the same thing** — and it would be the one sentence the product exists
+not to say.*
+
+**⚠ AND §5.10's EARLIER FINDING IS CONFIRMED, NOT OVERTURNED.** *The renormalisation is the mechanism: dropping
+the expensive dimensions silently re-weights the free band to **MA 50% / MH 25% / DR 25%**.* **That is a fame
+score — and the flat 85 is what a fame score looks like when it is applied to famous brands.** *A band that
+cannot tell McDonald's from a hawker stall is not a lite positioning read; it is a broken one.*
+
+**✅ THE RESOLUTION — AND IT KEEPS ALL THREE OF SEAN'S PARTS INTACT.**
+*Name all six. Explain all six. **Assess** the three non-search dimensions. **Do not derive the headline from
+them alone.*** **Instead:**
+
+| what the lite report does | how |
+|---|---|
+| **Explains all six** | *the same definitions the paid report uses — no separate free-tier vocabulary* |
+| **Assesses three** | *mental_advantage, market_headroom, demand_reach — scored normally, no search needed* |
+| **Does NOT invent the other three** | **position_strength, defensibility, competitive_room are CAPPED at ADEQUATE (3), not guessed** — *the rubric's own rule for "the set names no occupant… a flank is only proven against a named rival"* |
+| **Still produces a meaningful headline** | *the composite runs across **all six weights, unchanged** — three measured, three capped. **The declared weighting is preserved, so fame cannot take over*** |
+
+**⚠ AND THIS IS A DIFFERENT OUTCOME, MEASURED.** *Compared against the renormalised version on the same cases:*
+
+| case | full read | lite (drop + renormalise) | **lite (assess 3 + cap 3)** |
+|---|---|---|---|
+| IKEA | 80 Strong | **85 Strong** | **68 Viable, conditional** |
+| McDonald's | 80 Strong | **85 Strong** | **68 Viable, conditional** |
+| **Hill Street Tai Hwa** *(hawker)* | 80 Strong | **85 Strong** | **68 Viable, conditional** |
+
+*All eight fame cases collapse to one score under renormalisation; **capping preserves their differences and
+keeps the weights intact.*** **The capped version also needs no special free-tier weighting concept to explain
+or defend** — it is the same instrument, with three answers withheld rather than invented.
+
+**⚠ WHAT CAPPING COSTS, STATED HONESTLY.** *A capped dimension is not evidence-free — it is **evidenced as
+incomplete**.* *The report must therefore say so in its own words: these three sit at the honest ceiling
+because reading the rivals is what proves them, and that is the paid analysis (§3.3).* ***That sentence is also
+the sales argument, and it is true rather than manufactured.***
+
+**⚠ STILL SEAN'S, AND NOW NARROWER:** *does the lite headline run across all six (three measured, three capped),
+or does the lite report show the three scores and **no headline number at all**?* *Both are honest; the second
+is more conservative and loses the single most persuasive element of the free report.* **Recommendation: keep
+the headline, cap the three, and label the caps.** *The measurement above is why.*
+
+**⚠ REPRODUCE:** *`composite` over `NOSCAN = [mental_advantage, market_headroom, demand_reach]` with weights
+renormalised, vs `{**dims, **{d: 3 for d in SCANNEED}}` over all six declared weights, on the 102 cases carrying
+a composite in `runs-1220-control`; the eight fame cases collapse to exactly 85 under the first and diverge
+under the second.*
 
 **⚠ REPRODUCE:** *recompute `composite` from `dimensions_display_1to5` over each subset above, using
 `rubric.json`'s weights renormalised over the scored dimensions, and compare `band_of()` against the full-six
