@@ -3579,6 +3579,82 @@ renormalised, vs `{**dims, **{d: 3 for d in SCANNEED}}` over all six declared we
 a composite in `runs-1220-control`; the eight fame cases collapse to exactly 85 under the first and diverge
 under the second.*
 
+
+**✅✅✅ 5.10.2 SEAN'S RULING — THE LITE TIER IS NOT SCORED AT ALL, AND THE CAP IS REJECTED (7 Oct).**
+
+**SEAN'S RULING, VERBATIM.** ***"I think we shouldn't score the lite because it is incomplete. Only the full
+report. What I mean is to show the difference between the lite and full report, we make it clear there are 6
+dimensions and what their definitions are, as well as how special they are. But for lite only 3 will be assessed
+and these are your scores for the 3. The remaining 3 will only be assessed in the full report."***
+
+**⚠⚠ SEAN IS RIGHT AND §5.10.1 WAS WRONG TO OFFER THE CAP.** *That section worked hard to preserve a **headline
+band** for the free report — capping the three withheld dimensions at ADEQUATE and running the composite across
+all six weights.* *It was solving the right problem with the wrong instrument.*
+***A composite is a claim about the WHOLE position. Three of its six inputs are not merely uncertain in the lite
+tier — they are ABSENT.*** *Labelling three inputs that you never measured, and then printing a number that
+looks like a verdict, **is the "confident wrong report" failure class this spec has spent its whole history
+removing** (§4.6.0b's invented rival, §4.1's silent 60%, §3.7.15's false promises).* **Capping is a
+label on invented data. Sean's answer removes the invention.**
+
+**✅ THE LITE/FULL SPLIT, AS RULED — four parts:**
+1. **All six dimensions are NAMED, with their definitions — and why each is special.** *"How special they are"
+   is the load-bearing part: it is what makes the reader understand they are looking at a six-instrument set and
+   hold three of it.* **The lite report is legible as a system, not a truncated one.**
+2. **Only 3 are assessed** — *mental_advantage, market_headroom, demand_reach: the ones that need **no
+   intensive competitor search**.*
+3. **Those 3 are shown as scores.** *"These are your scores for the 3."*
+4. **The other 3 are assessed ONLY in the full report** — ***and the lite report produces NO composite and NO
+   band.***
+
+**⚠ WHAT THIS DELETES FROM THE REPORT, AND IT IS A REAL TRADE — NOT A SIDE EFFECT.** *The free report currently
+prints a headline — **`{composite}/100` with a band** (`generate_report.py:736`, `:864`; the renderer even
+raises `REFUSED: artifact is missing dimensions` rather than print a report that silently omits part of the
+composite, `:1186`).* **Under this ruling the lite tier has no such number.** *That is the correct consequence
+of "we shouldn't score the lite because it is incomplete" — but it means the free report's single most
+persuasive element is deliberately given up.*
+
+***The replacement headline is the SHAPE, not a score:** three answered, three named-and-defined-but-not-assessed,
+and the reason the three are withheld* — **reading the rivals is what proves them, and that is the paid analysis
+(§3.3).** *That is a stronger hook than a capped number, because it is true and it is specific.*
+
+**⚠ THE RENDERER GUARD BECOMES MORE IMPORTANT, NOT LESS — AND IT NEEDS EXTENDING.**
+*`generate_report.py:1186` currently refuses to render if a dimension is neither in `dims` nor in
+`dimensions_unscored`.* **The lite tier is a THIRD state that does not exist yet: "not assessed in this tier,
+and not unscored."** *So the two tiers must be distinguished **structurally**, not by omission:*
+- **FULL** — all six assessed; composite and band required. *The existing guard is correct for this tier.*
+- **LITE** — three assessed, three **explicitly excluded by design**; **composite and band absent, and their
+  absence is INTENDED** — *distinct from `dimensions_unscored` (which means the evidence was too thin to score
+  at all, a different statement).* ⚠ **This does not exist in the code.** *Folding it into
+  `dimensions_unscored` would make "we chose not to look" indistinguishable from "we could not determine" —
+  the same conflation class as §4.5.*
+- ⚠ **The guard must still refuse a FULL report that is missing a dimension** — *this ruling must not be read as
+  a licence to drop dimensions silently.*
+
+**✅ AND IT CLEANLY INVERTS THE ORDER OF THE FREE→PAID UPGRADE, WHICH IS THE POINT.** *The paid engagement is not
+"the same report with more depth."* ***It is the only tier in which five of the six dimensions can be a POSITION
+claim at all*** *— because **PS, DEF and CR all rest on reading the rivals**, and three of the six weights (60%)
+come from those three.* **So the lite report is honestly a report on the business's standing (fame, reach,
+demand) and NOT on its competitive position.** *That is a smaller claim, made truthfully, and it makes the full
+report the only place the product's actual thesis is delivered.*
+
+**⚠⚠ ONE CONSEQUENCE WORTH STATING PLAINLY, BECAUSE IT BEARS ON THE FREE TIER'S QUALITY FLOOR.** *The three
+assessed dimensions are the three weakest-measured of the six (§3.7.22):*
+| lite dimension | exact | within-1 | compression gap |
+|---|---|---|---|
+| **mental_advantage** | 52% | 93% | **−0.46** *(largest of any dimension)* |
+| **demand_reach** | 58% | 96% | −0.22 |
+| **market_headroom** | n=5 *(inert in 114 of 120)* | — | +0.20 |
+
+*So the lite tier rests on the three dimensions the instrument reproduces least well, **and market_headroom —
+which carries 10% of the weight — is inert for ~95% of SME cases.*** **The lite report is not a weak version of
+the full report; it is a version whose every claim depends on the least-validated part of the instrument.**
+*That does not change the ruling — but it sets the bar the lite copy must clear, and it argues for
+market_headroom's inertness being **labelled rather than silently passed over** when the free report explains
+what that dimension is for.*
+
+**⚠ REPRODUCE:** *`grep -n 'dimensions_unscored\|REFUSED: artifact is missing' generate_report.py` for the
+guard that a lite tier must not defeat; §3.7.22 for the per-dimension compression table.*
+
 **⚠ REPRODUCE:** *recompute `composite` from `dimensions_display_1to5` over each subset above, using
 `rubric.json`'s weights renormalised over the scored dimensions, and compare `band_of()` against the full-six
 band on the 102 cases that carry a composite in `runs-1220-control`.*
