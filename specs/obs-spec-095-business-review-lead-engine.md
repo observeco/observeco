@@ -2343,6 +2343,11 @@ use the spec has not yet justified. (E2) **The k-anonymity floor is a number and
 too low and a reader can re-identify, too high and the benchmark never renders, making the unlock a promise
 the tool cannot keep. **Thresholds are Sean's call.***
 
+**→ RESOLVED AND CORRECTED IN §3.7.25.** *The drop is **deliberate, documented decision A3**, not an open
+capability gap; the 10% weight is **renormalised away, not carried** (contra the "carries 10% regardless"
+above); and the live consequence is the **lite tier**, whose three assessed dimensions include this one —
+inert in 95% of cases.***
+
 **✅ P5 FILLED — Supabase region is `ap-southeast-1` (Singapore).** *Now recorded in the processor register.
 
 **⚠ REPRODUCE:** *`PROBE_HOST=127.0.0.1 python3 probe_widget_element.py` (widget healthy, no 110200);
@@ -3500,6 +3505,145 @@ anywhere it ranks or compares.*
 run in the direction tool→human, since a forward fit applied backwards is what made the first attempt look
 catastrophic (+0.607); the correct figure is +0.064 and still negative.***
 
+**⚠⚠⚠ 3.7.24 C4 ROOT-CAUSED AND FIXED — THE RIVAL RESOLVER WAS DESTROYING THE OWNER'S OWN INPUT, TWICE
+(8 Oct). C4 was recorded as "2-of-6 rival resolution on F&B" and left as a limit to disclose or buy out
+of. **It was neither. It was two bugs, and both were our own.**
+
+**✅ DEFECT 1 — THE URL BUILDER DELETED THE HYPHEN.** *`_domain_candidates` tokenised `"Each-A-Cup"` to
+`['each','cup']` and joined it as `eachcup`, so the only candidates ever probed were `eachcup.com` and
+`each.*` — **all of which fail.** *The brand's real site is **`each-a-cup.com`, and it serves HTTP 200.***
+**The correct domain was unreachable by construction, and the case then reported `not_found` — the report
+blamed the rival's website for our builder's bug.**
+*⚠ **Second, nested bug:** the fix must build the hyphenated stem from the **raw name**, not the tokens,
+because `[t for t in toks if len(t) > 2]` **drops the `a`** — giving `each-cup`, which is still not the
+domain. The length filter exists to discard junk and it also discards the single letter that is the brand.
+
+**✅ DEFECT 2 — THE NAME TEST ATE THE JUNCTION.** *`_page_names_the_rival` required **exact adjacency**. The
+same length filter removed the `a`, so the pattern became `\beach\s+cup` — **while the page normalises to
+"each a cup", with the filtered token sitting between the two survivors.** *So a correctly-resolved, live,
+200-serving domain was **refused**, and the owner was told "a page could be a different business that shares
+the word" — **which is false.*** *It rendered **a limit of ours as a fact about their page**, the §4.6 failure,
+in a message printed to the business owner.*
+
+**✅ THE FIX, AND ITS MEASURED TRADE** — *one intervening token is now allowed:*
+
+| gap allowed | real rival pages accepted | known strangers accepted |
+|---|---|---|
+| **0 (was)** | **2 of 6** | 1 of 5 |
+| **1 (now)** | **4 of 6** | **1 of 5** |
+| 2 | 4 of 6 | 2 of 5 |
+
+***One intervening token doubles recall with no measured precision lost.*** *Two gains nothing and adds a
+false accept.* **The last-token extension is preserved unchanged** — *`"Wood Mac"` must still match `"Wood
+Mackenzie"`; it failed for a **different** reason and neither tolerance replaces the other.*
+
+**✅ VERIFIED.** *`Each-A-Cup` now reads **200 from `https://each-a-cup.com`** (was `not_found`).* *Old vs new
+across **14 name/page pairs: exactly ONE behavioural difference, and it is the intended one.*** **The
+adversarial page — "research on each and every cup of ocean water" — is still refused.** *No regression on
+Afry, Wood Mac, Chicha San Chen or Gong Cha, and no regression on the four known strangers.*
+
+**⚠ NOT FIXED, AND THIS IS A MEASURED LIMIT RATHER THAN AN OVERSIGHT: SINGLE-TOKEN NAMES** *(LiHO, Mixue,
+SaladStop!).* ***Five rules were written and all five were measured wrong in both directions,*** *and the
+category-overlap threshold has **no separation at all** — correct matches score 0 and 4, wrong ones 0 and 1.*
+**The code reports the limit honestly and states the remedy the owner controls: name the rival as the
+business writes it (`"KOI The"`, `"Modo Energy"`).** *⚠ **Buying confirmation costs one model call**, which
+§5.5's no-second-call constraint forbids without Sean's ruling — so this stays a *decision*, not a task.*
+
+**⚠ BLAST RADIUS.** *`competitor_scan.py` is the resolver §4.6.2's method calls; §6.7.13's single-token
+measurement is unchanged and still accurate; §6.7.16's apostrophe bug is the **same class** (one character
+of the owner's input silently rewritten) and is now recorded as three instances of it, not two.*
+
+**⚠ REPRODUCE:** *`_domain_candidates('Each-A-Cup')` must return `each-a-cup.com` at rank 1;
+`rival_reads(['Each-A-Cup'], category='bubble tea', market='singapore')` must return `capture_status='ok'`;
+and `curl -o /dev/null -w '%{http_code}' https://each-a-cup.com` must return 200.**
+
+**⚠⚠⚠ 3.7.25 C2 RESOLVED — `market_headroom` IS INERT BY DELIBERATE DESIGN, NOT BY DEFECT. AND ITS REAL
+CONSEQUENCE IS THE LITE TIER, NOT THE FULL REPORT (8 Oct).**
+
+**⚠ WHAT THIS CORRECTS IN §3.7.22 — TWO FACTS, NOT A JUDGEMENT.** *§3.7.22 was careful and fair: it called
+the inertness "not broken", "a capability question, not a bug", and it noted both sides are silent on the
+same 113 cases so there is no disagreement to fix. That reasoning stands.* **But two of its statements are
+factually wrong, and both matter:**
+**(i) "it carries 10% of the composite weight regardless" — IT DOES NOT.** ***The dimension is EXCLUDED from
+the weighted average and the remaining weights are renormalised.*** *Verified on BK01-breadtalk:
+`weights_used_renormalised` = MA 20→**30.77**, DEF 20→**30.77**, CR 15→**23.08**, DR 10→**15.38**, summing to
+100. The 10% is redistributed, not carried.*
+**(ii) It treats the drop as still-open — IT IS ALREADY A SETTLED, DOCUMENTED DECISION.** *The rubric's own
+version history records it as **decision A3**, with its rationale and its measurement:*
+
+> ***"In an elastic-capacity market, unmet demand cannot accumulate: any shortfall is absorbed by rivals
+> opening capacity, so the crowding/unmet axis is a constant and scoring it multiplies a near-constant by
+> its weight. Verified: 12 of 17 cases span raw 1.78–1.98, a 0.10 band narrower than the 0.08 noise floor.
+> In an inelastic market the shortfall has nowhere to go and shows up as an order book, which is
+> measurable."***
+
+***So the inertness is the thing working as designed.*** *§3.7.22 re-derived a deliberate decision from the
+outside and filed it as a fault.* **And the 10% is not lost: `weights_used_renormalised` redistributes it
+proportionally across the dimensions actually assessed** — *verified on BK01-breadtalk: MA 20→30.77, DEF
+20→30.77, CR 15→23.08, DR 10→15.38, summing to 100.*
+
+**✅ AND THE READER GETS A SUBSTANTIVE FINDING, NOT A HOLE.** *The client-facing dict renders the
+not-applicable dimension as a **sentence**:* *"Demand in your market is served and contested. Buyers can
+already get what you sell, so there is no pool of unmet demand to step into — growth means taking share
+from an existing player."* **That meets the value-unit standard — an empty state carries an actionable
+sentence, never a bare "N/A".**
+
+**⚠⚠ THE SIDE EFFECT, AND WHAT CAN BE DONE ABOUT IT.** *Renormalising **promotes `mental_advantage`**, and
+when `position_strength` is also missing it reaches **30.77% — the heaviest dimension in the report,
+against a nominal 20%.** *Because `mental_advantage` is the **worst-measured** dimension in the corpus
+(−0.46), that is the composite leaning hardest on its least reliable input.*
+
+**✅ WHY IT IS BOUNDED, AND CHEAPER TO FIX THAN IT LOOKS.**
+**(a) The band EDGES stay valid.** *The bands are anchored to the scale's own arithmetic — all-dims-at-3 =
+57.50 — and that property is **invariant under renormalisation**: whether or not `market_headroom` is
+included, all-assessed-dims-at-X still yields X.* **Verified numerically at levels 2, 3 and 4: identical to
+1e-9.** *So a promoted weight changes **which dimension drives** the composite, not **what the number
+means**.* **The band words do not move.**
+**(b) The exposure is already measured.** *The rubric records that changing the weight denominator moved
+the composite by **mean 2.4 pts, max 8**, and that **3 band words depended on which dimensions were
+counted** — which is exactly why the evidence floor was moved to 0.0 so that **all cases share one
+dimension set, `market_headroom` excepted**.* **The mitigation is already in place.**
+**(c) It varies in exactly two ways:** *`market_headroom` (structural, 95%) and `position_strength`
+(**4 of 120**, 3.3%).* **Nothing else moves.**
+
+**⚠ THE OPTIONS, WITH MY RECOMMENDATION.**
+| # | option | verdict |
+|---|---|---|
+| **1** | **Disclose the dimension set with the composite** — *"based on 4 of 6 dimensions (position strength and market headroom not assessed)"* | ✅ **RECOMMENDED.** *The renormalisation is currently **invisible to the reader**. The number is honest; the **basis** is hidden. One sentence fixes it, with no measurement risk and no rubric change* |
+| **2** | Leave it entirely | *Defensible — (a) and (b) show the band is safe — but the reader cannot tell a 6-dimension composite from a 4-dimension one* |
+| **3** | Score a missing dimension at 3 (neutral) instead of renormalising | ❌ **REJECTED.** *It **fabricates a score for a dimension we did not assess** — the null-not-faked principle, and precisely what §5.10.2 forbids on the lite tier* |
+| **4** | Suppress the band whenever a heavy dimension is missing | *Over-reacts to 4 of 120 cases; the band edges are already valid per (a)* |
+
+**⚠⚠⚠ AND THE FINDING THAT ACTUALLY MATTERS — C2'S CONSEQUENCE LANDS ON THE LITE TIER.**
+*Lite assesses exactly three dimensions: `mental_advantage` (20%), `market_headroom` (10%), `demand_reach`
+(10%) — chosen because they need no competitor sweep.* **But `market_headroom` returns "not applicable"
+in 114 of 120 cases.** ***So in ~95% of lite reports one of the three free dimensions is inert, and the
+lite read effectively rests on `mental_advantage` and `demand_reach` alone.*** **⚠ Those are the two
+worst-measured dimensions in the six-dimension audit (−0.46 and −0.22).** *The free tier's evidence base is
+**one live dimension plus one that is unavailable nine times in ten**, and both are the least
+reproducible in the corpus.* **⚠ This is a live problem for §5.10 and it is a DESIGN question, not a bug:
+the cheap dimensions were chosen for cost, and cost turns out to correlate with weak measurement.**
+
+**⚠ A HAZARD FOUND WHILE MEASURING THIS, WORTH KNOWING.** *`dimensions_display_1to5` **carries placeholder
+values for dimensions that are declared unscored** — BK01 shows `position_strength: 4` and
+`market_headroom: 3` in that dict while both are in `dimensions_unscored` and excluded from the weights.*
+**The client path is NOT affected: the renderer consumes `display_for_client`, which correctly renders
+`market_headroom` as the sentence and `position_strength` as "insufficient evidence to score".**
+*⚠ But **every analysis script reads the raw dict**, and any that fails to filter `dimensions_unscored`
+will compute findings over fabricated scores.* *⚠ §3.7.22's audit DID filter (which is why it reports n=116
+for position_strength and n=5 for market_headroom, not 120), and §3.7.23's compression test filtered too —
+but this is a standing trap for the next analysis.*
+
+**⚠ BLAST RADIUS.** *§3.7.22's framing of `market_headroom` as a defect is **superseded** by this section —
+the inertness is deliberate; the live issue is the lite tier's evidence base. §5.10's "assess three"
+should cite this: **one of its three is inert 95% of the time.***
+
+**⚠ REPRODUCE:** *`market_headroom_qualifier.disposition` gives 114 `not_applicable` / 6 `scored`;
+`weights_used_renormalised` shows the redistribution (BK01: MA 30.77); `display_for_client` shows the
+reader gets the sentence; the anchor invariance is checked by computing the composite with and without
+`market_headroom` at levels 2/3/4; the missing-dimension counts are `dimensions_unscored` tallied per
+dimension.*
+
 
 ---
 
@@ -3733,7 +3877,8 @@ assessed dimensions are the three weakest-measured of the six (§3.7.22):*
 | **market_headroom** | n=5 *(inert in 114 of 120)* | — | +0.20 |
 
 *So the lite tier rests on the three dimensions the instrument reproduces least well, **and market_headroom —
-which carries 10% of the weight — is inert for ~95% of SME cases.*** **The lite report is not a weak version of
+whose 10% weight is **renormalised away rather than carried** (§3.7.25) — is inert for ~95% of SME
+cases.*** **The lite report is not a weak version of
 the full report; it is a version whose every claim depends on the least-validated part of the instrument.**
 *That does not change the ruling — but it sets the bar the lite copy must clear, and it argues for
 market_headroom's inertness being **labelled rather than silently passed over** when the free report explains
