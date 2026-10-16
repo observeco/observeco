@@ -3904,6 +3904,62 @@ iconic café in the area"**.* **⚠ "Iconic" is BreadTalk's analyst-assigned cla
 `cookies.sqlite` + `-wal` + `-shm` + `key4.db` + `cert9.db` seeded from the Firefox login **while Firefox was running**;
 full place hrefs are in the enumeration, never the `data=`-stripped form; review bodies come from `.wiI7pd`.*
 
+### 4.6.4.6 ⚠⚠⚠ SECOND CORPUS, SAME VERDICT — AND NOW THE CAUSE IS ESTABLISHED. GOOGLE MAPS REVIEWS ARE THE WRONG INSTRUMENT FOR POSITIONING
+
+*Sean's instruction was to run the same process on the category he named — the CaiCa / SaladShop corpora.*
+**The SaladShop corpus was already on disk: 142 entries, 28 chains, 12,523 verbatim reviews.** *The result is a
+measured negative, and a structural one.*
+
+**⚠⚠ THE FINDING: THE UNIT OF A GOOGLE MAPS REVIEW IS THE OUTLET, NOT THE BRAND.**
+***142 entries resolve to 28 chains*** — *"Stuff'D" alone appears as 30+ separate places, each with ~200 reviews.*
+**A Google Maps review is attached to a PLACE — the branch the customer walked into.** *Positioning is a
+**brand-level** property.* **So a mind built from Maps reviews is a mind about *that outlet*, and no amount of volume
+turns outlet experience into brand position.** *This is why no positioning signal appeared in either corpus, and it is
+a property of the instrument, not of the categories tested.*
+
+**⚠ AND THE CORPUS IS ABOUT THE VISIT, IN BOTH CATEGORIES, MEASURED.**
+*Per 200-review sample of the salad corpus: **Stuff'D carries ~113–146 service-impression mentions** (staff, rude,
+queue, cashier) against 33–100 product mentions.* **The bakery corpus measured the same thing (§4.6.4.5).** *Two
+categories, 12,633 reviews, one conclusion: **food-retail reviews describe the visit.***
+
+**⚠⚠ AND THE ATTRIBUTION TEST NEEDS A CORRECTION I FOUND IN MY OWN ANALYSIS — TWICE.**
+*Measuring cross-brand comparison required identifying when a review names a rival, and **three successive versions
+were wrong**:*
+1. **Substring matching self-matched.** *9 "rival mentions" for Tiong Bahru Bakery were the brand inside its own name
+   (§4.6.4.5).*
+2. **Word-boundary matching on raw brand names matched English words.** *`crunch` inside "lacks crunch",
+   `corner` inside "bottom left corner", `grains` inside "grain bowl".* ***The protocol's own rule — "navigation
+   labels and currency codes appear on every site in every category, so they are the MOST-corroborated strings" —
+   applies to BRAND NAMES made of common words.***
+3. **A frequency filter (drop keys in >3% of ALL reviews) removed `daily`, `salad`, `stuff`, `super` — and still left
+   the decisive case: `Salad Shop`, a brand **literally named after the generic phrase**, collected **168 of the 449
+   hits**. Every one is a false positive.*
+
+**⚠ SO THE CLEANED NUMBER IS NOT DEFENSIBLE EITHER.** *3.59% cross-brand mentions became, on inspection, a fraction of
+that — and the residue is quality-and-value comparison ("generous with the dressing"), **not positioning-claim
+comparison.*** **⚠ An automated "who owns which claim" test cannot be built on this corpus, and I stopped refining
+because each fix exposed the next class of junk — the protocol's stated signal that the MECHANISM is wrong.**
+
+**⚠⚠ WHAT THIS MEANS FOR SEAN'S RULE, STATED PLAINLY.**
+***Google Maps reviews answer "what do customers care about" — which is what the CaiCa and SaladShop theme analyses
+actually measured, and it is genuinely useful. They do NOT answer "which brand owns which claim."*** **The claim/mind
+test needs an instrument whose reviews are *about the vendor's differentiation and name the alternative* — and food
+retail, reviewed by the visit, is the opposite of that.**
+
+**✅ AND THE INVERSION THIS PRODUCES: THE B2B DESIGN OF §4.6.4.3 IS THE BETTER INSTRUMENT, NOT THE FALLBACK.**
+*G2 / Capterra / Clutch reviews are **inherently comparative and vendor-level**: a reviewer states what they evaluated,
+what they switched from, and why. That is the attribution sentence §4.6.4.4 needs* — ***"I go here instead of X because…"
+is the NORM on a B2B review site and the exception on Google Maps.*** **So the mind test should be attempted on a B2B
+category FIRST, where the instrument matches the question.**
+
+**⚠ AND THE B2C BRANCH STILL HAS A HOME, NARROWLY DEFINED:** *a category where the buyer **researches and compares**
+rather than transacting* — *high-ticket, considered purchase, switching intent voiced.* **⚠ That is a hypothesis, not a
+finding, and must be tested before it is relied on.**
+
+**⚠ REPRODUCE:** *`google_reviews_full.json` — 142 entries / 28 chains / 12,523 reviews; aggregate by CHAIN before any
+brand-level statement; the generic-key test is key-frequency across ALL reviews (`>3%` dropped `daily`, `salad`,
+`stuff`, `super`); `Salad Shop` is the case that defeats frequency filtering.*
+
 **⚠⚠⚠ 3.7.25 C2 RESOLVED — `market_headroom` IS INERT BY DELIBERATE DESIGN, NOT BY DEFECT. AND ITS REAL
 CONSEQUENCE IS THE LITE TIER, NOT THE FULL REPORT (8 Oct).**
 
