@@ -3960,6 +3960,72 @@ finding, and must be tested before it is relied on.**
 brand-level statement; the generic-key test is key-frequency across ALL reviews (`>3%` dropped `daily`, `salad`,
 `stuff`, `super`); `Salad Shop` is the case that defeats frequency filtering.*
 
+### 4.6.4.7 ⚠⚠⚠ THE B2B TEST — AND THE RULE IT EXPOSES: IT IS NOT B2C-vs-B2B, IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION
+
+*Option 1: test the B2B mind instrument on a real B2B category.* **Case: `C9-b2b-it-services`** — *a Singapore
+managed-IT and cybersecurity firm for SMEs; claim **"one accountable team for every layer of your IT, instead of
+juggling eight vendors"**, differentiator **"we publish our rates"**.*
+
+**⚠ FIRST PROBLEM, AND IT IS STRUCTURAL TO B2B INTAKE: THE OWNER NAMED ARCHETYPES, NOT COMPANIES.**
+*His `competitors_named` is: "One in-house IT hire (the alternative to buying)", "Separate single-service vendors
+(the status quo we replace)", "The larger established MSPs with longer client relationships", "Cheaper per-ticket IT
+support shops".* **The analyst's own diagnostic: "The owner did NOT name any of the six competitors found… the
+blindspot is structural."** ***You cannot look up "the larger established MSPs" on G2.*** **So for B2B the named set
+must be derived before any mind work can begin — the same conclusion as §4.6.3, one step earlier in the pipeline.**
+
+**⚠ SECOND PROBLEM, AND IT IS A DEAD END: THE B2B DIRECTORIES ARE BOT-WALLED, AND THEY FAIL *SILENTLY*.**
+*Clutch / DesignRush / TechBehemoths were all attempted through the static ladder **and** through a real stealth
+browser (the same Camoufox profile that had just worked on Google Maps).* **Clutch returned an 813-character shell.**
+*DesignRush returned 1,465 chars and TechBehemoths 1,590 — **and both were NAVIGATION MENUS** ("AGENCIES / Web Design
+Companies / PPC Agencies / Branding Agencies").* **A naive extractor rendered those menus as VENDOR NAMES.**
+***That is the protocol's worst documented failure — a block page returning as ordinary text — and it produced a
+plausible-looking garbage vendor list that only reading the output caught.*** **Recorded as a NEGATIVE; not patched
+again (the protocol's own stop rule).**
+
+**✅ THE ROUTE THAT WORKED: GOOGLE MAPS FOR THE SET, BECAUSE A MANAGED-IT FIRM IS A LOCAL B2B SERVICE.**
+*29 named MSPs derived from three category searches* — **and the capture ran clean** *(tab opened, `limited_view:
+False`, verbatim text)*. **⚠ The derivation needed noise-stripping: the same search returned a fibre-products
+distributor and, memorably, **"WINZ CREDIT PTE LTD — Best Money Lender in Clementi"**. A category query returns
+lookalikes.* **⚠ AND REVIEW VOLUME IS AN ORDER OF MAGNITUDE LOWER THAN B2C: 40 / 11 / 7 / 1 reviews** *on the sample
+captured.* ***B2B firms simply have far fewer reviews, which caps what any mind test can do here.***
+
+**⚠⚠⚠ THE RESULT — AND IT REFUTES THE HYPOTHESIS I GAVE SEAN, WHILE EXPLAINING WHY.**
+| finding | measured |
+|---|---|
+| **B2B reviews ARE about the vendor relationship, not the visit** | **✅ CONFIRMED** — *IT Block **relationship 27 vs service 11**; iXiZ **9 vs 4*** ("partnering with Ixiz since 2007", "under the good hands of Roy Chan… for many years"). *Contrast food retail's "rude staff" / "the bun was warm".* |
+| **B2B reviews name an alternative** | **❌ ZERO of 59.** *No `switched`, no `compared`, no `alternative`, no `instead of`, no `previously` — on any brand.* |
+| **B2B reviews use the vendor's positioning language** | **❌ ZERO.** *The claim is "one team instead of juggling eight vendors" / "we publish our rates"; the reviews say "professional, knowledgeable, quick to respond". Generic service-praise, not the claim.* |
+
+***So the attribution sentence — "I chose X over Y because…" — is absent from B2B Google reviews too.*** **My
+hypothesis was that B2B is the better instrument. It is not, and the reason matters more than the refutation.**
+
+**⚠⚠⚠ WHY — AND THIS IS THE RULE. GOOGLE REVIEWS ARE POST-PURCHASE.** *Their author has already chosen, and is
+describing their own experience with the vendor they picked.* ***A satisfied customer does not narrate the
+alternative they rejected.*** **The comparison happens in the BUYING DECISION, which is exactly what a Google review
+is not.** *B2B's improvement — reviews about the relationship rather than the visit — does not change that, because
+relationship depth and competitive comparison are different things.*
+
+**✅ SO THE DISCRIMINATOR IS NOT B2C-vs-B2B. IT IS WHETHER THE REVIEW FORM ASKS THE COMPARISON QUESTION.**
+*Google's form asks "how was your experience".* ***G2, Capterra, TrustRadius, Clutch and Gartner Peer Insights ask
+"what alternatives did you consider", "what do you dislike", "what problems does it solve" — the comparison is
+SOLICITED, so it appears in the text.*** **That is why those platforms are the right instrument — the platform's
+form, not the buyer's nature.**
+
+**⚠ AND IT GIVES THE MIND TEST A CLEAN PRECONDITION, WHICH REPLACES THE ONE IN §4.6.4.5:**
+```
+CAN THIS CATEGORY BE MIND-TESTED AT ALL?
+  A review corpus whose FORM asks about alternatives -> YES, test attribution.
+  A post-purchase corpus (Google Maps, Trustpilot, Yelp) -> NO. Attribution is absent BY CONSTRUCTION,
+      not by scarcity, and more volume will not produce it.
+      -> fall to the claim-vs-claims branch (§4.6.3), limit stated.
+```
+***That single test replaces the corpus-type check, and it is measurable before any capture: read the review form.***
+
+**⚠ REPRODUCE:** *`b2b_mind.py` (enumerate `managed IT services Singapore` → 29 named MSPs → capture;
+`/tmp/b2b_enum.json`, `/tmp/b2b_reviews.json`); `derive_b2b_set.py` shows the three directories failing
+(813/1465/1590 chars, menus only); §4.6.4.4's Test 2 is the attribution test that returns zero here; the case is
+`inputs-v4/C9-b2b-it-services.json`.*
+
 **⚠⚠⚠ 3.7.25 C2 RESOLVED — `market_headroom` IS INERT BY DELIBERATE DESIGN, NOT BY DEFECT. AND ITS REAL
 CONSEQUENCE IS THE LITE TIER, NOT THE FULL REPORT (8 Oct).**
 
