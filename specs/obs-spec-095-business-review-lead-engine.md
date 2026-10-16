@@ -3728,6 +3728,127 @@ does not confirm the map the corpus was scored against — it contradicts it on 
 **⚠ REPRODUCE:** *from `specs/calibration/`: `python3 ps_evidence.py "BreadTalk" "Four Leaves" "Paris Baguette"
 "Tiong Bahru Bakery" "Polar Puffs & Cakes" "Duke Bakery"`.*
 
+
+---
+
+## 4.6.4 THE CLAIM/MIND PROTOCOL — VERIFYING WHAT CUSTOMERS THINK, NOT JUST WHAT THE BRAND SAYS
+
+**⚠ SEAN'S DIRECTION (8 Oct):** ***"To achieve the claim/mind distinction, it is important to independently verify what their
+customers think. To do so you need as part of the process to get customers reviews assessed. B2C can be derived from Google
+reviews just like what we did for bubble tea with caica and sgsaladshop. Run similar processes. B2B is different, and you need to
+figure a way to get b2b customers feedback somehow. If there is a difference in claim/mind, we have a problem with there worth
+flagging. For new companies that do not have a mind distinction yet, then their claim has to be evaluated against their
+competitors' claim."***
+
+**⚠ WHY THIS COMPLETES §4.6.3.** *§4.6.3 derives what a brand **PUBLISHES**.* **That is only half the object.** *A brand can
+publish "artisan" while its customers experience "cheap and convenient" — and per positioning theory that is not a positioning
+at all, it is **unfulfilled copy**.* **The law that governs it: judge *sets-the-reference* vs *follows-it*, never popularity**
+*(positioning-strategy).* *A brand following its category's language holds no position however loudly it says it.*
+
+### 4.6.4.1 ⚠ THE THREE-WAY RULE — SEAN'S, AND IT DECIDES THE WHOLE PIPELINE
+
+```
+STEP 1.  Is there INDEPENDENT CUSTOMER EVIDENCE for this business?
+         B2C -> Google reviews (proven path), plus any category review site
+         B2B -> G2 / Capterra / Clutch / tender records / corroborated client list
+
+  NO  ->  NEW OR UNOBSERVED: no mind yet.
+          ***Evaluate the CLAIM against COMPETITORS' CLAIMS only*** (§4.6.3's map).
+          ⚠ Report the limit explicitly: "no independent customer evidence found, so the
+            claim could not be tested against what customers actually think."
+            A limit is stated, never smoothed over -- and never reported as an absence of customers.
+
+  YES ->  Compare the customers' OWN WORDS against the brand's published claim.
+          AGREE     -> the position is real and supported.
+          DISAGREE  -> ⚠⚠ FLAG IT: the brand claims X; its customers describe Y.
+```
+
+**⚠ THE FLAG IS THE PRODUCT.** **A claim/mind divergence is a finding worth raising on its own** — *it is the difference
+between "we say we are artisan" and "our customers say we are the cheap option", and the second is the truth the owner is
+paying to hear.* **It must render in plain English, as a consequence, not as a metric.**
+
+### 4.6.4.2 B2C — THE PROVEN PATH, AND ITS EXACT BLOCKER *MEASURED TODAY*
+
+**The machinery exists and is validated** *(web-search-scraping-protocol; `client-competitive-analysis/scripts/gmaps_reviews_scraper.py`,
+"VALIDATED 2026-09-11 … 69–140 verbatim reviews per place")*. **The SaladShop 12,523-text corpus on disk is the same path.**
+
+**⚠⚠⚠ AND IT IS BLOCKED RIGHT NOW ON ONE THING: THE GOOGLE SESSION IS STALE.** *A probe was run today against two bakery
+brands (`probe_b2c_reviews.py`, then `diag_b2c_mind.py`).* **Result, and it is unambiguous:**
+
+| reading | value |
+|---|---|
+| place cards found | **11** *(enumeration works)* |
+| **signed-out limited-view banner** | **True — ON BOTH BRANDS** |
+| review-tab button present | **False** |
+| **review cards captured** | **0** |
+
+***The profile was seeded from the Firefox login on 25 Aug; the Google session has since expired, so Maps serves the
+signed-out "limited view" that carries NO review feed.*** **This is a stated limit with a named cause, not an absence of
+reviews** — *and the distinction is the whole point of §4.6.2's rule.*
+
+**⚠ THE REMEDY IS SEAN'S, AND IT IS SMALL:** *re-login to Google in **Firefox**, quit Firefox (which flushes cookies to
+disk), and the profile can be re-seeded with `cookies.sqlite` + `key4.db` + `cert9.db` only.* **⚠ Copy ONLY those three —
+`compatibility.ini` is an FF-version lock that makes Camoufox refuse to open the profile (validated bug, 2026-09-15).**
+
+**⚠ AND TWO DEFECTS THE PROBE FOUND IN MY OWN CODE, BOTH FIXED:**
+1. **`links[0]` was taken blindly.** *For "Tiong Bahru Bakery Singapore" the **first** place card is **`Kopi & Tarts @ City
+   Square Mall`** — a different business — and for BreadTalk it is the same. The probe scraped the wrong business and would
+   have reported its reviews as the brand's.* ***Same "commit to the first guess" class as §3.7.24 and §4.6.3.6.*** **Fixed by
+   matching the card's name against the brand** *(verified: now picks `BreadTalk` at index 1 and `Tiong Bahru Bakery` at index 2).*
+2. **A zero was reported without a reason.** *"0 reviews" is exactly the silent failure §4.6.2 forbids.* **The diagnostic now
+   pairs every count with a verdict** — *`SESSION STALE` vs `FLOW DEFECT`* — *which is how the stale login was identified
+   rather than guessed at.*
+
+### 4.6.4.3 B2B — THE PART THAT HAD TO BE DESIGNED, AND THE LADDER
+
+***B2C review sites index PLACES. B2B review sites index VENDORS. So the source depends on how the thing is bought — and
+there is no single equivalent of Google Maps.*** *The ladder, most-corroborated first:*
+
+| # | where B2B customers actually speak | covers | ⚠ caveat |
+|---|---|---|---|
+| **1** | **G2, Capterra, TrustRadius, Gartner Peer Insights, Product Hunt** | *software / SaaS* | *Cloudflare-walled — needs the protocol's Camoufox tier; many SMEs absent entirely* |
+| **2** | **Clutch, GoodFirms, DesignRush** | *agencies, professional services* | *verified-client reviews; thin for small firms* |
+| **3** | **Marketplace reviews** — AppExchange, AWS Marketplace, Shopify App Store | *marketplace-sold* | ***strongest of all**: tied to a real purchase* |
+| **4** | **Tender / procurement award records** *(GeBIZ in SG)* | *government, regulated suppliers* | ***not opinion — a recorded buyer DECISION.*** *A repeat winner has a demonstrated mind position* |
+| **5** | **Analyst peer-review sections + Magic Quadrant / Forrester Wave** | *enterprise* | *professional-buyer consensus, not verbatim voice* |
+| **6** | **⚠ THIRD-PARTY CORROBORATION OF THE CLIENT LIST** | *everything else* | *see below — the substitution that makes B2B tractable* |
+| **7** | LinkedIn recommendations, case studies, Reddit/HN threads | *anything* | *⚠ WEAKEST: self-selected or anecdotal. Never the sole basis* |
+
+**⚠⚠ #6 IS THE ONE THAT MAKES B2B WORK, AND IT IS A GENUINE SUBSTITUTION RATHER THAN A COMPROMISE.**
+*A B2B firm's own case-study page is **self-published — that is claim, not mind**, and it must never be counted as customer
+evidence.* **But it becomes evidence when the named customer's OWN site names the vendor back.** ***The client's own site is a
+third party saying "we chose them" — which is precisely the sentence the mind test needs.*** **So the rule: a client logo
+counts as mind evidence ONLY when the client's own domain independently mentions the vendor.** *Everything else stays claim.*
+
+**⚠ AND THE HONEST FLOOR, WHICH WILL BE THE COMMON CASE:** *most B2B SMEs — and certainly the home-based and personal-service
+businesses in D3's segment — will have **no reviews, no analyst coverage and no corroborated client list**.* ***For them the
+answer is STEP-1-NO: no mind exists to test, and the claim is assessed against competitors' claims alone, with the limit
+stated.*** **⚠ Do NOT manufacture a mind from testimonials.** *A self-selected quote is the same failure as an invented claim.*
+
+### 4.6.4.4 ⚠ HOW "AGREE" AND "DISAGREE" ARE ACTUALLY DECIDED — NOT BY IMPRESSION
+
+**Two tests, in order. The second is the one that matters.**
+
+**Test 1 — vocabulary overlap.** *Do the reviewers' distinctive terms for the brand match the claim's distinctive terms?*
+*Cheap, mechanical, and necessary but **not sufficient**.*
+
+**⚠ TEST 2 — ATTRIBUTION: DO THE CUSTOMERS CREDIT *THIS BRAND* WITH THE CLAIM, OR TREAT IT AS TRUE OF THE WHOLE CATEGORY?**
+***This is the sets-the-reference test, and it is the discriminator.*** *If reviewers say "their bread is fresh" alongside "all
+these bakeries are fresh", the claim is a **category convention** and the brand owns nothing — **even though the words
+match.*** *The claim is real only when reviewers attribute it to this brand **against** the alternatives.*
+**⚠ Operationalised:** *does a review name the rival as the comparison?* ***"I go here instead of X because…" is the sentence
+that proves a position exists.*** *A review with no competitor in it is category talk, and category talk corroborates nobody.*
+
+**⚠ AND THE FAILURE DIRECTIONS TO STATE, BOTH REAL:** *too few reviews to test at all* (report the count and refuse the
+verdict), and *reviews that are about the visit rather than the brand* **— a bakery's reviews are mostly about whether the
+bun was warm.** *A corpus of service impressions cannot settle a positioning question, and must say so rather than being
+pressed into service.*
+
+**⚠ REPRODUCE:** *`/tmp/mind_diag.json` holds the per-brand diagnosis (`limited_view: true`, `cards: 0`); the scraper is
+`client-competitive-analysis/scripts/gmaps_reviews_scraper.py`; the diagnostic is
+`profiles/accelerator/cache/scratch/diag_b2c_mind.py`; re-seed by re-logging into Google in Firefox and copying
+`cookies.sqlite` + `key4.db` + `cert9.db` into the Camoufox profile.*
+
 **⚠⚠⚠ 3.7.25 C2 RESOLVED — `market_headroom` IS INERT BY DELIBERATE DESIGN, NOT BY DEFECT. AND ITS REAL
 CONSEQUENCE IS THE LITE TIER, NOT THE FULL REPORT (8 Oct).**
 
