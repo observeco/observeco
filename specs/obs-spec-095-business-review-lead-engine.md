@@ -3557,6 +3557,177 @@ of the owner's input silently rewritten) and is now recorded as three instances 
 `rival_reads(['Each-A-Cup'], category='bubble tea', market='singapore')` must return `capture_status='ok'`;
 and `curl -o /dev/null -w '%{http_code}' https://each-a-cup.com` must return 200.**
 
+
+---
+
+## 4.6.3 THE PS EVIDENCE PROTOCOL — how PS is graded, and how it is graded BY THE TOOL
+
+**⚠ WHY THIS SECTION EXISTS.** *Sean's direction (8 Oct): "establish a comfortable PS grading methodology yourself,
+because you will have to do the work yourself in a steady state condition. Then all I am doing is corroborate your
+results."* **So this is not a calibration aid. It is the production method, and it must be runnable by the tool,
+per submission, with no analyst in the loop.**
+
+### 4.6.3.1 WHAT PS ACTUALLY NEEDS — THE CLAIM-OWNERSHIP MAP
+
+**✅ FIRST, THE FINDING THAT SETS THE SCOPE.** *The scorer already receives `derived_competitive_set`
+(`run_jev.build_state`, lines 79–89).* **But look at what the set contains for BK01-breadtalk:**
+
+> *`tier_3_category_incumbent`: "BreadTalk owns 'iconic local', Four Leaves 'everyday', TBB 'artisan'."*
+
+***That line IS the answer to `position_strength`, pre-computed by a human analyst.*** *PS asks "can this business own
+a claim a named rival does not?" — and the input to the model already states who owns which claim.* **So the corpus's
+PS grades are as good as that map, and the 99% close condition validates the rubric GIVEN the map.** *⚠ §4.6.2a
+already flagged this: the machine-derived set is unmeasured.* **This section is how it gets derived, and the pilot
+below is its first measurement.**
+
+### 4.6.3.2 ⚠⚠ THE PILOT, AND THE ONE ERROR THAT MATTERS — ONE CATEGORY, SIX BRANDS, THREE CLAIMS
+
+*Method: resolve each named incumbent to its own domain, read it, extract claim-shaped sentences, compare against
+the analyst's `tier_3` labels.* **⚠ SAMPLE: one category (bakery), six brands, three checked claims. This is a
+PILOT, not a measurement of the corpus — it establishes that the method works and that the map is checkable.**
+
+| brand | analyst's `tier_3` label | what the brand's OWN page states | verdict |
+|---|---|---|---|
+| **BreadTalk** | *"iconic local"* | *"a distinctive, **award-winning Singaporean brand**… its signature Flosss"*; *"Flosss is an **iconic** product"*; *"**renowned** for the way it has revolutionised the culture of bread consumption"* | **✅ CONFIRMED**, verbatim |
+| **Tiong Bahru Bakery** | *"artisan"* | *"we set out to make simple things exceptionally well"*; *"our **obsession with craft**"*; *"our love of culture"* | **✅ SUPPORTED** *("craft")* |
+| **Four Leaves** | *"everyday"* | *"one of the **leading** companies in the bakery industry"*; *"a **trustworthy** bakery manufacturer"*; *"quality at all stages"*; *"our Central Factory"* | **❌ NOT SUPPORTED — and probably mis-assigned** |
+
+**⚠⚠⚠ "EVERYDAY" BELONGS TO PARIS BAGUETTE, AND THE PAGE SAYS SO VERBATIM.**
+*Paris Baguette's own site runs the campaign line **"#GoodBreadEveryday"** and states **"simple, honest breads made
+for the rhythm of everyday life."** Tiong Bahru Bakery also uses it: **"the everyday rituals that bring people
+together."*** **Four Leaves — the brand the map assigns "everyday" to — claims the opposite register: it presents
+itself as a leading industrial quality manufacturer with a Central Factory.** **Three brands; the label sits on the
+wrong one.** *So the corpus's PS evidence contains at least one mis-assigned claim, and PS is scored against it.*
+
+**⚠ AND THE CLAIM/MIND DISTINCTION IS REAL AND MUST NOT BE COLLAPSED.** *Four Leaves may well hold "everyday" **in
+the customer's mind** — that is a market fact — while its **published claim** is leadership.* **PS is scored against
+what rivals PUBLISH (§4.6.2a: "a flank is only proven against a named rival"), so the published claim is the right
+object.** *But a method that silently substitutes one for the other would be wrong in a way nobody could see.*
+
+### 4.6.3.3 ⚠⚠ THE METHODOLOGICAL RULE THE PILOT PROVED — READ THE ABOUT PAGE, NOT THE HOMEPAGE
+
+***The single most important operating rule, and it is a trap that nearly produced a false finding.***
+*Reading only homepages, the extraction returned **"no claim-shaped sentence"** for **both Four Leaves and Tiong
+Bahru Bakery** — i.e. it would have recorded two real rivals as stating no claim.* **But their About pages carry
+their claims.** *A modern retailer's homepage is a **shop** — promo tiles, cart strings ("Your go-to favourites are
+saved for easy reordering"), seasonal SKUs. The **About / Our Story page is the manifesto**, and that is where a
+positioning claim lives.*
+
+**⚠ SO AN EMPTY HOMEPAGE READ IS NOT "NO CLAIM" — IT IS A WRONG-SURFACE READ.** *The protocol must therefore walk a
+**surface ladder per rival**, and only report "no stated claim" after the whole ladder is exhausted:*
+| # | surface | why |
+|---|---|---|
+| 1 | **`/about`, `/about-us`, `/our-story`, `/pages/about-us`** | *the manifesto — **try this FIRST for claim extraction*** |
+| 2 | homepage | *brand line, campaign slogan* |
+| 3 | press / PR page | *the claim that was **announced** (PR precedes advertising — positioning-strategy) |
+| 4 | **review corpus (Pass B/D)** | *how third parties characterise it — the **mind** check, which is a DIFFERENT object from the claim* |
+
+**⚠ AND THE HONEST FAILURE MODES, both of which occurred in the pilot:**
+- **Duke Bakery returned 0 characters.** *That is a **blocked** read, not an absent claim.* §4.6.2's rule applies: it
+  must escalate to the browser tier and, failing that, be reported as **"could not be read"** — never as "states no
+  claim". *A tool failure must never render as a finding about the rival.*
+- **BreadTalk's claim was on the homepage**, so the ladder must not stop at the About page either. **The ladder is
+  walked to completion, and the FIRST surface yielding a claim does not terminate the pass — the later surfaces
+  can contradict it.**
+
+**⚠ THE CLAIM GATE STILL APPLIES** *(web-search-scraping-protocol: unescape entities; reject menu / order / cart /
+cookie vocabulary; reject price lists; require a length window and ≥1 **verb stem**, not a whole word — the
+`focus` failure).* *The pilot's raw output confirms the need: Polar Puffs' claim-shaped hits were a **delivery
+price line** and **customer testimonials**, and Paris Baguette's were an **emoji-laden promo tile** — all three would
+have been rendered as "what they say about themselves".*
+
+### 4.6.3.4 THE PIPELINE — WHAT I WILL ACTUALLY RUN
+
+1. **Situation.** *From the form: the buyer and the occasion. Deterministic.*
+2. **Subject's claim.** *Resolve the subject's own domain (`_domain_candidates`, **now hyphen-safe**), walk the
+   surface ladder, extract its claim through the gate.*
+3. **The set.** *Owner-named rivals (treated as the owner's perception, expected to be incomplete) + a **bounded
+   category sweep** (Pass A reduced + Pass B) + new entrants. **⚠ Per CATEGORY, once, cached, reused by every case
+   in that category** — this is what makes it affordable: the §4.6.2 full sweep is 180 cells for the whole
+   category, not per submission.*
+4. **The rivals' claims.** *Surface ladder per rival, claim gate, **domain + verbatim quote recorded for every
+   entry**.*
+5. **The claim-ownership map.** *Which named occupant owns which claim — the automated form of the analyst's
+   `tier_3` line.*
+6. **Score PS** *against **that** map, by the §4.6.2a rule: a claim a named rival already owns cannot be owned; a
+   thin set caps at ADEQUATE (3) and says so.*
+7. **Audit.** *Every read recorded with domain and status, so every refusal is a **stated limit** and not a
+   silent absence.*
+
+**⚠ DETERMINISM.** *The evidence is fetched and **cached per category**; the scoring stays bound to the rubric
+rule.* *Same category → same set → same map.* **⚠ AND THE CONSTRAINT THAT DOES NOT MOVE: §5.5 forbids a second model
+call for the REPORT.** *Deriving the map is **evidence assembly feeding the single scoring call**, not an extra
+call — the map is data, like the form.*
+
+### 4.6.3.5 D1–D4, DECIDED BY THE TOOL NOT THE USER (Sean's instruction, 8 Oct)
+
+*Sean: "I want you to answer D1 to D4 yourself."* **The reasoning is recorded because the answers are contestable.**
+
+| | decision | answer and why |
+|---|---|---|
+| **D1** | **How many cases?** | **All 120 — staged.** *The join to Sean's existing grades is the entire point: it yields C1's trusted target AND a measure of my agreement with him, for free.* **Stage 1 = one category, method frozen; Stage 2 = scale.** *Grading a subset saves little because the expensive part (the category sweep) is shared.* |
+| **D2** | **Fresh cases or the existing 120?** | **The existing 120.** *A fresh sample **breaks the join**, doubles the work, and loses the comparison that gives C1 its target.* |
+| **D3** | **Blind?** | **Yes — and it now means something stricter than it did for Sean.** *If I see the tool's PS score, or the analyst's `tier_3` map, I am **reproducing the answer rather than producing an independent target**.* **⚠ CONTAMINATION DISCLOSURE: I have already read BK01-breadtalk's `tier_3` map (§4.6.3.2), so BK01 is COMPROMISED as evidence and must be excluded from the blind set — or re-derived by someone who has not seen it.** *The pilot's other five brands remain clean.* |
+| **D4** | **The competitive set?** | **I derive it; I do not read the analyst's.** *⚠ And the comparison between my derived map and the analyst's is **itself the first measurement of set-derivation quality** — the exact thing §4.6.2a left unmeasured.* **This is why D4 is the highest-value of the four.** |
+
+**⚠ WHAT THIS DOES TO C1 AND C3.** *Both were blocked on a trusted target. **Grading PS by this method produces
+that target** — but only for PS. *C1's compression spans all six dimensions, so a PS-only pass closes C3 and
+**informs** C1 without fully closing it.* **The honest statement: this unblocks C3, and it gives C1 its first
+trustworthy dimension.**
+
+**⚠ REPRODUCE:** *fetch `https://www.fourleaves.com.sg/about-us` and `https://tiongbahrubakery.com/pages/our-story`
+— both return 200 and carry claims the **homepages do not**; fetch `https://parisbaguette.com.sg` for the verbatim
+"#GoodBreadEveryday"; the analyst labels are `derived_competitive_set.tier_3_category_incumbent` in
+`inputs-v4/BK01-breadtalk.json`; the prompt-side wiring is `run_jev.py:79–89`.*
+
+### 4.6.3.6 THE TOOL IS BUILT AND RUN — `ps_evidence.py`, AND THE THREE DEFECTS ITS FIRST RUN FOUND IN IT
+
+*`specs/calibration/ps_evidence.py` implements §4.6.3.4: a surface ladder per rival, the claim gate, candidate-domain
+fall-through, and a three-way outcome that never invents.*
+
+| run | claims recovered (bakery, 6 rivals) |
+|---|---|
+| **first working draft** | **2 of 6** |
+| **after the three fixes** | **5 of 6** |
+
+**⚠⚠ THE FIRST RUN FAILED ON THREE OF ITS OWN DEFECTS, ALL OF WHICH MADE A REAL RIVAL LOOK LIKE IT STATES NOTHING.**
+*Recorded because two of them are the same mistake the resolver already made once (§3.7.24) — **committing to a single
+guess** — and it recurred in new code within the hour.*
+
+1. **Only the FIRST candidate domain was tried.** *`_domain_candidates("Four Leaves")` returns `fourleaves.com`
+   first; the real site is `fourleaves.com.sg`. The whole ladder was walked on the wrong domain, so the rival came
+   back `could_not_read` — **while a hand read of `fourleaves.com.sg/about-us` returned 200 and carried its claim.**
+   Fixed by falling through the candidate domains.*
+2. **The surface cap truncated the ladder before the surface that mattered.** *`max_surfaces=4` stopped at
+   `[about-us, about, our-story, homepage]`; **Tiong Bahru Bakery's claim is on `/pages/our-story`**, which was never
+   reached, so it was reported `read_no_claim` — again contradicting a successful hand read.*
+3. **The homepage sat at the end of the ladder.** *BreadTalk's claim is on its **homepage**, not its About page, so a
+   truncating cap made it look like it states nothing.*
+
+**✅ AND THE SAFETY PROPERTY HELD THROUGHOUT, WHICH IS THE ONE THAT MATTERS: THE TOOL NEVER INVENTED A CLAIM.**
+*A wrong-surface read returns `read_no_claim`; a failed read returns `could_not_read`.* ***Neither is ever a fabricated
+finding about a rival.*** *The gate also visibly worked: Polar Puffs' raw claim-shaped hits were a **delivery price
+line** and **customer testimonials**, and Paris Baguette's were an **emoji-laden promo tile** — all three rejected.*
+
+**✅ FINAL RUN — 5 of 6, each with its domain and a verbatim quote:**
+| rival | surface that yielded it | derived claim (opening) |
+|---|---|---|
+| **BreadTalk** | **homepage** | *"over 700 outlets in 14 international markets… culinary magic"* |
+| **Four Leaves** | **/about-us** | *"we started our first outlet at Nutmeg Road… our Central Factory"* |
+| **Paris Baguette** | **/about** | *"our bakers, cakers and baristas go further every day to perfect their own craft"* |
+| **Tiong Bahru Bakery** | **/pages/our-story** | *"We first opened our doors in 2012 at 56 Eng Hoon Street"* |
+| **Duke Bakery** | **/about-us on `dukebakery.sg`** | *"Combining Japanese and European baking techniques, we craft soft, healthy breads"* |
+| **Polar Puffs & Cakes** | — | **⚠ `could_not_read`.** *Its real domain is `polarpuffs-cakes.com` — hyphenated at ONE internal boundary only, a form no simple rule generates. **Reported as a stated limit, correctly, not as an absence.*** |
+
+**⚠ SO THE METHOD IS RUNNABLE AND THE MAP IS DERIVABLE.** *5 of 6 rivals yielded a claim with provenance in ~70s of
+wall clock, and the single failure is flagged rather than hidden.* **⚠ BUT §4.6.3.2's FINDING STANDS AND IS NOT
+SOFTENED BY THIS: the derived claims do NOT match the analyst's `tier_3` labels.** *Four Leaves derives as
+"leading / Central Factory", **not** "everyday"; **Paris Baguette's own copy carries "everyday".** ***Deriving the map
+does not confirm the map the corpus was scored against — it contradicts it on at least one incumbent.***
+
+**⚠ REPRODUCE:** *from `specs/calibration/`: `python3 ps_evidence.py "BreadTalk" "Four Leaves" "Paris Baguette"
+"Tiong Bahru Bakery" "Polar Puffs & Cakes" "Duke Bakery"`.*
+
 **⚠⚠⚠ 3.7.25 C2 RESOLVED — `market_headroom` IS INERT BY DELIBERATE DESIGN, NOT BY DEFECT. AND ITS REAL
 CONSEQUENCE IS THE LITE TIER, NOT THE FULL REPORT (8 Oct).**
 
