@@ -3849,6 +3849,61 @@ pressed into service.*
 `profiles/accelerator/cache/scratch/diag_b2c_mind.py`; re-seed by re-logging into Google in Firefox and copying
 `cookies.sqlite` + `key4.db` + `cert9.db` into the Camoufox profile.*
 
+### 4.6.4.5 ⚠⚠ THE MIND CAPTURE NOW RUNS END-TO-END — AND ITS FIRST HONEST RESULT IS *INCONCLUSIVE*, NOT A FLAG
+
+**✅ SEAN RE-LOGGED INTO GOOGLE IN FIREFOX AND THE WHOLE CHAIN NOW WORKS.** *Three bakery brands captured
+(50/30/30 verbatim reviews). Four defects were found and fixed to get there — **three in the pipeline, one in my own
+metric** — and the result is more useful than a clean pass would have been.*
+
+| # | defect | evidence it was real |
+|---|---|---|
+| **1** | **The cookie seed omitted the WAL.** *`cookies.sqlite-wal` was **557KB** and 26 seconds old when the login was fresh — the new session was in the WAL, not yet checkpointed. The project scraper's `SEED_FILES` copies only `cookies.sqlite`.* | *Before: **`limited_view: True`, 0 cards**. After seeding **`cookies.sqlite` + `-wal` + `-shm`**: `limited_view: False`* |
+| **2** | **The place ID was thrown away.** *`href.split("data=")[0]` is the scraper's **DEDUPE KEY**, and I used it as the destination — which strips the `data=!4m…!3m…` that identifies the place, so the page loaded as a shell.* | *Before: **review tab absent, 0 cards**. Navigating the FULL href: **tab=True, 100 cards**.* |
+| **3** | **The review TEXT was taken from the whole card.** *`inner_text()` on the card container returned **Google's UI chrome and the owner's replies**: the top "words" across 100 BreadTalk reviews came back as `share/photos/reviews/guide/owner/response`.* | *Sampling `.wiI7pd` (the review body) instead: the text becomes real customer voice — "the old aunty on duty… is very rude".* |
+| **4** | **⚠ MY OWN METRIC SELF-MATCHED.** *My rival detector reported **9 rival mentions for Tiong Bahru Bakery** — and **all nine were the brand naming ITSELF**, because `"tiong bahru"` is a substring of `"Tiong Bahru Bakery"` and my exclusion tested `r != b.lower()` against the full name.* | *Reading the flagged reviews: **not one of them names an alternative.** After the fix: **zero rival comparisons.*** |
+| | | ***⚠ Defect 4 is `"independence means who is SPEAKING"` and `"a subdomain split quietly doubles a single voice"` — the protocol's own documented failure, and I reproduced it as a substring match.*** |
+
+**⚠⚠⚠ THE RESULT — AND IT IS NOT THE ONE SEAN'S RULE ANTICIPATED. THE CORPUS CANNOT SETTLE THE QUESTION.**
+
+| brand | n | language of the reviews | rival named *(after fixing self-match)* | claim language present |
+|---|---|---|---|---|
+| **BreadTalk** | 50 | **service-dominated** *(staff 15, service 12, **rude 10**, cashier 7)* | **0** | **none** |
+| **Paris Baguette** | 30 | **service-dominated** *(32 service vs 15 product)* | **0** | **none** |
+| **Tiong Bahru Bakery** | 30 | **product/experience** *(croissant, seating, air-con, prices)* | **0** | **none** |
+
+***No review of any of the three brands compares it against a named alternative, and none uses the brand's own positioning
+language.*** **By §4.6.4.4's Test 2 — "a review with no competitor in it is category talk, and category talk corroborates
+nobody" — this corpus corroborates nobody.**
+
+**⚠ SO THE HONEST VERDICT IS `INCONCLUSIVE`, NOT "CLAIM/MIND DIVERGENCE FLAGGED".** *The reason is the one §4.6.4.4
+predicted before the data existed: **"a bakery's reviews are mostly about whether the bun was warm… such a corpus cannot
+settle a positioning question, and must say so rather than being pressed into service."*** *That is exactly what these are —
+service and product impressions.* **⚠ Reporting these as "the market disagrees with your positioning" would be the
+confident-garbage failure this whole protocol exists to prevent.**
+
+**⚠⚠ AND THE PRECONDITION SEAN'S RULE NEEDS, NOW MEASURED: BEFORE TESTING CLAIM AGAINST MIND, CHECK THE CORPUS IS ABOUT THE
+BRAND AND NOT ABOUT THE VISIT.** *A corpus dominated by service/product impressions **cannot** return a divergence finding,
+however large it grows.* **So the mind test needs a gate on corpus TYPE, and baked-goods retail fails it.** *⚠ This does not
+weaken the rule — it says where the rule can be applied.*
+
+**⚠ ONE GENUINE SIGNAL, AND IT POINTS AT THE EARLIER FINDING.** *A TBB reviewer writes **"Tiong Bahru Bakery has been an
+iconic café in the area"**.* **⚠ "Iconic" is BreadTalk's analyst-assigned claim, not TBB's** — *whose analyst label is
+"artisan".* **So the claim vocabulary does surface in the mind, but attached to the wrong brand** — *consistent with
+§4.6.3.2, where the `tier_3` labels were measured to sit on the wrong brands.*
+
+**⚠⚠ THREE LIMITS ON THIS RESULT, ALL OF WHICH BOUND IT HARD.**
+1. **n is 30–50 reviews per brand.** *That is thin for a positioning claim and thinner after the corpus turns out to be
+   service impressions.* **It is enough to establish the corpus TYPE, not to measure a mind.**
+2. **Keyword counting is a weak test.** *"craft" not appearing as a word does not mean customers do not experience craft —
+   they may write "the croissant is way better than X".* ***So "claim language: none" is a weak-evidence result and must NOT
+   be read as "the claim is unperceived".***
+3. **Bakery is one category, and it is the least likely to bear a positioning corpus at all.** *⚠ The method is not
+   discredited by this — **the category was badly chosen for a first test, and that is now measured rather than assumed.***
+
+**⚠ REPRODUCE:** *`capture_b2c_mind.py <brand…>` (writes `/tmp/mind_capture.json`); the run needed
+`cookies.sqlite` + `-wal` + `-shm` + `key4.db` + `cert9.db` seeded from the Firefox login **while Firefox was running**;
+full place hrefs are in the enumeration, never the `data=`-stripped form; review bodies come from `.wiI7pd`.*
+
 **⚠⚠⚠ 3.7.25 C2 RESOLVED — `market_headroom` IS INERT BY DELIBERATE DESIGN, NOT BY DEFECT. AND ITS REAL
 CONSEQUENCE IS THE LITE TIER, NOT THE FULL REPORT (8 Oct).**
 
