@@ -4073,6 +4073,76 @@ agencies**.* **So the mind test applies to SaaS and agency/services categories, 
 claim-vs-claims branch (§4.6.3) with the limit stated.** ***Clutch covers agency firms — and ObserveCo is itself a
 consulting firm — so the mind test is applicable to our own category, which is the one we can validate it against.***
 
+### 4.6.4.10 ✅ CONSULTING-AGENCY VALIDATION — THE RAW-REVIEW ROUTE FAILS, THE SYNTHESIS ROUTE WORKS, AND IT FOUND A SYSTEMATIC GAP
+
+*Ran on our own category — Singapore consulting/agency firms on Clutch — because §4.6.4.8 put it in scope and it
+is the one category we can also check by hand.*
+
+**⚠⚠ FIRST, §4.6.4.8 IS PARTLY REFUTED, AND THE CORRECTION MATTERS. THE SELECTION QUESTION IS ON THE FORM BUT NOT ON
+THE PUBLISHED PAGE.**
+*Step 2 read the live Clutch profile structure: it renders `BACKGROUND / OPPORTUNITY / CHALLENGE / SOLUTION /
+RESULTS & FEEDBACK / RATINGS` — **there is NO "Why did you select {vendor} over others?" section, and no
+"Alternatives" section, on the public profile.*** **The form asks the question and the published corpus does not show
+the answer.** *Then 8 Singapore consulting profiles were read in full — **68,081 characters** — and searched for
+selection-reason language (`we chose`, `selected because`, `compared`, `over other`, `switch from`, `evaluated`,
+`previous vendor`…):*
+```
+profiles rendering a selection/alternatives SECTION: 0 of 8
+selection-reason language hits across 68,081 chars: 0
+```
+***⚠ AND THE ZERO WAS VERIFIED BEFORE IT WAS BELIEVED.*** **A regex returning an absolute zero is more likely a broken
+harness than a finding, so control words were counted first: `project` 10–15, `team` 15–18, `client` 16–18, `review`
+14, `company` 17–23.** ***The harness works; the zero is real.*** **So §4.6.4.8's practical conclusion — "the mind test
+has a home on Clutch" — is WRONG as stated, and the reason is that a form's question does not survive into the
+published corpus.**
+
+**✅ BUT THE VALIDATION FOUND SOMETHING BETTER, AND IT IS USABLE. CLUTCH PUBLISHES A THIRD-PARTY SYNTHESIS OF WHAT
+CLIENTS ACTUALLY VALUED.** *The readable profile carries exactly two things, and neither is raw reviewer prose:*
+1. **the AGENCY'S OWN BLURB** — *"Make your brand easy to find and hard to forget. We are a Strategic Branding and
+   Design Agency."* → **that IS the published CLAIM (§4.6.3's object).**
+2. **a CLUTCH EDITORIAL SYNTHESIS of the verified reviews** — *"Clients appreciate their value for cost, noting
+   efficient communication and tailored services… **This summary is based on verified Clutch reviews.**"*
+   → **that IS a MIND signal: a third party's reading of what customers actually valued.**
+*Plus structured themes Clutch extracts (`Top Mentions`: "High-Quality Work (4)", "Timely (3)", "Knowledgeable (2)").*
+
+**✅ AND RUN ON SIX AGENCIES IT PRODUCED A SYSTEMATIC GAP — THE FLAG THE PRODUCT EXISTS TO RAISE.**
+| agency | CLAIM (their own words) | MIND (Clutch's synthesis of verified clients) | verdict |
+|---|---|---|---|
+| **Gohan Strategy** | *"Make your brand easy to find and **hard to forget**… transforming your brand's vision into revenue"* | *"offers **competitive pricing**… Clients appreciate their **value for cost**… efficient communication"* | **⚠ DIVERGES** — claim is transformation; the mind is cost |
+| **KeyHole Insights** | *"the intersection of **data analytics, market research, strategy and storytelling**"* | *"offers **competitive pricing**… clients **liken their services to major firms at lower costs**"* | **⚠ DIVERGES** — clients position them as a **cheap substitute for the big firms**, not as an insight specialist |
+| **TDCX** | *"**Award-Winning** Digital Economy Enabler… innovation and operational precision"* | *"High-Quality Work (4), Proactive (3), Results-Oriented (3), Timely (3)"* | **⚠ DIVERGES** — distinctive scale/innovation claims flatten into **generic quality themes** |
+| **STUDIO DAM** | *"**ESG Certified** design consultancy… efficient and **timeless** design"* | *"offers **competitive pricing** with high value… understanding client needs"* | **⚠ DIVERGES** — ESG and timelessness absent |
+| **Creative For More** | *"strategy must come **before execution**… tailored, **data-driven** marketing systems"* | *"**fair pricing**… clients report significant **ROI, +250% lead generation, +45% revenue**"* | **PARTIAL** — the **outcome** claim is corroborated; the **mechanism** claim is absent |
+| **Margin Wheeler** | *"**leading** corporate service provider… **chartered accountants** and certified corporate secretaries"* | *"good **value for cost**… **transparent pricing**… Knowledgeable (2)"* | **PARTIAL** — expertise is perceived, but weakly; price and timeliness dominate |
+
+***⚠⚠ THE PATTERN: EVERY CLAIM IS ABOUT DISTINCTIVE EXPERTISE. EVERY MIND IS ABOUT PRICE AND GENERIC SERVICE
+QUALITIES.*** *"Value for cost" leads the synthesis for 5 of the 6.* **That is precisely the claim/mind divergence
+§4.6.4.1 exists to flag — measured on real data, in our own category.**
+
+**⚠⚠ BUT ONE CONFOUND MUST BE CARRIED WITH THIS RESULT, AND IT IS SERIOUS.** ***Clutch is a marketplace whose
+editorial summary is built to support PRICING COMPARISON — its profile leads with a "Pricing Snapshot" and "Rating
+for cost".*** **So "the mind is about price" may be partly CLUTCH'S FRAMING rather than the customers'.** *The honest
+statement is: **the synthesis route yields a usable claim/mind comparison, with a known systematic bias toward price
+that must be discounted when reading it.*** **⚠ It is NOT a neutral instrument.**
+
+**✅ AND THE ATTRIBUTION TEST SURVIVES HERE, INSIDE THE SYNTHESIS.** *KeyHole's synthesis contains **"clients liken
+their services to major firms at lower costs"** — a genuine comparison sentence, the thing that was **absent in 59
+Google reviews**.* **⚠ §4.6.4.4's Test 1/Test 2 were written for raw review text; on Clutch they must run against the
+SYNTHESIS, which paraphrases** — *a literal keyword test misses it (that is how the 0 above occurred).*
+
+**⚠ SO THE CORRECTED DESIGN, REPLACING §4.6.4.8's CONCLUSION:**
+```
+CLAIM  = the vendor's own published blurb (already sourced, §4.6.3)
+MIND   = Clutch's editorial synthesis + extracted Top Mentions   [third-party, price-biased]
+        NOT the raw reviews (not published; 0/8 sections, 0 selection language)
+RUN ON = consulting / agency / SaaS firms with a Clutch profile  -> our own category qualifies
+LIMIT  = state that the synthesis is Clutch's aggregate and leads with pricing by construction
+```
+**⚠ REPRODUCE:** *`consulting_set.py` (directory reads fine via Camoufox — 28,228 chars, 200 links; the earlier
+813-char shell was the `/sg/it-services/...` path, a different wall); `consulting_decide.py` (0/8 sections,
+0 hits in 68,081 chars); `verify_zero.py` (control-word proof the zero is real); `claim_vs_mind.py` (the six
+side-by-side pairs); artifacts `/tmp/consulting_*.json`, `/tmp/claim_vs_mind.json`.*
+
 **⚠ REPRODUCE:** *the five forms are quoted with source URLs in `/tmp/ws_a_forms.md` (24.9 KB, with a raw appendix);
 Clutch reachability re-verified independently by `verify_clutch.py` (13,010 chars, 110 bodies); the implementation of
 this section's verdict rules is `specs/calibration/mind_test.py` (§4.6.4.9).*
